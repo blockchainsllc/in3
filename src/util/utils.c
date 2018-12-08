@@ -185,6 +185,49 @@ char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc)
 	return NULL;
 }
 
+int json_get_token_size(jsmntok_t* t) {
+	int i,j=1;
+	switch (t->type) {
+		case JSMN_PRIMITIVE:
+		case JSMN_STRING:
+		  return 1;
+		case JSMN_OBJECT:
+		  for (i=0;i<t->size;i++) 
+			  j+=1+json_get_token_size(t+j+1);
+		  return j;
+		case JSMN_ARRAY:
+		  for (i=0;i<t->size;i++) 
+			  j+=json_get_token_size(t+j);
+		  return j;
+		default:
+		  return 1;
+	}
+}
+
+int json_get_token(json_object* json, char *key, json_object* result) {
+ int i,n;
+ jsmntok_t* c;
+
+ for (i=1;i<json->tokc;i++) {
+	 c = json->tok+i;
+	 n = c->end - c->start;
+	 // the key must be a string
+	 if (c->type != JSMN_STRING)
+	    return 0;
+	 // if the key matches we retrun the next token 
+	 if (strlen(key)==n && !strncmp(json->js + c->start, key, n)) {
+		 result->js = json->js;
+		 result->tok = c+1;
+		 result->tokc = json->tokc -i;
+		 return 1;
+	 }
+	 // if not we have to check the value
+	 i+=1+json_get_token_size(c+1);
+ }
+ return 0;
+}
+
+
 char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok)
 {
 	int c;
@@ -250,6 +293,13 @@ int hex2byte_arr(char *buf, int len, uint8_t *out, int outbuf_size) {
     }
 
     return out_len;
+}
+bytes_t* hex2byte_bytes(char *buf, int len) {
+    int bytes_len = (len & 1) ? (len + 1) / 2 : len/2;
+
+    uint8_t *b  = malloc(bytes_len);
+	hex2byte_arr(buf,len,b,bytes_len);
+	return b_new(b,bytes_len);
 }
 
 void int8_to_char(uint8_t *buffer, int len, char *out) {
