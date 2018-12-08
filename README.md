@@ -1,0 +1,1 @@
+This is the core-library to handle JSON-RPC-Requests. All other modules will have a dependency to this one.
