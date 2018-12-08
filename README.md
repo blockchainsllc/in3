@@ -1,1 +1,1 @@
-This is the core-library to handle JSON-RPC-Requests. All other modules will have a dependency to this one.
+This library contains the core API + management of the nodeList as well as the capability to sign requests
