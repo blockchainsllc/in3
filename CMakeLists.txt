@@ -43,5 +43,20 @@ target_sources(in3-core PRIVATE
 	src/util/utils.c
 	src/jsmn/jsmn.c
 	src/jsmn/jsmnutil.c
+	src/crypto/ecdsa.c
+	src/crypto/address.c
+	src/crypto/bignum.c
+	src/crypto/rand.c
+	src/crypto/hmac.c
+	src/crypto/secp256k1.c
+	src/crypto/memzero.c
+	src/crypto/sha3.c
+	src/crypto/ripemd160.c
+	src/crypto/base58.c
+	src/crypto/hasher.c
+	src/crypto/sha2.c
+	src/crypto/blake256.c
+	src/crypto/blake2b.c
+	src/crypto/groestl.c
 )
 

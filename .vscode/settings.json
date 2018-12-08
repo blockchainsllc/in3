@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "jsmnutil.h": "c"
+        "jsmnutil.h": "c",
+        "base58.h": "c"
     }
 }

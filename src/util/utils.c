@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../jsmn/jsmnutil.h"
+#include "bytes.h"
 
 #include "debug.h"
-
+#include "../crypto/sha3.h"
 
 void byte_to_hex(uint8_t b, char s[23]) {
 	unsigned i=1;
@@ -262,4 +263,33 @@ void int8_to_char(uint8_t *buffer, int len, char *out) {
         j++;
     }
     out[i] = '\0';
+}
+
+
+
+bytes_t *sha3(bytes_t *data)
+{
+	bytes_t *out;
+	struct SHA3_CTX ctx;
+	char p[65] = { '0' };
+
+	out = calloc(1, sizeof(bytes_t));
+
+	sha3_256_Init(&ctx);
+	sha3_Update(&ctx, data->data, data->len);
+
+	out->data = calloc(1, 32 * sizeof(uint8_t));
+	out->len = 32;
+
+	keccak_Final(&ctx, out->data);
+
+	for(int i=0; i<out->len; i++) {
+		char s[3];
+		byte_to_hex(out->data[i],s);
+		p[i*2] = s[0];
+		p[(i*2)+1] = s[1];
+	}
+	dbg_log("sha3(): '%s'\n", p);
+
+	return out;
 }
