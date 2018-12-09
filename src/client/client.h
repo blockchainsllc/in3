@@ -108,6 +108,28 @@ typedef struct {
 } in3_request_t;
 
 
+typedef struct {
+   u_int64_t lastNodeList;
+   u_int64_t currentBlock;
+   json_object_t* proof; 
+} in3_response_config_t;
+
+/* the response */
+typedef struct {
+   /* json rpc-id */
+   u_int64_t id;
+
+   /* if the response is an error, this will contain the error-string or json-coe*/
+   json_object_t* error;
+
+   /* the result */
+   json_object_t* result;
+
+   /* the in3-data */
+   in3_response_config_t* in3;
+
+} in3_response_t;
+
 
 
 typedef struct {
