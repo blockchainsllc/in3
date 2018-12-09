@@ -2,6 +2,9 @@
 
 #ifndef BYTES_H
 #define BYTES_H
+#define ADDRESS(v,d) bytes_t v; u_int8_t d[20];  v.data=d; v.len=20;
+#define HASH(v,d) bytes_t v; u_int8_t d[32];  v.data=d; v.len=32;
+#define BYTES(v,d,len) bytes_t v; u_int8_t d[len];  v.data=d; v.len=len;
 
 /* a byte array */
 typedef struct {

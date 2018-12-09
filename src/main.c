@@ -13,8 +13,10 @@ int main (int argc, char *argv[])
     return 1;
   }
 
+  
+
   unsigned int chars =  strlen(argv[1]);
-  bytes_t* bytes     = hex2byte_bytes(argv[1],chars);
+  bytes_t* bytes     = hex2byte_new_bytes(argv[1],chars);
   bytes_t* shaBytes  = sha3(bytes);
   char* hex          = malloc(65);
   int8_to_char(shaBytes->data, shaBytes->len,hex);

@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "jsmnutil.h": "c",
-        "base58.h": "c"
+        "base58.h": "c",
+        "client.h": "c",
+        "string.h": "c",
+        "stdint.h": "c"
     }
 }

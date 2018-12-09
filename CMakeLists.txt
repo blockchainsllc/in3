@@ -38,6 +38,8 @@ add_executable(in3-core src/main.c)
 
 target_sources(in3-core PRIVATE
 	src/main.c
+	src/client/client.c
+	src/client/client_init.c
 	src/util/debug.c
 	src/util/bytes.c
 	src/util/utils.c

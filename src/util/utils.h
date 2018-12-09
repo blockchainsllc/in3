@@ -13,14 +13,15 @@ typedef uint_least8_t pb_byte_t;
 typedef struct {
     char* js;
     jsmntok_t* tok;
-    int tokc;
 } json_object_t ;
+
+#define JSON_OBJECT(ob, str, tokens) json_object_t ob = { .js=str, .tok=tokens };
 
 
 int size_of_bytes(int str_len);
 uint8_t strtohex(char c);
 int hex2byte_arr(char *buf, int len, uint8_t *out, int outbuf_size);
-bytes_t* hex2byte_bytes(char *buf, int len);
+bytes_t* hex2byte_new_bytes(char *buf, int len);
 void int8_to_char(uint8_t *buffer, int len, char *out);
 
 bytes_t *sha3(bytes_t *data);
@@ -32,6 +33,10 @@ char *json_get_value(char *data, char *key);
 
 
 int json_get_token(json_object_t* json, char *key, json_object_t* result);
+int json_object_to_int(json_object_t* json);
+int json_object_to_string(json_object_t* json, char* result);
+int json_object_len(json_object_t* json);
+int json_object_to_array(json_object_t* json, json_object_t* result);
 
 
 int str2hex_str(char *str, char **buf);
