@@ -5,6 +5,7 @@
 #include <math.h>
 #include "util/debug.h"
 #include "util/utils.h"
+#include "client/client.h"
 
 int main (int argc, char *argv[])
 {
@@ -12,6 +13,15 @@ int main (int argc, char *argv[])
     fprintf(stdout,"Usage: %s hex\n",argv[0]);
     return 1;
   }
+
+  in3* c = in3_new();
+  char result[500];
+  in3_client_send(c, "{\"method\":\"test\",\"method2\":\"test2\"}", result,500);
+  in3_free(c);
+
+  fprintf(stdout, "result: %s ",result);
+
+  
 
   
 

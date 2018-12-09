@@ -1,9 +1,19 @@
 #include <stdint.h>  
 #include "../util/bytes.h"
 #include "../util/utils.h"
+#include <stdbool.h>
 
 #ifndef CLIENT_H
 #define CLIENT_H
+
+enum in3err {
+	/*  */
+	IN3_ERR_INVALID_JSON = -1,
+
+    IN3_ERR_BUFFER_TOO_SMALL = -2,
+
+    IN3_ERR_CHAIN_NOT_FOUND = -3,
+};
 
 
 typedef enum {
@@ -99,7 +109,7 @@ typedef struct {
    bytes_t* contract; 
 
    /* if true the nodelist should be updated. */
-   u_int8_t needsUpdate;
+   bool needsUpdate;
 
    /* array of nodes */
    in3_node_t* nodeList;
@@ -130,6 +140,7 @@ typedef struct {
     char* error;
     char* result;
 } in3_response_t;
+
 
 typedef in3_response_t** (*in3_transport_send)(in3_request_t* requests, int request_count);
 
@@ -193,9 +204,17 @@ typedef struct {
 
 /* allocates a new byte array with 0 filled */
 in3 *in3_new();
+
+/* sends a request and stores the result in the provided buffer */
 int in3_client_send(in3* c,char* req, char* result, int buf_size);
 
-/* frees the data */
+/* sends a request and stores the result in the provided buffer */
+int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size);
+
+/* rreturns the nodelist or even updates it. */
+int get_node_list(in3* c, u_int64_t chain, bool update,  in3_node_t** nodeList, u_int32_t* nodeListLength );
+
+/* frees the references of the client */
 void in3_free(in3 *a);
 
 

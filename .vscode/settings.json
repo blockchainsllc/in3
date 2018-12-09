@@ -4,6 +4,7 @@
         "base58.h": "c",
         "client.h": "c",
         "string.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "errno.h": "c"
     }
 }

@@ -268,7 +268,7 @@ int json_object_to_array(json_object_t* json, json_object_t* result) {
 		t->js  = json->js;
 		t->tok = c; 
 
-		c = c + json_get_token_size(c+1);
+		c = c + json_get_token_size(c);
 	}
 	return json->tok->size;
 }
@@ -344,7 +344,7 @@ bytes_t* hex2byte_new_bytes(char *buf, int len) {
 
     uint8_t *b  = malloc(bytes_len);
 	hex2byte_arr(buf,len,b,bytes_len);
-	return b_new(b,bytes_len);
+	return b_new((char*)b,bytes_len);
 }
 
 void int8_to_char(uint8_t *buffer, int len, char *out) {
@@ -387,4 +387,40 @@ bytes_t *sha3(bytes_t *data)
 	dbg_log("sha3(): '%s'\n", p);
 
 	return out;
+}
+
+
+json_response_t* new_json_response(char* data) {
+    int tokc, res;
+	jsmntok_t *tokv=NULL;
+	res = jsmnutil_parse_json(data, &tokv, &tokc);
+    if (res<0 || tokc==0) 
+      return NULL;
+    JSON_OBJECT(req,data, tokv) 
+	json_response_t* r = calloc(1, sizeof(json_response_t));
+	r->tokv = tokv;
+	json_object_t t;
+	if (json_get_token(&req,"in3",&t)) {
+		r->in3 = malloc(sizeof(json_object_t));
+		r->in3->js = data;
+		r->in3->tok = t.tok;
+	}
+	if (json_get_token(&req,"result",&t)) {
+		r->result = malloc(sizeof(json_object_t));
+		r->result->js = data;
+		r->result->tok = t.tok;
+	}
+	if (json_get_token(&req,"error",&t)) {
+		r->error = malloc(sizeof(json_object_t));
+		r->error->js = data;
+		r->error->tok = t.tok;
+	}
+	return r;
+}
+
+
+void free_json_response(json_response_t* r) {
+
+	  
+
 }

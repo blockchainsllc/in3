@@ -9,11 +9,21 @@
 
 typedef uint32_t pb_size_t;
 typedef uint_least8_t pb_byte_t;
-
+//typedef enum { false, true } bool;
 typedef struct {
     char* js;
     jsmntok_t* tok;
 } json_object_t ;
+
+
+typedef struct {
+    json_object_t* error;
+    json_object_t* result;
+    json_object_t* in3;
+
+    jsmntok_t* tokv;
+} json_response_t;
+
 
 #define JSON_OBJECT(ob, str, tokens) json_object_t ob = { .js=str, .tok=tokens };
 
@@ -45,5 +55,8 @@ void *k_realloc(void *ptr, size_t size, size_t oldsize);
 int get_json_key_value_int(char *buf, char *key, jsmntok_t* tok, int tokc);
 char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc);
 char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok);
+
+json_response_t* new_json_response(char* data);
+void free_json_response(json_response_t* r);
 
 #endif
