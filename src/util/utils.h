@@ -13,8 +13,8 @@ typedef uint_least8_t pb_byte_t;
 typedef struct {
     char* js;
     jsmntok_t* tok;
-    int tokc
-} json_object ;
+    int tokc;
+} json_object_t ;
 
 
 int size_of_bytes(int str_len);
@@ -31,7 +31,7 @@ int json_get_int_value(char *data, char *key);
 char *json_get_value(char *data, char *key);
 
 
-int json_get_token(json_object* json, char *key, json_object* result);
+int json_get_token(json_object_t* json, char *key, json_object_t* result);
 
 
 int str2hex_str(char *str, char **buf);

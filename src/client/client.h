@@ -1,5 +1,6 @@
 #include <stdint.h>  
 #include "../util/bytes.h"
+#include "../util/utils.h"
 
 #ifndef CLIENT_H
 #define CLIENT_H
@@ -9,7 +10,13 @@ typedef enum {
 	PROOF_NONE = 0,
 	PROOF_STANDARD = 1,
 	PROOF_FULL = 2
-} proof_t;
+} in3_proof_t;
+
+typedef enum {
+	VERIFICATION_NEVER = 0,
+	VERIFICATION_PROOF = 1,
+	VERIFICATION_PROOF_WITH_SIGNATURE = 2
+} in3_verification_t;
 
 typedef struct {
     /* number of seconds requests can be cached. */
@@ -31,7 +38,7 @@ typedef struct {
     u_int32_t maxBlockCache;
 
     /* the type of proof used */
-    proof_t proof;
+    in3_proof_t proof;
 
     /* the number of request send when getting a first answer */
     u_int8_t requestCount; 
@@ -60,6 +67,9 @@ typedef struct {
     /* a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
     in3_storage_handler_t* cacheStorage;
 
+    /* the transporthandler sending requests */
+    in3_transport_handler_t* transport;
+
     /* chain spec and nodeList definitions*/
     in3_chain_t* servers;
 
@@ -70,14 +80,35 @@ typedef struct {
     /* function pointer returning a stored value for the given key.*/
     u_int32_t (verify)(bytes_t* data);
 
-
-
-
-
-   
-
+    //TODO define verifier
     
 } in3_verifier_t;
+
+typedef struct {
+   bytes_t* chainId;
+   u_int8_t includeCode;
+   u_int8_t useFullProof;
+   bytes_t** verifiedHashes;
+   u_int16_t verifiedHashesCount;
+   u_int16_t latestBlock;
+   u_int16_t finality;
+   in3_verification_t verification;
+   bytes_t* clientSignature;
+   bytes_t** signatures;
+   u_int8_t signaturesCount;
+
+} in3_request_config_t;
+
+typedef struct {
+   u_int64_t id;
+   char* method;
+   json_object_t* params;
+   u_int8_t params_count;
+   in3_request_config_t* in3;
+} in3_request_t;
+
+
+
 
 typedef struct {
    /* chainId */
@@ -152,22 +183,19 @@ typedef struct {
 } in3_storage_handler_t;
 
 
+typedef struct {
+
+} in3_transport_handler_t;
+
+
 
 
 
 /* allocates a new byte array with 0 filled */
-bytes_t *b_new(char *data, int len);
-
-/* printsa the bytes as hey to stdout */
-void b_print(bytes_t *a);
-
-/* compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
-int b_cmp(bytes_t *a, bytes_t *b);
+bytes_t *in3_new();
 
 /* frees the data */
-void b_free(bytes_t *a);
+void in3_free(in3 *a);
 
-/* clones a byte array*/
-bytes_t* b_dup(bytes_t *a);
 
 #endif

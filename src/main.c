@@ -25,6 +25,5 @@ int main (int argc, char *argv[])
   b_free(bytes);
   b_free(shaBytes);
 
-
   return 0;
 }

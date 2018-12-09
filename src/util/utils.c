@@ -204,7 +204,7 @@ int json_get_token_size(jsmntok_t* t) {
 	}
 }
 
-int json_get_token(json_object* json, char *key, json_object* result) {
+int json_get_token(json_object_t* json, char *key, json_object_t* result) {
  int i,n;
  jsmntok_t* c;
 
