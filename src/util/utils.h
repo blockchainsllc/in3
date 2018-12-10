@@ -40,6 +40,6 @@ char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc);
 char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok);
 
 
-char* clone_chars(char* c);
+
 
 #endif

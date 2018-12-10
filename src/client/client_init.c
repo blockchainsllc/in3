@@ -38,6 +38,8 @@ static void in3_client_init(in3* c) {
     c->cacheTimeout = 0;
     c->chainId      = 0x01; // mainnet
     c->key          = NULL;
+    c->finality     = 0;
+    c->max_attempts = 3;
     c->maxBlockCache= 0;
     c->maxCodeCache = 0;
     c->minDeposit   = 0;

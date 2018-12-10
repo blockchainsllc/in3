@@ -5,6 +5,7 @@
         "client.h": "c",
         "string.h": "c",
         "stdint.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "context.h": "c"
     }
 }

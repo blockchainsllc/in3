@@ -1,7 +1,6 @@
 #include <stdint.h>  
 #include "../util/bytes.h"
 #include "../util/utils.h"
-#include "context.h"
 #include <stdbool.h>
 
 #ifndef CLIENT_H
@@ -10,10 +9,12 @@
 enum in3err {
 	/*  */
 	IN3_ERR_INVALID_JSON = -1,
-
     IN3_ERR_BUFFER_TOO_SMALL = -2,
-
-    IN3_ERR_CHAIN_NOT_FOUND = -3,
+    IN3_ERR_REQUEST_INVALID = -3,
+    IN3_ERR_CHAIN_NOT_FOUND = -4,
+    IN3_ERR_NO_NODES_FOUND = -5,
+    IN3_ERR_CONFIG_ERROR =  -6,
+    IN3_ERR_MAX_ATTEMPTS = -7,
 };
 
 
@@ -41,23 +42,19 @@ typedef struct {
    u_int64_t chainId;
    u_int8_t includeCode;
    u_int8_t useFullProof;
-   bytes_t** verifiedHashes;
+   bytes_t* verifiedHashes;
    u_int16_t verifiedHashesCount;
    u_int16_t latestBlock;
    u_int16_t finality;
    in3_verification_t verification;
    bytes_t* clientSignature;
 
-   bytes_t** signatures;
+   bytes_t* signatures;
    u_int8_t signaturesCount;
 
 } in3_request_config_t;
 
-typedef struct {
-   char* url;
-   char* data;
-   in3_request_config_t in3;
-} in3_request_t;
+
 typedef struct {
     /* the index within the contract */
     u_int32_t index;
@@ -114,7 +111,7 @@ typedef struct {
    in3_node_t* nodeList;
 
    /* number of nodes in the nodeList */
-   u_int32_t nodeListLength;
+   int nodeListLength;
 
    /* stats and weights recorded for each node */
    in3_node_weight_t* weights;
@@ -141,7 +138,7 @@ typedef struct {
 } in3_response_t;
 
 
-typedef in3_response_t* (*in3_transport_send)(in3_request_t* ctx, int request_count);
+typedef in3_response_t* (*in3_transport_send)(char** urls, char* payload, int request_count);
 
 
 typedef struct {
@@ -174,6 +171,12 @@ typedef struct {
 
     /* if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
     u_int16_t replaceLatestBlock;
+
+    /* the number of signatures in percent required for the request*/
+    u_int16_t finality;
+
+    /* the max number of attempts before giving up*/
+    u_int16_t max_attempts;
 
     /* specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
     u_int32_t timeout;  
@@ -211,7 +214,7 @@ int in3_client_send(in3* c,char* req, char* result, int buf_size);
 int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size);
 
 /* rreturns the nodelist or even updates it. */
-int get_node_list(in3* c, u_int64_t chain, bool update,  in3_node_t** nodeList, u_int32_t* nodeListLength );
+int in3_client_get_node_list(in3* c, u_int64_t chain, bool update,  in3_node_t** nodeList, int* nodeListLength,  in3_node_weight_t** weights );
 
 /* frees the references of the client */
 void in3_free(in3 *a);

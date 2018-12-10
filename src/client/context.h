@@ -1,10 +1,18 @@
 #include <stdint.h>  
 #include <stdbool.h>
 #include "../util/utils.h"
+#include "client.h"
 
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
+typedef struct weight {
+  in3_node_t* node;
+  in3_node_weight_t* weight;
+  float s;
+  float w;
+  struct weight * next;
+} node_weight_t;
 
 
 typedef struct {
@@ -20,6 +28,9 @@ typedef struct {
    /* the number of requests */
    int len;
 
+   /* the number of attempts */
+   int attempt;
+
    /* full list of tokens, which will be cleaned up*/
    jsmntok_t* tok_req;
    /* full list of tokens, which will be cleaned up*/
@@ -30,6 +41,12 @@ typedef struct {
    
     /* references to the tokens representring the responses*/
    jsmntok_t** requests;
+
+   /* configs adjusted for each request */
+   in3_request_config_t* requests_configs;
+
+   /* selected nodes to process the request*/
+   node_weight_t* nodes;
 
 } in3_ctx_t;
 
@@ -43,5 +60,11 @@ int ctx_cpy_string(char* str, jsmntok_t* root, char* dst);
 u_int64_t ctx_to_long(char* str, jsmntok_t* root, u_int64_t defVal);
 /* creates a new bytes-array which must be cleaned up*/
 bytes_t* ctx_to_bytes(char* str, jsmntok_t* root, int min_len);
+
+int ctx_create_payload(in3_ctx_t* c, char* buffer, int buffer_size);
+
+int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
+int ctx_nodes_len (node_weight_t* root);
+void free_ctx_nodes (node_weight_t* c) ;
 
 #endif

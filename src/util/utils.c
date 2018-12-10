@@ -301,13 +301,3 @@ bytes_t *sha3(bytes_t *data)
 	return out;
 }
 
-
-
-
-
-char* clone_chars(char* c) {
-	int l = strlen(c);
-	char* dst = malloc(l+1);
-	strcpy(dst,c);
-	return dst;
-}
