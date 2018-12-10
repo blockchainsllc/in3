@@ -185,94 +185,6 @@ char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc)
 	return NULL;
 }
 
-int json_get_token_size(jsmntok_t* t) {
-	int i,j=1;
-	switch (t->type) {
-		case JSMN_PRIMITIVE:
-		case JSMN_STRING:
-		  return 1;
-		case JSMN_OBJECT:
-		  for (i=0;i<t->size;i++) 
-			  j+=1+json_get_token_size(t+j+1);
-		  return j;
-		case JSMN_ARRAY:
-		  for (i=0;i<t->size;i++) 
-			  j+=json_get_token_size(t+j);
-		  return j;
-		default:
-		  return 1;
-	}
-}
-
-int json_get_token(json_object_t* json, char *key, json_object_t* result) {
- int i,n;
- jsmntok_t* c = json->tok+1;
- 
- for (i=0;i<json->tok->size;i++) {
-	 n = c->end - c->start;
-	 // the key must be a string
-	 if (c->type != JSMN_STRING)
-	    return 0;
-	 // if the key matches we retrun the next token 
-	 if (strlen(key)==n && !strncmp(json->js + c->start, key, n)) {
-		 result->js = json->js;
-		 result->tok = c+1;
-		 return 1;
-	 }
-	 // if not we have to check the value
-	 c = c + json_get_token_size(c+1)+1;
- }
- return 0;
-}
-
-int json_object_to_int(json_object_t* json) {
-	if (json->tok == NULL) return 0;
-	int n = json->tok->end - json->tok->start;
-    char *idval = malloc(n+1);
-    idval[n] = 0;
-	strncpy(idval, json->js + json->tok->start, n);
-	int val = atoi(idval);
-	free(idval);
-	return val;
-}
-
-int json_object_to_string(json_object_t* json, char* result) {
-	if (json->tok == NULL) return 0;
-	int n = json->tok->end - json->tok->start;
-    strncpy(result, json->js + json->tok->start, n);
-    result[n] = 0;
-	return n;
-}
-
-int json_object_len(json_object_t* json) {
-	return json->tok->end - json->tok->start;
-}
-
-int json_object_to_bytes(json_object_t* json, bytes_t* result) {
-	if (json->tok == NULL) return 0;
-	int n = json->tok->end - json->tok->start;
-	int l = hex2byte_arr(json->js + json->tok->start +2, n-2, result->data, result->len);
-	if (l<0) return 0;
-	result->len=l;
-	return l;
-}
-
-int json_object_to_array(json_object_t* json, json_object_t* result) {
-	if (json->tok == NULL || json->tok->type!=JSMN_ARRAY || json->tok->size==0) return 0;
-	int i,n;
-	jsmntok_t* c = json->tok+1;
-	json_object_t* t;
-
-	for (i=0;i<json->tok->size;i++) {
-		t = result + i;
-		t->js  = json->js;
-		t->tok = c; 
-
-		c = c + json_get_token_size(c);
-	}
-	return json->tok->size;
-}
-
 char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok)
 {
 	int c;
@@ -390,37 +302,12 @@ bytes_t *sha3(bytes_t *data)
 }
 
 
-json_response_t* new_json_response(char* data) {
-    int tokc, res;
-	jsmntok_t *tokv=NULL;
-	res = jsmnutil_parse_json(data, &tokv, &tokc);
-    if (res<0 || tokc==0) 
-      return NULL;
-    JSON_OBJECT(req,data, tokv) 
-	json_response_t* r = calloc(1, sizeof(json_response_t));
-	r->tokv = tokv;
-	json_object_t t;
-	if (json_get_token(&req,"in3",&t)) {
-		r->in3 = malloc(sizeof(json_object_t));
-		r->in3->js = data;
-		r->in3->tok = t.tok;
-	}
-	if (json_get_token(&req,"result",&t)) {
-		r->result = malloc(sizeof(json_object_t));
-		r->result->js = data;
-		r->result->tok = t.tok;
-	}
-	if (json_get_token(&req,"error",&t)) {
-		r->error = malloc(sizeof(json_object_t));
-		r->error->js = data;
-		r->error->tok = t.tok;
-	}
-	return r;
-}
 
 
-void free_json_response(json_response_t* r) {
 
-	  
-
+char* clone_chars(char* c) {
+	int l = strlen(c);
+	char* dst = malloc(l+1);
+	strcpy(dst,c);
+	return dst;
 }
