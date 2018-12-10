@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 
+
 /**
  * JSON type identifier. Basic types are:
  * 	o Object

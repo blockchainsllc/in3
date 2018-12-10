@@ -6,82 +6,73 @@
 #include "../jsmn/jsmnutil.h"
 #include "../util/utils.h"
 #include <errno.h> 
+#include "context.h"
 
 
 
 
-static int in3_client_send_intern( in3* c, json_object_t* requests, int request_count, in3_response_t* responses) {
-  int i,l;
-  json_object_t token;
-  for (i=0;i<request_count;i++) {
-    responses[i].result=malloc(200);
-    if (json_get_token(requests+i,"method",&token)) 
-      json_object_to_string(&token,responses[i].result);
-    else
-       memcpy(responses[i].result,"none",5);
+static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
+  int i,l,p=1;
+  jsmntok_t* t;
+
+  char* buf = malloc(1000);
+  buf[0]='[';
+
+  // create response
+  for (i=0;i< ctx->len;i++) {
+    if (i>0) buf[p++]=',';
+    memcpy(buf+p,"{\"result\":\"",11);
+    p+=11;
+    if ((t=ctx_get_token(ctx->request_data, ctx->requests[i],"method")))
+      p+=ctx_cpy_string(ctx->request_data,t,buf+p);
+    else {
+      memcpy(buf+p,"none",4);
+      p+=4;
+    }
+    buf[p++]='\"';
+    buf[p++]='}';
   }
-//   printf("Value of errno: %d\n", errno); 
+  buf[p++]=']';
+  buf[p++]=0;
 
-  return 0;
+  return ctx_parse_response(ctx,buf);
 }
 
 
 int in3_client_send( in3* c, char* req, char* result, int buf_size) {
-  int tokc, res=0, len,p,i;
-	jsmntok_t *tokv=NULL;
-  in3_response_t* responses = NULL;
+  int res=0, len,p,i;
+  in3_ctx_t* ctx = new_ctx(req); 
 
-
-   // parse the incomming request
-	res = jsmnutil_parse_json(req, &tokv, &tokc);
-  if (res<0 || tokc==0) 
-    return IN3_ERR_INVALID_JSON;
-  JSON_OBJECT(data,req, tokv) 
-
-  if (data.tok->type==JSMN_ARRAY) {
-      // request is a array, we also create a response array
-      json_object_t* requests = malloc(sizeof(json_object_t)* data.tok->size);
-      responses = malloc(sizeof(in3_response_t)* data.tok->size);
-      json_object_to_array(&data,requests);
-      res = in3_client_send_intern(c,requests, data.tok->size, responses);
-      // create the results if it was succesful
-      if (res>0) {
-        result[0]='[';
-        for (p=1,i=0,len=0;i<data.tok->size;i++) {
-          if (i>0) result[p++]=',';
-          len = strlen(responses[i].result);
-          if (p+len>buf_size) {
-            res = IN3_ERR_BUFFER_TOO_SMALL;
-            break;
-          }
-          memcpy(result+p, responses[i].result, len);
-          p+=len;
+  if (ctx->error) 
+    res=-1;
+  else if (ctx->tok_req->type==JSMN_ARRAY) {
+    res = in3_client_send_intern(c,ctx);
+    // create the results if it was succesful
+    if (res>=0) {
+      result[0]='[';
+      for (p=1,i=0,len=0;i<ctx->len;i++) {
+        if (i>0) result[p++]=',';
+        len = ctx->responses[i]->end-ctx->responses[i]->start;
+        if (p+len>buf_size) {
+          res = IN3_ERR_BUFFER_TOO_SMALL;
+          break;
         }
-        result[p++]=']';
-        result[p]=0;
+        p+=ctx_cpy_string(ctx->response_data,ctx->responses[i],result+p);
       }
-
-      // clean up
-      for (i=0;i<data.tok->size;i++)
-        free(responses[i].result);
-      free(responses);
-      free(requests);
+      result[p++]=']';
+      result[p]=0;
     }
-    else if (data.tok->type==JSMN_OBJECT) {
-      in3_response_t r;
-      res = in3_client_send_intern(c,&data, 1, &r);
-      if (res==0) {
-        len = strlen(r.result);
-        memcpy(result, r.result, len+1);
-      }
-      free(r.result);
-    }
-    else
-      res = 0;
+  }
+  else if (ctx->tok_req->type==JSMN_OBJECT) {
+    res = in3_client_send_intern(c,ctx);
+    if (res>=0) 
+      result[ctx_cpy_string(ctx->response_data, ctx->responses[0],result)]=0;
+  }
+  else
+    res = 0;
 
+  free_ctx(ctx);
 
-	if (tokv)
-       free(tokv);
 
   return res;
 

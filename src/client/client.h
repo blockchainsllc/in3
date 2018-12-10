@@ -1,6 +1,7 @@
 #include <stdint.h>  
 #include "../util/bytes.h"
 #include "../util/utils.h"
+#include "context.h"
 #include <stdbool.h>
 
 #ifndef CLIENT_H
@@ -54,11 +55,9 @@ typedef struct {
 
 typedef struct {
    char* url;
-   json_object_t data;
+   char* data;
    in3_request_config_t in3;
 } in3_request_t;
-
-
 typedef struct {
     /* the index within the contract */
     u_int32_t index;
@@ -142,7 +141,7 @@ typedef struct {
 } in3_response_t;
 
 
-typedef in3_response_t** (*in3_transport_send)(in3_request_t* requests, int request_count);
+typedef in3_response_t* (*in3_transport_send)(in3_request_t* ctx, int request_count);
 
 
 typedef struct {
