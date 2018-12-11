@@ -69,4 +69,4 @@ manylinux-x64:
   extends: .xbuild
   variables:
      IMAGE: manylinux-x64
-     INSTALL: "sudo apt-get install python-pip; pip install conan"
+     INSTALL: "sudo apt install python-pip; pip install conan"
