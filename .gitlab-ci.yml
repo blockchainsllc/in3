@@ -30,6 +30,25 @@ build-in3:
      INSTALL: "cd ."
      CONAN_OPTS: ""
 
+.conanbuild:
+  services:
+    - docker:dind
+  image: jonaskello/docker-and-compose:latest
+  stage: build
+  tags:
+    - short-jobs
+  script:
+    - docker run --rm -v $(pwd):/home/conan/src "conanio/$IMAGE" /bin/bash -c "$INSTALL; mkdir src/build; cd src/build; conan install .. $CONAN_OPTS && cmake .. && make && ls -ltr src/*/"
+  variables:
+     IMAGE: "linux-x64"
+     INSTALL: "cd ."
+     CONAN_OPTS: "--build missing"
+
+gcc8-armv7:
+  extends: .conanbuild
+  variables:
+     IMAGE: gcc8-armv7
+    
 linux-x64:
   extends: .xbuild
   variables:
