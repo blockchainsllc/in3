@@ -39,25 +39,25 @@ xbuild-windows-x64:
   variables:
      IMAGE: "windows-x64"
 
-xbuild-armv5:
+xbuild-linux-armv5:
   extends: .xbuild
   variables:
-     IMAGE: "armv5"
+     IMAGE: "linux-armv5"
 
-xbuild-armv64:
+xbuild-linux-armv64:
   extends: .xbuild
   variables:
-     IMAGE: "armv64"
+     IMAGE: "linux-armv64"
 
-xbuild-armv6:
+xbuild-linux-armv6:
   extends: .xbuild
   variables:
-     IMAGE: "armv6"
+     IMAGE: "linux-armv6"
 
-xbuild-armv7:
+xbuild-linux-armv7:
   extends: .xbuild
   variables:
-     IMAGE: "armv7"
+     IMAGE: "linux-armv7"
 
 xbuild-windows-x86:
   extends: .xbuild
