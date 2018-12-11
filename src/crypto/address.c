@@ -59,8 +59,9 @@ bool address_check_prefix(const uint8_t *addr, uint32_t address_type)
 
 void ethereum_address_checksum(const uint8_t *addr, char *address, bool rskip60, uint32_t chain_id)
 {
+	int i;
 	const char *hex = "0123456789abcdef";
-	for (int i = 0; i < 20; i++) {
+	for (i = 0; i < 20; i++) {
 		address[i * 2]     = hex[(addr[i] >> 4) & 0xF];
 		address[i * 2 + 1] = hex[addr[i] & 0xF];
 	}
@@ -77,7 +78,7 @@ void ethereum_address_checksum(const uint8_t *addr, char *address, bool rskip60,
 	keccak_Update(&ctx, (const uint8_t *)address, 40);
 	keccak_Final(&ctx, hash);
 
-	for (int i = 0; i < 20; i++) {
+	for (i = 0; i < 20; i++) {
 		if (hash[i] & 0x80 && address[i * 2    ] >= 'a' && address[i * 2    ] <= 'f') {
 			address[i * 2] -= 0x20;
 		}

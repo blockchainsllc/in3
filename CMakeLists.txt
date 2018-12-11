@@ -17,6 +17,7 @@ configure_file (
 # so that we will find TutorialConfig.h
 include_directories("${PROJECT_BINARY_DIR}")
 
+set_property(TARGET tgt PROPERTY C_STANDARD 99)
 
 # options
 OPTION(DEBUG
