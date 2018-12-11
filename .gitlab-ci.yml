@@ -24,7 +24,7 @@ build-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "conan install .. --build libcurl; mkdir build; cd build; cmake .. && make && ls -ltr src/*/"
+    - ./dockcross bash -c "mkdir build; cd build; conan install .. --build libcurl && cmake .. && make && ls -ltr src/*/"
   variables:
      IMAGE: "linux-x64"
 
