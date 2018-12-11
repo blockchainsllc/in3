@@ -32,7 +32,7 @@ build-in3:
 xbuild-linux-64:
   extends: .xbuild
   variables:
-     IMAGE: linux-64:"
+     IMAGE: linux-64"
 
 xbuild-windows-x64:
   extends: .xbuild
