@@ -44,10 +44,10 @@ linux-armv5:
   variables:
      IMAGE: linux-armv5
 
-linux-armv64:
+linux-arm64:
   extends: .xbuild
   variables:
-     IMAGE: linux-armv64
+     IMAGE: linux-arm64
 
 linux-armv6:
   extends: .xbuild
@@ -64,3 +64,7 @@ windows-x86:
   variables:
      IMAGE: windows-x86
 
+manylinux-x64:
+  extends: .xbuild
+  variables:
+     IMAGE: manylinux-x64
