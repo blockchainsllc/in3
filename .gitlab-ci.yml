@@ -71,4 +71,4 @@ manylinux-x64:
   variables:
      IMAGE: manylinux-x64
      CONAN_OPTS : --build libcurl
-     INSTALL: "sudo apt install python-pip; pip install conan"
+     INSTALL: "apk add py-pip; pip install conan"
