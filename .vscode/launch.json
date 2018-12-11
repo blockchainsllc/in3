@@ -8,7 +8,7 @@
             "name": "(lldb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/test/in3-core",
+            "program": "${workspaceFolder}/build/src/test/tests",
             "args": ["1234"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",

@@ -6,7 +6,7 @@
 #include <util/debug.h>
 #include <util/utils.h>
 #include <client/client.h>
-
+#include <in3_curl.h>
 
 in3_response_t* send(char** urls,char* payload,int nodes_count) {
   printf("payload: %s\n",payload);
@@ -30,7 +30,8 @@ int main (int argc, char *argv[])
   }
 
   in3* c = in3_new();
-  c->transport = send;
+//  c->transport = send;
+  c->transport = send_curl;
   c->requestCount = 2;
   char result[500];
   in3_client_send(c, "{\"method\":\"test\",\"method2\":\"test2\"}", result,500);

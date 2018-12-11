@@ -34,6 +34,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
 # add core
 add_subdirectory( src/core )
 add_subdirectory( src/libin3 )
+add_subdirectory( src/transport_curl )
 add_subdirectory( src/test )
 #add_subdirectory( src/wasm )
 
