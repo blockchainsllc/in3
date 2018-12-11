@@ -1,3 +1,5 @@
+image: docker.slock.it/build-images/node:8-alpine
+
 stages:
   - build
 
@@ -15,7 +17,9 @@ build-in3:
     - make
 
 xbuild-linux-64:
-  image: docker:stable-dind
+  services:
+    - docker:dind
+  image: jonaskello/docker-and-compose:latest
   stage: build
   tags:
     - short-jobs
