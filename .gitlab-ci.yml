@@ -9,7 +9,7 @@ build-in3:
   script:
     - mkdir build
     - cd build
-    - conan install ..
+    - conan install .. --build libcurl
     - cmake ..
     - make
 

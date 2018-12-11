@@ -4,7 +4,6 @@ libcurl/7.52.1@bincrafters/stable
 [generators]
 cmake
 
-
 [options]
 libcurl:shared=True
 libcurl:with_openssl=True
