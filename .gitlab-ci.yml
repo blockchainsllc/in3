@@ -16,3 +16,12 @@ build-in3:
     - cd build
     - cmake ..
     - make
+
+xbuild-linux-64:
+  image: docker:stable-dind
+  stage: build
+  tags:
+    - short-jobs
+  script:
+    - docker run --rm dockcross/linux-x64 > ./dockcross
+    - sh ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
