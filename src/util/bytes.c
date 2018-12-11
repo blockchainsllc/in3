@@ -18,11 +18,12 @@ bytes_t *b_new(char *data, int len)
 
 void b_print(bytes_t *a)
 {
+	int i;
 	if (!a)
 		return;
 
 	printf("Bytes: ");
-	for (int i = 0; i < a->len; i++)
+	for (i = 0; i < a->len; i++)
 		printf("%02x", a->data[i]);
 	printf("\n");
 }
