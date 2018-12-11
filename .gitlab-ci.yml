@@ -25,4 +25,5 @@ xbuild-linux-64:
     - short-jobs
   script:
     - docker run --rm dockcross/linux-x64 > ./dockcross
-    - sh ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
+    - chmod +x ./dockcross
+    - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
