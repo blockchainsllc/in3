@@ -2,13 +2,11 @@ stages:
   - build
 
 build-in3:
-  image: gcc
+  image: conanio/gcc8
   stage: build
   tags:
     - short-jobs
   script:
-    - apt-get update --yes
-    - apt-get install --yes cmake conan automake
     - mkdir build
     - cd build
     - conan install ..
