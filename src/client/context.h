@@ -57,7 +57,7 @@ void free_ctx(in3_ctx_t* ctx);
 jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key);
 bool ctx_equals(char* str, jsmntok_t* root, char* val);
 int ctx_cpy_string(char* str, jsmntok_t* root, char* dst);
-u_int64_t ctx_to_long(char* str, jsmntok_t* root, u_int64_t defVal);
+uint64_t ctx_to_long(char* str, jsmntok_t* root, uint64_t defVal);
 /* creates a new bytes-array which must be cleaned up*/
 bytes_t* ctx_to_bytes(char* str, jsmntok_t* root, int min_len);
 

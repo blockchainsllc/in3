@@ -32,32 +32,32 @@ typedef enum {
 
 typedef struct {
     /* function pointer returning a stored value for the given key.*/
-//    u_int32_t (verify)(bytes_t* data);
+//    uint32_t (verify)(bytes_t* data);
 
     //TODO define verifier
     
 } in3_verifier_t;
 
 typedef struct {
-   u_int64_t chainId;
-   u_int8_t includeCode;
-   u_int8_t useFullProof;
+   uint64_t chainId;
+   uint8_t includeCode;
+   uint8_t useFullProof;
    bytes_t* verifiedHashes;
-   u_int16_t verifiedHashesCount;
-   u_int16_t latestBlock;
-   u_int16_t finality;
+   uint16_t verifiedHashesCount;
+   uint16_t latestBlock;
+   uint16_t finality;
    in3_verification_t verification;
    bytes_t* clientSignature;
 
    bytes_t* signatures;
-   u_int8_t signaturesCount;
+   uint8_t signaturesCount;
 
 } in3_request_config_t;
 
 
 typedef struct {
     /* the index within the contract */
-    u_int32_t index;
+    uint32_t index;
 
     /* url of the node*/
     char* url;
@@ -66,13 +66,13 @@ typedef struct {
     bytes_t* address; 
 
     /* stored deposit */
-    u_int64_t deposit;
+    uint64_t deposit;
 
     /* the maximal capacity able to handle*/
-    u_int32_t capacity;
+    uint32_t capacity;
 
     /* the properties*/
-    u_int64_t props;
+    uint64_t props;
     
 } in3_node_t;
 
@@ -81,25 +81,25 @@ typedef struct {
     float weight;
 
     /* counter for responses */
-    u_int32_t response_count;
+    uint32_t response_count;
 
     /* total of all response times */
-    u_int32_t total_response_time;
+    uint32_t total_response_time;
 
     /** if >0 this node is blacklisted  untilk the ts */
-    u_int64_t blacklistedUntil;
+    uint64_t blacklistedUntil;
 
 } in3_node_weight_t;
 
 typedef struct {
    /* chainId */
-   u_int64_t chainId; 
+   uint64_t chainId; 
 
    /* array of addresses of nodes that should always part of the nodeList */
    bytes_t** initAddresses;
 
    /* last blocknumber the nodeList was updated*/
-   u_int64_t lastBlock;
+   uint64_t lastBlock;
 
    /* the address of the registry contract */
    bytes_t* contract; 
@@ -143,49 +143,49 @@ typedef in3_response_t* (*in3_transport_send)(char** urls, char* payload, int re
 
 typedef struct {
     /* number of seconds requests can be cached. */
-    u_int32_t cacheTimeout;
+    uint32_t cacheTimeout;
 
     /* the limit of nodes to store in the client. */
-    u_int16_t nodeLimit;
+    uint16_t nodeLimit;
 
     /* the client key to sign requests */
     bytes_t* key; 
 
     /* number of max bytes used to cache the code in memory */
-    u_int32_t maxCodeCache;
+    uint32_t maxCodeCache;
 
     /* number of number of blocks cached  in memory */
-    u_int32_t maxBlockCache;
+    uint32_t maxBlockCache;
 
     /* the type of proof used */
     in3_proof_t proof;
 
     /* the number of request send when getting a first answer */
-    u_int8_t requestCount; 
+    uint8_t requestCount; 
 
     /* the number of signatures used to proof the blockhash. */
-    u_int8_t signatureCount;
+    uint8_t signatureCount;
 
     /* min stake of the server. Only nodes owning at least this amount will be chosen. */
-    u_int64_t minDeposit;
+    uint64_t minDeposit;
 
     /* if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
-    u_int16_t replaceLatestBlock;
+    uint16_t replaceLatestBlock;
 
     /* the number of signatures in percent required for the request*/
-    u_int16_t finality;
+    uint16_t finality;
 
     /* the max number of attempts before giving up*/
-    u_int16_t max_attempts;
+    uint16_t max_attempts;
 
     /* specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
-    u_int32_t timeout;  
+    uint32_t timeout;  
 
     /* servers to filter for the given chain. The chain-id based on EIP-155.*/
-    u_int64_t chainId; 
+    uint64_t chainId; 
 
     /* if true the nodelist will be automaticly updated if the lastBlock is newer */
-    u_int8_t autoUpdateList; 
+    uint8_t autoUpdateList; 
 
     /* a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
     in3_storage_handler_t* cacheStorage;
@@ -197,7 +197,7 @@ typedef struct {
     in3_chain_t* servers;
 
     /* number of configured chains */
-    u_int16_t serversCount;
+    uint16_t serversCount;
 
 
 } in3;
@@ -214,7 +214,7 @@ int in3_client_send(in3* c,char* req, char* result, int buf_size);
 int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size);
 
 /* rreturns the nodelist or even updates it. */
-int in3_client_get_node_list(in3* c, u_int64_t chain, bool update,  in3_node_t** nodeList, int* nodeListLength,  in3_node_weight_t** weights );
+int in3_client_get_node_list(in3* c, uint64_t chain, bool update,  in3_node_t** nodeList, int* nodeListLength,  in3_node_weight_t** weights );
 
 /* frees the references of the client */
 void in3_free(in3 *a);

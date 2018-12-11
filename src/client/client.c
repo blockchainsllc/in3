@@ -332,7 +332,7 @@ int in3_client_send( in3* c, char* req, char* result, int buf_size) {
 
 
 
-int in3_client_get_node_list(in3* c, u_int64_t chain_id, bool update,  in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights ) {
+int in3_client_get_node_list(in3* c, uint64_t chain_id, bool update,  in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights ) {
   int i;
   in3_chain_t* chain;
   for (i=0;i<c->serversCount;i++) {

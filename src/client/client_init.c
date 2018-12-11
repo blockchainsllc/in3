@@ -4,7 +4,7 @@
 #include "client.h"
 
 
-static void initChain(in3_chain_t* chain, u_int64_t chainId, char* contract, int boot_node_count) {
+static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int boot_node_count) {
     chain->chainId       = chainId;
     chain->initAddresses = NULL;
     chain->lastBlock     = 0;

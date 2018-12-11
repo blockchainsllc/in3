@@ -10,7 +10,7 @@
 typedef uint32_t pb_size_t;
 typedef uint_least8_t pb_byte_t;
 
-#define CLONE(str) char* =     bytes_t v; u_int8_t d[20];  v.data=d; v.len=20;
+#define CLONE(str) char* =     bytes_t v; uint8_t d[20];  v.data=d; v.len=20;
 
 
 #define JSON_OBJECT(ob, str, tokens) json_object_t ob = { .js=str, .tok=tokens };

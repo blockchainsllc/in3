@@ -145,13 +145,13 @@ bool ctx_equals(char* str, jsmntok_t* c, char* val) {
     return strlen(val)==n && !strncmp(str + c->start, val, n);
 }
 
-u_int64_t ctx_to_long(char* str, jsmntok_t* c, u_int64_t defVal) {
+uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
     if (!c) return defVal;
 	int  n = c->end - c->start;
     char *idval = malloc(n+1);
     idval[n] = 0;
 	strncpy(idval, str + c->start, n);
-	u_int64_t val = atol(idval);
+	uint64_t val = atol(idval);
 	free(idval);
 	return val;
 }
