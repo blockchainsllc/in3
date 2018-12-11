@@ -190,11 +190,12 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
 
 
   // prepare the payload
-  int payload_buffer_size = strlen(ctx->request_data)*2;
+  int payload_buffer_size = strlen(ctx->request_data)*4;
   char* payload = malloc(payload_buffer_size);
   char** urls = malloc(sizeof(char*)* nodes_count);
   node_weight_t* w = ctx->nodes;
   for (n=0;n<nodes_count;n++) {
+    printf("nodeUrl %i:%s",n,w->node->url);
     urls[n]=w->node->url;
     w=w->next;
   }
@@ -254,6 +255,7 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
     if (response[i].error) free(response[i].error);
     if (response[i].result && response[i].result!=ctx->response_data) free(response[i].result);
   }
+  free(response);
 
   if (!w) {
     // this means all of the responses failed or could not be verified

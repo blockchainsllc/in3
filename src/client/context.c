@@ -220,7 +220,8 @@ int ctx_create_payload(in3_ctx_t* c, char* b, int buffer_size) {
     b[0]='[';
 
     for (i=0;i<c->len;i++) {
-        if (i>0) b[p++]='{';
+        if (i>0) b[p++]=',';
+        b[p++]='{';
         r = c->requests[i];
         if ((t=ctx_get_token(c->request_data,r,"id"))==NULL) 
             p+=add_key_value(b+p,"id", temp,  sprintf(temp,"%lu",counter++), false);

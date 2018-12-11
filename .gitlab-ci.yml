@@ -1,0 +1,18 @@
+
+image: gcc
+before_script:
+ - apt-get update --yes
+ - apt-get install --yes cmake
+ 
+stages:
+  - build
+
+build-in3:
+  stage: build
+  tags:
+    - short
+  script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make

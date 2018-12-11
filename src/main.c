@@ -7,6 +7,21 @@
 #include "util/utils.h"
 #include "client/client.h"
 
+
+in3_response_t* send(char** urls,char* payload,int nodes_count) {
+  printf("payload: %s\n",payload);
+  in3_response_t* r = calloc(nodes_count, sizeof(in3_response_t));
+  int i;
+  for (i=0;i<nodes_count;i++) {
+    printf("  url: %s\n",urls[i]);
+    r[i].result=malloc(200);
+    memcpy(r[i].result,"[{\"result\":\"0x1234\"}]",50);
+  }
+
+  return r;
+
+}
+
 int main (int argc, char *argv[])
 {
   if (argc < 2) {
@@ -15,6 +30,8 @@ int main (int argc, char *argv[])
   }
 
   in3* c = in3_new();
+  c->transport = send;
+  c->requestCount = 2;
   char result[500];
   in3_client_send(c, "{\"method\":\"test\",\"method2\":\"test2\"}", result,500);
   in3_free(c);
