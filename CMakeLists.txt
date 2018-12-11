@@ -31,7 +31,6 @@ ENDIF(DEBUG)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
   ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
-#include_directories ("${PROJECT_SOURCE_DIR}/src")
 
 # add the executable
 add_executable(in3-core src/main.c)
