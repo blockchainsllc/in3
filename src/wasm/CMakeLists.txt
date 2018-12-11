@@ -1,11 +1,11 @@
 cmake_minimum_required (VERSION 2.8)
-project (BoostGilWasm LANGUAGES CXX)
+project (in3-wasm)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".bc")
 
 set(COMMON_CXX_FLAGS "-std=c++14 -Wall -Werror -Wno-c++11-narrowing -Wno-unused-local-typedef -pthread")
 set(WASM_CXX_FLAGS "-s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" -s DEMANGLE_SUPPORT=1")
-set(EMSCRIPTEN_OUT_FLAGS "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/glue.js --emrun")
+set(EMSCRIPTEN_OUT_FLAGS "--emrun")
 
 # Set compile flags for emscripten clang
 if(UNIX)
