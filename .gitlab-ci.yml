@@ -32,35 +32,35 @@ build-in3:
 xbuild-linux-64:
   extends: .xbuild
   variables:
-     IMAGE: linux-64"
+     IMAGE: linux-64
 
 xbuild-windows-x64:
   extends: .xbuild
   variables:
-     IMAGE: "windows-x64"
+     IMAGE: windows-x64
 
 xbuild-linux-armv5:
   extends: .xbuild
   variables:
-     IMAGE: "linux-armv5"
+     IMAGE: linux-armv5
 
 xbuild-linux-armv64:
   extends: .xbuild
   variables:
-     IMAGE: "linux-armv64"
+     IMAGE: linux-armv64
 
 xbuild-linux-armv6:
   extends: .xbuild
   variables:
-     IMAGE: "linux-armv6"
+     IMAGE: linux-armv6
 
 xbuild-linux-armv7:
   extends: .xbuild
   variables:
-     IMAGE: "linux-armv7"
+     IMAGE: linux-armv7
 
 xbuild-windows-x86:
   extends: .xbuild
   variables:
-     IMAGE: "windows-x86"
+     IMAGE: windows-x86
 
