@@ -26,3 +26,16 @@ xbuild-linux-64:
     - docker run --rm dockcross/linux-x64 > ./dockcross
     - chmod +x ./dockcross
     - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
+
+xbuild-windows-x64:
+  services:
+    - docker:dind
+  image: jonaskello/docker-and-compose:latest
+  stage: build
+  tags:
+    - short-jobs
+  script:
+    - apk add --no-cache bash
+    - docker run --rm dockcross/windows-x64 > ./dockcross
+    - chmod +x ./dockcross
+    - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
