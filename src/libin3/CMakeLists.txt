@@ -10,3 +10,5 @@ add_library( libin3 SHARED
 )
 target_link_libraries (libin3 core)
 set_property(TARGET libin3 PROPERTY C_STANDARD 99)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)

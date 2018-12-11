@@ -25,3 +25,4 @@ add_library( core STATIC
 	crypto/groestl.c
 )
 set_property(TARGET core PROPERTY C_STANDARD 99)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
