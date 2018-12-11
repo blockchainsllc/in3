@@ -24,10 +24,11 @@ build-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; mkdir build; cd build; conan install .. --build libcurl && cmake .. && make && ls -ltr src/*/"
+    - ./dockcross bash -c "$INSTALL; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake .. && make && ls -ltr src/*/"
   variables:
      IMAGE: "linux-x64"
      INSTALL: "cd ."
+     CONAN_OPTS: ""
 
 linux-x64:
   extends: .xbuild
@@ -69,4 +70,5 @@ manylinux-x64:
   extends: .xbuild
   variables:
      IMAGE: manylinux-x64
+     CONAN_OPTS : --build libcurl
      INSTALL: "sudo apt install python-pip; pip install conan"
