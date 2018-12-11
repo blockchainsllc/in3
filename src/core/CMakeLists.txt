@@ -1,25 +1,27 @@
-target_sources(in3-core PRIVATE
-	src/core/client/context.c
-	src/core/client/client.c
-	src/core/client/client_init.c
-	src/core/util/debug.c
-	src/core/util/bytes.c
-	src/core/util/utils.c
-	src/core/jsmn/jsmn.c
-	src/core/jsmn/jsmnutil.c
-	src/core/crypto/ecdsa.c
-	src/core/crypto/address.c
-	src/core/crypto/bignum.c
-	src/core/crypto/rand.c
-	src/core/crypto/hmac.c
-	src/core/crypto/secp256k1.c
-	src/core/crypto/memzero.c
-	src/core/crypto/sha3.c
-	src/core/crypto/ripemd160.c
-	src/core/crypto/base58.c
-	src/core/crypto/hasher.c
-	src/core/crypto/sha2.c
-	src/core/crypto/blake256.c
-	src/core/crypto/blake2b.c
-	src/core/crypto/groestl.c
+
+add_library( core STATIC 
+	client/context.c
+	client/client.c
+	client/client_init.c
+	util/debug.c
+	util/bytes.c
+	util/utils.c
+	jsmn/jsmn.c
+	jsmn/jsmnutil.c
+	crypto/ecdsa.c
+	crypto/address.c
+	crypto/bignum.c
+	crypto/rand.c
+	crypto/hmac.c
+	crypto/secp256k1.c
+	crypto/memzero.c
+	crypto/sha3.c
+	crypto/ripemd160.c
+	crypto/base58.c
+	crypto/hasher.c
+	crypto/sha2.c
+	crypto/blake256.c
+	crypto/blake2b.c
+	crypto/groestl.c
 )
+set_property(TARGET core PROPERTY C_STANDARD 99)

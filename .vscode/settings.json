@@ -6,6 +6,7 @@
         "string.h": "c",
         "stdint.h": "c",
         "errno.h": "c",
-        "context.h": "c"
+        "context.h": "c",
+        "utils.h": "c"
     }
 }

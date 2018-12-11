@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7.2)
 
 # project name
-project(in3-core)
+project(in3)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -31,14 +31,10 @@ ENDIF(DEBUG)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
   ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
-
-# add the executable
-add_executable(in3-core src/main.c)
-
 # add core
 add_subdirectory( src/core )
+add_subdirectory( src/libin3 )
+add_subdirectory( src/test )
+#add_subdirectory( src/wasm )
 
 
-
-
-set_property(TARGET in3-core PROPERTY C_STANDARD 99)

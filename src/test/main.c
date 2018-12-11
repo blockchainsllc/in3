@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "core/util/debug.h"
-#include "core/util/utils.h"
-#include "core/client/client.h"
+#include <util/debug.h>
+#include <util/utils.h>
+#include <client/client.h>
 
 
 in3_response_t* send(char** urls,char* payload,int nodes_count) {

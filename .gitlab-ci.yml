@@ -25,7 +25,7 @@ build-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make ; ls -ltr '
+    - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make ; ls -ltr src/*/'
   variables:
      IMAGE: "linux-x64"
 
