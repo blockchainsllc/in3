@@ -9,7 +9,7 @@ project(in3-core)
 set (IN3_VERSION_MAJOR 1)
 set (IN3_VERSION_MINOR 0)
 configure_file (
-  "${PROJECT_SOURCE_DIR}/src/util/config.h.in"
+  "${PROJECT_SOURCE_DIR}/src/core/util/config.h.in"
   "${PROJECT_BINARY_DIR}/in3Config.h"
   )
  
@@ -37,30 +37,29 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
 add_executable(in3-core src/main.c)
 
 target_sources(in3-core PRIVATE
-	src/main.c
-	src/client/context.c
-	src/client/client.c
-	src/client/client_init.c
-	src/util/debug.c
-	src/util/bytes.c
-	src/util/utils.c
-	src/jsmn/jsmn.c
-	src/jsmn/jsmnutil.c
-	src/crypto/ecdsa.c
-	src/crypto/address.c
-	src/crypto/bignum.c
-	src/crypto/rand.c
-	src/crypto/hmac.c
-	src/crypto/secp256k1.c
-	src/crypto/memzero.c
-	src/crypto/sha3.c
-	src/crypto/ripemd160.c
-	src/crypto/base58.c
-	src/crypto/hasher.c
-	src/crypto/sha2.c
-	src/crypto/blake256.c
-	src/crypto/blake2b.c
-	src/crypto/groestl.c
+	src/core/client/context.c
+	src/core/client/client.c
+	src/core/client/client_init.c
+	src/core/util/debug.c
+	src/core/util/bytes.c
+	src/core/util/utils.c
+	src/core/jsmn/jsmn.c
+	src/core/jsmn/jsmnutil.c
+	src/core/crypto/ecdsa.c
+	src/core/crypto/address.c
+	src/core/crypto/bignum.c
+	src/core/crypto/rand.c
+	src/core/crypto/hmac.c
+	src/core/crypto/secp256k1.c
+	src/core/crypto/memzero.c
+	src/core/crypto/sha3.c
+	src/core/crypto/ripemd160.c
+	src/core/crypto/base58.c
+	src/core/crypto/hasher.c
+	src/core/crypto/sha2.c
+	src/core/crypto/blake256.c
+	src/core/crypto/blake2b.c
+	src/core/crypto/groestl.c
 )
 
 set_property(TARGET in3-core PROPERTY C_STANDARD 99)
