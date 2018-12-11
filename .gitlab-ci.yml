@@ -30,24 +30,37 @@ build-in3:
      IMAGE: "linux-x64"
 
 xbuild-linux-64:
-  services:
-    - docker:dind
-  image: jonaskello/docker-and-compose:latest
-  stage: build
-  tags:
-    - short-jobs
-  script:
-    - apk add --no-cache bash
-    - docker run --rm dockcross/linux-x64 > ./dockcross
-    - chmod +x ./dockcross
-    - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
+  extends: .xbuild
+  variables:
+     IMAGE: linux-64:"
 
 xbuild-windows-x64:
   extends: .xbuild
   variables:
      IMAGE: "windows-x64"
 
-xbuild-windows-x32:
+xbuild-armv5:
   extends: .xbuild
   variables:
-     IMAGE: "windows-x32"
+     IMAGE: "armv5"
+
+xbuild-armv64:
+  extends: .xbuild
+  variables:
+     IMAGE: "armv64"
+
+xbuild-armv6:
+  extends: .xbuild
+  variables:
+     IMAGE: "armv6"
+
+xbuild-armv7:
+  extends: .xbuild
+  variables:
+     IMAGE: "armv7"
+
+xbuild-windows-x86:
+  extends: .xbuild
+  variables:
+     IMAGE: "windows-x86"
+
