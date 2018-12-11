@@ -27,7 +27,7 @@ build-in3:
     - ./dockcross bash -c "$INSTALL; mkdir build; cd build; conan install .. --build libcurl && cmake .. && make && ls -ltr src/*/"
   variables:
      IMAGE: "linux-x64"
-     INSTALL: ""
+     INSTALL: "cd ."
 
 linux-x64:
   extends: .xbuild
