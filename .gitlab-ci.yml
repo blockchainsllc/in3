@@ -1,17 +1,14 @@
-
-image: gcc
-before_script:
- - apt-get update --yes
- - apt-get install --yes cmake
-
 stages:
   - build
 
 build-in3:
+  image: gcc
   stage: build
   tags:
     - short-jobs
   script:
+    - apt-get update --yes
+    - apt-get install --yes cmake
     - mkdir build
     - cd build
     - cmake ..
