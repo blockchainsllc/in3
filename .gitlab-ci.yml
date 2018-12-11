@@ -17,10 +17,12 @@ build-in3:
 xbuild-linux-64:
   services:
     - docker:dind
+  image: jonaskello/docker-and-compose:latest
   stage: build
   tags:
     - short-jobs
   script:
+    - apt-get oinstall -yes bash
     - docker run --rm dockcross/linux-x64 > ./dockcross
     - chmod +x ./dockcross
     - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
