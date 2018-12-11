@@ -17,7 +17,6 @@ configure_file (
 # so that we will find TutorialConfig.h
 include_directories("${PROJECT_BINARY_DIR}")
 
-set_property(TARGET in3-core PROPERTY C_STANDARD 99)
 
 # options
 OPTION(DEBUG
@@ -64,3 +63,4 @@ target_sources(in3-core PRIVATE
 	src/crypto/groestl.c
 )
 
+set_property(TARGET in3-core PROPERTY C_STANDARD 99)
