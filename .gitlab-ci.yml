@@ -22,7 +22,7 @@ xbuild-linux-64:
   tags:
     - short-jobs
   script:
-    - apt-get oinstall -yes bash
+    - apk add --no-cache bash
     - docker run --rm dockcross/linux-x64 > ./dockcross
     - chmod +x ./dockcross
     - ./dockcross bash -c 'mkdir build; cd build; cmake ..; make  '
