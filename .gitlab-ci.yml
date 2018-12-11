@@ -28,7 +28,7 @@ build-in3:
     - ./dockcross bash -c "$INSTALL_CURL; mkdir build; cd build; cmake .. && make && ls -ltr src/*/"
   variables:
      IMAGE: "linux-x64"
-     INSTALL_CURL: "aptitude install libcurl-dev"
+     INSTALL_CURL: "aptitude install libcurl4-gnutls-dev"
 
 linux-x64:
   extends: .xbuild
@@ -59,6 +59,7 @@ linux-armv7:
   extends: .xbuild
   variables:
      IMAGE: linux-armv7
+
 
 windows-x86:
   extends: .xbuild
