@@ -12,6 +12,9 @@ build-in3:
     - conan install .. --build libcurl
     - cmake ..
     - make
+  artifacts:
+    paths:
+      - build
 
 .xbuild:
   services:
@@ -20,6 +23,10 @@ build-in3:
   stage: build
   tags:
     - short-jobs
+  artifacts:
+    paths:
+      - build
+
   script:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
