@@ -68,7 +68,7 @@ void readData( char* url, char* payload, in3_response_t* r  ) {
       sprintf(r->error, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
     }
     else {
-      printf("%lu bytes retrieved\n%s", (unsigned long)chunk.size, chunk.memory);
+//      printf("%lu bytes retrieved\n%s", (unsigned long)chunk.size, chunk.memory);
       r->result = chunk.memory;
       chunk.memory=NULL;
     }
@@ -87,11 +87,11 @@ void readData( char* url, char* payload, in3_response_t* r  ) {
 
 
 in3_response_t* send_curl(char** urls,char* payload,int nodes_count) {
-  printf("payload: %s\n",payload);
+ // printf("payload: %s\n",payload);
   in3_response_t* r = calloc(nodes_count, sizeof(in3_response_t));
   int i;
   for (i=0;i<nodes_count;i++) {
-    printf("  url: %s\n",urls[i]);
+//    printf("  url: %s\n",urls[i]);
     readData(urls[i],payload, r+i );
   }
   return r;

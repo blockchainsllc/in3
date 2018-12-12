@@ -208,10 +208,10 @@ typedef struct {
 in3 *in3_new();
 
 /* sends a request and stores the result in the provided buffer */
-int in3_client_send(in3* c,char* req, char* result, int buf_size);
+int in3_client_send(in3* c,char* req, char* result, int buf_size, char* error);
 
 /* sends a request and stores the result in the provided buffer */
-int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size);
+int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size, char* error);
 
 /* rreturns the nodelist or even updates it. */
 int in3_client_get_node_list(in3* c, uint64_t chain, bool update,  in3_node_t** nodeList, int* nodeListLength,  in3_node_weight_t** weights );

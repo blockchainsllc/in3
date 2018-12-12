@@ -7,6 +7,10 @@
         "stdint.h": "c",
         "errno.h": "c",
         "context.h": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "debug.h": "c",
+        "math.h": "c",
+        "stdbool.h": "c",
+        "bytes.h": "c"
     }
 }

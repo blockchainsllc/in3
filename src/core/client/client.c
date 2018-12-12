@@ -195,7 +195,6 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
   char** urls = malloc(sizeof(char*)* nodes_count);
   node_weight_t* w = ctx->nodes;
   for (n=0;n<nodes_count;n++) {
-    printf("nodeUrl %i:%s",n,w->node->url);
     urls[n]=w->node->url;
     w=w->next;
   }
@@ -289,12 +288,16 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
 }
 
 
-int in3_client_send( in3* c, char* req, char* result, int buf_size) {
+int in3_client_send( in3* c, char* req, char* result, int buf_size, char* error) {
   int res=0, len,p,i;
   in3_ctx_t* ctx = new_ctx(req); 
+  result[0]=0;
+  error[0]=0;
 
-  if (ctx->error) 
+  if (ctx->error) {
+    if (error!=NULL) strcpy(error,ctx->error);
     res=-1;
+  }
   else if (ctx->tok_req->type==JSMN_ARRAY) {
     res = in3_client_send_intern(c,ctx);
     // create the results if it was succesful
@@ -328,6 +331,44 @@ int in3_client_send( in3* c, char* req, char* result, int buf_size) {
 
   return res;
 
+}
+
+int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size, char* error) {
+  int res=0, len,p,i;
+  char req[10000];
+  sprintf(req,"{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}",method,params);
+
+
+  in3_ctx_t* ctx = new_ctx(req); 
+  result[0]=0;
+  error[0]=0;
+
+  if (ctx->error) {
+    if (error!=NULL) strcpy(error,ctx->error);
+    res=-1;
+  }
+  else  {
+    res = in3_client_send_intern(c,ctx);
+    if (res>=0) {
+
+      jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
+      if (r)
+        ctx_cpy_string(ctx->response_data,r,result);
+      else if ((r = ctx_get_token(ctx->response_data,ctx->responses[0],"error")))
+        ctx_cpy_string(ctx->response_data,r,error);
+      else if (ctx->error)
+        strcpy(error,ctx->error);
+      else
+        strcpy(error,"No Result and also no error");
+
+    }
+    else if (ctx->error)
+      strcpy(error,ctx->error);
+    else
+      strcpy(error,"Error sending the request");
+  }
+  free_ctx(ctx);
+  return res;
 }
 
 
