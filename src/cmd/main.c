@@ -9,23 +9,6 @@
 #include <client/client.h>
 #include <in3_curl.h>
 
-/*
-in3_response_t* send(char** urls,char* payload,int nodes_count) {
-  printf("payload: %s\n",payload);
-  in3_response_t* r = calloc(nodes_count, sizeof(in3_response_t));
-  int i;
-  for (i=0;i<nodes_count;i++) {
-    printf("  url: %s\n",urls[i]);
-    r[i].result=malloc(200);
-    memcpy(r[i].result,"[{\"result\":\"0x1234\"}]",50);
-  }
-
-  return r;
-
-}
-*/
-
-
 uint64_t getChainId(char* name) {
   if (strcmp(name,"mainnet")==0)    return 0x01L;
   if (strcmp(name,"kovan")==0)      return 0x2aL;
@@ -40,7 +23,7 @@ int main (int argc, char *argv[])
 {
   int i;
   if (argc < 2) {
-    fprintf(stdout,"Usage: %s hex\n",argv[0]);
+    fprintf(stdout,"Usage: %s <options> method params ... \n  -p -proof    none|standard|full\n  -c -chain    mainnet|kovan|evan|tobalaba|ipfs\n",argv[0]);
     return 1;
   }
 
@@ -54,9 +37,9 @@ int main (int argc, char *argv[])
 
   // fill from args
   for (i=1;i<argc;i++) {
-    if (strcmp(argv[i],"--chain")==0)
+    if (strcmp(argv[i],"-chain")==0 || strcmp(argv[i],"-c")==0)
        c->chainId = getChainId(argv[++i]);
-    else if (strcmp(argv[i],"--proof")==0) {
+    else if (strcmp(argv[i],"-proof")==0 || strcmp(argv[i],"-p")==0) {
       if (strcmp(argv[i+1],"none")==0) 
          c->proof = PROOF_NONE;
       else if (strcmp(argv[i+1],"standard")==0) 
