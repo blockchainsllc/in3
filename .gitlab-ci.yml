@@ -54,6 +54,16 @@ build-in3:
 gcc8-armv7:
   image: conanio/gcc8-armv7
   extends: .conanbuild
+  artifacts:
+    paths:
+      - build
+
+gcc8-armv7hf:
+  image: conanio/gcc8-armv7hf
+  extends: .conanbuild
+  artifacts:
+    paths:
+      - build
 
   
 linux-x64:
