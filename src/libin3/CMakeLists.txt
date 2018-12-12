@@ -1,6 +1,3 @@
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
-
 include_directories ("${PROJECT_SOURCE_DIR}/src/core")
 include_directories ("${PROJECT_SOURCE_DIR}/src/transport_curl")
 

@@ -26,6 +26,7 @@ int main (int argc, char *argv[])
     fprintf(stdout,"Usage: %s <options> method params ... \n  -p -proof    none|standard|full\n  -c -chain    mainnet|kovan|evan|tobalaba|ipfs\n",argv[0]);
     return 1;
   }
+  
 
   char* method=NULL;
   char params[5000];

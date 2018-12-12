@@ -1,3 +1,5 @@
+
+# import results from conan, which declares the dependend libraries.
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 

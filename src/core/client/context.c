@@ -5,6 +5,7 @@
 #include "context.h"
 #include "client.h"
 #include "../jsmn/jsmnutil.h"
+#include "../util/stringbuilder.h"
 
 static int get_token_size(jsmntok_t* t) {
 	int i,j=1;
