@@ -207,54 +207,65 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
     return ctx_set_error(ctx,"could not generate the payload",IN3_ERR_CONFIG_ERROR);
   }
 
-  in3_response_t* response = c->transport(urls,payload->data,nodes_count);
+  // prepare response-object
+  in3_response_t* response = malloc( sizeof(in3_response_t)*nodes_count );
+  for (n=0;n<nodes_count;n++) {
+    sb_init(&response[n].error);
+    sb_init(&response[n].result);
+  }
+
+  // send requets 
+  res = c->transport(urls,nodes_count, payload->data,response);
+
+
   sb_free(payload);
   free(urls);
-  if (!response) 
-      return ctx_set_error(ctx, "no response from transport",IN3_ERR_CONFIG_ERROR);
-
-  // verify responses
-  w = ctx->nodes;
-  for (n=0;n<nodes_count;n++) {
-    if (response[n].error || !response[n].result) {
-      // blacklist the node
-      w->weight->blacklistedUntil = time(0) + 3600000;
-      w->weight=0;
-    }
-    else {
-      // we need to clean up the prev ios responses if set
-      if (ctx->responses) free(ctx->responses);
-      if (ctx->tok_res)   free(ctx->tok_res);
-
-      // parse the result
-      res = ctx_parse_response(ctx,response[n].result);
-      if (res<0) {
-        // blacklist!
+  if (res>=0) {
+    // verify responses
+    w = ctx->nodes;
+    for (n=0;n<nodes_count;n++) {
+      if (response[n].error.len || !response[n].result.len) {
+        // blacklist the node
         w->weight->blacklistedUntil = time(0) + 3600000;
         w->weight=0;
       }
       else {
-        // check each request
-        for (i=0;i<ctx->len;i++) {
-          if (verify_response(c,ctx,ctx->requests[i], ctx->requests_configs+i, ctx->responses[i])<0) {
-            // blacklist!
-            w->weight->blacklistedUntil = time(0) + 3600000;
-            w->weight=0;
-            break;
-          }
-        } 
+        // we need to clean up the prev ios responses if set
+        if (ctx->responses) free(ctx->responses);
+        if (ctx->tok_res)   free(ctx->tok_res);
+
+        // parse the result
+        res = ctx_parse_response(ctx,response[n].result.data);
+        if (res<0) {
+          // blacklist!
+          w->weight->blacklistedUntil = time(0) + 3600000;
+          w->weight=0;
+        }
+        else {
+          // check each request
+          for (i=0;i<ctx->len;i++) {
+            if (verify_response(c,ctx,ctx->requests[i], ctx->requests_configs+i, ctx->responses[i])<0) {
+              // blacklist!
+              w->weight->blacklistedUntil = time(0) + 3600000;
+              w->weight=0;
+              break;
+            }
+          } 
+        }
       }
+      if (w->weight>0) 
+        // this reponse was successfully verified, so let us keep it.
+        break;
+      w=w->next;
     }
-    if (w->weight>0) 
-      // this reponse was successfully verified, so let us keep it.
-      break;
-    w=w->next;
-  }
+  } 
+
 
   // clean up responses
   for (i=0;i<nodes_count;i++) {
-    if (response[i].error) free(response[i].error);
-    if (response[i].result && response[i].result!=ctx->response_data) free(response[i].result);
+
+    free(response[i].error.data);
+    if (response[i].result.data!=ctx->response_data) free(response[i].result.data);
   }
   free(response);
 

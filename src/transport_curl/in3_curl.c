@@ -5,42 +5,26 @@
 
 #include "in3_curl.h"
 #include "../core/client/client.h"
+#include "../core/util/stringbuilder.h"
 #include <curl/curl.h>
 
+/*
 struct MemoryStruct {
   char *memory;
   size_t size;
 };
- 
+ */
 static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
-  size_t realsize = size * nmemb;
-  struct MemoryStruct *mem = (struct MemoryStruct *)userp;
- 
-  char *ptr = realloc(mem->memory, mem->size + realsize + 1);
-  if(ptr == NULL) {
-    /* out of memory! */ 
-    printf("not enough memory (realloc returned NULL)\n");
-    mem->memory = NULL;
-    return 0;
-  }
- 
-  mem->memory = ptr;
-  memcpy(&(mem->memory[mem->size]), contents, realsize);
-  mem->size += realsize;
-  mem->memory[mem->size] = 0;
- 
-  return realsize;
+  in3_response_t* r = (in3_response_t*) userp;
+  sb_add_range(&r->result, contents, 0, size * nmemb );
+  return size * nmemb ;
 }
  
 
 void readData( char* url, char* payload, in3_response_t* r  ) {
   CURL *curl;
   CURLcode res;
-  struct MemoryStruct chunk;
-  chunk.memory = malloc(1);  /* will be grown as needed by the realloc above */ 
-  chunk.size = 0;    /* no data at this point */ 
-
   
   curl = curl_easy_init();
   if(curl) {
@@ -57,28 +41,23 @@ void readData( char* url, char* payload, in3_response_t* r  ) {
     headers = curl_slist_append(headers, "charsets: utf-8");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers); 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)r);
 
 
     /* Perform the request, res will get the return code */ 
     res = curl_easy_perform(curl);
     /* Check for errors */ 
     if(res != CURLE_OK) {
-      r->error=malloc(100);
-      sprintf(r->error, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-    }
-    else {
-//      printf("%lu bytes retrieved\n%s", (unsigned long)chunk.size, chunk.memory);
-      r->result = chunk.memory;
-      chunk.memory=NULL;
+      sb_add_chars(&r->error, "curl_easy_perform() failed:");
+      sb_add_chars(&r->error, (char*) curl_easy_strerror(res));
     }
  
     /* always cleanup */ 
     curl_easy_cleanup(curl);
   }
   else {
-    r->error=malloc(100);
-    sprintf(r->error, "no curl: %s\n", curl_easy_strerror(res));
+    sb_add_chars(&r->error, "no curl:");
+    sb_add_chars(&r->error, (char*)curl_easy_strerror(res));
   }
 
 }
@@ -86,14 +65,13 @@ void readData( char* url, char* payload, in3_response_t* r  ) {
 
 
 
-in3_response_t* send_curl(char** urls,char* payload,int nodes_count) {
+int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
  // printf("payload: %s\n",payload);
-  in3_response_t* r = calloc(nodes_count, sizeof(in3_response_t));
   int i;
-  for (i=0;i<nodes_count;i++) {
+  for (i=0;i<urls_len;i++) {
 //    printf("  url: %s\n",urls[i]);
-    readData(urls[i],payload, r+i );
+    readData(urls[i],payload, result+i );
   }
-  return r;
+  return 0;
 
 }

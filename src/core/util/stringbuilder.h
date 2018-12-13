@@ -14,6 +14,7 @@ typedef struct sb {
 } sb_t;
 
 sb_t* sb_new(char* chars);
+sb_t* sb_init(sb_t* sb);
 void  sb_free(sb_t* sb);
 
 sb_t* sb_add_char(sb_t* sb, char c);

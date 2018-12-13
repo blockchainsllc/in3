@@ -1,6 +1,7 @@
 #include <stdint.h>  
 #include "../util/bytes.h"
 #include "../util/utils.h"
+#include "../util/stringbuilder.h"
 #include <stdbool.h>
 
 #ifndef CLIENT_H
@@ -133,12 +134,12 @@ typedef struct {
 } in3_storage_handler_t;
 
 typedef struct {
-    char* error;
-    char* result;
+    sb_t error;
+    sb_t result;
 } in3_response_t;
 
 
-typedef in3_response_t* (*in3_transport_send)(char** urls, char* payload, int request_count);
+typedef int (*in3_transport_send)(char** urls,  int urls_len, char* payload, in3_response_t* results);
 
 
 typedef struct {

@@ -17,6 +17,13 @@ sb_t* sb_new(char* chars) {
       sb_add_chars(sb, chars);
     return sb;
 }
+sb_t* sb_init(sb_t* sb) {
+    sb->data = malloc(MIN_SIZE);
+    sb->allocted = MIN_SIZE;
+    sb->data[0] = 0;
+    sb->len =0;
+    return sb;
+}
 static void check_size(sb_t* sb, size_t len) {
     if (sb==NULL || len==0 || sb->len + len < sb->allocted) return;
     while (sb->len + len >= sb->allocted)
@@ -24,7 +31,7 @@ static void check_size(sb_t* sb, size_t len) {
     sb->data = realloc(sb->data,sb->allocted);
 }
 
-sb_t* sb_add_chars(sb_t* sb, char* chars) {
+sb_t* sb_add_chars(sb_t* sb,  char* chars) {
     int l = strlen(chars);
     if (l==0 || chars==NULL) return sb;
     check_size(sb,l);
