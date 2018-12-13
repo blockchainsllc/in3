@@ -183,107 +183,80 @@ int ctx_cpy_string(char* str, jsmntok_t* c, char* dst) {
 }
 
 static unsigned long counter = 1;
-static int add_key_value(char* b,char* key, char* value, int lv, bool as_string) {
-    if (lv==0) return 0;
-    int p=0, lk=strlen(key);
-    b[p++]='"';
-    memcpy(b+p,key,lk);
-    p+=lk;
-    b[p++]='"';
-    b[p++]=':';
-    if (as_string)  b[p++]='"';
-    memcpy(b+p,value,lv);
-    p+=lv;
-    if (as_string)  b[p++]='"';
-    return p;
-}
 
-static int write_bytes(char* b, char* prefix, bytes_t* bytes, int len) {
-    int i,p=strlen(prefix);
-    memcpy(b,prefix,p);
-    b[p++]='[';
-    for (i=0;i<len;i++)  {
-        if (i>0) b[p++]=',';
-        b[p++]='"';
-        b[p++]='0';
-        b[p++]='x';
-        int8_to_char(bytes[i].data,bytes[i].len,b+p);
-        p+=bytes[i].len;
-        b[p++]='"';
-    }
-    b[p++]=']';
-    return p;
-}
-int ctx_create_payload(in3_ctx_t* c, char* b, int buffer_size) {
-    int p=1,i,lv=0;
+
+int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
+
+    int i,lv=0;
     jsmntok_t* r,*t;
     char temp[100];
-    b[0]='[';
+    sb_add_char(sb,'[');
 
     for (i=0;i<c->len;i++) {
-        if (i>0) b[p++]=',';
-        b[p++]='{';
+        if (i>0) sb_add_char(sb,',');
+        sb_add_char(sb,'{');
         r = c->requests[i];
         if ((t=ctx_get_token(c->request_data,r,"id"))==NULL) 
-            p+=add_key_value(b+p,"id", temp,  sprintf(temp,"%lu",counter++), false);
+            sb_add_key_value(sb, "id", temp,  sprintf(temp,"%lu",counter++), false);
         else
-            p+=add_key_value(b+p,"id", c->request_data + t->start, t->end-t->start, t->type==JSMN_STRING);
-        b[p++]=',';
-        p+=add_key_value(b+p,"jsonrpc", "2.0",3,true);
-        b[p++]=',';
+            sb_add_key_value(sb,"id", c->request_data + t->start, t->end-t->start, t->type==JSMN_STRING);
+        sb_add_char(sb,',');
+        sb_add_key_value(sb,"jsonrpc", "2.0",3,true);
+        sb_add_char(sb,',');
         if ((t=ctx_get_token(c->request_data,r,"method"))==NULL) 
             return ctx_set_error(c,"missing method-property in request",IN3_ERR_REQUEST_INVALID);
         else 
-            p+=add_key_value(b+p,"method", c->request_data + t->start, t->end-t->start, true);
-
-        b[p++]=',';
+            sb_add_key_value(sb,"method", c->request_data + t->start, t->end-t->start, true);
+        sb_add_char(sb,',');
         if ((t=ctx_get_token(c->request_data,r,"params"))==NULL) 
-            p+=add_key_value(b+p,"params", "[]",2,false);
+            sb_add_key_value(sb,"params", "[]",2,false);
         else 
-            p+=add_key_value(b+p,"params", c->request_data + t->start, t->end-t->start, false);
-        b[p++]=',';
+            sb_add_key_value(sb,"params", c->request_data + t->start, t->end-t->start, false);
+        sb_add_char(sb,',');
 
         // add in3
         in3_request_config_t* rc = c->requests_configs+i;
-        p+=sprintf(b+p,"\"in3\":{\"chainId\":\"0x%llx\"", rc->chainId);
-        if (rc->clientSignature) {
-            p+=sprintf(b+p,",\"clientSignature\":\"0x");
-            int8_to_char(rc->clientSignature->data,rc->clientSignature->len,b+p);
-            p+=rc->clientSignature->len*2;
-            b[p++]='"';
-        }
+        sb_add_range(sb,temp,0, sprintf(temp,"\"in3\":{\"chainId\":\"0x%llx\"", rc->chainId));
+        if (rc->clientSignature) 
+           sb_add_bytes(sb,",\"clientSignature\":",rc->clientSignature,1,false );
         if (rc->finality) 
-           p+=sprintf(b+p,",\"finality\":%i", rc->finality);
+           sb_add_range(sb,temp,0,sprintf(temp,",\"finality\":%i", rc->finality));
         if (rc->includeCode)
-           p+=sprintf(b+p,",\"includeCode\":true");
+           sb_add_chars(sb,",\"includeCode\":true");
         if (rc->latestBlock)
-           p+=sprintf(b+p,",\"latestBlock\":%i", rc->latestBlock);
+           sb_add_range(sb,temp,0,sprintf(temp,",\"latestBlock\":%i", rc->latestBlock));
         if (rc->signaturesCount) 
-           p+=write_bytes(b+p,",\"signatures\":",rc->signatures,rc->signaturesCount);
+           sb_add_bytes(sb,",\"signatures\":",rc->signatures,rc->signaturesCount,true);
         if (rc->useFullProof)
-           p+=sprintf(b+p,",\"useFullProof\":true");
+           sb_add_chars(sb,",\"useFullProof\":true");
         if (rc->verification==VERIFICATION_PROOF)
-           p+=sprintf(b+p,",\"verification\":\"proof\"");
+           sb_add_chars(sb,",\"verification\":\"proof\"");
         else if (rc->verification==VERIFICATION_PROOF_WITH_SIGNATURE)
-           p+=sprintf(b+p,",\"verification\":\"proofWithSignature\"");
+           sb_add_chars(sb,",\"verification\":\"proofWithSignature\"");
         if (rc->verifiedHashesCount) 
-           p+=write_bytes(b+p,",\"verifiedHashes\":",rc->verifiedHashes,rc->verifiedHashesCount);
-           
+           sb_add_bytes(sb,",\"verifiedHashes\":",rc->verifiedHashes,rc->verifiedHashesCount,true);
 
-        b[p++]='}';
-        b[p++]='}';
+        sb_add_range(sb,"}}",0,2);
     }
-    b[p++]=']';
-    b[p++]=0;
-    return p;
+    sb_add_char(sb,']');
+    return 0;
 }
 
 
 int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
-    if (c->error) free(c->error);
     int l = strlen(msg);
-	char* dst = malloc(l+1);
-	strcpy(dst,msg);
+	char* dst;
+    if (c->error) {
+        dst= malloc(l+2+strlen(c->error));
+    	strcpy(dst,msg);
+        dst[l]='\n';
+    	strcpy(dst+l+1,c->error);
+        free(c->error);
+    }
+    else  {
+        dst= malloc(l+1);
+    	strcpy(dst,msg);
+    }
     c->error = dst;
     return errnumber;
 }

@@ -11,6 +11,7 @@
         "debug.h": "c",
         "math.h": "c",
         "stdbool.h": "c",
-        "bytes.h": "c"
+        "bytes.h": "c",
+        "stringbuilder.h": "c"
     }
 }

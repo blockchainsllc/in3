@@ -1,6 +1,7 @@
 #include <stdint.h>  
 #include <stdbool.h>
 #include "../util/utils.h"
+#include "../util/stringbuilder.h"
 #include "client.h"
 
 #ifndef CONTEXT_H
@@ -61,7 +62,7 @@ uint64_t ctx_to_long(char* str, jsmntok_t* root, uint64_t defVal);
 /* creates a new bytes-array which must be cleaned up*/
 bytes_t* ctx_to_bytes(char* str, jsmntok_t* root, int min_len);
 
-int ctx_create_payload(in3_ctx_t* c, char* buffer, int buffer_size);
+int ctx_create_payload(in3_ctx_t* c, sb_t* sb);
 
 int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
 int ctx_nodes_len (node_weight_t* root);

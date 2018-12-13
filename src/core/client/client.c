@@ -9,6 +9,7 @@
 #include <errno.h> 
 #include "context.h"
 #include <time.h>
+#include "../util/stringbuilder.h"
 
 static node_weight_t*  fill_weight_list(in3* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, time_t now, float* total_weight, int* total_found) {
   int i,p;
@@ -190,23 +191,24 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
 
 
   // prepare the payload
-  int payload_buffer_size = strlen(ctx->request_data)*4;
-  char* payload = malloc(payload_buffer_size);
+  sb_t* payload = sb_new(NULL);
+//  int payload_buffer_size = strlen(ctx->request_data)*4;
+//  char* payload = malloc(payload_buffer_size);
   char** urls = malloc(sizeof(char*)* nodes_count);
   node_weight_t* w = ctx->nodes;
   for (n=0;n<nodes_count;n++) {
     urls[n]=w->node->url;
     w=w->next;
   }
-  res = ctx_create_payload(ctx, payload,payload_buffer_size);
+  res = ctx_create_payload(ctx, payload);
   if (res<0)  {
-     free(payload);
+     sb_free(payload);
      free(urls);
     return ctx_set_error(ctx,"could not generate the payload",IN3_ERR_CONFIG_ERROR);
   }
 
-  in3_response_t* response = c->transport(urls,payload,nodes_count);
-  free(payload);
+  in3_response_t* response = c->transport(urls,payload->data,nodes_count);
+  sb_free(payload);
   free(urls);
   if (!response) 
       return ctx_set_error(ctx, "no response from transport",IN3_ERR_CONFIG_ERROR);
