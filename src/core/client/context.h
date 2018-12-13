@@ -56,9 +56,12 @@ int ctx_parse_response(in3_ctx_t* ctx, char* response_data);
 void free_ctx(in3_ctx_t* ctx);
 
 jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key);
+jsmntok_t* ctx_get_array_token(char* str, jsmntok_t* root, int index);
+
 bool ctx_equals(char* str, jsmntok_t* root, char* val);
 int ctx_cpy_string(char* str, jsmntok_t* root, char* dst);
 uint64_t ctx_to_long(char* str, jsmntok_t* root, uint64_t defVal);
+uint32_t ctx_to_int(char* str, jsmntok_t* root, uint32_t defVal);
 /* creates a new bytes-array which must be cleaned up*/
 bytes_t* ctx_to_bytes(char* str, jsmntok_t* root, int min_len);
 

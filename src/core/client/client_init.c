@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "client.h"
+#include "cache.h"
 
 
 static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int boot_node_count) {
@@ -21,7 +22,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
     node->index    = node_index;
     node->capacity = 1;
     node->deposit  = 0;
-    node->props    = 0x65535;
+    node->props    = 0xFF;
     node->url      = malloc( strlen(url)+1 );
     memcpy(node->url,url,strlen(url)+1 );
 
@@ -33,6 +34,8 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
 }
 
 static void in3_client_init(in3* c) {
+    int i;
+
     c->autoUpdateList=1;
     c->cacheStorage=NULL;
     c->cacheTimeout = 0;
@@ -74,6 +77,11 @@ static void in3_client_init(in3* c) {
     initChain(c->servers+4, 0x7d0, "0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9" , 2 );
     initNode( c->servers+4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a","https://in3.slock.it/ipfs/nd-1");
     initNode( c->servers+4, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D","https://in3.slock.it/ipfs/nd-5");
+
+
+    // now try to see if we have a newer node_list, so we can update.
+    for (i=0;i<c->serversCount;i++) in3_cache_update_nodelist(c,c->servers+i);
+
 
 }
 

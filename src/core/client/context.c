@@ -124,7 +124,7 @@ void free_ctx(in3_ctx_t* ctx) {
 jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key) {
    int i,n,l=strlen(key);
    jsmntok_t* c = root+1;
- 
+
    for (i=0;i<root->size;i++) {
 	 n = c->end - c->start;
 	 // the key must be a string
@@ -140,10 +140,35 @@ jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key) {
    return NULL;
 }
 
+jsmntok_t* ctx_get_array_token(char* str, jsmntok_t* root, int index) {
+   int i;
+   jsmntok_t* c = root+1;
+   if (index >= root->size) return NULL;
+ 
+   for (i=0;i<root->size;i++) {
+     if (i==index) return c;
+	 // if not we have to check the value
+	 c += get_token_size(c);
+   }
+   return NULL;
+}
+
+
 bool ctx_equals(char* str, jsmntok_t* c, char* val) {
     if (!c) return false;
 	int  n = c->end - c->start;
     return strlen(val)==n && !strncmp(str + c->start, val, n);
+}
+
+uint32_t ctx_to_int(char* str, jsmntok_t* c, uint32_t defVal) {
+    if (!c) return defVal;
+	int  n = c->end - c->start;
+    char *idval = malloc(n+1);
+    idval[n] = 0;
+	strncpy(idval, str + c->start, n);
+	uint32_t val = atol(idval);
+	free(idval);
+	return val;
 }
 
 uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
@@ -177,7 +202,7 @@ bytes_t* ctx_to_bytes(char* str, jsmntok_t* c, int min_len) {
 
 int ctx_cpy_string(char* str, jsmntok_t* c, char* dst) {
     if (!c) return 0;
-    int n=c->end-c->start;
+    size_t n=c->end-c->start;
     memcpy(dst,str + c->start, n);
     return n;
 }
@@ -241,6 +266,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
     sb_add_char(sb,']');
     return 0;
 }
+
 
 
 int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {

@@ -11,6 +11,144 @@
 #include <time.h>
 #include "../util/stringbuilder.h"
 
+static int in3_client_send_intern( in3* c, in3_ctx_t* ctx);
+static void free_nodeList(in3_node_t* nodeList, int count) {
+  int i;
+
+     // clean chain..
+   for (i=0;i<count;i++) {
+     if (nodeList[i].url) free(nodeList[i].url);
+     if (nodeList[i].address) b_free(nodeList[i].address);
+   }
+   free(nodeList);
+}
+
+static int fill_chain(in3* c,in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) {
+  jsmntok_t* t;
+  char* res=ctx->response_data;
+  int i,r=0;
+  jsmntok_t* nodes = ctx_get_token(res, result,"nodes");
+  if (!nodes || nodes->type!=JSMN_ARRAY) return ctx_set_error(ctx, "No Nodes in the result", -1); 
+
+  if (!(t=ctx_get_token(res, result,"lastBlockNumber"))) return ctx_set_error(ctx, "LastBlockNumer is missing", -1);
+  chain->lastBlock = ctx_to_long(res,t,chain->lastBlock);
+
+  
+   in3_node_t* newList = calloc(nodes->size, sizeof(in3_node_t));
+
+   // set new values
+   for (i=0;i<nodes->size;i++) {
+     in3_node_t* n = newList+i;
+     jsmntok_t* node = ctx_get_array_token(res, nodes,i);
+     if (!node) 
+        r = ctx_set_error(ctx, "node missing", -1); 
+     else {
+        
+        n->capacity = ctx_to_int(res,ctx_get_token(res,node,"capacity"),1); 
+        n->index = ctx_to_int(res,ctx_get_token(res,node,"index"),i); 
+        n->deposit = ctx_to_long(res,ctx_get_token(res,node,"deposit"),0); 
+        n->props = ctx_to_long(res,ctx_get_token(res,node,"props"),65535); 
+
+        t=ctx_get_token(res,node,"url");
+        if (t) {
+          n->url = malloc(t->end - t->start +1);
+          ctx_cpy_string(res,t,n->url);
+        }
+        else 
+          r = ctx_set_error(ctx,"missing url in nodelist",-1);
+
+        t=ctx_get_token(res,node,"address");
+        if (t) 
+          n->address = ctx_to_bytes(res,t,20);
+        else
+          r = ctx_set_error(ctx,"missing address in nodelist",-1);
+     }
+     if (r!=0) break;
+   }
+
+   if (r==0) {
+       free_nodeList(chain->nodeList, chain->nodeListLength);
+       chain->nodeList = newList;
+       chain->nodeListLength = nodes->size;
+   }
+   else 
+      free_nodeList(newList, nodes->size);
+
+  return r;
+
+    
+}
+
+static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+  int res=0;
+
+  // create random seed
+  char seed[67];
+  sprintf(seed,"0x%08x%08x%08x%08x%08x%08x%08x%08x",rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand());
+
+  // create request
+  char req[10000];
+  sprintf(req,"{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}",c->nodeLimit, seed);
+
+  // new client
+  in3_ctx_t* ctx = new_ctx(req); 
+  if (ctx->error) 
+    res = ctx_set_error(parent_ctx,ctx->error,-1);
+  else  {
+    res = in3_client_send_intern(c,ctx);
+    if (res>=0) {
+      jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
+      if (r) {
+        // we have a result....
+        res = fill_chain(c,chain,ctx,r);
+        if (res<0)
+          res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,ctx->error,res));
+      }
+      else if (ctx->error) 
+        res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,ctx->error,-1));
+      else if ((r = ctx_get_token(ctx->response_data,ctx->responses[0],"error"))) {
+        ctx_cpy_string(ctx->response_data,r,req);
+        res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,req,-1));
+      }
+      else
+        res = ctx_set_error(parent_ctx,"Error updating node_list without any result",-1);
+    }
+    else if (ctx->error)
+      res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,ctx->error,-1));
+    else
+      res = ctx_set_error(parent_ctx,"Error updating node_list without any result",-1);
+  }
+  free_ctx(ctx);
+  return res;
+}
+
+static int get_node_list(in3* c, uint64_t chain_id, bool update,  in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights, in3_ctx_t* parent_ctx ) {
+  int i, res=IN3_ERR_CHAIN_NOT_FOUND;
+  in3_chain_t* chain;
+  for (i=0;i<c->serversCount;i++) {
+    chain = c->servers + i;
+    if (chain->chainId == chain_id) {
+      if (chain->needsUpdate || update) {
+        chain->needsUpdate=false;
+
+        // now update the nodeList
+        in3_ctx_t* ctx = parent_ctx ? parent_ctx : new_ctx("{}");
+        res=update_nodelist(c,chain, parent_ctx);
+        if (parent_ctx==NULL) free_ctx(ctx);
+        if (res<0) break;
+
+      }
+      *nodeListLength = chain->nodeListLength;
+      *nodeList = chain->nodeList;
+      *weights = chain->weights;
+      return 0;
+    }
+  }
+
+  return res;
+}
+
+
 static node_weight_t*  fill_weight_list(in3* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, time_t now, float* total_weight, int* total_found) {
   int i,p;
   float s=0;
@@ -52,7 +190,7 @@ static int in3_get_nodes(in3* c, in3_ctx_t* ctx, node_weight_t** nodes) {
 
 
   int all_nodes_len, res, total_found,i,l;
-  res = in3_client_get_node_list(c, c->chainId, false, &all_nodes, &all_nodes_len, &weights);
+  res = get_node_list(c, c->chainId, false, &all_nodes, &all_nodes_len, &weights,ctx);
   if (res<0) 
      return ctx_set_error(ctx,"could not find the chain",res);
 
@@ -171,35 +309,21 @@ static int verify_response( in3* c, in3_ctx_t* ctx, jsmntok_t* request, in3_requ
   return 0;
 }
 
-static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
-  // find the nodes to send the request to
-  int i,n,nodes_count;
-  int res = in3_get_nodes(c,ctx, &ctx->nodes);
-  if (res<0)
-    return ctx_set_error(ctx, "could not find any node",res);
-  nodes_count = ctx_nodes_len(ctx->nodes);
+static int send_request(in3* c, in3_ctx_t* ctx, int nodes_count,in3_response_t** response_result ) {
+  int n,res;
 
-  // configure the requests
-  for (i=0;i<ctx->len;i++) {
-    res = configure_request(c,ctx,ctx->requests_configs+i,ctx->requests[i]);
-    if (res<0) 
-       return ctx_set_error(ctx, "error configuring the config for request",res);
-  }
-  // now send the request
-  if (!c->transport)
-     return ctx_set_error(ctx, "no transport set",IN3_ERR_CONFIG_ERROR);
-
-
+  *response_result = NULL;
   // prepare the payload
   sb_t* payload = sb_new(NULL);
-//  int payload_buffer_size = strlen(ctx->request_data)*4;
-//  char* payload = malloc(payload_buffer_size);
+
+  // create url-array
   char** urls = malloc(sizeof(char*)* nodes_count);
   node_weight_t* w = ctx->nodes;
   for (n=0;n<nodes_count;n++) {
     urls[n]=w->node->url;
     w=w->next;
   }
+
   res = ctx_create_payload(ctx, payload);
   if (res<0)  {
      sb_free(payload);
@@ -217,12 +341,28 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
   // send requets 
   res = c->transport(urls,nodes_count, payload->data,response);
 
-
+  // free resources
   sb_free(payload);
   free(urls);
-  if (res>=0) {
-    // verify responses
-    w = ctx->nodes;
+
+  if (res<0) {
+     for (n=0;n<nodes_count;n++) {
+       free(response[n].error.data);
+       free(response[n].result.data);
+     }
+     free(response);
+     return res;
+  }
+  *response_result = response;
+
+  return res;
+
+}
+
+
+static bool find_valid_result(in3* c,in3_ctx_t* ctx, int nodes_count,in3_response_t* response) {
+  node_weight_t* w = ctx->nodes;
+  int n,i,res;
     for (n=0;n<nodes_count;n++) {
       if (response[n].error.len || !response[n].result.len) {
         // blacklist the node
@@ -255,21 +395,50 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
       }
       if (w->weight>0) 
         // this reponse was successfully verified, so let us keep it.
-        break;
+        return true;
+
       w=w->next;
     }
-  } 
+    return false;
+    
+}
 
+static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
+  // find the nodes to send the request to
+  int i,n,nodes_count;
 
-  // clean up responses
+  in3_response_t* response;
+  int res = in3_get_nodes(c,ctx, &ctx->nodes);
+  if (res<0)
+    return ctx_set_error(ctx, "could not find any node",res);
+  nodes_count = ctx_nodes_len(ctx->nodes);
+
+  // configure the requests
+  for (i=0;i<ctx->len;i++) {
+    res = configure_request(c,ctx,ctx->requests_configs+i,ctx->requests[i]);
+    if (res<0) 
+       return ctx_set_error(ctx, "error configuring the config for request",res);
+  }
+  // now send the request
+  if (!c->transport)
+     return ctx_set_error(ctx, "no transport set",IN3_ERR_CONFIG_ERROR);
+
+  res = send_request(c,ctx,nodes_count,&response);
+  if (res<0 || response==NULL) 
+     return ctx_set_error(ctx, "The request could not be send",res);
+    // verify responses
+
+  // verify responses and return the node with the correct result.
+  bool is_valid = find_valid_result(c,ctx,nodes_count,response);
+
+  // clean up responses exycept the response we want to keep.
   for (i=0;i<nodes_count;i++) {
-
     free(response[i].error.data);
     if (response[i].result.data!=ctx->response_data) free(response[i].result.data);
   }
   free(response);
 
-  if (!w) {
+  if (!is_valid) {
     // this means all of the responses failed or could not be verified
     if (ctx->attempt< c->max_attempts) {
       ctx->attempt++;
@@ -293,7 +462,6 @@ static int in3_client_send_intern( in3* c, in3_ctx_t* ctx) {
     else 
       // we give up
       return ctx_set_error(ctx, "reaching max_attempts and giving up",IN3_ERR_MAX_ATTEMPTS);
-  
   }
   else 
     // we have a result
@@ -337,7 +505,7 @@ int in3_client_send( in3* c, char* req, char* result, int buf_size, char* error)
   else
     res = 0;
 
-  printf("\n error: %s\n",ctx->error);
+//  printf("\n error: %s\n",ctx->error);
 
   free_ctx(ctx);
 
@@ -385,38 +553,3 @@ int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_siz
 }
 
 
-
-int in3_client_get_node_list(in3* c, uint64_t chain_id, bool update,  in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights ) {
-  int i;
-  in3_chain_t* chain;
-  for (i=0;i<c->serversCount;i++) {
-    chain = c->servers + i;
-    if (chain->chainId == chain_id) {
-      if (chain->needsUpdate || update) {
-        chain->needsUpdate=false;
-        // now update the nodeList
-
-/*
-
-        
-      // create a random seed which ensures the deterministic nature of even a partly list.
-      const seed = '0x' + keccak256('0x' + Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)).toString('hex')
-
-      const nlResponse = await this.sendRPC(
-        'in3_nodeList',
-        [this.defConfig.nodeLimit || 0, seed, servers.initAddresses || []],
-        chain, conf)
-      const nl = nlResponse.result as ServerList
-
-*/
-
-      }
-      *nodeListLength = chain->nodeListLength;
-      *nodeList = chain->nodeList;
-      *weights = chain->weights;
-      return 0;
-    }
-  }
-
-  return IN3_ERR_CHAIN_NOT_FOUND;
-}
