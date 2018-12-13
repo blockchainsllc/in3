@@ -7,7 +7,9 @@
 #include <util/debug.h>
 #include <util/utils.h>
 #include <client/client.h>
+#include <client/cache.h>
 #include <in3_curl.h>
+#include <in3_storage.h>
 
 uint64_t getChainId(char* name) {
   if (strcmp(name,"mainnet")==0)    return 0x01L;
@@ -32,9 +34,17 @@ int main (int argc, char *argv[])
   char params[5000];
   params[0]='[';
   int p=1;
+
+  in3_storage_handler_t storage_handler;
+  storage_handler.get_item=storage_get_item;
+  storage_handler.set_item=storage_set_item;
+
   in3* c = in3_new();
   c->transport = send_curl;
   c->requestCount = 1;
+  c->cacheStorage = &storage_handler;
+  in3_cache_init(c);
+  
 
   // fill from args
   for (i=1;i<argc;i++) {

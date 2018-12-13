@@ -12,6 +12,7 @@
         "math.h": "c",
         "stdbool.h": "c",
         "bytes.h": "c",
-        "stringbuilder.h": "c"
+        "stringbuilder.h": "c",
+        "stdio.h": "c"
     }
 }

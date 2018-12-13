@@ -121,6 +121,7 @@ typedef struct {
 } in3_chain_t;
 
 
+
 typedef bytes_t* (*in3_storage_get_item)(char *);
 typedef void (*in3_storage_set_item)(char *, bytes_t*);
 

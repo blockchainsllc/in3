@@ -8,8 +8,10 @@
 #include "../util/utils.h"
 #include <errno.h> 
 #include "context.h"
+#include "cache.h"
 #include <time.h>
 #include "../util/stringbuilder.h"
+
 
 static int in3_client_send_intern( in3* c, in3_ctx_t* ctx);
 static void free_nodeList(in3_node_t* nodeList, int count) {
@@ -23,7 +25,7 @@ static void free_nodeList(in3_node_t* nodeList, int count) {
    free(nodeList);
 }
 
-static int fill_chain(in3* c,in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) {
+int in3_client_fill_chain(in3* c,in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) {
   jsmntok_t* t;
   char* res=ctx->response_data;
   int i,r=0;
@@ -48,6 +50,7 @@ static int fill_chain(in3* c,in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* resul
         n->index = ctx_to_int(res,ctx_get_token(res,node,"index"),i); 
         n->deposit = ctx_to_long(res,ctx_get_token(res,node,"deposit"),0); 
         n->props = ctx_to_long(res,ctx_get_token(res,node,"props"),65535); 
+        
 
         t=ctx_get_token(res,node,"url");
         if (t) {
@@ -70,13 +73,16 @@ static int fill_chain(in3* c,in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* resul
        free_nodeList(chain->nodeList, chain->nodeListLength);
        chain->nodeList = newList;
        chain->nodeListLength = nodes->size;
+
+       free(chain->weights);
+       chain->weights=  calloc(nodes->size,sizeof(in3_node_weight_t));
+       for (i=0;i<nodes->size;i++)
+         chain->weights[i].weight = 1;
    }
    else 
       free_nodeList(newList, nodes->size);
 
   return r;
-
-    
 }
 
 static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
@@ -100,7 +106,7 @@ static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
       jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
       if (r) {
         // we have a result....
-        res = fill_chain(c,chain,ctx,r);
+        res = in3_client_fill_chain(c,chain,ctx,r);
         if (res<0)
           res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,ctx->error,res));
       }
@@ -118,6 +124,9 @@ static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
     else
       res = ctx_set_error(parent_ctx,"Error updating node_list without any result",-1);
   }
+
+  if (!res && c->cacheStorage) 
+     in3_cache_store_nodelist(c,ctx,chain);
   free_ctx(ctx);
   return res;
 }
@@ -226,13 +235,16 @@ static int in3_get_nodes(in3* c, in3_ctx_t* ctx, node_weight_t** nodes) {
   node_weight_t* first=NULL;
   node_weight_t* wn=NULL;
   float r;
+
   int added=0;
   node_weight_t* w=NULL;
 
   // we want ot make sure this loop is run only max 10xthe number of requested nodes
   for (i=0;added<l && i<l*10;i++) {
     // pick a random number
-    r = ( total_weight * (float)rand())/RAND_MAX;
+    r = total_weight *  ((float)(rand() % 10000)) / 10000.0;
+
+//    printf("random: %f of %f\n",r, total_weight);
 
     // find the first node matching it.
     w = found;

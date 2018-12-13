@@ -66,10 +66,10 @@ void readData( char* url, char* payload, in3_response_t* r  ) {
 
 
 int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
- // printf("payload: %s\n",payload);
+// printf("payload: %s\n",payload);
   int i;
   for (i=0;i<urls_len;i++) {
-//    printf("  url: %s\n",urls[i]);
+  // printf("  url: %s\n",urls[i]);
     readData(urls[i],payload, result+i );
   }
   return 0;

@@ -51,6 +51,12 @@ tok_arr_append_cb(void *data, const char* buf, jsmntok_t *tok, int c)
 int
 jsmnutil_parse_json (const char *buf, jsmntok_t **jsonv_out, int *jsons_out)
 {
+	return jsmnutil_parse_json_range(buf, strlen(buf), jsonv_out, jsons_out);
+}
+
+int
+jsmnutil_parse_json_range (const char *buf, size_t len,jsmntok_t **jsonv_out, int *jsons_out)
+{
 	jsmn_parser parser;
 	int r, offset;
 
@@ -64,7 +70,7 @@ jsmnutil_parse_json (const char *buf, jsmntok_t **jsonv_out, int *jsons_out)
 		return 0;
 	}
 again:
-	r = jsmn_parse(&parser, buf, strlen (buf), *jsonv_out,
+	r = jsmn_parse(&parser, buf, len, *jsonv_out,
 		       *jsons_out);
 
 	if (r < 0) {

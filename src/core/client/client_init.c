@@ -3,6 +3,7 @@
 #include <string.h>
 #include "client.h"
 #include "cache.h"
+#include <time.h>
 
 
 static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int boot_node_count) {
@@ -77,12 +78,6 @@ static void in3_client_init(in3* c) {
     initChain(c->servers+4, 0x7d0, "0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9" , 2 );
     initNode( c->servers+4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a","https://in3.slock.it/ipfs/nd-1");
     initNode( c->servers+4, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D","https://in3.slock.it/ipfs/nd-5");
-
-
-    // now try to see if we have a newer node_list, so we can update.
-    for (i=0;i<c->serversCount;i++) in3_cache_update_nodelist(c,c->servers+i);
-
-
 }
 
 
@@ -107,6 +102,9 @@ void in3_free(in3 *a) {
 }
 
 in3 *in3_new() {
+    // initialize random withj the timestamp as seed
+    srand ( time(NULL) );
+
 	in3 *c = calloc(1, sizeof(in3));
     in3_client_init(c);
 	return c;

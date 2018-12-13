@@ -10,6 +10,10 @@ enum
 int
 jsmnutil_parse_json (const char *buf, jsmntok_t **jsonv_out, int *jsons_out);
 
+int
+jsmnutil_parse_json_range (const char *buf, size_t len,jsmntok_t **jsonv_out, int *jsons_out);
+
+
 /* count of keys inside a JSMN_OBJECT */
 int
 jsmnutil_object_key_count(const char *buf, jsmntok_t* tok);
