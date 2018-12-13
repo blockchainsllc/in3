@@ -244,8 +244,6 @@ static int in3_get_nodes(in3* c, in3_ctx_t* ctx, node_weight_t** nodes) {
     // pick a random number
     r = total_weight *  ((float)(rand() % 10000)) / 10000.0;
 
-//    printf("random: %f of %f\n",r, total_weight);
-
     // find the first node matching it.
     w = found;
     while (w) {

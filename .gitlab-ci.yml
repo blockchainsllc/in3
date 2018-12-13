@@ -65,6 +65,20 @@ gcc8-armv7hf:
     paths:
       - build
 
+gcc5:
+  image: conanio/gcc5
+  extends: .conanbuild
+  artifacts:
+    paths:
+      - build
+
+clang50:
+  image: conanio/clang50
+  extends: .conanbuild
+  artifacts:
+    paths:
+      - build
+
   
 linux-x64:
   extends: .xbuild
@@ -72,10 +86,10 @@ linux-x64:
      IMAGE: linux-x64
 
 
-#windows-x64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: windows-x64
+windows-x64:
+  extends: .xbuild
+  variables:
+     IMAGE: windows-x64
 
 #linux-armv5:
 #  extends: .xbuild
