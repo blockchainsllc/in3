@@ -39,13 +39,12 @@ uint8_t b_read_byte(bytes_t* b, size_t* pos);
 uint16_t b_read_short(bytes_t* b, size_t* pos);
 uint32_t b_read_int(bytes_t* b, size_t* pos);
 uint64_t b_read_long(bytes_t* b, size_t* pos);
-char* b_read_chars(bytes_t* b, size_t* pos);
-bytes_t* b_read_dyn_bytes(bytes_t* b, size_t* pos);
-bytes_t* b_read_fixed_bytes(bytes_t* b, size_t* pos);
-
+char* b_new_chars(bytes_t* b, size_t* pos);
+bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos);
+bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);
 /* allocates a new byte array with 0 filled */
 bytes_builder_t *bb_new();
-
+void bb_free(bytes_builder_t* bb);
 
 void bb_write_chars(bytes_builder_t *bb,char* c, int len);
 void bb_write_dyn_bytes(bytes_builder_t *bb, bytes_t* src);
@@ -54,6 +53,8 @@ void bb_write_int(bytes_builder_t *bb, uint32_t val);
 void bb_write_long(bytes_builder_t *bb, uint64_t val);
 void bb_write_byte(bytes_builder_t *bb, uint8_t val);
 void bb_write_short(bytes_builder_t *bb, uint16_t val);
+void bb_write_raw_bytes(bytes_builder_t *bb, void* ptr, size_t len);
+
 bytes_t* bb_move_to_bytes(bytes_builder_t *bb);
 
 #endif

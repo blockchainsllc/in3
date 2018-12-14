@@ -205,6 +205,7 @@ int ctx_cpy_string(char* str, jsmntok_t* c, char* dst) {
     if (!c) return 0;
     size_t n=c->end-c->start;
     memcpy(dst,str + c->start, n);
+    dst[n]=0;
     return n;
 }
 

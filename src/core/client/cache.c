@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "context.h"
 #include "stdio.h"
+#include <string.h>
 #include "../jsmn/jsmnutil.h"
 
 int in3_cache_init(in3* c) {
@@ -18,28 +19,67 @@ int in3_cache_update_nodelist(in3* c, in3_chain_t* chain) {
 
     bytes_t* b = c->cacheStorage->get_item(key);
     if (b) {
-        in3_ctx_t ctx;
-        ctx.error = NULL;
-        ctx.tok_res=NULL;
-        int tokc;
-        ctx.response_data =(char*) b->data;
-        if (jsmnutil_parse_json_range((char*)b->data,b->len, &ctx.tok_req, &tokc)>=0 && in3_client_fill_chain(chain, &ctx,ctx.tok_req)>=0)
-           chain->needsUpdate=false;
-        if (ctx.error) free(ctx.error);
-        if (ctx.tok_req) free(ctx.tok_req);
+        int i,count;
+        size_t p=0;
+        uint8_t version = b_read_byte(b,&p);
+        if (version!=1) {
+            b_free(b);
+            return -1;
+        }
+
+        // clean up old
+        for (i=0;i<chain->nodeListLength;i++) {
+            if (chain->nodeList[i].url) free(chain->nodeList[i].url);
+            if (chain->nodeList[i].address) b_free(chain->nodeList[i].address);
+        }
+        free(chain->nodeList);
+        free(chain->weights);
+
+
+        chain->contract = b_new_fixed_bytes(b,&p,20);
+        chain->lastBlock = b_read_long(b,&p);
+        chain->nodeListLength = count = b_read_int(b,&p);
+        chain->nodeList = calloc(count,sizeof(in3_node_t));
+        chain->weights = calloc(count,sizeof(in3_node_weight_t));
+        chain->needsUpdate = false;
+        memcpy(chain->weights,b->data+p,count *  sizeof(in3_node_weight_t));
+        p+= count *  sizeof(in3_node_weight_t);
+        for (i=0;i<count;i++) {
+            in3_node_t* n = chain->nodeList + i;
+            n->capacity = b_read_int(b,&p);
+            n->index = b_read_int(b,&p);
+            n->deposit = b_read_long(b,&p);
+            n->props = b_read_long(b,&p);
+            n->address = b_new_fixed_bytes(b,&p,20);
+            n->url = b_new_chars(b,&p);
+        }
         b_free(b);
     }
     return 0;
 }
 int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
-    jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
-    if (r) {
-        char key[200];
-        sprintf(key,"nodelist_%llx",chain->chainId);
-        bytes_t b;
-        b.len = r->end - r->start;
-        b.data = (uint8_t*)(ctx->response_data + r->start);
-        ctx->client ->cacheStorage->set_item(key,&b);
+    int i;
+    bytes_builder_t* bb = bb_new();
+    bb_write_byte(bb, 1 ); // Version flag
+    bb_write_fixed_bytes(bb, chain->contract); // 20 bytes fixed
+    bb_write_long(bb, chain->lastBlock);
+    bb_write_int(bb, chain->nodeListLength);
+    bb_write_raw_bytes(bb, chain->weights, chain->nodeListLength * sizeof(in3_node_weight_t));
+    for (i=0;i<chain->nodeListLength;i++) {
+        in3_node_t* n=chain->nodeList + i;
+        bb_write_int(bb, n->capacity);
+        bb_write_int(bb, n->index);
+        bb_write_long(bb, n->deposit);
+        bb_write_long(bb, n->props);
+        bb_write_fixed_bytes(bb, n->address);
+        bb_write_chars(bb, n->url,strlen(n->url));
     }
+
+
+    char key[200];
+    sprintf(key,"nodelist_%llx",chain->chainId);
+
+    ctx->client ->cacheStorage->set_item(key,&bb->b);
+    bb_free(bb);
     return 0;
 }
