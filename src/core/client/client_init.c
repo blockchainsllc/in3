@@ -6,7 +6,7 @@
 #include <time.h>
 
 
-static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int boot_node_count) {
+static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int boot_node_count, in3_chain_type_t type) {
     chain->chainId       = chainId;
     chain->initAddresses = NULL;
     chain->lastBlock     = 0;
@@ -15,6 +15,7 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int 
     chain->nodeList      = malloc(sizeof(in3_node_t)*boot_node_count);
     chain->nodeListLength= boot_node_count;
     chain->weights       = malloc(sizeof(in3_node_weight_t)*boot_node_count);
+    chain->type          = type;
 }
 
 static void initNode(in3_chain_t* chain, int node_index, char* address, char* url) {
@@ -55,27 +56,27 @@ static void in3_client_init(in3* c) {
     c->servers      = malloc(sizeof(in3_chain_t) * c->serversCount);
 
     // mainnet
-    initChain(c->servers, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252" , 2 );
+    initChain(c->servers, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252" , 2 , CHAIN_ETH);
     initNode( c->servers, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9","https://in3.slock.it/mainnet/nd-3");
     initNode( c->servers, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D","https://in3.slock.it/mainnet/nd-5");
 
     // tobalaba
-    initChain(c->servers+1, 0x044d, "845E484b505443814B992Bf0319A5e8F5e407879" , 2 );
+    initChain(c->servers+1, 0x044d, "845E484b505443814B992Bf0319A5e8F5e407879" , 2 ,  CHAIN_ETH);
     initNode( c->servers+1, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9","https://in3.slock.it/tobalaba/nd-3");
     initNode( c->servers+1, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a","https://in3.slock.it/tobalaba/nd-1");
 
     // evan
-    initChain(c->servers+2, 0x04b1, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e" , 2 );
+    initChain(c->servers+2, 0x04b1, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e" , 2 ,  CHAIN_ETH);
     initNode( c->servers+2, 0, "eaC4B82273e828878fD765D993800891bA2E3475","http://52.47.61.24:8500");
     initNode( c->servers+2, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33A","https://in3.slock.it/evan/nd-5");
 
     // kovan
-    initChain(c->servers+3, 0x2a, "27a37a1210df14f7e058393d026e2fb53b7cf8c1" , 2 );
+    initChain(c->servers+3, 0x2a, "27a37a1210df14f7e058393d026e2fb53b7cf8c1" , 2 , CHAIN_ETH);
     initNode( c->servers+3, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9","https://in3.slock.it/kovan/nd-3");
     initNode( c->servers+3, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D","https://in3.slock.it/kovan/nd-5");
 
     // ipfs
-    initChain(c->servers+4, 0x7d0, "0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9" , 2 );
+    initChain(c->servers+4, 0x7d0, "0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9" , 2 , CHAIN_IPFS);
     initNode( c->servers+4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a","https://in3.slock.it/ipfs/nd-1");
     initNode( c->servers+4, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D","https://in3.slock.it/ipfs/nd-5");
 }

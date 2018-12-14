@@ -46,7 +46,7 @@ static char* get_storage_dir() {
 
 static char* create_path(char* key) {
     char* path = malloc(strlen(get_storage_dir())+strlen(key)+5);
-    sprintf(path,"%s%s.json",get_storage_dir(),key);
+    sprintf(path,"%s%s",get_storage_dir(),key);
     return path;
 }
 

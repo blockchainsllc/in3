@@ -7,8 +7,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+/* ERROR types  used as return values */
 enum in3err {
-	/*  */
 	IN3_ERR_INVALID_JSON = -1,
     IN3_ERR_BUFFER_TOO_SMALL = -2,
     IN3_ERR_REQUEST_INVALID = -3,
@@ -17,6 +17,16 @@ enum in3err {
     IN3_ERR_CONFIG_ERROR =  -6,
     IN3_ERR_MAX_ATTEMPTS = -7,
 };
+
+/* type of the chain */
+typedef enum {
+	CHAIN_ETH = 0,
+	CHAIN_SUBSTRATE = 1,
+	CHAIN_IPFS = 2,
+	CHAIN_BTC = 3,
+	CHAIN_IOTA = 4,
+	CHAIN_GENERIC = 5,
+} in3_chain_type_t;
 
 
 typedef enum {
@@ -32,14 +42,6 @@ typedef enum {
 } in3_verification_t;
 
 typedef struct {
-    /* function pointer returning a stored value for the given key.*/
-//    uint32_t (verify)(bytes_t* data);
-
-    //TODO define verifier
-    
-} in3_verifier_t;
-
-typedef struct {
    uint64_t chainId;
    uint8_t includeCode;
    uint8_t useFullProof;
@@ -49,7 +51,6 @@ typedef struct {
    uint16_t finality;
    in3_verification_t verification;
    bytes_t* clientSignature;
-
    bytes_t* signatures;
    uint8_t signaturesCount;
 
@@ -59,9 +60,6 @@ typedef struct {
 typedef struct {
     /* the index within the contract */
     uint32_t index;
-
-    /* url of the node*/
-    char* url;
 
     /* the address of node */
     bytes_t* address; 
@@ -74,6 +72,9 @@ typedef struct {
 
     /* the properties*/
     uint64_t props;
+
+    /* url of the node*/
+    char* url;
     
 } in3_node_t;
 
@@ -96,32 +97,34 @@ typedef struct {
    /* chainId */
    uint64_t chainId; 
 
-   /* array of addresses of nodes that should always part of the nodeList */
-   bytes_t** initAddresses;
+   /*! chaintype */
+   in3_chain_type_t type;
 
    /* last blocknumber the nodeList was updated*/
    uint64_t lastBlock;
 
-   /* the address of the registry contract */
-   bytes_t* contract; 
-
    /* if true the nodelist should be updated. */
    bool needsUpdate;
-
-   /* array of nodes */
-   in3_node_t* nodeList;
 
    /* number of nodes in the nodeList */
    int nodeListLength;
 
+   /* array of nodes */
+   in3_node_t* nodeList;
+
    /* stats and weights recorded for each node */
    in3_node_weight_t* weights;
 
-    
+   /* array of addresses of nodes that should always part of the nodeList */
+   bytes_t** initAddresses;
+
+   /* the address of the registry contract */
+   bytes_t* contract; 
+
+
 } in3_chain_t;
 
-
-
+/* storage handler */
 typedef bytes_t* (*in3_storage_get_item)(char *);
 typedef void (*in3_storage_set_item)(char *, bytes_t*);
 
@@ -134,12 +137,12 @@ typedef struct {
 
 } in3_storage_handler_t;
 
+
+/* transport handler */
 typedef struct {
     sb_t error;
     sb_t result;
 } in3_response_t;
-
-
 typedef int (*in3_transport_send)(char** urls,  int urls_len, char* payload, in3_response_t* results);
 
 
