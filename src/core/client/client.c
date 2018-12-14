@@ -11,6 +11,7 @@
 #include "cache.h"
 #include <time.h>
 #include "../util/stringbuilder.h"
+#include "verifier.h"
 
 
 static int in3_client_send_intern( in3_ctx_t* ctx);
@@ -372,44 +373,64 @@ static int send_request(in3_ctx_t* ctx, int nodes_count,in3_response_t** respons
 
 static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* response) {
   node_weight_t* w = ctx->nodes;
+  in3_chain_t* chain = NULL;
   int n,i,res;
-    for (n=0;n<nodes_count;n++) {
-      if (response[n].error.len || !response[n].result.len) {
-        // blacklist the node
+
+  // find the chain-config.
+  for (i=0;i< ctx->client->serversCount;i++) {
+    chain = ctx->client->servers + i;
+    if (chain->chainId==ctx->client->chainId) break;
+  } 
+
+  if (chain==NULL) return false;
+
+  // find the verifier
+  in3_verifier_t* verifier = in3_get_verifier(chain->type);
+  if (verifier==NULL && ctx->client->proof!=PROOF_NONE) {
+    ctx_set_error(ctx,"No Verifier found",-1);
+    return false;
+  }
+
+
+  // blacklist nodes for missing response
+  for (n=0;n<nodes_count;n++) {
+    if (response[n].error.len || !response[n].result.len) {
+      // blacklist the node
+      w->weight->blacklistedUntil = time(0) + 3600000;
+      w->weight=0;
+    }
+    else {
+      // we need to clean up the prev ios responses if set
+      if (ctx->responses) free(ctx->responses);
+      if (ctx->tok_res)   free(ctx->tok_res);
+
+      // parse the result
+      res = ctx_parse_response(ctx,response[n].result.data);
+      if (res<0) {
+        // blacklist!
         w->weight->blacklistedUntil = time(0) + 3600000;
         w->weight=0;
       }
       else {
-        // we need to clean up the prev ios responses if set
-        if (ctx->responses) free(ctx->responses);
-        if (ctx->tok_res)   free(ctx->tok_res);
+        // check each request
+        for (i=0;i<ctx->len;i++) {
 
-        // parse the result
-        res = ctx_parse_response(ctx,response[n].result.data);
-        if (res<0) {
-          // blacklist!
-          w->weight->blacklistedUntil = time(0) + 3600000;
-          w->weight=0;
-        }
-        else {
-          // check each request
-          for (i=0;i<ctx->len;i++) {
-            if (verify_response(ctx,ctx->requests[i], ctx->requests_configs+i, ctx->responses[i])<0) {
-              // blacklist!
-              w->weight->blacklistedUntil = time(0) + 3600000;
-              w->weight=0;
-              break;
-            }
-          } 
-        }
+          if (verifier && verifier->verify(ctx,chain,ctx->requests[i], ctx->requests_configs+i, ctx->responses[i])<0) {
+            // blacklist!
+            w->weight->blacklistedUntil = time(0) + 3600000;
+            w->weight=0;
+            break;
+          }
+        } 
       }
-      if (w->weight>0) 
-        // this reponse was successfully verified, so let us keep it.
-        return true;
-
-      w=w->next;
     }
-    return false;
+    if (w->weight>0) 
+      // this reponse was successfully verified, so let us keep it.
+      return true;
+
+    w=w->next;
+  }
+  return false;
     
 }
 

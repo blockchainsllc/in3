@@ -163,22 +163,24 @@ bool ctx_equals(char* str, jsmntok_t* c, char* val) {
 
 uint32_t ctx_to_int(char* str, jsmntok_t* c, uint32_t defVal) {
     if (!c) return defVal;
-	int  n = c->end - c->start;
-    char *idval = malloc(n+1);
-    idval[n] = 0;
-	strncpy(idval, str + c->start, n);
-	uint32_t val = atol(idval);
-	free(idval);
-	return val;
+    return (uint32_t)ctx_to_long(str,c,defVal);
 }
 
 uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
     if (!c) return defVal;
-	int  n = c->end - c->start;
+	int  n = c->end - c->start,i;
     char *idval = malloc(n+1);
     idval[n] = 0;
 	strncpy(idval, str + c->start, n);
-	uint64_t val = atol(idval);
+    uint64_t val=0;
+
+    if (idval[0]=='0' && idval[1]=='x') {
+        for (i=n-1;i>1;i--) 
+            val |= ((uint64_t) strtohex(idval[i])) << ( 8*(n-1-i) );
+    }
+    else 
+      val = atol(idval);
+
 	free(idval);
 	return val;
 }

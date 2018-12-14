@@ -13,6 +13,7 @@
         "stdbool.h": "c",
         "bytes.h": "c",
         "stringbuilder.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "verifier.h": "c"
     }
 }

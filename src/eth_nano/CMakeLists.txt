@@ -1,6 +1,12 @@
 
 # static lib
-add_library( in3_eth_nano STATIC eth_tx.c)
+add_library( in3_eth_nano STATIC 
+  eth_nano.c 
+  rlp.c
+)
+
+# include core in the headers
+include_directories ("${PROJECT_SOURCE_DIR}/src/core")
 
 # props
 set_property(TARGET in3_eth_nano PROPERTY C_STANDARD 99)

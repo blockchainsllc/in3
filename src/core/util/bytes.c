@@ -30,17 +30,20 @@ void b_print(bytes_t *a)
 
 int b_cmp(bytes_t *a, bytes_t *b)
 {
-	int i = 0;
+	int i;
 
 	if ((a && b) == 0)
 		return 1;
 
+	if (a->len!=b->len)
+		return 0;
+
 	for (i = 0; i < a->len; i++) {
 		if (a->data[i] != b->data[i])
-			break;
+			return 0;
 	}
 
-	return (i != a->len);
+	return 1;
 }
 
 void b_free(bytes_t *a)
