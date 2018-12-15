@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/src/cmd/in3",
-            "args": ["eth_blockNumber"],
+            "args": ["eth_getTransactionReceipt","0x3ddc5012709aa350f4d27aad023410605087aa3dea92a7308c164584a92a5199"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -11,10 +11,8 @@ int eth_verify_blockheader(  in3_ctx_t* ctx, in3_chain_t* chain,in3_request_conf
     bytes_t* block_hash = sha3(header);
     bytes_t temp;
 
-    if (rlp_decode_item(header,0,&temp) && rlp_decode_item(&temp,8,&temp)) {
-        // this should be the list for the blockheader
-       memcpy(((uint8_t*)&header_number)+8-temp.len,temp.data,temp.len);
-    }
+    if (rlp_decode(header,0,&temp) && rlp_decode(&temp,8,&temp)) 
+       header_number = bytes_to_long(temp.data,temp.len);
     else
       res = ctx_set_error(ctx,"Could not rlpdecode the blocknumber",-1);
 

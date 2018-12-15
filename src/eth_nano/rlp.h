@@ -11,6 +11,6 @@
  * 1 : item found
  * 2 : list found ( you can then decode the same bytes again) 
  */
-int rlp_decode_item(bytes_t* b, size_t index, bytes_t* dst);
+int rlp_decode(bytes_t* b, size_t index, bytes_t* dst);
 
 #endif  // rlp__

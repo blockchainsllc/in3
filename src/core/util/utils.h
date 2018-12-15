@@ -16,6 +16,8 @@ typedef uint_least8_t pb_byte_t;
 #define JSON_OBJECT(ob, str, tokens) json_object_t ob = { .js=str, .tok=tokens };
 
 
+uint64_t bytes_to_long (uint8_t* data, int len);
+
 int size_of_bytes(int str_len);
 uint8_t strtohex(char c);
 int hex2byte_arr(char *buf, int len, uint8_t *out, int outbuf_size);

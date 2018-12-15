@@ -36,6 +36,7 @@ sb_t* sb_add_chars(sb_t* sb,  char* chars) {
     if (l==0 || chars==NULL) return sb;
     check_size(sb,l);
     memcpy(sb->data + sb->len,chars,l);
+    sb->len+=l;
     sb->data[sb->len]=0;
     return sb;
 }
