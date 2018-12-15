@@ -17,6 +17,7 @@ subgraph verifier
      eth_full(eth_full)
      eth_basic(eth_basic)
      eth_nano(eth_nano)
+     ipfs(ipfs)
  end
 
 subgraph transport
@@ -41,10 +42,12 @@ transport_wirepass --> wirepass
 cmd --> transport_curl
 cmd --> eth_full
 cmd -.-> core
+cmd --> ipfs
 
 lib --> transport_curl
 lib --> eth_full
 lib -.-> core
+lib --> ipfs
 
 
 eth_basic --> eth_nano
