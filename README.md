@@ -7,7 +7,7 @@ graph LR
 
 subgraph exe/lib
      cmd((cmd))
-     lib((lib)
+     lib((lib))
  end
 
 subgraph verifier
