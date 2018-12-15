@@ -3,17 +3,17 @@ This library contains the core API + management of the nodeList as well as the c
 Within the src-folder there are different modules used create the binaries matching the requirements of the device.
 
 ```mermaid
-graph RL
+graph LR
 
 subgraph exe/lib
-     cmd
-     lib
+     cmd((cmd))
+     lib((lib)
  end
 
 subgraph verifier
-     eth_full
-     eth_basic
-     eth_nano((nano))
+     eth_full(eth_full)
+     eth_basic(eth_basic)
+     eth_nano(eth_nano)
  end
 
 subgraph transport
@@ -23,7 +23,7 @@ subgraph transport
  end
 
 subgraph lib
-   core
+   core((core)
  end
 
 
