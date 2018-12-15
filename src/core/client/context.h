@@ -59,7 +59,7 @@ int ctx_parse_response(in3_ctx_t* ctx, char* response_data);
 void free_ctx(in3_ctx_t* ctx);
 
 jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key);
-jsmntok_t* ctx_get_array_token(char* str, jsmntok_t* root, int index);
+jsmntok_t* ctx_get_array_token(jsmntok_t* root, int index);
 
 bool ctx_equals(char* str, jsmntok_t* root, char* val);
 int ctx_cpy_string(char* str, jsmntok_t* root, char* dst);

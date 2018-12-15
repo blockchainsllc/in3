@@ -26,7 +26,7 @@ int main (int argc, char *argv[])
 {
   int i;
   if (argc < 2) {
-    fprintf(stdout,"Usage: %s <options> method params ... \n  -p -proof    none|standard|full\n  -c -chain    mainnet|kovan|evan|tobalaba|ipfs\n",argv[0]);
+    fprintf(stdout,"Usage: %s <options> method params ... \n  -p -proof    none|standard|full\n  -s -signs    number of signatures\n  -c -chain    mainnet|kovan|evan|tobalaba|ipfs\n",argv[0]);
     return 1;
   }
   
@@ -53,6 +53,8 @@ int main (int argc, char *argv[])
   for (i=1;i<argc;i++) {
     if (strcmp(argv[i],"-chain")==0 || strcmp(argv[i],"-c")==0)
        c->chainId = getChainId(argv[++i]);
+    else if (strcmp(argv[i],"-signs")==0 || strcmp(argv[i],"-s")==0)
+       c->signatureCount = atoi(argv[++i]);
     else if (strcmp(argv[i],"-proof")==0 || strcmp(argv[i],"-p")==0) {
       if (strcmp(argv[i+1],"none")==0) 
          c->proof = PROOF_NONE;

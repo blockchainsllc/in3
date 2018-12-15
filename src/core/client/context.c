@@ -141,8 +141,9 @@ jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key) {
    return NULL;
 }
 
-jsmntok_t* ctx_get_array_token(char* str, jsmntok_t* root, int index) {
+jsmntok_t* ctx_get_array_token(jsmntok_t* root, int index) {
    int i;
+   if (root==NULL) return NULL;
    jsmntok_t* c = root+1;
    if (index >= root->size) return NULL;
  
@@ -176,7 +177,7 @@ uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
 
     if (idval[0]=='0' && idval[1]=='x') {
         for (i=n-1;i>1;i--) 
-            val |= ((uint64_t) strtohex(idval[i])) << ( 8*(n-1-i) );
+            val |= ((uint64_t) strtohex(idval[i])) << ( 4*(n-1-i) );
     }
     else 
       val = atol(idval);

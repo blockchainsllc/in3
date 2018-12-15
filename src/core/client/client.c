@@ -42,7 +42,7 @@ int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) 
    // set new values
    for (i=0;i<nodes->size;i++) {
      in3_node_t* n = newList+i;
-     jsmntok_t* node = ctx_get_array_token(res, nodes,i);
+     jsmntok_t* node = ctx_get_array_token(nodes,i);
      if (!node) 
         r = ctx_set_error(ctx, "node missing", -1); 
      else {
@@ -391,6 +391,10 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
     return false;
   }
 
+  in3_vctx_t vc;
+  vc.ctx=ctx;
+  vc.chain=chain;
+
 
   // blacklist nodes for missing response
   for (n=0;n<nodes_count;n++) {
@@ -412,10 +416,16 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
         w->weight=0;
       }
       else {
+        printf("res:%s",ctx->response_data);
         // check each request
         for (i=0;i<ctx->len;i++) {
+          vc.request=ctx->requests[i];
+          vc.result = ctx_get_token(ctx->response_data, ctx->responses[i],"result");
+          if ((vc.proof =ctx_get_token(ctx->response_data,  ctx->responses[i], "in3")))
+            vc.proof=ctx_get_token(ctx->response_data,  vc.proof, "proof");
+          vc.config = ctx->requests_configs +i;
 
-          if (verifier && verifier->verify(ctx,chain,ctx->requests[i], ctx->requests_configs+i, ctx->responses[i])<0) {
+          if (verifier && verifier->verify(&vc)) {
             // blacklist!
             w->weight->blacklistedUntil = time(0) + 3600000;
             w->weight=0;

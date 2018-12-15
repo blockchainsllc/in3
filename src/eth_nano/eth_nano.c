@@ -4,25 +4,27 @@
 #include <string.h>
 #include "rlp.h"
 
-int eth_verify_blockheader(  in3_ctx_t* ctx, in3_chain_t* chain,in3_request_config_t* request_config, bytes_t* header, jsmntok_t* expected_blockhash, jsmntok_t* proof) {
+int eth_verify_blockheader( in3_vctx_t* vc, bytes_t* header, jsmntok_t* expected_blockhash) {
     int res=0,i;
     uint64_t header_number=0;
     jsmntok_t* t,*sig,*t2;
     bytes_t* block_hash = sha3(header);
     bytes_t temp;
 
+    if (!header) return vc_err(vc,"no header found");
+
     if (rlp_decode(header,0,&temp) && rlp_decode(&temp,8,&temp)) 
        header_number = bytes_to_long(temp.data,temp.len);
     else
-      res = ctx_set_error(ctx,"Could not rlpdecode the blocknumber",-1);
+      res = vc_err(vc,"Could not rlpdecode the blocknumber");
 
     if (res==0 && expected_blockhash) {
-        bytes_t* expected = ctx_to_bytes(ctx->response_data,expected_blockhash,32);
-        if (!b_cmp(block_hash, expected)) res = ctx_set_error(ctx,"wrong blockhash",-1);
+        bytes_t* expected = res_to_bytes(vc,expected_blockhash);
+        if (!b_cmp(block_hash, expected)) res = vc_err(vc,"wrong blockhash");
         b_free(expected);
     }
 
-    if (res==0 && request_config->signaturesCount==0) {
+    if (res==0 && vc->config->signaturesCount==0) {
       // for proof of authorities we can verify the signatures
       // TODO
 //        if (ctx && ctx.chainSpec && ctx.chainSpec.engine==='authorityRound') {
@@ -32,23 +34,24 @@ int eth_verify_blockheader(  in3_ctx_t* ctx, in3_chain_t* chain,in3_request_conf
 //        }
 
     }
-    else if (res==0 && (!(t=ctx_get_token(ctx->response_data,proof,"signatures")) || t->size<request_config->signaturesCount))
-      res = ctx_set_error(ctx,"missing signatures",-1);
+    else if (res==0 && (!(t= res_get(vc,vc->proof,"signatures")) || t->size<vc->config->signaturesCount))
+      res = vc_err(vc,"missing signatures");
     else if (res==0){
         int confirmed=0;
         for (i=0;i<t->size;i++) {
-            sig = ctx_get_array_token(ctx->response_data,t,i);
-            if ((t=ctx_get_token(ctx->response_data,sig,"block"))) {
-                uint64_t block_number = ctx_to_long(ctx->response_data,t,0);
+            sig = ctx_get_array_token(t,i);
+            if ((t= res_get(vc,sig,"block"))) {
+                uint64_t block_number = res_to_long(vc,t,0);
                 if (block_number==header_number) {
                     // TODO check sig
+                    
 
                     confirmed++;
                 }
             }
         }
-        if (confirmed<request_config->signaturesCount) 
-           res = ctx_set_error(ctx,"missing signatures",-1);
+        if (confirmed< vc->config->signaturesCount) 
+           res = vc_err(vc,"missing signatures");
     }
 
 
@@ -56,29 +59,28 @@ int eth_verify_blockheader(  in3_ctx_t* ctx, in3_chain_t* chain,in3_request_conf
 }
 
 
-int in3_verify_eth_getTransactionReceipt(in3_ctx_t* ctx , in3_chain_t* chain, jsmntok_t* tx_hash, 
-    in3_request_config_t* request_config, jsmntok_t* result, jsmntok_t* proof ) {
+int in3_verify_eth_getTransactionReceipt(in3_vctx_t* vc, jsmntok_t* tx_hash ) {
 
     int res=0;
     jsmntok_t* in3,*t;
 
-    if (!tx_hash) return ctx_set_error(ctx,"No Transaction Hash found",-1);
-    if (tx_hash->end- tx_hash->start!=66) return ctx_set_error(ctx,"The transactionHash has the wrong length!",-1);
+    if (!tx_hash) return vc_err(vc,"No Transaction Hash found");
+    if (tx_hash->end- tx_hash->start!=66) return vc_err(vc,"The transactionHash has the wrong length!");
 
     // this means result: null, which is ok, since we can not verify a transaction that does not exists
-    if (result->type==JSMN_PRIMITIVE) return 0;
+    if (vc->result->type==JSMN_PRIMITIVE) return 0;
 
-    if (!proof)  return ctx_set_error(ctx,"Proof is missing!",-1);
-    if (!(t=ctx_get_token(ctx->response_data,proof,"block"))) 
-       return ctx_set_error(ctx,"No Block-Proof!",-1);
+    if (!vc->proof)  return vc_err(vc,"Proof is missing!");
+    if (!(t= res_get(vc,vc->proof,"block"))) 
+       return vc_err(vc,"No Block-Proof!");
 
 
-    bytes_t* blockHeader = ctx_to_bytes(ctx->response_data, t,32);
-    res = eth_verify_blockheader(ctx, chain, request_config, blockHeader, ctx_get_token(ctx->response_data,result,"blockHash"), proof);
+    bytes_t* blockHeader = res_to_bytes(vc, t);
+    res = eth_verify_blockheader(vc, blockHeader, res_get(vc,vc->result,"blockHash"));
     b_free(blockHeader);
 
     if (res==0) {
-        bytes_t* txHash = ctx_to_bytes(ctx->response_data, tx_hash,32);
+        bytes_t* txHash = res_to_bytes(vc,tx_hash);
 
         // TODO check merkle tree
         b_free(txHash);
@@ -90,29 +92,24 @@ int in3_verify_eth_getTransactionReceipt(in3_ctx_t* ctx , in3_chain_t* chain, js
 
 
 
-int in3_verify_eth_nano( in3_ctx_t* ctx , in3_chain_t* chain, jsmntok_t* request, in3_request_config_t* request_config, jsmntok_t* response) {
-    jsmntok_t* t, *result, *proof;
+int in3_verify_eth_nano( in3_vctx_t* vc) {
+    jsmntok_t* t;
 
-    if (request_config->verification==VERIFICATION_NEVER) return 0;
-    // do we support this request?
-    if (!(t=ctx_get_token(ctx->request_data,request,"method"))) 
-       return ctx_set_error(ctx,"No Method in request defined!",-1);
-    if (!ctx_equals(ctx->request_data,t,"eth_getTransactionReceipt")) 
-       return ctx_set_error(ctx,"The Method cannot be verified with eth_nano!",-1);
+    if (vc->config->verification==VERIFICATION_NEVER) return 0;
 
     // do we have a result? if not it is a vaslid error-response
-    if (!(result=ctx_get_token(ctx->response_data,response,"result"))) 
+    if (!vc->result) 
       return 0;
 
-    if (!(t=ctx_get_token(ctx->request_data,request,"params")) || t->size<1) 
-       return ctx_set_error(ctx,"No params in request defined!",-1);
+    // do we support this request?
+    if (!(t=req_get(vc,vc->request,"method")))
+       return vc_err(vc,"No Method in request defined!");
+    if (!req_eq(vc,t,"eth_getTransactionReceipt")) 
+       return vc_err(vc,"The Method cannot be verified with eth_nano!");
 
-    if ((proof=ctx_get_token(ctx->response_data,response,"in3"))) 
-       proof = ctx_get_token(ctx->response_data,proof,"proof");
-    
-    
+
     // for txReceipt, we need the txhash
-    return in3_verify_eth_getTransactionReceipt(ctx, chain,  ctx_get_array_token(ctx->request_data,t,0),request_config ,result, proof);
+    return in3_verify_eth_getTransactionReceipt(vc, req_get_param(vc,0));
 }
 
 

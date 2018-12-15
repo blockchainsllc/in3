@@ -32,7 +32,7 @@ static char* get_storage_dir() {
             _mkdir(_HOME_DIR);
         #else 
             char* home = getenv("HOME");
-            if (!home) home = "~";
+            if (!home) home = ".";
             _HOME_DIR = malloc(strlen(home)+8);
             sprintf(_HOME_DIR,"%s/.in3/",home);
             mode_t old_umask;                                                                
@@ -80,8 +80,10 @@ bytes_t* storage_get_item(char* key) {
 void storage_set_item(char* key, bytes_t* content) {
     char* path = create_path(key);
     FILE* file = fopen (path, "wb");
-    fwrite (content->data , sizeof(uint8_t), content->len, file);
-    fclose (file);
+    if (file) {
+       fwrite (content->data , sizeof(uint8_t), content->len, file);
+       fclose (file);
+    }
     free(path);
 }
 
