@@ -15,7 +15,7 @@ int in3_cache_init(in3* c) {
 int in3_cache_update_nodelist(in3* c, in3_chain_t* chain) {
     if (!c->cacheStorage) return 0;
     char key[200];
-    sprintf(key,"nodelist_%llx",chain->chainId);
+    sprintf(key,"nodelist_%llx",(unsigned long long) chain->chainId);
 
     bytes_t* b = c->cacheStorage->get_item(key);
     if (b) {
@@ -77,7 +77,7 @@ int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
 
 
     char key[200];
-    sprintf(key,"nodelist_%llx",chain->chainId);
+    sprintf(key,"nodelist_%llx",(unsigned long long) chain->chainId);
 
     ctx->client ->cacheStorage->set_item(key,&bb->b);
     bb_free(bb);

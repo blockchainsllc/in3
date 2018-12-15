@@ -7,6 +7,8 @@ add_library( in3_eth_nano STATIC
 
 # include core in the headers
 include_directories ("${PROJECT_SOURCE_DIR}/src/core")
+# add dependency
+target_link_libraries(in3_eth_nano core)
 
 # props
 set_property(TARGET in3_eth_nano PROPERTY C_STANDARD 99)
