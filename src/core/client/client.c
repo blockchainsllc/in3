@@ -97,6 +97,9 @@ static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   char req[10000];
   sprintf(req,"{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}",c->nodeLimit, seed);
 
+  uint16_t old_sig_count =  c->signatureCount;
+  c->signatureCount=0;
+
   // new client
   in3_ctx_t* ctx = new_ctx(c,req); 
   if (ctx->error) 
@@ -129,6 +132,7 @@ static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   if (!res && c->cacheStorage) 
      in3_cache_store_nodelist(ctx,chain);
   free_ctx(ctx);
+  c->signatureCount=old_sig_count;
   return res;
 }
 

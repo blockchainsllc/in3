@@ -26,6 +26,9 @@ void int8_to_char(uint8_t *buffer, int len, char *out);
 
 bytes_t *sha3(bytes_t *data);
 
+
+void long_to_bytes(uint64_t val, uint8_t* dst);
+void int_to_bytes(uint32_t val, uint8_t* dst);
 void byte_to_hex(uint8_t b, char s[23]);
 int hash_cmp(uint8_t *a, uint8_t *b);
 
