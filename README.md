@@ -6,8 +6,8 @@ Within the src-folder there are different modules used create the binaries match
 graph LR
 
 subgraph exe/lib
-     cmd((cmd))
-     lib((lib))
+     cmd(cmd)
+     lib(lib)
  end
 
 subgraph verifier
@@ -23,7 +23,7 @@ subgraph transport
  end
 
 subgraph lib
-   core((core)
+   core((core))
  end
 
 
