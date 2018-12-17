@@ -1,3 +1,7 @@
+/** @file 
+ * Ethereum Nanon verification.
+ * */ 
+
 #ifndef in3_eth_nano_h__
 #define in3_eth_nano_h__
 

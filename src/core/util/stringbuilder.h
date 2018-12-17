@@ -1,3 +1,8 @@
+/** @file 
+ * simple string buffer used to dynamicly add content.
+ * */ 
+
+
 #ifndef __STR_BUILDER_H__
 #define __STR_BUILDER_H__
  

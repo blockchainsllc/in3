@@ -1,3 +1,7 @@
+/** @file 
+ * serialization of ETH-Objects.
+ * */ 
+
 #include <util/bytes.h>
 #include <client/context.h>
 #include <string.h>

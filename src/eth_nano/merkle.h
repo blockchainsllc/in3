@@ -1,3 +1,7 @@
+/** @file 
+ * Merkle Proof Verification.
+ * */ 
+
 #include <util/bytes.h>
 
 
