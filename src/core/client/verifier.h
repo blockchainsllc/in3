@@ -1,3 +1,9 @@
+/** @file 
+ * Verification Context.
+ * This context is passed to the verifier.
+ * */ 
+
+
 #include <stdint.h>  
 #include <stdbool.h>
 #include "../util/utils.h"
@@ -7,7 +13,7 @@
 
 #ifndef VERIFIER_H
 #define VERIFIER_H
-
+/** gets a child of the given request-token with the given name*/
 #define req_get(v,t,c) ctx_get_token(v->ctx->request_data,t,c)
 #define res_get(v,t,c) ctx_get_token(v->ctx->response_data,t,c)
 #define req_eq(v,t,c) ctx_equals(v->ctx->request_data,t,c)

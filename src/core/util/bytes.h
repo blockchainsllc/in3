@@ -1,3 +1,8 @@
+/** @file 
+ * Verification Context.
+ * This context is passed to the verifier.
+ * */ 
+
 #include <stdint.h>  
 #include <stdbool.h>
 #include <stdlib.h>
@@ -8,30 +13,31 @@
 #define HASH(v,d) bytes_t v; uint8_t d[32];  v.data=d; v.len=32;
 #define BYTES(v,d,len) bytes_t v; uint8_t d[len];  v.data=d; v.len=len;
 
-/* a byte array */
+/** a byte array */
 typedef struct {
-	int len;
-	uint8_t *data;
+	int len;        /**< the length of the array ion bytes */
+	uint8_t *data;  /**< the byte-data  */
 } bytes_t;
 
+/** a byte-buffer to attach byte-functions. */
 typedef struct {
 	int bsize;
 	bytes_t b;
 } bytes_builder_t;
 
-/* allocates a new byte array with 0 filled */
+/** allocates a new byte array with 0 filled */
 bytes_t *b_new(char *data, int len);
 
-/* printsa the bytes as hey to stdout */
+/** printsa the bytes as hey to stdout */
 void b_print(bytes_t *a);
 
-/* compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+/** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
 int b_cmp(bytes_t *a, bytes_t *b);
 
-/* frees the data */
+/** frees the data */
 void b_free(bytes_t *a);
 
-/* clones a byte array*/
+/** clones a byte array*/
 bytes_t* b_dup(bytes_t *a);
 
 

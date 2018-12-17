@@ -1,3 +1,8 @@
+/** @file 
+ * storing nodelists and other cahces with thew storage handler.
+ * */ 
+
+
 #include <stdint.h>  
 #include "../util/bytes.h"
 #include "client.h"

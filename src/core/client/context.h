@@ -1,3 +1,9 @@
+/** @file 
+ * Request Context.
+ * This is used for each request holding request and response-pointers.
+ * */ 
+
+
 #include <stdint.h>  
 #include <stdbool.h>
 #include "../util/utils.h"
@@ -7,15 +13,22 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
+/**
+ * the weight of a ceertain node as linked list
+ */
 typedef struct weight {
-  in3_node_t* node;
-  in3_node_weight_t* weight;
-  float s;
-  float w;
-  struct weight * next;
+  in3_node_t* node;           /**< the node definition including the url */
+  in3_node_weight_t* weight;  /**< the current weight and blacklisting-stats */ 
+  float s;                    /**< The starting value */
+  float w;                    /**< weight value */
+  struct weight * next;       /**< next in the linkedlistt or NULL if this is the last element*/
 } node_weight_t;
 
 
+/**
+ * The Request config.
+ * This is generated for each request and represents the current state.
+ * */
 typedef struct {
    /*! reference to the client*/
    in3* client;
@@ -54,6 +67,11 @@ typedef struct {
 
 } in3_ctx_t;
 
+/** 
+ * creates a new context.
+ * 
+ * the request data will be parsed and represented in the context.
+ */
 in3_ctx_t* new_ctx(in3* client, char* req_data);
 int ctx_parse_response(in3_ctx_t* ctx, char* response_data);
 void free_ctx(in3_ctx_t* ctx);
