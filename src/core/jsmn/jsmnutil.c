@@ -63,7 +63,7 @@ jsmnutil_parse_json_range (const char *buf, size_t len,jsmntok_t **jsonv_out, in
 	jsmn_init (&parser);
 
 	*jsons_out=10;
-	*jsonv_out = calloc(1, *jsons_out * sizeof(jsmntok_t));
+	*jsonv_out = _calloc(1, *jsons_out * sizeof(jsmntok_t));
 
 	if (*jsonv_out == NULL) {
 		fprintf(stderr, "k_malloc(): errno=%d\n", errno);
@@ -113,7 +113,7 @@ jsmnutil_get_array_toks (const char *buf, jsmntok_t *tok)
 		return NULL;
 	}
 
-	arr = malloc(sizeof(jsmntok_t*) * (tok->size + 1));
+	arr = _malloc(sizeof(jsmntok_t*) * (tok->size + 1));
 	arr[tok->size] = NULL; // NULL terminated
 
 	iterate_json_item(buf, tok, tok_arr_append_cb, arr);
@@ -145,7 +145,7 @@ jsmnutil_get_object_keys (const char *buf, jsmntok_t *tok)
 	}
 
 	c = jsmnutil_object_key_count(buf, tok);
-	arr = malloc(sizeof(jsmntok_t*) * (c + 1));
+	arr = _malloc(sizeof(jsmntok_t*) * (c + 1));
 	arr[c] = NULL; // NULL terminated
 
 	iterate_json_item(buf, tok, tok_arr_append_cb, arr);
@@ -169,5 +169,5 @@ jsmnutil_tokv_k_free(jsmntok_t** tok)
 	// do not k_free tokens as they are managed by
 	// token array memory blocked created during
 	// parsing
-	free (tok);
+	_free (tok);
 }

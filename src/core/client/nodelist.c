@@ -5,16 +5,17 @@
 #include <time.h>
 #include <stdio.h>
 #include "send.h"
+#include "../util/mem.h"
 
 static void free_nodeList(in3_node_t* nodeList, int count) {
    int i;
 
      // clean chain..
    for (i=0;i<count;i++) {
-     if (nodeList[i].url)       free(nodeList[i].url);
+     if (nodeList[i].url)       _free(nodeList[i].url);
      if (nodeList[i].address) b_free(nodeList[i].address);
    }
-   free(nodeList);
+   _free(nodeList);
 }
 
 static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) {
@@ -33,7 +34,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* r
   chain->lastBlock = ctx_to_long(response,t,chain->lastBlock);
 
   // new nodelist
-  in3_node_t* newList = calloc(nodes->size, sizeof(in3_node_t));
+  in3_node_t* newList = _calloc(nodes->size, sizeof(in3_node_t));
 
    // set new values
   for (i=0;i<nodes->size;i++) {
@@ -51,7 +52,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* r
     
     t=ctx_get_token(response,node,"url");
     if (t) {
-        n->url = malloc(t->end - t->start +1);
+        n->url = _malloc(t->end - t->start +1);
         ctx_cpy_string(response,t,n->url);
     }
     else  {
@@ -74,8 +75,8 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* r
        chain->nodeList       = newList;
        chain->nodeListLength = nodes->size;
 
-       free(chain->weights);
-       chain->weights = calloc(nodes->size,sizeof(in3_node_weight_t));
+      _free(chain->weights);
+       chain->weights = _calloc(nodes->size,sizeof(in3_node_weight_t));
        for (i=0;i<nodes->size;i++)
          chain->weights[i].weight = 1;
    }
@@ -149,7 +150,7 @@ node_weight_t*  in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_n
     if (nodeDef->deposit<c->minDeposit)  continue;
     weightDef = weights +i;
     if (weightDef->blacklistedUntil > now )  continue;
-    w = malloc(sizeof(node_weight_t));
+    w = _malloc(sizeof(node_weight_t));
     if (!first) first = w;
     w->node = nodeDef;
     w->weight = weightDef;
@@ -264,7 +265,7 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 
       if (!wn) {
         added++;
-        wn = calloc(1,sizeof(node_weight_t));
+        wn = _calloc(1,sizeof(node_weight_t));
         wn->s = w->s;
         wn->w = w->w;
         wn->weight = w->weight;
@@ -288,11 +289,11 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 int in3_nodelist_clear(in3_chain_t* chain) {
     int i;
     for (i=0;i<chain->nodeListLength;i++) {
-        if (chain->nodeList[i].url)       free(chain->nodeList[i].url);
+        if (chain->nodeList[i].url)      _free(chain->nodeList[i].url);
         if (chain->nodeList[i].address) b_free(chain->nodeList[i].address);
     }
-    free(chain->nodeList);
-    free(chain->weights);
+   _free(chain->nodeList);
+   _free(chain->weights);
     return 0;
 }
 

@@ -5,6 +5,7 @@
 #include "cache.h"
 #include "nodelist.h"
 #include <time.h>
+#include "../util/mem.h"
 
 
 static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int boot_node_count, in3_chain_type_t type) {
@@ -13,9 +14,9 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int 
     chain->lastBlock     = 0;
     chain->contract      = hex2byte_new_bytes(contract,40);
     chain->needsUpdate   = 1;
-    chain->nodeList      = malloc(sizeof(in3_node_t)*boot_node_count);
+    chain->nodeList      = _malloc(sizeof(in3_node_t)*boot_node_count);
     chain->nodeListLength= boot_node_count;
-    chain->weights       = malloc(sizeof(in3_node_weight_t)*boot_node_count);
+    chain->weights       = _malloc(sizeof(in3_node_weight_t)*boot_node_count);
     chain->type          = type;
 }
 
@@ -26,7 +27,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
     node->capacity = 1;
     node->deposit  = 0;
     node->props    = 0xFF;
-    node->url      = malloc( strlen(url)+1 );
+    node->url      = _malloc( strlen(url)+1 );
     memcpy(node->url,url,strlen(url)+1 );
 
     in3_node_weight_t* weight = chain->weights + node_index;
@@ -54,7 +55,7 @@ static void in3_client_init(in3_t* c) {
     c->replaceLatestBlock = 0;
     c->requestCount = 1;
     c->serversCount = 5;
-    c->servers      = malloc(sizeof(in3_chain_t) * c->serversCount);
+    c->servers      = _malloc(sizeof(in3_chain_t) * c->serversCount);
 
     // mainnet
     initChain(c->servers, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252" , 2 , CHAIN_ETH);
@@ -88,10 +89,10 @@ void in3_free(in3_t* a) {
     int i;
     for (i=0;i<a->serversCount;i++) {
         in3_nodelist_clear(a->servers+i);
-        free(a->servers[i].contract);
+        _free(a->servers[i].contract);
     }
-    free(a->servers);
-    free(a);
+    _free(a->servers);
+    _free(a);
 }
 
 in3_t *in3_new() {
@@ -99,7 +100,7 @@ in3_t *in3_new() {
     srand ( time(NULL) );
 
      // create new client
-	in3_t *c = calloc(1, sizeof(in3_t));
+	in3_t *c = _calloc(1, sizeof(in3_t));
     in3_client_init(c);
 	return c;
 }

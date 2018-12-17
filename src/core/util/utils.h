@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include "bytes.h"
 #include "../jsmn/jsmn.h"
+#include "mem.h"
 
 typedef uint32_t pb_size_t;
 typedef uint_least8_t pb_byte_t;
@@ -43,7 +44,6 @@ char *json_get_value(char *data, char *key);
 
 int str2hex_str(char *str, char **buf);
 int str2byte_a(char *str, uint8_t **buf);
-void *k_realloc(void *ptr, size_t size, size_t oldsize);
 int get_json_key_value_int(char *buf, char *key, jsmntok_t* tok, int tokc);
 char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc);
 char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok);

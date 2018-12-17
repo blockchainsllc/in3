@@ -7,6 +7,7 @@
 #include "serialize.h"
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
+#include <util/mem.h>
 
 int eth_verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, jsmntok_t *sig)
 {
@@ -168,7 +169,7 @@ static void free_proof(bytes_t** proof) {
         b_free(*p);
         p += 1;
     }
-    free(proof);
+   _free(proof);
 }
 
 
@@ -264,7 +265,7 @@ int in3_verify_eth_nano(in3_vctx_t *vc)
 
 void in3_register_eth_nano()
 {
-    in3_verifier_t *v = calloc(1, sizeof(in3_verification_t));
+    in3_verifier_t *v = _calloc(1, sizeof(in3_verification_t));
     v->type = CHAIN_ETH;
     v->verify = in3_verify_eth_nano;
     in3_register_verifier(v);

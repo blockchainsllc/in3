@@ -13,6 +13,7 @@
 #include "../util/stringbuilder.h"
 #include "verifier.h"
 #include "nodelist.h"
+#include "../util/mem.h"
 
 
 static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, jsmntok_t* req ) {
@@ -38,7 +39,7 @@ static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, jsmntok
          return ctx_set_error(ctx,"Could not find any nodes for requesting signatures",IN3_ERR_NO_NODES_FOUND);
        int node_count = ctx_nodes_len(sig_nodes);
        conf->signaturesCount = node_count;
-       conf->signatures = malloc(sizeof(bytes_t)*node_count);
+       conf->signatures = _malloc(sizeof(bytes_t)*node_count);
        node_weight_t* w= sig_nodes;
        for (i=0;i<node_count;i++) {
          conf->signatures[i].len = w->node->address->len;
@@ -59,7 +60,7 @@ static int send_request(in3_ctx_t* ctx, int nodes_count,in3_response_t** respons
   sb_t* payload = sb_new(NULL);
 
   // create url-array
-  char** urls = malloc(sizeof(char*)* nodes_count);
+  char** urls = _malloc(sizeof(char*)* nodes_count);
   node_weight_t* w = ctx->nodes;
   for (n=0;n<nodes_count;n++) {
     urls[n]=w->node->url;
@@ -69,12 +70,12 @@ static int send_request(in3_ctx_t* ctx, int nodes_count,in3_response_t** respons
   res = ctx_create_payload(ctx, payload);
   if (res<0)  {
      sb_free(payload);
-     free(urls);
+    _free(urls);
     return ctx_set_error(ctx,"could not generate the payload",IN3_ERR_CONFIG_ERROR);
   }
 
   // prepare response-object
-  in3_response_t* response = malloc( sizeof(in3_response_t)*nodes_count );
+  in3_response_t* response = _malloc( sizeof(in3_response_t)*nodes_count );
   for (n=0;n<nodes_count;n++) {
     sb_init(&response[n].error);
     sb_init(&response[n].result);
@@ -85,14 +86,14 @@ static int send_request(in3_ctx_t* ctx, int nodes_count,in3_response_t** respons
 
   // free resources
   sb_free(payload);
-  free(urls);
+ _free(urls);
 
   if (res<0) {
      for (n=0;n<nodes_count;n++) {
-       free(response[n].error.data);
-       free(response[n].result.data);
+      _free(response[n].error.data);
+      _free(response[n].result.data);
      }
-     free(response);
+    _free(response);
      return res;
   }
   *response_result = response;
@@ -136,8 +137,8 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
     }
     else {
       // we need to clean up the prev ios responses if set
-      if (ctx->responses) free(ctx->responses);
-      if (ctx->tok_res)   free(ctx->tok_res);
+      if (ctx->responses)_free(ctx->responses);
+      if (ctx->tok_res)  _free(ctx->tok_res);
 
       // parse the result
       res = ctx_parse_response(ctx,response[n].result.data);
@@ -205,23 +206,23 @@ int in3_send_ctx( in3_ctx_t* ctx) {
 
   // clean up responses exycept the response we want to keep.
   for (i=0;i<nodes_count;i++) {
-    free(response[i].error.data);
-    if (response[i].result.data!=ctx->response_data) free(response[i].result.data);
+   _free(response[i].error.data);
+    if (response[i].result.data!=ctx->response_data)_free(response[i].result.data);
   }
-  free(response);
+ _free(response);
 
   if (!is_valid) {
     // this means all of the responses failed or could not be verified
     if (ctx->attempt< ctx->client->max_attempts) {
       ctx->attempt++;
       // clean up old results
-      if (ctx->response_data) free(ctx->response_data);
-      if (ctx->responses) free(ctx->responses);
-      if (ctx->tok_res)   free(ctx->tok_res);
+      if (ctx->response_data)_free(ctx->response_data);
+      if (ctx->responses)_free(ctx->responses);
+      if (ctx->tok_res)  _free(ctx->tok_res);
       if (ctx->requests_configs ) {
           for (i=0;i<ctx->len;i++) {
               if (ctx->requests_configs[i].signaturesCount) 
-                free(ctx->requests_configs[i].signatures);
+               _free(ctx->requests_configs[i].signatures);
           }
       }
       ctx->response_data = NULL;

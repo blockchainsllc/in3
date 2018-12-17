@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>  
 #include <util/utils.h>
+#include <util/mem.h>
 //#include <zephyr.h>
 
 //#include "fsm.h"
@@ -28,7 +29,7 @@ static int matching_nibbles(uint8_t *a,uint8_t *b  ) {
 
 // converts the byte array to nibles of 4 bit each
 static uint8_t* str_to_nibbles(bytes_t *path, int use_prefix) {
-	uint8_t *n = malloc(1 + (path->len * 2));
+	uint8_t *n = _malloc(1 + (path->len * 2));
 	int j=0;
     
 	for (int i = 0; i < path->len; i++) {
@@ -79,7 +80,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
 	int matching = matching_nibbles(path_nibbles, *key);
 	int node_path_len = nibble_len(path_nibbles);
 	int is_leaf = val.data[0] & 32;
-    free(path_nibbles);
+   _free(path_nibbles);
 
     // if the relativeKey in the leaf does not math our rest key, we throw!
 	if (node_path_len!=matching) {
@@ -160,6 +161,6 @@ int verifyMerkleProof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
 		}
 	}
 
-	if (full_key) free(full_key);
+	if (full_key)_free(full_key);
 	return res;
 }

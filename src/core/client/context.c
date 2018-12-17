@@ -6,6 +6,7 @@
 #include "client.h"
 #include "../jsmn/jsmnutil.h"
 #include "../util/stringbuilder.h"
+#include "../util/mem.h"
 
 static int get_token_size(jsmntok_t* t) {
 	int i,j=1;
@@ -28,7 +29,7 @@ static int get_token_size(jsmntok_t* t) {
 
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
-    in3_ctx_t* c = calloc(1,sizeof(in3_ctx_t));
+    in3_ctx_t* c = _calloc(1,sizeof(in3_ctx_t));
     c->request_data = req_data;
     c->attempt      = 0;
     c->client       = client;
@@ -45,13 +46,13 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
     if (c->tok_req[0].type==JSMN_OBJECT) {
         // it is a single result
-        c->requests      = malloc(sizeof(jsmntok_t*));
+        c->requests      = _malloc(sizeof(jsmntok_t*));
         c->requests[0]   = c->tok_req;
         c->len          = 1;
     }
     else if (c->tok_req[0].type==JSMN_ARRAY) {
         c->len        = c->tok_req[0].size;
-        c->requests   = malloc(sizeof(jsmntok_t*)*c->len);
+        c->requests   = _malloc(sizeof(jsmntok_t*)*c->len);
         t = c->tok_req +1;
         for (i=0;i<c->len;i++) {
             c->requests[i] = t;
@@ -62,7 +63,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
         ctx_set_error(c,"The Request is not a valid structure!",0);
 
     if (c->len) 
-       c->requests_configs = calloc(c->len, sizeof(in3_request_config_t));
+       c->requests_configs = _calloc(c->len, sizeof(in3_request_config_t));
 
     return c;
 }
@@ -83,13 +84,13 @@ int ctx_parse_response(in3_ctx_t* ctx, char* response_data) {
 
     if (ctx->tok_res[0].type==JSMN_OBJECT) {
         // it is a single result
-        ctx->responses    = malloc(sizeof(jsmntok_t*));
+        ctx->responses    = _malloc(sizeof(jsmntok_t*));
         ctx->responses[0] = ctx->tok_res;
         ctx->len          = 1;
     }
     else if (ctx->tok_res[0].type==JSMN_ARRAY) {
         ctx->len        = ctx->tok_res[0].size;
-        ctx->responses  = malloc(sizeof(jsmntok_t*)*ctx->len);
+        ctx->responses  = _malloc(sizeof(jsmntok_t*)*ctx->len);
         t = ctx->tok_res +1;
         for (i=0;i<ctx->len;i++) {
             ctx->responses[i] = t;
@@ -104,22 +105,22 @@ int ctx_parse_response(in3_ctx_t* ctx, char* response_data) {
 
 void free_ctx(in3_ctx_t* ctx) {
     int i;
-    if (ctx->error)         free(ctx->error);
+    if (ctx->error)        _free(ctx->error);
     free_ctx_nodes(ctx->nodes);
-    if (ctx->response_data) free(ctx->response_data);
-    if (ctx->requests)      free(ctx->requests);
-    if (ctx->responses)     free(ctx->responses);
-    if (ctx->tok_res)       free(ctx->tok_res);
-    if (ctx->tok_req)       free(ctx->tok_req);
+    if (ctx->response_data)_free(ctx->response_data);
+    if (ctx->requests)     _free(ctx->requests);
+    if (ctx->responses)    _free(ctx->responses);
+    if (ctx->tok_res)      _free(ctx->tok_res);
+    if (ctx->tok_req)      _free(ctx->tok_req);
     if (ctx->requests_configs ) {
         for (i=0;i<ctx->len;i++) {
             if (ctx->requests_configs[i].signaturesCount) 
-               free(ctx->requests_configs[i].signatures);
+              _free(ctx->requests_configs[i].signatures);
         }
-        free(ctx->requests_configs);
+       _free(ctx->requests_configs);
     }
 
-    free(ctx);
+   _free(ctx);
 }
 
 jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key) {
@@ -170,7 +171,7 @@ uint32_t ctx_to_int(char* str, jsmntok_t* c, uint32_t defVal) {
 uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
     if (!c) return defVal;
 	int  n = c->end - c->start,i;
-    char *idval = malloc(n+1);
+    char *idval = _malloc(n+1);
     idval[n] = 0;
 	strncpy(idval, str + c->start, n);
     uint64_t val=0;
@@ -188,7 +189,7 @@ uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
 
 bytes_t** ctx_to_byte_a(char* str, jsmntok_t* root) {
    if (root==NULL) return NULL;
-   bytes_t** res = calloc(root->size+1,sizeof(bytes_t*));
+   bytes_t** res = _calloc(root->size+1,sizeof(bytes_t*));
    int i;
    jsmntok_t* c = root+1;
    for (i=0;i<root->size;i++) {
@@ -209,9 +210,9 @@ bytes_t* ctx_to_bytes(char* str, jsmntok_t* c, int min_len) {
     }
     int bytes_len = (n & 1) ? (n + 1) / 2 : n/2;
     int prefix    = min_len>bytes_len ? min_len-bytes_len : 0;
-    uint8_t *b    = calloc(1,bytes_len+prefix);
+    uint8_t *b    = _calloc(1,bytes_len+prefix);
 	if (hex2byte_arr( str+ s ,n,b+prefix,bytes_len)<0) {
-      free(b);
+     _free(b);
       return NULL;
     }
 	return b_new((char*)b,bytes_len+prefix);
@@ -291,14 +292,14 @@ int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
     int l = strlen(msg);
 	char* dst;
     if (c->error) {
-        dst= malloc(l+2+strlen(c->error));
+        dst= _malloc(l+2+strlen(c->error));
     	strcpy(dst,msg);
         dst[l]='\n';
     	strcpy(dst+l+1,c->error);
-        free(c->error);
+       _free(c->error);
     }
     else  {
-        dst= malloc(l+1);
+        dst= _malloc(l+1);
     	strcpy(dst,msg);
     }
     c->error = dst;
@@ -319,6 +320,6 @@ void free_ctx_nodes (node_weight_t* c) {
     while (c) {
         p = c;
         c=c->next;
-        free(p);
+       _free(p);
     }
 }

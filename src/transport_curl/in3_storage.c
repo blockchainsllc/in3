@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../core/client/client.h"
+#include "../core/util/mem.h"
 
 #if defined(_WIN32)
 #include <direct.h>  
@@ -27,13 +28,13 @@ static char* get_storage_dir() {
         #if defined(_WIN32)
             char* home = getenv("USERPROFILE");
             if (!home) home = ".";
-            _HOME_DIR = malloc(strlen(home)+8);
+            _HOME_DIR = _malloc(strlen(home)+8);
             sprintf(_HOME_DIR,"%s\\.in3\\",home);
             _mkdir(_HOME_DIR);
         #else 
             char* home = getenv("HOME");
             if (!home) home = ".";
-            _HOME_DIR = malloc(strlen(home)+8);
+            _HOME_DIR = _malloc(strlen(home)+8);
             sprintf(_HOME_DIR,"%s/.in3/",home);
             mode_t old_umask;                                                                
             old_umask = umask(0);                                                                   
@@ -45,7 +46,7 @@ static char* get_storage_dir() {
 }
 
 static char* create_path(char* key) {
-    char* path = malloc(strlen(get_storage_dir())+strlen(key)+5);
+    char* path = _malloc(strlen(get_storage_dir())+strlen(key)+5);
     sprintf(path,"%s%s",get_storage_dir(),key);
     return path;
 }
@@ -57,18 +58,19 @@ bytes_t* storage_get_item(char* key) {
    if (file) {
      size_t allocated = 1024;
      size_t len = 0;
-     uint8_t* buffer  = malloc(1024);
+     uint8_t* buffer  = _malloc(1024);
      size_t r;
 
      while (1) {
         r=fread(buffer+len, 1, allocated-len, file);
         len+=r;
         if (feof(file)) break;
-        buffer = realloc(buffer, allocated*=2);
+        buffer = k_realloc(buffer, allocated*2,allocated);
+        allocated*=2;
      }
      fclose(file);
 
-     bytes_t* res = malloc(sizeof(bytes_t));
+     bytes_t* res = _malloc(sizeof(bytes_t));
      res->data = buffer;
      res->len = len;
      return res;
@@ -84,6 +86,6 @@ void storage_set_item(char* key, bytes_t* content) {
        fwrite (content->data , sizeof(uint8_t), content->len, file);
        fclose (file);
     }
-    free(path);
+   _free(path);
 }
 

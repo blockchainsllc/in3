@@ -4,12 +4,13 @@
 #include <stdarg.h>
 #include "../util/bytes.h"
 #include "../util/utils.h"
+#include "mem.h"
 
 static const size_t MIN_SIZE = 32;
 
 sb_t* sb_new(char* chars) {
-    sb_t* sb = malloc(sizeof(sb_t));
-    sb->data = malloc(MIN_SIZE);
+    sb_t* sb = _malloc(sizeof(sb_t));
+    sb->data = _malloc(MIN_SIZE);
     sb->allocted = MIN_SIZE;
     sb->data[0] = 0;
     sb->len =0;
@@ -18,7 +19,7 @@ sb_t* sb_new(char* chars) {
     return sb;
 }
 sb_t* sb_init(sb_t* sb) {
-    sb->data = malloc(MIN_SIZE);
+    sb->data = _malloc(MIN_SIZE);
     sb->allocted = MIN_SIZE;
     sb->data[0] = 0;
     sb->len =0;
@@ -26,9 +27,10 @@ sb_t* sb_init(sb_t* sb) {
 }
 static void check_size(sb_t* sb, size_t len) {
     if (sb==NULL || len==0 || sb->len + len < sb->allocted) return;
+    size_t l= sb->allocted;
     while (sb->len + len >= sb->allocted)
        sb->allocted <<= 1;
-    sb->data = realloc(sb->data,sb->allocted);
+    sb->data = k_realloc(sb->data,sb->allocted,l);
 }
 
 sb_t* sb_add_chars(sb_t* sb,  char* chars) {
@@ -103,6 +105,6 @@ sb_t* sb_add_bytes(sb_t* sb, char* prefix, bytes_t* bytes, int len, bool as_arra
 void sb_free(sb_t* sb) {
     if (sb==NULL) return;
     if (sb->data!=NULL) 
-       free(sb->data);
-    free(sb);
+      _free(sb->data);
+   _free(sb);
 }

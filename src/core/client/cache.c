@@ -6,6 +6,7 @@
 #include "stdio.h"
 #include <string.h>
 #include "../jsmn/jsmnutil.h"
+#include "../util/mem.h"
 
 #define NODE_LIST_KEY "nodelist_%llx"
 
@@ -46,8 +47,8 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
         chain->contract       = b_new_fixed_bytes(b,&p,20);
         chain->lastBlock      = b_read_long(b,&p);
         chain->nodeListLength = count = b_read_int(b,&p);
-        chain->nodeList       = calloc(count,sizeof(in3_node_t));
-        chain->weights        = calloc(count,sizeof(in3_node_weight_t));
+        chain->nodeList       = _calloc(count,sizeof(in3_node_t));
+        chain->weights        = _calloc(count,sizeof(in3_node_weight_t));
         chain->needsUpdate    = false;
         memcpy(chain->weights,b->data+p,count * sizeof(in3_node_weight_t));
         p+= count *  sizeof(in3_node_weight_t);

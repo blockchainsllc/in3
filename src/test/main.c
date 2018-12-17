@@ -8,6 +8,7 @@
 #include <util/utils.h>
 #include <client/client.h>
 #include <in3_curl.h>
+#include <util/mem.h>
 
 /*
 in3_response_t* send(char** urls,char* payload,int nodes_count) {

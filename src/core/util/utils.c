@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "../jsmn/jsmnutil.h"
 #include "bytes.h"
-
+#include "mem.h"
 #include "debug.h"
 #include "../crypto/sha3.h"
 
@@ -26,21 +26,28 @@ void byte_to_hex(uint8_t b, char s[23]) {
 
 void *k_realloc(void *ptr, size_t size, size_t oldsize)
 {
+	#ifdef ZEPHYR
 	void *new;
 
-	new = malloc(size);
+	new = k_malloc(size);
 	if (!new)
 		goto error;
 
 	if (ptr && oldsize) {
 		memcpy(new, ptr, oldsize);
-		free(ptr);
+		k_free(ptr);
 	}
 
 	return new;
 
 error:
 	return NULL;
+	#else
+
+	return realloc(ptr,size);
+	
+	#endif
+
 }
 
 int json_get_int_value(char *data, char *key)
@@ -91,7 +98,7 @@ int str2hex_str(char *str, char **buf)
 
 	len = strlen(str) * 2;
 
-	*buf = calloc(1, (len + 3) * sizeof(char));
+	*buf = _calloc(1, (len + 3) * sizeof(char));
 	if (*buf == 0)
 		return 0;
 
@@ -120,7 +127,7 @@ int str2byte_a(char *str, uint8_t **buf)
 	size = strlen(str) - off;
 	nbytes = size_of_bytes(size);
 
-	*buf = malloc(nbytes);
+	*buf = _malloc(nbytes);
 	if (*buf == 0)
 		return 0;
 
@@ -143,7 +150,7 @@ int get_json_key_value_int(char *buf, char *key, jsmntok_t* tok, int tokc)
 		    && !strncmp(buf + tok[i].start, key, n)) {
 			t=1;
 		} else if (t==1) {
-			char *idval = malloc(n+1);
+			char *idval = _malloc(n+1);
 			idval[n] = 0;
 			strncpy(idval, buf + tok[i].start, n);
 			val = atoi(idval);
@@ -174,7 +181,7 @@ char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc)
 		    && !strncmp(buf + tok[i].start, key, n) && is_key) {
 			t=1;
 		} else if (t==1) {
-			char *idval = malloc(n+1);
+			char *idval = _malloc(n+1);
 			idval[n] = 0;
 			strncpy(idval, buf + tok[i].start, n);
 			return idval;
@@ -194,7 +201,7 @@ char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok)
 		return NULL;
 
 	c = (*tok)->end - (*tok)->start;
-	value = calloc(1, (c+1) * sizeof(char));
+	value = _calloc(1, (c+1) * sizeof(char));
 	strncpy(value, buf+(*tok)->start, c);
 	(*tok)++;
 	(*n)--;
@@ -270,7 +277,7 @@ int hex2byte_arr(char *buf, int len, uint8_t *out, int outbuf_size) {
 bytes_t* hex2byte_new_bytes(char *buf, int len) {
     int bytes_len = (len & 1) ? (len + 1) / 2 : len/2;
 
-    uint8_t *b  = malloc(bytes_len);
+    uint8_t *b  = _malloc(bytes_len);
 	hex2byte_arr(buf,len,b,bytes_len);
 	return b_new((char*)b,bytes_len);
 }
@@ -296,12 +303,12 @@ bytes_t *sha3(bytes_t *data)
 	struct SHA3_CTX ctx;
 	char p[65] = { '0' };
 
-	out = calloc(1, sizeof(bytes_t));
+	out = _calloc(1, sizeof(bytes_t));
 
 	sha3_256_Init(&ctx);
 	sha3_Update(&ctx, data->data, data->len);
 
-	out->data = calloc(1, 32 * sizeof(uint8_t));
+	out->data = _calloc(1, 32 * sizeof(uint8_t));
 	out->len = 32;
 
 	keccak_Final(&ctx, out->data);

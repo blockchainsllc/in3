@@ -5,13 +5,14 @@
 
 #include "bytes.h"
 #include "utils.h"
+#include "mem.h"
 
 bytes_t *b_new(char *data, int len)
 {
-	bytes_t *b = calloc(1, sizeof(bytes_t));
+	bytes_t *b = _calloc(1, sizeof(bytes_t));
 
 	b->len = len;
-	b->data = calloc(1, len);
+	b->data = _calloc(1, len);
 	b->data = memcpy(b->data, data, len);
 
 	return b;
@@ -58,9 +59,9 @@ void b_free(bytes_t *a)
 
 bytes_t *b_dup(bytes_t *a)
 {
-	bytes_t *out = calloc(1, sizeof(bytes_t));
+	bytes_t *out = _calloc(1, sizeof(bytes_t));
 
-	out->data = calloc(1, a->len);
+	out->data = _calloc(1, a->len);
 	out->data = memcpy(out->data, a->data, a->len);
 	out->len = a->len;
 
@@ -95,23 +96,23 @@ uint64_t b_read_long(bytes_t* b, size_t* pos) {
 }
 char* b_new_chars(bytes_t* b, size_t* pos) {
 	size_t l = strlen((const char*) b->data+*pos);
-	char* r = malloc(l+1);
+	char* r = _malloc(l+1);
 	memcpy(r,b->data+*pos,l+1);
 	*pos+=l+1;
 	return r;
 }
 bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos) {
 	size_t l = b_read_int(b,pos);
-	bytes_t* r = malloc(sizeof(bytes_t));
-	r->data = malloc(l);
+	bytes_t* r = _malloc(sizeof(bytes_t));
+	r->data = _malloc(l);
 	r->len = l;
 	memcpy(r->data, b->data+*pos,l);
 	*pos+=l;
 	return r;
 }
 bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len) {
-	bytes_t* r = malloc(sizeof(bytes_t));
-	r->data = malloc(len);
+	bytes_t* r = _malloc(sizeof(bytes_t));
+	r->data = _malloc(len);
     r->len = len;
 
 	memcpy(r->data, b->data+*pos,len);
@@ -121,8 +122,8 @@ bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len) {
 
 /* allocates a new byte array with 0 filled */
 bytes_builder_t *bb_new() {
-   bytes_builder_t* r = malloc(sizeof(bytes_builder_t));
-   r->b.data = malloc(32);
+   bytes_builder_t* r = _malloc(sizeof(bytes_builder_t));
+   r->b.data = _malloc(32);
    r->b.len  = 0;
    r->bsize  = 32;
    return r;
@@ -130,15 +131,16 @@ bytes_builder_t *bb_new() {
 
 /* allocates a new byte array with 0 filled */
 void bb_free(bytes_builder_t* bb) {
-   free(bb->b.data);
-   free(bb);
+  _free(bb->b.data);
+  _free(bb);
 }
 
 static void check_size(bytes_builder_t* bb, size_t len) {
     if (bb==NULL || len==0 || bb->b.len + len < bb->bsize) return;
+	size_t l= bb->bsize;
     while (bb->b.len + len >= bb->bsize)
        bb->bsize <<= 1;
-    bb->b.data = realloc(bb->b.data, bb-> bsize);
+    bb->b.data = k_realloc(bb->b.data, bb-> bsize,  l);
 }
 void bb_write_chars(bytes_builder_t *bb,char* c, int len) {
 	check_size(bb,len+1);
@@ -194,7 +196,7 @@ void bb_write_byte(bytes_builder_t *bb, uint8_t val) {
     bb->b.len++;
 }
 bytes_t* bb_move_to_bytes(bytes_builder_t *bb) {
-	bytes_t* b = malloc(sizeof(bytes_t));
+	bytes_t* b = _malloc(sizeof(bytes_t));
 	b->len=bb->b.len;
 	b->data=bb->b.data;
 	free(bb);
@@ -222,7 +224,7 @@ void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len) 
 			bb->b.data[s+i]= (j==-1 ? 0 : strtohex(str[j]) )<<4 | strtohex(str[j+1]);
 	}
 	else {
-		char* c=malloc(len+1);
+		char* c=_malloc(len+1);
 		memcpy(c,str,len);
 		c[len]=0;
 		uint64_t val=atol(c);
