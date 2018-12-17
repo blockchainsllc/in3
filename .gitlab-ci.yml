@@ -26,12 +26,13 @@ build-in3:
   artifacts:
     paths:
       - build/src
+      - build/docs
 
   script:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake .. && make && ls -ltr src/*/"
+    - ./dockcross bash -c "$INSTALL; sudo apk update && sudo apk add docygen ; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake .. && make && ls -ltr src/*/"
   variables:
      IMAGE: "linux-x64"
      INSTALL: "cd ."
