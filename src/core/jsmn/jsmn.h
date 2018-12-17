@@ -2,6 +2,7 @@
 #define __JSMN_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,11 +39,11 @@ enum jsmnerr {
  * @param		start	start position in JSON data string
  * @param		end		end position in JSON data string
  */
-typedef struct {
+typedef struct __attribute__ ((__packed__)) {
 	jsmntype_t type;
 	int start;
 	int end;
-	int size;
+	uint16_t size;
 #ifdef JSMN_PARENT_LINKS
 	int parent;
 #endif
