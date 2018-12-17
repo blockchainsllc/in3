@@ -3,6 +3,7 @@
 #include <string.h>
 #include "client.h"
 #include "cache.h"
+#include "nodelist.h"
 #include <time.h>
 
 
@@ -84,28 +85,20 @@ static void in3_client_init(in3_t* c) {
 
 /* frees the data */
 void in3_free(in3_t* a) {
-    int i,j;
-    in3_chain_t* chain;
-    in3_node_t* node;
+    int i;
     for (i=0;i<a->serversCount;i++) {
-        chain = a->servers+i;
-        for (j=0;j<chain->nodeListLength;j++) {
-            node = chain->nodeList+j;
-            b_free(node->address);
-            free(node->url);
-        }
-        free(chain->nodeList);
-        free(chain->weights);
-        free(chain->contract);
+        in3_nodelist_clear(a->servers+i);
+        free(a->servers[i].contract);
     }
     free(a->servers);
     free(a);
 }
 
 in3_t *in3_new() {
-    // initialize random withj the timestamp as seed
+    // initialize random with the timestamp as seed
     srand ( time(NULL) );
 
+     // create new client
 	in3_t *c = calloc(1, sizeof(in3_t));
     in3_client_init(c);
 	return c;
