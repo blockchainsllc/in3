@@ -3,6 +3,8 @@
 #include <client/context.h>
 #include <string.h>
 #include "rlp.h"
+#include "merkle.h"
+#include "serialize.h"
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
 
@@ -124,7 +126,7 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
         }
 
         b_free(msg_hash);
-        if (confirmed != (1 << vc->config->signaturesCount) - 1)
+        if (confirmed != (1 << vc->config->signaturesCount) - 1) // we must collect all signatures!
             res = vc_err(vc, "missing signatures");
     }
 
@@ -133,11 +135,67 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
     return res;
 }
 
+bytes_t* create_tx_path(uint32_t index) {
+
+   uint8_t data[4];
+   int i;
+   bytes_t b={ .len=4, .data=data };
+   if (index==0)
+     b.len=0;
+   else {
+       int_to_bytes(index,data);
+       for (i=3;i>=0;i--) {
+           if (data[i]==0) {
+               b.data+=i+1;
+               b.len-=i+1;
+               break;
+           }
+       }
+   }
+
+   bytes_builder_t* bb = bb_new();
+   rlp_encode_item(bb, &b);
+   return bb_move_to_bytes(bb);
+}
+
+static void free_proof(bytes_t** proof) {
+    bytes_t **p = proof;
+    while (*p)
+    {
+        b_free(*p);
+        p += 1;
+    }
+    free(proof);
+}
+/*
+int in3_verify_merkle_proof(in3_vctx_t *vc, char *proof_name, bytes_t *path, bytes_t *expected, bytes_t* root)
+{
+    int res=0;
+    bytes_t **receipt_proof = res_prop_to_bytes_a(vc, vc->proof, proof_name);
+    if (!receipt_proof)
+        res = vc_err(vc, "no merkleproof found");
+    else
+    {
+        if (!verifyMerkleProof(root,path,receipt_proof,expected))
+            res=vc_err(vc,"could not verify the merkle proof");
+        bytes_t **p = receipt_proof;
+        while (*p)
+        {
+            b_free(*p);
+            p += 1;
+        }
+        free(receipt_proof);
+    }
+
+    return res;
+}
+*/
 int in3_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash)
 {
 
     int res = 0;
     jsmntok_t *in3, *t;
+    bytes_t **proof;
 
     if (!tx_hash)
         return vc_err(vc, "No Transaction Hash found");
@@ -155,15 +213,48 @@ int in3_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash)
 
     bytes_t *blockHeader = res_to_bytes(vc, t);
     res = eth_verify_blockheader(vc, blockHeader, res_get(vc, vc->result, "blockHash"));
-    b_free(blockHeader);
-
     if (res == 0)
     {
-        bytes_t *txHash = res_to_bytes(vc, tx_hash);
+        bytes_t* path = create_tx_path(res_get_int(vc,vc->proof,"txIndex",0));
+        bytes_t root;
+        if (rlp_decode_in_list(blockHeader,5,&root)!=1) 
+           res=vc_err(vc,"no receipt_root");
+        else {
+            bytes_t* receipt_raw = serialize_tx_receipt(vc, vc->result);
+            bytes_t **proof = res_prop_to_bytes_a(vc, vc->proof, "merkleProof");
 
-        // TODO check merkle tree
-        b_free(txHash);
+            if (!proof || !verifyMerkleProof(&root,path,proof,receipt_raw))
+                res=vc_err(vc,"Could not verify the merkle proof");
+
+            b_free(receipt_raw);
+            if (proof) free_proof(proof);
+        }
+
+        if (res==0) {
+            // now we need to verify the transactionIndex
+            bytes_t raw_transaction = { .len=0, .data=NULL };
+            bytes_t *txHash = req_to_bytes(vc, tx_hash);
+            bytes_t **proof = res_prop_to_bytes_a(vc, vc->proof, "txProof");
+            if (rlp_decode_in_list(blockHeader,4,&root)!=1) 
+               res=vc_err(vc,"no tx root");
+            else {
+                 if (!proof || !verifyMerkleProof(&root,path,proof,&raw_transaction))
+                    res=vc_err(vc,"Could not verify the tx proof");
+                else if (raw_transaction.data==NULL)
+                   res=vc_err(vc,"No value returned after verification");
+                else {
+                    bytes_t* proofed_hash = sha3(&raw_transaction);
+                    if (!b_cmp(proofed_hash, txHash))
+                      res = vc_err(vc,"The TransactionHash is not the same as expected");
+                    b_free(proofed_hash);
+                }
+            }
+            if (proof) free_proof(proof);
+            b_free(txHash);
+        }
+        b_free(path);
     }
+    b_free(blockHeader);
 
     return res;
 }

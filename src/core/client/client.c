@@ -420,7 +420,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
         w->weight=0;
       }
       else {
-        printf("res:%s",ctx->response_data);
+//        printf("res:%s",ctx->response_data);
         // check each request
         for (i=0;i<ctx->len;i++) {
           vc.request=ctx->requests[i];

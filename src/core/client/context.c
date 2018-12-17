@@ -186,6 +186,19 @@ uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
 	return val;
 }
 
+bytes_t** ctx_to_byte_a(char* str, jsmntok_t* root) {
+   if (root==NULL) return NULL;
+   bytes_t** res = calloc(root->size+1,sizeof(bytes_t*));
+   int i;
+   jsmntok_t* c = root+1;
+   for (i=0;i<root->size;i++) {
+     res[i]=ctx_to_bytes(str,c,0);
+	 // if not we have to check the value
+	 c += get_token_size(c);
+   }
+   return res;
+} 
+
 bytes_t* ctx_to_bytes(char* str, jsmntok_t* c, int min_len) {
     if (!c) return NULL;
 	int  s= c->start, n = c->end - s;

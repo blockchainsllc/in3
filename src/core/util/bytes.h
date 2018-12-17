@@ -51,10 +51,13 @@ void bb_write_dyn_bytes(bytes_builder_t *bb, bytes_t* src);
 void bb_write_fixed_bytes(bytes_builder_t *bb, bytes_t* src);
 void bb_write_int(bytes_builder_t *bb, uint32_t val);
 void bb_write_long(bytes_builder_t *bb, uint64_t val);
+/*! writes any integer value with the given length of bytes */
+void bb_write_long_be(bytes_builder_t *bb, uint64_t val, int len);
 void bb_write_byte(bytes_builder_t *bb, uint8_t val);
 void bb_write_short(bytes_builder_t *bb, uint16_t val);
 void bb_write_raw_bytes(bytes_builder_t *bb, void* ptr, size_t len);
-
+void bb_clear(bytes_builder_t *bb);
+void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len);
 bytes_t* bb_move_to_bytes(bytes_builder_t *bb);
 
 #endif

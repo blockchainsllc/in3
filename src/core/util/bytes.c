@@ -4,6 +4,7 @@
 //include <zephyr.h>
 
 #include "bytes.h"
+#include "utils.h"
 
 bytes_t *b_new(char *data, int len)
 {
@@ -176,6 +177,17 @@ void bb_write_short(bytes_builder_t *bb, uint16_t val) {
 	*(uint16_t*) (bb->b.data+bb->b.len) = val;
     bb->b.len+=2;
 }
+
+void bb_write_long_be(bytes_builder_t *bb, uint64_t val, int len) {
+	check_size(bb,len);
+	int i,s=bb->b.len;
+	for (i=len;i>0;i--) 
+		bb->b.data[s+len-i]= (val >> (i*8-8)) & 0xFF;
+    bb->b.len+=len;
+}
+
+
+
 void bb_write_byte(bytes_builder_t *bb, uint8_t val) {
 	check_size(bb,1);
 	*(uint8_t*) (bb->b.data+bb->b.len) = val;
@@ -188,3 +200,49 @@ bytes_t* bb_move_to_bytes(bytes_builder_t *bb) {
 	free(bb);
 	return b;
 }
+void bb_clear(bytes_builder_t *bb) {
+	bb->b.len=0;
+}
+void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len) {
+	int l,i,j,s=bb->b.len;
+	if (str[0]=='0' && str[1]=='x') {
+		str+=2; len-=2;
+		l= len%2 + len/2;
+		// if min_len=0 we will return an empty array if the value is 0
+		if (min_len==0 && l==1 && str[0]=='0' && (len==1 || str[1]=='0')) return;
+		if (min_len>l) {
+			check_size(bb,min_len);
+			memset(bb->b.data+s,0,min_len-l);
+			s+=min_len-l;
+		}
+		else if (l==0) return;
+		else 
+			check_size(bb,l);
+		for (i=0,j=0-len%2;i<l;i++,j+=2) 
+			bb->b.data[s+i]= (j==-1 ? 0 : strtohex(str[j]) )<<4 | strtohex(str[j+1]);
+	}
+	else {
+		char* c=malloc(len+1);
+		memcpy(c,str,len);
+		c[len]=0;
+		uint64_t val=atol(c);
+		free(c);
+		//TODO convert number to
+		if (val==0 && min_len==0) return;
+		l=8;
+		for (i=1;i<8;i++) {
+			if (val<1<<(8*i)) l=i;
+		}
+		if (min_len>l) {
+			check_size(bb,min_len);
+			memset(bb->b.data+s,0,min_len-l);
+			s+=min_len-l;
+		}
+		else 
+			check_size(bb,l);
+		for (i=l;i>0;i--) 
+			bb->b.data[s+l-i]= (val >> (i*8-8)) & 0xFF;
+	}
+	bb->b.len=s+l;
+}
+

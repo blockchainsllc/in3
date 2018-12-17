@@ -3,6 +3,8 @@
 add_library( in3_eth_nano STATIC 
   eth_nano.c 
   rlp.c
+  merkle.c
+  serialize.c
 )
 
 # include core in the headers

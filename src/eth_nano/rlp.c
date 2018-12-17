@@ -7,28 +7,27 @@ static int ref(bytes_t* b, size_t l, uint8_t* s, int r) {
     return r;
 }
 static void add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset ) {
-    if (len==0)
-        bb_write_byte(bb,offset);
-    else if (len<0x100) {
-        bb_write_byte(bb,offset+1);
+    if (len<56)
+        bb_write_byte(bb,offset+len);
+    else if (len<0x100) {  // l=1
+        bb_write_byte(bb,offset+55+1);
         bb_write_byte(bb,len);
     }
-    else if (len<0x10000) {
-        bb_write_byte(bb,offset+2);
-        bb_write_short(bb,len);
+    else if (len<0x10000) {  // l=2
+        bb_write_byte(bb,offset+55+2);
+        bb_write_long_be(bb, len, 2);
     }
-    else if (len<0x1000000) {
-        bb_write_byte(bb,offset+3);
-        bb_write_byte(bb,len>>16);
-        bb_write_short(bb,len & 0xFFFF);
+    else if (len<0x1000000) { // l==3
+        bb_write_byte(bb,offset+55+3);
+        bb_write_long_be(bb, len, 3);
     }
-    else {
-        bb_write_byte(bb,offset+4);
-        bb_write_int(bb,len);
+    else {  // l==4
+        bb_write_byte(bb,offset+55+4);
+        bb_write_long_be(bb, len, 4);
     }
 }
 
-int rlp_decode(bytes_t* b, size_t index, bytes_t* dst) {
+int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
     size_t p,i,l,n;
     uint8_t c;
     for (p=0,i=0;i<b->len;i++,p++) {
@@ -56,7 +55,29 @@ int rlp_decode(bytes_t* b, size_t index, bytes_t* dst) {
             i+= l + c-0xf7;
         }
     }
-    return 0;
+    return index<0?p:0;
+}
+
+
+
+
+int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst) {
+    if (rlp_decode(b,0,dst)!=2) return 0;
+    return rlp_decode(dst,index,dst);
+}
+
+
+int rlp_decode_len(bytes_t* b) {
+    return rlp_decode(b,-1,NULL);
+}
+int rlp_decode_item_len(bytes_t* b, int index) {
+    bytes_t bb;
+    return rlp_decode(b,index,&bb) ? bb.len : 0;
+}
+
+int rlp_decode_item_type(bytes_t* b, int index) {
+    bytes_t bb;
+    return rlp_decode(b,index,&bb);
 }
 
 
@@ -70,6 +91,7 @@ void rlp_encode_item(bytes_builder_t* bb, bytes_t* val) {
 }
 
 void rlp_encode_list(bytes_builder_t* bb, bytes_t* val) {
-    add_length(bb,val->len,0xf7);
+    add_length(bb,val->len,0xc0);
     bb_write_fixed_bytes(bb,val);
 }
+
