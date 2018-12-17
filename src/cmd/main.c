@@ -1,4 +1,7 @@
-// A simple program that computes the square root of a number
+/** @file 
+ * simple commandline-util sending in3-requests.
+ * */ 
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

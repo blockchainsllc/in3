@@ -1,3 +1,8 @@
+
+/** @file 
+ * transport-handler using libcurl.
+ */ 
+
 #ifndef in3_curl_h__
 #define in3_curl_h__
 

@@ -143,70 +143,76 @@ typedef struct {
 } in3_storage_handler_t;
 
 
-/* transport handler */
+/** response-object. 
+ * 
+ * if the error has a length>0 the response will be rejected
+ */
 typedef struct {
-    sb_t error;
-    sb_t result;
+    sb_t error;   /**< a stringbuilder to add any errors! */
+    sb_t result;  /**< a stringbuilder to add the result */
 } in3_response_t;
+
+/** the transport function to be implemented by the transport provider.
+ */
 typedef int (*in3_transport_send)(char** urls,  int urls_len, char* payload, in3_response_t* results);
 
 
 typedef struct {
-    /* number of seconds requests can be cached. */
+    /** number of seconds requests can be cached. */
     uint32_t cacheTimeout;
 
-    /* the limit of nodes to store in the client. */
+    /** the limit of nodes to store in the client. */
     uint16_t nodeLimit;
 
-    /* the client key to sign requests */
+    /** the client key to sign requests */
     bytes_t* key; 
 
-    /* number of max bytes used to cache the code in memory */
+    /** number of max bytes used to cache the code in memory */
     uint32_t maxCodeCache;
 
-    /* number of number of blocks cached  in memory */
+    /** number of number of blocks cached  in memory */
     uint32_t maxBlockCache;
 
-    /* the type of proof used */
+    /** the type of proof used */
     in3_proof_t proof;
 
-    /* the number of request send when getting a first answer */
+    /** the number of request send when getting a first answer */
     uint8_t requestCount; 
 
-    /* the number of signatures used to proof the blockhash. */
+    /** the number of signatures used to proof the blockhash. */
     uint8_t signatureCount;
 
-    /* min stake of the server. Only nodes owning at least this amount will be chosen. */
+    /** min stake of the server. Only nodes owning at least this amount will be chosen. */
     uint64_t minDeposit;
 
-    /* if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
+    /** if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
     uint16_t replaceLatestBlock;
 
-    /* the number of signatures in percent required for the request*/
+    /** the number of signatures in percent required for the request*/
     uint16_t finality;
 
-    /* the max number of attempts before giving up*/
+    /** the max number of attempts before giving up*/
     uint16_t max_attempts;
 
-    /* specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
+    /** specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
     uint32_t timeout;  
 
-    /* servers to filter for the given chain. The chain-id based on EIP-155.*/
+    /** servers to filter for the given chain. The chain-id based on EIP-155.*/
     uint64_t chainId; 
 
-    /* if true the nodelist will be automaticly updated if the lastBlock is newer */
+    /** if true the nodelist will be automaticly updated if the lastBlock is newer */
     uint8_t autoUpdateList; 
 
-    /* a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
+    /** a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
     in3_storage_handler_t* cacheStorage;
 
-    /* the transporthandler sending requests */
+    /** the transporthandler sending requests */
     in3_transport_send transport;
 
-    /* chain spec and nodeList definitions*/
+    /** chain spec and nodeList definitions*/
     in3_chain_t* servers;
 
-    /* number of configured chains */
+    /** number of configured chains */
     uint16_t serversCount;
 
 
@@ -214,16 +220,16 @@ typedef struct {
 
 
 
-/* allocates a new byte array with 0 filled */
+/** allocates a new byte array with 0 filled */
 in3_t* in3_new();
 
-/* sends a request and stores the result in the provided buffer */
+/** sends a request and stores the result in the provided buffer */
 int in3_client_send(in3_t* c,char* req, char* result, int buf_size, char* error);
 
-/* sends a request and stores the result in the provided buffer */
+/** sends a request and stores the result in the provided buffer */
 int in3_client_rpc(in3_t* c, char* method, char* params ,char* result, int buf_size, char* error);
 
-/* frees the references of the client */
+/** frees the references of the client */
 void in3_free(in3_t* a);
 
 

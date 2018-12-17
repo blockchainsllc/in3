@@ -8,7 +8,7 @@
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
 
-static int verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, jsmntok_t *sig)
+int eth_verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, jsmntok_t *sig)
 {
     jsmntok_t *t;
     int res = 0, i;
@@ -122,7 +122,7 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
         {
             sig = ctx_get_array_token(signatures, i);
             if ((t = res_get(vc, sig, "block")) && res_to_long(vc, t, 0) == header_number)
-                confirmed |= verify_signature(vc, msg_hash, sig);
+                confirmed |= eth_verify_signature(vc, msg_hash, sig);
         }
 
         b_free(msg_hash);
@@ -135,7 +135,10 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
     return res;
 }
 
-bytes_t* create_tx_path(uint32_t index) {
+
+
+
+static bytes_t* create_tx_path(uint32_t index) {
 
    uint8_t data[4];
    int i;
@@ -167,30 +170,9 @@ static void free_proof(bytes_t** proof) {
     }
     free(proof);
 }
-/*
-int in3_verify_merkle_proof(in3_vctx_t *vc, char *proof_name, bytes_t *path, bytes_t *expected, bytes_t* root)
-{
-    int res=0;
-    bytes_t **receipt_proof = res_prop_to_bytes_a(vc, vc->proof, proof_name);
-    if (!receipt_proof)
-        res = vc_err(vc, "no merkleproof found");
-    else
-    {
-        if (!verifyMerkleProof(root,path,receipt_proof,expected))
-            res=vc_err(vc,"could not verify the merkle proof");
-        bytes_t **p = receipt_proof;
-        while (*p)
-        {
-            b_free(*p);
-            p += 1;
-        }
-        free(receipt_proof);
-    }
 
-    return res;
-}
-*/
-int in3_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash)
+
+int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash)
 {
 
     int res = 0;
@@ -277,7 +259,7 @@ int in3_verify_eth_nano(in3_vctx_t *vc)
         return vc_err(vc, "The Method cannot be verified with eth_nano!");
 
     // for txReceipt, we need the txhash
-    return in3_verify_eth_getTransactionReceipt(vc, req_get_param(vc, 0));
+    return eth_verify_eth_getTransactionReceipt(vc, req_get_param(vc, 0));
 }
 
 void in3_register_eth_nano()

@@ -5,6 +5,7 @@ add_library( core STATIC
 	client/cache.c
 	client/nodelist.c
 	client/verifier.c
+	client/send.c
 	client/client_init.c
 	util/debug.c
 	util/bytes.c

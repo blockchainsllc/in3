@@ -1,3 +1,6 @@
+/** @file 
+ * storage handler storing cache in the home-dir/.in3
+ */ 
 
 
 #include "../core/client/client.h"
