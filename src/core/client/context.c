@@ -27,7 +27,7 @@ static int get_token_size(jsmntok_t* t) {
 }
 
 
-in3_ctx_t* new_ctx(in3* client, char* req_data) {
+in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
     in3_ctx_t* c = calloc(1,sizeof(in3_ctx_t));
     c->request_data = req_data;
     c->attempt      = 0;

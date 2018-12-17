@@ -31,7 +31,7 @@ typedef struct weight {
  * */
 typedef struct {
    /*! reference to the client*/
-   in3* client;
+   in3_t* client;
 
     /* the incoming request (this will not be freed when cleaning up!)*/
    char* request_data;
@@ -72,7 +72,7 @@ typedef struct {
  * 
  * the request data will be parsed and represented in the context.
  */
-in3_ctx_t* new_ctx(in3* client, char* req_data);
+in3_ctx_t* new_ctx(in3_t* client, char* req_data);
 int ctx_parse_response(in3_ctx_t* ctx, char* response_data);
 void free_ctx(in3_ctx_t* ctx);
 

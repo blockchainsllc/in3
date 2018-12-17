@@ -210,21 +210,21 @@ typedef struct {
     uint16_t serversCount;
 
 
-} in3;
+} in3_t;
 
 
 
 /* allocates a new byte array with 0 filled */
-in3 *in3_new();
+in3_t* in3_new();
 
 /* sends a request and stores the result in the provided buffer */
-int in3_client_send(in3* c,char* req, char* result, int buf_size, char* error);
+int in3_client_send(in3_t* c,char* req, char* result, int buf_size, char* error);
 
 /* sends a request and stores the result in the provided buffer */
-int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size, char* error);
+int in3_client_rpc(in3_t* c, char* method, char* params ,char* result, int buf_size, char* error);
 
 /* frees the references of the client */
-void in3_free(in3 *a);
+void in3_free(in3_t* a);
 
 
 #endif

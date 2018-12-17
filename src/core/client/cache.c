@@ -6,13 +6,13 @@
 #include <string.h>
 #include "../jsmn/jsmnutil.h"
 
-int in3_cache_init(in3* c) {
+int in3_cache_init(in3_t* c) {
     int i;
     for (i=0;i<c->serversCount;i++) in3_cache_update_nodelist(c,c->servers+i);
     return 0;
 }
 
-int in3_cache_update_nodelist(in3* c, in3_chain_t* chain) {
+int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     if (!c->cacheStorage) return 0;
     char key[200];
     sprintf(key,"nodelist_%llx",(unsigned long long) chain->chainId);

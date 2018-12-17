@@ -18,12 +18,12 @@
  * 
  * This is done by checking the cache and updating the local storage.
  */
-int in3_cache_init(in3* c);
+int in3_cache_init(in3_t* c);
 
 /**
  * reads the nodelist from cache. 
  */
-int in3_cache_update_nodelist(in3* c, in3_chain_t* chain);
+int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain);
 
 /**
  * stores the nodelist to thes cache. 

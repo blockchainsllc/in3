@@ -8,7 +8,7 @@ extern "C" {
     }
 
     /* sends a request and stores the result in the provided buffer */
-    int EMSCRIPTEN_KEEPALIVE in3_send(in3* c,char* req, char* result, int buf_size) {
+    int EMSCRIPTEN_KEEPALIVE in3_send(in3_t* c,char* req, char* result, int buf_size) {
         return in3_client_send(c,req,result,buf_size);
     }
 

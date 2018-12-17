@@ -35,7 +35,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
     weight->weight              = 1;
 }
 
-static void in3_client_init(in3* c) {
+static void in3_client_init(in3_t* c) {
     int i;
 
     c->autoUpdateList=1;
@@ -83,7 +83,7 @@ static void in3_client_init(in3* c) {
 
 
 /* frees the data */
-void in3_free(in3 *a) {
+void in3_free(in3_t* a) {
     int i,j;
     in3_chain_t* chain;
     in3_node_t* node;
@@ -102,11 +102,11 @@ void in3_free(in3 *a) {
     free(a);
 }
 
-in3 *in3_new() {
+in3_t *in3_new() {
     // initialize random withj the timestamp as seed
     srand ( time(NULL) );
 
-	in3 *c = calloc(1, sizeof(in3));
+	in3_t *c = calloc(1, sizeof(in3_t));
     in3_client_init(c);
 	return c;
 }

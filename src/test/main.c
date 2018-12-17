@@ -48,7 +48,7 @@ int main (int argc, char *argv[])
   char params[5000];
   params[0]='[';
   int p=1;
-  in3* c = in3_new();
+  in3_t* c = in3_new();
   c->transport = send_curl;
   c->requestCount = 1;
 

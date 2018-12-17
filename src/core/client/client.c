@@ -86,7 +86,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* r
   return r;
 }
 
-static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+static int update_nodelist(in3_t* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   int res=0;
 
   // create random seed
@@ -139,7 +139,7 @@ static int update_nodelist(in3* c,in3_chain_t* chain, in3_ctx_t* parent_ctx) {
 static int get_node_list(in3_ctx_t* ctx, uint64_t chain_id, bool update,  in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
   int i, res=IN3_ERR_CHAIN_NOT_FOUND;
   in3_chain_t* chain;
-  in3* c = ctx->client;
+  in3_t* c = ctx->client;
   for (i=0;i< c->serversCount;i++) {
     chain = c->servers + i;
     if (chain->chainId == chain_id) {
@@ -162,7 +162,7 @@ static int get_node_list(in3_ctx_t* ctx, uint64_t chain_id, bool update,  in3_no
 }
 
 
-static node_weight_t*  fill_weight_list(in3* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, time_t now, float* total_weight, int* total_found) {
+static node_weight_t*  fill_weight_list(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, time_t now, float* total_weight, int* total_found) {
   int i,p;
   float s=0;
   in3_node_t* nodeDef;
@@ -286,7 +286,7 @@ static int in3_get_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 
 static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, jsmntok_t* req ) {
    int i;
-   in3* c         = ctx->client;
+   in3_t* c         = ctx->client;
 
    conf->chainId  = c->chainId;
    conf->finality = c->finality;
@@ -514,7 +514,7 @@ static int in3_client_send_intern( in3_ctx_t* ctx) {
 }
 
 
-int in3_client_send( in3* c, char* req, char* result, int buf_size, char* error) {
+int in3_client_send( in3_t* c, char* req, char* result, int buf_size, char* error) {
   int res=0, len,p,i;
   in3_ctx_t* ctx = new_ctx(c,req); 
   result[0]=0;
@@ -559,7 +559,7 @@ int in3_client_send( in3* c, char* req, char* result, int buf_size, char* error)
 
 }
 
-int in3_client_rpc(in3* c, char* method, char* params ,char* result, int buf_size, char* error) {
+int in3_client_rpc(in3_t* c, char* method, char* params ,char* result, int buf_size, char* error) {
   int res=0, len,p,i;
   char req[10000];
   sprintf(req,"{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}",method,params);
