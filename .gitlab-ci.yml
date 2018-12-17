@@ -86,6 +86,24 @@ linux-x64:
   variables:
      IMAGE: linux-x64
 
+pages:
+  tags:
+    - short-jobs
+  stage: deploy
+  when: always
+  environment:
+    name: test-results
+    url: https://in3.git-pages.slock.it/c/in3-core
+  dependencies:
+    - linux-x64
+  script:
+    - mkdir -p public/
+    - cp -r build/docs/doc_doxygen/html/* public/
+  artifacts:
+    paths:
+      - public
+
+
 
 #windows-x64:
 #  extends: .xbuild
