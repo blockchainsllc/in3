@@ -1,23 +1,34 @@
 /** @file 
- * storing nodelists and other cahces with thew storage handler.
+ * handles caching and storage.
+ * 
+ * storing nodelists and other caches with the storage handler as specified in the client.
+ * If no storage handler is specified nothing will be cached.
  * */ 
 
 
-#include <stdint.h>  
 #include "../util/bytes.h"
 #include "client.h"
 #include "context.h"
-#include <stdbool.h>
 
 #ifndef CACHE_H
 #define CACHE_H
 
+/**
+ * inits the client.
+ * 
+ * This is done by checking the cache and updating the local storage.
+ */
 int in3_cache_init(in3* c);
 
+/**
+ * reads the nodelist from cache. 
+ */
 int in3_cache_update_nodelist(in3* c, in3_chain_t* chain);
-int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain);
 
-int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result);
+/**
+ * stores the nodelist to thes cache. 
+ */
+int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain);
 
 
 #endif

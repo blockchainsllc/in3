@@ -26,7 +26,7 @@ static void free_nodeList(in3_node_t* nodeList, int count) {
    free(nodeList);
 }
 
-int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) {
+static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) {
   jsmntok_t* t;
   char* res=ctx->response_data;
   int i,r=0;
