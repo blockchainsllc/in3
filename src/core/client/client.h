@@ -1,3 +1,7 @@
+/** @file 
+ * incubed main client file.
+ * */ 
+
 #include <stdint.h>  
 #include "../util/bytes.h"
 #include "../util/utils.h"
@@ -7,9 +11,9 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-/* ERROR types  used as return values */
+/** ERROR types  used as return values */
 enum in3err {
-	IN3_ERR_INVALID_JSON = -1,
+	IN3_ERR_INVALID_JSON = -1, 
     IN3_ERR_BUFFER_TOO_SMALL = -2,
     IN3_ERR_REQUEST_INVALID = -3,
     IN3_ERR_CHAIN_NOT_FOUND = -4,
@@ -18,51 +22,52 @@ enum in3err {
     IN3_ERR_MAX_ATTEMPTS = -7,
 };
 
-/* type of the chain */
+/** type of the chain */
 typedef enum {
-	CHAIN_ETH = 0,
-	CHAIN_SUBSTRATE = 1,
-	CHAIN_IPFS = 2,
-	CHAIN_BTC = 3,
-	CHAIN_IOTA = 4,
+	CHAIN_ETH = 0,       /**< Ethereum chain */
+	CHAIN_SUBSTRATE = 1, /**< substrate chain */
+	CHAIN_IPFS = 2,      /**< ipfs verifiaction */
+	CHAIN_BTC = 3,       /**< Bitcoin chain */
+	CHAIN_IOTA = 4,      /**< IOTA chain */
 	CHAIN_GENERIC = 5,
 } in3_chain_type_t;
 
-
+/** type of proof */
 typedef enum {
-	PROOF_NONE = 0,
-	PROOF_STANDARD = 1,
-	PROOF_FULL = 2
+	PROOF_NONE = 0,      /**< No Verification */
+	PROOF_STANDARD = 1,  /**< Standard Verification of the important properties */
+	PROOF_FULL = 2       /**< All field will be validated including uncles */
 } in3_proof_t;
 
+/** verification as delivered by the server. This will be part of the in3-request.*/
 typedef enum {
-	VERIFICATION_NEVER = 0,
-	VERIFICATION_PROOF = 1,
-	VERIFICATION_PROOF_WITH_SIGNATURE = 2
+	VERIFICATION_NEVER = 0,  /**< No Verifacation */
+	VERIFICATION_PROOF = 1,  /**< Includes the proof of the data */
+	VERIFICATION_PROOF_WITH_SIGNATURE = 2  /**< Proof + Signmatures */
 } in3_verification_t;
 
+/** the configuration as part of each incubed request. 
+ * This will be generated based on the client-configuration. 
+ */
 typedef struct {
-   uint64_t chainId;
-   uint8_t includeCode;
-   uint8_t useFullProof;
-   bytes_t* verifiedHashes;
-   uint16_t verifiedHashesCount;
-   uint16_t latestBlock;
-   uint16_t finality;
-   in3_verification_t verification;
-   bytes_t* clientSignature;
-   bytes_t* signatures;
-   uint8_t signaturesCount;
+   uint64_t chainId;                 /**< the chain to be used. this is holding the integer-value of the hexstring. */
+   uint8_t includeCode;              /**< if true the code needed will always be devlivered.  */
+   uint8_t useFullProof;             /**< this flaqg is set, if the proof is set to "PROOF_FULL" */ 
+   bytes_t* verifiedHashes;          /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
+   uint16_t verifiedHashesCount;     /**< number of verified blockhashes*/
+   uint16_t latestBlock;             /**< the last blocknumber the nodelistz changed */
+   uint16_t finality;                /**< number of signatures( in percent) needed in order to reach finality. */
+   in3_verification_t verification;  /**< Verification-tyüe */
+   bytes_t* clientSignature;         /**< the signature of the client with the client key */
+   bytes_t* signatures;              /**< the addresses of servers requested to sign the blockhash */
+   uint8_t signaturesCount;          /**< number or addresses */
 
 } in3_request_config_t;
 
-
+/** node-configuration */
 typedef struct {
-    /* the index within the contract */
-    uint32_t index;
-
-    /* the address of node */
-    bytes_t* address; 
+    uint32_t index;                 /**< index within the nodelist, also used in the contract as key */
+    bytes_t* address;               /**< address of the server */
 
     /* stored deposit */
     uint64_t deposit;

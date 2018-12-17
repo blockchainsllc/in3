@@ -38,6 +38,8 @@ add_subdirectory( src/transport_curl )
 add_subdirectory( src/eth_nano )
 add_subdirectory( src/test )
 add_subdirectory( src/cmd )
+
+add_subdirectory( docs )
 #add_subdirectory( src/wasm )
 
 
