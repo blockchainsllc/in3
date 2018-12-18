@@ -133,7 +133,7 @@ pages:
     name: test-results
     url: https://in3.git-pages.slock.it/c/in3-core
   dependencies:
-    - linux-x64
+    - linux-x64-shared
   script:
     - mkdir -p public/
     - cp -r build/docs/doc_doxygen/html/* public/
