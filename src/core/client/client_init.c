@@ -38,7 +38,6 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
 }
 
 static void in3_client_init(in3_t* c) {
-    int i;
 
     c->autoUpdateList=1;
     c->cacheStorage=NULL;
@@ -97,7 +96,7 @@ void in3_free(in3_t* a) {
 
 in3_t *in3_new() {
     // initialize random with the timestamp as seed
-    srand ( time(NULL) );
+    _srand ( _time() );
 
      // create new client
 	in3_t *c = _calloc(1, sizeof(in3_t));

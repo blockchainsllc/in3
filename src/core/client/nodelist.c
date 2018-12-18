@@ -91,7 +91,7 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
 
   // create random seed
   char seed[67];
-  sprintf(seed,"0x%08x%08x%08x%08x%08x%08x%08x%08x",rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand());
+  sprintf(seed,"0x%08x%08x%08x%08x%08x%08x%08x%08x",_rand(),_rand(),_rand(),_rand(),_rand(),_rand(),_rand(),_rand());
 
   // create request
   char req[10000];
@@ -136,7 +136,7 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
   return res;
 }
 
-node_weight_t*  in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, time_t now, float* total_weight, int* total_found) {
+node_weight_t*  in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, float* total_weight, int* total_found) {
   int i,p;
   float s=0;
   in3_node_t* nodeDef;
@@ -197,7 +197,7 @@ int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update,  in3_node_
 int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 
   // get all nodes from the nodelist
-  time_t now  = time(0);
+  _time_t now  = _time();
   in3_node_t*        all_nodes;
   in3_node_weight_t* weights;
   float total_weight;
@@ -246,7 +246,7 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
   // we want ot make sure this loop is run only max 10xthe number of requested nodes
   for (i=0;added<l && i<l*10;i++) {
     // pick a random number
-    r = total_weight *  ((float)(rand() % 10000)) / 10000.0;
+    r = total_weight *  ((float)(_rand() % 10000)) / 10000.0;
 
     // find the first node matching it.
     w = found;

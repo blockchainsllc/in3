@@ -1,0 +1,28 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "buildAll",
+            "type": "shell",
+            "command": "cd build; make",
+            "problemMatcher": [
+                "$gcc"
+            ]
+            
+        },
+        {
+            "label": "buildZephyr",
+            "type": "shell",
+            "command": "cd src/zephyr/build; ninja",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

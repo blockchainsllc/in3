@@ -1,4 +1,12 @@
 
+OPTION(ZEPHYR "ZEPHYR" OFF)
+IF(ZEPHYR)
+  add_definitions(-DZEPHYR_OS)
+  add_definitions(-DZEPHYR)
+ENDIF(ZEPHYR)
+
+
+
 add_library( core STATIC 
 	client/context.c
 	client/client.c

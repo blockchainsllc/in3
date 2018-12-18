@@ -10,7 +10,7 @@
 extern in3_t* in3_create();
 
 /** sends a request and stores the result in the provided buffer */
-extern int in3_send(in3_t* c, char* method, char* params ,char* result, int buf_size, char* error);
+extern int in3_send(in3_t* c, char* method, char* params ,char** result,  char** error);
 
 
 /** frees the references of the client */

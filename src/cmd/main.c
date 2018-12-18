@@ -22,7 +22,7 @@ uint64_t getChainId(char* name) {
   if (strcmp(name,"evan")==0)       return 0x4b1L;
   if (strcmp(name,"evan")==0)       return 0x4b1L;
   if (strcmp(name,"ipfs")==0)       return 0x7d0;
-  return atol(name);
+  return atoi(name);
 }
 
 int main (int argc, char *argv[])
@@ -87,16 +87,20 @@ int main (int argc, char *argv[])
   params[p]=0;
 
 
-  char result[100000];
-  char error[100000];
-  in3_client_rpc(c, method, params, result,100000, error);
+  char* result;
+  char* error;;
+
+  in3_client_rpc(c, method, params, &result, &error);
   in3_free(c);
 
-  if (strlen(error)) {
+  if (error) {
     fprintf(stderr, "Error: %s\n",error);
+    free(error);
     return 1;
   }
-  else
+  else {
      printf( "%s\n",result);
+     free(result);
+  }
   return 0;
 }

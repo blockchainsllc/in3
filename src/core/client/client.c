@@ -52,8 +52,8 @@ int in3_client_send( in3_t* c, char* req, char* result, int buf_size, char* erro
 
 }
 
-int in3_client_rpc(in3_t* c, char* method, char* params ,char* result, int buf_size, char* error) {
-  int res=0, len,p,i;
+int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** error) {
+  int res=0;
   char req[10000];
   sprintf(req,"{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}",method,params);
 
@@ -63,7 +63,10 @@ int in3_client_rpc(in3_t* c, char* method, char* params ,char* result, int buf_s
   error[0]=0;
 
   if (ctx->error) {
-    if (error!=NULL) strcpy(error,ctx->error);
+    if (error!=NULL) {
+      *error = malloc(strlen(ctx->error)+1);
+      strcpy(*error,ctx->error);
+    }
     res=-1;
   }
   else  {
@@ -71,20 +74,32 @@ int in3_client_rpc(in3_t* c, char* method, char* params ,char* result, int buf_s
     if (res>=0) {
 
       jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
-      if (r)
-        ctx_cpy_string(ctx->response_data,r,result);
-      else if ((r = ctx_get_token(ctx->response_data,ctx->responses[0],"error")))
-        ctx_cpy_string(ctx->response_data,r,error);
-      else if (ctx->error)
-        strcpy(error,ctx->error);
-      else
-        strcpy(error,"No Result and also no error");
+      if (r) {
+        *result = malloc(r->end - r->start +1);
+        ctx_cpy_string(ctx->response_data,r,*result);
+      }
+      else if ((r = ctx_get_token(ctx->response_data,ctx->responses[0],"error"))) {
+        *error = malloc(r->end - r->start +1);
+        ctx_cpy_string(ctx->response_data,r,*error);
+      }
+      else if (ctx->error) {
+        *error = malloc(strlen(ctx->error)+1);
+        strcpy(*error,ctx->error);
+      }
+      else {
+        *error = malloc(50);
+        strcpy(*error,"No Result and also no error");
+      }
 
     }
-    else if (ctx->error)
-      strcpy(error,ctx->error);
-    else
-      strcpy(error,"Error sending the request");
+    else if (ctx->error) {
+      *error = malloc(strlen(ctx->error)+1);
+      strcpy(*error,ctx->error);
+    }
+    else {
+        *error = malloc(50);
+        strcpy(*error,"Error sending the request");
+    }
   }
   free_ctx(ctx);
   return res;

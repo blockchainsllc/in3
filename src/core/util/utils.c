@@ -284,9 +284,7 @@ bytes_t* hex2byte_new_bytes(char *buf, int len) {
 
 void int8_to_char(uint8_t *buffer, int len, char *out) {
     const char hex[] = "0123456789abcdef";
-    int max = 2 * len;
-    int i = 0;
-    int j = 0;
+    int i = 0,j = 0;
     while (j < len) {
         out[i++] = hex[(buffer[j] >> 4) & 0xF];
         out[i++] = hex[buffer[j] & 0xF];

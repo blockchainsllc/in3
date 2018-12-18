@@ -7,6 +7,7 @@
 #include "client.h"
 #include "context.h"
 #include <time.h>
+#include "../util/mem.h"
 
 #ifndef NODELIST_H
 #define NODELIST_H
@@ -23,7 +24,7 @@ int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update,  in3_node_
 /**
  * filters and fills the weights on a returned linked list.
  */
-node_weight_t*  in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, time_t now, float* total_weight, int* total_found);
+node_weight_t*  in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, float* total_weight, int* total_found);
 
 /**
  * picks (based on the config) a random number of nodes and returns them as weightslist.

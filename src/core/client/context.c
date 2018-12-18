@@ -181,7 +181,7 @@ uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
             val |= ((uint64_t) strtohex(idval[i])) << ( 4*(n-1-i) );
     }
     else 
-      val = atol(idval);
+      val = _atol(idval);
 
 	free(idval);
 	return val;
@@ -231,7 +231,7 @@ static unsigned long counter = 1;
 
 int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
-    int i,lv=0;
+    int i;
     jsmntok_t* r,*t;
     char temp[100];
     sb_add_char(sb,'[');

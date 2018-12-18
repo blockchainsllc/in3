@@ -132,7 +132,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
   for (n=0;n<nodes_count;n++) {
     if (response[n].error.len || !response[n].result.len) {
       // blacklist the node
-      w->weight->blacklistedUntil = time(0) + 3600000;
+      w->weight->blacklistedUntil = _time() + 3600000;
       w->weight=0;
     }
     else {
@@ -144,7 +144,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
       res = ctx_parse_response(ctx,response[n].result.data);
       if (res<0) {
         // blacklist!
-        w->weight->blacklistedUntil = time(0) + 3600000;
+        w->weight->blacklistedUntil = _time() + 3600000;
         w->weight=0;
       }
       else {
@@ -159,7 +159,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
 
           if (verifier && verifier->verify(&vc)) {
             // blacklist!
-            w->weight->blacklistedUntil = time(0) + 3600000;
+            w->weight->blacklistedUntil = _time() + 3600000;
             w->weight=0;
             break;
           }
@@ -178,7 +178,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
 
 int in3_send_ctx( in3_ctx_t* ctx) {
   // find the nodes to send the request to
-  int i,n,nodes_count;
+  int i,nodes_count;
 
   in3_response_t* response;
   int res = in3_node_list_pick_nodes(ctx, &ctx->nodes);

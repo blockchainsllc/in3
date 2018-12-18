@@ -227,7 +227,7 @@ void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len) 
 		char* c=_malloc(len+1);
 		memcpy(c,str,len);
 		c[len]=0;
-		uint64_t val=atol(c);
+		uint64_t val=_atol(c);
 		free(c);
 		//TODO convert number to
 		if (val==0 && min_len==0) return;

@@ -13,8 +13,7 @@ configure_file (
   "${PROJECT_BINARY_DIR}/in3Config.h"
   )
  
-# add the binary tree to the search path for include files
-# so that we will find TutorialConfig.h
+
 include_directories("${PROJECT_BINARY_DIR}")
 
 
@@ -26,6 +25,15 @@ IF(DEBUG)
   ADD_DEFINITIONS(-DDEBUG)
   SET(CMAKE_BUILD_TYPE Debug)
 ENDIF(DEBUG)
+
+# options
+OPTION(ZEPHYR "ZEPHYR" OFF)
+IF(ZEPHYR)
+  ADD_DEFINITIONS(-DZEPHYR)
+  add_subdirectory( src/zephyr )
+
+ENDIF(ZEPHYR)
+
 
 # subst
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
