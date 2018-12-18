@@ -97,7 +97,6 @@ zephyr:
      paths:
       - src/zephyr/build
   script:
-    - apt-get -y install ninja-build
     - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
     - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
     - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION} 
@@ -106,8 +105,8 @@ zephyr:
     - source zephyr/zephyr-env.sh
     - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}" 
     - cd src/zephyr; mkdir build; cd build
-    - cmake -GNinja -DZEPHYR=true -DBOARD=nrf52840_pca10056 ..
-    - ninja
+    - cmake -DBOARD=nrf52840_pca10056 ..
+    - mke
 
   variables:
     LANG : C.UTF-8
