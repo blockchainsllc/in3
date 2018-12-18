@@ -11,7 +11,7 @@ build-in3:
     - mkdir build
     - cd build
     - conan install .. --build libcurl
-    - cmake ..
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
   artifacts:
     paths:
@@ -33,7 +33,7 @@ build-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen ; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake .. && make && ls -ltr src/*/"
+    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen ; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make && ls -ltr src/*/"
   variables:
      IMAGE: "linux-x64"
      INSTALL: "cd ."
@@ -48,8 +48,8 @@ build-in3:
   script:
     - mkdir build
     - cd build
-    - conan install .. --build missing
-    - cmake ..
+    - conan install .. --build missing 
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
     - ls -ltr src/*/lib/ src/*/bin/ 
 
@@ -82,10 +82,17 @@ clang50:
       - build/src
 
   
-linux-x64:
+linux-x64-static:
   extends: .xbuild
   variables:
      IMAGE: linux-x64
+     CONAN_OPTS: "-o libcurl:shared=False"
+
+linux-x64-shared:
+  extends: .xbuild
+  variables:
+     IMAGE: linux-x64
+     CONAN_OPTS: "-o libcurl:shared=True"
 
 
 zephyr:
@@ -105,7 +112,7 @@ zephyr:
     - source zephyr/zephyr-env.sh
     - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}" 
     - cd src/zephyr; mkdir build; cd build
-    - cmake -DBOARD=nrf52840_pca10056 ..
+    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
     - make
 
   variables:
