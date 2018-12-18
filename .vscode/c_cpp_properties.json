@@ -3,7 +3,7 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**","${workspaceFolder}/../zephyr/include/**"
             ],
             "defines": [],
             "macFrameworkPath": [

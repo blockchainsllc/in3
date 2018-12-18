@@ -7,6 +7,7 @@
 #include "jsmn/jsmnutil.h"
 #include "util/utils.h"
 #include "rent.h"
+#include <eth_nano.h>
 
 #include "util/debug.h"
 
@@ -63,7 +64,7 @@ static in3_state_t in3_init(void)
 {
 	client = k_calloc(1, sizeof(struct in3_client));
 	timer = k_calloc(1, sizeof(struct k_timer));
-
+    
 	client->in3 = in3_new();
 	client->in3->chainId=0x044d;
 	client->in3->requestCount = 1;
@@ -71,7 +72,8 @@ static in3_state_t in3_init(void)
 	client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
 	client->msg = k_calloc(1, sizeof(in3_msg_t));
 
-	bluetooth_setup(client);
+	in3_register_eth_nano();
+    bluetooth_setup(client);
 	led_setup();
 	k_sem_init(&client->sem, 0 , 1);
 	k_mutex_init(&client->mutex);
@@ -105,7 +107,7 @@ static in3_state_t in3_waiting(void)
 	return STATE_WAITING;
 }
 
-static in3_state_t in3_verify(void)
+static in3_state_t in3_verifying(void)
 {
 	return STATE_RESET;
 }
@@ -155,10 +157,9 @@ static in3_state_t in3_reset(void)
 in3_state_func_t* const state_table[STATE_MAX] = {
 	in3_init,
 	in3_waiting,
-	in3_verify,
+	in3_verifying,
 	in3_action,
-	in3_reset,
-	NULL
+	in3_reset
 };
 
 static in3_state_t run_state(in3_state_t state)

@@ -52,7 +52,7 @@ int eth_verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, jsmntok_t *sig)
 
     // now create the address
     bytes_t *hash = sha3(&pubkey_bytes);
-    bytes_t *addr = b_new((void *)hash->data + 12, 20);
+    bytes_t *addr = b_new((char *)hash->data + 12, 20);
 
     for (i = 0; i < vc->config->signaturesCount; i++)
     {
@@ -73,7 +73,7 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
 {
     int res = 0, i;
     uint64_t header_number = 0;
-    jsmntok_t *t, *sig, *t2, *signatures;
+    jsmntok_t *t, *sig, *signatures;
     bytes_t *block_hash = sha3(header);
     bytes_t temp;
 
@@ -177,8 +177,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash)
 {
 
     int res = 0;
-    jsmntok_t *in3, *t;
-    bytes_t **proof;
+    jsmntok_t* t;
 
     if (!tx_hash)
         return vc_err(vc, "No Transaction Hash found");
