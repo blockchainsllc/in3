@@ -2,7 +2,7 @@
 #ifndef __MEM_H__
 #define __MEM_H__
 
-#ifdef ZEPHYR
+#ifdef __ZEPHYR__
 #include <zephyr.h>
 
 #define _malloc(s) k_malloc(s)

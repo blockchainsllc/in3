@@ -6,7 +6,6 @@
 #include <misc/printk.h>
 #include <string.h>
 #include <gpio.h>
-#include <board.h>
 #include <device.h>
 
 #include <settings/settings.h>
@@ -25,6 +24,10 @@
 #include "util/bytes.h"
 
 #include "util/debug.h"
+
+
+#define CONFIG_GPIO_P0_DEV_NAME              "GPIO_0"
+#define CONFIG_GPIO_P1_DEV_NAME              "GPIO_1"
 
 static struct bt_conn *default_conn = NULL;
 

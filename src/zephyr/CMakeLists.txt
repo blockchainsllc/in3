@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.8.2)
+set(QEMU_EXTRA_FLAGS -s)
 
 include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
 project(NONE)
+
 
 OPTION(DEBUG "Debug" OFF)
 IF(DEBUG)
@@ -12,10 +14,10 @@ ENDIF(DEBUG)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
   ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
-add_definitions(-DZEPHYR_OS)
-add_definitions(-DZEPHYR)
-zephyr_library_include_directories($ENV{ZEPHYR_BASE}/samples/bluetooth)
-include_directories($ENV{ZEPHYR_BASE}/samples/in3-test-receiver/src/crypto)
+#add_definitions(-DZEPHYR_OS)
+#add_definitions(-DZEPHYR)
+#zephyr_library_include_directories($ENV{ZEPHYR_BASE}/samples/bluetooth)
+#include_directories($ENV{ZEPHYR_BASE}/samples/in3-test-receiver/src/crypto)
 
 
 
