@@ -26,7 +26,7 @@ void byte_to_hex(uint8_t b, char s[23]) {
 
 void *k_realloc(void *ptr, size_t size, size_t oldsize)
 {
-	#ifdef ZEPHYR
+	#ifdef __ZEPHYR__
 	void *new;
 
 	new = k_malloc(size);
