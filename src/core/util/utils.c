@@ -26,7 +26,7 @@ void byte_to_hex(uint8_t b, char s[23]) {
 
 void *k_realloc(void *ptr, size_t size, size_t oldsize)
 {
-	#ifdef ZEPHYR
+	#ifdef __ZEPHYR__
 	void *new;
 
 	new = k_malloc(size);
@@ -254,7 +254,7 @@ uint8_t strtohex(char c)
         return c - 'a' + 10;
     if(c >= 'A' && c <= 'F')
         return c - 'A' + 10;
-    return 255;
+    ret urn 255;
 }
 
 int hex2byte_arr(char *buf, int len, uint8_t *out, int outbuf_size) {
