@@ -87,6 +87,31 @@ linux-x64:
   variables:
      IMAGE: linux-x64
 
+
+zephyr:
+  image: agustinhenze/zephyr-arm
+  stage: build
+  tags:
+    - short-jobs
+  artifacts:
+     paths:
+      - src/zephyr/build
+  script:
+    - git clone https://github.com/zephyrproject-rtos/zephyr.git 
+    - source zephyr/zephyr-env.sh
+    - export ZEPHYR_SDK_INSTALL_DIR=$(find /opt/sdk -name "zephyr-sdk-*" | sort -rz | head -n 1)
+    - cd src/zephyr; mkdir build; cd build
+    - cmake -GNinja -DZEPHYR=true -DBOARD=nrf52840_pca10056 ..
+    - ninja
+
+  variables:
+    LANG : C.UTF-8
+    LC_ALL : C.UTF-8
+    ZEPHYR_GCC_VARIANT : gccarmemb
+    GCCARMEMB_TOOLCHAIN_PATH : /usr
+    CROSS_COMPILE : /usr/bin/arm-none-eabi-
+
+
 pages:
   tags:
     - short-jobs
