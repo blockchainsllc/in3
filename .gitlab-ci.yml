@@ -143,10 +143,10 @@ pages:
 
 
 
-#windows-x64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: windows-x64
+windows-x64:
+  extends: .xbuild
+  variables:
+     IMAGE: windows-x64
 
 #linux-armv5:
 #  extends: .xbuild
