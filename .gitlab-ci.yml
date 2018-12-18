@@ -106,7 +106,7 @@ zephyr:
     - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}" 
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 ..
-    - mke
+    - make
 
   variables:
     LANG : C.UTF-8
