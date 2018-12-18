@@ -254,7 +254,7 @@ uint8_t strtohex(char c)
         return c - 'a' + 10;
     if(c >= 'A' && c <= 'F')
         return c - 'A' + 10;
-    ret urn 255;
+    return 255;
 }
 
 int hex2byte_arr(char *buf, int len, uint8_t *out, int outbuf_size) {
