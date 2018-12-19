@@ -9,6 +9,11 @@
 #include <crypto/ecdsa.h>
 #include <util/mem.h>
 
+// list of methods allowed withoput proof
+#define MAX_METHODS  23
+char *ALLOWED_METHODS[MAX_METHODS] = {"eth_blockNumber", "web3_clientVersion", "web3_sha3", "net_version", "net_peerCount", "net_listening", "eth_protocolVersion", "eth_syncing", "eth_coinbase", "eth_mining", "eth_hashrate", "eth_gasPrice", "eth_accounts", "eth_sign", "eth_sendRawTransaction", "eth_estimateGas", "eth_getCompilers", "eth_compileLLL", "eth_compileSolidity", "eth_compileSerpent", "eth_getWork", "eth_submitWork", "eth_submitHashrate"};
+
+
 int eth_verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, jsmntok_t *sig)
 {
     jsmntok_t *t;
@@ -244,6 +249,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash)
 int in3_verify_eth_nano(in3_vctx_t *vc)
 {
     jsmntok_t *t;
+    int i;
 
     if (vc->config->verification == VERIFICATION_NEVER)
         return 0;
@@ -255,11 +261,19 @@ int in3_verify_eth_nano(in3_vctx_t *vc)
     // do we support this request?
     if (!(t = req_get(vc, vc->request, "method")))
         return vc_err(vc, "No Method in request defined!");
-    if (!req_eq(vc, t, "eth_getTransactionReceipt"))
+
+    // check if this call is part of the not verifieable calls
+    for (i=0;i<MAX_METHODS;i++) {
+       if (req_eq(vc, t, ALLOWED_METHODS[i])) 
+          return 0;
+    }
+
+    if (req_eq(vc, t, "eth_getTransactionReceipt"))
+        // for txReceipt, we need the txhash
+        return eth_verify_eth_getTransactionReceipt(vc, req_get_param(vc, 0));
+    else
         return vc_err(vc, "The Method cannot be verified with eth_nano!");
 
-    // for txReceipt, we need the txhash
-    return eth_verify_eth_getTransactionReceipt(vc, req_get_param(vc, 0));
 }
 
 void in3_register_eth_nano()
