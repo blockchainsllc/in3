@@ -95,12 +95,12 @@ int main (int argc, char *argv[])
 
   if (error) {
     fprintf(stderr, "Error: %s\n",error);
-    free(error);
+    _free(error);
     return 1;
   }
   else {
      printf( "%s\n",result);
-     free(result);
+     _free(result);
   }
   return 0;
 }

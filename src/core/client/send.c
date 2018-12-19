@@ -1,7 +1,6 @@
 #include <stdlib.h>  
 #include <string.h>
 #include <stdio.h>
-#include <math.h>
 #include <stdint.h>  
 #include "client.h"  
 #include "../jsmn/jsmnutil.h"

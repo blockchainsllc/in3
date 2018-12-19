@@ -53,8 +53,8 @@ void b_free(bytes_t *a)
 	if (!a)
 		return;
 
-	free(a->data);
-	free(a);
+	_free(a->data);
+	_free(a);
 }
 
 bytes_t *b_dup(bytes_t *a)
@@ -199,7 +199,7 @@ bytes_t* bb_move_to_bytes(bytes_builder_t *bb) {
 	bytes_t* b = _malloc(sizeof(bytes_t));
 	b->len=bb->b.len;
 	b->data=bb->b.data;
-	free(bb);
+	_free(bb);
 	return b;
 }
 void bb_clear(bytes_builder_t *bb) {
@@ -228,7 +228,7 @@ void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len) 
 		memcpy(c,str,len);
 		c[len]=0;
 		uint64_t val=_atol(c);
-		free(c);
+		_free(c);
 		//TODO convert number to
 		if (val==0 && min_len==0) return;
 		l=8;

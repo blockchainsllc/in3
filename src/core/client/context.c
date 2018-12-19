@@ -183,7 +183,7 @@ uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {
     else 
       val = _atol(idval);
 
-	free(idval);
+	_free(idval);
 	return val;
 }
 

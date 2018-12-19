@@ -59,7 +59,7 @@ int json_get_int_value(char *data, char *key)
 	value = get_json_key_value_int(data, key, tokv, tokc);
 
 	if (tokv)
-		free(tokv);
+		_free(tokv);
 
 	return value;
 }
@@ -74,7 +74,7 @@ char *json_get_value(char *data, char *key)
 	value = get_json_key_value(data, key, tokv, tokc);
 
 	if (tokv)
-		free(tokv);
+		_free(tokv);
 
 	return value;
 }
@@ -134,7 +134,7 @@ int str2byte_a(char *str, uint8_t **buf)
 	if (hex2byte_arr(str+off, size, *buf, nbytes))
 		return nbytes;
 
-	free(*buf);
+	f_ree(*buf);
 	return 0;
 }
 
@@ -154,7 +154,7 @@ int get_json_key_value_int(char *buf, char *key, jsmntok_t* tok, int tokc)
 			idval[n] = 0;
 			strncpy(idval, buf + tok[i].start, n);
 			val = atoi(idval);
-			free(idval);
+			_free(idval);
 			return val;
 		} else if (t==1) {
 			return val;

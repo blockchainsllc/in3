@@ -149,7 +149,7 @@ int send_ble(char** urls,int urls_len, char* pl, in3_response_t* result)  {
 
 	dbg_log("");
 	if (err < 0) {
-        sb_add_chars(&result->result, "Error receiving this response");
+        sb_add_chars(&result->error, "Error receiving this response");
 		return err;
 	}
 	dbg_log("");
