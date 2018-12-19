@@ -134,7 +134,7 @@ int str2byte_a(char *str, uint8_t **buf)
 	if (hex2byte_arr(str+off, size, *buf, nbytes))
 		return nbytes;
 
-	f_ree(*buf);
+	_free(*buf);
 	return 0;
 }
 
