@@ -140,7 +140,7 @@ static void check_size(bytes_builder_t* bb, size_t len) {
 	size_t l= bb->bsize;
     while (bb->b.len + len >= bb->bsize)
        bb->bsize <<= 1;
-    bb->b.data = k_realloc(bb->b.data, bb-> bsize,  l);
+    bb->b.data = _realloc(bb->b.data, bb-> bsize,  l);
 }
 void bb_write_chars(bytes_builder_t *bb,char* c, int len) {
 	check_size(bb,len+1);

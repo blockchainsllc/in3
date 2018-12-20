@@ -15,6 +15,7 @@
         "stringbuilder.h": "c",
         "stdio.h": "c",
         "verifier.h": "c",
-        "jsmn.h": "c"
+        "jsmn.h": "c",
+        "check.h": "c"
     }
 }

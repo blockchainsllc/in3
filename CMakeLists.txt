@@ -18,13 +18,18 @@ include_directories("${PROJECT_BINARY_DIR}")
 
 
 # options
-OPTION(DEBUG
-  "Debug"
-  OFF)
+OPTION(DEBUG "Debug" OFF)
 IF(DEBUG)
   ADD_DEFINITIONS(-DDEBUG)
   SET(CMAKE_BUILD_TYPE Debug)
 ENDIF(DEBUG)
+
+OPTION(TEST "Test" OFF)
+IF(TEST)
+  ADD_DEFINITIONS(-DTEST)
+  SET(CMAKE_BUILD_TYPE Debug)
+  add_subdirectory( test )
+ENDIF(TEST)
 
 # subst
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
@@ -35,7 +40,6 @@ add_subdirectory( src/core )
 add_subdirectory( src/libin3 )
 add_subdirectory( src/transport_curl )
 add_subdirectory( src/eth_nano )
-add_subdirectory( src/test )
 add_subdirectory( src/cmd )
 
 add_subdirectory( docs )

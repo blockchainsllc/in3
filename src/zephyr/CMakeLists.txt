@@ -14,11 +14,6 @@ ENDIF(DEBUG)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
   ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
-#add_definitions(-DZEPHYR_OS)
-#add_definitions(-DZEPHYR)
-#zephyr_library_include_directories($ENV{ZEPHYR_BASE}/samples/bluetooth)
-#include_directories($ENV{ZEPHYR_BASE}/samples/in3-test-receiver/src/crypto)
-
 
 
 target_sources(app PRIVATE

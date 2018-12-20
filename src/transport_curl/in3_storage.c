@@ -65,7 +65,7 @@ bytes_t* storage_get_item(char* key) {
         r=fread(buffer+len, 1, allocated-len, file);
         len+=r;
         if (feof(file)) break;
-        buffer = k_realloc(buffer, allocated*2,allocated);
+        buffer = _realloc(buffer, allocated*2,allocated);
         allocated*=2;
      }
      fclose(file);

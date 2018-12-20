@@ -78,7 +78,7 @@ again:
 			offset = *jsons_out;
 			int size = *jsons_out;
 			*jsons_out = *jsons_out * 2;
-			*jsonv_out = k_realloc(*jsonv_out, sizeof(jsmntok_t)
+			*jsonv_out = _realloc(*jsonv_out, sizeof(jsmntok_t)
 					     * *jsons_out, size * sizeof(jsmntok_t));
 			memset(*jsonv_out+offset, 0, sizeof(jsmntok_t) * offset);
 			if (jsonv_out == NULL) {

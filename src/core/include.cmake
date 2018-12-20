@@ -10,6 +10,7 @@ target_sources( app PRIVATE
     ../core/util/debug.c
     ../core/util/bytes.c
     ../core/util/utils.c
+    ../core/util/mem.c
     ../core/util/stringbuilder.c
     ../core/jsmn/jsmn.c
     ../core/jsmn/jsmnutil.c

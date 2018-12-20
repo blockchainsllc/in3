@@ -30,7 +30,7 @@ static void check_size(sb_t* sb, size_t len) {
     size_t l= sb->allocted;
     while (sb->len + len >= sb->allocted)
        sb->allocted <<= 1;
-    sb->data = k_realloc(sb->data,sb->allocted,l);
+    sb->data = _realloc(sb->data,sb->allocted,l);
 }
 
 sb_t* sb_add_chars(sb_t* sb,  char* chars) {

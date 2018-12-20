@@ -24,32 +24,6 @@ void byte_to_hex(uint8_t b, char s[23]) {
 	}
 }
 
-void *k_realloc(void *ptr, size_t size, size_t oldsize)
-{
-	#ifdef __ZEPHYR__
-	void *new;
-
-	new = k_malloc(size);
-	if (!new)
-		goto error;
-
-	if (ptr && oldsize) {
-		memcpy(new, ptr, oldsize);
-		k_free(ptr);
-	}
-
-	return new;
-
-error:
-	return NULL;
-	#else
-
-	return realloc(ptr,size);
-	
-	#endif
-
-}
-
 int json_get_int_value(char *data, char *key)
 {
 	int tokc, value;
