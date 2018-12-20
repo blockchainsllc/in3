@@ -51,7 +51,6 @@ build-in3:
     - conan install .. --build missing 
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
-    - ls -ltr src/*/lib/ src/*/bin/ 
 
 gcc8-armv7:
   image: conanio/gcc8-armv7
