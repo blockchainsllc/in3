@@ -2,7 +2,6 @@
    #define TEST
 #endif
 #include <stdio.h>
-#include <check.h>
 #include <string.h>
 #include <core/client/client.h>
 #include <core/client/context.h>
@@ -10,7 +9,6 @@
 #include <core/jsmn/jsmnutil.h>
 #include <eth_nano/eth_nano.h>
 
-#include <unistd.h>
 
 #define ERROR(s) printf("Error: %s",s)
 
@@ -167,6 +165,8 @@ int runRequests(char *name)
                 else
                    sprintf(temp,"Request #%i",i+1);
                  printf("\n%2i/%2i : %-60s ",i+1,tests->size,temp);
+//                 mem_reset(64);
+
                  in3_t *c = in3_new();
                  int j;
                  c->max_attempts=1;
@@ -174,12 +174,21 @@ int runRequests(char *name)
                  for (j=0;j<c->serversCount;j++) 
                      c->servers[j].needsUpdate=false;
 
-                 if (execRequest(c, content, test)!=0) failed++;
+
+                 int fail =execRequest(c, content, test);
+                 if (fail) failed++;
                  _tmp_response = NULL;
                  _tmp_str = NULL;
 
                  in3_free(c);
-            }
+/*
+                 if (mem_get_memleak_cnt()) {
+                     printf(" -- Memory Leak detected by malloc #%i!",mem_get_memleak_cnt());
+                     if (!fail) failed++;
+                 }
+
+                 printf(" ( heap: %zu ) ",mem_get_max_heap() );
+*/            }
 
         }
 
@@ -201,13 +210,6 @@ int runRequests(char *name)
 
 int main(int argc, char *argv[])
 {
-    char cwd[1000];
-   if (getcwd(cwd, sizeof(cwd)) != NULL) {
-       printf("Current working dir: %s\n", cwd);
-   } else {
-       perror("getcwd() error");
-       return 1;
-   }
     in3_register_eth_nano();
     return runRequests(argv[1]);
 }

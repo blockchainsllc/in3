@@ -103,6 +103,7 @@ void mem_reset(int cnt) {
 	max_mem = 0;
 	c_mem = 0;
 	mem_count = 0;
+    /*
 	mem_p_t* t = mem_tracker,*n;
 	while (t) {
 		free(t->ptr);
@@ -110,6 +111,7 @@ void mem_reset(int cnt) {
 		t=t->next;
 		free(n);
 	}
+    */
 	mem_tracker=NULL;
 }
 
