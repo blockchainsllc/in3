@@ -24,6 +24,7 @@ test-in3:
   tags:
     - short-jobs
   script:
+    - sudo apt-get install check
     - mkdir build
     - cd build
     - conan install .. --build libcurl
