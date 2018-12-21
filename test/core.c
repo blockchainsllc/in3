@@ -15,7 +15,7 @@ void runRequests(char *name)
         sprintf(temp, "test/testdata/%s.json", name);
 
         FILE *file = fopen(temp, "r");
-        ck_assert_ptr_nonnull(file);
+        ck_assert_ptr_ne(file,NULL);
         if (!file)
                 return;
         size_t allocated = 1024;
