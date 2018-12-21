@@ -13,6 +13,7 @@ build-in3:
     - conan install .. --build libcurl
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
+    - make test
   artifacts:
     paths:
       - build/src
@@ -33,7 +34,7 @@ build-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen ; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make && ls -ltr src/*/"
+    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen ; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make && make test"
   variables:
      IMAGE: "linux-x64"
      INSTALL: "cd ."
@@ -51,6 +52,7 @@ build-in3:
     - conan install .. --build missing 
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
+    - make test
 
 gcc8-armv7:
   image: conanio/gcc8-armv7

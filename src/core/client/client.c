@@ -64,7 +64,7 @@ int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** e
 
   if (ctx->error) {
     if (error!=NULL) {
-      *error = malloc(strlen(ctx->error)+1);
+      *error = _malloc(strlen(ctx->error)+1);
       strcpy(*error,ctx->error);
     }
     res=-1;
@@ -75,29 +75,29 @@ int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** e
 
       jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
       if (r) {
-        *result = malloc(r->end - r->start +1);
+        *result = _malloc(r->end - r->start +1);
         ctx_cpy_string(ctx->response_data,r,*result);
       }
       else if ((r = ctx_get_token(ctx->response_data,ctx->responses[0],"error"))) {
-        *error = malloc(r->end - r->start +1);
+        *error = _malloc(r->end - r->start +1);
         ctx_cpy_string(ctx->response_data,r,*error);
       }
       else if (ctx->error) {
-        *error = malloc(strlen(ctx->error)+1);
+        *error = _malloc(strlen(ctx->error)+1);
         strcpy(*error,ctx->error);
       }
       else {
-        *error = malloc(50);
+        *error = _malloc(50);
         strcpy(*error,"No Result and also no error");
       }
 
     }
     else if (ctx->error) {
-      *error = malloc(strlen(ctx->error)+1);
+      *error = _malloc(strlen(ctx->error)+1);
       strcpy(*error,ctx->error);
     }
     else {
-        *error = malloc(50);
+        *error = _malloc(50);
         strcpy(*error,"Error sending the request");
     }
   }

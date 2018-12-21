@@ -124,6 +124,7 @@ void free_ctx(in3_ctx_t* ctx) {
 }
 
 jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key) {
+    if (root==NULL) return NULL;
    int i,n,l=strlen(key);
    jsmntok_t* c = root+1;
 
@@ -166,6 +167,10 @@ bool ctx_equals(char* str, jsmntok_t* c, char* val) {
 uint32_t ctx_to_int(char* str, jsmntok_t* c, uint32_t defVal) {
     if (!c) return defVal;
     return (uint32_t)ctx_to_long(str,c,defVal);
+}
+bool ctx_to_bool(char* str, jsmntok_t* c) {
+    if (!c) return false;
+    return ctx_equals(str,c,"true");
 }
 
 uint64_t ctx_to_long(char* str, jsmntok_t* c, uint64_t defVal) {

@@ -81,6 +81,7 @@ jsmntok_t* ctx_get_array_token(jsmntok_t* root, int index);
 
 bool ctx_equals(char* str, jsmntok_t* root, char* val);
 int ctx_cpy_string(char* str, jsmntok_t* root, char* dst);
+bool ctx_to_bool(char* str, jsmntok_t* c);
 uint64_t ctx_to_long(char* str, jsmntok_t* root, uint64_t defVal);
 uint32_t ctx_to_int(char* str, jsmntok_t* root, uint32_t defVal);
 /* creates a new bytes-array which must be cleaned up*/

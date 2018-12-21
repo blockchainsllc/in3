@@ -3,18 +3,7 @@ cmake_minimum_required(VERSION 3.7.2)
 # project name
 project(in3)
 
-# configure a header file to pass some of the CMake settings
-# to the source code
-# The version number.
-set (IN3_VERSION_MAJOR 1)
-set (IN3_VERSION_MINOR 0)
-configure_file (
-  "${PROJECT_SOURCE_DIR}/src/core/util/config.h.in"
-  "${PROJECT_BINARY_DIR}/in3Config.h"
-  )
- 
-
-include_directories("${PROJECT_BINARY_DIR}")
+#include_directories("${PROJECT_BINARY_DIR}")
 
 
 # options
@@ -26,9 +15,13 @@ ENDIF(DEBUG)
 
 OPTION(TEST "Test" OFF)
 IF(TEST)
+
+  MESSAGE ( STATUS "Build Tests" )
   ADD_DEFINITIONS(-DTEST)
   SET(CMAKE_BUILD_TYPE Debug)
+  enable_testing()
   add_subdirectory( test )
+
 ENDIF(TEST)
 
 # subst

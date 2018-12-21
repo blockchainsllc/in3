@@ -54,8 +54,10 @@ void runRequests(char *name)
 
 START_TEST(init_in3)
 {
+        mem_reset(-1);
         in3_t *c = in3_new();
         ck_assert_msg(c->key == NULL, "must create");
+        
 
         //   ck_abort_msg("I fail, and tell you that I do");
 }
@@ -67,32 +69,31 @@ void testR(char *name)
         ck_assert_msg(name[5] != '3', "must be dummy5");
 }
 
-START_TEST(init_all)
-printf("testing----\n");
-   mem_reset(1);
-
-
+START_TEST(mem_test)
+   mem_reset(0);
    char* p = _malloc(100);
-   printf("before_free %i\n",mem_get_memleak_cnt());
-
+   ck_assert_int_eq(mem_get_memleak_cnt(),1);
    _free(p);
-
-   printf("after_free %i\n",mem_get_memleak_cnt());
-   printf("max_mem_used : %zu bytes",mem_get_max_heap() );
-
-
-
+   ck_assert_int_eq(mem_get_memleak_cnt(),0);
+   ck_assert_int_eq(mem_get_max_heap(),100);
 END_TEST
 
+// register all tests
 Suite *str_suite(void)
 {
         Suite *in3 = suite_create("in3");
 
+        TCase *util = tcase_create("util");
+        suite_add_tcase(in3, util);
+        // util-tests
+        tcase_add_test(util, mem_test);
+
+
         TCase *eth = tcase_create("eth");
+        // eth-tests
         suite_add_tcase(in3, eth);
 
         tcase_add_test(eth, init_in3);
-        tcase_add_test(eth, init_all);
         return in3;
 }
 
@@ -101,8 +102,9 @@ int main(int argc, char *argv[])
         int number_failed;
         Suite *suite = str_suite();
         SRunner *runner = srunner_create(suite);
-        srunner_run_all(runner, CK_NORMAL);
+        srunner_run_all(runner, CK_VERBOSE);
         number_failed = srunner_ntests_failed(runner);
+        printf("failed tests : %i",number_failed);
         srunner_free(runner);
         return number_failed;
 }

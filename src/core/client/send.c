@@ -212,7 +212,7 @@ int in3_send_ctx( in3_ctx_t* ctx) {
 
   if (!is_valid) {
     // this means all of the responses failed or could not be verified
-    if (ctx->attempt< ctx->client->max_attempts) {
+    if (ctx->attempt< ctx->client->max_attempts-1) {
       ctx->attempt++;
       // clean up old results
       if (ctx->response_data)_free(ctx->response_data);
@@ -233,7 +233,7 @@ int in3_send_ctx( in3_ctx_t* ctx) {
     }
     else 
       // we give up
-      return ctx_set_error(ctx, "reaching max_attempts and giving up",IN3_ERR_MAX_ATTEMPTS);
+      return ctx->client->max_attempts==1 ? -1 :  ctx_set_error(ctx, "reaching max_attempts and giving up",IN3_ERR_MAX_ATTEMPTS);
   }
   else 
     // we have a result
