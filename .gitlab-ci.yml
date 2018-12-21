@@ -1,5 +1,6 @@
 stages:
   - build
+  - test
   - deploy
 
 build-in3:
@@ -11,12 +12,29 @@ build-in3:
     - mkdir build
     - cd build
     - conan install .. --build libcurl
-    - cmake -DTEST=true -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
     - CTEST_OUTPUT_ON_FAILURE=1 make test
   artifacts:
     paths:
       - build/src
+
+test-in3:
+  image: conanio/gcc8
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mkdir build
+    - cd build
+    - conan install .. --build libcurl
+    - cmake -DTEST=true -DCMAKE_BUILD_TYPE=Debug ..
+    - make
+    - CTEST_OUTPUT_ON_FAILURE=1 make test
+  artifacts:
+    paths:
+      - build/test
+      - Testing
 
 .xbuild:
   services:
