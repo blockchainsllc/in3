@@ -14,7 +14,6 @@ build-in3:
     - conan install .. --build libcurl
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
-    - CTEST_OUTPUT_ON_FAILURE=1 make test
   artifacts:
     paths:
       - build/src
