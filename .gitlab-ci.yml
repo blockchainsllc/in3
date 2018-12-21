@@ -25,15 +25,15 @@ test-in3:
     - short-jobs
   script:
     - sudo apt-get install check
-    - mkdir build
-    - cd build
+    - mkdir testbuild
+    - cd testbuild
     - conan install .. --build libcurl
     - cmake -DTEST=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
     - CTEST_OUTPUT_ON_FAILURE=1 make test
   artifacts:
     paths:
-      - build/test
+      - testbuild/test
       - Testing
 
 .xbuild:
