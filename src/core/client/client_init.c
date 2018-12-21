@@ -77,7 +77,7 @@ static void in3_client_init(in3_t* c) {
     initNode( c->servers+3, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D","https://in3.slock.it/kovan/nd-5");
 
     // ipfs
-    initChain(c->servers+4, 0x7d0, "0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9" , 2 , CHAIN_IPFS);
+    initChain(c->servers+4, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9" , 2 , CHAIN_IPFS);
     initNode( c->servers+4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a","https://in3.slock.it/ipfs/nd-1");
     initNode( c->servers+4, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D","https://in3.slock.it/ipfs/nd-5");
 }
@@ -88,7 +88,7 @@ void in3_free(in3_t* a) {
     int i;
     for (i=0;i<a->serversCount;i++) {
         in3_nodelist_clear(a->servers+i);
-        _free(a->servers[i].contract);
+        b_free(a->servers[i].contract);
     }
     _free(a->servers);
     _free(a);

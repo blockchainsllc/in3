@@ -220,7 +220,12 @@ bytes_t* ctx_to_bytes(char* str, jsmntok_t* c, int min_len) {
      _free(b);
       return NULL;
     }
-	return b_new((char*)b,bytes_len+prefix);
+    if (prefix)
+      memset(b,0,prefix);
+    bytes_t* bytes = _malloc(sizeof(bytes_t));
+    bytes->data=b;
+    bytes->len=bytes_len+prefix; 
+    return bytes;
 }
 
 int ctx_cpy_string(char* str, jsmntok_t* c, char* dst) {

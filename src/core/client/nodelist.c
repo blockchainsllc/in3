@@ -293,8 +293,10 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 int in3_nodelist_clear(in3_chain_t* chain) {
     int i;
     for (i=0;i<chain->nodeListLength;i++) {
-        if (chain->nodeList[i].url)      _free(chain->nodeList[i].url);
-        if (chain->nodeList[i].address) b_free(chain->nodeList[i].address);
+        if (chain->nodeList[i].url)      
+          _free(chain->nodeList[i].url);
+        if (chain->nodeList[i].address) 
+          b_free(chain->nodeList[i].address);
     }
    _free(chain->nodeList);
    _free(chain->weights);

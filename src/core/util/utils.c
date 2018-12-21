@@ -253,7 +253,10 @@ bytes_t* hex2byte_new_bytes(char *buf, int len) {
 
     uint8_t *b  = _malloc(bytes_len);
 	hex2byte_arr(buf,len,b,bytes_len);
-	return b_new((char*)b,bytes_len);
+	bytes_t* bytes = _malloc(sizeof(bytes_t));
+	bytes->data = b;
+	bytes->len=bytes_len;
+	return bytes;
 }
 
 void int8_to_char(uint8_t *buffer, int len, char *out) {

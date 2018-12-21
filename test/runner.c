@@ -129,7 +129,7 @@ int execRequest(in3_t *c , char* str, jsmntok_t* test) {
 
 }
 
-int runRequests(char *name)
+int runRequests(char *name, int test_index, int mem_track)
 {
         int res=0;
         char* content = readContent(name);
@@ -159,13 +159,14 @@ int runRequests(char *name)
 
         if ((tests = ctx_get_token(content,tokens,"tests"))) {
             for (i=0;i<tests->size;i++) {
+                if (test_index>0 && i+1!=test_index) continue;
                 test = ctx_get_array_token(tests,i);
                 if ((t=ctx_get_token(content,test,"descr")))
                    ctx_cpy_string(content,t,temp);
                 else
                    sprintf(temp,"Request #%i",i+1);
                  printf("\n%2i/%2i : %-60s ",i+1,tests->size,temp);
-//                 mem_reset(64);
+                 mem_reset(mem_track);
 
                  in3_t *c = in3_new();
                  int j;
@@ -181,18 +182,18 @@ int runRequests(char *name)
                  _tmp_str = NULL;
 
                  in3_free(c);
-/*
+
                  if (mem_get_memleak_cnt()) {
                      printf(" -- Memory Leak detected by malloc #%i!",mem_get_memleak_cnt());
                      if (!fail) failed++;
                  }
 
                  printf(" ( heap: %zu ) ",mem_get_max_heap() );
-*/            }
+            }
 
         }
 
-        _free(tokens);
+        free(tokens);
 
 
         printf("\n%2i of %2i successfully tested", tests->size-failed, tests->size);
@@ -211,5 +212,5 @@ int runRequests(char *name)
 int main(int argc, char *argv[])
 {
     in3_register_eth_nano();
-    return runRequests(argv[1]);
+    return runRequests(argv[1], argc>2 ? atoi(argv[2]) : -1,  argc>3 ? atoi(argv[3]) : -1 );
 }

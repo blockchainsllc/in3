@@ -33,7 +33,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
-            "args": ["receipt"],
+            "args": ["receipt","2","111"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],
