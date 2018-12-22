@@ -33,6 +33,8 @@ add_subdirectory( src/core )
 add_subdirectory( src/libin3 )
 add_subdirectory( src/transport_curl )
 add_subdirectory( src/eth_nano )
+add_subdirectory( src/eth_basic )
+add_subdirectory( src/eth_full )
 add_subdirectory( src/cmd )
 
 add_subdirectory( docs )

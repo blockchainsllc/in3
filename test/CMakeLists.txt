@@ -9,7 +9,7 @@ include_directories(. ../src)
 #target_link_libraries(in3_tests ${CHECK_LIBRARIES} core in3_eth_nano)
 
 add_executable(runner runner.c)
-target_link_libraries(runner core in3_eth_nano)
+target_link_libraries(runner core in3_eth_full)
 
 
 #add_test(test_core ${CMAKE_CURRENT_BINARY_DIR}/in3_tests)

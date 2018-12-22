@@ -16,6 +16,8 @@
         "stdio.h": "c",
         "verifier.h": "c",
         "jsmn.h": "c",
-        "check.h": "c"
+        "check.h": "c",
+        "eth_nano.h": "c",
+        "mem.h": "c"
     }
 }

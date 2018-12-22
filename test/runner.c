@@ -7,7 +7,7 @@
 #include <core/client/context.h>
 #include <core/util/utils.h>
 #include <core/jsmn/jsmnutil.h>
-#include <eth_nano/eth_nano.h>
+#include <eth_full/eth_full.h>
 
 
 #define ERROR(s) printf("Error: %s",s)
@@ -211,6 +211,6 @@ int runRequests(char *name, int test_index, int mem_track)
 
 int main(int argc, char *argv[])
 {
-    in3_register_eth_nano();
+    in3_register_eth_full();
     return runRequests(argv[1], argc>2 ? atoi(argv[2]) : -1,  argc>3 ? atoi(argv[3]) : -1 );
 }
