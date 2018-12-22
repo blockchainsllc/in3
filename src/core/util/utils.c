@@ -306,3 +306,40 @@ uint64_t bytes_to_long (uint8_t* data, int len) {
 		res |= ((uint64_t) data[i] ) << (len-i-1)*8; 
 	return res;
 }
+long c_to_long(char* a, int l)  {
+	if (a[0]=='0' && a[1]=='x') {
+   	    long val=0;
+        for (int i=l-1;i>1;i--) 
+            val |= ((uint64_t) strtohex(a[i])) << ( 4*(l-1-i) );
+		return val;
+    }
+	else if (l<12) {
+		char temp[12];
+		strncpy(temp,a,l);
+		temp[l]=0;
+		return atoi(temp);
+	}
+	return -1;
+
+}
+
+char c_to_lower(char c) {
+	return c>='A' && c<='Z' ? c-32 : c;
+}
+
+
+bool equals_range(char* a, int la,char* b, int lb, uint8_t mode) {
+    if (a==NULL) return b==NULL;
+    if (b==NULL) return a==NULL;
+    if (EQ_MODE_CASE_NUMBER & mode) 
+	   return c_to_long(a,la)==c_to_long(b,lb);
+	if (la!=lb) return false;
+	if (EQ_MODE_CASE_INSENSITIVE & mode) {
+   	  int i;
+	  for (i=0;i<la;i++) {
+		  if (a[i]!=b[i] && c_to_lower(a[i])==c_to_lower(b[i])) return false;
+	  }
+	  return true;
+	}
+	return strncmp(a,b,la)==0;
+}

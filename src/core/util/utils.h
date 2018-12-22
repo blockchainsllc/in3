@@ -48,7 +48,12 @@ int get_json_key_value_int(char *buf, char *key, jsmntok_t* tok, int tokc);
 char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc);
 char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok);
 
+#define EQ_MODE_CASE_INSENSITIVE  1
+#define EQ_MODE_CASE_NUMBER  2
 
 
+long c_to_int(char* a, int l) ;
+char c_to_lower(char c);
 
+bool equals_range(char* a, int la,char* b, int lb, uint8_t mode) ;
 #endif

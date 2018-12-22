@@ -14,7 +14,7 @@
 
 char* readContent(char* name) {
     char temp[500];
-    sprintf(temp, "../test/testdata/%s.json", name);
+    sprintf(temp,  strchr(name,'.')==NULL ? "../test/testdata/%s.json" : "%s", name);
     FILE *file = fopen(temp, "r");
     if (file==NULL) {
         ERROR("could not open the file");
@@ -58,7 +58,7 @@ static  int send_mock(char** urls,int urls_len, char* payload, in3_response_t* r
 int execRequest(in3_t *c , char* str, jsmntok_t* test) {
     jsmntok_t* request  = ctx_get_token(str,test,"request");
     jsmntok_t* response = ctx_get_token(str,test,"response");
-    jsmntok_t* config = ctx_get_token(str,request,"config");
+    jsmntok_t* config   = ctx_get_token(str,request,"config");
     jsmntok_t* t;
 
     // configure in3

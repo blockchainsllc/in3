@@ -7,6 +7,7 @@
 #include "../jsmn/jsmnutil.h"
 #include "../util/stringbuilder.h"
 #include "../util/mem.h"
+#include <stdarg.h>
 
 static int get_token_size(jsmntok_t* t) {
 	int i,j=1;
@@ -332,4 +333,31 @@ void free_ctx_nodes (node_weight_t* c) {
         c=c->next;
        _free(p);
     }
+}
+
+
+bool ctx_equals_path(char* str_a, jsmntok_t*  root_a, int path_a,char* str_b, jsmntok_t*  root_b, int path_b, int mode, ...) {
+  int i,n=path_a+path_b;
+  va_list vl;
+  va_start(vl,mode);
+  jsmntok_t* a=root_a;
+  jsmntok_t* b=root_b;
+  for (i=0;i<path_a;i++) 
+     a = ctx_get_token(str_a,a,va_arg(vl,char*));
+  for (i=0;i<path_b;i++) 
+     b = ctx_get_token(str_b,b,va_arg(vl,char*));
+  va_end(vl);
+
+  if (a==NULL || b==NULL) return false;
+  return equals_range(str_a + a->start,a->end-a->start,str_b + b->start,b->end-b->start,mode);
+}
+
+jsmntok_t* ctx_get_path(char* str, jsmntok_t* root, int n,...) {
+  va_list vl;
+  va_start(vl,n);
+  jsmntok_t* t=root;
+  for (int i=0;i<n;i++) 
+     t = ctx_get_token(str,t,va_arg(vl,char*));
+  va_end(vl);
+  return t;
 }

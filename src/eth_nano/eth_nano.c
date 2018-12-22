@@ -243,6 +243,14 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash)
     }
     b_free(blockHeader);
 
+    if (res==0) {
+        // check rest iof the values
+        if (!ctx_equals_path(vc->ctx->response_data, vc->proof,1,vc->ctx->response_data, vc->result,1,EQ_MODE_CASE_NUMBER,"txIndex","transactionIndex"))
+           return vc_err(vc,"wrong transactionIndex");
+        if (!ctx_equals_path(vc->ctx->request_data, tx_hash,0,vc->ctx->response_data, vc->result,1,EQ_MODE_CASE_INSENSITIVE,"transactionHash"))
+           return vc_err(vc,"wrong transactionHash");
+    }
+
     return res;
 }
 

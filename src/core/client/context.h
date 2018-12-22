@@ -75,23 +75,29 @@ typedef struct {
 in3_ctx_t* new_ctx(in3_t* client, char* req_data);
 int ctx_parse_response(in3_ctx_t* ctx, char* response_data);
 void free_ctx(in3_ctx_t* ctx);
+int ctx_create_payload(in3_ctx_t* c, sb_t* sb);
+int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
 
+
+// weights
+void free_ctx_nodes (node_weight_t* c) ;
+int ctx_nodes_len (node_weight_t* root);
+
+// find token...
+jsmntok_t* ctx_get_path(char* str, jsmntok_t* root, int n,...);
 jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key);
 jsmntok_t* ctx_get_array_token(jsmntok_t* root, int index);
 
-bool ctx_equals(char* str, jsmntok_t* root, char* val);
-int ctx_cpy_string(char* str, jsmntok_t* root, char* dst);
-bool ctx_to_bool(char* str, jsmntok_t* c);
-uint64_t ctx_to_long(char* str, jsmntok_t* root, uint64_t defVal);
-uint32_t ctx_to_int(char* str, jsmntok_t* root, uint32_t defVal);
-/* creates a new bytes-array which must be cleaned up*/
-bytes_t* ctx_to_bytes(char* str, jsmntok_t* root, int min_len);
-bytes_t** ctx_to_byte_a(char* str, jsmntok_t* root);
 
-int ctx_create_payload(in3_ctx_t* c, sb_t* sb);
+// get
+bool      ctx_equals     (char* str, jsmntok_t* root, char* val);
+int       ctx_cpy_string (char* str, jsmntok_t* root, char* dst);
+bool      ctx_to_bool    (char* str, jsmntok_t* c);
+uint64_t  ctx_to_long    (char* str, jsmntok_t* root, uint64_t defVal);
+uint32_t  ctx_to_int     (char* str, jsmntok_t* root, uint32_t defVal);
+bytes_t*  ctx_to_bytes   (char* str, jsmntok_t* root, int min_len);
+bytes_t** ctx_to_byte_a  (char* str, jsmntok_t* root);
+bool      ctx_equals_path(char* str_a, jsmntok_t*  root_a, int path_a,char* str_b, jsmntok_t*  root_b, int path_b, int mode, ...) ;
 
-int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
-int ctx_nodes_len (node_weight_t* root);
-void free_ctx_nodes (node_weight_t* c) ;
 
 #endif

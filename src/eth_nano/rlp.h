@@ -22,9 +22,9 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst);
 */
 int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst);
 
-int rlp_decode_len(bytes_t* b);
-int rlp_decode_item_len(bytes_t* b, int index);
-int rlp_decode_item_type(bytes_t* b, int index);
+int  rlp_decode_len(bytes_t* b);
+int  rlp_decode_item_len(bytes_t* b, int index);
+int  rlp_decode_item_type(bytes_t* b, int index);
 void rlp_encode_item(bytes_builder_t* bb, bytes_t* val);
 void rlp_encode_list(bytes_builder_t* bb, bytes_t* val);
 
