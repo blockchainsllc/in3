@@ -5,6 +5,9 @@ add_library( in3_eth_nano STATIC
   rlp.c
   merkle.c
   serialize.c
+  blockheader.c
+  signature.c
+  txreceipt.c
 )
 
 # include core in the headers

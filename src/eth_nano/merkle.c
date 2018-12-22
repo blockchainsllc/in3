@@ -164,3 +164,17 @@ int verifyMerkleProof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
 	if (full_key)_free(full_key);
 	return res;
 }
+
+
+
+
+
+void free_proof(bytes_t** proof) {
+    bytes_t **p = proof;
+    while (*p)
+    {
+        b_free(*p);
+        p += 1;
+    }
+   _free(proof);
+}
