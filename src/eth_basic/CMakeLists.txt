@@ -2,6 +2,8 @@
 # static lib
 add_library( in3_eth_basic STATIC 
   eth_basic.c 
+  ../eth_basic/eth_getTransaction.c 
+
 )
 
 # include core in the headers

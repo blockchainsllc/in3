@@ -144,7 +144,7 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
 
 
 
-static bytes_t* create_tx_path(uint32_t index) {
+bytes_t* create_tx_path(uint32_t index) {
 
    uint8_t data[4];
    int i;
@@ -167,7 +167,7 @@ static bytes_t* create_tx_path(uint32_t index) {
    return bb_move_to_bytes(bb);
 }
 
-static void free_proof(bytes_t** proof) {
+void free_proof(bytes_t** proof) {
     bytes_t **p = proof;
     while (*p)
     {

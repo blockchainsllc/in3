@@ -10,6 +10,10 @@
 /** entry-function to execute the verification context. */
 int in3_verify_eth_basic( in3_vctx_t* v);
 
+/**
+ * verifies a transaction.
+ */
+int eth_verify_eth_getTransaction(in3_vctx_t *vc, jsmntok_t *tx_hash);
 
 /**
  * this function should only be called once and will register the eth-nano verifier.

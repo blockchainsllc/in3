@@ -12,12 +12,17 @@ add_executable(runner runner.c)
 target_link_libraries(runner core in3_eth_full)
 
 
-#add_test(test_core ${CMAKE_CURRENT_BINARY_DIR}/in3_tests)
-add_test(
-    NAME eth_receipt 
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/runner receipt 
+file(GLOB files "testdata/*.json")
+foreach(file ${files})
+  get_filename_component(testname "${file}" NAME_WE)
+  add_test(
+    NAME              ${testname} 
+    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/runner ${file} 
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
+endforeach()
+
+
 
 #add_test(eth_tx ${CMAKE_CURRENT_BINARY_DIR}/runner receipt)
 

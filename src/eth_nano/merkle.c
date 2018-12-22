@@ -36,7 +36,7 @@ static uint8_t* str_to_nibbles(bytes_t *path, int use_prefix) {
 		n[j++] = path->data[i] >> 4;
 		n[j++] = path->data[i] & 0x0F;
 		if (i==0 && use_prefix) 
-		   n[0] = n[(j= n[0] & 2 ? 1 : 0)];
+		   n[0] = n[(j= n[0] & 1 ? 1 : 0)];
 	}
 
 	n[j] = 0xFF;

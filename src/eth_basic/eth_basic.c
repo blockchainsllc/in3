@@ -28,7 +28,7 @@ int in3_verify_eth_basic(in3_vctx_t *vc)
 
     if (req_eq(vc, t, "eth_getTransactionByHash"))
         // for txReceipt, we need the txhash
-        return eth_verify_eth_getTransactionReceipt(vc, req_get_param(vc, 0));
+        return eth_verify_eth_getTransaction(vc, req_get_param(vc, 0));
     else
         return in3_verify_eth_nano(vc);
 }
@@ -40,3 +40,4 @@ void in3_register_eth_basic()
     v->verify = in3_verify_eth_basic;
     in3_register_verifier(v);
 }
+

@@ -33,7 +33,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
-            "args": ["receipt","2","111"],
+            "args": ["eth_getTransactionByHash"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],
