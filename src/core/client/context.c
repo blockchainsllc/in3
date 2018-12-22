@@ -337,7 +337,7 @@ void free_ctx_nodes (node_weight_t* c) {
 
 
 bool ctx_equals_path(char* str_a, jsmntok_t*  root_a, int path_a,char* str_b, jsmntok_t*  root_b, int path_b, int mode, ...) {
-  int i,n=path_a+path_b;
+  int i;
   va_list vl;
   va_start(vl,mode);
   jsmntok_t* a=root_a;

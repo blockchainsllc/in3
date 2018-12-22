@@ -7,7 +7,7 @@
 #include "jsmn/jsmnutil.h"
 #include "util/utils.h"
 #include "rent.h"
-#include <eth_nano.h>
+#include <eth_full.h>
 
 #include "util/debug.h"
 
@@ -72,7 +72,7 @@ static in3_state_t in3_init(void)
 	client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
 	client->msg = k_calloc(1, sizeof(in3_msg_t));
 
-	in3_register_eth_nano();
+	in3_register_eth_full();
     bluetooth_setup(client);
 	led_setup();
 	k_sem_init(&client->sem, 0 , 1);

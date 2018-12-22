@@ -1,13 +1,13 @@
 #include <util/mem.h>
-#include "eth_nano.h"
-#include "eth_basic.h"
+#include "../eth_nano/eth_nano.h"
+#include "../eth_basic/eth_basic.h"
 #include "eth_full.h"
 #include <util/utils.h>
 #include <client/context.h>
 #include <string.h>
-#include "rlp.h"
-#include "merkle.h"
-#include "serialize.h"
+#include "../eth_nano/rlp.h"
+#include "../eth_nano/merkle.h"
+#include "../eth_nano/serialize.h"
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
 

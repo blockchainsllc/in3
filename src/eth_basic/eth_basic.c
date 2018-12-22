@@ -1,12 +1,12 @@
 #include <util/mem.h>
-#include "eth_nano.h"
+#include "../eth_nano/eth_nano.h"
 #include "eth_basic.h"
 #include <util/utils.h>
 #include <client/context.h>
 #include <string.h>
-#include "rlp.h"
-#include "merkle.h"
-#include "serialize.h"
+#include "../eth_nano/rlp.h"
+#include "../eth_nano/merkle.h"
+#include "../eth_nano/serialize.h"
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
 
@@ -14,7 +14,6 @@
 int in3_verify_eth_basic(in3_vctx_t *vc)
 {
     jsmntok_t *t;
-    int i;
 
     if (vc->config->verification == VERIFICATION_NEVER)
         return 0;
