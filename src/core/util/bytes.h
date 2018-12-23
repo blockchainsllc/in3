@@ -15,13 +15,13 @@
 
 /** a byte array */
 typedef struct {
-	int len;        /**< the length of the array ion bytes */
+	uint32_t len;        /**< the length of the array ion bytes */
 	uint8_t *data;  /**< the byte-data  */
 } bytes_t;
 
 /** a byte-buffer to attach byte-functions. */
 typedef struct {
-	int bsize;
+	uint32_t bsize;
 	bytes_t b;
 } bytes_builder_t;
 
