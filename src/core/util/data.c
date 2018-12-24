@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "item.h"
+#include "data.h"
 #include "mem.h"
 #include "stringbuilder.h"
 
@@ -14,7 +14,7 @@
 // len = -2 -> boolean false
 // len = -3  -> byte
 
-r_key_t key(char* c) {
+d_key_t key(char* c) {
     uint16_t val=0;
     while (true) {
         if (*c==0) return val;
@@ -23,7 +23,7 @@ r_key_t key(char* c) {
     }
     return val;
 }
-r_key_t keyn(char* c, int len) {
+d_key_t keyn(char* c, int len) {
     uint16_t val=0;
     int i=0;
     for (;i<len;i++) {
@@ -34,18 +34,18 @@ r_key_t keyn(char* c, int len) {
     return val;
 }
 
-bytes_t* r_bytes(r_item_t* item) {
+bytes_t* d_bytes(d_item_t* item) {
     return (bytes_t*) item;
 }
-char* r_string(r_item_t* item) {
+char* d_string(d_item_t* item) {
     if (item==NULL) return NULL;
     return (char*)item->data;
 }
-int r_int(r_item_t* item) {
+int d_int(d_item_t* item) {
     if (item==NULL) return 0;
-    if (r_type(item)==T_INTEGER)
+    if (d_type(item)==T_INTEGER)
       return item->len & 0xFFFFFFF;
-    else if (r_type(item) == T_BYTES) {
+    else if (d_type(item) == T_BYTES) {
         return 0;
     }
     return 0;
@@ -55,12 +55,12 @@ int r_int(r_item_t* item) {
 
 
 
-r_type_t r_type(r_item_t* item) {
+d_type_t d_type(d_item_t* item) {
     return item==NULL ? T_NULL :(item->len & 0xF0000000)>>28;
 }
-int child_count(r_item_t* item) {
+int child_count(d_item_t* item) {
     if (item==NULL) return 0;
-    switch (r_type(item)) {
+    switch (d_type(item)) {
         case T_ARRAY:
         case T_OBJECT:
           return item->len & 0xFFFFFFF;
@@ -69,55 +69,54 @@ int child_count(r_item_t* item) {
     }
 }
 
-int r_size(r_item_t* item) {
+int d_size(d_item_t* item) {
     if (item==NULL) return 0;
     int i,c=1;
-    switch (r_type(item)) {
+    switch (d_type(item)) {
         case T_ARRAY:
         case T_OBJECT:
           for (i=0;i<(item->len & 0xFFFFFFF);i++)
-            c+=r_size(item+c);
+            c+=d_size(item+c);
           return c;
         default:
           return 1;
     }
 }
 
-r_item_t*  r_get(r_item_t* item, uint16_t key) {
+d_item_t*  d_get(d_item_t* item, uint16_t key) {
   if (item==NULL) return NULL;
   int i=0,l=item->len & 0xFFFFFFF;
   item+=1;
-  for (;i<l;i++,item+=r_size(item)) {
+  for (;i<l;i++,item+=d_size(item)) {
       if (item->key==key) return item;
   }
   return NULL;
 }
 
-r_item_t*  r_get_at(r_item_t* item, int index) {
+d_item_t*  d_get_at(d_item_t* item, int index) {
   if (item==NULL) return NULL;
   int i=0,l=item->len & 0xFFFFFFF;
   item+=1;
-  for (;i<l;i++,item+=r_size(item)) {
+  for (;i<l;i++,item+=d_size(item)) {
       if (i==index) return item;
   }
   return NULL;
 }
 
-r_item_t*  r_next(r_item_t* item) {
-   return item==NULL ? NULL : item+r_size(item);
+d_item_t*  d_next(d_item_t* item) {
+   return item==NULL ? NULL : item+d_size(item);
 }
 
 typedef struct json_parser {
-    r_item_t* items;
+    d_item_t* items;
     int allocated;
     int len;
     char* c;
-    char* temp;
-} json_parser_t;
+} json_parsed_t;
 
 
 
-char next_char(json_parser_t* jp) {
+char next_char(json_parsed_t* jp) {
     while (true) {
         switch (*jp->c) {
             case ' ':
@@ -132,12 +131,12 @@ char next_char(json_parser_t* jp) {
     }
 }
 
-r_item_t* parser_next_item(json_parser_t* jp, r_type_t type, r_key_t key,int parent) {
+d_item_t* parsed_next_item(json_parsed_t* jp, d_type_t type, d_key_t key,int parent) {
   if (jp->len+1>jp->allocated) {
-      jp->items = _realloc(jp->items,(jp->allocated<<1)*sizeof(r_item_t),jp->allocated*sizeof(r_item_t));
+      jp->items = _realloc(jp->items,(jp->allocated<<1)*sizeof(d_item_t),jp->allocated*sizeof(d_item_t));
       jp->allocated<<=1;
   }
-  r_item_t* n = jp->items+jp->len;
+  d_item_t* n = jp->items+jp->len;
   jp->len+=1;
   n->key=key;
   n->data=NULL;
@@ -146,7 +145,7 @@ r_item_t* parser_next_item(json_parser_t* jp, r_type_t type, r_key_t key,int par
   return n;
 }
 
-int parse_key(json_parser_t* jp) {
+int parse_key(json_parsed_t* jp) {
     char* start=jp->c;
     int r;
     while (true) {
@@ -162,7 +161,7 @@ int parse_key(json_parser_t* jp) {
     }
 }
 
-int parse_number(json_parser_t* jp, r_item_t* item) {
+int parse_number(json_parsed_t* jp, d_item_t* item) {
     char temp[20];
     int i=0;
     jp->c--;
@@ -180,7 +179,7 @@ int parse_number(json_parser_t* jp, r_item_t* item) {
     return -2;
 }
 
-int parse_string(json_parser_t* jp, r_item_t* item) {
+int parse_string(json_parsed_t* jp, d_item_t* item) {
     char* start=jp->c;
     int l,i;
     while (true) {
@@ -219,14 +218,14 @@ int parse_string(json_parser_t* jp, r_item_t* item) {
 }
 
 
-int parse_object(json_parser_t* jp, int parent, uint32_t key) {
+int parse_object(json_parsed_t* jp, int parent, uint32_t key) {
     int res, p_index=jp->len;
     
 
     switch (next_char(jp)) {
         case 0: return -2;
         case '{':
-          parser_next_item(jp,T_OBJECT,key,parent)->data = (uint8_t*) jp->c-1;
+          parsed_next_item(jp,T_OBJECT,key,parent)->data = (uint8_t*) jp->c-1;
           while (true) {
             switch (next_char(jp)) {
                 case '"': 
@@ -245,7 +244,7 @@ int parse_object(json_parser_t* jp, int parent, uint32_t key) {
             }
           }
         case '[':
-          parser_next_item(jp,T_ARRAY,key,parent);
+          parsed_next_item(jp,T_ARRAY,key,parent);
           while (true) {
             res = parse_object(jp,p_index, jp->items[p_index].len & 0xFFFFFF);  // parse the value
             if (res<0) return res;
@@ -256,24 +255,24 @@ int parse_object(json_parser_t* jp, int parent, uint32_t key) {
             }
           }
         case '"':
-          return parse_string(jp,parser_next_item(jp,T_STRING,key,parent));
+          return parse_string(jp,parsed_next_item(jp,T_STRING,key,parent));
         case 't':
           if (strncmp(jp->c,"rue",3)==0) {
-              parser_next_item(jp,T_BOOLEAN,key,parent)->len|=1;
+              parsed_next_item(jp,T_BOOLEAN,key,parent)->len|=1;
               jp->c+=3;
               return 0;
           }
           else return -2;
         case 'f':
           if (strncmp(jp->c,"alse",4)==0) {
-              parser_next_item(jp,T_BOOLEAN,key,parent);
+              parsed_next_item(jp,T_BOOLEAN,key,parent);
               jp->c+=4;
               return 0;
           }
           else return -2;
         case 'n':
           if (strncmp(jp->c,"ull",3)==0) {
-              parser_next_item(jp,T_NULL,key,parent);
+              parsed_next_item(jp,T_NULL,key,parent);
               jp->c+=3;
               return 0;
           }
@@ -288,7 +287,7 @@ int parse_object(json_parser_t* jp, int parent, uint32_t key) {
         case '7':
         case '8':
         case '9':
-           return parse_number(jp,parser_next_item(jp,T_INTEGER,key,parent) );
+           return parse_number(jp,parsed_next_item(jp,T_INTEGER,key,parent) );
         default:
            return -2;
     }
@@ -296,18 +295,18 @@ int parse_object(json_parser_t* jp, int parent, uint32_t key) {
 
 }
 
-void free_json(r_item_t* items, int tokc) {
+void free_json(d_item_t* items, int tokc) {
     if (items==NULL) return;
     int i;
     for (i=0;i<tokc;i++) {
-        if (items[i].data!=NULL && r_type(items+i)<2) 
+        if (items[i].data!=NULL && d_type(items+i)<2) 
             _free(items[i].data);
     }
     _free(items);
 }
 
-int parse_json(char* js, r_item_t** items, int* tokc ) {
-    json_parser_t parser={ .items = _malloc(sizeof(r_item_t)*10), .allocated=10, .len=0, .c=js };
+int parse_json(char* js, d_item_t** items, int* tokc ) {
+    json_parsed_t parser={ .items = _malloc(sizeof(d_item_t)*10), .allocated=10, .len=0, .c=js };
     int res = parse_object(&parser,-1,0);
     if (res<0) free_json(parser.items,parser.len);
     else {
@@ -335,7 +334,7 @@ static int find_end(char* str) {
 }
 
 
-str_range_t r_to_json(r_item_t* item) {
+str_range_t d_to_json(d_item_t* item) {
     str_range_t s;
     s.data =  (char*) item->data;
     s.len = find_end(s.data);

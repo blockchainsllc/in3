@@ -18,6 +18,8 @@
         "jsmn.h": "c",
         "check.h": "c",
         "eth_nano.h": "c",
-        "mem.h": "c"
+        "mem.h": "c",
+        "item.h": "c",
+        "util.h": "c"
     }
 }

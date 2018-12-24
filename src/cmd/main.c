@@ -15,6 +15,8 @@
 #include <in3_storage.h>
 #include <eth_full.h>
 
+#include <util/data.h>
+
 uint64_t getChainId(char* name) {
   if (strcmp(name,"mainnet")==0)    return 0x01L;
   if (strcmp(name,"kovan")==0)      return 0x2aL;
@@ -25,8 +27,28 @@ uint64_t getChainId(char* name) {
   return atoi(name);
 }
 
+void newp() {
+  char* js = "{ \"key\":\"value\", \"array\":[1,2,3,4,\"test\"], \"sub\":{ \"a\":3}, \"bytes\":\"0xabcdef1234567890\"  }";
+  d_item_t* root;
+  int tokc;
+
+  if (parse_json(js,&root,&tokc)==0) {
+    char* val = d_get_string(root,"key");
+    bytes_t* bytes = d_get_bytes(root,"bytes");
+    b_print(bytes);
+
+    str_range_t s = d_to_json( d_get(root,key("sub")));
+    char tmp[1000];
+    strncpy(tmp,s.data,s.len);
+    printf("json = | %s | ",tmp);
+  }
+
+}
+
+
 int main (int argc, char *argv[])
 {
+  newp();
   int i;
   if (argc < 2) {
     fprintf(stdout,"Usage: %s <options> method params ... \n  -p -proof    none|standard|full\n  -s -signs    number of signatures\n  -c -chain    mainnet|kovan|evan|tobalaba|ipfs\n",argv[0]);

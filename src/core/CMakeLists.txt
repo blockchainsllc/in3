@@ -18,7 +18,7 @@ add_library( core STATIC
 	util/debug.c
 	util/bytes.c
 	util/utils.c
-	util/item.c
+	util/data.c
 	util/mem.c
 	util/stringbuilder.c
 	jsmn/jsmn.c
