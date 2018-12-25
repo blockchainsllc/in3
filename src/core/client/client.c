@@ -5,52 +5,11 @@
 #include <errno.h> 
 #include "context.h"
 #include "send.h"
+#include "../util/data.h"
+#include "keys.h"
 
 
-int in3_client_send( in3_t* c, char* req, char* result, int buf_size, char* error) {
-  int res=0, len,p,i;
-  in3_ctx_t* ctx = new_ctx(c,req); 
-  result[0]=0;
-  error[0]=0;
 
-  if (ctx->error) {
-    if (error!=NULL) strcpy(error,ctx->error);
-    res=-1;
-  }
-  else if (ctx->tok_req->type==JSMN_ARRAY) {
-    res = in3_send_ctx(ctx);
-    // create the results if it was succesful
-    if (res>=0) {
-      result[0]='[';
-      for (p=1,i=0,len=0;i<ctx->len;i++) {
-        if (i>0) result[p++]=',';
-        len = ctx->responses[i]->end-ctx->responses[i]->start;
-        if (p+len>buf_size) {
-          res = IN3_ERR_BUFFER_TOO_SMALL;
-          break;
-        }
-        p+=ctx_cpy_string(ctx->response_data,ctx->responses[i],result+p);
-      }
-      result[p++]=']';
-      result[p]=0;
-    }
-  }
-  else if (ctx->tok_req->type==JSMN_OBJECT) {
-    res = in3_send_ctx(ctx);
-    if (res>=0) 
-      result[ctx_cpy_string(ctx->response_data, ctx->responses[0],result)]=0;
-  }
-  else
-    res = 0;
-
-//  printf("\n error: %s\n",ctx->error);
-
-  free_ctx(ctx);
-
-
-  return res;
-
-}
 
 int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** error) {
   int res=0;
@@ -59,6 +18,7 @@ int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** e
 
 
   in3_ctx_t* ctx = new_ctx(c, req); 
+  str_range_t s; 
   result[0]=0;
   error[0]=0;
 
@@ -73,14 +33,20 @@ int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** e
     res = in3_send_ctx(ctx);
     if (res>=0) {
 
-      jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
+      d_token_t* r = d_get(ctx->responses[0],K_RESULT);
       if (r) {
-        *result = _malloc(r->end - r->start +1);
-        ctx_cpy_string(ctx->response_data,r,*result);
+          *result = d_create_json(r);
       }
-      else if ((r = ctx_get_token(ctx->response_data,ctx->responses[0],"error"))) {
-        *error = _malloc(r->end - r->start +1);
-        ctx_cpy_string(ctx->response_data,r,*error);
+      else if ((r = d_get(ctx->responses[0],K_ERROR))) {
+        if (d_type(r)==T_OBJECT) {
+          s = d_to_json(r);
+          *result = _malloc(s.len +1);
+          strncpy(*result,s.data,s.len);
+        }
+        else {
+          *result = _malloc(d_len(r) +1);
+          strncpy(*result,d_string(r),d_len(r));
+        }
       }
       else if (ctx->error) {
         *error = _malloc(strlen(ctx->error)+1);

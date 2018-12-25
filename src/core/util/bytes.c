@@ -205,6 +205,10 @@ bytes_t* bb_move_to_bytes(bytes_builder_t *bb) {
 void bb_clear(bytes_builder_t *bb) {
 	bb->b.len=0;
 }
+
+
+
+
 void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len) {
 	int l,i,j,s=bb->b.len;
 	if (str[0]=='0' && str[1]=='x') {

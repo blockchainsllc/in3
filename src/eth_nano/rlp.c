@@ -94,3 +94,4 @@ void rlp_encode_list(bytes_builder_t* bb, bytes_t* val) {
     add_length(bb,val->len,0xc0);
     bb_write_fixed_bytes(bb,val);
 }
+

@@ -10,15 +10,16 @@
 #include "../util/stringbuilder.h"
 #include "client.h"
 #include "context.h"
+#include "../util/data.h"
 
 #ifndef VERIFIER_H
 #define VERIFIER_H
 /** gets a child of the given request-token with the given name*/
+/*
 #define req_get(v,t,c) ctx_get_token(v->ctx->request_data,t,c)
 #define res_get(v,t,c) ctx_get_token(v->ctx->response_data,t,c)
 #define req_eq(v,t,c) ctx_equals(v->ctx->request_data,t,c)
 #define res_eq(v,t,c) ctx_equals(v->ctx->response_data,t,c)
-#define vc_err(v,e) ctx_set_error(v->ctx,e,-1)
 #define req_get_param(v,i) ctx_get_array_token(req_get(v,v->request,"params"),i)
 #define req_to_bytes(v,t) ctx_to_bytes(v->ctx->request_data,t,0)
 #define res_to_bytes(v,t) ctx_to_bytes(v->ctx->response_data,t,0)
@@ -26,7 +27,8 @@
 #define res_get_long(v,t,n,def) ctx_to_long(v->ctx->response_data, res_get(v,t,n) ,def)
 #define res_get_int(v,t,n,def) ctx_to_int(v->ctx->response_data, res_get(v,t,n) ,def)
 #define res_prop_to_bytes_a(v,t,prop) ctx_to_byte_a(v->ctx->response_data, ctx_get_token(v->ctx->response_data,t,prop))
-
+*/
+#define vc_err(v,e) ctx_set_error(v->ctx,e,-1)
 
 typedef struct {
 
@@ -34,11 +36,11 @@ typedef struct {
 
    in3_chain_t* chain;
 
-   jsmntok_t* result;
+   d_token_t* result;
 
-   jsmntok_t* request;
+   d_token_t* request;
 
-   jsmntok_t* proof;
+   d_token_t* proof;
 
    in3_request_config_t* config;
 

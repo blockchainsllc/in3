@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include "send.h"
 #include "../util/mem.h"
+#include "keys.h"
+#include "../util/data.h"
 
 #ifdef __TEST__
 
@@ -22,52 +24,49 @@ static void free_nodeList(in3_node_t* nodeList, int count) {
    _free(nodeList);
 }
 
-static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* result) {
-  char* response = ctx->response_data;
-  int i,res = 0;
+static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+  int i,res = 0,len;
 
   // read the nodes
-  jsmntok_t* t, *nodes = ctx_get_token(response, result,"nodes");
-  if (!nodes || nodes->type!=JSMN_ARRAY) 
+  d_token_t* t, *nodes = d_get(result,K_NODES), *node=NULL;
+  if (!nodes || d_type(nodes)!=T_ARRAY) 
     return ctx_set_error(ctx, "No Nodes in the result", -1); 
 
-  if (!(t=ctx_get_token(response, result,"lastBlockNumber"))) 
+  if (!(t=d_get(result,K_LAST_BLOCK_NUMBER))) 
     return ctx_set_error(ctx, "LastBlockNumer is missing", -1);
 
   // update last blockNumber
-  chain->lastBlock = ctx_to_long(response,t,chain->lastBlock);
+  chain->lastBlock = d_long(t);
 
   // new nodelist
-  in3_node_t* newList = _calloc(nodes->size, sizeof(in3_node_t));
+  in3_node_t* newList = _calloc((len = d_len( nodes )), sizeof(in3_node_t));
 
    // set new values
-  for (i=0;i<nodes->size;i++) {
+  for (i=0;i<len;i++) {
     in3_node_t* n   = newList+i;
-    jsmntok_t* node = ctx_get_array_token(nodes,i);
+    node = node ? d_next(node) : d_get_at(nodes,i);
     if (!node) {
        res = ctx_set_error(ctx, "node missing", -1); 
        break;
     }
     
-    n->capacity = ctx_to_int(response,ctx_get_token(response,node,"capacity"),1); 
-    n->index    = ctx_to_int(response,ctx_get_token(response,node,"index"),i); 
-    n->deposit  = ctx_to_long(response,ctx_get_token(response,node,"deposit"),0); 
-    n->props    = ctx_to_long(response,ctx_get_token(response,node,"props"),65535); 
+    n->capacity = d_get_intkd(node,K_CAPACITY,1); 
+    n->index    = d_get_intkd(node,K_INDEX,i);
+    n->deposit  = d_get_longk(node,K_DEPOSIT); 
+    n->props    = d_get_longkd(node,K_PROPS,65535); 
+    n->url      = d_get_stringk(node,K_URL);
     
-    t=ctx_get_token(response,node,"url");
-    if (t) {
-        n->url = _malloc(t->end - t->start +1);
-        ctx_cpy_string(response,t,n->url);
-    }
+    if (n->url)
+      n->url = _strdup(n->url,-1);
     else  {
         res = ctx_set_error(ctx,"missing url in nodelist",-1);
         break;
     }
 
-    t=ctx_get_token(response,node,"address");
-    if (t) 
-        n->address = ctx_to_bytes(response,t,20);
-    else {
+    n->address  = d_get_bytesk( node, K_ADDRESS);
+    if (n->address)
+      n->address = b_dup(n->address);
+    else  {
         res = ctx_set_error(ctx,"missing address in nodelist",-1);
         break;
     }
@@ -77,15 +76,15 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx,jsmntok_t* r
        // successfull, so we can update the chain.
        free_nodeList(chain->nodeList, chain->nodeListLength);
        chain->nodeList       = newList;
-       chain->nodeListLength = nodes->size;
+       chain->nodeListLength = len;
 
       _free(chain->weights);
-       chain->weights = _calloc(nodes->size,sizeof(in3_node_weight_t));
-       for (i=0;i<nodes->size;i++)
+       chain->weights = _calloc(len,sizeof(in3_node_weight_t));
+       for (i=0;i<len;i++)
          chain->weights[i].weight = 1;
    }
    else 
-      free_nodeList(newList, nodes->size);
+      free_nodeList(newList, len);
 
   return res;
 }
@@ -111,7 +110,7 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
   else  {
     res = in3_send_ctx(ctx);
     if (res>=0) {
-      jsmntok_t* r = ctx_get_token(ctx->response_data, ctx->responses[0],"result");
+      d_token_t* r = d_get(ctx->responses[0],K_RESULT);
       if (r) {
         // we have a result....
         res = in3_client_fill_chain(chain,ctx,r);
@@ -120,9 +119,14 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
       }
       else if (ctx->error) 
         res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,ctx->error,-1));
-      else if ((r = ctx_get_token(ctx->response_data,ctx->responses[0],"error"))) {
-        ctx_cpy_string(ctx->response_data,r,req);
-        res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,req,-1));
+      else if ((r = d_get(ctx->responses[0],K_ERROR))) {
+        if (d_type(r)==T_OBJECT) {
+          str_range_t s = d_to_json(r);
+          strncpy(req,s.data,s.len);
+          res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,req,-1));
+        }
+        else
+          res = ctx_set_error(parent_ctx,"Error updating node_list",ctx_set_error(parent_ctx,d_string(r),-1));
       }
       else
         res = ctx_set_error(parent_ctx,"Error updating node_list without any result",-1);

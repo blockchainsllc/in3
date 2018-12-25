@@ -18,10 +18,9 @@ add_library( core STATIC
 	util/debug.c
 	util/bytes.c
 	util/utils.c
+	util/data.c
 	util/mem.c
 	util/stringbuilder.c
-	jsmn/jsmn.c
-	jsmn/jsmnutil.c
 	crypto/ecdsa.c
 	crypto/address.c
 	crypto/bignum.c

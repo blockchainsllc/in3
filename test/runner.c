@@ -2,11 +2,11 @@
    #define TEST
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <core/client/client.h>
 #include <core/client/context.h>
 #include <core/util/utils.h>
-#include <core/jsmn/jsmnutil.h>
 #include <eth_full/eth_full.h>
 
 
@@ -39,15 +39,15 @@ char* readContent(char* name) {
 }
 
 static char* _tmp_str;
-static jsmntok_t* _tmp_response;
+static d_token_t* _tmp_response;
 
 static  int send_mock(char** urls,int urls_len, char* payload, in3_response_t* result) {
     // printf("payload: %s\n",payload);
     int i;
     for (i=0;i<urls_len;i++) {
-        jsmntok_t* r = ctx_get_array_token(_tmp_response,i);
+        str_range_t r = d_to_json(d_get_at(_tmp_response,i));
         sb_add_char( &result->result, '[');
-        sb_add_range( &result->result, _tmp_str ,  r->start, r->end - r->start);
+        sb_add_range( &result->result, r.data ,  0, r.len);
         sb_add_char( &result->result, ']');
     }
     return 0;
@@ -55,37 +55,34 @@ static  int send_mock(char** urls,int urls_len, char* payload, in3_response_t* r
 
 
 
-int execRequest(in3_t *c , char* str, jsmntok_t* test) {
-    jsmntok_t* request  = ctx_get_token(str,test,"request");
-    jsmntok_t* response = ctx_get_token(str,test,"response");
-    jsmntok_t* config   = ctx_get_token(str,request,"config");
-    jsmntok_t* t;
+int execRequest(in3_t *c, d_token_t* test) {
+    d_token_t* request  = d_get(test,key("request"));
+    d_token_t* response = d_get(test,key("response"));
+    d_token_t* config   = d_get(request,key("config"));
+    d_token_t* t;
+    char* method;
+    char params[10000];
 
     // configure in3
-    if ((t=ctx_get_token(str,config,"requestCount")))
-        c->requestCount = ctx_to_int(str, t,1);
-    else
-        c->requestCount = 1;
+    c->requestCount = (t=d_get(config,key("requestCount"))) ?  d_int(t) : 1;
+    method = d_get_string(request,"method");
 
-    char method[200], params[5000];
-    if ((t=ctx_get_token(str,request,"method")))
-        ctx_cpy_string(str,t,method);
-    else {
+    str_range_t s = d_to_json( d_get(request, key("params")) );
+    if (!method) {
         printf("NO METHOD");
         return -1;
     }
-    if ((t=ctx_get_token(str,request,"params")))
-        ctx_cpy_string(str,t,params);
-    else {
-        printf("NO PARAM");
+    if (!s.data) {
+        printf("NO PARAMS");
         return -1;
     }
+    strncpy(params,s.data,s.len);
+    params[s.len]=0;
 
     char* res, *err;
-    int success =  (t=ctx_get_token(str,test,"success")) ? ctx_to_bool(str,t) : true;
+    int success =  d_get_intkd(test,key("success"),true);
 
     _tmp_response = response;
-    _tmp_str = str;
 
     in3_client_rpc(c,method,params,&res,&err);
 
@@ -102,11 +99,13 @@ int execRequest(in3_t *c , char* str, jsmntok_t* test) {
            _free(err);
            return -1;
         }
+        /*
         if ((t=ctx_get_token(str,test,"error")) && strncmp(str+t->start, err, t->end - t->start)!=0) {
                 printf("wrong error: %s", err);
                _free(err);
                return -1;
         }
+        */
         printf("OK");
         _free(err);
         return 0;
@@ -140,32 +139,31 @@ int runRequests(char *name, int test_index, int mem_track)
         // create client        
 
         // TODO init the nodelist
-
-        // parse the data;
-        int tokc=0,  i;
-        jsmntok_t *t = NULL, *tests, *test;
-        jsmntok_t *tokens = NULL;
-
-
-        // parse
-        res = jsmnutil_parse_json(content, &tokens, &tokc);
-        if (res < 0 || tokc == 0) {
+        json_parsed_t* parsed = parse_json(content); 
+        if (!parsed) {
             free(content);
             ERROR("Error parsing the requests");
             return -1;
         }
 
+
+        // parse the data;
+        int i;
+        char* descr;
+        d_token_t *t = NULL, *tests, *test;
+        d_token_t *tokens = NULL;
+
         int failed = 0;
 
-        if ((tests = ctx_get_token(content,tokens,"tests"))) {
-            for (i=0;i<tests->size;i++) {
+        if ((tests = d_get(parsed->items,key("tests")))) {
+            for (i=0, test=tests+1;i<d_len(tests);i++, test=d_next(test)) {
                 if (test_index>0 && i+1!=test_index) continue;
-                test = ctx_get_array_token(tests,i);
-                if ((t=ctx_get_token(content,test,"descr")))
-                   ctx_cpy_string(content,t,temp);
+
+                if ((descr=d_get_string(test,"descr")))
+                   strcpy(temp,descr);
                 else
                    sprintf(temp,"Request #%i",i+1);
-                 printf("\n%2i/%2i : %-60s ",i+1,tests->size,temp);
+                 printf("\n%2i/%2i : %-60s ",i+1,d_len(tests),temp);
                  mem_reset(mem_track);
 
                  in3_t *c = in3_new();
@@ -176,7 +174,7 @@ int runRequests(char *name, int test_index, int mem_track)
                      c->servers[j].needsUpdate=false;
 
 
-                 int fail =execRequest(c, content, test);
+                 int fail =execRequest(c, test);
                  if (fail) failed++;
                  _tmp_response = NULL;
                  _tmp_str = NULL;
@@ -193,10 +191,17 @@ int runRequests(char *name, int test_index, int mem_track)
 
         }
 
-        free(tokens);
+        free(content);
+        for (i=0;i<parsed->len;i++) {
+          if (parsed->items[i].data!=NULL && d_type(parsed->items+i)<2) 
+             free(parsed->items[i].data);
+        }
+        free(parsed->items);
+        free(parsed);
 
 
-        printf("\n%2i of %2i successfully tested", tests->size-failed, tests->size);
+
+        printf("\n%2i of %2i successfully tested", d_len(tests)-failed, d_len(tests));
 
         if (failed) {
            printf("\n%2i tests failed", failed);

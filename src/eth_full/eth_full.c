@@ -10,12 +10,13 @@
 #include "../eth_nano/serialize.h"
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
+#include <util/data.h>
+#include <client/keys.h>
 
 
 int in3_verify_eth_full(in3_vctx_t *vc)
 {
-    jsmntok_t *t;
-
+    char* method = d_get_stringk(vc->request, K_METHOD);
     if (vc->config->verification == VERIFICATION_NEVER)
         return 0;
 
@@ -24,10 +25,10 @@ int in3_verify_eth_full(in3_vctx_t *vc)
         return 0;
 
     // do we support this request?
-    if (!(t = req_get(vc, vc->request, "method")))
+    if (!method)
         return vc_err(vc, "No Method in request defined!");
 
-    if (req_eq(vc, t, "eth_call"))
+    if (strcmp(method, "eth_call")==0)
         // for txReceipt, we need the txhash
         return vc_err(vc,"Not implemented yet");
     else

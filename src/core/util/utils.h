@@ -9,7 +9,6 @@
 
 #include <stdint.h>
 #include "bytes.h"
-#include "../jsmn/jsmn.h"
 #include "mem.h"
 
 typedef uint32_t pb_size_t;
@@ -38,20 +37,14 @@ void byte_to_hex(uint8_t b, char s[23]);
 int hash_cmp(uint8_t *a, uint8_t *b);
 
 
-int json_get_int_value(char *data, char *key);
-char *json_get_value(char *data, char *key);
-
-
+char* _strdup(char* src, int len);
 int str2hex_str(char *str, char **buf);
 int str2byte_a(char *str, uint8_t **buf);
-int get_json_key_value_int(char *buf, char *key, jsmntok_t* tok, int tokc);
-char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc);
-char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok);
 
 #define EQ_MODE_CASE_INSENSITIVE  1
 #define EQ_MODE_CASE_NUMBER  2
 
-
+int min_bytes_len(uint64_t val);
 long c_to_int(char* a, int l) ;
 char c_to_lower(char c);
 

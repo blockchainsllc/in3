@@ -1,6 +1,7 @@
 #include "eth_nano.h"
 #include <util/utils.h>
 #include <client/context.h>
+#include <client/verifier.h>
 #include <string.h>
 #include "rlp.h"
 #include "merkle.h"
@@ -8,6 +9,7 @@
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
 #include <util/mem.h>
+#include <client/keys.h>
 
 // list of methods allowed withoput proof
 #define MAX_METHODS  23
@@ -20,7 +22,8 @@ char *ALLOWED_METHODS[MAX_METHODS] = {"eth_blockNumber", "web3_clientVersion", "
 
 int in3_verify_eth_nano(in3_vctx_t *vc)
 {
-    jsmntok_t *t;
+    char* method;
+    d_token_t* params = d_get(vc->request, K_PARAMS);
     int i;
 
     if (vc->config->verification == VERIFICATION_NEVER)
@@ -31,18 +34,18 @@ int in3_verify_eth_nano(in3_vctx_t *vc)
         return 0;
 
     // do we support this request?
-    if (!(t = req_get(vc, vc->request, "method")))
+    if (!(method = d_get_stringk(vc->request, K_METHOD)))
         return vc_err(vc, "No Method in request defined!");
 
     // check if this call is part of the not verifieable calls
     for (i=0;i<MAX_METHODS;i++) {
-       if (req_eq(vc, t, ALLOWED_METHODS[i])) 
+       if (strcmp(ALLOWED_METHODS[i],method)==0) 
           return 0;
     }
 
-    if (req_eq(vc, t, "eth_getTransactionReceipt"))
+    if (strcmp(method, "eth_getTransactionReceipt")==0)
         // for txReceipt, we need the txhash
-        return eth_verify_eth_getTransactionReceipt(vc, req_get_param(vc, 0));
+        return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(params,0));
     else
         return vc_err(vc, "The Method cannot be verified with eth_nano!");
 

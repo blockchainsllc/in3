@@ -9,26 +9,28 @@
 #include "../eth_nano/serialize.h"
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
+#include <util/data.h>
+#include <client/keys.h>
 
 
 int in3_verify_eth_basic(in3_vctx_t *vc)
 {
-    jsmntok_t *t;
+    char* method = d_get_stringk(vc->request, K_METHOD);
 
     if (vc->config->verification == VERIFICATION_NEVER)
         return 0;
 
     // do we have a result? if not it is a vaslid error-response
-    if (!vc->result)
+    if (!vc->result || d_type(vc->result)==T_NULL)
         return 0;
 
     // do we support this request?
-    if (!(t = req_get(vc, vc->request, "method")))
+    if (!method)
         return vc_err(vc, "No Method in request defined!");
 
-    if (req_eq(vc, t, "eth_getTransactionByHash"))
+    if (strcmp(method,"eth_getTransactionByHash")==0)
         // for txReceipt, we need the txhash
-        return eth_verify_eth_getTransaction(vc, req_get_param(vc, 0));
+        return eth_verify_eth_getTransaction(vc, d_get_bytes_at( d_get(vc->request, K_PARAMS) ,0));
     else
         return in3_verify_eth_nano(vc);
 }

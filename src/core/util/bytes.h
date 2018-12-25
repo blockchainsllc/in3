@@ -9,19 +9,16 @@
 
 #ifndef BYTES_H
 #define BYTES_H
-#define ADDRESS(v,d) bytes_t v; uint8_t d[20];  v.data=d; v.len=20;
-#define HASH(v,d) bytes_t v; uint8_t d[32];  v.data=d; v.len=32;
-#define BYTES(v,d,len) bytes_t v; uint8_t d[len];  v.data=d; v.len=len;
 
 /** a byte array */
 typedef struct {
-	int len;        /**< the length of the array ion bytes */
+	uint32_t len;        /**< the length of the array ion bytes */
 	uint8_t *data;  /**< the byte-data  */
 } bytes_t;
 
 /** a byte-buffer to attach byte-functions. */
 typedef struct {
-	int bsize;
+	uint32_t bsize;
 	bytes_t b;
 } bytes_builder_t;
 

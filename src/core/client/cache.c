@@ -5,7 +5,6 @@
 #include "context.h"
 #include "stdio.h"
 #include <string.h>
-#include "../jsmn/jsmnutil.h"
 #include "../util/mem.h"
 
 #define NODE_LIST_KEY "nodelist_%llx"

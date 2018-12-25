@@ -7,13 +7,12 @@ target_sources( app PRIVATE
     ../core/client/verifier.c
     ../core/client/send.c
     ../core/client/client_init.c
+    ../core/util/data.c
     ../core/util/debug.c
     ../core/util/bytes.c
     ../core/util/utils.c
     ../core/util/mem.c
     ../core/util/stringbuilder.c
-    ../core/jsmn/jsmn.c
-    ../core/jsmn/jsmnutil.c
     ../core/crypto/ecdsa.c
     ../core/crypto/address.c
     ../core/crypto/bignum.c
