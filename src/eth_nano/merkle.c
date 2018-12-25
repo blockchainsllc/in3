@@ -8,7 +8,6 @@
 
 //#include "fsm.h"
 #include "merkle.h"
-#include <jsmn/jsmnutil.h>
 #include "rlp.h"
 
 static int nibble_len(uint8_t *a) {

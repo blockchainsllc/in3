@@ -224,9 +224,6 @@ typedef struct {
 in3_t* in3_new();
 
 /** sends a request and stores the result in the provided buffer */
-int in3_client_send(in3_t* c,char* req, char* result, int buf_size, char* error);
-
-/** sends a request and stores the result in the provided buffer */
 int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** error);
 
 /** frees the references of the client */

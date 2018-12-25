@@ -11,7 +11,7 @@
 int in3_verify_eth_nano( in3_vctx_t* v);
 
 /** verifies a blockheader. */
-int eth_verify_blockheader( in3_vctx_t* vc, bytes_t* header, jsmntok_t* expected_blockhash);
+int eth_verify_blockheader( in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash);
 
 /** 
  * verifies a single signature blockheader.
@@ -20,12 +20,12 @@ int eth_verify_blockheader( in3_vctx_t* vc, bytes_t* header, jsmntok_t* expected
  * This is based on the signatiures in the request-config.
  * 
  */
-int eth_verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, jsmntok_t *sig);
+int eth_verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, d_token_t *sig);
 
 /**
  * verifies a transaction receipt.
  */
-int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, jsmntok_t *tx_hash);
+int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t* tx_hash);
 
 /**
  * this function should only be called once and will register the eth-nano verifier.

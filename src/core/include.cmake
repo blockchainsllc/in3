@@ -12,8 +12,6 @@ target_sources( app PRIVATE
     ../core/util/utils.c
     ../core/util/mem.c
     ../core/util/stringbuilder.c
-    ../core/jsmn/jsmn.c
-    ../core/jsmn/jsmnutil.c
     ../core/crypto/ecdsa.c
     ../core/crypto/address.c
     ../core/crypto/bignum.c

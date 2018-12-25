@@ -2,11 +2,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../jsmn/jsmnutil.h"
 #include "bytes.h"
 #include "mem.h"
 #include "debug.h"
 #include "../crypto/sha3.h"
+#include "utils.h"
 
 void byte_to_hex(uint8_t b, char s[23]) {
 	unsigned i=1;
@@ -24,34 +24,7 @@ void byte_to_hex(uint8_t b, char s[23]) {
 	}
 }
 
-int json_get_int_value(char *data, char *key)
-{
-	int tokc, value;
-	jsmntok_t *tokv;
 
-	jsmnutil_parse_json(data, &tokv, &tokc);
-	value = get_json_key_value_int(data, key, tokv, tokc);
-
-	if (tokv)
-		_free(tokv);
-
-	return value;
-}
-
-char *json_get_value(char *data, char *key)
-{
-	int tokc;
-	char *value;
-	jsmntok_t *tokv;
-
-	jsmnutil_parse_json(data, &tokv, &tokc);
-	value = get_json_key_value(data, key, tokv, tokc);
-
-	if (tokv)
-		_free(tokv);
-
-	return value;
-}
 
 int hash_cmp(uint8_t *a, uint8_t *b)
 {
@@ -110,92 +83,6 @@ int str2byte_a(char *str, uint8_t **buf)
 
 	_free(*buf);
 	return 0;
-}
-
-int get_json_key_value_int(char *buf, char *key, jsmntok_t* tok, int tokc)
-{
-	int i;
-	int val = 0;
-	int t=-1;
-
-	for(i=0; i<tokc; i++) {
-		int n = tok[i].end - tok[i].start;
-		if (tok[i+1].type == JSMN_PRIMITIVE
-		    && !strncmp(buf + tok[i].start, key, n)) {
-			t=1;
-		} else if (t==1) {
-			char *idval = _malloc(n+1);
-			idval[n] = 0;
-			strncpy(idval, buf + tok[i].start, n);
-			val = atoi(idval);
-			_free(idval);
-			return val;
-		} else if (t==1) {
-			return val;
-		}
-	}
-	return val;
-}
-
-char* get_json_key_value(char *buf, char *key, jsmntok_t* tok, int tokc)
-{
-	int i;
-	int t=-1;
-	int is_key;
-	unsigned short idx = 0;
-
-	for(i=0; i<tokc; i++) {
-		int n = tok[i].end - tok[i].start;
-		if (t==-1 && tok[i].type == JSMN_OBJECT && n > 2) {
-			idx = 1 - idx;
-			continue;
-		}
-		is_key = idx ? (i & 1) :(i & ~1);
-		if (n && (strlen(key) == n) && tok[i].type == JSMN_STRING
-		    && !strncmp(buf + tok[i].start, key, n) && is_key) {
-			t=1;
-		} else if (t==1) {
-			char *idval = _malloc(n+1);
-			idval[n] = 0;
-			strncpy(idval, buf + tok[i].start, n);
-			return idval;
-		} else if (t==1) {
-			return NULL;
-		}
-	}
-	return NULL;
-}
-
-char* json_array_get_one_str(char *buf, int *n, jsmntok_t **tok)
-{
-	int c;
-	char *value;
-
-	if (*n == 0)
-		return NULL;
-
-	c = (*tok)->end - (*tok)->start;
-	value = _calloc(1, (c+1) * sizeof(char));
-	strncpy(value, buf+(*tok)->start, c);
-	(*tok)++;
-	(*n)--;
-
-	return value;
-}
-
-int json_get_key_count(char *buf, char *key, jsmntok_t *tok, int tokc)
-{
-	int count = 0;
-
-	for (int i=0; i<tokc; i++) {
-		int n = tok[i].end - tok[i].start;
-		if (tok[i].type == JSMN_STRING
-		    && !strncmp(buf + tok[i].start, key, n)) {
-			count += 1;
-		}
-	}
-
-	return count;
 }
 
 
@@ -342,4 +229,18 @@ bool equals_range(char* a, int la,char* b, int lb, uint8_t mode) {
 	  return true;
 	}
 	return strncmp(a,b,la)==0;
+}
+char* _strdup(char* src, int len) {
+	if (len<0) len=strlen(src);
+	char* dst = _malloc(len+1);
+	strncpy(dst,src,len);
+	dst[len]=0;
+	return dst;
+}
+int min_bytes_len(uint64_t val) {
+	int i;
+	for (i=0;i<8;i++,val>>=8) {
+		if (val==0) return i;
+	}
+	return 8;
 }

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdint.h>  
 #include "client.h"  
-#include "../jsmn/jsmnutil.h"
 #include "../util/utils.h"
 #include <errno.h> 
 #include "context.h"
@@ -13,9 +12,11 @@
 #include "verifier.h"
 #include "nodelist.h"
 #include "../util/mem.h"
+#include "../util/data.h"
+#include "keys.h"
 
 
-static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, jsmntok_t* req ) {
+static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* req ) {
    int i;
    in3_t* c         = ctx->client;
 
@@ -136,8 +137,8 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
     }
     else {
       // we need to clean up the prev ios responses if set
-      if (ctx->responses)_free(ctx->responses);
-      if (ctx->tok_res)  _free(ctx->tok_res);
+      if (ctx->responses) _free(ctx->responses);
+      if (ctx->response_context) free_json(ctx->response_context);
 
       // parse the result
       res = ctx_parse_response(ctx,response[n].result.data);
@@ -151,9 +152,9 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
         // check each request
         for (i=0;i<ctx->len;i++) {
           vc.request=ctx->requests[i];
-          vc.result = ctx_get_token(ctx->response_data, ctx->responses[i],"result");
-          if ((vc.proof =ctx_get_token(ctx->response_data,  ctx->responses[i], "in3")))
-            vc.proof=ctx_get_token(ctx->response_data,  vc.proof, "proof");
+          vc.result = d_get(ctx->responses[i],K_RESULT);
+          if ((vc.proof =  d_get(ctx->responses[i],K_IN3)))
+            vc.proof = d_get(vc.proof,K_PROOF);
           vc.config = ctx->requests_configs +i;
 
           if (verifier && verifier->verify(&vc)) {
@@ -206,7 +207,7 @@ int in3_send_ctx( in3_ctx_t* ctx) {
   // clean up responses exycept the response we want to keep.
   for (i=0;i<nodes_count;i++) {
    _free(response[i].error.data);
-    if (response[i].result.data!=ctx->response_data)_free(response[i].result.data);
+    if (ctx->response_context ==NULL || response[i].result.data!=ctx->response_context->c) _free(response[i].result.data);
   }
  _free(response);
 
@@ -215,18 +216,19 @@ int in3_send_ctx( in3_ctx_t* ctx) {
     if (ctx->attempt< ctx->client->max_attempts-1) {
       ctx->attempt++;
       // clean up old results
-      if (ctx->response_data)_free(ctx->response_data);
-      if (ctx->responses)_free(ctx->responses);
-      if (ctx->tok_res)  _free(ctx->tok_res);
+      if (ctx->responses) _free(ctx->responses);
+      if (ctx->response_context) { 
+        _free(ctx->response_context->c);
+        _free(ctx->response_context);
+      }
       if (ctx->requests_configs ) {
           for (i=0;i<ctx->len;i++) {
               if (ctx->requests_configs[i].signaturesCount) 
                _free(ctx->requests_configs[i].signatures);
           }
       }
-      ctx->response_data = NULL;
       ctx->responses = NULL;
-      ctx->tok_res = NULL;
+      ctx->response_context = NULL;
 
       // now try again
       return  in3_send_ctx(ctx);

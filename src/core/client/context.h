@@ -9,7 +9,7 @@
 #include "../util/utils.h"
 #include "../util/stringbuilder.h"
 #include "client.h"
-
+#include "../util/data.h"
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
@@ -33,11 +33,8 @@ typedef struct {
    /*! reference to the client*/
    in3_t* client;
 
-    /* the incoming request (this will not be freed when cleaning up!)*/
-   char* request_data;
-
-   /* the response-string */
-   char* response_data;
+   json_parsed_t* request_context;
+   json_parsed_t* response_context;
 
    /* in case of an error this will hold the message */
    char* error;
@@ -48,16 +45,12 @@ typedef struct {
    /* the number of attempts */
    int attempt;
 
-   /* full list of tokens, which will be cleaned up*/
-   jsmntok_t* tok_req;
-   /* full list of tokens, which will be cleaned up*/
-   jsmntok_t* tok_res;
 
     /* references to the tokens representring the requests*/
-   jsmntok_t** responses;
+   d_token_t** responses;
    
     /* references to the tokens representring the responses*/
-   jsmntok_t** requests;
+   d_token_t** requests;
 
    /* configs adjusted for each request */
    in3_request_config_t* requests_configs;
@@ -82,22 +75,5 @@ int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
 // weights
 void free_ctx_nodes (node_weight_t* c) ;
 int ctx_nodes_len (node_weight_t* root);
-
-// find token...
-jsmntok_t* ctx_get_path(char* str, jsmntok_t* root, int n,...);
-jsmntok_t* ctx_get_token(char* str, jsmntok_t* root, char* key);
-jsmntok_t* ctx_get_array_token(jsmntok_t* root, int index);
-
-
-// get
-bool      ctx_equals     (char* str, jsmntok_t* root, char* val);
-int       ctx_cpy_string (char* str, jsmntok_t* root, char* dst);
-bool      ctx_to_bool    (char* str, jsmntok_t* c);
-uint64_t  ctx_to_long    (char* str, jsmntok_t* root, uint64_t defVal);
-uint32_t  ctx_to_int     (char* str, jsmntok_t* root, uint32_t defVal);
-bytes_t*  ctx_to_bytes   (char* str, jsmntok_t* root, int min_len);
-bytes_t** ctx_to_byte_a  (char* str, jsmntok_t* root);
-bool      ctx_equals_path(char* str_a, jsmntok_t*  root_a, int path_a,char* str_b, jsmntok_t*  root_b, int path_b, int mode, ...) ;
-
 
 #endif

@@ -8,13 +8,14 @@
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
 #include <util/mem.h>
+#include <client/keys.h>
 
 
-int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_blockhash)
+int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, bytes_t *expected_blockhash)
 {
     int res = 0, i;
     uint64_t header_number = 0;
-    jsmntok_t *t, *sig, *signatures;
+    d_token_t *t, *sig, *signatures;
     bytes_t *block_hash = sha3(header);
     bytes_t temp;
 
@@ -26,13 +27,8 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
     else
         res = vc_err(vc, "Could not rlpdecode the blocknumber");
 
-    if (res == 0 && expected_blockhash)
-    {
-        bytes_t *expected = res_to_bytes(vc, expected_blockhash);
-        if (!b_cmp(block_hash, expected))
-            res = vc_err(vc, "wrong blockhash");
-        b_free(expected);
-    }
+    if (res == 0 && expected_blockhash && !b_cmp(block_hash, expected_blockhash))
+        res = vc_err(vc, "wrong blockhash");
 
     if (res == 0 && vc->config->signaturesCount == 0)
     {
@@ -44,7 +40,7 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
         //            throw new Error('we have only a finality of '+finality+' but expected was '+proof.finality)
         //        }
     }
-    else if (res == 0 && (!(signatures = res_get(vc, vc->proof, "signatures")) || signatures->size < vc->config->signaturesCount))
+    else if (res == 0 && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
         res = vc_err(vc, "missing signatures");
     else if (res == 0)
     {
@@ -53,17 +49,16 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, jsmntok_t *expected_
         uint8_t msg_data[64];
         msg.data = (uint8_t *)&msg_data;
         msg.len = 64;
-        // first the blockhash + blocknumber
+        // first the blockhash + blocknumbero
         memcpy(msg_data, block_hash->data, 32);
         memset(msg_data + 32, 0, 32);
         long_to_bytes(header_number, msg_data + 56);
         bytes_t *msg_hash = sha3(&msg);
 
         int confirmed = 0; // confiremd is a bitmask for each signature one bit on order to ensure we have all requested signatures
-        for (i = 0; i < signatures->size; i++)
+        for (i = 0, sig = signatures+1; i < d_len(signatures); i++, sig=d_next(sig))
         {
-            sig = ctx_get_array_token(signatures, i);
-            if ((t = res_get(vc, sig, "block")) && res_to_long(vc, t, 0) == header_number)
+            if (d_get_longk(sig, K_BLOCK) == header_number)
                 confirmed |= eth_verify_signature(vc, msg_hash, sig);
         }
 

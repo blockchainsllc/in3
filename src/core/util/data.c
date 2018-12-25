@@ -18,7 +18,7 @@ d_key_t key(char* c) {
     uint16_t val=0;
     while (true) {
         if (*c==0) return val;
-        val^=*c | val<<9;
+        val^=*c | val<<7;
         c+=1;
     }
     return val;
@@ -28,37 +28,62 @@ d_key_t keyn(char* c, int len) {
     int i=0;
     for (;i<len;i++) {
         if (*c==0) return val;
-        val^=*c | val<<9;
+        val^=*c | val<<7;
         c+=1;
     }
     return val;
 }
 
-bytes_t* d_bytes(d_item_t* item) {
+bytes_t* d_bytes(d_token_t* item) {
     return (bytes_t*) item;
 }
-char* d_string(d_item_t* item) {
+char* d_string(d_token_t* item) {
     if (item==NULL) return NULL;
     return (char*)item->data;
 }
-int d_int(d_item_t* item) {
-    if (item==NULL) return 0;
+int d_int(d_token_t* item) {
+    return d_intd(item,0);
+}
+int d_intd(d_token_t* item, int def_val) {
+    if (item==NULL) return def_val;
+    switch (d_type(item)) {
+        case T_INTEGER:
+        case T_BOOLEAN:
+          return item->len & 0xFFFFFFF;
+        default:
+          return def_val;
+    }
+}
+
+bytes_t ** d_create_bytes_vec(d_token_t* arr) {
+    if (arr==NULL) return NULL;
+    int l = d_len(arr),i;
+    bytes_t ** dst = _calloc(l+1,sizeof(bytes_t*)) ;
+    d_token_t* t = arr+1;
+    for (i=0;i<l;i++, t+=d_token_size(t)) 
+       dst[i]=d_bytes(t); 
+    return dst;
+}
+
+uint64_t d_long(d_token_t* item) {
+    return d_longd(item,0L);
+}
+uint64_t d_longd(d_token_t* item, uint64_t def_val) {
+    if (item==NULL) return def_val;
     if (d_type(item)==T_INTEGER)
       return item->len & 0xFFFFFFF;
     else if (d_type(item) == T_BYTES) {
         return 0;
     }
-    return 0;
-
+    return 0;    
 }
 
 
 
-
-d_type_t d_type(d_item_t* item) {
+d_type_t d_type(d_token_t* item) {
     return item==NULL ? T_NULL :(item->len & 0xF0000000)>>28;
 }
-int child_count(d_item_t* item) {
+int d_len(d_token_t* item) {
     if (item==NULL) return 0;
     switch (d_type(item)) {
         case T_ARRAY:
@@ -69,51 +94,54 @@ int child_count(d_item_t* item) {
     }
 }
 
-int d_size(d_item_t* item) {
+int d_token_size(d_token_t* item) {
     if (item==NULL) return 0;
     int i,c=1;
     switch (d_type(item)) {
         case T_ARRAY:
         case T_OBJECT:
           for (i=0;i<(item->len & 0xFFFFFFF);i++)
-            c+=d_size(item+c);
+            c+=d_token_size(item+c);
           return c;
         default:
           return 1;
     }
 }
 
-d_item_t*  d_get(d_item_t* item, uint16_t key) {
+d_token_t*  d_get(d_token_t* item, uint16_t key) {
   if (item==NULL) return NULL;
   int i=0,l=item->len & 0xFFFFFFF;
   item+=1;
-  for (;i<l;i++,item+=d_size(item)) {
+  for (;i<l;i++,item+=d_token_size(item)) {
       if (item->key==key) return item;
   }
   return NULL;
 }
+d_token_t*  d_get_or(d_token_t* item, uint16_t key, uint16_t key2) {
+  if (item==NULL) return NULL;
+  d_token_t* s=NULL;
+  int i=0,l=item->len & 0xFFFFFFF;
+  item+=1;
+  for (;i<l;i++,item+=d_token_size(item)) {
+      if (item->key==key) return item;
+      if (item->key==key2) s=item;
+  }
+  return s;
+}
 
-d_item_t*  d_get_at(d_item_t* item, int index) {
+d_token_t*  d_get_at(d_token_t* item, int index) {
   if (item==NULL) return NULL;
   int i=0,l=item->len & 0xFFFFFFF;
   item+=1;
-  for (;i<l;i++,item+=d_size(item)) {
+  for (;i<l;i++,item+=d_token_size(item)) {
       if (i==index) return item;
   }
   return NULL;
 }
 
-d_item_t*  d_next(d_item_t* item) {
-   return item==NULL ? NULL : item+d_size(item);
+d_token_t*  d_next(d_token_t* item) {
+   return item==NULL ? NULL : item+d_token_size(item);
 }
-
-typedef struct json_parser {
-    d_item_t* items;
-    int allocated;
-    int len;
-    char* c;
-} json_parsed_t;
-
 
 
 char next_char(json_parsed_t* jp) {
@@ -131,12 +159,12 @@ char next_char(json_parsed_t* jp) {
     }
 }
 
-d_item_t* parsed_next_item(json_parsed_t* jp, d_type_t type, d_key_t key,int parent) {
+d_token_t* parsed_next_item(json_parsed_t* jp, d_type_t type, d_key_t key,int parent) {
   if (jp->len+1>jp->allocated) {
-      jp->items = _realloc(jp->items,(jp->allocated<<1)*sizeof(d_item_t),jp->allocated*sizeof(d_item_t));
+      jp->items = _realloc(jp->items,(jp->allocated<<1)*sizeof(d_token_t),jp->allocated*sizeof(d_token_t));
       jp->allocated<<=1;
   }
-  d_item_t* n = jp->items+jp->len;
+  d_token_t* n = jp->items+jp->len;
   jp->len+=1;
   n->key=key;
   n->data=NULL;
@@ -161,7 +189,7 @@ int parse_key(json_parsed_t* jp) {
     }
 }
 
-int parse_number(json_parsed_t* jp, d_item_t* item) {
+int parse_number(json_parsed_t* jp, d_token_t* item) {
     char temp[20];
     int i=0;
     jp->c--;
@@ -179,7 +207,7 @@ int parse_number(json_parsed_t* jp, d_item_t* item) {
     return -2;
 }
 
-int parse_string(json_parsed_t* jp, d_item_t* item) {
+int parse_string(json_parsed_t* jp, d_token_t* item) {
     char* start=jp->c;
     int l,i;
     while (true) {
@@ -244,7 +272,10 @@ int parse_object(json_parsed_t* jp, int parent, uint32_t key) {
             }
           }
         case '[':
-          parsed_next_item(jp,T_ARRAY,key,parent);
+          parsed_next_item(jp,T_ARRAY,key,parent)->data = (uint8_t*) jp->c-1;
+          if (next_char(jp)==']') return 0;
+          jp->c--;
+
           while (true) {
             res = parse_object(jp,p_index, jp->items[p_index].len & 0xFFFFFF);  // parse the value
             if (res<0) return res;
@@ -295,26 +326,30 @@ int parse_object(json_parsed_t* jp, int parent, uint32_t key) {
 
 }
 
-void free_json(d_item_t* items, int tokc) {
-    if (items==NULL) return;
+void free_json(json_parsed_t* jp) {
+    if (jp->items==NULL) return;
     int i;
-    for (i=0;i<tokc;i++) {
-        if (items[i].data!=NULL && d_type(items+i)<2) 
-            _free(items[i].data);
+    for (i=0;i<jp->len;i++) {
+        if (jp->items[i].data!=NULL && d_type(jp->items+i)<2) 
+            _free(jp->items[i].data);
     }
-    _free(items);
+    _free(jp->items);
+    _free(jp);
 }
 
-int parse_json(char* js, d_item_t** items, int* tokc ) {
-    json_parsed_t parser={ .items = _malloc(sizeof(d_item_t)*10), .allocated=10, .len=0, .c=js };
-    int res = parse_object(&parser,-1,0);
-    if (res<0) free_json(parser.items,parser.len);
-    else {
-        *items = parser.items;
-        *tokc  = parser.len;
+json_parsed_t* parse_json(char* js ) {
+    json_parsed_t* parser=_malloc(sizeof(json_parsed_t));
+    parser->len = 0;
+    parser->items = _malloc(sizeof(d_token_t)*10);
+    parser->c = js;
+    parser->allocated = 10;
+    int res = parse_object(parser,-1,0);
+    if (res<0) {
+      free_json(parser);
+      return NULL;
     }
-    return res;
-
+    parser->c=js;
+    return parser;
 }
 
 
@@ -324,8 +359,12 @@ static int find_end(char* str) {
     char* c=str;
     while (*c!=0) {
         switch (*(c++)) {
-            case '{': l++; break;
-            case '}': l--; break;
+            case '{': 
+            case '[': 
+               l++; break;
+            case '}': 
+            case ']': 
+               l--; break;
         }
         if (l==0) 
            return c - str;
@@ -333,8 +372,46 @@ static int find_end(char* str) {
     return c - str;
 }
 
+char* d_create_json(d_token_t* item) {
+    char* dst;
+    int i,l=d_len(item);
+    str_range_t s;
+    switch (d_type(item)) {
+        case T_ARRAY:
+        case T_OBJECT:
+          s= d_to_json(item);
+          dst = _malloc(s.len+1);
+          memcpy(dst,s.data,s.len);
+          dst[s.len]=0;
+          return dst;
+        case T_BOOLEAN:
+          return d_int(item) ? _strdup("true",4) : _strdup("false",5);
+        case T_INTEGER:
+          dst = _malloc(16);
+          sprintf(dst,"0x%x",d_int(item));
+          return dst;
+        case T_NULL:
+          return _strdup("null",4);
+        case T_STRING:
+          dst = _malloc(l+3);
+          dst[0]='"';
+          dst[l+1]='"';
+          dst[l+2]=0;
+          memcpy(dst+1,item->data,l);
+          return dst;
+        case T_BYTES:
+          dst = _malloc(l*2+5);
+          dst[0]='"';
+          dst[1]='0';
+          dst[2]='x';
+          int8_to_char(item->data,item->len,dst+3);
+          dst[l*2+3]='"';
+          dst[l*2+4]=0;
+          return dst;
+    }
+}
 
-str_range_t d_to_json(d_item_t* item) {
+str_range_t d_to_json(d_token_t* item) {
     str_range_t s;
     s.data =  (char*) item->data;
     s.len = find_end(s.data);

@@ -26,10 +26,10 @@ uint64_t getChainId(char* name) {
   if (strcmp(name,"ipfs")==0)       return 0x7d0;
   return atoi(name);
 }
-
+/*
 void newp() {
   char* js = "{ \"key\":\"value\", \"array\":[1,2,3,4,\"test\"], \"sub\":{ \"a\":3}, \"bytes\":\"0xabcdef1234567890\"  }";
-  d_item_t* root;
+  d_token_t* root;
   int tokc;
 
   if (parse_json(js,&root,&tokc)==0) {
@@ -44,11 +44,11 @@ void newp() {
   }
 
 }
-
+*/
 
 int main (int argc, char *argv[])
 {
-  newp();
+//  newp();
   int i;
   if (argc < 2) {
     fprintf(stdout,"Usage: %s <options> method params ... \n  -p -proof    none|standard|full\n  -s -signs    number of signatures\n  -c -chain    mainnet|kovan|evan|tobalaba|ipfs\n",argv[0]);
