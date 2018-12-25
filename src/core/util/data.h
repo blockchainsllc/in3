@@ -39,16 +39,20 @@ typedef struct json_parser {
 
 d_key_t key(char* c);
 d_key_t keyn(char* c, int len);
+
+
 bytes_t* d_bytes(d_token_t* item);
-char* d_string(d_token_t* item);
-int d_int(d_token_t* item);
-int d_intd(d_token_t* item, int def_val);
+char*    d_string(d_token_t* item);
+int      d_int(d_token_t* item);
+int      d_intd(d_token_t* item, int def_val);
 uint64_t d_long(d_token_t* item);
 uint64_t d_longd(d_token_t* item, uint64_t def_val);
-d_type_t d_type(d_token_t* item);
-int d_len(d_token_t* item);
-int d_token_size(d_token_t* item);
 bytes_t ** d_create_bytes_vec(d_token_t* arr);
+
+d_type_t d_type(d_token_t* item);
+int      d_len(d_token_t* item);
+int      d_token_size(d_token_t* item);
+int      d_eq(d_token_t* a, d_token_t* b);
 
 
 d_token_t*  d_get(d_token_t* item, uint16_t key);
@@ -57,10 +61,9 @@ d_token_t*  d_get_at(d_token_t* item, int index);
 d_token_t*  d_next(d_token_t* item);
 
 json_parsed_t* parse_json(char* js );
-void free_json(json_parsed_t* parser_ctx);
-
-str_range_t d_to_json(d_token_t* item);
-char* d_create_json(d_token_t* item);
+void           free_json(json_parsed_t* parser_ctx);
+str_range_t    d_to_json(d_token_t* item);
+char*          d_create_json(d_token_t* item);
 
 
 #define d_get_string(r,k) d_string(d_get(r,key(k)))

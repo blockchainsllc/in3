@@ -98,14 +98,12 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t *tx_hash)
         b_free(path);
     }
     if (res==0) {
-        // check rest iof the values
-        /*
 
-        if (!ctx_equals_path(vc->ctx->response_data, vc->proof,1,vc->ctx->response_data, vc->result,1,EQ_MODE_CASE_NUMBER,"txIndex","transactionIndex"))
+        // check rest iof the values
+        if (!d_eq(d_get(vc->proof,K_TX_INDEX),d_get(vc->result,K_TRANSACTION_INDEX)))
            return vc_err(vc,"wrong transactionIndex");
-        if (!ctx_equals_path(vc->ctx->request_data, tx_hash,0,vc->ctx->response_data, vc->result,1,EQ_MODE_CASE_INSENSITIVE,"transactionHash"))
+        if (!b_cmp(tx_hash, d_get_bytesk(vc->result,K_TRANSACTION_HASH)))
            return vc_err(vc,"wrong transactionHash");
-           */
     }
 
     return res;

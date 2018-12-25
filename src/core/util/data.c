@@ -108,6 +108,14 @@ int d_token_size(d_token_t* item) {
     }
 }
 
+int d_eq(d_token_t* a, d_token_t* b) {
+    if (a==NULL || b==NULL) return false;
+    if (a->len!=b->len) return false;
+    if (a->data && b->data) 
+        return b_cmp(d_bytes(a),d_bytes(b));
+    return a->data==NULL && b->data==NULL;
+}
+
 d_token_t*  d_get(d_token_t* item, uint16_t key) {
   if (item==NULL) return NULL;
   int i=0,l=item->len & 0xFFFFFFF;

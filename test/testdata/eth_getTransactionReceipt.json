@@ -36,7 +36,6 @@
             },
             "response": [
                 {
-                    "success":"true",
                     "result": {
                         "blockHash": "0xea6ee1e20d3408ad7f6981cfcc2625d80b4f4735a75ca5b20baeb328e41f0304",
                         "blockNumber": "0x8c1e39",

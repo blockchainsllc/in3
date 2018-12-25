@@ -22,8 +22,8 @@ int rlp_add(bytes_builder_t *rlp, d_token_t* t, int ml) {
       tmp[2] = (t->len & 0xFF00)>>8;
       tmp[1] = (t->len & 0xFF0000)>>16;
       tmp[0] = (t->len & 0xF000000)>>24;
-      b.data= (uint8_t*) &tmp;
       b.len = tmp[0] ? 4 : (tmp[1] ? 3 : (tmp[2] ? 2 : (tmp[3] ? 1:0)));
+      b.data= (uint8_t*) &tmp + 4-b.len;
       break;
     case T_BYTES:
       b.data = t->data;
