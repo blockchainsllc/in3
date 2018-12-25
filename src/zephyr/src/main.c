@@ -18,7 +18,6 @@
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/sdp.h>
 
-#include "jsmn/jsmnutil.h"
 #include "fsm.h"
 #include "util/utils.h"
 #include "util/bytes.h"

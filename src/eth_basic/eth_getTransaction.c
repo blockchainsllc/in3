@@ -17,7 +17,6 @@
 int eth_verify_eth_getTransaction(in3_vctx_t *vc, bytes_t *tx_hash) {
 
     int res = 0;
-    d_token_t* t;
 
     if (!tx_hash)
         return vc_err(vc, "No Transaction Hash found");
@@ -28,7 +27,7 @@ int eth_verify_eth_getTransaction(in3_vctx_t *vc, bytes_t *tx_hash) {
     if (!vc->proof)
         return vc_err(vc, "Proof is missing!");
 
-    bytes_t *blockHeader = d_get_bytesk(vc->result,K_BLOCK_HASH);
+    bytes_t *blockHeader = d_get_bytesk(vc->proof,K_BLOCK);
     if (!blockHeader)
         return vc_err(vc, "No Block-Proof!");
     res = eth_verify_blockheader(vc, blockHeader, d_get_bytesk(vc->result, K_BLOCK_HASH ) );

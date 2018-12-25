@@ -3,36 +3,31 @@
 #include <rtc.h>
 #include <client/client.h>
 #include "fsm.h"
-#include "jsmn/jsmnutil.h"
 #include "util/debug.h"
 #include "util/stringbuilder.h"
 #include <crypto/secp256k1.h>
 #include <crypto/ecdsa.h>
+#include <util/data.h>
+#include <eth_nano.h>
+
 
 
 msg_type_t msg_get_type(struct in3_client *c)
 {
-	int tokc, ret;
-	jsmntok_t *tokv = 0;
 	char *val = 0;
 	msg_type_t type = T_ERROR;
 
 	if (!c->msg->ready)
 		return T_ERROR;
 
-	ret = jsmnutil_parse_json(c->msg->data, &tokv, &tokc);
-	val = get_json_key_value(c->msg->data, "msgType", tokv, tokc);
-
-	if (tokv)
-		k_free(tokv);
-
+    val = json_get_str_value(c->msg->data, "msgType");
 	if (val && !strcmp(val, "action"))
 		type = T_ACTION;
 	else if (val && !strcmp(val, "in3Response"))
 		type = T_RESPONSE;
 
 	if (val)
-		k_free(val);
+		_free(val);
 
 	c->msg->type = type;
 
@@ -41,8 +36,6 @@ msg_type_t msg_get_type(struct in3_client *c)
 
 action_type_t msg_get_action(struct in3_client *c)
 {
-	int tokc, ret;
-	jsmntok_t *tokv = 0;
 	char *val = 0;
 	action_type_t type = NONE;
 
@@ -52,11 +45,8 @@ action_type_t msg_get_action(struct in3_client *c)
 	if (c->msg->type != T_ACTION)
 		return NONE;
 
-	ret = jsmnutil_parse_json(c->msg->data, &tokv, &tokc);
-	val = get_json_key_value(c->msg->data, "action", tokv, tokc);
+    val = json_get_str_value(c->msg->data, "action");
 
-	if (tokv)
-		k_free(tokv);
 
 	if (val && !strcmp(val, "unlock"))
 		type = UNLOCK;
@@ -64,41 +54,25 @@ action_type_t msg_get_action(struct in3_client *c)
 		type = LOCK;
 
 	if (val)
-		k_free(val);
+		_free(val);
 
 	return type;
 }
 
 char *msg_get_response(struct in3_client *c)
 {
-	int tokc, ret;
-	jsmntok_t *tokv = 0;
 	char *val = 0;
 
 	if (!c->msg->ready)
 		return T_ERROR;
 
-	ret = jsmnutil_parse_json(c->msg->data, &tokv, &tokc);
-	val = get_json_key_value(c->msg->data, "responses", tokv, tokc);
-
+	val = json_get_json_value(c->msg->data, "responses");
 	dbg_log("msg: '%s'\n", c->msg->data);
-	if (tokv)
-		k_free(tokv);
-
 	return val;
 }
 static char *get_tx_hash(char *msg)
 {
-	int tokc, ret;
-	jsmntok_t *tokv = 0;
-	char *val = 0;
-
-	ret = jsmnutil_parse_json(msg, &tokv, &tokc);
-
-	val = get_json_key_value(msg, "transactionHash", tokv, tokc);
-	if (tokv)
-		k_free(tokv);
-
+	char *val = json_get_str_value(msg, "transactionHash");
 	if (!val)
 		return NULL;
 
@@ -109,7 +83,7 @@ static char *get_tx_hash(char *msg)
 
 err:
 	if (val)
-		k_free(val);
+		_free(val);
 
 	return NULL;
 }
@@ -204,159 +178,91 @@ int in3_get_tx_receipt(struct in3_client *c, char *tx_hash, char **response)
 	return 0;
 }
 
-int in3_can_rent(struct in3_client *c, char *resp, char *amsg)
-{
-	int ret = -1;
-	int size, tokc, v;
-	uint8_t *pubkey = 0, *sdata = 0;
-	char tmp[256], mhash[256];
-	char *logs = 0, *data = 0;
-	char *topics = 0, *topic = 0, *log = 0;
-	char *url = 0, *action = 0, *msg_hash = 0;
-	char *r = 0, *s = 0, *vs = 0, *str = 0, *sig = 0;
-	bytes_t *addr = 0, *signer = 0, *t = 0;
-	jsmntok_t *tokv_l = 0, *tokv_t = 0;
 
-	logs = json_get_value(resp, "logs");
 
-	jsmnutil_parse_json(logs, &tokv_l, &tokc);
 
-	int n = (tokv_l+1)->end - (tokv_l+1)->start;
-	log = k_calloc(1, n * sizeof(char));
-	memcpy(log, logs+(tokv_l+1)->start, n);
 
-	topics = json_get_value(log, "topics");
-	jsmnutil_parse_json(topics, &tokv_t, &tokc);
+int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
+	int res=-1,i;
+    char tmp[256], mhash[256];
+	json_parsed_t*  response = parse_json(resp);
+	json_parsed_t*  message  = parse_json(amsg);
+	d_token_t* l, *log=NULL;
+	bytes_t* signer=NULL,  *hash=NULL;
+	bytes_t* log_rented = hex2byte_new_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8",64);
 
-	size = jsmnutil_array_count(topics, tokv_t);
-	jsmntok_t *k = tokv_t+1;
 
-	topic = json_array_get_one_str(topics, &size, &k);
-	if (strcmp(topic, "0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8"))
-		goto out;
+	if (!response || !message) goto out; 
 
-	data = json_get_value(log, "data");
+	d_token_t* logs = d_get(response->items,key("logs"));
+	if (!logs)  goto out;
 
-	snprintf(tmp, 65,"%s", (data+2+64));
-	c->rent->from = strtoul(tmp, NULL, 16);
-	snprintf(tmp, 65, "%s", (data+2+(2*64)));
-	c->rent->until = strtoul(tmp, NULL, 16);
+	for (i=0,l=logs+1;i<d_len(logs);i++,l=d_next(l)) {
+		if (b_cmp(d_get_bytes_at(d_get(l,key("topics")),0),log_rented)) {
+			log=l;
+			break;
+		}
+	}
 
-	c->rent->controller = k_calloc(1, 43 * sizeof(char));
-	snprintf(c->rent->controller, 43, "0x%s", (data+26));
+    // no event found,
+	if (!log) goto out; 
 
-	k_free(data);
+	char* url         = d_get_string(message->items,"url");
+    //bytes_t* deviceId = d_get_bytes_at(d_get(log,key("topics")),1);  // we need to store and compare the deviceId
+	bytes_t* data     = d_get_bytes(log,"data");
+	
+	c->rent->from  = bytes_to_long(data->data+32,32);
+	c->rent->until = bytes_to_long(data->data+64,32);
+    //TODO do we need to set it as string?
+    c->rent->controller = _malloc(43);
+    c->rent->controller[0]='0';
+    c->rent->controller[1]='x';
+	int8_to_char(data->data+12,20,c->rent->controller+2);
+
 
 	dbg_log("controller: '%s'\n", c->rent->controller);
 	dbg_log("from: %d, until: %d, when: %d\n", c->rent->from, c->rent->until, c->rent->when);
 
-	if ((c->rent->from >= c->rent->when) ||
-		(c->rent->when >= c->rent->until)) {
-		goto out;
-	}
+    // wrong time
+	if (c->rent->from >= c->rent->when ||  c->rent->when >= c->rent->until)  goto out;
 
-	dbg_log("amsg: '%s'\n", amsg);
-	url = json_get_value(amsg, "url");
-	action = json_get_value(amsg, "action");
-	msg_hash = json_get_value(amsg, "messageHash");
+	// check signature
 
-	sig = json_get_value(amsg, "signature");
-	r = json_get_value(sig, "r");
-	s = json_get_value(sig, "s");
-	vs = json_get_value(sig, "v");
-	v = strtoul(vs, NULL, 16);
-	k_free(vs);
-	k_free(sig);
 
-	sdata = k_calloc(1, 64 * sizeof(uint8_t));
-
-	sprintf(tmp, "%s%s", r+2, s+2);
-	str2byte_a(tmp, &sdata);
-	k_free(r);
-	k_free(s);
-
-	sprintf(tmp, "%s%d%s{}", url, c->rent->when, action);
+    // prepare message hash
+	sprintf(tmp, "%s%d%s{}", url, c->rent->when, d_get_string(message->items,"action"));
 	sprintf(mhash, "\031Ethereum Signed Message:\n%d%s", strlen(tmp), tmp);
-	dbg_log("mhash: '%s'\n", mhash);
+	bytes_t msg= { .data = (uint8_t*) &mhash, .len = strlen(mhash) };
+    hash = sha3(&msg);
 
-	k_free(url);
-	k_free(action);
+    // get the signature
+	signer = ecrecover_signature(hash,  d_get(message->items,key("signature")));
+	if (signer==NULL) goto out;
 
-	str2hex_str(mhash, &str);
-	bytes_t *m = k_calloc(1, sizeof(bytes_t));
-	m->len = str2byte_a(str, &m->data);
-	k_free(str);
+    // check if the signer is the same as the controller in the event.
+    // reuse msg to point to the address in the event.
+	msg.data = data->data+12;
+	msg.len  = 20;
+	if (!b_cmp(signer, &msg))  goto out;
 
-	bytes_t *hash = sha3(m);
-	b_free(m);
+	//TODO check if the url and the deviceid is correct.
+	// if (strcmp(url, saved_url)!=0)          goto out;
+	// if (!b_comp(device_id, saved_device_id)) goto out;
+	// if (!b_comp( d_get_bytes(response,"contractAddress") , saved_contract)) goto out;
 
-	// compare msg hash
-	t = k_calloc(1, sizeof(bytes_t));
-	t->len = str2byte_a(msg_hash, &t->data);
-	k_free(msg_hash);
+	res = 0;
+	
+	out:
+	if (response) _free(response);
+	if (message)  _free(message);
+	if (hash)     b_free(hash);
+	if (signer)   b_free(signer);
+	b_free(log_rented);
 
-	if (b_cmp(hash, t)) {
-		b_free(hash);
-		printk("Invalid message hash\n");
-		goto out;
-	}
-
-	b_free(hash);
-	hash = 0;
-
-	pubkey = k_calloc(1, 65 * sizeof(uint8_t));
-	if (v >= 27) {
-		v -= 27;
-	}
-
-	// verify signature
-	ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, t->data, v);
-	b_free(t);
-	t = 0;
-
-	k_free(sdata);
-
-	bytes_t *key = b_new(pubkey+1, 64);
-	hash = sha3(key);
-	b_free(key);
-
-	// verify address here
-	addr = b_new(hash->data+12, 20);
-	signer = k_calloc(1, sizeof(bytes_t));
-	signer->len = str2byte_a(c->rent->controller, &signer->data);
-	b_free(hash);
-
-	if (b_cmp(addr, signer)) {
-		printk("Invalid signatory\n");
-		goto out;
-	}
-
-	ret = 0;
-
-out:
-	if (topics)
-		k_free(topics);
-	if (topic)
-		k_free(topic);
-	if (tokv_t)
-		k_free(tokv_t);
-	if (tokv_l)
-		k_free(tokv_l);
-	if (log)
-		k_free(log);
-	if (logs)
-		k_free(logs);
-	if (t)
-		b_free(t);
-	if (addr)
-		b_free(addr);
-	if (signer)
-		b_free(signer);
-	if (pubkey)
-		k_free(pubkey);
-
-	return ret;
+	return res;
 }
+
+
 
 int verify_rent(struct in3_client *c)
 {

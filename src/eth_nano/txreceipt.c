@@ -38,7 +38,6 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t *tx_hash)
 {
 
     int res = 0;
-    d_token_t* t;
 
     if (!tx_hash)
         return vc_err(vc, "No Transaction Hash found");

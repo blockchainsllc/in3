@@ -23,6 +23,11 @@ int eth_verify_blockheader( in3_vctx_t* vc, bytes_t* header, bytes_t* expected_b
 int eth_verify_signature(in3_vctx_t *vc, bytes_t *msg_hash, d_token_t *sig);
 
 /**
+ *  returns the address of the signature if the msg_hash is correct
+ */
+bytes_t* ecrecover_signature(bytes_t *msg_hash, d_token_t *sig);
+
+/**
  * verifies a transaction receipt.
  */
 int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t* tx_hash);

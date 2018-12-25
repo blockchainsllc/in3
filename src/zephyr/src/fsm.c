@@ -4,7 +4,6 @@
 #include <misc/printk.h>
 
 #include "fsm.h"
-#include "jsmn/jsmnutil.h"
 #include "util/utils.h"
 #include "rent.h"
 #include <eth_full.h>

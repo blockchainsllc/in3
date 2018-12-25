@@ -23,7 +23,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
             return c;
         }
 
-        int res, i;
+        int i;
         d_token_t* t;
 
         if (d_type (c-> request_context->items) == T_OBJECT) {

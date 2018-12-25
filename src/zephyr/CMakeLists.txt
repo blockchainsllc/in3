@@ -27,6 +27,8 @@ set_property(TARGET app PROPERTY C_STANDARD 99)
 # include core in the headers
 include_directories ("${PROJECT_SOURCE_DIR}/../core")
 include_directories ("${PROJECT_SOURCE_DIR}/../eth_full")
+include_directories ("${PROJECT_SOURCE_DIR}/../eth_nano")
+include_directories ("${PROJECT_SOURCE_DIR}/../eth_basic")
 include(../core/include.cmake)
 
 # choose which mlodule to include

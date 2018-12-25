@@ -201,7 +201,6 @@ int parse_number(json_parsed_t* jp, d_token_t* item) {
     char temp[20];
     int i=0;
     jp->c--;
-    char* start=jp->c;
     for (;i<20;i++) {
         if (jp->c[i]>='0' && jp->c[i]<='9') 
            temp[i]=jp->c[i];
@@ -381,8 +380,9 @@ static int find_end(char* str) {
 }
 
 char* d_create_json(d_token_t* item) {
+    if (item==NULL) return NULL;
     char* dst;
-    int i,l=d_len(item);
+    int l=d_len(item);
     str_range_t s;
     switch (d_type(item)) {
         case T_ARRAY:
@@ -417,6 +417,7 @@ char* d_create_json(d_token_t* item) {
           dst[l*2+4]=0;
           return dst;
     }
+    return NULL;
 }
 
 str_range_t d_to_json(d_token_t* item) {
@@ -424,4 +425,36 @@ str_range_t d_to_json(d_token_t* item) {
     s.data =  (char*) item->data;
     s.len = find_end(s.data);
     return s;
+}
+
+
+// util fast parse
+int json_get_int_value(char* js, char* prop) {
+    json_parsed_t* ctx = parse_json(js);
+    if (ctx) {
+      int res = d_get_int( ctx->items, prop);
+      free_json(ctx);
+      return res;
+    }
+    return -1;
+}
+
+char* json_get_str_value(char* js, char* prop) {
+    json_parsed_t* ctx = parse_json(js);
+    if (ctx) {
+      char* c = d_get_string( ctx->items, prop);
+      free_json(ctx);
+      return c ? _strdup(c,strlen(c)) : NULL;
+    }
+    return NULL;
+}
+
+char* json_get_json_value(char* js, char* prop) {
+    json_parsed_t* ctx = parse_json(js);
+    if (ctx) {
+      char* c = d_create_json( d_get( ctx->items, key(prop) ));
+      free_json(ctx);
+      return c;
+    }
+    return NULL;
 }

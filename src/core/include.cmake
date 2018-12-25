@@ -7,6 +7,7 @@ target_sources( app PRIVATE
     ../core/client/verifier.c
     ../core/client/send.c
     ../core/client/client_init.c
+    ../core/util/data.c
     ../core/util/debug.c
     ../core/util/bytes.c
     ../core/util/utils.c

@@ -189,8 +189,10 @@ bytes_t *sha3(bytes_t *data)
 uint64_t bytes_to_long (uint8_t* data, int len) {
 	uint64_t res = 0;
 	int i;
-	for (i=0;i<len;i++) 
-		res |= ((uint64_t) data[i] ) << (len-i-1)*8; 
+	for (i=0;i<len;i++) {
+		if (data[i])
+   		  res |= ((uint64_t) data[i] ) << (len-i-1)*8; 
+	}
 	return res;
 }
 long c_to_long(char* a, int l)  {

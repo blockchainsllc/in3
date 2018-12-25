@@ -15,7 +15,7 @@ int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, bytes_t *expected_bl
 {
     int res = 0, i;
     uint64_t header_number = 0;
-    d_token_t *t, *sig, *signatures;
+    d_token_t *sig, *signatures;
     bytes_t *block_hash = sha3(header);
     bytes_t temp;
 
