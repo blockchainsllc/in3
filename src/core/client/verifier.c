@@ -8,6 +8,7 @@
 static in3_verifier_t* verifiers=NULL;
 
 void in3_register_verifier(in3_verifier_t* verifier) {
+    if (  in3_get_verifier(verifier->type)!=NULL) return;
     verifier->next = verifiers;
     verifiers = verifier;
 }

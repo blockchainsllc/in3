@@ -2,6 +2,10 @@
 #include <client/client.h>
 #include <client/context.h>
 #include <client/keys.h>
+#include <client/send.h>
+#include <in3_curl.h>
+#include <eth_full.h>
+
 
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
@@ -54,7 +58,7 @@ JNIEXPORT jbyteArray JNICALL Java_in3_IN3_getKey(JNIEnv *env, jobject ob) {
    bytes_t* k= get_in3(env,ob)->key;
    if (!k) return NULL;
    jbyteArray res = (*env)->NewByteArray(env, k->len);
-   (*env)->SetByteArrayRegion(env,res,0,k->len,k->data);
+   (*env)->SetByteArrayRegion(env,res,0,k->len, (jbyte*) k->data);
    return res;
 }
 /*
@@ -70,7 +74,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setKey  (JNIEnv *env, jobject ob, jbyteArray
     in3->key = _malloc(sizeof(bytes_t));
     in3->key->len =(*env)->GetArrayLength(env,val);
     in3->key->data = _malloc(in3->key->len);
-    (*env)->GetByteArrayRegion(env,val,0,in3->key->len,in3->key->data);
+    (*env)->GetByteArrayRegion(env,val,0,in3->key->len, (jbyte*) in3->key->data);
 }
 
 /*
@@ -139,7 +143,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setProof(JNIEnv *env, jobject ob, jobject va
     in3_t* in3 = get_in3(env,ob);
     jclass enum_clazz  = (*env)->FindClass(env,"in3/Proof");
 
-    char** values = {"none", "standard", "full"};
+    char*  values[] = { "none", "standard", "full"};
     for (int i=0;i<3;i++) {
          if (val== (*env)->GetStaticObjectField(env, enum_clazz,  (*env)->GetStaticFieldID(env,enum_clazz , values[i], "Lin3/Proof;")))
            in3->proof = i;
@@ -315,13 +319,13 @@ JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList(JNIEnv *env, jobject ob, j
  */
 JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv *env, jobject ob, jstring jreq) {
 
-	const char *str = (*env)->GetStringUTFChars(env,jreq,0);
+	const char* str = (*env)->GetStringUTFChars(env,jreq,0);
     char* result = NULL;
     char error[10000];
     int res;
-    jstring js;
+    jstring js = NULL;
 
-    in3_ctx_t* ctx = new_ctx(get_in3(env,ob), str );
+    in3_ctx_t* ctx = new_ctx(get_in3(env,ob), (char*) str );
 
     if (!ctx->error) {
         res = in3_send_ctx(ctx);
@@ -338,7 +342,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv *env, jobject ob, jstring jre
                    strncpy(error,d_string(r),d_len(r));
             }
             else if (ctx->error) 
-                strcpy(*error,ctx->error);
+                strcpy(error,ctx->error);
             else 
                 strcpy(error,"No Result and also no error");
 
@@ -366,6 +370,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv *env, jobject ob, jstring jre
        jclass Exception = (*env)->FindClass(env,"java/lang/Exception");
        (*env)->ThrowNew(env,Exception,error);
     }
+    return js;
 }
 
 /*
@@ -382,5 +387,9 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv *env, jobject ob) {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv *env, jobject ob) {
-   return (jlong) in3_new();
+    in3_t* in3 = in3_new();
+    in3_register_eth_full();
+    in3->transport = send_curl;
+
+   return (jlong) in3;
 }
