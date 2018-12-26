@@ -2,7 +2,6 @@
 #include <client/client.h>
 #include <in3_curl.h>
 
-
 in3_t* in3_create() {
     in3_t* i = in3_new();
     i->transport = send_curl;

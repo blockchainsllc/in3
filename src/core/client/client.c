@@ -40,12 +40,12 @@ int in3_client_rpc(in3_t* c, char* method, char* params ,char** result, char** e
       else if ((r = d_get(ctx->responses[0],K_ERROR))) {
         if (d_type(r)==T_OBJECT) {
           s = d_to_json(r);
-          *result = _malloc(s.len +1);
-          strncpy(*result,s.data,s.len);
+          *error = _malloc(s.len +1);
+          strncpy(*error,s.data,s.len);
         }
         else {
-          *result = _malloc(d_len(r) +1);
-          strncpy(*result,d_string(r),d_len(r));
+          *error = _malloc(d_len(r) +1);
+          strncpy(*error,d_string(r),d_len(r));
         }
       }
       else if (ctx->error) {
