@@ -249,6 +249,22 @@ JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList
 
 /*
  * Class:     in3_IN3
+ * Method:    getStorageProvider
+ * Signature: ()Lin3/StorageProvider;
+ */
+JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     in3_IN3
+ * Method:    setStorageProvider
+ * Signature: (Lin3/StorageProvider;)V
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_setStorageProvider
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     in3_IN3
  * Method:    send
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */

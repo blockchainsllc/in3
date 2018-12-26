@@ -51,7 +51,7 @@ static char* create_path(char* key) {
     return path;
 }
 
-bytes_t* storage_get_item(char* key) {
+bytes_t* storage_get_item(void* cptr, char* key) {
    char* path = create_path(key);
 
    FILE *file = fopen(path,"r");
@@ -79,7 +79,7 @@ bytes_t* storage_get_item(char* key) {
 }
 
 
-void storage_set_item(char* key, bytes_t* content) {
+void storage_set_item(void* cptr, char* key, bytes_t* content) {
     char* path = create_path(key);
     FILE* file = fopen (path, "wb");
     if (file) {

@@ -130,8 +130,8 @@ typedef struct {
 } in3_chain_t;
 
 /* storage handler */
-typedef bytes_t* (*in3_storage_get_item)(char *);
-typedef void (*in3_storage_set_item)(char *, bytes_t*);
+typedef bytes_t* (*in3_storage_get_item)(void* cptr, char *);
+typedef void (*in3_storage_set_item)(void* cptr, char *, bytes_t*);
 
 typedef struct {
     /* function pointer returning a stored value for the given key.*/
@@ -139,6 +139,9 @@ typedef struct {
      
     /* function pointer setting a stored value for the given key.*/
     in3_storage_set_item set_item;
+
+    /* custom object whill will be passed to functions */
+    void* cptr;
 
 } in3_storage_handler_t;
 

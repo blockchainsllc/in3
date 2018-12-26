@@ -312,12 +312,74 @@ JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList(JNIEnv *env, jobject ob, j
    get_in3(env,ob)->autoUpdateList=val;
 }
 
+
+/*
+ * Class:     in3_IN3
+ * Method:    getStorageProvider
+ * Signature: ()Lin3/StorageProvider;
+ */
+JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider  (JNIEnv *env, jobject ob) {
+   in3_t* in3 = get_in3(env,ob);
+   if (in3->cacheStorage && in3->cacheStorage->cptr) 
+      return (jobject) in3->cacheStorage->cptr;
+   return NULL;
+}
+
+static JNIEnv* jni=NULL;
+
+bytes_t* storage_get_item(void* cptr, char* key) {
+   jobject handler = (jobject) cptr;
+   jclass cls = (*jni)->GetObjectClass(jni, handler);
+   jmethodID mid = (*jni)->GetMethodID(jni, cls, "getItem", "(Ljava/lang/String;)[B");
+   jstring js = (*jni)->NewStringUTF(jni, key);	
+
+   jbyteArray result = (jbyteArray) (*jni)->CallObjectMethod(jni,handler,mid,js);
+   if (result==NULL) return NULL;
+
+
+   bytes_t* res  = _malloc(sizeof(bytes_t));
+   res->len =(*jni)->GetArrayLength(jni,result);
+   res->data = _malloc(res->len);
+   (*jni)->GetByteArrayRegion(jni,result,0,res->len, (jbyte*) res->data);
+
+   return res;
+}
+
+void storage_set_item(void* cptr, char* key, bytes_t* content) {
+   jobject handler = (jobject) cptr;
+   jclass cls = (*jni)->GetObjectClass(jni, handler);
+   jmethodID mid = (*jni)->GetMethodID(jni, cls, "setItem", "(Ljava/lang/String;[B)V");
+   jstring js = (*jni)->NewStringUTF(jni, key);	
+   jbyteArray bytes = (*jni)->NewByteArray(jni, content->len);	
+   (*jni)->SetByteArrayRegion(jni, bytes, 0, content->len, (jbyte *)content->data);
+   (*jni)->CallVoidMethod(jni,handler,mid,js, bytes);
+}
+
+/*
+ * Class:     in3_IN3
+ * Method:    setStorageProvider
+ * Signature: (Lin3/StorageProvider;)V
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_setStorageProvider(JNIEnv *env, jobject ob, jobject provider) {
+   in3_t* in3 = get_in3(env,ob);
+   if (in3->cacheStorage) _free(in3->cacheStorage);
+   in3->cacheStorage = _malloc(sizeof(in3_storage_handler_t));
+   in3->cacheStorage->cptr = provider;
+   in3->cacheStorage->get_item = storage_get_item;
+   in3->cacheStorage->set_item = storage_set_item;
+   
+
+
+}
+
+
 /*
  * Class:     in3_IN3
  * Method:    send
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv *env, jobject ob, jstring jreq) {
+   jni = env;
 
 	const char* str = (*env)->GetStringUTFChars(env,jreq,0);
     char* result = NULL;

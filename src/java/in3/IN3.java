@@ -1,6 +1,7 @@
 package in3;
 
 import in3.Proof;
+import in3.StorageProvider;
 
 public class IN3 {  
 
@@ -66,6 +67,10 @@ public class IN3 {
     public native boolean isAutoUpdateList(); 
     public native void setAutoUpdateList(boolean val); 
 
+    /** provides the ability to cache content*/
+    public native StorageProvider getStorageProvider();
+    public native void setStorageProvider(StorageProvider val);
+
     /** send a request. The request must a valid json-string with method and params */
     public native String send(String request);
 
@@ -117,8 +122,8 @@ public class IN3 {
        Object[] params = new Object[args.length-1];
        for (int i=1;i<args.length;i++)
           params[i-1]=args[i];
-       try{System.in.read();}
-       catch(Exception e){}
+//       try{System.in.read();}
+//       catch(Exception e){}
        System.out.println(new IN3().sendRPC(args[0],params));
 //      new HelloJNI().sayHello();  // Create an instance and invoke the native method
    }

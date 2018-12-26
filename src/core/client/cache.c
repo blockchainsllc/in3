@@ -28,7 +28,7 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     sprintf(key,NODE_LIST_KEY,(unsigned long long) chain->chainId);
 
     // get from cache
-    bytes_t* b = c->cacheStorage->get_item(key);
+    bytes_t* b = c->cacheStorage->get_item(c->cacheStorage->cptr ,key);
     if (b) {
         int i,count;
         size_t p=0;
@@ -93,7 +93,7 @@ int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
     sprintf(key,NODE_LIST_KEY,(unsigned long long) chain->chainId);
 
     // store it and ignore return value since failing when writing cache should not stop us.
-    ctx->client ->cacheStorage->set_item(key,&bb->b);
+    ctx->client ->cacheStorage->set_item(ctx->client->cacheStorage->cptr ,key,&bb->b);
 
     // clear buffer
     bb_free(bb);

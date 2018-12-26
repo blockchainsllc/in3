@@ -1,5 +1,4 @@
 find_package(JNI REQUIRED)
-
 include_directories(${JNI_INCLUDE_DIRS})
 include_directories ("${PROJECT_SOURCE_DIR}/src/core")
 include_directories ("${PROJECT_SOURCE_DIR}/src/transport_curl")

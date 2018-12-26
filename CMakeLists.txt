@@ -33,6 +33,7 @@ add_subdirectory( src/eth_nano )
 add_subdirectory( src/eth_basic )
 add_subdirectory( src/eth_full )
 add_subdirectory( src/cmd )
+add_subdirectory( src/java )
 
 add_subdirectory( docs )
 #add_subdirectory( src/wasm )
