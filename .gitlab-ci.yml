@@ -9,6 +9,7 @@ build-in3:
   tags:
     - short-jobs
   script:
+    - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
     - conan install .. --build libcurl
@@ -24,7 +25,7 @@ test-in3:
   tags:
     - short-jobs
   script:
-    - sudo apt-get update && sudo apt-get -y install check
+    - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir testbuild
     - cd testbuild
     - conan install .. --build libcurl
@@ -52,7 +53,7 @@ test-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen ; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make"
+    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make"
   variables:
      IMAGE: "linux-x64"
      INSTALL: "cd ."
