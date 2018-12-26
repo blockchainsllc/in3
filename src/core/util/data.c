@@ -88,6 +88,8 @@ int d_len(d_token_t* item) {
     switch (d_type(item)) {
         case T_ARRAY:
         case T_OBJECT:
+        case T_BYTES:
+        case T_STRING:
           return item->len & 0xFFFFFFF;
         default:
           return 0;

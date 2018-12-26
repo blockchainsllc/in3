@@ -70,7 +70,23 @@ public class IN3 {
     public native String send(String request);
 
     public String sendRPC(String method, Object[] params) {
-        return null;
+        String p = "";
+        for (int i=0;i<params.length;i++) {
+            if (p.length()>0) p+=",";
+            if (params[i]==null)
+               p+="null";
+            else if (params[i] instanceof String) {
+                String s = (String) params[i];
+                if (s.charAt(0)=='{')
+                   p+=s;
+                else
+                   p+="\""+s+"\"";
+            }
+            else
+               p+=params[i].toString();
+        }
+ 
+        return this.send("{\"method\":\""+method+"\", \"params\":["+p+"]}");
     }
 
     private native void free();
@@ -88,7 +104,7 @@ public class IN3 {
 
   
    static {
-      System.loadLibrary("in3"); 
+      System.loadLibrary("libin3"); 
    }
  
    // Declare an instance native method sayHello() which receives no parameter and returns void
@@ -98,6 +114,12 @@ public class IN3 {
 
    // Test Driver
    public static void main(String[] args) {
+       Object[] params = new Object[args.length-1];
+       for (int i=1;i<args.length;i++)
+          params[i-1]=args[i];
+       try{System.in.read();}
+       catch(Exception e){}
+       System.out.println(new IN3().sendRPC(args[0],params));
 //      new HelloJNI().sayHello();  // Create an instance and invoke the native method
    }
 }
