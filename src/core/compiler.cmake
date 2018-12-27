@@ -1,5 +1,5 @@
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -Wall -funsigned-char -Wextra  ")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -funsigned-char -Wextra  -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -Wall -funsigned-char -Wextra  -std=c99 ")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -funsigned-char -Wextra  -std=c99 -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
