@@ -458,8 +458,6 @@ char* json_get_json_value(char* js, char* prop) {
 
 //    bytes-parser
 
-
-
 static d_token_t* next_item(json_parsed_t* jp, d_type_t type,  int len) {
   if (jp->allocated==0) {
       jp->items = _malloc(10*sizeof(d_token_t));

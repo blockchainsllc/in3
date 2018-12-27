@@ -94,7 +94,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
 	   rlp_decode(&node,0,&node);
 	   node.data+=node.len;
 	   node.len=val.data+val.len-node.data;
-	   return check_node(&node,key,expectedValue,*(key+1)<0,last_value,next_hash);
+	   return check_node(&node,key,expectedValue,*(key+1)==NULL,last_value,next_hash);
 	}
 	else if (**key==0xFF) {
 		if (!is_last_node) return 0;
