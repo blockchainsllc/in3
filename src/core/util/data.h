@@ -60,6 +60,8 @@ d_token_t*  d_get_or(d_token_t* item, uint16_t key1, uint16_t key2);
 d_token_t*  d_get_at(d_token_t* item, int index);
 d_token_t*  d_next(d_token_t* item);
 
+void d_serialize_binary(bytes_builder_t* bb, d_token_t* t);
+json_parsed_t* parse_binary(bytes_t* data);
 json_parsed_t* parse_json(char* js );
 void           free_json(json_parsed_t* parser_ctx);
 str_range_t    d_to_json(d_token_t* item);

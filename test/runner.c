@@ -176,8 +176,8 @@ int runRequests(char *name, int test_index, int mem_track)
 
                  int fail =execRequest(c, test);
                  if (fail) failed++;
-                 _tmp_response = NULL;
-                 _tmp_str = NULL;
+
+
 
                  in3_free(c);
 
@@ -186,7 +186,17 @@ int runRequests(char *name, int test_index, int mem_track)
                      if (!fail) failed++;
                  }
 
-                 printf(" ( heap: %zu ) ",mem_get_max_heap() );
+                 size_t max_heap=mem_get_max_heap();
+                 str_range_t res_size = d_to_json(_tmp_response);
+                 bytes_builder_t* bb = bb_new();
+
+                 d_serialize_binary(bb,_tmp_response);
+
+                 _tmp_response = NULL;
+                 _tmp_str = NULL;
+
+                 printf(" ( heap: %zu json: %lu bin: %i) ",max_heap, res_size.len, bb->b.len );
+                 bb_free(bb);
             }
 
         }
