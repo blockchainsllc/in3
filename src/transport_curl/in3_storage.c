@@ -45,7 +45,7 @@ static char* create_path(char* key) {
 }
 
 bytes_t* storage_get_item(void* cptr, char* key) {
-   UNUSED(cptr);
+   UNUSED_VAR(cptr);
    char* path = create_path(key);
 
    FILE *file = fopen(path,"r");
@@ -74,7 +74,7 @@ bytes_t* storage_get_item(void* cptr, char* key) {
 
 
 void storage_set_item(void* cptr, char* key, bytes_t* content) {
-   UNUSED(cptr);
+    UNUSED_VAR(cptr);
     char* path = create_path(key);
     FILE* file = fopen (path, "wb");
     if (file) {

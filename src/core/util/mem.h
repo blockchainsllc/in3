@@ -2,8 +2,8 @@
 #ifndef __MEM_H__
 #define __MEM_H__
 
-#ifndef UNUSED
- #define UNUSED(x) (void)(x)
+#ifndef UNUSED_VAR
+ #define UNUSED_VAR(x) (void)(x)
 #endif
 #ifdef __ZEPHYR__
 #include <zephyr.h>
