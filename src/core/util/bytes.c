@@ -254,7 +254,7 @@ void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len) 
 		if (val==0 && min_len==0) return;
 		l=8;
 		for (i=1;i<8;i++) {
-			if (val<1<<(8*i)) l=i;
+			if (val<((uint64_t)1)<<(8*i)) l=i;
 		}
 		if (min_len>l) {
 			check_size(bb,min_len);

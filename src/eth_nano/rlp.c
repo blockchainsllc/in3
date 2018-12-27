@@ -40,7 +40,7 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
             i+= c-0x80;
         } 
         else if (c<0xc0) { // very long item
-            for (l=0,n=0;n<c-0xb7;n++) l|= (*(b->data+i+1+n)) << ( 8*((c-0xb7)-n-1) );
+            for (l=0,n=0;n<(uint8_t)(c-0xB7);n++) l|= (*(b->data+i+1+n)) << ( 8*((c-0xb7)-n-1) );
             if ((int)p==index)  return ref(dst,l,b->data + i + c-0xb7 + 1,1);
             i+= l + c-0xb7;
         }
@@ -50,7 +50,7 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
             i+=l+1;
         }
         else { // very long list
-            for (l=0,n=0;n<c-0xf7;n++) l|= (*(b->data+i+1+n)) << ( 8*((c-0xf7)-n-1) );
+            for (l=0,n=0;n<(uint8_t)(c-0xF7);n++) l|= (*(b->data+i+1+n)) << ( 8*((c-0xf7)-n-1) );
             if ((int)p==index) return ref(dst, l,b->data + i + c-0xf7 + 1,2);
             i+= l + c-0xf7;
         }

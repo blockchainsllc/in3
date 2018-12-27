@@ -163,7 +163,6 @@ bytes_t *sha3(bytes_t *data)
 {
 	bytes_t *out;
 	struct SHA3_CTX ctx;
-	char p[65] = { '0' };
 
 	out = _calloc(1, sizeof(bytes_t));
 
@@ -175,6 +174,8 @@ bytes_t *sha3(bytes_t *data)
 
 	keccak_Final(&ctx, out->data);
 
+    #ifdef DEBUG
+	char p[65] = { '0' };
 	for(size_t i=0; i<out->len; i++) {
 		char s[3];
 		byte_to_hex(out->data[i],s);
@@ -182,6 +183,7 @@ bytes_t *sha3(bytes_t *data)
 		p[(i*2)+1] = s[1];
 	}
 	dbg_log("sha3(): '%s'\n", p);
+	#endif
 
 	return out;
 }
