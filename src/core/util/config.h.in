@@ -1,3 +1,0 @@
-// the configured options and settings for Tutorial
-#define IN3_VERSION_MAJOR @IN3_VERSION_MAJOR@
-#define IN3_VERSION_MINOR @IN3_VERSION_MINOR@
