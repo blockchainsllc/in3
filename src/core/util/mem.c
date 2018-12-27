@@ -65,6 +65,7 @@ void t_free(void* ptr, char *file, const char *func, int line) {
 	}
 
    printf("freeing a pointer which was not allocated anymore %s : %s : %i\n", file,func,line);
+   free(ptr);
 
 }
 void* t_realloc(void* ptr,size_t size, char *file, const char *func, int line) {

@@ -82,7 +82,7 @@ public class IN3 {
                p+="null";
             else if (params[i] instanceof String) {
                 String s = (String) params[i];
-                if (s.charAt(0)=='{')
+                if (s.charAt(0)=='{' || s.equals("true") || s.equals("false"))
                    p+=s;
                 else
                    p+="\""+s+"\"";
@@ -109,7 +109,7 @@ public class IN3 {
 
   
    static {
-      System.loadLibrary("libin3"); 
+      System.loadLibrary("in3"); 
    }
  
    // Declare an instance native method sayHello() which receives no parameter and returns void
