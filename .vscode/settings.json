@@ -21,6 +21,7 @@
         "mem.h": "c",
         "item.h": "c",
         "util.h": "c",
-        "data.h": "c"
+        "data.h": "c",
+        "stat.h": "c"
     }
 }

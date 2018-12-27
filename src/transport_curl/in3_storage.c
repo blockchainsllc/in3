@@ -8,7 +8,8 @@
 #if defined(_WIN32)
 #include <direct.h>  
 #else 
-#include <sys/stat.h>                                                           
+#include <sys/stat.h>            
+#include <sys/types.h>                                               
 #endif
 
 
