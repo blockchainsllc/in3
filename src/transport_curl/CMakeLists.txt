@@ -10,7 +10,4 @@ add_library( in3_curl STATIC in3_curl.c in3_storage.c)
 target_link_libraries(in3_curl CONAN_PKG::libcurl)
 
 # props
-set_property(TARGET in3_curl PROPERTY C_STANDARD 99)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+include(../core/compiler.cmake)

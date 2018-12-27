@@ -55,10 +55,8 @@ void readData( char* url, char* payload, in3_response_t* r  ) {
     /* always cleanup */ 
     curl_easy_cleanup(curl);
   }
-  else {
+  else 
     sb_add_chars(&r->error, "no curl:");
-    sb_add_chars(&r->error, (char*)curl_easy_strerror(res));
-  }
 
 }
 

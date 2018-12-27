@@ -1,12 +1,4 @@
 
-OPTION(ZEPHYR "ZEPHYR" OFF)
-IF(ZEPHYR)
-  add_definitions(-DZEPHYR_OS)
-  add_definitions(-DZEPHYR)
-ENDIF(ZEPHYR)
-
-
-
 add_library( core STATIC 
 	client/context.c
 	client/client.c
@@ -37,7 +29,4 @@ add_library( core STATIC
 	crypto/blake2b.c
 	crypto/groestl.c
 )
-set_property(TARGET core PROPERTY C_STANDARD 99)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+include(compiler.cmake)

@@ -14,14 +14,6 @@
 
 
 
-static char* get_home() {
-    char* path = getenv("HOME");
-    if (!path) path = getenv("USERPROFILE");
-    return path;
-}
-
-
-
 static char* _HOME_DIR=NULL;
 static char* get_storage_dir() {
     if (_HOME_DIR==NULL) {
@@ -52,6 +44,7 @@ static char* create_path(char* key) {
 }
 
 bytes_t* storage_get_item(void* cptr, char* key) {
+   UNUSED(cptr);
    char* path = create_path(key);
 
    FILE *file = fopen(path,"r");
@@ -80,6 +73,7 @@ bytes_t* storage_get_item(void* cptr, char* key) {
 
 
 void storage_set_item(void* cptr, char* key, bytes_t* content) {
+   UNUSED(cptr);
     char* path = create_path(key);
     FILE* file = fopen (path, "wb");
     if (file) {

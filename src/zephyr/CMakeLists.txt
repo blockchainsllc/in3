@@ -11,18 +11,12 @@ IF(DEBUG)
   SET(CMAKE_BUILD_TYPE Debug)
 ENDIF(DEBUG)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
-  ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-
-
 
 target_sources(app PRIVATE
 	src/main.c
 	src/fsm.c
 	src/rent.c
 )
-set_property(TARGET app PROPERTY C_STANDARD 99)
-
 
 # include core in the headers
 include_directories ("${PROJECT_SOURCE_DIR}/../core")
@@ -34,6 +28,7 @@ include(../core/include.cmake)
 # choose which mlodule to include
 #include(../eth_basic/include.cmake)
 include(../eth_full/include.cmake)
+include(../core/compiler.cmake)
 
 # add dependency
 # add_subdirectory( ../core "${PROJECT_BINARY_DIR}/core")

@@ -20,7 +20,7 @@ bytes_t *b_new(char *data, int len)
 
 void b_print(bytes_t *a)
 {
-	int i;
+	size_t i;
 	if (!a)
 		return;
 
@@ -32,7 +32,7 @@ void b_print(bytes_t *a)
 
 int b_cmp(bytes_t *a, bytes_t *b)
 {
-	int i;
+	size_t i;
 
 	if ((a && b) == 0)
 		return 1;
@@ -101,6 +101,17 @@ char* b_new_chars(bytes_t* b, size_t* pos) {
 	*pos+=l+1;
 	return r;
 }
+
+uint32_t b_read_int_be(bytes_t* b, size_t* pos, size_t len) {
+	uint32_t val=0;
+	for (size_t i=0;i<len;i++) 
+		val |= b->data[*pos + len -i-1] <<  (i*8);
+	*pos+=len;
+	return val;
+
+}
+
+
 bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos) {
 	size_t l = b_read_int(b,pos);
 	bytes_t* r = _malloc(sizeof(bytes_t));
@@ -137,10 +148,16 @@ void bb_free(bytes_builder_t* bb) {
 
 static void check_size(bytes_builder_t* bb, size_t len) {
     if (bb==NULL || len==0 || bb->b.len + len < bb->bsize) return;
-	size_t l= bb->bsize;
+	#ifdef ZEPHYR 
+	size_t l= bb->bsize;  
+	#endif
     while (bb->b.len + len >= bb->bsize)
        bb->bsize <<= 1;
+	#ifdef ZEPHYR 
     bb->b.data = _realloc(bb->b.data, bb-> bsize,  l);
+	#else 
+    bb->b.data = _realloc(bb->b.data, bb-> bsize,  0);
+	#endif
 }
 void bb_write_chars(bytes_builder_t *bb,char* c, int len) {
 	check_size(bb,len+1);

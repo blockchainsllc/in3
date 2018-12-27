@@ -29,9 +29,8 @@ static int matching_nibbles(uint8_t *a,uint8_t *b  ) {
 // converts the byte array to nibles of 4 bit each
 static uint8_t* str_to_nibbles(bytes_t *path, int use_prefix) {
 	uint8_t *n = _malloc(1 + (path->len * 2));
-	int j=0;
-    
-	for (int i = 0; i < path->len; i++) {
+	size_t j=0, i=0;
+	for (; i < path->len; i++) {
 		n[j++] = path->data[i] >> 4;
 		n[j++] = path->data[i] & 0x0F;
 		if (i==0 && use_prefix) 

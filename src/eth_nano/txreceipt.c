@@ -64,7 +64,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t *tx_hash)
         if (rlp_decode_in_list(blockHeader,5,&root)!=1) 
            res=vc_err(vc,"no receipt_root");
         else {
-            bytes_t* receipt_raw = serialize_tx_receipt(vc, vc->result);
+            bytes_t* receipt_raw = serialize_tx_receipt(vc->result);
             bytes_t **proof      = d_create_bytes_vec( d_get(vc->proof,K_MERKLE_PROOF));
 
             if (!proof || !verifyMerkleProof(&root,path,proof,receipt_raw))

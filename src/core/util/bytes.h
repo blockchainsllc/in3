@@ -41,6 +41,7 @@ bytes_t* b_dup(bytes_t *a);
 uint8_t b_read_byte(bytes_t* b, size_t* pos);
 uint16_t b_read_short(bytes_t* b, size_t* pos);
 uint32_t b_read_int(bytes_t* b, size_t* pos);
+uint32_t b_read_int_be(bytes_t* b, size_t* pos, size_t len);
 uint64_t b_read_long(bytes_t* b, size_t* pos);
 char* b_new_chars(bytes_t* b, size_t* pos);
 bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos);

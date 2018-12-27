@@ -7,7 +7,9 @@ include_directories ("${PROJECT_SOURCE_DIR}/src/eth_full")
 # add the executablex
 add_library( libin3 SHARED in3.c in3_IN3.c)
 SET_TARGET_PROPERTIES(libin3  PROPERTIES OUTPUT_NAME in3)
-set_property(TARGET libin3 PROPERTY C_STANDARD 99)
+# props
+include(../core/compiler.cmake)
+
 target_link_libraries (libin3 core in3_curl in3_eth_full)
 
 

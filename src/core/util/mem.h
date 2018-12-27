@@ -1,7 +1,7 @@
 #include <string.h>
 #ifndef __MEM_H__
 #define __MEM_H__
-
+#define UNUSED(x) (void)(x)
 #ifdef __ZEPHYR__
 #include <zephyr.h>
 

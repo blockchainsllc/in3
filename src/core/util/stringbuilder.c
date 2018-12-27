@@ -27,10 +27,16 @@ sb_t* sb_init(sb_t* sb) {
 }
 static void check_size(sb_t* sb, size_t len) {
     if (sb==NULL || len==0 || sb->len + len < sb->allocted) return;
+    #ifdef ZEPHYR
     size_t l= sb->allocted;
+    #endif
     while (sb->len + len >= sb->allocted)
        sb->allocted <<= 1;
+    #ifdef ZEPHYR   
     sb->data = _realloc(sb->data,sb->allocted,l);
+    #else
+    sb->data = _realloc(sb->data,sb->allocted,0);
+    #endif
 }
 
 sb_t* sb_add_chars(sb_t* sb,  char* chars) {

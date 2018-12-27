@@ -32,8 +32,8 @@ typedef struct str_range {
 
 typedef struct json_parser {
     d_token_t* items;
-    int allocated;
-    int len;
+    size_t allocated;
+    size_t len;
     char* c;
 } json_parsed_t;
 
@@ -51,7 +51,7 @@ bytes_t ** d_create_bytes_vec(d_token_t* arr);
 
 d_type_t d_type(d_token_t* item);
 int      d_len(d_token_t* item);
-int      d_token_size(d_token_t* item);
+size_t   d_token_size(d_token_t* item);
 int      d_eq(d_token_t* a, d_token_t* b);
 
 

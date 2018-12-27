@@ -20,6 +20,7 @@
         "eth_nano.h": "c",
         "mem.h": "c",
         "item.h": "c",
-        "util.h": "c"
+        "util.h": "c",
+        "data.h": "c"
     }
 }

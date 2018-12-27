@@ -48,6 +48,12 @@ static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token
        free_ctx_nodes(sig_nodes);
      }
    }
+
+   if (req) {
+     d_token_t* in3 = d_get(req,K_IN3);
+     if (in3==NULL) return 0;
+     //TODO read config from request
+   }
    return 0;
 }
 
@@ -133,7 +139,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
     if (response[n].error.len || !response[n].result.len) {
       // blacklist the node
       w->weight->blacklistedUntil = _time() + 3600000;
-      w->weight=0;
+      w->weight = NULL;
     }
     else {
       // we need to clean up the prev ios responses if set
@@ -145,7 +151,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
       if (res<0) {
         // blacklist!
         w->weight->blacklistedUntil = _time() + 3600000;
-        w->weight=0;
+        w->weight = NULL;
       }
       else {
 //        printf("res:%s",ctx->response_data);
@@ -160,13 +166,13 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count,in3_response_t* re
           if (verifier && verifier->verify(&vc)) {
             // blacklist!
             w->weight->blacklistedUntil = _time() + 3600000;
-            w->weight=0;
+            w->weight = NULL;
             break;
           }
         } 
       }
     }
-    if (w->weight>0) 
+    if (w->weight) 
       // this reponse was successfully verified, so let us keep it.
       return true;
 

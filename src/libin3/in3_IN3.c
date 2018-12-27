@@ -5,6 +5,7 @@
 #include <client/send.h>
 #include <in3_curl.h>
 #include <eth_full.h>
+#include <util/mem.h>
 
 
 
@@ -449,6 +450,8 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv *env, jobject ob) {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv *env, jobject ob) {
+    UNUSED(env);
+    UNUSED(ob);
     in3_t* in3 = in3_new();
     in3_register_eth_full();
     in3->transport = send_curl;

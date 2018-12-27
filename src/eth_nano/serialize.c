@@ -41,7 +41,7 @@ int rlp_add(bytes_builder_t *rlp, d_token_t* t, int ml) {
        ml=-ml;
   }
 
-  if (ml>b.len) {
+  if ((size_t)ml>b.len) {
     // we need to fill left
     uint8_t* tmp = _calloc(ml,1);
     memcpy(tmp+ ml-b.len,b.data,b.len);
@@ -64,7 +64,7 @@ int rlp_add(bytes_builder_t *rlp, d_token_t* t, int ml) {
 
 
 
-bytes_t *serialize_tx(in3_vctx_t *vc, d_token_t *tx) {
+bytes_t *serialize_tx(d_token_t *tx) {
   bytes_builder_t *rlp = bb_new();
   bytes_builder_t *bb  = bb_new();
 
@@ -84,7 +84,7 @@ bytes_t *serialize_tx(in3_vctx_t *vc, d_token_t *tx) {
   return bb_move_to_bytes(bb);
 }
 
-bytes_t *serialize_tx_receipt(in3_vctx_t *vc, d_token_t *receipt) {
+bytes_t *serialize_tx_receipt(d_token_t *receipt) {
   bytes_builder_t *bb = bb_new();
   bytes_builder_t *rlp = bb_new();
   bytes_builder_t *rlp_log = bb_new();

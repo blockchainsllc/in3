@@ -160,7 +160,7 @@ node_weight_t*  in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_n
     nodeDef = all_nodes+i;
     if (nodeDef->deposit<c->minDeposit)  continue;
     weightDef = weights +i;
-    if (weightDef->blacklistedUntil > now )  continue;
+    if (weightDef->blacklistedUntil > (uint64_t) now )  continue;
     w = _malloc(sizeof(node_weight_t));
     if (!first) first = w;
     w->node = nodeDef;
@@ -226,7 +226,7 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
     // no node available, so we should check if we can retry some blacklisted
     int blacklisted=0;
     for (i=0;i<all_nodes_len;i++) {
-      if (weights[i].blacklistedUntil>now) blacklisted++;
+      if (weights[i].blacklistedUntil>(uint64_t)now) blacklisted++;
     }
 
     // if morethan 50% of the nodes are blacklisted, we remove the mark and try again

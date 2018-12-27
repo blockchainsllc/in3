@@ -175,7 +175,7 @@ bytes_t *sha3(bytes_t *data)
 
 	keccak_Final(&ctx, out->data);
 
-	for(int i=0; i<out->len; i++) {
+	for(size_t i=0; i<out->len; i++) {
 		char s[3];
 		byte_to_hex(out->data[i],s);
 		p[i*2] = s[0];
