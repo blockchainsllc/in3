@@ -18,7 +18,7 @@ int eth_verify_eth_getBlock(in3_vctx_t *vc, bytes_t *block_hash, uint64_t blockN
 
 
     int res = 0,i;
-    d_token_t* transactions, *t;
+    d_token_t* transactions, *t, *tx_hashs, *txh;
     if (block_hash && !b_cmp(block_hash,d_get_bytesk(vc->result,K_HASH ))) 
         return vc_err(vc, "The transactionHash does not match the required");
 
@@ -37,35 +37,41 @@ int eth_verify_eth_getBlock(in3_vctx_t *vc, bytes_t *block_hash, uint64_t blockN
     }
     b_free(header_from_data);
 
+    bool include_full_tx = d_get_int_at( d_get(vc->request,K_PARAMS ),1);
+
+    if (!include_full_tx) {
+      tx_hashs =  d_get( vc->result, K_TRANSACTIONS);
+      txh = tx_hashs+1;
+    }
     // if we have transaction, we need to verify them as well
-    if ((transactions = d_get(vc->result, K_TRANSACTIONS))) {
+    if ((transactions = d_get( include_full_tx ? vc->result : vc->proof, K_TRANSACTIONS))) {
+
+        if (!include_full_tx && (!tx_hashs || d_len(transactions)!=d_len(tx_hashs)))
+          return vc_err(vc,"no transactionhashes found!" );
 
         trie_t* trie = trie_new();
         for (i=0, t=transactions+1; i<d_len(transactions);i++,t=d_next(t)) {
-            d_token_t* tx2=t;
             bytes_t* key = create_tx_path(i);
             bytes_t* tx  = serialize_tx(t);
+            bytes_t* h   = include_full_tx ? NULL : sha3(tx);
+            if (h) {
+                if (!b_cmp(d_bytes(txh),h))
+                    res= vc_err(vc,"Wrong Transactionhash");
+                txh = d_next(txh);
+            }
             trie_set_value(trie, key, tx);
             b_free(key);
             b_free(tx);
+            if (h) b_free(h);
         }
 
-        if (!b_cmp(&trie->root, d_get_bytesk(vc->result,K_TRANSACTIONS_ROOT)) ) {
-            printf("\nExpoected  ");
-            b_print(d_get_bytesk(vc->result,K_TRANSACTIONS_ROOT));
-            printf("\ncalculated ");
-            b_print(&trie->root);
-
-
-
+        if (!b_cmp(&trie->root, d_get_bytesk(vc->result,K_TRANSACTIONS_ROOT)) ) 
           res= vc_err(vc,"Wrong Transaction root");
-        }
+
         trie_free(trie);
     }
-    
-
-
-
+    else 
+        res= vc_err(vc,"Missing transaction-properties");
     
     return res;
 

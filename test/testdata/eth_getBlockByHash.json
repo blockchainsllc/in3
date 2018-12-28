@@ -5,9 +5,9 @@
             "descr": "mainnet block with transactions",
             "success": true,
             "request": {
-                "method": "eth_getBlockByNumber",
+                "method": "eth_getBlockByHash",
                 "params": [
-                    "6a5c56",
+                    "0x4c45aaaf983de4bd6cd81fb0a63f93d1eed148242e1a08fe477d4803d9181372",
                     true
                 ]
             },
@@ -103,9 +103,9 @@
             "descr": "kovan block with transaction hashes",
             "success": true,
             "request": {
-                "method": "eth_getBlockByNumber",
+                "method": "eth_getBlockByHash",
                 "params": [
-                    "0x967a46",
+                    "0xfeb120ae45f1009e6c2289436d5957c58a15915288ec083658bd044101608f26",
                     false
                 ]
             },
@@ -205,9 +205,9 @@
             "descr": "kovan block with wrong transaction hashes",
             "success": false,
             "request": {
-                "method": "eth_getBlockByNumber",
+                "method": "eth_getBlockByHash",
                 "params": [
-                    "0x967a46",
+                    "0xfeb120ae45f1009e6c2289436d5957c58a15915288ec083658bd044101608f26",
                     false
                 ]
             },
@@ -307,9 +307,9 @@
             "descr": "kovan block",
             "success": true,
             "request": {
-                "method": "eth_getBlockByNumber",
+                "method": "eth_getBlockByHash",
                 "params": [
-                    "0x967a66",
+                    "0xa49d4fb25b279a96217f68309a2e9bee95b996b56a5c223fda2c099934d74465",
                     true
                 ],
                 "config": {}
