@@ -16,6 +16,11 @@ int in3_verify_eth_basic( in3_vctx_t* v);
 int eth_verify_eth_getTransaction(in3_vctx_t *vc, bytes_t *tx_hash);
 
 /**
+ * verifies a block
+ */
+int eth_verify_eth_getBlock(in3_vctx_t *vc, bytes_t *block_hash, uint64_t blockNumber);
+
+/**
  * this function should only be called once and will register the eth-nano verifier.
  */
 void in3_register_eth_basic();

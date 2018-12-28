@@ -19,7 +19,7 @@ static int nibble_len(uint8_t *a) {
 }
 
 
-static int matching_nibbles(uint8_t *a,uint8_t *b  ) {
+int matching_nibbles(uint8_t *a,uint8_t *b  ) {
 	int i=0;
 	for (i=0;;i++) {
 		if (a[i]==0xff || b[i]==0xff || a[i]!=b[i]) return i;
@@ -27,7 +27,7 @@ static int matching_nibbles(uint8_t *a,uint8_t *b  ) {
 }
 
 // converts the byte array to nibles of 4 bit each
-static uint8_t* str_to_nibbles(bytes_t *path, int use_prefix) {
+uint8_t* str_to_nibbles(bytes_t *path, int use_prefix) {
 	uint8_t *n = _malloc(1 + (path->len * 2));
 	size_t j=0, i=0;
 	for (; i < path->len; i++) {

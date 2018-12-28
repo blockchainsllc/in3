@@ -50,6 +50,11 @@ int eth_verify_eth_getTransaction(in3_vctx_t *vc, bytes_t *tx_hash) {
         }
         if (proof) _free(proof);
         b_free(path);
+
+        bytes_t* tx_data = serialize_tx(vc->result);
+        if (res==0 && !b_cmp(tx_data,&raw_transaction)) 
+           res=vc_err(vc,"Could not verify the transaction data");
+        b_free(tx_data);
     }
     return res;
 

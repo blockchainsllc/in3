@@ -22,6 +22,10 @@
         "item.h": "c",
         "util.h": "c",
         "data.h": "c",
-        "stat.h": "c"
+        "stat.h": "c",
+        "rlp.h": "c",
+        "merkle.h": "c",
+        "limits": "c",
+        "type_traits": "c"
     }
 }

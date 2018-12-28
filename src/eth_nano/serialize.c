@@ -84,6 +84,45 @@ bytes_t *serialize_tx(d_token_t *tx) {
   return bb_move_to_bytes(bb);
 }
 
+
+
+bytes_t *serialize_block(d_token_t *block) {
+  bytes_builder_t *rlp = bb_new();
+  bytes_builder_t *bb = bb_new();
+  d_token_t* sealed_fields,*t;
+  int i;
+
+  rlp_add(rlp, d_get(block,K_PARENT_HASH)                    , HASH);
+  rlp_add(rlp, d_get(block,K_SHA3_UNCLES)                    , HASH);
+  rlp_add(rlp, d_get_or(block,K_MINER,K_COINBASE)            , ADDRESS);
+  rlp_add(rlp, d_get(block,K_STATE_ROOT)                     , HASH);
+  rlp_add(rlp, d_get(block,K_TRANSACTIONS_ROOT)              , HASH);
+  rlp_add(rlp, d_get_or(block,K_RECEIPT_ROOT,K_RECEIPTS_ROOT), HASH);
+  rlp_add(rlp, d_get(block,K_LOGS_BLOOM)                     , BLOOM);
+  rlp_add(rlp, d_get(block,K_DIFFICULTY)                     , UINT);
+  rlp_add(rlp, d_get(block,K_NUMBER)                         , UINT);
+  rlp_add(rlp, d_get(block,K_GAS_LIMIT)                      , UINT);
+  rlp_add(rlp, d_get(block,K_GAS_USED)                       , UINT);
+  rlp_add(rlp, d_get(block,K_TIMESTAMP)                      , UINT);
+  rlp_add(rlp, d_get(block,K_EXTRA_DATA)                     , BYTES);
+  if ((sealed_fields=d_get(block,K_SEAL_FIELDS))) {
+    for (i=0,t=sealed_fields+1;i<d_len(sealed_fields);i++,t=d_next(t))
+       bb_write_raw_bytes(rlp,t->data, t->len);   // we need to check if the nodes is within the bounds!
+  }
+  else {
+    rlp_add(rlp, d_get(block,K_MIX_HASH)                     , HASH);
+    rlp_add(rlp, d_get(block,K_NONCE)                        , BYTES);
+  }
+
+  rlp_encode_list(bb,&rlp->b);
+
+  bb_free(rlp);
+  return bb_move_to_bytes(bb);
+}
+
+
+
+
 bytes_t *serialize_tx_receipt(d_token_t *receipt) {
   bytes_builder_t *bb = bb_new();
   bytes_builder_t *rlp = bb_new();

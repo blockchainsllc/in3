@@ -2,7 +2,9 @@
 # static lib
 add_library( in3_eth_basic STATIC 
   eth_basic.c 
-  ../eth_basic/eth_getTransaction.c 
+  eth_getTransaction.c 
+  eth_getBlock.c 
+  trie.c
 )
 
 
