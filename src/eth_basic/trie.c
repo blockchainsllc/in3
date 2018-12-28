@@ -24,8 +24,8 @@ static void finish_rlp(bytes_builder_t* bb,bytes_t* dst) {
     rlp_encode_list(ll,&bb->b);
     bb_free(bb);
     if (dst->data) _free(dst->data);
-    dst->data = bb->b.data;
-    dst->len = bb->b.len;
+    dst->data = ll->b.data;
+    dst->len = ll->b.len;
     _free(ll);
 }
 
@@ -46,10 +46,19 @@ trie_t* trie_new() {
     t->codec->encode_add(ll,&t->root);
     t->hasher(&ll->b,&t->root);
     bb_free(ll);
+    b_print(&t->root);
     return t;
 }
 void trie_free(trie_t* val) {
     _free(val->root.data);
+    trie_node_t* t=val->nodes, *p;
+    while (t) {
+        _free(t->hash.data);
+        _free(t->data.data);
+        p=t;
+        t = t->next;
+        _free(p);
+    }
     _free(val);
 }
 
@@ -128,9 +137,12 @@ static int trie_node_value_from_nibbles(trie_node_type_t type, uint8_t* val, byt
     }
     dst->len=blen;
 
-    dst->data[0] = (type == NODE_EXT ? 0 : 2 + odd)<<4 | (odd ? 0 : val[0]);
+    dst->data[0] = (type == NODE_EXT ? 0 : 2 + odd)<<4 | (odd==0 ? 0 : val[0]);
     for (i=odd,n=1;i<l;i+=2,n++)
        dst->data[n]=(val[i]<<4)|val[i+1];
+
+//    printf("\n nibbles : ");
+//    b_print(dst);
     return 0;
 }
 
@@ -178,9 +190,25 @@ static node_key_t update_db(trie_t* t, trie_node_t* n, int top) {
     if (n->data.len<32 && !top) 
         return node_key(n);
     else {
-        n->next=t->nodes;
-        t->nodes = n;
+        // do we already have it?
+        trie_node_t* p= t->nodes;
+        while (p) {
+            if (p==n) break;
+            p=p->next;
+        }
+
+        // we only add the node if we don't have it yet.
+        if (p==NULL) {
+            n->next=t->nodes;
+            t->nodes = n;
+        }
+
+//        printf("\nrawData: ");
+//        b_print(&n->data);
+
+        // update and return the hash
         _sha3(&n->data,&n->hash);
+//        b_print(&n->hash);
         return hash_key(&n->hash);
     }
 }
@@ -205,7 +233,7 @@ static node_key_t handle_node ( trie_t* trie, trie_node_t* n, uint8_t* path, byt
     int path_len = nibble_len(path);
     uint8_t* node_path=NULL;
     uint8_t* rel_path=NULL;
-    trie_node_t* b=NULL;
+    trie_node_t* b=NULL, *b2=NULL;
 
     bytes_t tmp;
     if (path_len==0) {
@@ -292,12 +320,18 @@ static node_key_t handle_node ( trie_t* trie, trie_node_t* n, uint8_t* path, byt
                    trie_node_set_item(b,16,value);
                 else
                    trie_node_set_item(b,*rel_path, key_as_data ( update_db (  trie, trie_node_create_leaf(trie, rel_path+1,value), false  ) )  );
-                
+                trie_node_set_item(b,node_path[matching], key_as_data ( node_path[matching+1]==0xFF && n->type==NODE_EXT
+                  ? node_key(rlp_decode(&n->items,1,&tmp)==1
+                      ? get_node( trie, hash_key( &tmp) )
+                      : (b2=trie_node_new(tmp.data,tmp.len,true)))
+                  : update_db(trie,n,false)));
+
                 if (matching)  node_path[matching]=0xFF;
                 // use the new current node
                 n = matching>0 
                    ? trie_node_create_ext(trie, node_path,  key_as_data ( update_db (  trie, b ,false)))
                    : b;
+                rel_path=NULL;
              }
         }
     }
@@ -310,6 +344,10 @@ static node_key_t handle_node ( trie_t* trie, trie_node_t* n, uint8_t* path, byt
         _free(b->hash.data);
         _free(b);
     }
+    if (b2 && b2->is_embedded) {
+        _free(b2->hash.data);
+        _free(b2);
+    }
     if (node_path) _free(node_path);
     if (rel_path)  _free(rel_path);
 
@@ -319,9 +357,13 @@ static node_key_t handle_node ( trie_t* trie, trie_node_t* n, uint8_t* path, byt
 
 
 void trie_set_value( trie_t* t, bytes_t* key, bytes_t* value ) {
+//    printf("set key/value\n");
+//    b_print(key);
+//    b_print(value);
     uint8_t* path = str_to_nibbles(key,false);
     bytes_t* root = handle_node(t, get_node(t, hash_key( &t->root) ), path, value, true).hash;
     _free(path);
-    _free(t->root.data);
-    t->root.data = root->data;
+    memcpy(t->root.data,root->data,32);
+//    printf("   root=");
+//    b_print(root);
 }

@@ -210,6 +210,7 @@ int parse_number(json_parsed_t* jp, d_token_t* item) {
 int parse_string(json_parsed_t* jp, d_token_t* item) {
     char* start=jp->c;
     size_t l,i;
+    int n;
     while (true) {
         switch (*(jp->c++)) {
             case 0: return -2;
@@ -228,8 +229,8 @@ int parse_string(json_parsed_t* jp, d_token_t* item) {
                        item->data=_malloc(item->len);
                        if (l%2)  item->data[0]=strtohex(start[2]);
                        l=l%2+2;
-                       for (i=l-2;i<item->len;i++) 
-                          item->data[i] = strtohex(start[l+i*2])<<4 | strtohex(start[l+i*2+1]) ;
+                       for (i=l-2,n=0;i<item->len;i++,n++) 
+                          item->data[i] = strtohex(start[l+n*2])<<4 | strtohex(start[l+n*2+1]) ;
                    }
                }
                else {
