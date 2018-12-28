@@ -14,13 +14,15 @@
 int eth_verify_blockheader(in3_vctx_t *vc, bytes_t *header, bytes_t *expected_blockhash)
 {
     int res = 0, i;
+
+    if (!header)
+        return vc_err(vc, "no header found");
+
     uint64_t header_number = 0;
     d_token_t *sig, *signatures;
     bytes_t *block_hash = sha3(header);
     bytes_t temp;
 
-    if (!header)
-        res = vc_err(vc, "no header found");
 
     if (!res && rlp_decode(header, 0, &temp) && rlp_decode(&temp, 8, &temp))
         header_number = bytes_to_long(temp.data, temp.len);

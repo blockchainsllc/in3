@@ -28,16 +28,11 @@ int eth_verify_eth_getBlock(in3_vctx_t *vc, bytes_t *block_hash, uint64_t blockN
     if (!vc->proof)
         return vc_err(vc, "Proof is missing!");
 
-    // verify the blockheader and hash
-    bytes_t *blockHeader = d_get_bytesk(vc->proof,K_BLOCK);
-    if (eth_verify_blockheader(vc, blockHeader, d_get_bytesk(vc->result,K_HASH ) )) 
-        return vc_err(vc, "invalid blockheader!");
-
     // verify the blockdata
     bytes_t* header_from_data = serialize_block(vc->result);
-    if (!b_cmp(blockHeader, header_from_data)) {
+    if (eth_verify_blockheader(vc, header_from_data, d_get_bytesk(vc->result,K_HASH ) )) {
         b_free(header_from_data);
-        return vc_err(vc,"The blockdata do not match the header");
+        return vc_err(vc, "invalid blockheader!");
     }
     b_free(header_from_data);
 
