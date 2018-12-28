@@ -46,7 +46,6 @@ trie_t* trie_new() {
     t->codec->encode_add(ll,&t->root);
     t->hasher(&ll->b,&t->root);
     bb_free(ll);
-    b_print(&t->root);
     return t;
 }
 void trie_free(trie_t* val) {
