@@ -40,15 +40,58 @@ char* readContent(char* name) {
 
 static char* _tmp_str;
 static d_token_t* _tmp_response;
+static int fuzz_pos = -1;
+
+
+static int find_hex(char* str, int start, int len) {
+    int i;
+    for ( i=start, str+=start;i<len;i++,str++) {
+        if (*str=='x' && i>2 && *(str-1)=='0' && i<len+1 && *(str+1)!='"') 
+            return i+1;
+    }
+    return -1;
+}
+static void mod_hex(char* c) {
+    if (*c=='f' || *c=='F') *c='e';
+    else  if (*c=='9') *c='d';
+    else *c=*c+1;
+}
+
+static str_range_t find_prop_name(char* p, char* start) {
+    int i=0, offset=start-p;
+    int prop = 0, end=0; 
+    str_range_t res;
+    for (i=0;i>offset;i--) {
+        if (!prop) {
+            if (p[i]==':') prop=1;
+        }
+        else if (p[i]=='"') {
+            if (!end) end=i;
+            else {
+                res.data=p-i+1;
+                res.len =end-i-1;
+                return res;
+            }
+        }
+    }
+    res.data=NULL;
+    return res;
+}
+
 
 static  int send_mock(char** urls,int urls_len, char* payload, in3_response_t* result) {
     // printf("payload: %s\n",payload);
     int i;
     for (i=0;i<urls_len;i++) {
         str_range_t r = d_to_json(d_get_at(_tmp_response,i));
-        sb_add_char( &result->result, '[');
-        sb_add_range( &result->result, r.data ,  0, r.len);
-        sb_add_char( &result->result, ']');
+        sb_add_char( &(result+i)->result, '[');
+        sb_add_range( &(result+i)->result, r.data ,  0, r.len);
+        sb_add_char( &(result+i)->result, ']');
+
+        if (fuzz_pos>=0) 
+            mod_hex((result+i)->result.data+fuzz_pos);
+
+
     }
     return 0;
 }
@@ -128,6 +171,9 @@ int execRequest(in3_t *c, d_token_t* test) {
 
 }
 
+
+
+
 int runRequests(char *name, int test_index, int mem_track)
 {
         int res=0;
@@ -153,11 +199,13 @@ int runRequests(char *name, int test_index, int mem_track)
         d_token_t *t = NULL, *tests, *test;
         d_token_t *tokens = NULL;
 
-        int failed = 0;
+        int failed = 0, total=0;
 
         if ((tests = d_get(parsed->items,key("tests")))) {
             for (i=0, test=tests+1;i<d_len(tests);i++, test=d_next(test)) {
                 if (test_index>0 && i+1!=test_index) continue;
+
+                total++;
 
                 if ((descr=d_get_string(test,"descr")))
                    strcpy(temp,descr);

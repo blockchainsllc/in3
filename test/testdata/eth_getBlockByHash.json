@@ -4,6 +4,7 @@
         {
             "descr": "mainnet block with transactions",
             "success": true,
+            "fuzzer" : true,
             "request": {
                 "method": "eth_getBlockByHash",
                 "params": [
