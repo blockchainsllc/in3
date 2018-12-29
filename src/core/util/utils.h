@@ -11,6 +11,8 @@
 #include "bytes.h"
 #include "mem.h"
 
+#define SWAP(a,b) { void* p=a; a=b; b=p; }
+
 typedef uint32_t pb_size_t;
 typedef uint_least8_t pb_byte_t;
 
@@ -29,6 +31,10 @@ bytes_t* hex2byte_new_bytes(char *buf, int len);
 void int8_to_char(uint8_t *buffer, int len, char *out);
 
 bytes_t *sha3(bytes_t *data);
+/**
+ * writes 32 bytes to the pointer.
+ */
+int sha3_to(bytes_t* data, void*dst);
 
 
 void long_to_bytes(uint64_t val, uint8_t* dst);
@@ -49,4 +55,5 @@ long c_to_int(char* a, int l) ;
 char c_to_lower(char c);
 
 bool equals_range(char* a, int la,char* b, int lb, uint8_t mode) ;
+
 #endif

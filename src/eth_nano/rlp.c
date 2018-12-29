@@ -95,3 +95,15 @@ void rlp_encode_list(bytes_builder_t* bb, bytes_t* val) {
     bb_write_fixed_bytes(bb,val);
 }
 
+
+bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb) {
+    bytes_builder_t ll;
+    uint8_t d[4];
+    ll.bsize=4;
+    ll.b.len=0;
+    ll.b.data=(uint8_t*) &d;
+    add_length(&ll,bb->b.len,0xc0);
+    bb_replace(bb,0,0,d,ll.b.len);
+    return bb;
+}
+

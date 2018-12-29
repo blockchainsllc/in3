@@ -206,7 +206,6 @@ void bb_write_long_be(bytes_builder_t *bb, uint64_t val, int len) {
 }
 
 
-
 void bb_write_byte(bytes_builder_t *bb, uint8_t val) {
 	check_size(bb,1);
 	*(uint8_t*) (bb->b.data+bb->b.len) = val;
@@ -223,6 +222,14 @@ void bb_clear(bytes_builder_t *bb) {
 	bb->b.len=0;
 }
 
+void bb_replace(bytes_builder_t *bb, int offset, int delete_len, uint8_t* data, int data_len) {
+	if (!delete_len && !data_len) return;
+	check_size(bb, data_len-delete_len);
+	memmove(bb->b.data+offset+data_len, bb->b.data+offset+delete_len, bb->b.len-offset-delete_len);
+	if (data_len) 
+	   memcpy(bb->b.data+offset,data,data_len);
+	bb->b.len+=data_len-delete_len;
+}
 
 
 

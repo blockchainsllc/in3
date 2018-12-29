@@ -9,6 +9,10 @@
 
 /** entry-function to execute the verification context. */
 int in3_verify_eth_basic( in3_vctx_t* v);
+/**
+ * verifies internal tx-values.
+ */
+int eth_verify_tx_values(in3_vctx_t *vc, d_token_t* tx, bytes_t* raw);
 
 /**
  * verifies a transaction.

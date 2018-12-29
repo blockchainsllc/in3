@@ -159,6 +159,17 @@ void int8_to_char(uint8_t *buffer, int len, char *out) {
 
 
 
+int sha3_to(bytes_t* data, void*dst) {
+	if (data==NULL) return -1;
+	struct SHA3_CTX ctx;
+	sha3_256_Init(&ctx);
+	sha3_Update(&ctx, data->data, data->len);
+	keccak_Final(&ctx, dst);
+	return 0;
+}
+
+
+
 bytes_t *sha3(bytes_t *data)
 {
 	bytes_t *out;

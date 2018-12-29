@@ -86,7 +86,7 @@ bytes_t *serialize_tx(d_token_t *tx) {
 
 
 
-bytes_t *serialize_block(d_token_t *block) {
+bytes_t *serialize_block_header(d_token_t *block) {
   bytes_builder_t *rlp = bb_new();
   bytes_builder_t *bb = bb_new();
   d_token_t* sealed_fields,*t;

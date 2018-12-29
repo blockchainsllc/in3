@@ -29,6 +29,7 @@ int  rlp_decode_item_type(bytes_t* b, int index);
 
 void rlp_encode_item(bytes_builder_t* bb, bytes_t* val);
 void rlp_encode_list(bytes_builder_t* bb, bytes_t* val);
+bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb);
 
 
 

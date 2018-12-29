@@ -9,6 +9,32 @@
 #include <core/util/utils.h>
 #include <eth_full/eth_full.h>
 
+int ignore_property(char* name, int full_proof) {
+  // we cannot add all difiiculties from the beginning in order to verify it,
+  if (strcmp(name,"totalDifficulty")==0) return 1;
+
+  // size should be verified if proof = full
+  if (!full_proof && strcmp(name,"size")==0) return 1;
+
+  return 0;
+}
+
+
+
+static int use_color = 0;
+
+static void print_error(char* msg) {
+    if (use_color)
+      printf("\x1B[31m%s\x1B[0m",msg);
+    else
+      printf("!! %s",msg);
+}
+static void print_success(char* msg) {
+    if (use_color)
+      printf("\x1B[32m%s\x1B[0m",msg);
+    else
+      printf(".. %s",msg);
+}
 
 #define ERROR(s) printf("Error: %s",s)
 
@@ -68,7 +94,7 @@ static str_range_t find_prop_name(char* p, char* start) {
         else if (p[i]=='"') {
             if (!end) end=i;
             else {
-                res.data=p-i+1;
+                res.data=p+i+1;
                 res.len =end-i-1;
                 return res;
             }
@@ -88,8 +114,8 @@ static  int send_mock(char** urls,int urls_len, char* payload, in3_response_t* r
         sb_add_range( &(result+i)->result, r.data ,  0, r.len);
         sb_add_char( &(result+i)->result, ']');
 
-        if (fuzz_pos>=0) 
-            mod_hex((result+i)->result.data+fuzz_pos);
+        if (fuzz_pos>=0 && i==0) 
+            mod_hex((result+i)->result.data+fuzz_pos+1);
 
 
     }
@@ -98,7 +124,7 @@ static  int send_mock(char** urls,int urls_len, char* payload, in3_response_t* r
 
 
 
-int execRequest(in3_t *c, d_token_t* test) {
+int execRequest(in3_t *c, d_token_t* test, int must_fail) {
     d_token_t* request  = d_get(test,key("request"));
     d_token_t* response = d_get(test,key("response"));
     d_token_t* config   = d_get(request,key("config"));
@@ -123,14 +149,14 @@ int execRequest(in3_t *c, d_token_t* test) {
     params[s.len]=0;
 
     char* res, *err;
-    int success =  d_get_intkd(test,key("success"),true);
+    int success = must_fail ? 0 : d_get_intkd(test,key("success"),1);
 
     _tmp_response = response;
 
     in3_client_rpc(c,method,params,&res,&err);
 
     if (err && res) {
-        printf("Error and Result set");
+        print_error("Error and Result set");
         _free(err);
         _free(res);
         return -1;
@@ -138,7 +164,8 @@ int execRequest(in3_t *c, d_token_t* test) {
     }
     else if (err) {
         if (success) {
-            printf("Failed: %s", err);
+            print_error("Failed");
+            printf(":%s",err);
            _free(err);
            return -1;
         }
@@ -149,22 +176,22 @@ int execRequest(in3_t *c, d_token_t* test) {
                return -1;
         }
         */
-        printf("OK");
+        print_success("OK");
         _free(err);
         return 0;
     }
     else if (res){
         if (!success) {
-            printf("Should have Failed");
+            print_error("Should have Failed");
            _free(res);
            return -1;
         }
-        printf("OK");
+        print_success("OK");
         _free(res);
         return 0;
     }
     else {
-        printf("NO Error and no Result");
+        print_error("NO Error and no Result");
         return -1;
     }
 
@@ -172,13 +199,60 @@ int execRequest(in3_t *c, d_token_t* test) {
 }
 
 
+int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
+    char temp[300];
+    char* descr;
+
+    if ((descr=d_get_string(test,"descr"))) {
+        if (fuzz_prop)
+            sprintf(temp,"  ...  manipulate #%s",fuzz_prop);
+        else
+            strcpy(temp,descr);
+    }
+    else
+        sprintf(temp,"Request #%i",counter);
+    printf("\n%2i : %-60s ",counter,temp);
+
+
+    in3_t *c = in3_new();
+    int j;
+    c->max_attempts=1;
+    c->transport = send_mock;
+    for (j=0;j<c->serversCount;j++) 
+        c->servers[j].needsUpdate=false;
+    c->proof = proof;
+
+
+    int fail =execRequest(c, test, fuzz_prop!=NULL);
+
+    in3_free(c);
+
+    if (mem_get_memleak_cnt()) {
+        printf(" -- Memory Leak detected by malloc #%i!",mem_get_memleak_cnt());
+        if (!fail) fail=1;
+    }
+
+    size_t max_heap=mem_get_max_heap();
+    str_range_t res_size = d_to_json(_tmp_response);
+    bytes_builder_t* bb = bb_new();
+
+    d_serialize_binary(bb,_tmp_response);
+
+    _tmp_response = NULL;
+    _tmp_str = NULL;
+
+    printf(" ( heap: %zu json: %lu bin: %i) ",max_heap, res_size.len, bb->b.len );
+    bb_free(bb);
+    return fail;
+
+}
 
 
 int runRequests(char *name, int test_index, int mem_track)
 {
         int res=0;
         char* content = readContent(name);
-        char temp[200];
+        char tmp[300];
         if (content==NULL) 
             return -1;
 
@@ -195,56 +269,49 @@ int runRequests(char *name, int test_index, int mem_track)
 
         // parse the data;
         int i;
-        char* descr;
+        char* str_proof;
         d_token_t *t = NULL, *tests, *test;
         d_token_t *tokens = NULL;
 
-        int failed = 0, total=0;
+        int failed = 0, total=0, count=0;
 
         if ((tests = d_get(parsed->items,key("tests")))) {
             for (i=0, test=tests+1;i<d_len(tests);i++, test=d_next(test)) {
-                if (test_index>0 && i+1!=test_index) continue;
 
+                fuzz_pos = -1;
+                in3_proof_t proof = PROOF_STANDARD;
+                if ((str_proof=d_get_string(test,"proof"))) {
+                    if (strcmp(str_proof,"none")==0)     proof=PROOF_NONE;
+                    if (strcmp(str_proof,"standard")==0) proof=PROOF_STANDARD;
+                    if (strcmp(str_proof,"full")==0)     proof=PROOF_FULL;
+                }
+
+
+                count++;
+                if (test_index>0 && count!=test_index) continue;
                 total++;
-
-                if ((descr=d_get_string(test,"descr")))
-                   strcpy(temp,descr);
-                else
-                   sprintf(temp,"Request #%i",i+1);
-                 printf("\n%2i/%2i : %-60s ",i+1,d_len(tests),temp);
-                 mem_reset(mem_track);
-
-                 in3_t *c = in3_new();
-                 int j;
-                 c->max_attempts=1;
-                 c->transport = send_mock;
-                 for (j=0;j<c->serversCount;j++) 
-                     c->servers[j].needsUpdate=false;
+                mem_reset(mem_track);
+                if (run_test(test, count, NULL, proof)) failed++;
 
 
-                 int fail =execRequest(c, test);
-                 if (fail) failed++;
+                if (d_get_int(test,"fuzzer")) {
+                    str_range_t resp = d_to_json(d_get_at(d_get(test,key("response")),0));
+                    while ((fuzz_pos = find_hex(resp.data,fuzz_pos+1,resp.len))>0) {
+                        str_range_t prop = find_prop_name(resp.data + fuzz_pos, resp.data);
+                        if (prop.data==NULL) continue;
+                        strncpy(tmp,prop.data,prop.len);
+                        tmp[prop.len]=0;
 
+                        if (ignore_property(tmp, proof == PROOF_FULL)) continue;
 
+                        count++;
+                        if (test_index>0 && count!=test_index) continue;
+                        total++;
+                        mem_reset(mem_track);
+                        if (run_test(test, count, tmp, proof)) failed++;
 
-                 in3_free(c);
-
-                 if (mem_get_memleak_cnt()) {
-                     printf(" -- Memory Leak detected by malloc #%i!",mem_get_memleak_cnt());
-                     if (!fail) failed++;
-                 }
-
-                 size_t max_heap=mem_get_max_heap();
-                 str_range_t res_size = d_to_json(_tmp_response);
-                 bytes_builder_t* bb = bb_new();
-
-                 d_serialize_binary(bb,_tmp_response);
-
-                 _tmp_response = NULL;
-                 _tmp_str = NULL;
-
-                 printf(" ( heap: %zu json: %lu bin: %i) ",max_heap, res_size.len, bb->b.len );
-                 bb_free(bb);
+                    }
+                }
             }
 
         }
@@ -259,7 +326,7 @@ int runRequests(char *name, int test_index, int mem_track)
 
 
 
-        printf("\n%2i of %2i successfully tested", d_len(tests)-failed, d_len(tests));
+        printf("\n%2i of %2i successfully tested", total-failed, total);
 
         if (failed) {
            printf("\n%2i tests failed", failed);
@@ -274,6 +341,7 @@ int runRequests(char *name, int test_index, int mem_track)
 
 int main(int argc, char *argv[])
 {
+    use_color=1;
     in3_register_eth_full();
     return runRequests(argv[1], argc>2 ? atoi(argv[2]) : -1,  argc>3 ? atoi(argv[3]) : -1 );
 }

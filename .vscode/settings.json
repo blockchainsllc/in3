@@ -26,6 +26,7 @@
         "rlp.h": "c",
         "merkle.h": "c",
         "limits": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "keys.h": "c"
     }
 }

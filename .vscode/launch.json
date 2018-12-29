@@ -41,7 +41,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
-            "args": ["eth_getBlockByNumber","-1","167"],
+            "args": ["eth_getBlockByHash"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

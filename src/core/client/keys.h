@@ -19,6 +19,7 @@
 
 #define K_BLOCK             key("block")
 #define K_BLOCK_HASH        key("blockHash")
+#define K_BLOCK_NUMBER      key("blockNumber")
 #define K_TX_INDEX          key("txIndex")
 #define K_MERKLE_PROOF      key("merkleProof")
 #define K_TX_PROOF          key("txProof")
@@ -53,6 +54,7 @@
 #define K_PARENT_HASH       key("parentHash")
 #define K_SHA3_UNCLES       key("sha3Uncles")
 #define K_MINER             key("miner")
+#define K_AUTHOR            key("author")
 #define K_COINBASE          key("coinbase")
 #define K_STATE_ROOT        key("stateRoot")
 #define K_TRANSACTIONS_ROOT key("transactionsRoot")
@@ -67,3 +69,9 @@
 #define K_SEAL_FIELDS       key("sealFields")
 #define K_MIX_HASH          key("mixHash")
 #define K_TRANSACTIONS      key("transactions")
+
+#define K_PUBLIC_KEY        key("publicKey")
+#define K_CHAIN_ID          key("chainId")
+#define K_RAW               key("raw")
+#define K_FROM              key("from")
+#define K_STANDARD_V        key("standardV")
