@@ -4,6 +4,7 @@
         {
             "descr": "mainnet block with transactions",
             "success": true,
+            "fuzzer" : true,
             "request": {
                 "method": "eth_getBlockByNumber",
                 "params": [
@@ -102,6 +103,7 @@
         {
             "descr": "kovan block with transaction hashes",
             "success": true,
+            "fuzzer" : true,
             "request": {
                 "method": "eth_getBlockByNumber",
                 "params": [
@@ -306,6 +308,7 @@
         {
             "descr": "kovan block",
             "success": true,
+            "fuzzer" : true,
             "request": {
                 "method": "eth_getBlockByNumber",
                 "params": [

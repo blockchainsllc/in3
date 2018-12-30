@@ -103,6 +103,7 @@
         {
             "descr": "kovan block with transaction hashes",
             "success": true,
+            "fuzzer" : true,
             "request": {
                 "method": "eth_getBlockByHash",
                 "params": [
@@ -307,6 +308,7 @@
         {
             "descr": "kovan block",
             "success": true,
+            "fuzzer" : true,
             "request": {
                 "method": "eth_getBlockByHash",
                 "params": [
