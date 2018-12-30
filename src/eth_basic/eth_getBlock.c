@@ -15,7 +15,7 @@
 int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
 
   int        res = 0, i;
-  d_token_t *transactions, *t, *t2, *tx_hashs, *txh;
+  d_token_t *transactions, *t, *t2, *tx_hashs, *txh = NULL;
   bytes_t    tmp, *bhash;
   uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
   bhash              = d_get_bytesk(vc->result, K_HASH);
@@ -78,7 +78,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
       if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != i)
         res = vc_err(vc, "Wrong Transaction index in tx");
 
-      if (h) {
+      if (h && txh) {
         if (!b_cmp(d_bytes(txh), h))
           res = vc_err(vc, "Wrong Transactionhash");
         txh = d_next(txh);
