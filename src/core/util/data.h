@@ -1,3 +1,15 @@
+/** @file 
+ * json-parser.
+ * 
+ * The parser can read from :
+ * - json
+ * - bin
+ * 
+ * When reading from json all '0x'... values will be stored as bytes_t. If the value is lower than 0xFFFFFFF, it is converted as integer.
+ * 
+ * 
+ * */ 
+
 #include "bytes.h"
 #include <stdint.h>
 #include "stringbuilder.h"
@@ -7,21 +19,25 @@
 #define __DATA_H__
 
 typedef uint16_t d_key_t;
-
+/** type of a token. */
 typedef enum {
-    T_BYTES = 0,
-    T_STRING = 1,
-    T_ARRAY = 2,
-    T_OBJECT = 3,
-    T_BOOLEAN = 4,
-    T_INTEGER = 5,
+    T_BYTES = 0,   /**< content is stored as data ptr. */
+    T_STRING = 1,  /**<content is stored a c-str*/
+    T_ARRAY = 2,   /**< the node is an array with the length stored in length */
+    T_OBJECT = 3,  /**< the node is an object with properties*/
+    T_BOOLEAN = 4, /**< boolean with the value stored in len */
+    T_INTEGER = 5, /**< a integer with the value stored */
     T_NULL = 6
 } d_type_t;
 
+/** a token holding any kind of value. 
+ * 
+ * use d_type,  d_len or the cast-function to get the value.
+ */
 typedef struct item {
-    uint32_t len;        /**< the length of the array ion bytes */
-    uint8_t *data;  /**< the byte-data  */
-    uint16_t key;
+    uint32_t len;    /**< the length of the content (or number of properties) depending +  type. */
+    uint8_t *data;   /**< the byte or string-data  */
+    d_key_t  key;    /**< the key of the property. */ 
 } d_token_t;
 
 
@@ -72,8 +88,8 @@ char* json_get_str_value(char* js, char* prop);
 char* json_get_json_value(char* js, char* prop);
 
 
-#define d_get_string(r,k) d_string(d_get(r,key(k)))
-#define d_get_stringk(r,k) d_string(d_get(r,k))
+#define d_get_string(r,k) d_string(d_get(r,key(k)))    /**< reads string of a property as string. */ 
+#define d_get_stringk(r,k) d_string(d_get(r,k))        /**< reads string of a property as key. */ 
 #define d_get_string_at(r,i) d_string(d_get_at(r,i))
 
 #define d_get_int(r,k) d_int(d_get(r,key(k)))

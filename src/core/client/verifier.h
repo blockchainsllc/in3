@@ -14,38 +14,33 @@
 
 #ifndef VERIFIER_H
 #define VERIFIER_H
-/** gets a child of the given request-token with the given name*/
-/*
-#define req_get(v,t,c) ctx_get_token(v->ctx->request_data,t,c)
-#define res_get(v,t,c) ctx_get_token(v->ctx->response_data,t,c)
-#define req_eq(v,t,c) ctx_equals(v->ctx->request_data,t,c)
-#define res_eq(v,t,c) ctx_equals(v->ctx->response_data,t,c)
-#define req_get_param(v,i) ctx_get_array_token(req_get(v,v->request,"params"),i)
-#define req_to_bytes(v,t) ctx_to_bytes(v->ctx->request_data,t,0)
-#define res_to_bytes(v,t) ctx_to_bytes(v->ctx->response_data,t,0)
-#define res_to_long(v,t,def) ctx_to_long(v->ctx->response_data,t,def)
-#define res_get_long(v,t,n,def) ctx_to_long(v->ctx->response_data, res_get(v,t,n) ,def)
-#define res_get_int(v,t,n,def) ctx_to_int(v->ctx->response_data, res_get(v,t,n) ,def)
-#define res_prop_to_bytes_a(v,t,prop) ctx_to_byte_a(v->ctx->response_data, ctx_get_token(v->ctx->response_data,t,prop))
-*/
+/**
+ * creates an error attaching it to the context and returns -1 as a return value.
+ */
 #define vc_err(v,e) ctx_set_error(v->ctx,e,-1)
 
+/**
+ * verification context holding the pointers to all relevant toknes.
+ */
 typedef struct {
 
-   in3_ctx_t* ctx;
+   in3_ctx_t* ctx;        /**< Request context. */
 
-   in3_chain_t* chain;
+   in3_chain_t* chain;    /**< the chain definition. */
 
-   d_token_t* result;
+   d_token_t* result;     /**< the result to verify */
 
-   d_token_t* request;
+   d_token_t* request;    /**< the request sent. */
 
-   d_token_t* proof;
+   d_token_t* proof;      /**< the delivered proof. */
 
-   in3_request_config_t* config;
+   in3_request_config_t* config;  /**< Request configuration. */
 
 } in3_vctx_t;
 
+/**
+ * function to verify the result.
+ */
 typedef int (*in3_verify)(in3_vctx_t* c );
 
 
