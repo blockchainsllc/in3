@@ -13,3 +13,9 @@ BinPackParameters: true
 BraceWrapping:
   AfterControlStatement: false
   AfterStruct: false
+PointerAlignment: Left
+SortIncludes: true
+SpaceAfterCStyleCast: true
+SpaceBeforeAssignmentOperators: true
+ColumnLimit: 0
+IndentCaseLabels: true

@@ -1,15 +1,14 @@
 /** @file 
  * Request Context.
  * This is used for each request holding request and response-pointers.
- * */ 
+ * */
 
-
-#include <stdint.h>  
-#include <stdbool.h>
-#include "../util/utils.h"
-#include "../util/stringbuilder.h"
-#include "client.h"
 #include "../util/data.h"
+#include "../util/stringbuilder.h"
+#include "../util/utils.h"
+#include "client.h"
+#include <stdbool.h>
+#include <stdint.h>
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
@@ -17,46 +16,44 @@
  * the weight of a ceertain node as linked list
  */
 typedef struct weight {
-  in3_node_t* node;           /**< the node definition including the url */
-  in3_node_weight_t* weight;  /**< the current weight and blacklisting-stats */ 
-  float s;                    /**< The starting value */
-  float w;                    /**< weight value */
-  struct weight * next;       /**< next in the linkedlistt or NULL if this is the last element*/
+  in3_node_t*        node;   /**< the node definition including the url */
+  in3_node_weight_t* weight; /**< the current weight and blacklisting-stats */
+  float              s;      /**< The starting value */
+  float              w;      /**< weight value */
+  struct weight*     next;   /**< next in the linkedlistt or NULL if this is the last element*/
 } node_weight_t;
-
 
 /**
  * The Request config.
  * This is generated for each request and represents the current state.
  * */
 typedef struct {
-   /*! reference to the client*/
-   in3_t* client;
+  /*! reference to the client*/
+  in3_t* client;
 
-   json_parsed_t* request_context;
-   json_parsed_t* response_context;
+  json_parsed_t* request_context;
+  json_parsed_t* response_context;
 
-   /* in case of an error this will hold the message */
-   char* error;
+  /* in case of an error this will hold the message */
+  char* error;
 
-   /* the number of requests */
-   int len;
+  /* the number of requests */
+  int len;
 
-   /* the number of attempts */
-   int attempt;
+  /* the number of attempts */
+  int attempt;
 
+  /* references to the tokens representring the requests*/
+  d_token_t** responses;
 
-    /* references to the tokens representring the requests*/
-   d_token_t** responses;
-   
-    /* references to the tokens representring the responses*/
-   d_token_t** requests;
+  /* references to the tokens representring the responses*/
+  d_token_t** requests;
 
-   /* configs adjusted for each request */
-   in3_request_config_t* requests_configs;
+  /* configs adjusted for each request */
+  in3_request_config_t* requests_configs;
 
-   /* selected nodes to process the request*/
-   node_weight_t* nodes;
+  /* selected nodes to process the request*/
+  node_weight_t* nodes;
 
 } in3_ctx_t;
 
@@ -66,14 +63,13 @@ typedef struct {
  * the request data will be parsed and represented in the context.
  */
 in3_ctx_t* new_ctx(in3_t* client, char* req_data);
-int ctx_parse_response(in3_ctx_t* ctx, char* response_data);
-void free_ctx(in3_ctx_t* ctx);
-int ctx_create_payload(in3_ctx_t* c, sb_t* sb);
-int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
-
+int        ctx_parse_response(in3_ctx_t* ctx, char* response_data);
+void       free_ctx(in3_ctx_t* ctx);
+int        ctx_create_payload(in3_ctx_t* c, sb_t* sb);
+int        ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
 
 // weights
-void free_ctx_nodes (node_weight_t* c) ;
-int ctx_nodes_len (node_weight_t* root);
+void free_ctx_nodes(node_weight_t* c);
+int  ctx_nodes_len(node_weight_t* root);
 
 #endif

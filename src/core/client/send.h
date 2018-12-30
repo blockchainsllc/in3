@@ -2,9 +2,7 @@
  * handles caching and storage.
  * 
  * handles the request.
- * */ 
-
-
+ * */
 
 #include "context.h"
 
@@ -15,6 +13,5 @@
  * executes a request context by  picking nodes and sending it.
  */
 int in3_send_ctx(in3_ctx_t* ctx);
-
 
 #endif

@@ -1,29 +1,29 @@
-#include <util/bytes.h>
-#include <client/context.h>
-#include <string.h>
-#include <client/verifier.h>
 #include "serialize.h"
 #include "rlp.h"
-#include <util/utils.h>
-#include <util/data.h>
+#include <client/context.h>
 #include <client/keys.h>
+#include <client/verifier.h>
+#include <string.h>
+#include <util/bytes.h>
+#include <util/data.h>
+#include <util/utils.h>
 
-int rlp_add(bytes_builder_t *rlp, d_token_t* t, int ml) {
+int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
   uint8_t tmp[4];
   bytes_t b;
 
   switch (d_type(t)) {
     case T_NULL:
-      b.data=tmp;
-      b.len=0;
+      b.data = tmp;
+      b.len  = 0;
       break;
     case T_INTEGER:
       tmp[3] = t->len & 0xFF;
-      tmp[2] = (t->len & 0xFF00)>>8;
-      tmp[1] = (t->len & 0xFF0000)>>16;
-      tmp[0] = (t->len & 0xF000000)>>24;
-      b.len = tmp[0] ? 4 : (tmp[1] ? 3 : (tmp[2] ? 2 : (tmp[3] ? 1:0)));
-      b.data= (uint8_t*) &tmp + 4-b.len;
+      tmp[2] = (t->len & 0xFF00) >> 8;
+      tmp[1] = (t->len & 0xFF0000) >> 16;
+      tmp[0] = (t->len & 0xF000000) >> 24;
+      b.len  = tmp[0] ? 4 : (tmp[1] ? 3 : (tmp[2] ? 2 : (tmp[3] ? 1 : 0)));
+      b.data = (uint8_t*) &tmp + 4 - b.len;
       break;
     case T_BYTES:
       b.data = t->data;
@@ -33,40 +33,37 @@ int rlp_add(bytes_builder_t *rlp, d_token_t* t, int ml) {
       return -1;
   }
 
-  if (ml==0 && b.len==1 && b.data[0]==0) b.len=0;
-  if (ml<0) {
-    if (b.len==0)
-       ml=0;
+  if (ml == 0 && b.len == 1 && b.data[0] == 0) b.len = 0;
+  if (ml < 0) {
+    if (b.len == 0)
+      ml = 0;
     else
-       ml=-ml;
+      ml = -ml;
   }
 
-  if ((size_t)ml>b.len) {
+  if ((size_t) ml > b.len) {
     // we need to fill left
-    uint8_t* tmp = _calloc(ml,1);
-    memcpy(tmp+ ml-b.len,b.data,b.len);
+    uint8_t* tmp = _calloc(ml, 1);
+    memcpy(tmp + ml - b.len, b.data, b.len);
     b.data = tmp;
     b.len  = ml;
-    rlp_encode_item(rlp,&b);
+    rlp_encode_item(rlp, &b);
     _free(tmp);
-  }
-  else
-    rlp_encode_item(rlp,&b);
+  } else
+    rlp_encode_item(rlp, &b);
 
   return 0;
 }
 
-#define UINT 0 
+#define UINT 0
 #define BYTES -1
 #define ADDRESS -20
 #define HASH 32
 #define BLOOM 256
 
-
-
-bytes_t *serialize_tx(d_token_t *tx) {
-  bytes_builder_t *rlp = bb_new();
-
+bytes_t* serialize_tx(d_token_t* tx) {
+  bytes_builder_t* rlp = bb_new();
+  // clang-format off
   rlp_add(rlp, d_get(tx,K_NONCE)             , UINT);
   rlp_add(rlp, d_get(tx,K_GAS_PRICE)         , UINT);
   rlp_add(rlp, d_get_or(tx,K_GAS,K_GAS_LIMIT), UINT);
@@ -76,17 +73,15 @@ bytes_t *serialize_tx(d_token_t *tx) {
   rlp_add(rlp, d_get(tx,K_V)                 , UINT);
   rlp_add(rlp, d_get(tx,K_R)                 , UINT);
   rlp_add(rlp, d_get(tx,K_S)                 , UINT);
-
+  // clang-format on
   return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
 
-
-
-bytes_t *serialize_block_header(d_token_t *block) {
-  bytes_builder_t *rlp = bb_new();
-  d_token_t* sealed_fields,*t;
-  int i;
-
+bytes_t* serialize_block_header(d_token_t* block) {
+  bytes_builder_t* rlp = bb_new();
+  d_token_t *      sealed_fields, *t;
+  int              i;
+  // clang-format off
   rlp_add(rlp, d_get(block,K_PARENT_HASH)                    , HASH);
   rlp_add(rlp, d_get(block,K_SHA3_UNCLES)                    , HASH);
   rlp_add(rlp, d_get_or(block,K_MINER,K_COINBASE)            , ADDRESS);
@@ -108,25 +103,23 @@ bytes_t *serialize_block_header(d_token_t *block) {
     rlp_add(rlp, d_get(block,K_MIX_HASH)                     , HASH);
     rlp_add(rlp, d_get(block,K_NONCE)                        , BYTES);
   }
-
+  // clang-format on
   return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
 
+bytes_t* serialize_tx_receipt(d_token_t* receipt) {
+  bytes_builder_t* bb          = bb_new();
+  bytes_builder_t* rlp         = bb_new();
+  bytes_builder_t* rlp_log     = bb_new();
+  bytes_builder_t* rlp_topics  = bb_new();
+  bytes_builder_t* rlp_loglist = bb_new();
+  d_token_t *      t, *logs, *l, *topics;
+  int              i, j;
 
-
-
-bytes_t *serialize_tx_receipt(d_token_t *receipt) {
-  bytes_builder_t *bb = bb_new();
-  bytes_builder_t *rlp = bb_new();
-  bytes_builder_t *rlp_log = bb_new();
-  bytes_builder_t *rlp_topics = bb_new();
-  bytes_builder_t *rlp_loglist = bb_new();
-  d_token_t *t, *logs, *l, *topics;
-  int i, j;
-
-  if ((t=d_get_or(receipt,K_STATUS,K_ROOT)))
+  if ((t = d_get_or(receipt, K_STATUS, K_ROOT)))
     rlp_add(rlp, t, UINT);
-  
+
+  // clang-format off
   rlp_add(rlp, d_get(receipt,K_CUMULATIVE_GAS_USED) , UINT);
   rlp_add(rlp, d_get(receipt,K_LOGS_BLOOM         ) , BLOOM);
 
@@ -149,6 +142,8 @@ bytes_t *serialize_tx_receipt(d_token_t *receipt) {
     }
 
   }
+
+  // clang-format on
   rlp_encode_list(rlp, &rlp_loglist->b);
   rlp_encode_to_list(rlp);
 

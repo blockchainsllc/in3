@@ -2,7 +2,7 @@
  * RLP-En/Decoding as described in the [Ethereum RLP-Spec](https://github.com/ethereum/wiki/wiki/RLP).
  * 
  * This decoding works without allocating new memory.
- * */ 
+ * */
 
 #ifndef rlp_h__
 #define rlp_h__
@@ -65,7 +65,7 @@ int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst);
  * 
  * \param b the ptr to the incoming bytes to decode.
  */
-int  rlp_decode_len(bytes_t* b);
+int rlp_decode_len(bytes_t* b);
 
 /**
  * returns the number of bytes of the element specified by index.
@@ -75,7 +75,7 @@ int  rlp_decode_len(bytes_t* b);
  * 
  * \return the number of bytes or 0 if not found.
  */
-int  rlp_decode_item_len(bytes_t* b, int index);
+int rlp_decode_item_len(bytes_t* b, int index);
 
 /**
  * returns the type of the element specified by index.
@@ -88,7 +88,7 @@ int  rlp_decode_item_len(bytes_t* b, int index);
  * - 1 : item found
  * - 2 : list found ( you can then decode the same bytes again) 
  */
-int  rlp_decode_item_type(bytes_t* b, int index);
+int rlp_decode_item_type(bytes_t* b, int index);
 
 /**
  * encode a item as single string and add it to the bytes_builder.
@@ -121,8 +121,4 @@ void rlp_encode_list(bytes_builder_t* bb, bytes_t* val);
  */
 bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb);
 
-
-
-
-
-#endif  // rlp__
+#endif // rlp__

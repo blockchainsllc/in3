@@ -1,3 +1,4 @@
+// clang-format off
 #define K_ID                key("id")
 #define K_METHOD            key("method")
 #define K_PARAMS            key("params")

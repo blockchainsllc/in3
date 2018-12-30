@@ -3,8 +3,7 @@
  * 
  * storing nodelists and other caches with the storage handler as specified in the client.
  * If no storage handler is specified nothing will be cached.
- * */ 
-
+ * */
 
 #include "../util/bytes.h"
 #include "client.h"
@@ -29,6 +28,5 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain);
  * stores the nodelist to thes cache. 
  */
 int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain);
-
 
 #endif

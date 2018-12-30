@@ -1,21 +1,18 @@
 /** @file 
  * simple string buffer used to dynamicly add content.
- * */ 
-
+ * */
 
 #ifndef __STR_BUILDER_H__
 #define __STR_BUILDER_H__
- 
-#include <stddef.h>
-#include <stdbool.h>
+
 #include "bytes.h"
-
-
+#include <stdbool.h>
+#include <stddef.h>
 
 typedef struct sb {
-    char* data;
-    size_t allocted;
-    size_t len;
+  char*  data;
+  size_t allocted;
+  size_t len;
 } sb_t;
 
 sb_t* sb_new(char* chars);
@@ -28,8 +25,4 @@ sb_t* sb_add_range(sb_t* sb, char* chars, int start, int len);
 sb_t* sb_add_key_value(sb_t* sb, char* key, char* value, int lv, bool as_string);
 sb_t* sb_add_bytes(sb_t* sb, char* prefix, bytes_t* bytes, int len, bool as_array);
 
-
-
 #endif
-
-
