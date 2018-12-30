@@ -41,7 +41,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
-            "args": ["eth_getBlockByHash"],
+            "args": ["eth_getTransactionReceipt"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

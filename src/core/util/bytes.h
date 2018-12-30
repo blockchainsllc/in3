@@ -61,7 +61,6 @@ void bb_write_byte(bytes_builder_t *bb, uint8_t val);
 void bb_write_short(bytes_builder_t *bb, uint16_t val);
 void bb_write_raw_bytes(bytes_builder_t *bb, void* ptr, size_t len);
 void bb_clear(bytes_builder_t *bb);
-void bb_write_from_str(bytes_builder_t *bb, char* str, size_t len, int min_len);
 void bb_replace(bytes_builder_t *bb, int offset, int delete_len, uint8_t* data, int data_len);
 
 bytes_t* bb_move_to_bytes(bytes_builder_t *bb);

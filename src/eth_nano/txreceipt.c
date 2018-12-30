@@ -67,7 +67,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t *tx_hash)
             bytes_t* receipt_raw = serialize_tx_receipt(vc->result);
             bytes_t **proof      = d_create_bytes_vec( d_get(vc->proof,K_MERKLE_PROOF));
 
-            if (!proof || !verifyMerkleProof(&root,path,proof,receipt_raw))
+            if (!proof || !trie_verify_proof(&root,path,proof,receipt_raw))
                 res=vc_err(vc,"Could not verify the merkle proof");
 
             b_free(receipt_raw);
@@ -81,7 +81,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t *tx_hash)
             if (rlp_decode_in_list(blockHeader,4,&root)!=1) 
                res=vc_err(vc,"no tx root");
             else {
-                 if (!proof || !verifyMerkleProof(&root,path,proof,&raw_transaction))
+                 if (!proof || !trie_verify_proof(&root,path,proof,&raw_transaction))
                     res=vc_err(vc,"Could not verify the tx proof");
                 else if (raw_transaction.data==NULL)
                    res=vc_err(vc,"No value returned after verification");

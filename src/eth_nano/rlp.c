@@ -1,5 +1,7 @@
 
 #include "rlp.h"
+#include "../core/util/utils.h"
+
 
 static int ref(bytes_t* b, size_t l, uint8_t* s, int r) {
     b->len  = l;

@@ -245,7 +245,7 @@ static node_key_t handle_node ( trie_t* trie, trie_node_t* n, uint8_t* path, byt
              break;
           case NODE_LEAF:
              tmp = trie_node_get_item(n,0);
-             node_path = str_to_nibbles(&tmp,true);
+             node_path = trie_path_to_nibbles(&tmp,true);
              if (*node_path==0XFF) 
                // here we simply change the value if the path ends here
                trie_node_set_item(n,2,value);
@@ -261,7 +261,7 @@ static node_key_t handle_node ( trie_t* trie, trie_node_t* n, uint8_t* path, byt
            case NODE_EXT:  
              b        = trie_node_create_branch(trie, value);
              tmp      = trie_node_get_item(n,0);
-             rel_path = str_to_nibbles(&tmp,true);
+             rel_path = trie_path_to_nibbles(&tmp,true);
              tmp      = trie_node_get_item(n,1);
              if (nibble_len(rel_path)==1)
                // the extension has no elements to skip left, we remove it and replace it with the branch.
@@ -299,8 +299,8 @@ static node_key_t handle_node ( trie_t* trie, trie_node_t* n, uint8_t* path, byt
           case NODE_EXT:
           case NODE_LEAF:
              tmp = trie_node_get_item(n,0);
-             node_path = str_to_nibbles(&tmp,true);
-             matching = matching_nibbles(node_path, path);
+             node_path = trie_path_to_nibbles(&tmp,true);
+             matching = trie_matching_nibbles(node_path, path);
              if (matching == nibble_len(node_path)) {  // next element fits so we can update next node 
                 if (n->type==NODE_LEAF)                // for Leaf: we simply replace the leaf-value
                   trie_node_set_item(n,1,value);
@@ -359,7 +359,7 @@ void trie_set_value( trie_t* t, bytes_t* key, bytes_t* value ) {
 //    printf("set key/value\n");
 //    b_print(key);
 //    b_print(value);
-    uint8_t* path = str_to_nibbles(key,false);
+    uint8_t* path = trie_path_to_nibbles(key,false);
     bytes_t* root = handle_node(t, get_node(t, hash_key( &t->root) ), path, value, true).hash;
     _free(path);
     memcpy(t->root.data,root->data,32);

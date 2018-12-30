@@ -66,7 +66,6 @@ int rlp_add(bytes_builder_t *rlp, d_token_t* t, int ml) {
 
 bytes_t *serialize_tx(d_token_t *tx) {
   bytes_builder_t *rlp = bb_new();
-  bytes_builder_t *bb  = bb_new();
 
   rlp_add(rlp, d_get(tx,K_NONCE)             , UINT);
   rlp_add(rlp, d_get(tx,K_GAS_PRICE)         , UINT);
@@ -78,17 +77,13 @@ bytes_t *serialize_tx(d_token_t *tx) {
   rlp_add(rlp, d_get(tx,K_R)                 , UINT);
   rlp_add(rlp, d_get(tx,K_S)                 , UINT);
 
-  rlp_encode_list(bb,&rlp->b);
-
-  bb_free(rlp);
-  return bb_move_to_bytes(bb);
+  return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
 
 
 
 bytes_t *serialize_block_header(d_token_t *block) {
   bytes_builder_t *rlp = bb_new();
-  bytes_builder_t *bb = bb_new();
   d_token_t* sealed_fields,*t;
   int i;
 
@@ -114,10 +109,7 @@ bytes_t *serialize_block_header(d_token_t *block) {
     rlp_add(rlp, d_get(block,K_NONCE)                        , BYTES);
   }
 
-  rlp_encode_list(bb,&rlp->b);
-
-  bb_free(rlp);
-  return bb_move_to_bytes(bb);
+  return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
 
 
@@ -158,13 +150,11 @@ bytes_t *serialize_tx_receipt(d_token_t *receipt) {
 
   }
   rlp_encode_list(rlp, &rlp_loglist->b);
+  rlp_encode_to_list(rlp);
 
-  bb_clear(rlp_log);
-  rlp_encode_list(rlp_log, &rlp->b);
-  
   bb_free(bb);
-  bb_free(rlp);
+  bb_free(rlp_log);
   bb_free(rlp_topics);
   bb_free(rlp_loglist);
-  return bb_move_to_bytes(rlp_log);
+  return bb_move_to_bytes(rlp);
 }

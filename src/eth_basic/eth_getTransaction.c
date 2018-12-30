@@ -114,7 +114,7 @@ int eth_verify_eth_getTransaction(in3_vctx_t *vc, bytes_t *tx_hash) {
         if (rlp_decode_in_list(blockHeader,4,&root)!=1) 
             res=vc_err(vc,"no tx root");
         else {
-            if (!proof || !verifyMerkleProof(&root,path,proof,&raw_transaction) || raw_transaction.data==NULL)
+            if (!proof || !trie_verify_proof(&root,path,proof,&raw_transaction) || raw_transaction.data==NULL)
                 res=vc_err(vc,"Could not verify the tx proof");
             else {
                 bytes_t* proofed_hash = sha3(&raw_transaction);

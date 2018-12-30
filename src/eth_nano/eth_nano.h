@@ -38,5 +38,5 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t *vc, bytes_t* tx_hash);
 void in3_register_eth_nano();
 
 bytes_t* create_tx_path(uint32_t index);
-void free_proof(bytes_t** proof);
+void trie_free_proof(bytes_t** proof);
 #endif  // in3_eth_nano_h__
