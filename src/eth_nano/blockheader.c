@@ -59,7 +59,7 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   // copy the whole header
   rlp_decode(header, 0, &bare);
 
-  if (rlp_decode(&bare, 15, &sig) == 1) { // we have 3 sealed fields the messagehash is calculated hash = sha3( concat ( bare_hash | rlp_encode ( sealed_fields[2] ) ) )
+  if (rlp_decode(&bare, BLOCKHEADER_SEALED_FIELD3, &sig) == 1) { // we have 3 sealed fields the messagehash is calculated hash = sha3( concat ( bare_hash | rlp_encode ( sealed_fields[2] ) ) )
     bb_clear(&ll);
     rlp_add_length(&ll, sig.len, 0xc0);
 
@@ -70,7 +70,7 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
     keccak_Final(&ctx, bare_hash);
   }
   // get the signature
-  rlp_decode(&bare, 14, &sig);
+  rlp_decode(&bare, BLOCKHEADER_SEALED_FIELD2, &sig);
 
   // recover signature
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub_key, sig.data, bare_hash, sig.data[64]))
@@ -86,14 +86,13 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
 }
 
 int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint16_t needed_finality) {
-  bytes_t* b = blocks[0];
-  uint8_t  hash[32], signer[20];
-  bytes_t  tmp;
-  bytes_t* proposer;
-  int      val_len = 0, passed = 0, i = 0;
+  bytes_t tmp, *proposer, *b = blocks[0];
+  uint8_t hash[32], signer[20];
+  int     val_len = 0, passed = 0, i = 0;
 
   // check if the parent hashes match
   while (b) {
+    // find the validator with permission to sign this block.
     if ((proposer = eth_get_validator(vc, b, spec, b == blocks[0] ? &val_len : NULL)) == NULL)
       return vc_err(vc, "could not find the validator for the block");
 
@@ -118,11 +117,14 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
     passed++;
   }
 
-  if (val_len == 0) return vc_err(vc, "no validators");
+  // we could not find any validators
+  if (val_len == 0)
+    return vc_err(vc, "no validators");
 
   return passed * 100 / val_len >= needed_finality ? 0 : vc_err(vc, "not enought blocks to reach finality");
 }
 
+/** verify the header */
 int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
   int res = 0, i;
 
@@ -131,8 +133,11 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
 
   uint64_t   header_number = 0;
   d_token_t *sig, *signatures;
-  bytes_t*   block_hash = sha3(header); // generate the blockhash
   bytes_t    temp, *sig_hash;
+  uint8_t    block_hash[32];
+
+  // generate the blockhash;
+  sha3_to(header, &block_hash);
 
   // if we expect a certain blocknumber, it must match the 8th field in the BlockHeader
   if (!res && rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp))
@@ -141,7 +146,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
     res = vc_err(vc, "Could not rlpdecode the blocknumber");
 
   // if we have a blockhash we verify it
-  if (res == 0 && expected_blockhash && !b_cmp(block_hash, expected_blockhash))
+  if (res == 0 && expected_blockhash && memcmp(block_hash, expected_blockhash->data, 32))
     res = vc_err(vc, "wrong blockhash");
 
   // if we expect no signatures ...
@@ -172,16 +177,17 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
     msg.data = (uint8_t*) &msg_data;
     msg.len  = 64;
     // first the blockhash + blocknumber
-    memcpy(msg_data, block_hash->data, 32);
+    memcpy(msg_data, block_hash, 32);
     memset(msg_data + 32, 0, 32);
     long_to_bytes(header_number, msg_data + 56);
 
     // hash it to create the message hash
     bytes_t* msg_hash = sha3(&msg);
 
-    int confirmed = 0; // confiremd is a bitmask for each signature one bit on order to ensure we have all requested signatures
+    int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
     for (i = 0, sig = signatures + 1; i < d_len(signatures); i++, sig = d_next(sig)) {
-      if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_bytesk(sig, K_BLOCK_HASH)) ? b_cmp(sig_hash, block_hash) : 1))
+      // only if this signature has the correct blockhash and blocknumber we will verify it.
+      if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_bytesk(sig, K_BLOCK_HASH)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
         confirmed |= eth_verify_signature(vc, msg_hash, sig);
     }
 
@@ -189,8 +195,6 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
     if (confirmed != (1 << vc->config->signaturesCount) - 1) // we must collect all signatures!
       res = vc_err(vc, "missing signatures");
   }
-
-  b_free(block_hash);
 
   return res;
 }
