@@ -55,7 +55,10 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   sha3_Update(&ctx, bare.data, bare.len);
   keccak_Final(&ctx, bare_hash);
 
-  if (rlp_decode(header, 15, &sig) == 1) { // we have 3 sealed fields the messagehash is calculated hash = sha3( concat ( bare_hash | rlp_encode ( sealed_fields[2] ) ) )
+  // copy the whole header
+  rlp_decode(header, 0, &bare);
+
+  if (rlp_decode(&bare, 15, &sig) == 1) { // we have 3 sealed fields the messagehash is calculated hash = sha3( concat ( bare_hash | rlp_encode ( sealed_fields[2] ) ) )
     bb_clear(&ll);
     rlp_add_length(&ll, sig.len, 0xc0);
 
@@ -65,8 +68,8 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
     sha3_Update(&ctx, sig.data, sig.len);
     keccak_Final(&ctx, bare_hash);
   }
-
-  rlp_decode(header, 14, &sig);
+  // get the signature
+  rlp_decode(&bare, 14, &sig);
 
   // recover signature
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub_key, sig.data, bare_hash, sig.data[64]))
@@ -99,13 +102,12 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
   while (b) {
     if ((proposer = eth_get_validator(vc, b, spec, b == blocks[0] ? &val_len : NULL)) == NULL) return vc_err(vc, "could not find the validator for the block");
 
-    if (needed_finality > 100) { // for now it is just deactivated
-      // check signature of proposer
-      if (get_signer(vc, b, signer)) return vc_err(vc, "could not get the signer");
+    // check signature of proposer
+    if (get_signer(vc, b, signer)) return vc_err(vc, "could not get the signer");
 
-      // check if it was signed by the right validator
-      if (memcmp(signer, proposer->data, 20) != 0) return vc_err(vc, "the block was signed by the wrong key");
-    }
+    // check if it was signed by the right validator
+    if (memcmp(signer, proposer->data, 20) != 0) return vc_err(vc, "the block was signed by the wrong key");
+
     // calculate the blockhash
     sha3_to(b, &hash);
 
