@@ -93,7 +93,7 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
   uint8_t  hash[32], signer[20];
   bytes_t  tmp;
   bytes_t* proposer;
-  int      val_len = 0, passed = 0;
+  int      val_len = 0, passed = 0, i = 0;
 
   // check if the parent hashes match
   while (b) {
@@ -110,7 +110,7 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
     sha3_to(b, &hash);
 
     // next block
-    b += 1;
+    b = blocks[++i];
     // check if the next blocks parent_hash matches
     if (b && (rlp_decode_in_list(b, 0, &tmp) != 1 || memcmp(hash, tmp.data, 32) != 0))
       return vc_err(vc, "The parent hashes of the finality blocks don't match");
@@ -118,7 +118,7 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
     passed++;
   }
 
-  if (val_len) return vc_err(vc, "no validators");
+  if (val_len == 0) return vc_err(vc, "no validators");
 
   return passed * 100 / val_len >= needed_finality ? 0 : vc_err(vc, "not enought blocks to reach finality");
 }
@@ -145,12 +145,13 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
   if (res == 0 && vc->config->signaturesCount == 0) {
     if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->items, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
       sig              = d_get(vc->proof, K_FINALITY_BLOCKS);
-      bytes_t** blocks = _calloc(sig ? d_len(sig) + 1 : 2, sizeof(bytes_t*));
+      bytes_t** blocks = _malloc((sig ? d_len(sig) + 1 : 2) * sizeof(bytes_t*));
       blocks[0]        = header;
       if (sig) {
         for (i = 0; i < d_len(sig); i++) blocks[i + 1] = d_get_bytes_at(sig, i);
       }
-      res = eth_verify_authority(vc, blocks, vc->chain->spec->items, vc->config->finality);
+      blocks[sig ? d_len(sig) : 1] = NULL;
+      res                          = eth_verify_authority(vc, blocks, vc->chain->spec->items, vc->config->finality);
       _free(blocks);
     } else // we didn't request signatures so blockheader should be ok.
       res = 0;
