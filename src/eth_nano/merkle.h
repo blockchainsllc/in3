@@ -11,6 +11,11 @@
 /**
  *  verifies a merkle proof.
  * 
+ *
+ * expectedValue == NULL     : value must not exist
+ * expectedValue.data ==NULL : please copy the data I want to evaluate it afterwards.
+ * expectedValue.data !=NULL : the value must match the data.
+ * 
  * \param rootHash the expected root hash of the trie.
  * \param path the path the the value
  * \param proof a array of bytes of rlp encoded nodes. This array must be terminatzed with a NULL-Pointer.

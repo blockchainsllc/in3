@@ -95,11 +95,14 @@ bytes_t* serialize_block_header(d_token_t* block) {
   rlp_add(rlp, d_get(block,K_GAS_USED)                       , UINT);
   rlp_add(rlp, d_get(block,K_TIMESTAMP)                      , UINT);
   rlp_add(rlp, d_get(block,K_EXTRA_DATA)                     , BYTES);
+
+  // if there are sealed field we take them as raw already rlp-encoded data and add them.
   if ((sealed_fields=d_get(block,K_SEAL_FIELDS))) {
     for (i=0,t=sealed_fields+1;i<d_len(sealed_fields);i++,t=d_next(t))
        bb_write_raw_bytes(rlp,t->data, t->len);   // we need to check if the nodes is within the bounds!
   }
   else {
+    // good old proof of work...
     rlp_add(rlp, d_get(block,K_MIX_HASH)                     , HASH);
     rlp_add(rlp, d_get(block,K_NONCE)                        , BYTES);
   }
@@ -116,19 +119,20 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt) {
   d_token_t *      t, *logs, *l, *topics;
   int              i, j;
 
-  if ((t = d_get_or(receipt, K_STATUS, K_ROOT)))
-    rlp_add(rlp, t, UINT);
-
   // clang-format off
+  // we only add it if it exists since this EIP came later.
+  if ((t = d_get_or(receipt, K_STATUS, K_ROOT)))
+    rlp_add(rlp, t                                  , UINT);
+
   rlp_add(rlp, d_get(receipt,K_CUMULATIVE_GAS_USED) , UINT);
   rlp_add(rlp, d_get(receipt,K_LOGS_BLOOM         ) , BLOOM);
 
-  logs =  d_get(receipt,K_LOGS);
-  if (logs) {
+  if ((logs =  d_get(receipt,K_LOGS))) {
+    // iterate over log-entries
     for (i = 0,l=logs+1; i < d_len(logs); i++, l=d_next(l)) {
       bb_clear(rlp_log);
 
-      rlp_add(rlp_log, d_get(l,K_ADDRESS) , ADDRESS);
+      rlp_add(rlp_log, d_get(l,K_ADDRESS)          , ADDRESS);
 
       topics = d_get(l,K_TOPICS);
       bb_clear(rlp_topics);
@@ -137,7 +141,7 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt) {
 
       rlp_encode_list(rlp_log, &rlp_topics->b);
 
-      rlp_add(rlp_log, d_get(l,K_DATA),BYTES);
+      rlp_add(rlp_log, d_get(l,K_DATA)              ,BYTES);
       rlp_encode_list(rlp_loglist, &rlp_log->b);
     }
 

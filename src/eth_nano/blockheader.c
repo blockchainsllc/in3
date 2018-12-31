@@ -10,24 +10,29 @@
 #include <util/mem.h>
 #include <util/utils.h>
 
-bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
+static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
   d_token_t* tmp;
-  bytes_t    b;
-  bytes_t**  validators = NULL;
-  bytes_t*   proposer;
+  bytes_t ** validators = NULL, *proposer, b;
   int        validator_len, i;
+
+  // if we have a fixed validator list,
   if ((tmp = d_get(spec, K_VALIDATOR_LIST))) {
+    // create a validator list from spec.
     validator_len = d_len(tmp);
-    if (val_len) *val_len = validator_len;
-    validators = _malloc(sizeof(bytes_t*) * validator_len);
+    validators    = _malloc(sizeof(bytes_t*) * validator_len);
+    // copy references
     for (i = 0, tmp += 1; i < validator_len; i++, tmp = d_next(tmp)) validators[i] = d_bytes(tmp);
+    // copy the size of the validators to the given pointer, because it will be needed to ensure finality.
+    if (val_len) *val_len = validator_len;
+
   } else {
     // TODO read the validators from the chain.
     vc_err(vc, "currently only static validators are supported");
     return NULL;
   }
 
-  rlp_decode_in_list(header, 13, &b);
+  // the nonce used to find out who's turn it is to sign.
+  rlp_decode_in_list(header, BLOCKHEADER_SEALED_FIELD1, &b);
   proposer = validators[bytes_to_long(b.data, 4) % validator_len];
   _free(validators);
   return proposer;
@@ -35,8 +40,9 @@ bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int
 
 static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;
-  bytes_builder_t ll;
   uint8_t         d[4], bare_hash[32], pub_key[65];
+  bytes_builder_t ll = {.bsize = 4, .b = {.len = 0, .data = (uint8_t*) &d}};
+  struct SHA3_CTX ctx;
 
   // get the raw data without the sealed field
   rlp_decode(header, 0, &bare);
@@ -44,13 +50,9 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bare.len = sig.len + sig.data - bare.data;
 
   // calculate the list prefix
-  ll.bsize  = 4;
-  ll.b.len  = 0;
-  ll.b.data = (uint8_t*) &d;
   rlp_add_length(&ll, bare.len, 0xc0);
 
   // calculate the bare hash
-  struct SHA3_CTX ctx;
   sha3_256_Init(&ctx);
   sha3_Update(&ctx, ll.b.data, ll.b.len);
   sha3_Update(&ctx, bare.data, bare.len);
@@ -59,7 +61,8 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   // copy the whole header
   rlp_decode(header, 0, &bare);
 
-  if (rlp_decode(&bare, BLOCKHEADER_SEALED_FIELD3, &sig) == 1) { // we have 3 sealed fields the messagehash is calculated hash = sha3( concat ( bare_hash | rlp_encode ( sealed_fields[2] ) ) )
+  // we have 3 sealed fields the messagehash is calculated hash = sha3( concat ( bare_hash | rlp_encode ( sealed_fields[2] ) ) )
+  if (rlp_decode(&bare, BLOCKHEADER_SEALED_FIELD3, &sig) == 1) {
     bb_clear(&ll);
     rlp_add_length(&ll, sig.len, 0xc0);
 
@@ -76,10 +79,12 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   if (ecdsa_recover_pub_from_sig(&secp256k1, pub_key, sig.data, bare_hash, sig.data[64]))
     return vc_err(vc, "The signature of a validator could not recover!");
 
+  // hash the public key
   sha3_256_Init(&ctx);
   sha3_Update(&ctx, pub_key + 1, 64);
   keccak_Final(&ctx, bare_hash);
 
+  // and take the last 20 bytes as address
   memcpy(dst, bare_hash + 12, 20);
 
   return 0;
@@ -182,16 +187,17 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
     long_to_bytes(header_number, msg_data + 56);
 
     // hash it to create the message hash
-    bytes_t* msg_hash = sha3(&msg);
+    sha3_to(&msg, msg_data);
+    msg.data = msg_data;
+    msg.len  = 32;
 
     int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
     for (i = 0, sig = signatures + 1; i < d_len(signatures); i++, sig = d_next(sig)) {
       // only if this signature has the correct blockhash and blocknumber we will verify it.
       if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_bytesk(sig, K_BLOCK_HASH)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
-        confirmed |= eth_verify_signature(vc, msg_hash, sig);
+        confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    b_free(msg_hash);
     if (confirmed != (1 << vc->config->signaturesCount) - 1) // we must collect all signatures!
       res = vc_err(vc, "missing signatures");
   }

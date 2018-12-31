@@ -14,28 +14,27 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
   bytes_t* sig_msg_hash = d_get_bytesk(sig, K_MSG_HASH);
   if (sig_msg_hash && !b_cmp(sig_msg_hash, msg_hash)) return NULL;
 
-  uint8_t pubkey[65];
-  bytes_t pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
-  uint8_t sdata[64];
+  uint8_t  pubkey[65], sdata[64];
+  bytes_t  pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
+  bytes_t* r            = d_get_bytesk(sig, K_R);
+  bytes_t* s            = d_get_bytesk(sig, K_S);
+  int      v            = d_get_intk(sig, K_V);
 
-  bytes_t* r = d_get_bytesk(sig, K_R);
-  bytes_t* s = d_get_bytesk(sig, K_S);
-  int      v = d_get_intk(sig, K_V);
+  // correct v
   if (v >= 27) v -= 27;
   if (r == NULL || s == NULL || r->len + s->len != 64)
     return NULL;
+
+  // concat r and s
   memcpy(sdata, r->data, r->len);
   memcpy(sdata + r->len, s->data, s->len);
 
   // verify signature
-  ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, msg_hash->data, v);
-
-  // now create the address
-  bytes_t* hash = sha3(&pubkey_bytes);
-  bytes_t* addr = b_new((char*) hash->data + 12, 20);
-  b_free(hash);
-
-  return addr;
+  if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, msg_hash->data, v) == 0)
+    // hash it and return the last 320 bytes as address
+    return sha3_to(&pubkey_bytes, sdata) == 0 ? b_new((char*) sdata + 12, 20) : NULL;
+  else
+    return NULL;
 }
 
 int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig) {
