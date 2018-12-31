@@ -38,11 +38,17 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
 }
 
 int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig) {
+  // recover the signature
   int      res  = 0, i;
   bytes_t* addr = ecrecover_signature(msg_hash, sig);
-  if (addr == NULL) return 0;
+
+  // if we can not recover, we return 0, so no but set.
+  if (addr == NULL) return 0 * vc_err(vc, "could not recover the signature");
+
+  // try to find the signature requested
   for (i = 0; i < vc->config->signaturesCount; i++) {
     if (b_cmp(vc->config->signatures + i, addr)) {
+      // adn set the bit depending on the index.
       res = 1 << i;
       break;
     }
