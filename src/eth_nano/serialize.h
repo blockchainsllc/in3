@@ -43,3 +43,23 @@ bytes_t* serialize_block_header(d_token_t* block);
  * \return 0 if added -1 if the value could not be handled.
  */
 int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml);
+
+// clang-format off
+
+#define BLOCKHEADER_PARENT_HASH       0
+#define BLOCKHEADER_SHA3_UNCLES       1
+#define BLOCKHEADER_MINER             2
+#define BLOCKHEADER_STATE_ROOT        3
+#define BLOCKHEADER_TRANSACTIONS_ROOT 4
+#define BLOCKHEADER_RECEIPT_ROOT      5
+#define BLOCKHEADER_LOGS_BLOOM        6
+#define BLOCKHEADER_DIFFICULTY        7
+#define BLOCKHEADER_NUMBER            8
+#define BLOCKHEADER_GAS_LIMIT         9
+#define BLOCKHEADER_GAS_USED         10
+#define BLOCKHEADER_TIMESTAMP        11
+#define BLOCKHEADER_EXTRA_DATA       12
+#define BLOCKHEADER_SEALED_FIELD1    13
+#define BLOCKHEADER_SEALED_FIELD2    14
+#define BLOCKHEADER_SEALED_FIELD3    15
+

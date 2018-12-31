@@ -22,6 +22,7 @@ bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int
     validators = _malloc(sizeof(bytes_t*) * validator_len);
     for (i = 0, tmp += 1; i < validator_len; i++, tmp = d_next(tmp)) validators[i] = d_bytes(tmp);
   } else {
+    // TODO read the validators from the chain.
     vc_err(vc, "currently only static validators are supported");
     return NULL;
   }
@@ -83,13 +84,6 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
 
   return 0;
 }
-/*
-export function getSigner(data: Block):Buffer {
-  const signature: Buffer = data.sealedFields[1];
-  const message = data.sealedFields.length === 3 ? hash(Buffer.concat([data.bareHash(), rlp.encode(data.sealedFields[2])])) : data.bareHash();
-  return publicToAddress(recover(message, signature.slice(0, 64), signature[64]), true);
-}
-*/
 
 int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint16_t needed_finality) {
   bytes_t* b = blocks[0];
@@ -100,19 +94,23 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
 
   // check if the parent hashes match
   while (b) {
-    if ((proposer = eth_get_validator(vc, b, spec, b == blocks[0] ? &val_len : NULL)) == NULL) return vc_err(vc, "could not find the validator for the block");
+    if ((proposer = eth_get_validator(vc, b, spec, b == blocks[0] ? &val_len : NULL)) == NULL)
+      return vc_err(vc, "could not find the validator for the block");
 
     // check signature of proposer
-    if (get_signer(vc, b, signer)) return vc_err(vc, "could not get the signer");
+    if (get_signer(vc, b, signer))
+      return vc_err(vc, "could not get the signer");
 
     // check if it was signed by the right validator
-    if (memcmp(signer, proposer->data, 20) != 0) return vc_err(vc, "the block was signed by the wrong key");
+    if (memcmp(signer, proposer->data, 20) != 0)
+      return vc_err(vc, "the block was signed by the wrong key");
 
     // calculate the blockhash
     sha3_to(b, &hash);
 
     // next block
     b = blocks[++i];
+
     // check if the next blocks parent_hash matches
     if (b && (rlp_decode_in_list(b, 0, &tmp) != 1 || memcmp(hash, tmp.data, 32) != 0))
       return vc_err(vc, "The parent hashes of the finality blocks don't match");
@@ -133,19 +131,25 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
 
   uint64_t   header_number = 0;
   d_token_t *sig, *signatures;
-  bytes_t*   block_hash = sha3(header);
+  bytes_t*   block_hash = sha3(header); // generate the blockhash
   bytes_t    temp, *sig_hash;
 
-  if (!res && rlp_decode(header, 0, &temp) && rlp_decode(&temp, 8, &temp))
+  // if we expect a certain blocknumber, it must match the 8th field in the BlockHeader
+  if (!res && rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp))
     header_number = bytes_to_long(temp.data, temp.len);
   else
     res = vc_err(vc, "Could not rlpdecode the blocknumber");
 
+  // if we have a blockhash we verify it
   if (res == 0 && expected_blockhash && !b_cmp(block_hash, expected_blockhash))
     res = vc_err(vc, "wrong blockhash");
 
+  // if we expect no signatures ...
   if (res == 0 && vc->config->signaturesCount == 0) {
+
+    // ... and the chain is a authority chain....
     if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->items, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
+      // we merge the current header + finality blocks
       sig              = d_get(vc->proof, K_FINALITY_BLOCKS);
       bytes_t** blocks = _malloc((sig ? d_len(sig) + 1 : 2) * sizeof(bytes_t*));
       blocks[0]        = header;
@@ -153,11 +157,13 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
         for (i = 0; i < d_len(sig); i++) blocks[i + 1] = d_get_bytes_at(sig, i);
       }
       blocks[sig ? d_len(sig) : 1] = NULL;
-      res                          = eth_verify_authority(vc, blocks, vc->chain->spec->items, vc->config->finality);
+      // now we verify these block headers
+      res = eth_verify_authority(vc, blocks, vc->chain->spec->items, vc->config->finality);
       _free(blocks);
     } else // we didn't request signatures so blockheader should be ok.
       res = 0;
   } else if (res == 0 && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
+    // no signatures found,even though we expected some.
     res = vc_err(vc, "missing signatures");
   else if (res == 0) {
     // prepare the message to be sigfned
@@ -165,10 +171,12 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
     uint8_t msg_data[64];
     msg.data = (uint8_t*) &msg_data;
     msg.len  = 64;
-    // first the blockhash + blocknumbero
+    // first the blockhash + blocknumber
     memcpy(msg_data, block_hash->data, 32);
     memset(msg_data + 32, 0, 32);
     long_to_bytes(header_number, msg_data + 56);
+
+    // hash it to create the message hash
     bytes_t* msg_hash = sha3(&msg);
 
     int confirmed = 0; // confiremd is a bitmask for each signature one bit on order to ensure we have all requested signatures
