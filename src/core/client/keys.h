@@ -76,3 +76,9 @@
 #define K_RAW               key("raw")
 #define K_FROM              key("from")
 #define K_STANDARD_V        key("standardV")
+
+#define K_FINALITY_BLOCKS   key("finalityBlocks")
+
+//# chainspec
+#define K_ENGINE            key("engine")
+#define K_VALIDATORS        key("validators")

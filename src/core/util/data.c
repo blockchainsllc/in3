@@ -313,7 +313,7 @@ int parse_object(json_parsed_t* jp, int parent, uint32_t key) {
 }
 
 void free_json(json_parsed_t* jp) {
-  if (jp->items == NULL) return;
+  if (!jp || jp->items == NULL) return;
   if (jp->allocated) {
     size_t i;
     for (i = 0; i < jp->len; i++) {

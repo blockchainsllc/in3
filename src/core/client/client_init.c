@@ -17,6 +17,7 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int 
   chain->nodeListLength = boot_node_count;
   chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
   chain->type           = type;
+  chain->spec           = NULL;
 }
 
 static void initNode(in3_chain_t* chain, int node_index, char* address, char* url) {
@@ -87,6 +88,7 @@ void in3_free(in3_t* a) {
   for (i = 0; i < a->serversCount; i++) {
     in3_nodelist_clear(a->servers + i);
     b_free(a->servers[i].contract);
+    free_json(a->servers[i].spec);
   }
   _free(a->servers);
   _free(a);

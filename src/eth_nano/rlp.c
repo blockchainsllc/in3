@@ -7,7 +7,7 @@ static int ref(bytes_t* b, size_t l, uint8_t* s, int r) {
   b->data = s;
   return r;
 }
-static void add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset) {
+void rlp_add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset) {
   if (len < 56)
     bb_write_byte(bb, offset + len);
   else if (len < 0x100) { // l=1
@@ -75,12 +75,12 @@ void rlp_encode_item(bytes_builder_t* bb, bytes_t* val) {
   } else if (val->len < 56)
     bb_write_byte(bb, val->len + 0x80);
   else
-    add_length(bb, val->len, 0x80);
+    rlp_add_length(bb, val->len, 0x80);
   bb_write_fixed_bytes(bb, val);
 }
 
 void rlp_encode_list(bytes_builder_t* bb, bytes_t* val) {
-  add_length(bb, val->len, 0xc0);
+  rlp_add_length(bb, val->len, 0xc0);
   bb_write_fixed_bytes(bb, val);
 }
 
@@ -90,7 +90,7 @@ bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb) {
   ll.bsize  = 4;
   ll.b.len  = 0;
   ll.b.data = (uint8_t*) &d;
-  add_length(&ll, bb->b.len, 0xc0);
+  rlp_add_length(&ll, bb->b.len, 0xc0);
   bb_replace(bb, 0, 0, d, ll.b.len);
   return bb;
 }

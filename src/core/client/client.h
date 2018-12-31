@@ -3,6 +3,7 @@
  * */
 
 #include "../util/bytes.h"
+#include "../util/data.h"
 #include "../util/stringbuilder.h"
 #include "../util/utils.h"
 #include <stdbool.h>
@@ -125,6 +126,9 @@ typedef struct {
 
   /* the address of the registry contract */
   bytes_t* contract;
+
+  /* optional chain specification*/
+  json_parsed_t* spec;
 
 } in3_chain_t;
 
