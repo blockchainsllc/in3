@@ -4,7 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        { 
+        {
             "name": "(lldb) Attach",
             "type": "cppdbg",
             "request": "attach",
@@ -17,7 +17,12 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/src/cmd/in3",
-            "args": ["-c","tobalaba","eth_getTransactionReceipt","0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"],
+            "args": [
+                "-c",
+                "tobalaba",
+                "eth_getTransactionReceipt",
+                "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+            ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -29,7 +34,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/in3_tests",
-            "args": ["test1"],
+            "args": [
+                "test1"
+            ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -41,7 +48,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
-            "args": ["eth_getTransactionReceipt"],
+            "args": [
+                "eth_getBlockByNumber"
+            ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

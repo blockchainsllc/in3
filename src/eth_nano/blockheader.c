@@ -19,7 +19,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
   uint64_t   header_number = 0;
   d_token_t *sig, *signatures;
   bytes_t*   block_hash = sha3(header);
-  bytes_t    temp;
+  bytes_t    temp, *sig_hash;
 
   if (!res && rlp_decode(header, 0, &temp) && rlp_decode(&temp, 8, &temp))
     header_number = bytes_to_long(temp.data, temp.len);
@@ -53,7 +53,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
 
     int confirmed = 0; // confiremd is a bitmask for each signature one bit on order to ensure we have all requested signatures
     for (i = 0, sig = signatures + 1; i < d_len(signatures); i++, sig = d_next(sig)) {
-      if (d_get_longk(sig, K_BLOCK) == header_number)
+      if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_bytesk(sig, K_BLOCK_HASH)) ? b_cmp(sig_hash, block_hash) : 1))
         confirmed |= eth_verify_signature(vc, msg_hash, sig);
     }
 
