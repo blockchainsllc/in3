@@ -273,7 +273,7 @@ int runRequests(char* name, int test_index, int mem_track) {
 
   int failed = 0, total = 0, count = 0;
 
-  if ((tests = d_get(parsed->items, key("tests")))) {
+  if ((tests = parsed->items)) {
     for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {
 
       fuzz_pos          = -1;
