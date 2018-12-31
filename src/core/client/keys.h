@@ -43,6 +43,7 @@
 #define K_CUMULATIVE_GAS_USED key("cumulativeGasUsed")
 #define K_LOGS_BLOOM        key("logsBloom")
 #define K_LOGS              key("logs")
+#define K_LOG_INDEX         key("logIndex")
 #define K_TOPICS            key("topics")
 
 #define K_SIGNATURES        key("signatures")

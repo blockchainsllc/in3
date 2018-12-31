@@ -13,8 +13,14 @@ int ignore_property(char* name, int full_proof) {
   // we cannot add all difiiculties from the beginning in order to verify it,
   if (strcmp(name, "totalDifficulty") == 0) return 1;
 
+  // this is not part of the standatd RPC
+  if (strcmp(name, "transactionLogIndex") == 0) return 1;
+
   // size should be verified if proof = full
   if (!full_proof && strcmp(name, "size") == 0) return 1;
+
+  // gasUsed should be verified if proof = full
+  if (!full_proof && strcmp(name, "gasUsed") == 0) return 1;
 
   return 0;
 }

@@ -1,34 +1,16 @@
 [
     {
-        "descr": "blocknumnber is not verified",
-        "success": true,
-        "request": {
-            "method": "eth_blockNumber",
-            "params": [],
-            "config": {
-                "requestCount": 1
-            }
-        },
-        "response": [
-            {
-                "result": "0x1234"
-            }
-        ]
-    },
-    {
         "descr": "correct TransactionReceipt",
         "success": true,
+        "fuzzer": true,
+        "chainId": "0x44d",
         "request": {
             "id": 1,
             "jsonrpc": "2.0",
             "method": "eth_getTransactionReceipt",
             "params": [
                 "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
-            ],
-            "in3": {
-                "chainId": "0x44d",
-                "verification": "proof"
-            }
+            ]
         },
         "response": [
             {

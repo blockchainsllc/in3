@@ -15,6 +15,7 @@ bytes_t* create_tx_path(uint32_t index) {
   uint8_t data[4];
   int     i;
   bytes_t b = {.len = 4, .data = data};
+
   if (index == 0)
     b.len = 0;
   else {
@@ -35,7 +36,9 @@ bytes_t* create_tx_path(uint32_t index) {
 
 int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
 
-  int res = 0;
+  int        res = 0, i;
+  bytes_t    root;
+  d_token_t* block_hash = d_get(vc->result, K_BLOCK_HASH);
 
   if (!tx_hash)
     return vc_err(vc, "No Transaction Hash found");
@@ -54,11 +57,18 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
     return vc_err(vc, "No Block-Proof!");
 
   // verify the header
-  res = eth_verify_blockheader(vc, blockHeader, d_get_bytesk(vc->result, K_BLOCK_HASH));
+  res = eth_verify_blockheader(vc, blockHeader, d_bytes(block_hash));
+
+  // make sure the blocknumner on the receipt is correct
+  if (res == 0 && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) != d_get_longk(vc->result, K_BLOCK_NUMBER)))
+    res = vc_err(vc, "wrong blocknumber in the result");
+
   if (res == 0) {
+    // encode the tx_path
     bytes_t* path = create_tx_path(d_get_intk(vc->proof, K_TX_INDEX));
-    bytes_t  root;
-    if (rlp_decode_in_list(blockHeader, 5, &root) != 1)
+
+    // verify the merkle proof for the receipt
+    if (rlp_decode_in_list(blockHeader, BLOCKHEADER_RECEIPT_ROOT, &root) != 1)
       res = vc_err(vc, "no receipt_root");
     else {
       bytes_t*  receipt_raw = serialize_tx_receipt(vc->result);
@@ -71,11 +81,13 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
       if (proof) _free(proof);
     }
 
+    // now we need to verify the transactionIndex by making sure we can do the merkle proof for the same transactionhash and transaction index.
     if (res == 0) {
-      // now we need to verify the transactionIndex
       bytes_t   raw_transaction = {.len = 0, .data = NULL};
       bytes_t** proof           = d_create_bytes_vec(d_get(vc->proof, K_TX_PROOF));
-      if (rlp_decode_in_list(blockHeader, 4, &root) != 1)
+
+      // get the transaction root and do the merkle proof.
+      if (rlp_decode_in_list(blockHeader, BLOCKHEADER_TRANSACTIONS_ROOT, &root) != 1)
         res = vc_err(vc, "no tx root");
       else {
         if (!proof || !trie_verify_proof(&root, path, proof, &raw_transaction))
@@ -83,23 +95,40 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
         else if (raw_transaction.data == NULL)
           res = vc_err(vc, "No value returned after verification");
         else {
-          bytes_t* proofed_hash = sha3(&raw_transaction);
-          if (!b_cmp(proofed_hash, tx_hash))
+          // after a successfull merkle proof, we want to make sure the transaction hash we asked for matches the hash of the last value.
+          uint8_t proofed_hash[32];
+          sha3_to(&raw_transaction, proofed_hash);
+          if (memcmp(proofed_hash, tx_hash->data, 32))
             res = vc_err(vc, "The TransactionHash is not the same as expected");
-          b_free(proofed_hash);
         }
       }
       if (proof) _free(proof);
     }
     b_free(path);
   }
+
+  // if this was all successfull, we still need to make sure all values are correct in the result.
   if (res == 0) {
 
-    // check rest iof the values
+    // check rest of the values
     if (!d_eq(d_get(vc->proof, K_TX_INDEX), d_get(vc->result, K_TRANSACTION_INDEX)))
       return vc_err(vc, "wrong transactionIndex");
     if (!b_cmp(tx_hash, d_get_bytesk(vc->result, K_TRANSACTION_HASH)))
       return vc_err(vc, "wrong transactionHash");
+
+    d_token_t *l, *logs = d_get(vc->result, K_LOGS), *block_number = d_get(vc->result, K_BLOCK_NUMBER);
+    for (i = 0, l = logs + 1; i < d_len(logs); i++, l = d_next(l)) {
+      if (!d_eq(block_number, d_get(l, K_BLOCK_NUMBER)))
+        return vc_err(vc, "wrong block number in log");
+      if (!d_eq(block_hash, d_get(l, K_BLOCK_HASH)))
+        return vc_err(vc, "wrong block hash in log");
+      if (d_get_intk(l, K_LOG_INDEX) != i)
+        return vc_err(vc, "wrong log index");
+      if (!b_cmp(d_get_bytesk(l, K_TRANSACTION_HASH), tx_hash))
+        return vc_err(vc, "wrong tx Hash");
+      if (!d_eq(d_get(vc->proof, K_TX_INDEX), d_get(l, K_TRANSACTION_INDEX)))
+        return vc_err(vc, "wrong tx index");
+    }
   }
 
   return res;
