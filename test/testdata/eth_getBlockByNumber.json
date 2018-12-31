@@ -115,6 +115,7 @@
         "descr": "kovan block with transaction hashes",
         "success": true,
         "fuzzer": true,
+        "chainId": "0x2a",
         "request": {
             "method": "eth_getBlockByNumber",
             "params": [

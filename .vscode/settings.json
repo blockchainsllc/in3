@@ -27,6 +27,7 @@
         "merkle.h": "c",
         "limits": "c",
         "type_traits": "c",
-        "keys.h": "c"
+        "keys.h": "c",
+        "stdlib.h": "c"
     }
 }

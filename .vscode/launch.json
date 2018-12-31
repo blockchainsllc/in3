@@ -49,7 +49,24 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "eth_getBlockByNumber"
+                "eth_getBlockByNumber",
+                "58"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "json",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/json",
+            "args": [
+                "-o",
+                "cstr",
+                "{ \"name\":1,\"name2\":2  }"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

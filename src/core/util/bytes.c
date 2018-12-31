@@ -178,7 +178,7 @@ void bb_write_short(bytes_builder_t* bb, uint16_t val) {
 void bb_write_long_be(bytes_builder_t* bb, uint64_t val, int len) {
   check_size(bb, len);
   int i, s = bb->b.len;
-  for (i = len; i > 0; i--) bb->b.data[s + len - i] = (val >> (i * 8 - 8)) & 0xFF;
+  for (i = 0; i < len; i++) bb->b.data[s + len - i - 1] = (val >> (i << 3)) & 0xFF;
   bb->b.len += len;
 }
 

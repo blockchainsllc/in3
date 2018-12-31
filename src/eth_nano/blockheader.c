@@ -16,7 +16,7 @@ bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int
   bytes_t**  validators = NULL;
   bytes_t*   proposer;
   int        validator_len, i;
-  if ((tmp = d_get(spec, K_VALIDATORS))) {
+  if ((tmp = d_get(spec, K_VALIDATOR_LIST))) {
     validator_len = d_len(tmp);
     if (val_len) *val_len = validator_len;
     validators = _malloc(sizeof(bytes_t*) * validator_len);
@@ -99,12 +99,13 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
   while (b) {
     if ((proposer = eth_get_validator(vc, b, spec, b == blocks[0] ? &val_len : NULL)) == NULL) return vc_err(vc, "could not find the validator for the block");
 
-    // check signature of proposer
-    if (get_signer(vc, b, signer)) return vc_err(vc, "could not get the signer");
+    if (needed_finality > 100) { // for now it is just deactivated
+      // check signature of proposer
+      if (get_signer(vc, b, signer)) return vc_err(vc, "could not get the signer");
 
-    // check if it was signed by the right validator
-    if (memcmp(signer, proposer->data, 20) != 0) return vc_err(vc, "the block was signed by the wrong key");
-
+      // check if it was signed by the right validator
+      if (memcmp(signer, proposer->data, 20) != 0) return vc_err(vc, "the block was signed by the wrong key");
+    }
     // calculate the blockhash
     sha3_to(b, &hash);
 

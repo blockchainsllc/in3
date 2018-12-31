@@ -463,7 +463,7 @@ static int read_token(json_parsed_t* jp, uint8_t* d, size_t* p) {
 
   // calculate len
   uint32_t len = d[(*p)++] & 0x1F, i;
-  int      l   = len > 27 ? len - 27 : 0;
+  int      l   = len > 27 ? len - 27 : 0, ll;
   if (len == 28)
     len = d[*p];
   else if (len == 29)
@@ -497,8 +497,9 @@ static int read_token(json_parsed_t* jp, uint8_t* d, size_t* p) {
       for (i = 0; i < len; i++) {
         key = d[(*p)] << 8 | d[*p + 1];
         *p += 2;
+        ll = jp->len;
         if (read_token(jp, d, p)) return 1;
-        jp->items[jp->len - 1].key = key;
+        jp->items[ll].key = key;
       }
       break;
     case T_STRING:
@@ -514,6 +515,11 @@ static int read_token(json_parsed_t* jp, uint8_t* d, size_t* p) {
       break;
   }
   return 0;
+}
+
+json_parsed_t* parse_binary_str(char* data, int len) {
+  bytes_t b = {.data = (uint8_t*) data, .len = len};
+  return parse_binary(&b);
 }
 
 json_parsed_t* parse_binary(bytes_t* data) {
@@ -555,7 +561,7 @@ static void write_token(bytes_builder_t* bb, d_token_t* t) {
       break;
     case T_OBJECT:
       for (i = 0, c = t + 1; i < len; i++, c = d_next(c)) {
-        bb_write_long_be(bb, t->key, 2);
+        bb_write_long_be(bb, c->key, 2);
         write_token(bb, c);
       }
       break;

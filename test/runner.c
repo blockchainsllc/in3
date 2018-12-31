@@ -285,10 +285,11 @@ int runRequests(char* name, int test_index, int mem_track) {
       }
 
       count++;
-      if (test_index > 0 && count != test_index) continue;
-      total++;
-      mem_reset(mem_track);
-      if (run_test(test, count, NULL, proof)) failed++;
+      if (test_index < 0 || count == test_index) {
+        total++;
+        mem_reset(mem_track);
+        if (run_test(test, count, NULL, proof)) failed++;
+      }
 
       if (d_get_int(test, "fuzzer")) {
         str_range_t resp = d_to_json(d_get_at(d_get(test, key("response")), 0));
