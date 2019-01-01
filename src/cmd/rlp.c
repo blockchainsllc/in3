@@ -192,10 +192,29 @@ void write(bytes_t* data, char* l, char** tt) {
   }
 }
 
+void add_rlp(bytes_builder_t* bb, char* val) {
+  int l = strlen(val);
+  if (l > 1 && val[0] == '0' && val[1] == 'x') {
+    bytes_t* b = hex2byte_new_bytes(val + 2, l - 2);
+    rlp_encode_item(bb, b);
+    b_free(b);
+  } else {
+    uint8_t  data[8];
+    uint64_t value = strtoull(val, NULL, 10);
+    bytes_t  bytes = {.len = 0, .data = data};
+    if (value) {
+      bytes.len  = min_bytes_len(value);
+      bytes.data = data + 8 - min_bytes_len(value);
+      long_to_bytes(value, data);
+    }
+    rlp_encode_item(bb, &bytes);
+  }
+}
+
 int main(int argc, char* argv[]) {
-  char* default_format = "hex";
-  char* input          = NULL;
-  char* format         = default_format;
+  char*            input  = NULL;
+  bytes_builder_t* bb     = bb_new();
+  int              output = 0;
 
   int i;
 
@@ -203,10 +222,25 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-f") == 0)
       input = read_from_stdin(fopen(argv[++i], "r"));
-    else if (strcmp(argv[i], "-o") == 0)
-      format = argv[++i];
+    else if (strcmp(argv[i], "-e") == 0)
+      output = 1;
+    else if (strcmp(argv[i], "-l") == 0)
+      output = 2;
+    else if (output)
+      add_rlp(bb, argv[i]);
     else
       input = argv[i];
+  }
+
+  if (output) {
+    if (output == 2)
+      rlp_encode_to_list(bb);
+    for (int j = 0; j < bb->b.len; j++)
+      printf("%02x", bb->b.data[j]);
+
+    printf("\n");
+
+    return 0;
   }
 
   if (input == NULL) input = read_from_stdin(stdin);
