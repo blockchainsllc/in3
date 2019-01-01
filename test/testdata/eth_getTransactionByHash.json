@@ -2,12 +2,12 @@
     {
         "descr": "correct transaction",
         "success": true,
+        "fuzzer": true,
         "request": {
             "method": "eth_getTransactionByHash",
             "params": [
                 "0x3ddc5012709aa350f4d27aad023410605087aa3dea92a7308c164584a92a5199"
-            ],
-            "config": {}
+            ]
         },
         "response": [
             {

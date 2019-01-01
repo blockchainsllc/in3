@@ -111,12 +111,20 @@ int eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
       if (!proof || !trie_verify_proof(&root, path, proof, &raw_transaction) || raw_transaction.data == NULL)
         res = vc_err(vc, "Could not verify the tx proof");
       else {
-        bytes_t* proofed_hash = sha3(&raw_transaction);
-        if (!b_cmp(proofed_hash, tx_hash))
+        uint8_t proofed_hash[32];
+        sha3_to(&raw_transaction, proofed_hash);
+        if (memcmp(proofed_hash, tx_hash->data, 32))
           res = vc_err(vc, "The TransactionHash is not the same as expected");
-        b_free(proofed_hash);
       }
     }
+
+    if (res == 0)
+      res = eth_verify_tx_values(vc, vc->result, &raw_transaction);
+
+    if (res == 0 && !d_eq(d_get(vc->result, K_TRANSACTION_INDEX), d_get(vc->proof, K_TX_INDEX)))
+      res = vc_err(vc, "wrong transaction index");
+    if (res == 0 && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || d_get_longk(vc->result, K_BLOCK_NUMBER) != bytes_to_long(root.data, root.len)))
+      res = vc_err(vc, "wrong block number");
 
     if (proof) _free(proof);
     b_free(path);
