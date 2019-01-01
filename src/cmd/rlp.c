@@ -42,6 +42,7 @@ static char* BLOCK_HEADER[] = {
     "parent hash",
     "sha3 uncles",
     "miner",
+    "state root",
     "transaction root",
     "receipt root",
     "logs bloom",
@@ -173,7 +174,17 @@ void write(bytes_t* data, char* l, char** tt) {
         d = printf("%-20s : ", tt[i + 1]);
       }
 
-      printf("[ %s\n", t2 ? t2[0] : "");
+      printf("[ %s", t2 ? t2[0] : "");
+
+      bytes_t* hash = sha3(data);
+      printf("  Hash : 0x");
+
+      for (int j = 0; j < 32; j++)
+        printf("%02x", hash->data[j]);
+
+      printf("\n");
+      b_free(hash);
+
       sprintf(prefix, "%s   ", l);
       write(&t, prefix, t2);
       printf("%s]\n", l);
@@ -202,8 +213,8 @@ int main(int argc, char* argv[]) {
 
   if (input[0] == '0' && input[1] == 'x') input += 2;
 
-  write(hex2byte_new_bytes(input, strlen(input)), "", NULL);
+  bytes_t* bytes = hex2byte_new_bytes(input, strlen(input));
+  write(bytes, "", NULL);
 
-  //  printf("INPUT: %s", input);
   return 0;
 }
