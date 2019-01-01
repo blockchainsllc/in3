@@ -49,8 +49,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "eth_getBlockByNumber",
-                "58"
+                "eth_getBalance"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

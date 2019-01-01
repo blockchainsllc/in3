@@ -36,6 +36,12 @@ char* read_from_stdin(FILE* file) {
   if (file != stdin) fclose(file);
   return (char*) buffer;
 }
+static char* ACCOUNT[] = {
+    "ACCOUNT",
+    "nonce",
+    "balance",
+    "storage hash",
+    "code hash"};
 
 static char* BLOCK_HEADER[] = {
     "BLOCKHEADER",
@@ -165,7 +171,7 @@ void write(bytes_t* data, char* l, char** tt) {
           t2 = LOG;
           break;
         case 4:
-          t2 = TX_RECEIPT;
+          t2 = rlp_decode_item_type(&t, 3) == 2 ? TX_RECEIPT : ACCOUNT;
           break;
       }
       if (tt) t2 = NULL;
@@ -235,6 +241,7 @@ int main(int argc, char* argv[]) {
   if (output) {
     if (output == 2)
       rlp_encode_to_list(bb);
+    printf("0x");
     for (int j = 0; j < bb->b.len; j++)
       printf("%02x", bb->b.data[j]);
 

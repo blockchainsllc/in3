@@ -12,6 +12,8 @@
 int ignore_property(char* name, int full_proof) {
   // we cannot add all difiiculties from the beginning in order to verify it,
   if (strcmp(name, "totalDifficulty") == 0) return 1;
+  // accounts have keys withn the address. Manipulating them makes no sense, since only the address inside is used.
+  if (strcmp(name, "accounts") == 0) return 1;
 
   // this is not part of the standatd RPC
   if (strcmp(name, "transactionLogIndex") == 0) return 1;

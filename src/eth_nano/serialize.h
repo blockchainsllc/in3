@@ -25,6 +25,19 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt);
  */
 
 bytes_t* serialize_tx(d_token_t* tx);
+
+/**
+ * creates rlp-encoded raw bytes for a account.
+ * 
+ * The bytes must be freed with b_free after use!
+ * 
+ * 
+ */
+
+bytes_t* serialize_account(d_token_t* a);
+
+
+
 /**
  * creates rlp-encoded raw bytes for a blockheader.
  * 

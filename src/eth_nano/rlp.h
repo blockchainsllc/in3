@@ -122,6 +122,17 @@ void rlp_encode_list(bytes_builder_t* bb, bytes_t* val);
 bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb);
 
 /**
+ * converts the data in the builder to a rlp-encoded item.
+ * 
+ * This function is optimized to not increase the memory more than needed and is fastet than 
+ * creating a second builder to encode the data. 
+ * 
+ * \param bb the builder containing the data.
+ * 
+ * \return the same builder.
+ */
+bytes_builder_t* rlp_encode_to_item(bytes_builder_t* bb);
+/**
  * helper to encode the prefix for a value
  */
 void rlp_add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset);

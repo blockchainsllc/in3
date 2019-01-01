@@ -91,3 +91,17 @@ bytes_builder_t* rlp_encode_to_list(bytes_builder_t* bb) {
   bb_replace(bb, 0, 0, d, ll.b.len);
   return bb;
 }
+
+bytes_builder_t* rlp_encode_to_item(bytes_builder_t* bb) {
+  uint8_t         d[4];
+  bytes_builder_t ll = {.bsize = 4, .b = {.len = 0, .data = (uint8_t*) &d}};
+
+  if (bb->b.len == 1 && bb->b.data[0] < 0x80)
+    return bb;
+  else if (bb->b.len < 56)
+    bb_write_byte(&ll, bb->b.len + 0x80);
+  else
+    rlp_add_length(&ll, bb->b.len, 0x80);
+  bb_replace(bb, 0, 0, d, ll.b.len);
+  return bb;
+}

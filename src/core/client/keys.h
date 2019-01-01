@@ -83,3 +83,16 @@
 //# chainspec
 #define K_ENGINE            key("engine")
 #define K_VALIDATOR_LIST    key("validatorList")
+
+
+
+#define K_CODE_HASH         key("codeHash")
+#define K_ACCOUNT_PROOF     key("accountProof")
+#define K_ACCOUNTS          key("accounts")
+#define K_TYPE              key("type")
+#define K_BALANCE           key("balance")
+#define K_STORAGE_HASH      key("storageHash")
+#define K_KEY               key("key")
+#define K_STORAGE_PROOF     key("storageProof")
+
+#define K_CONTRACT          key("contract")

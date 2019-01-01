@@ -4,6 +4,7 @@ add_library( in3_eth_basic STATIC
   eth_basic.c 
   eth_getTransaction.c 
   eth_getBlock.c 
+  eth_account.c
   trie.c
 )
 

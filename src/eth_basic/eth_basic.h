@@ -20,6 +20,11 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw);
 int eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash);
 
 /**
+ * verify account-proofs
+ */
+int eth_verify_account_proof(in3_vctx_t* vc);
+
+/**
  * verifies a block
  */
 int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber);

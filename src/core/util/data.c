@@ -31,6 +31,56 @@ d_key_t keyn(char* c, int len) {
 bytes_t* d_bytes(d_token_t* item) {
   return (bytes_t*) item;
 }
+
+int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
+  if (item) {
+    int l = d_len(item), i, val;
+    if (l > max) l = max;
+    switch (d_type(item)) {
+      case T_BYTES:
+        if (max > l) {
+          memset(dst, 0, max - l);
+          dst += max - l;
+        }
+        memcpy(dst, item->data, l);
+        return l;
+
+      case T_STRING:
+        if (max > l) {
+          memset(dst, 0, max - 1 - l);
+          dst += max - l - 1;
+        }
+        memcpy(dst, item->data, l);
+        dst[l] = 0;
+        return l + 1;
+      case T_BOOLEAN:
+        memset(dst, 0, max - 1);
+        dst[max - 1] = item->len & 1;
+        return 1;
+      case T_INTEGER:
+        val = item->len & 0xFFFFFFF;
+        for (i = max < 3 ? max : 3; i >= 0; i--) {
+          if (val & 0xFF << (i << 3)) {
+            l = i + 1;
+            if (max > l) {
+              memset(dst, 0, max - l);
+              dst += max - l;
+            }
+
+            for (; i <= 0; i--)
+              dst[l - i - 1] = val & 0xFF << (i << 3);
+            return l;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  memset(dst, 0, max);
+  return 0;
+}
+
 char* d_string(d_token_t* item) {
   if (item == NULL) return NULL;
   return (char*) item->data;
@@ -54,8 +104,7 @@ bytes_t** d_create_bytes_vec(d_token_t* arr) {
   int        l   = d_len(arr), i;
   bytes_t**  dst = _calloc(l + 1, sizeof(bytes_t*));
   d_token_t* t   = arr + 1;
-  for (i = 0; i < l; i++, t += d_token_size(t))
-    dst[i] = d_bytes(t);
+  for (i = 0; i < l; i++, t += d_token_size(t)) dst[i] = d_bytes(t);
   return dst;
 }
 
@@ -102,7 +151,7 @@ int d_eq(d_token_t* a, d_token_t* b) {
 }
 
 d_token_t* d_get(d_token_t* item, uint16_t key) {
-  if (item == NULL) return NULL;
+  if (item == NULL /*|| item->len & 0xF0000000 != 0x30000000*/) return NULL;
   int i = 0, l = item->len & 0xFFFFFFF;
   item += 1;
   for (; i < l; i++, item += d_token_size(item)) {

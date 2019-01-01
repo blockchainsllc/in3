@@ -61,6 +61,17 @@ int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
 #define HASH 32
 #define BLOOM 256
 
+bytes_t* serialize_account(d_token_t* a) {
+  bytes_builder_t* rlp = bb_new();
+  // clang-format off
+  rlp_add(rlp, d_get(a,K_NONCE)              , UINT);
+  rlp_add(rlp, d_get(a,K_BALANCE)            , UINT);
+  rlp_add(rlp, d_get(a,K_STORAGE_HASH)       , HASH);
+  rlp_add(rlp, d_get(a,K_CODE_HASH)          , HASH);
+  // clang-format on
+  return bb_move_to_bytes(rlp_encode_to_list(rlp));
+}
+
 bytes_t* serialize_tx(d_token_t* tx) {
   bytes_builder_t* rlp = bb_new();
   // clang-format off
