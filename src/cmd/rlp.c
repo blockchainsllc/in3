@@ -37,21 +37,102 @@ char* read_from_stdin(FILE* file) {
   return (char*) buffer;
 }
 
-void write(bytes_t* data, char* l) {
+static char* BLOCK_HEADER[] = {
+    "BLOCKHEADER",
+    "parent hash",
+    "sha3 uncles",
+    "miner",
+    "transaction root",
+    "receipt root",
+    "logs bloom",
+    "difficulty",
+    "number",
+    "gas limit",
+    "gas used",
+    "timestamp",
+    "extra data",
+    "mixhash/proposerSeed",
+    "nonce/signature",
+    "extra sealed field"};
+
+static char* TX[] = {
+    "TRANSACTION",
+    "nonce",
+    "gas price",
+    "gas",
+    "to",
+    "value",
+    "data",
+    "v",
+    "r",
+    "s"};
+
+static char* TX_RECEIPT[] = {
+    "TRANSACTION RECEIPT",
+    "status",
+    "cumulative gas",
+    "logs bloom",
+    "logs"};
+
+static char* LOG[] = {
+    "EVENT",
+    "address",
+    "topics",
+    "data"};
+
+static char* TRIE_LEAF[] = {
+    "MERKLE LEAF",
+    "path",
+    "value"};
+
+static char* TRIE_BRANCH[] = {
+    "MERKLE LEAF",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "value"};
+
+void write(bytes_t* data, char* l, char** tt) {
   bytes_t t;
-  char    prefix[100];
-  int     i, j, type, p = strlen(l), d;
+  //  names
+  char prefix[100];
+  int  i, j, type, p = strlen(l), d;
   for (i = 0;; i++) {
     type = rlp_decode(data, i, &t);
     if (type == 0) return;
     if (type == 1) {
-      if (t.len == 0)
-        d = printf("%s0", l);
-      else if (t.len < 6)
-        d = printf("%s%llu", l, bytes_to_long(t.data, t.len));
+      printf("%s", l);
+      if (tt) {
+        d = printf("%-20s : ", tt[i + 1]);
+      }
+
+      if (tt == TRIE_LEAF && i == 0)
+        d = printf("%s (%s)", (t.data[0] & 32) ? "LEAF" : "EXTENSION", (t.data[0] & 16) ? "odd" : "even");
+
+      else if (t.len == 0)
+        d = printf("0");
+      else if (t.len < 9)
+        d = printf("%llu", bytes_to_long(t.data, t.len));
+      else if (t.len == 20)
+        d = printf("<address>");
+      else if (t.len == 32)
+        d = printf("<hash>");
       else
-        d = printf("%sDATA", l);
-      for (j = d - p; j < 12; j++) printf(" ");
+        d = printf("<data %i>", t.len);
+      for (j = d; j < 17; j++) printf(" ");
       if (t.len > 0)
         printf("0x");
       else
@@ -63,9 +144,38 @@ void write(bytes_t* data, char* l) {
       printf("\n");
 
     } else if (type == 2) {
-      printf("%s[\n", l);
+      int    l2 = rlp_decode_len(&t);
+      char** t2;
+      switch (l2) {
+        case 15:
+        case 16:
+          t2 = BLOCK_HEADER;
+          break;
+        case 17:
+          t2 = TRIE_BRANCH;
+          break;
+        case 2:
+          t2 = TRIE_LEAF;
+          break;
+        case 9:
+          t2 = TX;
+          break;
+        case 3:
+          t2 = LOG;
+          break;
+        case 4:
+          t2 = TX_RECEIPT;
+          break;
+      }
+      if (tt) t2 = NULL;
+      printf("%s", l);
+      if (tt) {
+        d = printf("%-20s : ", tt[i + 1]);
+      }
+
+      printf("[ %s\n", t2 ? t2[0] : "");
       sprintf(prefix, "%s   ", l);
-      write(&t, prefix);
+      write(&t, prefix, t2);
       printf("%s]\n", l);
     }
   }
@@ -92,7 +202,7 @@ int main(int argc, char* argv[]) {
 
   if (input[0] == '0' && input[1] == 'x') input += 2;
 
-  write(hex2byte_new_bytes(input, strlen(input)), "");
+  write(hex2byte_new_bytes(input, strlen(input)), "", NULL);
 
   //  printf("INPUT: %s", input);
   return 0;
