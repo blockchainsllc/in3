@@ -54,6 +54,7 @@ typedef struct json_parser {
 d_key_t key(char* c);
 d_key_t keyn(char* c, int len);
 
+bytes_t*  d_create_bytes(d_token_t* item);
 int       d_bytes_to(d_token_t* item, uint8_t* dst, int max);
 bytes_t*  d_bytes(d_token_t* item);
 char*     d_string(d_token_t* item);

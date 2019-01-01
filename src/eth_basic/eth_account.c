@@ -62,16 +62,18 @@ int verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
     d_bytes_to(d_get(p, K_KEY), hash, 32);
     sha3_to(&path, hash);
 
-    proof = d_create_bytes_vec(d_get(account, K_PROOF));
+    proof = d_create_bytes_vec(d_get(p, K_PROOF));
     if (!proof) return vc_err(vc, "no merkle proof for the storage");
 
     // rlp encode the value.
-    if ((bb.b.len = d_bytes_to(d_get(p, K_VALUE), val, 32)))
+    if ((bb.b.len = d_bytes_to(d_get(p, K_VALUE), val, 32))) {
+      if (bb.b.len < 32) memmove(val, val + 32 - bb.b.len, bb.b.len);
       rlp_encode_to_item(&bb);
+    }
 
     if (!trie_verify_proof(&root, &path, proof, bb.b.len ? &bb.b : NULL)) {
       _free(proof);
-      return vc_err(vc, "invalid account proof");
+      return vc_err(vc, "invalid storage proof");
     }
     _free(proof);
   }
@@ -125,7 +127,23 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
         return vc_err(vc, "the codehash in the proof is different");
     } else if (memcmp(d_get_bytesk(proofed_account, K_CODE_HASH)->data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");
-  }
+  } else if (strcmp(method, "eth_getStorageAt") == 0) {
+    uint8_t result[32], proofed_result[32];
+    d_bytes_to(vc->result, result, 32);
+    d_token_t* storage = d_get(proofed_account, K_STORAGE_PROOF);
+    d_token_t* skey    = d_get_at(d_get(vc->request, K_PARAMS), 1);
+
+    for (i = 0, t = storage + 1; i < d_len(storage); i++, t = d_next(t)) {
+      if (d_eq(skey, d_get(t, K_KEY))) {
+        d_bytes_to(d_get(t, K_VALUE), proofed_result, 32);
+        if (memcmp(result, proofed_result, 32) == 0)
+          return 0;
+        break;
+      }
+    }
+    return vc_err(vc, "the storage result does not match");
+  } else
+    return vc_err(vc, "not supported method");
 
   /*
 

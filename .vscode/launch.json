@@ -49,7 +49,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "eth_getCode"
+                "eth_getStorageAt"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

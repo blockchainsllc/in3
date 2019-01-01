@@ -67,7 +67,7 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
               dst += max - l;
             }
 
-            for (; i <= 0; i--)
+            for (; i >= 0; i--)
               dst[l - i - 1] = val & 0xFF << (i << 3);
             return l;
           }
@@ -79,6 +79,50 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
   }
   memset(dst, 0, max);
   return 0;
+}
+
+bytes_t* d_create_bytes(d_token_t* item) {
+  if (item) {
+    int      l   = d_len(item), i, val;
+    bytes_t* res = _malloc(sizeof(bytes_t));
+    switch (d_type(item)) {
+      case T_BYTES:
+        res->data = _malloc(d_len(item));
+        res->len  = item->len;
+        memcpy(res->data, item->data, res->len);
+        return res;
+
+      case T_STRING:
+        res->len  = d_len(item);
+        res->data = _malloc(res->len + 1);
+        memcpy(res->data, item->data, res->len + 1);
+        return res;
+      case T_BOOLEAN:
+        res->len     = 1;
+        res->data    = _malloc(1);
+        res->data[0] = item->len & 1;
+        return res;
+      case T_INTEGER:
+        val = item->len & 0xFFFFFFF;
+        for (i = 3; i >= 0; i--) {
+          if (val & 0xFF << (i << 3)) {
+            l         = i + 1;
+            res->len  = l;
+            res->data = _malloc(l);
+            for (; i >= 0; i--)
+              res->data[l - i - 1] = val & 0xFF << (i << 3);
+            return res;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+    res->data = NULL;
+    res->len  = 0;
+    return res;
+  }
+  return NULL;
 }
 
 char* d_string(d_token_t* item) {
@@ -251,6 +295,7 @@ int parse_string(json_parsed_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
+
   while (true) {
     switch (*(jp->c++)) {
       case 0: return -2;
@@ -258,18 +303,22 @@ int parse_string(json_parsed_t* jp, d_token_t* item) {
         l = jp->c - start - 1;
         if (l > 1 && *start == '0' && start[1] == 'x') {
           // this is a hex-value
-          if (l < 10) { // we can accept up to 3,4 bytes as integer
+          if (l == 2) {
+            // empty byte array
+            item->len  = 0;
+            item->data = NULL;
+          } else if (l < 10 && !(l > 3 && start[2] == '0' && start[3] == '0')) { // we can accept up to 3,4 bytes as integer
             item->len = T_INTEGER << 28;
             for (i = 2; i < l; i++)
-              item->len |= strtohex(start[i]) << (l - i - 1) * 4;
+              item->len |= strtohex(start[i]) << ((l - i - 1) << 2);
           } else {
             // we need to allocate bytes for it. and so set the type to bytes
-            item->len  = (l % 2 ? l - 1 : l - 2) / 2;
+            item->len  = ((l & 1) ? l - 1 : l - 2) >> 1;
             item->data = _malloc(item->len);
-            if (l % 2) item->data[0] = strtohex(start[2]);
-            l = l % 2 + 2;
-            for (i = l - 2, n = 0; i < item->len; i++, n++)
-              item->data[i] = strtohex(start[l + n * 2]) << 4 | strtohex(start[l + n * 2 + 1]);
+            if (l & 1) item->data[0] = strtohex(start[2]);
+            l = (l & 1) + 2;
+            for (i = l - 2, n = l; i < item->len; i++, n += 2)
+              item->data[i] = strtohex(start[n]) << 4 | strtohex(start[n + 1]);
           }
         } else {
           item->len  = l | T_STRING << 28;
