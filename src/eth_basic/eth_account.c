@@ -84,6 +84,7 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
   d_token_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
   char*      method = d_get_stringk(vc->request, K_METHOD);
   bytes_t    tmp;
+  uint8_t    hash[32];
   int        i;
 
   // no result -> nothing to verify
@@ -118,6 +119,9 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
   if (strcmp(method, "eth_getBalance") == 0) {
     if (!d_eq(vc->result, d_get(proofed_account, K_BALANCE)))
       return vc_err(vc, "the balance in the proof is different");
+  } else if (strcmp(method, "eth_getCode") == 0) {
+    if (d_type(vc->result) != T_BYTES || sha3_to(d_bytes(vc->result), hash) != 0 || memcmp(d_get_bytesk(proofed_account, K_CODE_HASH)->data, hash, 32))
+      return vc_err(vc, "the codehash in the proof is different");
   }
 
   /*
