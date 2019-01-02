@@ -2,15 +2,15 @@
  * incubed main client file.
  * */
 
+#ifndef CLIENT_H
+#define CLIENT_H
+
 #include "../util/bytes.h"
 #include "../util/data.h"
 #include "../util/stringbuilder.h"
 #include "../util/utils.h"
 #include <stdbool.h>
 #include <stdint.h>
-
-#ifndef CLIENT_H
-#define CLIENT_H
 
 /** ERROR types  used as return values */
 enum in3err {

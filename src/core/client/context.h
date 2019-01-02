@@ -67,6 +67,12 @@ int        ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len);
 void       free_ctx(in3_ctx_t* ctx);
 int        ctx_create_payload(in3_ctx_t* c, sb_t* sb);
 int        ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
+/** 
+ * sends a request and returns a context used to access the result or errors. 
+ * 
+ * This context *MUST* be freed with free_ctx(ctx) after usage to release the resources.
+*/
+in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params);
 
 // weights
 void free_ctx_nodes(node_weight_t* c);

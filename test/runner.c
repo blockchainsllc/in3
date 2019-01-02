@@ -276,79 +276,81 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   return fail;
 }
 
-int runRequests(char* name, int test_index, int mem_track) {
-  int   res     = 0;
-  char* content = readContent(name);
-  char  tmp[300];
-  if (content == NULL)
-    return -1;
+int runRequests(char** names, int test_index, int mem_track) {
+  int   res = 0, n = 0;
+  char* name   = names[n];
+  int   failed = 0, total = 0, count = 0;
+  while (name) {
+    char* content = readContent(name);
+    char  tmp[300];
+    if (content == NULL)
+      return -1;
 
-  // create client
+    // create client
 
-  // TODO init the nodelist
-  json_parsed_t* parsed = parse_json(content);
-  if (!parsed) {
-    free(content);
-    ERROR("Error parsing the requests");
-    return -1;
-  }
+    // TODO init the nodelist
+    json_parsed_t* parsed = parse_json(content);
+    if (!parsed) {
+      free(content);
+      ERROR("Error parsing the requests");
+      return -1;
+    }
 
-  // parse the data;
-  int        i;
-  char*      str_proof;
-  d_token_t *t      = NULL, *tests, *test;
-  d_token_t* tokens = NULL;
+    // parse the data;
+    int        i;
+    char*      str_proof;
+    d_token_t *t      = NULL, *tests, *test;
+    d_token_t* tokens = NULL;
 
-  int failed = 0, total = 0, count = 0;
+    if ((tests = parsed->items)) {
+      for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {
 
-  if ((tests = parsed->items)) {
-    for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {
+        fuzz_pos          = -1;
+        in3_proof_t proof = PROOF_STANDARD;
+        if ((str_proof = d_get_string(test, "proof"))) {
+          if (strcmp(str_proof, "none") == 0) proof = PROOF_NONE;
+          if (strcmp(str_proof, "standard") == 0) proof = PROOF_STANDARD;
+          if (strcmp(str_proof, "full") == 0) proof = PROOF_FULL;
+        }
 
-      fuzz_pos          = -1;
-      in3_proof_t proof = PROOF_STANDARD;
-      if ((str_proof = d_get_string(test, "proof"))) {
-        if (strcmp(str_proof, "none") == 0) proof = PROOF_NONE;
-        if (strcmp(str_proof, "standard") == 0) proof = PROOF_STANDARD;
-        if (strcmp(str_proof, "full") == 0) proof = PROOF_FULL;
-      }
-
-      count++;
-      if (test_index < 0 || count == test_index) {
-        total++;
-        prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), -1);
-        mem_reset(mem_track);
-        if (run_test(test, count, NULL, proof)) failed++;
-      }
-
-      if (d_get_int(test, "fuzzer")) {
-        str_range_t resp = d_to_json(d_get_at(d_get(test, key("response")), 0));
-        while ((fuzz_pos = find_hex(resp.data, fuzz_pos + 1, resp.len)) > 0) {
-          str_range_t prop = find_prop_name(resp.data + fuzz_pos, resp.data);
-          if (prop.data == NULL) continue;
-          strncpy(tmp, prop.data, prop.len);
-          tmp[prop.len] = 0;
-
-          if (ignore_property(tmp, proof == PROOF_FULL)) continue;
-
-          count++;
-          if (test_index > 0 && count != test_index) continue;
+        count++;
+        if (test_index < 0 || count == test_index) {
           total++;
-          prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), fuzz_pos);
+          prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), -1);
           mem_reset(mem_track);
-          if (run_test(test, count, tmp, proof)) failed++;
+          if (run_test(test, count, NULL, proof)) failed++;
+        }
+
+        if (d_get_int(test, "fuzzer")) {
+          str_range_t resp = d_to_json(d_get_at(d_get(test, key("response")), 0));
+          while ((fuzz_pos = find_hex(resp.data, fuzz_pos + 1, resp.len)) > 0) {
+            str_range_t prop = find_prop_name(resp.data + fuzz_pos, resp.data);
+            if (prop.data == NULL) continue;
+            strncpy(tmp, prop.data, prop.len);
+            tmp[prop.len] = 0;
+
+            if (ignore_property(tmp, proof == PROOF_FULL)) continue;
+
+            count++;
+            if (test_index > 0 && count != test_index) continue;
+            total++;
+            prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), fuzz_pos);
+            mem_reset(mem_track);
+            if (run_test(test, count, tmp, proof)) failed++;
+          }
         }
       }
     }
-  }
 
-  free(content);
-  for (i = 0; i < parsed->len; i++) {
-    if (parsed->items[i].data != NULL && d_type(parsed->items + i) < 2)
-      free(parsed->items[i].data);
+    free(content);
+    for (i = 0; i < parsed->len; i++) {
+      if (parsed->items[i].data != NULL && d_type(parsed->items + i) < 2)
+        free(parsed->items[i].data);
+    }
+    free(parsed->items);
+    free(parsed);
+    name = names[++n];
   }
-  free(parsed->items);
-  free(parsed);
-
   printf("\n%2i of %2i successfully tested", total - failed, total);
 
   if (failed) {
@@ -363,5 +365,24 @@ int runRequests(char* name, int test_index, int mem_track) {
 int main(int argc, char* argv[]) {
   use_color = 1;
   in3_register_eth_full();
-  return runRequests(argv[1], argc > 2 ? atoi(argv[2]) : -1, argc > 3 ? atoi(argv[3]) : -1);
+  int    i = 0, size = 1;
+  int    testIndex = -1, membrk = -1;
+  char** names = malloc(sizeof(char*));
+  names[0]     = NULL;
+  for (i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "-t") == 0)
+      testIndex = atoi(argv[++i]);
+    else if (strcmp(argv[i], "-m") == 0)
+      membrk = atoi(argv[++i]);
+    else {
+      char** t = malloc((size + 1) * sizeof(char*));
+      memmove(t, names, size * sizeof(char*));
+      free(names);
+      names           = t;
+      names[size - 1] = argv[i];
+      names[size++]   = NULL;
+    }
+  }
+
+  return runRequests(names, testIndex, membrk);
 }

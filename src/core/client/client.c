@@ -8,6 +8,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
+  char* req = _malloc(strlen(method) + strlen(params) + 200);
+  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  in3_ctx_t* ctx = new_ctx(c, req);
+  _free(req);
+  if (ctx->error) return ctx;
+
+  if (in3_send_ctx(ctx) == 0) {
+    if (ctx->error) _free(ctx->error);
+    ctx->error = NULL;
+  }
+  return ctx;
+}
+
 int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
   int  res = 0;
   char req[10000];
