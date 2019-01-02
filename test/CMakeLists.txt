@@ -23,9 +23,4 @@ foreach(file ${files})
 endforeach()
 
 
-
-#add_test(eth_tx ${CMAKE_CURRENT_BINARY_DIR}/runner receipt)
-
-#set_property(TARGET in3_tests PROPERTY C_STANDARD 99)
 set_property(TARGET runner PROPERTY C_STANDARD 99)
-
