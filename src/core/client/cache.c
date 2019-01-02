@@ -12,8 +12,8 @@
 int in3_cache_init(in3_t* c) {
   int i;
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
-  for (i = 0; i < c->serversCount; i++)
-    in3_cache_update_nodelist(c, c->servers + i);
+  for (i = 0; i < c->chainsCount; i++)
+    in3_cache_update_nodelist(c, c->chains + i);
 
   return 0;
 }

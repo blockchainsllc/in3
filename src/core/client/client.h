@@ -214,10 +214,10 @@ typedef struct {
   in3_transport_send transport;
 
   /** chain spec and nodeList definitions*/
-  in3_chain_t* servers;
+  in3_chain_t* chains;
 
   /** number of configured chains */
-  uint16_t serversCount;
+  uint16_t chainsCount;
 
 } in3_t;
 

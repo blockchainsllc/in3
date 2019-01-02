@@ -111,8 +111,8 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
   int            n, i, res;
 
   // find the chain-config.
-  for (i = 0; i < ctx->client->serversCount; i++) {
-    chain = ctx->client->servers + i;
+  for (i = 0; i < ctx->client->chainsCount; i++) {
+    chain = ctx->client->chains + i;
     if (chain->chainId == ctx->client->chainId) break;
   }
 

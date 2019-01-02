@@ -213,21 +213,21 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   int    j;
   c->max_attempts = 1;
   c->transport    = send_mock;
-  for (j = 0; j < c->serversCount; j++)
-    c->servers[j].needsUpdate = false;
+  for (j = 0; j < c->chainsCount; j++)
+    c->chains[j].needsUpdate = false;
   c->proof = proof;
 
   d_token_t* signatures = d_get(test, key("signatures"));
   c->chainId            = d_get_longkd(test, key("chainId"), 1);
   if (signatures) {
     c->signatureCount = d_len(signatures);
-    for (j = 0; j < c->serversCount; j++) {
-      if (c->servers[j].chainId == c->chainId) {
-        for (i = 0; i < c->servers[j].nodeListLength; i++) {
+    for (j = 0; j < c->chainsCount; j++) {
+      if (c->chains[j].chainId == c->chainId) {
+        for (i = 0; i < c->chains[j].nodeListLength; i++) {
           if (i < c->signatureCount)
-            memcpy(c->servers[j].nodeList[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
+            memcpy(c->chains[j].nodeList[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
           else
-            c->servers[j].weights[i].blacklistedUntil = 0xFFFFFFFFFFFFFF;
+            c->chains[j].weights[i].blacklistedUntil = 0xFFFFFFFFFFFFFF;
         }
       }
     }

@@ -178,8 +178,8 @@ int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t
   int          i, res = IN3_ERR_CHAIN_NOT_FOUND;
   in3_chain_t* chain;
   in3_t*       c = ctx->client;
-  for (i = 0; i < c->serversCount; i++) {
-    chain = c->servers + i;
+  for (i = 0; i < c->chainsCount; i++) {
+    chain = c->chains + i;
     if (chain->chainId == chain_id) {
       if (chain->needsUpdate || update) {
         chain->needsUpdate = false;
