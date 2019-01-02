@@ -63,7 +63,7 @@ typedef struct {
  * the request data will be parsed and represented in the context.
  */
 in3_ctx_t* new_ctx(in3_t* client, char* req_data);
-int        ctx_parse_response(in3_ctx_t* ctx, char* response_data);
+int        ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len);
 void       free_ctx(in3_ctx_t* ctx);
 int        ctx_create_payload(in3_ctx_t* c, sb_t* sb);
 int        ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);

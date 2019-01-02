@@ -58,8 +58,8 @@ static void in3_client_init(in3_t* c) {
   c->proof              = PROOF_STANDARD;
   c->replaceLatestBlock = 0;
   c->requestCount       = 1;
-  c->chainsCount       = 5;
-  c->chains            = _malloc(sizeof(in3_chain_t) * c->chainsCount);
+  c->chainsCount        = 5;
+  c->chains             = _malloc(sizeof(in3_chain_t) * c->chainsCount);
 
   // mainnet
   initChain(c->chains, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252", 2, CHAIN_ETH, NULL);

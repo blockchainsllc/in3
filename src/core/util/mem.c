@@ -18,6 +18,7 @@ static mem_p_t* mem_tracker = NULL;
 static int      mem_count   = 0;
 static size_t   c_mem       = 0;
 static size_t   max_mem     = 0;
+static size_t   max_cnt     = 0;
 static int      track_count = -1;
 
 void* t_malloc(size_t size, char* file, const char* func, int line) {
@@ -32,7 +33,11 @@ void* t_malloc(size_t size, char* file, const char* func, int line) {
     printf("Found allocated memory ( %zu bytes ) in %s : %s : %i\n", size, file, func, line);
   mem_tracker = t;
   c_mem += size;
-  if (max_mem < c_mem) max_mem = c_mem;
+  if (max_mem < c_mem) {
+    max_mem = c_mem;
+    //    printf("new max allocated memory %zu bytes ( + %zu bytes ) in %s : %s : %i\n", c_mem, size, file, func, line);
+    max_cnt = mem_count;
+  }
   return ptr;
 }
 
@@ -75,7 +80,10 @@ void* t_realloc(void* ptr, size_t size, char* file, const char* func, int line) 
   while (t) {
     if (ptr == t->ptr) {
       c_mem += size - t->size;
-      if (max_mem < c_mem) max_mem = c_mem;
+      if (max_mem < c_mem) {
+        max_mem = c_mem;
+        //        printf("            .... realloc %zu                        %s : %s : %i\n", c_mem, file, func, line);
+      }
       t->ptr  = realloc(ptr, size);
       t->size = size;
       return t->ptr;

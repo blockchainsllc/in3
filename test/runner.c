@@ -69,9 +69,8 @@ char* readContent(char* name) {
   return buffer;
 }
 
-static char*      _tmp_str;
-static d_token_t* _tmp_response;
-static int        fuzz_pos = -1;
+static bytes_t* _tmp_response;
+static int      fuzz_pos = -1;
 
 static int find_hex(char* str, int start, int len) {
   int i;
@@ -111,18 +110,41 @@ static str_range_t find_prop_name(char* p, char* start) {
   return res;
 }
 
+static void prepare_response(int count, d_token_t* response_array, int as_bin, int fuzz_pos) {
+  if (_tmp_response) {
+    free(_tmp_response->data);
+    free(_tmp_response);
+  }
+  if (!as_bin) {
+    sb_t*       sb = sb_new(NULL);
+    str_range_t r  = d_to_json(d_get_at(response_array, 0));
+    sb_add_char(sb, '[');
+    sb_add_range(sb, r.data, 0, r.len);
+    sb_add_char(sb, ']');
+
+    if (fuzz_pos >= 0)
+      mod_hex(sb->data + fuzz_pos + 1);
+    _tmp_response       = _malloc(sizeof(bytes_t));
+    _tmp_response->data = (uint8_t*) sb->data;
+    _tmp_response->len  = sb->len;
+    _free(sb);
+  } else {
+    bytes_builder_t* bb = bb_new();
+    d_serialize_binary(bb, response_array + 1);
+    _tmp_response       = _malloc(sizeof(bytes_t));
+    _tmp_response->data = bb->b.data;
+    _tmp_response->len  = bb->b.len;
+    _free(bb);
+  }
+}
+
 static int send_mock(char** urls, int urls_len, char* payload, in3_response_t* result) {
   // printf("payload: %s\n",payload);
   int i;
-  for (i = 0; i < urls_len; i++) {
-    str_range_t r = d_to_json(d_get_at(_tmp_response, i));
-    sb_add_char(&(result + i)->result, '[');
-    sb_add_range(&(result + i)->result, r.data, 0, r.len);
-    sb_add_char(&(result + i)->result, ']');
-
-    if (fuzz_pos >= 0 && i == 0)
-      mod_hex((result + i)->result.data + fuzz_pos + 1);
-  }
+  for (i = 0; i < urls_len; i++)
+    // rioght now we always add the same response
+    // TODO later support array of responses.
+    sb_add_range(&(result + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
   return 0;
 }
 
@@ -153,9 +175,10 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   char *res, *err;
   int   success = must_fail ? 0 : d_get_intkd(test, key("success"), 1);
 
-  _tmp_response = response;
+  //  _tmp_response = response;
+  int is_bin = d_get_int(test, "binaryFormat");
 
-  in3_client_rpc(c, method, params, &res, &err);
+  in3_client_rpc(c, method, params, is_bin ? NULL : &res, &err);
 
   if (err && res) {
     print_error("Error and Result set");
@@ -180,14 +203,14 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
     print_success("OK");
     _free(err);
     return 0;
-  } else if (res) {
+  } else if (res || is_bin) {
     if (!success) {
       print_error("Should have Failed");
-      _free(res);
+      if (!is_bin) _free(res);
       return -1;
     }
     print_success("OK");
-    _free(res);
+    if (!is_bin) _free(res);
     return 0;
   } else {
     print_error("NO Error and no Result");
@@ -241,15 +264,12 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     printf(" -- Memory Leak detected by malloc #%i!", mem_get_memleak_cnt());
     if (!fail) fail = 1;
   }
-
+  d_token_t*       response = d_get(test, key("response"));
   size_t           max_heap = mem_get_max_heap();
-  str_range_t      res_size = d_to_json(_tmp_response);
+  str_range_t      res_size = d_to_json(response);
   bytes_builder_t* bb       = bb_new();
 
-  d_serialize_binary(bb, _tmp_response);
-
-  _tmp_response = NULL;
-  _tmp_str      = NULL;
+  d_serialize_binary(bb, response);
 
   printf(" ( heap: %zu json: %lu bin: %i) ", max_heap, res_size.len, bb->b.len);
   bb_free(bb);
@@ -295,6 +315,7 @@ int runRequests(char* name, int test_index, int mem_track) {
       count++;
       if (test_index < 0 || count == test_index) {
         total++;
+        prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), -1);
         mem_reset(mem_track);
         if (run_test(test, count, NULL, proof)) failed++;
       }
@@ -312,6 +333,7 @@ int runRequests(char* name, int test_index, int mem_track) {
           count++;
           if (test_index > 0 && count != test_index) continue;
           total++;
+          prepare_response(1, d_get(test, key("response")), d_get_int(test, "binaryFormat"), fuzz_pos);
           mem_reset(mem_track);
           if (run_test(test, count, tmp, proof)) failed++;
         }

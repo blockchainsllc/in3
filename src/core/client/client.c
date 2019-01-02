@@ -15,8 +15,8 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
 
   in3_ctx_t*  ctx = new_ctx(c, req);
   str_range_t s;
-  result[0] = 0;
-  error[0]  = 0;
+  if (result) result[0] = 0;
+  error[0] = 0;
 
   if (ctx->error) {
     if (error != NULL) {
@@ -30,7 +30,8 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
 
       d_token_t* r = d_get(ctx->responses[0], K_RESULT);
       if (r) {
-        *result = d_create_json(r);
+        if (result)
+          *result = d_create_json(r);
       } else if ((r = d_get(ctx->responses[0], K_ERROR))) {
         if (d_type(r) == T_OBJECT) {
           s      = d_to_json(r);

@@ -106,4 +106,6 @@ char* json_get_json_value(char* js, char* prop);
 #define d_get_bytesk(r, k) d_bytes(d_get(r, k))
 #define d_get_bytes_at(r, i) d_bytes(d_get_at(r, i))
 
+#define d_is_binary_ctx(parsed) (parsed->allocated == 0)
+
 #endif

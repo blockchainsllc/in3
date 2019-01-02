@@ -466,6 +466,7 @@ char* d_create_json(d_token_t* item) {
   switch (d_type(item)) {
     case T_ARRAY:
     case T_OBJECT:
+      if (!item->data) return NULL;
       s   = d_to_json(item);
       dst = _malloc(s.len + 1);
       memcpy(dst, s.data, s.len);

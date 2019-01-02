@@ -141,7 +141,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
       if (ctx->response_context) free_json(ctx->response_context);
 
       // parse the result
-      res = ctx_parse_response(ctx, response[n].result.data);
+      res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len);
       if (res < 0) {
         // blacklist!
         w->weight->blacklistedUntil = _time() + 3600000;

@@ -45,11 +45,11 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
   return c;
 }
 
-int ctx_parse_response(in3_ctx_t* ctx, char* response_data) {
+int ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   int        i;
   d_token_t* t;
 
-  ctx->response_context = parse_json(response_data);
+  ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
   if (!ctx->response_context)
     return ctx_set_error(ctx, "Error parsing the JSON-respomse!", IN3_ERR_INVALID_JSON);
 
@@ -75,6 +75,7 @@ void free_ctx(in3_ctx_t* ctx) {
   if (ctx->error) _free(ctx->error);
   free_ctx_nodes(ctx->nodes);
   if (ctx->response_context) {
+    //if (ctx->response_context->allocated)
     _free(ctx->response_context->c);
     free_json(ctx->response_context);
   }
