@@ -124,6 +124,7 @@ zephyr:
      paths:
       - src/zephyr/build
   script:
+    - sudo apt-get remove --auto-remove cmake
     - pip3 install --user cmake
     - apt-get update && eatmydata apt-get install -y qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
     - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
