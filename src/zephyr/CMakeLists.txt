@@ -29,6 +29,7 @@ include(../core/include.cmake)
 #include(../eth_basic/include.cmake)
 include(../eth_full/include.cmake)
 include(../core/compiler.cmake)
+set_property(GLOBAL PROPERTY C_STANDARD 99)
 
 # add dependency
 # add_subdirectory( ../core "${PROJECT_BINARY_DIR}/core")
