@@ -159,24 +159,22 @@ int op_shift(evm_t* evm, uint8_t left) {
   if ((l = evm_stack_pop_ref(evm, &b)) < 0) return EVM_ERROR_EMPTY_STACK;
   memmove(res + 32 - l, b, l);
   if (l < 32) memset(res, 0, 32 - l);
-  if (left == 1) {
+  if (left == 1)
     big_shift_left(res, 32, pos);
-    pos = l + ((pos + 7) >> 3);
-    if (pos > 32) pos = 32;
-  } else if (left == 0) {
+  else if (left == 0)
     big_shift_right(res, 32, pos);
-    pos = l - (((pos >> 3) > l) ? l : (pos >> 3));
-    if (pos < 0) pos = 32;
-  } else if (left == 2) {
-    uint8_t is_signed = *res & 128;
+  else if (left == 2) { // signed shift right
     big_shift_right(res, 32, pos);
-    if (is_signed) {
+    if (l == 32 && (*b & 128)) { // the original number was signed
       for (l = 0; l<pos>> 3; l++) res[l] = 0xFF;
-      res[pos >> 3] |= (0XFF >> (7 - (pos % 8))) << (7 - (pos % 8));
+      l = 8 - (pos % 8);
+      res[pos >> 3] |= (0XFF >> l) << l;
       return evm_stack_push(evm, res, 32);
     }
-    pos = l - (((pos >> 3) > l) ? l : (pos >> 3));
-    if (pos < 0) pos = 32;
+  }
+  // optimize length
+  for (pos = 32; pos > 0; pos--) {
+    if (res[32 - pos]) break;
   }
   return evm_stack_push(evm, res + 32 - pos, pos);
 }
