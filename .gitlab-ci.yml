@@ -126,7 +126,7 @@ zephyr:
   script:
     - sudo apt-get remove -y --auto-remove cmake
     - apt-get update && eatmydata apt-get install -y curl qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
-    - curl -L https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2-Linux-x86_64.tar.gz | tar -xzf -
+    - curl -L https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2.tar.gz | tar -xzf -
     - cd cmake-3.13.2-Linux-x86_64/ && ./bootstrap && make && make install && cd ..
     - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
     - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
