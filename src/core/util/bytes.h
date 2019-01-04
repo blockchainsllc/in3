@@ -57,6 +57,10 @@ bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);
 bytes_builder_t* bb_new();
 /** frees a bytebuilder and its content. */
 void bb_free(bytes_builder_t* bb);
+
+/** internal helper to increase the buffer if needed */
+int bb_check_size(bytes_builder_t* bb, size_t len);
+
 /** writes a string to the builder. */
 void bb_write_chars(bytes_builder_t* bb, char* c, int len);
 /** writes bytes to the builder with a prefixed length. */
@@ -81,5 +85,12 @@ void bb_clear(bytes_builder_t* bb);
 void bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, int data_len);
 /** frees the builder and moves the content in a newly created bytes struct (which needs to be freed later). */
 bytes_t* bb_move_to_bytes(bytes_builder_t* bb);
+
+// [len][data][len] [len][data][len] [len][data][len]
+//                  ^
+// [p1]
+//
+void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
+void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
 
 #endif

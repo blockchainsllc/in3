@@ -28,6 +28,8 @@
         "limits": "c",
         "type_traits": "c",
         "keys.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "ecdsa.h": "c",
+        "bignum.h": "c"
     }
 }

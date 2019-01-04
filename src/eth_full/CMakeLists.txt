@@ -2,6 +2,9 @@
 # static lib
 add_library( in3_eth_full STATIC 
   eth_full.c 
+  evm.c
+  opcodes.c  
+  big.c
 )
 
 # include core in the headers
