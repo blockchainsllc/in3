@@ -125,7 +125,7 @@ zephyr:
       - src/zephyr/build
   script:
     - sudo apt remove cmake
-    - apt-get update && eatmydata apt-get install cmake qemu-system-arm --no-install-recommends -y && rm -rf /var/lib/apt
+    - apt-get update && eatmydata apt-get install -y cmake qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
     - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
     - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
     - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION} 
