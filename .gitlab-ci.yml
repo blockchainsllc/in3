@@ -124,15 +124,12 @@ zephyr:
      paths:
       - src/zephyr/build
   script:
-    - sudo apt remove -y cmake cmake-data
-    - apt-get update &&  apt-get install -y software-properties-common python-software-properties
-    - sudo -E add-apt-repository -y ppa:george-edison55/cmake-3.x
-    - apt-get update && eatmydata apt-get install -y cmake qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
+    - apt-get update && eatmydata apt-get install -y qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
     - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
     - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
     - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION} 
     - rm zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
-    - git clone https://github.com/zephyrproject-rtos/zephyr.git 
+    - git clone -b 'zephyr-v1.13.0' --single-branch https://github.com/zephyrproject-rtos/zephyr.git 
     - source zephyr/zephyr-env.sh
     - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}" 
     - cd src/zephyr; mkdir build; cd build
