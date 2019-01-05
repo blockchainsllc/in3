@@ -275,9 +275,79 @@ static int op_mstore(evm_t* evm, uint8_t len) {
   return 0;
 }
 
-int evm_execute(evm_t* evm) {
+static int op_sload(evm_t* evm) {
+  uint8_t* data;
+  int      l;
+  if ((l = evm_stack_pop_ref(evm, &data)) < 0) return l;
+  if ((l = evm->env(evm, EVM_ENV_STORAGE, data, l, data, 0, 0)) < 0) return l;
+  return evm_stack_push(evm, data, l);
+}
 
-  switch (evm->code.data[evm->pos++]) {
+static int op_jump(evm_t* evm, uint8_t cond) {
+  int pos = evm_stack_pop_int(evm);
+  if (pos < 0) return pos;
+  if ((uint32_t) pos > evm->code.len || evm->code.data[pos] != 0x5B) return EVM_ERROR_INVALID_JUMPDEST;
+  if (cond) {
+    uint8_t c;
+    int     ret = evm_stack_pop_byte(evm, &c);
+    if (ret == EVM_ERROR_EMPTY_STACK) return EVM_ERROR_EMPTY_STACK;
+    if (!c && ret >= 0) return 0; // the condition was false
+  }
+  evm->pos = pos + 1;
+  return 0;
+}
+
+static int op_push(evm_t* evm, uint8_t len) {
+  if (evm->code.len < (uint32_t) evm->pos + len) return EVM_ERROR_INVALID_PUSH;
+  if (evm_stack_push(evm, evm->code.data + evm->pos, len) < 0)
+    return EVM_ERROR_BUFFER_TOO_SMALL;
+  evm->pos += len;
+  return 0;
+}
+
+static int op_dup(evm_t* evm, uint8_t pos) {
+  uint8_t* data;
+  int      l = evm_stack_get_ref(evm, pos, &data);
+  if (l < 0) return l;
+  return evm_stack_push(evm, data, l);
+}
+
+static int op_swap(evm_t* evm, uint8_t pos) {
+  uint8_t data[33], *a, *b;
+  int     l1 = evm_stack_get_ref(evm, 1, &a);
+  if (l1 < 0) return l1;
+  int l2 = evm_stack_get_ref(evm, pos, &b);
+  if (l2 < 0) return l2;
+  if (l1 == l2) {
+    memcpy(data, a, l1);
+    memcpy(a, b, l1);
+    memcpy(b, data, l1);
+  } else if (l2 > l1) {
+    memcpy(data, b, l2 + 1); // keep old b + len
+    memcpy(b, a, l1 + 1);
+    if (pos > 2) memmove(b + l1 + 1, b + l2 + 1, a - b - l2 - 1);
+    memcpy(a + l1 - l2, data, l2 + 1);
+  } else {
+    memcpy(data, a, l1 + 1); // keep old b + len
+    memcpy(a, b, l2 + 1);
+    if (pos > 2) memmove(b + l1 + 1, b + l2 + 1, a - b - l2 - 1);
+    memcpy(b, data, l1 + 1);
+  }
+  return 0;
+}
+
+int evm_execute(evm_t* evm) {
+  uint8_t op = evm->code.data[evm->pos++];
+  if (op >= 0x60 && op <= 0x7F) // PUSH
+    return op_push(evm, op - 0x5F);
+  if (op >= 0x80 && op <= 0x8F) // DUP
+    return op_dup(evm, op - 0x7F);
+  if (op >= 0x90 && op <= 0x9F) // SWAP
+    return op_swap(evm, op - 0x8F);
+  if (op >= 0xA0 && op <= 0xA4) // LOG --> for now, we don't support logs
+    return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+
+  switch (op) {
     case 0x00: // STOP
       evm->state = EVM_STATE_STOPPED;
       return 0;
@@ -367,6 +437,26 @@ int evm_execute(evm_t* evm) {
       return op_mstore(evm, 32);
     case 0x53: // MSTORE8
       return op_mstore(evm, 1);
+    case 0x54: // SLOAD
+      return op_sload(evm);
+    case 0x55: // SSTORE   -->   for eth_call we do not support storing storage yet!
+      return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+    case 0x56: // JUMP
+      return op_jump(evm, 0);
+    case 0x57: // JUMPI
+      return op_jump(evm, 1);
+    case 0x58: // PC
+      return evm_stack_push_int(evm, evm->pos - 1);
+    case 0x59: // MSIZE
+      return evm_stack_push_int(evm, evm->memory.bsize);
+    case 0x5a: // GAS     --> here we always return enough gas to keep going, since eth call should not use it anyway
+      return evm_stack_push_int(evm, 0xFFFFFFF);
+    case 0x5b: // JUMPDEST
+      return 0;
+    case 0xF0: // CREATE   -> we don't support it for call
+      return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+    case 0xF1: // CALL
+      return 0;
 
     default:
       return EVM_ERROR_INVALID_OPCODE;

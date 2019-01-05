@@ -11,6 +11,9 @@ typedef enum evm_state {
 #define EVM_ERROR_INVALID_OPCODE -2
 #define EVM_ERROR_BUFFER_TOO_SMALL -3
 #define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -4
+#define EVM_ERROR_INVALID_JUMPDEST -5
+#define EVM_ERROR_INVALID_PUSH -6
+#define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -7
 
 #define EVM_EIP_CONSTANTINOPL 1
 
@@ -49,6 +52,7 @@ int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len);
 int evm_stack_push_bn(evm_t* evm, bignum256* val);
 int evm_stack_push_int(evm_t* evm, uint32_t val);
 
+int     evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst);
 int     evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len);
 int     evm_stack_pop_bn(evm_t* evm, bignum256* dst);
 int     evm_stack_pop_ref(evm_t* evm, uint8_t** dst);

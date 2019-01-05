@@ -58,6 +58,26 @@ int evm_stack_pop_ref(evm_t* evm, uint8_t** dst) {
   return l;
 }
 
+int evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst) {
+  if (evm->stack_size - pos <= 0) return EVM_ERROR_EMPTY_STACK; // stack empty
+  uint32_t p = evm->stack.b.len;
+  uint8_t  i, l;
+  for (i = 0; i < pos; i++) {
+    l = evm->stack.b.data[p - 1];
+    p -= l + 1;
+  }
+  *dst = evm->stack.b.data + p;
+  return l;
+}
+
+int evm_stack_peek_ref(evm_t* evm, uint8_t** dst) {
+  if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
+  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1];
+  evm->stack.b.len -= l + 1;
+  evm->stack_size--;
+  *dst = evm->stack.b.data + evm->stack.b.len;
+  return l;
+}
 int evm_stack_pop_byte(evm_t* evm, uint8_t* dst) {
   if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
   uint8_t l = evm->stack.b.data[evm->stack.b.len - 1];
