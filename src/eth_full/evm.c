@@ -26,6 +26,17 @@ int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
   evm->stack_size++;
   return 0;
 }
+int evm_stack_push_int(evm_t* evm, uint32_t val) {
+  uint8_t bytes[4];
+  bytes[3] = val & 0xFF;
+  bytes[2] = (val << 8) & 0xFF;
+  bytes[1] = (val << 16) & 0xFF;
+  bytes[0] = (val << 24) & 0xFF;
+  if (bytes[0]) return evm_stack_push(evm, bytes, 4);
+  if (bytes[1]) return evm_stack_push(evm, bytes + 1, 3);
+  if (bytes[2]) return evm_stack_push(evm, bytes + 2, 2);
+  return evm_stack_push(evm, bytes + 3, 1);
+}
 
 int evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len) {
   if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
@@ -33,7 +44,8 @@ int evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len) {
   evm->stack.b.len -= l + 1;
   evm->stack_size--;
   if (l > len) return EVM_ERROR_BUFFER_TOO_SMALL;
-  memmove(dst, evm->stack.b.data + evm->stack.b.len, l);
+  if (dst)
+    memmove(dst, evm->stack.b.data + evm->stack.b.len, l);
   return l;
 }
 
@@ -57,8 +69,24 @@ int evm_stack_pop_byte(evm_t* evm, uint8_t* dst) {
     }
   } else if (l == 0)
     return -3;
-  dst = evm->stack.b.data + evm->stack.b.len + l - 1;
+  *dst = evm->stack.b.data[evm->stack.b.len + l - 1];
   return l;
+}
+
+int32_t evm_stack_pop_int(evm_t* evm) {
+  if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
+  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1], i;
+  evm->stack.b.len -= l + 1;
+  evm->stack_size--;
+  if (l > 4) {
+    for (uint32_t i = evm->stack.b.len; i < evm->stack.b.len + l - 1; i++) {
+      if (evm->stack.b.data[i]) return -3;
+    }
+  } else if (l == 0)
+    return -3;
+  int32_t val = 0;
+  for (i = 0; i < l; i++) val |= ((int32_t) evm->stack.b.data[evm->stack.b.len + l - 1 - i]) << (i << 3);
+  return val;
 }
 
 int evm_stack_pop_bn(evm_t* evm, bignum256* dst) {

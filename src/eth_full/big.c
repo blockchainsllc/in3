@@ -67,3 +67,18 @@ void big_shift_right(uint8_t* a, int len, int bits) {
       a[i] = i - r >= 0 ? a[i - r] : 0;
   }
 }
+
+int big_int(uint8_t* val, int len) {
+  switch (len) {
+    case 1:
+      return *val;
+    case 2:
+      return ((int32_t) val[0] << 8) + val[1];
+    case 3:
+      return ((int32_t) val[0] << 16) + ((int32_t) val[1] << 8) + val[2];
+    case 4:
+      return ((int32_t) val[0] << 24) + ((int32_t) val[1] << 16) + ((int32_t) val[2] << 8) + val[3];
+    default:
+      return -1;
+  }
+}
