@@ -14,6 +14,7 @@ typedef enum evm_state {
 #define EVM_ERROR_INVALID_JUMPDEST -5
 #define EVM_ERROR_INVALID_PUSH -6
 #define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -7
+#define EVM_ERROR_TIMEOUT -8
 
 #define EVM_EIP_CONSTANTINOPL 1
 
@@ -27,24 +28,31 @@ typedef enum evm_state {
 typedef int (*evm_get_env)(void* evm, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t* out_data, int offset, int len);
 
 typedef struct evm {
+  // internal data
   bytes_builder_t stack;
   bytes_builder_t memory;
   int             stack_size;
   bytes_t         code;
   int             pos;
   evm_state_t     state;
+  bytes_t         last_returned;
 
-  uint32_t    properties;
-  uint8_t*    address;
-  uint8_t*    account;
-  uint8_t*    origin;
-  uint8_t*    caller;
-  bytes_t     call_value;
-  bytes_t     call_data;
-  bytes_t     gas_price;
-  bytes_t*    block_header;
-  bytes_t     last_returned;
+  // set properties as to which EIPs to use.
+  uint32_t properties;
+
+  // define the enviroment-function.
   evm_get_env env;
+
+  //
+  uint8_t* address;
+  uint8_t* account;
+  uint8_t* origin;
+  uint8_t* caller;
+  bytes_t  call_value;
+  bytes_t  call_data;
+
+  bytes_t  gas_price;
+  bytes_t* block_header;
 
 } evm_t;
 
@@ -58,3 +66,5 @@ int     evm_stack_pop_bn(evm_t* evm, bignum256* dst);
 int     evm_stack_pop_ref(evm_t* evm, uint8_t** dst);
 int     evm_stack_pop_byte(evm_t* evm, uint8_t* dst);
 int32_t evm_stack_pop_int(evm_t* evm);
+
+int evm_run(evm_t* evm);

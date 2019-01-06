@@ -21,19 +21,74 @@ static int ensure_memory(evm_t* evm, uint32_t max_pos) {
   return max_pos > evm->memory.bsize ? bb_check_size(&evm->memory, max_pos - evm->memory.b.len) : 0;
 }
 
-static int op_add(evm_t* evm) {
-  bignum256 a, b;
-  if (evm_stack_pop_bn(evm, &a)) return EVM_ERROR_EMPTY_STACK;
-  if (evm_stack_pop_bn(evm, &b)) return EVM_ERROR_EMPTY_STACK;
-  bn_add(&a, &b);
-  return evm_stack_push_bn(evm, &a);
-}
-static int op_mul(evm_t* evm) {
-  bignum256 a, b;
-  if (evm_stack_pop_bn(evm, &a)) return EVM_ERROR_EMPTY_STACK;
-  if (evm_stack_pop_bn(evm, &b)) return EVM_ERROR_EMPTY_STACK;
-  //  bn_multiply(&a, &b,2);
-  return evm_stack_push_bn(evm, &a);
+#define MATH_ADD 1
+#define MATH_SUB 2
+#define MATH_MUL 3
+#define MATH_DIV 4
+#define MATH_SDIV 5
+#define MATH_MOD 6
+#define MATH_SMOD 7
+#define MATH_EXP 8
+#define MATH_SIGNEXP 9
+
+static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
+  uint8_t *a, *b, res[65], *r = res;
+  int      la = evm_stack_pop_ref(evm, &a), lb = evm_stack_pop_ref(evm, &b), l;
+  if (la < 0 || lb < 0) return EVM_ERROR_EMPTY_STACK;
+  switch (op) {
+    case MATH_ADD:
+      l = big_add(a, la, b, lb, res, mod ? 64 : 32);
+      break;
+    case MATH_SUB:
+      l = big_sub(a, la, b, lb, res);
+      break;
+    case MATH_MUL:
+      l = big_mul(a, la, b, lb, res, mod ? 65 : 32);
+      break;
+    case MATH_DIV:
+      l = big_div(a, la, b, lb, 0, res);
+      break;
+    case MATH_SDIV:
+      l = big_div(a, la, b, lb, 1, res);
+      break;
+    case MATH_MOD:
+      l = big_mod(a, la, b, lb, 0, res);
+      break;
+    case MATH_SMOD:
+      l = big_mod(a, la, b, lb, 1, res);
+      break;
+    case MATH_EXP:
+      l = big_exp(a, la, b, lb, 0, res);
+      break;
+    case MATH_SIGNEXP:
+      l = big_exp(a, la, b, lb, 1, res);
+      break;
+  }
+
+  if (l < 0) return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+  // optimize
+  while (l > 1 && r[0] == 0) {
+    l--;
+    r++;
+  }
+
+  if (mod) {
+    uint8_t *mod_data, tmp[65];
+    int      modl = evm_stack_pop_ref(evm, &mod_data);
+    if (modl < 0) return modl;
+    memcpy(tmp, r, l);
+    l = big_mod(tmp, l, mod_data, modl, 0, res);
+    r = res;
+    if (l < 0) return l;
+
+    // optimize
+    while (l > 1 && r[0] == 0) {
+      l--;
+      r++;
+    }
+  }
+
+  return evm_stack_push(evm, r, l);
 }
 
 static int op_is_zero(evm_t* evm) {
@@ -343,7 +398,7 @@ int evm_execute(evm_t* evm) {
   if (op >= 0x80 && op <= 0x8F) // DUP
     return op_dup(evm, op - 0x7F);
   if (op >= 0x90 && op <= 0x9F) // SWAP
-    return op_swap(evm, op - 0x8F);
+    return op_swap(evm, op - 0x8E);
   if (op >= 0xA0 && op <= 0xA4) // LOG --> for now, we don't support logs
     return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
 
@@ -353,9 +408,28 @@ int evm_execute(evm_t* evm) {
       return 0;
 
     case 0x01: //  ADD
-      return op_add(evm);
+      return op_math(evm, MATH_ADD, 0);
     case 0x02: //  MUL
-      return op_mul(evm);
+      return op_math(evm, MATH_MUL, 0);
+    case 0x03: //  MUL
+      return op_math(evm, MATH_SUB, 0);
+    case 0x04: //  DIV
+      return op_math(evm, MATH_DIV, 0);
+    case 0x05: //  SDIV
+      return op_math(evm, MATH_SDIV, 0);
+    case 0x06: //  MOD
+      return op_math(evm, MATH_MOD, 0);
+    case 0x07: //  SMOD
+      return op_math(evm, MATH_SMOD, 0);
+    case 0x08: //  ADDMOD
+      return op_math(evm, MATH_ADD, 1);
+    case 0x09: //  MULMOD
+      return op_math(evm, MATH_MUL, 1);
+    case 0x0A: //  EXP
+      return op_math(evm, MATH_EXP, 0);
+    case 0x0B: //  SIGNEXTEND
+      return op_math(evm, MATH_SIGNEXP, 0);
+
     case 0x10: // LT
       return op_cmp(evm, -1, 0);
     case 0x11: // GT
@@ -461,4 +535,16 @@ int evm_execute(evm_t* evm) {
     default:
       return EVM_ERROR_INVALID_OPCODE;
   }
+}
+
+int evm_run(evm_t* evm) {
+  uint32_t timeout = 0xFFFFFFFF;
+  int      res;
+  evm->state = EVM_STATE_RUNNING;
+  while (evm->state == EVM_STATE_RUNNING) {
+    res = evm_execute(evm);
+    if (res < 0) return res;
+    if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
+  }
+  return res;
 }
