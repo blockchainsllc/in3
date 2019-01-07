@@ -49,8 +49,9 @@ int big_signed(uint8_t* val, int len, uint8_t* dst) {
 }
 
 void big_shift_left(uint8_t* a, int len, int bits) {
-  uint8_t  i, r = bits % 8;
+  uint8_t  r     = bits % 8;
   uint16_t carry = 0;
+  int      i;
   if ((r = bits % 8)) {
     for (i = len - 1; i >= 0; i--) {
       a[i] = (carry |= a[i] << r) & 0xFF;
@@ -64,8 +65,9 @@ void big_shift_left(uint8_t* a, int len, int bits) {
 }
 
 void big_shift_right(uint8_t* a, int len, int bits) {
-  uint8_t  i, r = bits % 8;
+  uint8_t  r     = bits % 8;
   uint16_t carry = 0;
+  int      i;
   if ((r = bits % 8)) {
     for (i = 0; i < len; i++) {
       a[i] = (carry |= (uint16_t) a[i] << (8 - r)) >> 8;
@@ -99,7 +101,7 @@ int big_add(uint8_t* a, uint8_t len_a, uint8_t* b, uint8_t len_b, uint8_t* out, 
   uint8_t  l     = len_a > len_b ? len_a + 1 : len_b + 1;
   uint16_t carry = 0;
   if (max && l > max) l = max;
-  for (uint8_t i = l - 1;; i--) {
+  for (int i = l - 1;; i--) {
     carry |= (len_a ? a[--len_a] : 0) + (len_b ? b[--len_b] : 0);
     out[i] = carry & 0xFF;
     carry >>= 8;
@@ -114,7 +116,7 @@ int big_sub(uint8_t* a, uint8_t len_a, uint8_t* b, uint8_t len_b, uint8_t* out) 
   uint8_t  l = len_a > len_b ? len_a + 1 : len_b + 1, borrow = 0;
   uint16_t carry = 0;
   if (l > 32) l = 32;
-  for (uint8_t i = l - 1;; i--) {
+  for (int i = l - 1;; i--) {
     carry  = (uint16_t)(len_a ? a[--len_a] : 0) - (uint16_t)(len_b ? b[--len_b] : 0) - (uint16_t) borrow;
     out[i] = carry & 0xFF;
     borrow = (carry >> 8) & 1;
