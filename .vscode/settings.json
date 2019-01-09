@@ -30,6 +30,9 @@
         "keys.h": "c",
         "stdlib.h": "c",
         "ecdsa.h": "c",
-        "bignum.h": "c"
+        "bignum.h": "c",
+        "evm.h": "c",
+        "code.h": "c",
+        "cache.h": "c"
     }
 }

@@ -28,6 +28,7 @@ typedef struct {
   d_token_t*            request; /**< the request sent. */
   d_token_t*            proof;   /**< the delivered proof. */
   in3_request_config_t* config;  /**< Request configuration. */
+
 } in3_vctx_t;
 
 /**

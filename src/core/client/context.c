@@ -13,6 +13,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
   in3_ctx_t* c = _calloc(1, sizeof(in3_ctx_t));
   c->attempt   = 0;
+  c->cache     = NULL;
   c->client    = client;
 
   if (req_data != NULL) {
@@ -91,6 +92,8 @@ void free_ctx(in3_ctx_t* ctx) {
     }
     _free(ctx->requests_configs);
   }
+  if (ctx->cache)
+    in3_cache_free(ctx->cache);
 
   _free(ctx);
 }

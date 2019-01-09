@@ -5,6 +5,10 @@ add_library( in3_eth_full STATIC
   evm.c
   opcodes.c  
   big.c
+  call.c
+  code.c
+  env.c
+  
 )
 
 # include core in the headers

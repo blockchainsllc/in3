@@ -1,4 +1,5 @@
 #include "evm.h"
+#include <client/verifier.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util/utils.h>
@@ -56,10 +57,10 @@ int evm_prepare_evm(evm_t*      evm,
 
   if ((l = env(evm, EVM_ENV_CODE_COPY, account, 20, &tmp, 0, 0)) < 0) return l;
   evm->code.data = tmp;
+  return 0;
 }
 
 int evm_sub_call(evm_t*   parent,
-                 uint8_t* gas_limit, int l_gas,
                  uint8_t* address,
                  uint8_t* code_address,
                  uint8_t* value, int l_value,
@@ -73,11 +74,39 @@ int evm_sub_call(evm_t*   parent,
   evm_t evm;
   int   res;
   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr);
+  if (l_value > 0 && bytes_to_long(value, l_value) != 0) res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+  evm.call_data.data = data;
+  evm.call_data.len  = l_data;
+  if (mode == EVM_CALL_MODE_STATIC && l_value > 1) res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+
   if (res == 0) res = evm_run(&evm);
   if (res == 0 && evm.return_data.data && out_offset && out_len) {
     res = evm_ensure_memory(parent, out_offset + out_len);
     if (res == 0) memcpy(parent->memory.b.data + out_offset, evm.return_data.data, out_len);
   }
+
+  if (evm.return_data.data) _free(evm.return_data.data);
+  if (evm.stack.b.data) _free(evm.stack.b.data);
+  if (evm.memory.b.data) _free(evm.memory.b.data);
+
+  return res;
+}
+
+int evm_call(in3_vctx_t* vc,
+             uint8_t*    address,
+             uint8_t* value, int l_value,
+             uint8_t* data, int l_data,
+             uint8_t*  caller,
+             bytes_t** result) {
+  evm_t evm;
+
+  int res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc);
+  if (res == 0 && l_value > 0 && bytes_to_long(value, l_value) != 0) res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+  evm.call_data.data = data;
+  evm.call_data.len  = l_data;
+  if (res == 0) res = evm_run(&evm);
+  if (res == 0 && evm.return_data.data)
+    *result = b_dup(&evm.return_data);
 
   if (evm.return_data.data) _free(evm.return_data.data);
   if (evm.stack.b.data) _free(evm.stack.b.data);

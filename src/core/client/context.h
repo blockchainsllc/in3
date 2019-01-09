@@ -3,6 +3,7 @@
  * This is used for each request holding request and response-pointers.
  * */
 
+#include "../util/cache.h"
 #include "../util/data.h"
 #include "../util/stringbuilder.h"
 #include "../util/utils.h"
@@ -54,6 +55,9 @@ typedef struct {
 
   /* selected nodes to process the request*/
   node_weight_t* nodes;
+
+  /** optional cache-entries */
+  cache_entry_t* cache;
 
 } in3_ctx_t;
 

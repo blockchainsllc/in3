@@ -436,7 +436,6 @@ int op_call(evm_t* evm, uint8_t mode) {
   switch (mode) {
     case CALL_CALL:
       return evm_sub_call(evm,
-                          gas_limit, l_gas,
                           address, address,
                           value, l_value,
                           evm->memory.b.data + in_offset, in_len,
@@ -444,7 +443,6 @@ int op_call(evm_t* evm, uint8_t mode) {
                           evm->origin, 0, out_offset, out_len);
     case CALL_CODE:
       return evm_sub_call(evm,
-                          gas_limit, l_gas,
                           evm->address, address,
                           value, l_value,
                           evm->memory.b.data + in_offset, in_len,
@@ -452,7 +450,6 @@ int op_call(evm_t* evm, uint8_t mode) {
                           evm->origin, 0, out_offset, out_len);
     case CALL_DELEGATE:
       return evm_sub_call(evm,
-                          gas_limit, l_gas,
                           evm->address, address,
                           evm->call_value.data, evm->call_value.len,
                           evm->memory.b.data + in_offset, in_len,
@@ -460,7 +457,6 @@ int op_call(evm_t* evm, uint8_t mode) {
                           evm->origin, EVM_CALL_MODE_DELEGATE, out_offset, out_len);
     case CALL_STATIC:
       return evm_sub_call(evm,
-                          gas_limit, l_gas,
                           address, address,
                           &zero, 1,
                           evm->memory.b.data + in_offset, in_len,

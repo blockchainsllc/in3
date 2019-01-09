@@ -1,4 +1,5 @@
 
+#include <client/verifier.h>
 #include <util/bytes.h>
 
 typedef enum evm_state {
@@ -16,16 +17,16 @@ typedef enum evm_state {
 #define EVM_ERROR_INVALID_PUSH -6
 #define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -7
 #define EVM_ERROR_TIMEOUT -8
+#define EVM_ERROR_INVALID_ENV -9
 
 #define EVM_EIP_CONSTANTINOPL 1
 
 #define EVM_ENV_BALANCE 1
-#define EVM_ENV_GASPRICE 2
-#define EVM_ENV_CODE_SIZE 3
-#define EVM_ENV_CODE_COPY 4
-#define EVM_ENV_BLOCKHASH 5
-#define EVM_ENV_STORAGE 6
-#define EVM_ENV_BLOCKHEADER 7
+#define EVM_ENV_CODE_SIZE 2
+#define EVM_ENV_CODE_COPY 3
+#define EVM_ENV_BLOCKHASH 4
+#define EVM_ENV_STORAGE 5
+#define EVM_ENV_BLOCKHEADER 6
 
 /**
  * This function provides data from the enviroment.
@@ -72,12 +73,10 @@ typedef struct evm {
 } evm_t;
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len);
-int evm_stack_push_bn(evm_t* evm, bignum256* val);
 int evm_stack_push_int(evm_t* evm, uint32_t val);
 
 int     evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst);
 int     evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len);
-int     evm_stack_pop_bn(evm_t* evm, bignum256* dst);
 int     evm_stack_pop_ref(evm_t* evm, uint8_t** dst);
 int     evm_stack_pop_byte(evm_t* evm, uint8_t* dst);
 int32_t evm_stack_pop_int(evm_t* evm);
@@ -87,7 +86,6 @@ int evm_run(evm_t* evm);
 #define EVM_CALL_MODE_DELEGATE 2
 
 int evm_sub_call(evm_t*   parent,
-                 uint8_t* gas_limit, int l_gas,
                  uint8_t* address,
                  uint8_t* account,
                  uint8_t* value, int l_value,
@@ -98,3 +96,10 @@ int evm_sub_call(evm_t*   parent,
                  int out_offset, int out_len);
 
 int evm_ensure_memory(evm_t* evm, uint32_t max_pos);
+int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
+int evm_call(in3_vctx_t* vc,
+             uint8_t*    address,
+             uint8_t* value, int l_value,
+             uint8_t* data, int l_data,
+             uint8_t*  caller,
+             bytes_t** result);
