@@ -17,7 +17,7 @@
 
 #include "evm.h"
 
-static int ensure_memory(evm_t* evm, uint32_t max_pos) {
+int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
   return max_pos > evm->memory.bsize ? bb_check_size(&evm->memory, max_pos - evm->memory.b.len) : 0;
 }
 
@@ -252,10 +252,10 @@ static int op_sha3(evm_t* evm) {
 }
 
 static int op_account(evm_t* evm, uint8_t key) {
-  uint8_t *address, data[32];
+  uint8_t *address, *data;
   int      l = evm_stack_pop_ref(evm, &address);
   if (l < 0) return EVM_ERROR_EMPTY_STACK;
-  l = evm->env(evm, key, address, l, data, 0, 0);
+  l = evm->env(evm, key, address, l, &data, 0, 0);
   return l < 0 ? l : evm_stack_push(evm, data, l);
 }
 static int op_dataload(evm_t* evm) {
@@ -279,24 +279,31 @@ static int op_datacopy(evm_t* evm, bytes_t* src) {
   int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
   if (mem_pos < 0 || data_len < 0 || data_pos < 0) return EVM_ERROR_EMPTY_STACK;
   if (src->len < (uint32_t)(data_pos + data_len)) return 0;
-  if (ensure_memory(evm, mem_pos + data_len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if (evm_ensure_memory(evm, mem_pos + data_len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
   memcpy(evm->memory.b.data + mem_pos, src->data + data_pos, data_len);
   return 0;
 }
 
 static int op_extcodecopy(evm_t* evm) {
-  uint8_t* address;
+  uint8_t *address, *data;
   int      l = evm_stack_pop_ref(evm, &address), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
   if (l < 0 || mem_pos < 0 || data_len < 0 || code_pos < 0) return EVM_ERROR_EMPTY_STACK;
-  if (ensure_memory(evm, mem_pos + data_len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if (evm_ensure_memory(evm, mem_pos + data_len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   // address, memOffset, codeOffset, length
-  return evm->env(evm, EVM_ENV_CODE_COPY, address, 20, evm->memory.b.data + mem_pos, code_pos, data_len);
+  int res = evm->env(evm, EVM_ENV_CODE_COPY, address, 20, &data, code_pos, data_len);
+  if (res < 0) return res;
+  memcpy(evm->memory.b.data + mem_pos, data, data_len);
+  return 0;
 }
 
 static int op_header(evm_t* evm, uint8_t index) {
   bytes_t b;
-  if (rlp_decode_in_list(evm->block_header, index, &b) == 1)
+  int     l;
+  if ((l = evm->env(evm, EVM_ENV_BLOCKHEADER, NULL, 0, &b.data, 0, 0)) < 0) return l;
+  b.len = l;
+
+  if (rlp_decode_in_list(&b, index, &b) == 1)
     return evm_stack_push(evm, b.data, b.len);
   else
     return evm_stack_push_int(evm, 0);
@@ -318,7 +325,7 @@ static int op_mload(evm_t* evm) {
 static int op_mstore(evm_t* evm, uint8_t len) {
   int mem_pos = evm_stack_pop_int(evm), l;
   if (mem_pos < 0) return EVM_ERROR_EMPTY_STACK;
-  if (ensure_memory(evm, mem_pos + len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if (evm_ensure_memory(evm, mem_pos + len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
   uint8_t* data;
   if ((l = evm_stack_pop_ref(evm, &data)) < 0) return EVM_ERROR_EMPTY_STACK;
   if (len == 1)
@@ -331,11 +338,11 @@ static int op_mstore(evm_t* evm, uint8_t len) {
 }
 
 static int op_sload(evm_t* evm) {
-  uint8_t* data;
+  uint8_t *key, *value;
   int      l;
-  if ((l = evm_stack_pop_ref(evm, &data)) < 0) return l;
-  if ((l = evm->env(evm, EVM_ENV_STORAGE, data, l, data, 0, 0)) < 0) return l;
-  return evm_stack_push(evm, data, l);
+  if ((l = evm_stack_pop_ref(evm, &key)) < 0) return l;
+  if ((l = evm->env(evm, EVM_ENV_STORAGE, key, l, &value, 0, 0)) < 0) return l;
+  return evm_stack_push(evm, value, l);
 }
 
 static int op_jump(evm_t* evm, uint8_t cond) {
@@ -389,6 +396,78 @@ static int op_swap(evm_t* evm, uint8_t pos) {
     memcpy(b, data, l1 + 1);
   }
   return 0;
+}
+
+int op_return(evm_t* evm, uint8_t revert) {
+  int offset, len;
+  if ((offset = evm_stack_pop_int(evm)) < 0) return offset;
+  if ((len = evm_stack_pop_int(evm)) < 0) return len;
+
+  if (evm->memory.bsize < (uint32_t) offset + len) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if (evm->return_data.data) _free(evm->return_data.data);
+
+  evm->return_data.data = _malloc(len);
+  if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
+  memcpy(evm->return_data.data, evm->memory.b.data + offset, len);
+  evm->return_data.len = len;
+  if (revert) evm->state = EVM_STATE_REVERTED;
+  return 0;
+}
+#define CALL_CALL 0
+#define CALL_CODE 1
+#define CALL_DELEGATE 2
+#define CALL_STATIC 3
+
+int op_call(evm_t* evm, uint8_t mode) {
+  //
+  // gasLimit, toAddress, value, inOffset, inLength, outOffset, outLength
+  uint8_t *gas_limit, *address, *value, zero = 0;
+  int32_t  l_gas, l_address, l_value, in_offset, in_len, out_offset, out_len;
+  if ((l_gas = evm_stack_pop_ref(evm, &gas_limit)) < 0) return l_gas;
+  if ((l_address = evm_stack_pop_ref(evm, &address)) < 0) return l_address;
+  if ((mode == CALL_CALL || mode == CALL_CODE) && (l_value = evm_stack_pop_ref(evm, &value)) < 0) return l_value;
+  if ((in_offset = evm_stack_pop_int(evm)) < 0) return in_offset;
+  if ((in_len = evm_stack_pop_int(evm)) < 0) return in_len;
+  if ((out_offset = evm_stack_pop_int(evm)) < 0) return out_offset;
+  if ((out_len = evm_stack_pop_int(evm)) < 0) return out_len;
+
+  if ((uint32_t) in_offset + in_len > evm->memory.bsize) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+
+  switch (mode) {
+    case CALL_CALL:
+      return evm_sub_call(evm,
+                          gas_limit, l_gas,
+                          address, address,
+                          value, l_value,
+                          evm->memory.b.data + in_offset, in_len,
+                          evm->address,
+                          evm->origin, 0, out_offset, out_len);
+    case CALL_CODE:
+      return evm_sub_call(evm,
+                          gas_limit, l_gas,
+                          evm->address, address,
+                          value, l_value,
+                          evm->memory.b.data + in_offset, in_len,
+                          evm->address,
+                          evm->origin, 0, out_offset, out_len);
+    case CALL_DELEGATE:
+      return evm_sub_call(evm,
+                          gas_limit, l_gas,
+                          evm->address, address,
+                          evm->call_value.data, evm->call_value.len,
+                          evm->memory.b.data + in_offset, in_len,
+                          evm->caller,
+                          evm->origin, EVM_CALL_MODE_DELEGATE, out_offset, out_len);
+    case CALL_STATIC:
+      return evm_sub_call(evm,
+                          gas_limit, l_gas,
+                          address, address,
+                          &zero, 1,
+                          evm->memory.b.data + in_offset, in_len,
+                          evm->address,
+                          evm->origin, EVM_CALL_MODE_STATIC, out_offset, out_len);
+  }
+  return EVM_ERROR_INVALID_OPCODE;
 }
 
 int evm_execute(evm_t* evm) {
@@ -530,7 +609,19 @@ int evm_execute(evm_t* evm) {
     case 0xF0: // CREATE   -> we don't support it for call
       return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
     case 0xF1: // CALL
-      return 0;
+      return op_call(evm, CALL_CALL);
+    case 0xF2: // CALLCODE
+      return op_call(evm, CALL_CODE);
+    case 0xF3: // RETURN
+      return op_return(evm, 0);
+    case 0xF4: // DELEGATE_CALL
+      return op_call(evm, CALL_DELEGATE);
+    case 0xFA: // STATIC_CALL
+      return op_call(evm, CALL_STATIC);
+    case 0xFD: // REVERT
+      return op_return(evm, 1);
+    case 0xFE: // INVALID OPCODE
+      return EVM_ERROR_INVALID_OPCODE;
 
     default:
       return EVM_ERROR_INVALID_OPCODE;
