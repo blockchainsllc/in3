@@ -95,11 +95,12 @@ int evm_sub_call(evm_t*   parent,
                  uint8_t  mode,
                  int out_offset, int out_len);
 
-int evm_ensure_memory(evm_t* evm, uint32_t max_pos);
-int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
-int evm_call(in3_vctx_t* vc,
-             uint8_t*    address,
-             uint8_t* value, int l_value,
-             uint8_t* data, int l_data,
-             uint8_t*  caller,
-             bytes_t** result);
+int  evm_ensure_memory(evm_t* evm, uint32_t max_pos);
+int  in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
+int  evm_call(in3_vctx_t* vc,
+              uint8_t*    address,
+              uint8_t* value, int l_value,
+              uint8_t* data, int l_data,
+              uint8_t*  caller,
+              bytes_t** result);
+void evm_print_stack(evm_t* evm);

@@ -49,8 +49,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "eth_getCode",
-                "eth_getBalance"
+                "eth_call"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

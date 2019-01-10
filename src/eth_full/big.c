@@ -169,6 +169,11 @@ int big_mul(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res, uint8_
 int big_div(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t* res) {
   optimze_length(&a, &la);
   optimze_length(&b, &lb);
+  while (la > 1 && lb > 1 && a[la - 1] == 0 && b[lb - 1] == 0) {
+    la--;
+    lb--;
+  }
+
   if (lb < 9 && la < 9) {
     uint64_t _a = bytes_to_long(a, la);
     uint64_t _b = bytes_to_long(b, lb);

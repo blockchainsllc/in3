@@ -213,6 +213,9 @@ typedef struct {
   /** the transporthandler sending requests */
   in3_transport_send transport;
 
+  /** includes the code when sending eth_call-requests */
+  uint8_t includeCode;
+
   /** chain spec and nodeList definitions*/
   in3_chain_t* chains;
 

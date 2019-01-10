@@ -17,6 +17,7 @@
 #define K_PROPS             key("props")
 #define K_URL               key("url")
 #define K_ADDRESS           key("address")
+#define K_CODE              key("code")
 
 #define K_BLOCK             key("block")
 #define K_BLOCK_HASH        key("blockHash")

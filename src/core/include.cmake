@@ -10,7 +10,7 @@ target_sources( app PRIVATE
     ../core/util/data.c
     ../core/util/debug.c
     ../core/util/bytes.c
-    ../core/util/cache.c
+    ../core/util/scache.c
     ../core/util/utils.c
     ../core/util/mem.c
     ../core/util/stringbuilder.c

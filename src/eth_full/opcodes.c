@@ -391,7 +391,7 @@ static int op_swap(evm_t* evm, uint8_t pos) {
     memcpy(a + l1 - l2, data, l2 + 1);
   } else {
     memcpy(data, a, l1 + 1); // keep old b + len
-    memcpy(a, b, l2 + 1);
+    memcpy(a + l1 - l2, b, l2 + 1);
     if (pos > 2) memmove(b + l1 + 1, b + l2 + 1, a - b - l2 - 1);
     memcpy(b, data, l1 + 1);
   }
@@ -410,7 +410,7 @@ int op_return(evm_t* evm, uint8_t revert) {
   if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
   memcpy(evm->return_data.data, evm->memory.b.data + offset, len);
   evm->return_data.len = len;
-  if (revert) evm->state = EVM_STATE_REVERTED;
+  evm->state           = revert ? EVM_STATE_REVERTED : EVM_STATE_STOPPED;
   return 0;
 }
 #define CALL_CALL 0
@@ -467,6 +467,9 @@ int op_call(evm_t* evm, uint8_t mode) {
 }
 
 int evm_execute(evm_t* evm) {
+
+  //  evm_print_stack(evm);
+  //  printf("\n exec %i : %02x\n", evm->pos, evm->code.data[evm->pos]);
   uint8_t op = evm->code.data[evm->pos++];
   if (op >= 0x60 && op <= 0x7F) // PUSH
     return op_push(evm, op - 0x5F);
@@ -548,7 +551,7 @@ int evm_execute(evm_t* evm) {
     case 0x35: // CALLDATALOAD
       return op_dataload(evm);
     case 0x36: // CALLDATA_SIZE
-      return evm_stack_push_int(evm, evm->call_value.len);
+      return evm_stack_push_int(evm, evm->call_data.len);
     case 0x37: // CALLDATACOPY
       return op_datacopy(evm, &evm->call_data);
     case 0x38: // CODESIZE

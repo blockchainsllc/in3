@@ -235,6 +235,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   in3_t* c = in3_new();
   int    j;
   c->max_attempts = 1;
+  c->includeCode  = 1;
   c->transport    = send_mock;
   for (j = 0; j < c->chainsCount; j++)
     c->chains[j].needsUpdate = false;

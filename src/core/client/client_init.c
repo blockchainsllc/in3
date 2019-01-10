@@ -47,6 +47,7 @@ static void in3_client_init(in3_t* c) {
   c->autoUpdateList     = 1;
   c->cacheStorage       = NULL;
   c->cacheTimeout       = 0;
+  c->includeCode        = 0;
   c->chainId            = 0x01; // mainnet
   c->key                = NULL;
   c->finality           = 0;

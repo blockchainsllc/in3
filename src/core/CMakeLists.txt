@@ -10,7 +10,7 @@ add_library( core STATIC
 	util/debug.c
 	util/bytes.c
 	util/utils.c
-	util/cache.c
+	util/scache.c
 	util/data.c
 	util/mem.c
 	util/stringbuilder.c

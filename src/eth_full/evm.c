@@ -10,6 +10,8 @@
 #include <crypto/bignum.h>
 #include <crypto/ecdsa.h>
 #include <crypto/secp256k1.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <util/data.h>
 #include <util/mem.h>
@@ -20,9 +22,9 @@
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
   if (bb_check_size(&evm->stack, len + 1)) return EVM_ERROR_EMPTY_STACK;
   uint8_t* buffer = evm->stack.b.data + evm->stack.b.len;
-  memcpy(data, buffer, len);
+  memcpy(buffer, data, len);
   evm->stack.b.len += len + 1;
-  buffer[evm->stack.b.len - 1] = len;
+  evm->stack.b.data[evm->stack.b.len - 1] = len;
   evm->stack_size++;
   return 0;
 }
@@ -59,7 +61,7 @@ int evm_stack_pop_ref(evm_t* evm, uint8_t** dst) {
 }
 
 int evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst) {
-  if (evm->stack_size - pos <= 0) return EVM_ERROR_EMPTY_STACK; // stack empty
+  if (evm->stack_size - pos < 0) return EVM_ERROR_EMPTY_STACK; // stack empty
   uint32_t p = evm->stack.b.len;
   uint8_t  i, l;
   for (i = 0; i < pos; i++) {
@@ -133,4 +135,13 @@ int evm_stack_push_bn(evm_t* evm, bignum256* val) {
   buffer[evm->stack.b.len - 1] = 32;
   evm->stack_size++;
   return 0;
+}
+void evm_print_stack(evm_t* evm) {
+  for (int i = 0; i < evm->stack_size; i++) {
+    printf("%i : ", i);
+    uint8_t* dst;
+    int      l = evm_stack_get_ref(evm, i + 1, &dst);
+    for (int j = 0; j < l; j++) printf("%02x", dst[j]);
+    printf("\n");
+  }
 }

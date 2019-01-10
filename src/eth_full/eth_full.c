@@ -28,6 +28,7 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
     return vc_err(vc, "No Method in request defined!");
 
   if (strcmp(method, "eth_call") == 0) {
+    if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
     d_token_t* tx      = d_get_at(d_get(vc->request, K_PARAMS), 0);
     bytes_t*   address = d_get_bytesk(tx, K_TO);
     uint8_t    zeros[20];
@@ -59,8 +60,8 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
         return vc_err(vc, "This op code is not supported with eth_call!");
       case 0:
         if (!result) return vc_err(vc, "no result");
-        b_free(result);
         res = b_cmp(d_bytes(vc->result), result);
+        b_free(result);
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
 
       default:

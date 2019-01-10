@@ -106,6 +106,8 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
   // get the account this proof is based on
   if (!(contract = strcmp(method, "in3_nodeList") == 0 ? d_get(vc->result, K_CONTRACT) : d_get_at(d_get(vc->request, K_PARAMS), 0)))
     return vc_err(vc, "no account found in request");
+  if (strcmp(method, "eth_call") == 0)
+    contract = d_get(d_get_at(d_get(vc->request, K_PARAMS), 0), K_TO);
 
   //now check the results
   if (!(accounts = d_get(vc->proof, K_ACCOUNTS))) return vc_err(vc, "no accounts");
@@ -142,6 +144,8 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
       }
     }
     return vc_err(vc, "the storage result does not match");
+  } else if (strcmp(method, "eth_call") == 0) {
+    return 0;
   } else
     return vc_err(vc, "not supported method");
 

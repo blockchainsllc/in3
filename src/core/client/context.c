@@ -147,6 +147,8 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
     if (rc->signaturesCount)
       sb_add_bytes(sb, ",\"signatures\":", rc->signatures, rc->signaturesCount, true);
+    if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
+      sb_add_chars(sb, ",\"includeCode\":true");
     if (rc->useFullProof)
       sb_add_chars(sb, ",\"useFullProof\":true");
     if (rc->verification == VERIFICATION_PROOF)

@@ -3,8 +3,8 @@
  * This is used for each request holding request and response-pointers.
  * */
 
-#include "../util/cache.h"
 #include "../util/data.h"
+#include "../util/scache.h"
 #include "../util/stringbuilder.h"
 #include "../util/utils.h"
 #include "client.h"
