@@ -24,7 +24,6 @@
 
 #include "util/debug.h"
 
-
 #define CONFIG_GPIO_P0_DEV_NAME              "GPIO_0"
 #define CONFIG_GPIO_P1_DEV_NAME              "GPIO_1"
 
@@ -80,17 +79,19 @@ struct device *gpio;
 static u8_t recv_buf_static[512];
 static u8_t req_buf[512];
 static u8_t *recv_buf;
-static int b_off;
-static unsigned long total_len;
+//static int b_off;
+//static unsigned long total_len;
+static unsigned int b_off;
+static unsigned int total_len;
 
 static u32_t start, end;
 static struct in3_client *client;
 
 int start_message(int size)
 {
-	int old_len = total_len;
+	unsigned int old_len = total_len;
 	total_len = size;
-	dbg_log("RX Message (length: %lu bytes)\n", total_len);
+	dbg_log("RX Message (length: %u bytes)\n", total_len);
 
 	if (recv_buf && (old_len > total_len)) {
 		memset(recv_buf, 0, total_len);
@@ -104,7 +105,7 @@ int start_message(int size)
 
 out:
 	if (!recv_buf) {
-		printk("Error allocating RX buf (size=%lu)\n", total_len);
+		dbg_log("Error allocating RX buf (size=%u)\n", total_len);
 		return -1;
 	}
 
@@ -117,8 +118,7 @@ out:
 
 void process_msg(void)
 {
-	printk("Received %lu bytes in %lums, c->msg=%p\n", total_len, (unsigned long) end-start, client->msg);
-	dbg_log("Data:\n'%s'\n", recv_buf);
+	dbg_log("A bluetooth msg rx: %i\n %s\n", total_len, recv_buf);
 	client->msg->data = recv_buf;
 	client->msg->size = total_len;
 
@@ -174,7 +174,7 @@ static ssize_t write_msg(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 		    header[1] == 0x6e &&
 		    header[2] == 0x33 &&
 		    header[3] == 0x63) {
-			printk("Magic: 0x%s\n", magic);
+			dbg_log("Magic: 0x%s\n", magic);
 			if (start_message(*((int *) buf+1)))
 				return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 			bluetooth_clear_req();
@@ -318,7 +318,8 @@ int bluetooth_setup(struct in3_client *c)
 		settings_load();
 	}
 
-	bt_set_name("in3-peripheral");
+//	bt_set_name("in3-peripheral");
+	bt_set_name("in3-emiliotest");
 
 	err = bt_le_adv_start(&param, ad, ad_len, scan_rsp, scan_rsp_len);
 	if (err < 0) {

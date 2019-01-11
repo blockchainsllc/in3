@@ -14,7 +14,6 @@
 
 // Messaging
 
-
 typedef enum {
 	T_ERROR = 0,
 	T_ACTION,

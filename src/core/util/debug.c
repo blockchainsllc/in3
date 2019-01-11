@@ -1,6 +1,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef __ZEPHYR__
+#include <zephyr.h>
+#endif
 
 void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...) {
   char*   d = 0;
@@ -14,9 +17,17 @@ void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...) 
     d = file;
 
   if (!raw)
-    printf("(%s) %s():%d - ", d, func, line);
+#ifdef __ZEPHYR__
+	printk("(%s) %s():%d - ", d, func, line);
+#else		
+	printf("(%s) %s():%d - ", d, func, line);
+#endif
 
-  vprintf(fmt, args);
+#ifdef __ZEPHYR__
+	vprintk(fmt, args);
+#else		
+	vprintf(fmt, args);
+#endif
 
   va_end(args);
 }

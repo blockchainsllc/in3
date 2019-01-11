@@ -11,9 +11,9 @@
 #include "util/debug.h"
 
 // Global Client
-struct in3_client* client;
-struct k_timer*    timer;
-int                undo;
+struct in3_client*  client;
+struct k_timer*     timer;
+int                 undo;
 
 // private
 static void timer_expired(struct k_timer* work) {
@@ -57,7 +57,7 @@ typedef in3_state_t in3_state_func_t(void);
 
 static in3_state_t in3_init(void) {
   client = k_calloc(1, sizeof(struct in3_client));
-  timer  = k_calloc(1, sizeof(struct k_timer));
+  timer = k_calloc(1, sizeof(struct k_timer));
 
   client->in3               = in3_new();
   client->in3->chainId      = 0x044d;
@@ -79,14 +79,19 @@ static in3_state_t in3_init(void) {
 static in3_state_t in3_waiting(void) {
   k_mutex_lock(&client->mutex, 10000);
   if (client->msg->ready) {
+  	dbg_log("***received %s\n", client->msg->data); // DEBUG !!!
     client->msg->start = k_uptime_get_32();
-    if (msg_get_type(client) == T_ACTION) {
+    if (msg_get_type(client->msg->data) == T_ACTION) {
       k_mutex_unlock(&client->mutex);
+    	dbg_log("***go and do action!\n", 0); // DEBUG !!!
       return STATE_ACTION;
     }
     client->msg->end = k_uptime_get_32();
-    printk("Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+    dbg_log("Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
     clear_message(client);
+//    k_mutex_unlock(&client->mutex); // DEBUG !!!
+//  	dbg_log("return to wait after delete message\n", 0); // DEBUG !!!
+//    return STATE_WAITING; // DEBUG !!!
   }
 
   k_mutex_unlock(&client->mutex);
@@ -106,9 +111,9 @@ static in3_state_t in3_verifying(void) {
 
 static in3_state_t in3_action(void) {
   int           err;
-  action_type_t action = msg_get_action(client);
+  action_type_t action = msg_get_action(client->msg->data); // by Emilio
 
-  printk("Action: 0x%02x\n", action);
+  dbg_log("Action: 0x%02x\n", action);
   if (action != LOCK && action != UNLOCK)
     return STATE_RESET;
 
@@ -118,12 +123,15 @@ static in3_state_t in3_action(void) {
     k_free(client->rent);
   }
 
-  client->rent       = k_calloc(1, sizeof(in3_rental_t));
-  client->rent->when = json_get_int_value(client->msg->data, "timestamp");
+	client->rent = k_calloc(1, sizeof(in3_rental_t));
+	dbg_log("Received rent: %x\n", client->rent);
+
+	client->rent->when = json_get_int_value(client->msg->data, "timestamp");
+	dbg_log("rent->when: %x\n", client->rent->when);
 
   err = verify_rent(client);
   if (err) {
-    printk("Invalid rental\n");
+    dbg_log("Invalid rental\n");
     return STATE_RESET;
   }
 
@@ -138,7 +146,7 @@ static in3_state_t in3_action(void) {
 static in3_state_t in3_reset(void) {
   client->msg->end = k_uptime_get_32();
 
-  printk("Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+  dbg_log("Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
   clear_message(client);
 
   return STATE_WAITING;

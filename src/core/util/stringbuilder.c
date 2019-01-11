@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include "debug.h"
 
 static const size_t MIN_SIZE = 32;
 
@@ -26,11 +27,11 @@ sb_t* sb_init(sb_t* sb) {
 }
 static void check_size(sb_t* sb, size_t len) {
   if (sb == NULL || len == 0 || sb->len + len < sb->allocted) return;
-#ifdef ZEPHYR
+#ifdef __ZEPHYR__
   size_t l = sb->allocted;
 #endif
   while (sb->len + len >= sb->allocted) sb->allocted <<= 1;
-#ifdef ZEPHYR
+#ifdef __ZEPHYR__
   sb->data = _realloc(sb->data, sb->allocted, l);
 #else
   sb->data = _realloc(sb->data, sb->allocted, 0);

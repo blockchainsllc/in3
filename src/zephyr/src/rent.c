@@ -10,51 +10,32 @@
 #include <util/data.h>
 #include <eth_nano.h>
 
-
-
-msg_type_t msg_get_type(struct in3_client *c)
+msg_type_t msg_get_type(char *c)
 {
-	char *val = 0;
+char buf[20]; // allocate tmp space for string compare
+
 	msg_type_t type = T_ERROR;
 
-	if (!c->msg->ready)
-		return T_ERROR;
-
-    val = json_get_str_value(c->msg->data, "msgType");
-	if (val && !strcmp(val, "action"))
+    json_get_str_value(c, "msgType", buf); // note: check buf size (need some json_get_str_length)
+	if (strcmp(buf, "action") == 0) // if string match
 		type = T_ACTION;
-	else if (val && !strcmp(val, "in3Response"))
+	else if (strcmp(buf, "in3Response") == 0) // if string match
 		type = T_RESPONSE;
-
-	if (val)
-		_free(val);
-
-	c->msg->type = type;
 
 	return type;
 }
 
-action_type_t msg_get_action(struct in3_client *c)
+action_type_t msg_get_action(char *c)
 {
-	char *val = 0;
+char buf[20]; // allocate tmp space for string compare
+
 	action_type_t type = NONE;
-
-	if (!c->msg->ready)
-		return NONE ;
-
-	if (c->msg->type != T_ACTION)
-		return NONE;
-
-    val = json_get_str_value(c->msg->data, "action");
-
-
-	if (val && !strcmp(val, "unlock"))
+		
+    json_get_str_value(c, "action", buf); // note: check buf size (need some json_get_str_length)
+	if (strcmp(buf, "unlock") == 0) // if string match
 		type = UNLOCK;
-	else if (val && !strcmp(val, "lock"))
+	else if (strcmp(buf, "lock") == 0) // if string match
 		type = LOCK;
-
-	if (val)
-		_free(val);
 
 	return type;
 }
@@ -70,22 +51,17 @@ char *msg_get_response(struct in3_client *c)
 	dbg_log("msg: '%s'\n", c->msg->data);
 	return val;
 }
-static char *get_tx_hash(char *msg)
+static  int get_tx_hash(char *msg, char* dst)
 {
-	char *val = json_get_str_value(msg, "transactionHash");
-	if (!val)
-		return NULL;
+    *dst = 0; // preset out string as an empty string
 
-	if (strncmp(val, "0x", 2))
-		goto err;
+	json_get_str_value(msg, "transactionHash", dst); // note: check dst buf len
 
-	return val;
+	dbg_log("tx_hash: '%s'\n", dst);
+	if (strncmp(dst, "0x", 2)) // need to check also 0X ???
+		return -1;
 
-err:
-	if (val)
-		_free(val);
-
-	return NULL;
+	return 0;
 }
 
 int wait_for_message(struct in3_client *c)
@@ -110,7 +86,7 @@ int send_ble(char** urls,int urls_len, char* pl, in3_response_t* result)  {
 
 
     char payload[5120];
-
+     dbg_log("incubed payload: %s\n", pl);
 	sprintf(payload,"{\"msgType\":\"in3Request\",\"msgId\":1,\"url\":\"%s\",\"method\":\"POST\",\"data\":%s}",*urls,pl);
 	dbg_log("payload (len=%d): '%s'\n", strlen(payload), payload);
 
@@ -121,14 +97,14 @@ int send_ble(char** urls,int urls_len, char* pl, in3_response_t* result)  {
 
 	_client->txr->data = NULL;
 
-	dbg_log("");
+	dbg_log("reach this point %i\n", err);
 	if (err < 0) {
         sb_add_chars(&result->error, "Error receiving this response");
 		return err;
 	}
-	dbg_log("");
 
 	_client->txr->data = msg_get_response(_client);
+	dbg_log("reach this other point %s", _client->txr->data);
     sb_add_chars(&result->result, _client->txr->data);
 	return 0;
 }
@@ -161,14 +137,17 @@ int in3_get_tx_receipt(struct in3_client *c, char *tx_hash, char **response)
 
 
 	sprintf(params, "[\"%s\"]", tx_hash);
+
+	dbg_log("calling the incubed client with params : %s\n", params);
     in3_client_rpc(c->in3,"eth_getTransactionReceipt",params,&result,&error);
 
     if (error) {
-     	dbg_log("error: '%s'\n", error);
+     	dbg_log("got s error: '%s'\n", error);
 		*response =NULL;
 		k_free(error);
 	}
 	else {
+		dbg_log("got a response: '%s'\n", result);
 		*response = result;
 		//TODO don't need it!
 		c->txr->hash = k_calloc(1, strlen(tx_hash)+1);
@@ -267,20 +246,20 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 int verify_rent(struct in3_client *c)
 {
 	int ret = -1, id = 0;
-	char *tx_hash = 0, *r = 0;
+	char tx_hash[67], *r = 0;
 	char *amsg = 0;
 	char payload[512];
 
-	tx_hash = get_tx_hash(c->msg->data);
-	if (!tx_hash)
-		goto out;
+	if (get_tx_hash(c->msg->data, tx_hash))
+		return -1;
+//	if (!tx_hash)
+	if (tx_hash[0] == 0) // if empty string
+		goto out; // note: ret = -1
 
 	// keep copy of action message
 	amsg = k_calloc(1, sizeof(char) * (c->msg->size + 1));
 	amsg = memcpy(amsg, c->msg->data, c->msg->size + 1);
 	id = json_get_int_value(amsg, "msgId");
-
-	dbg_log("tx_hash: '%s'\n", tx_hash);
 
 	in3_get_tx_receipt(c, tx_hash, &r);
 	if (r)
@@ -316,7 +295,7 @@ out:
 void do_action(action_type_t action)
 {
 	if (action == LOCK) {
-		printk("action: LOCK\n");
+		dbg_log("action: LOCK\n");
 		for (int i = 4; i > 0; i--) {
 			led_set(1);
 			k_sleep(125);
@@ -324,7 +303,7 @@ void do_action(action_type_t action)
 			k_sleep(125);
 		}
 	} else {
-		printk("action: UNLOCK\n");
+		dbg_log("action: UNLOCK\n");
 		for (int i = 4; i > 0; i--) {
 			led_set(0);
 			k_sleep(125);
