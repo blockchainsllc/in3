@@ -63,6 +63,8 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
     case MATH_SIGNEXP:
       l = big_exp(a, la, b, lb, 1, res);
       break;
+    default:
+      return EVM_ERROR_INVALID_OPCODE;
   }
 
   if (l < 0) return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
