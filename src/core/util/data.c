@@ -602,8 +602,9 @@ static int read_token(json_parsed_t* jp, uint8_t* d, size_t* p) {
   switch (type) {
     case T_ARRAY:
       for (i = 0; i < len; i++) {
+        ll = jp->len;
         if (read_token(jp, d, p)) return 1;
-        jp->items[jp->len - 1].key = i;
+        jp->items[ll].key = i;
       }
       break;
     case T_OBJECT:

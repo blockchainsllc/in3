@@ -93,7 +93,7 @@ static char* TRIE_LEAF[] = {
     "value"};
 
 static char* TRIE_BRANCH[] = {
-    "MERKLE LEAF",
+    "MERKLE BRANCH",
     "0",
     "1",
     "2",
@@ -111,6 +111,8 @@ static char* TRIE_BRANCH[] = {
     "E",
     "F",
     "value"};
+
+static int first = 1;
 
 void write(bytes_t* data, char* l, char** tt) {
   bytes_t t;
@@ -145,8 +147,14 @@ void write(bytes_t* data, char* l, char** tt) {
       else
         printf("<EMPTY>");
 
-      for (j = 0; j < t.len; j++)
+      for (j = 0; j < t.len; j++) {
+        if (j > 0 && j % 32 == 0 && (!tt || strcmp(tt[i + 1], "value"))) {
+          printf("\n%s", l);
+          if (tt) printf("%-20s  ", "");
+          printf("%-17s 0x", "");
+        }
         printf("%02x", t.data[j]);
+      }
 
       printf("\n");
 
@@ -182,14 +190,17 @@ void write(bytes_t* data, char* l, char** tt) {
 
       printf("[ %s", t2 ? t2[0] : "");
 
-      bytes_t* hash = sha3(data);
-      printf("  Hash : 0x");
+      if (first) {
+        bytes_t* hash = sha3(data);
+        printf("  Hash : 0x");
+        first = 0;
 
-      for (int j = 0; j < 32; j++)
-        printf("%02x", hash->data[j]);
+        for (int j = 0; j < 32; j++)
+          printf("%02x", hash->data[j]);
 
+        b_free(hash);
+      }
       printf("\n");
-      b_free(hash);
 
       sprintf(prefix, "%s   ", l);
       write(&t, prefix, t2);

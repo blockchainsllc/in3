@@ -15,6 +15,15 @@ bytes_t* b_new(char* data, int len) {
   return b;
 }
 
+void ba_print(uint8_t* a, int l) {
+  size_t i;
+  if (!a) return;
+
+  printf("Bytes: ");
+  for (i = 0; i < l; i++) printf("%02x", a[i]);
+  printf("\n");
+}
+
 void b_print(bytes_t* a) {
   size_t i;
   if (!a) return;
