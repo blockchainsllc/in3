@@ -8,6 +8,8 @@
 #include "mem.h"
 #include "stringbuilder.h"
 
+#include "util/debug.h" // DEBUG !!!
+
 d_key_t key(char* c) {
   uint16_t val = 0;
   while (true) {
@@ -518,14 +520,26 @@ int json_get_int_value(char* js, char* prop) {
   return -1;
 }
 
-char* json_get_str_value(char* js, char* prop) {
+void json_get_str_value(char* js, char* prop, char* dst) {
+  *dst = 0; // preset returned string as empty string
+  d_token_t* t;
+  
   json_parsed_t* ctx = parse_json(js);
   if (ctx) {
-    char* c = d_get_string(ctx->items, prop);
+    t = d_get(ctx->items,key(prop));
+    switch (d_type(t)) {
+      case T_STRING:
+        strcpy(dst,d_string(t));
+        break;
+      case T_BYTES:
+        dst[0] = '0';
+        dst[1] = 'x';
+        int8_to_char(t->data, t->len, dst + 2);        
+        dst[t->len*2+2] = 0;
+        break;
+    }
     free_json(ctx);
-    return c ? _strdup(c, strlen(c)) : NULL;
   }
-  return NULL;
 }
 
 char* json_get_json_value(char* js, char* prop) {
