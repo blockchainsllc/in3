@@ -136,10 +136,10 @@ int big_mul(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res, uint8_
   uint8_t  v1, low_carry, high_carry, multiply_result_low8, multiply_result_high8, i, j, l = la + lb + 1, out[66], *r = out;
 
   memset(out, 0, la + lb + 1);
-  for (i = la - 1; i >= 0 && i != 0xFF; i--) {
+  for (i = la - 1; i != 0xFF; i--) {
     v1         = a[i];
     high_carry = 0;
-    for (j = lb; j >= 0 && j != 0xFF; j--) {
+    for (j = lb; j != 0xFF; j--) {
       // o = i + j
       multiply_result16     = (uint16_t) v1 * (uint16_t) b[j];
       multiply_result_low8  = multiply_result16 & 0xFF;

@@ -123,7 +123,8 @@ static int op_not(evm_t* evm) {
 #define OP_XOR 2
 
 static int op_bit(evm_t* evm, uint8_t op) {
-  uint8_t result[32], *res = result, *a, l, l1 = evm_stack_pop_ref(evm, &a), i, j;
+  uint8_t result[32], *res = result, *a;
+  int     l, l1            = evm_stack_pop_ref(evm, &a), i, j;
   if (l1 < 0) return l1;
   memcpy(res + 32 - l1, a, l1);
   if (l1 < 32) memset(res, 0, 32 - l1);
@@ -162,7 +163,7 @@ static int op_byte(evm_t* evm) {
 }
 
 static int op_cmp(evm_t* evm, int8_t eq, uint8_t sig) {
-  uint8_t *a, *b, res = 0, sig_a, sig_b;
+  uint8_t *a, *b, res = 0, sig_a = 0, sig_b = 0;
   int      len_a, len_b;
   // try fetch the 2 values from the stack
   if ((len_a = evm_stack_pop_ref(evm, &a)) < 0 || (len_b = evm_stack_pop_ref(evm, &b)) < 0) return EVM_ERROR_EMPTY_STACK;
@@ -422,7 +423,7 @@ int op_call(evm_t* evm, uint8_t mode) {
   //
   // gasLimit, toAddress, value, inOffset, inLength, outOffset, outLength
   uint8_t *gas_limit, *address, *value, zero = 0;
-  int32_t  l_gas, l_address, l_value, in_offset, in_len, out_offset, out_len;
+  int32_t  l_gas, l_address, l_value = 0, in_offset, in_len, out_offset, out_len;
   if ((l_gas = evm_stack_pop_ref(evm, &gas_limit)) < 0) return l_gas;
   if ((l_address = evm_stack_pop_ref(evm, &address)) < 0) return l_address;
   if ((mode == CALL_CALL || mode == CALL_CODE) && (l_value = evm_stack_pop_ref(evm, &value)) < 0) return l_value;
