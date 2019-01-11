@@ -2,6 +2,7 @@
  * simple commandline-util parsing json and creating bin
  * */
 
+#include <inttypes.h>
 #include <math.h>
 #include <rlp.h>
 #include <stdint.h>
@@ -134,7 +135,7 @@ void write(bytes_t* data, char* l, char** tt) {
       else if (t.len == 0)
         d = printf("0");
       else if (t.len < 9)
-        d = printf("%llu", bytes_to_long(t.data, t.len));
+        d = printf("%" PRIu64 "", bytes_to_long(t.data, t.len));
       else if (t.len == 20)
         d = printf("<address>");
       else if (t.len == 32)
