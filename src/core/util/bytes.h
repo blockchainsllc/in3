@@ -28,7 +28,7 @@ bytes_t* b_new(char* data, int len);
 void b_print(bytes_t* a);
 
 /** prints a the bytes as hey to stdout */
-void ba_print(uint8_t* a, int l);
+void ba_print(uint8_t* a, size_t l);
 
 /** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
 int b_cmp(bytes_t* a, bytes_t* b);

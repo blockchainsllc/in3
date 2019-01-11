@@ -8,7 +8,7 @@
 #include "mem.h"
 #include "stringbuilder.h"
 
-#include "util/debug.h" // DEBUG !!!
+#include "debug.h" // DEBUG !!!
 
 d_key_t key(char* c) {
   uint16_t val = 0;
@@ -522,21 +522,36 @@ int json_get_int_value(char* js, char* prop) {
 
 void json_get_str_value(char* js, char* prop, char* dst) {
   *dst = 0; // preset returned string as empty string
-  d_token_t* t;
-  
+  d_token_t*  t;
+  str_range_t s;
+
   json_parsed_t* ctx = parse_json(js);
   if (ctx) {
-    t = d_get(ctx->items,key(prop));
+    t = d_get(ctx->items, key(prop));
     switch (d_type(t)) {
       case T_STRING:
-        strcpy(dst,d_string(t));
+        strcpy(dst, d_string(t));
         break;
       case T_BYTES:
         dst[0] = '0';
         dst[1] = 'x';
-        int8_to_char(t->data, t->len, dst + 2);        
-        dst[t->len*2+2] = 0;
+        int8_to_char(t->data, t->len, dst + 2);
+        dst[t->len * 2 + 2] = 0;
         break;
+      case T_ARRAY:
+      case T_OBJECT:
+        s = d_to_json(t);
+        memcpy(dst, s.data, s.len);
+        dst[s.len] = 0;
+        break;
+      case T_BOOLEAN:
+        strcpy(dst, d_int(t) ? "true" : "false");
+        break;
+      case T_INTEGER:
+        sprintf(dst, "0x%x", d_int(t));
+        break;
+      case T_NULL:
+        strcpy(dst, "null");
     }
     free_json(ctx);
   }

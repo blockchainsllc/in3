@@ -15,7 +15,7 @@ bytes_t* b_new(char* data, int len) {
   return b;
 }
 
-void ba_print(uint8_t* a, int l) {
+void ba_print(uint8_t* a, size_t l) {
   size_t i;
   if (!a) return;
 
