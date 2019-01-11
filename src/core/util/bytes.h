@@ -24,8 +24,11 @@ typedef struct {
 /** allocates a new byte array with 0 filled */
 bytes_t* b_new(char* data, int len);
 
-/** printsa the bytes as hey to stdout */
+/** prints a the bytes as hey to stdout */
 void b_print(bytes_t* a);
+
+/** prints a the bytes as hey to stdout */
+void ba_print(uint8_t* a, int l);
 
 /** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
 int b_cmp(bytes_t* a, bytes_t* b);
