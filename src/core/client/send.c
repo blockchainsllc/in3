@@ -26,6 +26,7 @@ static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token
     // conf->clientSignature =
   }
   conf->latestBlock = c->replaceLatestBlock;
+  conf->useBinary   = c->use_binary;
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
     if (c->proof == PROOF_FULL)
       conf->useFullProof = true;
@@ -56,6 +57,12 @@ static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token
   return 0;
 }
 
+static void free_urls(char** urls, int len, uint8_t free_items) {
+  if (free_items) {
+    for (int i = 0; i < len; i++) _free(urls[i]);
+  }
+  _free(urls);
+}
 static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** response_result) {
   int n, res;
 
@@ -69,12 +76,26 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
   for (n = 0; n < nodes_count; n++) {
     urls[n] = w->node->url;
     w       = w->next;
+
+    if (ctx->client->use_http) {
+      char* url;
+      if (strncmp(urls[n], "https://", 8) == 0) {
+        int l = strlen(urls[n]);
+        url   = _malloc(l);
+        strcpy(url, urls[n] + 1);
+        url[0] = 'h';
+        url[2] = 't';
+        url[3] = 'p';
+      } else
+        url = strdup(urls[n]);
+      urls[n] = url;
+    }
   }
 
   res = ctx_create_payload(ctx, payload);
   if (res < 0) {
     sb_free(payload);
-    _free(urls);
+    free_urls(urls, nodes_count, ctx->client->use_http);
     return ctx_set_error(ctx, "could not generate the payload", IN3_ERR_CONFIG_ERROR);
   }
 
@@ -90,7 +111,7 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
 
   // free resources
   sb_free(payload);
-  _free(urls);
+  free_urls(urls, nodes_count, ctx->client->use_http);
 
   if (res < 0) {
     for (n = 0; n < nodes_count; n++) {

@@ -151,6 +151,8 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
       sb_add_chars(sb, ",\"includeCode\":true");
     if (rc->useFullProof)
       sb_add_chars(sb, ",\"useFullProof\":true");
+    if (rc->useBinary)
+      sb_add_chars(sb, ",\"useBinary\":true");
     if (rc->verification == VERIFICATION_PROOF)
       sb_add_chars(sb, ",\"verification\":\"proof\"");
     else if (rc->verification == VERIFICATION_PROOF_WITH_SIGNATURE)

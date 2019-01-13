@@ -54,6 +54,7 @@ typedef struct {
   uint64_t           chainId;             /**< the chain to be used. this is holding the integer-value of the hexstring. */
   uint8_t            includeCode;         /**< if true the code needed will always be devlivered.  */
   uint8_t            useFullProof;        /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
+  uint8_t            useBinary;           /**< this flaqg is set, the client should use binary-format */
   bytes_t*           verifiedHashes;      /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
   uint16_t           verifiedHashesCount; /**< number of verified blockhashes*/
   uint16_t           latestBlock;         /**< the last blocknumber the nodelistz changed */
@@ -215,6 +216,12 @@ typedef struct {
 
   /** includes the code when sending eth_call-requests */
   uint8_t includeCode;
+
+  /** if true the client will use binary format*/
+  uint8_t use_binary;
+
+  /** if true the client will try to use http instead of https*/
+  uint8_t use_http;
 
   /** chain spec and nodeList definitions*/
   in3_chain_t* chains;
