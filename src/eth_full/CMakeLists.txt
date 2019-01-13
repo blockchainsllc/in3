@@ -11,6 +11,10 @@ add_library( in3_eth_full STATIC
   
 )
 
+# add gas-calculation
+ADD_DEFINITIONS(-DEVM_GAS)
+
+
 # include core in the headers
 include_directories ("${PROJECT_SOURCE_DIR}/src/core")
 include_directories ("${PROJECT_SOURCE_DIR}/src/eth_nano")

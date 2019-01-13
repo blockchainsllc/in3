@@ -79,15 +79,15 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
 
     if (ctx->client->use_http) {
       char* url;
+      int   l = strlen(urls[n]);
       if (strncmp(urls[n], "https://", 8) == 0) {
-        int l = strlen(urls[n]);
-        url   = _malloc(l);
+        url = _malloc(l);
         strcpy(url, urls[n] + 1);
         url[0] = 'h';
         url[2] = 't';
         url[3] = 'p';
       } else
-        url = strdup(urls[n]);
+        url = _strdup(urls[n], l);
       urls[n] = url;
     }
   }
