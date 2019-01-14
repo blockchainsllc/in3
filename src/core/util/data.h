@@ -55,6 +55,7 @@ d_key_t key(char* c);
 d_key_t keyn(char* c, int len);
 
 bytes_t*  d_create_bytes(d_token_t* item);
+bytes_t   d_to_bytes(d_token_t* item);
 int       d_bytes_to(d_token_t* item, uint8_t* dst, int max);
 bytes_t*  d_bytes(d_token_t* item);
 char*     d_string(d_token_t* item);
@@ -83,7 +84,7 @@ str_range_t    d_to_json(d_token_t* item);
 char*          d_create_json(d_token_t* item);
 
 int   json_get_int_value(char* js, char* prop);
-void json_get_str_value(char* js, char* prop, char *dst);
+void  json_get_str_value(char* js, char* prop, char* dst);
 char* json_get_json_value(char* js, char* prop);
 
 #define d_get_string(r, k) d_string(d_get(r, key(k))) /**< reads string of a property as string. */

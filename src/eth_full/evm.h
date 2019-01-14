@@ -1,6 +1,10 @@
 
 #include <client/verifier.h>
 #include <util/bytes.h>
+#ifndef evm_h__
+#define evml_h__
+
+#define EVM_GAS
 
 typedef enum evm_state {
   EVM_STATE_INIT     = 0,
@@ -18,6 +22,8 @@ typedef enum evm_state {
 #define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -7
 #define EVM_ERROR_TIMEOUT -8
 #define EVM_ERROR_INVALID_ENV -9
+#define EVM_ERROR_OUT_OF_GAS -10
+#define EVM_ERROR_BALANCE_TOO_LOW -11
 
 #define EVM_EIP_CONSTANTINOPL 1
 
@@ -42,6 +48,20 @@ typedef enum evm_state {
  * 
  */
 typedef int (*evm_get_env)(void* evm, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
+
+typedef struct account_storage {
+  uint8_t                 key[32];
+  uint8_t                 value[32];
+  struct account_storage* next;
+} storage_t;
+
+typedef struct account {
+  uint8_t         address[20];
+  uint8_t         balance[32];
+  bytes_t         code;
+  storage_t*      storage;
+  struct account* next;
+} account_t;
 
 typedef struct evm {
   // internal data
@@ -70,6 +90,13 @@ typedef struct evm {
   bytes_t  call_data;
   bytes_t  gas_price;
 
+#ifdef EVM_GAS
+  uint64_t    gas;
+  account_t*  accounts;
+  struct evm* root;
+
+#endif
+
 } evm_t;
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len);
@@ -92,6 +119,7 @@ int evm_sub_call(evm_t*   parent,
                  uint8_t* data, int l_data,
                  uint8_t* caller,
                  uint8_t* origin,
+                 uint64_t gas,
                  uint8_t  mode,
                  int out_offset, int out_len);
 
@@ -102,5 +130,15 @@ int  evm_call(in3_vctx_t* vc,
               uint8_t* value, int l_value,
               uint8_t* data, int l_data,
               uint8_t*  caller,
+              uint64_t  gas,
               bytes_t** result);
 void evm_print_stack(evm_t* evm);
+
+#ifdef EVM_GAS
+account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create);
+storage_t* evm_get_storage(evm_t* evm, uint8_t* adr, uint8_t* key, int keylen, uint8_t create);
+void       uint256_set(uint8_t* src, int src_len, uint8_t* dst);
+int        transfer_value(evm_t* evm, uint8_t* from_account, uint8_t* to_account, uint8_t* value, int value_len);
+
+#endif
+#endif

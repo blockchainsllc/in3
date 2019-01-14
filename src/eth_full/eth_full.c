@@ -33,13 +33,16 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
     bytes_t*   address = d_get_bytesk(tx, K_TO);
     uint8_t    zeros[20];
     memset(zeros, 0, 20);
-    int      res    = 0;
-    bytes_t* from   = d_get_bytesk(tx, K_FROM);
-    bytes_t* value  = d_get_bytesk(tx, K_VALUE);
-    bytes_t* data   = d_get_bytesk(tx, K_DATA);
-    bytes_t* result = NULL;
+    int      res       = 0;
+    bytes_t* from      = d_get_bytesk(tx, K_FROM);
+    bytes_t* value     = d_get_bytesk(tx, K_VALUE);
+    bytes_t* data      = d_get_bytesk(tx, K_DATA);
+    bytes_t  gas       = d_to_bytes(d_get(tx, K_GAS_LIMIT));
+    bytes_t* result    = NULL;
+    uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
+    if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
 
-    switch (evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, &result)) {
+    switch (evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, &result)) {
       case EVM_ERROR_BUFFER_TOO_SMALL:
         return vc_err(vc, "Memory or Buffer too small!");
       case EVM_ERROR_EMPTY_STACK:
@@ -58,6 +61,8 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
         return vc_err(vc, "timeout running the call");
       case EVM_ERROR_UNSUPPORTED_CALL_OPCODE:
         return vc_err(vc, "This op code is not supported with eth_call!");
+      case EVM_ERROR_OUT_OF_GAS:
+        return vc_err(vc, "Ran out of gas.");
       case 0:
         if (!result) return vc_err(vc, "no result");
         res = b_cmp(d_bytes(vc->result), result);

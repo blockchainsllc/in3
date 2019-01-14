@@ -34,6 +34,26 @@ bytes_t* d_bytes(d_token_t* item) {
   return (bytes_t*) item;
 }
 
+bytes_t d_to_bytes(d_token_t* item) {
+  bytes_t dst;
+  switch (d_type(item)) {
+    case T_BYTES:
+      dst.data = item->data;
+      dst.len  = item->len;
+      return dst;
+    case T_INTEGER:
+      dst.len  = d_bytes_to(item, (uint8_t*) &item->data, 4);
+      dst.data = (uint8_t*) &item->data;
+      dst.data += 4 - dst.len;
+      return dst;
+    case T_NULL:
+    default:
+      dst.len  = 0;
+      dst.data = NULL;
+      return dst;
+  }
+}
+
 int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
   if (item) {
     int l = d_len(item), i, val;
