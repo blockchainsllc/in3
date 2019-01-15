@@ -1,5 +1,6 @@
 #include "big.h"
 #include "evm.h"
+#include "gas.h"
 #include <client/verifier.h>
 #include <stdlib.h>
 #include <string.h>
@@ -183,9 +184,14 @@ int evm_sub_call(evm_t*   parent,
 ) {
   evm_t evm;
   int   res;
-  res     = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr);
-  evm.gas = gas;
+  res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr);
+
 #ifdef EVM_GAS
+  evm.gas = gas;
+  if (parent->gas < gas)
+    res = EVM_ERROR_OUT_OF_GAS;
+  else
+    parent->gas -= gas;
   evm.root = parent->root;
   if (res == 0) res = transfer_value(&evm, parent->account, address, value, l_value);
 #endif
@@ -198,6 +204,9 @@ int evm_sub_call(evm_t*   parent,
     res = evm_ensure_memory(parent, out_offset + out_len);
     if (res == 0) memcpy(parent->memory.b.data + out_offset, evm.return_data.data, out_len);
   }
+#ifdef EVM_GAS
+  if (res == 0) parent->gas += evm.gas;
+#endif
 
   evm_free(&evm);
 
