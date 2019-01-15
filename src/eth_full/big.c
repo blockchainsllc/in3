@@ -225,6 +225,10 @@ int big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
 int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t* res) {
   optimze_length(&a, &la);
   optimze_length(&b, &lb);
+  if (!sig && lb == 0 && *b == 0) {
+    res[0] = 1;
+    return 1;
+  }
   if (!sig && la == 1 && *a == 2) {
     memset(res, 0, 63);
     res[63] = 1;
@@ -232,4 +236,12 @@ int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
     return 64;
   }
   return -7;
+}
+
+int big_log256(uint8_t* a, int len) {
+  while (a[0] == 0) {
+    len--;
+    a++;
+  }
+  return len;
 }

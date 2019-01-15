@@ -9,9 +9,18 @@ void evm_free(evm_t* evm) {
   if (evm->return_data.data) _free(evm->return_data.data);
   if (evm->stack.b.data) _free(evm->stack.b.data);
   if (evm->memory.b.data) _free(evm->memory.b.data);
+  logs_t* l;
+  while (evm->logs) {
+    l = evm->logs;
+    _free(l->data.data);
+    _free(l->topics.data);
+    evm->logs = l->next;
+    _free(l);
+  }
 
   account_t* ac = NULL;
   storage_t* s;
+
   while (evm->accounts) {
     ac = evm->accounts;
     if (ac->code.data) _free(ac->code.data);

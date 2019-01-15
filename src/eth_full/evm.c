@@ -40,6 +40,22 @@ int evm_stack_push_int(evm_t* evm, uint32_t val) {
   return evm_stack_push(evm, bytes + 3, 1);
 }
 
+int evm_stack_push_long(evm_t* evm, uint64_t val) {
+  uint8_t bytes[8];
+  bytes[7] = val & 0xFF;
+  bytes[6] = (val << 8) & 0xFF;
+  bytes[5] = (val << 16) & 0xFF;
+  bytes[4] = (val << 24) & 0xFF;
+  bytes[3] = (val << 32) & 0xFF;
+  bytes[2] = (val << 40) & 0xFF;
+  bytes[1] = (val << 48) & 0xFF;
+  bytes[0] = (val << 56) & 0xFF;
+  for (uint8_t i = 0; i < 7; i++) {
+    if (bytes[i] == 0) return evm_stack_push(evm, bytes + i, 8 - i);
+  }
+  return evm_stack_push(evm, bytes + 7, 1);
+}
+
 int evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len) {
   if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
   uint8_t l = evm->stack.b.data[evm->stack.b.len - 1];

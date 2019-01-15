@@ -2,7 +2,7 @@
 #include <client/verifier.h>
 #include <util/bytes.h>
 #ifndef evm_h__
-#define evml_h__
+#define evm_h__
 
 #define EVM_GAS
 
@@ -33,6 +33,7 @@ typedef enum evm_state {
 #define EVM_ENV_BLOCKHASH 4
 #define EVM_ENV_STORAGE 5
 #define EVM_ENV_BLOCKHEADER 6
+#define EVM_ENV_CODE_HASH 7
 
 /**
  * This function provides data from the enviroment.
@@ -54,6 +55,11 @@ typedef struct account_storage {
   uint8_t                 value[32];
   struct account_storage* next;
 } storage_t;
+typedef struct logs {
+  bytes_t      topics;
+  bytes_t      data;
+  struct logs* next;
+} logs_t;
 
 typedef struct account {
   uint8_t         address[20];
@@ -94,6 +100,7 @@ typedef struct evm {
   uint64_t    gas;
   account_t*  accounts;
   struct evm* root;
+  logs_t*     logs;
 
 #endif
 
@@ -101,6 +108,7 @@ typedef struct evm {
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len);
 int evm_stack_push_int(evm_t* evm, uint32_t val);
+int evm_stack_push_long(evm_t* evm, uint64_t val);
 
 int     evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst);
 int     evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len);
