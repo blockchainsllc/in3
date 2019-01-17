@@ -12,6 +12,7 @@ void evm_free(evm_t* evm) {
   if (evm->memory.b.data) _free(evm->memory.b.data);
   printf("#  FREE EVM 1 \n");
 
+#ifdef EVM_GAS
   logs_t* l;
   while (evm->logs) {
     l = evm->logs;
@@ -37,7 +38,7 @@ void evm_free(evm_t* evm) {
     evm->accounts = ac->next;
     _free(ac);
   }
-
+#endif
   printf("#  FREE EVM 3 \n");
 }
 
@@ -162,6 +163,8 @@ int evm_prepare_evm(evm_t*      evm,
 #ifdef EVM_GAS
   evm->accounts = NULL;
   evm->gas      = 0;
+  evm->logs     = NULL;
+  evm->root     = &evm;
 #endif
 
   // get the code
