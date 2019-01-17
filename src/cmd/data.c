@@ -11,26 +11,6 @@
 #include <util/data.h>
 #include <util/mem.h>
 
-/*
-void newp() {
-  char* js = "{ \"key\":\"value\", \"array\":[1,2,3,4,\"test\"], \"sub\":{ \"a\":3}, \"bytes\":\"0xabcdef1234567890\"  }";
-  d_token_t* root;
-  int tokc;
-
-  if (parse_json(js,&root,&tokc)==0) {
-    char* val = d_get_string(root,"key");
-    bytes_t* bytes = d_get_bytes(root,"bytes");
-    b_print(bytes);
-
-    str_range_t s = d_to_json( d_get(root,key("sub")));
-    char tmp[1000];
-    strncpy(tmp,s.data,s.len);
-    printf("json = | %s | ",tmp);
-  }
-
-}
-*/
-
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {
     printf("File not found!");
@@ -100,6 +80,5 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  //  printf("INPUT: %s", input);
   return 0;
 }

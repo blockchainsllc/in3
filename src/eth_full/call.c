@@ -10,7 +10,6 @@ void evm_free(evm_t* evm) {
   if (evm->return_data.data) _free(evm->return_data.data);
   if (evm->stack.b.data) _free(evm->stack.b.data);
   if (evm->memory.b.data) _free(evm->memory.b.data);
-  printf("#  FREE EVM 1 \n");
 
 #ifdef EVM_GAS
   logs_t* l;
@@ -24,7 +23,6 @@ void evm_free(evm_t* evm) {
 
   account_t* ac = NULL;
   storage_t* s;
-  printf("#  FREE EVM 2 \n");
 
   while (evm->accounts) {
     ac = evm->accounts;
@@ -39,7 +37,6 @@ void evm_free(evm_t* evm) {
     _free(ac);
   }
 #endif
-  printf("#  FREE EVM 3 \n");
 }
 
 #ifdef EVM_GAS
@@ -164,7 +161,7 @@ int evm_prepare_evm(evm_t*      evm,
   evm->accounts = NULL;
   evm->gas      = 0;
   evm->logs     = NULL;
-  evm->root     = &evm;
+  evm->root     = evm;
 #endif
 
   // get the code
@@ -229,12 +226,10 @@ int evm_call(in3_vctx_t* vc,
              uint64_t  gas,
              bytes_t** result) {
   evm_t evm;
-  printf("#start EVM_CALL\n");
 
   int res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc);
 
 #ifdef EVM_GAS
-  printf("#EVM_GAS\n");
   evm.root = &evm;
   if (res == 0) res = transfer_value(&evm, caller, address, value, l_value);
 #endif
@@ -242,13 +237,10 @@ int evm_call(in3_vctx_t* vc,
   evm.gas            = gas;
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
-  printf("#START_RUN %i\n", res);
   if (res == 0) res = evm_run(&evm);
-  printf("#END_RUN %i\n", res);
   if (res == 0 && evm.return_data.data)
     *result = b_dup(&evm.return_data);
   evm_free(&evm);
-  printf("#EVM_FREE %i\n", res);
 
   return res;
 }

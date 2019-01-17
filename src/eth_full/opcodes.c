@@ -12,6 +12,8 @@
 #include <crypto/bignum.h>
 #include <crypto/ecdsa.h>
 #include <crypto/secp256k1.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <util/data.h>
 #include <util/mem.h>
