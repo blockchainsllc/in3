@@ -31,7 +31,7 @@ test-in3:
     - conan install .. --build libcurl
     - cmake -DTEST=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - build/test/runner test/testdata/eth_call.json
+    - test/runner ../test/testdata/eth_call.json
     - CTEST_OUTPUT_ON_FAILURE=1 make test
   artifacts:
     paths:
