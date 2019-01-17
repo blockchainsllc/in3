@@ -87,6 +87,10 @@ int   json_get_int_value(char* js, char* prop);
 void  json_get_str_value(char* js, char* prop, char* dst);
 char* json_get_json_value(char* js, char* prop);
 
+char* d_get_keystr(d_key_t k);
+void  d_track_keynames(uint8_t v);
+void  d_clear_keynames();
+
 #define d_get_string(r, k) d_string(d_get(r, key(k))) /**< reads string of a property as string. */
 #define d_get_stringk(r, k) d_string(d_get(r, k))     /**< reads string of a property as key. */
 #define d_get_string_at(r, i) d_string(d_get_at(r, i))

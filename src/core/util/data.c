@@ -10,6 +10,14 @@
 
 #include "debug.h" // DEBUG !!!
 
+typedef struct keyname {
+  char*           name;
+  d_key_t         key;
+  struct keyname* next;
+} keyname_t;
+static uint8_t    __track_keys = 0;
+static keyname_t* __keynames   = NULL;
+
 d_key_t key(char* c) {
   uint16_t val = 0;
   while (true) {
@@ -28,6 +36,25 @@ d_key_t keyn(char* c, int len) {
     c += 1;
   }
   return val;
+}
+
+static d_key_t add_key(char* c, int len) {
+  d_key_t k = keyn(c, len);
+  if (!__track_keys) return k;
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (kn->key == k) return k;
+    kn = kn->next;
+  }
+
+  kn         = malloc(sizeof(keyname_t));
+  kn->next   = __keynames;
+  __keynames = kn;
+  kn->key    = k;
+  kn->name   = malloc(len + 1);
+  memcpy(kn->name, c, len);
+  kn->name[len] = 0;
+  return k;
 }
 
 bytes_t* d_bytes(d_token_t* item) {
@@ -90,7 +117,7 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
             }
 
             for (; i >= 0; i--)
-              dst[l - i - 1] = val & 0xFF << (i << 3);
+              dst[l - i - 1] = (val >> (i << 3)) & 0xFF;
             return l;
           }
         }
@@ -182,7 +209,7 @@ uint64_t d_longd(d_token_t* item, uint64_t def_val) {
   if (d_type(item) == T_INTEGER)
     return item->len & 0xFFFFFFF;
   else if (d_type(item) == T_BYTES) {
-    return 0;
+    return bytes_to_long(item->data, item->len);
   }
   return 0;
 }
@@ -287,7 +314,7 @@ int parse_key(json_parsed_t* jp) {
     switch (*(jp->c++)) {
       case 0: return -2;
       case '"':
-        r = keyn(start, jp->c - start - 1);
+        r = add_key(start, jp->c - start - 1);
         return next_char(jp) == ':' ? r : -2;
       case '\\':
         jp->c++;
@@ -727,4 +754,25 @@ static void write_token(bytes_builder_t* bb, d_token_t* t) {
 void d_serialize_binary(bytes_builder_t* bb, d_token_t* t) {
   write_token_count(bb, d_token_size(t));
   write_token(bb, t);
+}
+
+char* d_get_keystr(d_key_t k) {
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (kn->key == k) return kn->name;
+    kn = kn->next;
+  }
+  return NULL;
+}
+void d_track_keynames(uint8_t v) {
+  __track_keys = v;
+}
+void d_clear_keynames() {
+  keyname_t* kn;
+  while (__keynames) {
+    kn = __keynames;
+    free(kn->name);
+    __keynames = kn->next;
+    free(kn);
+  }
 }

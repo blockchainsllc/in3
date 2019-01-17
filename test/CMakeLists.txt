@@ -11,6 +11,9 @@ include_directories(. ../src)
 add_executable(runner runner.c)
 target_link_libraries(runner core in3_eth_full)
 
+add_executable(vmrunner vm_runner.c)
+target_link_libraries(vmrunner core in3_eth_full)
+
 
 file(GLOB files "testdata/*.json")
 foreach(file ${files})
@@ -24,3 +27,4 @@ endforeach()
 
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)
+set_property(TARGET vmrunner PROPERTY C_STANDARD 99)

@@ -17,6 +17,6 @@ int  big_sub(uint8_t* a, uint8_t len_a, uint8_t* b, uint8_t len_b, uint8_t* out)
 int  big_mul(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res, uint8_t max);
 int  big_div(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t* res);
 int  big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t* res);
-int  big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t* res);
+int  big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res);
 int  big_log256(uint8_t* a, int len);
 #endif

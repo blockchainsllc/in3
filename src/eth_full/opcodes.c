@@ -78,11 +78,8 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
       l = big_mod(a, la, b, lb, 1, res);
       break;
     case MATH_EXP:
-      l = big_exp(a, la, b, lb, 0, res);
+      l = big_exp(a, la, b, lb, res);
       subgas(G_EXPBYTE * big_log256(b, lb));
-      break;
-    case MATH_SIGNEXP:
-      l = big_exp(a, la, b, lb, 1, res);
       break;
     default:
       return EVM_ERROR_INVALID_OPCODE;
@@ -113,7 +110,32 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
 
   return evm_stack_push(evm, r, l);
 }
+static int op_signextend(evm_t* evm) {
+  uint8_t* val;
+  int32_t  k = evm_stack_pop_int(evm), l;
+  if (k < 0) return k;
+  l = evm_stack_pop_ref(evm, &val);
+  if (l < 0) return l;
 
+  uint8_t extendOnes = false;
+  if (k <= 31) {
+    extendOnes = l > 31 - k && (val[31 - k] & 0x80);
+    uint8_t res[32];
+    memset(res, 0, 32);
+    memcpy(res + 32 - l, val, l);
+
+    // 31-k-1 since k-th byte shouldn't be modified
+    for (int i = 30 - k; i >= 0; i--) res[i] = extendOnes ? 0xff : 0;
+    l   = 32;
+    val = res;
+    while (l > 0 && *val == 0) {
+      l--;
+      val++;
+    }
+    return evm_stack_push(evm, val, l);
+  }
+  return evm_stack_push(evm, val, l);
+}
 static int op_is_zero(evm_t* evm) {
   uint8_t res = 1, *a;
   int     l   = evm_stack_pop_ref(evm, &a), i;
@@ -132,13 +154,21 @@ static int op_not(evm_t* evm) {
   uint8_t res[32], *a;
   int     l = evm_stack_pop_ref(evm, &a), i;
   if (l < 0) return l;
-
-  for (i = 0; i < l; i++)
-    res[i + 32 - l] = a[i] ^ 0xFF;
   if (l < 32) memset(res, 0, 32 - l);
+  memcpy(res + 32 - l, a, l);
+
+  for (i = 0; i < 32; i++)
+    res[i] = res[i] ^ 0xFF;
+
+  a = res;
+  l = 32;
+  while (l > 1 && a[0] == 0) {
+    a++;
+    l--;
+  }
 
   // push result to stack
-  return evm_stack_push(evm, res, 32);
+  return evm_stack_push(evm, a, l);
 }
 
 #define OP_AND 0
@@ -415,7 +445,7 @@ static int op_sload(evm_t* evm) {
   if (s) {
     value = s->value;
     l     = 32;
-    while (value[0] == 0) {
+    while (value[0] == 0 && l > 1) {
       l--;
       value++;
     }
@@ -433,11 +463,71 @@ static int op_sstore(evm_t* evm) {
   if ((l_val = evm_stack_pop_ref(evm, &value)) < 0) return l_val;
 
 #ifdef EVM_GAS
-  storage_t* s = evm_get_storage(evm, evm->account, key, l_key, 1);
+  storage_t* s       = evm_get_storage(evm, evm->account, key, l_key, 0);
+  uint8_t    created = s == NULL, el = l_val;
+  uint8_t    l_current = 0;
+  if (created)
+    s = evm_get_storage(evm, evm->account, key, l_key, 1);
+  else {
+    created = true;
+    for (int i = 0; i < 32; i++) {
+      if (s->value[i] != 0) {
+        l_current = 32 - i;
+        created   = false;
+        break;
+      }
+    }
+  }
+
+  while (el > 0 && value[l_val - el] == 0) el--;
+
+  if (evm->properties & EVM_EIP_CONSTANTINOPL) {
+    uint8_t* original   = NULL;
+    uint8_t  changed    = big_cmp(value, l_val, s->value, 32);
+    int      l_original = evm->env(evm, EVM_ENV_STORAGE, key, l_key, &original, 0, 0);
+    if (l_original < 0) l_original = 0;
+
+    if (!changed) {
+      subgas(GAS_CC_NET_SSTORE_NOOP_GAS);
+    } else if (big_cmp(original, l_original, s->value, 32) == 0) {
+      if (l_original == 0) {
+        subgas(GAS_CC_NET_SSTORE_INIT_GAS);
+      }
+      if (el == 0) {
+        evm->gas += GAS_CC_NET_SSTORE_CLEAR_REFUND;
+      }
+
+      subgas(GAS_CC_NET_SSTORE_CLEAN_GAS);
+    } else {
+      if (l_original) {
+        if (l_current == 0)
+          evm->gas -= GAS_CC_NET_SSTORE_CLEAR_REFUND;
+        else
+          evm->gas += GAS_CC_NET_SSTORE_CLEAR_REFUND;
+      }
+
+      if (big_cmp(original, l_original, value, l_val) == 0) {
+        if (l_original == 0)
+          evm->gas += GAS_CC_NET_SSTORE_RESET_CLEAR_REFUND;
+        else
+          evm->gas += GAS_CC_NET_SSTORE_RESET_REFUND;
+      }
+      subgas(GAS_CC_NET_SSTORE_DIRTY_GAS);
+    }
+  } else {
+    if (el == 0 && created) {
+      subgas(G_SRESET);
+    } else if (el == 0 && !created) {
+      subgas(G_SRESET);
+      evm->gas += R_SCLEAR;
+    } else if (el && created) {
+      subgas(G_SSET);
+    } else if (el && !created) {
+      subgas(G_SRESET);
+    }
+  }
+
   uint256_set(value, l_val, s->value);
-
-  //TODO calculate gas
-
   return 0;
 #else
   return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
@@ -601,8 +691,9 @@ int op_call(evm_t* evm, uint8_t mode) {
 
 int evm_execute(evm_t* evm) {
 
-  //  evm_print_stack(evm);
-  //  printf("\n exec %i : %02x\n", evm->pos, evm->code.data[evm->pos]);
+#ifdef TEST
+  if (evm->properties & EVM_DEBUG) evm_print_stack(evm);
+#endif
   uint8_t op = evm->code.data[evm->pos++];
   if (op >= 0x60 && op <= 0x7F) // PUSH
     op_exec(op_push(evm, op - 0x5F), G_VERY_LOW);
@@ -639,7 +730,7 @@ int evm_execute(evm_t* evm) {
     case 0x0A: //  EXP
       op_exec(op_math(evm, MATH_EXP, 0), G_EXP);
     case 0x0B: //  SIGNEXTEND
-      op_exec(op_math(evm, MATH_SIGNEXP, 0), G_LOW);
+      op_exec(op_signextend(evm), G_LOW);
 
     case 0x10: // LT
       op_exec(op_cmp(evm, -1, 0), G_VERY_LOW);
@@ -772,7 +863,7 @@ int evm_run(evm_t* evm) {
   uint32_t timeout = 0xFFFFFFFF;
   int      res;
   evm->state = EVM_STATE_RUNNING;
-  while (evm->state == EVM_STATE_RUNNING) {
+  while (evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
     res = evm_execute(evm);
     if (res < 0) return res;
     if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;

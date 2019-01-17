@@ -152,12 +152,115 @@ int evm_stack_push_bn(evm_t* evm, bignum256* val) {
   evm->stack_size++;
   return 0;
 }
+
+#define __code(n)       \
+  {                     \
+    printf("%-10s", n); \
+    return;             \
+  }
+void evm_print_op(evm_t* evm) {
+  uint8_t op = evm->code.data[evm->pos];
+  printf("\n%03i (%010llu) %02x : ", evm->pos, evm->gas, op);
+  if (op >= 0x60 && op <= 0x7F) {
+    printf("PUSH%i     ", op - 0x5F);
+    //    for (int j = 0; j < op - 0x5F; j++) printf("%02x", evm->code.data[evm->pos + j + 1]);
+    return;
+  }
+  if (op >= 0x80 && op <= 0x8F) {
+    printf("DUP%i      ", op - 0x7F);
+    return;
+  }
+  if (op >= 0x90 && op <= 0x9F) {
+    printf("SWAP%i     ", op - 0x8E);
+    return;
+  }
+  if (op >= 0xA0 && op <= 0xA4) {
+    printf("LOG%i      ", op - 0x9F);
+    return;
+  }
+
+  switch (op) {
+    case 0x00: __code("STOP");
+    case 0x01: __code("ADD");
+    case 0x02: __code("MUL");
+    case 0x03: __code("SUB");
+    case 0x04: __code("DIV");
+    case 0x05: __code("SDIV");
+    case 0x06: __code("MOD");
+    case 0x07: __code("SMOD");
+    case 0x08: __code("ADDMOD");
+    case 0x09: __code("MULMOD");
+    case 0x0A: __code("EXP");
+    case 0x0B: __code("SIGNEXTEND");
+    case 0x10: __code("LT");
+    case 0x11: __code("GT");
+    case 0x12: __code("SLT");
+    case 0x13: __code("SGT");
+    case 0x14: __code("EQ");
+    case 0x15: __code("IS_ZERO");
+    case 0x16: __code("AND");
+    case 0x17: __code("OR");
+    case 0x18: __code("XOR");
+    case 0x19: __code("NOT");
+    case 0x1a: __code("BYTE");
+    case 0x1b: __code("SHL");
+    case 0x1c: __code("SHR");
+    case 0x1d: __code("SAR");
+    case 0x20: __code("SHA3");
+    case 0x30: __code("ADDRESS");
+    case 0x31: __code("BALANCE");
+    case 0x32: __code("ORIGIN");
+    case 0x33: __code("CALLER");
+    case 0x34: __code("CALLVALUE");
+    case 0x35: __code("CALLDATALOAD");
+    case 0x36: __code("CALLDATA_SIZE");
+    case 0x37: __code("CALLDATACOPY");
+    case 0x38: __code("CODESIZE");
+    case 0x39: __code("CODECOPY");
+    case 0x3a: __code("GASPRICE");
+    case 0x3b: __code("EXTCODESIZE");
+    case 0x3c: __code("EXTCODECOPY");
+    case 0x3d: __code("RETURNDATASIZE");
+    case 0x3e: __code("RETURNDATACOPY");
+    case 0x3f: __code("EXTCODEHASH");
+    case 0x40: __code("BLOCKHASH");
+    case 0x41: __code("COINBASE");
+    case 0x42: __code("TIMESTAMP");
+    case 0x43: __code("NUMBER");
+    case 0x44: __code("DIFFICULTY");
+    case 0x45: __code("GASLIMIT");
+    case 0x50: __code("POP");
+    case 0x51: __code("MLOAD");
+    case 0x52: __code("MSTORE");
+    case 0x53: __code("MSTORE8");
+    case 0x54: __code("SLOAD");
+    case 0x55: __code("SSTORE");
+    case 0x56: __code("JUMP");
+    case 0x57: __code("JUMPI");
+    case 0x58: __code("PC");
+    case 0x59: __code("MSIZE");
+    case 0x5a: __code("GAS");
+    case 0x5b: __code("JUMPDEST");
+    case 0xF0: __code("CREATE");
+    case 0xF1: __code("CALL");
+    case 0xF2: __code("CALLCODE");
+    case 0xF3: __code("RETURN");
+    case 0xF4: __code("DELEGATE_CALL");
+    case 0xFA: __code("STATIC_CALL");
+    case 0xFD: __code("REVERT");
+    case 0xFE: __code("INVALID OPCODE");
+    case 0xFF: __code("SELFDESTRUCT");
+  }
+}
 void evm_print_stack(evm_t* evm) {
+
+  evm_print_op(evm);
+  printf(" [ ");
   for (int i = 0; i < evm->stack_size; i++) {
-    printf("%i : ", i);
     uint8_t* dst;
     int      l = evm_stack_get_ref(evm, i + 1, &dst);
     for (int j = 0; j < l; j++) printf("%02x", dst[j]);
-    printf("\n");
+    if (i < evm->stack_size - 1) printf(" | ");
   }
+  printf(" ]");
 }

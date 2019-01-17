@@ -1,6 +1,6 @@
 
-#include <client/verifier.h>
-#include <util/bytes.h>
+#include "../core/client/verifier.h"
+#include "../core/util/bytes.h"
 #ifndef evm_h__
 #define evm_h__
 
@@ -26,6 +26,7 @@ typedef enum evm_state {
 #define EVM_ERROR_BALANCE_TOO_LOW -11
 
 #define EVM_EIP_CONSTANTINOPL 1
+#define EVM_DEBUG 65536
 
 #define EVM_ENV_BALANCE 1
 #define EVM_ENV_CODE_SIZE 2
@@ -75,7 +76,7 @@ typedef struct evm {
   bytes_builder_t memory;
   int             stack_size;
   bytes_t         code;
-  int             pos;
+  uint32_t        pos;
   evm_state_t     state;
   bytes_t         last_returned;
   bytes_t         return_data;
@@ -141,6 +142,7 @@ int  evm_call(in3_vctx_t* vc,
               uint64_t  gas,
               bytes_t** result);
 void evm_print_stack(evm_t* evm);
+void evm_free(evm_t* evm);
 
 #ifdef EVM_GAS
 account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create);
