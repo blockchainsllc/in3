@@ -146,38 +146,28 @@ int big_mul(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res, uint8_
     return lr;
   }
 
-  uint16_t multiply_result16, partial_sum;
-  uint8_t  v1, low_carry, high_carry, multiply_result_low8, multiply_result_high8, i, j, l = la + lb + 1, out[66], *r = out;
+  uint8_t  out[66], i = la + lb, *p = out;
+  uint32_t val = 0;
+  int8_t   xs  = la - 1, ys, x, y;
 
-  memset(out, 0, la + lb + 1);
-  for (i = la - 1; i != 0xFF; i--) {
-    v1         = a[i];
-    high_carry = 0;
-    for (j = lb; j != 0xFF; j--) {
-      // o = i + j
-      multiply_result16     = (uint16_t) v1 * (uint16_t) b[j];
-      multiply_result_low8  = multiply_result16 & 0xFF;
-      multiply_result_high8 = multiply_result16 >> 8;
-      partial_sum           = (uint16_t)((uint16_t) out[i + j + 1] + (uint16_t) multiply_result_low8);
-      out[i + j + 1]        = (uint8_t) partial_sum;
-      low_carry             = (uint8_t)(partial_sum >> 8);
-      partial_sum           = (uint16_t)((uint16_t) out[i + j] + (uint16_t) multiply_result_high8 + (uint16_t) low_carry + (uint16_t) high_carry);
-      out[i + j]            = (uint8_t) partial_sum;
-      high_carry            = (uint8_t)(partial_sum >> 8);
-    }
+  for (ys = lb - 1; ys >= 0; val >>= 8, ys--) {
+    for (x = xs, y = ys; x >= 0 && y < lb; x--, y++) val += (uint32_t) a[x] * b[y];
+    out[--i] = val & 0xFF;
   }
 
-  // optimize length by removeing leading zeros
-  optimze_length(&r, &l);
-  // copy result
-  if (l <= max) {
-    memcpy(res, r, l);
-    return l;
-  } else {
-    // if too long we only copy the last 32 bytes which is alos the modulo of it.
-    memcpy(res + l - max, r, max);
-    return max;
+  for (ys = 0, xs = la - 2; xs >= 0; xs--, val >>= 8) {
+    for (x = xs, y = ys; x >= 0 && y < lb; x--, y++) val += (uint32_t) a[x] * b[y];
+    out[--i] = val & 0xFF;
   }
+  out[--i] = val & 0xFF;
+  i        = la + lb;
+  optimze_length(&p, &i);
+  if (i > max) {
+    memcpy(res, p + i - max, max);
+    i = max;
+  } else
+    memcpy(res, p, i);
+  return i;
 }
 
 int big_bitlen(uint8_t* a, uint8_t la) {

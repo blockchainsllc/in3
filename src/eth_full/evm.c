@@ -153,29 +153,29 @@ int evm_stack_push_bn(evm_t* evm, bignum256* val) {
   return 0;
 }
 
-#define __code(n)       \
-  {                     \
-    printf("%-10s", n); \
-    return;             \
+#define __code(n)                      \
+  {                                    \
+    printf("\x1B[32m%-10s\x1B[0m", n); \
+    return;                            \
   }
-void evm_print_op(evm_t* evm) {
-  uint8_t op = evm->code.data[evm->pos];
-  printf("\n%03i (%010llu) %02x : ", evm->pos, evm->gas, op);
+void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
+  uint8_t op = evm->code.data[pos];
+  printf("\n%03i \x1B[33m%5llu\x1B[0m %02x : ", pos, last_gas - evm->gas, op);
   if (op >= 0x60 && op <= 0x7F) {
-    printf("PUSH%i     ", op - 0x5F);
+    printf("\x1B[32mPUSH%i\x1B[0m     ", op - 0x5F);
     //    for (int j = 0; j < op - 0x5F; j++) printf("%02x", evm->code.data[evm->pos + j + 1]);
     return;
   }
   if (op >= 0x80 && op <= 0x8F) {
-    printf("DUP%i      ", op - 0x7F);
+    printf("\x1B[32mDUP%i\x1B[0m      ", op - 0x7F);
     return;
   }
   if (op >= 0x90 && op <= 0x9F) {
-    printf("SWAP%i     ", op - 0x8E);
+    printf("\x1B[32mSWAP%i\x1B[0m     ", op - 0x8E);
     return;
   }
   if (op >= 0xA0 && op <= 0xA4) {
-    printf("LOG%i      ", op - 0x9F);
+    printf("\x1B[32mLOG%i\x1B[0m      ", op - 0x9F);
     return;
   }
 
@@ -252,9 +252,9 @@ void evm_print_op(evm_t* evm) {
     case 0xFF: __code("SELFDESTRUCT");
   }
 }
-void evm_print_stack(evm_t* evm) {
+void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos) {
 
-  evm_print_op(evm);
+  evm_print_op(evm, last_gas, pos);
   printf(" [ ");
   for (int i = 0; i < evm->stack_size; i++) {
     uint8_t* dst;

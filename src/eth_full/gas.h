@@ -49,12 +49,12 @@
 #define G_CALLSTIPEND 2300   // This is a stipend for the called contract subtracted from Gcallvalue for a non-zero value transfer.
 #define G_NEWACCOUNT 25000   // This is paid for a CALL or for a SELFDESTRUCT operation which creates an account.
 #define G_EXP 10             // This is a partial payment for an EXP operation.
-#define G_EXPBYTE 50         // This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.
+#define G_EXPBYTE 10         // This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.
 #define G_MEMORY 3           // This is paid for every additional word when expanding memory.
 #define G_TXCREATE 32000     // This is paid by all contract-creating transactions after the Homestead transition
 #define G_TXDATA_ZERO 4      // This is paid for every zero byte of data or code for a transaction.
 #define G_TXDATA_NONZERO 68  // This is paid for every non-zero byte of data or code for a transaction
-#define G_TRANSACTION 20000  // This is paid for every transaction.
+#define G_TRANSACTION 21000  // This is paid for every transaction.
 #define G_LOG 375            // This is a partial payment for a LOG operation.
 #define G_LOGDATA 8          // This is paid for each byte in a LOG operation’s data.
 #define G_LOGTOPIC 375       // This is paid for each topic of a LOG operation.

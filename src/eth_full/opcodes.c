@@ -691,9 +691,6 @@ int op_call(evm_t* evm, uint8_t mode) {
 
 int evm_execute(evm_t* evm) {
 
-#ifdef TEST
-  if (evm->properties & EVM_DEBUG) evm_print_stack(evm);
-#endif
   uint8_t op = evm->code.data[evm->pos++];
   if (op >= 0x60 && op <= 0x7F) // PUSH
     op_exec(op_push(evm, op - 0x5F), G_VERY_LOW);
@@ -861,12 +858,21 @@ int evm_execute(evm_t* evm) {
 
 int evm_run(evm_t* evm) {
   uint32_t timeout = 0xFFFFFFFF;
-  int      res;
-  evm->state = EVM_STATE_RUNNING;
-  while (evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
+  int      res     = 0;
+  evm->state       = EVM_STATE_RUNNING;
+  while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
+#ifdef TEST
+    uint32_t last     = evm->pos;
+    uint64_t last_gas = evm->gas;
+    res               = evm_execute(evm);
+    if (evm->properties & EVM_DEBUG) evm_print_stack(evm, last_gas, last);
+#else
     res = evm_execute(evm);
-    if (res < 0) return res;
+#endif
     if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
   }
+#ifdef TEST
+  if (evm->properties & EVM_DEBUG) printf("\n Result-code (%i) : ", res);
+#endif
   return res;
 }

@@ -283,13 +283,17 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
     bytes_t must_out = d_to_bytes(d_get(test, key("out")));
     if (must_out.len && !b_cmp(&must_out, &evm.return_data)) {
       print_error(" wrong result");
+      printf("\nshould be :");
+      b_print(&must_out);
+      printf("\nbut is    :");
+      b_print(&evm.return_data);
       fail = 1;
     } else
       // check post state
       fail = check_post_state(&evm, d_get(test, key("post")));
     if (!fail && d_get_long(test, "gas") != evm.gas) {
       print_error("Wrong Gas");
-      printf("(expected : %llu, but got %llu", d_get_long(test, "gas"), evm.gas);
+      printf(" (expected : %llu, but got %llu", d_get_long(test, "gas"), evm.gas);
       fail = 1;
     }
   } else

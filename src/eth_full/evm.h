@@ -141,7 +141,7 @@ int  evm_call(in3_vctx_t* vc,
               uint8_t*  caller,
               uint64_t  gas,
               bytes_t** result);
-void evm_print_stack(evm_t* evm);
+void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
 void evm_free(evm_t* evm);
 
 #ifdef EVM_GAS
