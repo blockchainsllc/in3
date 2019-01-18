@@ -1,6 +1,7 @@
 #include "big.h"
 #include "evm.h"
 #include "gas.h"
+#include "mem.h"
 #include <client/verifier.h>
 #include <stdlib.h>
 #include <string.h>
@@ -208,10 +209,8 @@ int evm_sub_call(evm_t*   parent,
   if (mode == EVM_CALL_MODE_STATIC && l_value > 1) res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
 
   if (res == 0) res = evm_run(&evm);
-  if (res == 0 && evm.return_data.data && out_offset && out_len) {
-    res = evm_ensure_memory(parent, out_offset + out_len);
-    if (res == 0) memcpy(parent->memory.b.data + out_offset, evm.return_data.data, out_len);
-  }
+  if (res == 0 && evm.return_data.data && out_offset && out_len)
+    res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
 #ifdef EVM_GAS
   if (res == 0) parent->gas += evm.gas;
 #endif
@@ -237,6 +236,7 @@ int evm_call(in3_vctx_t* vc,
   if (res == 0) res = transfer_value(&evm, caller, address, value, l_value);
 #endif
 
+  //  evm.properties     = EVM_DEBUG;
   evm.gas            = gas;
   evm.call_data.data = data;
   evm.call_data.len  = l_data;

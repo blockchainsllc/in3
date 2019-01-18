@@ -24,6 +24,17 @@ typedef uint_least8_t pb_byte_t;
 /** converts the bytes to a unsigned long (at least the last max len bytes) */
 uint64_t bytes_to_long(uint8_t* data, int len);
 
+/** converts the bytes to a unsigned int (at least the last max len bytes) */
+static inline uint32_t bytes_to_int(uint8_t* data, int len) {
+  switch (len) {
+    case 0: return 0;
+    case 1: return data[0];
+    case 2: return (((uint32_t) data[0]) << 8) | data[1];
+    case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
+    default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
+  }
+}
+
 /** the number of bytes used for a conerting a hex into bytes. */
 int size_of_bytes(int str_len);
 
@@ -57,5 +68,11 @@ char* _strdup(char* src, int len);
 
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);
+
+#define optimize_len(a, l)   \
+  while (l > 1 && *a == 0) { \
+    l--;                     \
+    a++;                     \
+  }
 
 #endif

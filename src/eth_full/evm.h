@@ -73,6 +73,7 @@ typedef struct account {
 typedef struct evm {
   // internal data
   bytes_builder_t stack;
+  //  bytes_builder_t memory;
   bytes_builder_t memory;
   int             stack_size;
   bytes_t         code;
@@ -108,6 +109,7 @@ typedef struct evm {
 } evm_t;
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len);
+int evm_stack_push_ref(evm_t* evm, uint8_t** dst, uint8_t len);
 int evm_stack_push_int(evm_t* evm, uint32_t val);
 int evm_stack_push_long(evm_t* evm, uint64_t val);
 
@@ -116,6 +118,7 @@ int     evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len);
 int     evm_stack_pop_ref(evm_t* evm, uint8_t** dst);
 int     evm_stack_pop_byte(evm_t* evm, uint8_t* dst);
 int32_t evm_stack_pop_int(evm_t* evm);
+int     evm_stack_peek_len(evm_t* evm);
 
 int evm_run(evm_t* evm);
 #define EVM_CALL_MODE_STATIC 1
