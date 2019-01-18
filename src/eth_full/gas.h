@@ -36,7 +36,7 @@
 #define G_HIGH 10            // This is the amount of gas to pay for operations of the set Whigh.
 #define G_EXTCODE 700        //  This is the amount of gas to pay for operations of the set Wextcode.
 #define G_BALANCE 400        // This is the amount of gas to pay for a BALANCE operation.
-#define G_SLOAD 200          // This is paid for an SLOAD operation.
+#define G_SLOAD 50           // This is paid for an SLOAD operation.
 #define G_SSET 20000         // This is paid for an SSTORE operation when the storage value is set to non-zero from zero.
 #define G_SRESET 5000        // This is the amount for an SSTORE operation when the storage value’s zeroness remains unchanged or is set to zero.
 #define R_SCLEAR 15000       // This is the refund given (added into the refund counter) when the storage value is set to zero from non-zero.

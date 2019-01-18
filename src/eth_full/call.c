@@ -47,7 +47,11 @@ account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create) {
     if (memcmp(ac->address, adr, 20) == 0) return ac;
     ac = ac->next;
   }
-  if (create) {
+
+  uint8_t* data;
+  int      l = evm->env(evm, EVM_ENV_BALANCE, adr, 20, &data, 0, 0);
+
+  if (create || l >= 0) {
     ac = _malloc(sizeof(account_t));
     memcpy(ac->address, adr, 20);
     ac->code.data = NULL;
@@ -56,8 +60,6 @@ account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create) {
     ac->next      = evm->accounts;
     evm->accounts = ac;
 
-    uint8_t* data;
-    int      l = evm->env(evm, EVM_ENV_BALANCE, adr, 20, &data, 0, 0);
     if (l >= 0) {
       if (l < 32) memset(ac->balance, 0, 32 - l);
       memcpy(ac->balance + 32 - l, data, l);
@@ -78,14 +80,14 @@ storage_t* evm_get_storage(evm_t* evm, uint8_t* adr, uint8_t* key, int keylen, u
     if (memcmp(s->key, k, 32) == 0) return s;
     s = s->next;
   }
-  if (create) {
+  uint8_t* data;
+  int      l = evm->env(evm, EVM_ENV_STORAGE, key, keylen, &data, 0, 0);
+  if (create || l >= 0) {
     s = _malloc(sizeof(storage_t));
     memcpy(s->key, k, 32);
     s->next     = ac->storage;
     ac->storage = s;
 
-    uint8_t* data;
-    int      l = evm->env(evm, EVM_ENV_STORAGE, key, keylen, &data, 0, 0);
     if (l >= 0) {
       if (l < 32) memset(s->value, 0, 32 - l);
       memcpy(s->value + 32 - l, data, l);
@@ -123,9 +125,10 @@ int evm_prepare_evm(evm_t*      evm,
   evm->stack.b.len  = 0;
   evm->stack.bsize  = 64;
 
-  evm->memory.b.data = _malloc(32);
+  evm->memory.b.data = _calloc(32, 1);
   evm->memory.b.len  = 0;
   evm->memory.bsize  = 32;
+  memset(evm->memory.b.data, 0, 32);
 
   evm->stack_size = 0;
 

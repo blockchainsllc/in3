@@ -117,11 +117,11 @@ int32_t evm_stack_pop_int(evm_t* evm) {
   evm->stack.b.len -= l + 1;
   evm->stack_size--;
   if (l > 4) {
-    for (uint32_t i = evm->stack.b.len; i < evm->stack.b.len + l - 1; i++) {
-      if (evm->stack.b.data[i]) return -3;
+    for (uint32_t i = evm->stack.b.len; i < evm->stack.b.len + l - 4; i++) {
+      if (evm->stack.b.data[i]) return 0xFFFFFFF;
     }
   } else if (l == 0)
-    return -3;
+    return 0;
   int32_t val = 0;
   for (i = 0; i < l; i++) val |= ((int32_t) evm->stack.b.data[evm->stack.b.len + l - 1 - i]) << (i << 3);
   return val;

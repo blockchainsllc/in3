@@ -239,7 +239,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   evm.stack.b.len  = 0;
   evm.stack.bsize  = 64;
 
-  evm.memory.b.data = _malloc(32);
+  evm.memory.b.data = _calloc(32, 1);
   evm.memory.b.len  = 0;
   evm.memory.bsize  = 32;
 
@@ -296,8 +296,12 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
       printf(" (expected : %llu, but got %llu", d_get_long(test, "gas"), evm.gas);
       fail = 1;
     }
-  } else
+  } else {
+    if (fail && !d_get(test, key("post"))) fail = 0;
+
     switch (fail) {
+      case 0:
+        break;
       case EVM_ERROR_BUFFER_TOO_SMALL:
         print_error("Memory or Buffer too small!");
         break;
@@ -332,7 +336,9 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
         printf("Unknown return-code %i", fail);
         break;
     }
+  }
   evm_free(&evm);
+
   if (mem_get_memleak_cnt()) {
     printf(" -- Memory Leak detected by malloc #%i!", mem_get_memleak_cnt());
     if (!fail) fail = 1;

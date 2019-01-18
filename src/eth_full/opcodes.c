@@ -22,8 +22,10 @@
 int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
 
 #ifdef EVM_GAS
+  uint32_t old_l = evm->memory.bsize;
   if (max_pos > evm->memory.b.len) {
-    int old_wc = (evm->memory.bsize + 31) / 32;
+
+    int old_wc = (evm->memory.b.len + 31) / 32;
     int new_wc = (max_pos + 31) / 32;
     if (new_wc > old_wc) {
       int old_cost = old_wc * G_MEMORY + (old_wc * old_wc) / 512;
@@ -34,10 +36,16 @@ int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
 
     new_wc            = bb_check_size(&evm->memory, max_pos - evm->memory.b.len);
     evm->memory.b.len = max_pos;
+    if (old_l < evm->memory.bsize)
+      memset(evm->memory.b.data + old_l, 0, evm->memory.bsize - old_l);
     return new_wc;
 #else
-  if (max_pos > evm->memory.bsize) {
-    return bb_check_size(&evm->memory, max_pos - evm->memory.b.len);
+  if (max_pos > evm->memory.b.len) {
+    int r             = bb_check_size(&evm->memory, max_pos - evm->memory.b.len);
+    evm->memory.b.len = max_pos;
+    if (old_l < evm->memory.bsize)
+      memset(evm->memory.b.data + old_l, 0, evm->memory.bsize - old_l);
+    return r;
 #endif
   } else
     return 0;
@@ -368,7 +376,8 @@ static int op_dataload(evm_t* evm) {
 static int op_datacopy(evm_t* evm, bytes_t* src) {
   int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
   if (mem_pos < 0 || data_len < 0 || data_pos < 0) return EVM_ERROR_EMPTY_STACK;
-  if (src->len < (uint32_t)(data_pos + data_len)) return 0;
+
+  if (src->len < (uint32_t)(data_pos + data_len) || !data_len) return 0;
   if (evm_ensure_memory(evm, mem_pos + data_len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
   memcpy(evm->memory.b.data + mem_pos, src->data + data_pos, data_len);
   subgas(((data_len + 31) / 32) * G_COPY);
@@ -413,11 +422,12 @@ static int op_header(evm_t* evm, uint8_t index) {
 static int op_mload(evm_t* evm) {
   int mem_pos = evm_stack_pop_int(evm);
   if (mem_pos < 0) return EVM_ERROR_EMPTY_STACK;
-  if (evm->memory.bsize < (uint32_t) mem_pos + 32) {
+  if (evm_ensure_memory(evm, mem_pos + 32) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if (evm->memory.b.len < (uint32_t) mem_pos + 32) {
     uint8_t data[32];
     memset(data, 0, 32);
-    if (evm->memory.bsize > (uint32_t) mem_pos)
-      memcpy(data + 32 - evm->memory.bsize + mem_pos, evm->memory.b.data + mem_pos, evm->memory.bsize - mem_pos);
+    if (evm->memory.b.len > (uint32_t) mem_pos)
+      memcpy(data + 32 - evm->memory.b.len + mem_pos, evm->memory.b.data + mem_pos, evm->memory.b.len - mem_pos);
     return evm_stack_push(evm, data, 32);
   }
   return evm_stack_push(evm, evm->memory.b.data + mem_pos, 32);
@@ -825,7 +835,7 @@ int evm_execute(evm_t* evm) {
     case 0x58: // PC
       op_exec(evm_stack_push_int(evm, evm->pos - 1), G_BASE);
     case 0x59: // MSIZE
-      op_exec(evm_stack_push_int(evm, evm->memory.bsize), G_BASE);
+      op_exec(evm_stack_push_int(evm, evm->memory.b.len), G_BASE);
     case 0x5a: // GAS     --> here we always return enough gas to keep going, since eth call should not use it anyway
 #ifdef EVM_GAS
       op_exec(evm_stack_push_long(evm, evm->gas), G_BASE);

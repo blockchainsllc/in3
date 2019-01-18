@@ -190,10 +190,27 @@ int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res) {
     return la;
   }
   if (la == 1 && *a == 2) {
+    if (lb > 1) {
+      *res = 0;
+      return 1;
+    }
+
     memset(res, 0, 63);
-    res[63] = 1;
-    big_shift_left(res, 64, bytes_to_long(b, lb));
-    return 64;
+    res[63]      = 1;
+    uint32_t exp = bytes_to_long(b, lb);
+    if (exp > 255) {
+      *res = 0;
+      return 1;
+    }
+    big_shift_left(res, 64, exp);
+    uint8_t *p = res, l = 64;
+    optimze_length(&p, &l);
+    if (l > 32) {
+      p += l - 32;
+      l = 32;
+    }
+    if (p != res) memmove(res, p, l);
+    return l;
   } else {
     uint8_t wnd[16 * 32], tmp[65], r[65], word, first = 1, *p = r;
     int     i, j, l, current = 0, current_len = 0, start = big_bitlen(b, lb) % 8, rl = 32;
@@ -354,12 +371,12 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
     return 0;
   } else {
 
-    uint8_t row[32], tmp[32], tmp2[32], val, min, max;
+    uint8_t row[32], tmp[33], tmp2[33], val, min, max;
     int     res;
     memset(row, 0, 32);
 
     for (i = 0, j = -1; i < ln; i++) {
-      memmove(row + 1, row, 31);
+      memmove(row, row + 1, 31);
       row[31] = n[i];
       if (big_cmp(row, 32, d, ld) < 0) {
         if (j >= 0) q[++j] = 0;
@@ -368,7 +385,7 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
         min = 1;
         max = 255;
         while (true) {
-          l   = big_mul(&val, 1, d, ld, tmp, 32);
+          l   = big_mul(&val, 1, d, ld, tmp, 33);
           res = big_cmp(row, 32, tmp, l);
           if (res < 0) {
             max = val;
@@ -383,7 +400,7 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
         }
         q[++j] = val;
         if (res) {
-          l = big_mul(&val, 1, d, ld, tmp, 32);
+          l = big_mul(&val, 1, d, ld, tmp, 33);
           l = big_sub(row, 32, tmp, l, tmp2);
           memset(row, 0, 32);
           memcpy(row + 32 - l, tmp2, l);
