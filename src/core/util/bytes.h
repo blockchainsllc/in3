@@ -96,4 +96,16 @@ bytes_t* bb_move_to_bytes(bytes_builder_t* bb);
 void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
 void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
 
+static inline bytes_t b_as_bytes(uint8_t* a, uint32_t len) {
+  bytes_t b = {.data = a, .len = len};
+  return b;
+}
+
+static inline void b_optimize_len(bytes_t* b) {
+  while (b->len > 1 && *b->data == 0) {
+    b->data++;
+    b->len--;
+  }
+}
+
 #endif

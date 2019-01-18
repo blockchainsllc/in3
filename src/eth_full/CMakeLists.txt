@@ -8,7 +8,7 @@ add_library( in3_eth_full STATIC
   call.c
   code.c
   env.c
-  
+  mem.c
 )
 
 # add gas-calculation

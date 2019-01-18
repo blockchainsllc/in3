@@ -8,6 +8,7 @@
 #include "eth_full.h"
 #include "evm.h"
 #include "gas.h"
+#include "mem.h"
 #include <client/context.h>
 #include <crypto/bignum.h>
 #include <crypto/ecdsa.h>
@@ -19,6 +20,7 @@
 #include <util/mem.h>
 #include <util/utils.h>
 
+/*
 int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
 
 #ifdef EVM_GAS
@@ -50,7 +52,7 @@ int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
   } else
     return 0;
 }
-
+*/
 #define MATH_ADD 1
 #define MATH_SUB 2
 #define MATH_MUL 3
@@ -97,10 +99,7 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
 
   if (l < 0) return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
   // optimize
-  while (l > 1 && r[0] == 0) {
-    l--;
-    r++;
-  }
+  optimize_len(r, l);
 
   if (mod) {
     uint8_t *mod_data, tmp[65];
@@ -112,14 +111,12 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
     if (l < 0) return l;
 
     // optimize
-    while (l > 1 && r[0] == 0) {
-      l--;
-      r++;
-    }
+    optimize_len(r, l);
   }
 
   return evm_stack_push(evm, r, l);
 }
+
 static int op_signextend(evm_t* evm) {
   uint8_t* val;
   int32_t  k = evm_stack_pop_int(evm), l;
@@ -138,14 +135,12 @@ static int op_signextend(evm_t* evm) {
     for (int i = 30 - k; i >= 0; i--) res[i] = extendOnes ? 0xff : 0;
     l   = 32;
     val = res;
-    while (l > 0 && *val == 0) {
-      l--;
-      val++;
-    }
+    optimize_len(val, l);
     return evm_stack_push(evm, val, l);
   }
   return evm_stack_push(evm, val, l);
 }
+
 static int op_is_zero(evm_t* evm) {
   uint8_t res = 1, *a;
   int     l   = evm_stack_pop_ref(evm, &a), i;
@@ -167,15 +162,11 @@ static int op_not(evm_t* evm) {
   if (l < 32) memset(res, 0, 32 - l);
   memcpy(res + 32 - l, a, l);
 
-  for (i = 0; i < 32; i++)
-    res[i] = res[i] ^ 0xFF;
+  for (i = 0; i < 32; i++) res[i] ^= 0xFF;
 
   a = res;
   l = 32;
-  while (l > 1 && a[0] == 0) {
-    a++;
-    l--;
-  }
+  optimize_len(a, l);
 
   // push result to stack
   return evm_stack_push(evm, a, l);
@@ -210,12 +201,13 @@ static int op_bit(evm_t* evm, uint8_t op) {
       return -1;
   }
 
+  optimize_len(res, l1);
+
   // push result to stack
   return evm_stack_push(evm, res, l1);
 }
 
 static int op_byte(evm_t* evm) {
-
   uint8_t pos, *b, res = 0xFF;
   int     l = evm_stack_pop_byte(evm, &pos);
   if (l == EVM_ERROR_EMPTY_STACK) return l;
@@ -295,22 +287,42 @@ int op_shift(evm_t* evm, uint8_t left) {
       return evm_stack_push(evm, res, 32);
     }
   }
-  // optimize length
-  for (pos = 32; pos > 0; pos--) {
-    if (res[32 - pos]) break;
-  }
-  return evm_stack_push(evm, res + 32 - pos, pos);
+
+  b   = res;
+  pos = 32;
+  optimize_len(b, pos);
+  return evm_stack_push(evm, b, pos);
 }
 
 static int op_sha3(evm_t* evm) {
+  if (evm->stack_size < 2) return EVM_ERROR_EMPTY_STACK;
+  if (evm_stack_peek_len(evm) > 3) return EVM_ERROR_OUT_OF_GAS;
+  int offset = evm_stack_pop_int(evm);
+  if (evm_stack_peek_len(evm) > 3) return EVM_ERROR_OUT_OF_GAS;
+  int     len = evm_stack_pop_int(evm);
+  bytes_t src;
+  if (evm_mem_read_ref(evm, offset, len, &src) < 0) return EVM_ERROR_OUT_OF_GAS;
 
-  int32_t offset = evm_stack_pop_int(evm), len = evm_stack_pop_int(evm);
-  if (offset < 0 || len < 0) return EVM_ERROR_EMPTY_STACK;
-  if ((uint32_t)(offset + len) > evm->memory.bsize) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
   uint8_t         res[32];
   struct SHA3_CTX ctx;
   sha3_256_Init(&ctx);
-  sha3_Update(&ctx, evm->memory.b.data + offset, len);
+  if (src.data && src.len >= (uint32_t) len)
+    sha3_Update(&ctx, src.data, len);
+  else {
+    uint8_t  tmp[32];
+    uint32_t p = 0;
+    memset(tmp, 0, 32);
+    if (src.data) {
+      sha3_Update(&ctx, src.data, src.len);
+      p += src.len;
+    }
+    while (p < (uint32_t) len) {
+      uint8_t part = 32;
+      if (len - p < 32) part = len - p;
+      sha3_Update(&ctx, tmp, part);
+      p += part;
+    }
+  }
   keccak_Final(&ctx, res);
   return evm_stack_push(evm, res, 32);
 }
@@ -376,35 +388,29 @@ static int op_dataload(evm_t* evm) {
 static int op_datacopy(evm_t* evm, bytes_t* src) {
   int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
   if (mem_pos < 0 || data_len < 0 || data_pos < 0) return EVM_ERROR_EMPTY_STACK;
-
-  if (src->len < (uint32_t)(data_pos + data_len) || !data_len) return 0;
-  if (evm_ensure_memory(evm, mem_pos + data_len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
-  memcpy(evm->memory.b.data + mem_pos, src->data + data_pos, data_len);
   subgas(((data_len + 31) / 32) * G_COPY);
-  return 0;
+  return evm_mem_write(evm, mem_pos, b_as_bytes(src->data + data_pos, src->len > (uint32_t) data_pos ? src->len - data_pos : 0), data_len);
 }
 
 static int op_extcodecopy(evm_t* evm) {
-  uint8_t *address, *data;
-  int      l = evm_stack_pop_ref(evm, &address), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
+  uint8_t address[20], *data;
+  int     l = evm_stack_pop(evm, address, 20), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
   if (l < 0 || mem_pos < 0 || data_len < 0 || code_pos < 0) return EVM_ERROR_EMPTY_STACK;
-  if (evm_ensure_memory(evm, mem_pos + data_len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  subgas(((data_len + 31) / 32) * G_COPY);
 
 #ifdef EVM_GAS
   account_t* ac = evm_get_account(evm, address, 0);
-  if (ac && ac->code.len) {
-    memcpy(evm->memory.b.data + mem_pos, ac->code.data + code_pos, data_len);
-    subgas(((data_len + 31) / 32) * G_COPY);
-    return 0;
-  }
+  if (ac && ac->code.len)
+    return evm_mem_write(evm, mem_pos, b_as_bytes(ac->code.data + code_pos, ac->code.len > (uint32_t) code_pos ? ac->code.len - code_pos : 0), data_len);
 #endif
 
   // address, memOffset, codeOffset, length
   int res = evm->env(evm, EVM_ENV_CODE_COPY, address, 20, &data, code_pos, data_len);
-  if (res < 0) return res;
-  memcpy(evm->memory.b.data + mem_pos, data, data_len);
-  subgas(((data_len + 31) / 32) * G_COPY);
-  return 0;
+  if (res < 0)
+    // we will write 0x0
+    return evm_mem_write(evm, mem_pos, b_as_bytes(NULL, 0), data_len);
+  else
+    return evm_mem_write(evm, mem_pos, b_as_bytes(data, res), data_len);
 }
 
 static int op_header(evm_t* evm, uint8_t index) {
@@ -420,32 +426,29 @@ static int op_header(evm_t* evm, uint8_t index) {
 }
 
 static int op_mload(evm_t* evm) {
-  int mem_pos = evm_stack_pop_int(evm);
-  if (mem_pos < 0) return EVM_ERROR_EMPTY_STACK;
-  if (evm_ensure_memory(evm, mem_pos + 32) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
-  if (evm->memory.b.len < (uint32_t) mem_pos + 32) {
-    uint8_t data[32];
-    memset(data, 0, 32);
-    if (evm->memory.b.len > (uint32_t) mem_pos)
-      memcpy(data + 32 - evm->memory.b.len + mem_pos, evm->memory.b.data + mem_pos, evm->memory.b.len - mem_pos);
-    return evm_stack_push(evm, data, 32);
-  }
-  return evm_stack_push(evm, evm->memory.b.data + mem_pos, 32);
+  uint8_t *off, *dst;
+  int      off_len = evm_stack_pop_ref(evm, &off);
+  if (off_len < 0) return off_len;
+
+  if (evm_stack_push_ref(evm, &dst, 32)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  return evm_mem_read(evm, b_as_bytes(off, off_len), dst, 32);
 }
 
 static int op_mstore(evm_t* evm, uint8_t len) {
-  int mem_pos = evm_stack_pop_int(evm), l;
-  if (mem_pos < 0) return EVM_ERROR_EMPTY_STACK;
-  if (evm_ensure_memory(evm, mem_pos + len) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  int offset = evm_stack_pop_int(evm);
+  if (offset < 0) return offset;
   uint8_t* data;
-  if ((l = evm_stack_pop_ref(evm, &data)) < 0) return EVM_ERROR_EMPTY_STACK;
-  if (len == 1)
-    evm->memory.b.data[mem_pos] = l ? data[l - 1] : 0;
-  else {
-    if (l < 32) memset(evm->memory.b.data + mem_pos, 0, 32 - l);
-    memcpy(evm->memory.b.data + mem_pos + 32 - l, data, l);
+  int      data_len = evm_stack_pop_ref(evm, &data);
+
+  if (data_len < 0) return data_len;
+
+  if (len == 32) {
+    uint8_t tmp[32];
+    memset(tmp, 0, 32);
+    memcpy(tmp + 32 - data_len, data, data_len);
+    return evm_mem_write(evm, offset, b_as_bytes(tmp, 32), len);
   }
-  return 0;
+  return evm_mem_write(evm, offset, b_as_bytes(data, data_len), len);
 }
 
 static int op_sload(evm_t* evm) {
@@ -556,7 +559,7 @@ static int op_jump(evm_t* evm, uint8_t cond) {
     if (ret == EVM_ERROR_EMPTY_STACK) return EVM_ERROR_EMPTY_STACK;
     if (!c && ret >= 0) return 0; // the condition was false
   }
-  evm->pos = pos + 1;
+  evm->pos = pos;
   return 0;
 }
 

@@ -47,6 +47,15 @@ void* t_calloc(size_t n, size_t size, char* file, const char* func, int line) {
   return ptr;
 }
 
+void memstack() {
+  printf("\n M:");
+  mem_p_t* t = mem_tracker;
+  while (t) {
+    printf("[%p %zu ] ", t->ptr, t->size);
+    t = t->next;
+  }
+}
+
 void t_free(void* ptr, char* file, const char* func, int line) {
   if (ptr == NULL)
     printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);

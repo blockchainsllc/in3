@@ -9,5 +9,6 @@ target_sources( app PRIVATE
 ../eth_full/call.c
 ../eth_full/code.c
 ../eth_full/env.c
+../eth_full/mem.c
 )
 

@@ -28,12 +28,21 @@ int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
   evm->stack_size++;
   return 0;
 }
+
+int evm_stack_push_ref(evm_t* evm, uint8_t** dst, uint8_t len) {
+  if (bb_check_size(&evm->stack, len + 1)) return EVM_ERROR_EMPTY_STACK;
+  *dst = evm->stack.b.data + evm->stack.b.len;
+  evm->stack.b.len += len + 1;
+  evm->stack.b.data[evm->stack.b.len - 1] = len;
+  evm->stack_size++;
+  return 0;
+}
 int evm_stack_push_int(evm_t* evm, uint32_t val) {
   uint8_t bytes[4];
   bytes[3] = val & 0xFF;
-  bytes[2] = (val << 8) & 0xFF;
-  bytes[1] = (val << 16) & 0xFF;
-  bytes[0] = (val << 24) & 0xFF;
+  bytes[2] = (val >> 8) & 0xFF;
+  bytes[1] = (val >> 16) & 0xFF;
+  bytes[0] = (val >> 24) & 0xFF;
   if (bytes[0]) return evm_stack_push(evm, bytes, 4);
   if (bytes[1]) return evm_stack_push(evm, bytes + 1, 3);
   if (bytes[2]) return evm_stack_push(evm, bytes + 2, 2);
@@ -43,13 +52,13 @@ int evm_stack_push_int(evm_t* evm, uint32_t val) {
 int evm_stack_push_long(evm_t* evm, uint64_t val) {
   uint8_t bytes[8];
   bytes[7] = val & 0xFF;
-  bytes[6] = (val << 8) & 0xFF;
-  bytes[5] = (val << 16) & 0xFF;
-  bytes[4] = (val << 24) & 0xFF;
-  bytes[3] = (val << 32) & 0xFF;
-  bytes[2] = (val << 40) & 0xFF;
-  bytes[1] = (val << 48) & 0xFF;
-  bytes[0] = (val << 56) & 0xFF;
+  bytes[6] = (val >> 8) & 0xFF;
+  bytes[5] = (val >> 16) & 0xFF;
+  bytes[4] = (val >> 24) & 0xFF;
+  bytes[3] = (val >> 32) & 0xFF;
+  bytes[2] = (val >> 40) & 0xFF;
+  bytes[1] = (val >> 48) & 0xFF;
+  bytes[0] = (val >> 56) & 0xFF;
   for (uint8_t i = 0; i < 7; i++) {
     if (bytes[i] == 0) return evm_stack_push(evm, bytes + i, 8 - i);
   }
@@ -61,9 +70,14 @@ int evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len) {
   uint8_t l = evm->stack.b.data[evm->stack.b.len - 1];
   evm->stack.b.len -= l + 1;
   evm->stack_size--;
-  if (l > len) return EVM_ERROR_BUFFER_TOO_SMALL;
-  if (dst)
-    memmove(dst, evm->stack.b.data + evm->stack.b.len, l);
+  if (!dst) return l;
+  if (l == len)
+    memcpy(dst, evm->stack.b.data + evm->stack.b.len, l);
+  else if (l < len) {
+    memset(dst, 0, len - l);
+    memcpy(dst, evm->stack.b.data + evm->stack.b.len + len - l, l);
+  } else
+    memcpy(dst, evm->stack.b.data + evm->stack.b.len + l - len, len);
   return l;
 }
 
@@ -110,21 +124,20 @@ int evm_stack_pop_byte(evm_t* evm, uint8_t* dst) {
   *dst = evm->stack.b.data[evm->stack.b.len + l - 1];
   return l;
 }
+int evm_stack_peek_len(evm_t* evm) {
+  if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK;
+  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1], *p = evm->stack.b.data + evm->stack.b.len - l - 1;
+  optimize_len(p, l);
+  return l;
+}
 
 int32_t evm_stack_pop_int(evm_t* evm) {
   if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
-  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1], i;
+  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1], *p = evm->stack.b.data + evm->stack.b.len - l - 1;
   evm->stack.b.len -= l + 1;
   evm->stack_size--;
-  if (l > 4) {
-    for (uint32_t i = evm->stack.b.len; i < evm->stack.b.len + l - 4; i++) {
-      if (evm->stack.b.data[i]) return 0xFFFFFFF;
-    }
-  } else if (l == 0)
-    return 0;
-  int32_t val = 0;
-  for (i = 0; i < l; i++) val |= ((int32_t) evm->stack.b.data[evm->stack.b.len + l - 1 - i]) << (i << 3);
-  return val;
+  optimize_len(p, l);
+  return l > 3 ? 0xFFFFFFF : bytes_to_int(p, l);
 }
 
 int evm_stack_pop_bn(evm_t* evm, bignum256* dst) {
