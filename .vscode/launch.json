@@ -58,6 +58,21 @@
             "MIMode": "lldb"
         },
         {
+            "name": "vmrunner",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/vmrunner",
+            "args": [
+                "-d",
+                "../../tests/VMTests/vmSha3Test/sha3_memSizeQuadraticCost32_zeroSize.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "json",
             "type": "cppdbg",
             "request": "launch",

@@ -15,15 +15,29 @@ add_executable(vmrunner vm_runner.c)
 target_link_libraries(vmrunner core in3_eth_full)
 
 
-file(GLOB files "testdata/*.json")
+file(GLOB files "testdata/requests/*.json")
 foreach(file ${files})
   get_filename_component(testname "${file}" NAME_WE)
   add_test(
-    NAME              ${testname} 
+    NAME              "in3_${testname}" 
     COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/runner ${file} 
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 endforeach()
+
+foreach(testdir vmBitwiseLogicOperation vmBlockInfoTest vmEnviromentalInfo vmLogTest vmSha3Test)
+    file(GLOB files "testdata/evm/${testdir}/*.json")
+    foreach(file ${files})
+    get_filename_component(testname "${file}" NAME_WE)
+    add_test(
+        NAME              "EVM_${testdir}_${testname}" 
+        COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file} 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+    )
+    set_tests_properties("EVM_${testdir}_${testname}" PROPERTIES TIMEOUT 1) 
+    endforeach()
+endforeach()
+
 
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)

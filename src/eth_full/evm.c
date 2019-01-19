@@ -137,7 +137,7 @@ int32_t evm_stack_pop_int(evm_t* evm) {
   evm->stack.b.len -= l + 1;
   evm->stack_size--;
   optimize_len(p, l);
-  return l > 3 ? 0xFFFFFFF : bytes_to_int(p, l);
+  return (l > 4 || (l == 4 && *p & 0xF0)) ? 0xFFFFFFF : bytes_to_int(p, l);
 }
 
 int evm_stack_pop_bn(evm_t* evm, bignum256* dst) {

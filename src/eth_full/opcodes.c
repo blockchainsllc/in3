@@ -295,13 +295,16 @@ int op_shift(evm_t* evm, uint8_t left) {
 }
 
 static int op_sha3(evm_t* evm) {
-  if (evm->stack_size < 2) return EVM_ERROR_EMPTY_STACK;
-  if (evm_stack_peek_len(evm) > 3) return EVM_ERROR_OUT_OF_GAS;
   int offset = evm_stack_pop_int(evm);
-  if (evm_stack_peek_len(evm) > 3) return EVM_ERROR_OUT_OF_GAS;
-  int     len = evm_stack_pop_int(evm);
-  bytes_t src;
-  if (evm_mem_read_ref(evm, offset, len, &src) < 0) return EVM_ERROR_OUT_OF_GAS;
+  if (offset < 0) return offset;
+  if (offset == MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
+  int len = evm_stack_pop_int(evm);
+  if (len < 0) return len;
+  if (len == MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
+
+  bytes_t src = {.data = NULL, .len = 0};
+  if (len && evm_mem_read_ref(evm, offset, len, &src) < 0) return EVM_ERROR_OUT_OF_GAS;
+  subgas(((len + 31) / 32) * G_SHA3WORD);
 
   uint8_t         res[32];
   struct SHA3_CTX ctx;
@@ -564,7 +567,13 @@ static int op_jump(evm_t* evm, uint8_t cond) {
 }
 
 static int op_push(evm_t* evm, uint8_t len) {
-  if (evm->code.len < (uint32_t) evm->pos + len) return EVM_ERROR_INVALID_PUSH;
+  if (evm->code.len < (uint32_t) evm->pos + len) {
+    uint8_t tmp[32];
+    memset(tmp, 0, 32);
+    memcpy(tmp, evm->code.data + evm->pos, evm->code.len - evm->pos);
+    evm->pos += len;
+    return evm_stack_push(evm, tmp, len);
+  }
   if (evm_stack_push(evm, evm->code.data + evm->pos, len) < 0)
     return EVM_ERROR_BUFFER_TOO_SMALL;
   evm->pos += len;
@@ -635,15 +644,40 @@ int op_return(evm_t* evm, uint8_t revert) {
   int offset, len;
   if ((offset = evm_stack_pop_int(evm)) < 0) return offset;
   if ((len = evm_stack_pop_int(evm)) < 0) return len;
+  if (len > MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
 
-  if (evm->memory.bsize < (uint32_t) offset + len) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
   if (evm->return_data.data) _free(evm->return_data.data);
-
   evm->return_data.data = _malloc(len);
   if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
-  memcpy(evm->return_data.data, evm->memory.b.data + offset, len);
+  if (evm_mem_readi(evm, offset, evm->return_data.data, len) < 0) return EVM_ERROR_OUT_OF_GAS;
   evm->return_data.len = len;
   evm->state           = revert ? EVM_STATE_REVERTED : EVM_STATE_STOPPED;
+  return 0;
+}
+
+int op_selfdestruct(evm_t* evm) {
+  uint8_t adr[20], l, *p;
+  if (evm_stack_pop(evm, adr, 20) < 0) return EVM_ERROR_EMPTY_STACK;
+  account_t* self_account = evm_get_account(evm, evm->address, 1);
+  // TODO check if this account was selfsdesstructed before
+  evm->gas += R_SELFDESTRUCT;
+
+  l = 32;
+  p = self_account->balance;
+  optimize_len(p, l);
+  if (l && (l > 1 || *p != 0)) {
+    if (evm_get_account(evm, adr, 0) == NULL) subgas(G_NEWACCOUNT);
+    if (transfer_value(evm, evm->address, adr, self_account->balance, 32) < 0) return EVM_ERROR_OUT_OF_GAS;
+  }
+  memset(self_account->balance, 0, 32);
+  storage_t* s;
+  while (self_account->storage) {
+    s                     = self_account->storage;
+    self_account->storage = s->next;
+    _free(s);
+  }
+  evm->state = EVM_STATE_STOPPED;
+
   return 0;
 }
 #define CALL_CALL 0
@@ -714,7 +748,7 @@ int evm_execute(evm_t* evm) {
   if (op >= 0x90 && op <= 0x9F) // SWAP
     op_exec(op_swap(evm, op - 0x8E), G_VERY_LOW);
   if (op >= 0xA0 && op <= 0xA4) // LOG
-    op_exec(op_log(evm, op - 0x9F), G_LOG);
+    op_exec(op_log(evm, op - 0xA0), G_LOG);
 
   switch (op) {
     case 0x00: // STOP
@@ -854,7 +888,7 @@ int evm_execute(evm_t* evm) {
     case 0xF2: // CALLCODE
       op_exec(op_call(evm, CALL_CODE), G_CALL);
     case 0xF3: // RETURN
-      return op_return(evm, 0);
+      op_exec(op_return(evm, 0), 0);
     case 0xF4: // DELEGATE_CALL
       op_exec(op_call(evm, CALL_DELEGATE), G_CALL);
     case 0xFA: // STATIC_CALL
@@ -864,7 +898,7 @@ int evm_execute(evm_t* evm) {
     case 0xFE: // INVALID OPCODE
       return EVM_ERROR_INVALID_OPCODE;
     case 0xFF: // SELFDESTRUCT
-      return EVM_ERROR_INVALID_OPCODE;
+      op_exec(op_selfdestruct(evm), G_SELFDESTRUCT);
 
     default:
       return EVM_ERROR_INVALID_OPCODE;

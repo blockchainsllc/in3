@@ -51,8 +51,9 @@ account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create) {
 
   uint8_t* data;
   int      l = evm->env(evm, EVM_ENV_BALANCE, adr, 20, &data, 0, 0);
+  if (l >= 0) optimize_len(data, l);
 
-  if (create || l >= 0) {
+  if (create || l > 1 || (l == 1 && *data)) {
     ac = _malloc(sizeof(account_t));
     memcpy(ac->address, adr, 20);
     ac->code.data = NULL;

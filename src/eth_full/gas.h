@@ -9,10 +9,11 @@
     else                           \
       evm->gas -= gas;             \
   }
-#define op_exec(m, g) \
-  {                   \
-    evm->gas -= (g);  \
-    return m;         \
+#define op_exec(m, gc)                                \
+  {                                                   \
+    if (evm->gas < (gc)) return EVM_ERROR_OUT_OF_GAS; \
+    evm->gas -= (gc);                                 \
+    return m;                                         \
   }
 #else
 #define op_exec(m, gas) return m;
