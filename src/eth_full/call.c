@@ -12,6 +12,7 @@ void evm_free(evm_t* evm) {
   if (evm->return_data.data) _free(evm->return_data.data);
   if (evm->stack.b.data) _free(evm->stack.b.data);
   if (evm->memory.b.data) _free(evm->memory.b.data);
+  if (evm->invalid_jumpdest) _free(evm->invalid_jumpdest);
 
 #ifdef EVM_GAS
   logs_t* l;
@@ -133,7 +134,8 @@ int evm_prepare_evm(evm_t*      evm,
   evm->memory.bsize  = 32;
   memset(evm->memory.b.data, 0, 32);
 
-  evm->stack_size = 0;
+  evm->stack_size       = 0;
+  evm->invalid_jumpdest = NULL;
 
   evm->pos   = 0;
   evm->state = EVM_STATE_INIT;

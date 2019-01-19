@@ -244,6 +244,8 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   evm.memory.b.len  = 0;
   evm.memory.bsize  = 32;
 
+  evm.invalid_jumpdest = NULL;
+
   evm.stack_size = 0;
 
   evm.pos   = 0;

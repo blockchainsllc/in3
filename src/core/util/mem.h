@@ -32,6 +32,8 @@ void   t_free(void* ptr, char* file, const char* func, int line);
 int    mem_get_memleak_cnt();
 void   mem_reset(int cnt);
 void   memstack();
+int    mem_stack_size();
+
 #define _malloc(s) t_malloc(s, __FILE__, __func__, __LINE__)
 #define _calloc(n, s) t_calloc(n, s, __FILE__, __func__, __LINE__)
 #define _free(p) t_free(p, __FILE__, __func__, __LINE__)

@@ -24,6 +24,7 @@ typedef enum evm_state {
 #define EVM_ERROR_INVALID_ENV -9
 #define EVM_ERROR_OUT_OF_GAS -10
 #define EVM_ERROR_BALANCE_TOO_LOW -11
+#define EVM_ERROR_STACK_LIMIT -12
 
 #define EVM_EIP_CONSTANTINOPL 1
 #define EVM_DEBUG 65536
@@ -81,6 +82,7 @@ typedef struct evm {
   evm_state_t     state;
   bytes_t         last_returned;
   bytes_t         return_data;
+  uint32_t*       invalid_jumpdest;
 
   // set properties as to which EIPs to use.
   uint32_t properties;

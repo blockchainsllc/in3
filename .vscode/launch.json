@@ -64,7 +64,7 @@
             "program": "${workspaceFolder}/build/test/vmrunner",
             "args": [
                 "-d",
-                "../../tests/VMTests/vmSha3Test/sha3_memSizeQuadraticCost32_zeroSize.json"
+                "../test/testdata/evm/vmPerformance/manyFunctions100.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

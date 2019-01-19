@@ -1,4 +1,3 @@
-
 #include "../eth_basic/eth_basic.h"
 #include "../eth_nano/eth_nano.h"
 #include "../eth_nano/merkle.h"
@@ -6,6 +5,7 @@
 #include "../eth_nano/serialize.h"
 #include "big.h"
 #include "eth_full.h"
+#include "gas.h"
 #include <client/context.h>
 #include <crypto/bignum.h>
 #include <crypto/ecdsa.h>
@@ -20,6 +20,7 @@
 #include "evm.h"
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
+  if (evm->stack_size == EVM_STACK_LIMIT) return EVM_ERROR_STACK_LIMIT;
   if (bb_check_size(&evm->stack, len + 1)) return EVM_ERROR_EMPTY_STACK;
   uint8_t* buffer = evm->stack.b.data + evm->stack.b.len;
   memcpy(buffer, data, len);
@@ -30,6 +31,7 @@ int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
 }
 
 int evm_stack_push_ref(evm_t* evm, uint8_t** dst, uint8_t len) {
+  if (evm->stack_size == EVM_STACK_LIMIT) return EVM_ERROR_STACK_LIMIT;
   if (bb_check_size(&evm->stack, len + 1)) return EVM_ERROR_EMPTY_STACK;
   *dst = evm->stack.b.data + evm->stack.b.len;
   evm->stack.b.len += len + 1;

@@ -47,6 +47,16 @@ void* t_calloc(size_t n, size_t size, char* file, const char* func, int line) {
   return ptr;
 }
 
+int mem_stack_size() {
+  int      n = 0;
+  mem_p_t* t = mem_tracker;
+  while (t) {
+    n++;
+    t = t->next;
+  }
+  return n;
+}
+
 void memstack() {
   printf("\n M:");
   mem_p_t* t = mem_tracker;

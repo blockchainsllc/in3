@@ -25,7 +25,7 @@ foreach(file ${files})
 )
 endforeach()
 
-foreach(testdir vmBitwiseLogicOperation vmBlockInfoTest vmEnviromentalInfo vmLogTest vmSha3Test)
+foreach(testdir vmBitwiseLogicOperation vmBlockInfoTest vmEnviromentalInfo vmLogTest vmSha3Test vmSystemOperations vmTests vmIOandFlowOperations vmRandomTest vmPushDupSwapTest)
     file(GLOB files "testdata/evm/${testdir}/*.json")
     foreach(file ${files})
     get_filename_component(testname "${file}" NAME_WE)

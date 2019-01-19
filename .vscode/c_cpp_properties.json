@@ -3,9 +3,17 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**","${workspaceFolder}/../zephyr/include/**","${workspaceFolder}/src/**","/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/include/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/../zephyr/include/**",
+                "${workspaceFolder}/src/**",
+                "/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/include/**"
             ],
-            "defines": [],
+            "defines": [
+                "-DEVM_GAS=true",
+                "EVM_GAS=true",
+                "EVM_GAS",
+                "TEST"
+            ],
             "macFrameworkPath": [
                 "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/System/Library/Frameworks"
             ],

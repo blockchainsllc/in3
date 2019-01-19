@@ -555,13 +555,43 @@ static int op_sstore(evm_t* evm) {
 static int op_jump(evm_t* evm, uint8_t cond) {
   int pos = evm_stack_pop_int(evm);
   if (pos < 0) return pos;
-  if ((uint32_t) pos > evm->code.len || evm->code.data[pos] != 0x5B) return EVM_ERROR_INVALID_JUMPDEST;
   if (cond) {
     uint8_t c;
     int     ret = evm_stack_pop_byte(evm, &c);
     if (ret == EVM_ERROR_EMPTY_STACK) return EVM_ERROR_EMPTY_STACK;
     if (!c && ret >= 0) return 0; // the condition was false
   }
+  if ((uint32_t) pos > evm->code.len || evm->code.data[pos] != 0x5B) return EVM_ERROR_INVALID_JUMPDEST;
+
+  // check if this is a invalid jumpdest
+  if (evm->invalid_jumpdest == NULL) {
+    uint32_t size = 8, p = 0, *list = _malloc(8 * sizeof(uint32_t)), i, cl = evm->code.len;
+    uint8_t  op, jumpl = 0;
+    for (i = 0; i < cl; i++) {
+      op = evm->code.data[i];
+      if (jumpl) {
+        if (op == 0x5B) {
+          // add it
+          if (p == size - 2) {
+            list = _realloc(list, (size + 8) * sizeof(uint32_t), size * sizeof(uint32_t));
+            size = size + 8;
+          }
+          list[p++] = i;
+        }
+        jumpl--;
+      } else if (op >= 0x60 && op <= 0x7F) // PUSH
+        jumpl = op - 0x5F;
+    }
+    list[p]               = 0xFFFFFFFF;
+    evm->invalid_jumpdest = list;
+  }
+
+  // check if our dest contains the pos as invalid
+  for (int i = 0;; i++) {
+    if (evm->invalid_jumpdest[i] == 0xFFFFFFFF) break;
+    if (evm->invalid_jumpdest[i] == (uint32_t) pos) return EVM_ERROR_INVALID_JUMPDEST;
+  }
+
   evm->pos = pos;
   return 0;
 }
@@ -918,9 +948,10 @@ int evm_execute(evm_t* evm) {
 
 int evm_run(evm_t* evm) {
   uint32_t timeout = 0xFFFFFFFF;
-  int      res     = 0;
-  evm->state       = EVM_STATE_RUNNING;
+  int      res = 0, cnt = 0;
+  evm->state = EVM_STATE_RUNNING;
   while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
+    cnt++;
 #ifdef TEST
     uint32_t last = evm->pos;
 #ifdef EVM_GAS
@@ -929,6 +960,7 @@ int evm_run(evm_t* evm) {
     uint64_t last_gas = 0;
 #endif
     res = evm_execute(evm);
+    //    if (evm->properties & EVM_DEBUG) printf("\n ..... %5i << Stack : %i >>", cnt, mem_stack_size());
     if (evm->properties & EVM_DEBUG) evm_print_stack(evm, last_gas, last);
 #else
     res = evm_execute(evm);
