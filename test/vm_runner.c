@@ -430,6 +430,11 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-c") == 0)
       props |= EVM_EIP_CONSTANTINOPL;
     else {
+      if (strstr(argv[i], "exp") || strstr(argv[i], "loop-mulmod")) {
+        printf("\nskipping %s\n", argv[i]);
+        continue;
+      }
+
       char** t = malloc((size + 1) * sizeof(char*));
       memmove(t, names, size * sizeof(char*));
       free(names);

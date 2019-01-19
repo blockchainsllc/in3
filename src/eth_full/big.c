@@ -442,8 +442,12 @@ int big_div(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
     sb = big_signed(b, lb, _b);
     big_divmod(sa ? _a : a, la, sb ? _b : b, lb, res, &l, NULL, NULL);
 
-    if (sa != sb)
-      big_sign(res, l, res);
+    if (sa != sb) {
+      memcpy(_a + 32 - l, res, l);
+      if (l < 32) memset(_a, 0, 32 - l);
+      big_sign(_a, 32, res);
+      l = 32;
+    }
     return l;
   }
 
@@ -458,7 +462,7 @@ int big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
   optimze_length(&a, &la);
   optimze_length(&b, &lb);
 
-  if (lb > la) {
+  if (lb > la && !sig) {
     // special case that the number is smaller than the modulo
     memcpy(res, a, la);
     return la;
@@ -493,8 +497,18 @@ int big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
     sb = big_signed(b, lb, _b);
     big_divmod(sa ? _a : a, la, sb ? _b : b, lb, tmp, &l2, res, &l);
 
-    if (sa != sb)
-      big_sign(res, l, res);
+    /*    if (sa) {
+      l = big_sub(sb ? _b : b, lb, res, l, _a);
+      memcpy(res, _a, l);
+    }
+    */
+
+    if (sa) {
+      memcpy(_a + 32 - l, res, l);
+      if (l < 32) memset(_a, 0, 32 - l);
+      big_sign(_a, 32, res);
+      l = 32;
+    }
     return l;
   }
 
