@@ -33,26 +33,20 @@ int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only) {
         subgas(new_cost - old_cost);
       max_pos = new_wc * 32;
     }
-
-    if (!read_only) {
-      uint32_t old_l    = evm->memory.bsize;
-      int      err      = bb_check_size(&evm->memory, max_pos - evm->memory.b.len);
-      evm->memory.b.len = max_pos;
-      if (old_l < evm->memory.bsize)
-        memset(evm->memory.b.data + old_l, 0, evm->memory.bsize - old_l);
-      return err;
-    }
+#endif
     evm->memory.b.len = max_pos;
+  }
 
-#else
-    uint32_t old_l    = evm->memory.bsize;
-    int      r        = bb_check_size(&evm->memory, max_pos - evm->memory.b.len);
-    evm->memory.b.len = (max_pos + 31) / 32 * 32;
+  if (!read_only && max_pos > evm->memory.bsize) {
+    uint32_t old_l = evm->memory.bsize, msize = evm->memory.b.len;
+    evm->memory.b.len = 0;
+    int err           = bb_check_size(&evm->memory, max_pos);
+    evm->memory.b.len = msize;
     if (old_l < evm->memory.bsize)
       memset(evm->memory.b.data + old_l, 0, evm->memory.bsize - old_l);
-    return r;
-#endif
+    return err;
   }
+
   return 0;
 }
 

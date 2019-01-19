@@ -5,6 +5,7 @@
 #include <client/verifier.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util/mem.h>
 #include <util/utils.h>
 
 void evm_free(evm_t* evm) {
@@ -204,6 +205,10 @@ int evm_sub_call(evm_t*   parent,
     parent->gas -= gas;
   evm.root = parent->root;
   if (res == 0) res = transfer_value(&evm, parent->account, address, value, l_value);
+#else
+  UNUSED_VAR(value);
+  UNUSED_VAR(gas);
+  UNUSED_VAR(l_value);
 #endif
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
@@ -235,6 +240,8 @@ int evm_call(in3_vctx_t* vc,
 #ifdef EVM_GAS
   evm.root = &evm;
   if (res == 0) res = transfer_value(&evm, caller, address, value, l_value);
+#else
+  if (value == NULL || l_value < 0) (void) gas;
 #endif
 
 //  evm.properties     = EVM_DEBUG;
