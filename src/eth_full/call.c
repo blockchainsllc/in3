@@ -237,8 +237,10 @@ int evm_call(in3_vctx_t* vc,
   if (res == 0) res = transfer_value(&evm, caller, address, value, l_value);
 #endif
 
-  //  evm.properties     = EVM_DEBUG;
-  evm.gas            = gas;
+//  evm.properties     = EVM_DEBUG;
+#ifdef EVM_GAS
+  evm.gas = gas;
+#endif
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
   if (res == 0) res = evm_run(&evm);

@@ -4,7 +4,7 @@
 #ifndef evm_h__
 #define evm_h__
 
-#define EVM_GAS
+//#define EVM_GAS
 
 typedef enum evm_state {
   EVM_STATE_INIT     = 0,

@@ -184,6 +184,7 @@ void prepare_header(d_token_t* block) {
 }
 
 int check_post_state(evm_t* evm, d_token_t* post) {
+#ifdef EVM_GAS
   int        i, j;
   d_token_t *t, *storages, *s;
   for (i = 0, t = post + 1; i < d_len(post); i++, t = d_next(t)) {
@@ -191,7 +192,6 @@ int check_post_state(evm_t* evm, d_token_t* post) {
     uint8_t address[20];
     hex2byte_arr(adr_str + 2, strlen(adr_str) - 2, address, 20);
     storages = d_get(t, key("storage"));
-
     for (j = 0, s = storages + 1; j < d_len(storages); j++, t = d_next(s)) {
       char*      s_str = d_get_keystr(s->key);
       uint8_t    s_key[32];
@@ -214,6 +214,7 @@ int check_post_state(evm_t* evm, d_token_t* post) {
       }
     }
   }
+#endif
   return 0;
 }
 
@@ -263,15 +264,17 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   evm.return_data.data = NULL;
   evm.return_data.len  = 0;
 
-  evm.caller   = d_get_bytes(exec, "caller")->data;
-  evm.origin   = d_get_bytes(exec, "origin")->data;
-  evm.address  = d_get_bytes(exec, "address")->data;
-  evm.account  = d_get_bytes(exec, "address")->data;
+  evm.caller  = d_get_bytes(exec, "caller")->data;
+  evm.origin  = d_get_bytes(exec, "origin")->data;
+  evm.address = d_get_bytes(exec, "address")->data;
+  evm.account = d_get_bytes(exec, "address")->data;
+#ifdef EVM_GAS
   evm.accounts = NULL;
   evm.gas      = d_get_long(exec, "gas");
   evm.code     = d_to_bytes(d_get(exec, K_CODE));
   evm.root     = &evm;
   evm.logs     = NULL;
+#endif
 
   prepare_header(d_get(test, key("env")));
 
@@ -291,11 +294,13 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
     } else
       // check post state
       fail = check_post_state(&evm, d_get(test, key("post")));
+#ifdef EVM_GAS
     if (!fail && d_get_long(test, "gas") != evm.gas) {
       print_error("Wrong Gas");
       printf(" (expected : %llu, but got %llu", d_get_long(test, "gas"), evm.gas);
       fail = 1;
     }
+#endif
   } else {
     if (fail && !d_get(test, key("post"))) fail = 0;
 

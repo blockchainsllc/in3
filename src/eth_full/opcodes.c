@@ -612,6 +612,7 @@ static int op_swap(evm_t* evm, uint8_t pos) {
 }
 
 static int op_log(evm_t* evm, uint8_t len) {
+#ifdef EVM_GAS
   int memoffset = evm_stack_pop_int(evm);
   if (memoffset < 0) return memoffset;
   int memlen = evm_stack_pop_int(evm);
@@ -636,6 +637,11 @@ static int op_log(evm_t* evm, uint8_t len) {
     if (l < 32) memset(log->topics.data + i * 32, 0, 32 - l);
     memcpy(log->topics.data + i * 32 + 32 - l, t, l);
   }
+#else
+  UNUSED_VAR(evm);
+  UNUSED_VAR(len);
+  return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+#endif
 
   return 0;
 }
@@ -656,6 +662,7 @@ int op_return(evm_t* evm, uint8_t revert) {
 }
 
 int op_selfdestruct(evm_t* evm) {
+#ifdef EVM_GAS
   uint8_t adr[20], l, *p;
   if (evm_stack_pop(evm, adr, 20) < 0) return EVM_ERROR_EMPTY_STACK;
   account_t* self_account = evm_get_account(evm, evm->address, 1);
@@ -677,6 +684,10 @@ int op_selfdestruct(evm_t* evm) {
     _free(s);
   }
   evm->state = EVM_STATE_STOPPED;
+#else
+  UNUSED_VAR(evm);
+  return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+#endif
 
   return 0;
 }
@@ -911,9 +922,13 @@ int evm_run(evm_t* evm) {
   evm->state       = EVM_STATE_RUNNING;
   while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
 #ifdef TEST
-    uint32_t last     = evm->pos;
+    uint32_t last = evm->pos;
+#ifdef EVM_GAS
     uint64_t last_gas = evm->gas;
-    res               = evm_execute(evm);
+#else
+    uint64_t last_gas = 0;
+#endif
+    res = evm_execute(evm);
     if (evm->properties & EVM_DEBUG) evm_print_stack(evm, last_gas, last);
 #else
     res = evm_execute(evm);

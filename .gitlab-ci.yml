@@ -29,7 +29,7 @@ test-in3:
     - mkdir testbuild
     - cd testbuild
     - conan install .. --build libcurl
-    - cmake -DTEST=true -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
     - CTEST_OUTPUT_ON_FAILURE=1 make test
   artifacts:

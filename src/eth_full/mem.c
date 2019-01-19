@@ -45,7 +45,8 @@ int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only) {
     evm->memory.b.len = max_pos;
 
 #else
-    int r             = bb_check_size(&evm->memory, max_pos - evm->memory.b.len);
+    uint32_t old_l    = evm->memory.bsize;
+    int      r        = bb_check_size(&evm->memory, max_pos - evm->memory.b.len);
     evm->memory.b.len = (max_pos + 31) / 32 * 32;
     if (old_l < evm->memory.bsize)
       memset(evm->memory.b.data + old_l, 0, evm->memory.bsize - old_l);

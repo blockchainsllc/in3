@@ -10,6 +10,15 @@ IF(DEBUG)
   SET(CMAKE_BUILD_TYPE Debug)
 ENDIF(DEBUG)
 
+OPTION(EVM_GAS "Evm Gas" OFF)
+IF(EVM_GAS)
+
+  MESSAGE ( STATUS "Enable GAS in EVM" )
+  ADD_DEFINITIONS(-DEVM_GAS)
+
+ENDIF(EVM_GAS)
+
+
 OPTION(TEST "Test" OFF)
 IF(TEST)
 
@@ -20,6 +29,7 @@ IF(TEST)
   add_subdirectory( test )
 
 ENDIF(TEST)
+
 
 # substiture __FILENAME__ as it is used in DEBUG
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst
