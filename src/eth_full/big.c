@@ -1,4 +1,5 @@
 #include "big.h"
+#include "mini-gmp.h"
 #include "util/utils.h"
 #include <math.h>
 #include <stdlib.h>
@@ -212,51 +213,38 @@ int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res) {
     if (p != res) memmove(res, p, l);
     return l;
   } else {
-    uint8_t wnd[16 * 32], tmp[65], r[65], word, first = 1, *p = r;
-    int     i, j, l, current = 0, current_len = 0, start = big_bitlen(b, lb) % 8, rl = 32;
-    memset(wnd, 0, 16 * 32);
-    wnd[31] = 1;
-    memcpy(wnd + 32 + 32 - la, a, la);
-    for (i = 2; i < 16; i++) {
-      l = big_mul(wnd + (i - 1) * 32, 32, a, la, tmp, 32);
-      memcpy(wnd + i * 32 + 32 - l, tmp, l);
-    }
-    memcpy(r, wnd, 32);
+    uint8_t mod[33];
+    memset(mod + 1, 0, 32);
+    *mod = 1;
 
-    if (start == 0) start = 8;
-    for (i = lb - 1; i >= 0; i--) {
-      word = b[i];
-      for (j = start - 1; j >= 0; j--) {
-        uint8_t bit = (word >> j) & 1;
-        if (!first) {
-          memcpy(tmp, r, rl);
-          rl = big_mul(tmp, rl, tmp, rl, r, 32);
-        }
+    // we use gmp for now
+    mpz_t ma, mb, mc, mm;
+    mpz_init(ma);
+    mpz_init(mb);
+    mpz_init(mc);
+    mpz_init(mm);
 
-        if (bit == 0 && current == 0) {
-          current_len = 0;
-          continue;
-        }
+    // Convert the 1024-bit number 'input' into an mpz_t, with the most significant byte
+    // first and using native endianness within each byte.
+    mpz_import(ma, la, 1, sizeof(uint8_t), 1, 0, a);
+    mpz_import(mb, lb, 1, sizeof(uint8_t), 1, 0, b);
+    mpz_import(mm, 33, 1, sizeof(uint8_t), 1, 0, mod);
 
-        current <<= 1;
-        current |= bit;
-        current_len++;
-        if (current_len != 4 && (i != 0 || j != 0)) continue;
+    mpz_powm(mc, ma, mb, mm);
+    size_t ml;
+    mpz_export(res, &ml, 1, sizeof(uint8_t), 1, 0, mc);
 
-        first = 0;
-        memcpy(tmp, r, rl);
-        rl          = big_mul(tmp, rl, wnd + 32 * current, 32, r, 32);
-        current_len = 0;
-        current     = 0;
-      }
-      start = 8;
+    mpz_clear(ma);
+    mpz_clear(mb);
+    mpz_clear(mc);
+    mpz_clear(mm);
+
+    if (ml == 0) {
+      *res = 0;
+      return 1;
     }
 
-    first = rl;
-    optimze_length(&p, &first);
-
-    memcpy(res, p, first);
-    return first;
+    return ml;
   }
 
   // a ** num

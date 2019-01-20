@@ -9,6 +9,7 @@ add_library( in3_eth_full STATIC
   code.c
   env.c
   mem.c
+  mini-gmp.c
 )
 
 # add gas-calculation
