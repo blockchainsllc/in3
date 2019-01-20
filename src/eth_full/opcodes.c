@@ -120,24 +120,20 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
 static int op_signextend(evm_t* evm) {
   uint8_t* val;
   int32_t  k = evm_stack_pop_int(evm), l;
+
   if (k < 0) return k;
-  l = evm_stack_pop_ref(evm, &val);
-  if (l < 0) return l;
+  if (k > 31) return 0;
+  if ((l = evm_stack_pop_ref(evm, &val)) < 0) return l;
 
-  uint8_t extendOnes = false;
-  if (k <= 31) {
-    extendOnes = l > 31 - k && (val[31 - k] & 0x80);
-    uint8_t res[32];
-    memset(res, 0, 32);
-    memcpy(res + 32 - l, val, l);
-
-    // 31-k-1 since k-th byte shouldn't be modified
-    for (int i = 30 - k; i >= 0; i--) res[i] = extendOnes ? 0xff : 0;
-    l   = 32;
-    val = res;
-    optimize_len(val, l);
-    return evm_stack_push(evm, val, l);
-  }
+  //  uint8_t bit_set = l>k ? val[l-k-1] & 128 :0
+  bool    bitset = l > k && val[l - k - 1] & 128;
+  uint8_t tmp[32];
+  if (k < 31)
+    memset(tmp, bitset ? 0xFF : 0, 31 - k);
+  memcpy(tmp + 31 - k, val + l - k - 1, k + 1);
+  val = tmp;
+  l   = 32;
+  optimize_len(val, l);
   return evm_stack_push(evm, val, l);
 }
 

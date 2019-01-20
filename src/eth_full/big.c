@@ -179,17 +179,21 @@ int big_bitlen(uint8_t* a, uint8_t la) {
 }
 
 int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res) {
-  optimze_length(&a, &la);
-  optimze_length(&b, &lb);
+  optimize_len(a, la);
+  optimize_len(b, lb);
+  // short cuts a**0 = 1
   if (lb == 0 || (lb == 1 && *b == 0)) {
     res[0] = 1;
     return 1;
   }
+  // short cuts a**1 = a
   if (lb == 1 && *b == 1) {
     memcpy(res, a, la);
     return la;
   }
+  // short cuts 2**b
   if (la == 1 && *a == 2) {
+    // lb must not be bigger than 256 (one byte length) in this case we simply use the module and get 0
     if (lb > 1) {
       *res = 0;
       return 1;
@@ -197,14 +201,10 @@ int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res) {
 
     memset(res, 0, 63);
     res[63]      = 1;
-    uint32_t exp = bytes_to_long(b, lb);
-    if (exp > 255) {
-      *res = 0;
-      return 1;
-    }
+    uint32_t exp = *b;
     big_shift_left(res, 64, exp);
     uint8_t *p = res, l = 64;
-    optimze_length(&p, &l);
+    optimize_len(p, l);
     if (l > 32) {
       p += l - 32;
       l = 32;
