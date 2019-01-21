@@ -229,6 +229,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   if (name[l - 5] == '.') name[l - 5] = 0;
   char*    tname = d_get_keystr(test->key);
   uint64_t start = clock();
+  if (strcmp(tname, "dup1") == 0) props |= EVM_DEBUG;
 
   if (tname)
     sprintf(temp, "%s : %s", name, tname);
