@@ -609,8 +609,18 @@ static int op_push(evm_t* evm, uint8_t len) {
 static int op_dup(evm_t* evm, uint8_t pos) {
   uint8_t* data;
   int      l = evm_stack_get_ref(evm, pos, &data);
+  if (evm->properties & EVM_DEBUG && pos == 1) {
+    printf("\nRead from pos 1             :");
+    ba_print(data, l);
+  }
   if (l < 0) return l;
-  return evm_stack_push(evm, data, l);
+  int r = evm_stack_push(evm, data, l);
+  if (r == 0 && evm->properties & EVM_DEBUG && pos == 1) {
+    l = evm_stack_get_ref(evm, 1, &data);
+    printf("Read after write from pos 1 :");
+    ba_print(data, l);
+  }
+  return r;
 }
 
 static int op_swap(evm_t* evm, uint8_t pos) {

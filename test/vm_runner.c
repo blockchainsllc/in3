@@ -9,6 +9,7 @@
 #include <eth_full/big.h>
 #include <eth_full/evm.h>
 #include <eth_nano/rlp.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -229,6 +230,8 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   if (name[l - 5] == '.') name[l - 5] = 0;
   char*    tname = d_get_keystr(test->key);
   uint64_t start = clock();
+
+  // debug
   if (strcmp(tname, "dup1") == 0) props |= EVM_DEBUG;
 
   if (tname)
@@ -358,7 +361,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   }
   if (!fail) print_success("OK");
 
-  printf(" ( heap: %zu, %zu ms) ", mem_get_max_heap(), ms);
+  printf(" ( heap: %zu, %" PRIu64 " ms) ", mem_get_max_heap(), ms);
 
   return fail;
 }
