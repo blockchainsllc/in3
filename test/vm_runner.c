@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 static int use_color = 1;
 
@@ -226,13 +227,15 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   d_token_t* exec = d_get(test, key("exec"));
   int        l    = strlen(name);
   if (name[l - 5] == '.') name[l - 5] = 0;
-  char* tname = d_get_keystr(test->key);
+  char*    tname = d_get_keystr(test->key);
+  uint64_t start = clock();
 
   if (tname)
     sprintf(temp, "%s : %s", name, tname);
   else
     sprintf(temp, "%s #%i", name, counter);
   printf("\n%2i : %-80s ", counter, temp);
+  fflush(stdout);
 
   // create vm
   evm_t evm;
@@ -280,7 +283,9 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
 
   prepare_header(d_get(test, key("env")));
 
-  int fail = evm_run(&evm);
+  int      fail = evm_run(&evm);
+  uint64_t ms   = (clock() - start) / 1000;
+
   _free(current_block.data);
 
   // now check results...
@@ -352,7 +357,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   }
   if (!fail) print_success("OK");
 
-  printf(" ( heap: %zu) ", mem_get_max_heap());
+  printf(" ( heap: %zu, %zu ms) ", mem_get_max_heap(), ms);
 
   return fail;
 }
