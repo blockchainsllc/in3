@@ -232,7 +232,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   uint64_t start = clock();
 
   // debug
-  if (strcmp(tname, "dup1") == 0) props |= EVM_DEBUG;
+  //  if (strcmp(tname, "dup1") == 0) props |= EVM_DEBUG;
 
   if (tname)
     sprintf(temp, "%s : %s", name, tname);

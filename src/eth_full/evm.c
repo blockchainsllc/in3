@@ -20,10 +20,16 @@
 #include "evm.h"
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
-  if (evm->stack_size == EVM_STACK_LIMIT) return EVM_ERROR_STACK_LIMIT;
-  if (bb_check_size(&evm->stack, len + 1)) return EVM_ERROR_EMPTY_STACK;
-  uint8_t* buffer = evm->stack.b.data + evm->stack.b.len;
-  memcpy(buffer, data, len);
+  if (evm->stack_size == EVM_STACK_LIMIT || len > 32) return EVM_ERROR_STACK_LIMIT;
+  if (&evm->stack.b.len + len > &evm->stack.bsize) {
+    // we need to make sure the data ref is not part of the stack and would be ionvalidated now
+    uint32_t tmp[32];
+    memcpy(tmp, data, len);
+    if (bb_check_size(&evm->stack, len + 1)) return EVM_ERROR_EMPTY_STACK;
+    memcpy(evm->stack.b.data + evm->stack.b.len, tmp, len);
+  } else
+    memcpy(evm->stack.b.data + evm->stack.b.len, data, len);
+
   evm->stack.b.len += len + 1;
   evm->stack.b.data[evm->stack.b.len - 1] = len;
   evm->stack_size++;
