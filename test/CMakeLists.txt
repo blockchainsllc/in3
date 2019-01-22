@@ -11,7 +11,7 @@ include_directories(. ../src)
 add_executable(runner runner.c)
 target_link_libraries(runner core in3_eth_full)
 
-add_executable(vmrunner vm_runner.c)
+add_executable(vmrunner vm_runner.c test_evm.c)
 target_link_libraries(vmrunner core in3_eth_full)
 
 
@@ -25,16 +25,28 @@ foreach(file ${files})
 )
 endforeach()
 
-foreach(testdir vmBitwiseLogicOperation vmBlockInfoTest vmEnviromentalInfo vmLogTest vmSha3Test vmSystemOperations vmTests vmIOandFlowOperations vmRandomTest vmPushDupSwapTest vmArithmeticTest)
+foreach(testdir 
+vmTests/vmBitwiseLogicOperation 
+vmTests/vmBlockInfoTest 
+vmTests/vmEnviromentalInfo 
+vmTests/vmLogTest 
+vmTests/vmSha3Test 
+vmTests/vmSystemOperations 
+vmTests/vmTests 
+vmTests/vmIOandFlowOperations 
+vmTests/vmRandomTest 
+vmTests/vmPushDupSwapTest 
+vmTests/vmArithmeticTest
+)
     file(GLOB files "testdata/evm/${testdir}/*.json")
     foreach(file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
-        NAME              "EVM_${testdir}_${testname}" 
+        NAME              "evm/${testdir}/${testname}" 
         COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file} 
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
     )
-    set_tests_properties("EVM_${testdir}_${testname}" PROPERTIES TIMEOUT 1) 
+    set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 1) 
     endforeach()
 endforeach()
 

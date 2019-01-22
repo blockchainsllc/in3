@@ -49,7 +49,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "eth_call"
+                "../test/testdata/requests/eth_call.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
@@ -64,7 +64,7 @@
             "program": "${workspaceFolder}/build/test/vmrunner",
             "args": [
                 "-d",
-                "../test/testdata/evm/vmPerformance/manyFunctions100.json"
+                "../test/testdata/evm/GeneralStateTests/stExample/add11.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

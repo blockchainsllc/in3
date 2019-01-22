@@ -5,7 +5,7 @@
  * 
  * */
 
-#include <util/data.h>
+#include "../core/util/data.h"
 
 /**
  * creates rlp-encoded raw bytes for a receipt.
@@ -35,8 +35,6 @@ bytes_t* serialize_tx(d_token_t* tx);
  */
 
 bytes_t* serialize_account(d_token_t* a);
-
-
 
 /**
  * creates rlp-encoded raw bytes for a blockheader.

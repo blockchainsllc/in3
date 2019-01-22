@@ -36,6 +36,7 @@ typedef enum evm_state {
 #define EVM_ENV_STORAGE 5
 #define EVM_ENV_BLOCKHEADER 6
 #define EVM_ENV_CODE_HASH 7
+#define EVM_ENV_NONCE 8
 
 /**
  * This function provides data from the enviroment.
@@ -66,6 +67,7 @@ typedef struct logs {
 typedef struct account {
   uint8_t         address[20];
   uint8_t         balance[32];
+  uint8_t         nonce[32];
   bytes_t         code;
   storage_t*      storage;
   struct account* next;

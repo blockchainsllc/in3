@@ -1,6 +1,7 @@
 #include "bytes.h"
 #include "mem.h"
 #include "utils.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,9 +20,11 @@ void ba_print(uint8_t* a, size_t l) {
   size_t i;
   if (!a) return;
 
-  printf("Bytes: ");
+  printf(" 0x");
   for (i = 0; i < l; i++) printf("%02x", a[i]);
-  printf("\n");
+
+  if (l < 9)
+    printf(" ( %" PRId64 " ) ", bytes_to_long(a, l));
 }
 
 void b_print(bytes_t* a) {

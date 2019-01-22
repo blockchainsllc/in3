@@ -29,7 +29,7 @@ void evm_free(evm_t* evm) {
 
   while (evm->accounts) {
     ac = evm->accounts;
-    if (ac->code.data) _free(ac->code.data);
+    //    if (ac->code.data) _free(ac->code.data);
     s = NULL;
     while (ac->storage) {
       s           = ac->storage;
@@ -51,15 +51,23 @@ account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create) {
     ac = ac->next;
   }
 
-  uint8_t* data;
-  int      l = evm->env(evm, EVM_ENV_BALANCE, adr, 20, &data, 0, 0);
+  uint8_t *data, *nonce, *cs;
+  int      l      = evm->env(evm, EVM_ENV_BALANCE, adr, 20, &data, 0, 0);
+  int      lcs    = evm->env(evm, EVM_ENV_CODE_SIZE, adr, 20, &cs, 0, 0);
+  int      lnonce = evm->env(evm, EVM_ENV_NONCE, adr, 20, &nonce, 0, 0);
   if (l >= 0) optimize_len(data, l);
+  if (lnonce >= 0) optimize_len(nonce, lnonce);
+  if (lcs >= 0) optimize_len(cs, lcs);
 
-  if (create || l > 1 || (l == 1 && *data)) {
+  if (create || l > 1 || lnonce > 1 || lcs > 1 || (l == 1 && *data) || (lnonce == 1 && *nonce) || (lcs == 1 && *cs)) {
     ac = _malloc(sizeof(account_t));
     memcpy(ac->address, adr, 20);
+
     ac->code.data = NULL;
-    ac->code.len  = 0;
+    ac->code.len  = bytes_to_long(cs, lcs);
+
+    if (ac->code.len)
+      evm->env(evm, EVM_ENV_CODE_COPY, adr, 20, &ac->code.data, 0, 0);
     ac->storage   = NULL;
     ac->next      = evm->accounts;
     evm->accounts = ac;
@@ -69,6 +77,12 @@ account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create) {
       memcpy(ac->balance + 32 - l, data, l);
     } else
       memset(ac->balance, 0, 32);
+
+    if (lnonce >= 0) {
+      if (lnonce < 32) memset(ac->nonce, 0, 32 - lnonce);
+      memcpy(ac->nonce + 32 - lnonce, data, lnonce);
+    } else
+      memset(ac->nonce, 0, 32);
   }
   return ac;
 }
@@ -237,11 +251,14 @@ int evm_call(in3_vctx_t* vc,
              bytes_t** result) {
   evm_t evm;
 
-  int res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc);
+  int      res     = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc);
+  uint8_t* ccaller = caller;
+  int      l       = 20;
+  optimize_len(ccaller, l);
 
 #ifdef EVM_GAS
   evm.root = &evm;
-  if (res == 0) res = transfer_value(&evm, caller, address, value, l_value);
+  if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value);
 #else
   if (value == NULL || l_value < 0) (void) gas;
 #endif

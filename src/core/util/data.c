@@ -68,6 +68,10 @@ bytes_t d_to_bytes(d_token_t* item) {
       dst.data = item->data;
       dst.len  = item->len;
       return dst;
+    case T_STRING:
+      dst.data = item->data;
+      dst.len  = d_len(item);
+      return dst;
     case T_INTEGER:
       dst.len  = d_bytes_to(item, (uint8_t*) &item->data, 4);
       dst.data = (uint8_t*) &item->data;
