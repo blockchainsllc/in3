@@ -63,8 +63,25 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/vmrunner",
             "args": [
+                "-t",
+                "5",
                 "-d",
-                "../test/testdata/evm/GeneralStateTests/stExample/add11.json"
+                "../test/testdata/TrieTests/trietest.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "vmtest",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/vmrunner",
+            "args": [
+                "-d",
+                "../test/testdata/evm/vmTests/vmPushDupSwapTest/push32AndSuicide.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

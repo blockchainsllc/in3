@@ -26,8 +26,12 @@ typedef enum evm_state {
 #define EVM_ERROR_BALANCE_TOO_LOW -11
 #define EVM_ERROR_STACK_LIMIT -12
 
-#define EVM_EIP_CONSTANTINOPL 1
-#define EVM_DEBUG 65536
+#define EVM_PROP_FRONTIER 1
+#define EVM_PROP_EIP150 2
+#define EVM_PROP_EIP158 4
+#define EVM_PROP_CONSTANTINOPL 16
+#define EVM_PROP_DEBUG 65536
+#define EVM_PROP_STATIC 256
 
 #define EVM_ENV_BALANCE 1
 #define EVM_ENV_CODE_SIZE 2
@@ -155,7 +159,9 @@ void evm_free(evm_t* evm);
 account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create);
 storage_t* evm_get_storage(evm_t* evm, uint8_t* adr, uint8_t* key, int keylen, uint8_t create);
 void       uint256_set(uint8_t* src, int src_len, uint8_t* dst);
-int        transfer_value(evm_t* evm, uint8_t* from_account, uint8_t* to_account, uint8_t* value, int value_len);
+int        transfer_value(evm_t* evm, uint8_t* from_account, uint8_t* to_account, uint8_t* value, int value_len, uint32_t base_gas);
+int        evm_run_precompiled(evm_t* evm, uint8_t* address);
+uint8_t    evm_is_precompiled(evm_t* evm, uint8_t* address);
 
 #endif
 #endif

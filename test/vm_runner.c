@@ -67,7 +67,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   uint64_t ms    = 0;
 
   // debug
-  //  if (strcmp(tname, "dup1") == 0) props |= EVM_DEBUG;
+  //  if (strcmp(tname, "dup1") == 0) props |= EVM_PROP_DEBUG;
 
   if (tname)
     sprintf(temp, "%s : %s", name, tname);
@@ -79,7 +79,9 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   d_token_t* exec        = d_get(test, key("exec"));
   d_token_t* transaction = d_get(test, key("transaction"));
 
-  if (exec || transaction)
+  if (d_get(test, key("root")) && d_get(test, key("in")))
+    fail = test_trie(test, props, &ms);
+  else if (exec || transaction)
     fail = test_evm(test, props, &ms);
   else {
     fail = -1;
@@ -166,9 +168,9 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-m") == 0)
       membrk = atoi(argv[++i]);
     else if (strcmp(argv[i], "-d") == 0)
-      props |= EVM_DEBUG;
+      props |= EVM_PROP_DEBUG;
     else if (strcmp(argv[i], "-c") == 0)
-      props |= EVM_EIP_CONSTANTINOPL;
+      props |= EVM_PROP_CONSTANTINOPL;
     else {
       //      if (strstr(argv[i], "exp") || strstr(argv[i], "loop-mulmod")) {
       //        printf("\nskipping %s\n", argv[i]);

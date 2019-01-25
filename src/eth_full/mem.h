@@ -5,6 +5,7 @@
 
 #define MEM_LIMIT 0xFFFFFFF // this cost about 8M gas
 //#define MEM_INT_LIMIT 3   // bytes
+int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only);
 
 int evm_mem_read_ref(evm_t* evm, uint32_t off, uint32_t len, bytes_t* src);
 int evm_mem_read(evm_t* evm, bytes_t mem_off, void* dst, uint32_t len);

@@ -12,6 +12,11 @@ static void optimze_length(uint8_t** data, uint8_t* l) {
   }
 }
 
+uint8_t big_is_zero(uint8_t* data, uint8_t l) {
+  optimize_len(data, l);
+  return l == 1 && !*data;
+}
+
 // +1 if a > b
 // 0  if a==b
 // -1 if a < b

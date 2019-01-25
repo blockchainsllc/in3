@@ -9,6 +9,7 @@
 #include <util/utils.h>
 
 void evm_free(evm_t* evm) {
+  if (evm->last_returned.data) _free(evm->last_returned.data);
   if (evm->return_data.data) _free(evm->return_data.data);
   if (evm->stack.b.data) _free(evm->stack.b.data);
   if (evm->memory.b.data) _free(evm->memory.b.data);
@@ -119,15 +120,24 @@ void uint256_set(uint8_t* src, int src_len, uint8_t* dst) {
   if (src_len < 32) memset(dst, 0, 32 - src_len);
   memcpy(dst + 32 - src_len, src, src_len);
 }
-int transfer_value(evm_t* evm, uint8_t* from_account, uint8_t* to_account, uint8_t* value, int value_len) {
+int transfer_value(evm_t* evm, uint8_t* from_account, uint8_t* to_account, uint8_t* value, int value_len, uint32_t base_gas) {
+  if (big_is_zero(value, value_len)) return 0;
   account_t* ac_from = evm_get_account(evm, from_account, true);
-  account_t* ac_to   = evm_get_account(evm, to_account, true);
-  uint8_t    tmp[32];
+  account_t* ac_to   = evm_get_account(evm, to_account, false);
+#ifdef EVM_GAS
+  if (!ac_to) {
+    subgas(G_NEWACCOUNT);
+    ac_to = evm_get_account(evm, to_account, true);
+  }
+  subgas(base_gas);
+#endif
+  uint8_t tmp[32];
   if (ac_from) {
     if (big_cmp(ac_from->balance, 32, value, value_len) < 0) return EVM_ERROR_BALANCE_TOO_LOW;
     uint256_set(tmp, big_sub(ac_from->balance, 32, value, value_len, tmp), ac_from->balance);
   }
   uint256_set(tmp, big_add(ac_from->balance, 32, value, value_len, tmp, 32), ac_to->balance);
+
   return 0;
 }
 #endif
@@ -157,7 +167,7 @@ int evm_prepare_evm(evm_t*      evm,
   evm->last_returned.data = NULL;
   evm->last_returned.len  = 0;
 
-  evm->properties = EVM_EIP_CONSTANTINOPL;
+  evm->properties = EVM_PROP_CONSTANTINOPL;
 
   evm->env     = env;
   evm->env_ptr = env_ptr;
@@ -211,7 +221,10 @@ int evm_sub_call(evm_t*   parent,
 ) {
   evm_t evm;
   int   res;
-  res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr);
+  res                = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr);
+  evm.call_data.data = data;
+  evm.call_data.len  = l_data;
+  evm.properties     = parent->properties;
 
 #ifdef EVM_GAS
   evm.gas = gas;
@@ -220,19 +233,33 @@ int evm_sub_call(evm_t*   parent,
   else
     parent->gas -= gas;
   evm.root = parent->root;
-  if (res == 0) res = transfer_value(&evm, parent->account, address, value, l_value);
+
+  if (res == 0) res = transfer_value(&evm, parent->account, address, value, l_value, G_CALLVALUE);
+
+  for (uint32_t i = 0; i < evm.call_data.len; i++)
+    evm.gas -= evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
+
 #else
   UNUSED_VAR(value);
   UNUSED_VAR(gas);
   UNUSED_VAR(l_value);
 #endif
-  evm.call_data.data = data;
-  evm.call_data.len  = l_data;
   if (mode == EVM_CALL_MODE_STATIC && l_value > 1) res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
 
-  if (res == 0) res = evm_run(&evm);
-  if (res == 0 && evm.return_data.data && out_offset && out_len)
-    res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
+  if (res == 0) {
+    res = evm_run(&evm);
+    evm_stack_push_int(parent, res == 0 ? 1 : 0);
+    //    res = 0;
+  }
+  if (res == 0 && evm.return_data.data) {
+    if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
+    if (res == 0) {
+      if (parent->last_returned.data) _free(parent->last_returned.data);
+      parent->last_returned = evm.return_data;
+      evm.return_data.data  = NULL;
+      evm.return_data.len   = 0;
+    }
+  }
 #ifdef EVM_GAS
   if (res == 0) parent->gas += evm.gas;
 #endif
@@ -258,12 +285,12 @@ int evm_call(in3_vctx_t* vc,
 
 #ifdef EVM_GAS
   evm.root = &evm;
-  if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value);
+  if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value, 0);
 #else
   if (value == NULL || l_value < 0) (void) gas;
 #endif
 
-//  evm.properties     = EVM_DEBUG;
+//  evm.properties     = EVM_PROP_DEBUG;
 #ifdef EVM_GAS
   evm.gas = gas;
 #endif

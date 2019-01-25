@@ -37,7 +37,7 @@
 #define G_HIGH 10           // This is the amount of gas to pay for operations of the set Whigh.
 #define G_EXTCODE 700       //  This is the amount of gas to pay for operations of the set Wextcode.
 #define G_BALANCE 400       // This is the amount of gas to pay for a BALANCE operation.
-#define G_SLOAD 50          // This is paid for an SLOAD operation.
+#define G_SLOAD 200         // This is paid for an SLOAD operation.
 #define G_SSET 20000        // This is paid for an SSTORE operation when the storage value is set to non-zero from zero.
 #define G_SRESET 5000       // This is the amount for an SSTORE operation when the storage value’s zeroness remains unchanged or is set to zero.
 #define R_SCLEAR 15000      // This is the refund given (added into the refund counter) when the storage value is set to zero from non-zero.
@@ -50,7 +50,7 @@
 #define G_CALLSTIPEND 2300  // This is a stipend for the called contract subtracted from Gcallvalue for a non-zero value transfer.
 #define G_NEWACCOUNT 0      // This is paid for a CALL or for a SELFDESTRUCT operation which creates an account.
 #define G_EXP 10            // This is a partial payment for an EXP operation.
-#define G_EXPBYTE 10        // This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.
+#define G_EXPBYTE 50        // This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.
 #define G_MEMORY 3          // This is paid for every additional word when expanding memory.
 #define G_TXCREATE 32000    // This is paid by all contract-creating transactions after the Homestead transition
 #define G_TXDATA_ZERO 4     // This is paid for every zero byte of data or code for a transaction.
@@ -64,4 +64,22 @@
 #define G_COPY 3            // This is a partial payment for *COPY operations, multiplied by the number of words copied, rounded up.
 #define G_BLOCKHASH 20      // This is a payment for a BLOCKHASH operation.
 
-#define EVM_STACK_LIMIT 1024 // max elements of the stack
+#define G_PRE_EC_RECOVER 3000         // Precompile EC RECOVER
+#define G_PRE_SHA256 60               // Precompile SHA256
+#define G_PRE_SHA256_WORD 12          // Precompile SHA256 per word
+#define G_PRE_RIPEMD160 600           // Precompile RIPEMD160
+#define G_PRE_RIPEMD160_WORD 120      // Precompile RIPEMD160 per word
+#define G_PRE_IDENTITY 15             // Precompile IDENTIY (copyies data)
+#define G_PRE_IDENTITY_WORD 3         // Precompile IDENTIY per word
+#define G_PRE_MODEXP_GQUAD_DIVISOR 20 // Gquaddivisor from modexp precompile for gas calculation
+#define G_PRE_ECADD 500               // Gas costs for curve addition precompile
+#define G_PRE_ECMUL 40000             // Gas costs for curve multiplication precompile
+#define G_PRE_ECPAIRING 100000        // Base gas costs for curve pairing precompile
+#define G_PRE_ECPAIRING_WORD 80000    // Gas costs regarding curve pairing precompile input length
+
+#define EVM_STACK_LIMIT 1024    // max elements of the stack
+#define EVM_MAX_CODE_SIZE 24576 // max size of the code
+
+///  fork values
+#define FRONTIER_G_EXPBYTE 10 // This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.
+#define FRONTIER_G_SLOAD 50   // This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.

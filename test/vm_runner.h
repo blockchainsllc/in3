@@ -12,6 +12,7 @@ void print_success(char* msg);
 #define ERROR(s) printf("Error: %s", s)
 
 int test_evm(d_token_t* test, uint32_t props, uint64_t* ms);
+int test_trie(d_token_t* test, uint32_t props, uint64_t* ms);
 
 #ifdef __cplusplus
 }

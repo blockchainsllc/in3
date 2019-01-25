@@ -33,6 +33,8 @@
         "bignum.h": "c",
         "evm.h": "c",
         "code.h": "c",
-        "cache.h": "c"
+        "cache.h": "c",
+        "secp256k1.h": "c",
+        "ripemd160.h": "c"
     }
 }

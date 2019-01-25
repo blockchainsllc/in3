@@ -13,13 +13,13 @@
 #include <crypto/bignum.h>
 #include <crypto/ecdsa.h>
 #include <crypto/secp256k1.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util/data.h>
 #include <util/mem.h>
 #include <util/utils.h>
-
 /*
 int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
 
@@ -91,7 +91,7 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
       break;
     case MATH_EXP:
       l = big_exp(a, la, b, lb, res);
-      subgas(G_EXPBYTE * big_log256(b, lb));
+      subgas((evm->properties & EVM_PROP_FRONTIER ? FRONTIER_G_EXPBYTE : G_EXPBYTE) * big_log256(b, lb));
       break;
     default:
       return EVM_ERROR_INVALID_OPCODE;
@@ -253,7 +253,7 @@ static int op_cmp(evm_t* evm, int8_t eq, uint8_t sig) {
 int op_shift(evm_t* evm, uint8_t left) {
   uint8_t pos, *b, res[32];
   int     l;
-  if ((evm->properties & EVM_EIP_CONSTANTINOPL) == 0) return EVM_ERROR_INVALID_OPCODE;
+  if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0) return EVM_ERROR_INVALID_OPCODE;
   l = evm_stack_pop_byte(evm, &pos);
   if (l == EVM_ERROR_EMPTY_STACK) return l;
   if (l < 0) { // the number is out of range
@@ -495,7 +495,7 @@ static int op_sstore(evm_t* evm) {
 
   while (el > 0 && value[l_val - el] == 0) el--;
 
-  if (evm->properties & EVM_EIP_CONSTANTINOPL) {
+  if (evm->properties & EVM_PROP_CONSTANTINOPL) {
     uint8_t* original   = NULL;
     uint8_t  changed    = big_cmp(value, l_val, s->value, 32);
     int      l_original = evm->env(evm, EVM_ENV_STORAGE, key, l_key, &original, 0, 0);
@@ -700,7 +700,7 @@ int op_selfdestruct(evm_t* evm) {
   optimize_len(p, l);
   if (l && (l > 1 || *p != 0)) {
     if (evm_get_account(evm, adr, 0) == NULL) subgas(G_NEWACCOUNT);
-    if (transfer_value(evm, evm->address, adr, self_account->balance, 32) < 0) return EVM_ERROR_OUT_OF_GAS;
+    if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
   }
   memset(self_account->balance, 0, 32);
   storage_t* s;
@@ -723,12 +723,12 @@ int op_selfdestruct(evm_t* evm) {
 #define CALL_STATIC 3
 
 int op_call(evm_t* evm, uint8_t mode) {
-  //
+  // 0         1          2      3         4         5          6
   // gasLimit, toAddress, value, inOffset, inLength, outOffset, outLength
-  uint8_t *gas_limit, *address, *value, zero = 0;
-  int32_t  l_gas, l_address, l_value = 0, in_offset, in_len, out_offset, out_len;
+  uint8_t *gas_limit, address[20], *value, zero = 0;
+  int32_t  l_gas, l_value = 0, in_offset, in_len, out_offset, out_len;
   if ((l_gas = evm_stack_pop_ref(evm, &gas_limit)) < 0) return l_gas;
-  if ((l_address = evm_stack_pop_ref(evm, &address)) < 0) return l_address;
+  if (evm_stack_pop(evm, address, 20) < 0) return EVM_ERROR_EMPTY_STACK;
   if ((mode == CALL_CALL || mode == CALL_CODE) && (l_value = evm_stack_pop_ref(evm, &value)) < 0) return l_value;
   if ((in_offset = evm_stack_pop_int(evm)) < 0) return in_offset;
   if ((in_len = evm_stack_pop_int(evm)) < 0) return in_len;
@@ -736,10 +736,20 @@ int op_call(evm_t* evm, uint8_t mode) {
   if ((out_len = evm_stack_pop_int(evm)) < 0) return out_len;
   uint64_t gas = bytes_to_long(gas_limit, l_gas);
 
+  if (mem_check(evm, out_offset + out_len, true) < 0 || mem_check(evm, in_offset + in_len, true) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+
   if ((uint32_t) in_offset + in_len > evm->memory.bsize) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
 #ifdef EVM_GAS
   if (evm->gas < gas) return EVM_ERROR_OUT_OF_GAS;
+/*
+  printf("gas     : %" PRId64 "\n", gas);
+  printf("address : ");
+  ba_print(address, 20);
+  printf("\nvalue   : %" PRId64 "\n", bytes_to_long(value, l_value));
+  printf("\nin  (offset=%i, len=%i)\n", in_offset, in_len);
+  printf("out (offset=%i, len=%i)\n", out_offset, out_len);
+*/
 #endif
 
   switch (mode) {
@@ -899,7 +909,7 @@ int evm_execute(evm_t* evm) {
     case 0x53: // MSTORE8
       op_exec(op_mstore(evm, 1), G_VERY_LOW);
     case 0x54: // SLOAD
-      op_exec(op_sload(evm), G_SLOAD);
+      op_exec(op_sload(evm), evm->properties & EVM_PROP_FRONTIER ? FRONTIER_G_SLOAD : G_SLOAD);
     case 0x55: // SSTORE
       return op_sstore(evm);
     case 0x56: // JUMP
@@ -943,6 +953,8 @@ int evm_execute(evm_t* evm) {
 }
 
 int evm_run(evm_t* evm) {
+  if (evm_is_precompiled(evm, evm->account))
+    return evm_run_precompiled(evm, evm->account);
   uint32_t timeout = 0xFFFFFFFF;
   int      res = 0, cnt = 0;
   evm->state = EVM_STATE_RUNNING;
@@ -956,15 +968,15 @@ int evm_run(evm_t* evm) {
     uint64_t last_gas = 0;
 #endif
     res = evm_execute(evm);
-    //    if (evm->properties & EVM_DEBUG) printf("\n ..... %5i << Stack : %i >>", cnt, mem_stack_size());
-    if (evm->properties & EVM_DEBUG) evm_print_stack(evm, last_gas, last);
+    //    if (evm->properties & EVM_PROP_DEBUG) printf("\n ..... %5i << Stack : %i >>", cnt, mem_stack_size());
+    if (evm->properties & EVM_PROP_DEBUG) evm_print_stack(evm, last_gas, last);
 #else
     res = evm_execute(evm);
 #endif
     if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
   }
 #ifdef TEST
-  if (evm->properties & EVM_DEBUG) printf("\n Result-code (%i) : ", res);
+  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i) : ", res);
 #endif
   return res;
 }

@@ -83,7 +83,7 @@ int evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len) {
     memcpy(dst, evm->stack.b.data + evm->stack.b.len, l);
   else if (l < len) {
     memset(dst, 0, len - l);
-    memcpy(dst, evm->stack.b.data + evm->stack.b.len + len - l, l);
+    memcpy(dst + len - l, evm->stack.b.data + evm->stack.b.len, l);
   } else
     memcpy(dst, evm->stack.b.data + evm->stack.b.len + l - len, len);
   return l;
@@ -182,7 +182,7 @@ int evm_stack_push_bn(evm_t* evm, bignum256* val) {
 void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   uint8_t op = evm->code.data[pos];
 #ifdef EVM_GAS
-  printf("\n%03i \x1B[33m%5llu\x1B[0m %02x : ", pos, last_gas - evm->gas, op);
+  printf("\n%s%010llx %03i \x1B[33m%5llu\x1B[0m %02x : ", evm == evm->root ? "" : " .. ", last_gas, pos, last_gas - evm->gas, op);
 #else
   UNUSED_VAR(last_gas);
   printf("\n%03i       %02x : ", pos, op);

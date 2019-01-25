@@ -213,32 +213,33 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
   bytes_t tmp, k;
   while (s) {
     to_uint256(&tmp, s->value);
+
     if (tmp.len) {
       k.len  = 32;
       k.data = s->key;
       sha3_to(&k, dst);
       k.data = dst;
       trie_set_value(trie, &k, &tmp);
-    }
-    if (evm->properties & EVM_DEBUG) {
-      to_uint256(&k, s->key);
-      printf("    - ");
-      if (k.len)
-        ba_print(k.data, k.len);
-      else
-        printf("0x00");
-      printf(" : ");
-      if (tmp.len)
-        ba_print(tmp.data, tmp.len);
-      else
-        printf("0x00");
+      if (evm->properties & EVM_PROP_DEBUG) {
+        to_uint256(&k, s->key);
+        printf("    - ");
+        if (k.len)
+          ba_print(k.data, k.len);
+        else
+          printf("0x00");
+        printf(" : ");
+        if (tmp.len)
+          ba_print(tmp.data, tmp.len);
+        else
+          printf("0x00");
 
-      printf("\n");
+        printf("\n");
+      }
     }
 
     s = s->next;
   }
-  memcpy(dst, trie->root.data, 32);
+  memcpy(dst, trie->root, 32);
   trie_free(trie);
 }
 
@@ -250,13 +251,13 @@ bytes_t* serialize_ac(evm_t* evm, account_t* ac) {
 
   rlp_encode_item(rlp, to_uint256(&tmp, ac->nonce));
 
-  if (evm->properties & EVM_DEBUG) {
+  if (evm->properties & EVM_PROP_DEBUG) {
     printf("  nonce   : ");
     ba_print(tmp.data, tmp.len);
   }
 
   rlp_encode_item(rlp, to_uint256(&tmp, ac->balance));
-  if (evm->properties & EVM_DEBUG) {
+  if (evm->properties & EVM_PROP_DEBUG) {
     printf("\n  balance : ");
     ba_print(tmp.data, tmp.len);
     printf("\n  code    : ");
@@ -303,7 +304,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
       continue;
     }
 
-    if (evm->properties & EVM_DEBUG) {
+    if (evm->properties & EVM_PROP_DEBUG) {
       printf("\n## Account ");
       ba_print(ac->address, 20);
       printf("  ##\n");
@@ -319,7 +320,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
     ac = ac->next;
   }
 
-  memcpy(dst, trie->root.data, 32);
+  memcpy(dst, trie->root, 32);
   trie_free(trie);
 
 #endif
@@ -337,15 +338,13 @@ static void uint256_setb(uint8_t* dst, uint8_t* data, int len) {
   memcpy(dst + 32 - len, data, len);
 }
 
-int test_evm(d_token_t* test, uint32_t props, uint64_t* ms) {
+int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name) {
   uint8_t caller[32];
 
   d_token_t* exec        = d_get(test, key("exec"));
   d_token_t* transaction = d_get(test, key("transaction"));
   d_token_t* post        = d_get(test, key("post"));
-
-  char*    fork_name = "Homestead";
-  uint64_t total_gas;
+  uint64_t   total_gas;
 
   // create vm
   evm_t evm;
@@ -367,7 +366,7 @@ int test_evm(d_token_t* test, uint32_t props, uint64_t* ms) {
   evm.last_returned.data = NULL;
   evm.last_returned.len  = 0;
 
-  evm.properties = props; //EVM_EIP_CONSTANTINOPL;
+  evm.properties = props | (exec ? EVM_PROP_FRONTIER : 0); //EVM_PROP_CONSTANTINOPL;
 
   evm.env     = runner_get_env;
   evm.env_ptr = test;
@@ -579,4 +578,16 @@ int test_evm(d_token_t* test, uint32_t props, uint64_t* ms) {
   }
   evm_free(&evm);
   return fail;
+}
+
+int test_evm(d_token_t* test, uint32_t props, uint64_t* ms) {
+  if (d_get(test, key("transaction"))) {
+    int res = 0;
+    res     = run_evm(test, props, ms, "Byzantium");
+    if (res == 0)
+      res = run_evm(test, props | EVM_PROP_CONSTANTINOPL, ms, "Constantinople");
+
+    return res;
+  } else
+    return run_evm(test, props, ms, NULL);
 }

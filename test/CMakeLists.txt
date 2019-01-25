@@ -11,7 +11,7 @@ include_directories(. ../src)
 add_executable(runner runner.c)
 target_link_libraries(runner core in3_eth_full)
 
-add_executable(vmrunner vm_runner.c test_evm.c)
+add_executable(vmrunner vm_runner.c test_evm.c test_trie.c)
 target_link_libraries(vmrunner core in3_eth_full)
 
 
