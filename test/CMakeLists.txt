@@ -11,7 +11,7 @@ include_directories(. ../src)
 add_executable(runner runner.c)
 target_link_libraries(runner core in3_eth_full)
 
-add_executable(vmrunner vm_runner.c test_evm.c test_trie.c)
+add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner core in3_eth_full)
 
 
@@ -50,6 +50,11 @@ vmTests/vmArithmeticTest
     endforeach()
 endforeach()
 
+add_test(
+    NAME              "rlp" 
+    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ../test/testdata/RLPTests/rlptest.json 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
 
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)

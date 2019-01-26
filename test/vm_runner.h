@@ -13,6 +13,7 @@ void print_success(char* msg);
 
 int test_evm(d_token_t* test, uint32_t props, uint64_t* ms);
 int test_trie(d_token_t* test, uint32_t props, uint64_t* ms);
+int test_rlp(d_token_t* test, uint32_t props, uint64_t* ms);
 
 #ifdef __cplusplus
 }

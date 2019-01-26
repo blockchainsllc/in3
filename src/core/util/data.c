@@ -373,6 +373,10 @@ int parse_string(json_parsed_t* jp, d_token_t* item) {
             for (i = l - 2, n = l; i < item->len; i++, n += 2)
               item->data[i] = strtohex(start[n]) << 4 | strtohex(start[n + 1]);
           }
+        } else if (l == 6 && *start == '\\' && start[1] == 'u') {
+          item->len   = 1;
+          item->data  = _malloc(1);
+          *item->data = strtohex(start[4]) << 4 | strtohex(start[5]);
         } else {
           item->len  = l | T_STRING << 28;
           item->data = (uint8_t*) start;
