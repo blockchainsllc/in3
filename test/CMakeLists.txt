@@ -52,7 +52,7 @@ endforeach()
 
 add_test(
     NAME              "rlp" 
-    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ../test/testdata/RLPTests/rlptest.json 
+    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ../test/testdata/evm/RLPTests/rlptest.json 
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
