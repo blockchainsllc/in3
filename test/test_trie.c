@@ -33,6 +33,9 @@ bytes_t get_bytes(d_token_t* t, uint8_t* tmp, uint8_t is_hex) {
 }
 
 int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
+
+  if (props & EVM_PROP_DEBUG & 2)
+    printf("\n using secure trie and hashing the key...\n");
   uint64_t   start  = clock();
   trie_t*    trie   = trie_new();
   d_token_t *in     = d_get(test, key("in")), *t, *el;
@@ -40,13 +43,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
 
   if (d_type(in) == T_ARRAY) {
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t)) {
-      bytes_t key_bytes = get_bytes(d_get_at(t, 0), tmp2, is_hex), value_bytes = get_bytes(d_get_at(t, 1), tmp, is_hex);
-      if (props & 2) {
-        sha3_to(&key_bytes, tmp3);
-        key_bytes.data = tmp3;
-        key_bytes.len  = 32;
-      }
-
+      bytes_t    key_bytes = get_bytes(d_get_at(t, 0), tmp2, is_hex), value_bytes = get_bytes(d_get_at(t, 1), tmp, is_hex);
       uint8_t    will_be_null = 0;
       bytes_t    tmp_key;
       int        n;
@@ -56,6 +53,11 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
 
         if (b_cmp(&key_bytes, &tmp_key) && d_type(d_get_at(tt, 1)) == T_NULL)
           will_be_null = 1;
+      }
+      if (props & 2) {
+        sha3_to(&key_bytes, tmp3);
+        key_bytes.data = tmp3;
+        key_bytes.len  = 32;
       }
 
       if (!will_be_null)

@@ -37,6 +37,7 @@ vmTests/vmIOandFlowOperations
 vmTests/vmRandomTest 
 vmTests/vmPushDupSwapTest 
 vmTests/vmArithmeticTest
+TrieTests
 )
     file(GLOB files "testdata/evm/${testdir}/*.json")
     foreach(file ${files})
@@ -55,6 +56,8 @@ add_test(
     COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ../test/testdata/evm/RLPTests/rlptest.json 
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
+
+
 
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)
