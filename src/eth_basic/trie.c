@@ -54,14 +54,12 @@ void trie_free(trie_t* val) {
 
 static void free_node(trie_node_t* n) {
   if (n->own_memory) {
-
     // check if the node has a hash assigned. In this case it is stored and we be cleaned up later.
     int      l = 0;
     uint8_t* p = n->hash;
     for (; l < 32; l++, p++) {
-      if (*p) break;
+      if (*p) return;
     }
-    if (l < 32) return;
 
     _free(n->data.data);
   }
@@ -75,9 +73,9 @@ static bytes_t trie_node_get_item(trie_node_t* t, int index) {
   return b;
 }
 
-static trie_node_t* trie_node_new(uint8_t* data, size_t len,
-                                  uint8_t own_memory) {
+static trie_node_t* trie_node_new(uint8_t* data, size_t len, uint8_t own_memory) {
   trie_node_t* t = _malloc(sizeof(trie_node_t));
+  t->own_memory  = own_memory;
   t->data.data   = data;
   t->data.len    = len;
   memset(t->hash, 0, 32);
@@ -86,13 +84,11 @@ static trie_node_t* trie_node_new(uint8_t* data, size_t len,
   switch (rlp_decode_len(&t->items)) {
     case 0: t->type = NODE_EMPTY; break;
     case 17: t->type = NODE_BRANCH; break;
-    case 2:
-      t->type = trie_node_get_item(t, 0).data[0] & 32 ? NODE_LEAF : NODE_EXT;
-      break;
+    case 2: t->type = trie_node_get_item(t, 0).data[0] & 32 ? NODE_LEAF : NODE_EXT; break;
   }
-  t->own_memory = own_memory;
   return t;
 }
+
 static void ensure_own_memory(trie_node_t* n) {
   if (n->own_memory) return;
   uint8_t* new_buffer = _malloc(n->data.len);
@@ -122,19 +118,8 @@ static void trie_node_set_item(trie_node_t* t, int index, bytes_t* val, uint8_t 
 
   rlp_decode(&t->items, index, &item);
   if (item.data + item.len < t->items.data + t->items.len)
-    bb_write_raw_bytes(bb, item.data + item.len,
-                       t->items.data + t->items.len - item.data - item.len);
-  // src : 8080808080808080808080808080808080
+    bb_write_raw_bytes(bb, item.data + item.len, t->items.data + t->items.len - item.data - item.len);
 
-  // 80 80 80 80 80
-  // 80 80 XX 80 80
-  // 80 80 80 80 80
-  // 80 80
-
-  // 80 80 80 80 80
-  // 80 80 c720857075707079 80 80
-  // 80 80 80 80 80
-  // 80 80
   t->items.len = bb->b.len;
   finish_rlp(bb, &t->data);
   t->items.data = t->data.data + t->data.len - t->items.len;
@@ -184,15 +169,14 @@ static trie_node_t* trie_node_create_leaf(trie_t* trie, uint8_t* nibbles, bytes_
   bytes_builder_t* bb    = bb_new();
   bytes_t          empty = {.data = NULL, .len = 0};
 
-  trie_node_value_from_nibbles(NODE_LEAF, nibbles, &empty);
+  trie_node_value_from_nibbles(value->len ? NODE_LEAF : NODE_EXT, nibbles, &empty);
   trie->codec->encode_add(bb, &empty);
   trie->codec->encode_add(bb, value);
   trie->codec->encode_finish(bb, &empty);
   return trie_node_new(empty.data, empty.len, true);
 }
 
-static trie_node_t* trie_node_create_ext(trie_t* trie, uint8_t* nibbles,
-                                         node_key_t target) {
+static trie_node_t* trie_node_create_ext(trie_t* trie, uint8_t* nibbles, node_key_t target) {
   bytes_builder_t* bb    = bb_new();
   bytes_t          empty = {.data = NULL, .len = 0}, tmp = {.data = target.hash, .len = 32};
   trie_node_value_from_nibbles(NODE_EXT, nibbles, &empty);
@@ -276,50 +260,42 @@ static trie_node_t* get_node_target(trie_t* trie, trie_node_t* n, int index) {
   }
 }
 
-static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
-                              bytes_t* value, int top) {
+static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path, bytes_t* value, int top) {
   int          path_len  = nibble_len(path);
   uint8_t *    node_path = NULL, is_embedded, *rel_path = NULL;
+  bytes_t      tmp;
   trie_node_t* b = NULL;
 
-  if (!n)
-    return update_db(trie, trie_node_create_leaf(trie, path, value), top);
+  if (!n) return update_db(trie, trie_node_create_leaf(trie, path, value), top);
 
-  bytes_t tmp;
   if (path_len == 0) {
     switch (n->type) {
-      case NODE_EMPTY: // should not happen (only for the root, which is then
-                       // simply null)
+      case NODE_EMPTY: // should not happen (only for the root, which is then simply null)
         break;
       case NODE_BRANCH:
         // here we simply change the value if the path ends here
         trie_node_set_item(n, 16, value, false);
         break;
       case NODE_LEAF:
-        tmp       = trie_node_get_item(n, 0);
-        node_path = trie_path_to_nibbles(&tmp, true);
+        node_path = trie_path_to_nibbles(trie_node_get_item(n, 0), true);
         if (*node_path == 0XFF)
           // here we simply change the value if the path ends here
           trie_node_set_item(n, 2, value, false);
         else {
           // so this is a leaf with a longer path and we try to set a value with
           // here so we create a branch and set the leaf
-          trie_node_set_path(n, path + 1);
+          trie_node_set_path(n, node_path + 1);
           b = trie_node_create_branch(trie, value);
           set_node_target(trie, b, *node_path, update_db(trie, n, false));
           n = b;
         }
         break;
       case NODE_EXT:
-        b        = trie_node_create_branch(trie, value);
-        tmp      = trie_node_get_item(n, 0);
-        rel_path = trie_path_to_nibbles(&tmp, true);
-
+        b           = trie_node_create_branch(trie, value);
+        rel_path    = trie_path_to_nibbles(trie_node_get_item(n, 0), true);
         is_embedded = rlp_decode(&n->items, 1, &tmp) == 2;
-        tmp         = trie_node_get_item(n, 1);
         if (nibble_len(rel_path) == 1)
-          // the extension has no elements to skip left, we remove it and
-          // replace it with the branch.
+          // the extension has no elements to skip left, we remove it and replace it with the branch.
           trie_node_set_item(b, *rel_path, &tmp, is_embedded);
         else {
           // we remove the first nibble in the path with the branch
@@ -333,106 +309,72 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
     uint8_t first = *path;
     int     matching;
     switch (n->type) {
-      case NODE_EMPTY: // should not happen (only for the root, which is then
-                       // simply null)
-        break;
-      case NODE_BRANCH:
-        if (trie_node_get_item(n, first).len == 0) {
-          // we can simply add a leaf here
-          set_node_target(trie, n, first,
-                          update_db(trie, trie_node_create_leaf(trie, path + 1, value), false));
-        } else {
-          // follow the path and handle the next node
-          set_node_target(trie, n, first,
-                          handle_node(trie, get_node_target(trie, n, first), path + 1, value, false));
-        }
+      case NODE_EMPTY: break;                                                                          // should not happen (only for the root, which is then simply null)
+      case NODE_BRANCH:                                                                                // for branches ...
+        if (trie_node_get_item(n, first).len == 0)                                                     // if the next slot in the branch is empty...
+          set_node_target(trie, n, first,                                                              // we can simply ...
+                          update_db(trie, trie_node_create_leaf(trie, path + 1, value), false));       // create a leaf to the new value.
+        else                                                                                           // .. so there is already something...
+          set_node_target(trie, n, first,                                                              //  then we simply follow the path
+                          handle_node(trie, get_node_target(trie, n, first), path + 1, value, false)); // and handle the next node
         break;
 
       case NODE_EXT:
       case NODE_LEAF:
-        tmp       = trie_node_get_item(n, 0);
-        node_path = trie_path_to_nibbles(&tmp, true);
-        matching  = trie_matching_nibbles(node_path, path);
+        node_path = trie_path_to_nibbles(trie_node_get_item(n, 0), true);                                     // generate the path of the current node
+        matching  = trie_matching_nibbles(node_path, path);                                                   // and check how many nibbles match the new one.
+        if (matching == nibble_len(node_path)) {                                                              // next element fits exactly this this node
+          if (n->type == NODE_EXT)                                                                            // in case of extension,
+            set_node_target(trie, n, 1,                                                                       // we simply follohandle the target node
+                            handle_node(trie, get_node_target(trie, n, 1), path + matching, value, false));   // after we handled its target
+          else if (matching < path_len) {                                                                     // so this is a leaf, but it only matches partially
+            tmp = trie_node_get_item(n, 1);                                                                   // we stor the current value in tmp
+            b   = trie_node_create_branch(trie, &tmp);                                                        // and create a new branch with this value
+            set_node_target(trie, b, path[matching],                                                          // and inside this branch ...
+                            update_db(trie, trie_node_create_leaf(trie, path + matching + 1, value), false)); //  we create a leaf to the new value.
+            if (*node_path != 0xFF) {                                                                         //  if this leaf ends here
+              n->type = NODE_EXT;                                                                             // we have to change it to a extension
+              trie_node_set_path(n, node_path);                                                               // with the same path
+              set_node_target(trie, n, 1, update_db(trie, b, false));                                         // but now pointing to the branch as  target
+            } else {                                                                                          // otherwise
+              free_node(n);                                                                                   // we can remove it
+              n = b;                                                                                          // and use the branch as the actual value
+            }                                                                                                 // which will be updaded later
+          } else                                                                                              // the path end here and it is a Leaf:
+            trie_node_set_item(n, 1, value, false);                                                           //  so we can simply replace its value.
 
-        if (matching == nibble_len(node_path)) { // next element fits so we can update next node
-          if (matching < path_len) {
-            if (n->type == NODE_EXT) {
-              // handle the next node
-              set_node_target(trie, n, 1,
-                              handle_node(trie, get_node_target(trie, n, 1), path + matching, value, false));
-              break;
-            }
-            // this is a leaf and we need turn it into a extension to a branch.
-            // we have a leaf/ext, but it is too short
-            tmp = trie_node_get_item(n, 1);
-            b   = trie_node_create_branch(trie, &tmp);
-
-            // add a leaf from the branch to actual value.
-            set_node_target(trie, b, path[matching],
-                            update_db(trie, trie_node_create_leaf(trie, path + matching + 1, value), false));
-
-            if (*node_path != 0xFF) {
-              // change it to a extension
-              ensure_own_memory(n);
-              n->type = NODE_EXT;
-              trie_node_set_path(n, node_path);
-              set_node_target(trie, n, 1, update_db(trie, b, false));
-            } else {
-              free_node(n);
-              n = b;
-            }
-
-          } else if (n->type == NODE_LEAF) // for Leaf: we simply replace the leaf-value
-            trie_node_set_item(n, 1, value, false);
-          else // for Extension: we follow the path
-               // handle the next node
-            set_node_target(trie, n, 1,
-                            handle_node(trie, get_node_target(trie, n, 1), path + matching, value, false));
-
-        } else { // does not fit, so we need rebuild the trie
-          b = trie_node_create_branch(trie, NULL);
-          ensure_own_memory(n);
-          trie_node_set_path(n, node_path + matching + 1);
-          rel_path = path + matching;
-          if (*rel_path == 0xFF)
-            trie_node_set_item(b, 16, value, false);
-          else
-            set_node_target(trie, b, *rel_path, node_key(trie_node_create_leaf(trie, rel_path + 1, value)));
-
-          node_key_t target_key = node_path[matching + 1] == 0xFF && n->type == NODE_EXT
-                                      ? node_key(get_node_target(trie, n, 1))
-                                      : update_db(trie, n, false);
-          set_node_target(trie, b, node_path[matching], target_key);
-
-          // do we need an extension for the branch?
-          if (matching) node_path[matching] = 0xFF;
-          // use the new current node
-          n        = matching > 0 ? trie_node_create_ext(trie, node_path, update_db(trie, b, false)) : b;
-          rel_path = NULL;
+        } else {                                                                                          // does not fit, so we need rebuild the trie
+          b        = trie_node_create_branch(trie, NULL);                                                 // we need a branch
+          rel_path = path + matching;                                                                     // calculate the relative path to the current leaf
+          if (*rel_path == 0xFF)                                                                          //  there is no path the leaf ends right in the branch,
+            trie_node_set_item(b, 16, value, false);                                                      //  so we set the value
+          else                                                                                            // we do have a relative path
+            set_node_target(trie, b, *rel_path,                                                           // and set into the branch
+                            node_key(trie_node_create_leaf(trie, rel_path + 1, value)));                  // the leaf node for our value.
+          trie_node_set_path(n, node_path + matching + 1);                                                // the current node must change its path,
+          set_node_target(trie, b, node_path[matching],                                                   // because it will become a child of the new branch
+                          node_path[matching + 1] == 0xFF && n->type == NODE_EXT                          // if this is a extension and the path collapse now
+                              ? node_key(get_node_target(trie, n, 1))                                     // we remove it and simply set the target directly in the branch
+                              : update_db(trie, n, false));                                               // if not, we use the current extension or value
+          if (matching) node_path[matching] = 0xFF;                                                       // do we need an extension to the branch?
+          n        = matching > 0 ? trie_node_create_ext(trie, node_path, update_db(trie, b, false)) : b; // if so will simply insert one
+          rel_path = NULL;                                                                                // we need to set it to null, since this rel_path does not point to new allocated memory and should not be freed.
         }
     }
   }
 
-  // update hash and store it
-  node_key_t key = update_db(trie, n, top);
-
-  // clean up
-  if (node_path) _free(node_path);
-  if (rel_path) _free(rel_path);
-
-  return key;
+  if (node_path) _free(node_path); // clean up node_path, since this may have been created here
+  if (rel_path) _free(rel_path);   // clean up rel_path, since this may have been created here
+  return update_db(trie, n, top);  // update hash and store it (unless it is a embedded node)
 }
 
 void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
-  //    printf("set key/value\n");
-  //    b_print(key);
-  //    b_print(value);
-  uint8_t* path = trie_path_to_nibbles(key, false);
+  if (key == NULL || value == NULL || value->len == 0) return;
+  // create path based on the key
+  uint8_t* path = trie_path_to_nibbles(*key, false);
   uint8_t* root = handle_node(t, get_node(t, hash_key(t->root)), path, value, true).hash;
   _free(path);
   memcpy(t->root, root, 32);
-  //    printf("   root=");
-  //    b_print(root);
 }
 
 #ifdef TEST
@@ -441,7 +383,7 @@ static void hexprint(uint8_t* a, int l) {
   for (i = 0; i < l; i++) printf("%02x", a[i]);
 }
 static void print_nibbles(bytes_t* path) {
-  uint8_t *nibbles = trie_path_to_nibbles(path, true), *p = nibbles;
+  uint8_t *nibbles = trie_path_to_nibbles(*path, true), *p = nibbles;
   printf("\x1B[32m");
   while (*p != 0xFF) {
     printf("%01x", *p);

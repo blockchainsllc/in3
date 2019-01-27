@@ -46,9 +46,23 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         key_bytes.data = tmp3;
         key_bytes.len  = 32;
       }
-      trie_set_value(trie, &key_bytes, &value_bytes);
+
+      uint8_t    will_be_null = 0;
+      bytes_t    tmp_key;
+      int        n;
+      d_token_t* tt;
+      for (n = i + 1, tt = d_next(t); n < d_len(in) && !will_be_null; n++, tt = d_next(tt)) {
+        tmp_key = d_to_bytes(d_get_at(tt, 0));
+
+        if (b_cmp(&key_bytes, &tmp_key) && d_type(d_get_at(tt, 1)) == T_NULL)
+          will_be_null = 1;
+      }
+
+      if (!will_be_null)
+        trie_set_value(trie, &key_bytes, &value_bytes);
+
       if (props & EVM_PROP_DEBUG) {
-        printf("\n\n_____________________\n%i:####### SET ", i + 1);
+        printf(will_be_null ? "\n\n_____________________\n%i:####### SKIP " : "\n\n_____________________\n%i:####### SET ", i + 1);
         ba_print(key_bytes.data, key_bytes.len);
         printf(" = ");
         ba_print(value_bytes.data, value_bytes.len);
