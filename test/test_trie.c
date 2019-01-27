@@ -36,19 +36,24 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
   uint64_t   start  = clock();
   trie_t*    trie   = trie_new();
   d_token_t *in     = d_get(test, key("in")), *t, *el;
-  uint8_t    is_hex = d_get_int(test, "hexEncoded"), i, tmp[64], tmp2[64], res = 0;
+  uint8_t    is_hex = d_get_int(test, "hexEncoded"), i, tmp[64], tmp2[64], tmp3[32], res = 0;
 
   if (d_type(in) == T_ARRAY) {
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t)) {
       bytes_t key_bytes = get_bytes(d_get_at(t, 0), tmp2, is_hex), value_bytes = get_bytes(d_get_at(t, 1), tmp, is_hex);
+      if (props & 2) {
+        sha3_to(&key_bytes, tmp3);
+        key_bytes.data = tmp3;
+        key_bytes.len  = 32;
+      }
       trie_set_value(trie, &key_bytes, &value_bytes);
       if (props & EVM_PROP_DEBUG) {
-        printf("\n..SET ");
+        printf("\n\n_____________________\n%i:####### SET ", i + 1);
         ba_print(key_bytes.data, key_bytes.len);
         printf(" = ");
         ba_print(value_bytes.data, value_bytes.len);
 
-        trie_dump(trie, 1);
+        trie_dump(trie, 0);
       }
     }
   } else {
@@ -56,7 +61,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t)) {
       char*   k = d_get_keystr(t->key);
       bytes_t key_bytes, value_bytes = get_bytes(t, tmp, is_hex);
-      if (is_hex) {
+      if (k[0] == '0' && k[1] == 'x') {
         key_bytes.data = tmp;
         key_bytes.len  = hex2byte_arr(k + 2, strlen(k) - 2, tmp, 64);
       } else {
@@ -64,14 +69,20 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         key_bytes.len  = strlen(k);
       }
 
+      if (props & 2) {
+        sha3_to(&key_bytes, tmp3);
+        key_bytes.data = tmp3;
+        key_bytes.len  = 32;
+      }
+      trie_set_value(trie, &key_bytes, &value_bytes);
       if (props & EVM_PROP_DEBUG) {
-        printf("\n  ");
+        printf("\n\n_____________________\n%i:####### SET ", i + 1);
         ba_print(key_bytes.data, key_bytes.len);
         printf(" = ");
         ba_print(value_bytes.data, value_bytes.len);
-      }
 
-      trie_set_value(trie, &key_bytes, &value_bytes);
+        trie_dump(trie, 0);
+      }
     }
   }
   bytes_t root_bytes = d_to_bytes(d_get(test, key("root")));

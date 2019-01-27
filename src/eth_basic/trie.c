@@ -45,13 +45,28 @@ trie_t* trie_new() {
 void trie_free(trie_t* val) {
   trie_node_t *t = val->nodes, *p;
   while (t) {
-    _free(t->data.data);
+    if (t->own_memory) _free(t->data.data);
     t = (p = t)->next;
     _free(p);
   }
   _free(val);
 }
 
+static void free_node(trie_node_t* n) {
+  if (n->own_memory) {
+
+    // check if the node has a hash assigned. In this case it is stored and we be cleaned up later.
+    int      l = 0;
+    uint8_t* p = n->hash;
+    for (; l < 32; l++, p++) {
+      if (*p) break;
+    }
+    if (l < 32) return;
+
+    _free(n->data.data);
+  }
+  _free(n);
+}
 // -- trie_node --
 
 static bytes_t trie_node_get_item(trie_node_t* t, int index) {
@@ -61,10 +76,11 @@ static bytes_t trie_node_get_item(trie_node_t* t, int index) {
 }
 
 static trie_node_t* trie_node_new(uint8_t* data, size_t len,
-                                  uint8_t is_embedded) {
+                                  uint8_t own_memory) {
   trie_node_t* t = _malloc(sizeof(trie_node_t));
   t->data.data   = data;
   t->data.len    = len;
+  memset(t->hash, 0, 32);
   rlp_decode(&t->data, 0, &t->items);
 
   switch (rlp_decode_len(&t->items)) {
@@ -74,26 +90,51 @@ static trie_node_t* trie_node_new(uint8_t* data, size_t len,
       t->type = trie_node_get_item(t, 0).data[0] & 32 ? NODE_LEAF : NODE_EXT;
       break;
   }
-  t->is_embedded = is_embedded;
+  t->own_memory = own_memory;
   return t;
 }
+static void ensure_own_memory(trie_node_t* n) {
+  if (n->own_memory) return;
+  uint8_t* new_buffer = _malloc(n->data.len);
+  memcpy(new_buffer, n->data.data, n->data.len);
+  n->items.data = n->items.data - n->data.data + new_buffer;
+  n->data.data  = new_buffer;
+  n->own_memory = true;
+}
 
-static void trie_node_set_item(trie_node_t* t, int index, bytes_t* val) {
+static void trie_node_set_item(trie_node_t* t, int index, bytes_t* val, uint8_t is_list) {
+  ensure_own_memory(t);
   bytes_builder_t* bb = bb_new();
   bytes_t          item;
-  if (index == 0)
-    rlp_encode_item(bb, val);
-  else {
+  if (index == 0) {
+    if (is_list)
+      rlp_encode_list(bb, val);
+    else
+      rlp_encode_item(bb, val);
+  } else {
     rlp_decode(&t->items, index - 1, &item);
     bb_write_raw_bytes(bb, t->items.data, item.data + item.len - t->items.data);
-    rlp_encode_item(bb, val);
+    if (is_list)
+      rlp_encode_list(bb, val);
+    else
+      rlp_encode_item(bb, val);
   }
 
   rlp_decode(&t->items, index, &item);
   if (item.data + item.len < t->items.data + t->items.len)
     bb_write_raw_bytes(bb, item.data + item.len,
                        t->items.data + t->items.len - item.data - item.len);
+  // src : 8080808080808080808080808080808080
 
+  // 80 80 80 80 80
+  // 80 80 XX 80 80
+  // 80 80 80 80 80
+  // 80 80
+
+  // 80 80 80 80 80
+  // 80 80 c720857075707079 80 80
+  // 80 80 80 80 80
+  // 80 80
   t->items.len = bb->b.len;
   finish_rlp(bb, &t->data);
   t->items.data = t->data.data + t->data.len - t->items.len;
@@ -106,7 +147,7 @@ static trie_node_t* trie_node_create_branch(trie_t* trie, bytes_t* value) {
 
   trie->codec->encode_add(bb, value ? value : &empty);
   trie->codec->encode_finish(bb, &empty);
-  return trie_node_new(empty.data, empty.len, false);
+  return trie_node_new(empty.data, empty.len, true);
 }
 
 static int nibble_len(uint8_t* val) {
@@ -126,7 +167,7 @@ static int trie_node_value_from_nibbles(trie_node_type_t type, uint8_t* val, byt
     dst->data = _malloc(blen);
   }
   dst->len     = blen;
-  dst->data[0] = (type == NODE_EXT ? 0 : 2 + odd) << 4 | (odd == 0 ? 0 : val[0]);
+  dst->data[0] = ((type == NODE_EXT ? 0 : 2) + odd) << 4 | (odd == 0 ? 0 : val[0]);
   for (i = odd, n = 1; i < l; i += 2, n++) dst->data[n] = (val[i] << 4) | val[i + 1];
   return 0;
 }
@@ -134,7 +175,7 @@ static int trie_node_value_from_nibbles(trie_node_type_t type, uint8_t* val, byt
 static void trie_node_set_path(trie_node_t* t, uint8_t* val) {
   bytes_t bytes = {.len = 0, .data = NULL};
   if (trie_node_value_from_nibbles(t->type, val, &bytes) == 0) {
-    trie_node_set_item(t, 0, &bytes);
+    trie_node_set_item(t, 0, &bytes, false);
     _free(bytes.data);
   }
 }
@@ -147,18 +188,24 @@ static trie_node_t* trie_node_create_leaf(trie_t* trie, uint8_t* nibbles, bytes_
   trie->codec->encode_add(bb, &empty);
   trie->codec->encode_add(bb, value);
   trie->codec->encode_finish(bb, &empty);
-  return trie_node_new(empty.data, empty.len, false);
+  return trie_node_new(empty.data, empty.len, true);
 }
 
 static trie_node_t* trie_node_create_ext(trie_t* trie, uint8_t* nibbles,
-                                         bytes_t* value) {
+                                         node_key_t target) {
   bytes_builder_t* bb    = bb_new();
-  bytes_t          empty = {.data = NULL, .len = 0};
+  bytes_t          empty = {.data = NULL, .len = 0}, tmp = {.data = target.hash, .len = 32};
   trie_node_value_from_nibbles(NODE_EXT, nibbles, &empty);
   trie->codec->encode_add(bb, &empty);
-  trie->codec->encode_add(bb, value);
+
+  if (target.hash)
+    rlp_encode_item(bb, &tmp);
+  else {
+    rlp_encode_list(bb, &target.node->items);
+    free_node(target.node);
+  }
   trie->codec->encode_finish(bb, &empty);
-  return trie_node_new(empty.data, empty.len, false);
+  return trie_node_new(empty.data, empty.len, true);
 }
 
 inline static node_key_t hash_key(uint8_t* hash) {
@@ -203,17 +250,40 @@ static trie_node_t* get_node(trie_t* t, node_key_t key) {
   return NULL;
 }
 
-static bytes_t key_as_data(node_key_t k) {
-  return k.hash ? b_as_bytes(k.hash, 32) : k.node->data;
+static void set_node_target(trie_t* trie, trie_node_t* n, int index, node_key_t target) {
+  if (target.node && target.node->data.len >= 32)
+    target = update_db(trie, target.node, false);
+
+  if (target.hash) {
+    bytes_t tmp = {.data = target.hash, .len = 32};
+    trie_node_set_item(n, index, &tmp, false);
+  } else {
+    trie_node_set_item(n, index, &target.node->items, true);
+    free_node(target.node);
+  }
+}
+
+static trie_node_t* get_node_target(trie_t* trie, trie_node_t* n, int index) {
+  bytes_t tmp;
+  // handle the next node
+  if (rlp_decode(&n->items, index, &tmp) == 1) {
+    // we have a hash and resolve the node
+    return get_node(trie, hash_key(tmp.data));
+  } else {
+    bytes_t pre;
+    rlp_decode(&n->items, index - 1, &pre);
+    return trie_node_new(pre.data + pre.len, tmp.data + tmp.len - pre.data - pre.len, false);
+  }
 }
 
 static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
                               bytes_t* value, int top) {
-  if (!n) return update_db(trie, trie_node_create_leaf(trie, path, value), top);
   int          path_len  = nibble_len(path);
-  uint8_t*     node_path = NULL;
-  uint8_t*     rel_path  = NULL;
-  trie_node_t *b = NULL, *b2 = NULL;
+  uint8_t *    node_path = NULL, is_embedded, *rel_path = NULL;
+  trie_node_t* b = NULL;
+
+  if (!n)
+    return update_db(trie, trie_node_create_leaf(trie, path, value), top);
 
   bytes_t tmp;
   if (path_len == 0) {
@@ -223,21 +293,20 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
         break;
       case NODE_BRANCH:
         // here we simply change the value if the path ends here
-        trie_node_set_item(n, 16, value);
+        trie_node_set_item(n, 16, value, false);
         break;
       case NODE_LEAF:
         tmp       = trie_node_get_item(n, 0);
         node_path = trie_path_to_nibbles(&tmp, true);
         if (*node_path == 0XFF)
           // here we simply change the value if the path ends here
-          trie_node_set_item(n, 2, value);
+          trie_node_set_item(n, 2, value, false);
         else {
           // so this is a leaf with a longer path and we try to set a value with
           // here so we create a branch and set the leaf
           trie_node_set_path(n, path + 1);
-          b   = trie_node_create_branch(trie, value);
-          tmp = key_as_data(update_db(trie, n, false));
-          trie_node_set_item(n, *node_path, &tmp);
+          b = trie_node_create_branch(trie, value);
+          set_node_target(trie, b, *node_path, update_db(trie, n, false));
           n = b;
         }
         break;
@@ -245,17 +314,17 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
         b        = trie_node_create_branch(trie, value);
         tmp      = trie_node_get_item(n, 0);
         rel_path = trie_path_to_nibbles(&tmp, true);
-        tmp      = trie_node_get_item(n, 1);
+
+        is_embedded = rlp_decode(&n->items, 1, &tmp) == 2;
+        tmp         = trie_node_get_item(n, 1);
         if (nibble_len(rel_path) == 1)
           // the extension has no elements to skip left, we remove it and
           // replace it with the branch.
-          trie_node_set_item(b, *rel_path, &tmp);
+          trie_node_set_item(b, *rel_path, &tmp, is_embedded);
         else {
           // we remove the first nibble in the path with the branch
           trie_node_set_path(n, rel_path + 1);
-          tmp = key_as_data(update_db(trie, n, false));
-          // update the hash here, since we return the hash of the branch
-          trie_node_set_item(b, *rel_path, &tmp);
+          set_node_target(trie, b, *rel_path, update_db(trie, n, false));
         }
         n = b;
         break;
@@ -269,17 +338,13 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
         break;
       case NODE_BRANCH:
         if (trie_node_get_item(n, first).len == 0) {
-          tmp = key_as_data(update_db(trie, trie_node_create_leaf(trie, path + 1, value), false));
           // we can simply add a leaf here
-          trie_node_set_item(n, first, &tmp);
+          set_node_target(trie, n, first,
+                          update_db(trie, trie_node_create_leaf(trie, path + 1, value), false));
         } else {
-          // handle the next node
-          b = rlp_decode(&n->items, first, &tmp) == 1
-                  ? get_node(trie, hash_key(tmp.data))
-                  : trie_node_new(tmp.data, tmp.len, true);
-
-          tmp = key_as_data(handle_node(trie, b, path + 1, value, false));
-          trie_node_set_item(n, first, &tmp);
+          // follow the path and handle the next node
+          set_node_target(trie, n, first,
+                          handle_node(trie, get_node_target(trie, n, first), path + 1, value, false));
         }
         break;
 
@@ -288,48 +353,61 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
         tmp       = trie_node_get_item(n, 0);
         node_path = trie_path_to_nibbles(&tmp, true);
         matching  = trie_matching_nibbles(node_path, path);
-        if (matching ==
-            nibble_len(
-                path)) {            // next element fits so we can update next node
-          if (n->type == NODE_LEAF) // for Leaf: we simply replace the leaf-value
-            trie_node_set_item(n, 1, value);
-          else { // for Extension: we follow the path
-            b = rlp_decode(&n->items, 1, &tmp) == 1
-                    ? get_node(trie, hash_key(tmp.data))
-                    : trie_node_new(tmp.data, tmp.len, true);
 
-            tmp = key_as_data(handle_node(trie, b, path + matching, value, false));
-            trie_node_set_item(n, 1, &tmp);
-          }
+        if (matching == nibble_len(node_path)) { // next element fits so we can update next node
+          if (matching < path_len) {
+            if (n->type == NODE_EXT) {
+              // handle the next node
+              set_node_target(trie, n, 1,
+                              handle_node(trie, get_node_target(trie, n, 1), path + matching, value, false));
+              break;
+            }
+            // this is a leaf and we need turn it into a extension to a branch.
+            // we have a leaf/ext, but it is too short
+            tmp = trie_node_get_item(n, 1);
+            b   = trie_node_create_branch(trie, &tmp);
+
+            // add a leaf from the branch to actual value.
+            set_node_target(trie, b, path[matching],
+                            update_db(trie, trie_node_create_leaf(trie, path + matching + 1, value), false));
+
+            if (*node_path != 0xFF) {
+              // change it to a extension
+              ensure_own_memory(n);
+              n->type = NODE_EXT;
+              trie_node_set_path(n, node_path);
+              set_node_target(trie, n, 1, update_db(trie, b, false));
+            } else {
+              free_node(n);
+              n = b;
+            }
+
+          } else if (n->type == NODE_LEAF) // for Leaf: we simply replace the leaf-value
+            trie_node_set_item(n, 1, value, false);
+          else // for Extension: we follow the path
+               // handle the next node
+            set_node_target(trie, n, 1,
+                            handle_node(trie, get_node_target(trie, n, 1), path + matching, value, false));
+
         } else { // does not fit, so we need rebuild the trie
           b = trie_node_create_branch(trie, NULL);
+          ensure_own_memory(n);
           trie_node_set_path(n, node_path + matching + 1);
           rel_path = path + matching;
           if (*rel_path == 0xFF)
-            trie_node_set_item(b, 16, value);
-          else {
-            tmp = key_as_data(update_db(
-                trie, trie_node_create_leaf(trie, rel_path + 1, value),
-                false));
-            trie_node_set_item(b, *rel_path, &tmp);
-          }
+            trie_node_set_item(b, 16, value, false);
+          else
+            set_node_target(trie, b, *rel_path, node_key(trie_node_create_leaf(trie, rel_path + 1, value)));
 
-          tmp = key_as_data(node_path[matching + 1] == 0xFF && n->type == NODE_EXT
-                                ? node_key(rlp_decode(&n->items, 1, &tmp) == 1
-                                               ? get_node(trie, hash_key(tmp.data))
-                                               : (b2 = trie_node_new(
-                                                      tmp.data, tmp.len, true)))
-                                : update_db(trie, n, false));
+          node_key_t target_key = node_path[matching + 1] == 0xFF && n->type == NODE_EXT
+                                      ? node_key(get_node_target(trie, n, 1))
+                                      : update_db(trie, n, false);
+          set_node_target(trie, b, node_path[matching], target_key);
 
-          trie_node_set_item(b, node_path[matching], &tmp);
-
+          // do we need an extension for the branch?
           if (matching) node_path[matching] = 0xFF;
           // use the new current node
-          if (matching > 0) {
-            tmp = key_as_data(update_db(trie, b, false));
-            n   = trie_node_create_ext(trie, node_path, &tmp);
-          } else
-            n = b;
+          n        = matching > 0 ? trie_node_create_ext(trie, node_path, update_db(trie, b, false)) : b;
           rel_path = NULL;
         }
     }
@@ -339,10 +417,6 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path,
   node_key_t key = update_db(trie, n, top);
 
   // clean up
-  if (b && b->is_embedded)
-    _free(b);
-  if (b2 && b2->is_embedded)
-    _free(b2);
   if (node_path) _free(node_path);
   if (rel_path) _free(rel_path);
 
@@ -354,8 +428,7 @@ void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
   //    b_print(key);
   //    b_print(value);
   uint8_t* path = trie_path_to_nibbles(key, false);
-  uint8_t* root =
-      handle_node(t, get_node(t, hash_key(t->root)), path, value, true).hash;
+  uint8_t* root = handle_node(t, get_node(t, hash_key(t->root)), path, value, true).hash;
   _free(path);
   memcpy(t->root, root, 32);
   //    printf("   root=");
@@ -367,6 +440,16 @@ static void hexprint(uint8_t* a, int l) {
   int i;
   for (i = 0; i < l; i++) printf("%02x", a[i]);
 }
+static void print_nibbles(bytes_t* path) {
+  uint8_t *nibbles = trie_path_to_nibbles(path, true), *p = nibbles;
+  printf("\x1B[32m");
+  while (*p != 0xFF) {
+    printf("%01x", *p);
+    p++;
+  }
+  printf("\x1B[0m");
+  _free(nibbles);
+}
 
 static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int level, char* prefix) {
   int     i;
@@ -375,47 +458,56 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
   printf("\n");
   for (i = 0; i < level; i++) printf("  ");
   if (prefix) printf("%s", prefix);
+  if (n == NULL) {
+    printf("##MISSING NODE##");
+    return;
+  }
   if (with_hash) printf("<%02x%02x%02x>", n->hash[0], n->hash[1], n->hash[2]);
   switch (n->type) {
     case NODE_BRANCH:
-      printf("<BRANCH> ");
+      printf("\x1B[33m<BRANCH>\x1B[0m ");
       tmp = trie_node_get_item(n, 16);
       if (tmp.len) {
         printf(" = ");
         hexprint(tmp.data, tmp.len);
       }
       for (i = 0; i < 16; i++) {
-
         if (rlp_decode(&n->items, i, &tmp) == 2) {
-          sprintf(_prefix, " %02x : (EMBED) ", i);
-          trie_node_t* t = trie_node_new(tmp.data, tmp.len, true);
+          sprintf(_prefix, "\x1B[32m%01x\x1B[0m : (EMBED) ", i);
+          //          b_print(&tmp);
+          trie_node_t* t = get_node_target(trie, n, i);
           dump_handle(trie, t, with_hash, level + 1, _prefix);
           _free(t);
         } else if (tmp.len) {
-          sprintf(_prefix, " %02x : ", i);
+          sprintf(_prefix, "\x1B[32m%01x\x1B[0m : ", i);
           dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);
         }
       }
       break;
     case NODE_LEAF:
-      printf("<LEAF> ");
+      printf("\x1B[33m<LEAF \x1B[0m");
       tmp = trie_node_get_item(n, 0);
-      hexprint(tmp.data, tmp.len);
+      print_nibbles(&tmp);
+      printf(">");
       tmp = trie_node_get_item(n, 1);
       printf(" = 0x");
       hexprint(tmp.data, tmp.len);
       break;
     case NODE_EXT:
-      printf("<EXT> ");
+      printf("\x1B[33m<EXT \x1B[0m");
       tmp = trie_node_get_item(n, 0);
-      hexprint(tmp.data, tmp.len);
-      if (rlp_decode(&n->items, i, &tmp) == 2) {
-        sprintf(_prefix, " ==> (EMBED) ");
-        trie_node_t* t = trie_node_new(tmp.data, tmp.len, true);
+      print_nibbles(&tmp);
+      printf(">");
+
+      if (rlp_decode(&n->items, 1, &tmp) == 2) {
+        printf(" ==> (EMBED) ");
+        sprintf(_prefix, "");
+        trie_node_t* t = get_node_target(trie, n, 1);
         dump_handle(trie, t, with_hash, level + 1, _prefix);
         _free(t);
       } else {
-        sprintf(_prefix, " ==> ");
+        printf(" ==> ");
+        sprintf(_prefix, "");
         dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);
       }
       break;
@@ -427,6 +519,6 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
 void trie_dump(trie_t* trie, uint8_t with_hash) {
   printf("\n\n root = ");
   hexprint(trie->root, 32);
-  dump_handle(trie, get_node(trie, hash_key(trie->root)), with_hash, 0, "");
+  dump_handle(trie, get_node(trie, hash_key(trie->root)), with_hash, 2, "");
 }
 #endif

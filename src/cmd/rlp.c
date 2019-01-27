@@ -125,9 +125,10 @@ void write(bytes_t* data, char* l, char** tt) {
     if (type == 0) return;
     if (type == 1) {
       printf("%s", l);
-      if (tt) {
+      if (tt)
         d = printf("%-20s : ", tt[i + 1]);
-      }
+      else
+        d = printf("%-3i : ", i);
 
       if (tt == TRIE_LEAF && i == 0)
         d = printf("%s (%s)", (t.data[0] & 32) ? "LEAF" : "EXTENSION", (t.data[0] & 16) ? "odd" : "even");

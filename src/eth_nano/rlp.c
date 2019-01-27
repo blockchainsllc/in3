@@ -42,8 +42,8 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
     } else if (c < 0xf8) { // 0-55 byte long list
       l = c - 0xc0;
       if ((int) p == index) return ref(dst, l, b->data + i + 1, 2);
-      i += l + 1;
-    } else { // very long list
+      i += l; // + 1;
+    } else {  // very long list
       for (l = 0, n = 0; n < (uint8_t)(c - 0xF7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xf7) - n - 1));
       if ((int) p == index) return ref(dst, l, b->data + i + c - 0xf7 + 1, 2);
       i += l + c - 0xf7;

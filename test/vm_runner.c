@@ -82,7 +82,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   if (d_len(test) == 2 && d_get(test, key("in")) && d_get(test, key("out")))
     fail = test_rlp(test, props, &ms);
   else if (d_get(test, key("root")) && d_get(test, key("in")))
-    fail = test_trie(test, props, &ms);
+    fail = test_trie(test, props | (strstr(name, "secure") ? 2 : 0), &ms);
   else if (exec || transaction)
     fail = test_evm(test, props, &ms);
   else {

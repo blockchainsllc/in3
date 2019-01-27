@@ -31,12 +31,12 @@ typedef enum {
  * single node in the merkle trie.
  */
 typedef struct trie_node {
-  uint8_t           hash[32];    /**< the hash of the node */
-  bytes_t           data;        /**< the raw data */
-  bytes_t           items;       /**< the data as list  */
-  uint8_t           is_embedded; /**< if true this is a embedded node */
-  trie_node_type_t  type;        /**< type of the node */
-  struct trie_node* next;        /**< used as linked list */
+  uint8_t           hash[32];   /**< the hash of the node */
+  bytes_t           data;       /**< the raw data */
+  bytes_t           items;      /**< the data as list  */
+  uint8_t           own_memory; /**< if true this is a embedded node with own memory */
+  trie_node_type_t  type;       /**< type of the node */
+  struct trie_node* next;       /**< used as linked list */
 } trie_node_t;
 
 /**
