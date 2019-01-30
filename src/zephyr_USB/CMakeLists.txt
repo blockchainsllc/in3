@@ -5,7 +5,7 @@ include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
 project(NONE)
 
 
-OPTION(DEBUG "DEBUG" ON)
+OPTION(DEBUG "Debug" OFF)
 IF(DEBUG)
   ADD_DEFINITIONS(-DDEBUG)
   SET(CMAKE_BUILD_TYPE Debug)

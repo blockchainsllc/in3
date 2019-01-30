@@ -18,7 +18,7 @@ int                 undo;
 // private
 static void timer_expired(struct k_timer* work) {
   undo = 1;
-  dbg_log("<--- timer expired\n");
+  dbg_log("timer expired\n");
   k_sem_give(&client->sem);
 }
 
@@ -158,19 +158,19 @@ int in3_client_start(void) {
     switch(state)
       {
       case STATE_INIT:
-        dbg_log("<--- INIT\n");
+        dbg_log("*** Machine state = INIT\n");
         break;
       case STATE_WAITING:
-        dbg_log("<--- WAITING\n");
+        dbg_log("*** Machine state = WAITING\n");
         break;
       case STATE_ACTION:
-        dbg_log("<--- ACTION\n");
+        dbg_log("*** Machine state = ACTION\n");
         break;
       case STATE_RESET:
-        dbg_log("<--- RESET\n");
+        dbg_log("*** Machine state = RESET\n");
         break;
       default:
-        dbg_log("<--- STATE MACHINE ERROR!\n");
+        dbg_log("*** STATE MACHINE ERROR!!! This MUST NOT HAPPEN!\n");
         state = STATE_RESET; // force state to reset
         break;
       }

@@ -72,6 +72,7 @@ static ssize_t rx_data(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 			 const void *buf, u16_t len, u16_t offset,
 			 u8_t flags)
 {
+	dbg_log("<--- len:%u\n", len);
 	// if processing a message don't take new ones
 	if (client->msg->ready)
 		{
