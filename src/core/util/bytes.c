@@ -28,9 +28,15 @@ void b_print(bytes_t* a) {
   size_t i;
   if (!a) return;
 
+#ifdef __ZEPHYR__
   printk("Bytes: ");
   for (i = 0; i < a->len; i++) printk("%02x", a->data[i]);
   printk("\n");
+#else
+  printf("Bytes: ");
+  for (i = 0; i < a->len; i++) printf("%02x", a->data[i]);
+  printf("\n");
+#endif
 }
 
 int b_cmp(bytes_t* a, bytes_t* b) {

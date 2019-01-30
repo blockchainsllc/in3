@@ -7,12 +7,10 @@
 #include <util/bytes.h>
 #include <util/data.h>
 #include <util/utils.h>
-#include <util/debug.h>
 
 int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
   uint8_t tmp[4];
   bytes_t b;
-  dbg_log(" rlp add %i ml=%i", d_type(t),ml);
 
   switch (d_type(t)) {
     case T_NULL:
@@ -43,9 +41,6 @@ int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
       ml = -ml;
   }
 
-   b_print(&b);
-   int old_len=rlp->b.len;
-
   if ((size_t) ml > b.len) {
     // we need to fill left
     uint8_t* tmp = _calloc(ml, 1);
@@ -56,9 +51,6 @@ int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
     _free(tmp);
   } else
     rlp_encode_item(rlp, &b);
-
-  bytes_t encoded = {.data=rlp->b.data+old_len, .len=rlp->b.len-old_len};
-  b_print(&encoded);
 
   return 0;
 }

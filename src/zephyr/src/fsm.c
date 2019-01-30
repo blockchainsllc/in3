@@ -26,7 +26,8 @@ static void wait_for_event(void) {
   if (!client)
     return;
 
-  k_sem_take(&client->sem, 600000);
+//  k_sem_take(&client->sem, 600000); // EFnote: 600000 mS = 600 sec = 10 min
+  k_sem_take(&client->sem, K_SECONDS(60)); // 60 sec = 1 min
 }
 
 // PUBLIC API
@@ -34,7 +35,7 @@ void in3_signal_event(void) {
   if (!client)
     return;
 
-  dbg_log("signalling event\n");
+  dbg_log("<--- signalling event\n");
   k_sem_give(&client->sem);
 }
 
@@ -47,7 +48,6 @@ void in3_signal_event(void) {
 typedef enum {
   STATE_INIT,
   STATE_WAITING,
-  STATE_VERIFY,
   STATE_ACTION,
   STATE_RESET,
   STATE_MAX
@@ -62,6 +62,7 @@ static in3_state_t in3_init(void) {
   client->in3               = in3_new();
   client->in3->chainId      = 0x044d;
   client->in3->requestCount = 1;
+  client->in3->max_attempts=1;
 
   client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
   client->msg = k_calloc(1, sizeof(in3_msg_t));
@@ -79,19 +80,15 @@ static in3_state_t in3_init(void) {
 static in3_state_t in3_waiting(void) {
   k_mutex_lock(&client->mutex, 10000);
   if (client->msg->ready) {
-  	dbg_log("***received %s\n", client->msg->data); // DEBUG !!!
+  	dbg_log("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
     client->msg->start = k_uptime_get_32();
     if (msg_get_type(client->msg->data) == T_ACTION) {
       k_mutex_unlock(&client->mutex);
-    	dbg_log("***go and do action!\n", 0); // DEBUG !!!
       return STATE_ACTION;
     }
     client->msg->end = k_uptime_get_32();
-    dbg_log("Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+    dbg_log("<--- total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
     clear_message(client);
-//    k_mutex_unlock(&client->mutex); // DEBUG !!!
-//  	dbg_log("return to wait after delete message\n", 0); // DEBUG !!!
-//    return STATE_WAITING; // DEBUG !!!
   }
 
   k_mutex_unlock(&client->mutex);
@@ -105,15 +102,10 @@ static in3_state_t in3_waiting(void) {
   return STATE_WAITING;
 }
 
-static in3_state_t in3_verifying(void) {
-  return STATE_RESET;
-}
-
 static in3_state_t in3_action(void) {
   int           err;
-  action_type_t action = msg_get_action(client->msg->data); // by Emilio
+  action_type_t action = msg_get_action(client->msg->data); // EFmod:
 
-  dbg_log("Action: 0x%02x\n", action);
   if (action != LOCK && action != UNLOCK)
     return STATE_RESET;
 
@@ -124,14 +116,11 @@ static in3_state_t in3_action(void) {
   }
 
 	client->rent = k_calloc(1, sizeof(in3_rental_t));
-	dbg_log("Received rent: %x\n", client->rent);
-
 	client->rent->when = json_get_int_value(client->msg->data, "timestamp");
-	dbg_log("rent->when: %x\n", client->rent->when);
 
   err = verify_rent(client);
   if (err) {
-    dbg_log("Invalid rental\n");
+    dbg_log("*** Invalid rental\n");
     return STATE_RESET;
   }
 
@@ -146,7 +135,7 @@ static in3_state_t in3_action(void) {
 static in3_state_t in3_reset(void) {
   client->msg->end = k_uptime_get_32();
 
-  dbg_log("Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+  dbg_log("*** Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
   clear_message(client);
 
   return STATE_WAITING;
@@ -155,7 +144,6 @@ static in3_state_t in3_reset(void) {
 in3_state_func_t* const state_table[STATE_MAX] = {
     in3_init,
     in3_waiting,
-    in3_verifying,
     in3_action,
     in3_reset};
 
@@ -167,7 +155,25 @@ int in3_client_start(void) {
   in3_state_t state = STATE_INIT;
 
   while (1) {
-    dbg_log("Going to state 0x%02x\n", state);
+    switch(state)
+      {
+      case STATE_INIT:
+        dbg_log("*** Machine state = INIT\n");
+        break;
+      case STATE_WAITING:
+        dbg_log("*** Machine state = WAITING\n");
+        break;
+      case STATE_ACTION:
+        dbg_log("*** Machine state = ACTION\n");
+        break;
+      case STATE_RESET:
+        dbg_log("*** Machine state = RESET\n");
+        break;
+      default:
+        dbg_log("*** STATE MACHINE ERROR!!! This MUST NOT HAPPEN!\n");
+        state = STATE_RESET; // force state to reset
+        break;
+      }
     state = run_state(state);
   }
 }
