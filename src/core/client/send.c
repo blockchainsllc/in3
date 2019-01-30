@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "util/debug.h"
 
 static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* req) {
   int    i;
@@ -87,7 +88,7 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
 
   // send requets
   res = ctx->client->transport(urls, nodes_count, payload->data, response);
-
+  
   // free resources
   sb_free(payload);
   _free(urls);
@@ -101,7 +102,7 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
     return res;
   }
   *response_result = response;
-
+  dbg_log("response %s\n", response->result.data); //
   return res;
 }
 
@@ -180,23 +181,33 @@ int in3_send_ctx(in3_ctx_t* ctx) {
 
   in3_response_t* response;
   int             res = in3_node_list_pick_nodes(ctx, &ctx->nodes);
-  if (res < 0)
+
+  if (res < 0) {
+    dbg_log("<--- no nodes\n");
     return ctx_set_error(ctx, "could not find any node", res);
+    }
   nodes_count = ctx_nodes_len(ctx->nodes);
 
   // configure the requests
-  for (i = 0; i < ctx->len; i++) {
+  for (i = 0; i < ctx->len; i++) { // EFmod -is this really  ctx->len ? 
     res = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i]);
-    if (res < 0)
+    if (res < 0) {
+      dbg_log("<--- error configuring request\n");
       return ctx_set_error(ctx, "error configuring the config for request", res);
+    }
   }
-  // now send the request
-  if (!ctx->client->transport)
-    return ctx_set_error(ctx, "no transport set", IN3_ERR_CONFIG_ERROR);
 
-  res = send_request(ctx, nodes_count, &response);
-  if (res < 0 || response == NULL)
+  // now send the request
+  if (!ctx->client->transport) {
+     dbg_log("<--- no transport set\n");
+    return ctx_set_error(ctx, "no transport set", IN3_ERR_CONFIG_ERROR);
+    }
+
+   res = send_request(ctx, nodes_count, &response);
+    if (res < 0 || response == NULL) {
+    dbg_log("<--- can't send the request\n");
     return ctx_set_error(ctx, "The request could not be send", res);
+  }
   // verify responses
 
   // verify responses and return the node with the correct result.
@@ -204,8 +215,9 @@ int in3_send_ctx(in3_ctx_t* ctx) {
 
   // clean up responses exycept the response we want to keep.
   for (i = 0; i < nodes_count; i++) {
-    _free(response[i].error.data);
-    if (ctx->response_context == NULL || response[i].result.data != ctx->response_context->c) _free(response[i].result.data);
+    _free(response[i].error.data); // EFmod -why _free ?
+    if (ctx->response_context == NULL || response[i].result.data != ctx->response_context->c)
+      _free(response[i].result.data);
   }
   _free(response);
 

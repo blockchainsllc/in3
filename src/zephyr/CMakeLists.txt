@@ -25,7 +25,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/../eth_nano")
 #include_directories ("${PROJECT_SOURCE_DIR}/../eth_basic")
 include(../core/include.cmake)
 
-# choose which mlodule to include
+# choose which module to include
 #include(../eth_basic/include.cmake)
 include(../eth_nano/include.cmake)
 include(../core/compiler.cmake)

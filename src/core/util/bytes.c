@@ -28,9 +28,9 @@ void b_print(bytes_t* a) {
   size_t i;
   if (!a) return;
 
-  printf("Bytes: ");
-  for (i = 0; i < a->len; i++) printf("%02x", a->data[i]);
-  printf("\n");
+  printk("Bytes: ");
+  for (i = 0; i < a->len; i++) printk("%02x", a->data[i]);
+  printk("\n");
 }
 
 int b_cmp(bytes_t* a, bytes_t* b) {
@@ -136,11 +136,11 @@ void bb_free(bytes_builder_t* bb) {
 
 int bb_check_size(bytes_builder_t* bb, size_t len) {
   if (bb == NULL || len == 0 || bb->b.len + len < bb->bsize) return 0;
-#ifdef ZEPHYR
+#ifdef __ZEPHYR__
   size_t l = bb->bsize;
 #endif
   while (bb->b.len + len >= bb->bsize) bb->bsize <<= 1;
-#ifdef ZEPHYR
+#ifdef __ZEPHYR__
   uint8_t* buffer = _realloc(bb->b.data, bb->bsize, l);
 #else
   uint8_t* buffer = _realloc(bb->b.data, bb->bsize, 0);

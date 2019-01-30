@@ -1,7 +1,7 @@
 #include <zephyr.h>
 #include "client/client.h"
-
 #include "util/bytes.h"
+#include "util/debug.h"
 
 #ifndef LED0_GPIO_CONTROLLER
 #define LED0_GPIO_CONTROLLER 	NORDIC_NRF_GPIO_50000000_LABEL

@@ -6,9 +6,10 @@
 
 #include "data.h"
 #include "mem.h"
+#include "debug.h"
 #include "stringbuilder.h"
 
-#include "util/debug.h" // DEBUG !!!
+//#include "util/debug.h" // DEBUG !!!
 
 d_key_t key(char* c) {
   uint16_t val = 0;
@@ -140,6 +141,8 @@ int d_intd(d_token_t* item, int def_val) {
     case T_INTEGER:
     case T_BOOLEAN:
       return item->len & 0xFFFFFFF;
+    case T_BYTES:
+      return bytes_to_long(item->data,4);
     default:
       return def_val;
   }
@@ -278,15 +281,23 @@ int parse_key(json_parsed_t* jp) {
 
 int parse_number(json_parsed_t* jp, d_token_t* item) {
   char temp[20];
-  int  i = 0;
+  int  i;
   jp->c--;
-  for (; i < 20; i++) {
+  for (i=0; i < 20; i++) {
     if (jp->c[i] >= '0' && jp->c[i] <= '9')
       temp[i] = jp->c[i];
     else {
       temp[i] = 0;
       jp->c += i;
-      item->len |= atoi(temp);
+      dbg_log("\n###### Found Number %s = %i\n",temp, atoi(temp) );
+      int res = atoi(temp);
+      if (res & 0XF0000000) {
+        item->data = _malloc(4);
+        item->len = 0;
+        int_to_bytes(res,item->data);
+      }
+      else
+         item->len |=res;
       return 0;
     }
   }
@@ -514,7 +525,10 @@ int json_get_int_value(char* js, char* prop) {
   json_parsed_t* ctx = parse_json(js);
   if (ctx) {
     int res = d_get_int(ctx->items, prop);
+    dbg_log("GET INT %s = %i, type=%i len =%u",prop,res,d_type(d_get(ctx->items, prop)), d_get(ctx->items, prop)->len );
+    
     free_json(ctx);
+
     return res;
   }
   return -1;
@@ -536,6 +550,8 @@ void json_get_str_value(char* js, char* prop, char* dst) {
         dst[1] = 'x';
         int8_to_char(t->data, t->len, dst + 2);        
         dst[t->len*2+2] = 0;
+        break;
+      default: // T_ARRAY, T_OBJECT,T_BOOLEAN,T_INTEGER, T_NULL
         break;
     }
     free_json(ctx);

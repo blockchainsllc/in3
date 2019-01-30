@@ -24,7 +24,7 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
 
 int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
   int  res = 0;
-  char req[10000];
+  char req[10000]; // EFmod -a bit long for heap size ?
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   in3_ctx_t*  ctx = new_ctx(c, req);

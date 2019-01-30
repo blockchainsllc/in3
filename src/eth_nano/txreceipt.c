@@ -71,8 +71,17 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
     if (rlp_decode_in_list(blockHeader, BLOCKHEADER_RECEIPT_ROOT, &root) != 1)
       res = vc_err(vc, "no receipt_root");
     else {
+      str_range_t range = d_to_json(vc->result);
+      range.data[range.len]=0;
+
+      printk("receiptdata: %s\n",range.data);
       bytes_t*  receipt_raw = serialize_tx_receipt(vc->result);
       bytes_t** proof       = d_create_bytes_vec(d_get(vc->proof, K_MERKLE_PROOF));
+b_print(&root);
+b_print(path);
+b_print(receipt_raw);
+
+
 
       if (!proof || !trie_verify_proof(&root, path, proof, receipt_raw))
         res = vc_err(vc, "Could not verify the merkle proof");
