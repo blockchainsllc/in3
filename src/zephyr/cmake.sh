@@ -6,9 +6,8 @@ fi
 # create new one and move to
 mkdir build
 cd build       
-# call cmake for USB board
-#cmake -GNinja -DBOARD=nrf52840_pca10059 ..
-# call cmake for SDK board
-cmake -GNinja -DBOARD=nrf52840_pca10056 ..
+# make (look at CMakeLists.txt for options)
+cmake -GNinja ..
+# read the results...
 echo -n "press any key..."
 read

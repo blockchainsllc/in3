@@ -3,34 +3,47 @@
 
 #include "util/bytes.h"
 
-// I/O defines
+// USB & SDK I/O defines
+// defines:
 #define CONFIG_GPIO_P0_DEV_NAME	"GPIO_0"
 #define CONFIG_GPIO_P1_DEV_NAME	"GPIO_1"
 
-#define LEDPOWER_PORT	CONFIG_GPIO_P0_DEV_NAME
-#define LEDPOWER		6 // LED1 on PCA10059 (USB)
+#define IO_ON	1	// IO line ON (high level)
+#define IO_OFF	0	// IO line OFF (low level)
 
-#define LEDSTRIP_PORT	CONFIG_GPIO_P1_DEV_NAME
-#define LEDSTRIP		15 // P1.15 on PCA10059 (USB)
+#ifndef USB_DONGLE // if USB dongle is NOT enabled
 
-#define LOCKPIN_PORT	CONFIG_GPIO_P0_DEV_NAME
-#define LOCKPIN			31 // P0.31 on PCA10059 (USB)
+ // SDK board I/O defines
+ #define LEDPOWER_PORT	CONFIG_GPIO_P0_DEV_NAME
+ #define LEDPOWER		13 // LED1 on PCA10056 (SDK)
 
-#define IO_ON	1	// IO line ON
-#define IO_OFF	0	// IO line OFF
+ #define LEDSTRIP_PORT	CONFIG_GPIO_P0_DEV_NAME
+ #define LEDSTRIP		14 // LED2 on PCA10056 (SDK)
 
-// I/O defines (used in old USB demo, with blue led used as lock simulator)
-#define LED_PORT	CONFIG_GPIO_P0_DEV_NAME
-#define LED			6 // LED1 on PCA10059 (USB)
+ #define LOCKPIN_PORT	CONFIG_GPIO_P0_DEV_NAME
+ #define LOCKPIN			15 // LED3 on PCA10056 (SDK)
 
-#define LEDR_PORT	CONFIG_GPIO_P0_DEV_NAME
-#define LEDR		8 // LED2 R on PCA10059 (USB)
-#define LEDG_PORT	CONFIG_GPIO_P1_DEV_NAME
-#define LEDG		9 // LED2 G on PCA10059 (USB)
-#define LEDB_PORT	CONFIG_GPIO_P0_DEV_NAME
-#define LEDB		12 // LED2 B on PCA10059 (USB)
+#else // if USB dongle is used
 
-#define ACTION_PIN	31
+ // USB board I/O defines
+ #define LEDPOWER_PORT	CONFIG_GPIO_P0_DEV_NAME
+ #define LEDPOWER		6 // LED1 on PCA10059 (USB)
+
+ #define LEDSTRIP_PORT	CONFIG_GPIO_P1_DEV_NAME
+ #define LEDSTRIP		15 // P1.15 on PCA10059 (USB)
+
+ #define LOCKPIN_PORT	CONFIG_GPIO_P0_DEV_NAME
+ #define LOCKPIN			31 // P0.31 on PCA10059 (USB)
+
+ // -> some others USB board useful I/Os
+ #define LEDR_PORT	CONFIG_GPIO_P0_DEV_NAME
+ #define LEDR		8 // LED2 Red on PCA10059 (USB)
+ #define LEDG_PORT	CONFIG_GPIO_P1_DEV_NAME
+ #define LEDG		9 // LED2 Green on PCA10059 (USB)
+ #define LEDB_PORT	CONFIG_GPIO_P0_DEV_NAME
+ #define LEDB		12 // LED2 Blue on PCA10059 (USB)
+
+#endif
 
 // Messaging
 

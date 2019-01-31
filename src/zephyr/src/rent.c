@@ -279,25 +279,3 @@ out:
 
 	return ret;
 }
-
-void do_action(action_type_t action)
-{
-	if (action == LOCK) {
-		dbg_log("*** action: LOCK\n");
-		for (int i = 4; i > 0; i--) {
-			led_set(1);
-			k_sleep(125);
-			led_set(0);
-			k_sleep(125);
-		}
-	} else {
-		dbg_log("*** action: UNLOCK\n");
-		for (int i = 4; i > 0; i--) {
-			led_set(0);
-			k_sleep(125);
-			led_set(1);
-			k_sleep(125);
-		}
-	}
-	gpio_set(action);
-}

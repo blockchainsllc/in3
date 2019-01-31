@@ -29,10 +29,6 @@ void bt_dev_show_info(void);
 int start_message(int size);
 void process_msg(void);
 
-// defines:
-#define CONFIG_GPIO_P0_DEV_NAME              "GPIO_0"
-#define CONFIG_GPIO_P1_DEV_NAME              "GPIO_1"
-
 // variables:
 static struct bt_conn *default_conn = NULL;
 static struct bt_gatt_ccc_cfg req_ccc_cfg[BT_GATT_CCC_MAX] = {};
@@ -310,7 +306,8 @@ void bluetooth_clear_req(void)
 	memset(req_buf, 0, sizeof(recv_buf_static)); // EFmod: may be sizeof(req_buf) ?
 }
 
-// START block: next 3 functions needed only if hardcoded mac is requested
+#ifdef BT_MAC // START block: next 3 functions needed only if hardcoded BT MAC is enabled
+///////////////////////////////////////////////////////////////////////////////
 static int char2hex(const char *c, u8_t *x)
 {
 	if (*c >= '0' && *c <= '9') {
@@ -374,21 +371,30 @@ static int str2bt_addr_le(const char *str, const char *type, bt_addr_le_t *addr)
 
 	return 0;
 }
-// END block
+#endif
+///////////////////////////////////////////////////////////////////// END block
+
+static void byte_to_hex(uint8_t b, char *s)
+{
+	s[0] = (b / 16) + '0'; // get high nibble, add ascii '0'
+	if(s[0] > '9') s[0] += 7; // convert 10..15 to 'A'..'F' (+= 39 if 'a'..'f')
+	s[1] = (b & 15) + '0'; // get low nibble, add ascii '0'
+	if(s[1] > '9') s[1] += 7; // convert 10..15 to 'A'..'F' (+= 39 if 'a'..'f')
+	s[2] = '\0'; // null terminate
+}
 
 int bluetooth_setup(struct in3_client *c)
 {
-	int err;
+	int err, lnam, fmac;
 	size_t ad_len, scan_rsp_len = 0;
 	struct bt_le_adv_param param;
 	const struct bt_data *ad = 0, *scan_rsp = 0;
+	char deviceName[20] = "in3-"; // look in prj.con (max length fixed to 20 chars)
 
-// Enable to hardcode MAC address
-#if BTMAC
-	// client (this)
+#ifdef BT_MAC // if enabled, hardcode the BT MAC address
 	bt_addr_le_t addr;
 //	char *c_addr = "d3:6c:29:4b:6b:45";
-	char *c_addr = "c0:00:00:00:00:00"; // EFmod:
+	char *c_addr = "c0:00:00:00:00:00"; // EFmod: most significative 2 bits must be 1
 	char *c_addr_type = "(random)";
 	err = str2bt_addr_le(c_addr, c_addr_type, &addr);
 	bt_set_id_addr((const bt_addr_le_t *) &addr);
@@ -415,8 +421,14 @@ int bluetooth_setup(struct in3_client *c)
 		settings_load();
 	}
 
-//	bt_set_name("in3-peripheral");
-	bt_set_name("in3-emiliotest"); // EFmod: just for testing with Ardo's App
+	fmac = NRF_FICR->DEVICEADDR[0]; // get low 4 octets of BT MAC
+	lnam = strlen(deviceName); // original name length (before adding the MAC)
+    byte_to_hex((fmac & 0xFF000000) >> 24, deviceName +lnam); // add MAC[3]
+    byte_to_hex((fmac & 0xFF0000) >> 16, deviceName +lnam +2); // add MAC[2]
+    byte_to_hex((fmac & 0xFF00) >> 8, deviceName +lnam +4); // add MAC[1]
+    byte_to_hex(fmac & 0xFF, deviceName +lnam +6); // add MAC[0] (byte_to_hex adds \0)
+//	bt_set_name(deviceName); // BT name built with "in3-" and NORDIC (almost) unique BT MAC (es: in3-84C8C54B)
+	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Ardo's App
 
 	err = bt_le_adv_start(&param, ad, ad_len, scan_rsp, scan_rsp_len);
 	if (err < 0) {
@@ -495,6 +507,7 @@ int gpio_setup(void)
 	return 0;
 }
 /////////////////////// end of new GPIO functions
+
 void main(void)
 {
 	dbg_log("\n\n\n\n\n***\n*** Starting in3_client...\n");

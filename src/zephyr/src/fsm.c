@@ -57,7 +57,7 @@ void do_action(action_type_t action)
 		{
 		dbg_log("<--- action: UNLOCK\n");
 		ledstrip_set(IO_ON); // led on
-		k_timer_start(timer2, 15000, 0); // start timer 2 initial duration 15*1000mS, period = 0
+		k_timer_start(timer2, 10000, 0); // start timer 2 initial duration 10*1000mS, period = 0
 		lock_set(IO_ON); // lock on
 		k_timer_start(timer3, 1500, 0); // start timer 3 initial duration 1500mS, period = 0
 		}
