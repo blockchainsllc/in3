@@ -3,13 +3,33 @@
 
 #include "util/bytes.h"
 
-#ifndef LED0_GPIO_CONTROLLER
-#define LED0_GPIO_CONTROLLER 	NORDIC_NRF_GPIO_50000000_LABEL
-#define LED1_GPIO_CONTROLLER 	NORDIC_NRF_GPIO_50000300_LABEL
-#endif
-#define LED_PORT LED0_GPIO_CONTROLLER
-#define LED		LED0_GPIO_PIN
-#define LED_STRIP	15
+// I/O defines
+#define CONFIG_GPIO_P0_DEV_NAME	"GPIO_0"
+#define CONFIG_GPIO_P1_DEV_NAME	"GPIO_1"
+
+#define LEDPOWER_PORT	CONFIG_GPIO_P0_DEV_NAME
+#define LEDPOWER		6 // LED1 on PCA10059 (USB)
+
+#define LEDSTRIP_PORT	CONFIG_GPIO_P1_DEV_NAME
+#define LEDSTRIP		15 // P1.15 on PCA10059 (USB)
+
+#define LOCKPIN_PORT	CONFIG_GPIO_P0_DEV_NAME
+#define LOCKPIN			31 // P0.31 on PCA10059 (USB)
+
+#define IO_ON	1	// IO line ON
+#define IO_OFF	0	// IO line OFF
+
+// I/O defines (used in old USB demo, with blue led used as lock simulator)
+#define LED_PORT	CONFIG_GPIO_P0_DEV_NAME
+#define LED			6 // LED1 on PCA10059 (USB)
+
+#define LEDR_PORT	CONFIG_GPIO_P0_DEV_NAME
+#define LEDR		8 // LED2 R on PCA10059 (USB)
+#define LEDG_PORT	CONFIG_GPIO_P1_DEV_NAME
+#define LEDG		9 // LED2 G on PCA10059 (USB)
+#define LEDB_PORT	CONFIG_GPIO_P0_DEV_NAME
+#define LEDB		12 // LED2 B on PCA10059 (USB)
+
 #define ACTION_PIN	31
 
 // Messaging
@@ -72,4 +92,11 @@ int led_setup(void);
 void led_set(int);
 void gpio_set(action_type_t);
 void clear_message(struct in3_client *c);
+
 int in3_can_rent(struct in3_client *c, char *r, char *amsg);
+
+int gpio_setup(void);
+void ledpower_set(int);
+void ledstrip_set(int);
+void lock_set(int);
+void do_action(action_type_t action);

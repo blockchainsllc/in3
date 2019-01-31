@@ -12,7 +12,7 @@
 
 // Global Client
 struct in3_client*  client;
-struct k_timer*     timer;
+struct k_timer *timer, *timer1, *timer2, *timer3; // timer structures
 int                 undo;
 
 // private
@@ -22,12 +22,45 @@ static void timer_expired(struct k_timer* work) {
   k_sem_give(&client->sem);
 }
 
+static void timer1_expired(struct k_timer *work) // one shot timer (monitor led)
+{
+	ledpower_set(IO_ON); // power led on
+}
+
+static void timer2_expired(struct k_timer *work) // one shot timer (led stripe)
+{
+	ledstrip_set(IO_OFF); // ledstrip off
+}
+
+static void timer3_expired(struct k_timer *work) // one shot timer (lock-coil)
+{
+	lock_set(IO_OFF); // lock off
+}
+
 static void wait_for_event(void) {
   if (!client)
     return;
 
 //  k_sem_take(&client->sem, 600000); // EFnote: 600000 mS = 600 sec = 10 min
   k_sem_take(&client->sem, K_SECONDS(60)); // 60 sec = 1 min
+}
+
+void do_action(action_type_t action)
+{
+	ledpower_set(IO_OFF); // power led off
+	k_timer_start(timer1, 250, 0); // start timer 1 initial duration 250mS, period = 0
+	if (action == LOCK)
+		{
+		dbg_log("<--- action: LOCK\n");
+		}
+	else
+		{
+		dbg_log("<--- action: UNLOCK\n");
+		ledstrip_set(IO_ON); // led on
+		k_timer_start(timer2, 15000, 0); // start timer 2 initial duration 15*1000mS, period = 0
+		lock_set(IO_ON); // lock on
+		k_timer_start(timer3, 1500, 0); // start timer 3 initial duration 1500mS, period = 0
+		}
 }
 
 // PUBLIC API
@@ -58,6 +91,9 @@ typedef in3_state_t in3_state_func_t(void);
 static in3_state_t in3_init(void) {
   client = k_calloc(1, sizeof(struct in3_client));
   timer = k_calloc(1, sizeof(struct k_timer));
+	timer1 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
+	timer2 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
+	timer3 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 
   client->in3               = in3_new();
   client->in3->chainId      = 0x044d;
@@ -69,10 +105,14 @@ static in3_state_t in3_init(void) {
 
   in3_register_eth_nano();
   bluetooth_setup(client);
-  led_setup();
+ 	gpio_setup();
+
   k_sem_init(&client->sem, 0, 1);
   k_mutex_init(&client->mutex);
   k_timer_init(timer, timer_expired, NULL);
+	k_timer_init(timer1, timer1_expired, NULL); // init timer, callback for expired, callback for stopped
+	k_timer_init(timer2, timer2_expired, NULL); // init timer, callback for expired, callback for stopped
+	k_timer_init(timer3, timer3_expired, NULL); // init timer, callback for expired, callback for stopped
 
   return STATE_WAITING;
 }
@@ -104,7 +144,7 @@ static in3_state_t in3_waiting(void) {
 
 static in3_state_t in3_action(void) {
   int           err;
-  action_type_t action = msg_get_action(client->msg->data); // EFmod:
+  action_type_t action = msg_get_action(client->msg->data);
 
   if (action != LOCK && action != UNLOCK)
     return STATE_RESET;
@@ -120,7 +160,7 @@ static in3_state_t in3_action(void) {
 
   err = verify_rent(client);
   if (err) {
-    dbg_log("*** Invalid rental\n");
+    dbg_log("<--- Invalid rental\n");
     return STATE_RESET;
   }
 
@@ -135,7 +175,7 @@ static in3_state_t in3_action(void) {
 static in3_state_t in3_reset(void) {
   client->msg->end = k_uptime_get_32();
 
-  dbg_log("*** Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+  dbg_log("<--- Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
   clear_message(client);
 
   return STATE_WAITING;
@@ -145,7 +185,9 @@ in3_state_func_t* const state_table[STATE_MAX] = {
     in3_init,
     in3_waiting,
     in3_action,
-    in3_reset};
+    in3_reset,
+    NULL
+  };
 
 static in3_state_t run_state(in3_state_t state) {
   return state_table[state]();
