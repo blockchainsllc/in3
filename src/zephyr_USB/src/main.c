@@ -38,9 +38,10 @@ static struct bt_conn *default_conn = NULL;
 static struct bt_gatt_ccc_cfg req_ccc_cfg[BT_GATT_CCC_MAX] = {};
 
 static u32_t cnt;
-struct device *led;
-struct device *led_strip;
-struct device *gpio;
+struct device *ledpower; // green led (power)
+struct device *ledstrip; // led strip (used as lamp)
+struct device *lockpin; // lock out
+struct device *gpio; // using blue led on usb board for testing
 
 static u8_t recv_buf_static[512];
 static u8_t req_buf[512];
@@ -383,7 +384,7 @@ int bluetooth_setup(struct in3_client *c)
 	const struct bt_data *ad = 0, *scan_rsp = 0;
 
 // Enable to hardcode MAC address
-#if 1
+#if 0
 	// client (this)
 	bt_addr_le_t addr;
 //	char *c_addr = "d3:6c:29:4b:6b:45";
@@ -445,49 +446,57 @@ int bluetooth_setup(struct in3_client *c)
 
 	return 0;
 }
-
-void gpio_set(action_type_t state)
+///////// new GPIO functions
+void ledpower_set(int state)
 {
-	int value = (state == UNLOCK) ? 1 : 0;
-
-	gpio_pin_write(led, ACTION_PIN, value);
+	if(state) // if ON
+		gpio_pin_write(ledpower, LEDPOWER, 0); // led with negative logic
+	else // if OFF
+		gpio_pin_write(ledpower, LEDPOWER, 1); // led with negative logic
 }
 
-void led_set(int state)
+void ledstrip_set(int state)
 {
-	int value = state ? 0 : 1;
-	gpio_pin_write(led, LED, value);
-	gpio_pin_write(led_strip, LED_STRIP, state);
+	if(state) // if ON
+		gpio_pin_write(ledstrip, LEDSTRIP, 1); // led with positive logic
+	else // if OFF
+		gpio_pin_write(ledstrip, LEDSTRIP, 0); // led with positive logic
 }
 
-int led_setup(void)
+void lock_set(int state)
 {
-	led = device_get_binding(CONFIG_GPIO_P0_DEV_NAME);
-	led_strip = device_get_binding(CONFIG_GPIO_P1_DEV_NAME);
+	if(state) // if ON
+		gpio_pin_write(lockpin, LOCKPIN, 1); // coil with positive logic
+	else // if OFF
+		gpio_pin_write(lockpin, LOCKPIN, 0); // coil with positive logic
+}
 
-	gpio_pin_configure(led, LED, GPIO_DIR_OUT);
-	gpio_pin_configure(led_strip, LED_STRIP, GPIO_DIR_OUT);
+int gpio_setup(void)
+{
+	ledpower = device_get_binding(LEDPOWER_PORT); // CONFIG_GPIO_P0_DEV_NAME
+	gpio_pin_configure(ledpower, LEDPOWER, GPIO_DIR_OUT); // set as output (see fsm.h)
+	ledpower_set(IO_ON);
 
-	gpio = device_get_binding(CONFIG_GPIO_P0_DEV_NAME);
-	gpio_pin_configure(gpio, ACTION_PIN, GPIO_DIR_OUT);
+	ledstrip = device_get_binding(LEDSTRIP_PORT);
+	gpio_pin_configure(ledstrip, LEDSTRIP, GPIO_DIR_OUT); // set as output (see fsm.h)
+	ledstrip_set(IO_OFF);
 
-	cnt = 0;
+	lockpin = device_get_binding(LOCKPIN_PORT);
+	gpio_pin_configure(lockpin, LOCKPIN, GPIO_DIR_OUT); // set as output (see fsm.h)
+	lock_set(IO_OFF);
 
-	for (int i = 0; i < 5; i++, cnt++) {
-		led_set(cnt % 2);
+	for(int i = 0, cnt = 0; i < 5; i++, cnt++) // blink led and terminate ON
+		{
+		ledpower_set(cnt % 2);
 		k_sleep(200);
-	}
-
-	led_set(0);
-	gpio_set(LOCK);
-
+		}
+	ledpower_set(IO_ON);
 	return 0;
 }
+/////////////////////// end of new GPIO functions
 
 void main(void)
 {
-	dbg_log("\n\n\n\n\n***\n*** Starting in3_client...\n");
 	in3_client_start();
-
 	return;
 }

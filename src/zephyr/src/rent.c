@@ -150,6 +150,7 @@ int in3_get_tx_receipt(struct in3_client *c, char *tx_hash, char **response)
 		k_free(error);
 	}
 	else {
+		c->txr->data = result; // 190131 solves the issue in caching
 		*response = result;
 		//TODO don't need it!
 		c->txr->hash = k_calloc(1, strlen(tx_hash)+1);
@@ -172,7 +173,7 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 	if (!response || !message) goto out; 
 
 	d_token_t* logs = d_get(response->items,key("logs"));
-	if (!logs)  goto out;
+	if (!logs)  goto out; 
 
 	for (i=0,l=logs+1;i<d_len(logs);i++,l=d_next(l)) {
 		if (b_cmp(d_get_bytes_at(d_get(l,key("topics")),0),log_rented)) {
@@ -201,7 +202,7 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 	dbg_log("*** from: %d, until: %d, when: %d\n", c->rent->from, c->rent->until, c->rent->when);
 
     // wrong time
-	if (c->rent->from >= c->rent->when ||  c->rent->when >= c->rent->until)  goto out;
+	if (c->rent->from >= c->rent->when ||  c->rent->when >= c->rent->until)  goto out; 
 
 	// check signature
 
@@ -214,13 +215,13 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 
     // get the signature
 	signer = ecrecover_signature(hash,  d_get(message->items,key("signature")));
-	if (signer==NULL) goto out;
+	if (signer==NULL) goto out; 
 
     // check if the signer is the same as the controller in the event.
     // reuse msg to point to the address in the event.
 	msg.data = data->data+12;
 	msg.len  = 20;
-	if (!b_cmp(signer, &msg))  goto out;
+	if (!b_cmp(signer, &msg))  goto out; 
 
 	//TODO check if the url and the deviceid is correct.
 	// if (strcmp(url, saved_url)!=0)          goto out;

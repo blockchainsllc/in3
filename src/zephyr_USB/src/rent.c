@@ -150,7 +150,7 @@ int in3_get_tx_receipt(struct in3_client *c, char *tx_hash, char **response)
 		k_free(error);
 	}
 	else {
-		dbg_log("*** got a response:\n%s\n", result);
+		c->txr->data = result; // 190131 solves the issue in caching
 		*response = result;
 		//TODO don't need it!
 		c->txr->hash = k_calloc(1, strlen(tx_hash)+1);
@@ -259,12 +259,12 @@ int verify_rent(struct in3_client *c)
 
 	in3_get_tx_receipt(c, tx_hash, &r); // try to receive response 
 	if (r)
-		dbg_log("*** response:\n\n%s\n\n", r);
+		dbg_log("<--- response:\n%s\n", r);
 
 	if (in3_can_rent(c, r, amsg) < 0)
 		goto out;
 
-	ret = 0; // good response
+	ret = 0;
 
 out:
 	if (ret)
@@ -272,38 +272,10 @@ out:
 	else
 		sprintf(payload, "{\"msgId\":%d,\"msgType\":\"action\",\"result\":\"success\"}", id);
 
-	dbg_log("*** payload (len=%d): '%s'\n", strlen(payload), payload);
-
 	bluetooth_write_req(payload);
-
-	dbg_log("*** c->txr: %p\n", c->txr);
-	dbg_log("*** c->txr->hash: %p\n", c->txr->hash);
-	dbg_log("*** c->txr->data: %p\n", c->txr->data);
 
 	if (amsg)
 		k_free(amsg);
 
 	return ret;
-}
-
-void do_action(action_type_t action)
-{
-	if (action == LOCK) {
-		dbg_log("*** action: LOCK\n");
-		for (int i = 4; i > 0; i--) {
-			led_set(1);
-			k_sleep(125);
-			led_set(0);
-			k_sleep(125);
-		}
-	} else {
-		dbg_log("*** action: UNLOCK\n");
-		for (int i = 4; i > 0; i--) {
-			led_set(0);
-			k_sleep(125);
-			led_set(1);
-			k_sleep(125);
-		}
-	}
-	gpio_set(action);
 }
