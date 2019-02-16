@@ -92,15 +92,15 @@ storage_t* evm_get_storage(evm_t* evm, uint8_t* adr, uint8_t* key, int keylen, u
   if (!adr) return NULL;
   account_t* ac = evm_get_account(evm, adr, create);
   if (!ac) return NULL;
+
   storage_t* s = ac->storage;
-  uint8_t    k[32];
+  uint8_t    k[32], *data;
   uint256_set(key, keylen, k);
   while (s) {
     if (memcmp(s->key, k, 32) == 0) return s;
     s = s->next;
   }
-  uint8_t* data;
-  int      l = evm->env(evm, EVM_ENV_STORAGE, key, keylen, &data, 0, 0);
+  int l = evm->env(evm, EVM_ENV_STORAGE, key, keylen, &data, 0, 0);
   if (create || l >= 0) {
     s = _malloc(sizeof(storage_t));
     memcpy(s->key, k, 32);

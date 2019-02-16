@@ -5,6 +5,7 @@
 #include <crypto/secp256k1.h>
 
 uint8_t evm_is_precompiled(evm_t* evm, uint8_t* address) {
+  UNUSED_VAR(evm);
   int l = 20;
   optimize_len(address, l);
   return (l == 1 && *address && *address < 9);

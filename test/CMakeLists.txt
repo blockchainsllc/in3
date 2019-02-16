@@ -38,6 +38,7 @@ vmTests/vmRandomTest
 vmTests/vmPushDupSwapTest 
 vmTests/vmArithmeticTest
 TrieTests
+RLPTests
 )
     file(GLOB files "testdata/evm/${testdir}/*.json")
     foreach(file ${files})
@@ -50,12 +51,6 @@ TrieTests
     set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 1) 
     endforeach()
 endforeach()
-
-add_test(
-    NAME              "rlp" 
-    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ../test/testdata/evm/RLPTests/rlptest.json 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-)
 
 
 

@@ -75,4 +75,16 @@ int min_bytes_len(uint64_t val);
     a++;                     \
   }
 
+#define TRY(exp)           \
+  {                        \
+    int _r = exp;          \
+    if (_r < 0) return _r; \
+  }
+
+#define TRY_GOTO(exp)        \
+  {                          \
+    res = exp;               \
+    if (res < 0) goto clean; \
+  }
+
 #endif

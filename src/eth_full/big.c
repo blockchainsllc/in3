@@ -5,14 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void optimze_length(uint8_t** data, uint8_t* l) {
-  while (*l > 1 && **data == 0) {
-    *l -= 1;
-    *data += 1;
-  }
-}
-
-uint8_t big_is_zero(uint8_t* data, uint8_t l) {
+uint8_t big_is_zero(uint8_t* data, uint_fast8_t l) {
   optimize_len(data, l);
   return l == 1 && !*data;
 }
@@ -20,8 +13,8 @@ uint8_t big_is_zero(uint8_t* data, uint8_t l) {
 // +1 if a > b
 // 0  if a==b
 // -1 if a < b
-int big_cmp(uint8_t* a, int len_a, uint8_t* b, int len_b) {
-  int i;
+int big_cmp(uint8_t* a, uint_fast8_t len_a, uint8_t* b, uint_fast8_t len_b) {
+  uint_fast8_t i;
   if (len_a == len_b) return memcmp(a, b, len_a);
   if (len_a > len_b) {
     for (i = 0; i < len_a - len_b; i++) {
@@ -35,13 +28,12 @@ int big_cmp(uint8_t* a, int len_a, uint8_t* b, int len_b) {
   return memcmp(a, b + +len_b - len_a, len_a);
 }
 
-int big_sign(uint8_t* val, int len, uint8_t* dst) {
+int big_sign(uint8_t* val, uint_fast8_t len, uint8_t* dst) {
   if (len > 32) return -1;
-  uint8_t  tmp[32];
-  int      i;
-  uint16_t rest = 1;
+  uint8_t       tmp[32];
+  uint_fast16_t rest = 1;
   memcpy(tmp, val, len);
-  for (i = len - 1; i >= 0; i--) {
+  for (int_fast8_t i = len - 1; i >= 0; i--) {
     rest += val[i] ^ 0XFF;
     tmp[i] = rest & 0xFF;
     rest >>= 8;
@@ -52,16 +44,17 @@ int big_sign(uint8_t* val, int len, uint8_t* dst) {
 /**
  * returns 0 if the value is positive or 1 if negavtive. in this case the absolute value is copied to dst.
 */
-int big_signed(uint8_t* val, int len, uint8_t* dst) {
+int big_signed(uint8_t* val, uint_fast8_t len, uint8_t* dst) {
   if ((*val & 128) == 0) return 0;
   if (len > 32) return -1;
   big_sign(val, len, dst);
   return 1;
 }
-void big_shift_left(uint8_t* a, int len, int bits) {
-  uint8_t  r     = bits % 8;
-  uint16_t carry = 0;
-  int      i;
+
+void big_shift_left(uint8_t* a, uint_fast8_t len, int bits) {
+  uint_fast8_t  r     = bits % 8;
+  uint_fast16_t carry = 0;
+  int           i;
   if ((r = bits % 8)) {
     for (i = len - 1; i >= 0; i--) {
       a[i] = (carry |= a[i] << r) & 0xFF;
@@ -74,13 +67,13 @@ void big_shift_left(uint8_t* a, int len, int bits) {
   }
 }
 
-void big_shift_right(uint8_t* a, int len, int bits) {
-  uint8_t  r     = bits % 8;
-  uint16_t carry = 0;
-  int      i;
+void big_shift_right(uint8_t* a, uint_fast8_t len, int bits) {
+  uint_fast8_t  r     = bits % 8;
+  uint_fast16_t carry = 0;
+  int           i;
   if ((r = bits % 8)) {
     for (i = 0; i < len; i++) {
-      a[i] = (carry |= (uint16_t) a[i] << (8 - r)) >> 8;
+      a[i] = (carry |= (uint_fast16_t) a[i] << (8 - r)) >> 8;
       carry <<= 8;
     }
   }
@@ -90,7 +83,7 @@ void big_shift_right(uint8_t* a, int len, int bits) {
   }
 }
 
-int big_int(uint8_t* val, int len) {
+int32_t big_int(uint8_t* val, uint_fast8_t len) {
   switch (len) {
     case 1:
       return *val;
@@ -105,13 +98,13 @@ int big_int(uint8_t* val, int len) {
   }
 }
 
-int big_add(uint8_t* a, uint8_t len_a, uint8_t* b, uint8_t len_b, uint8_t* out, uint8_t max) {
-  optimze_length(&a, &len_a);
-  optimze_length(&b, &len_b);
-  uint8_t  l     = len_a > len_b ? len_a + 1 : len_b + 1;
-  uint16_t carry = 0;
+int big_add(uint8_t* a, uint_fast8_t len_a, uint8_t* b, uint_fast8_t len_b, uint8_t* out, uint_fast8_t max) {
+  optimize_len(a, len_a);
+  optimize_len(b, len_b);
+  uint_fast8_t  l     = len_a > len_b ? len_a + 1 : len_b + 1;
+  uint_fast16_t carry = 0;
   if (max && l > max) l = max;
-  for (int i = l - 1;; i--) {
+  for (int_fast8_t i = l - 1;; i--) {
     carry += (len_a ? a[--len_a] : 0) + (len_b ? b[--len_b] : 0);
     out[i] = carry & 0xFF;
     carry >>= 8;
@@ -120,14 +113,14 @@ int big_add(uint8_t* a, uint8_t len_a, uint8_t* b, uint8_t len_b, uint8_t* out, 
   return l;
 }
 
-int big_sub(uint8_t* a, uint8_t len_a, uint8_t* b, uint8_t len_b, uint8_t* out) {
-  optimze_length(&a, &len_a);
-  optimze_length(&b, &len_b);
-  uint8_t  l = len_a > len_b ? len_a + 1 : len_b + 1, borrow = 0;
-  uint16_t carry = 0;
+int big_sub(uint8_t* a, uint_fast8_t len_a, uint8_t* b, uint_fast8_t len_b, uint8_t* out) {
+  optimize_len(a, len_a);
+  optimize_len(b, len_b);
+  uint_fast8_t  l = len_a > len_b ? len_a + 1 : len_b + 1, borrow = 0;
+  uint_fast16_t carry = 0;
   if (l > 32) l = 32;
-  for (int i = l - 1;; i--) {
-    carry  = (uint16_t)(len_a ? a[--len_a] : 0) - (uint16_t)(len_b ? b[--len_b] : 0) - (uint16_t) borrow;
+  for (int_fast8_t i = l - 1;; i--) {
+    carry  = (uint_fast16_t)(len_a ? a[--len_a] : 0) - (uint_fast16_t)(len_b ? b[--len_b] : 0) - (uint_fast16_t) borrow;
     out[i] = carry & 0xFF;
     borrow = (carry >> 8) & 1;
     if (i == 0) break;
@@ -141,20 +134,21 @@ int big_sub(uint8_t* a, uint8_t len_a, uint8_t* b, uint8_t len_b, uint8_t* out) 
   return l;
 }
 
-int big_mul(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res, uint8_t max) {
-  optimze_length(&a, &la);
-  optimze_length(&b, &lb);
+int big_mul(uint8_t* a, uint_fast8_t la, uint8_t* b, uint_fast8_t lb, uint8_t* res, uint_fast8_t max) {
+  optimize_len(a, la);
+  optimize_len(b, lb);
   if (la + lb < 9) {
-    uint8_t rr[8], *p = rr, lr = 8;
+    uint8_t      rr[8], *p = rr;
+    uint_fast8_t lr = 8;
     long_to_bytes(bytes_to_long(a, la) * bytes_to_long(b, lb), rr);
-    optimze_length(&p, &lr);
+    optimize_len(p, lr);
     memcpy(res, p, lr);
     return lr;
   }
 
-  uint8_t  out[66], i = la + lb, *p = out;
-  uint32_t val = 0;
-  int8_t   xs  = la - 1, ys, x, y;
+  uint8_t     out[66], *p = out;
+  uint32_t    val = 0;
+  int_fast8_t i = la + lb, xs = la - 1, ys, x, y;
 
   for (ys = lb - 1; ys >= 0; val >>= 8, ys--) {
     for (x = xs, y = ys; x >= 0 && y < lb; x--, y++) val += (uint32_t) a[x] * b[y];
@@ -167,7 +161,7 @@ int big_mul(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res, uint8_
   }
   out[--i] = val & 0xFF;
   i        = la + lb;
-  optimze_length(&p, &i);
+  optimize_len(p, i);
   if (i > max) {
     memcpy(res, p + i - max, max);
     i = max;
@@ -176,15 +170,15 @@ int big_mul(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res, uint8_
   return i;
 }
 
-int big_bitlen(uint8_t* a, uint8_t la) {
-  optimze_length(&a, &la);
-  for (int i = 7; i >= 0; i--) {
+int big_bitlen(uint8_t* a, uint_fast8_t la) {
+  optimize_len(a, la);
+  for (int_fast8_t i = 7; i >= 0; i--) {
     if (*a & (1 << i)) return la * 8 - 7 + i;
   }
   return la * 8 - 8;
 }
 
-int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res) {
+int big_exp(uint8_t* a, uint_fast8_t la, uint8_t* b, uint_fast8_t lb, uint8_t* res) {
   optimize_len(a, la);
   optimize_len(b, lb);
   // short cuts a**0 = 1
@@ -209,7 +203,8 @@ int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res) {
     res[63]      = 1;
     uint32_t exp = *b;
     big_shift_left(res, 64, exp);
-    uint8_t *p = res, l = 64;
+    uint8_t*     p = res;
+    uint_fast8_t l = 64;
     optimize_len(p, l);
     if (l > 32) {
       p += l - 32;
@@ -251,61 +246,9 @@ int big_exp(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t* res) {
 
     return ml;
   }
-
-  // a ** num
-
-  /*
-      if (num.isZero()) return new BN(1).toRed(this);
-      if (num.cmpn(1) === 0) return a.clone();
-  
-      var windowSize = 4;
-      var wnd = new Array(1 << windowSize);
-      wnd[0] = new BN(1).toRed(this);
-      wnd[1] = a;
-      for (var i = 2; i < wnd.length; i++) {
-        wnd[i] = this.mul(wnd[i - 1], a);
-      }
-
-
-  
-      var res = wnd[0];
-      var current = 0;
-      var currentLen = 0;
-      var start = num.bitLength() % 26;
-      if (start === 0) {
-        start = 26;
-      }
-  
-      for (i = num.length - 1; i >= 0; i--) {
-        var word = num.words[i];
-        for (var j = start - 1; j >= 0; j--) {
-          var bit = (word >> j) & 1;
-          if (res !== wnd[0]) {
-            res = this.sqr(res);
-          }
-  
-          if (bit === 0 && current === 0) {
-            currentLen = 0;
-            continue;
-          }
-  
-          current <<= 1;
-          current |= bit;
-          currentLen++;
-          if (currentLen !== windowSize && (i !== 0 || j !== 0)) continue;
-  
-          res = this.mul(res, wnd[current]);
-          currentLen = 0;
-          current = 0;
-        }
-        start = 26;
-      }
-  
-      return res;
-  */
 }
 
-int big_log256(uint8_t* a, int len) {
+int big_log256(uint8_t* a, uint_fast8_t len) {
   while (a[0] == 0) {
     len--;
     a++;
@@ -313,12 +256,12 @@ int big_log256(uint8_t* a, int len) {
   return len;
 }
 
-int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* qlen, uint8_t* remain, int* remain_len) {
-  int     j, i;
-  uint8_t l = 8;
+int big_divmod(uint8_t* n, uint_fast8_t ln, uint8_t* d, uint_fast8_t ld, uint8_t* q, uint_fast8_t* qlen, uint8_t* remain, uint_fast8_t* remain_len) {
+  int_fast8_t  j, i;
+  uint_fast8_t l = 8;
 
-  optimze_length(&n, &ln);
-  optimze_length(&d, &ld);
+  optimize_len(n, ln);
+  optimize_len(d, ld);
 
   if (ld < 8) {
     // we can use long here
@@ -329,13 +272,13 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
       // shortcurt for pure long operation
       ur = bytes_to_long(n, ln);
       long_to_bytes(ur / ud, p);
-      optimze_length(&p, &l);
+      optimize_len(p, l);
       memcpy(q, p, l);
       *qlen = l;
       l     = 8;
       p     = pp;
       long_to_bytes(ur % ud, p);
-      optimze_length(&p, &l);
+      optimize_len(p, l);
       if (remain) {
         memcpy(remain, p, l);
         *remain_len = l;
@@ -356,7 +299,7 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
 
     *qlen = j + 1;
     long_to_bytes(ur, p);
-    optimze_length(&p, &l);
+    optimize_len(p, l);
     if (remain) {
       memcpy(remain, p, l);
       *remain_len = l;
@@ -364,8 +307,9 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
     return 0;
   } else {
 
-    uint8_t row[32], tmp[33], tmp2[33], val, min, max;
-    int     res;
+    uint8_t      row[32], tmp[33], tmp2[33];
+    uint_fast8_t val, min, max;
+    int          res;
     memset(row, 0, 32);
 
     for (i = 0, j = -1; i < ln; i++) {
@@ -378,7 +322,7 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
         min = 1;
         max = 255;
         while (true) {
-          l   = big_mul(&val, 1, d, ld, tmp, 33);
+          TRY(l = big_mul(&val, 1, d, ld, tmp, 33))
           res = big_cmp(row, 32, tmp, l);
           if (res < 0) {
             max = val;
@@ -393,8 +337,8 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
         }
         q[++j] = val;
         if (res) {
-          l = big_mul(&val, 1, d, ld, tmp, 33);
-          l = big_sub(row, 32, tmp, l, tmp2);
+          TRY(l = big_mul(&val, 1, d, ld, tmp, 33))
+          TRY(l = big_sub(row, 32, tmp, l, tmp2))
           memset(row, 0, 32);
           memcpy(row + 32 - l, tmp2, l);
         } else
@@ -402,8 +346,9 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
       }
     }
 
-    uint8_t *p = row, pl = 32;
-    optimze_length(&p, &pl);
+    uint8_t*     p  = row;
+    uint_fast8_t pl = 32;
+    optimize_len(p, pl);
     if (remain) {
       memcpy(remain, p, pl);
       *remain_len = pl;
@@ -413,11 +358,11 @@ int big_divmod(uint8_t* n, uint8_t ln, uint8_t* d, uint8_t ld, uint8_t* q, int* 
   return 0;
 }
 
-int big_div(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t* res) {
-  int l;
+int big_div(uint8_t* a, uint_fast8_t la, uint8_t* b, uint_fast8_t lb, uint_fast8_t sig, uint8_t* res) {
+  uint_fast8_t l;
 
-  optimze_length(&a, &la);
-  optimze_length(&b, &lb);
+  optimize_len(a, la);
+  optimize_len(b, lb);
 
   while (la > 1 && lb > 1 && a[la - 1] == 0 && b[lb - 1] == 0) {
     la--;
@@ -444,16 +389,16 @@ int big_div(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
     return l;
   }
 
-  big_divmod(a, la, b, lb, res, &l, NULL, 0);
+  TRY(big_divmod(a, la, b, lb, res, &l, NULL, 0));
   return l;
 }
 
-int big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t* res) {
-  int     l, l2;
-  uint8_t tmp[65];
+int big_mod(uint8_t* a, uint_fast8_t la, uint8_t* b, uint_fast8_t lb, uint_fast8_t sig, uint8_t* res) {
+  uint_fast8_t l, l2;
+  uint8_t      tmp[65];
 
-  optimze_length(&a, &la);
-  optimze_length(&b, &lb);
+  optimize_len(a, la);
+  optimize_len(b, lb);
 
   if (lb > la && !sig) {
     // special case that the number is smaller than the modulo
@@ -470,7 +415,7 @@ int big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
     l = 1;
     // check if the mod is a power 2 value
     if ((*b & (*b - 1)) == 0) {
-      for (int i = 1; i < lb; i++) {
+      for (uint_fast8_t i = 1; i < lb; i++) {
         if (b[i] != 0) {
           // we can not do the shortcut, because it is not a power of 2 - number
           l = 0;
@@ -485,16 +430,11 @@ int big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
       }
     }
   } else {
-    uint8_t _a[32], _b[32], sa, sb;
+    uint8_t      _a[32], _b[32];
+    uint_fast8_t sa, sb;
     sa = big_signed(a, la, _a);
     sb = big_signed(b, lb, _b);
     big_divmod(sa ? _a : a, la, sb ? _b : b, lb, tmp, &l2, res, &l);
-
-    /*    if (sa) {
-      l = big_sub(sb ? _b : b, lb, res, l, _a);
-      memcpy(res, _a, l);
-    }
-    */
 
     if (sa) {
       memcpy(_a + 32 - l, res, l);
@@ -505,6 +445,6 @@ int big_mod(uint8_t* a, uint8_t la, uint8_t* b, uint8_t lb, uint8_t sig, uint8_t
     return l;
   }
 
-  int rres = big_divmod(a, la, b, lb, tmp, &l2, res, &l);
-  return rres < 0 ? rres : l;
+  TRY(big_divmod(a, la, b, lb, tmp, &l2, res, &l));
+  return l;
 }
