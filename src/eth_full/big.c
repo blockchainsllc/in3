@@ -13,7 +13,7 @@ uint8_t big_is_zero(uint8_t* data, uint_fast8_t l) {
 // +1 if a > b
 // 0  if a==b
 // -1 if a < b
-int big_cmp(uint8_t* a, uint_fast8_t len_a, uint8_t* b, uint_fast8_t len_b) {
+int big_cmp(const uint8_t* a, const uint_fast8_t len_a, const uint8_t* b, const uint_fast8_t len_b) {
   uint_fast8_t i;
   if (len_a == len_b) return memcmp(a, b, len_a);
   if (len_a > len_b) {

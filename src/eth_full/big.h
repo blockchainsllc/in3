@@ -10,7 +10,7 @@
 uint8_t big_is_zero(uint8_t* data, uint_fast8_t l);
 void    big_shift_left(uint8_t* a, uint_fast8_t len, int bits);
 void    big_shift_right(uint8_t* a, uint_fast8_t len, int bits);
-int     big_cmp(uint8_t* a, uint_fast8_t len_a, uint8_t* b, uint_fast8_t len_b);
+int     big_cmp(const uint8_t* a, const uint_fast8_t len_a, const uint8_t* b, const uint_fast8_t len_b);
 int     big_signed(uint8_t* val, uint_fast8_t len, uint8_t* dst);
 int32_t big_int(uint8_t* val, uint_fast8_t len);
 int     big_add(uint8_t* a, uint_fast8_t len_a, uint8_t* b, uint_fast8_t len_b, uint8_t* out, uint_fast8_t max);
