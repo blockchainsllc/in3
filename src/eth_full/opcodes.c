@@ -354,7 +354,7 @@ static int op_account(evm_t* evm, uint8_t key) {
         l    = 32;
       }
       if (data) {
-        while (data[0] == 0) {
+        while (data[0] == 0 && l > 1) {
           l--;
           data++;
         }
@@ -498,7 +498,7 @@ static int op_sstore(evm_t* evm) {
   if (evm->properties & EVM_PROP_CONSTANTINOPL) {
     uint8_t* original   = NULL;
     uint8_t  changed    = big_cmp(value, l_val, s->value, 32);
-    int      l_original = evm->env(evm, EVM_ENV_STORAGE, key, l_key, &original, 0, 0);
+    int      l_original = evm->env(evm, EVM_ENV_STORAGE, key, l_key, &original, 0, 0); // wo we need this call, or simply use s?
     if (l_original < 0) l_original = 0;
 
     if (!changed) {

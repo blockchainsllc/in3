@@ -338,7 +338,32 @@ static void uint256_setb(uint8_t* dst, uint8_t* data, int len) {
   memcpy(dst + 32 - len, data, len);
 }
 
-int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name) {
+static void read_accounts(evm_t* evm, d_token_t* accounts) {
+  int        i, j;
+  d_token_t *t, *storage, *s;
+  for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
+    char*   adr_str = d_get_keystr(t->key);
+    uint8_t address[20];
+    hex2byte_arr(adr_str + 2, strlen(adr_str) - 2, address, 20);
+    evm_get_account(evm, address, true);
+    storage = d_get(t, key("storage"));
+    if (storage) {
+      for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
+        char*   k = d_get_keystr(s->key);
+        uint8_t kk[32];
+        hex2byte_arr(k + 2, strlen(k) - 2, kk, 32);
+        evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true);
+      }
+    }
+  }
+}
+
+static d_token_t* get_test_val(d_token_t* root, char* name, int test_index) {
+  d_token_t* array = d_get(root, key(name));
+  if (!array) return NULL;
+  return d_get_at(array, min(d_len(array) - 1, test_index));
+}
+int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int test_index) {
   uint8_t caller[32];
 
   d_token_t* exec        = d_get(test, key("exec"));
@@ -395,8 +420,8 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name) {
 
   } else if (transaction) {
     evm.gas_price  = d_to_bytes(d_get(transaction, key("gasPrice")));
-    evm.call_data  = d_to_bytes(d_get_at(d_get(transaction, key("data")), 0));
-    evm.call_value = d_to_bytes(d_get_at(d_get(transaction, key("value")), 0));
+    evm.call_data  = d_to_bytes(get_test_val(transaction, "data", test_index));
+    evm.call_value = d_to_bytes(get_test_val(transaction, "value", test_index));
 
     uint8_t *pk           = d_get_bytes(transaction, "secretKey")->data, public_key[65], sdata[32];
     bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
@@ -422,9 +447,12 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name) {
 
 #ifdef EVM_GAS
     evm.accounts = NULL;
-    evm.gas      = d_get_long_at(d_get(transaction, key("gasLimit")), 0);
+    evm.gas      = d_long(get_test_val(transaction, "gasLimit", test_index));
     evm.root     = &evm;
     evm.logs     = NULL;
+
+    // prepare all accounts
+    read_accounts(&evm, d_get(test, key("pre")));
 
     // increase the nonce and pay for gas
     account_t* c_adr = evm_get_account(&evm, evm.caller, true);
@@ -466,37 +494,65 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name) {
 
   uint64_t start = clock(), gas_before = evm.gas;
   int      fail = evm_run(&evm);
-  total_gas += gas_before - evm.gas;
-  *ms = (clock() - start) / 1000;
+  *ms           = (clock() - start) / 1000;
 
   if (transaction) {
 #ifdef EVM_GAS
+    total_gas += gas_before - evm.gas;
+    if (fail) {
+      // it failed, so the transaction used up all the gas and we reverse all accounts
+      total_gas = d_long(get_test_val(transaction, "gasLimit", test_index));
+      evm.gas   = 0;
+      fail      = 0;
+      uint8_t    gas_tmp[32], gas_tmp2[32];
+      account_t* ac;
+      storage_t* s;
+      // reset all accounts except the sender
+      while (evm.accounts) {
+        ac = evm.accounts;
+        //    if (ac->code.data) _free(ac->code.data);
+        s = NULL;
+        while (ac->storage) {
+          s           = ac->storage;
+          ac->storage = s->next;
+          _free(s);
+        }
+        evm.accounts = ac->next;
+        _free(ac);
+      }
+
+      // read the accounts from pre-state
+      read_accounts(&evm, d_get(test, key("pre")));
+
+      // reduce the gasLimit*price from caller the
+      account_t* sender = evm_get_account(&evm, evm.caller, true);
+      long_to_bytes(total_gas, gas_tmp);
+      int l = big_mul(evm.gas_price.data, evm.gas_price.len, gas_tmp, 8, gas_tmp2, 32);
+      uint256_setb(sender->balance, gas_tmp, big_sub(sender->balance, 32, gas_tmp2, l, gas_tmp));
+
+      // incremente the nonce
+      uint256_setn(sender->nonce, bytes_to_long(sender->nonce, 32) + 1);
+    }
 
     uint8_t tmp[32], tmp2[32], eth3[8];
     int     l;
+
+    // if there is gas left we return it to the sender
     if (evm.gas > 0) {
       account_t* c_adr = evm_get_account(&evm, evm.caller, true);
-
       long_to_bytes(evm.gas, tmp);
       l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, tmp2, 32);
       l = big_add(tmp2, l, c_adr->balance, 32, tmp, 32);
       uint256_setb(c_adr->balance, tmp, l);
     }
 
-    // pay the miner
+    // pay the miner the total gas
     account_t* miner = evm_get_account(&evm, d_get_bytes(d_get(test, key("env")), "currentCoinbase")->data, 1);
 
-    // gas reward
+    // increase balance of the miner
     long_to_bytes(total_gas, tmp);
     l = big_mul(evm.gas_price.data, evm.gas_price.len, tmp, 8, tmp2, 32);
-
-    // + add block reward
-    //    memcpy(eth3, "\x29\xa2\x24\x1a\xf6\x2c\x00\x00", 8);
-    //    l = big_add(tmp2, l, eth3, 8, tmp, 32);
-
-    // increase balance
-    l = big_add(tmp2, l, miner->balance, 32, tmp, 32);
-    uint256_setb(miner->balance, tmp, l);
+    uint256_setb(miner->balance, tmp, big_add(tmp2, l, miner->balance, 32, tmp, 32));
 
 #endif
   }
@@ -509,11 +565,12 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name) {
     if (transaction) {
       uint8_t state_root[32];
       generate_state_root(&evm, state_root);
-      d_token_t* pp       = d_get_at(d_get(post, key(fork_name)), 0);
+      d_token_t* pp       = d_get_at(d_get(post, key(fork_name)), test_index);
       bytes_t    expected = d_to_bytes(d_get(pp, K_HASH));
-      if (expected.len != 32 || memcmp(state_root, expected.data, 32)) {
+      if (pp && (expected.len != 32 || memcmp(state_root, expected.data, 32))) {
         print_error("wrong state root : ");
         ba_print(state_root, 32);
+        ba_print(expected.data, 32);
         fail = 1;
       }
     } else if (must_out.len && !b_cmp(&must_out, &evm.return_data)) {
@@ -582,12 +639,16 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name) {
 
 int test_evm(d_token_t* test, uint32_t props, uint64_t* ms) {
   if (d_get(test, key("transaction"))) {
-    int res = 0;
-    res     = run_evm(test, props, ms, "Byzantium");
-    if (res == 0)
-      res = run_evm(test, props | EVM_PROP_CONSTANTINOPL, ms, "Constantinople");
+    char*      chain   = (props & EVM_PROP_CONSTANTINOPL) ? "Constantinople" : "Byzantium";
+    d_token_t* results = d_get(d_get(test, key("post")), key(chain));
+    if (!results) return 0;
+    int res = 0, test_index;
+    for (test_index = 0; res == 0 && test_index < d_len(results); test_index++)
+      res = run_evm(test, props, ms, chain, test_index);
+    //    if (res == 0)
+    //      res = run_evm(test, props | EVM_PROP_CONSTANTINOPL, ms, "Constantinople");
 
     return res;
   } else
-    return run_evm(test, props, ms, NULL);
+    return run_evm(test, props, ms, NULL, 0);
 }

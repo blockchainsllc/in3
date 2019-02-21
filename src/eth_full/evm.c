@@ -182,7 +182,11 @@ int evm_stack_push_bn(evm_t* evm, bignum256* val) {
 void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   uint8_t op = evm->code.data[pos];
 #ifdef EVM_GAS
-  printf("\n%s%010llx %03i \x1B[33m%5llu\x1B[0m %02x : ", evm == evm->root ? "" : " .. ", last_gas, pos, last_gas - evm->gas, op);
+
+  if (last_gas > evm->gas)
+    printf("\n%s%010llx %03i \x1B[33m-%5llu\x1B[0m %02x : ", evm == evm->root ? "" : " .. ", evm->gas, pos, last_gas - evm->gas, op);
+  else
+    printf("\n%s%010llx %03i \x1B[33m+%5llu\x1B[0m %02x : ", evm == evm->root ? "" : " .. ", evm->gas, pos, evm->gas - last_gas, op);
 #else
   UNUSED_VAR(last_gas);
   printf("\n%03i       %02x : ", pos, op);

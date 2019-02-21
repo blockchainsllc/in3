@@ -133,35 +133,35 @@ int evm_run(evm_t* evm);
 #define EVM_CALL_MODE_DELEGATE 2
 
 int evm_sub_call(evm_t*   parent,
-                 uint8_t* address,
-                 uint8_t* account,
-                 uint8_t* value, int l_value,
-                 uint8_t* data, int l_data,
-                 uint8_t* caller,
-                 uint8_t* origin,
-                 uint64_t gas,
-                 uint8_t  mode,
-                 int out_offset, int out_len);
+                 uint8_t  address[20],
+                 uint8_t  account[20],
+                 uint8_t* value, uint_fast8_t l_value,
+                 uint8_t* data, uint32_t l_data,
+                 uint8_t      caller[20],
+                 uint8_t      origin[20],
+                 uint64_t     gas,
+                 uint_fast8_t mode,
+                 uint32_t out_offset, uint32_t out_len);
 
 int     evm_ensure_memory(evm_t* evm, uint32_t max_pos);
 int     in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
 int     evm_call(in3_vctx_t* vc,
-                 uint8_t*    address,
-                 uint8_t* value, int l_value,
-                 uint8_t* data, int l_data,
-                 uint8_t*  caller,
+                 uint8_t     address[20],
+                 uint8_t* value, uint_fast8_t l_value,
+                 uint8_t* data, uint32_t l_data,
+                 uint8_t   caller[20],
                  uint64_t  gas,
                  bytes_t** result);
 void    evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
 void    evm_free(evm_t* evm);
-int     evm_run_precompiled(evm_t* evm, uint8_t* address);
-uint8_t evm_is_precompiled(evm_t* evm, uint8_t* address);
+int     evm_run_precompiled(evm_t* evm, uint8_t address[20]);
+uint8_t evm_is_precompiled(evm_t* evm, uint8_t address[20]);
+void    uint256_set(uint8_t* src, uint_fast8_t src_len, uint8_t dst[32]);
 
 #ifdef EVM_GAS
-account_t* evm_get_account(evm_t* evm, uint8_t* adr, uint8_t create);
-storage_t* evm_get_storage(evm_t* evm, uint8_t* adr, uint8_t* key, int keylen, uint8_t create);
-void       uint256_set(uint8_t* src, int src_len, uint8_t* dst);
-int        transfer_value(evm_t* evm, uint8_t* from_account, uint8_t* to_account, uint8_t* value, int value_len, uint32_t base_gas);
+account_t* evm_get_account(evm_t* evm, uint8_t adr[20], uint_fast8_t create);
+storage_t* evm_get_storage(evm_t* evm, uint8_t adr[20], uint8_t* key, uint_fast8_t keylen, uint_fast8_t create);
+int        transfer_value(evm_t* evm, uint8_t from_account[20], uint8_t to_account[20], uint8_t* value, uint_fast8_t value_len, uint32_t base_gas);
 
 #endif
 #endif
