@@ -425,7 +425,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.accounts = NULL;
     evm.gas      = d_get_long(exec, "gas");
     evm.code     = d_to_bytes(d_get(exec, K_CODE));
-    evm.root     = &evm;
+    evm.parent   = NULL;
     evm.logs     = NULL;
 #endif
 
@@ -459,7 +459,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 #ifdef EVM_GAS
     evm.accounts = NULL;
     evm.gas      = d_long(get_test_val(transaction, "gasLimit", test_index));
-    evm.root     = &evm;
+    evm.parent   = NULL;
     evm.logs     = NULL;
 
     // prepare all accounts

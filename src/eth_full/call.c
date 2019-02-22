@@ -50,12 +50,27 @@ void evm_free(evm_t* evm) {
  */
 account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   if (!adr) return NULL;
-  account_t* ac = evm->root->accounts;
+  account_t* ac = evm->accounts;
 
   // check if we already have the account.
   while (ac) {
     if (memcmp(ac->address, adr, 20) == 0) return ac;
     ac = ac->next;
+  }
+
+  // if this is a internal call take it from the parent
+  if (evm->parent) {
+    ac = evm_get_account(evm->parent, adr, create);
+
+    if (ac) {
+      // clone and add account
+      account_t* a = _malloc(sizeof(account_t));
+      memcpy(a, ac, sizeof(account_t));
+      a->storage    = NULL;
+      a->next       = evm->accounts;
+      evm->accounts = a;
+      return a;
+    }
   }
 
   // get balance, nonce and code
@@ -80,9 +95,9 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
       evm->env(evm, EVM_ENV_CODE_COPY, adr, 20, &ac->code.data, 0, 0);
 
     // add to accounts
-    ac->storage         = NULL;
-    ac->next            = evm->root->accounts;
-    evm->root->accounts = ac;
+    ac->storage   = NULL;
+    ac->next      = evm->accounts;
+    evm->accounts = ac;
 
     // set balance & nonce
     uint256_set(balance, l_balance, ac->balance);
@@ -107,6 +122,19 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
     s = s->next;
   }
 
+  // not found?, but if we have parents, we try to copy the entry from there first
+  if (evm->parent) {
+    storage_t* parent_s = evm_get_storage(evm->parent, adr, s_key, s_key_len, create);
+    if (parent_s) {
+      // clone and add account
+      s = _malloc(sizeof(storage_t));
+      memcpy(s, parent_s, sizeof(storage_t));
+      s->next     = ac->storage;
+      ac->storage = s;
+      return s;
+    }
+  }
+
   // get storage value from env
   int l = evm->env(evm, EVM_ENV_STORAGE, s_key, s_key_len, &data, 0, 0);
 
@@ -124,6 +152,92 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
     uint256_set(data, l, s->value);
   }
   return s;
+}
+
+static void copy_state(evm_t* dst, evm_t* src) {
+
+  // first move all logs
+  if (src->logs) {
+    logs_t* last = src->logs;
+    while (last->next) last = last->next;
+
+    last->next = dst->logs;
+    dst->logs  = src->logs;
+  }
+
+  account_t *sa = src->accounts, *prv = NULL;
+  while (sa) {
+    // find the account in the dst-state
+    account_t *a = dst->accounts, *da = NULL;
+    while (a) {
+      if (memcmp(a->address, sa->address, 20) == 0) {
+        da = a;
+        break;
+      }
+      a = a->next;
+    }
+    if (!da) {
+      // the account does not exist yet, so we simply move it
+
+      // remove from src
+      if (prv == NULL)
+        src->accounts = sa->next;
+      else
+        prv->next = sa->next;
+
+      // add to dst
+      sa->next      = dst->accounts;
+      dst->accounts = sa;
+
+      // next item...
+      sa = prv == NULL ? src->accounts : prv->next;
+      continue;
+    } else {
+      // clone data
+      memcpy(da->balance, sa->balance, 32);
+      memcpy(da->nonce, sa->nonce, 32);
+      da->code = sa->code;
+
+      // clone storage
+      storage_t *ss = sa->storage, *ps = NULL, *ds, *s;
+      while (ss) {
+        // find the storage in the parent
+        ds = NULL;
+        s  = da->storage;
+        while (s) {
+          if (memcmp(s->key, ss->key, 32) == 0) {
+            ds = s;
+            break;
+          }
+          s = s->next;
+        }
+
+        if (ds)
+          memcpy(ds->value, ss->value, 32);
+        else {
+          // move the storage to the parent
+          // remove from src
+          if (ps == NULL)
+            sa->storage = ss->next;
+          else
+            ps->next = ss->next;
+
+          // add to dst
+          ss->next    = da->storage;
+          da->storage = ss;
+
+          // next item...
+          ss = ps == NULL ? sa->storage : ps->next;
+          continue;
+        }
+
+        ps = ss;
+        ss = ss->next;
+      }
+    }
+    prv = sa;
+    sa  = sa->next;
+  }
 }
 
 /**
@@ -221,7 +335,7 @@ int evm_prepare_evm(evm_t*      evm,
   evm->accounts = NULL;
   evm->gas      = 0;
   evm->logs     = NULL;
-  evm->root     = evm;
+  evm->parent   = NULL;
 #endif
 
   // get the code
@@ -276,7 +390,7 @@ int evm_sub_call(evm_t*    parent,
       parent->gas -= gas;
 
     // inherit root-evm
-    evm.root = parent->root;
+    evm.parent = parent;
 
     // reduce the gas based on the length of the data (which is not zero)
     for (uint32_t i = 0; i < evm.call_data.len; i++)
@@ -295,8 +409,14 @@ int evm_sub_call(evm_t*    parent,
   // execute the internal call
   if (res == 0) res = evm_run(&evm);
 
+#ifdef EVM_GAS
+  // if it was successfull we copy the new state to the parent
+  if (res == 0 && evm.state != EVM_STATE_REVERTED)
+    copy_state(parent, &evm);
+#endif
+
   // put the success in the stack
-  evm_stack_push_int(parent, res == 0 ? 1 : 0);
+  res = evm_stack_push_int(parent, res == 0 ? 1 : 0);
 
   // if we have returndata we write them into memory
   if (res == 0 && evm.return_data.data) {
@@ -341,7 +461,6 @@ int evm_call(in3_vctx_t* vc,
   optimize_len(ccaller, l);
 
 #ifdef EVM_GAS
-  evm.root = &evm;
   // we only transfer initial value if the we have caller
   if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value, 0);
 #else

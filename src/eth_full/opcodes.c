@@ -648,10 +648,10 @@ static int op_log(evm_t* evm, uint8_t len) {
   if ((uint32_t) memoffset + memlen > evm->memory.b.len) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
   logs_t* log = _malloc(sizeof(logs_t));
 
-  log->next       = evm->root->logs;
-  evm->root->logs = log;
-  log->data.data  = _malloc(memlen);
-  log->data.len   = memlen;
+  log->next      = evm->logs;
+  evm->logs      = log;
+  log->data.data = _malloc(memlen);
+  log->data.len  = memlen;
   memcpy(log->data.data, evm->memory.b.data + memoffset, memlen);
   log->topics.data = _malloc(len * 32);
   log->topics.len  = len * 32;

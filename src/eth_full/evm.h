@@ -109,7 +109,7 @@ typedef struct evm {
 #ifdef EVM_GAS
   uint64_t    gas;
   account_t*  accounts;
-  struct evm* root;
+  struct evm* parent;
   logs_t*     logs;
 
 #endif
