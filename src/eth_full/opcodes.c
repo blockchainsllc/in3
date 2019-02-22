@@ -593,9 +593,9 @@ static int op_jump(evm_t* evm, uint8_t cond) {
   return 0;
 }
 
-static int op_push(evm_t* evm, uint8_t len) {
+static int op_push(evm_t* evm, wlen_t len) {
   if (evm->code.len < (uint32_t) evm->pos + len) {
-    uint8_t tmp[32];
+    bytes32_t tmp;
     memset(tmp, 0, 32);
     memcpy(tmp, evm->code.data + evm->pos, evm->code.len - evm->pos);
     evm->pos += len;

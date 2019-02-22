@@ -49,6 +49,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
+                "-t",
+                "1",
                 "../test/testdata/requests/eth_call.json"
             ],
             "stopAtEntry": true,
@@ -64,9 +66,9 @@
             "program": "${workspaceFolder}/build/test/vmrunner",
             "args": [
                 "-t",
-                "5",
+                "1",
                 "-d",
-                "../test/testdata/TrieTests/trietest.json"
+                "../test/testdata/evm/GeneralStateTests/stArgsZeroOneBalance/callNonConst.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

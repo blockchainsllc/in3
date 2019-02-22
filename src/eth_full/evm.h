@@ -58,8 +58,8 @@ typedef enum evm_state {
 typedef int (*evm_get_env)(void* evm, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
 
 typedef struct account_storage {
-  uint8_t                 key[32];
-  uint8_t                 value[32];
+  bytes32_t               key;
+  bytes32_t               value;
   struct account_storage* next;
 } storage_t;
 typedef struct logs {
@@ -69,9 +69,9 @@ typedef struct logs {
 } logs_t;
 
 typedef struct account {
-  uint8_t         address[20];
-  uint8_t         balance[32];
-  uint8_t         nonce[32];
+  address_t       address;
+  bytes32_t       balance;
+  bytes32_t       nonce;
   bytes_t         code;
   storage_t*      storage;
   struct account* next;
