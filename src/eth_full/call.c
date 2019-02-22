@@ -48,7 +48,7 @@ void evm_free(evm_t* evm) {
 /**
  * reads a account from the enviroment.
  */
-account_t* evm_get_account(evm_t* evm, uint8_t adr[20], uint_fast8_t create) {
+account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   if (!adr) return NULL;
   account_t* ac = evm->root->accounts;
 
@@ -91,7 +91,7 @@ account_t* evm_get_account(evm_t* evm, uint8_t adr[20], uint_fast8_t create) {
   return ac;
 }
 
-storage_t* evm_get_storage(evm_t* evm, uint8_t adr[20], uint8_t* s_key, uint_fast8_t s_key_len, uint_fast8_t create) {
+storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_key_len, wlen_t create) {
   account_t* ac = evm_get_account(evm, adr, create);
   if (!ac) return NULL;
 
@@ -129,7 +129,7 @@ storage_t* evm_get_storage(evm_t* evm, uint8_t adr[20], uint8_t* s_key, uint_fas
 /**
  * sets a variable value to 32byte word.
  */
-void uint256_set(uint8_t* src, uint_fast8_t src_len, uint8_t dst[32]) {
+void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
   if (src_len < 32) memset(dst, 0, 32 - src_len);
   memcpy(dst + 32 - src_len, src, src_len);
 }
@@ -137,7 +137,7 @@ void uint256_set(uint8_t* src, uint_fast8_t src_len, uint8_t dst[32]) {
 /**
  * transfer a value to a account.
  */
-int transfer_value(evm_t* evm, uint8_t from_account[20], uint8_t to_account[20], uint8_t* value, uint_fast8_t value_len, uint32_t base_gas) {
+int transfer_value(evm_t* evm, address_t from_account, address_t to_account, uint8_t* value, wlen_t value_len, uint32_t base_gas) {
   if (big_is_zero(value, value_len)) return 0;
   account_t* ac_from = evm_get_account(evm, from_account, true);
   account_t* ac_to   = evm_get_account(evm, to_account, false);
@@ -171,10 +171,10 @@ int transfer_value(evm_t* evm, uint8_t from_account[20], uint8_t to_account[20],
  * sets the default for the evm.
  */
 int evm_prepare_evm(evm_t*      evm,
-                    uint8_t     address[20],
-                    uint8_t     account[20],
-                    uint8_t     origin[20],
-                    uint8_t     caller[20],
+                    address_t   address,
+                    address_t   account,
+                    address_t   origin,
+                    address_t   caller,
                     evm_get_env env,
                     void*       env_ptr) {
   evm->stack.b.data = _malloc(64);
@@ -239,15 +239,15 @@ int evm_prepare_evm(evm_t*      evm,
 /**
  * handle internal calls.
  */
-int evm_sub_call(evm_t*   parent,
-                 uint8_t  address[20],
-                 uint8_t  code_address[20],
-                 uint8_t* value, uint_fast8_t l_value,
+int evm_sub_call(evm_t*    parent,
+                 address_t address,
+                 address_t code_address,
+                 uint8_t* value, wlen_t l_value,
                  uint8_t* data, uint32_t l_data,
-                 uint8_t      caller[20],
-                 uint8_t      origin[20],
-                 uint64_t     gas,
-                 uint_fast8_t mode,
+                 address_t caller,
+                 address_t origin,
+                 uint64_t  gas,
+                 wlen_t    mode,
                  uint32_t out_offset, uint32_t out_len
 
 ) {
@@ -325,10 +325,10 @@ int evm_sub_call(evm_t*   parent,
  * run a evm-call
  */
 int evm_call(in3_vctx_t* vc,
-             uint8_t     address[20],
-             uint8_t* value, uint_fast8_t l_value,
+             address_t   address,
+             uint8_t* value, wlen_t l_value,
              uint8_t* data, uint32_t l_data,
-             uint8_t   caller[20],
+             address_t caller,
              uint64_t  gas,
              bytes_t** result) {
 

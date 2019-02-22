@@ -4,7 +4,7 @@
 #include <crypto/ripemd160.h>
 #include <crypto/secp256k1.h>
 
-uint8_t evm_is_precompiled(evm_t* evm, uint8_t address[20]) {
+uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   UNUSED_VAR(evm);
   int l = 20;
   optimize_len(address, l);
@@ -55,7 +55,7 @@ int pre_identity(evm_t* evm) {
   return 0;
 }
 
-int evm_run_precompiled(evm_t* evm, uint8_t address[20]) {
+int evm_run_precompiled(evm_t* evm, address_t address) {
   switch (address[19]) {
     case 1:
       return pre_ecrecover(evm);

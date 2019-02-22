@@ -9,6 +9,10 @@
 #ifndef BYTES_H
 #define BYTES_H
 
+typedef uint8_t      address_t[20]; /**< pointer to a 20byte address */
+typedef uint8_t      bytes32_t[32]; /**< pointer to a 32byte word */
+typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byte but usually a uint) */
+
 /** a byte array */
 typedef struct {
   uint32_t len;  /**< the length of the array ion bytes */
@@ -24,10 +28,10 @@ typedef struct {
 /** allocates a new byte array with 0 filled */
 bytes_t* b_new(char* data, int len);
 
-/** prints a the bytes as hey to stdout */
+/** prints a the bytes as hex to stdout */
 void b_print(bytes_t* a);
 
-/** prints a the bytes as hey to stdout */
+/** prints a the bytes as hex to stdout */
 void ba_print(uint8_t* a, size_t l);
 
 /** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/

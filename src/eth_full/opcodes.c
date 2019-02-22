@@ -392,8 +392,9 @@ static int op_datacopy(evm_t* evm, bytes_t* src) {
 }
 
 static int op_extcodecopy(evm_t* evm) {
-  uint8_t address[20], *data;
-  int     l = evm_stack_pop(evm, address, 20), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
+  address_t address;
+  uint8_t*  data;
+  int       l = evm_stack_pop(evm, address, 20), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
   if (l < 0 || mem_pos < 0 || data_len < 0 || code_pos < 0) return EVM_ERROR_EMPTY_STACK;
   subgas(((data_len + 31) / 32) * G_COPY);
 
