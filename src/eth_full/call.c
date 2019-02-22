@@ -232,7 +232,8 @@ int evm_prepare_evm(evm_t*      evm,
   evm->code.len = bytes_to_int(tmp, l);
 
   // copy the code or return error
-  return env(evm, EVM_ENV_CODE_COPY, account, 20, &evm->code.data, 0, 0);
+  l = env(evm, EVM_ENV_CODE_COPY, account, 20, &evm->code.data, 0, 0);
+  return l < 0 ? l : 0;
 }
 
 /**

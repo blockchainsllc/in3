@@ -101,6 +101,17 @@ int runner_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len
       }
       *out_data = &__zero;
       return 1;
+    case EVM_ENV_NONCE:
+      t = vm_get_account(test, in_data);
+      if (t) {
+        res = d_to_bytes(d_get(t, K_NONCE));
+        if (res.data != NULL) {
+          *out_data = res.data;
+          return res.len;
+        }
+      }
+      *out_data = &__zero;
+      return 1;
 
     case EVM_ENV_CODE_HASH:
       t = vm_get_account(test, in_data);

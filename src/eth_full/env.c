@@ -41,10 +41,18 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
       return res->len;
 
     case EVM_ENV_BALANCE:
-      if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), in_data)) || !(res = d_get_bytesk(t, K_BALANCE)))
+      if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), in_data)) || !(t = d_get(t, K_BALANCE)))
         return EVM_ERROR_INVALID_ENV;
-      *out_data = res->data;
-      return res->len;
+      bytes_t b1 = d_to_bytes(t);
+      *out_data  = b1.data;
+      return b1.len;
+
+    case EVM_ENV_NONCE:
+      if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), in_data)) || !(t = d_get(t, K_NONCE)))
+        return EVM_ERROR_INVALID_ENV;
+      bytes_t b2 = d_to_bytes(t);
+      *out_data  = b2.data;
+      return b2.len;
 
     case EVM_ENV_STORAGE:
       if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), evm->address)) || !(t = d_get(t, K_STORAGE_PROOF)))
