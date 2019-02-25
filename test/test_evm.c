@@ -220,17 +220,21 @@ bytes_t* to_uint256(bytes_t* b, uint8_t* val) {
 
 void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
 
-  trie_t* trie = trie_new();
-  bytes_t tmp, k;
+  trie_t*          trie = trie_new();
+  bytes_t          tmp, k;
+  bytes_builder_t* bb = bb_new();
   while (s) {
     to_uint256(&tmp, s->value);
 
     if (tmp.len) {
+      //      bytes_t value = b_as_bytes(s->value, 32);
+      bb_clear(bb);
+      rlp_encode_item(bb, &tmp);
       k.len  = 32;
       k.data = s->key;
       sha3_to(&k, dst);
       k.data = dst;
-      trie_set_value(trie, &k, &tmp);
+      trie_set_value(trie, &k, &bb->b);
       if (evm->properties & EVM_PROP_DEBUG) {
         to_uint256(&k, s->key);
         printf("    - ");
@@ -244,7 +248,7 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
         else
           printf("0x00");
 
-        printf("\n");
+        printf("(l:%i) \n", tmp.len);
       }
     }
 
@@ -252,6 +256,7 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
   }
   memcpy(dst, trie->root, 32);
   trie_free(trie);
+  bb_free(bb);
 }
 
 bytes_t* serialize_ac(evm_t* evm, account_t* ac) {
@@ -277,6 +282,13 @@ bytes_t* serialize_ac(evm_t* evm, account_t* ac) {
   }
 
   generate_storage_hash(evm, ac->storage, hash);
+
+  if (evm->properties & EVM_PROP_DEBUG) {
+    printf("\n  storageHash : \n");
+    ba_print(hash, 32);
+    printf("\n");
+  }
+
   tmp.data = hash;
   tmp.len  = 32;
   rlp_encode_item(rlp, &tmp);
@@ -369,10 +381,10 @@ static void read_accounts(evm_t* evm, d_token_t* accounts) {
   }
 }
 
-static d_token_t* get_test_val(d_token_t* root, char* name, int test_index) {
+static d_token_t* get_test_val(d_token_t* root, char* name, d_token_t* indexes) {
   d_token_t* array = d_get(root, key(name));
   if (!array) return NULL;
-  return d_get_at(array, min(d_len(array) - 1, test_index));
+  return d_get_at(array, d_get_int(indexes, strcmp(name, "gasLimit") == 0 ? "gas" : name));
 }
 int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int test_index) {
   uint8_t caller[32];
@@ -380,6 +392,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
   d_token_t* exec        = d_get(test, key("exec"));
   d_token_t* transaction = d_get(test, key("transaction"));
   d_token_t* post        = d_get(test, key("post"));
+  d_token_t* indexes     = NULL;
   uint64_t   total_gas;
 
   // create vm
@@ -430,9 +443,10 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 #endif
 
   } else if (transaction) {
+    indexes        = d_get(d_get_at(d_get(post, key(fork_name)), test_index), key("indexes"));
     evm.gas_price  = d_to_bytes(d_get(transaction, key("gasPrice")));
-    evm.call_data  = d_to_bytes(get_test_val(transaction, "data", test_index));
-    evm.call_value = d_to_bytes(get_test_val(transaction, "value", test_index));
+    evm.call_data  = d_to_bytes(get_test_val(transaction, "data", indexes));
+    evm.call_value = d_to_bytes(get_test_val(transaction, "value", indexes));
 
     uint8_t *pk           = d_get_bytes(transaction, "secretKey")->data, public_key[65], sdata[32];
     bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
@@ -458,7 +472,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 
 #ifdef EVM_GAS
     evm.accounts = NULL;
-    evm.gas      = d_long(get_test_val(transaction, "gasLimit", test_index));
+    evm.gas      = d_long(get_test_val(transaction, "gasLimit", indexes));
     evm.parent   = NULL;
     evm.logs     = NULL;
 
@@ -512,7 +526,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     total_gas += gas_before - evm.gas;
     if (fail) {
       // it failed, so the transaction used up all the gas and we reverse all accounts
-      total_gas = d_long(get_test_val(transaction, "gasLimit", test_index));
+      total_gas = d_long(get_test_val(transaction, "gasLimit", indexes));
       evm.gas   = 0;
       fail      = 0;
       uint8_t    gas_tmp[32], gas_tmp2[32];

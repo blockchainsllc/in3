@@ -251,17 +251,24 @@ void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
 /**
  * transfer a value to a account.
  */
-int transfer_value(evm_t* evm, address_t from_account, address_t to_account, uint8_t* value, wlen_t value_len, uint32_t base_gas) {
+int transfer_value(evm_t* current, address_t from_account, address_t to_account, uint8_t* value, wlen_t value_len, uint32_t base_gas) {
   if (big_is_zero(value, value_len)) return 0;
-  account_t* ac_from = evm_get_account(evm, from_account, true);
-  account_t* ac_to   = evm_get_account(evm, to_account, false);
+
+  // since the value is not zero we add the free gas for a call.
+  current->gas += G_CALLSTIPEND;
+
+  // while the gas is handled by the parent, the new state is handled in the current evm, so we can roll it back.
+  evm_t* evm = current->parent ? current->parent : current;
+
+  account_t* ac_from = evm_get_account(current, from_account, true);
+  account_t* ac_to   = evm_get_account(current, to_account, false);
   uint8_t    tmp[32];
 
 #ifdef EVM_GAS
   if (!ac_to) {
-    // to account does exisz, so we create it and manage gas for new account
+    // to account does exist, so we create it and manage gas for new account
     subgas(G_NEWACCOUNT);
-    ac_to = evm_get_account(evm, to_account, true);
+    ac_to = evm_get_account(current, to_account, true);
   }
   subgas(base_gas);
 #endif
@@ -367,7 +374,7 @@ int evm_sub_call(evm_t*    parent,
 ) {
   // create a new evm
   evm_t evm;
-  int   res          = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr);
+  int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr), success = 0;
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
   evm.properties     = parent->properties;
@@ -378,7 +385,9 @@ int evm_sub_call(evm_t*    parent,
 #ifdef EVM_GAS
 
   // give the call the amount of gas
-  evm.gas = gas;
+  // inherit root-evm
+  evm.gas    = gas;
+  evm.parent = parent;
 
   // and try to transfer the value
   if (res == 0) res = transfer_value(&evm, parent->account, address, value, l_value, G_CALLVALUE);
@@ -389,12 +398,9 @@ int evm_sub_call(evm_t*    parent,
     else
       parent->gas -= gas;
 
-    // inherit root-evm
-    evm.parent = parent;
-
-    // reduce the gas based on the length of the data (which is not zero)
-    for (uint32_t i = 0; i < evm.call_data.len; i++)
-      evm.gas -= evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
+    //    // reduce the gas based on the length of the data (which is not zero)
+    //    for (uint32_t i = 0; i < evm.call_data.len; i++)
+    //      parent->gas -= evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
   }
 
 #else
@@ -407,19 +413,19 @@ int evm_sub_call(evm_t*    parent,
   if (mode == EVM_CALL_MODE_STATIC && l_value > 1) res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
 
   // execute the internal call
-  if (res == 0) res = evm_run(&evm);
+  if (res == 0) success = evm_run(&evm);
 
 #ifdef EVM_GAS
   // if it was successfull we copy the new state to the parent
-  if (res == 0 && evm.state != EVM_STATE_REVERTED)
+  if (success == 0 && evm.state != EVM_STATE_REVERTED)
     copy_state(parent, &evm);
 #endif
 
   // put the success in the stack
-  res = evm_stack_push_int(parent, res == 0 ? 1 : 0);
+  res = evm_stack_push_int(parent, success == 0 ? 1 : 0);
 
   // if we have returndata we write them into memory
-  if (res == 0 && evm.return_data.data) {
+  if (success == 0 && evm.return_data.data) {
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
     if (res == 0) {
       if (parent->last_returned.data) _free(parent->last_returned.data);
@@ -431,14 +437,14 @@ int evm_sub_call(evm_t*    parent,
 
 #ifdef EVM_GAS
   // if we have gas left and it was successfull we returen it to the parent process.
-  if (res == 0) parent->gas += evm.gas;
+  if (success == 0) parent->gas += evm.gas;
 #endif
 
   // clean up
   evm_free(&evm);
 
   // we always return 0 since a failure simply means we write a 0 on the stack.
-  return 0;
+  return res;
 }
 
 /**

@@ -48,7 +48,7 @@
 #define G_CALL 700          //  This is paid for a CALL operation.
 #define G_CALLVALUE 9000    // This is paid for a non-zero value transfer as part of the CALL operation.
 #define G_CALLSTIPEND 2300  // This is a stipend for the called contract subtracted from Gcallvalue for a non-zero value transfer.
-#define G_NEWACCOUNT 0      // This is paid for a CALL or for a SELFDESTRUCT operation which creates an account.
+#define G_NEWACCOUNT 25000  // This is paid for a CALL or for a SELFDESTRUCT operation which creates an account.
 #define G_EXP 10            // This is a partial payment for an EXP operation.
 #define G_EXPBYTE 50        // This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.
 #define G_MEMORY 3          // This is paid for every additional word when expanding memory.

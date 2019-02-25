@@ -443,13 +443,13 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
 
       if (rlp_decode(&n->items, 1, &tmp) == 2) {
         printf(" ==> (EMBED) ");
-        sprintf(_prefix, "");
+        _prefix[0]     = 0;
         trie_node_t* t = get_node_target(trie, n, 1);
         dump_handle(trie, t, with_hash, level + 1, _prefix);
         _free(t);
       } else {
         printf(" ==> ");
-        sprintf(_prefix, "");
+        _prefix[0] = 0;
         dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);
       }
       break;
