@@ -452,8 +452,10 @@ int evm_sub_call(evm_t*    parent,
   // if we have returndata we write them into memory
   if (success == 0 && evm.return_data.data) {
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
+#ifdef EVM_GAS
     if (new_account)
       new_account->code = evm.return_data;
+#endif
 
     if (res == 0) {
       if (parent->last_returned.data) _free(parent->last_returned.data);
