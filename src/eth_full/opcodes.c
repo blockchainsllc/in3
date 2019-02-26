@@ -645,14 +645,17 @@ static int op_log(evm_t* evm, uint8_t len) {
   int memlen = evm_stack_pop_int(evm);
   if (memlen < 0) return memlen;
   subgas(len * G_LOGTOPIC + memlen * G_LOGDATA);
-  if ((uint32_t) memoffset + memlen > evm->memory.b.len) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+
+  TRY(mem_check(evm, memoffset + memlen, true));
+
   logs_t* log = _malloc(sizeof(logs_t));
 
   log->next      = evm->logs;
   evm->logs      = log;
   log->data.data = _malloc(memlen);
   log->data.len  = memlen;
-  memcpy(log->data.data, evm->memory.b.data + memoffset, memlen);
+
+  evm_mem_readi(evm, memoffset, log->data.data, memlen);
   log->topics.data = _malloc(len * 32);
   log->topics.len  = len * 32;
 
@@ -700,7 +703,10 @@ int op_selfdestruct(evm_t* evm) {
   p = self_account->balance;
   optimize_len(p, l);
   if (l && (l > 1 || *p != 0)) {
-    if (evm_get_account(evm, adr, 0) == NULL) subgas(G_NEWACCOUNT);
+    if (evm_get_account(evm, adr, 0) == NULL) {
+      subgas(G_NEWACCOUNT);
+      evm_get_account(evm, adr, 1);
+    }
     if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
   }
   memset(self_account->balance, 0, 32);
@@ -724,6 +730,7 @@ int op_selfdestruct(evm_t* evm) {
 #define CALL_STATIC 3
 
 int op_create(evm_t* evm, uint_fast8_t use_salt) {
+#ifdef EVM_GAS
   bytes_t   in_data, tmp;
   uint8_t*  value;
   int32_t   l_value = 0, in_offset, in_len;
@@ -771,6 +778,9 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
 
   // now execute the call
   return evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
+#else
+  return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+#endif
 }
 
 int op_call(evm_t* evm, uint8_t mode) {

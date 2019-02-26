@@ -418,7 +418,7 @@ int evm_sub_call(evm_t*    parent,
   evm.gas = gas;
 
   // and try to transfer the value
-  if (res == 0) res = transfer_value(&evm, parent->address, evm.address, value, l_value, address ? G_CALLVALUE : 0);
+  if (res == 0) res = transfer_value(&evm, parent->address, evm.address, value, l_value, address && mode != EVM_CALL_MODE_DELEGATE ? G_CALLVALUE : 0);
   if (res == 0) {
     // if we don't even have enough gas
     if (parent->gas < gas)
