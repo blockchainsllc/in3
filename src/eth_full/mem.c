@@ -82,7 +82,7 @@ int evm_mem_read_ref(evm_t* evm, uint32_t off, uint32_t len, bytes_t* src) {
   if (mem_check(evm, off + len, 1) < 0) return EVM_ERROR_OUT_OF_GAS;
   if (off < evm->memory.bsize) {
     src->data = evm->memory.b.data + off;
-    src->len  = evm->memory.bsize - off;
+    src->len  = min(len, evm->memory.bsize - off);
   }
   return 0;
 }

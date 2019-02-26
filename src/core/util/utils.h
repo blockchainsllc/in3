@@ -80,13 +80,18 @@ int min_bytes_len(uint64_t val);
 
 #define TRY(exp)           \
   {                        \
-    int _r = exp;          \
+    int _r = (exp);        \
     if (_r < 0) return _r; \
+  }
+#define TRY_SET(var, exp)    \
+  {                          \
+    var = (exp);             \
+    if (var < 0) return var; \
   }
 
 #define TRY_GOTO(exp)        \
   {                          \
-    res = exp;               \
+    res = (exp);             \
     if (res < 0) goto clean; \
   }
 

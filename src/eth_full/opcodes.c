@@ -723,6 +723,56 @@ int op_selfdestruct(evm_t* evm) {
 #define CALL_DELEGATE 2
 #define CALL_STATIC 3
 
+int op_create(evm_t* evm, uint_fast8_t use_salt) {
+  bytes_t   in_data, tmp;
+  uint8_t*  value;
+  int32_t   l_value = 0, in_offset, in_len;
+  bytes32_t hash;
+  // read data from stack
+  TRY_SET(l_value, evm_stack_pop_ref(evm, &value));
+  TRY_SET(in_offset, evm_stack_pop_int(evm));
+  TRY_SET(in_len, evm_stack_pop_int(evm));
+
+  // check gas for extending memory
+  TRY(mem_check(evm, in_offset + in_len, true));
+
+  // read the data from memory
+  TRY(evm_mem_read_ref(evm, in_offset, in_len, &in_data));
+
+  if (use_salt == 0) {
+    //  calculate the generated address
+    uint8_t*         nonce = evm_get_account(evm, evm->address, true)->nonce;
+    bytes_builder_t* bb    = bb_new();
+    tmp                    = b_as_bytes(evm->address, 20);
+    rlp_encode_item(bb, &tmp);
+    if (big_is_zero(nonce, 32))
+      tmp.len = 0;
+    else {
+      tmp.len  = 32;
+      tmp.data = nonce;
+      optimize_len(tmp.data, tmp.len);
+    }
+    rlp_encode_item(bb, &tmp);
+    rlp_encode_to_list(bb);
+    sha3_to(&bb->b, hash);
+    bb_free(bb);
+  } else {
+    // CREATE2 is only allowed after CONSTANTINOPL
+    if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0) return EVM_ERROR_INVALID_OPCODE;
+    uint8_t buffer[85]; // 1 +20 +32+32
+    tmp.data  = buffer;
+    tmp.len   = 85;
+    buffer[0] = 0xFF;
+    memcpy(buffer + 1, evm->address, 20);
+    TRY(evm_stack_pop(evm, buffer + 21, 32));
+    sha3_to(&in_data, buffer + 21 + 32);
+    sha3_to(&tmp, hash);
+  }
+
+  // now execute the call
+  return evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
+}
+
 int op_call(evm_t* evm, uint8_t mode) {
   // 0         1          2      3         4         5          6
   // gasLimit, toAddress, value, inOffset, inLength, outOffset, outLength
@@ -739,19 +789,8 @@ int op_call(evm_t* evm, uint8_t mode) {
 
   if (mem_check(evm, out_offset + out_len, true) < 0 || mem_check(evm, in_offset + in_len, true) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
-  if ((uint32_t) in_offset + in_len > evm->memory.bsize) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
-
-#ifdef EVM_GAS
-  if (evm->gas < gas) return EVM_ERROR_OUT_OF_GAS;
-/*
-  printf("gas     : %" PRId64 "\n", gas);
-  printf("address : ");
-  ba_print(address, 20);
-  printf("\nvalue   : %" PRId64 "\n", bytes_to_long(value, l_value));
-  printf("\nin  (offset=%i, len=%i)\n", in_offset, in_len);
-  printf("out (offset=%i, len=%i)\n", out_offset, out_len);
-*/
-#endif
+  //TODO  do we need this check?
+  //  if ((uint32_t) in_offset + in_len > evm->memory.bsize) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   switch (mode) {
     case CALL_CALL:
@@ -929,8 +968,8 @@ int evm_execute(evm_t* evm) {
 #endif
     case 0x5b: // JUMPDEST
       op_exec(0, G_JUMPDEST);
-    case 0xF0: // CREATE   -> we don't support it for call
-      return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+    case 0xF0: // CREATE
+      op_exec(op_create(evm, 0), G_CREATE);
     case 0xF1: // CALL
       op_exec(op_call(evm, CALL_CALL), G_CALL);
     case 0xF2: // CALLCODE
@@ -939,6 +978,8 @@ int evm_execute(evm_t* evm) {
       op_exec(op_return(evm, 0), 0);
     case 0xF4: // DELEGATE_CALL
       op_exec(op_call(evm, CALL_DELEGATE), G_CALL);
+    case 0xF5: // CREATE2
+      op_exec(op_create(evm, 1), G_CREATE);
     case 0xFA: // STATIC_CALL
       op_exec(op_call(evm, CALL_STATIC), G_CALL);
     case 0xFD: // REVERT
@@ -976,6 +1017,10 @@ int evm_run(evm_t* evm) {
 #endif
     if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
   }
+
+  // if it is still running, it means we ran out of code. The code must call stop, revert or return.
+//  if (evm->code.len == 0)
+//    res = EVM_ERROR_INVALID_OPCODE;
 #ifdef TEST
   if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i) : ", res);
 #endif

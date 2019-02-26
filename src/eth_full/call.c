@@ -139,7 +139,7 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
   int l = evm->env(evm, EVM_ENV_STORAGE, s_key, s_key_len, &data, 0, 0);
 
   // if it does not exist and we have a value, we set it
-  if (create || l >= 0) {
+  if (create || l > 1 || (l == 1 && *data)) {
     // create with key
     s = _malloc(sizeof(storage_t));
     memcpy(s->key, key_data, 32);
@@ -255,7 +255,8 @@ int transfer_value(evm_t* current, address_t from_account, address_t to_account,
   if (big_is_zero(value, value_len)) return 0;
 
   // since the value is not zero we add the free gas for a call.
-  current->gas += G_CALLSTIPEND;
+  if (base_gas)
+    current->gas += G_CALLSTIPEND;
 
   // while the gas is handled by the parent, the new state is handled in the current evm, so we can roll it back.
   evm_t* evm = current->parent ? current->parent : current;
@@ -345,16 +346,20 @@ int evm_prepare_evm(evm_t*      evm,
   evm->parent   = NULL;
 #endif
 
-  // get the code
-  uint8_t* tmp;
-  int      l = env(evm, EVM_ENV_CODE_SIZE, account, 20, &tmp, 0, 32);
-  // error?
-  if (l < 0) return l;
-  evm->code.len = bytes_to_int(tmp, l);
+  // if the address is NULL this is a CREATE-CALL, so don't try to fetch the code here.
+  if (address) {
+    // get the code
+    uint8_t* tmp;
+    int      l = env(evm, EVM_ENV_CODE_SIZE, account, 20, &tmp, 0, 32);
+    // error?
+    if (l < 0) return l;
+    evm->code.len = bytes_to_int(tmp, l);
 
-  // copy the code or return error
-  l = env(evm, EVM_ENV_CODE_COPY, account, 20, &evm->code.data, 0, 0);
-  return l < 0 ? l : 0;
+    // copy the code or return error
+    l = env(evm, EVM_ENV_CODE_COPY, account, 20, &evm->code.data, 0, 0);
+    return l < 0 ? l : 0;
+  } else
+    return 0;
 }
 
 /**
@@ -375,22 +380,45 @@ int evm_sub_call(evm_t*    parent,
   // create a new evm
   evm_t evm;
   int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr), success = 0;
+
+  evm.properties     = parent->properties;
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
-  evm.properties     = parent->properties;
 
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
 
 #ifdef EVM_GAS
-
-  // give the call the amount of gas
   // inherit root-evm
-  evm.gas    = gas;
   evm.parent = parent;
 
+  uint64_t   max_gas_provided = parent->gas - (parent->gas >> 6);
+  account_t* new_account      = NULL;
+
+  if (!address) {
+    new_account = evm_get_account(&evm, code_address, 1);
+    // this is a create-call
+    evm.code               = b_as_bytes(data, l_data);
+    evm.call_data.len      = 0;
+    evm.address            = code_address;
+    new_account->nonce[31] = 1;
+
+    // increment the nonce of the sender
+    account_t* sender_account = evm_get_account(&evm, caller, 1);
+    bytes32_t  new_nonce;
+    uint8_t    one = 1;
+    uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
+
+    // handle gas
+    gas = max_gas_provided;
+  } else
+    gas = min(gas, max_gas_provided);
+
+  // give the call the amount of gas
+  evm.gas = gas;
+
   // and try to transfer the value
-  if (res == 0) res = transfer_value(&evm, parent->account, address, value, l_value, G_CALLVALUE);
+  if (res == 0) res = transfer_value(&evm, parent->address, evm.address, value, l_value, address ? G_CALLVALUE : 0);
   if (res == 0) {
     // if we don't even have enough gas
     if (parent->gas < gas)
@@ -415,18 +443,18 @@ int evm_sub_call(evm_t*    parent,
   // execute the internal call
   if (res == 0) success = evm_run(&evm);
 
-#ifdef EVM_GAS
-  // if it was successfull we copy the new state to the parent
-  if (success == 0 && evm.state != EVM_STATE_REVERTED)
-    copy_state(parent, &evm);
-#endif
-
   // put the success in the stack
-  res = evm_stack_push_int(parent, success == 0 ? 1 : 0);
+  if (!address && success == 0) // we ignore errors here, why? beacuse parity uses a trap to catch errors and then resumes by writing the address to the stack. Strange, but works.
+    res = evm_stack_push(parent, evm.account, 20);
+  else
+    res = evm_stack_push_int(parent, success == 0 ? 1 : 0);
 
   // if we have returndata we write them into memory
   if (success == 0 && evm.return_data.data) {
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
+    if (new_account)
+      new_account->code = evm.return_data;
+
     if (res == 0) {
       if (parent->last_returned.data) _free(parent->last_returned.data);
       parent->last_returned = evm.return_data;
@@ -436,6 +464,10 @@ int evm_sub_call(evm_t*    parent,
   }
 
 #ifdef EVM_GAS
+  // if it was successfull we copy the new state to the parent
+  if (success == 0 && evm.state != EVM_STATE_REVERTED)
+    copy_state(parent, &evm);
+
   // if we have gas left and it was successfull we returen it to the parent process.
   if (success == 0) parent->gas += evm.gas;
 #endif
