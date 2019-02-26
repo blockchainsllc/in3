@@ -254,10 +254,6 @@ void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
 int transfer_value(evm_t* current, address_t from_account, address_t to_account, uint8_t* value, wlen_t value_len, uint32_t base_gas) {
   if (big_is_zero(value, value_len)) return 0;
 
-  // since the value is not zero we add the free gas for a call.
-  if (base_gas)
-    current->gas += G_CALLSTIPEND;
-
   // while the gas is handled by the parent, the new state is handled in the current evm, so we can roll it back.
   evm_t* evm = current->parent ? current->parent : current;
 
@@ -344,6 +340,8 @@ int evm_prepare_evm(evm_t*      evm,
   evm->gas      = 0;
   evm->logs     = NULL;
   evm->parent   = NULL;
+  evm->refund   = 0;
+  evm->init_gas = 0;
 #endif
 
   // if the address is NULL this is a CREATE-CALL, so don't try to fetch the code here.
@@ -418,17 +416,22 @@ int evm_sub_call(evm_t*    parent,
   evm.gas = gas;
 
   // and try to transfer the value
-  if (res == 0) res = transfer_value(&evm, parent->address, evm.address, value, l_value, address && mode != EVM_CALL_MODE_DELEGATE ? G_CALLVALUE : 0);
+  if (res == 0 && !big_is_zero(value, l_value)) {
+    // if we have a value and this should be static we throw
+    if (mode == EVM_CALL_MODE_STATIC)
+      res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+    else {
+      // only for CALL or CALLCODE we add the CALLSTIPEND
+      if (!mode && address) evm.gas += G_CALLSTIPEND;
+      res = transfer_value(&evm, parent->address, evm.address, value, l_value, (!mode && address) ? G_CALLVALUE : 0);
+    }
+  }
   if (res == 0) {
     // if we don't even have enough gas
     if (parent->gas < gas)
       res = EVM_ERROR_OUT_OF_GAS;
     else
       parent->gas -= gas;
-
-    //    // reduce the gas based on the length of the data (which is not zero)
-    //    for (uint32_t i = 0; i < evm.call_data.len; i++)
-    //      parent->gas -= evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
   }
 
 #else
@@ -437,26 +440,27 @@ int evm_sub_call(evm_t*    parent,
   UNUSED_VAR(l_value);
 #endif
 
-  // if we have a value and this should be static we throw
-  if (mode == EVM_CALL_MODE_STATIC && l_value > 1) res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
-
   // execute the internal call
   if (res == 0) success = evm_run(&evm);
 
-  // put the success in the stack
-  if (!address && success == 0) // we ignore errors here, why? beacuse parity uses a trap to catch errors and then resumes by writing the address to the stack. Strange, but works.
+  // put the success in the stack ( in case of a create we add the new address)
+  if (!address && success == 0)
     res = evm_stack_push(parent, evm.account, 20);
   else
     res = evm_stack_push_int(parent, success == 0 ? 1 : 0);
 
   // if we have returndata we write them into memory
   if (success == 0 && evm.return_data.data) {
+    // if we have a target to write the result to we do.
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
+
 #ifdef EVM_GAS
+    // if we created a new account, we can now copy the return_data as code
     if (new_account)
       new_account->code = evm.return_data;
 #endif
 
+    // move the return_data to parent.
     if (res == 0) {
       if (parent->last_returned.data) _free(parent->last_returned.data);
       parent->last_returned = evm.return_data;

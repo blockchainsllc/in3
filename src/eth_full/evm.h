@@ -30,6 +30,7 @@ typedef enum evm_state {
 #define EVM_PROP_EIP150 2
 #define EVM_PROP_EIP158 4
 #define EVM_PROP_CONSTANTINOPL 16
+#define EVM_PROP_NO_FINALIZE 32768
 #define EVM_PROP_DEBUG 65536
 #define EVM_PROP_STATIC 256
 
@@ -111,6 +112,8 @@ typedef struct evm {
   account_t*  accounts;
   struct evm* parent;
   logs_t*     logs;
+  uint64_t    refund;
+  uint64_t    init_gas;
 
 #endif
 

@@ -475,6 +475,8 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.gas      = d_long(get_test_val(transaction, "gasLimit", indexes));
     evm.parent   = NULL;
     evm.logs     = NULL;
+    evm.refund   = 0;
+    evm.init_gas = evm.gas;
 
     // prepare all accounts
     read_accounts(&evm, d_get(test, key("pre")));
@@ -675,5 +677,5 @@ int test_evm(d_token_t* test, uint32_t props, uint64_t* ms) {
 
     return res;
   } else
-    return run_evm(test, props, ms, NULL, 0);
+    return run_evm(test, props | EVM_PROP_FRONTIER | EVM_PROP_NO_FINALIZE, ms, NULL, 0);
 }

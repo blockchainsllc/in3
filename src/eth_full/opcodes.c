@@ -509,7 +509,7 @@ static int op_sstore(evm_t* evm) {
         subgas(GAS_CC_NET_SSTORE_INIT_GAS);
       }
       if (el == 0) {
-        evm->gas += GAS_CC_NET_SSTORE_CLEAR_REFUND;
+        evm->refund += GAS_CC_NET_SSTORE_CLEAR_REFUND;
       }
 
       subgas(GAS_CC_NET_SSTORE_CLEAN_GAS);
@@ -518,14 +518,14 @@ static int op_sstore(evm_t* evm) {
         if (l_current == 0)
           evm->gas -= GAS_CC_NET_SSTORE_CLEAR_REFUND;
         else
-          evm->gas += GAS_CC_NET_SSTORE_CLEAR_REFUND;
+          evm->refund += GAS_CC_NET_SSTORE_CLEAR_REFUND;
       }
 
       if (big_cmp(original, l_original, value, l_val) == 0) {
         if (l_original == 0)
-          evm->gas += GAS_CC_NET_SSTORE_RESET_CLEAR_REFUND;
+          evm->refund += GAS_CC_NET_SSTORE_RESET_CLEAR_REFUND;
         else
-          evm->gas += GAS_CC_NET_SSTORE_RESET_REFUND;
+          evm->refund += GAS_CC_NET_SSTORE_RESET_REFUND;
       }
       subgas(GAS_CC_NET_SSTORE_DIRTY_GAS);
     }
@@ -534,7 +534,7 @@ static int op_sstore(evm_t* evm) {
       subgas(G_SRESET);
     } else if (el == 0 && !created) {
       subgas(G_SRESET);
-      evm->gas += R_SCLEAR;
+      evm->refund += R_SCLEAR;
     } else if (el && created) {
       subgas(G_SSET);
     } else if (el && !created) {
@@ -697,14 +697,14 @@ int op_selfdestruct(evm_t* evm) {
   if (evm_stack_pop(evm, adr, 20) < 0) return EVM_ERROR_EMPTY_STACK;
   account_t* self_account = evm_get_account(evm, evm->address, 1);
   // TODO check if this account was selfsdesstructed before
-  evm->gas += R_SELFDESTRUCT;
+  evm->refund += R_SELFDESTRUCT;
 
   l = 32;
   p = self_account->balance;
   optimize_len(p, l);
   if (l && (l > 1 || *p != 0)) {
     if (evm_get_account(evm, adr, 0) == NULL) {
-      subgas(G_NEWACCOUNT);
+      if ((evm->properties & EVM_PROP_NO_FINALIZE) == 0) subgas(G_NEWACCOUNT);
       evm_get_account(evm, adr, 1);
     }
     if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
@@ -997,7 +997,7 @@ int evm_execute(evm_t* evm) {
     case 0xFE: // INVALID OPCODE
       return EVM_ERROR_INVALID_OPCODE;
     case 0xFF: // SELFDESTRUCT
-      op_exec(op_selfdestruct(evm), G_SELFDESTRUCT);
+      op_exec(op_selfdestruct(evm), (evm->properties & EVM_PROP_FRONTIER) ? 0 : G_SELFDESTRUCT);
 
     default:
       return EVM_ERROR_INVALID_OPCODE;
@@ -1005,6 +1005,11 @@ int evm_execute(evm_t* evm) {
 }
 
 int evm_run(evm_t* evm) {
+#ifdef EVM_GAS
+  evm->refund   = 0;
+  evm->init_gas = evm->gas;
+#endif
+
   if (evm_is_precompiled(evm, evm->account))
     return evm_run_precompiled(evm, evm->account);
   uint32_t timeout = 0xFFFFFFFF;
@@ -1034,5 +1039,27 @@ int evm_run(evm_t* evm) {
 #ifdef TEST
   if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i) : ", res);
 #endif
+#ifdef EVM_GAS
+
+  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0) {
+    // finalize and refund
+    //    uint64_t gas_left = evm->gas + min(evm->refund, (evm->init_gas - evm->gas) >> 1), gas_used = evm->init_gas - min(gas_left, evm->init_gas);
+    //    uint64_t gas_left = evm->gas + min(evm->refund, (evm->init_gas - evm->gas) >> 1), gas_used = evm->init_gas - min(gas_left, evm->init_gas);
+    evm->gas += min(evm->refund, (evm->init_gas - evm->gas) >> 1);
+
+    /*
+      // real ammount to refund
+      let gas_left_prerefund = match result { Ok(FinalizationResult{ gas_left, .. }) => gas_left, _ => 0.into() };
+      let refunded = cmp::min(refunds_bound, (t.gas - gas_left_prerefund) >> 1);
+      let gas_left = gas_left_prerefund + refunded;
+
+      let gas_used = t.gas.saturating_sub(gas_left);
+      let (refund_value, overflow_1) = gas_left.overflowing_mul(t.gas_price);
+      let (fees_value, overflow_2) = gas_used.overflowing_mul(t.gas_price);
+  */
+  }
+
+#endif
+
   return res;
 }
