@@ -184,9 +184,9 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
 #ifdef EVM_GAS
 
   if (last_gas > evm->gas)
-    printf("\n%s%010llx %03i \x1B[33m-%5llu\x1B[0m %02x : ", evm == evm->parent ? "" : " .. ", evm->gas, pos, last_gas - evm->gas, op);
+    printf("\n%s%010llx %03i \x1B[33m-%5llu\x1B[0m %02x : ", !evm->parent ? "" : " .. ", evm->gas, pos, last_gas - evm->gas, op);
   else
-    printf("\n%s%010llx %03i \x1B[33m+%5llu\x1B[0m %02x : ", evm == evm->parent ? "" : " .. ", evm->gas, pos, evm->gas - last_gas, op);
+    printf("\n%s%010llx %03i \x1B[33m+%5llu\x1B[0m %02x : ", !evm->parent ? "" : " .. ", evm->gas, pos, evm->gas - last_gas, op);
 #else
   UNUSED_VAR(last_gas);
   printf("\n%03i       %02x : ", pos, op);
@@ -205,7 +205,7 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     return;
   }
   if (op >= 0xA0 && op <= 0xA4) {
-    printf("\x1B[32mLOG%i\x1B[0m      ", op - 0x9F);
+    printf("\x1B[32mLOG%i\x1B[0m      ", op - 0xA0);
     return;
   }
 

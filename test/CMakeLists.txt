@@ -38,6 +38,8 @@ vmTests/vmRandomTest
 vmTests/vmPushDupSwapTest 
 vmTests/vmArithmeticTest
 GeneralStateTests/stArgsZeroOneBalance
+GeneralStateTests/stShift
+GeneralStateTests/stLogTests
 TrieTests
 RLPTests
 )

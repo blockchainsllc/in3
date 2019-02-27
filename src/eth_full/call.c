@@ -163,6 +163,7 @@ static void copy_state(evm_t* dst, evm_t* src) {
 
     last->next = dst->logs;
     dst->logs  = src->logs;
+    src->logs  = NULL;
   }
 
   account_t *sa = src->accounts, *prv = NULL;
