@@ -440,6 +440,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.code     = d_to_bytes(d_get(exec, K_CODE));
     evm.parent   = NULL;
     evm.logs     = NULL;
+    evm.init_gas = 0;
 #endif
 
   } else if (transaction) {

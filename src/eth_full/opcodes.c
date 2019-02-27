@@ -710,6 +710,8 @@ int op_selfdestruct(evm_t* evm) {
     if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
   }
   memset(self_account->balance, 0, 32);
+  memset(self_account->nonce, 0, 32);
+  self_account->code.len = 0;
   storage_t* s;
   while (self_account->storage) {
     s                     = self_account->storage;
@@ -1006,8 +1008,8 @@ int evm_execute(evm_t* evm) {
 
 int evm_run(evm_t* evm) {
 #ifdef EVM_GAS
-  evm->refund   = 0;
-  evm->init_gas = evm->gas;
+  evm->refund = 0;
+  if (!evm->init_gas) evm->init_gas = evm->gas;
 #endif
 
   if (evm_is_precompiled(evm, evm->account))
@@ -1037,7 +1039,7 @@ int evm_run(evm_t* evm) {
 //  if (evm->code.len == 0)
 //    res = EVM_ERROR_INVALID_OPCODE;
 #ifdef TEST
-  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i) : ", res);
+  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i)   init_gas: %llu   gas_left: %llu  refund: %llu", res, evm->init_gas, evm->gas, evm->refund);
 #endif
 #ifdef EVM_GAS
 

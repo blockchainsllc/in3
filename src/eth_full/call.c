@@ -259,7 +259,11 @@ int transfer_value(evm_t* current, address_t from_account, address_t to_account,
 
   account_t* ac_from = evm_get_account(current, from_account, true);
   account_t* ac_to   = evm_get_account(current, to_account, false);
-  uint8_t    tmp[32];
+  uint8_t    tmp[32], val[32];
+
+  // we clone it because the value may point to the value we want to change.
+  memcpy(val, value, value_len);
+  value = val;
 
 #ifdef EVM_GAS
   if (!ac_to) {
@@ -279,7 +283,7 @@ int transfer_value(evm_t* current, address_t from_account, address_t to_account,
   }
 
   // add balance to receiver. (This will be executed) even if the sender is null (which means initial setup for test)
-  uint256_set(tmp, big_add(ac_from->balance, 32, value, value_len, tmp, 32), ac_to->balance);
+  uint256_set(tmp, big_add(ac_to->balance, 32, value, value_len, tmp, 32), ac_to->balance);
 
   return 0;
 }
