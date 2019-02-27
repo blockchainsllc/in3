@@ -51,6 +51,7 @@ int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only) {
 }
 
 int evm_mem_readi(evm_t* evm, uint32_t off, void* dst, uint32_t len) {
+  if (!len) return 0;
   uint8_t* src     = NULL;
   uint32_t max_len = 0;
   if (mem_check(evm, off + len, 1) < 0) return EVM_ERROR_OUT_OF_GAS;
@@ -89,13 +90,20 @@ int evm_mem_read_ref(evm_t* evm, uint32_t off, uint32_t len, bytes_t* src) {
 
 int evm_mem_write(evm_t* evm, uint32_t off, bytes_t src, uint32_t len) {
   if (mem_check(evm, off + len, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
+  if (evm->properties & EVM_PROP_DEBUG) {
+    printf("\n   MEM: writing %i bytes to %i : ", len, off);
+    b_print(&src);
+  }
 
   if (src.data == NULL)
     memset(evm->memory.b.data + off, 0, len);
   else {
-    if (src.len) memcpy(evm->memory.b.data + off, src.data, src.len < len ? src.len : len);
-    if (src.len < len)
-      memset(evm->memory.b.data + off + src.len, 0, len - src.len);
+    if (src.len >= len)
+      memcpy(evm->memory.b.data + off, src.data + src.len - len, len);
+    else {
+      memset(evm->memory.b.data + off, 0, len - src.len);
+      memcpy(evm->memory.b.data + off + len - src.len, src.data, src.len);
+    }
   }
   return 0;
 }

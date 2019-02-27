@@ -237,18 +237,18 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
       trie_set_value(trie, &k, &bb->b);
       if (evm->properties & EVM_PROP_DEBUG) {
         to_uint256(&k, s->key);
-        printf("    - ");
+        printf(":::    - ");
         if (k.len)
           ba_print(k.data, k.len);
         else
-          printf("0x00");
+          printf(" 0x00");
         printf(" : ");
         if (tmp.len)
           ba_print(tmp.data, tmp.len);
         else
-          printf("0x00");
+          printf(" 0x00");
 
-        printf("(l:%i) \n", tmp.len);
+        printf("\n");
       }
     }
 
@@ -268,17 +268,17 @@ bytes_t* serialize_ac(evm_t* evm, account_t* ac) {
   rlp_encode_item(rlp, to_uint256(&tmp, ac->nonce));
 
   if (evm->properties & EVM_PROP_DEBUG) {
-    printf("  nonce   : ");
+    printf(":::   nonce   : ");
     ba_print(tmp.data, tmp.len);
   }
 
   rlp_encode_item(rlp, to_uint256(&tmp, ac->balance));
   if (evm->properties & EVM_PROP_DEBUG) {
-    printf("\n  balance : ");
+    printf("\n:::   balance : ");
     ba_print(tmp.data, tmp.len);
-    printf("\n  code    : ");
+    printf("\n:::   code    : ");
     ba_print(ac->code.data, ac->code.len);
-    printf("\n  storage : \n");
+    printf("\n:::   storage : \n");
   }
 
   generate_storage_hash(evm, ac->storage, hash);
@@ -318,6 +318,8 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
     hex2byte_arr(d_get_keystr(t->key) + 2, 40, adr, 20);
     evm_get_account(evm, adr, 1);
   }
+  if (evm->properties & EVM_PROP_DEBUG)
+    printf("\n::: ================ ");
 
   //
   account_t* ac = evm->accounts;
@@ -328,7 +330,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
     }
 
     if (evm->properties & EVM_PROP_DEBUG) {
-      printf("\n## Account ");
+      printf("\n::: Account ");
       ba_print(ac->address, 20);
       printf("  ##\n");
     }
@@ -466,10 +468,8 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 
     if (d_get(transaction, K_TO) && d_len(d_get(transaction, K_TO)))
       evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, "to")->data), K_CODE));
-    else {
-      evm.code.data = NULL;
-      evm.code.len  = 0;
-    }
+    else
+      evm.code = evm.call_data;
 
 #ifdef EVM_GAS
     evm.accounts = NULL;
@@ -508,7 +508,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     for (int i = 0; i < evm.call_data.len; i++)
       total_gas += evm.call_data.data[i] ? G_TXDATA_NONZERO : G_TXDATA_ZERO;
 
-    evm.gas -= total_gas;
+    evm.gas = (total_gas > evm.gas) ? 0 : evm.gas - total_gas;
 
 #endif
 

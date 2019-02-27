@@ -52,7 +52,7 @@ int big_signed(uint8_t* val, wlen_t len, uint8_t* dst) {
 }
 
 void big_shift_left(uint8_t* a, wlen_t len, int bits) {
-  wlen_t  r     = bits % 8;
+  wlen_t        r     = bits % 8;
   uint_fast16_t carry = 0;
   int           i;
   if ((r = bits % 8)) {
@@ -68,7 +68,7 @@ void big_shift_left(uint8_t* a, wlen_t len, int bits) {
 }
 
 void big_shift_right(uint8_t* a, wlen_t len, int bits) {
-  wlen_t  r     = bits % 8;
+  wlen_t        r     = bits % 8;
   uint_fast16_t carry = 0;
   int           i;
   if ((r = bits % 8)) {
@@ -101,7 +101,7 @@ int32_t big_int(uint8_t* val, wlen_t len) {
 int big_add(uint8_t* a, wlen_t len_a, uint8_t* b, wlen_t len_b, uint8_t* out, wlen_t max) {
   optimize_len(a, len_a);
   optimize_len(b, len_b);
-  wlen_t  l     = len_a > len_b ? len_a + 1 : len_b + 1;
+  wlen_t        l     = len_a > len_b ? len_a + 1 : len_b + 1;
   uint_fast16_t carry = 0;
   if (max && l > max) l = max;
   for (int_fast8_t i = l - 1;; i--) {
@@ -116,7 +116,7 @@ int big_add(uint8_t* a, wlen_t len_a, uint8_t* b, wlen_t len_b, uint8_t* out, wl
 int big_sub(uint8_t* a, wlen_t len_a, uint8_t* b, wlen_t len_b, uint8_t* out) {
   optimize_len(a, len_a);
   optimize_len(b, len_b);
-  wlen_t  l = len_a > len_b ? len_a + 1 : len_b + 1, borrow = 0;
+  wlen_t        l = len_a > len_b ? len_a + 1 : len_b + 1, borrow = 0;
   uint_fast16_t carry = 0;
   if (l > 32) l = 32;
   for (int_fast8_t i = l - 1;; i--) {
@@ -138,8 +138,8 @@ int big_mul(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res, wlen_t m
   optimize_len(a, la);
   optimize_len(b, lb);
   if (la + lb < 9) {
-    uint8_t      rr[8], *p = rr;
-    wlen_t lr = 8;
+    uint8_t rr[8], *p = rr;
+    wlen_t  lr = 8;
     long_to_bytes(bytes_to_long(a, la) * bytes_to_long(b, lb), rr);
     optimize_len(p, lr);
     memcpy(res, p, lr);
@@ -203,8 +203,8 @@ int big_exp(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res) {
     res[63]      = 1;
     uint32_t exp = *b;
     big_shift_left(res, 64, exp);
-    uint8_t*     p = res;
-    wlen_t l = 64;
+    uint8_t* p = res;
+    wlen_t   l = 64;
     optimize_len(p, l);
     if (l > 32) {
       p += l - 32;
@@ -257,8 +257,8 @@ int big_log256(uint8_t* a, wlen_t len) {
 }
 
 int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t* qlen, uint8_t* remain, wlen_t* remain_len) {
-  int_fast8_t  j, i;
-  wlen_t l = 8;
+  int_fast8_t j, i;
+  wlen_t      l = 8;
 
   optimize_len(n, ln);
   optimize_len(d, ld);
@@ -307,6 +307,54 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
     return 0;
   } else {
 
+    //    mpz_tdiv_qr
+
+    size_t ql, rl;
+
+    // we use gmp for now
+    mpz_t mq, mr, mn, md;
+    mpz_init(mq);
+    mpz_init(mr);
+    mpz_init(mn);
+    mpz_init(md);
+
+    mpz_import(mn, ln, 1, sizeof(uint8_t), 1, 0, n);
+    mpz_import(md, ld, 1, sizeof(uint8_t), 1, 0, d);
+
+    if (remain && q)
+      mpz_tdiv_qr(mq, mr, mn, md);
+    else if (remain)
+      mpz_tdiv_r(mr, mn, md);
+    else
+      mpz_tdiv_q(mq, mn, md);
+
+    if (q) {
+      mpz_export(q, &ql, 1, sizeof(uint8_t), 1, 0, mq);
+      *qlen = ql;
+      if (!ql) {
+        *q    = 0;
+        *qlen = 1;
+      }
+    }
+    if (remain) {
+      mpz_export(remain, &rl, 1, sizeof(uint8_t), 1, 0, mr);
+      *remain_len = rl;
+      if (!rl) {
+        *remain     = 0;
+        *remain_len = 1;
+      }
+    }
+
+    mpz_clear(mq);
+    mpz_clear(mr);
+    mpz_clear(mn);
+    mpz_clear(md);
+
+    return 0;
+
+    /*
+
+
     uint8_t      row[32], tmp[33], tmp2[33];
     wlen_t val, min, max;
     int          res;
@@ -354,6 +402,7 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
       *remain_len = pl;
     }
     *qlen = j + 1;
+  */
   }
   return 0;
 }
@@ -394,8 +443,8 @@ int big_div(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* r
 }
 
 int big_mod(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* res) {
-  wlen_t l, l2;
-  uint8_t      tmp[65];
+  wlen_t  l, l2;
+  uint8_t tmp[65];
 
   optimize_len(a, la);
   optimize_len(b, lb);
@@ -425,13 +474,13 @@ int big_mod(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* r
 
       if (l) {
         if (lb > 1) memcpy(res + 1, a + la - lb + 1, lb - 1);
-        *res = *a & (*b - 1);
+        *res = a[la - lb] & (*b - 1);
         return lb;
       }
     }
   } else {
-    uint8_t      _a[32], _b[32];
-    wlen_t sa, sb;
+    uint8_t _a[32], _b[32];
+    wlen_t  sa, sb;
     sa = big_signed(a, la, _a);
     sb = big_signed(b, lb, _b);
     big_divmod(sa ? _a : a, la, sb ? _b : b, lb, tmp, &l2, res, &l);

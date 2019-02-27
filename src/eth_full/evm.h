@@ -98,22 +98,24 @@ typedef struct evm {
   evm_get_env env;
   void*       env_ptr;
 
-  //
-  uint8_t* address;
-  uint8_t* account;
-  uint8_t* origin;
-  uint8_t* caller;
-  bytes_t  call_value;
-  bytes_t  call_data;
-  bytes_t  gas_price;
+  // tx values
+  uint8_t* address;    /*< the address of the current storage*/
+  uint8_t* account;    /*< the address of the code */
+  uint8_t* origin;     /*< the address of original sender of the root-transaction */
+  uint8_t* caller;     /*< the address of the parent sender */
+  bytes_t  call_value; /*< value send */
+  bytes_t  call_data;  /*< data send in the tx */
+  bytes_t  gas_price;  /*< current gasprice */
 
 #ifdef EVM_GAS
-  uint64_t    gas;
-  account_t*  accounts;
-  struct evm* parent;
-  logs_t*     logs;
-  uint64_t    refund;
-  uint64_t    init_gas;
+
+  // gas values
+  uint64_t    gas;      /*< gas left in the tx */
+  account_t*  accounts; /*< linked list of the accounts read or modified */
+  struct evm* parent;   /*< link to the parent-tx that called or crteated this one */
+  logs_t*     logs;     /*< linked list of log-entries */
+  uint64_t    refund;   /*< amount of wei reserved for refund */
+  uint64_t    init_gas; /*< inital gasLimit set in the tx */
 
 #endif
 

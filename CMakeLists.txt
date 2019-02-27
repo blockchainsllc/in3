@@ -27,6 +27,7 @@ IF(TEST)
   SET(CMAKE_BUILD_TYPE Debug)
   enable_testing()
   add_subdirectory( test )
+  add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 16)
 
 ENDIF(TEST)
 

@@ -296,7 +296,7 @@ int op_shift(evm_t* evm, uint8_t left) {
 static int op_sha3(evm_t* evm) {
   int offset = evm_stack_pop_int(evm);
   if (offset < 0) return offset;
-  if (offset == MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
+  //  if (offset == MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
   int len = evm_stack_pop_int(evm);
   if (len < 0) return len;
   if (len == MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
@@ -387,11 +387,20 @@ static int op_dataload(evm_t* evm) {
   }
 }
 
-static int op_datacopy(evm_t* evm, bytes_t* src) {
-  int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
+static int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
+  int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm), res = 0;
   if (mem_pos < 0 || data_len < 0 || data_pos < 0) return EVM_ERROR_EMPTY_STACK;
   subgas(((data_len + 31) / 32) * G_COPY);
-  return evm_mem_write(evm, mem_pos, b_as_bytes(src->data + data_pos, src->len > (uint32_t) data_pos ? src->len - data_pos : 0), data_len);
+  bytes_t src_data = {.data = ((uint32_t) data_pos < src->len) ? (src->data + data_pos) : NULL, .len = src->len - data_pos};
+  src_data.len     = src_data.data ? min(src_data.len, ((uint32_t) data_len)) : 0;
+  if (check_size && !src_data.data) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+
+  if (src_data.len < (uint32_t) data_len)
+    res = evm_mem_write(evm, mem_pos + src_data.len, b_as_bytes(NULL, 0), data_len - src_data.len);
+
+  if (src_data.len && res == 0)
+    res = evm_mem_write(evm, mem_pos, src_data, src_data.len);
+  return res;
 }
 
 static int op_extcodecopy(evm_t* evm) {
@@ -802,7 +811,7 @@ int op_call(evm_t* evm, uint8_t mode) {
   if ((out_len = evm_stack_pop_int(evm)) < 0) return out_len;
   uint64_t gas = bytes_to_long(gas_limit, l_gas);
 
-  if (mem_check(evm, out_offset + out_len, true) < 0 || mem_check(evm, in_offset + in_len, true) < 0) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
+  if ((out_len > 0 && mem_check(evm, out_offset + out_len, true) < 0) || (in_len && mem_check(evm, in_offset + in_len, true) < 0)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   //TODO  do we need this check?
   //  if ((uint32_t) in_offset + in_len > evm->memory.bsize) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
@@ -925,11 +934,11 @@ int evm_execute(evm_t* evm) {
     case 0x36: // CALLDATA_SIZE
       op_exec(evm_stack_push_int(evm, evm->call_data.len), G_BASE);
     case 0x37: // CALLDATACOPY
-      op_exec(op_datacopy(evm, &evm->call_data), G_VERY_LOW);
+      op_exec(op_datacopy(evm, &evm->call_data, 0), G_VERY_LOW);
     case 0x38: // CODESIZE
       op_exec(evm_stack_push_int(evm, evm->code.len), G_BASE);
     case 0x39: // CODECOPY
-      op_exec(op_datacopy(evm, &evm->code), G_VERY_LOW);
+      op_exec(op_datacopy(evm, &evm->code, 0), G_VERY_LOW);
     case 0x3a: // GASPRICE
       op_exec(evm_stack_push(evm, evm->gas_price.data, evm->gas_price.len), G_BASE);
     case 0x3b: // EXTCODESIZE
@@ -939,7 +948,7 @@ int evm_execute(evm_t* evm) {
     case 0x3d: // RETURNDATASIZE
       op_exec(evm_stack_push_int(evm, evm->last_returned.len), G_BASE);
     case 0x3e: // RETURNDATACOPY
-      op_exec(op_datacopy(evm, &evm->last_returned), G_VERY_LOW);
+      op_exec(op_datacopy(evm, &evm->last_returned, 1), G_VERY_LOW);
     case 0x3f: // EXTCODEHASH
       op_exec(op_account(evm, EVM_ENV_CODE_HASH), G_BALANCE);
     case 0x40: // BLOCKHASH
@@ -1010,61 +1019,62 @@ int evm_execute(evm_t* evm) {
 }
 
 int evm_run(evm_t* evm) {
+
 #ifdef EVM_GAS
+  // prepare evm gas
   evm->refund = 0;
   if (!evm->init_gas) evm->init_gas = evm->gas;
 #endif
 
+  // for precompiled we simply execute it there
   if (evm_is_precompiled(evm, evm->account))
     return evm_run_precompiled(evm, evm->account);
+
+  // timeout is simply used in case we don't use gas to make sure we don't run a infite loop.
   uint32_t timeout = 0xFFFFFFFF;
-  int      res = 0, cnt = 0;
+  int      res     = 0;
+
+  // inital state
   evm->state = EVM_STATE_RUNNING;
+
+  // loop opcodes
   while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
-    cnt++;
 #ifdef TEST
+    // keeping track of the previous pos only in order to display the position.
     uint32_t last = evm->pos;
 #ifdef EVM_GAS
+    // keeping track of the previous gas only in order to display the used gas.
     uint64_t last_gas = evm->gas;
 #else
     uint64_t last_gas = 0;
 #endif
+
+    // execute the opcode
     res = evm_execute(evm);
-    //    if (evm->properties & EVM_PROP_DEBUG) printf("\n ..... %5i << Stack : %i >>", cnt, mem_stack_size());
+
+    // display the result of the opcode (only if the debug flag is set)
     if (evm->properties & EVM_PROP_DEBUG) evm_print_stack(evm, last_gas, last);
 #else
+    // execute the opcode
     res = evm_execute(evm);
 #endif
     if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
   }
 
-  // if it is still running, it means we ran out of code. The code must call stop, revert or return.
-//  if (evm->code.len == 0)
-//    res = EVM_ERROR_INVALID_OPCODE;
-#ifdef TEST
-  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i)   init_gas: %llu   gas_left: %llu  refund: %llu", res, evm->init_gas, evm->gas, evm->refund);
-#endif
-#ifdef EVM_GAS
+  // done...
 
-  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0) {
-    // finalize and refund
-    //    uint64_t gas_left = evm->gas + min(evm->refund, (evm->init_gas - evm->gas) >> 1), gas_used = evm->init_gas - min(gas_left, evm->init_gas);
-    //    uint64_t gas_left = evm->gas + min(evm->refund, (evm->init_gas - evm->gas) >> 1), gas_used = evm->init_gas - min(gas_left, evm->init_gas);
+#ifdef EVM_GAS
+#ifdef TEST
+  // debug gas output
+  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i)   init_gas: %llu   gas_left: %llu  refund: %llu  gas_used: %llu  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
+#endif
+
+  // finalize and refund
+  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0)
     evm->gas += min(evm->refund, (evm->init_gas - evm->gas) >> 1);
 
-    /*
-      // real ammount to refund
-      let gas_left_prerefund = match result { Ok(FinalizationResult{ gas_left, .. }) => gas_left, _ => 0.into() };
-      let refunded = cmp::min(refunds_bound, (t.gas - gas_left_prerefund) >> 1);
-      let gas_left = gas_left_prerefund + refunded;
-
-      let gas_used = t.gas.saturating_sub(gas_left);
-      let (refund_value, overflow_1) = gas_left.overflowing_mul(t.gas_price);
-      let (fees_value, overflow_2) = gas_used.overflowing_mul(t.gas_price);
-  */
-  }
-
 #endif
 
+  // return result
   return res;
 }

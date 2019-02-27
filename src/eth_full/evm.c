@@ -173,7 +173,11 @@ int evm_stack_push_bn(evm_t* evm, bignum256* val) {
   evm->stack_size++;
   return 0;
 }
+/*
+I:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06ae28d285a71b5 | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | 
+P:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06ae28d285a71b5 | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff |
 
+*/
 #define __code(n)                      \
   {                                    \
     printf("\x1B[32m%-10s\x1B[0m", n); \
@@ -182,26 +186,32 @@ int evm_stack_push_bn(evm_t* evm, bignum256* val) {
 void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   uint8_t op = evm->code.data[pos];
 #ifdef EVM_GAS
+  printf("\n::: ");
+  evm_t* pp = evm->parent;
+  while (pp) {
+    printf(" .. ");
+    pp = pp->parent;
+  }
 
   if (last_gas > evm->gas)
-    printf("\n%s%010llx %03i \x1B[33m-%5llu\x1B[0m %02x : ", !evm->parent ? "" : " .. ", evm->gas, pos, last_gas - evm->gas, op);
+    printf("%08llx %03i \x1B[33m%5llu\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
   else
-    printf("\n%s%010llx %03i \x1B[33m+%5llu\x1B[0m %02x : ", !evm->parent ? "" : " .. ", evm->gas, pos, evm->gas - last_gas, op);
+    printf("%08llx %03i \x1B[33m+%5llu\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
 #else
   UNUSED_VAR(last_gas);
   printf("\n%03i       %02x : ", pos, op);
 #endif
   if (op >= 0x60 && op <= 0x7F) {
-    printf("\x1B[32mPUSH%i\x1B[0m     ", op - 0x5F);
+    printf("\x1B[32mPUSH%i\x1B[0m    %s", op - 0x5F, (op - 0x05F) < 10 ? " " : "");
     //    for (int j = 0; j < op - 0x5F; j++) printf("%02x", evm->code.data[evm->pos + j + 1]);
     return;
   }
   if (op >= 0x80 && op <= 0x8F) {
-    printf("\x1B[32mDUP%i\x1B[0m      ", op - 0x7F);
+    printf("\x1B[32mDUP%i\x1B[0m     %s", op - 0x7F, (op - 0x7F) < 10 ? " " : "");
     return;
   }
   if (op >= 0x90 && op <= 0x9F) {
-    printf("\x1B[32mSWAP%i\x1B[0m     ", op - 0x8E);
+    printf("\x1B[32mSWAP%i\x1B[0m    %s", op - 0x8F, (op - 0x8F) < 10 ? " " : "");
     return;
   }
   if (op >= 0xA0 && op <= 0xA4) {
@@ -289,8 +299,13 @@ void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   for (int i = 0; i < evm->stack_size; i++) {
     uint8_t* dst;
     int      l = evm_stack_get_ref(evm, i + 1, &dst);
-    for (int j = 0; j < l; j++) printf("%02x", dst[j]);
-    if (i < evm->stack_size - 1) printf(" | ");
+    optimize_len(dst, l);
+    for (int j = 0; j < l; j++) {
+      if (j == 0 && dst[j] < 16)
+        printf("%x", dst[j]);
+      else
+        printf("%02x", dst[j]);
+    }
+    printf(" | ");
   }
-  printf(" ]");
 }
