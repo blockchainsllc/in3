@@ -127,7 +127,10 @@ static int op_signextend(evm_t* evm) {
 
   //  uint8_t bit_set = l>k ? val[l-k-1] & 128 :0
   bool    bitset = l > k && val[l - k - 1] & 128;
-  uint8_t tmp[32];
+  uint8_t tmp[32], tmp2[32];
+  memset(tmp2, 0, 32);
+  memcpy(tmp2, val, l);
+  val = tmp2;
   if (k < 31)
     memset(tmp, bitset ? 0xFF : 0, 31 - k);
   memcpy(tmp + 31 - k, val + l - k - 1, k + 1);

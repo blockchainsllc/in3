@@ -37,6 +37,7 @@ vmTests/vmIOandFlowOperations
 vmTests/vmRandomTest 
 vmTests/vmPushDupSwapTest 
 vmTests/vmArithmeticTest
+GeneralStateTests/stArgsZeroOneBalance
 TrieTests
 RLPTests
 )
