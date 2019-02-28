@@ -43,8 +43,9 @@ graph TD
     
     isCached -- yes --> hasEvent{Receipt has LogRented-Event?}
     isCached -- no --> in3_tx[ get a verified TransactionReceipt ] 
-
     
+    in3_tx -. in3-request over ble .-> in3_tx
+
     in3_tx -- valid --> cache[Store Receipt in RAM]
     in3_tx -- error --> reject
     
