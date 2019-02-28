@@ -37,13 +37,13 @@ vmTests/vmIOandFlowOperations
 vmTests/vmRandomTest 
 vmTests/vmPushDupSwapTest 
 vmTests/vmArithmeticTest
-#GeneralStateTests/stRandom
+GeneralStateTests/stRandom
 #GeneralStateTests/stRevertTest
 #GeneralStateTests/stInitCodeTest
 #GeneralStateTests/stCreateTest
-#GeneralStateTests/stRandom2
+GeneralStateTests/stRandom2
 #GeneralStateTests/stWalletTest
-#GeneralStateTests/stCodeCopyTest
+GeneralStateTests/stCodeCopyTest
 #GeneralStateTests/stRefundTest
 #GeneralStateTests/stRecursiveCreate
 #GeneralStateTests/stPreCompiledContracts
@@ -63,7 +63,7 @@ GeneralStateTests/stShift
 #GeneralStateTests/stStackTests
 #GeneralStateTests/stChangedEIP150
 #GeneralStateTests/stSolidityTest
-#GeneralStateTests/stMemoryTest
+GeneralStateTests/stMemoryTest
 #GeneralStateTests/stEWASMTests
 #GeneralStateTests/stNonZeroCallsTest
 #GeneralStateTests/stCodeSizeLimit
@@ -87,15 +87,19 @@ GeneralStateTests/stLogTests
 GeneralStateTests/stArgsZeroOneBalance
 #GeneralStateTests/stAttackTest
 #GeneralStateTests/stReturnDataTest
-
-
-#GeneralStateTests/stArgsZeroOneBalance
-#GeneralStateTests/stShift
-#GeneralStateTests/stLogTests
 TrieTests
 RLPTests
 )
     file(GLOB files "testdata/evm/${testdir}/*.json")
+
+    # exclude tests, but fix them later    
+    list(FILTER files EXCLUDE REGEX ".*randomStatetest(150|154|159|178|184|205|248|306|48|458|467|498|554|572|636|639).json$")
+    list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
+    list(FILTER files EXCLUDE REGEX ".*(ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
+
+    
+
+
     foreach(file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
