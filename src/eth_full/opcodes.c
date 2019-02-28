@@ -1066,7 +1066,7 @@ int evm_run(evm_t* evm) {
 #ifdef EVM_GAS
 #ifdef TEST
   // debug gas output
-  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i)   init_gas: %llu   gas_left: %llu  refund: %llu  gas_used: %llu  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
+  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
 #endif
 
   // finalize and refund

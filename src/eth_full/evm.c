@@ -1,3 +1,4 @@
+#include "evm.h"
 #include "../eth_basic/eth_basic.h"
 #include "../eth_nano/eth_nano.h"
 #include "../eth_nano/merkle.h"
@@ -10,14 +11,13 @@
 #include <crypto/bignum.h>
 #include <crypto/ecdsa.h>
 #include <crypto/secp256k1.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util/data.h>
 #include <util/mem.h>
 #include <util/utils.h>
-
-#include "evm.h"
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
   if (evm->stack_size == EVM_STACK_LIMIT || len > 32) return EVM_ERROR_STACK_LIMIT;
@@ -194,9 +194,9 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   }
 
   if (last_gas > evm->gas)
-    printf("%08llx %03i \x1B[33m%5llu\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
+    printf("%08" PRIx64 " %03i \x1B[33m%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
   else
-    printf("%08llx %03i \x1B[33m+%5llu\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
+    printf("%08" PRIx64 " %03i \x1B[33m+%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
 #else
   UNUSED_VAR(last_gas);
   printf("\n%03i       %02x : ", pos, op);

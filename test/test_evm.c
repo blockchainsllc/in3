@@ -614,7 +614,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 #ifdef EVM_GAS
       if (!fail && d_get_long(test, "gas") != evm.gas) {
         print_error("Wrong Gas");
-        printf(" (expected : %llu, but got %llu", d_get_long(test, "gas"), evm.gas);
+        printf(" (expected : %" PRIu64 ", but got %" PRIu64 "", d_get_long(test, "gas"), evm.gas);
         fail = 1;
       }
 #endif

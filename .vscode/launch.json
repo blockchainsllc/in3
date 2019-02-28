@@ -68,7 +68,7 @@
                 "-t",
                 "1",
                 "-d",
-                "../test/testdata/evm/GeneralStateTests/stArgsZeroOneBalance/callNonConst.json"
+                "../test/testdata/evm/GeneralStateTests/stRandom2/randomStatetest643.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
