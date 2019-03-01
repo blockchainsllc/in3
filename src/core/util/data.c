@@ -10,6 +10,11 @@
 
 #include "debug.h" // DEBUG !!!
 
+// Here we check the pointer-size
+#if UINTPTR_MAX == 0xFFFF
+#error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
+#endif
+
 typedef struct keyname {
   char*           name;
   d_key_t         key;
@@ -18,7 +23,7 @@ typedef struct keyname {
 static uint8_t    __track_keys = 0;
 static keyname_t* __keynames   = NULL;
 
-d_key_t key(char* c) {
+d_key_t key(const char* c) {
   uint16_t val = 0;
   while (true) {
     if (*c == 0) return val;
@@ -27,7 +32,7 @@ d_key_t key(char* c) {
   }
   return val;
 }
-d_key_t keyn(char* c, int len) {
+d_key_t keyn(const char* c, const int len) {
   uint16_t val = 0;
   int      i   = 0;
   for (; i < len; i++) {
@@ -57,35 +62,51 @@ static d_key_t add_key(char* c, int len) {
   return k;
 }
 
-bytes_t* d_bytes(d_token_t* item) {
+static size_t d_token_size(const d_token_t* item) {
+  if (item == NULL) return 0;
+  size_t i, c = 1;
+  switch (d_type(item)) {
+    case T_ARRAY:
+    case T_OBJECT:
+      for (i = 0; i < (item->len & 0xFFFFFFF); i++)
+        c += d_token_size(item + c);
+      return c;
+    default:
+      return 1;
+  }
+}
+
+bytes_t* d_bytes(const d_token_t* item) {
   return (bytes_t*) item;
 }
 
 bytes_t d_to_bytes(d_token_t* item) {
-  bytes_t dst;
   switch (d_type(item)) {
     case T_BYTES:
-      dst.data = item->data;
-      dst.len  = item->len;
-      return dst;
+      return bytes(item->data, item->len);
     case T_STRING:
-      dst.data = item->data;
-      dst.len  = d_len(item);
-      return dst;
+      return bytes(item->data, d_len(item));
     case T_INTEGER:
-      dst.len  = d_bytes_to(item, (uint8_t*) &item->data, 4);
+    case T_BOOLEAN: {
+      bytes_t dst;
+      // why do we need this cast?
+      // Because here we set the pointer to the pointer-field in the token.
+      // Since a int/bool does not need the data-pointer, we simply reuse that memory and store the
+      // bigendian representation of the int there.
+      // but since we cannot accept a pointersize that is smaller than 32bit,
+      // we have this check at the top of this file.
       dst.data = (uint8_t*) &item->data;
+      dst.len  = d_bytes_to(item, dst.data, 4);
       dst.data += 4 - dst.len;
       return dst;
+    }
     case T_NULL:
     default:
-      dst.len  = 0;
-      dst.data = NULL;
-      return dst;
+      return bytes(NULL, 0);
   }
 }
 
-int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
+int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
   if (item) {
     int l = d_len(item), i, val;
     if (l > max) l = max;
@@ -134,58 +155,14 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, int max) {
   return 0;
 }
 
-bytes_t* d_create_bytes(d_token_t* item) {
-  if (item) {
-    int      l   = d_len(item), i, val;
-    bytes_t* res = _malloc(sizeof(bytes_t));
-    switch (d_type(item)) {
-      case T_BYTES:
-        res->data = _malloc(d_len(item));
-        res->len  = item->len;
-        memcpy(res->data, item->data, res->len);
-        return res;
-
-      case T_STRING:
-        res->len  = d_len(item);
-        res->data = _malloc(res->len + 1);
-        memcpy(res->data, item->data, res->len + 1);
-        return res;
-      case T_BOOLEAN:
-        res->len     = 1;
-        res->data    = _malloc(1);
-        res->data[0] = item->len & 1;
-        return res;
-      case T_INTEGER:
-        val = item->len & 0xFFFFFFF;
-        for (i = 3; i >= 0; i--) {
-          if (val & 0xFF << (i << 3)) {
-            l         = i + 1;
-            res->len  = l;
-            res->data = _malloc(l);
-            for (; i >= 0; i--)
-              res->data[l - i - 1] = val & 0xFF << (i << 3);
-            return res;
-          }
-        }
-        break;
-      default:
-        break;
-    }
-    res->data = NULL;
-    res->len  = 0;
-    return res;
-  }
-  return NULL;
-}
-
-char* d_string(d_token_t* item) {
+char* d_string(const d_token_t* item) {
   if (item == NULL) return NULL;
   return (char*) item->data;
 }
-int d_int(d_token_t* item) {
+uint32_t d_int(const d_token_t* item) {
   return d_intd(item, 0);
 }
-int d_intd(d_token_t* item, int def_val) {
+uint32_t d_intd(const d_token_t* item, const uint32_t def_val) {
   if (item == NULL) return def_val;
   switch (d_type(item)) {
     case T_INTEGER:
@@ -198,19 +175,19 @@ int d_intd(d_token_t* item, int def_val) {
   }
 }
 
-bytes_t** d_create_bytes_vec(d_token_t* arr) {
+bytes_t** d_create_bytes_vec(const d_token_t* arr) {
   if (arr == NULL) return NULL;
-  int        l   = d_len(arr), i;
-  bytes_t**  dst = _calloc(l + 1, sizeof(bytes_t*));
-  d_token_t* t   = arr + 1;
+  int              l   = d_len(arr), i;
+  bytes_t**        dst = _calloc(l + 1, sizeof(bytes_t*));
+  const d_token_t* t   = arr + 1;
   for (i = 0; i < l; i++, t += d_token_size(t)) dst[i] = d_bytes(t);
   return dst;
 }
 
-uint64_t d_long(d_token_t* item) {
+uint64_t d_long(const d_token_t* item) {
   return d_longd(item, 0L);
 }
-uint64_t d_longd(d_token_t* item, uint64_t def_val) {
+uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
   if (item == NULL) return def_val;
   if (d_type(item) == T_INTEGER)
     return item->len & 0xFFFFFFF;
@@ -220,28 +197,7 @@ uint64_t d_longd(d_token_t* item, uint64_t def_val) {
   return 0;
 }
 
-d_type_t d_type(d_token_t* item) {
-  return item == NULL ? T_NULL : (item->len & 0xF0000000) >> 28;
-}
-int d_len(d_token_t* item) {
-  return item == NULL ? 0 : item->len & 0xFFFFFFF;
-}
-
-size_t d_token_size(d_token_t* item) {
-  if (item == NULL) return 0;
-  size_t i, c = 1;
-  switch (d_type(item)) {
-    case T_ARRAY:
-    case T_OBJECT:
-      for (i = 0; i < (item->len & 0xFFFFFFF); i++)
-        c += d_token_size(item + c);
-      return c;
-    default:
-      return 1;
-  }
-}
-
-int d_eq(d_token_t* a, d_token_t* b) {
+bool d_eq(const d_token_t* a, const d_token_t* b) {
   if (a == NULL || b == NULL) return false;
   if (a->len != b->len) return false;
   if (a->data && b->data)
@@ -249,7 +205,7 @@ int d_eq(d_token_t* a, d_token_t* b) {
   return a->data == NULL && b->data == NULL;
 }
 
-d_token_t* d_get(d_token_t* item, uint16_t key) {
+d_token_t* d_get(d_token_t* item, const uint16_t key) {
   if (item == NULL /*|| item->len & 0xF0000000 != 0x30000000*/) return NULL;
   int i = 0, l = item->len & 0xFFFFFFF;
   item += 1;
@@ -258,7 +214,7 @@ d_token_t* d_get(d_token_t* item, uint16_t key) {
   }
   return NULL;
 }
-d_token_t* d_get_or(d_token_t* item, uint16_t key, uint16_t key2) {
+d_token_t* d_get_or(d_token_t* item, const uint16_t key, const uint16_t key2) {
   if (item == NULL) return NULL;
   d_token_t* s = NULL;
   int        i = 0, l = item->len & 0xFFFFFFF;
@@ -270,9 +226,9 @@ d_token_t* d_get_or(d_token_t* item, uint16_t key, uint16_t key2) {
   return s;
 }
 
-d_token_t* d_get_at(d_token_t* item, int index) {
+d_token_t* d_get_at(d_token_t* item, const uint32_t index) {
   if (item == NULL) return NULL;
-  int i = 0, l = item->len & 0xFFFFFFF;
+  uint32_t i = 0, l = item->len & 0xFFFFFFF;
   item += 1;
   for (; i < l; i++, item += d_token_size(item)) {
     if (i == index) return item;

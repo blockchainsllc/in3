@@ -18,9 +18,10 @@
     b       = p;   \
   }
 
+#ifndef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
-
+#endif
 typedef uint32_t      pb_size_t;
 typedef uint_least8_t pb_byte_t;
 

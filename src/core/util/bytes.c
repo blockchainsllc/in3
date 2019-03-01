@@ -65,10 +65,9 @@ void b_free(bytes_t* a) {
 
 bytes_t* b_dup(bytes_t* a) {
   bytes_t* out = _calloc(1, sizeof(bytes_t));
-
-  out->data = _calloc(1, a->len);
-  out->data = memcpy(out->data, a->data, a->len);
-  out->len  = a->len;
+  out->data    = _calloc(1, a->len);
+  out->data    = memcpy(out->data, a->data, a->len);
+  out->len     = a->len;
 
   return out;
 }

@@ -131,15 +131,15 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
 
 /** verify the header */
 int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
-  int res = 0, i;
 
   if (!header)
     return vc_err(vc, "no header found");
 
+  int        res = 0, i;
+  uint8_t    block_hash[32];
   uint64_t   header_number = 0;
   d_token_t *sig, *signatures;
   bytes_t    temp, *sig_hash;
-  uint8_t    block_hash[32];
 
   // generate the blockhash;
   sha3_to(header, &block_hash);

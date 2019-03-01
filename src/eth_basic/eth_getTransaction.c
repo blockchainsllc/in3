@@ -21,10 +21,10 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   uint8_t    hash[32], pubkey[65], sdata[64];
   bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
 
-  bytes_t* r        = d_get_bytesk(tx, K_R);
-  bytes_t* s        = d_get_bytesk(tx, K_S);
-  int      v        = d_get_intk(tx, K_V);
-  int      chain_id = v > 35 ? (v - 35) / 2 : 0;
+  bytes_t*     r        = d_get_bytesk(tx, K_R);
+  bytes_t*     s        = d_get_bytesk(tx, K_S);
+  uint_fast8_t v        = d_get_intk(tx, K_V);
+  uint_fast8_t chain_id = v > 35 ? (v - 35) / 2 : 0;
 
   // check transaction hash
   if (sha3_to(raw ? raw : d_get_bytesk(tx, K_RAW), &hash) == 0 && memcmp(hash, d_get_bytesk(tx, K_HASH)->data, 32))

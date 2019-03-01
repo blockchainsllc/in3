@@ -75,7 +75,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
       if ((t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != bnumber)
         res = vc_err(vc, "Wrong Blocknumber in tx");
 
-      if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != i)
+      if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != (uint32_t) i)
         res = vc_err(vc, "Wrong Transaction index in tx");
 
       if (h && txh) {
