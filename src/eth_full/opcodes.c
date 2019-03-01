@@ -793,6 +793,9 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
   // now execute the call
   return evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
 #else
+
+  UNUSED_VAR(evm);
+  UNUSED_VAR(use_salt);
   return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
 #endif
 }

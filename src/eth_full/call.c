@@ -513,7 +513,7 @@ int evm_call(in3_vctx_t* vc,
   // we only transfer initial value if the we have caller
   if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value, 0);
 #else
-  if (value == NULL || l_value < 0) (void) gas;
+  UNUSED_VAR(gas);
 #endif
 
 //  evm.properties     = EVM_PROP_DEBUG;

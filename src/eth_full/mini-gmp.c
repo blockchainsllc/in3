@@ -40,6 +40,9 @@ see https://www.gnu.org/licenses/.  */
    mpn/generic/mul_basecase.c, mpn/generic/rshift.c,
    mpn/generic/sbpi1_div_qr.c, mpn/generic/sub_n.c,
    mpn/generic/submul_1.c. */
+#ifndef UNUSED_VAR
+#define UNUSED_VAR(x) (void) (x)
+#endif
 
 #include <assert.h>
 #include <ctype.h>
@@ -74,6 +77,7 @@ see https://www.gnu.org/licenses/.  */
   do {                        \
     mp_limb_t __cy = (x);     \
     assert(__cy == 0);        \
+    UNUSED_VAR(__cy)          \
   } while (0)
 
 #define gmp_clz(count, x)                                            \
