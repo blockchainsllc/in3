@@ -21,10 +21,10 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   uint8_t    hash[32], pubkey[65], sdata[64];
   bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
 
-  bytes_t*     r        = d_get_bytesk(tx, K_R);
-  bytes_t*     s        = d_get_bytesk(tx, K_S);
-  uint_fast8_t v        = d_get_intk(tx, K_V);
-  uint_fast8_t chain_id = v > 35 ? (v - 35) / 2 : 0;
+  bytes_t* r        = d_get_bytesk(tx, K_R);
+  bytes_t* s        = d_get_bytesk(tx, K_S);
+  uint32_t v        = d_get_intk(tx, K_V);
+  uint32_t chain_id = v > 35 ? (v - 35) / 2 : 0;
 
   // check transaction hash
   if (sha3_to(raw ? raw : d_get_bytesk(tx, K_RAW), &hash) == 0 && memcmp(hash, d_get_bytesk(tx, K_HASH)->data, 32))
@@ -35,7 +35,7 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     return vc_err(vc, "invalid raw-value");
 
   // check standardV
-  if ((t = d_get(tx, K_STANDARD_V)) && raw && (chain_id ? v - chain_id * 2 - 8 : v) - 27 != d_int(t))
+  if ((t = d_get(tx, K_STANDARD_V)) && raw && (uint32_t)((chain_id ? (v - chain_id * 2 - 8) : v) - 27) != d_int(t))
     return vc_err(vc, "standardV is invalid");
 
   // check chain id
