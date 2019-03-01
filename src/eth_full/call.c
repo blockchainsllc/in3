@@ -401,7 +401,7 @@ int evm_sub_call(evm_t*    parent,
   if (!address) {
     new_account = evm_get_account(&evm, code_address, 1);
     // this is a create-call
-    evm.code               = b_as_bytes(data, l_data);
+    evm.code               = bytes(data, l_data);
     evm.call_data.len      = 0;
     evm.address            = code_address;
     new_account->nonce[31] = 1;

@@ -396,7 +396,7 @@ static int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   if (check_size && !src_data.data) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   if (src_data.len < (uint32_t) data_len)
-    res = evm_mem_write(evm, mem_pos + src_data.len, b_as_bytes(NULL, 0), data_len - src_data.len);
+    res = evm_mem_write(evm, mem_pos + src_data.len, bytes(NULL, 0), data_len - src_data.len);
 
   if (src_data.len && res == 0)
     res = evm_mem_write(evm, mem_pos, src_data, src_data.len);
@@ -413,16 +413,16 @@ static int op_extcodecopy(evm_t* evm) {
 #ifdef EVM_GAS
   account_t* ac = evm_get_account(evm, address, 0);
   if (ac && ac->code.len)
-    return evm_mem_write(evm, mem_pos, b_as_bytes(ac->code.data + code_pos, ac->code.len > (uint32_t) code_pos ? ac->code.len - code_pos : 0), data_len);
+    return evm_mem_write(evm, mem_pos, bytes(ac->code.data + code_pos, ac->code.len > (uint32_t) code_pos ? ac->code.len - code_pos : 0), data_len);
 #endif
 
   // address, memOffset, codeOffset, length
   int res = evm->env(evm, EVM_ENV_CODE_COPY, address, 20, &data, code_pos, data_len);
   if (res < 0)
     // we will write 0x0
-    return evm_mem_write(evm, mem_pos, b_as_bytes(NULL, 0), data_len);
+    return evm_mem_write(evm, mem_pos, bytes(NULL, 0), data_len);
   else
-    return evm_mem_write(evm, mem_pos, b_as_bytes(data, res), data_len);
+    return evm_mem_write(evm, mem_pos, bytes(data, res), data_len);
 }
 
 static int op_header(evm_t* evm, uint8_t index) {
@@ -443,7 +443,7 @@ static int op_mload(evm_t* evm) {
   if (off_len < 0) return off_len;
 
   if (evm_stack_push_ref(evm, &dst, 32)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
-  return evm_mem_read(evm, b_as_bytes(off, off_len), dst, 32);
+  return evm_mem_read(evm, bytes(off, off_len), dst, 32);
 }
 
 static int op_mstore(evm_t* evm, uint8_t len) {
@@ -458,9 +458,9 @@ static int op_mstore(evm_t* evm, uint8_t len) {
     uint8_t tmp[32];
     memset(tmp, 0, 32);
     memcpy(tmp + 32 - data_len, data, data_len);
-    return evm_mem_write(evm, offset, b_as_bytes(tmp, 32), len);
+    return evm_mem_write(evm, offset, bytes(tmp, 32), len);
   }
-  return evm_mem_write(evm, offset, b_as_bytes(data, data_len), len);
+  return evm_mem_write(evm, offset, bytes(data, data_len), len);
 }
 
 static int op_sload(evm_t* evm) {
@@ -764,7 +764,7 @@ int op_create(evm_t* evm, uint_fast8_t use_salt) {
     //  calculate the generated address
     uint8_t*         nonce = evm_get_account(evm, evm->address, true)->nonce;
     bytes_builder_t* bb    = bb_new();
-    tmp                    = b_as_bytes(evm->address, 20);
+    tmp                    = bytes(evm->address, 20);
     rlp_encode_item(bb, &tmp);
     if (big_is_zero(nonce, 32))
       tmp.len = 0;

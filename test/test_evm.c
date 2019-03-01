@@ -227,7 +227,7 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
     to_uint256(&tmp, s->value);
 
     if (tmp.len) {
-      //      bytes_t value = b_as_bytes(s->value, 32);
+      //      bytes_t value = bytes(s->value, 32);
       bb_clear(bb);
       rlp_encode_item(bb, &tmp);
       k.len  = 32;
