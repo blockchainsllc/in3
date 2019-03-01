@@ -77,7 +77,7 @@ see https://www.gnu.org/licenses/.  */
   do {                        \
     mp_limb_t __cy = (x);     \
     assert(__cy == 0);        \
-    UNUSED_VAR(__cy)          \
+    UNUSED_VAR(__cy);         \
   } while (0)
 
 #define gmp_clz(count, x)                                            \
