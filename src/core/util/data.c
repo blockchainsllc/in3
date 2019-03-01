@@ -191,6 +191,8 @@ int d_intd(d_token_t* item, int def_val) {
     case T_INTEGER:
     case T_BOOLEAN:
       return item->len & 0xFFFFFFF;
+    case T_BYTES:
+      return bytes_to_int(item->data, 4);
     default:
       return def_val;
   }
@@ -337,7 +339,15 @@ int parse_number(json_parsed_t* jp, d_token_t* item) {
     else {
       temp[i] = 0;
       jp->c += i;
-      item->len |= atoi(temp);
+
+      int res = atoi(temp); // modified for integers that doesn't fit in 28 bits
+      if (res & 0XF0000000) {
+        item->data = _malloc(4);
+        item->len  = 4;
+        int_to_bytes(res, item->data);
+      } else
+        item->len |= res;
+
       return 0;
     }
   }

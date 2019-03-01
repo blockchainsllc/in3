@@ -14,7 +14,7 @@ typedef uint8_t      bytes32_t[32]; /**< pointer to a 32byte word */
 typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byte but usually a uint) */
 
 /** a byte array */
-typedef struct {
+typedef struct bytes {
   uint32_t len;  /**< the length of the array ion bytes */
   uint8_t* data; /**< the byte-data  */
 } bytes_t;
@@ -93,16 +93,13 @@ void bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, 
 /** frees the builder and moves the content in a newly created bytes struct (which needs to be freed later). */
 bytes_t* bb_move_to_bytes(bytes_builder_t* bb);
 
-// [len][data][len] [len][data][len] [len][data][len]
-//                  ^
-// [p1]
-//
-void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
 void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
 
 static inline bytes_t b_as_bytes(uint8_t* a, uint32_t len) {
-  bytes_t b = {.data = a, .len = len};
-  return b;
+  return (bytes_t){.data = a, .len = len};
+}
+static inline bytes_t bytes(uint8_t* a, uint32_t len) {
+  return (bytes_t){.data = a, .len = len};
 }
 
 static inline void b_optimize_len(bytes_t* b) {

@@ -1,3 +1,6 @@
+/** @file 
+ * main evm-file.
+ * */
 
 #include "../core/client/verifier.h"
 #include "../core/util/bytes.h"
@@ -5,26 +8,26 @@
 #define evm_h__
 
 //#define EVM_GAS
-
+/** the current state of the evm*/
 typedef enum evm_state {
-  EVM_STATE_INIT     = 0,
-  EVM_STATE_RUNNING  = 1,
-  EVM_STATE_STOPPED  = 2,
-  EVM_STATE_REVERTED = 3
+  EVM_STATE_INIT     = 0, /**< just initialised, but not yet started */
+  EVM_STATE_RUNNING  = 1, /**< started and still running */
+  EVM_STATE_STOPPED  = 2, /**< successfully stopped */
+  EVM_STATE_REVERTED = 3  /**< stopped, but results must be reverted */
 } evm_state_t;
 
-#define EVM_ERROR_EMPTY_STACK -1
-#define EVM_ERROR_INVALID_OPCODE -2
-#define EVM_ERROR_BUFFER_TOO_SMALL -3
-#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -4
-#define EVM_ERROR_INVALID_JUMPDEST -5
-#define EVM_ERROR_INVALID_PUSH -6
-#define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -7
-#define EVM_ERROR_TIMEOUT -8
-#define EVM_ERROR_INVALID_ENV -9
-#define EVM_ERROR_OUT_OF_GAS -10
-#define EVM_ERROR_BALANCE_TOO_LOW -11
-#define EVM_ERROR_STACK_LIMIT -12
+#define EVM_ERROR_EMPTY_STACK -1             /**< the no more elements on the stack  */
+#define EVM_ERROR_INVALID_OPCODE -2          /**< the opcode is not supported  */
+#define EVM_ERROR_BUFFER_TOO_SMALL -3        /**< reading data from a position, which is not initialized  */
+#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -4   /**< the memory-offset does not exist  */
+#define EVM_ERROR_INVALID_JUMPDEST -5        /**< the jump destination is not marked as valid destination  */
+#define EVM_ERROR_INVALID_PUSH -6            /**< the push data is empy */
+#define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -7 /**< error handling the call, usually because static-calls are not allowed to change state  */
+#define EVM_ERROR_TIMEOUT -8                 /**< the evm ran into a loop  */
+#define EVM_ERROR_INVALID_ENV -9             /**< the enviroment could not deliver the data  */
+#define EVM_ERROR_OUT_OF_GAS -10             /**< not enough gas to exewcute the opcode  */
+#define EVM_ERROR_BALANCE_TOO_LOW -11        /**< not enough funds to transfer the requested value.  */
+#define EVM_ERROR_STACK_LIMIT -12            /**< stack limit reached  */
 
 #define EVM_PROP_FRONTIER 1
 #define EVM_PROP_EIP150 2
@@ -99,23 +102,23 @@ typedef struct evm {
   void*       env_ptr;
 
   // tx values
-  uint8_t* address;    /*< the address of the current storage*/
-  uint8_t* account;    /*< the address of the code */
-  uint8_t* origin;     /*< the address of original sender of the root-transaction */
-  uint8_t* caller;     /*< the address of the parent sender */
-  bytes_t  call_value; /*< value send */
-  bytes_t  call_data;  /*< data send in the tx */
-  bytes_t  gas_price;  /*< current gasprice */
+  uint8_t* address;    /**< the address of the current storage*/
+  uint8_t* account;    /**< the address of the code */
+  uint8_t* origin;     /**< the address of original sender of the root-transaction */
+  uint8_t* caller;     /**< the address of the parent sender */
+  bytes_t  call_value; /**< value send */
+  bytes_t  call_data;  /**< data send in the tx */
+  bytes_t  gas_price;  /**< current gasprice */
 
 #ifdef EVM_GAS
 
   // gas values
-  uint64_t    gas;      /*< gas left in the tx */
-  account_t*  accounts; /*< linked list of the accounts read or modified */
-  struct evm* parent;   /*< link to the parent-tx that called or crteated this one */
-  logs_t*     logs;     /*< linked list of log-entries */
-  uint64_t    refund;   /*< amount of wei reserved for refund */
-  uint64_t    init_gas; /*< inital gasLimit set in the tx */
+  uint64_t    gas;      /**< gas left in the tx */
+  account_t*  accounts; /**< linked list of the accounts read or modified */
+  struct evm* parent;   /**< link to the parent-tx that called or crteated this one */
+  logs_t*     logs;     /**< linked list of log-entries */
+  uint64_t    refund;   /**< amount of wei reserved for refund */
+  uint64_t    init_gas; /**< inital gasLimit set in the tx */
 
 #endif
 
