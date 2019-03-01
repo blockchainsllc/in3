@@ -514,6 +514,8 @@ int evm_call(in3_vctx_t* vc,
   if (res == 0 && l > 1) res = transfer_value(&evm, caller, address, value, l_value, 0);
 #else
   UNUSED_VAR(gas);
+  UNUSED_VAR(value);
+  UNUSED_VAR(l_value);
 #endif
 
 //  evm.properties     = EVM_PROP_DEBUG;
