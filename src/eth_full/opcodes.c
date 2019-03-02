@@ -1002,7 +1002,7 @@ int evm_execute(evm_t* evm) {
     case 0xF2: // CALLCODE
       op_exec(op_call(evm, CALL_CODE), G_CALL);
     case 0xF3: // RETURN
-      op_exec(op_return(evm, 0), 0);
+      return op_return(evm, 0);
     case 0xF4: // DELEGATE_CALL
       op_exec(op_call(evm, CALL_DELEGATE), G_CALL);
     case 0xF5: // CREATE2
