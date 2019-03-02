@@ -12,12 +12,12 @@ typedef struct {
 typedef struct eth_tx {
   bytes32_t hash;              /**< the blockhash */
   bytes32_t block_hash;        /**< hash of ther containnig block */
-  u_int64_t block_number;      /**< number of the containing block */
+  uint64_t  block_number;      /**< number of the containing block */
   address_t from;              /**< sender of the tx */
-  u_int64_t gas;               /**< gas send along */
-  u_int64_t gas_price;         /**< gas price used */
+  uint64_t  gas;               /**< gas send along */
+  uint64_t  gas_price;         /**< gas price used */
   bytes_t   data;              /**< data send along with the transaction */
-  u_int64_t nonce;             /**< nonce of the transaction */
+  uint64_t  nonce;             /**< nonce of the transaction */
   address_t to;                /**< receiver of the address 0x0000.. -Address is used for contract creation. */
   uint256_t value;             /**< the value in wei send */
   int       transaction_index; /**< the transaction index */
