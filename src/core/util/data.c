@@ -191,10 +191,9 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
   if (item == NULL) return def_val;
   if (d_type(item) == T_INTEGER)
     return item->len & 0xFFFFFFF;
-  else if (d_type(item) == T_BYTES) {
+  else if (d_type(item) == T_BYTES)
     return bytes_to_long(item->data, item->len);
-  }
-  return 0;
+  return def_val;
 }
 
 bool d_eq(const d_token_t* a, const d_token_t* b) {

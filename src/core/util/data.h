@@ -120,12 +120,9 @@ typedef struct {
 } d_iterator_t;
 
 static inline d_iterator_t d_iter(d_token_t* parent) { return (d_iterator_t){.i = d_len(parent), .token = parent + 1}; } /**< creates a iterator for a object or array */
-static inline d_token_t*   d_iter_next(d_iterator_t* const iter) {
-  if (!iter->i) return NULL;
-  iter->i--;
-  d_token_t* t = iter->token;
-  iter->token  = d_next(iter->token);
-  return t;
+static inline bool         d_iter_next(d_iterator_t* const iter) {
+  iter->token = d_next(iter->token);
+  return iter->i--;
 } /**< fetched the next token or null if the end is reached.*/
 
 #endif
