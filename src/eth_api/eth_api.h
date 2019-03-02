@@ -1,9 +1,20 @@
+/** @file 
+ * Ethereum API.
+ * 
+ * This header-file defines easy to use function, which are preparing the JSON-RPC-Request, which is then executed and verified by the incubed-client.
+ * */
+
 #ifndef ETH_API_H
 #define ETH_API_H
 
 #include "../core/client/client.h"
 #include "../core/util/utils.h"
 
+/** 
+ * a 32 byte long integer used to store ethereum-numbers. 
+ * 
+ * use the as_long() or as_double() to convert this to a useable number.
+*/
 typedef struct {
   uint8_t data[32];
 } uint256_t;
@@ -55,7 +66,8 @@ uint64_t     eth_gasPrice(in3_t* in3);                                          
 eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx); /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);    /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 
-char*       eth_last_error(); /**< the current error or null if all is ok */
-long double as_double(uint256_t d);
-uint64_t    as_long(uint256_t d);
+char*       eth_last_error();       /**< the current error or null if all is ok */
+long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
+uint64_t    as_long(uint256_t d);   /**< converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
+
 #endif
