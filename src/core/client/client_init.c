@@ -46,6 +46,7 @@ static void in3_client_init(in3_t* c) {
 
   c->autoUpdateList     = 1;
   c->cacheStorage       = NULL;
+  c->signer             = NULL;
   c->cacheTimeout       = 0;
   c->use_binary         = 0;
   c->use_http           = 0;

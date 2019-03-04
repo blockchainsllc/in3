@@ -71,6 +71,11 @@ bytes_t* b_dup(bytes_t* a) {
 
   return out;
 }
+bytes_t cloned_bytes(bytes_t data) {
+  uint8_t* p = _malloc(data.len);
+  memcpy(p, data.data, data.len);
+  return (bytes_t){.data = p, .len = data.len};
+}
 
 uint8_t b_read_byte(bytes_t* b, size_t* pos) {
   uint8_t val = *(uint8_t*) (b->data + *pos);

@@ -7,25 +7,28 @@
 #include <stdio.h>
 #include <string.h>
 
-#define rpc_init sb_t* params = params_new();
-#define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                             \
-  errno              = 0;                                                        \
-  in3_ctx_t*  ctx    = in3_client_rpc_ctx(in3, (METHOD), params_finish(params)); \
-  d_token_t*  result = get_result(ctx);                                          \
-  RETURN_TYPE res;                                                               \
-  if (result)                                                                    \
-    res = (HANDLE_RESULT);                                                       \
-  else                                                                           \
-    memset(&res, 0, sizeof(RETURN_TYPE));                                        \
-  free_ctx(ctx);                                                                 \
-  sb_free(params);                                                               \
+// create the params as stringbuilder
+#define rpc_init sb_t* params = sb_new("[");
+
+// execute the request after the params have been set.
+#define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                                      \
+  errno              = 0;                                                                 \
+  in3_ctx_t*  ctx    = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
+  d_token_t*  result = get_result(ctx);                                                   \
+  RETURN_TYPE res;                                                                        \
+  if (result)                                                                             \
+    res = (HANDLE_RESULT);                                                                \
+  else                                                                                    \
+    memset(&res, 0, sizeof(RETURN_TYPE));                                                 \
+  free_ctx(ctx);                                                                          \
+  sb_free(params);                                                                        \
   return res;
 
+// last error string
 static char* last_error = NULL;
-char*        eth_last_error() {
-  return last_error;
-}
+char*        eth_last_error() { return last_error; }
 
+// sets the error and a message
 static void set_errorn(int std_error, char* msg, int len) {
   errno = std_error;
   if (last_error) _free(last_error);
@@ -33,10 +36,12 @@ static void set_errorn(int std_error, char* msg, int len) {
   memcpy(last_error, msg, len);
   last_error[len] = 0;
 }
+// sets the error and a message
 static void set_error(int std_error, char* msg) {
   set_errorn(std_error, msg, strlen(msg));
 }
 
+/** copies bytes to a fixed length destination (leftpadding 0 if needed).*/
 static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
   if (data.len > len)
     memcpy(dst, data.data + data.len - len, len);
@@ -49,6 +54,7 @@ static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
     memset(dst, 0, len);
 }
 
+/** converts a uint256 to a long double */
 long double as_double(uint256_t d) {
   uint8_t* p = d.data;
   int      l = 32;
@@ -62,53 +68,44 @@ long double as_double(uint256_t d) {
     return val + bytes_to_long(d.data + 24, 8);
   }
 }
+/** converts a uint256_t to a int (by taking the last 8 bytes) */
 uint64_t as_long(uint256_t d) {
   return bytes_to_long(d.data + 32 - 8, 8);
 }
 
+/** creates a uin256_t from a flexible byte */
 static uint256_t uint256_from_bytes(bytes_t bytes) {
   uint256_t d;
   copy_fixed(d.data, 32, bytes);
   return d;
 }
 
-static void long_to_hex(uint64_t n, char* dst) {
-  sprintf(dst, "0x%" PRIu64 "", n);
-}
-
+/** returns the result from a previously executed ctx*/
 static d_token_t* get_result(in3_ctx_t* ctx) {
   d_token_t* res = d_get(ctx->responses[0], K_RESULT);
-  if (res) return res;
-  if (ctx->error)
-    set_error(ETIMEDOUT, ctx->error);
-  else {
-    d_token_t* r = d_get(ctx->responses[0], K_ERROR);
-    // the response was correct but contains a error-object, which we convert into a string
-    if (d_type(r) == T_OBJECT) {
-      str_range_t s = d_to_json(r);
-      set_errorn(ETIMEDOUT, s.data, s.len);
-    } else
-      set_errorn(ETIMEDOUT, d_string(r), d_len(r));
+  if (res) return res;                                // everthing is good, we have a result
+  if (ctx->error)                                     // error means something went wrong during verification or a timeout occured.
+    set_error(ETIMEDOUT, ctx->error);                 // so we copy the error as last_error
+  else {                                              // but since we did not get a result and even without a error
+    d_token_t* r = d_get(ctx->responses[0], K_ERROR); // we find the error in the response from the server
+    if (d_type(r) == T_OBJECT) {                      // the response was correct but contains a error-object, which we convert into a string
+      str_range_t s = d_to_json(r);                   // this will not work, if we used binary-format, since we don't know the propnames in this case!!!
+      set_errorn(ETIMEDOUT, s.data, s.len);           // set error as json
+    } else                                            // or we have a string
+      set_errorn(ETIMEDOUT, d_string(r), d_len(r));   // and can simply copy it
   }
   return NULL;
 }
 
-static sb_t* params_new() {
-  return sb_new("[");
-}
-
-static char* params_finish(sb_t* sb) {
-  return sb_add_char(sb, ']')->data;
-}
+/** adds a number as hex */
 static void params_add_number(sb_t* sb, uint64_t num) {
-  if (sb->len > 1) sb_add_char(sb, ',');
   char tmp[30];
-  long_to_hex(num, tmp);
-  sb_add_char(sb, '"');
+  if (sb->len > 1) sb_add_char(sb, ',');
+  sprintf(tmp, "\"0x%" PRIu64 "\"", num);
   sb_add_chars(sb, tmp);
-  sb_add_char(sb, '"');
 }
 
+/** adding blocknumber, where bn==0 means 'latest' */
 static void params_add_blocknumber(sb_t* sb, uint64_t bn) {
   if (bn)
     params_add_number(sb, bn);
@@ -118,26 +115,21 @@ static void params_add_blocknumber(sb_t* sb, uint64_t bn) {
   }
 }
 
+/** add ther raw bytes as hex*/
 static void params_add_bytes(sb_t* sb, bytes_t data) {
   if (sb->len > 1) sb_add_char(sb, ',');
   sb_add_bytes(sb, "", &data, 1, false);
 }
 
+/** add a booleans as true or false */
 static void params_add_bool(sb_t* sb, bool val) {
   if (sb->len > 1) sb_add_char(sb, ',');
   sb_add_chars(sb, val ? "true" : "false");
 }
 
+/** copy the data from the token to a eth_tx_t-object */
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
-  bytes_t b = d_to_bytes(d_get(t, K_INPUT));
-  memcpy(tx + sizeof(eth_tx_t), b.data, b.len);
-  copy_fixed(tx->block_hash, 32, d_to_bytes(d_get(t, K_BLOCK_HASH)));
-  copy_fixed(tx->from, 20, d_to_bytes(d_get(t, K_FROM)));
-  copy_fixed(tx->to, 20, d_to_bytes(d_get(t, K_TO)));
-  copy_fixed(tx->value.data, 32, d_to_bytes(d_get(t, K_VALUE)));
-  copy_fixed(tx->hash, 32, d_to_bytes(d_get(t, K_HASH)));
-  copy_fixed(tx->signature, 32, d_to_bytes(d_get(t, K_R)));
-  copy_fixed(tx->signature + 32, 32, d_to_bytes(d_get(t, K_S)));
+  bytes_t b             = d_to_bytes(d_get(t, K_INPUT));
   tx->signature[64]     = d_get_intk(t, K_V);
   tx->block_number      = d_get_longk(t, K_NUMBER);
   tx->gas               = d_get_longk(t, K_GAS);
@@ -145,15 +137,36 @@ static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   tx->nonce             = d_get_longk(t, K_NONCE);
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
   tx->transaction_index = d_get_intk(t, K_TRANSACTION_INDEX);
+  memcpy(tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
+  copy_fixed(tx->block_hash, 32, d_to_bytes(d_get(t, K_BLOCK_HASH)));
+  copy_fixed(tx->from, 20, d_to_bytes(d_get(t, K_FROM)));
+  copy_fixed(tx->to, 20, d_to_bytes(d_get(t, K_TO)));
+  copy_fixed(tx->value.data, 32, d_to_bytes(d_get(t, K_VALUE)));
+  copy_fixed(tx->hash, 32, d_to_bytes(d_get(t, K_HASH)));
+  copy_fixed(tx->signature, 32, d_to_bytes(d_get(t, K_R)));
+  copy_fixed(tx->signature + 32, 32, d_to_bytes(d_get(t, K_S)));
 
   return sizeof(eth_tx_t) + b.len;
 }
-static uint32_t get_tx_size(d_token_t* tx) {
-  return d_to_bytes(d_get(tx, K_INPUT)).len + sizeof(eth_tx_t);
-}
 
+/** calculate the tx size as struct+data */
+static uint32_t get_tx_size(d_token_t* tx) { return d_to_bytes(d_get(tx, K_INPUT)).len + sizeof(eth_tx_t); }
+
+/** 
+ * allocates memory for the block and all required lists like the transactions and copies the data.
+ * 
+ * this allocates more memory than just the block-struct, but does it with one malloc!
+ * so the structure looksm like this:
+ * 
+ * struct {
+ *   eth_block_t block;
+ *   uint8_t[]   extra_data;
+ *   bytes_t[]   seal_fields;
+ *   uint8_t[]   seal_fields bytes-datas;
+ *   eth_tx_t[]  transactions including their data;
+ * }
+ */
 static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
-  eth_block_t* res = NULL;
   if (result) {
     if (d_type(result) == T_NULL)
       set_error(EAGAIN, "Block does not exist");
@@ -165,16 +178,15 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       // calc size
       uint32_t s = sizeof(eth_block_t);
       if (include_tx) {
-        for (d_iterator_t it = d_iter(txs); it.i; d_iter_next(&it))
-          s += get_tx_size(it.token);
-      } else
-        s += 32 * d_len(txs);
-
-      s += extra.len;
-      for (d_iterator_t sf = d_iter(sealed); sf.i; d_iter_next(&sf)) {
+        for (d_iterator_t it = d_iter(txs); it.left; d_iter_next(&it))
+          s += get_tx_size(it.token); // add all struct-size for each transaction
+      } else                          // or
+        s += 32 * d_len(txs);         // just the transaction hashes
+      s += extra.len;                 // extra-data
+      for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
         bytes_t t = d_to_bytes(sf.token);
         rlp_decode(&t, 0, &t);
-        s += t.len + sizeof(bytes_t);
+        s += t.len + sizeof(bytes_t); // for each field in the selad-fields we need a bytes_t-struct in the array + the data itself
       }
 
       // copy data
@@ -183,7 +195,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
         set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
-      uint8_t* p = (uint8_t*) b + sizeof(eth_block_t);
+      uint8_t* p = (uint8_t*) b + sizeof(eth_block_t); // pointer where we add the next data after the block-struct
       copy_fixed(b->author, 20, d_to_bytes(d_get(result, K_AUTHOR)));
       copy_fixed(b->difficulty.data, 32, d_to_bytes(d_get(result, K_DIFFICULTY)));
       copy_fixed(b->hash, 32, d_to_bytes(d_get(result, K_HASH)));
@@ -204,10 +216,10 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       p += extra.len;
       b->seal_fields = (void*) p;
       p += sizeof(bytes_t) * b->seal_fields_count;
-      for (d_iterator_t sf = d_iter(sealed); sf.i; d_iter_next(&sf)) {
+      for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
         bytes_t t = d_to_bytes(sf.token);
         rlp_decode(&t, 0, &t);
-        b->seal_fields[b->seal_fields_count - sf.i] = bytes(p, t.len);
+        b->seal_fields[b->seal_fields_count - sf.left] = bytes(p, t.len);
         memcpy(p, t.data, t.len);
         p += t.len;
       }
@@ -215,7 +227,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       b->tx_data   = include_tx ? (eth_tx_t*) p : NULL;
       b->tx_hashes = include_tx ? NULL : (bytes32_t*) p;
 
-      for (d_iterator_t it = d_iter(txs); it.i; d_iter_next(&it)) {
+      for (d_iterator_t it = d_iter(txs); it.left; d_iter_next(&it)) {
         if (include_tx)
           p += write_tx(it.token, (eth_tx_t*) p);
         else {
@@ -223,10 +235,10 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
           p += 32;
         }
       }
-      res = b;
+      return b;
     }
   }
-  return res;
+  return NULL;
 }
 
 eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx) {
@@ -248,6 +260,19 @@ uint256_t eth_getBalance(in3_t* in3, address_t account, uint64_t block) {
   params_add_bytes(params, bytes(account, 20));
   params_add_blocknumber(params, block);
   rpc_exec("eth_getBalance", uint256_t, uint256_from_bytes(d_to_bytes(result)));
+}
+bytes_t eth_getCode(in3_t* in3, address_t account, uint64_t block) {
+  rpc_init;
+  params_add_bytes(params, bytes(account, 20));
+  params_add_blocknumber(params, block);
+  rpc_exec("eth_getCode", bytes_t, cloned_bytes(d_to_bytes(result)));
+}
+uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block) {
+  rpc_init;
+  params_add_bytes(params, bytes(account, 20));
+  params_add_bytes(params, bytes(key, 32));
+  params_add_blocknumber(params, block);
+  rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }
 
 uint64_t eth_blockNumber(in3_t* in3) {

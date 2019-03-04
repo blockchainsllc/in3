@@ -114,15 +114,25 @@ static inline bytes_t* d_get_bytes(d_token_t* r, char* k) { return d_get_bytesk(
 static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_bytes(d_get_at(r, pos)); }      /**< reads bytes at given pos of an array. */
 static inline bool     d_is_binary_ctx(json_parsed_t* ctx) { return ctx->allocated == 0; }                   /**< check if the parser context was created from binary data. */
 
+/**
+ * iterator over elements of a array opf object.
+ * 
+ * usage:
+ * ```c
+ * for (d_iterator_t iter = d_iter( parent ); iter.left ; d_iter_next(&iter)) {
+ *   uint32_t val = d_int(iter.token);
+ * }
+ * ```
+ */
 typedef struct {
-  int        i;
-  d_token_t* token;
+  int        left;  /**< number of items left */
+  d_token_t* token; /**< current token */
 } d_iterator_t;
 
-static inline d_iterator_t d_iter(d_token_t* parent) { return (d_iterator_t){.i = d_len(parent), .token = parent + 1}; } /**< creates a iterator for a object or array */
+static inline d_iterator_t d_iter(d_token_t* parent) { return (d_iterator_t){.left = d_len(parent), .token = parent + 1}; } /**< creates a iterator for a object or array */
 static inline bool         d_iter_next(d_iterator_t* const iter) {
   iter->token = d_next(iter->token);
-  return iter->i--;
-} /**< fetched the next token or null if the end is reached.*/
+  return iter->left--;
+} /**< fetched the next token an returns a boolean indicating whther there is a next or not.*/
 
 #endif

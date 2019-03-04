@@ -17,7 +17,8 @@ typedef struct cache_entry {
   struct cache_entry* next;
 } cache_entry_t;
 
-bytes_t* in3_cache_get_entry(cache_entry_t* cache, bytes_t* key);
-void     in3_cache_free(cache_entry_t* cache);
+bytes_t*       in3_cache_get_entry(cache_entry_t* cache, bytes_t* key);
+cache_entry_t* in3_cache_add_entry(cache_entry_t* cache, bytes_t key, bytes_t value);
+void           in3_cache_free(cache_entry_t* cache);
 
 #endif

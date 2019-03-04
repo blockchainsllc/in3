@@ -35,9 +35,11 @@ typedef struct {
  * function to verify the result.
  */
 typedef int (*in3_verify)(in3_vctx_t* c);
+typedef int (*in3_pre_handle)(in3_ctx_t* ctx, in3_response_t** response);
 
 typedef struct verifier {
   in3_verify       verify;
+  in3_pre_handle   pre_handle;
   in3_chain_type_t type;
   struct verifier* next;
 } in3_verifier_t;
@@ -45,7 +47,5 @@ typedef struct verifier {
 /*! returns the verifier for the given chainType */
 in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
 void            in3_register_verifier(in3_verifier_t* verifier);
-
-//in3_vc_equals()
 
 #endif

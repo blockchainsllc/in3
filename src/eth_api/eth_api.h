@@ -60,11 +60,13 @@ typedef struct eth_block {
   /* data */
 } eth_block_t;
 
-uint256_t    eth_getBalance(in3_t* in3, address_t account, uint64_t block);      /**< returns the balance of the account of given address. */
-uint64_t     eth_blockNumber(in3_t* in3);                                        /**< returns the current price per gas in wei. */
-uint64_t     eth_gasPrice(in3_t* in3);                                           /**< returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
-eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx); /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
-eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);    /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
+uint256_t    eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block); /**< returns the storage value of a given address.*/
+bytes_t      eth_getCode(in3_t* in3, address_t account, uint64_t block);                     /**< returns the code of the account of given address. (Make sure you free the data-point of the result after use.) */
+uint256_t    eth_getBalance(in3_t* in3, address_t account, uint64_t block);                  /**< returns the balance of the account of given address. */
+uint64_t     eth_blockNumber(in3_t* in3);                                                    /**< returns the current price per gas in wei. */
+uint64_t     eth_gasPrice(in3_t* in3);                                                       /**< returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
+eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx);             /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
+eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */

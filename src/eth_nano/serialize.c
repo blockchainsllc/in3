@@ -8,6 +8,29 @@
 #include <util/data.h>
 #include <util/utils.h>
 
+static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
+  if (ml == 0 && b.len == 1 && b.data[0] == 0) b.len = 0;
+  if (ml < 0) {
+    if (b.len == 0)
+      ml = 0;
+    else
+      ml = -ml;
+  }
+
+  if ((size_t) ml > b.len) {
+    // we need to fill left
+    uint8_t* tmp = _calloc(ml, 1);
+    memcpy(tmp + ml - b.len, b.data, b.len);
+    b.data = tmp;
+    b.len  = ml;
+    rlp_encode_item(rlp, &b);
+    _free(tmp);
+  } else
+    rlp_encode_item(rlp, &b);
+
+  return 0;
+}
+
 int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
   uint8_t tmp[4];
   bytes_t b;
@@ -33,26 +56,7 @@ int rlp_add(bytes_builder_t* rlp, d_token_t* t, int ml) {
       return -1;
   }
 
-  if (ml == 0 && b.len == 1 && b.data[0] == 0) b.len = 0;
-  if (ml < 0) {
-    if (b.len == 0)
-      ml = 0;
-    else
-      ml = -ml;
-  }
-
-  if ((size_t) ml > b.len) {
-    // we need to fill left
-    uint8_t* tmp = _calloc(ml, 1);
-    memcpy(tmp + ml - b.len, b.data, b.len);
-    b.data = tmp;
-    b.len  = ml;
-    rlp_encode_item(rlp, &b);
-    _free(tmp);
-  } else
-    rlp_encode_item(rlp, &b);
-
-  return 0;
+  return rlp_add_bytes(rlp, b, ml);
 }
 
 #define UINT 0
@@ -84,6 +88,28 @@ bytes_t* serialize_tx(d_token_t* tx) {
   rlp_add(rlp, d_get(tx,K_V)                 , UINT);
   rlp_add(rlp, d_get(tx,K_R)                 , UINT);
   rlp_add(rlp, d_get(tx,K_S)                 , UINT);
+  // clang-format on
+  return bb_move_to_bytes(rlp_encode_to_list(rlp));
+}
+
+bytes_t* serialize_tx_raw(bytes_t nonce, bytes_t gas_price, bytes_t gas_limit, bytes_t to, bytes_t value, bytes_t data, uint64_t v, bytes_t r, bytes_t s) {
+  bytes_builder_t* rlp = bb_new();
+  // clang-format off
+  rlp_add_bytes(rlp, nonce             , UINT);
+  rlp_add_bytes(rlp, gas_price         , UINT);
+  rlp_add_bytes(rlp, gas_limit         , UINT);
+  rlp_add_bytes(rlp, to                , ADDRESS);
+  rlp_add_bytes(rlp, value             , UINT);
+  rlp_add_bytes(rlp, data              , BYTES);
+  if (v) {
+     uint8_t tmp[8],*p=tmp,l=8;
+     long_to_bytes(v,tmp);
+     optimize_len(p,l);
+    rlp_add_bytes(rlp, bytes(p,l)        , UINT);
+    rlp_add_bytes(rlp, r                 , UINT);
+    rlp_add_bytes(rlp, s                 , UINT);
+  }
+
   // clang-format on
   return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }

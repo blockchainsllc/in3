@@ -3,6 +3,7 @@
 #include "../eth_nano/merkle.h"
 #include "../eth_nano/rlp.h"
 #include "../eth_nano/serialize.h"
+#include "signer.h"
 #include <client/context.h>
 #include <client/keys.h>
 #include <crypto/ecdsa.h>
@@ -43,6 +44,7 @@ int in3_verify_eth_basic(in3_vctx_t* vc) {
 void in3_register_eth_basic() {
   in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
   v->type           = CHAIN_ETH;
+  v->pre_handle     = eth_handle_intern;
   v->verify         = in3_verify_eth_basic;
   in3_register_verifier(v);
 }

@@ -99,6 +99,8 @@ static inline bytes_t bytes(uint8_t* a, uint32_t len) {
   return (bytes_t){.data = a, .len = len};
 }
 
+bytes_t cloned_bytes(bytes_t data);
+
 static inline void b_optimize_len(bytes_t* b) {
   while (b->len > 1 && *b->data == 0) {
     b->data++;

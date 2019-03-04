@@ -10,7 +10,7 @@
 
 #include "debug.h" // DEBUG !!!
 
-// Here we check the pointer-size
+// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
 #if UINTPTR_MAX == 0xFFFF
 #error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
 #endif

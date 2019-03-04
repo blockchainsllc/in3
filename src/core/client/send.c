@@ -126,26 +126,11 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
   return res;
 }
 
-static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response) {
-  node_weight_t* w     = ctx->nodes;
-  in3_chain_t*   chain = NULL;
+static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
+  node_weight_t* w = ctx->nodes;
   int            n, i, res;
 
-  // find the chain-config.
-  for (i = 0; i < ctx->client->chainsCount; i++) {
-    chain = ctx->client->chains + i;
-    if (chain->chainId == ctx->client->chainId) break;
-  }
-
-  if (chain == NULL) return false;
-
   // find the verifier
-  in3_verifier_t* verifier = in3_get_verifier(chain->type);
-  if (verifier == NULL && ctx->client->proof != PROOF_NONE) {
-    ctx_set_error(ctx, "No Verifier found", -1);
-    return false;
-  }
-
   in3_vctx_t vc;
   vc.ctx   = ctx;
   vc.chain = chain;
@@ -197,10 +182,10 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
 
 int in3_send_ctx(in3_ctx_t* ctx) {
   // find the nodes to send the request to
-  int i, nodes_count;
-
-  in3_response_t* response;
-  int             res = in3_node_list_pick_nodes(ctx, &ctx->nodes);
+  int             i, nodes_count;
+  in3_response_t* response = NULL;
+  in3_chain_t*    chain    = NULL;
+  int             res      = in3_node_list_pick_nodes(ctx, &ctx->nodes);
   if (res < 0)
     return ctx_set_error(ctx, "could not find any node", res);
   nodes_count = ctx_nodes_len(ctx->nodes);
@@ -215,13 +200,39 @@ int in3_send_ctx(in3_ctx_t* ctx) {
   if (!ctx->client->transport)
     return ctx_set_error(ctx, "no transport set", IN3_ERR_CONFIG_ERROR);
 
-  res = send_request(ctx, nodes_count, &response);
+  // find the chain-config.
+  for (i = 0; i < ctx->client->chainsCount; i++) {
+    if (ctx->client->chains[i].chainId == ctx->client->chainId) {
+      chain = ctx->client->chains + i;
+      break;
+    }
+  }
+  if (chain == NULL) return false;
+
+  // find the verifier
+  in3_verifier_t* verifier = in3_get_verifier(chain->type);
+  if (verifier == NULL) {
+    ctx_set_error(ctx, "No Verifier found", -1);
+    return false;
+  }
+
+  // do we need to handle it inside?
+  if (verifier->pre_handle) {
+    res = verifier->pre_handle(ctx, &response);
+    if (res < 0)
+      return ctx_set_error(ctx, "The request could not be send", res);
+  }
+
+  // no response yet, so we ask the transport to give us a response.
+  if (response == NULL)
+    res = send_request(ctx, nodes_count, &response);
+
+  // this is not acceptable, so we consider no reponse as an error.
   if (res < 0 || response == NULL)
     return ctx_set_error(ctx, "The request could not be send", res);
-  // verify responses
 
   // verify responses and return the node with the correct result.
-  bool is_valid = find_valid_result(ctx, nodes_count, response);
+  bool is_valid = find_valid_result(ctx, nodes_count, response, chain, verifier);
 
   // clean up responses exycept the response we want to keep.
   for (i = 0; i < nodes_count; i++) {

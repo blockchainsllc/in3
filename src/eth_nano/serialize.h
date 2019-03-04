@@ -27,6 +27,15 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt);
 bytes_t* serialize_tx(d_token_t* tx);
 
 /**
+ * creates rlp-encoded raw bytes for a transaction from direct values.
+ * 
+ * The bytes must be freed with b_free after use!
+ * 
+ * 
+ */
+bytes_t* serialize_tx_raw(bytes_t nonce, bytes_t gas_price, bytes_t gas_limit, bytes_t to, bytes_t value, bytes_t data, uint64_t v, bytes_t r, bytes_t s);
+
+/**
  * creates rlp-encoded raw bytes for a account.
  * 
  * The bytes must be freed with b_free after use!
