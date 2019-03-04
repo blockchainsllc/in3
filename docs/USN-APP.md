@@ -453,10 +453,15 @@ static struct bt_gatt_attr msg_attrs[] = {
 So, as you can see, we have a GATT (Generic ATTribute) that defines:
 ```ts
 [0] the primary service (the container)
-[1] one channel / service that has the property to be writeable, the permission to write and the callback for the event rised when a request comes from BLE stack. Also, there is a pointer to the buffer that will contain the data. In the example the callback is "rx_data" and the buffer is "recv_buf_static"
-[2] one channel / service that has the property to be readable, the permission to read and the callback for the event rised when a request comes from BLE stack. In the example the callback is "read_req" and the buffer pointer is "req_buf"
-[3] one channel / service that has the property of "notify" and no permissions. The "notify" property is the way the server uses to communicate to the client that has to read some data from the server
-[4] the low-level communication service. This is used, for example, when the App tries to modify the standard MTU. The MTU is the standard packet size used by the protocol to rend / receive data.
+[1] one channel / service that has the property to be writeable, the permission to write and the callback for the event
+    rised when a request comes from BLE stack. Also, there is a pointer to the buffer that will contain the data.
+    In the example the callback is "rx_data" and the buffer is "recv_buf_static"
+[2] one channel / service that has the property to be readable, the permission to read and the callback for the event
+    rised when a request comes from BLE stack. In the example the callback is "read_req" and the buffer pointer is "req_buf"
+[3] one channel / service that has the property of "notify" and no permissions. The "notify" property is the way
+    the server uses to communicate to the client that has to read some data from the server
+[4] the low-level communication service. This is used, for example, when the App tries to modify the standard MTU.
+    The MTU is the standard packet size used by the protocol to rend / receive data.
 ```
 So, when the App wants to send data to the device, it uses the characteristic [1] of the GATT service [0];
 when the App wants to read data from the device, it uses the characteristic [2] of the GATT service [0];
@@ -517,6 +522,6 @@ The same does NOT apply to the data sent from the App to the device. If the data
 ```
 The "trick" is very simple. I suggest to have a look at the C sources of the hw-test FW in in3-c/samples and also to look at the test App sources to see both the ends of the BT communication process. For example, if we have to send 400 bytes of data and the MTU is lower, for example if it is just 20 (remember, the real space is MTU -3, cause the 3 bytes of header is a fix value) then we initially send a packet that contains a "magical number" plus the true data length (400 in this case).
 In the C source you can read: if the received packet length is 8 and if the first 4 bytes are the "magical number" then this packet is a start of one splitted transmission. So, in that case, the buffers are cleared, the counters necessary for joining the splitted packets are initialized and then all is ready to receive the next small packets. Every packet is queued to the previous in the "big receive buffer" and when the total of received data is equal the the one received in the "magical" packet, then the receiption is complete and you can handle the data.
-The "magical number" used in the C source is 0x696e3363. I used, in my hw-test, a different one: 0xF0CACC1A, just 'cause I found it in some memory integrity check function and I agreed with the authors: FOCACCIA is better than DEADBEEF.
+The "magical number" used in the C source is 0x696e3363 or "in3c" in ASCII. I used, in my hw-test, a different one: 0xF0CACC1A, just 'cause I found it in some memory integrity check function and I agreed with the authors: FOCACCIA is better than DEADBEEF.
 
 
