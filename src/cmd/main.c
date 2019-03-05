@@ -8,6 +8,7 @@
 #include <in3_curl.h>
 #include <in3_storage.h>
 #include <math.h>
+#include <signer.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,10 +52,14 @@ int main(int argc, char* argv[]) {
   c->requestCount = 1;
   c->cacheStorage = &storage_handler;
   in3_cache_init(c);
+  bytes32_t pk;
 
   // fill from args
   for (i = 1; i < argc; i++) {
-    if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
+    if (strcmp(argv[i], "-pk") == 0) {
+      hex2byte_arr(argv[++i], -1, pk, 32);
+      eth_set_pk_signer(c, pk);
+    } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
       c->chainId = getChainId(argv[++i]);
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signatureCount = atoi(argv[++i]);

@@ -37,6 +37,9 @@ void ba_print(uint8_t* a, size_t l);
 /** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
 int b_cmp(bytes_t* a, bytes_t* b);
 
+/** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+int bytes_cmp(bytes_t a, bytes_t b);
+
 /** frees the data */
 void b_free(bytes_t* a);
 

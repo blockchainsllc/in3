@@ -49,6 +49,13 @@ uint8_t strtohex(char c) {
 }
 
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {
+  if (len == -1) {
+    len = strlen(buf);
+    if (*buf == '0' && buf[1] == 'x') {
+      buf += 2;
+      len -= 2;
+    }
+  }
   int i       = len - 1;
   int out_len = (len & 1) ? (len + 1) / 2 : len / 2;
   int j       = out_len - 1;

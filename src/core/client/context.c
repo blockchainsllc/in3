@@ -51,8 +51,10 @@ int ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   d_token_t* t;
 
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
-  if (!ctx->response_context)
+  if (!ctx->response_context) {
+    // printf("\nresponse: %s\n", response_data);
     return ctx_set_error(ctx, "Error parsing the JSON-respomse!", IN3_ERR_INVALID_JSON);
+  }
 
   if (d_type(ctx->response_context->items) == T_OBJECT) {
     // it is a single result

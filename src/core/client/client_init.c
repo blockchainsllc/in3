@@ -99,6 +99,7 @@ void in3_free(in3_t* a) {
     b_free(a->chains[i].contract);
     free_json(a->chains[i].spec);
   }
+  if (a->signer) _free(a->signer);
   _free(a->chains);
   _free(a);
 }

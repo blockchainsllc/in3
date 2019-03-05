@@ -34,10 +34,16 @@ int in3_verify_eth_basic(in3_vctx_t* vc) {
   else if (strcmp(method, "eth_getBlockByHash") == 0)
     // for txReceipt, we need the txhash
     return eth_verify_eth_getBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
-  else if (strcmp(method, "eth_getBalance") == 0 || strcmp(method, "eth_getCode") == 0 || strcmp(method, "eth_getStorageAt") == 0)
+  else if (strcmp(method, "eth_getBalance") == 0 || strcmp(method, "eth_getCode") == 0 || strcmp(method, "eth_getStorageAt") == 0 || strcmp(method, "eth_getTransactionCount") == 0)
     // for txReceipt, we need the txhash
     return eth_verify_account_proof(vc);
-  else
+  else if (strcmp(method, "eth_gasPrice") == 0)
+    return 0;
+  else if (strcmp(method, "eth_sendRawTransaction") == 0) {
+    bytes32_t hash;
+    sha3_to(d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), hash);
+    return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? 0 : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
+  } else
     return in3_verify_eth_nano(vc);
 }
 

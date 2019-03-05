@@ -3,7 +3,7 @@
 
 bytes_t* in3_cache_get_entry(cache_entry_t* cache, bytes_t* key) {
   while (cache) {
-    if (b_cmp(key, &cache->key)) return &cache->value;
+    if (cache->key.data && b_cmp(key, &cache->key)) return &cache->value;
     cache = cache->next;
   }
   return NULL;
@@ -11,7 +11,7 @@ bytes_t* in3_cache_get_entry(cache_entry_t* cache, bytes_t* key) {
 void in3_cache_free(cache_entry_t* cache) {
   cache_entry_t* p;
   while (cache) {
-    _free(cache->key.data);
+    if (cache->key.data) _free(cache->key.data);
     if (cache->must_free)
       _free(cache->value.data);
     p     = cache;
