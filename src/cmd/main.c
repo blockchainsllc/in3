@@ -54,6 +54,11 @@ int main(int argc, char* argv[]) {
   in3_cache_init(c);
   bytes32_t pk;
 
+  if (getenv("IN3_PK")) {
+    hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
+    eth_set_pk_signer(c, pk);
+  }
+
   // fill from args
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) {
