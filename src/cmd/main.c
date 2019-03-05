@@ -107,6 +107,10 @@ int main(int argc, char* argv[]) {
     free(error);
     return 1;
   } else {
+    if (result[0] == '"' && result[strlen(result) - 1] == '"') {
+      memmove(result, result + 1, strlen(result) + 1);
+      result[strlen(result) - 1] = 0;
+    }
     printf("%s\n", result);
     free(result);
   }
