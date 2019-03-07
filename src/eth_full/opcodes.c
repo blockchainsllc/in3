@@ -658,7 +658,7 @@ static int op_log(evm_t* evm, uint8_t len) {
   if (memlen < 0) return memlen;
   subgas(len * G_LOGTOPIC + memlen * G_LOGDATA);
 
-  TRY(mem_check(evm, memoffset + memlen, true));
+  if (memlen) TRY(mem_check(evm, memoffset + memlen, true));
 
   logs_t* log = _malloc(sizeof(logs_t));
 

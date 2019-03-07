@@ -1,7 +1,8 @@
 
 # static lib
 add_library( in3_eth_api STATIC 
-  eth_api.c 
+eth_api.c 
+abi.c 
 )
 
 
