@@ -7,14 +7,14 @@ set(QEMU_EXTRA_FLAGS -s)
 #######################################################
 
 # typical options for USB dongle pca10059 (comment next 3 lines if NOT USB dongle)
-#OPTION(DEBUG "Set this ON for debug mode (on SDK shows dbg_log messages)" OFF)
-#OPTION(USB_DONGLE "Set this ON for USB dongle version" ON)
-#OPTION(BT_MAC "Set this to force hardcoded BT MAC address" OFF)
+OPTION(DEBUG "Set this ON for debug mode (on SDK shows dbg_log messages)" OFF)
+OPTION(USB_DONGLE "Set this ON for USB dongle version" ON)
+OPTION(BT_MAC "Set this to force hardcoded BT MAC address" OFF)
 
 # typical options for SDK board pca10056 (comment next 3 lines if NOT USDK board)
-OPTION(DEBUG "Set this ON for debug mode (on SDK shows dbg_log messages)" ON)
-OPTION(USB_DONGLE "Set this ON for USB dongle version" OFF)
-OPTION(BT_MAC "Set this to force hardcoded BT MAC address" ON)
+#OPTION(DEBUG "Set this ON for debug mode (on SDK shows dbg_log messages)" ON)
+#OPTION(USB_DONGLE "Set this ON for USB dongle version" OFF)
+#OPTION(BT_MAC "Set this to force hardcoded BT MAC address" ON)
 
 IF(USB_DONGLE)
   SET(BOARD nrf52840_pca10059)
