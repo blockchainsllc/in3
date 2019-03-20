@@ -23,6 +23,7 @@
 #define K_BLOCK_HASH        key("blockHash")
 #define K_BLOCK_NUMBER      key("blockNumber")
 #define K_TX_INDEX          key("txIndex")
+#define K_TX_HASH           key("txHash")
 #define K_MERKLE_PROOF      key("merkleProof")
 #define K_TX_PROOF          key("txProof")
 
@@ -46,6 +47,7 @@
 #define K_LOGS              key("logs")
 #define K_LOG_INDEX         key("logIndex")
 #define K_TOPICS            key("topics")
+#define K_TRANSACTION_LOG_INDEX key("transactionLogIndex")
 
 #define K_SIGNATURES        key("signatures")
 
@@ -97,3 +99,6 @@
 #define K_STORAGE_PROOF     key("storageProof")
 
 #define K_CONTRACT          key("contract")
+#define K_LOG_PROOF         key("logProof")
+#define K_RECEIPTS          key("receipts")
+#define K_REMOVED           key("removed")

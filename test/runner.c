@@ -20,6 +20,8 @@ int ignore_property(char* name, int full_proof) {
 
   // size should be verified if proof = full
   if (!full_proof && strcmp(name, "size") == 0) return 1;
+  // size should be verified if proof = full
+  if (!full_proof && strcmp(name, "logIndex") == 0) return 1;
 
   // gasUsed should be verified if proof = full
   if (!full_proof && strcmp(name, "gasUsed") == 0) return 1;
@@ -75,8 +77,13 @@ static int      fuzz_pos = -1;
 static int find_hex(char* str, int start, int len) {
   int i;
   for (i = start, str += start; i < len; i++, str++) {
-    if (*str == 'x' && i > 2 && *(str - 1) == '0' && i < len + 1 && *(str + 1) != '"')
+    if (*str == 'x' && i > 2 && *(str - 1) == '0' && i < len + 1 && *(str + 1) != '"') {
+      char* end = strchr(str, '"');
+      if (end) end++;
+      while (end && (*end == ' ' || *end == '\n' || *end == '\t')) end++;
+      if (end && *end == ':') continue;
       return i + 1;
+    }
   }
   return -1;
 }

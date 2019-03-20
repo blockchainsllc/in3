@@ -39,6 +39,8 @@ int in3_verify_eth_basic(in3_vctx_t* vc) {
     return eth_verify_account_proof(vc);
   else if (strcmp(method, "eth_gasPrice") == 0)
     return 0;
+  else if (strcmp(method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
+    return eth_verify_eth_getLog(vc, d_len(vc->result));
   else if (strcmp(method, "eth_sendRawTransaction") == 0) {
     bytes32_t hash;
     sha3_to(d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), hash);
