@@ -127,7 +127,7 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
     d_token_t *t      = NULL, *tests, *test;
     d_token_t* tokens = NULL;
 
-    if ((tests = parsed->items)) {
+    if ((tests = parsed->result)) {
       for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {
         count++;
         if (test_index < 0 || count == test_index) {
@@ -140,10 +140,10 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
 
     free(content);
     for (i = 0; i < parsed->len; i++) {
-      if (parsed->items[i].data != NULL && d_type(parsed->items + i) < 2)
-        free(parsed->items[i].data);
+      if (parsed->result[i].data != NULL && d_type(parsed->result + i) < 2)
+        free(parsed->result[i].data);
     }
-    free(parsed->items);
+    free(parsed->result);
     free(parsed);
     name = names[++n];
   }

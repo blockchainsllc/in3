@@ -26,15 +26,15 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
     int        i;
     d_token_t* t;
 
-    if (d_type(c->request_context->items) == T_OBJECT) {
+    if (d_type(c->request_context->result) == T_OBJECT) {
       // it is a single result
       c->requests    = _malloc(sizeof(d_type_t*));
-      c->requests[0] = c->request_context->items;
+      c->requests[0] = c->request_context->result;
       c->len         = 1;
-    } else if (d_type(c->request_context->items) == T_ARRAY) {
-      c->len      = d_len(c->request_context->items);
+    } else if (d_type(c->request_context->result) == T_ARRAY) {
+      c->len      = d_len(c->request_context->result);
       c->requests = _malloc(sizeof(d_type_t*) * c->len);
-      for (i = 0, t = c->request_context->items + 1; i < c->len; i++, t = d_next(t))
+      for (i = 0, t = c->request_context->result + 1; i < c->len; i++, t = d_next(t))
         c->requests[i] = t;
     } else
       ctx_set_error(c, "The Request is not a valid structure!", 0);
@@ -56,16 +56,16 @@ int ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
     return ctx_set_error(ctx, "Error parsing the JSON-respomse!", IN3_ERR_INVALID_JSON);
   }
 
-  if (d_type(ctx->response_context->items) == T_OBJECT) {
+  if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
     ctx->responses    = _malloc(sizeof(d_token_t*));
-    ctx->responses[0] = ctx->response_context->items;
+    ctx->responses[0] = ctx->response_context->result;
     if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_ERR_INVALID_JSON);
-  } else if (d_type(ctx->response_context->items) == T_ARRAY) {
-    if (d_len(ctx->response_context->items) != ctx->len)
+  } else if (d_type(ctx->response_context->result) == T_ARRAY) {
+    if (d_len(ctx->response_context->result) != ctx->len)
       return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_ERR_INVALID_JSON);
     ctx->responses = _malloc(sizeof(d_type_t*) * ctx->len);
-    for (i = 0, t = ctx->response_context->items + 1; i < ctx->len; i++, t = d_next(t))
+    for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
   } else
     return ctx_set_error(ctx, "The response must be a Object or Array", IN3_ERR_INVALID_JSON);

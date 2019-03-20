@@ -158,7 +158,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
   if (res == 0 && vc->config->signaturesCount == 0) {
 
     // ... and the chain is a authority chain....
-    if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->items, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
+    if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->result, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
       // we merge the current header + finality blocks
       sig              = d_get(vc->proof, K_FINALITY_BLOCKS);
       bytes_t** blocks = _malloc((sig ? d_len(sig) + 1 : 2) * sizeof(bytes_t*));
@@ -168,7 +168,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
       }
       blocks[sig ? d_len(sig) : 1] = NULL;
       // now we verify these block headers
-      res = eth_verify_authority(vc, blocks, vc->chain->spec->items, vc->config->finality);
+      res = eth_verify_authority(vc, blocks, vc->chain->spec->result, vc->config->finality);
       _free(blocks);
     } else // we didn't request signatures so blockheader should be ok.
       res = 0;

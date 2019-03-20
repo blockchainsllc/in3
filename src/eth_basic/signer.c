@@ -150,7 +150,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     // set the new RPC-Request.
     ctx->request_context = parse_json(sb->data);
-    ctx->requests[0]     = ctx->request_context->items;
+    ctx->requests[0]     = ctx->request_context->result;
 
     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
     ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) sb->data, sb->len));

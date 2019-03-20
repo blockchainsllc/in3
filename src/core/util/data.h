@@ -47,9 +47,9 @@ typedef struct str_range {
 
 /** parser for json or binary-data. it needs to freed after usage.*/
 typedef struct json_parser {
-  d_token_t* items;     /**< the list of all tokens. the first token is the main-token as returned by the parser.*/
-  size_t     allocated; /** amount of tokens allocated items */
-  size_t     len;       /** number of tokens in items */
+  d_token_t* result;    /**< the list of all tokens. the first token is the main-token as returned by the parser.*/
+  size_t     allocated; /** amount of tokens allocated result */
+  size_t     len;       /** number of tokens in result */
   char*      c;         /** pointer to the src-data*/
 } json_parsed_t;
 
@@ -125,7 +125,7 @@ static inline bool     d_is_binary_ctx(json_parsed_t* ctx) { return ctx->allocat
  * ```
  */
 typedef struct {
-  int        left;  /**< number of items left */
+  int        left;  /**< number of result left */
   d_token_t* token; /**< current token */
 } d_iterator_t;
 

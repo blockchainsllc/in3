@@ -9,6 +9,7 @@
 
 #include "../core/client/client.h"
 #include "../core/util/utils.h"
+#include <stdarg.h>
 
 /** 
  * a 32 byte long integer used to store ethereum-numbers. 
@@ -71,5 +72,7 @@ eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);   
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
 uint64_t    as_long(uint256_t d);   /**< converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
+
+d_token_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...); /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 
 #endif

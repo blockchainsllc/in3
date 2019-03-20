@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     printf("Invalid Json : %s\n", input);
   else {
     bytes_builder_t* bb = bb_new();
-    d_serialize_binary(bb, ctx->items);
+    d_serialize_binary(bb, ctx->result);
 
     if (strcmp(format, "hex") == 0) {
       for (i = 0; i < bb->b.len; i++) printf("%02x", bb->b.data[i]);

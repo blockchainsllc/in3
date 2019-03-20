@@ -17,7 +17,7 @@ typedef struct receipt {
   bytes_t   data;
   bytes_t   block_number;
   bytes32_t block_hash;
-  int       transaction_index;
+  uint32_t  transaction_index;
 } receipt_t;
 
 int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
