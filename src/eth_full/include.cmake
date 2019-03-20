@@ -10,5 +10,7 @@ target_sources( app PRIVATE
 ../eth_full/code.c
 ../eth_full/env.c
 ../eth_full/mem.c
+../eth_full/mini-gmp.c
+../eth_full/precompiled.c
 )
 

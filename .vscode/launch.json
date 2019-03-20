@@ -51,7 +51,26 @@
             "args": [
                 "-t",
                 "1",
-                "../test/testdata/requests/eth_call.json"
+                "../test/testdata/requests/eth_getLogs.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "cmd",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-pk",
+                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
+                "-c",
+                "kovan",
+                "eth_sendTransaction",
+                "{\"from\":\"0x5338d77B5905CdEEa7c55a1F3A88d03559c36D73\",\"to\":\"0xb5049E77a70c4ea06355E3bcbfcF8fDADa912481\",\"value\": \"0x10000\"}"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
@@ -68,7 +87,7 @@
                 "-t",
                 "1",
                 "-d",
-                "../test/testdata/evm/GeneralStateTests/stRandom2/randomStatetest643.json"
+                "../test/testdata/evm/GeneralStateTests/stRandom2/randomStatetest572.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

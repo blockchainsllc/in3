@@ -35,6 +35,8 @@
         "code.h": "c",
         "cache.h": "c",
         "secp256k1.h": "c",
-        "ripemd160.h": "c"
+        "ripemd160.h": "c",
+        "signer.h": "c",
+        "serialize.h": "c"
     }
 }
