@@ -148,13 +148,13 @@ int in3_get_tx_receipt(struct in3_client* c, char* tx_hash, char** response) {
 }
 
 int in3_can_rent(struct in3_client* c, char* resp, char* amsg) {
-  int            res = -1, i;
-  char           tmp[256], mhash[256];
-  json_parsed_t* response = parse_json(resp);
-  json_parsed_t* message  = parse_json(amsg);
-  d_token_t *    l, *log = NULL;
-  bytes_t *      signer = NULL, *hash = NULL;
-  bytes_t*       log_rented = hex2byte_new_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64);
+  int         res = -1, i;
+  char        tmp[256], mhash[256];
+  json_ctx_t* response = parse_json(resp);
+  json_ctx_t* message  = parse_json(amsg);
+  d_token_t * l, *log = NULL;
+  bytes_t *   signer = NULL, *hash = NULL;
+  bytes_t*    log_rented = hex2byte_new_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64);
 
   if (!response || !message) goto out;
 

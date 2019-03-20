@@ -239,7 +239,7 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
-char next_char(json_parsed_t* jp) {
+char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {
       case ' ':
@@ -254,7 +254,7 @@ char next_char(json_parsed_t* jp) {
   }
 }
 
-d_token_t* parsed_next_item(json_parsed_t* jp, d_type_t type, d_key_t key, int parent) {
+d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
@@ -268,7 +268,7 @@ d_token_t* parsed_next_item(json_parsed_t* jp, d_type_t type, d_key_t key, int p
   return n;
 }
 
-int parse_key(json_parsed_t* jp) {
+int parse_key(json_ctx_t* jp) {
   char* start = jp->c;
   int   r;
   while (true) {
@@ -284,7 +284,7 @@ int parse_key(json_parsed_t* jp) {
   }
 }
 
-int parse_number(json_parsed_t* jp, d_token_t* item) {
+int parse_number(json_ctx_t* jp, d_token_t* item) {
   char temp[20];
   int  i = 0;
   jp->c--;
@@ -309,7 +309,7 @@ int parse_number(json_parsed_t* jp, d_token_t* item) {
   return -2;
 }
 
-int parse_string(json_parsed_t* jp, d_token_t* item) {
+int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
@@ -355,7 +355,7 @@ int parse_string(json_parsed_t* jp, d_token_t* item) {
   }
 }
 
-int parse_object(json_parsed_t* jp, int parent, uint32_t key) {
+int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
   switch (next_char(jp)) {
@@ -432,7 +432,7 @@ int parse_object(json_parsed_t* jp, int parent, uint32_t key) {
   }
 }
 
-void free_json(json_parsed_t* jp) {
+void free_json(json_ctx_t* jp) {
   if (!jp || jp->result == NULL) return;
   if (jp->allocated) {
     size_t i;
@@ -445,13 +445,13 @@ void free_json(json_parsed_t* jp) {
   _free(jp);
 }
 
-json_parsed_t* parse_json(char* js) {
-  json_parsed_t* parser = _malloc(sizeof(json_parsed_t));
-  parser->len           = 0;
-  parser->result        = _malloc(sizeof(d_token_t) * 10);
-  parser->c             = js;
-  parser->allocated     = 10;
-  int res               = parse_object(parser, -1, 0);
+json_ctx_t* parse_json(char* js) {
+  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));
+  parser->len        = 0;
+  parser->result     = _malloc(sizeof(d_token_t) * 10);
+  parser->c          = js;
+  parser->allocated  = 10;
+  int res            = parse_object(parser, -1, 0);
   if (res < 0) {
     free_json(parser);
     return NULL;
@@ -531,7 +531,7 @@ str_range_t d_to_json(d_token_t* item) {
 
 // util fast parse
 int json_get_int_value(char* js, char* prop) {
-  json_parsed_t* ctx = parse_json(js);
+  json_ctx_t* ctx = parse_json(js);
   if (ctx) {
     int res = d_get_int(ctx->result, prop);
     free_json(ctx);
@@ -545,7 +545,7 @@ void json_get_str_value(char* js, char* prop, char* dst) {
   d_token_t*  t;
   str_range_t s;
 
-  json_parsed_t* ctx = parse_json(js);
+  json_ctx_t* ctx = parse_json(js);
   if (ctx) {
     t = d_get(ctx->result, key(prop));
     switch (d_type(t)) {
@@ -578,7 +578,7 @@ void json_get_str_value(char* js, char* prop, char* dst) {
 }
 
 char* json_get_json_value(char* js, char* prop) {
-  json_parsed_t* ctx = parse_json(js);
+  json_ctx_t* ctx = parse_json(js);
   if (ctx) {
     char* c = d_create_json(d_get(ctx->result, key(prop)));
     free_json(ctx);
@@ -589,7 +589,7 @@ char* json_get_json_value(char* js, char* prop) {
 
 //    bytes-parser
 
-static d_token_t* next_item(json_parsed_t* jp, d_type_t type, int len) {
+static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
   if (jp->allocated == 0) {
     jp->result    = _malloc(10 * sizeof(d_token_t));
     jp->allocated = 10;
@@ -605,7 +605,7 @@ static d_token_t* next_item(json_parsed_t* jp, d_type_t type, int len) {
   return n;
 }
 
-static int read_token(json_parsed_t* jp, uint8_t* d, size_t* p) {
+static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
   uint16_t key;
   d_type_t type = d[*p] >> 5;
 
@@ -666,15 +666,15 @@ static int read_token(json_parsed_t* jp, uint8_t* d, size_t* p) {
   return 0;
 }
 
-json_parsed_t* parse_binary_str(char* data, int len) {
+json_ctx_t* parse_binary_str(char* data, int len) {
   bytes_t b = {.data = (uint8_t*) data, .len = len};
   return parse_binary(&b);
 }
 
-json_parsed_t* parse_binary(bytes_t* data) {
-  size_t         p = 0, error = 0;
-  json_parsed_t* jp = _calloc(1, sizeof(json_parsed_t));
-  jp->c             = (char*) data->data;
+json_ctx_t* parse_binary(bytes_t* data) {
+  size_t      p = 0, error = 0;
+  json_ctx_t* jp = _calloc(1, sizeof(json_ctx_t));
+  jp->c          = (char*) data->data;
 
   while (!error && p < data->len)
     error = read_token(jp, data->data, &p);

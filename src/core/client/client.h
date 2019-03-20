@@ -129,7 +129,7 @@ typedef struct {
   bytes_t* contract;
 
   /* optional chain specification*/
-  json_parsed_t* spec;
+  json_ctx_t* spec;
 
 } in3_chain_t;
 

@@ -51,9 +51,10 @@ typedef struct json_parser {
   size_t     allocated; /** amount of tokens allocated result */
   size_t     len;       /** number of tokens in result */
   char*      c;         /** pointer to the src-data*/
-} json_parsed_t;
+} json_ctx_t;
 
-/**< 
+/**
+ * 
  * returns the byte-representation of token. 
  * 
  * In case of a number it is returned as bigendian. 
@@ -81,13 +82,13 @@ d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); 
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
 
-void           d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
-json_parsed_t* parse_binary(bytes_t* data);                           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-json_parsed_t* parse_binary_str(char* data, int len);                 /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-json_parsed_t* parse_json(char* js);                                  /**< parses json-data, which needs to be freed after usage! */
-void           free_json(json_parsed_t* parser_ctx);                  /**< frees the parse-context after usage */
-str_range_t    d_to_json(d_token_t* item);                            /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
-char*          d_create_json(d_token_t* item);                        /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
+void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
+json_ctx_t* parse_binary(bytes_t* data);                           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+json_ctx_t* parse_binary_str(char* data, int len);                 /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+json_ctx_t* parse_json(char* js);                                  /**< parses json-data, which needs to be freed after usage! */
+void        free_json(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
+str_range_t d_to_json(d_token_t* item);                            /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+char*       d_create_json(d_token_t* item);                        /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
 int   json_get_int_value(char* js, char* prop);            /**< parses the json and return the value as int. */
 void  json_get_str_value(char* js, char* prop, char* dst); /**< parses the json and return the value as string. */
@@ -112,7 +113,7 @@ static inline uint64_t d_get_long_at(d_token_t* r, uint32_t pos) { return d_long
 static inline bytes_t* d_get_bytesk(d_token_t* r, d_key_t k) { return d_bytes(d_get(r, k)); }                /**< reads token of a property as bytes. */
 static inline bytes_t* d_get_bytes(d_token_t* r, char* k) { return d_get_bytesk(r, key(k)); }                /**< reads token of a property as bytes. */
 static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_bytes(d_get_at(r, pos)); }      /**< reads bytes at given pos of an array. */
-static inline bool     d_is_binary_ctx(json_parsed_t* ctx) { return ctx->allocated == 0; }                   /**< check if the parser context was created from binary data. */
+static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                      /**< check if the parser context was created from binary data. */
 
 /**
  * iterator over elements of a array opf object.

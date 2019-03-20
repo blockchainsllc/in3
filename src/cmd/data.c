@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 
   if (input == NULL) input = read_from_stdin(stdin);
 
-  json_parsed_t* ctx = parse_json(input);
+  json_ctx_t* ctx = parse_json(input);
   if (!ctx)
     printf("Invalid Json : %s\n", input);
   else {

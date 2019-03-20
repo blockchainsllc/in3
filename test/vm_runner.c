@@ -115,7 +115,7 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
     d_track_keynames(1);
     d_clear_keynames();
 
-    json_parsed_t* parsed = parse_json(content);
+    json_ctx_t* parsed = parse_json(content);
     if (!parsed) {
       free(content);
       ERROR("Error parsing the requests");
