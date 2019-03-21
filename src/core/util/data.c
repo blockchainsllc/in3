@@ -688,6 +688,60 @@ json_ctx_t* parse_binary(bytes_t* data) {
   return jp;
 }
 
+json_ctx_t* json_create() {
+  return _calloc(1, sizeof(json_ctx_t));
+}
+d_token_t* json_create_null(json_ctx_t* jp) {
+  return next_item(jp, T_NULL, 0);
+}
+d_token_t* json_create_bool(json_ctx_t* jp, bool value) {
+  return next_item(jp, T_BOOLEAN, value);
+}
+
+d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
+  if (value > 0xF0000000) {
+    uint8_t tmp[8], *p = tmp, l = 8;
+    long_to_bytes(value, tmp);
+    optimize_len(p, l);
+    d_token_t* r = next_item(jp, T_BYTES, l);
+    r->data      = _malloc(l);
+    memcpy(r->data, p, l);
+    return r;
+  }
+
+  return next_item(jp, T_INTEGER, value);
+}
+d_token_t* json_create_string(json_ctx_t* jp, char* value) {
+  d_token_t* r = next_item(jp, T_STRING, strlen(value));
+  strcpy((char*) (r->data = _malloc(d_len(r) + 1)), value);
+  return r;
+}
+d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {
+  d_token_t* r = next_item(jp, T_BYTES, value.len);
+  memcpy(r->data = _malloc(value.len), value.data, value.len);
+  return r;
+}
+
+d_token_t* json_create_object(json_ctx_t* jp) {
+  return next_item(jp, T_OBJECT, 0);
+}
+
+d_token_t* json_create_array(json_ctx_t* jp) {
+  return next_item(jp, T_ARRAY, 0);
+}
+
+d_token_t* json_object_add_prop(d_token_t* object, d_key_t key, d_token_t* value) {
+  object->len++;
+  value->key = key;
+  return object;
+}
+
+d_token_t* json_array_add_value(d_token_t* object, d_token_t* value) {
+  value->key = object->len;
+  object->len++;
+  return object;
+}
+
 static void write_token_count(bytes_builder_t* bb, int len) {
   bb_write_byte(bb, T_NULL << 5 | (len < 28 ? len : min_bytes_len(len) + 27));
   if (len > 27)

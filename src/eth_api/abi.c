@@ -19,6 +19,11 @@ static int add_error(call_request_t* req, char* error) {
 static inline var_t* token(bytes_builder_t* bb, int i) {
   return (var_t*) bb->b.data + i;
 }
+void req_free(call_request_t* req) {
+  if (req->call_data) bb_free(req->call_data);
+  if (req->in_data) _free(req->in_data);
+  _free(req);
+}
 
 static int next_token(bytes_builder_t* bb, atype_t type) {
   if (bb_check_size(bb, bb->b.len + sizeof(var_t)) < 0) return -1;
@@ -164,10 +169,10 @@ static int t_size(var_t* t) {
   return 1;
 }
 
-static var_t* t_next(var_t* t) {
+var_t* t_next(var_t* t) {
   return t + t_size(t);
 }
-static int word_size(int b) {
+int word_size(int b) {
   return (b + 31) / 32;
 }
 
@@ -291,4 +296,50 @@ int set_data(call_request_t* req, d_token_t* data, var_t* tuple, int pos) {
     }
   }
   return 0;
+}
+
+d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
+  d_token_t* res = NULL;
+  bytes_t    tmp;
+
+  switch (t->type) {
+    case A_TUPLE:
+      res      = json_create_array(ctx);
+      var_t* p = t + 1;
+      for (int i = 0; i < t->type_len; i++, p = t_next(p))
+        json_array_add_value(res, get_data(ctx, p, data, offset));
+      break;
+    case A_UINT:
+    case A_INT:
+      tmp = bytes(data.data + *offset, 32);
+      b_optimize_len(&tmp);
+      res = json_create_bytes(ctx, tmp);
+      *offset += 32;
+      break;
+    case A_ADDRESS:
+      res = json_create_bytes(ctx, bytes(data.data + *offset, 20));
+      *offset += 32;
+      break;
+    case A_BYTES:
+      res = json_create_bytes(ctx, bytes(data.data + *offset, get_fixed_size(t)));
+      *offset += get_fixed_size(t);
+      break;
+
+    default:
+      break;
+  }
+  return res;
+}
+
+json_ctx_t* req_parse_result(call_request_t* req, bytes_t data) {
+  int         offset = 0;
+  json_ctx_t* res    = json_create();
+  if (req->out_data->type_len == 0) return res;
+  if (req->out_data->type_len == 1) {
+    get_data(res, req->out_data + 1, data, &offset);
+    return res;
+  }
+  get_data(res, req->out_data, data, &offset);
+
+  return res;
 }

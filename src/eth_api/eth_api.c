@@ -2,6 +2,7 @@
 #include "../core/client/context.h"
 #include "../core/client/keys.h"
 #include "../eth_nano/rlp.h"
+#include "abi.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -283,4 +284,75 @@ uint64_t eth_blockNumber(in3_t* in3) {
 uint64_t eth_gasPrice(in3_t* in3) {
   rpc_init;
   rpc_exec("eth_gasPrice", uint64_t, d_long(result));
+}
+
+static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
+  json_ctx_t* res = req_parse_result(req, d_to_bytes(result));
+  req_free(req);
+  return res;
+}
+
+json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
+  rpc_init;
+  int             res = 0;
+  call_request_t* req = parseSignature(fn_sig);
+  if (req->in_data->type == A_TUPLE) {
+    json_ctx_t* in_data = json_create();
+    d_token_t*  args    = json_create_array(in_data);
+    va_list     ap;
+    va_start(ap, fn_sig);
+    var_t* p = req->in_data + 1;
+    for (int i = 0; i < req->in_data->type_len; i++, p = t_next(p)) {
+      switch (p->type) {
+        case A_BOOL:
+          json_array_add_value(args, json_create_bool(in_data, va_arg(ap, int)));
+          break;
+        case A_ADDRESS:
+          json_array_add_value(args, json_create_bytes(in_data, bytes(va_arg(ap, uint8_t*), 20)));
+          break;
+        case A_BYTES:
+          json_array_add_value(args, json_create_bytes(in_data, va_arg(ap, bytes_t)));
+          break;
+        case A_STRING:
+          json_array_add_value(args, json_create_string(in_data, va_arg(ap, char*)));
+          break;
+        case A_INT:
+        case A_UINT: {
+          if (p->type_len <= 4)
+            json_array_add_value(args, json_create_int(in_data, va_arg(ap, uint32_t)));
+          else if (p->type_len <= 8)
+            json_array_add_value(args, json_create_int(in_data, va_arg(ap, uint64_t)));
+          else
+            json_array_add_value(args, json_create_bytes(in_data, bytes(va_arg(ap, uint256_t).data, 32)));
+          break;
+        }
+        default:
+          req->error = "unsuported token-type!";
+          res        = -1;
+      }
+    }
+    va_end(ap);
+
+    if ((res = set_data(req, args, req->in_data, 0)) < 0) req->error = "could not set the data";
+    free_json(in_data);
+  }
+  if (res == 0) {
+    bytes_t to = bytes(contract, 20);
+    sb_add_chars(params, "{\"to\":");
+    sb_add_bytes(params, "", &to, 1, false);
+    sb_add_chars(params, ", \"data\":");
+    sb_add_bytes(params, "", &req->call_data->b, 1, false);
+    sb_add_char(params, '}');
+  } else {
+    set_error(0, req->error ? req->error : "Error parsing the request-data");
+    sb_free(
+        params);
+    req_free(req);
+    return NULL;
+  }
+
+  if (res == 0) {
+    rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
+  }
+  return NULL;
 }

@@ -90,6 +90,17 @@ void        free_json(json_ctx_t* parser_ctx);                     /**< frees th
 str_range_t d_to_json(d_token_t* item);                            /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
 char*       d_create_json(d_token_t* item);                        /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
+json_ctx_t* json_create();
+d_token_t*  json_create_null(json_ctx_t* jp);
+d_token_t*  json_create_bool(json_ctx_t* jp, bool value);
+d_token_t*  json_create_int(json_ctx_t* jp, uint64_t value);
+d_token_t*  json_create_string(json_ctx_t* jp, char* value);
+d_token_t*  json_create_bytes(json_ctx_t* jp, bytes_t value);
+d_token_t*  json_create_object(json_ctx_t* jp);
+d_token_t*  json_create_array(json_ctx_t* jp);
+d_token_t*  json_object_add_prop(d_token_t* object, d_key_t key, d_token_t* value);
+d_token_t*  json_array_add_value(d_token_t* object, d_token_t* value);
+
 int   json_get_int_value(char* js, char* prop);            /**< parses the json and return the value as int. */
 void  json_get_str_value(char* js, char* prop, char* dst); /**< parses the json and return the value as string. */
 char* json_get_json_value(char* js, char* prop);           /**< parses the json and return the value as json-string. */

@@ -1,4 +1,5 @@
 #include "../core/util/bytes.h"
+#include "../core/util/data.h"
 
 typedef enum {
   A_UINT    = 1,
@@ -27,3 +28,8 @@ typedef struct {
 } call_request_t;
 
 call_request_t* parseSignature(char* sig);
+json_ctx_t*     req_parse_result(call_request_t* req, bytes_t data);
+void            req_free(call_request_t* req);
+int             set_data(call_request_t* req, d_token_t* data, var_t* tuple, int pos);
+var_t*          t_next(var_t* t);
+int             word_size(int b);

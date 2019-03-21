@@ -69,10 +69,10 @@ uint64_t     eth_blockNumber(in3_t* in3);                                       
 uint64_t     eth_gasPrice(in3_t* in3);                                                       /**< returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
 eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx);             /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
+json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...);                 /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 
-char*       eth_last_error();                                               /**< the current error or null if all is ok */
-long double as_double(uint256_t d);                                         /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
-uint64_t    as_long(uint256_t d);                                           /**< converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
-json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...); /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
+char*       eth_last_error();       /**< the current error or null if all is ok */
+long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
+uint64_t    as_long(uint256_t d);   /**< converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
 
 #endif
