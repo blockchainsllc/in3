@@ -55,11 +55,9 @@ test-in3:
     - chmod +x ./dockcross
     - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make"
   variables:
-     IMAGE: "linux-x64"
-     INSTALL: "cd ."
-     CONAN_OPTS: ""
-
-
+    IMAGE: "linux-x64"
+    INSTALL: "cd ."
+    CONAN_OPTS: ""
 
 .conanbuild:
   stage: build
@@ -69,7 +67,7 @@ test-in3:
     - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
-    - conan install .. --build missing 
+    - conan install .. --build missing
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
 
@@ -101,19 +99,17 @@ clang50:
     paths:
       - build/src
 
-  
 linux-x64-static:
   extends: .xbuild
   variables:
-     IMAGE: linux-x64
-     CONAN_OPTS: "-o libcurl:shared=False"
+    IMAGE: linux-x64
+    CONAN_OPTS: "-o libcurl:shared=False"
 
 linux-x64-shared:
   extends: .xbuild
   variables:
-     IMAGE: linux-x64
-     CONAN_OPTS: "-o libcurl:shared=True"
-
+    IMAGE: linux-x64
+    CONAN_OPTS: "-o libcurl:shared=True"
 
 zephyr:
   image: agustinhenze/zephyr-arm
@@ -121,31 +117,30 @@ zephyr:
   tags:
     - short-jobs
   artifacts:
-     paths:
+    paths:
       - src/zephyr/build
   script:
     - apt-get update && eatmydata apt-get install -y curl qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
     - curl -L https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2-Linux-x86_64.tar.gz | tar -xzf -
     - export PATH="`pwd`/cmake-3.13.2-Linux-x86_64/bin:$PATH"
-    - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
-    - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run 
-    - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION} 
+    - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
+    - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
+    - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}
     - rm zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
-    - git clone https://github.com/zephyrproject-rtos/zephyr.git 
+    - git clone https://github.com/zephyrproject-rtos/zephyr.git
     - source zephyr/zephyr-env.sh
-    - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}" 
+    - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}"
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
     - make
 
   variables:
-    LANG : C.UTF-8
-    LC_ALL : C.UTF-8
-    ZEPHYR_GCC_VARIANT : gccarmemb
-    GCCARMEMB_TOOLCHAIN_PATH : /usr
-    CROSS_COMPILE : /usr/bin/arm-none-eabi-
-    ZEPHYR_SDK_VERSION : "0.9.5"
-
+    LANG: C.UTF-8
+    LC_ALL: C.UTF-8
+    ZEPHYR_GCC_VARIANT: gccarmemb
+    GCCARMEMB_TOOLCHAIN_PATH: /usr
+    CROSS_COMPILE: /usr/bin/arm-none-eabi-
+    ZEPHYR_SDK_VERSION: "0.10.0"
 
 pages:
   tags:
@@ -163,9 +158,6 @@ pages:
   artifacts:
     paths:
       - public
-
-
-
 #windows-x64:
 #  extends: .xbuild
 #  variables:
@@ -190,7 +182,6 @@ pages:
 #  extends: .xbuild
 #  variables:
 #     IMAGE: linux-armv7
-
 
 #windows-x86:
 #  extends: .xbuild
