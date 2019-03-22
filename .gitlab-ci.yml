@@ -127,7 +127,7 @@ zephyr:
     - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
     - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}
     - rm zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
-    - git clone https://github.com/zephyrproject-rtos/zephyr.git
+    - git clone --branch ${ZEPHYR_VERSION} https://github.com/zephyrproject-rtos/zephyr.git
     - source zephyr/zephyr-env.sh
     - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}"
     - cd src/zephyr; mkdir build; cd build
@@ -140,7 +140,8 @@ zephyr:
     ZEPHYR_GCC_VARIANT: gccarmemb
     GCCARMEMB_TOOLCHAIN_PATH: /usr
     CROSS_COMPILE: /usr/bin/arm-none-eabi-
-    ZEPHYR_SDK_VERSION: "0.10.0"
+    ZEPHYR_SDK_VERSION: "0.9.5"
+    ZEPHYR_VERSION: "1.14.0-rc1"
 
 pages:
   tags:
