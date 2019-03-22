@@ -141,7 +141,7 @@ zephyr:
     GCCARMEMB_TOOLCHAIN_PATH: /usr
     CROSS_COMPILE: /usr/bin/arm-none-eabi-
     ZEPHYR_SDK_VERSION: "0.9.5"
-    ZEPHYR_VERSION: "1.14.0-rc1"
+    ZEPHYR_VERSION: "v1.14.0-rc1"
 
 pages:
   tags:
