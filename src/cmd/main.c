@@ -146,9 +146,9 @@ int main(int argc, char* argv[]) {
     } else {
       if (method == NULL)
         method = argv[i];
-      else if (to == NULL && strcmp(method, "call") == 0)
+      else if (to == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0))
         to = argv[i];
-      else if (sig == NULL && strcmp(method, "call") == 0)
+      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0))
         sig = argv[i];
       else {
         if (p > 1) params[p++] = ',';
@@ -166,6 +166,11 @@ int main(int argc, char* argv[]) {
   char* error;
 
   if (strcmp(method, "call") == 0) {
+    //    printf(" src params %s\n", params);
+    req    = prepare_tx(sig, to, params, block_number);
+    method = "eth_call";
+    //    printf(" new params %s\n", params);
+  } else if (strcmp(method, "call") == 0) {
     //    printf(" src params %s\n", params);
     req    = prepare_tx(sig, to, params, block_number);
     method = "eth_call";

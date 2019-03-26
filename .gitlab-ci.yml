@@ -99,17 +99,17 @@ clang50:
     paths:
       - build/src
 
-linux-x64-static:
-  extends: .xbuild
-  variables:
-    IMAGE: linux-x64
-    CONAN_OPTS: "-o libcurl:shared=False"
+#linux-x64-static:
+#  extends: .xbuild
+#  variables:
+#    IMAGE: linux-x64
+#    CONAN_OPTS: "-o libcurl:shared=False"
 
-linux-x64-shared:
-  extends: .xbuild
-  variables:
-    IMAGE: linux-x64
-    CONAN_OPTS: "-o libcurl:shared=True"
+#linux-x64-shared:
+#  extends: .xbuild
+#  variables:
+#    IMAGE: linux-x64
+#    CONAN_OPTS: "-o libcurl:shared=True"
 
 zephyr:
   image: agustinhenze/zephyr-arm
