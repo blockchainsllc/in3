@@ -60,10 +60,9 @@ cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
     if (en->key.len == 20 && memcmp(address, en->key.data, 20) == 0)
       return en;
   }
-  char key_str[42];
-  key_str[0]  = 'C';
-  key_str[41] = 0;
-  int8_to_char(address + 1, 20, key_str);
+  char key_str[43];
+  key_str[0] = 'C';
+  int8_to_char(address, 20, key_str + 1);
   bytes_t*       b = NULL;
   cache_entry_t* entry;
   uint8_t        must_free = 0;

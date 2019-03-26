@@ -333,7 +333,7 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
     }
     va_end(ap);
 
-    if ((res = set_data(req, args, req->in_data, 0)) < 0) req->error = "could not set the data";
+    if ((res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
     free_json(in_data);
   }
   if (res == 0) {

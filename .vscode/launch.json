@@ -79,6 +79,26 @@
             "MIMode": "lldb"
         },
         {
+            "name": "call",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-to",
+                "0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
+                "-c",
+                "kovan",
+                "call",
+                "servers(uint):(string,address,uint,uint,uint,address)",
+                "1"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "vmrunner",
             "type": "cppdbg",
             "request": "launch",

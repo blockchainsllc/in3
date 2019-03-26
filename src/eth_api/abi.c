@@ -17,7 +17,7 @@ static int add_error(call_request_t* req, char* error) {
 }
 
 static inline var_t* token(bytes_builder_t* bb, int i) {
-  return (var_t*) bb->b.data + i;
+  return (var_t*) (bb->b.data + i);
 }
 void req_free(call_request_t* req) {
   if (req->call_data) bb_free(req->call_data);
@@ -66,10 +66,10 @@ int add_token(bytes_builder_t* bb, char* start, unsigned int len, int tuple) {
     type_len = 20;
   } else if (strncmp(name, "uint", 4) == 0) {
     atype    = A_UINT;
-    type_len = atoi(name + 4) / 8;
+    type_len = strlen(name) == 4 ? 32 : (atoi(name + 4) / 8);
   } else if (strncmp(name, "int", 3) == 0) {
     atype    = A_INT;
-    type_len = atoi(name + 3) / 8;
+    type_len = strlen(name) == 3 ? 32 : (atoi(name + 3) / 8);
   } else if (strcmp(name, "bool") == 0) {
     atype    = A_BOOL;
     type_len = 1;
@@ -131,7 +131,7 @@ call_request_t* parseSignature(char* sig) {
 
   bytes_t          signature = bytes((uint8_t*) sig, ends - sig);
   bytes32_t        hash;
-  bytes_builder_t *tokens = bb_new(), *data = bb_new();
+  bytes_builder_t* tokens = bb_new();
   if (!parse_tuple(tokens, startb + 1)) {
     req->error = "invalid arguments in signature";
     return req;
@@ -141,16 +141,16 @@ call_request_t* parseSignature(char* sig) {
     req->error = "invalid return types in signature";
     return req;
   }
-  req->in_data  = token(tokens, 0);
-  req->out_data = token(tokens, out_start);
-  req->current  = req->in_data;
+  req->in_data     = token(tokens, 0);
+  req->out_data    = token(tokens, out_start);
+  req->current     = req->in_data;
+  req->call_data   = bb_new();
+  req->data_offset = 4;
   _free(tokens);
 
   // create input data
   sha3_to(&signature, hash);
-  bb_write_raw_bytes(data, hash, 4); // write functionhash
-
-  req->data_offset = 4;
+  bb_write_raw_bytes(req->call_data, hash, 4); // write functionhash
 
   return req;
 }
@@ -176,153 +176,167 @@ int word_size(int b) {
   return (b + 31) / 32;
 }
 
-static int get_fixed_size(var_t* t) {
-  int    i, all;
-  var_t* s;
-  switch (t->type) {
-    case A_TUPLE:
-      if (t->array_len < 0) return 32;
-      for (i = 0, s = t + 1, all = 0; i < t->type_len; i++, s = t_next(s))
-        all += get_fixed_size(s);
-      return all * (t->array_len > 0 ? t->array_len : 1);
-
-    case A_STRING:
-      return 32;
-
-    case A_BYTES:
-      if (t->type_len == 0)
-        return 32;
-      return word_size(t->type_len) * (t->array_len > 0 ? t->array_len : 1);
-
-    default:
-      return word_size(t->type_len) * (t->array_len > 0 ? t->array_len : 1);
+static bool is_dynamic(var_t* t) {
+  if (t->array_len < 0) return true;
+  if (t->type_len == 0 && (t->type == A_STRING || t->type == A_BYTES)) return true;
+  if (t->type == A_TUPLE) {
+    int    i;
+    var_t* s;
+    for (i = 0, s = t + 1; i < t->type_len; i++, s = t_next(s)) {
+      if (is_dynamic(s)) return true;
+    }
   }
+  return false;
 }
 
-int set_data(call_request_t* req, d_token_t* data, var_t* tuple, int pos) {
+static int head_size(var_t* t, bool single) {
+  if (is_dynamic(t)) return 32;
+  int f = t->array_len > 0 ? t->array_len : 1, a = 32;
+  if (t->type == A_TUPLE) {
+    int i;
+    a = 0;
+    var_t* s;
+    for (i = 0, s = t + 1; i < t->type_len; i++, s = t_next(s)) a += head_size(s, false);
+  } else if (t->type == A_BYTES || t->type == A_STRING)
+    a = word_size(t->type_len);
+  return single ? a : (a * f);
+}
 
-  switch (tuple->type) {
-    case A_TUPLE:
-      if (tuple->array_len < 0) {
-        // this is a dynamic tuple
-        return add_error(req, "dynamic tuples are not supported yet!");
-      } else {
-        int expected_size = tuple->array_len ? tuple->array_len : 1;
-        if (tuple->array_len && d_len(data) != expected_size) return add_error(req, "wront tuple_size!");
-        // [[1,2],[1,2]]
-        d_token_t* t = tuple->array_len ? data + 1 : data;
-        for (int n = 0; n < expected_size; n++, t = d_next(t)) {
-          d_token_t* tt       = t + 1;
-          var_t*     subTuple = tuple + 1;
-          int        offset = pos, static_len = get_fixed_size(tuple);
-          bb_check_size(req->call_data, static_len + offset - req->call_data->b.len); /// reserver enough for static
-          memset(req->call_data->b.data + offset, 0, static_len);
-          req->call_data->b.len += static_len;
-          for (int i = 0; i < tuple->type_len; i++, subTuple = t_next(subTuple), tt = d_next(tt)) {
-            if (set_data(req, tt, subTuple, pos) < 0) return -1;
-            pos += get_fixed_size(subTuple);
-          }
-        }
-      }
-      return 0;
-    case A_ADDRESS:
-    case A_BOOL:
-    case A_INT:
-    case A_UINT: {
-      int p = pos, len = 1;
-      if (tuple->array_len < 0) {
-        bytes32_t word;
-        memset(word, 0, 32);
-        len = d_len(data);
-        int_to_bytes(len, word + 32 - 4);
-        bb_check_size(req->call_data, len * 32 + 32);
-        bb_write_raw_bytes(req->call_data, word, 32);                                                  // add the length to the tail
-        int_to_bytes(req->call_data->b.len - req->data_offset, req->call_data->b.data + pos + 32 - 4); // write the offset
-        p = req->call_data->b.len;
-      } else if (tuple->array_len > 0)
-        len = tuple->array_len;
+static int check_buffer(call_request_t* req, int pos) {
+  if ((uint32_t) pos > req->call_data->b.len) {
+    if (bb_check_size(req->call_data, pos -
 
-      d_token_t* t = tuple->array_len ? data + 1 : data;
-      for (int i = 0; i < len; i++, t = d_next(t), p += 32)
-        d_bytes_to(t, req->call_data->b.data + p, 32);
-    }
-    case A_STRING:
-    case A_BYTES: {
-      int p = pos, len = 1;
-      if (tuple->array_len < 0) {
-        bytes32_t word;
-        memset(word, 0, 32);
-        len = d_len(data);
-        int_to_bytes(len, word + 32 - 4);
-        bb_check_size(req->call_data, len * 32 + 32);
-        bb_write_raw_bytes(req->call_data, word, 32);                                                  // add the length to the tail
-        int_to_bytes(req->call_data->b.len - req->data_offset, req->call_data->b.data + pos + 32 - 4); // write the offset
-        p = req->call_data->b.len;
-      } else if (tuple->array_len > 0)
-        len = tuple->array_len;
-
-      d_token_t* t = tuple->array_len ? data + 1 : data;
-      for (int i = 0; i < len; i++, t = d_next(t)) {
-        bytes_t b = d_to_bytes(t);
-
-        if (tuple->type_len) {
-          // static length
-          if (b.len > tuple->type_len) b.len = tuple->type_len;
-          memcpy(req->call_data->b.data + p, b.data, b.len);
-          int wl = word_size(tuple->type_len);
-          if (b.len < (uint32_t) wl)
-            memset(req->call_data->b.data + p + b.len, 0, wl - b.len);
-          p += wl;
-        } else {
-          // dynamic length
-          memset(req->call_data->b.data + p, 0, 32);
-          int_to_bytes(req->call_data->b.len - req->data_offset, req->call_data->b.data + p + 32 - 4);
-          p += 32;
-
-          // now add the dynamic data
-          bytes32_t word;
-          memset(word, 0, 32);
-          int_to_bytes(b.len, word + 32 - 4);
-          bb_check_size(req->call_data, word_size(b.len) + 32);
-          bb_write_raw_bytes(req->call_data, word, 32);      // add the length to the tail
-          bb_write_raw_bytes(req->call_data, b.data, b.len); // add the data
-
-          int wl = word_size(b.len);
-          memset(word, 0, 32);
-          if (b.len < (uint32_t) wl)
-            bb_write_raw_bytes(req->call_data, word, wl - b.len); // padd right
-        }
-      }
-    }
+                                          req->call_data->b.len) < 0) return -1;
+    req->call_data->b.len = pos;
   }
   return 0;
+}
+
+static int write_uint256(call_request_t* req, int p, uint32_t val) {
+  if (check_buffer(req, p + 32) < 0) return -1;
+  uint8_t* pos = req->call_data->b.data + p;
+  memset(pos, 0, 28);
+  int_to_bytes(val, pos + 28);
+  return 32;
+}
+static int write_right(call_request_t* req, int p, bytes_t data) {
+  int l = word_size(data.len) * 32;
+  if (check_buffer(req, p + l) < 0) return -1;
+  uint8_t* pos = req->call_data->b.data + p;
+  if ((uint32_t) l > data.len) {
+    memset(pos, 0, l - data.len);
+    pos += l - data.len;
+  }
+  memcpy(pos, data.data, data.len);
+  return l;
+}
+static int write_left(call_request_t* req, int p, bytes_t data) {
+  int l = word_size(data.len) * 32;
+  if (check_buffer(req, p + l) < 0) return -1;
+  uint8_t* pos = req->call_data->b.data + p;
+  memcpy(pos, data.data, data.len);
+  if ((uint32_t) l > data.len)
+    memset(pos + data.len, 0, l - data.len);
+  return l;
+}
+
+static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_pos, int tail_pos) {
+  bytes_builder_t* buffer    = req->call_data;
+  int              array_len = tuple->array_len;
+  d_token_t*       d         = data;
+
+  if (is_dynamic(tuple) && tail_pos > head_pos) {
+    write_uint256(req, head_pos, tail_pos - head_pos);
+    if (encode(req, data, tuple, tail_pos, -1) < 0) return -1;
+    return head_pos + 32;
+  }
+
+  if (array_len < 0) {
+    array_len = d_len(data);
+    head_pos += write_uint256(req, head_pos, array_len);
+    if (!array_len) return head_pos;
+  }
+
+  if (array_len) {
+    if (array_len != d_len(data) || d_type(data) != T_ARRAY) return add_error(req, "wrong array_size!");
+    d = data + 1;
+  } else
+    array_len = 1;
+
+  for (int i = 0; i < array_len; i++, d = d_next(d)) {
+    switch (tuple->type) {
+      case A_TUPLE: {
+        int n = 0;
+        if (check_buffer(req, head_pos + head_size(tuple, true)) < 0) return add_error(req, "wrong array_size!");
+        var_t*     t  = tuple + 1;
+        d_token_t* dd = d + 1;
+        if (tuple->type_len != d_len(d) || d_type(d) != T_ARRAY) return add_error(req, "wrong tuple size!");
+        for (n = 0; n < tuple->type_len; n++, t = t_next(t), dd = d_next(dd))
+          head_pos = encode(req, dd, t, head_pos, buffer->b.len);
+      }
+      case A_ADDRESS:
+      case A_INT:
+      case A_UINT:
+      case A_BOOL:
+        head_pos += write_right(req, head_pos, d_to_bytes(d));
+        break;
+      case A_BYTES:
+      case A_STRING:
+        if (!tuple->type_len)
+          head_pos += write_uint256(req, head_pos, d_len(d));
+        head_pos += write_left(req, head_pos, d_to_bytes(d));
+
+      default:
+        break;
+    }
+  }
+  return head_pos;
+}
+
+int set_data(call_request_t* req, d_token_t* data, var_t* tuple) {
+  return encode(req, data, tuple, req->data_offset, -1);
 }
 
 d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
   d_token_t* res = NULL;
   bytes_t    tmp;
+  int        len = t->type_len, dst = *offset;
 
   switch (t->type) {
     case A_TUPLE:
       res      = json_create_array(ctx);
       var_t* p = t + 1;
-      for (int i = 0; i < t->type_len; i++, p = t_next(p))
+      for (int i = 0; i < len; i++, p = t_next(p))
         json_array_add_value(res, get_data(ctx, p, data, offset));
       break;
     case A_UINT:
     case A_INT:
-      tmp = bytes(data.data + *offset, 32);
+      tmp = bytes(data.data + dst, 32);
       b_optimize_len(&tmp);
       res = json_create_bytes(ctx, tmp);
       *offset += 32;
       break;
     case A_ADDRESS:
-      res = json_create_bytes(ctx, bytes(data.data + *offset, 20));
+      res = json_create_bytes(ctx, bytes(data.data + dst + 12, 20));
       *offset += 32;
       break;
+    case A_STRING:
     case A_BYTES:
-      res = json_create_bytes(ctx, bytes(data.data + *offset, get_fixed_size(t)));
-      *offset += get_fixed_size(t);
+
+      if (!t->type_len) {
+        dst = bytes_to_int(data.data + dst + 28, 4);
+        len = bytes_to_int(data.data + dst + 28, 4);
+        dst += 32;
+      }
+
+      if (t->type == A_STRING) {
+        char tmp[len + 1];
+        strncpy(tmp, (char*) (data.data + dst), len);
+        res = json_create_string(ctx, tmp);
+      } else
+        res = json_create_bytes(ctx, bytes(data.data + dst, len));
+      *offset += t->type_len ? word_size(len) : 32;
+
       break;
 
     default:

@@ -2,11 +2,13 @@
  * simple commandline-util sending in3-requests.
  * */
 
+#include <abi.h>
 #include <client/cache.h>
 #include <client/client.h>
 #include <eth_full.h>
 #include <in3_curl.h>
 #include <in3_storage.h>
+#include <inttypes.h>
 #include <math.h>
 #include <signer.h>
 #include <stdint.h>
@@ -28,6 +30,56 @@ uint64_t getChainId(char* name) {
   return atoi(name);
 }
 
+call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number) {
+  call_request_t* req = parseSignature(fn_sig);
+  if (req->in_data->type == A_TUPLE) {
+    json_ctx_t* in_data = parse_json(args);
+    if (set_data(req, in_data->result, req->in_data) < 0) { printf("Error: could not set the data"); }
+    free_json(in_data);
+  }
+  sb_t* params = sb_new("");
+  sb_add_chars(params, "[{\"to\":\"");
+  sb_add_chars(params, to);
+  sb_add_chars(params, "\", \"data\":");
+  sb_add_bytes(params, "", &req->call_data->b, 1, false);
+  sb_add_chars(params, "},\"");
+  sb_add_chars(params, block_number);
+  sb_add_chars(params, "\"]");
+  strcpy(args, params->data);
+  sb_free(params);
+  return req;
+}
+
+void print_val(d_token_t* t) {
+  switch (d_type(t)) {
+    case T_ARRAY:
+    case T_OBJECT:
+      for (d_iterator_t it = d_iter(t); it.left; d_iter_next(&it))
+        print_val(it.token);
+      break;
+    case T_BOOLEAN:
+      printf("%s\n", d_int(t) ? "true" : "false");
+      break;
+    case T_INTEGER:
+      printf("%i\n", d_int(t));
+      break;
+    case T_BYTES:
+      if (t->len < 9)
+        printf("%" PRId64 "\n", d_long(t));
+      else {
+        printf("0x");
+        for (int i = 0; i < t->len; i++) printf("%02x", t->data[i]);
+        printf("\n");
+      }
+      break;
+    case T_NULL:
+      printf("NULL\n");
+      break;
+    case T_STRING:
+      printf("%s\n", d_string(t));
+      break;
+  }
+}
 int main(int argc, char* argv[]) {
   //  newp();
   int i;
@@ -52,7 +104,11 @@ int main(int argc, char* argv[]) {
   c->requestCount = 1;
   c->cacheStorage = &storage_handler;
   in3_cache_init(c);
-  bytes32_t pk;
+  bytes32_t       pk;
+  char*           sig          = NULL;
+  char*           to           = NULL;
+  char*           block_number = "latest";
+  call_request_t* req          = NULL;
 
   if (getenv("IN3_PK")) {
     hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
@@ -66,6 +122,10 @@ int main(int argc, char* argv[]) {
       eth_set_pk_signer(c, pk);
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
       c->chainId = getChainId(argv[++i]);
+    else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
+      block_number = argv[++i];
+    else if (strcmp(argv[i], "-to") == 0)
+      to = argv[++i];
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signatureCount = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
@@ -83,9 +143,13 @@ int main(int argc, char* argv[]) {
     } else {
       if (method == NULL)
         method = argv[i];
+      else if (to == NULL && strcmp(method, "call") == 0)
+        to = argv[i];
+      else if (sig == NULL && strcmp(method, "call") == 0)
+        sig = argv[i];
       else {
         if (p > 1) params[p++] = ',';
-        if (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0)
+        if (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9'))
           p += sprintf(params + p, "%s", argv[i]);
         else
           p += sprintf(params + p, "\"%s\"", argv[i]);
@@ -97,7 +161,11 @@ int main(int argc, char* argv[]) {
 
   char* result;
   char* error;
-  ;
+
+  if (strcmp(method, "call") == 0) {
+    req    = prepare_tx(sig, to, params, block_number);
+    method = "eth_call";
+  }
 
   in3_client_rpc(c, method, params, &result, &error);
   in3_free(c);
@@ -111,7 +179,17 @@ int main(int argc, char* argv[]) {
       memmove(result, result + 1, strlen(result) + 1);
       result[strlen(result) - 1] = 0;
     }
-    printf("%s\n", result);
+    if (req) {
+      int l = strlen(result) / 2 - 1;
+      if (l) {
+        uint8_t tmp[l + 1];
+        l               = hex2byte_arr(result, -1, tmp, l + 1);
+        json_ctx_t* res = req_parse_result(req, bytes(tmp, l));
+        print_val(res->result);
+        req_free(req);
+      }
+    } else
+      printf("%s\n", result);
     free(result);
   }
   return 0;
