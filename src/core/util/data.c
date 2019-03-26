@@ -488,11 +488,23 @@ char* d_create_json(d_token_t* item) {
   switch (d_type(item)) {
     case T_ARRAY:
     case T_OBJECT:
-      if (!item->data) return NULL;
-      s   = d_to_json(item);
-      dst = _malloc(s.len + 1);
-      memcpy(dst, s.data, s.len);
-      dst[s.len] = 0;
+      if (item->data) {
+        s   = d_to_json(item);
+        dst = _malloc(s.len + 1);
+        memcpy(dst, s.data, s.len);
+        dst[s.len] = 0;
+      } else {
+        sb_t* sb = sb_new(d_type(item) == T_ARRAY ? "[" : "{");
+        for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
+          char* p = d_create_json(it.token);
+          if (sb->len > 1) sb_add_char(sb, ',');
+          sb_add_chars(sb, p);
+          _free(p);
+        }
+        sb_add_char(sb, d_type(item) == T_ARRAY ? ']' : '}');
+        dst = sb->data;
+        _free(sb);
+      }
       return dst;
     case T_BOOLEAN:
       return d_int(item) ? _strdup("true", 4) : _strdup("false", 5);

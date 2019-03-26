@@ -90,7 +90,7 @@
                 "kovan",
                 "call",
                 "servers(uint):(string,address,uint,uint,uint,address)",
-                "1"
+                "0"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

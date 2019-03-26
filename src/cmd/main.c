@@ -109,6 +109,7 @@ int main(int argc, char* argv[]) {
   char*           to           = NULL;
   char*           block_number = "latest";
   call_request_t* req          = NULL;
+  bool            json         = false;
 
   if (getenv("IN3_PK")) {
     hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
@@ -126,6 +127,8 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
+    else if (strcmp(argv[i], "-json") == 0)
+      json = true;
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signatureCount = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
@@ -163,8 +166,10 @@ int main(int argc, char* argv[]) {
   char* error;
 
   if (strcmp(method, "call") == 0) {
+    //    printf(" src params %s\n", params);
     req    = prepare_tx(sig, to, params, block_number);
     method = "eth_call";
+    //    printf(" new params %s\n", params);
   }
 
   in3_client_rpc(c, method, params, &result, &error);
@@ -185,7 +190,10 @@ int main(int argc, char* argv[]) {
         uint8_t tmp[l + 1];
         l               = hex2byte_arr(result, -1, tmp, l + 1);
         json_ctx_t* res = req_parse_result(req, bytes(tmp, l));
-        print_val(res->result);
+        if (json)
+          printf("%s\n", d_create_json(res->result));
+        else
+          print_val(res->result);
         req_free(req);
       }
     } else

@@ -221,6 +221,7 @@ static int write_uint256(call_request_t* req, int p, uint32_t val) {
 }
 static int write_right(call_request_t* req, int p, bytes_t data) {
   int l = word_size(data.len) * 32;
+  if (l == 0) l = 32;
   if (check_buffer(req, p + l) < 0) return -1;
   uint8_t* pos = req->call_data->b.data + p;
   if ((uint32_t) l > data.len) {
@@ -273,6 +274,7 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
         if (tuple->type_len != d_len(d) || d_type(d) != T_ARRAY) return add_error(req, "wrong tuple size!");
         for (n = 0; n < tuple->type_len; n++, t = t_next(t), dd = d_next(dd))
           head_pos = encode(req, dd, t, head_pos, buffer->b.len);
+        break;
       }
       case A_ADDRESS:
       case A_INT:
