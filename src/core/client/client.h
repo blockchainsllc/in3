@@ -262,6 +262,9 @@ typedef struct {
   /** number of configured chains */
   uint16_t chainsCount;
 
+  /** flags for the evm (EIPs) */
+  uint32_t evm_flags;
+
 } in3_t;
 
 /** allocates a new byte array with 0 filled */

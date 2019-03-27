@@ -43,7 +43,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
 }
 
 static void in3_client_init(in3_t* c) {
-
+  c->evm_flags          = 0;
   c->autoUpdateList     = 1;
   c->cacheStorage       = NULL;
   c->signer             = NULL;

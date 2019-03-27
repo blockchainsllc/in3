@@ -504,6 +504,8 @@ int evm_call(in3_vctx_t* vc,
   evm_t evm;
   int   res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc);
 
+  evm.properties |= vc->ctx->client->evm_flags;
+
   // check if the caller is empty
   uint8_t* ccaller = caller;
   int      l       = 20;

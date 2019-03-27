@@ -6,6 +6,7 @@
 #include <client/cache.h>
 #include <client/client.h>
 #include <eth_full.h>
+#include <evm.h>
 #include <in3_curl.h>
 #include <in3_storage.h>
 #include <inttypes.h>
@@ -129,6 +130,8 @@ int main(int argc, char* argv[]) {
       to = argv[++i];
     else if (strcmp(argv[i], "-json") == 0)
       json = true;
+    else if (strcmp(argv[i], "-debug") == 0)
+      c->evm_flags = EVM_PROP_DEBUG;
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signatureCount = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
