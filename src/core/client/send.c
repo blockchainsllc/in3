@@ -104,10 +104,13 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
   for (n = 0; n < nodes_count; n++) {
     sb_init(&response[n].error);
     sb_init(&response[n].result);
+    if (ctx->client->evm_flags & IN3_DEBUG) printf("... sending request to %s\n... %s\n", urls[n], payload->data);
   }
 
   // send requets
   res = ctx->client->transport(urls, nodes_count, payload->data, response);
+
+  if (ctx->client->evm_flags & IN3_DEBUG) printf("... response: \n%s\n", response[0].error.len ? response[0].error.data : response[0].result.data);
 
   // free resources
   sb_free(payload);

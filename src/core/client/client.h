@@ -153,7 +153,7 @@ typedef struct {
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2
 #define IN3_SIGN_ERR_INVALID_MESSAGE -3
 #define IN3_SIGN_ERR_GENERAL_ERROR -4
-
+#define IN3_DEBUG 65536
 /** type of the requested signature */
 typedef enum {
   SIGN_EC_RAW  = 0, /**< sign the data directly */
