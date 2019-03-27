@@ -619,19 +619,19 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
 
 static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
   uint16_t key;
-  d_type_t type = d[*p] >> 5;
+  d_type_t type = d[*p] >> 5; // first 3 bits define the type
 
   // calculate len
-  uint32_t len = d[(*p)++] & 0x1F, i;
+  uint32_t len = d[(*p)++] & 0x1F, i; // the other 5 bits  (0-31) the length
   int      l   = len > 27 ? len - 27 : 0, ll;
   if (len == 28)
-    len = d[*p];
+    len = d[*p]; // 28 = 1 byte len
   else if (len == 29)
-    len = d[*p] << 8 | d[*p + 1];
+    len = d[*p] << 8 | d[*p + 1]; // 29 = 2 bytes length
   else if (len == 30)
-    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2];
+    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2]; // 30 = 3 bytes length
   else if (len == 31)
-    len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3];
+    len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3]; // 31 = 4 bytes length
   *p += l;
 
   // special token giving the number of tokens, so we can allocate the exact number
@@ -643,6 +643,13 @@ static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
       jp->result    = _realloc(jp->result, len * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
       jp->allocated = len;
     }
+    return 0;
+  }
+  // special handling for references
+  if (type == T_BOOLEAN && len > 1) {
+    uint32_t idx = len - 1;
+    if (jp->len < idx) return -1;
+    memcpy(next_item(jp, type, len), jp->result + idx, sizeof(d_token_t));
     return 0;
   }
   d_token_t* t = next_item(jp, type, len);
