@@ -31,7 +31,7 @@ uint64_t getChainId(char* name) {
   return atoi(name);
 }
 
-call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number) {
+call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value) {
   call_request_t* req = parseSignature(fn_sig);
   if (req->in_data->type == A_TUPLE) {
     json_ctx_t* in_data = parse_json(args);
@@ -43,9 +43,24 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
   sb_add_chars(params, to);
   sb_add_chars(params, "\", \"data\":");
   sb_add_bytes(params, "", &req->call_data->b, 1, false);
-  sb_add_chars(params, "},\"");
-  sb_add_chars(params, block_number);
-  sb_add_chars(params, "\"]");
+  if (block_number) {
+    sb_add_chars(params, "},\"");
+    sb_add_chars(params, block_number);
+    sb_add_chars(params, "\"]");
+  } else {
+    if (value) {
+      sb_add_chars(params, ", \"value\":\"");
+      sb_add_chars(params, value);
+      sb_add_chars(params, "\"");
+    }
+    sb_add_chars(params, ", \"gasLimit\":");
+    uint8_t gasdata[8];
+    bytes_t g_bytes = bytes(gasdata, 8);
+    long_to_bytes(gas ? gas : 100000, gasdata);
+    b_optimize_len(&g_bytes);
+    sb_add_bytes(params, "", &g_bytes, 1, false);
+    sb_add_chars(params, "}]");
+  }
   strcpy(args, params->data);
   sb_free(params);
   return req;
@@ -106,11 +121,14 @@ int main(int argc, char* argv[]) {
   c->cacheStorage = &storage_handler;
   in3_cache_init(c);
   bytes32_t       pk;
+  bool            force_hex    = false;
   char*           sig          = NULL;
   char*           to           = NULL;
   char*           block_number = "latest";
   call_request_t* req          = NULL;
   bool            json         = false;
+  uint64_t        gas_limit    = 100000;
+  char*           value        = NULL;
 
   if (getenv("IN3_PK")) {
     hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
@@ -128,6 +146,12 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
+    else if (strcmp(argv[i], "-gas") == 0)
+      gas_limit = atoll(argv[++i]);
+    else if (strcmp(argv[i], "-value") == 0)
+      value = argv[++i];
+    else if (strcmp(argv[i], "-hex") == 0)
+      force_hex = true;
     else if (strcmp(argv[i], "-json") == 0)
       json = true;
     else if (strcmp(argv[i], "-debug") == 0)
@@ -155,7 +179,7 @@ int main(int argc, char* argv[]) {
         sig = argv[i];
       else {
         if (p > 1) params[p++] = ',';
-        if (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9'))
+        if (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
           p += sprintf(params + p, "%s", argv[i]);
         else
           p += sprintf(params + p, "\"%s\"", argv[i]);
@@ -170,16 +194,18 @@ int main(int argc, char* argv[]) {
 
   if (strcmp(method, "call") == 0) {
     //    printf(" src params %s\n", params);
-    req    = prepare_tx(sig, to, params, block_number);
+    req    = prepare_tx(sig, to, params, block_number, 0, NULL);
     method = "eth_call";
     //    printf(" new params %s\n", params);
-  } else if (strcmp(method, "call") == 0) {
+  } else if (strcmp(method, "send") == 0) {
     //    printf(" src params %s\n", params);
-    req    = prepare_tx(sig, to, params, block_number);
-    method = "eth_call";
+    prepare_tx(sig, to, params, NULL, gas_limit, value);
+    method = "eth_sendTransaction";
     //    printf(" new params %s\n", params);
+    //    return 0;
   }
 
+  // send the request
   in3_client_rpc(c, method, params, &result, &error);
   in3_free(c);
 
@@ -188,10 +214,13 @@ int main(int argc, char* argv[]) {
     free(error);
     return 1;
   } else {
+    // if the result is a string, we remove the quotes
     if (result[0] == '"' && result[strlen(result) - 1] == '"') {
       memmove(result, result + 1, strlen(result) + 1);
       result[strlen(result) - 1] = 0;
     }
+
+    // if the request was a eth_call, we decode the result
     if (req) {
       int l = strlen(result) / 2 - 1;
       if (l) {
@@ -204,8 +233,13 @@ int main(int argc, char* argv[]) {
           print_val(res->result);
         req_free(req);
       }
-    } else
-      printf("%s\n", result);
+      // if not we simply print the result
+    } else {
+      if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
+        printf("%" PRIu64 "\n", c_to_long(result, strlen(result)));
+      } else
+        printf("%s\n", result);
+    }
     free(result);
   }
   return 0;

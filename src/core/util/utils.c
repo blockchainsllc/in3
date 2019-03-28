@@ -128,7 +128,7 @@ uint64_t bytes_to_long(uint8_t* data, int len) {
   }
   return res;
 }
-long c_to_long(char* a, int l) {
+uint64_t c_to_long(char* a, int l) {
   if (a[0] == '0' && a[1] == 'x') {
     long val = 0;
     for (int i = l - 1; i > 1; i--)

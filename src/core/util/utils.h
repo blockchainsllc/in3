@@ -38,6 +38,8 @@ static inline uint32_t bytes_to_int(uint8_t* data, int len) {
     default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
   }
 }
+/** converts a character into a uint64_t*/
+uint64_t c_to_long(char* a, int l);
 
 /** the number of bytes used for a conerting a hex into bytes. */
 int size_of_bytes(int str_len);

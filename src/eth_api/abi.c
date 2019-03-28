@@ -124,12 +124,12 @@ call_request_t* parseSignature(char* sig) {
   call_request_t* req  = _malloc(sizeof(call_request_t));
   int             l    = strlen(sig);
   char *          ends = memchr(sig, ':', l), *startb = memchr(sig, '(', l);
-  if (!ends || !startb || ends < startb) {
+  if (!startb) {
     add_error(req, "Invalid call-signature");
     return req;
   }
 
-  bytes_t          signature = bytes((uint8_t*) sig, ends - sig);
+  bytes_t          signature = bytes((uint8_t*) sig, ends ? (ends - sig) : l);
   bytes32_t        hash;
   bytes_builder_t* tokens = bb_new();
   if (!parse_tuple(tokens, startb + 1)) {
@@ -137,12 +137,12 @@ call_request_t* parseSignature(char* sig) {
     return req;
   }
   int out_start = tokens->b.len;
-  if (!parse_tuple(tokens, ends + (ends[1] == '(' ? 2 : 1))) {
+  if (ends && !parse_tuple(tokens, ends + (ends[1] == '(' ? 2 : 1))) {
     req->error = "invalid return types in signature";
     return req;
   }
   req->in_data     = token(tokens, 0);
-  req->out_data    = token(tokens, out_start);
+  req->out_data    = ends ? token(tokens, out_start) : NULL;
   req->current     = req->in_data;
   req->call_data   = bb_new();
   req->data_offset = 4;
@@ -190,7 +190,7 @@ static bool is_dynamic(var_t* t) {
 }
 
 static int head_size(var_t* t, bool single) {
-  if (is_dynamic(t)) return 32;
+  if (is_dynamic(t) && !single) return 32;
   int f = t->array_len > 0 ? t->array_len : 1, a = 32;
   if (t->type == A_TUPLE) {
     int i;
@@ -267,13 +267,14 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
   for (int i = 0; i < array_len; i++, d = d_next(d)) {
     switch (tuple->type) {
       case A_TUPLE: {
-        int n = 0;
-        if (check_buffer(req, head_pos + head_size(tuple, true)) < 0) return add_error(req, "wrong array_size!");
+        int n          = 0;
+        int tail_start = head_pos + head_size(tuple, true);
+        if (check_buffer(req, tail_start) < 0) return add_error(req, "wrong array_size!");
         var_t*     t  = tuple + 1;
         d_token_t* dd = d + 1;
         if (tuple->type_len != d_len(d) || d_type(d) != T_ARRAY) return add_error(req, "wrong tuple size!");
         for (n = 0; n < tuple->type_len; n++, t = t_next(t), dd = d_next(dd))
-          head_pos = encode(req, dd, t, head_pos, buffer->b.len);
+          head_pos = encode(req, dd, t, head_pos, max(buffer->b.len, tail_start));
         break;
       }
       case A_ADDRESS:
