@@ -5,6 +5,7 @@
 #include <abi.h>
 #include <client/cache.h>
 #include <client/client.h>
+#include <eth_api.h>
 #include <eth_full.h>
 #include <evm.h>
 #include <in3_curl.h>
@@ -129,6 +130,7 @@ int main(int argc, char* argv[]) {
   bool            json         = false;
   uint64_t        gas_limit    = 100000;
   char*           value        = NULL;
+  bool            wait         = false;
 
   if (getenv("IN3_PK")) {
     hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
@@ -152,6 +154,8 @@ int main(int argc, char* argv[]) {
       value = argv[++i];
     else if (strcmp(argv[i], "-hex") == 0)
       force_hex = true;
+    else if (strcmp(argv[i], "-wait") == 0)
+      wait = true;
     else if (strcmp(argv[i], "-json") == 0)
       json = true;
     else if (strcmp(argv[i], "-debug") == 0)
@@ -193,20 +197,23 @@ int main(int argc, char* argv[]) {
   char* error;
 
   if (strcmp(method, "call") == 0) {
-    //    printf(" src params %s\n", params);
     req    = prepare_tx(sig, to, params, block_number, 0, NULL);
     method = "eth_call";
     //    printf(" new params %s\n", params);
   } else if (strcmp(method, "send") == 0) {
-    //    printf(" src params %s\n", params);
     prepare_tx(sig, to, params, NULL, gas_limit, value);
     method = "eth_sendTransaction";
     //    printf(" new params %s\n", params);
-    //    return 0;
   }
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
+  // if we need to wait
+  if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
+    bytes32_t txHash;
+    hex2byte_arr(result + 3, 64, txHash, 32);
+    result = eth_wait_for_receipt(c, txHash);
+  }
   in3_free(c);
 
   if (error) {
@@ -214,6 +221,7 @@ int main(int argc, char* argv[]) {
     free(error);
     return 1;
   } else {
+
     // if the result is a string, we remove the quotes
     if (result[0] == '"' && result[strlen(result) - 1] == '"') {
       memmove(result, result + 1, strlen(result) + 1);

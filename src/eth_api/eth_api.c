@@ -7,6 +7,11 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#if defined(_WIN32) || defined(WIN32)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 // create the params as stringbuilder
 #define rpc_init sb_t* params = sb_new("[");
@@ -355,4 +360,42 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
     rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
   }
   return NULL;
+}
+
+static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) {
+  errno             = 0;
+  in3_ctx_t* ctx    = in3_client_rpc_ctx(in3, "eth_getTransactionReceipt", params);
+  d_token_t* result = get_result(ctx);
+  if (result) {
+    if (d_type(result) == T_NULL) {
+      free_ctx(ctx);
+      if (count) {
+#if defined(_WIN32) || defined(WIN32)
+        Sleep(timeout);
+#else
+        usleep(timeout * 1000); // usleep takes sleep time in us (1 millionth of a second)
+#endif
+        return wait_for_receipt(in3, params, timeout + timeout, count - 1);
+      } else {
+        set_error(1, "timeout waiting for the receipt");
+        return NULL;
+      }
+    } else {
+      //
+      char* c = d_create_json(result);
+      free_ctx(ctx);
+      return c;
+    }
+  }
+  free_ctx(ctx);
+  set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
+  return NULL;
+}
+
+char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(tx_hash, 32));
+  char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 500, 6);
+  sb_free(params);
+  return data;
 }

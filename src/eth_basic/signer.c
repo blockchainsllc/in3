@@ -75,8 +75,20 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   // get the from-address
   if ((tmp = d_to_bytes(d_get(tx, K_FROM))).len == 0) {
     if (!d_get(tx, K_NONCE)) {
-      ctx_set_error(ctx, "you need to specify the from-address in the tx!", -1);
-      return bytes(NULL, 0);
+      // Derive the from-address from pk if no nonce is given.
+      // Note: This works because the signer->wallet points to the pk in the current signer implementation
+      // (see eth_set_pk_signer()), and may change in the future.
+      // Also, other wallet implementations may differ - hence the check.
+      if (ctx->client->signer->sign != eth_sign) {
+        ctx_set_error(ctx, "you need to specify the from-address in the tx!", -1);
+        return bytes(NULL, 0);
+      }
+
+      uint8_t public_key[65], sdata[32];
+      bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
+      ecdsa_get_public_key65(&secp256k1, ctx->client->signer->wallet, public_key);
+      sha3_to(&pubkey_bytes, sdata);
+      memcpy(from, sdata + 12, 20);
     } else
       memset(from, 0, 20);
   } else
