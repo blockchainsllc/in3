@@ -274,7 +274,7 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
         d_token_t* dd = d + 1;
         if (tuple->type_len != d_len(d) || d_type(d) != T_ARRAY) return add_error(req, "wrong tuple size!");
         for (n = 0; n < tuple->type_len; n++, t = t_next(t), dd = d_next(dd))
-          head_pos = encode(req, dd, t, head_pos, max(buffer->b.len, tail_start));
+          head_pos = encode(req, dd, t, head_pos, max((int) buffer->b.len, tail_start));
         break;
       }
       case A_ADDRESS:
