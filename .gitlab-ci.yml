@@ -123,7 +123,7 @@ zephyr:
     - apt-get update && eatmydata apt-get install -y curl qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
     - curl -L https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2-Linux-x86_64.tar.gz | tar -xzf -
     - export PATH="`pwd`/cmake-3.13.2-Linux-x86_64/bin:$PATH"
-    - wget https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
+    - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
     - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
     - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}
     - rm zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
