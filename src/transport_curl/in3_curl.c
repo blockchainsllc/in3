@@ -8,7 +8,9 @@
 #include "../core/util/stringbuilder.h"
 #include <curl/curl.h>
 
-#define CURL_MAX_PARALLEL 10
+#ifndef CURL_MAX_PARALLEL
+#define CURL_MAX_PARALLEL 50
+#endif
 
 /*
 struct MemoryStruct {
@@ -62,9 +64,12 @@ int send_curl_nonblocking(const char** urls,int urls_len, char* payload, in3_res
   curl_global_init(CURL_GLOBAL_ALL);
   cm = curl_multi_init();
 
-  curl_multi_setopt(cm, CURLMOPT_MAXCONNECTS, (long)CURL_MAX_PARALLEL);
+  int max_conn = min(CURL_MAX_PARALLEL, urls_len/10) + 1;
+  // printf("%d\n", max_conn);
 
-  for(transfers = 0; transfers < min(CURL_MAX_PARALLEL, urls_len); transfers++)
+  curl_multi_setopt(cm, CURLMOPT_MAXCONNECTS, (long) max_conn);
+
+  for(transfers = 0; transfers < min(max_conn, urls_len); transfers++)
     readDataNonBlocking(cm, urls[transfers],payload, result+transfers);
 
   do {
