@@ -147,7 +147,7 @@ void test_send_curl_match_responses() {
 }
 
 void test_send_curl_timing() {
-  const int    count     = 100;
+  const int    count     = 10000;
   const char*  localhost = "http://127.0.0.1";
   const size_t sz        = strlen(localhost) + 1;
   char**       ips       = _malloc(sizeof(*ips) * count);
