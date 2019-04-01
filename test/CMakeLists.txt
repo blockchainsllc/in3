@@ -14,6 +14,8 @@ target_link_libraries(runner core in3_eth_full)
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner core in3_eth_full)
 
+add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
+target_link_libraries(test_libcurl core in3_eth_full in3_curl)
 
 file(GLOB files "testdata/requests/*.json")
 foreach(file ${files})
