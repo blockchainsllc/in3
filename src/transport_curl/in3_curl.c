@@ -23,17 +23,14 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
   return size * nmemb ;
 }
 
-static void readData(CURLM *cm, const char* url, const char* payload, in3_response_t* r) {
+static void readDataNonBlocking(CURLM *cm, const char* url, const char* payload, in3_response_t* r) {
   CURL *curl;
   CURLcode res;
-  
+
   curl = curl_easy_init();
   if(curl) {
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
- 
-    /* if we don't provide POSTFIELDSIZE, libcurl will strlen() by
-       itself */ 
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(payload));
 
     struct curl_slist *headers = NULL;
@@ -55,7 +52,7 @@ static void readData(CURLM *cm, const char* url, const char* payload, in3_respon
     sb_add_chars(&r->error, "no curl:");
 }
 
-int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
+int send_curl_nonblocking(const char** urls,int urls_len, char* payload, in3_response_t* result) {
   CURLM *cm;
   CURLMsg *msg;
   int transfers = 0;
@@ -68,7 +65,7 @@ int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
   curl_multi_setopt(cm, CURLMOPT_MAXCONNECTS, (long)CURL_MAX_PARALLEL);
 
   for(transfers = 0; transfers < min(CURL_MAX_PARALLEL, urls_len); transfers++)
-    readData(cm, urls[transfers],payload, result+transfers);
+    readDataNonBlocking(cm, urls[transfers],payload, result+transfers);
 
   do {
     curl_multi_perform(cm, &still_alive);
@@ -88,7 +85,7 @@ int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
         sb_add_chars(&result->error, "E: CURLMsg");
       }
       if(transfers < urls_len) {
-        readData(cm, urls[transfers], payload, result + transfers);
+        readDataNonBlocking(cm, urls[transfers], payload, result + transfers);
         transfers++;
       }
     }
@@ -100,6 +97,59 @@ int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
 
   curl_multi_cleanup(cm);
   curl_global_cleanup();
-
   return 0;
+}
+
+static void readDataBlocking(const char* url, char* payload, in3_response_t* r) {
+  CURL *curl;
+  CURLcode res;
+
+  curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+
+    /* if we don't provide POSTFIELDSIZE, libcurl will strlen() by
+       itself */
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(payload));
+
+    struct curl_slist *headers = NULL;
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "charsets: utf-8");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)r);
+
+
+    /* Perform the request, res will get the return code */
+    res = curl_easy_perform(curl);
+    /* Check for errors */
+    if(res != CURLE_OK) {
+      sb_add_chars(&r->error, "curl_easy_perform() failed:");
+      sb_add_chars(&r->error, (char*) curl_easy_strerror(res));
+    }
+
+    /* always cleanup */
+    curl_easy_cleanup(curl);
+  }
+  else
+    sb_add_chars(&r->error, "no curl:");
+
+}
+
+int send_curl_blocking(const char** urls,int urls_len, char* payload, in3_response_t* result) {
+  int i;
+  for (i=0;i<urls_len;i++) {
+    readDataBlocking(urls[i],payload, result+i );
+  }
+  return 0;
+}
+
+int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
+#ifdef CURL_BLOCKING
+  return send_curl_blocking((const char**) urls, urls_len, payload, result);
+#else
+  return send_curl_nonblocking((const char**) urls, urls_len, payload, result);
+#endif
 }
