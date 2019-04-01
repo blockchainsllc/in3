@@ -8,7 +8,8 @@ extern "C" {
 #endif
 
 #define TESTS_BEGIN() UNITY_BEGIN()
-#define TESTS_END()   UNITY_END()
+#define TESTS_END() UNITY_END()
+#define TEST_LOG(f_, ...) printf("%s:%d:%s:LOG:" f_, __FILE__, __LINE__, __func__, __VA_ARGS__)
 
 // Timing
 #define TIMING_START() gettimeofday(&begin, NULL)
