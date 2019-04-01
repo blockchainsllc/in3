@@ -176,6 +176,8 @@ void test_send_curl_timing() {
   TIMING_END();
   double t2 = TIMING_GET();
 
+  TEST_LOG("Time taken for %d requests - Blocking: [%fs] v/s Non-blocking: [%fs]\n", count, t1, t2);
+
   TEST_ASSERT_MESSAGE(t1 > t2, "Blocking version is faster! Compiling with -DCURL_BLOCKING is recommended.");
 
   for (int n = 0; n < count; n++) {
