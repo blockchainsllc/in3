@@ -88,8 +88,8 @@ int send_curl(char** urls,int urls_len, char* payload, in3_response_t* result) {
         sb_add_chars(&result->error, "E: CURLMsg");
       }
       if(transfers < urls_len) {
+        readData(cm, urls[transfers], payload, result + transfers);
         transfers++;
-        readData(cm, urls[transfers],payload, result+transfers );
       }
     }
 
