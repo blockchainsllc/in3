@@ -63,7 +63,6 @@ static const char* test_urls[] = {
     "https://www.un.org",
 };
 
-#define CURL_MAX_PARALLEL 10
 #define NUM_URLS (sizeof(test_urls) / sizeof(char*))
 
 /*
