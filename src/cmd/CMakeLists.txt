@@ -6,6 +6,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/src/eth_basic")
 include_directories ("${PROJECT_SOURCE_DIR}/src/eth_nano")
 include_directories ("${PROJECT_SOURCE_DIR}/src/eth_api")
 
+include(${PROJECT_SOURCE_DIR}/src/core/compiler.cmake)
 
 # add the executablex
 add_executable(in3 main.c)
@@ -17,6 +18,4 @@ set_property(TARGET rlp PROPERTY C_STANDARD 99)
 target_link_libraries (in3 core in3_curl in3_eth_full in3_eth_api)
 target_link_libraries (rlp core in3_eth_nano)
 target_link_libraries (json core)
-
-
 
