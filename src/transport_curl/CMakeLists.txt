@@ -11,7 +11,15 @@ else()
 endif()
 
 # can we find curl installed?
-find_package(CURL)
+message(STATUS "check for curl: $ENV{CURL_LIBRARIES} ")
+if(DEFINED ENV{CURL_LIBRARIES})
+  SET(CURL_LIBRARIES $ENV{CURL_LIBRARIES})
+  SET(CURL_INCLUDE_DIRS $ENV{CURL_INCLUDE_DIRS})
+  message(STATUS "found a set curl:libs=$ENV{CURL_LIBRARIES} includeDirs= ${CURL_INCLUDE_DIRS} ")
+  set(CURL_FOUND True)
+else() 
+   find_package(CURL)
+endif()
 message(STATUS "check for curl....: ${CURL_FOUND} ")
 
 
