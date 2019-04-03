@@ -22,7 +22,7 @@ endif()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
 # run conan
-conan_cmake_run(REQUIRES libcurl/7.52.1@bincrafters/stable 
+conan_cmake_run(REQUIRES libcurl/7.61.1@bincrafters/stable 
                 OPTIONS libcurl:shared=${CURL_SHARED}
                 BASIC_SETUP CMAKE_TARGETS
                 BUILD missing)

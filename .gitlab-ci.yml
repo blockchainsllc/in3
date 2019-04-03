@@ -24,7 +24,6 @@ test-in3:
   tags:
     - short-jobs
   script:
-    - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir testbuild
     - cd testbuild
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
@@ -62,7 +61,6 @@ test-in3:
   tags:
     - short-jobs
   script:
-    - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release ..
