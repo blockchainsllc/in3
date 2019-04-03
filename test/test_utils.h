@@ -17,11 +17,13 @@ extern "C" {
 #define TIMING_END() gettimeofday(&end, NULL)
 #define TIMING_GET() ((double) (end.tv_usec - begin.tv_usec) / 1000000 + (double) (end.tv_sec - begin.tv_sec))
 
-#define RUN_TIMED_TEST(t) \
-  TIMING_START();         \
-  RUN_TEST(t);            \
-  TIMING_END();           \
-  TEST_LOG_INTERNAL(#t, "Completed in %fs\n", TIMING_GET());
+#define RUN_TIMED_TEST(t)                                      \
+  do {                                                         \
+    TIMING_START();                                            \
+    RUN_TEST(t);                                               \
+    TIMING_END();                                              \
+    TEST_LOG_INTERNAL(#t, "Completed in %fs\n", TIMING_GET()); \
+  } while (0)
 
 #ifdef __cplusplus
 }
