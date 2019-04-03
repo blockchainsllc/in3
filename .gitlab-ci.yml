@@ -4,7 +4,7 @@ stages:
   - deploy
 
 build-in3:
-  image: conanio/gcc8
+  image: docker.slock.it/build-images/cmake:gcc8
   stage: build
   tags:
     - short-jobs
@@ -19,7 +19,7 @@ build-in3:
       - build/src
 
 test-in3:
-  image: conanio/gcc8
+  image: docker.slock.it/build-images/cmake:gcc8
   stage: test
   tags:
     - short-jobs
@@ -69,28 +69,28 @@ test-in3:
     - make
 
 gcc8-armv7:
-  image: conanio/gcc8-armv7
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
   extends: .conanbuild
   artifacts:
     paths:
       - build/src
 
 gcc8-armv7hf:
-  image: conanio/gcc8-armv7hf
+  image: docker.slock.it/build-images/cmake:gcc8-armv7hf
   extends: .conanbuild
   artifacts:
     paths:
       - build/src
 
 gcc5:
-  image: conanio/gcc5
+  image: docker.slock.it/build-images/cmake:gcc5
   extends: .conanbuild
   artifacts:
     paths:
       - build/src
 
 clang50:
-  image: conanio/clang50
+  image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
   artifacts:
     paths:
