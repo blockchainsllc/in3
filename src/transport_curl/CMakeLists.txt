@@ -1,6 +1,4 @@
-
-include(FindCURL)
-
+# add a option
 option(LIBCURL_LINKTYPE "Link type for curl" SHARED)
 if(${LIBCURL_LINKTYPE} MATCHES "static")
   add_definitions( -DCURL_STATICLIB )
@@ -12,6 +10,7 @@ else()
   SET(LIBCURL_LINKTYPE "SHARED_LIBRARY")
 endif()
 
+# can we find curl installed?
 find_package(CURL)
 message(STATUS "check for curl....: ${CURL_FOUND} ")
 
@@ -27,9 +26,7 @@ if( CURL_FOUND)
     # Property INTERFACE_LINK_FLAGS do not work, necessary to add to INTERFACE_LINK_LIBRARIES
     set_property(TARGET CONAN_PKG::libcurl PROPERTY INTERFACE_LINK_LIBRARIES ${CURL_LIBRARIES})
     set_property(TARGET CONAN_PKG::libcurl PROPERTY INTERFACE_INCLUDE_DIRECTORIES  ${CURL_INCLUDE_DIRS})
-    message(STATUS "Found useable curl")
-#    include_directories( ${CURL_INCLUDE_DIRS} )
-    if(${LIBCURL_LINKTYPE} MATCHES "STATUC_LIBRARY")
+    if(${LIBCURL_LINKTYPE} MATCHES "STATIC_LIBRARY")
       set(CONAN_COMPILE_DEFINITIONS_LIBCURL "CURL_STATICLIB=1")
       set_property(TARGET CONAN_PKG::libcurl PROPERTY INTERFACE_COMPILE_DEFINITIONS ${CONAN_COMPILE_DEFINITIONS_LIBCURL})
     endif()
@@ -43,8 +40,8 @@ else()
 
     # stupid workaround since conan may not detect compilers correctly
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(ENV{CC} "")
-    set(ENV{CXX} "")
+      set(ENV{CC} "")
+      set(ENV{CXX} "")
     endif()
 
 
@@ -57,15 +54,14 @@ else()
                     BASIC_SETUP CMAKE_TARGETS
                     BUILD missing)
 
-    # add dependency
 endif()
 
 # static lib
 add_library( in3_curl STATIC in3_curl.c in3_storage.c)
+
 # props
 include(../core/compiler.cmake)
 
-
-
+# add dependency
 target_link_libraries(in3_curl CONAN_PKG::libcurl)
 
