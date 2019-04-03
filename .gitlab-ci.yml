@@ -71,6 +71,8 @@ gcc7-mingw-static:
   extends: .conanbuild
   variables:
     CONAN_OPTS: "-DLIBCURL_LINKTYPE=static"
+    CURL_LIBRARY: /home/conan/curl-7.64.1-win64-mingw/lib
+    CURL_INCLUDE_DIR: /home/conan/curl-7.64.1-win64-mingw/include
   artifacts:
     paths:
       - build/src
@@ -78,6 +80,10 @@ gcc7-mingw-static:
 gcc7-mingw-shared:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
   extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DLIBCURL_LINKTYPE=shared"
+    CURL_LIBRARY: /home/conan/curl-7.64.1-win64-mingw/lib
+    CURL_INCLUDE_DIR: /home/conan/curl-7.64.1-win64-mingw/include
   artifacts:
     paths:
       - build/src
