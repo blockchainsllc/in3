@@ -66,6 +66,22 @@ test-in3:
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
 
+gcc7-mingw-static:
+  image: docker.slock.it/build-images/cmake:gcc7-mingw
+  extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static"
+  artifacts:
+    paths:
+      - build/src
+
+gcc7-mingw-shared:
+  image: docker.slock.it/build-images/cmake:gcc7-mingw
+  extends: .conanbuild
+  artifacts:
+    paths:
+      - build/src
+
 gcc8-armv7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
   extends: .conanbuild
