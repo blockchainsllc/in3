@@ -12,7 +12,6 @@ build-in3:
     - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
-    - conan install .. --build libcurl
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
   artifacts:
@@ -28,7 +27,6 @@ test-in3:
     - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir testbuild
     - cd testbuild
-    - conan install .. --build libcurl
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
     - CTEST_OUTPUT_ON_FAILURE=1 make test
@@ -53,7 +51,7 @@ test-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make"
+    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release .. && make"
   variables:
     IMAGE: "linux-x64"
     INSTALL: "cd ."
@@ -67,7 +65,6 @@ test-in3:
     - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
-    - conan install .. --build missing
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
 
@@ -103,13 +100,13 @@ clang50:
 #  extends: .xbuild
 #  variables:
 #    IMAGE: linux-x64
-#    CONAN_OPTS: "-o libcurl:shared=False"
+#    CONAN_OPTS: "-DLIBCURL_TYPE=static"
 
 #linux-x64-shared:
 #  extends: .xbuild
 #  variables:
 #    IMAGE: linux-x64
-#    CONAN_OPTS: "-o libcurl:shared=True"
+#    CONAN_OPTS: "-DLIBCURL_TYPE=shared"
 
 zephyr:
   image: agustinhenze/zephyr-arm
