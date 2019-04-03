@@ -4,7 +4,7 @@ stages:
   - deploy
 
 build-in3:
-  image: conanio/gcc8
+  image: docker.slock.it/build-images/cmake:gcc8
   stage: build
   tags:
     - short-jobs
@@ -12,7 +12,6 @@ build-in3:
     - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
-    - conan install .. --build libcurl
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
   artifacts:
@@ -20,15 +19,13 @@ build-in3:
       - build/src
 
 test-in3:
-  image: conanio/gcc8
+  image: docker.slock.it/build-images/cmake:gcc8
   stage: test
   tags:
     - short-jobs
   script:
-    - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir testbuild
     - cd testbuild
-    - conan install .. --build libcurl
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
     - CTEST_OUTPUT_ON_FAILURE=1 make test
@@ -53,7 +50,7 @@ test-in3:
     - apk add --no-cache bash
     - docker run --rm "dockcross/$IMAGE" > ./dockcross
     - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; conan install .. $CONAN_OPTS && cmake -DCMAKE_BUILD_TYPE=Release .. && make"
+    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release .. && make"
   variables:
     IMAGE: "linux-x64"
     INSTALL: "cd ."
@@ -64,36 +61,52 @@ test-in3:
   tags:
     - short-jobs
   script:
-    - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
-    - conan install .. --build missing
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - make
 
+#gcc7-mingw-static:
+#  image: docker.slock.it/build-images/cmake:gcc7-mingw
+#  extends: .conanbuild
+#  variables:
+#    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static"
+#  artifacts:
+#    paths:
+#      - build/src
+
+#gcc7-mingw-shared:
+#  image: docker.slock.it/build-images/cmake:gcc7-mingw
+#  extends: .conanbuild
+#  variables:
+#    CONAN_OPTS: "-DLIBCURL_LINKTYPE=shared"
+#  artifacts:
+#    paths:
+#      - build/src
+
 gcc8-armv7:
-  image: conanio/gcc8-armv7
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
   extends: .conanbuild
   artifacts:
     paths:
       - build/src
 
 gcc8-armv7hf:
-  image: conanio/gcc8-armv7hf
+  image: docker.slock.it/build-images/cmake:gcc8-armv7hf
   extends: .conanbuild
   artifacts:
     paths:
       - build/src
 
 gcc5:
-  image: conanio/gcc5
+  image: docker.slock.it/build-images/cmake:gcc5
   extends: .conanbuild
   artifacts:
     paths:
       - build/src
 
 clang50:
-  image: conanio/clang50
+  image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
   artifacts:
     paths:
@@ -103,13 +116,13 @@ clang50:
 #  extends: .xbuild
 #  variables:
 #    IMAGE: linux-x64
-#    CONAN_OPTS: "-o libcurl:shared=False"
+#    CONAN_OPTS: "-DLIBCURL_TYPE=static"
 
 #linux-x64-shared:
 #  extends: .xbuild
 #  variables:
 #    IMAGE: linux-x64
-#    CONAN_OPTS: "-o libcurl:shared=True"
+#    CONAN_OPTS: "-DLIBCURL_TYPE=shared"
 
 zephyr:
   image: agustinhenze/zephyr-arm
