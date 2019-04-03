@@ -21,7 +21,7 @@ endif()
 
 # Only CMake >=3.13 has add_link_options(). For previous versions,
 # DEAD_STRIP_LINKER_OPT can be used with target_link_libraries()
-if(${CMAKE_VERSION} VERSION_GREATER "3.12")
+if(${CMAKE_VERSION} VERSION_GREATER "3.12.4")
   get_property(DEAD_STRIP_LINKER_OPT GLOBAL PROPERTY DEAD_STRIP_LINKER_OPT)
   add_link_options(${DEAD_STRIP_LINKER_OPT})
   set_property(GLOBAL PROPERTY DEAD_STRIP_LINKER_OPT "")
