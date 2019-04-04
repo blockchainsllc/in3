@@ -99,6 +99,30 @@
             "MIMode": "lldb"
         },
         {
+            "name": "send",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-to",
+                "0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
+                "-c",
+                "kovan",
+                "-pk",
+                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
+                "send",
+                "registerServer(string,uint256)",
+                "https://in3.slock.it/kovan1",
+                "0xFF",
+                "-wait"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "vmrunner",
             "type": "cppdbg",
             "request": "launch",
