@@ -52,6 +52,9 @@ void do_action(action_type_t action)
 	if (action == LOCK)
 		{
 		dbg_log("<--- action: LOCK\n");
+		ledstrip_set(IO_ON); // led on
+		k_timer_start(timer2, 2000, 0); // start timer 2 initial duration 2*1000mS, period = 0
+		door_control('c'); // close the door
 		}
 	else
 		{
@@ -60,6 +63,7 @@ void do_action(action_type_t action)
 		k_timer_start(timer2, 10000, 0); // start timer 2 initial duration 10*1000mS, period = 0
 		lock_set(IO_ON); // lock on
 		k_timer_start(timer3, 1500, 0); // start timer 3 initial duration 1500mS, period = 0
+		door_control('o'); // open the door
 		}
 }
 
@@ -166,8 +170,8 @@ static in3_state_t in3_action(void) {
 
   do_action(action);
 
-  if (action == UNLOCK)
-    k_timer_start(timer, K_SECONDS(5), 0);
+//  if (action == UNLOCK)
+//    k_timer_start(timer, K_SECONDS(5), 0);
 
   return STATE_RESET;
 }

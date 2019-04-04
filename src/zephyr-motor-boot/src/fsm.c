@@ -18,7 +18,7 @@ int                 undo;
 // private
 static void timer_expired(struct k_timer* work) {
   undo = 1;
-  dbg_log("<--- timer expired\n");
+  printk("<--- timer expired\n");
   k_sem_give(&client->sem);
 }
 
@@ -51,15 +51,19 @@ void do_action(action_type_t action)
 	k_timer_start(timer1, 250, 0); // start timer 1 initial duration 250mS, period = 0
 	if (action == LOCK)
 		{
-		dbg_log("<--- action: LOCK\n");
+		printk("<--- action: LOCK\n");
+		ledstrip_set(IO_ON); // led on
+		k_timer_start(timer2, 2000, 0); // start timer 2 initial duration 2*1000mS, period = 0
+		door_control('c'); // close the door
 		}
 	else
 		{
-		dbg_log("<--- action: UNLOCK\n");
+		printk("<--- action: UNLOCK\n");
 		ledstrip_set(IO_ON); // led on
 		k_timer_start(timer2, 10000, 0); // start timer 2 initial duration 10*1000mS, period = 0
 		lock_set(IO_ON); // lock on
 		k_timer_start(timer3, 1500, 0); // start timer 3 initial duration 1500mS, period = 0
+		door_control('o'); // open the door
 		}
 }
 
@@ -68,7 +72,7 @@ void in3_signal_event(void) {
   if (!client)
     return;
 
-  dbg_log("<--- signalling event\n");
+  printk("<--- signalling event\n");
   k_sem_give(&client->sem);
 }
 
@@ -95,8 +99,8 @@ static in3_state_t in3_init(void) {
 	timer2 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 	timer3 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 
-	client->in3               = in3_new();
-	client->in3->chainId      = 0x044d;
+	client->in3 = in3_new();
+	client->in3->chainId = 0x044d;
 	client->in3->requestCount = 1;
 	client->in3->max_attempts=1;
 
@@ -105,7 +109,6 @@ static in3_state_t in3_init(void) {
 
 	in3_register_eth_nano();
 	bluetooth_setup(client);
- 	gpio_setup();
 
 	k_sem_init(&client->sem, 0, 1);
 	k_mutex_init(&client->mutex);
@@ -120,14 +123,14 @@ static in3_state_t in3_init(void) {
 static in3_state_t in3_waiting(void) {
   k_mutex_lock(&client->mutex, 10000);
   if (client->msg->ready) {
-  	dbg_log("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
+  	printk("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
     client->msg->start = k_uptime_get_32();
     if (msg_get_type(client->msg->data) == T_ACTION) {
       k_mutex_unlock(&client->mutex);
       return STATE_ACTION;
     }
     client->msg->end = k_uptime_get_32();
-    dbg_log("<--- total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+    printk("<--- total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
     clear_message(client);
   }
 
@@ -160,14 +163,14 @@ static in3_state_t in3_action(void) {
 
   err = verify_rent(client);
   if (err) {
-    dbg_log("<--- Invalid rental\n");
+    printk("<--- Invalid rental\n");
     return STATE_RESET;
   }
 
   do_action(action);
 
-  if (action == UNLOCK)
-    k_timer_start(timer, K_SECONDS(5), 0);
+//  if (action == UNLOCK)
+//    k_timer_start(timer, K_SECONDS(5), 0);
 
   return STATE_RESET;
 }
@@ -175,7 +178,7 @@ static in3_state_t in3_action(void) {
 static in3_state_t in3_reset(void) {
   client->msg->end = k_uptime_get_32();
 
-  dbg_log("<--- Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+  printk("<--- Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
   clear_message(client);
 
   return STATE_WAITING;
@@ -200,19 +203,19 @@ int in3_client_start(void) {
     switch(state)
       {
       case STATE_INIT:
-        dbg_log("<--- INIT\n");
+        printk("<--- INIT\n");
         break;
       case STATE_WAITING:
-        dbg_log("<--- WAITING\n");
+        printk("<--- WAITING\n");
         break;
       case STATE_ACTION:
-        dbg_log("<--- ACTION\n");
+        printk("<--- ACTION\n");
         break;
       case STATE_RESET:
-        dbg_log("<--- RESET\n");
+        printk("<--- RESET\n");
         break;
       default:
-        dbg_log("<--- STATE MACHINE ERROR!\n");
+        printk("<--- STATE MACHINE ERROR!\n");
         state = STATE_RESET; // force state to reset
         break;
       }

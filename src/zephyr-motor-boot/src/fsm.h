@@ -108,7 +108,8 @@ void clear_message(struct in3_client *c);
 
 int in3_can_rent(struct in3_client *c, char *r, char *amsg);
 
-int gpio_setup(void);
+//int gpio_setup(void); // now used only in main.c
+void door_control(int);
 void ledpower_set(int);
 void ledstrip_set(int);
 void lock_set(int);

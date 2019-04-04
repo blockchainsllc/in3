@@ -76,7 +76,7 @@ int wait_for_message(struct in3_client *c)
 {
 	int i = 100;
 
-	dbg_log("<--- wait_for_message\n");
+	printk("<--- wait_for_message\n");
 	while (c->msg->ready == 0 && i--)
 		k_sleep(100);
 
@@ -84,10 +84,10 @@ int wait_for_message(struct in3_client *c)
 	k_mutex_unlock(&c->mutex);
 
 	if (c->msg->ready) {
-		dbg_log("<--- msg received!\n");
+		printk("<--- msg received!\n");
 		return 0;
 	}
-	dbg_log("<--- timeout error!\n");
+	printk("<--- timeout error!\n");
 	return i; // -1 if timeout elapsed
 }
 
@@ -145,7 +145,7 @@ int in3_get_tx_receipt(struct in3_client *c, char *tx_hash, char **response)
     in3_client_rpc(c->in3, "eth_getTransactionReceipt", params, &result, &error);
 
     if (error) {
-     	dbg_log("<--- got s error: %s\n", error);
+     	printk("<--- got s error: %s\n", error);
 		*response =NULL;
 		k_free(error);
 	}
@@ -198,8 +198,8 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 	int8_to_char(data->data+12,20,c->rent->controller+2);
 
 
-	dbg_log("*** controller: '%s'\n", c->rent->controller);
-	dbg_log("*** from: %d, until: %d, when: %d\n", c->rent->from, c->rent->until, c->rent->when);
+	printk("*** controller: '%s'\n", c->rent->controller);
+	printk("*** from: %d, until: %d, when: %d\n", c->rent->from, c->rent->until, c->rent->when);
 
     // wrong time
 	if (c->rent->from >= c->rent->when ||  c->rent->when >= c->rent->until)  goto out; 
@@ -259,7 +259,7 @@ int verify_rent(struct in3_client *c)
 
 	in3_get_tx_receipt(c, tx_hash, &r); // try to receive response 
 	if (r)
-		dbg_log("<--- response:\n%s\n", r);
+		printk("<--- response:\n%s\n", r);
 
 	if (in3_can_rent(c, r, amsg) < 0)
 		goto out;
