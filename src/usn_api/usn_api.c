@@ -40,7 +40,7 @@ static d_token_t* get_rented_event(d_token_t* receipt) {
 static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* conf, usn_msg_result_t* result) {
   in3_ctx_t* ctx = NULL;
   bytes32_t  hash;
-  char       tmp[500], mhash[500], *url = d_get_stringk(msg, K_URL);
+  char       tmp[400], mhash[500], *url = d_get_stringk(msg, K_URL);
   checkp_or_return(!url || strlen(url) == 0, "the url is missing");
   checkp_or_return(strcmp(conf->device_url, url), "wrong url");
 
