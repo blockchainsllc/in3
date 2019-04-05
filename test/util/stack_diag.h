@@ -8,15 +8,16 @@
 extern "C" {
 #endif
 
-#if PLATFORM == PLATFORM_BSD
-#include <sys/resource.h>
-#endif
-
 extern size_t stack_top;
 extern size_t stack_size;
 extern size_t stack_max_used;
 
+#if PLATFORM_IS_POSIX(PLATFORM)
+#include <sys/resource.h>
 #define STACK_TOP() STACK_TOP_POSIX()
+#elif
+#define STACK_TOP()
+#endif
 
 #define STACK_TOP_POSIX()                                \
   do {                                                   \
