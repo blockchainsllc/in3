@@ -8,9 +8,9 @@ include_directories ("${PROJECT_SOURCE_DIR}/src/eth_api")
 
 
 # add the executablex
-add_executable(in3 main.c)
+add_executable(in3 main.c ../../test/util/stack_diag.c)
 add_executable(json data.c ../../test/util/stack_diag.c)
-add_executable(rlp rlp.c)
+add_executable(rlp rlp.c ../../test/util/stack_diag.c)
 set_property(TARGET in3 PROPERTY C_STANDARD 99)
 set_property(TARGET json PROPERTY C_STANDARD 99)
 set_property(TARGET rlp PROPERTY C_STANDARD 99)
