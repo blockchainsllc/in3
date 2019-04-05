@@ -45,50 +45,17 @@ typedef struct {
 } receipt_data_t;
 
 static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* conf, usn_msg_result_t* result) {
-  in3_ctx_t*            ctx = NULL;
-  bytes32_t             hash;
-  static receipt_data_t last_receipt;
-  receipt_data_t        r;
+  in3_ctx_t* ctx = NULL;
+  bytes32_t  hash;
+  address_t  sender;
 
+  // check url
   char tmp[400], mhash[500], *url = d_get_stringk(msg, K_URL);
   checkp_or_return(!url || strlen(url) == 0, "the url is missing");
   checkp_or_return(strcmp(conf->device_url, url), "wrong url");
 
-  uint64_t now     = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
-  bytes_t* tx_hash = d_get_bytesk(msg, K_TRANSACTIONHASH);
-  checkp_or_return(!tx_hash || tx_hash->len != 32, "wrong or missing transactionHash");
-  memcpy(r.tx_hash, tx_hash->data, 32);
-
-  if (memcmp(last_receipt.tx_hash, tx_hash->data, 32) == 0) {
-    // same hash, so we can copy the last one
-    r = last_receipt;
-  } else {
-    // build request
-    char params[71];
-    strcpy(params, "[\"0x");
-    for (int i = 0; i < 32; i++) sprintf(params + 4 + 2 * i, "%02x", tx_hash->data[i]);
-    strcpy(params + 4 + 64, "\"]");
-    ctx = in3_client_rpc_ctx(c, "eth_getTransactionReceipt", params);
-
-    checkp_or_return(ctx->error, "The transaction receipt could not be verified");
-    checkp_or_return(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
-
-    // find the event
-    d_token_t* event = get_rented_event(d_get(ctx->responses[0], K_RESULT));
-    checkp_or_return(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
-
-    // extract the values
-    bytes_t* data      = d_get_bytesk(event, K_DATA);
-    bytes_t* device_id = d_get_bytes_at(d_get(event, K_TOPICS), 1);
-    r.rented_from      = bytes_to_long(data->data + 32, 32);
-    r.rented_until     = bytes_to_long(data->data + 64, 32);
-    r.controller       = data->data + 12;
-
-    checkp_or_return(!device_id || device_id->len != 32 || memcmp(device_id->data, conf->device_id, 32), "Invalid DeviceId");
-  }
-
   // prepare message hash
-  sprintf(tmp, "%s%" PRIu64 "%s{}", url, now, d_get_stringk(msg, K_ACTION));
+  sprintf(tmp, "%s%" PRIu64 "%s{}", url, d_get_longk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
   sprintf(mhash, "\031Ethereum Signed Message:\n%u%s", (unsigned int) strlen(tmp), tmp);
   bytes_t msg_data = {.data = (uint8_t*) mhash, .len = strlen(mhash)};
   sha3_to(&msg_data, hash);
@@ -96,11 +63,96 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
 
   // get the signature
   bytes_t* signer = ecrecover_signature(&msg_data, d_get(msg, K_SIGNATURE));
+  if (signer && signer->len != 20) {
+    b_free(signer);
+    signer == NULL;
+  }
   checkp_or_return(!signer, "the message was not signed");
-  bool valid_signer = signer->len == 20 && memcmp(signer->data, r.controller, 20) == 0;
+  memcpy(sender, signer->data, 20);
   b_free(signer);
-  checkp_or_return(!valid_signer, "invalid signature");
-  checkp_or_return(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
+
+  // look for a transaction hash
+  bytes_t* tx_hash = d_get_bytesk(msg, K_TRANSACTIONHASH);
+  checkp_or_return(tx_hash && tx_hash->len != 32, "incorrect transactionhash");
+
+  if (!tx_hash) {
+    // without a tx_hash, we can only call "hasAccess()" of the contract.
+    uint8_t calldata[100];
+    bytes_t action_bytes = d_to_bytes(d_get(msg, K_ACTION));
+    memset(calldata, 0, 100);
+    hex2byte_arr("a0b0305f", 8, calldata, 4);         // functionhash for canAccess()
+    memcpy(calldata + 4, conf->device_id, 32);        // the device_id
+    memcpy(calldata + 4 + 32 + 12, signer->data, 20); // the signer
+    sha3_to(&action_bytes, calldata + 4 + 32 + 32);   // add the hash of the action
+    memset(calldata + 4 + 32 + 32 + 4, 0, 28);        // set the rest of the data to 0
+
+    // build request
+    char *args[300], *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
+    for (int i = 0; i < 100; i++) p += sprintf(p, "%02x", calldata[i]);
+    p += sprintf(p, "\",\"gas\":\"0x77c810\",\"to\":\"0x");
+    for (int i = 0; i < 20; i++) p += sprintf(p, "%02x", conf->contract[i]);
+    p += sprintf(p, "\"},\"latest\"]");
+
+    // send the request
+    ctx = in3_client_rpc_ctx(c, "eth_call", (char*) args);
+
+    // do we have a valid result?
+    checkp_or_return(ctx->error, "The transaction receipt could not be verified");
+    checkp_or_return(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
+    checkp_or_return(d_get_intk(ctx->responses[0], K_RESULT) != 1, "Access rejected");
+
+  } else {
+
+    // we keep the data of the last receipt, so we don't need to verify them again.
+    static receipt_data_t last_receipt;
+    receipt_data_t        r;
+
+    // store the txhash
+    memcpy(r.tx_hash, tx_hash->data, 32);
+
+    // can we use a chached version?
+    if (memcmp(last_receipt.tx_hash, tx_hash->data, 32) == 0) {
+      // same hash, so we can copy the last one
+      r = last_receipt;
+    } else {
+      // build request
+      char params[71];
+      strcpy(params, "[\"0x");
+      for (int i = 0; i < 32; i++) sprintf(params + 4 + 2 * i, "%02x", tx_hash->data[i]);
+      strcpy(params + 4 + 64, "\"]");
+
+      // send the request
+      ctx = in3_client_rpc_ctx(c, "eth_getTransactionReceipt", params);
+
+      // do we have a valid result?
+      checkp_or_return(ctx->error, "The transaction receipt could not be verified");
+      checkp_or_return(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
+
+      // find the event
+      d_token_t* event = get_rented_event(d_get(ctx->responses[0], K_RESULT));
+      checkp_or_return(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
+
+      // extract the values
+      bytes_t* data      = d_get_bytesk(event, K_DATA);
+      bytes_t* address   = d_get_bytesk(event, K_ADDRESS);
+      bytes_t* device_id = d_get_bytes_at(d_get(event, K_TOPICS), 1);
+      r.rented_from      = bytes_to_long(data->data + 32, 32);
+      r.rented_until     = bytes_to_long(data->data + 64, 32);
+      r.controller       = data->data + 12;
+
+      // check device_id and contract
+      checkp_or_return(!device_id || device_id->len != 32 || memcmp(device_id->data, conf->device_id, 32), "Invalid DeviceId");
+      checkp_or_return(!address || address->len != 20 || memcmp(address->data, conf->contract, 20), "Invalid contract");
+
+      // cache it for next time.
+      last_receipt = r;
+    }
+
+    // check if the time and sender is correct
+    uint64_t now = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
+    checkp_or_return(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
+    checkp_or_return(memcmp(sender, r.controller, 20), "Invalid signer of the signature");
+  }
 
   result->accepted = true;
   strcpy(result->action, d_get_stringk(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
@@ -110,22 +162,29 @@ clean:
 }
 
 usn_msg_result_t usn_verify_message(in3_t* c, char* message, usn_device_conf_t* conf) {
+
+  // prepare message
   usn_msg_result_t result = {.accepted = false, .error_msg = NULL, .action = message, .id = 0};
   json_ctx_t*      parsed = parse_json(message);
   check_or_return(!message, "no message passed");
   check_or_return(!parsed, "error parsing the json-message");
-  char* msgType = d_get_stringk(parsed->result, K_MSG_TYPE);
-  result.id     = d_get_intk(parsed->result, K_ID);
   check_or_return(!conf, "no config passed");
   check_or_return(!conf->chain_id, "chain_id missing in config");
   check_or_return(!conf->device_url, "url missing in config");
+
+  // check message type
+  char* msgType = d_get_stringk(parsed->result, K_MSG_TYPE);
+  result.id     = d_get_intk(parsed->result, K_ID);
   check_or_return(!parsed->result || d_type(parsed->result) != T_OBJECT, "no message-object passed");
   check_or_return(!msgType || strlen(msgType) == 0, "the messageType is missing");
+
+  // handle message type
   if (strcmp(msgType, "action") == 0) {
     result.msg_type = USN_ACTION;
     verify_action_message(c, parsed->result, conf, &result);
   } else if (strcmp(msgType, "in3Response") == 0) {
     result.msg_type = USN_RESPONSE;
+    result.accepted = true;
   } else
     result.error_msg = "Unknown message type";
   free_json(parsed);
