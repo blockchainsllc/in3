@@ -15,7 +15,7 @@ extern size_t stack_max_used;
 #if PLATFORM_IS_POSIX(PLATFORM)
 #include <sys/resource.h>
 #define STACK_TOP() STACK_TOP_POSIX()
-#elif
+#else
 #define STACK_TOP()
 #endif
 
