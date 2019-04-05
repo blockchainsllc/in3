@@ -201,7 +201,7 @@ static in3_state_t in3_action(void) {
   usn_msg_result_t result = usn_verify_message(client->in3, client->msg->data, &client->conf);
 
   // send response
-  if (result.accepted)
+  if (!result.accepted)
     sprintf(payload, "{\"msgId\":%d,\"msgType\":\"error\",\"error\":\"%s\"}", result.id, result.error_msg);
   else
     sprintf(payload, "{\"msgId\":%d,\"msgType\":\"action\",\"result\":\"success\"}", result.id);
