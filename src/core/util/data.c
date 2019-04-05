@@ -9,6 +9,7 @@
 #include "stringbuilder.h"
 
 #include "debug.h" // DEBUG !!!
+#include "../../../test/util/stack_diag.h"
 
 // Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
 #if UINTPTR_MAX == 0xFFFF
@@ -356,10 +357,11 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
 }
 
 int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
+  STACK_CURR();
   int res, p_index = jp->len;
 
   if (jp->depth > DATA_DEPTH_MAX) {
-    printf("Depth -> %lu\n", jp->depth);
+    printf("Depth of %lu exceeds max supported!\n", jp->depth);
     return -3;
   }
 
@@ -465,6 +467,7 @@ void free_json(json_ctx_t* jp) {
 }
 
 json_ctx_t* parse_json(char* js) {
+  STACK_TOP();
   json_ctx_t* parser = _malloc(sizeof(json_ctx_t));
   parser->len        = 0;
   parser->depth      = 0;
@@ -472,6 +475,7 @@ json_ctx_t* parse_json(char* js) {
   parser->c          = js;
   parser->allocated  = 10;
   int res            = parse_object(parser, -1, 0);
+  printf("Stack usage -> %lu/%lu\nres -> %d, at -> %s\n", STACK_USED(), STACK_SZ(), res, parser->c);
   if (res < 0) {
     free_json(parser);
     return NULL;
