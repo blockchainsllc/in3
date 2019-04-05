@@ -44,6 +44,7 @@ add_subdirectory( src/eth_nano )
 add_subdirectory( src/eth_basic )
 add_subdirectory( src/eth_full )
 add_subdirectory( src/eth_api )
+add_subdirectory( src/usn_api )
 add_subdirectory( src/cmd )
 add_subdirectory( src/java )
 
