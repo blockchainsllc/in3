@@ -23,6 +23,7 @@ typedef struct {
   char*          error_msg;
   char*          action;
   usn_msg_type_t msg_type;
+  unsigned int   id;
 } usn_msg_result_t;
 
 typedef struct {

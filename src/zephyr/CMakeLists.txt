@@ -39,19 +39,18 @@ project(NONE)
 target_sources(app PRIVATE
 	src/main.c
 	src/fsm.c
-	src/rent.c
 )
 
 # include core in the headers
 include_directories ("${PROJECT_SOURCE_DIR}/../core")
-#include_directories ("${PROJECT_SOURCE_DIR}/../eth_full")
+include_directories ("${PROJECT_SOURCE_DIR}/../usn_api")
 include_directories ("${PROJECT_SOURCE_DIR}/../eth_nano")
-#include_directories ("${PROJECT_SOURCE_DIR}/../eth_basic")
 include(../core/include.cmake)
 
 # choose which module to include
 #include(../eth_basic/include.cmake)
 include(../eth_nano/include.cmake)
+include(../usn_api/include.cmake)
 include(../core/compiler.cmake)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 

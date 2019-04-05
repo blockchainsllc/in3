@@ -37,37 +37,53 @@ static d_token_t* get_rented_event(d_token_t* receipt) {
   return NULL;
 }
 
+typedef struct {
+  bytes32_t tx_hash;
+  uint64_t  rented_from;
+  uint64_t  rented_until;
+  uint8_t*  controller;
+} receipt_data_t;
+
 static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* conf, usn_msg_result_t* result) {
-  in3_ctx_t* ctx = NULL;
-  bytes32_t  hash;
-  char       tmp[400], mhash[500], *url = d_get_stringk(msg, K_URL);
+  in3_ctx_t*            ctx = NULL;
+  bytes32_t             hash;
+  static receipt_data_t last_receipt;
+  receipt_data_t        r;
+
+  char tmp[400], mhash[500], *url = d_get_stringk(msg, K_URL);
   checkp_or_return(!url || strlen(url) == 0, "the url is missing");
   checkp_or_return(strcmp(conf->device_url, url), "wrong url");
 
   bytes_t* tx_hash = d_get_bytesk(msg, K_TRANSACTIONHASH);
+  r.tx_hash        = tx_hash->data;
   checkp_or_return(!tx_hash || tx_hash->len != 32, "wrong or missing transactionHash");
 
-  // build request
-  char params[71];
-  strcpy(params, "[\"0x");
-  for (int i = 0; i < 32; i++) sprintf(params + 4 + 2 * i, "%02x", tx_hash->data[i]);
-  strcpy(params + 4 + 64, "\"]");
-  ctx = in3_client_rpc_ctx(c, "eth_getTransactionReceipt", params);
+  if (memcmp(last_receipt.tx_hash, tx_hash->data, 32) == 0) {
+    // same hash, so we can copy the last one
+    r = last_receipt;
+  } else {
+    // build request
+    char params[71];
+    strcpy(params, "[\"0x");
+    for (int i = 0; i < 32; i++) sprintf(params + 4 + 2 * i, "%02x", tx_hash->data[i]);
+    strcpy(params + 4 + 64, "\"]");
+    ctx = in3_client_rpc_ctx(c, "eth_getTransactionReceipt", params);
 
-  checkp_or_return(ctx->error, "The transaction receipt could not be verified");
-  checkp_or_return(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
+    checkp_or_return(ctx->error, "The transaction receipt could not be verified");
+    checkp_or_return(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
 
-  // find the event
-  d_token_t* event = get_rented_event(d_get(ctx->responses[0], K_RESULT));
-  checkp_or_return(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
+    // find the event
+    d_token_t* event = get_rented_event(d_get(ctx->responses[0], K_RESULT));
+    checkp_or_return(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
 
-  // extract the values
-  bytes_t* data         = d_get_bytesk(event, K_DATA);
-  bytes_t* device_id    = d_get_bytes_at(d_get(event, K_TOPICS), 1);
-  uint64_t rented_from  = bytes_to_long(data->data + 32, 32);
-  uint64_t rented_until = bytes_to_long(data->data + 64, 32);
-  uint8_t* controller   = data->data + 12;
-  uint64_t now          = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
+    // extract the values
+    bytes_t* data      = d_get_bytesk(event, K_DATA);
+    bytes_t* device_id = d_get_bytes_at(d_get(event, K_TOPICS), 1);
+    r.rented_from      = bytes_to_long(data->data + 32, 32);
+    r.rented_until     = bytes_to_long(data->data + 64, 32);
+    r.controller       = data->data + 12;
+    uint64_t now       = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
+  }
 
   // prepare message hash
   sprintf(tmp, "%s%" PRIu64 "%s{}", url, now, d_get_stringk(msg, K_ACTION));
@@ -93,11 +109,12 @@ clean:
 }
 
 usn_msg_result_t usn_verify_message(in3_t* c, char* message, usn_device_conf_t* conf) {
-  usn_msg_result_t result = {.accepted = false, .error_msg = NULL, .action = message};
+  usn_msg_result_t result = {.accepted = false, .error_msg = NULL, .action = message, .id = 0};
   json_ctx_t*      parsed = parse_json(message);
   check_or_return(!message, "no message passed");
   check_or_return(!parsed, "error parsing the json-message");
   char* msgType = d_get_stringk(parsed->result, K_MSG_TYPE);
+  result.id     = d_get_intk(parsed->result, K_ID);
   check_or_return(!conf, "no config passed");
   check_or_return(!conf->chain_id, "chain_id missing in config");
   check_or_return(!conf->device_url, "url missing in config");
