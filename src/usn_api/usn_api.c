@@ -54,9 +54,10 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
   checkp_or_return(!url || strlen(url) == 0, "the url is missing");
   checkp_or_return(strcmp(conf->device_url, url), "wrong url");
 
+  uint64_t now     = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
   bytes_t* tx_hash = d_get_bytesk(msg, K_TRANSACTIONHASH);
-  r.tx_hash        = tx_hash->data;
   checkp_or_return(!tx_hash || tx_hash->len != 32, "wrong or missing transactionHash");
+  memcpy(r.tx_hash, tx_hash->data, 32);
 
   if (memcmp(last_receipt.tx_hash, tx_hash->data, 32) == 0) {
     // same hash, so we can copy the last one
@@ -82,7 +83,8 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
     r.rented_from      = bytes_to_long(data->data + 32, 32);
     r.rented_until     = bytes_to_long(data->data + 64, 32);
     r.controller       = data->data + 12;
-    uint64_t now       = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
+
+    checkp_or_return(!device_id || device_id->len != 32 || memcmp(device_id->data, conf->device_id, 32), "Invalid DeviceId");
   }
 
   // prepare message hash
@@ -95,11 +97,10 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
   // get the signature
   bytes_t* signer = ecrecover_signature(&msg_data, d_get(msg, K_SIGNATURE));
   checkp_or_return(!signer, "the message was not signed");
-  bool valid_signer = signer->len == 20 && memcmp(signer->data, controller, 20) == 0;
+  bool valid_signer = signer->len == 20 && memcmp(signer->data, r.controller, 20) == 0;
   b_free(signer);
   checkp_or_return(!valid_signer, "invalid signature");
-  checkp_or_return(!device_id || device_id->len != 32 || memcmp(device_id->data, conf->device_id, 32), "Invalid DeviceId");
-  checkp_or_return(rented_from >= rented_until || rented_from > now || rented_until < now, "Invalid Time");
+  checkp_or_return(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
 
   result->accepted = true;
   strcpy(result->action, d_get_stringk(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
