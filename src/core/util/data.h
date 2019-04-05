@@ -18,7 +18,7 @@
 #define __DATA_H__
 
 #ifndef DATA_DEPTH_MAX
-#define DATA_DEPTH_MAX 5
+#define DATA_DEPTH_MAX 11
 #endif
 
 typedef uint16_t d_key_t;
