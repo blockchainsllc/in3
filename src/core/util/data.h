@@ -17,6 +17,10 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
+#ifndef DATA_DEPTH_MAX
+#define DATA_DEPTH_MAX 5
+#endif
+
 typedef uint16_t d_key_t;
 /** type of a token. */
 typedef enum {
@@ -50,6 +54,7 @@ typedef struct json_parser {
   d_token_t* result;    /**< the list of all tokens. the first token is the main-token as returned by the parser.*/
   size_t     allocated; /** amount of tokens allocated result */
   size_t     len;       /** number of tokens in result */
+  size_t     depth;     /** max depth of tokens in result */
   char*      c;         /** pointer to the src-data*/
 } json_ctx_t;
 

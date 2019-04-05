@@ -358,9 +358,15 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
 int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
+  if (jp->depth > DATA_DEPTH_MAX) {
+    printf("Depth -> %lu\n", jp->depth);
+    return -3;
+  }
+
   switch (next_char(jp)) {
     case 0: return -2;
     case '{':
+      jp->depth++;
       parsed_next_item(jp, T_OBJECT, key, parent)->data = (uint8_t*) jp->c - 1;
       while (true) {
         switch (next_char(jp)) {
@@ -368,20 +374,30 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             res = parse_key(jp);
             if (res < 0) return res;
             break;
-          case '}': return 0;
+          case '}': {
+            jp->depth--;
+            return 0;
+          }
           default: return -2; // invalid character or end
         }
         res = parse_object(jp, p_index, res); // parse the value
         if (res < 0) return res;
         switch (next_char(jp)) {
           case ',': break;    // we continue reading the next property
-          case '}': return 0; // this was the last property, so we return successfully.
+          case '}': {
+            jp->depth--;
+            return 0; // this was the last property, so we return successfully.
+          }
           default: return -2; // unexpected character, throw.
         }
       }
     case '[':
+      jp->depth++;
       parsed_next_item(jp, T_ARRAY, key, parent)->data = (uint8_t*) jp->c - 1;
-      if (next_char(jp) == ']') return 0;
+      if (next_char(jp) == ']') {
+        jp->depth--;
+        return 0;
+      }
       jp->c--;
 
       while (true) {
@@ -389,7 +405,10 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         if (res < 0) return res;
         switch (next_char(jp)) {
           case ',': break;    // we continue reading the next property
-          case ']': return 0; // this was the last element, so we return successfully.
+          case ']': {
+            jp->depth--;
+            return 0; // this was the last element, so we return successfully.
+          }
           default: return -2; // unexpected character, throw.
         }
       }
@@ -448,6 +467,7 @@ void free_json(json_ctx_t* jp) {
 json_ctx_t* parse_json(char* js) {
   json_ctx_t* parser = _malloc(sizeof(json_ctx_t));
   parser->len        = 0;
+  parser->depth      = 0;
   parser->result     = _malloc(sizeof(d_token_t) * 10);
   parser->c          = js;
   parser->allocated  = 10;
