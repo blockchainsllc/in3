@@ -71,7 +71,6 @@ typedef struct {
 } in3_msg_t;
 
 struct in3_client {
-  in3_t*            in3;
   struct k_sem      sem;
   struct k_mutex    mutex;
   in3_msg_t*        msg;

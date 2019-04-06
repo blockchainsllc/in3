@@ -19,8 +19,18 @@ typedef enum {
 } usn_msg_type_t;
 
 typedef struct {
-  char*     url;
-  bytes32_t id;
+  bytes32_t tx_hash;
+  uint64_t  rented_from;
+  uint64_t  rented_until;
+  uint8_t*  controller;
+  uint64_t  props[16];
+} usn_booking_t;
+
+typedef struct {
+  char*          url;
+  bytes32_t      id;
+  int            num_bookings;
+  usn_booking_t* bookings;
 } usn_device_t;
 
 typedef struct {
@@ -29,14 +39,10 @@ typedef struct {
   address_t     contract;
   uint64_t      chain_id;
   uint64_t      now;
+  uint64_t      last_checked_block;
+  in3_t*        c;
 } usn_device_conf_t;
 
-typedef struct {
-  bytes32_t tx_hash;
-  uint64_t  rented_from;
-  uint64_t  rented_until;
-  uint8_t*  controller;
-} usn_booking_t;
 typedef struct {
   bool           accepted;
   char*          error_msg;
@@ -52,8 +58,22 @@ typedef struct {
   uint64_t  counter;
 } usn_url_t;
 
-usn_msg_result_t usn_verify_message(in3_t* c, char* message, usn_device_conf_t* conf);
+typedef enum {
+  BOOKING_NONE,
+  BOOKING_START,
+  BOOKING_STOP
+} usn_event_type_t;
+
+typedef struct {
+  uint64_t         ts;
+  usn_device_t*    device;
+  usn_event_type_t type;
+} usn_event_t;
+
+usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message);
 int              usn_register_device(usn_device_conf_t* conf, char* url);
 usn_url_t        usn_parse_url(char* url);
-
+int              usn_update_bookings(usn_device_conf_t* conf);
+void             usn_remove_old_bookings(usn_device_conf_t* conf);
+usn_event_t      usn_get_next_event(usn_device_conf_t* conf);
 #endif

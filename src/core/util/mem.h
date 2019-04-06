@@ -13,7 +13,7 @@ void* k_realloc(void* ptr, size_t size, size_t oldsize);
 #define _malloc(s) k_malloc(s)
 #define _calloc(n, s) k_calloc(n, s)
 #define _free(p) k_free(p)
-#define _realloc(p, s, o) k_realloc(p, s, o);
+#define _realloc(p, s, o) k_realloc(p, s, o)
 
 #define _time() k_uptime_get()
 #define _time_t uint64_t
@@ -37,7 +37,7 @@ int    mem_stack_size();
 #define _malloc(s) t_malloc(s, __FILE__, __func__, __LINE__)
 #define _calloc(n, s) t_calloc(n, s, __FILE__, __func__, __LINE__)
 #define _free(p) t_free(p, __FILE__, __func__, __LINE__)
-#define _realloc(p, s, o) t_realloc(p, s, __FILE__, __func__, __LINE__);
+#define _realloc(p, s, o) t_realloc(p, s, __FILE__, __func__, __LINE__)
 
 #else
 

@@ -29,14 +29,14 @@ d_token_t*     vm_get_account(d_token_t* test, uint8_t* adr) {
   char tmp[44];
   tmp[0] = '0';
   tmp[1] = 'x';
-  int8_to_char(adr, 20, tmp + 2);
+  bytes_to_hex(adr, 20, tmp + 2);
   return d_get(d_get(test, key("pre")), key(tmp));
 }
 d_token_t* vm_get_storage(d_token_t* test, uint8_t* adr, uint8_t* k, int l_key) {
   char tmp[68];
   tmp[0] = '0';
   tmp[1] = 'x';
-  int8_to_char(k, l_key, tmp + 2);
+  bytes_to_hex(k, l_key, tmp + 2);
   return d_get(d_get(vm_get_account(test, adr), key("storage")), key(tmp));
 }
 static uint8_t __zero = 0, __tmp[32];

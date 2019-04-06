@@ -13,19 +13,21 @@
 #define K_TRANSACTIONHASH key("transactionHash")
 #define K_SIGNATURE key("signature")
 
-#define check_or_return(c, m)      \
+#define reject_if(c, m)            \
   if (c) {                         \
     if (parsed) free_json(parsed); \
     result.error_msg = m;          \
     result.action    = NULL;       \
     return result;                 \
   }
-#define checkp_or_return(c, m) \
-  if (c) {                     \
-    result->error_msg = m;     \
-    result->action    = NULL;  \
-    goto clean;                \
+#define rejectp_if(c, m)      \
+  if (c) {                    \
+    result->error_msg = m;    \
+    result->action    = NULL; \
+    goto clean;               \
   }
+
+//static int exec_eth_call(in3_t* c, address_t to, )
 
 static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;
@@ -45,13 +47,46 @@ static usn_device_t* find_device(usn_device_conf_t* conf, char* url) {
   return NULL;
 }
 
-static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* conf, usn_msg_result_t* result) {
+static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
+  if (!id) return NULL;
+  for (int i = 0; i < conf->len_devices; i++) {
+    if (memcmp(id, conf->devices[i].id, 32) == 0) return conf->devices + i;
+  }
+  return NULL;
+}
+
+static int exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result) {
+  int     l = 4 + 32 + data.len;
+  uint8_t cdata[l];
+  hex2byte_arr(fn_hash, -1, cdata, 4);
+  memcpy(cdata + 4, device_id, 32);
+  if (data.len) memcpy(cdata + 36, data.data, data.len);
+
+  char *args[l + l + 100], *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
+  for (int i = 0; i < 100; i++) p += sprintf(p, "%02x", cdata[i]);
+  p += sprintf(p, "\",\"gas\":\"0x77c810\",\"to\":\"0x");
+  for (int i = 0; i < 20; i++) p += sprintf(p, "%02x", conf->contract[i]);
+  p += sprintf(p, "\"},\"latest\"]");
+
+  // send the request
+  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", (char*) args);
+
+  // do we have a valid result?
+  if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+    free_ctx(ctx);
+    return -1;
+  }
+  free_ctx(ctx);
+  return d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, 0xFFFFFFFF);
+}
+
+static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_msg_result_t* result) {
   bytes32_t  hash;
   address_t  sender;
   char       tmp[400], mhash[500];
   in3_ctx_t* ctx = NULL;
   result->device = find_device(conf, d_get_stringk(msg, K_URL));
-  checkp_or_return(!result->device, "the device with this url does not exist");
+  rejectp_if(!result->device, "the device with this url does not exist");
 
   // prepare message hash
   sprintf(tmp, "%s%" PRIu64 "%s{}", result->device->url, d_get_longk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
@@ -66,39 +101,27 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
     b_free(signer);
     signer = NULL;
   }
-  checkp_or_return(!signer, "the message was not signed");
+  rejectp_if(!signer, "the message was not signed");
   memcpy(sender, signer->data, 20);
   b_free(signer);
 
   // look for a transaction hash
   bytes_t* tx_hash = d_get_bytesk(msg, K_TRANSACTIONHASH);
-  checkp_or_return(tx_hash && tx_hash->len != 32, "incorrect transactionhash");
+  rejectp_if(tx_hash && tx_hash->len != 32, "incorrect transactionhash");
 
   if (!tx_hash) {
     // without a tx_hash, we can only call "hasAccess()" of the contract.
-    uint8_t calldata[100];
-    bytes_t action_bytes = d_to_bytes(d_get(msg, K_ACTION));
-    memset(calldata, 0, 100);
-    hex2byte_arr("a0b0305f", 8, calldata, 4);         // functionhash for canAccess()
-    memcpy(calldata + 4, result->device->id, 32);     // the device_id
-    memcpy(calldata + 4 + 32 + 12, signer->data, 20); // the signer
-    sha3_to(&action_bytes, calldata + 4 + 32 + 32);   // add the hash of the action
-    memset(calldata + 4 + 32 + 32 + 4, 0, 28);        // set the rest of the data to 0
+    uint8_t   calldata[64];
+    bytes32_t access;
+    bytes_t   action_bytes = d_to_bytes(d_get(msg, K_ACTION));
+    memset(calldata, 0, 64);
+    memcpy(calldata + 12, signer->data, 20); // the signer
+    sha3_to(&action_bytes, calldata + 32);   // add the hash of the action
+    memset(calldata + 32 + 4, 0, 28);        // set the rest of the data to 0
 
-    // build request
-    char *args[300], *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
-    for (int i = 0; i < 100; i++) p += sprintf(p, "%02x", calldata[i]);
-    p += sprintf(p, "\",\"gas\":\"0x77c810\",\"to\":\"0x");
-    for (int i = 0; i < 20; i++) p += sprintf(p, "%02x", conf->contract[i]);
-    p += sprintf(p, "\"},\"latest\"]");
-
-    // send the request
-    ctx = in3_client_rpc_ctx(c, "eth_call", (char*) args);
-
-    // do we have a valid result?
-    checkp_or_return(ctx->error, "The transaction receipt could not be verified");
-    checkp_or_return(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
-    checkp_or_return(d_get_intk(ctx->responses[0], K_RESULT) != 1, "Access rejected");
+    int l = exec_eth_call(conf, "a0b0305f", result->device->id, bytes(calldata, 64), access);
+    rejectp_if(l < 0, "The has_access could not be verified");
+    rejectp_if(access + l - 1 == 0, "Access rejected");
 
   } else {
 
@@ -121,15 +144,15 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
       strcpy(params + 4 + 64, "\"]");
 
       // send the request
-      ctx = in3_client_rpc_ctx(c, "eth_getTransactionReceipt", params);
+      ctx = in3_client_rpc_ctx(conf->c, "eth_getTransactionReceipt", params);
 
       // do we have a valid result?
-      checkp_or_return(ctx->error, "The transaction receipt could not be verified");
-      checkp_or_return(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
+      rejectp_if(ctx->error, "The transaction receipt could not be verified");
+      rejectp_if(!ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT), "No useable response found");
 
       // find the event
       d_token_t* event = get_rented_event(d_get(ctx->responses[0], K_RESULT));
-      checkp_or_return(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
+      rejectp_if(!event || d_type(event) != T_OBJECT, "the tx receipt or the event could not be found");
 
       // extract the values
       bytes_t* data      = d_get_bytesk(event, K_DATA);
@@ -140,8 +163,8 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
       r.controller       = data->data + 12;
 
       // check device_id and contract
-      checkp_or_return(!device_id || device_id->len != 32 || memcmp(device_id->data, result->device->id, 32), "Invalid DeviceId");
-      checkp_or_return(!address || address->len != 20 || memcmp(address->data, conf->contract, 20), "Invalid contract");
+      rejectp_if(!device_id || device_id->len != 32 || memcmp(device_id->data, result->device->id, 32), "Invalid DeviceId");
+      rejectp_if(!address || address->len != 20 || memcmp(address->data, conf->contract, 20), "Invalid contract");
 
       // cache it for next time.
       last_receipt = r;
@@ -149,8 +172,8 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
 
     // check if the time and sender is correct
     uint64_t now = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
-    checkp_or_return(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
-    checkp_or_return(memcmp(sender, r.controller, 20), "Invalid signer of the signature");
+    rejectp_if(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
+    rejectp_if(memcmp(sender, r.controller, 20), "Invalid signer of the signature");
   }
 
   result->accepted = true;
@@ -160,26 +183,26 @@ clean:
   if (ctx) free_ctx(ctx);
 }
 
-usn_msg_result_t usn_verify_message(in3_t* c, char* message, usn_device_conf_t* conf) {
+usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
 
   // prepare message
   usn_msg_result_t result = {.accepted = false, .error_msg = NULL, .action = message, .id = 0};
   json_ctx_t*      parsed = parse_json(message);
-  check_or_return(!message, "no message passed");
-  check_or_return(!parsed, "error parsing the json-message");
-  check_or_return(!conf, "no config passed");
-  check_or_return(!conf->chain_id, "chain_id missing in config");
+  reject_if(!message, "no message passed");
+  reject_if(!parsed, "error parsing the json-message");
+  reject_if(!conf, "no config passed");
+  reject_if(!conf->chain_id, "chain_id missing in config");
 
   // check message type
   char* msgType = d_get_stringk(parsed->result, K_MSG_TYPE);
   result.id     = d_get_intk(parsed->result, K_ID);
-  check_or_return(!parsed->result || d_type(parsed->result) != T_OBJECT, "no message-object passed");
-  check_or_return(!msgType || strlen(msgType) == 0, "the messageType is missing");
+  reject_if(!parsed->result || d_type(parsed->result) != T_OBJECT, "no message-object passed");
+  reject_if(!msgType || strlen(msgType) == 0, "the messageType is missing");
 
   // handle message type
   if (strcmp(msgType, "action") == 0) {
     result.msg_type = USN_ACTION;
-    verify_action_message(c, parsed->result, conf, &result);
+    verify_action_message(conf, parsed->result, &result);
   } else if (strcmp(msgType, "in3Response") == 0) {
     result.msg_type = USN_RESPONSE;
     result.accepted = true;
@@ -198,9 +221,13 @@ int usn_register_device(usn_device_conf_t* conf, char* url) {
   else
     conf->devices = _realloc(conf->devices, sizeof(usn_device_t) * (conf->len_devices + 1), sizeof(usn_device_t) * conf->len_devices);
   if (conf->devices == NULL) return -1;
-  conf->devices[conf->len_devices].url = url;
-  memcpy(conf->devices[conf->len_devices].id, parsed.device_id, 32);
+  usn_device_t* device = conf->devices + conf->len_devices;
+  device->url          = url;
+  device->num_bookings = 0;
+  device->bookings     = NULL;
+  memcpy(device->id, parsed.device_id, 32);
   conf->len_devices++;
+
   return 0;
 }
 
@@ -221,4 +248,151 @@ usn_url_t usn_parse_url(char* url) {
   long_to_bytes(res.counter, res.device_id + 24);
   res.contract_name++;
   return res;
+}
+
+int usn_add_booking(usn_device_t* device, address_t controller, uint64_t rented_from, uint64_t rented_until, uint8_t* props, bytes32_t tx_hash) {
+  for (int i = 0; i < device->num_bookings; i++) {
+    if (device->bookings[i].rented_from == rented_from) {
+      device->bookings[i].rented_until = rented_until;
+      memcpy(device->bookings[i].props, props, 16);
+      return 0;
+    }
+  }
+  device->bookings = device->bookings
+                         ? _realloc(device->bookings, sizeof(usn_booking_t) * (device->num_bookings + 1), sizeof(usn_booking_t) * device->num_bookings)
+                         : _malloc(sizeof(usn_booking_t) * device->num_bookings + 1);
+  usn_booking_t* booking = device->bookings + device->num_bookings;
+  booking->rented_from   = rented_from;
+  booking->rented_until  = rented_until;
+  memcpy(booking->controller, controller, 20);
+  memcpy(booking->props, props, 16);
+  memcpy(booking->tx_hash, tx_hash, 32);
+  device->num_bookings++;
+  return 1;
+}
+
+int usn_update_bookings(usn_device_conf_t* conf) {
+  // first we get the current BlockNumber
+  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
+  if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+    free_ctx(ctx);
+    return -1;
+  }
+  uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
+  free_ctx(ctx);
+  if (conf->last_checked_block == current_block) return 0;
+
+  if (!conf->last_checked_block) {
+    // now we get all the current bookings
+    uint8_t tmp[128]; // we need 128 byte to store one state
+    for (int i = 0; i < conf->len_devices; i++) {
+      usn_device_t* device = conf->devices + i;
+
+      // get the number of bookings and manage memory
+      if (exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp) != 32) return -1;
+      if (device->bookings) _free(device->bookings);
+      device->num_bookings = bytes_to_int(tmp + 28, 4);
+      device->bookings     = device->num_bookings ? _calloc(sizeof(usn_booking_t), device->num_bookings) : NULL;
+
+      for (int n = 0; n < device->num_bookings; n++) {
+        // create the input data ( the index )
+        memset(tmp, 0, 32);
+        int_to_bytes(n, tmp + 28);
+
+        //  call the function in solidity: getState(bytes32 id, uint index) external view returns (address controller, uint64 rentedFrom, uint64 rentedUntil, uint128 properties);
+        if (exec_eth_call(conf, "0x29dd2f8e", device->id, bytes(tmp, 32), tmp) != 128) return -1; // call getState()
+        usn_booking_t* booking = device->bookings + n;
+        booking->rented_from   = bytes_to_long(tmp + 32 + 24, 8);
+        booking->rented_until  = bytes_to_long(tmp + 64 + 24, 8);
+        memcpy(booking->controller, tmp + 12, 20);
+        memcpy(booking->props, tmp + 96 + 16, 16);
+      }
+    }
+  } else {
+    // look for events
+    // build request
+    char  params[conf->len_devices * 70 + 320];
+    char* p = params + sprintf(params, "[{\"address\":\"0x");
+    p += bytes_to_hex(conf->contract, 20, p);
+    p += sprintf(p, "\", \"topics\":[[\"0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8\",\"0x63febe59689bc8e2235e549f5f941933c2ba8a6f470fa2db0badaab584c758b9\"],null,");
+    if (conf->len_devices == 1) {
+      p += sprintf(p, "\"0x");
+      p += bytes_to_hex(conf->devices->id, 32, p);
+      p += sprintf(p, "\"");
+    } else {
+      p += sprintf(p, "[");
+      for (int k = 0; k < conf->len_devices; k++) {
+        if (k) p += sprintf(p, ",");
+        p += sprintf(p, "\"0x");
+        p += bytes_to_hex(conf->devices[k].id, 32, p);
+        p += sprintf(p, "\"");
+      }
+      p += sprintf(p, "]");
+    }
+    p += sprintf(p, "],\"fromBlock\":\"0x%" PRIx64 "\",\"toBlock\":\"0x%" PRIx64 "\"]}]", conf->last_checked_block + 1, current_block);
+
+    // send the request
+    ctx = in3_client_rpc_ctx(conf->c, "eth_getLogs", params);
+
+    // do we have a valid result?
+    if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+      free_ctx(ctx);
+      return -1;
+    }
+
+    // let's iterate over the found events
+    for (d_iterator_t iter = d_iter(d_get(ctx->responses[0], K_RESULT)); iter.left; d_iter_next(&iter)) {
+      d_token_t*    topics = d_get(iter.token, K_TOPICS);
+      bytes_t       t0     = d_to_bytes(d_get_at(topics, 0));
+      usn_device_t* device = find_device_by_id(conf, d_to_bytes(d_get_at(topics, 2)).data);
+      bytes_t*      data   = d_get_bytesk(iter.token, K_DATA);
+      if (t0.len != 32 || !device || !data) continue;
+      usn_add_booking(device, data->data + 12,
+                      bytes_to_long(data->data + 32 + 24, 8),
+                      bytes_to_long(data->data + 64 + 24, 8),
+                      *t0.data == 0x63 ? NULL : data->data + 6 + 32 + 16,
+                      d_get_bytesk(iter.token, K_TRANSACTION_HASH)->data);
+    }
+
+    free_ctx(ctx);
+  }
+
+  // update the last_block
+  conf->last_checked_block = current_block;
+
+  return 0;
+}
+
+void usn_remove_old_bookings(usn_device_conf_t* conf) {
+  for (int i = 0; i < conf->len_devices; i++) {
+    usn_device_t* device = conf->devices + i;
+    for (int n = 0; n < device->num_bookings; n++) {
+      usn_booking_t* b = device->bookings + n;
+      if (b->rented_until <= conf->now) {
+        // remove it
+        if (n + 1 < device->num_bookings) memmove(b, b + 1, sizeof(usn_booking_t) * (device->num_bookings - n - 1));
+        device->num_bookings--;
+        n--;
+      }
+    }
+  }
+}
+usn_event_t usn_get_next_event(usn_device_conf_t* conf) {
+  usn_event_t e = {.ts = 0xFFFFFFFFFFFFFFFF, .device = NULL, .type = BOOKING_NONE};
+  for (int i = 0; i < conf->len_devices; i++) {
+    usn_device_t* device = conf->devices + i;
+    for (int n = 0; n < device->num_bookings; n++) {
+      usn_booking_t* b = device->bookings + n;
+      if (b->rented_from <= conf->now && b->rented_from < e.ts) {
+        e.type   = BOOKING_STOP;
+        e.ts     = b->rented_until;
+        e.device = device;
+      } else if (b->rented_from > conf->now && b->rented_from < e.ts) {
+        e.type   = BOOKING_START;
+        e.ts     = b->rented_from;
+        e.device = device;
+      }
+    }
+  }
+  return e;
 }

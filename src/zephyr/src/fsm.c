@@ -145,11 +145,11 @@ static in3_state_t in3_init(void) {
 
   // configure the incubed client
   in3_register_eth_full();
-  client->in3               = in3_new();
-  client->in3->chainId      = client->conf.chain_id;
-  client->in3->requestCount = 1;
-  client->in3->max_attempts = 1;
-  client->in3->transport    = send_ble;
+  client->conf.c               = in3_new();
+  client->conf.c->chainId      = client->conf.chain_id;
+  client->conf.c->requestCount = 1;
+  client->conf.c->max_attempts = 1;
+  client->conf.c->transport    = send_ble;
 
   // prepare the message-buffer
   client->msg = k_calloc(1, sizeof(in3_msg_t));
@@ -198,7 +198,7 @@ static in3_state_t in3_action(void) {
   char payload[100];
 
   // TODO if we can, we should try to set the real timestamp in client->conf->now, if now=0, it will take it from the message, which is not relieable.
-  usn_msg_result_t result = usn_verify_message(client->in3, client->msg->data, &client->conf);
+  usn_msg_result_t result = usn_verify_message(&client->conf, client->msg->data);
 
   // send response
   if (!result.accepted)
