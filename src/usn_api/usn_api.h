@@ -22,7 +22,7 @@ typedef struct {
   bytes32_t tx_hash;
   uint64_t  rented_from;
   uint64_t  rented_until;
-  uint8_t*  controller;
+  address_t controller;
   uint64_t  props[16];
 } usn_booking_t;
 
@@ -31,17 +31,8 @@ typedef struct {
   bytes32_t      id;
   int            num_bookings;
   usn_booking_t* bookings;
+  int            current_booking;
 } usn_device_t;
-
-typedef struct {
-  usn_device_t* devices;
-  int           len_devices;
-  address_t     contract;
-  uint64_t      chain_id;
-  uint64_t      now;
-  uint64_t      last_checked_block;
-  in3_t*        c;
-} usn_device_conf_t;
 
 typedef struct {
   bool           accepted;
@@ -70,10 +61,25 @@ typedef struct {
   usn_event_type_t type;
 } usn_event_t;
 
+typedef int (*usn_booking_handler)(usn_event_t*);
+
+typedef struct {
+  usn_device_t*       devices;
+  int                 len_devices;
+  address_t           contract;
+  uint64_t            chain_id;
+  uint64_t            now;
+  uint64_t            last_checked_block;
+  usn_booking_handler booking_handler;
+  in3_t*              c;
+} usn_device_conf_t;
+
 usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message);
 int              usn_register_device(usn_device_conf_t* conf, char* url);
 usn_url_t        usn_parse_url(char* url);
-int              usn_update_bookings(usn_device_conf_t* conf);
-void             usn_remove_old_bookings(usn_device_conf_t* conf);
-usn_event_t      usn_get_next_event(usn_device_conf_t* conf);
+
+unsigned int usn_update_state(usn_device_conf_t* conf, unsigned int wait_time);
+int          usn_update_bookings(usn_device_conf_t* conf);
+void         usn_remove_old_bookings(usn_device_conf_t* conf);
+usn_event_t  usn_get_next_event(usn_device_conf_t* conf);
 #endif

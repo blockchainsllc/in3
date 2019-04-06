@@ -55,29 +55,31 @@ static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
   return NULL;
 }
 
-static int exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result) {
+static int exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result, int max) {
   int     l = 4 + 32 + data.len;
-  uint8_t cdata[l];
+  uint8_t cdata[4 + 32 + data.len];
   hex2byte_arr(fn_hash, -1, cdata, 4);
   memcpy(cdata + 4, device_id, 32);
   if (data.len) memcpy(cdata + 36, data.data, data.len);
 
-  char *args[l + l + 100], *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
-  for (int i = 0; i < 100; i++) p += sprintf(p, "%02x", cdata[i]);
+  char  args[(4 + 32 + data.len) * 2 + 100];
+  char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
+  p += bytes_to_hex(cdata, l, p);
   p += sprintf(p, "\",\"gas\":\"0x77c810\",\"to\":\"0x");
-  for (int i = 0; i < 20; i++) p += sprintf(p, "%02x", conf->contract[i]);
+  p += bytes_to_hex(conf->contract, 20, p);
   p += sprintf(p, "\"},\"latest\"]");
 
   // send the request
-  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", (char*) args);
+  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", op);
 
   // do we have a valid result?
   if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
     free_ctx(ctx);
     return -1;
   }
+  l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, max);
   free_ctx(ctx);
-  return d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, 0xFFFFFFFF);
+  return l;
 }
 
 static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_msg_result_t* result) {
@@ -119,7 +121,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     sha3_to(&action_bytes, calldata + 32);   // add the hash of the action
     memset(calldata + 32 + 4, 0, 28);        // set the rest of the data to 0
 
-    int l = exec_eth_call(conf, "a0b0305f", result->device->id, bytes(calldata, 64), access);
+    int l = exec_eth_call(conf, "a0b0305f", result->device->id, bytes(calldata, 64), access, 32);
     rejectp_if(l < 0, "The has_access could not be verified");
     rejectp_if(access + l - 1 == 0, "Access rejected");
 
@@ -160,7 +162,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       bytes_t* device_id = d_get_bytes_at(d_get(event, K_TOPICS), 1);
       r.rented_from      = bytes_to_long(data->data + 32, 32);
       r.rented_until     = bytes_to_long(data->data + 64, 32);
-      r.controller       = data->data + 12;
+      memcpy(r.controller, data->data + 12, 20);
 
       // check device_id and contract
       rejectp_if(!device_id || device_id->len != 32 || memcmp(device_id->data, result->device->id, 32), "Invalid DeviceId");
@@ -221,10 +223,11 @@ int usn_register_device(usn_device_conf_t* conf, char* url) {
   else
     conf->devices = _realloc(conf->devices, sizeof(usn_device_t) * (conf->len_devices + 1), sizeof(usn_device_t) * conf->len_devices);
   if (conf->devices == NULL) return -1;
-  usn_device_t* device = conf->devices + conf->len_devices;
-  device->url          = url;
-  device->num_bookings = 0;
-  device->bookings     = NULL;
+  usn_device_t* device    = conf->devices + conf->len_devices;
+  device->url             = url;
+  device->num_bookings    = 0;
+  device->current_booking = -1;
+  device->bookings        = NULL;
   memcpy(device->id, parsed.device_id, 32);
   conf->len_devices++;
 
@@ -250,11 +253,11 @@ usn_url_t usn_parse_url(char* url) {
   return res;
 }
 
-int usn_add_booking(usn_device_t* device, address_t controller, uint64_t rented_from, uint64_t rented_until, uint8_t* props, bytes32_t tx_hash) {
+static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t rented_from, uint64_t rented_until, uint8_t* props, bytes32_t tx_hash) {
   for (int i = 0; i < device->num_bookings; i++) {
     if (device->bookings[i].rented_from == rented_from) {
       device->bookings[i].rented_until = rented_until;
-      memcpy(device->bookings[i].props, props, 16);
+      if (props) memcpy(device->bookings[i].props, props, 16);
       return 0;
     }
   }
@@ -289,23 +292,26 @@ int usn_update_bookings(usn_device_conf_t* conf) {
       usn_device_t* device = conf->devices + i;
 
       // get the number of bookings and manage memory
-      if (exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp) != 32) return -1;
+      if (exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp, 32) != 32) return -1;
       if (device->bookings) _free(device->bookings);
-      device->num_bookings = bytes_to_int(tmp + 28, 4);
-      device->bookings     = device->num_bookings ? _calloc(sizeof(usn_booking_t), device->num_bookings) : NULL;
+      int size             = bytes_to_int(tmp + 28, 4);
+      device->bookings     = size ? _calloc(sizeof(usn_booking_t), size) : NULL;
+      device->num_bookings = 0;
 
-      for (int n = 0; n < device->num_bookings; n++) {
+      for (int n = 0; n < size; n++) {
         // create the input data ( the index )
         memset(tmp, 0, 32);
         int_to_bytes(n, tmp + 28);
 
         //  call the function in solidity: getState(bytes32 id, uint index) external view returns (address controller, uint64 rentedFrom, uint64 rentedUntil, uint128 properties);
-        if (exec_eth_call(conf, "0x29dd2f8e", device->id, bytes(tmp, 32), tmp) != 128) return -1; // call getState()
-        usn_booking_t* booking = device->bookings + n;
+        if (exec_eth_call(conf, "0x29dd2f8e", device->id, bytes(tmp, 32), tmp, 128) != 128) return -1; // call getState()
+        usn_booking_t* booking = device->bookings + device->num_bookings;
         booking->rented_from   = bytes_to_long(tmp + 32 + 24, 8);
         booking->rented_until  = bytes_to_long(tmp + 64 + 24, 8);
         memcpy(booking->controller, tmp + 12, 20);
         memcpy(booking->props, tmp + 96 + 16, 16);
+        if (!booking->rented_from) continue;
+        device->num_bookings++;
       }
     }
   } else {
@@ -329,7 +335,7 @@ int usn_update_bookings(usn_device_conf_t* conf) {
       }
       p += sprintf(p, "]");
     }
-    p += sprintf(p, "],\"fromBlock\":\"0x%" PRIx64 "\",\"toBlock\":\"0x%" PRIx64 "\"]}]", conf->last_checked_block + 1, current_block);
+    p += sprintf(p, "],\"fromBlock\":\"0x%" PRIx64 "\",\"toBlock\":\"0x%" PRIx64 "\"}]", conf->last_checked_block + 1, current_block);
 
     // send the request
     ctx = in3_client_rpc_ctx(conf->c, "eth_getLogs", params);
@@ -383,16 +389,66 @@ usn_event_t usn_get_next_event(usn_device_conf_t* conf) {
     usn_device_t* device = conf->devices + i;
     for (int n = 0; n < device->num_bookings; n++) {
       usn_booking_t* b = device->bookings + n;
-      if (b->rented_from <= conf->now && b->rented_from < e.ts) {
+      if (b->rented_until < e.ts) {
         e.type   = BOOKING_STOP;
         e.ts     = b->rented_until;
         e.device = device;
-      } else if (b->rented_from > conf->now && b->rented_from < e.ts) {
+      }
+      if ((b->rented_from > conf->now || (device->current_booking == -1 && b->rented_until > conf->now)) && b->rented_from < e.ts) {
         e.type   = BOOKING_START;
         e.ts     = b->rented_from;
         e.device = device;
       }
     }
   }
+
   return e;
+}
+
+int usn_event_handled(usn_event_t* event) {
+  usn_device_t* device = event->device;
+  for (int n = 0; n < device->num_bookings; n++) {
+    usn_booking_t* b = device->bookings + n;
+    if (event->type == BOOKING_START && b->rented_from == event->ts) {
+      device->current_booking = n;
+      return 0;
+    }
+    if (event->type == BOOKING_STOP && b->rented_until == event->ts) {
+      usn_booking_t* b = device->bookings + n;
+      // remove it
+      if (n + 1 < device->num_bookings) memmove(b, b + 1, sizeof(usn_booking_t) * (device->num_bookings - n - 1));
+      device->num_bookings--;
+      event->device->current_booking = -1;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+uint64_t check_actions(usn_device_conf_t* conf) {
+  usn_event_t e;
+  while (true) {
+    e = usn_get_next_event(conf);
+    // we need to execute this now!
+    if (e.type != BOOKING_NONE && e.ts <= conf->now && e.device) {
+      if (conf->booking_handler)
+        conf->booking_handler(&e);
+      usn_event_handled(&e);
+    } else
+      return e.ts;
+  }
+}
+
+unsigned int usn_update_state(usn_device_conf_t* conf, unsigned int wait_time) {
+  // check if there is anything to do now
+  check_actions(conf);
+
+  // update all bookings
+  usn_update_bookings(conf);
+
+  // check again, if there was a new event we should handle now.
+  uint64_t next_action = check_actions(conf);
+
+  // how long show we sleep before checking again?
+  return next_action - conf->now < wait_time ? next_action - conf->now : wait_time;
 }
