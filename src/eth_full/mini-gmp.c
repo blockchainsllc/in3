@@ -244,10 +244,11 @@ see https://www.gnu.org/licenses/.  */
 //const int mp_bits_per_limb = GMP_LIMB_BITS;
 
 /* Memory allocation and other helper functions. */
-static void
-gmp_die(const char* msg) {
+static void gmp_die(const char* msg) {
   fprintf(stderr, "%s\n", msg);
+#ifndef __ZEPHYR__
   abort();
+#endif
 }
 
 static void*

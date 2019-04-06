@@ -7,6 +7,7 @@
 #include <string.h>
 #include <gpio.h>
 #include <device.h>
+#include <pwm.h>
 
 #include <settings/settings.h>
 
@@ -38,6 +39,17 @@ struct device *ledpower; // green led (power)
 struct device *ledstrip; // led strip (used as lamp)
 struct device *lockpin; // lock out
 struct device *gpio; // using blue led on usb board for testing
+struct device *pwm_dev; // door servo driver
+struct device *demoRled; // USB demo Rled
+struct device *demoGled; // USB demo Gled
+struct device *demoBled; // USB demo Bled
+ 
+/*
+static u8_t gbuff1[32768]; // test buffer -DEBUG ONLY-
+static u8_t gbuff2[32768]; // test buffer -DEBUG ONLY-
+static u8_t gbuff3[32768]; // test buffer -DEBUG ONLY-
+static u8_t gbuff4[8192]; // test buffer -DEBUG ONLY-
+*/
 
 static u8_t recv_buf_static[512];
 static u8_t req_buf[512];
@@ -58,7 +70,7 @@ static ssize_t read_req(struct bt_conn *conn, const struct bt_gatt_attr *attr, /
 	const char *value = attr->user_data;
 	u16_t value_len;
 
-	dbg_log("<--- read req (len=%u ofs=%u)\n", len, offset);
+	printk("<--- read req (len=%u ofs=%u)\n", len, offset);
 
 	value_len = min(strlen(value), sizeof(req_buf)); // limit the length to req_buf size
 
@@ -69,24 +81,24 @@ static ssize_t rx_data(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 			 const void *buf, u16_t len, u16_t offset,
 			 u8_t flags)
 {
-	dbg_log("<--- len:%u\n", len);
+	printk("<--- len:%u\n", len);
 	// if processing a message don't take new ones
 	if (client->msg->ready)
 		{
-		dbg_log("<--- write req rejected (another message being processed)!!!\n");
+		printk("<--- write req rejected (another message being processed)!!!\n");
 		return BT_GATT_ERR(BT_ATT_ERR_WRITE_REQ_REJECTED);
 		}
 /*
 	if (total_len == 0) {
 		int mtu = bt_gatt_get_mtu(conn) - 3;
-		dbg_log(" GATT MTU: %d, DATA_SIZE: %d len=%d\n", mtu+3, mtu, len);
+		printk(" GATT MTU: %d, DATA_SIZE: %d len=%d\n", mtu+3, mtu, len);
 	}
 */
 	if (len == 0x8) {
 		char magic[17];
 		char *header = (char *) buf;
 		if (total_len > 0) {
-			dbg_log("<--- Channel already open, dismissing new request\n");
+			printk("<--- Channel already open, dismissing new request\n");
 			return BT_GATT_ERR(BT_ATT_ERR_WRITE_REQ_REJECTED);
 		}
 		sprintf(magic, "%02x%02x%02x%02x%02x%02x%02x%02x", header[0], header[1],
@@ -95,10 +107,10 @@ static ssize_t rx_data(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 		    header[1] == 0x6e &&
 		    header[2] == 0x33 &&
 		    header[3] == 0x63) {
-			dbg_log("<--- Magic: 0x%s\n", magic);
+			printk("<--- Magic: 0x%s\n", magic);
 			if (start_message(*((int *) buf+1)))
 				{
-				dbg_log("<--- offset error\n");
+				printk("<--- offset error\n");
 				return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 				}
 			bluetooth_clear_req();
@@ -123,7 +135,7 @@ static ssize_t rx_data(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 
 static void req_ccc_cfg_changed(const struct bt_gatt_attr *attr, u16_t value) // Callback from: BT_GATT_CCC (req_ccc_cfg, req_ccc_cfg_changed)
 {
-	dbg_log("<--- value = %u\n", value);
+	printk("<--- value = %u\n", value);
 }
 
 // define an UUID for msg_svc (BT_GATT_PRIMARY_SERVICE)
@@ -176,7 +188,7 @@ int start_message(int size)
 {
 	int old_len = total_len;
 	total_len = size;
-	dbg_log("RX Message (length: %lu bytes)\n", total_len);
+	printk("RX Message (length: %lu bytes)\n", total_len);
 
 	if (recv_buf && (old_len > total_len)) {
 		memset(recv_buf, 0, total_len);
@@ -190,7 +202,7 @@ int start_message(int size)
 
 out:
 	if (!recv_buf) {
-		dbg_log("Error allocating RX buf (size=%lu)\n", total_len);
+		printk("Error allocating RX buf (size=%lu)\n", total_len);
 		return -1;
 	}
 
@@ -244,20 +256,20 @@ static const struct bt_data ad_discov[] = {
 
 static void connected(struct bt_conn *conn, u8_t err)
 {
-	dbg_log("<---\n"); // function is shown on the left
+	printk("<---\n"); // function is shown on the left
 	default_conn = conn;
 }
 
 static void disconnected(struct bt_conn *conn, u8_t reason)
 {
-	dbg_log("<---\n"); // function is shown on the left
+	printk("<---\n"); // function is shown on the left
 }
 
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
 {
 int mtu = bt_gatt_get_mtu(conn);
 
-	dbg_log("<--- req MTU=%d\n", mtu);
+	printk("<--- req MTU=%d\n", mtu);
 	return true;
 }
 
@@ -265,7 +277,7 @@ static void le_param_updated(struct bt_conn *conn, u16_t interval, u16_t latency
 {
 int mtu = bt_gatt_get_mtu(conn);
 
-	dbg_log("<--- upd MTU=%d\n", mtu);
+	printk("<--- upd MTU=%d\n", mtu);
 	return;
 }
 
@@ -290,11 +302,11 @@ void bluetooth_write_req(char *msg)
 		return;
 
 	strcpy(req_buf, msg);
-	dbg_log("<--- buffer prepared for req_char:\n%s\n", req_buf);
+	printk("<--- buffer prepared for req_char:\n%s\n", req_buf);
 
 	k_mutex_unlock(&client->mutex);
 
-	dbg_log("send notification for REQ\n");
+	printk("send notification for REQ\n");
 
 	char *send = "REQ_READY";
 //  EFmod: the "normal" [3] does not work. Index [5] is out of bounds, but it works...
@@ -389,7 +401,7 @@ int bluetooth_setup(struct in3_client *c)
 	size_t ad_len, scan_rsp_len = 0;
 	struct bt_le_adv_param param;
 	const struct bt_data *ad = 0, *scan_rsp = 0;
-	char deviceName[20] = "in3-"; // look in prj.con (max length fixed to 20 chars)
+	char deviceName[24] = "in3-"; // look in prj.conf for max length
 
 #ifdef BT_MAC // if enabled, hardcode the BT MAC address
 	bt_addr_le_t addr;
@@ -402,7 +414,7 @@ int bluetooth_setup(struct in3_client *c)
 
 	err = bt_enable(bt_ready);
 	if (err) {
-		dbg_log("Unable to setup bluetooth");
+		printk("Unable to setup bluetooth");
 		return -1;
 	}
 
@@ -428,14 +440,14 @@ int bluetooth_setup(struct in3_client *c)
     byte_to_hex((fmac & 0xFF00) >> 8, deviceName +lnam +4); // add MAC[1]
     byte_to_hex(fmac & 0xFF, deviceName +lnam +6); // add MAC[0] (byte_to_hex adds \0)
 //	bt_set_name(deviceName); // BT name built with "in3-" and NORDIC (almost) unique BT MAC (es: in3-84C8C54B)
-	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Ardo's App
+	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Arda's App
 
 	err = bt_le_adv_start(&param, ad, ad_len, scan_rsp, scan_rsp_len);
 	if (err < 0) {
-		dbg_log("Failed to start advertising (err %d)\n", err);
+		printk("Failed to start advertising (err %d)\n", err);
 		return -1;
 	} else {
-		dbg_log("Advertising started\n");
+		printk("Advertising started\n");
 	}
 
 	// set client data
@@ -446,20 +458,20 @@ int bluetooth_setup(struct in3_client *c)
 	b_off = 0;
 	total_len = 0;
 
-	dbg_log("Registering GATT service\n");
+	printk("Registering GATT service\n");
 	err = bt_gatt_service_register(&msg_svc);
 
 	if (err < 0) {
-		dbg_log("Failed to register servic\n");
+		printk("Failed to register servic\n");
 		return -1;
 	} else {
-		dbg_log("Service registered\n");
+		printk("Service registered\n");
 	}
 
 	return 0;
 }
 
-///////// new GPIO functions
+// GPIO functions //////////////////////////////////////////////////////
 void ledpower_set(int state)
 {
 	if(state) // if ON
@@ -472,8 +484,11 @@ void ledstrip_set(int state)
 {
 	if(state) // if ON
 		gpio_pin_write(ledstrip, LEDSTRIP, 1); // led with positive logic
-	else // if OFF
-		gpio_pin_write(ledstrip, LEDSTRIP, 0); // led with positive logic
+	else { // if OFF
+		gpio_pin_write(ledstrip, LEDSTRIP, 0); // led with positive logic OFF
+		gpio_pin_write(demoGled, LEDG, 1); // negative logic, green led OFF
+		gpio_pin_write(demoRled, LEDR, 1); // negative logic, red led OFF
+	}
 }
 
 void lock_set(int state)
@@ -484,34 +499,80 @@ void lock_set(int state)
 		gpio_pin_write(lockpin, LOCKPIN, 0); // coil with positive logic
 }
 
+void door_control(int state) // control the motorized door 
+{
+	if(state == 'o') { // open door
+		pwm_pin_set_usec(pwm_dev, 2, 40000, 2000); // P0.2 - 40ms period - 2 mS pulse; piston All-out
+		gpio_pin_write(demoGled, LEDG, 0); // negative logic, green led ON
+		return;
+	}
+	if(state == 'c') { // close door
+		pwm_pin_set_usec(pwm_dev, 2, 40000, 1000); // P0.2 - 40mS period - 1mS pulse; piston All-in
+		gpio_pin_write(demoRled, LEDR, 0); // negative logic, red led ON
+		return;
+	}
+}
+
 int gpio_setup(void)
 {
+	// PWM init ////////////////////////////////////////////////////////
+	pwm_dev = device_get_binding("PWM_0");
+	if (!pwm_dev) {
+		printk("Cannot find PWM device!\n");
+	}
+	pwm_pin_set_usec(pwm_dev, 2, 40000, 1000); // P0.2 - 40mS period - 1mS pulse; piston All-in (door closed)
+	
+	demoRled = device_get_binding(LEDR_PORT); // Rled is P0.08
+	gpio_pin_configure(demoRled, LEDR, GPIO_DIR_OUT); // set as output (see fsm.h)
+	gpio_pin_write(demoRled, LEDR, 0); // negative logic, led ON
+
+	demoGled = device_get_binding(LEDG_PORT); // Gled is P1.09
+	gpio_pin_configure(demoGled, LEDG, GPIO_DIR_OUT); // set as output (see fsm.h)
+	gpio_pin_write(demoGled, LEDG, 0); // negative logic, led ON
+
+	demoBled = device_get_binding(LEDB_PORT); // Gled is P0.12
+	gpio_pin_configure(demoBled, LEDB, GPIO_DIR_OUT); // set as output (see fsm.h)
+	gpio_pin_write(demoBled, LEDB, 0); // negative logic, led ON
+
 	ledpower = device_get_binding(LEDPOWER_PORT); // CONFIG_GPIO_P0_DEV_NAME
 	gpio_pin_configure(ledpower, LEDPOWER, GPIO_DIR_OUT); // set as output (see fsm.h)
-	ledpower_set(IO_ON);
-
+	gpio_pin_write(ledpower, LEDPOWER, 0); // negative logic, led ON
+	
 	ledstrip = device_get_binding(LEDSTRIP_PORT);
 	gpio_pin_configure(ledstrip, LEDSTRIP, GPIO_DIR_OUT); // set as output (see fsm.h)
-	ledstrip_set(IO_OFF);
+	gpio_pin_write(ledstrip, LEDSTRIP, 0); // positive logic, led stripe OFF
 
 	lockpin = device_get_binding(LOCKPIN_PORT);
 	gpio_pin_configure(lockpin, LOCKPIN, GPIO_DIR_OUT); // set as output (see fsm.h)
-	lock_set(IO_OFF);
+	gpio_pin_write(lockpin, LOCKPIN, 0); // positive logic, coil OFF
 
 	for(int i = 0, cnt = 0; i < 5; i++, cnt++) // blink led and terminate ON
 		{
 		ledpower_set(cnt % 2);
 		k_sleep(200);
 		}
-	ledpower_set(IO_ON);
+	gpio_pin_write(ledpower, LEDPOWER, 0); // negative logic, led ON
+	gpio_pin_write(demoRled, LEDR, 1); // red led off
+	gpio_pin_write(demoGled, LEDG, 1); // green led off
+	gpio_pin_write(demoBled, LEDB, 1); // blue led off
 	return 0;
 }
 /////////////////////// end of new GPIO functions
 
 void main(void)
 {
-	dbg_log("\n\n\n\n\n***\n*** Starting in3_client...\n");
+	printk("\n\n\n\n\n***\n*** Starting in3_client...\n");
+ 	gpio_setup(); // setup the GPIO
+/*
+	memset(gbuff1, 0x55, 32768); // fill buffer with 0x55
+	printk("Buff1 set...\n");
+	memset(gbuff2, 0x55, 32768); // fill buffer with 0x55
+	printk("Buff2 set...\n");
+	memset(gbuff3, 0x55, 32768); // fill buffer with 0x55
+	printk("Buff3 set...\n");
+	memset(gbuff4, 0x55, 8192); // fill buffer with 0x55
+	printk("Buff4 set...\n");
+*/
 	in3_client_start();
-
 	return;
 }

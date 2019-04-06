@@ -7,6 +7,7 @@
 #include <string.h>
 #include <gpio.h>
 #include <device.h>
+#include <pwm.h>
 
 #include <settings/settings.h>
 
@@ -38,6 +39,17 @@ struct device *ledpower; // green led (power)
 struct device *ledstrip; // led strip (used as lamp)
 struct device *lockpin; // lock out
 struct device *gpio; // using blue led on usb board for testing
+struct device *pwm_dev; // door servo driver
+//struct device *demoRled; // USB demo Rled
+//struct device *demoGled; // USB demo Gled
+//struct device *demoBled; // USB demo Bled
+ 
+/*
+static u8_t gbuff1[32768]; // test buffer -DEBUG ONLY-
+static u8_t gbuff2[32768]; // test buffer -DEBUG ONLY-
+static u8_t gbuff3[32768]; // test buffer -DEBUG ONLY-
+static u8_t gbuff4[8192]; // test buffer -DEBUG ONLY-
+*/
 
 static u8_t recv_buf_static[512];
 static u8_t req_buf[512];
@@ -428,7 +440,7 @@ int bluetooth_setup(struct in3_client *c)
     byte_to_hex((fmac & 0xFF00) >> 8, deviceName +lnam +4); // add MAC[1]
     byte_to_hex(fmac & 0xFF, deviceName +lnam +6); // add MAC[0] (byte_to_hex adds \0)
 //	bt_set_name(deviceName); // BT name built with "in3-" and NORDIC (almost) unique BT MAC (es: in3-84C8C54B)
-	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Ardo's App
+	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Arda's App
 
 	err = bt_le_adv_start(&param, ad, ad_len, scan_rsp, scan_rsp_len);
 	if (err < 0) {
@@ -472,8 +484,11 @@ void ledstrip_set(int state)
 {
 	if(state) // if ON
 		gpio_pin_write(ledstrip, LEDSTRIP, 1); // led with positive logic
-	else // if OFF
+	else { // if OFF
 		gpio_pin_write(ledstrip, LEDSTRIP, 0); // led with positive logic
+//		gpio_pin_write(demoGled, LEDG, 1); // negative logic, green led OFF
+//		gpio_pin_write(demoRled, LEDR, 1); // negative logic, red led OFF
+	}
 }
 
 void lock_set(int state)
@@ -484,8 +499,29 @@ void lock_set(int state)
 		gpio_pin_write(lockpin, LOCKPIN, 0); // coil with positive logic
 }
 
+void door_control(int state) // control the motorized door 
+{
+	if(state == 'o') { // open door
+		pwm_pin_set_usec(pwm_dev, 2, 40000, 2000); // P0.2 - 40ms period - 2 mS pulse; piston All-out
+//		gpio_pin_write(demoGled, LEDG, 0); // negative logic, green led ON
+		return;
+	}
+	if(state == 'c') { // close door
+//		gpio_pin_write(demoRled, LEDR, 0); // negative logic, red led ON
+		pwm_pin_set_usec(pwm_dev, 2, 40000, 1000); // P0.2 - 40mS period - 1mS pulse; piston All-in
+		return;
+	}
+}
+
 int gpio_setup(void)
 {
+	// PWM init ////////////////////////////////////////////////////////
+	pwm_dev = device_get_binding("PWM_0");
+	if (!pwm_dev) {
+		printk("Cannot find PWM device!\n");
+	}
+	pwm_pin_set_usec(pwm_dev, 2, 40000, 1000); // P0.2 - 40mS period - 1mS pulse; piston All-in (door closed)
+
 	ledpower = device_get_binding(LEDPOWER_PORT); // CONFIG_GPIO_P0_DEV_NAME
 	gpio_pin_configure(ledpower, LEDPOWER, GPIO_DIR_OUT); // set as output (see fsm.h)
 	ledpower_set(IO_ON);
@@ -497,7 +533,19 @@ int gpio_setup(void)
 	lockpin = device_get_binding(LOCKPIN_PORT);
 	gpio_pin_configure(lockpin, LOCKPIN, GPIO_DIR_OUT); // set as output (see fsm.h)
 	lock_set(IO_OFF);
+/*
+	demoRled = device_get_binding(CONFIG_GPIO_P0_DEV_NAME); // Rled is P0.08
+	gpio_pin_configure(demoRled, LEDR, GPIO_DIR_OUT); // set as output (see fsm.h)
+	gpio_pin_write(demoRled, LEDR, 1); // negative logic, led OFF
 
+	demoGled = device_get_binding(CONFIG_GPIO_P1_DEV_NAME); // Gled is P1.09
+	gpio_pin_configure(demoGled, LEDG, GPIO_DIR_OUT); // set as output (see fsm.h)
+	gpio_pin_write(demoGled, LEDG, 1); // negative logic, led OFF
+
+	demoBled = device_get_binding(CONFIG_GPIO_P0_DEV_NAME); // Gled is P0.12
+	gpio_pin_configure(demoBled, LEDB, GPIO_DIR_OUT); // set as output (see fsm.h)
+	gpio_pin_write(demoBled, LEDB, 1); // negative logic, led OFF
+*/
 	for(int i = 0, cnt = 0; i < 5; i++, cnt++) // blink led and terminate ON
 		{
 		ledpower_set(cnt % 2);
@@ -511,6 +559,16 @@ int gpio_setup(void)
 void main(void)
 {
 	dbg_log("\n\n\n\n\n***\n*** Starting in3_client...\n");
+/*
+	memset(gbuff1, 0x55, 32768); // fill buffer with 0x55
+	dbg_log("Buff1 set...\n");
+	memset(gbuff2, 0x55, 32768); // fill buffer with 0x55
+	dbg_log("Buff2 set...\n");
+	memset(gbuff3, 0x55, 32768); // fill buffer with 0x55
+	dbg_log("Buff3 set...\n");
+	memset(gbuff4, 0x55, 8192); // fill buffer with 0x55
+	dbg_log("Buff4 set...\n");
+*/
 	in3_client_start();
 
 	return;

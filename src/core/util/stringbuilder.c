@@ -1,11 +1,11 @@
 #include "stringbuilder.h"
 #include "../util/bytes.h"
 #include "../util/utils.h"
+#include "debug.h"
 #include "mem.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
 
 static const size_t MIN_SIZE = 32;
 
@@ -93,7 +93,7 @@ sb_t* sb_add_bytes(sb_t* sb, char* prefix, bytes_t* bytes, int len, bool as_arra
     sb->data[p++] = '"';
     sb->data[p++] = '0';
     sb->data[p++] = 'x';
-    int8_to_char(bytes[i].data, bytes[i].len, sb->data + p);
+    bytes_to_hex(bytes[i].data, bytes[i].len, sb->data + p);
     p += bytes[i].len * 2;
     sb->data[p++] = '"';
   }
