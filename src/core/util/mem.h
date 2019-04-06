@@ -44,7 +44,7 @@ int    mem_stack_size();
 #define _malloc(s) malloc(s)
 #define _calloc(n, s) calloc(n, s)
 #define _free(p) free(p)
-#define _realloc(p, s, o) realloc(p, s);
+#define _realloc(p, s, o) realloc(p, s)
 
 #endif
 
