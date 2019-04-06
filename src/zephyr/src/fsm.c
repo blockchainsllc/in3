@@ -136,12 +136,12 @@ static in3_state_t in3_init(void) {
   timer3 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 
   // configure the device
-  client->conf.device_url = "in3-1@tobalaba";
-  client->conf.chain_id   = 0x044d;
-  client->conf.now        = 0;
-
+  client->conf.chain_id = 0x044d;
+  client->conf.now      = 0;
   hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, client->conf.contract, 20);
-  hex2byte_arr("0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000", -1, client->conf.device_id, 32);
+
+  // register one device
+  usn_register_device(&client->conf, "in3-1@tobalaba");
 
   // configure the incubed client
   in3_register_eth_full();

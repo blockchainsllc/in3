@@ -37,25 +37,24 @@ static d_token_t* get_rented_event(d_token_t* receipt) {
   return NULL;
 }
 
-typedef struct {
-  bytes32_t tx_hash;
-  uint64_t  rented_from;
-  uint64_t  rented_until;
-  uint8_t*  controller;
-} receipt_data_t;
+static usn_device_t* find_device(usn_device_conf_t* conf, char* url) {
+  if (!url) return NULL;
+  for (int i = 0; i < conf->len_devices; i++) {
+    if (strcmp(url, conf->devices[i].url) == 0) return conf->devices + i;
+  }
+  return NULL;
+}
 
 static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* conf, usn_msg_result_t* result) {
-  in3_ctx_t* ctx = NULL;
   bytes32_t  hash;
   address_t  sender;
-
-  // check url
-  char tmp[400], mhash[500], *url = d_get_stringk(msg, K_URL);
-  checkp_or_return(!url || strlen(url) == 0, "the url is missing");
-  checkp_or_return(strcmp(conf->device_url, url), "wrong url");
+  char       tmp[400], mhash[500];
+  in3_ctx_t* ctx = NULL;
+  result->device = find_device(conf, d_get_stringk(msg, K_URL));
+  checkp_or_return(!result->device, "the device with this url does not exist");
 
   // prepare message hash
-  sprintf(tmp, "%s%" PRIu64 "%s{}", url, d_get_longk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
+  sprintf(tmp, "%s%" PRIu64 "%s{}", result->device->url, d_get_longk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
   sprintf(mhash, "\031Ethereum Signed Message:\n%u%s", (unsigned int) strlen(tmp), tmp);
   bytes_t msg_data = {.data = (uint8_t*) mhash, .len = strlen(mhash)};
   sha3_to(&msg_data, hash);
@@ -65,7 +64,7 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
   bytes_t* signer = ecrecover_signature(&msg_data, d_get(msg, K_SIGNATURE));
   if (signer && signer->len != 20) {
     b_free(signer);
-    signer == NULL;
+    signer = NULL;
   }
   checkp_or_return(!signer, "the message was not signed");
   memcpy(sender, signer->data, 20);
@@ -81,7 +80,7 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
     bytes_t action_bytes = d_to_bytes(d_get(msg, K_ACTION));
     memset(calldata, 0, 100);
     hex2byte_arr("a0b0305f", 8, calldata, 4);         // functionhash for canAccess()
-    memcpy(calldata + 4, conf->device_id, 32);        // the device_id
+    memcpy(calldata + 4, result->device->id, 32);     // the device_id
     memcpy(calldata + 4 + 32 + 12, signer->data, 20); // the signer
     sha3_to(&action_bytes, calldata + 4 + 32 + 32);   // add the hash of the action
     memset(calldata + 4 + 32 + 32 + 4, 0, 28);        // set the rest of the data to 0
@@ -104,8 +103,8 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
   } else {
 
     // we keep the data of the last receipt, so we don't need to verify them again.
-    static receipt_data_t last_receipt;
-    receipt_data_t        r;
+    static usn_booking_t last_receipt;
+    usn_booking_t        r;
 
     // store the txhash
     memcpy(r.tx_hash, tx_hash->data, 32);
@@ -141,7 +140,7 @@ static void verify_action_message(in3_t* c, d_token_t* msg, usn_device_conf_t* c
       r.controller       = data->data + 12;
 
       // check device_id and contract
-      checkp_or_return(!device_id || device_id->len != 32 || memcmp(device_id->data, conf->device_id, 32), "Invalid DeviceId");
+      checkp_or_return(!device_id || device_id->len != 32 || memcmp(device_id->data, result->device->id, 32), "Invalid DeviceId");
       checkp_or_return(!address || address->len != 20 || memcmp(address->data, conf->contract, 20), "Invalid contract");
 
       // cache it for next time.
@@ -170,7 +169,6 @@ usn_msg_result_t usn_verify_message(in3_t* c, char* message, usn_device_conf_t* 
   check_or_return(!parsed, "error parsing the json-message");
   check_or_return(!conf, "no config passed");
   check_or_return(!conf->chain_id, "chain_id missing in config");
-  check_or_return(!conf->device_url, "url missing in config");
 
   // check message type
   char* msgType = d_get_stringk(parsed->result, K_MSG_TYPE);
@@ -190,4 +188,37 @@ usn_msg_result_t usn_verify_message(in3_t* c, char* message, usn_device_conf_t* 
   free_json(parsed);
 
   return result;
+}
+
+int usn_register_device(usn_device_conf_t* conf, char* url) {
+  usn_url_t parsed = usn_parse_url(url);
+  if (!parsed.contract_name) return -1;
+  if (conf->len_devices == 0)
+    conf->devices = _malloc(sizeof(usn_device_t));
+  else
+    conf->devices = _realloc(conf->devices, sizeof(usn_device_t) * (conf->len_devices + 1), sizeof(usn_device_t) * conf->len_devices);
+  if (conf->devices == NULL) return -1;
+  conf->devices[conf->len_devices].url = url;
+  memcpy(conf->devices[conf->len_devices].id, parsed.device_id, 32);
+  conf->len_devices++;
+  return 0;
+}
+
+usn_url_t usn_parse_url(char* url) {
+  usn_url_t res;
+  memset(&res, 0, sizeof(usn_url_t));
+  res.contract_name = strchr(url, '@');
+  if (!res.contract_name) return res;
+  char* c = strchr(url, '#');
+  if (c) {
+    char counter[20];
+    strncpy(counter, c + 1, res.contract_name - c - 1);
+    res.counter = atoi(counter);
+  } else
+    c = res.contract_name;
+  bytes_t name = bytes((uint8_t*) url, c - url);
+  sha3_to(&name, res.device_id);
+  long_to_bytes(res.counter, res.device_id + 24);
+  res.contract_name++;
+  return res;
 }
