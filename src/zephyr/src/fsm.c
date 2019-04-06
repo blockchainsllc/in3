@@ -5,7 +5,7 @@
 
 #include "fsm.h"
 #include "util/utils.h"
-#include <eth_nano.h>
+#include <eth_full.h>
 #include <usn_api.h>
 
 #include "util/debug.h"
@@ -144,7 +144,7 @@ static in3_state_t in3_init(void) {
   hex2byte_arr("0x55a6ef49ec5dcf6cd006d21f151f390692eedd839c813a150000000000000000", -1, client->conf.device_id, 32);
 
   // configure the incubed client
-  in3_register_eth_nano();
+  in3_register_eth_full();
   client->in3               = in3_new();
   client->in3->chainId      = client->conf.chain_id;
   client->in3->requestCount = 1;
