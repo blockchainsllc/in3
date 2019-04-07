@@ -9,7 +9,6 @@ build-in3:
   tags:
     - short-jobs
   script:
-    - sudo apt-get update && sudo apt-get -y install check default-jdk
     - mkdir build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release ..

@@ -54,7 +54,7 @@ int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size);
 bytes_t* hex2byte_new_bytes(char* buf, int len);
 
 /** convefrts a bytes into hex */
-void int8_to_char(uint8_t* buffer, int len, char* out);
+int bytes_to_hex(uint8_t* buffer, int len, char* out);
 
 /** hashes the bytes and creates a new bytes_t */
 bytes_t* sha3(bytes_t* data);

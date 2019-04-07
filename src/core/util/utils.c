@@ -83,7 +83,7 @@ bytes_t* hex2byte_new_bytes(char* buf, int len) {
   return bytes;
 }
 
-void int8_to_char(uint8_t* buffer, int len, char* out) {
+int bytes_to_hex(uint8_t* buffer, int len, char* out) {
   const char hex[] = "0123456789abcdef";
   int        i = 0, j = 0;
   while (j < len) {
@@ -92,6 +92,7 @@ void int8_to_char(uint8_t* buffer, int len, char* out) {
     j++;
   }
   out[i] = '\0';
+  return len * 2;
 }
 
 int sha3_to(bytes_t* data, void* dst) {

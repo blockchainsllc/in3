@@ -526,7 +526,7 @@ char* d_create_json(d_token_t* item) {
       dst[0] = '"';
       dst[1] = '0';
       dst[2] = 'x';
-      int8_to_char(item->data, item->len, dst + 3);
+      bytes_to_hex(item->data, item->len, dst + 3);
       dst[l * 2 + 3] = '"';
       dst[l * 2 + 4] = 0;
       return dst;
@@ -567,7 +567,7 @@ void json_get_str_value(char* js, char* prop, char* dst) {
       case T_BYTES:
         dst[0] = '0';
         dst[1] = 'x';
-        int8_to_char(t->data, t->len, dst + 2);
+        bytes_to_hex(t->data, t->len, dst + 2);
         dst[t->len * 2 + 2] = 0;
         break;
       case T_ARRAY:
