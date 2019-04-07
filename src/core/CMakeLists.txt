@@ -31,3 +31,4 @@ add_library( core STATIC
 	crypto/groestl.c
 )
 include(compiler.cmake)
+target_include_directories(core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

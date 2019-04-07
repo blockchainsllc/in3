@@ -9,7 +9,6 @@
 
 #include <client/cache.h>
 #include <client/client.h>
-#include <eth_api.h>
 #include <eth_full.h>
 #include <evm.h>
 #include <in3_curl.h>

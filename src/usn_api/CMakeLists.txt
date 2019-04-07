@@ -11,3 +11,4 @@ target_link_libraries(usn_api core)
 
 # props
 include(../core/compiler.cmake)
+target_include_directories(usn_api PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

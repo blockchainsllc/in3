@@ -65,11 +65,12 @@ else()
 endif()
 
 # static lib
-add_library( in3_curl STATIC in3_curl.c in3_storage.c)
+add_library( transport_curl STATIC in3_curl.c in3_storage.c)
 
 # props
 include(../core/compiler.cmake)
 
 # add dependency
-target_link_libraries(in3_curl CONAN_PKG::libcurl)
+target_link_libraries(transport_curl CONAN_PKG::libcurl)
 
+target_include_directories(transport_curl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

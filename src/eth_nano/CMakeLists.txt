@@ -1,6 +1,6 @@
 
 # static lib
-add_library( in3_eth_nano STATIC 
+add_library( eth_nano STATIC 
   eth_nano.c 
   rlp.c
   merkle.c
@@ -10,10 +10,10 @@ add_library( in3_eth_nano STATIC
   txreceipt.c
 )
 
-# include core in the headers
-include_directories ("${PROJECT_SOURCE_DIR}/src/core")
 # add dependency
-target_link_libraries(in3_eth_nano core)
+target_link_libraries(eth_nano core)
 
 # props
 include(../core/compiler.cmake)
+
+target_include_directories(eth_nano PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

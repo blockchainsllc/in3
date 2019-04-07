@@ -1,18 +1,12 @@
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/test/cmake/")
 
-#find_package(Check REQUIRED)
-#include_directories(${CHECK_INCLUDE_DIR} ${CHECK_INCLUDE_DIRS})
-
 include_directories(. ../src)
 
-#add_executable(in3_tests core.c)
-#target_link_libraries(in3_tests ${CHECK_LIBRARIES} core in3_eth_nano)
-
 add_executable(runner runner.c)
-target_link_libraries(runner core in3_eth_full)
+target_link_libraries(runner core eth_full)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
-target_link_libraries(vmrunner core in3_eth_full)
+target_link_libraries(vmrunner core eth_full)
 
 
 file(GLOB files "testdata/requests/*.json")
