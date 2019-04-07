@@ -98,6 +98,13 @@ gcc8-armv7hf:
     paths:
       - build/src
 
+gcc8-x86:
+  image: docker.slock.it/build-images/cmake:gcc8-x86
+  extends: .conanbuild
+  artifacts:
+    paths:
+      - build/src
+      
 gcc5:
   image: docker.slock.it/build-images/cmake:gcc5
   extends: .conanbuild
