@@ -16,6 +16,7 @@ target_sources(app PRIVATE
 	src/main.c
 	src/fsm.c
 	src/rent.c
+	../../test/util/stack_diag.c
 )
 
 # include core in the headers
