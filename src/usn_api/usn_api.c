@@ -1,5 +1,6 @@
 #include "./usn_api.h"
 #include "../core/client/context.h"
+#include "../core/util/debug.h"
 #include "../core/client/keys.h"
 #include "../eth_nano/eth_nano.h"
 #include <errno.h>
@@ -147,6 +148,9 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
 
       // send the request
       ctx = in3_client_rpc_ctx(conf->c, "eth_getTransactionReceipt", params);
+
+      dbg_log("params after sending %s\n",params);
+      dbg_log("error for receipt: %s\n",ctx->error);
 
       // do we have a valid result?
       rejectp_if(ctx->error, "The transaction receipt could not be verified");

@@ -428,7 +428,7 @@ int bluetooth_setup(struct in3_client *c)
     byte_to_hex((fmac & 0xFF00) >> 8, deviceName +lnam +4); // add MAC[1]
     byte_to_hex(fmac & 0xFF, deviceName +lnam +6); // add MAC[0] (byte_to_hex adds \0)
 //	bt_set_name(deviceName); // BT name built with "in3-" and NORDIC (almost) unique BT MAC (es: in3-84C8C54B)
-	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Ardo's App
+	bt_set_name("in3-peripheral"); // EFmod: use ONLY this for testing with Ardo's App
 
 	err = bt_le_adv_start(&param, ad, ad_len, scan_rsp, scan_rsp_len);
 	if (err < 0) {
@@ -511,6 +511,7 @@ int gpio_setup(void)
 void main(void)
 {
 	dbg_log("\n\n\n\n\n***\n*** Starting in3_client...\n");
+ 	gpio_setup(); // setup the GPIO
 	in3_client_start();
 
 	return;

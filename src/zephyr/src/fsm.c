@@ -155,7 +155,6 @@ static in3_state_t in3_init(void) {
   client->msg = k_calloc(1, sizeof(in3_msg_t));
 
   bluetooth_setup(client);
-  gpio_setup();
 
   k_sem_init(&client->sem, 0, 1);
   k_mutex_init(&client->mutex);
