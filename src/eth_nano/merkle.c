@@ -40,8 +40,14 @@ uint8_t* trie_path_to_nibbles(bytes_t path, int use_prefix) {
   return n;
 }
 
-static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, int is_last_node, bytes_t* last_value, uint8_t* next_hash) {
+static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, int is_last_node, bytes_t* last_value, uint8_t* next_hash, size_t *depth) {
   bytes_t node, val;
+  (*depth)++;
+  if (*depth > MERKLE_DEPTH_MAX) {
+    printf("Depth of %lu exceeds max supported!\n", *depth);
+    return 0;
+  }
+
   // decode the list into war values
   rlp_decode(raw_node, 0, &node);
   switch (rlp_decode_len(&node)) {
@@ -67,7 +73,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
         node.len = val.data + val.len - node.data;
 
         // check the embedded
-        return check_node(&node, key, expectedValue, *(*key + 1) == 0xFF, last_value, next_hash);
+        return check_node(&node, key, expectedValue, *(*key + 1) == 0xFF, last_value, next_hash, depth);
 
       } else if (val.len != 32) // no hash, so we make sure the next hash is an empty hash
         memset(next_hash, 0, 32);
@@ -99,7 +105,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
           node.len = val.data + val.len - node.data;
 
           // check the embedded node
-          return check_node(&node, key, expectedValue, *(key + 1) == NULL, last_value, next_hash);
+          return check_node(&node, key, expectedValue, *(key + 1) == NULL, last_value, next_hash, depth);
 
         } else if (**key == 0xFF) {
           // readed the end, if this is the last node, it is ok.
@@ -136,11 +142,12 @@ int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
   // start with root hash
   memcpy(expected_hash, rootHash->data, 32);
 
+  size_t depth = 0;
   for (; *proof; proof += 1) {
     // create and check the hash of node
     if (!(res = sha3_to(*proof, node_hash) == 0 && memcmp(expected_hash, node_hash, 32) == 0)) break;
     // check embedded nodes and find the next expected hash
-    if (!(res = check_node(*proof, &key, expectedValue, *(proof + 1) == NULL, &last_value, expected_hash))) break;
+    if (!(res = check_node(*proof, &key, expectedValue, *(proof + 1) == NULL, &last_value, expected_hash, &depth))) break;
   }
 
   if (res && expectedValue != NULL) {
