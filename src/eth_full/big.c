@@ -1,5 +1,6 @@
 #include "big.h"
 #include "mini-gmp.h"
+#include "tommath/tommath.h"
 #include "util/utils.h"
 //#include <math.h>
 #include <stdlib.h>
@@ -312,24 +313,24 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
     size_t ql, rl;
 
     // we use gmp for now
-    mpz_t mq, mr, mn, md;
-    mpz_init(mq);
-    mpz_init(mr);
-    mpz_init(mn);
-    mpz_init(md);
+    mp_int mq, mr, mn, md;
+    mp_init(&mq);
+    mp_init(&mr);
+    mp_init(&mn);
+    mp_init(&md);
 
-    mpz_import(mn, ln, 1, sizeof(uint8_t), 1, 0, n);
-    mpz_import(md, ld, 1, sizeof(uint8_t), 1, 0, d);
+    mp_import(&mn, ln, 1, sizeof(uint8_t), 1, 0, n);
+    mp_import(&md, ld, 1, sizeof(uint8_t), 1, 0, d);
 
     if (remain && q)
-      mpz_tdiv_qr(mq, mr, mn, md);
+      mp_div(&mn, &md, &mq, &mr);
     else if (remain)
-      mpz_tdiv_r(mr, mn, md);
+      mp_div(&mn, &md, NULL, &mr);
     else
-      mpz_tdiv_q(mq, mn, md);
+      mp_div(&mn, &md, &mq, NULL);
 
     if (q) {
-      mpz_export(q, &ql, 1, sizeof(uint8_t), 1, 0, mq);
+      mp_export(q, &ql, 1, sizeof(uint8_t), 1, 0, &mq);
       *qlen = ql;
       if (!ql) {
         *q    = 0;
@@ -337,7 +338,7 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
       }
     }
     if (remain) {
-      mpz_export(remain, &rl, 1, sizeof(uint8_t), 1, 0, mr);
+      mp_export(remain, &rl, 1, sizeof(uint8_t), 1, 0, &mr);
       *remain_len = rl;
       if (!rl) {
         *remain     = 0;
@@ -345,10 +346,10 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
       }
     }
 
-    mpz_clear(mq);
-    mpz_clear(mr);
-    mpz_clear(mn);
-    mpz_clear(md);
+    mp_clear(&mq);
+    mp_clear(&mr);
+    mp_clear(&mn);
+    mp_clear(&md);
 
     return 0;
 
