@@ -123,6 +123,7 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
         if (d_type(r) == T_OBJECT) {
           str_range_t s = d_to_json(r);
           strncpy(req, s.data, s.len);
+          req[s.len] = '\0';
           res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, -1));
         } else
           res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, d_string(r), -1));

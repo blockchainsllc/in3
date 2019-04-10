@@ -42,7 +42,7 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
 
   // make sure result & error are clean
   if (result) result[0] = 0;
-  error[0] = 0;
+  if (error) *error = NULL;
 
   // check parse-errors
   if (ctx->error) {
@@ -64,31 +64,44 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
       } else if ((r = d_get(ctx->responses[0], K_ERROR))) {
         // the response was correct but contains a error-object, which we convert into a string
         if (d_type(r) == T_OBJECT) {
-          s      = d_to_json(r);
-          *error = _malloc(s.len + 1);
-          strncpy(*error, s.data, s.len);
+          s = d_to_json(r);
+          if (error != NULL) {
+            *error = _malloc(s.len + 1);
+            strncpy(*error, s.data, s.len);
+            *error[s.len ] = '\0';
+          }
         } else {
-          *error = _malloc(d_len(r) + 1);
-          strncpy(*error, d_string(r), d_len(r));
+          if (error != NULL) {
+            *error = _malloc(d_len(r) + 1);
+            strncpy(*error, d_string(r), d_len(r));
+          }
         }
       } else if (ctx->error) {
         // we don't have a result, but an error, so we copy this
-        *error = _malloc(strlen(ctx->error) + 1);
-        strcpy(*error, ctx->error);
+        if (error != NULL) {
+          *error = _malloc(strlen(ctx->error) + 1);
+          strcpy(*error, ctx->error);
+        }
       } else {
         // should not happen
-        *error = _malloc(50);
-        strcpy(*error, "No Result and also no error");
+        if (error != NULL) {
+          *error = _malloc(50);
+          strcpy(*error, "No Result and also no error");
+        }
       }
 
     } else if (ctx->error) {
       // there was an error, copy it
-      *error = _malloc(strlen(ctx->error) + 1);
-      strcpy(*error, ctx->error);
+      if (error != NULL) {
+        *error = _malloc(strlen(ctx->error) + 1);
+        strcpy(*error, ctx->error);
+      }
     } else {
       // something went wrong, but no error
-      *error = _malloc(50);
-      strcpy(*error, "Error sending the request");
+      if (error != NULL) {
+        *error = _malloc(50);
+        strcpy(*error, "Error sending the request");
+      }
     }
   }
   free_ctx(ctx);

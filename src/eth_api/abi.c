@@ -335,6 +335,7 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
       if (t->type == A_STRING) {
         char tmp[len + 1];
         strncpy(tmp, (char*) (data.data + dst), len);
+        tmp[len] = '\0';
         res = json_create_string(ctx, tmp);
       } else
         res = json_create_bytes(ctx, bytes(data.data + dst, len));
