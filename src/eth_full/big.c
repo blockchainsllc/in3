@@ -1,5 +1,4 @@
 #include "big.h"
-#include "mini-gmp.h"
 #include "tommath/tommath.h"
 #include "util/utils.h"
 //#include <math.h>
@@ -219,26 +218,27 @@ int big_exp(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res) {
     *mod = 1;
 
     // we use gmp for now
-    mpz_t ma, mb, mc, mm;
-    mpz_init(ma);
-    mpz_init(mb);
-    mpz_init(mc);
-    mpz_init(mm);
+    mp_int ma, mb, mc, mm;
+    mp_init(&ma);
+    mp_init(&mb);
+    mp_init(&mc);
+    mp_init(&mm);
 
     // Convert the 1024-bit number 'input' into an mpz_t, with the most significant byte
     // first and using native endianness within each byte.
-    mpz_import(ma, la, 1, sizeof(uint8_t), 1, 0, a);
-    mpz_import(mb, lb, 1, sizeof(uint8_t), 1, 0, b);
-    mpz_import(mm, 33, 1, sizeof(uint8_t), 1, 0, mod);
+    mp_import(&ma, la, 1, sizeof(uint8_t), 1, 0, a);
+    mp_import(&mb, lb, 1, sizeof(uint8_t), 1, 0, b);
+    mp_import(&mm, 33, 1, sizeof(uint8_t), 1, 0, mod);
 
-    mpz_powm(mc, ma, mb, mm);
+    ma.sign = mb.sign = mc.sign = 0;
+    mp_exptmod(&ma, &mb, &mm, &mc);
     size_t ml;
-    mpz_export(res, &ml, 1, sizeof(uint8_t), 1, 0, mc);
+    mp_export(res, &ml, 1, sizeof(uint8_t), 1, 0, &mc);
 
-    mpz_clear(ma);
-    mpz_clear(mb);
-    mpz_clear(mc);
-    mpz_clear(mm);
+    mp_clear(&ma);
+    mp_clear(&mb);
+    mp_clear(&mc);
+    mp_clear(&mm);
 
     if (ml == 0) {
       *res = 0;
