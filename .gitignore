@@ -1,5 +1,7 @@
-.vscode/ipch
 Testing
 .in3
 build
 _build
+cmake-build-debug/
+.vscode/
+.idea/
