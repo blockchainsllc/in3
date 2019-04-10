@@ -47,7 +47,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
       uint8_t    will_be_null = 0;
       bytes_t    tmp_key;
       int        n;
-      d_token_t* tt;
+      d_token_t* tt = NULL;
       for (n = i + 1, tt = d_next(t); n < d_len(in) && !will_be_null; n++, tt = d_next(tt)) {
         tmp_key = d_to_bytes(d_get_at(tt, 0));
 

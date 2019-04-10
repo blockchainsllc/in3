@@ -70,7 +70,7 @@ void int_to_bytes(uint32_t val, uint8_t* dst);
 int hash_cmp(uint8_t* a, uint8_t* b);
 
 /** duplicate the string */
-char* _strdup(char* src, int len);
+char* _strdupn(char* src, int len);
 
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);

@@ -11,7 +11,7 @@
 #include <util/data.h>
 #include <util/mem.h>
 
-char* read_from_stdin(FILE* file) {
+char * read_from_stdin(FILE* file) {
   if (file == NULL) {
     printf("File not found!");
     _Exit(1);

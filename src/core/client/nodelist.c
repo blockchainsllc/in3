@@ -57,7 +57,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
     n->url      = d_get_stringk(node, K_URL);
 
     if (n->url)
-      n->url = _strdup(n->url, -1);
+      n->url = _strdupn(n->url, -1);
     else {
       res = ctx_set_error(ctx, "missing url in nodelist", -1);
       break;
@@ -123,6 +123,7 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
         if (d_type(r) == T_OBJECT) {
           str_range_t s = d_to_json(r);
           strncpy(req, s.data, s.len);
+          req[s.len] = '\0';
           res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, -1));
         } else
           res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, d_string(r), -1));
@@ -146,11 +147,11 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
                                          int len, _time_t now, float* total_weight, int* total_found) {
   int                i, p;
   float              s = 0;
-  in3_node_t*        nodeDef;
-  in3_node_weight_t* weightDef;
-  node_weight_t*     prev  = NULL;
-  node_weight_t*     w     = NULL;
-  node_weight_t*     first = NULL;
+  in3_node_t*        nodeDef    = NULL;
+  in3_node_weight_t* weightDef  = NULL;
+  node_weight_t*     prev       = NULL;
+  node_weight_t*     w          = NULL;
+  node_weight_t*     first        = NULL;
 
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
@@ -176,7 +177,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
 
 int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
   int          i, res = IN3_ERR_CHAIN_NOT_FOUND;
-  in3_chain_t* chain;
+  in3_chain_t* chain  = NULL;
   in3_t*       c = ctx->client;
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
@@ -201,9 +202,9 @@ int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t
 int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 
   // get all nodes from the nodelist
-  _time_t            now = _time();
-  in3_node_t*        all_nodes;
-  in3_node_weight_t* weights;
+  _time_t            now        = _time();
+  in3_node_t*        all_nodes  = NULL;
+  in3_node_weight_t* weights    = NULL;
   float              total_weight;
   int                all_nodes_len, res, total_found, i, l;
 

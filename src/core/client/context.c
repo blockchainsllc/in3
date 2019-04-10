@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
@@ -24,7 +25,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
     }
 
     int        i;
-    d_token_t* t;
+    d_token_t* t = NULL;
 
     if (d_type(c->request_context->result) == T_OBJECT) {
       // it is a single result
@@ -48,7 +49,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
 int ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   int        i;
-  d_token_t* t;
+  d_token_t* t = NULL;
 
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
   if (!ctx->response_context) {
@@ -138,7 +139,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
     // add in3
     in3_request_config_t* rc = c->requests_configs + i;
-    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%llx\"", (unsigned long long) rc->chainId));
+    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%" PRIx64 "\"", (unsigned long long) rc->chainId));
     if (rc->clientSignature)
       sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
     if (rc->finality)
@@ -170,7 +171,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
 int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
   int   l = strlen(msg);
-  char* dst;
+  char* dst = NULL;
   if (c->error) {
     dst = _malloc(l + 2 + strlen(c->error));
     strcpy(dst, msg);
@@ -194,7 +195,7 @@ int ctx_nodes_len(node_weight_t* c) {
   return all;
 }
 void free_ctx_nodes(node_weight_t* c) {
-  node_weight_t* p;
+  node_weight_t* p = NULL;
   while (c) {
     p = c;
     c = c->next;
