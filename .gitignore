@@ -4,3 +4,5 @@ Testing*
 build*/
 _build
 /.metadata/
+.DS_Store
+/RemoteSystemsTempFiles/
