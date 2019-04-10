@@ -118,7 +118,7 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
 }
 
 static int op_signextend(evm_t* evm) {
-  uint8_t* val;
+  uint8_t* val = NULL;
   int32_t  k = evm_stack_pop_int(evm), l;
 
   if (k < 0) return k;
@@ -405,7 +405,7 @@ static int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
 
 static int op_extcodecopy(evm_t* evm) {
   address_t address;
-  uint8_t*  data;
+  uint8_t*  data = NULL;
   int       l = evm_stack_pop(evm, address, 20), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
   if (l < 0 || mem_pos < 0 || data_len < 0 || code_pos < 0) return EVM_ERROR_EMPTY_STACK;
   subgas(((data_len + 31) / 32) * G_COPY);
@@ -449,7 +449,7 @@ static int op_mload(evm_t* evm) {
 static int op_mstore(evm_t* evm, uint8_t len) {
   int offset = evm_stack_pop_int(evm);
   if (offset < 0) return offset;
-  uint8_t* data;
+  uint8_t* data = NULL;
   int      data_len = evm_stack_pop_ref(evm, &data);
 
   if (data_len < 0) return data_len;
@@ -620,7 +620,7 @@ static int op_push(evm_t* evm, wlen_t len) {
 }
 
 static int op_dup(evm_t* evm, uint8_t pos) {
-  uint8_t* data;
+  uint8_t* data = NULL;
   int      l = evm_stack_get_ref(evm, pos, &data);
   if (l < 0) return l;
   return evm_stack_push(evm, data, l);
@@ -671,7 +671,7 @@ static int op_log(evm_t* evm, uint8_t len) {
   log->topics.data = _malloc(len * 32);
   log->topics.len  = len * 32;
 
-  uint8_t* t;
+  uint8_t* t = NULL;
   int      l;
 
   for (int i = 0; i < len; i++) {
@@ -724,7 +724,7 @@ int op_selfdestruct(evm_t* evm) {
   memset(self_account->balance, 0, 32);
   memset(self_account->nonce, 0, 32);
   self_account->code.len = 0;
-  storage_t* s;
+  storage_t* s = NULL;
   while (self_account->storage) {
     s                     = self_account->storage;
     self_account->storage = s->next;
@@ -746,7 +746,7 @@ int op_selfdestruct(evm_t* evm) {
 int op_create(evm_t* evm, uint_fast8_t use_salt) {
 #ifdef EVM_GAS
   bytes_t   in_data, tmp;
-  uint8_t*  value;
+  uint8_t*  value = NULL;
   int32_t   l_value = 0, in_offset, in_len;
   bytes32_t hash;
   // read data from stack

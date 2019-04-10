@@ -58,7 +58,7 @@ char* readContent(char* name) {
 
 int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   char  temp[300];
-  char* descr;
+  char* descr = NULL;
   int   i;
 
   int l = strlen(name), fail = 0;
@@ -123,8 +123,8 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
     }
     // parse the data;
     int        i;
-    char*      str_proof;
-    d_token_t *t      = NULL, *tests, *test;
+    char*      str_proof = NULL;
+    d_token_t *t      = NULL, *tests = NULL, *test = NULL;
     d_token_t* tokens = NULL;
 
     if ((tests = parsed->result)) {

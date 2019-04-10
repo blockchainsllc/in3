@@ -533,8 +533,8 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
       evm.gas   = 0;
       fail      = 0;
       uint8_t    gas_tmp[32], gas_tmp2[32];
-      account_t* ac;
-      storage_t* s;
+      account_t* ac = NULL;
+      storage_t* s = NULL;
       // reset all accounts except the sender
       while (evm.accounts) {
         ac = evm.accounts;

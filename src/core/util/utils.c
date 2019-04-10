@@ -105,7 +105,7 @@ int sha3_to(bytes_t* data, void* dst) {
 }
 
 bytes_t* sha3(bytes_t* data) {
-  bytes_t*        out;
+  bytes_t*        out = NULL;
   struct SHA3_CTX ctx;
 
   out = _calloc(1, sizeof(bytes_t));

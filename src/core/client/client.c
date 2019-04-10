@@ -68,12 +68,13 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
           if (error != NULL) {
             *error = _malloc(s.len + 1);
             strncpy(*error, s.data, s.len);
-            *error[s.len ] = '\0';
+            (*error)[s.len ] = '\0';
           }
         } else {
           if (error != NULL) {
             *error = _malloc(d_len(r) + 1);
             strncpy(*error, d_string(r), d_len(r));
+            (*error)[d_len(r) ] = '\0';
           }
         }
       } else if (ctx->error) {

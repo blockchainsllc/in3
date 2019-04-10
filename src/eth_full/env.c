@@ -8,7 +8,7 @@
 
 static d_token_t* get_account(in3_vctx_t* vc, d_token_t* accounts, uint8_t* address) {
   int        i;
-  d_token_t* t;
+  d_token_t* t = NULL;
 
   if (!accounts) {
     vc_err(vc, "no accounts");
@@ -23,7 +23,7 @@ static d_token_t* get_account(in3_vctx_t* vc, d_token_t* accounts, uint8_t* addr
 }
 
 int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len) {
-  bytes_t* res;
+  bytes_t* res = NULL;
 
   d_token_t *t, *t2;
   int        i;

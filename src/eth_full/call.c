@@ -17,7 +17,7 @@ void evm_free(evm_t* evm) {
   if (evm->invalid_jumpdest) _free(evm->invalid_jumpdest);
 
 #ifdef EVM_GAS
-  logs_t* l;
+  logs_t* l = NULL;
   while (evm->logs) {
     l = evm->logs;
     _free(l->data.data);
@@ -27,7 +27,7 @@ void evm_free(evm_t* evm) {
   }
 
   account_t* ac = NULL;
-  storage_t* s;
+  storage_t* s  = NULL;
 
   while (evm->accounts) {
     ac = evm->accounts;
@@ -352,7 +352,7 @@ int evm_prepare_evm(evm_t*      evm,
   // if the address is NULL this is a CREATE-CALL, so don't try to fetch the code here.
   if (address) {
     // get the code
-    uint8_t* tmp;
+    uint8_t* tmp = NULL;
     int      l = env(evm, EVM_ENV_CODE_SIZE, account, 20, &tmp, 0, 32);
     // error?
     if (l < 0) return l;

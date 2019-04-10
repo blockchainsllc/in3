@@ -158,7 +158,7 @@ call_request_t* parseSignature(char* sig) {
 static int t_size(var_t* t) {
   if (t->type == A_TUPLE) {
     int    n = 0, i = 0, tmp;
-    var_t* s;
+    var_t* s = NULL;
     for (s = t + 1; i < t->type_len; i++) {
       tmp = t_size(s);
       n += tmp;
@@ -181,7 +181,7 @@ static bool is_dynamic(var_t* t) {
   if (t->type_len == 0 && (t->type == A_STRING || t->type == A_BYTES)) return true;
   if (t->type == A_TUPLE) {
     int    i;
-    var_t* s;
+    var_t* s = NULL;
     for (i = 0, s = t + 1; i < t->type_len; i++, s = t_next(s)) {
       if (is_dynamic(s)) return true;
     }
@@ -195,7 +195,7 @@ static int head_size(var_t* t, bool single) {
   if (t->type == A_TUPLE) {
     int i;
     a = 0;
-    var_t* s;
+    var_t* s = NULL;
     for (i = 0, s = t + 1; i < t->type_len; i++, s = t_next(s)) a += head_size(s, false);
   } else if (t->type == A_BYTES || t->type == A_STRING)
     a = word_size(t->type_len);
