@@ -507,13 +507,13 @@ char* d_create_json(d_token_t* item) {
       }
       return dst;
     case T_BOOLEAN:
-      return d_int(item) ? _strdup("true", 4) : _strdup("false", 5);
+      return d_int(item) ? _strdupn("true", 4) : _strdupn("false", 5);
     case T_INTEGER:
       dst = _malloc(16);
       sprintf(dst, "0x%x", d_int(item));
       return dst;
     case T_NULL:
-      return _strdup("null", 4);
+      return _strdupn("null", 4);
     case T_STRING:
       dst        = _malloc(l + 3);
       dst[0]     = '"';

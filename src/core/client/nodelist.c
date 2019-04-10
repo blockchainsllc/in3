@@ -57,7 +57,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
     n->url      = d_get_stringk(node, K_URL);
 
     if (n->url)
-      n->url = _strdup(n->url, -1);
+      n->url = _strdupn(n->url, -1);
     else {
       res = ctx_set_error(ctx, "missing url in nodelist", -1);
       break;

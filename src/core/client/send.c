@@ -87,7 +87,7 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
         url[2] = 't';
         url[3] = 'p';
       } else
-        url = _strdup(urls[n], l);
+        url = _strdupn(urls[n], l);
       urls[n] = url;
     }
   }
