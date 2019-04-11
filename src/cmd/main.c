@@ -131,6 +131,8 @@ int main(int argc, char* argv[]) {
   uint64_t        gas_limit    = 100000;
   char*           value        = NULL;
   bool            wait         = false;
+  char*           pwd          = NULL;
+  char*           pk_file      = NULL;
 
   if (getenv("IN3_PK")) {
     hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
@@ -140,8 +142,12 @@ int main(int argc, char* argv[]) {
   // fill from args
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) {
-      hex2byte_arr(argv[++i], -1, pk, 32);
-      eth_set_pk_signer(c, pk);
+      if (argv[i + 1][1] == '0' && argv[i][1] == 'x') {
+        hex2byte_arr(argv[++i], -1, pk, 32);
+        eth_set_pk_signer(c, pk);
+      } else
+        pk_file = argv[++i];
+
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
       c->chainId = getChainId(argv[++i]);
     else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
@@ -150,6 +156,8 @@ int main(int argc, char* argv[]) {
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0)
       gas_limit = atoll(argv[++i]);
+    else if (strcmp(argv[i], "-pwd") == 0)
+      pwd = argv[++i];
     else if (strcmp(argv[i], "-value") == 0)
       value = argv[++i];
     else if (strcmp(argv[i], "-hex") == 0)
@@ -195,6 +203,54 @@ int main(int argc, char* argv[]) {
 
   char* result = NULL;
   char* error = NULL;
+
+  if (pk_file) {
+    if (!pwd) {
+      //TODO ask for password
+    }
+    FILE* pkf = fopen(pk_file, "r");
+    if (!pkf) {
+      printf("pk file not found!\n");
+      return -1;
+    }
+
+    char*  buffer    = _malloc(1024);
+    size_t allocated = 1024;
+    size_t len       = 0;
+    size_t r;
+
+    while (1) {
+      r = fread(buffer + len, 1, allocated - len, pkf);
+      len += r;
+      if (feof(pkf)) break;
+      buffer = _realloc(buffer, allocated * 2, allocated);
+      allocated *= 2;
+    }
+    fclose(pkf);
+    buffer[len]          = 0;
+    json_ctx_t* key_json = parse_json(buffer);
+    if (!key_json) {
+      printf("invalid json in pk file!\n");
+      return -1;
+    }
+
+    bytes32_t pk_seed;
+
+    switch (decrypt_key(key_json->result, pwd, pk_seed)) {
+      case 0:
+        break;
+      default:
+        printf("Invalid key\n");
+        return -1;
+    }
+
+    if (!method) {
+      char tmp[64];
+      bytes_to_hex(pk_seed, 32, tmp);
+      printf("%s", tmp);
+      return 0;
+    }
+  }
 
   if (strcmp(method, "call") == 0) {
     req    = prepare_tx(sig, to, params, block_number, 0, NULL);

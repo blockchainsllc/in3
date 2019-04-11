@@ -3,6 +3,11 @@
 add_library( eth_api STATIC 
   eth_api.c 
   abi.c 
+  aes/aes_modes.c
+  aes/aescrypt.c
+  aes/aeskey.c
+  aes/aestab.c
+  key.c
 )
 
 # add dependency
