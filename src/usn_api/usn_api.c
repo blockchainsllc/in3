@@ -92,7 +92,8 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   rejectp_if(!result->device, "the device with this url does not exist");
 
   // prepare message hash
-  sprintf(tmp, "%s%" PRIu64 "%s{}", result->device->url, d_get_longk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
+  //TODO  the timestamp would run out space around 2106 !
+  sprintf(tmp, "%s%u%s{}", result->device->url, d_get_intk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
   sprintf(mhash, "\031Ethereum Signed Message:\n%u%s", (unsigned int) strlen(tmp), tmp);
   bytes_t msg_data = {.data = (uint8_t*) mhash, .len = strlen(mhash)};
   sha3_to(&msg_data, hash);
@@ -163,11 +164,13 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       // extract the values
       bytes_t* data      = d_get_bytesk(event, K_DATA);
       bytes_t* address   = d_get_bytesk(event, K_ADDRESS);
-      bytes_t* device_id = d_get_bytes_at(d_get(event, K_TOPICS), 1);
+      bytes_t* device_id = d_get_bytes_at(d_get(event, K_TOPICS), 2);
       r.rented_from      = bytes_to_long(data->data + 32, 32);
       r.rented_until     = bytes_to_long(data->data + 64, 32);
       memcpy(r.controller, data->data + 12, 20);
 
+      dbg_log("device_id in topic (len=%u) : 0x%02x%02x%02x%02x\n",device_id->len,device_id->data[0],device_id->data[1],device_id->data[2],device_id->data[3]);
+      dbg_log("device_id in result  : 0x%02x%02x%02x%02x\n",result->device->id[0],result->device->id[1],result->device->id[2],result->device->id[3]);
       // check device_id and contract
       rejectp_if(!device_id || device_id->len != 32 || memcmp(device_id->data, result->device->id, 32), "Invalid DeviceId");
       rejectp_if(!address || address->len != 20 || memcmp(address->data, conf->contract, 20), "Invalid contract");
@@ -179,6 +182,8 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     // check if the time and sender is correct
     uint64_t now = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
     rejectp_if(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
+      dbg_log("sender      : 0x%02x%02x%02x%02x\n",sender[0],sender[1],sender[2],sender[3]);
+      dbg_log("controller  : 0x%02x%02x%02x%02x\n",r.controller[0],r.controller[1],r.controller[2],r.controller[3]);
     rejectp_if(memcmp(sender, r.controller, 20), "Invalid signer of the signature");
   }
 

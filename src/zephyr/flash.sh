@@ -1,7 +1,8 @@
 #!/bin/bash
 if [ -d build ]; then
 	cd build
-	ninja flash
+#	ninja flash
+	west flash
 	cd ..
 else
 	echo build missing !!!

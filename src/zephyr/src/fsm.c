@@ -17,43 +17,43 @@ int                undo;
 
 // private
 static void timer_expired(struct k_timer* work) {
-  undo = 1;
   dbg_log("<--- timer expired\n");
+  undo = 1;
   k_sem_give(&client->sem);
 }
 
 static void timer1_expired(struct k_timer* work) // one shot timer (monitor led)
 {
+  dbg_log("<--- timer1 expired\n");
   ledpower_set(IO_ON); // power led on
 }
 
 static void timer2_expired(struct k_timer* work) // one shot timer (led stripe)
 {
+  dbg_log("<--- timer2 expired\n");
   ledstrip_set(IO_OFF); // ledstrip off
 }
 
 static void timer3_expired(struct k_timer* work) // one shot timer (lock-coil)
 {
+  dbg_log("<--- timer3 expired\n");
   lock_set(IO_OFF); // lock off
 }
 
-static void wait_for_event(void) {
-  if (!client)
-    return;
-
-  //  k_sem_take(&client->sem, 600000); // EFnote: 600000 mS = 600 sec = 10 min
-  k_sem_take(&client->sem, K_SECONDS(60)); // 60 sec = 1 min
-}
-
 void do_action(action_type_t action) {
+  dbg_log("<--- action: led power off\n");
   ledpower_set(IO_OFF);          // power led off
+  dbg_log("<--- action: start timer1\n");
   k_timer_start(timer1, 250, 0); // start timer 1 initial duration 250mS, period = 0
   if (action == LOCK) {
-    dbg_log("<--- action: LOCK\n");
+    dbg_log("<--- action: LOCK; led stripe on 3 sec\n");
+    ledstrip_set(IO_ON);             // led on
+    k_timer_start(timer2, 3000, 0); // start timer 2 initial duration 3*1000mS, period = 0
   } else {
-    dbg_log("<--- action: UNLOCK\n");
+    dbg_log("<--- action: UNLOCK; led stripe on 10 sec\n");
     ledstrip_set(IO_ON);             // led on
     k_timer_start(timer2, 10000, 0); // start timer 2 initial duration 10*1000mS, period = 0
+    dbg_log("<--- action: lock on 1.5 sec\n");
     lock_set(IO_ON);                 // lock on
     k_timer_start(timer3, 1500, 0);  // start timer 3 initial duration 1500mS, period = 0
   }
@@ -112,9 +112,11 @@ int send_ble(char** urls, int urls_len, char* pl, in3_response_t* result) {
   bluetooth_write_req(payload);
   int err = wait_for_message(client);
   bluetooth_clear_req();
+  dbg_log("<--- buffer cleared\n");
 
   if (err < 0) {
     sb_add_chars(&result->error, "Error receiving this response");
+    dbg_log("<--- string builder added response\n");
     return err;
   }
 
@@ -141,7 +143,8 @@ static in3_state_t in3_init(void) {
   hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, client->conf.contract, 20);
 
   // register one device
-  usn_register_device(&client->conf, "in3-1@tobalaba");
+//  usn_register_device(&client->conf, "in3-1@tobalaba");
+  usn_register_device(&client->conf, "in3-3@tobalaba");
 
   // configure the incubed client
   in3_register_eth_full();
@@ -150,6 +153,9 @@ static in3_state_t in3_init(void) {
   client->conf.c->requestCount = 1;
   client->conf.c->max_attempts = 1;
   client->conf.c->transport    = send_ble;
+  client->conf.c->autoUpdateList = false;
+  client->conf.c->chains[1].needsUpdate=false;
+  
 
   // prepare the message-buffer
   client->msg = k_calloc(1, sizeof(in3_msg_t));
@@ -168,11 +174,13 @@ static in3_state_t in3_init(void) {
 
 static in3_state_t in3_waiting(void) {
   k_mutex_lock(&client->mutex, 10000);
+	dbg_log("<--- check if there is a ready message...\n");
   if (client->msg->ready) {
     dbg_log("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
     client->msg->start = k_uptime_get_32();
     // only if it contains msgType it is worth verifying
     if (strstr(client->msg->data, "msgType")) {
+    	dbg_log("<--- yes, there is a message with msgType!\n");
       k_mutex_unlock(&client->mutex);
       return STATE_ACTION;
     }
@@ -182,12 +190,19 @@ static in3_state_t in3_waiting(void) {
   }
 
   k_mutex_unlock(&client->mutex);
-  wait_for_event();
+  if(client) { // if client is set 
+	  dbg_log("<--- now we check for semaphore (60 seconds)...\n");
+    //  k_sem_take(&client->sem, 600000); // EFnote: 600000 mS = 600 sec = 10 min
+    k_sem_take(&client->sem, K_SECONDS(60)); // 60 sec = 1 min
+  }
 
+	dbg_log("<--- check if UNDO is set...\n");
   if (undo) {
+  	dbg_log("<--- oops, it is set! do autonomous LOCK\n");
     do_action(LOCK);
     undo = 0;
   }
+	dbg_log("<--- ok\n");
 
   return STATE_WAITING;
 }
@@ -208,9 +223,9 @@ static in3_state_t in3_action(void) {
 
   // execute
   if (result.accepted && result.msg_type == USN_ACTION) {
-    if (strcmp(result.action, "lock"))
+    if (strcmp(result.action, "lock")==0)
       do_action(LOCK);
-    else if (strcmp(result.action, "unlock")) {
+    else if (strcmp(result.action, "unlock")==0) {
       do_action(UNLOCK);
       k_timer_start(timer, K_SECONDS(5), 0);
     }
@@ -224,6 +239,7 @@ static in3_state_t in3_reset(void) {
 
   dbg_log("<--- Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
   clear_message(client);
+  dbg_log("<--- client message cleared\n");
 
   return STATE_WAITING;
 }

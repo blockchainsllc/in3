@@ -1,10 +1,10 @@
-&flash0 {
-	reg = <0x00001000 0xDF000>;
-};
+//&flash0 {
+//	reg = <0x00001000 0xDF000>;
+//};
 
-&sram0 {
-	reg = <0x20000008 0x3FFF8>;
-};
+//&sram0 {
+//	reg = <0x20000008 0x3FFF8>;
+//};
 
 &i2c0 {
 	status = "ok";

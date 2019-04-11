@@ -7,7 +7,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
+#include "../util/debug.h"
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
@@ -103,7 +105,6 @@ void free_ctx(in3_ctx_t* ctx) {
 static unsigned long counter = 1;
 
 int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
-
   int        i;
   d_token_t *r, *t;
   char       temp[100];
@@ -138,7 +139,8 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
     // add in3
     in3_request_config_t* rc = c->requests_configs + i;
-    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%llx\"", (unsigned long long) rc->chainId));
+    //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
+    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int)rc->chainId));
     if (rc->clientSignature)
       sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
     if (rc->finality)
