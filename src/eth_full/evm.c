@@ -297,7 +297,7 @@ void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   evm_print_op(evm, last_gas, pos);
   printf(" [ ");
   for (int i = 0; i < evm->stack_size; i++) {
-    uint8_t* dst;
+    uint8_t* dst = NULL;
     int      l = evm_stack_get_ref(evm, i + 1, &dst);
     optimize_len(dst, l);
     for (int j = 0; j < l; j++) {

@@ -433,7 +433,7 @@ void point_multiply(const ecdsa_curve *curve, const bignum256 *k, const curve_po
 
 	int i, j;
 	static CONFIDENTIAL bignum256 a;
-	uint32_t *aptr;
+	uint32_t *aptr = NULL;
 	uint32_t abits;
 	int ashift;
 	uint32_t is_even = (k->val[0] & 1) - 1;

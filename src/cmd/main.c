@@ -193,8 +193,8 @@ int main(int argc, char* argv[]) {
   params[p++] = ']';
   params[p]   = 0;
 
-  char* result;
-  char* error;
+  char* result = NULL;
+  char* error = NULL;
 
   if (strcmp(method, "call") == 0) {
     req    = prepare_tx(sig, to, params, block_number, 0, NULL);

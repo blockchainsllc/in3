@@ -1,7 +1,7 @@
 #include "big.h"
 #include "mini-gmp.h"
 #include "util/utils.h"
-#include <math.h>
+//#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 

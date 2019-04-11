@@ -244,10 +244,11 @@ see https://www.gnu.org/licenses/.  */
 //const int mp_bits_per_limb = GMP_LIMB_BITS;
 
 /* Memory allocation and other helper functions. */
-static void
-gmp_die(const char* msg) {
+static void gmp_die(const char* msg) {
   fprintf(stderr, "%s\n", msg);
+#ifndef __ZEPHYR__
   abort();
+#endif
 }
 
 static void*
@@ -3739,7 +3740,7 @@ gmp_detect_endian(void) {
 /* Import and export. Does not support nails. */
 void mpz_import(mpz_t r, size_t count, int order, size_t size, int endian,
                 size_t nails, const void* src) {
-  const unsigned char* p;
+  const unsigned char* p = NULL;
   ptrdiff_t            word_step;
   mp_ptr               rp;
   mp_size_t            rn;
@@ -3815,7 +3816,7 @@ void* mpz_export(void* r, size_t* countp, int order, size_t size, int endian,
   count = 0;
   if (un != 0) {
     size_t         k;
-    unsigned char* p;
+    unsigned char* p = NULL;
     ptrdiff_t      word_step;
     /* The current (partial) limb. */
     mp_limb_t limb;

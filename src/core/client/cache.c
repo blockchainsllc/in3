@@ -6,8 +6,9 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
-#define NODE_LIST_KEY "nodelist_%llx"
+#define NODE_LIST_KEY   ("nodelist_%" PRIx64)
 
 int in3_cache_init(in3_t* c) {
   int i;

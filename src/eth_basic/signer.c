@@ -35,7 +35,7 @@ static bytes_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, byt
     }
   }
   free_ctx(ctx);
-  return b;
+  return res < 0 ? bytes(NULL, 0) : b;
 }
 
 /** signs the given data */
@@ -136,12 +136,12 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   // check method
   if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0) {
     // get the transaction-object
-    d_token_t* tx = d_get(req, K_PARAMS) + 1;
-    if ((int) tx == 1 || d_type(tx) != T_OBJECT) return ctx_set_error(ctx, "invalid params", -1);
+    d_token_t* tx_params = d_get(req, K_PARAMS);
+    if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", -1);
     if (!ctx->client->signer) return ctx_set_error(ctx, "no signer set", -1);
 
     // sign it.
-    bytes_t raw = sign_tx(tx, ctx);
+    bytes_t raw = sign_tx(tx_params + 1, ctx);
     if (!raw.len) return ctx_set_error(ctx, "error signing the transaction", -1);
 
     // build the RPC-request

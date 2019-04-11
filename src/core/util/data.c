@@ -482,7 +482,7 @@ static int find_end(char* str) {
 
 char* d_create_json(d_token_t* item) {
   if (item == NULL) return NULL;
-  char*       dst;
+  char*       dst = NULL;
   int         l = d_len(item);
   str_range_t s;
   switch (d_type(item)) {
@@ -507,13 +507,13 @@ char* d_create_json(d_token_t* item) {
       }
       return dst;
     case T_BOOLEAN:
-      return d_int(item) ? _strdup("true", 4) : _strdup("false", 5);
+      return d_int(item) ? _strdupn("true", 4) : _strdupn("false", 5);
     case T_INTEGER:
       dst = _malloc(16);
       sprintf(dst, "0x%x", d_int(item));
       return dst;
     case T_NULL:
-      return _strdup("null", 4);
+      return _strdupn("null", 4);
     case T_STRING:
       dst        = _malloc(l + 3);
       dst[0]     = '"';
@@ -526,7 +526,7 @@ char* d_create_json(d_token_t* item) {
       dst[0] = '"';
       dst[1] = '0';
       dst[2] = 'x';
-      int8_to_char(item->data, item->len, dst + 3);
+      bytes_to_hex(item->data, item->len, dst + 3);
       dst[l * 2 + 3] = '"';
       dst[l * 2 + 4] = 0;
       return dst;
@@ -554,7 +554,7 @@ int json_get_int_value(char* js, char* prop) {
 
 void json_get_str_value(char* js, char* prop, char* dst) {
   *dst = 0; // preset returned string as empty string
-  d_token_t*  t;
+  d_token_t*  t = NULL;
   str_range_t s;
 
   json_ctx_t* ctx = parse_json(js);
@@ -567,7 +567,7 @@ void json_get_str_value(char* js, char* prop, char* dst) {
       case T_BYTES:
         dst[0] = '0';
         dst[1] = 'x';
-        int8_to_char(t->data, t->len, dst + 2);
+        bytes_to_hex(t->data, t->len, dst + 2);
         dst[t->len * 2 + 2] = 0;
         break;
       case T_ARRAY:
@@ -768,8 +768,8 @@ static void write_token_count(bytes_builder_t* bb, int len) {
 }
 
 static void write_token(bytes_builder_t* bb, d_token_t* t) {
-  int        len = d_len(t), i;
-  d_token_t* c;
+  int        len  = d_len(t), i;
+  d_token_t* c    = NULL;
   bb_write_byte(bb, d_type(t) << 5 | (len < 28 ? len : min_bytes_len(len) + 27));
   if (len > 27)
     bb_write_long_be(bb, len, min_bytes_len(len));
@@ -814,7 +814,7 @@ void d_track_keynames(uint8_t v) {
   __track_keys = v;
 }
 void d_clear_keynames() {
-  keyname_t* kn;
+  keyname_t* kn = NULL;
   while (__keynames) {
     kn = __keynames;
     free(kn->name);

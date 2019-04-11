@@ -10,7 +10,7 @@
 
 /*
 struct MemoryStruct {
-  char *memory;
+  char *memory = NULL;
   size_t size;
 };
  */

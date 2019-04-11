@@ -287,7 +287,7 @@ void sha3_Update(SHA3_CTX *ctx, const unsigned char *msg, size_t size)
 		size -= left;
 	}
 	while (size >= block_size) {
-		uint64_t* aligned_message_block;
+		uint64_t* aligned_message_block = NULL;
 		if (IS_ALIGNED_64(msg)) {
 			/* the most common case is processing of an already aligned message
 			without copying it */

@@ -159,8 +159,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   d_token_t* request  = d_get(test, key("request"));
   d_token_t* response = d_get(test, key("response"));
   d_token_t* config   = d_get(request, key("config"));
-  d_token_t* t;
-  char*      method;
+  d_token_t* t = NULL;
+  char*      method = NULL;
   char       params[10000];
 
   // configure in3
@@ -227,7 +227,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
 
 int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   char  temp[300];
-  char* descr;
+  char* descr = NULL;
   int   i;
 
   if ((descr = d_get_string(test, "descr"))) {
@@ -306,8 +306,8 @@ int runRequests(char** names, int test_index, int mem_track) {
 
     // parse the data;
     int        i;
-    char*      str_proof;
-    d_token_t *t      = NULL, *tests, *test;
+    char*      str_proof = NULL;
+    d_token_t *t      = NULL, *tests = NULL, *test = NULL;
     d_token_t* tokens = NULL;
 
     if ((tests = parsed->result)) {

@@ -54,7 +54,7 @@ int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size);
 bytes_t* hex2byte_new_bytes(char* buf, int len);
 
 /** convefrts a bytes into hex */
-void int8_to_char(uint8_t* buffer, int len, char* out);
+int bytes_to_hex(uint8_t* buffer, int len, char* out);
 
 /** hashes the bytes and creates a new bytes_t */
 bytes_t* sha3(bytes_t* data);
@@ -70,7 +70,7 @@ void int_to_bytes(uint32_t val, uint8_t* dst);
 int hash_cmp(uint8_t* a, uint8_t* b);
 
 /** duplicate the string */
-char* _strdup(char* src, int len);
+char* _strdupn(char* src, int len);
 
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);
