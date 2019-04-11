@@ -145,7 +145,7 @@ void mem_reset(int cnt) {
 #ifdef __ZEPHYR__
 
 void* k_realloc(void* ptr, size_t size, size_t oldsize) {
-  void* new;
+  void* new = NULL;
 
   new = k_malloc(size);
   if (!new)

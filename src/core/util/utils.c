@@ -105,7 +105,7 @@ int sha3_to(bytes_t* data, void* dst) {
 }
 
 bytes_t* sha3(bytes_t* data) {
-  bytes_t*        out;
+  bytes_t*        out = NULL;
   struct SHA3_CTX ctx;
 
   out = _calloc(1, sizeof(bytes_t));
@@ -144,7 +144,7 @@ uint64_t c_to_long(char* a, int l) {
   return -1;
 }
 
-char* _strdup(char* src, int len) {
+char* _strdupn(char* src, int len) {
   if (len < 0) len = strlen(src);
   char* dst = _malloc(len + 1);
   strncpy(dst, src, len);

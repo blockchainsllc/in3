@@ -21,7 +21,7 @@ void append_rlp(bytes_builder_t* bb, d_token_t* in) {
   int i;
   if (d_type(in) == T_ARRAY) {
     bytes_builder_t* tmp = bb_new();
-    d_token_t*       t;
+    d_token_t*       t = NULL;
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t))
       append_rlp(tmp, t);
     rlp_encode_list(bb, &tmp->b);

@@ -11,7 +11,7 @@
 #include <util/utils.h>
 
 static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
-  d_token_t* tmp;
+  d_token_t* tmp = NULL;
   bytes_t ** validators = NULL, *proposer, b;
   int        validator_len, i;
 

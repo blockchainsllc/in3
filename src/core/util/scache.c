@@ -9,7 +9,7 @@ bytes_t* in3_cache_get_entry(cache_entry_t* cache, bytes_t* key) {
   return NULL;
 }
 void in3_cache_free(cache_entry_t* cache) {
-  cache_entry_t* p;
+  cache_entry_t* p = NULL;
   while (cache) {
     if (cache->key.data) _free(cache->key.data);
     if (cache->must_free)

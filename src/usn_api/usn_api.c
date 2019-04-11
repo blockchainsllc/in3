@@ -251,7 +251,9 @@ usn_url_t usn_parse_url(char* url) {
   char* c = strchr(url, '#');
   if (c) {
     char counter[20];
-    strncpy(counter, c + 1, res.contract_name - c - 1);
+    int len = res.contract_name - c - 1;
+    strncpy(counter, c + 1, len);
+    counter[min( (sizeof(counter)-1) , len)] = '\0';
     res.counter = atoi(counter);
   } else
     c = res.contract_name;

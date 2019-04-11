@@ -393,8 +393,10 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv* env, jobject ob, jstring jre
         if (d_type(r) == T_OBJECT) {
           str_range_t s = d_to_json(r);
           strncpy(error, s.data, s.len);
+          error[s.len] = '\0';
         } else
           strncpy(error, d_string(r), d_len(r));
+          error[d_len(r)] = '\0';
       } else if (ctx->error)
         strcpy(error, ctx->error);
       else
