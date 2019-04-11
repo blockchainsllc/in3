@@ -10,8 +10,10 @@
 /* #define SC_RSA_1 */
 
 /* Optimized for code size */
-#define IN3_MATH_LITE
+//#define IN3_MATH_LITE
 
+/* Optimized for speed */
+//#define IN3_MATH_FAST
 
 
 /* Works for RSA only, mpi.o is 68KiB */
@@ -119,4 +121,7 @@
 #   endif
 #endif
 
+#ifdef IN3_MATH_FAST
+#   define LTM_ALL
+#endif
 
