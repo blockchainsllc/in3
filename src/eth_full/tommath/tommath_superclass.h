@@ -4,16 +4,15 @@
 /* super class file for PK algos */
 
 /* default ... include all MPI */
-#define LTM_ALL
+// #define LTM_ALL
 
 /* RSA only (does not support DH/DSA/ECC) */
 /* #define SC_RSA_1 */
 
-/* For reference.... On an Athlon64 optimizing for speed...
+/* Optimized for code size */
+#define IN3_MATH_LITE
 
-   LTM's mpi.o with all functions [striped] is 142KiB in size.
 
-*/
 
 /* Works for RSA only, mpi.o is 68KiB */
 #ifdef SC_RSA_1
@@ -73,3 +72,51 @@
 #   endif
 
 #endif
+
+#ifdef IN3_MATH_LITE
+
+#   define BN_MP_EXPTMOD_C
+#   define BN_MP_DIV_C
+#   define BN_MP_IMPORT_C
+#   define BN_MP_EXPORT_C
+#   define BNCORE_C
+
+/* other modifiers */
+#   define BN_MP_DIV_SMALL                    /* Slower division, not critical */
+
+/* here we are on the last pass so we turn things off.  The functions classes are still there
+ * but we remove them specifically from the build.  This also invokes tweaks in functions
+ * like removing support for even moduli, etc...
+ */
+#   ifdef LTM_LAST
+#      undef BN_MP_TOOM_MUL_C
+#      undef BN_MP_TOOM_SQR_C
+#      undef BN_MP_KARATSUBA_MUL_C
+#      undef BN_MP_KARATSUBA_SQR_C
+//#      undef BN_MP_REDUCE_C
+//#      undef BN_MP_REDUCE_SETUP_C
+#      undef BN_MP_DR_IS_MODULUS_C
+#      undef BN_MP_DR_SETUP_C
+#      undef BN_MP_DR_REDUCE_C
+#      undef BN_MP_REDUCE_IS_2K_C
+#      undef BN_MP_REDUCE_2K_SETUP_C
+#      undef BN_MP_REDUCE_2K_C
+//#      undef BN_S_MP_EXPTMOD_C
+#      undef BN_MP_DIV_3_C
+#      undef BN_S_MP_MUL_HIGH_DIGS_C
+//#      undef BN_FAST_S_MP_MUL_HIGH_DIGS_C
+#      undef BN_FAST_MP_INVMOD_C
+#      undef BN_MP_EXPTMOD_FAST_C
+
+/* To safely undefine these you have to make sure your RSA key won't exceed the Comba threshold
+ * which is roughly 255 digits [7140 bits for 32-bit machines, 15300 bits for 64-bit machines]
+ * which means roughly speaking you can handle upto 2536-bit RSA keys with these defined without
+ * trouble.
+ */
+//#      undef BN_S_MP_MUL_DIGS_C
+#      undef BN_S_MP_SQR_C
+#      undef BN_MP_MONTGOMERY_REDUCE_C
+#   endif
+#endif
+
+

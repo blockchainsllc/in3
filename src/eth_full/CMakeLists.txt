@@ -11,10 +11,11 @@ add_library( eth_full STATIC
   mem.c
   precompiled.c
 #  tommath/bn_error.c
-  tommath/bn_fast_mp_invmod.c
+#  tommath/bn_fast_mp_invmod.c
   tommath/bn_fast_mp_montgomery_reduce.c
   tommath/bn_fast_s_mp_mul_digs.c
   tommath/bn_fast_s_mp_mul_high_digs.c
+  tommath/bn_fast_s_mp_sqr.c
   tommath/bn_fast_s_mp_sqr.c
   tommath/bn_mp_2expt.c
   tommath/bn_mp_abs.c
@@ -37,17 +38,17 @@ add_library( eth_full STATIC
   tommath/bn_mp_div.c
   tommath/bn_mp_div_2.c
   tommath/bn_mp_div_2d.c
-  tommath/bn_mp_div_3.c
+#  tommath/bn_mp_div_3.c
 #  tommath/bn_mp_div_d.c
-  tommath/bn_mp_dr_is_modulus.c
-  tommath/bn_mp_dr_reduce.c
-  tommath/bn_mp_dr_setup.c
+#  tommath/bn_mp_dr_is_modulus.c
+#  tommath/bn_mp_dr_reduce.c
+#  tommath/bn_mp_dr_setup.c
   tommath/bn_mp_exch.c
   tommath/bn_mp_export.c
 #  tommath/bn_mp_expt_d.c
 #  tommath/bn_mp_expt_d_ex.c
   tommath/bn_mp_exptmod.c
-  tommath/bn_mp_exptmod_fast.c
+#  tommath/bn_mp_exptmod_fast.c
 #  tommath/bn_mp_exteuclid.c
 #  tommath/bn_mp_fread.c
 #  tommath/bn_mp_fwrite.c
@@ -73,8 +74,8 @@ add_library( eth_full STATIC
 #  tommath/bn_mp_iseven.c
 #  tommath/bn_mp_isodd.c
 #  tommath/bn_mp_jacobi.c
-  tommath/bn_mp_karatsuba_mul.c
-  tommath/bn_mp_karatsuba_sqr.c
+#  tommath/bn_mp_karatsuba_mul.c
+#  tommath/bn_mp_karatsuba_sqr.c
 #  tommath/bn_mp_kronecker.c
 #  tommath/bn_mp_lcm.c
   tommath/bn_mp_lshd.c
@@ -82,7 +83,7 @@ add_library( eth_full STATIC
   tommath/bn_mp_mod_2d.c
 #  tommath/bn_mp_mod_d.c
   tommath/bn_mp_montgomery_calc_normalization.c
-  tommath/bn_mp_montgomery_reduce.c
+#  tommath/bn_mp_montgomery_reduce.c
   tommath/bn_mp_montgomery_setup.c
   tommath/bn_mp_mul.c
   tommath/bn_mp_mul_2.c
@@ -109,11 +110,11 @@ add_library( eth_full STATIC
 #  tommath/bn_mp_read_signed_bin.c
 #  tommath/bn_mp_read_unsigned_bin.c
   tommath/bn_mp_reduce.c
-  tommath/bn_mp_reduce_2k.c
+#  tommath/bn_mp_reduce_2k.c
   tommath/bn_mp_reduce_2k_l.c
-  tommath/bn_mp_reduce_2k_setup.c
+#  tommath/bn_mp_reduce_2k_setup.c
   tommath/bn_mp_reduce_2k_setup_l.c
-  tommath/bn_mp_reduce_is_2k.c
+#  tommath/bn_mp_reduce_is_2k.c
   tommath/bn_mp_reduce_is_2k_l.c
   tommath/bn_mp_reduce_setup.c
   tommath/bn_mp_rshd.c
@@ -129,8 +130,8 @@ add_library( eth_full STATIC
 #  tommath/bn_mp_sqrt.c
 #  tommath/bn_mp_sqrtmod_prime.c
   tommath/bn_mp_sub.c
-  tommath/bn_mp_sub_d.c
-  tommath/bn_mp_submod.c
+#  tommath/bn_mp_sub_d.c
+#  tommath/bn_mp_submod.c
 #  tommath/bn_mp_tc_and.c
 #  tommath/bn_mp_tc_div_2d.c
 #  tommath/bn_mp_tc_or.c
@@ -139,8 +140,8 @@ add_library( eth_full STATIC
 #  tommath/bn_mp_to_signed_bin_n.c
 #  tommath/bn_mp_to_unsigned_bin.c
 #  tommath/bn_mp_to_unsigned_bin_n.c
-  tommath/bn_mp_toom_mul.c
-  tommath/bn_mp_toom_sqr.c
+#  tommath/bn_mp_toom_mul.c
+#  tommath/bn_mp_toom_sqr.c
 #  tommath/bn_mp_toradix.c
 #  tommath/bn_mp_toradix_n.c
 #  tommath/bn_mp_unsigned_bin_size.c
@@ -151,8 +152,8 @@ add_library( eth_full STATIC
   tommath/bn_s_mp_add.c
   tommath/bn_s_mp_exptmod.c
   tommath/bn_s_mp_mul_digs.c
-  tommath/bn_s_mp_mul_high_digs.c
-  tommath/bn_s_mp_sqr.c
+#  tommath/bn_s_mp_mul_high_digs.c
+#  tommath/bn_s_mp_sqr.c
   tommath/bn_s_mp_sub.c
   tommath/bncore.c
   tommath/tommath.h

@@ -307,12 +307,8 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
     }
     return 0;
   } else {
-
-    //    mpz_tdiv_qr
-
     size_t ql, rl;
 
-    // we use gmp for now
     mp_int mq, mr, mn, md;
     mp_init(&mq);
     mp_init(&mr);
