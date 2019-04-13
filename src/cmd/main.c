@@ -85,7 +85,7 @@ void print_val(d_token_t* t) {
         printf("%" PRId64 "\n", d_long(t));
       else {
         printf("0x");
-        for (int i = 0; i < t->len; i++) printf("%02x", t->data[i]);
+        for (int i = 0; i < (int) t->len; i++) printf("%02x", t->data[i]);
         printf("\n");
       }
       break;
@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
   params[p]   = 0;
 
   char* result = NULL;
-  char* error = NULL;
+  char* error  = NULL;
 
   if (pk_file) {
     if (!pwd) {

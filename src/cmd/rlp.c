@@ -119,7 +119,7 @@ void write(bytes_t* data, char* l, char** tt) {
   bytes_t t;
   //  names
   char prefix[100];
-  int  i, j, type, p = strlen(l), d;
+  int  i, j, type, d;
   for (i = 0;; i++) {
     type = rlp_decode(data, i, &t);
     if (type == 0) return;
@@ -149,7 +149,7 @@ void write(bytes_t* data, char* l, char** tt) {
       else
         printf("<EMPTY>");
 
-      for (j = 0; j < t.len; j++) {
+      for (j = 0; j < (int) t.len; j++) {
         if (j > 0 && j % 32 == 0 && (!tt || strcmp(tt[i + 1], "value"))) {
           printf("\n%s", l);
           if (tt) printf("%-20s  ", "");
@@ -255,7 +255,7 @@ int main(int argc, char* argv[]) {
     if (output == 2)
       rlp_encode_to_list(bb);
     printf("0x");
-    for (int j = 0; j < bb->b.len; j++)
+    for (int j = 0; j < (int) bb->b.len; j++)
       printf("%02x", bb->b.data[j]);
 
     printf("\n");

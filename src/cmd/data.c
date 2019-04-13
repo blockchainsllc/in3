@@ -11,7 +11,7 @@
 #include <util/data.h>
 #include <util/mem.h>
 
-char * read_from_stdin(FILE* file) {
+char* read_from_stdin(FILE* file) {
   if (file == NULL) {
     printf("File not found!");
     _Exit(1);
@@ -63,12 +63,12 @@ int main(int argc, char* argv[]) {
     d_serialize_binary(bb, ctx->result);
 
     if (strcmp(format, "hex") == 0) {
-      for (i = 0; i < bb->b.len; i++) printf("%02x", bb->b.data[i]);
+      for (i = 0; i < (int) bb->b.len; i++) printf("%02x", bb->b.data[i]);
       printf("\n");
     } else if (strcmp(format, "cstr") == 0) {
       unsigned char c = 0, is_hex = 0;
 
-      for (i = 0; i < bb->b.len; i++) {
+      for (i = 0; i < (int) bb->b.len; i++) {
         c      = bb->b.data[i];
         is_hex = c < ' ' || c > 0x7E || c == 0x5C || c == '"' || (is_hex && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')));
         printf(is_hex ? "\\x%02x" : "%c", c);

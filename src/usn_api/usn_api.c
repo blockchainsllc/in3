@@ -1,7 +1,7 @@
 #include "./usn_api.h"
 #include "../core/client/context.h"
-#include "../core/util/debug.h"
 #include "../core/client/keys.h"
+#include "../core/util/debug.h"
 #include "../eth_nano/eth_nano.h"
 #include <errno.h>
 #include <inttypes.h>
@@ -150,8 +150,8 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       // send the request
       ctx = in3_client_rpc_ctx(conf->c, "eth_getTransactionReceipt", params);
 
-      dbg_log("params after sending %s\n",params);
-      dbg_log("error for receipt: %s\n",ctx->error);
+      dbg_log("params after sending %s\n", params);
+      dbg_log("error for receipt: %s\n", ctx->error);
 
       // do we have a valid result?
       rejectp_if(ctx->error, "The transaction receipt could not be verified");
@@ -169,8 +169,8 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
       r.rented_until     = bytes_to_long(data->data + 64, 32);
       memcpy(r.controller, data->data + 12, 20);
 
-      dbg_log("device_id in topic (len=%u) : 0x%02x%02x%02x%02x\n",device_id->len,device_id->data[0],device_id->data[1],device_id->data[2],device_id->data[3]);
-      dbg_log("device_id in result  : 0x%02x%02x%02x%02x\n",result->device->id[0],result->device->id[1],result->device->id[2],result->device->id[3]);
+      dbg_log("device_id in topic (len=%u) : 0x%02x%02x%02x%02x\n", device_id->len, device_id->data[0], device_id->data[1], device_id->data[2], device_id->data[3]);
+      dbg_log("device_id in result  : 0x%02x%02x%02x%02x\n", result->device->id[0], result->device->id[1], result->device->id[2], result->device->id[3]);
       // check device_id and contract
       rejectp_if(!device_id || device_id->len != 32 || memcmp(device_id->data, result->device->id, 32), "Invalid DeviceId");
       rejectp_if(!address || address->len != 20 || memcmp(address->data, conf->contract, 20), "Invalid contract");
@@ -182,8 +182,8 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     // check if the time and sender is correct
     uint64_t now = conf->now ? conf->now : d_get_longk(msg, K_TIMESTAMP);
     rejectp_if(r.rented_from >= r.rented_until || r.rented_from > now || r.rented_until < now, "Invalid Time");
-      dbg_log("sender      : 0x%02x%02x%02x%02x\n",sender[0],sender[1],sender[2],sender[3]);
-      dbg_log("controller  : 0x%02x%02x%02x%02x\n",r.controller[0],r.controller[1],r.controller[2],r.controller[3]);
+    dbg_log("sender      : 0x%02x%02x%02x%02x\n", sender[0], sender[1], sender[2], sender[3]);
+    dbg_log("controller  : 0x%02x%02x%02x%02x\n", r.controller[0], r.controller[1], r.controller[2], r.controller[3]);
     rejectp_if(memcmp(sender, r.controller, 20), "Invalid signer of the signature");
   }
 
@@ -250,11 +250,11 @@ usn_url_t usn_parse_url(char* url) {
   if (!res.contract_name) return res;
   char* c = strchr(url, '#');
   if (c) {
-    char counter[20];
-    int len = res.contract_name - c - 1;
+    char         counter[20];
+    unsigned int len = res.contract_name - c - 1;
     strncpy(counter, c + 1, len);
-    counter[min( (sizeof(counter)-1) , len)] = '\0';
-    res.counter = atoi(counter);
+    counter[min((sizeof(counter) - 1), len)] = '\0';
+    res.counter                              = atoi(counter);
   } else
     c = res.contract_name;
   bytes_t name = bytes((uint8_t*) url, c - url);
