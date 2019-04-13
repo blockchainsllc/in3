@@ -13,7 +13,7 @@ endif()
 # can we find curl installed?
 message(STATUS "check for curl: $ENV{CURL_LIBRARY} ")
 if(DEFINED ENV{CURL_LIBRARY})
-  SET(CURL_LIBRARIES $ENV{CURL_LIBRARY})
+  SET(CURL_LIBRARIES "$ENV{CURL_LIBRARY}/libcurl.a")
   SET(CURL_INCLUDE_DIRS $ENV{CURL_INCLUDE_DIRS})
   message(STATUS "found a set curl:libs=$ENV{CURL_LIBRARIES} includeDirs= ${CURL_INCLUDE_DIRS} ")
   set(CURL_FOUND True)
