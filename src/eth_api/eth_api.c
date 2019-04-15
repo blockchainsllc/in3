@@ -107,7 +107,7 @@ static d_token_t* get_result(in3_ctx_t* ctx) {
 static void params_add_number(sb_t* sb, uint64_t num) {
   char tmp[30];
   if (sb->len > 1) sb_add_char(sb, ',');
-  sprintf(tmp, "\"0x%" PRIu64 "\"", num);
+  sprintf(tmp, "\"0x%" PRIx64 "\"", num);
   sb_add_chars(sb, tmp);
 }
 

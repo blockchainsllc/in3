@@ -47,12 +47,13 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     return vc_err(vc, "invalid v-value of the signature");
 
   // r & s have valid length?
-  if (r == NULL || s == NULL || r->len + s->len != 64)
+  if (r == NULL || s == NULL || r->len + s->len > 64)
     return vc_err(vc, "invalid r/s-value of the signature");
 
   // combine r+s
-  memcpy(sdata, r->data, r->len);
-  memcpy(sdata + r->len, s->data, s->len);
+  memset(sdata, 0, 64);
+  memcpy(sdata + 32 - r->len, r->data, r->len);
+  memcpy(sdata + 64 - s->len, s->data, s->len);
 
   // calculate the  messagehash
   bytes_builder_t* bb = bb_new();
