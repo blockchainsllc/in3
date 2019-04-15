@@ -2,11 +2,13 @@
 #include "rlp.h"
 #include "../core/util/utils.h"
 
-static int ref(bytes_t* d, bytes_t* b, size_t l, uint8_t* s, int r) {
-  d->len  = l;
-  d->data = s;
-  return (d >= b && d <= (b + b->len)) ? r : -1;
+static int ref(bytes_t* b, size_t l, uint8_t* s, int r) {
+  if (b == NULL) return -1;
+  b->len  = l;
+  b->data = s;
+  return r;
 }
+
 void rlp_add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset) {
   if (len < 56)
     bb_write_byte(bb, offset + len);
@@ -25,28 +27,41 @@ void rlp_add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset) {
   }
 }
 
+size_t substrtoi(char* str, size_t start, size_t length) {
+  size_t sz_ = length + 1;
+  char*  s_  = malloc(sz_);
+  memcpy(s_, str + start, length);
+  s_[sz_]  = 0;
+  size_t i = (size_t) atoi(s_);
+  free(s_);
+  return i;
+}
+
 int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
-  size_t  p, i, l, n;
+  size_t  p, i, l, n, len;
   uint8_t c;
   for (p = 0, i = 0; i < b->len; i++, p++) {
-    c = b->data[i];
+    c   = b->data[i];
+    len = b->len;
     if (c < 0x80) { // single byte-item
-      if ((int) p == index) return ref(dst, b, 1, b->data + i, 1);
-    } else if (c < 0xb8) { // 0-55 length-item
-      if ((int) p == index) return ref(dst, b, c - 0x80, b->data + i + 1, 1);
+      if ((int) p == index) return ref(dst, 1, b->data + i, 1);
+    } else if (c < 0xb8 && len > (c - 0x80)) { // 0-55 length-item
+      if ((int) p == index) return ref(dst, (size_t)(c - 0x80), b->data + i + 1, 1);
       i += c - 0x80;
-    } else if (c < 0xc0) { // very long item
+    } else if (c < 0xc0 && len > c - 0xb7 && len > c - 0xb7 + substrtoi((char*) b->data, 1, (size_t)(c - 0xb7))) { // very long item
       for (l = 0, n = 0; n < (uint8_t)(c - 0xB7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xb7) - n - 1));
-      if ((int) p == index) return ref(dst, b, l, b->data + i + c - 0xb7 + 1, 1);
+      if ((int) p == index) return ref(dst, l, b->data + i + c - 0xb7 + 1, 1);
       i += l + c - 0xb7;
-    } else if (c < 0xf8) { // 0-55 byte long list
+    } else if (c < 0xf8 && len > c - 0xc0) { // 0-55 byte long list
       l = c - 0xc0;
-      if ((int) p == index) return ref(dst, b, l, b->data + i + 1, 2);
-      i += l; // + 1;
-    } else {  // very long list
+      if ((int) p == index) return ref(dst, l, b->data + i + 1, 2);
+      i += l;                                                                                                       // + 1;
+    } else if (c <= 0xff && len > c - 0xf7 && len > c - 0xf7 + substrtoi((char*) b->data, 1, (size_t)(c - 0xf7))) { // very long list
       for (l = 0, n = 0; n < (uint8_t)(c - 0xF7); n++) l |= (*(b->data + i + 1 + n)) << (8 * ((c - 0xf7) - n - 1));
-      if ((int) p == index) return ref(dst, b, l, b->data + i + c - 0xf7 + 1, 2);
+      if ((int) p == index) return ref(dst, l, b->data + i + c - 0xf7 + 1, 2);
       i += l + c - 0xf7;
+    } else {
+      return -1;
     }
   }
   return index < 0 ? p : 0;
