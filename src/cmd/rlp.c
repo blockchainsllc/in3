@@ -122,8 +122,12 @@ void write(bytes_t* data, char* l, char** tt) {
   int  i, j, type, p = strlen(l), d;
   for (i = 0;; i++) {
     type = rlp_decode(data, i, &t);
-    if (type == 0) return;
-    if (type == 1) {
+    if (type == 0)
+      return;
+    else if (type == -1) {
+      printf("Error: Decoding failed!\n");
+      return;
+    } else if (type == 1) {
       printf("%s", l);
       if (tt)
         d = printf("%-20s : ", tt[i + 1]);
