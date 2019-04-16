@@ -483,7 +483,7 @@ static int find_end(char* str) {
 char* d_create_json(d_token_t* item) {
   if (item == NULL) return NULL;
   char*       dst = NULL;
-  int         l = d_len(item);
+  int         l   = d_len(item);
   str_range_t s;
   switch (d_type(item)) {
     case T_ARRAY:
@@ -553,7 +553,7 @@ int json_get_int_value(char* js, char* prop) {
 }
 
 void json_get_str_value(char* js, char* prop, char* dst) {
-  *dst = 0; // preset returned string as empty string
+  *dst          = 0; // preset returned string as empty string
   d_token_t*  t = NULL;
   str_range_t s;
 
@@ -768,8 +768,8 @@ static void write_token_count(bytes_builder_t* bb, int len) {
 }
 
 static void write_token(bytes_builder_t* bb, d_token_t* t) {
-  int        len  = d_len(t), i;
-  d_token_t* c    = NULL;
+  int        len = d_len(t), i;
+  d_token_t* c   = NULL;
   bb_write_byte(bb, d_type(t) << 5 | (len < 28 ? len : min_bytes_len(len) + 27));
   if (len > 27)
     bb_write_long_be(bb, len, min_bytes_len(len));
@@ -821,4 +821,26 @@ void d_clear_keynames() {
     __keynames = kn->next;
     free(kn);
   }
+}
+
+bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
+  d_token_t* t = d_get(r, k);
+  if (t == NULL || d_type(t) != T_BYTES)
+    return NULL;
+  else if (t->len >= minl)
+    return d_bytes(t);
+
+  t->data = _realloc(t->data, minl, t->len);
+  memmove(t->data + minl - t->len, t->data, t->len);
+  unsigned i = 0;
+  for (; i < (minl - t->len); ++i)
+    t->data[i] = 0;
+
+  t->len += minl - t->len;
+  return d_bytes(t);
+}
+
+d_token_t* d_getl(d_token_t* item, uint16_t k, uint32_t minl) {
+  d_get_byteskl(item, k, minl);
+  return d_get(item, k);
 }

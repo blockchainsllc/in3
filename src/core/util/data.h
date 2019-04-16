@@ -125,6 +125,8 @@ static inline bytes_t* d_get_bytesk(d_token_t* r, d_key_t k) { return d_bytes(d_
 static inline bytes_t* d_get_bytes(d_token_t* r, char* k) { return d_get_bytesk(r, key(k)); }                /**< reads token of a property as bytes. */
 static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_bytes(d_get_at(r, pos)); }      /**< reads bytes at given pos of an array. */
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                      /**< check if the parser context was created from binary data. */
+bytes_t*               d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
+d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
 
 /**
  * iterator over elements of a array opf object.
