@@ -1,6 +1,7 @@
 
 #include "rlp.h"
 #include "../core/util/utils.h"
+#include "../core/util/mem.h"
 
 static int ref(bytes_t* b, size_t l, uint8_t* s, int r) {
   if (b == NULL) return -1;
@@ -29,11 +30,11 @@ void rlp_add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset) {
 
 size_t substrtoi(char* str, size_t start, size_t length) {
   size_t sz_ = length + 1;
-  char*  s_  = malloc(sz_);
+  char*  s_  = _malloc(sz_);
   memcpy(s_, str + start, length);
   s_[sz_]  = 0;
   size_t i = (size_t) atoi(s_);
-  free(s_);
+  _free(s_);
   return i;
 }
 
