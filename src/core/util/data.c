@@ -835,8 +835,7 @@ bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
   unsigned i = 0;
   for (; i < (minl - t->len); ++i)
     t->data[i] = 0;
-
-  t->len += minl - t->len;
+  t->len = minl;
   return d_bytes(t);
 }
 
