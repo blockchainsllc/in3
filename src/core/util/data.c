@@ -23,15 +23,6 @@ typedef struct keyname {
 static uint8_t    __track_keys = 0;
 static keyname_t* __keynames   = NULL;
 
-d_key_t key(const char* c) {
-  uint16_t val = 0;
-  while (true) {
-    if (*c == 0) return val;
-    val ^= *c | val << 7;
-    c += 1;
-  }
-  return val;
-}
 d_key_t keyn(const char* c, const int len) {
   uint16_t val = 0;
   int      i   = 0;
