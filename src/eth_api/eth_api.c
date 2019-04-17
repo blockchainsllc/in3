@@ -59,7 +59,12 @@ static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
   } else
     memset(dst, 0, len);
 }
-
+uint256_t to_uint256(uint64_t value) {
+  uint256_t data;
+  memset(data.data, 0, 32);
+  long_to_bytes(value, data.data + 24);
+  return data;
+}
 /** converts a uint256 to a long double */
 long double as_double(uint256_t d) {
   uint8_t* p = d.data;
@@ -341,7 +346,7 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
     if ((res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
     free_json(in_data);
   }
-  if (res == 0) {
+  if (res >= 0) {
     bytes_t to = bytes(contract, 20);
     sb_add_chars(params, "{\"to\":");
     sb_add_bytes(params, "", &to, 1, false);
@@ -356,7 +361,7 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
     return NULL;
   }
 
-  if (res == 0) {
+  if (res >= 0) {
     rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
   }
   return NULL;

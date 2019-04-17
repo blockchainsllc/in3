@@ -75,7 +75,7 @@ char*        eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
 uint64_t    as_long(uint256_t d);   /**< converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
-
-int decrypt_key(d_token_t* key_data, char* password, bytes32_t dst);
+uint256_t   to_uint256(uint64_t value);
+int         decrypt_key(d_token_t* key_data, char* password, bytes32_t dst);
 
 #endif
