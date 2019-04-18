@@ -8,6 +8,17 @@ target_link_libraries(runner core eth_full)
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner core eth_full)
 
+add_executable(test_key_hash 
+                test_key_hash.c 
+                unity/unity.c
+                ../src/core/util/mem.c 
+                ../src/core/util/data.c 
+                ../src/core/util/bytes.c 
+                ../src/core/util/stringbuilder.c 
+                ../src/core/util/utils.c 
+                ../src/core/crypto/sha3.c 
+                ../src/core/crypto/memzero.c)
+
 
 file(GLOB files "testdata/requests/*.json")
 foreach(file ${files})
