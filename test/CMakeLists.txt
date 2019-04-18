@@ -19,6 +19,11 @@ add_executable(test_key_hash
                 ../src/core/crypto/sha3.c 
                 ../src/core/crypto/memzero.c)
 
+add_test(
+    NAME              "in3_test_key_hash" 
+    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
 
 file(GLOB files "testdata/requests/*.json")
 foreach(file ${files})
