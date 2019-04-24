@@ -85,7 +85,7 @@ bytes_t* d_bytesl(d_token_t* item, size_t l) {
     return NULL;
   else if (item->len >= l)
     return d_bytes(item);
-    
+
   item->data = _realloc(item->data, l, item->len);
   memmove(item->data + l - item->len, item->data, item->len);
   memset(item->data, 0, l - item->len);
@@ -126,10 +126,8 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
     switch (d_type(item)) {
       case T_BYTES:
         if (max > l) {
-          item->data = _realloc(item->data, max, l);
-          memmove(item->data + max - l, item->data, l);
-          memset(item->data, 0, max - l);
-          l = item->len = max;
+          d_bytesl(item, max);
+          l = max;
         }
         memcpy(dst, item->data, l);
         return l;
@@ -840,16 +838,7 @@ void d_clear_keynames() {
 
 bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
   d_token_t* t = d_get(r, k);
-  if (t == NULL || d_type(t) != T_BYTES)
-    return NULL;
-  else if (t->len >= minl)
-    return d_bytes(t);
-
-  t->data = _realloc(t->data, minl, t->len);
-  memmove(t->data + minl - t->len, t->data, t->len);
-  memset(t->data, 0, minl - t->len);
-  t->len = minl;
-  return d_bytes(t);
+  return d_bytesl(t, minl);
 }
 
 d_token_t* d_getl(d_token_t* item, uint16_t k, uint32_t minl) {
