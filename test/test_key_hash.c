@@ -75,7 +75,7 @@ void test_key_hash_collisions() {
   TEST_ASSERT(hashes != NULL);
 
   const char* delim      = "\n";
-  char*       keyfilestr = filetostr("/Users/sufi-al-hussaini/in3-core/src/core/client/keys.h");
+  char*       keyfilestr = filetostr("../src/core/client/keys.h");
   TEST_ASSERT_MESSAGE(keyfilestr != NULL, "File keys.h not found!");
 
   char* tok = strtok(keyfilestr, delim);
