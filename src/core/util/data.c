@@ -80,6 +80,19 @@ bytes_t* d_bytes(const d_token_t* item) {
   return (bytes_t*) item;
 }
 
+bytes_t* d_bytesl(d_token_t* item, size_t l) {
+  if (item == NULL || d_type(item) != T_BYTES)
+    return NULL;
+  else if (item->len >= l)
+    return d_bytes(item);
+    
+  item->data = _realloc(item->data, l, item->len);
+  memmove(item->data + l - item->len, item->data, item->len);
+  memset(item->data, 0, l - item->len);
+  item->len = l;
+  return (bytes_t*) item;
+}
+
 bytes_t d_to_bytes(d_token_t* item) {
   switch (d_type(item)) {
     case T_BYTES:

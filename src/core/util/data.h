@@ -65,6 +65,7 @@ typedef struct json_parser {
 bytes_t                d_to_bytes(d_token_t* item);
 int                    d_bytes_to(d_token_t* item, uint8_t* dst, const int max);                                        /**< writes the byte-representation to the dst. details see d_to_bytes.*/
 bytes_t*               d_bytes(const d_token_t* item);                                                                  /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
+bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                             /**< returns the value as bytes with length l (may reallocates) */
 char*                  d_string(const d_token_t* item);                                                                 /**< converts the value as string. Make sure the type is string! */
 uint32_t               d_int(const d_token_t* item);                                                                    /**< returns the value as integer. only if type is integer */
 uint32_t               d_intd(const d_token_t* item, const uint32_t def_val);                                           /**< returns the value as integer or if NULL the default. only if type is integer */
