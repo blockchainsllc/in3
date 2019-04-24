@@ -113,8 +113,11 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
     switch (d_type(item)) {
       case T_BYTES:
         if (max > l) {
-          memset(dst, 0, max - l);
-          dst += max - l;
+          item->data = _realloc(item->data, max, l);
+          memmove(item->data + max - l, item->data, l);
+          for (i = 0; i < (max - l); ++i)
+            item->data[i] = 0;
+          l = item->len = max;
         }
         memcpy(dst, item->data, l);
         return l;
