@@ -20,20 +20,18 @@ int main() {
   return TESTS_END();
 }
 
-static uint16_t substrtokey(char* s, char* delim1, char* delim2) {
+static char* substr(char* s, char* delim1, char* delim2) {
   char *target, *start, *end;
   target = start = end = NULL;
-  uint16_t k           = 0;
 
   if ((start = strstr(s, delim1))) {
     start += strlen(delim1);
     if ((end = strstr(start, delim2))) {
       target = start;
       *end   = '\0';
-      k      = key(target);
     }
   }
-  return k;
+  return target;
 }
 
 static int compare(const void* a, const void* b) {
@@ -77,7 +75,7 @@ void test_key_hash_collisions() {
   TEST_ASSERT(hashes != NULL);
 
   const char* delim      = "\n";
-  char*       keyfilestr = filetostr("../src/core/client/keys.h");
+  char*       keyfilestr = filetostr("/Users/sufi-al-hussaini/in3-core/src/core/client/keys.h");
   TEST_ASSERT_MESSAGE(keyfilestr != NULL, "File keys.h not found!");
 
   char* tok = strtok(keyfilestr, delim);
@@ -87,7 +85,13 @@ void test_key_hash_collisions() {
       hashes = _realloc(hashes, cap * 2 * sizeof(*hashes), cap);
       cap *= 2;
     }
-    hashes[i] = substrtokey(tok, "key(\"", "\")");
+    char *kstr = substr(tok, "key(\"", "\")");
+    if (kstr) {
+      hashes[i] = key(kstr);
+#ifdef DEBUG
+      printf("\"%s\" => [%u]\n", kstr, hashes[i]);
+#endif
+    }
   }
   _free(keyfilestr);
 
