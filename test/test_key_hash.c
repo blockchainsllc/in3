@@ -85,7 +85,7 @@ void test_key_hash_collisions() {
       hashes = _realloc(hashes, cap * 2 * sizeof(*hashes), cap);
       cap *= 2;
     }
-    char *kstr = substr(tok, "key(\"", "\")");
+    char* kstr = substr(tok, "key(\"", "\")");
     if (kstr) {
       hashes[i] = key(kstr);
 #ifdef DEBUG

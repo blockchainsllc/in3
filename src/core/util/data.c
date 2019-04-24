@@ -115,8 +115,7 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
         if (max > l) {
           item->data = _realloc(item->data, max, l);
           memmove(item->data + max - l, item->data, l);
-          for (i = 0; i < (max - l); ++i)
-            item->data[i] = 0;
+          memset(item->data, 0, max - l);
           l = item->len = max;
         }
         memcpy(dst, item->data, l);
@@ -835,9 +834,7 @@ bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
 
   t->data = _realloc(t->data, minl, t->len);
   memmove(t->data + minl - t->len, t->data, t->len);
-  unsigned i = 0;
-  for (; i < (minl - t->len); ++i)
-    t->data[i] = 0;
+  memset(t->data, 0, minl - t->len);
   t->len = minl;
   return d_bytes(t);
 }
