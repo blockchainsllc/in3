@@ -68,7 +68,7 @@ int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       // check txhash
 
       sha3_to(&r->data, r->tx_hash);
-      if (!bytes_cmp(d_to_bytes(d_get(receipt.token, K_TX_HASH)), bytes(r->tx_hash, 32))) {
+      if (!bytes_cmp(d_to_bytes(d_getl(receipt.token, K_TX_HASH, 32)), bytes(r->tx_hash, 32))) {
         if (path) b_free(path);
         return vc_err(vc, "invalid tx hash");
       }
@@ -105,17 +105,17 @@ int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (rlp_decode(&logddata, d_get_intk(it.token, K_TRANSACTION_LOG_INDEX), &logddata) != 2) return vc_err(vc, "invalid log index");
 
     // check address
-    if (!rlp_decode(&logddata, 0, &tmp) || !bytes_cmp(tmp, d_to_bytes(d_get(it.token, K_ADDRESS)))) return vc_err(vc, "invalid address");
+    if (!rlp_decode(&logddata, 0, &tmp) || !bytes_cmp(tmp, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)))) return vc_err(vc, "invalid address");
     if (!rlp_decode(&logddata, 2, &tmp) || !bytes_cmp(tmp, d_to_bytes(d_get(it.token, K_DATA)))) return vc_err(vc, "invalid data");
     if (rlp_decode(&logddata, 1, &tops) != 2) return vc_err(vc, "invalid topics");
     if (rlp_decode_len(&tops) != d_len(topics)) return vc_err(vc, "invalid topics len");
 
     for (d_iterator_t t = d_iter(topics); t.left; d_iter_next(&t)) {
-      if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, d_to_bytes(t.token))) return vc_err(vc, "invalid topic");
+      if (!rlp_decode(&tops, i++, &tmp) || !bytes_cmp(tmp, *d_bytesl(t.token, 32))) return vc_err(vc, "invalid topic");
     }
 
     if (d_get_longk(it.token, K_BLOCK_NUMBER) != bytes_to_long(r->block_number.data, r->block_number.len)) return vc_err(vc, "invalid blocknumber");
-    if (!bytes_cmp(d_to_bytes(d_get(it.token, K_BLOCK_HASH)), bytes(r->block_hash, 32))) return vc_err(vc, "invalid blockhash");
+    if (!bytes_cmp(d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), bytes(r->block_hash, 32))) return vc_err(vc, "invalid blockhash");
     if (d_get_intk(it.token, K_REMOVED)) return vc_err(vc, "must be removed=false");
     if (d_get_intk(it.token, K_TRANSACTION_INDEX) != r->transaction_index) return vc_err(vc, "wrong transactionIndex");
   }

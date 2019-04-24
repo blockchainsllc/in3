@@ -21,13 +21,13 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   uint8_t    hash[32], pubkey[65], sdata[64];
   bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
 
-  bytes_t* r        = d_get_bytesk(tx, K_R);
-  bytes_t* s        = d_get_bytesk(tx, K_S);
+  bytes_t* r        = d_get_byteskl(tx, K_R, 32);
+  bytes_t* s        = d_get_byteskl(tx, K_S, 32);
   uint32_t v        = d_get_intk(tx, K_V);
   uint32_t chain_id = v > 35 ? (v - 35) / 2 : 0;
 
   // check transaction hash
-  if (sha3_to(raw ? raw : d_get_bytesk(tx, K_RAW), &hash) == 0 && memcmp(hash, d_get_bytesk(tx, K_HASH)->data, 32))
+  if (sha3_to(raw ? raw : d_get_bytesk(tx, K_RAW), &hash) == 0 && memcmp(hash, d_get_byteskl(tx, K_HASH, 32)->data, 32))
     return vc_err(vc, "wrong transactionHash");
 
   // check raw data
@@ -78,10 +78,10 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, hash, (chain_id ? v - chain_id * 2 - 8 : v) - 27))
     return vc_err(vc, "could not recover signature");
 
-  if ((t = d_get(tx, K_PUBLIC_KEY)) && memcmp(pubkey_bytes.data, t->data, t->len) != 0)
+  if ((t = d_getl(tx, K_PUBLIC_KEY, 64)) && memcmp(pubkey_bytes.data, t->data, t->len) != 0)
     return vc_err(vc, "invalid public Key");
 
-  if ((t = d_get(tx, K_FROM)) && sha3_to(&pubkey_bytes, &hash) == 0 && memcmp(hash + 12, t->data, 20))
+  if ((t = d_getl(tx, K_FROM, 20)) && sha3_to(&pubkey_bytes, &hash) == 0 && memcmp(hash + 12, t->data, 20))
     return vc_err(vc, "invalid from address");
   return 0;
 }
@@ -100,7 +100,7 @@ int eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
   if (!blockHeader)
     return vc_err(vc, "No Block-Proof!");
 
-  res = eth_verify_blockheader(vc, blockHeader, d_get_bytesk(vc->result, K_BLOCK_HASH));
+  res = eth_verify_blockheader(vc, blockHeader, d_get_byteskl(vc->result, K_BLOCK_HASH, 32));
   if (res == 0) {
     bytes_t*  path = create_tx_path(d_get_intk(vc->proof, K_TX_INDEX));
     bytes_t   root, raw_transaction = {.len = 0, .data = NULL};

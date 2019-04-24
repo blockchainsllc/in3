@@ -144,13 +144,13 @@ static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
   tx->transaction_index = d_get_intk(t, K_TRANSACTION_INDEX);
   memcpy(tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
-  copy_fixed(tx->block_hash, 32, d_to_bytes(d_get(t, K_BLOCK_HASH)));
-  copy_fixed(tx->from, 20, d_to_bytes(d_get(t, K_FROM)));
-  copy_fixed(tx->to, 20, d_to_bytes(d_get(t, K_TO)));
-  copy_fixed(tx->value.data, 32, d_to_bytes(d_get(t, K_VALUE)));
-  copy_fixed(tx->hash, 32, d_to_bytes(d_get(t, K_HASH)));
-  copy_fixed(tx->signature, 32, d_to_bytes(d_get(t, K_R)));
-  copy_fixed(tx->signature + 32, 32, d_to_bytes(d_get(t, K_S)));
+  copy_fixed(tx->block_hash, 32, d_to_bytes(d_getl(t, K_BLOCK_HASH, 32)));
+  copy_fixed(tx->from, 20, d_to_bytes(d_getl(t, K_FROM, 20)));
+  copy_fixed(tx->to, 20, d_to_bytes(d_getl(t, K_TO, 20)));
+  copy_fixed(tx->value.data, 32, d_to_bytes(d_getl(t, K_VALUE, 32)));
+  copy_fixed(tx->hash, 32, d_to_bytes(d_getl(t, K_HASH, 32)));
+  copy_fixed(tx->signature, 32, d_to_bytes(d_getl(t, K_R, 32)));
+  copy_fixed(tx->signature + 32, 32, d_to_bytes(d_getl(t, K_S, 32)));
 
   return sizeof(eth_tx_t) + b.len;
 }
@@ -202,15 +202,19 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
         return NULL;
       }
       uint8_t* p = (uint8_t*) b + sizeof(eth_block_t); // pointer where we add the next data after the block-struct
-      copy_fixed(b->author, 20, d_to_bytes(d_get(result, K_AUTHOR)));
+      copy_fixed(b->author, 20, d_to_bytes(d_getl(result, K_AUTHOR, 20)));
       copy_fixed(b->difficulty.data, 32, d_to_bytes(d_get(result, K_DIFFICULTY)));
-      copy_fixed(b->hash, 32, d_to_bytes(d_get(result, K_HASH)));
-      copy_fixed(b->logsBloom, 256, d_to_bytes(d_get(result, K_LOGS_BLOOM)));
-      copy_fixed(b->parent_hash, 32, d_to_bytes(d_get(result, K_PARENT_HASH)));
-      copy_fixed(b->transaction_root, 32, d_to_bytes(d_get(result, K_TRANSACTIONS_ROOT)));
-      copy_fixed(b->receipts_root, 32, d_to_bytes(d_get_or(result, K_RECEIPT_ROOT, K_RECEIPTS_ROOT)));
-      copy_fixed(b->sha3_uncles, 32, d_to_bytes(d_get(result, K_SHA3_UNCLES)));
-      copy_fixed(b->state_root, 32, d_to_bytes(d_get(result, K_STATE_ROOT)));
+      copy_fixed(b->hash, 32, d_to_bytes(d_getl(result, K_HASH, 32)));
+      copy_fixed(b->logsBloom, 256, d_to_bytes(d_getl(result, K_LOGS_BLOOM, 256)));
+      copy_fixed(b->parent_hash, 32, d_to_bytes(d_getl(result, K_PARENT_HASH, 32)));
+      copy_fixed(b->transaction_root, 32, d_to_bytes(d_getl(result, K_TRANSACTIONS_ROOT, 32)));
+
+      d_token_t* t = NULL;
+      if ((t = d_getl(result, K_RECEIPT_ROOT, 32)) || (t = d_getl(result, K_RECEIPTS_ROOT, 32)))
+        copy_fixed(b->receipts_root, 32, d_to_bytes(t));
+
+      copy_fixed(b->sha3_uncles, 32, d_to_bytes(d_getl(result, K_SHA3_UNCLES, 32)));
+      copy_fixed(b->state_root, 32, d_to_bytes(d_getl(result, K_STATE_ROOT, 32)));
       b->gasLimit          = d_get_longk(result, K_GAS_LIMIT);
       b->gasUsed           = d_get_longk(result, K_GAS_USED);
       b->number            = d_get_longk(result, K_NUMBER);
