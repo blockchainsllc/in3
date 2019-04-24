@@ -56,7 +56,7 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
   else if (i > b->len)
     return 0;
   else
-    return 0;
+    return -1;
 }
 
 int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst) {
