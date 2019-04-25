@@ -2,7 +2,9 @@
 #include <eth_api.h>       // wrapper for easier use
 #include <eth_full.h>      // the full ethereum verifier containing the EVM
 #include <in3_curl.h>      // transport implementation
+#include <signer.h>        // the full ethereum verifier containing the EVM
 #include <stdio.h>
+#include <usn_api.h> // for usn-specific functions
 
 void call_a_function(in3_t* c) {
   // define a address (20byte)
@@ -52,6 +54,54 @@ void show_transactions_in_block(in3_t* c, uint64_t block_number) {
   }
 }
 
+void start_charging(in3_t* c) {
+  address_t contract;
+  bytes32_t private_key, tx_hash;
+
+  // set the contract-address
+  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
+
+  // copy bytes and register private key first ( needs to be called only once per client-struct)
+  hex2byte_arr("0x21c15ea1cd68229536fb71f713a538bc3f0f33201db773f4edf49602bf15e5df", -1, private_key, 32);
+  eth_set_pk_signer(c, private_key);
+
+  // reserve charging for one hour (and pay for it)
+  uint32_t max_charging_seconds = 3600;
+
+  // start charging
+  if (usn_rent(c, contract, NULL, "wirelane1@tobalaba", max_charging_seconds, tx_hash) < 0)
+    printf("Could not start charging\n");
+  else {
+    printf("Charging tx successfully sent... tx_hash=");
+    ba_print(tx_hash, 32);
+    printf("\n");
+  }
+}
+
+void stop_charging(in3_t* c) {
+  address_t contract;
+  bytes32_t private_key, tx_hash;
+
+  // set the contract-address
+  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
+
+  // copy bytes and register private key first ( needs to be called only once per client-struct)
+  hex2byte_arr("0x21c15ea1cd68229536fb71f713a538bc3f0f33201db773f4edf49602bf15e5df", -1, private_key, 32);
+  eth_set_pk_signer(c, private_key);
+
+  // reserve charging for one hour (and pay for it)
+  uint32_t max_charging_seconds = 3600;
+
+  // stop charging
+  if (usn_return(c, contract, "wirelane1@tobalaba", tx_hash) < 0)
+    printf("Could not stop charging\n");
+  else {
+    printf("Charging tx successfully stopped... tx_hash=");
+    ba_print(tx_hash, 32);
+    printf("\n");
+  }
+}
+
 int main(int argc, char* argv[]) {
 
   // register a chain-verifier for full Ethereum-Support
@@ -72,6 +122,12 @@ int main(int argc, char* argv[]) {
 
   // example 2 - call a function
   call_a_function(c);
+
+  // example 3 - start charging
+  start_charging(c);
+
+  // example 4 - stop charging
+  stop_charging(c);
 
   // clean up
   in3_free(c);

@@ -64,14 +64,14 @@ typedef struct {
 typedef int (*usn_booking_handler)(usn_event_t*);
 
 typedef struct {
+  in3_t*              c;
+  address_t           contract;
   usn_device_t*       devices;
   int                 len_devices;
-  address_t           contract;
   uint64_t            chain_id;
   uint64_t            now;
   uint64_t            last_checked_block;
   usn_booking_handler booking_handler;
-  in3_t*              c;
 } usn_device_conf_t;
 
 usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message);
@@ -82,4 +82,9 @@ unsigned int usn_update_state(usn_device_conf_t* conf, unsigned int wait_time);
 int          usn_update_bookings(usn_device_conf_t* conf);
 void         usn_remove_old_bookings(usn_device_conf_t* conf);
 usn_event_t  usn_get_next_event(usn_device_conf_t* conf);
+
+int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, bytes32_t tx_hash);
+int usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash);
+int usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, address_t controller, bytes32_t price);
+
 #endif

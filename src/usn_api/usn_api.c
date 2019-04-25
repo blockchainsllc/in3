@@ -82,6 +82,31 @@ static int exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t devic
   free_ctx(ctx);
   return l;
 }
+static int exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t value, bytes32_t tx_hash) {
+  char  args[(4 + 32 + data.len) * 2 + 200];
+  char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
+  p += bytes_to_hex(data.data, data.len, p);
+  p += sprintf(p, "\",\"gas\":\"0x0f4240\",\"to\":\"0x");
+  p += bytes_to_hex(conf->contract, 20, p);
+  if (value) {
+    p += sprintf(p, "\",\"value\":\"0x");
+    p += bytes_to_hex(value, 32, p);
+  }
+  p += sprintf(p, "\"}]");
+
+  // send the request
+  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_sendTransaction", op);
+
+  // do we have a valid result?
+  if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+    free_ctx(ctx);
+    return -1;
+  }
+
+  int l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), tx_hash, 32);
+  free_ctx(ctx);
+  return l;
+}
 
 static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_msg_result_t* result) {
   bytes32_t  hash;
@@ -462,4 +487,60 @@ unsigned int usn_update_state(usn_device_conf_t* conf, unsigned int wait_time) {
 
   // how long show we sleep before checking again?
   return next_action - conf->now < wait_time ? next_action - conf->now : wait_time;
+}
+
+int usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, address_t controller, bytes32_t price) {
+  usn_device_conf_t conf = {.c = c};
+  memcpy(conf.contract, contract, 20);
+  usn_url_t purl = usn_parse_url(url);
+  uint8_t   params[96];
+  memset(params, 0, 96);
+  if (controller) memcpy(params + 12, controller, 20);
+  int_to_bytes(seconds, params + 60);
+  if (token) memcpy(params + 64 + 12, token, 20);
+  return exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(NULL, 0), price, 32) == 32 ? 0 : -1;
+  //     function price(bytes32 id, address user, uint32 secondsToRent, address token) public constant returns (uint128);
+}
+
+int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, bytes32_t tx_hash) {
+  usn_device_conf_t conf = {.c = c};
+  memcpy(conf.contract, contract, 20);
+  usn_url_t purl = usn_parse_url(url);
+  uint8_t   params[100];
+  memset(params, 0, 100);
+
+  int_to_bytes(seconds, params + 60);
+  if (token) memcpy(params + 64 + 12, token, 20);
+
+  // first get the price
+  bytes32_t price;
+  if (exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(NULL, 0), price, 32) != 32) return -1;
+
+  // now send the tx
+  memset(params, 0, 100);
+  hex2byte_arr("400a6315", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  memcpy(params + 4, purl.device_id, 32);
+  int_to_bytes(seconds, params + 64);
+  if (token) memcpy(params + 80, token, 20);
+
+  int res = exec_eth_send(&conf, bytes(params, 100), price, tx_hash);
+  if (res < 0) return res;
+  return 0;
+}
+
+int usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash) {
+  usn_device_conf_t conf = {.c = c};
+  memcpy(conf.contract, contract, 20);
+  usn_url_t purl = usn_parse_url(url);
+  uint8_t   params[36];
+  memset(params, 0, 36);
+
+  // now send the tx
+  memset(params, 0, 36);
+  hex2byte_arr("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  memcpy(params + 4, purl.device_id, 32);
+
+  int res = exec_eth_send(&conf, bytes(params, 100), NULL, tx_hash);
+  if (res < 0) return res;
+  return 0;
 }
