@@ -2,6 +2,7 @@
 # static lib
 add_library( eth_api STATIC 
   eth_api.c 
+  eth_filter.c 
   abi.c 
   aes/aes_modes.c
   aes/aescrypt.c

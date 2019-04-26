@@ -64,6 +64,7 @@ static void in3_client_init(in3_t* c) {
   c->requestCount       = 1;
   c->chainsCount        = 5;
   c->chains             = _malloc(sizeof(in3_chain_t) * c->chainsCount);
+  c->filters            = new_filter_handle();
 
   // mainnet
   initChain(c->chains, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252", 2, CHAIN_ETH, NULL);
@@ -101,6 +102,7 @@ void in3_free(in3_t* a) {
   }
   if (a->signer) _free(a->signer);
   _free(a->chains);
+  a->filters->release(a->filters);
   _free(a);
 }
 

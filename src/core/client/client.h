@@ -5,6 +5,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include "../eth_api/eth_filter.h"
 #include "../util/bytes.h"
 #include "../util/data.h"
 #include "../util/stringbuilder.h"
@@ -264,6 +265,9 @@ typedef struct {
 
   /** flags for the evm (EIPs) */
   uint32_t evm_flags;
+
+  /** filter handler */
+  in3_filter_handler_t* filters;
 
 } in3_t;
 
