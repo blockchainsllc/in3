@@ -7,9 +7,7 @@ static void release_filter_opt(in3_filter_opt_t* fopt) {
 }
 
 static void release_filter(in3_filter_t* f) {
-  if (f)
-    if (f->options)
-      f->options->release(f->options);
+  if (f && f->options) f->options->release(f->options);
   _free(f);
 }
 

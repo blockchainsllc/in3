@@ -218,7 +218,6 @@ typedef struct in3_filter_t_ {
 typedef struct in3_filter_handler_t_ {
   in3_filter_t** array;
   size_t         count;
-  void (*release)(struct in3_filter_handler_t_* fh);
 } in3_filter_handler_t;
 
 typedef struct {
