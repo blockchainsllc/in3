@@ -20,8 +20,9 @@ static bool add_topic_to_fopt(in3_filter_opt_t* fopt, uint32_t topic) {
   if (t_ == NULL) {
     return false;
   }
-  t                    = t_;
-  t[fopt->topic_count] = topic;
+  fopt->topics                    = t_;
+  fopt->topics[fopt->topic_count] = topic;
+  fopt->topic_count += 1;
   return true;
 }
 
