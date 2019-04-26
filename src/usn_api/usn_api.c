@@ -514,7 +514,7 @@ int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t 
 
   // first get the price
   bytes32_t price;
-  if (exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(NULL, 0), price, 32) != 32) return -1;
+  if (exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(params, 96), price, 32) != 32) return -1;
 
   // now send the tx
   memset(params, 0, 100);
