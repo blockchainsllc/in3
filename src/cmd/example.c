@@ -76,7 +76,7 @@ void start_charging(in3_t* c) {
   uint32_t max_charging_seconds = 3600;
 
   // start charging
-  if (usn_rent(c, contract, NULL, "in3-3@tobalaba", max_charging_seconds, tx_hash) < 0)
+  if (usn_rent(c, contract, NULL, "wirelane1@tobalaba", max_charging_seconds, tx_hash) < 0)
     printf("Could not start charging\n");
   else {
     printf("Charging tx successfully sent... tx_hash=");
