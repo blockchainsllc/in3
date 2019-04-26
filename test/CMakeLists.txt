@@ -3,7 +3,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/test/cmake/")
 include_directories(. ../src)
 
 add_executable(runner runner.c)
-target_link_libraries(runner core eth_full)
+target_link_libraries(runner core eth_full eth_api)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner core eth_full)
