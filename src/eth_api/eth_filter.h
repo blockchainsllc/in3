@@ -10,6 +10,7 @@ typedef struct in3_filter_opt_t_ {
   address_t address;
   uint32_t* topics;
   size_t    topic_count;
+  bool (*add_topic)(struct in3_filter_opt_t_* fopt, uint32_t topic);
   void (*release)(struct in3_filter_opt_t_* fopt);
 } in3_filter_opt_t;
 

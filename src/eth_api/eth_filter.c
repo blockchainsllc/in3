@@ -23,10 +23,22 @@ static void release_filter_handle(in3_filter_handler_t* fh) {
   _free(fh);
 }
 
+static bool add_topic_to_fopt(in3_filter_opt_t* fopt, uint32_t topic) {
+  uint32_t* t  = fopt->topics;
+  uint32_t* t_ = _realloc(t, sizeof(*t) * (fopt->topic_count + 1), sizeof(*t) * (fopt->topic_count));
+  if (t_ == NULL) {
+    return false;
+  }
+  t                    = t_;
+  t[fopt->topic_count] = topic;
+  return true;
+}
+
 in3_filter_opt_t* new_filter_opt() {
   in3_filter_opt_t* fopt = _calloc(1, sizeof *fopt);
   if (fopt) {
-    fopt->release = release_filter_opt;
+    fopt->add_topic = add_topic_to_fopt;
+    fopt->release   = release_filter_opt;
   }
   return fopt;
 }
