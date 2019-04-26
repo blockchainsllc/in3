@@ -86,11 +86,15 @@ static int exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t value,
   char  args[(4 + 32 + data.len) * 2 + 200];
   char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
   p += bytes_to_hex(data.data, data.len, p);
-  p += sprintf(p, "\",\"gas\":\"0x0f4240\",\"to\":\"0x");
+  p += sprintf(p, "\",\"gasLimit\":\"0x0f4240\",\"to\":\"0x");
   p += bytes_to_hex(conf->contract, 20, p);
   if (value) {
-    p += sprintf(p, "\",\"value\":\"0x");
-    p += bytes_to_hex(value, 32, p);
+    uint8_t *vs = value, vl = 32;
+    optimize_len(vs, vl);
+    if (vl > 1 || *vs) {
+      p += sprintf(p, "\",\"value\":\"0x");
+      p += bytes_to_hex(vs, vl, p);
+    }
   }
   p += sprintf(p, "\"}]");
 

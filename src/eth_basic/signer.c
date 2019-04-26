@@ -107,9 +107,10 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
           to        = get(tx, K_TO),
           value     = get(tx, K_VALUE),
           data      = get(tx, K_DATA);
+  uint64_t v        = ctx->requests_configs->chainId > 0xFF ? 0 : ctx->requests_configs->chainId;
 
   // create raw without signature
-  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, ctx->requests_configs->chainId, bytes(NULL, 0), bytes(NULL, 0));
+  bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, v, bytes(NULL, 0), bytes(NULL, 0));
 
   // sign the raw message
   int res = ctx->client->signer->sign(ctx->client->signer->wallet, SIGN_EC_HASH, *raw, bytes(NULL, 0), sig);
@@ -120,7 +121,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   if (res < 0) return bytes(NULL, 0);
 
   // create raw transaction with signature
-  raw            = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, 27 + sig[64] + ctx->requests_configs->chainId * 2 + 8, bytes(sig, 32), bytes(sig + 32, 32));
+  raw            = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, 27 + sig[64] + (v ? (v * 2 + 8) : 0), bytes(sig, 32), bytes(sig + 32, 32));
   bytes_t raw_tx = bytes(raw->data, raw->len);
   _free(raw); // we only free the struct, not the data!
 
