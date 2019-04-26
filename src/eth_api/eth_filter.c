@@ -58,7 +58,11 @@ static size_t add_filter(in3_t* in3, in3_filter_type_t type, in3_filter_opt_t* o
     return 0;
   }
 
-  fh->array            = _realloc(fh->array, sizeof(in3_filter_t) * (fh->count + 1), sizeof in3_filter_t * (fh->count));
+  in3_filter_t** arr_ = _realloc(fh->array, sizeof(in3_filter_t) * (fh->count + 1), sizeof in3_filter_t * (fh->count));
+  if (arr_ == NULL) {
+    return 0;
+  }
+  fh->array            = arr_;
   in3_filter_t* f      = new_filter(type);
   f->options           = options;
   f->last_block        = eth_blockNumber(in3);
