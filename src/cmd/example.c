@@ -4,7 +4,13 @@
 #include <in3_curl.h>      // transport implementation
 #include <signer.h>        // the full ethereum verifier containing the EVM
 #include <stdio.h>
+#include <time.h>
 #include <usn_api.h> // for usn-specific functions
+#if defined(_WIN32) || defined(WIN32)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 void call_a_function(in3_t* c) {
   // define a address (20byte)
@@ -55,6 +61,7 @@ void show_transactions_in_block(in3_t* c, uint64_t block_number) {
 }
 
 void start_charging(in3_t* c) {
+
   address_t contract;
   bytes32_t private_key, tx_hash;
 
@@ -69,7 +76,7 @@ void start_charging(in3_t* c) {
   uint32_t max_charging_seconds = 3600;
 
   // start charging
-  if (usn_rent(c, contract, NULL, "wirelane1@tobalaba", max_charging_seconds, tx_hash) < 0)
+  if (usn_rent(c, contract, NULL, "in3-3@tobalaba", max_charging_seconds, tx_hash) < 0)
     printf("Could not start charging\n");
   else {
     printf("Charging tx successfully sent... tx_hash=");
@@ -102,6 +109,52 @@ void stop_charging(in3_t* c) {
   }
 }
 
+static int handle_booking(usn_event_t* ev) {
+  if (ev->type == BOOKING_START)
+    printf("UNLOCK device\n");
+  else
+    printf("LOCK device\n");
+  return 0;
+}
+
+void watch_for_events(in3_t* c) {
+
+  // interval to check for new event (here 5 seconds)
+  unsigned int wait_time = 5;
+
+  // configure a device-config
+  usn_device_conf_t usn;
+
+  // set a function which is called whenever a rent event starts or stops
+  usn.booking_handler = handle_booking;
+  usn.c               = c;
+  usn.chain_id        = c->chainId;
+  usn.devices         = NULL;
+  usn.len_devices     = 0;
+  usn.now             = 0;
+  // set the contract-address
+  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, usn.contract, 20);
+
+  // register the device to listen to
+  usn_register_device(&usn, "greyp1@tobalaba");
+
+  printf("\n start watching...\n");
+
+  while (true) {
+    printf("checking...\n");
+    // update the current timestamp (UNIIX-TS in seconds since 1970)
+    usn.now = time(NULL);
+
+    // get the events and return the time to wait before the next check
+    unsigned int timeout = usn_update_state(&usn, wait_time) * 1000;
+#if defined(_WIN32) || defined(WIN32)
+    Sleep(timeout);
+#else
+    usleep(timeout * 1000); // usleep takes sleep time in us (1 millionth of a second)
+#endif
+  }
+}
+
 int main(int argc, char* argv[]) {
 
   // register a chain-verifier for full Ethereum-Support
@@ -110,7 +163,8 @@ int main(int argc, char* argv[]) {
   // create new incubed client
   in3_t* c = in3_new();
 
-  //  c->evm_flags = 65536;
+  // uncomment this for more debug output
+  //c->evm_flags = 65536;
 
   // set your config
   c->transport    = send_curl; // use curl to handle the requests
@@ -128,6 +182,9 @@ int main(int argc, char* argv[]) {
 
   // example 4 - stop charging
   stop_charging(c);
+
+  // example 5 - watch for events
+  watch_for_events(c);
 
   // clean up
   in3_free(c);
