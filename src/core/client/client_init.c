@@ -16,7 +16,7 @@ static void release_filter_handle(in3_filter_handler_t* fh) {
   in3_filter_t* f = NULL;
   for (size_t i = 0; i < fh->count; i++) {
     f = fh->array[i];
-    f->release(f);
+    if (f) f->release(f);
   }
   _free(fh->array);
   _free(fh);

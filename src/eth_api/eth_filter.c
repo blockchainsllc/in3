@@ -2,13 +2,15 @@
 #include <stdio.h>
 
 static void release_filter_opt(in3_filter_opt_t* fopt) {
-  _free(fopt->topics);
+  if (fopt) _free(fopt->topics);
   _free(fopt);
 }
 
 static void release_filter(in3_filter_t* f) {
-  in3_filter_opt_t* fopt = f->options;
-  fopt->release(fopt);
+  if (f) {
+    in3_filter_opt_t* fopt = f->options;
+    if (fopt) fopt->release(fopt);
+  }
   _free(f);
 }
 
@@ -68,12 +70,7 @@ static bool remove_filter(in3_t* in3, size_t id) {
 
   in3_filter_t* f = fh->array[id - 1];
   f->release(f);
-  f = NULL;
-  for (size_t i = id; i < fh->count; i++)
-    fh->array[i] = fh->array[i + 1];
-
-  fh->array = _realloc(fh->array, sizeof(in3_filter_t) * (fh->count - 1), sizeof in3_filter_t * (fh->count));
-  fh->count -= 1;
+  fh->array[id - 1] = NULL;
   return true;
 }
 
