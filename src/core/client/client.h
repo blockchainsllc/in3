@@ -5,7 +5,6 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "../eth_api/eth_filter.h"
 #include "../util/bytes.h"
 #include "../util/data.h"
 #include "../util/stringbuilder.h"
@@ -192,6 +191,35 @@ typedef struct {
 /** the transport function to be implemented by the transport provider.
  */
 typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
+
+typedef struct in3_filter_opt_t_ {
+  uint64_t  from_block;
+  uint64_t  to_block;
+  address_t address;
+  uint32_t* topics;
+  size_t    topic_count;
+  bool (*add_topic)(struct in3_filter_opt_t_* fopt, uint32_t topic);
+  void (*release)(struct in3_filter_opt_t_* fopt);
+} in3_filter_opt_t;
+
+typedef enum {
+  FILTER_EVENT,
+  FILTER_BLOCK,
+  FILTER_PENDING,
+} in3_filter_type_t;
+
+typedef struct in3_filter_t_ {
+  in3_filter_type_t type;
+  in3_filter_opt_t* options;
+  uint64_t          last_block;
+  void (*release)(struct in3_filter_t_* f);
+} in3_filter_t;
+
+typedef struct in3_filter_handler_t_ {
+  in3_filter_t** array;
+  size_t         count;
+  void (*release)(struct in3_filter_handler_t_* fh);
+} in3_filter_handler_t;
 
 typedef struct {
   /** number of seconds requests can be cached. */

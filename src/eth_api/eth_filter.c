@@ -1,5 +1,4 @@
 #include "eth_api.h"
-#include <client/client.h>
 #include <stdio.h>
 
 static void release_filter_opt(in3_filter_opt_t* fopt) {
@@ -11,16 +10,6 @@ static void release_filter(in3_filter_t* f) {
   in3_filter_opt_t* fopt = f->options;
   fopt->release(fopt);
   _free(f);
-}
-
-static void release_filter_handle(in3_filter_handler_t* fh) {
-  in3_filter_t* f = NULL;
-  for (size_t i = 0; i < fh->count; i++) {
-    f = fh->array[i];
-    f->release(f);
-  }
-  _free(fh->array);
-  _free(fh);
 }
 
 static bool add_topic_to_fopt(in3_filter_opt_t* fopt, uint32_t topic) {
@@ -51,16 +40,6 @@ in3_filter_t* new_filter(in3_filter_type_t ft) {
     f->last_block = 0;
   }
   return f;
-}
-
-in3_filter_handler_t* new_filter_handle() {
-  in3_filter_handler_t* fh = _malloc(sizeof *fh);
-  if (fh) {
-    fh->array   = NULL;
-    fh->count   = 0;
-    fh->release = release_filter_handle;
-  }
-  return fh;
 }
 
 static size_t add_filter(in3_t* in3, in3_filter_type_t type, in3_filter_opt_t* options) {

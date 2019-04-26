@@ -7,7 +7,7 @@ add_library( usn_api STATIC usn_api.c )
 include_directories ("${PROJECT_SOURCE_DIR}/src/core")
 
 # add dependency
-target_link_libraries(usn_api core eth_api)
+target_link_libraries(usn_api core)
 
 # props
 include(../core/compiler.cmake)

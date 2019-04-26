@@ -1,40 +1,14 @@
 #ifndef ETH_FILTER_H
 #define ETH_FILTER_H
 
-#include "../core/util/bytes.h"
-#include <stdint.h>
+#include <client/client.h>
 
-typedef struct in3_filter_opt_t_ {
-  uint64_t  from_block;
-  uint64_t  to_block;
-  address_t address;
-  uint32_t* topics;
-  size_t    topic_count;
-  bool (*add_topic)(struct in3_filter_opt_t_* fopt, uint32_t topic);
-  void (*release)(struct in3_filter_opt_t_* fopt);
-} in3_filter_opt_t;
+in3_filter_opt_t* new_filter_opt();
+in3_filter_t*     new_filter(in3_filter_type_t type);
 
-typedef enum {
-  FILTER_EVENT,
-  FILTER_BLOCK,
-  FILTER_PENDING,
-} in3_filter_type_t;
-
-typedef struct in3_filter_t_ {
-  in3_filter_type_t type;
-  in3_filter_opt_t* options;
-  uint64_t          last_block;
-  void (*release)(struct in3_filter_t_* f);
-} in3_filter_t;
-
-typedef struct in3_filter_handler_t_ {
-  in3_filter_t** array;
-  size_t         count;
-  void (*release)(struct in3_filter_handler_t_* fh);
-} in3_filter_handler_t;
-
-in3_filter_opt_t*     new_filter_opt();
-in3_filter_t*         new_filter(in3_filter_type_t type);
-in3_filter_handler_t* new_filter_handle();
+size_t eth_newFilter(in3_t* in3, in3_filter_opt_t* options);
+size_t eth_newBlockFilter(in3_t* in3, in3_filter_opt_t* options);
+size_t eth_newPendingTransactionFilter(in3_t* in3, in3_filter_opt_t* options);
+bool   eth_uninstallFilter(in3_t* in3, size_t id);
 
 #endif //ETH_FILTER_H
