@@ -7,16 +7,14 @@ static void release_filter_opt(in3_filter_opt_t* fopt) {
 }
 
 static void release_filter(in3_filter_t* f) {
-  if (f) {
-    in3_filter_opt_t* fopt = f->options;
-    if (fopt) fopt->release(fopt);
-  }
+  if (f)
+    if (f->options)
+      f->options->release(f->options);
   _free(f);
 }
 
 static bool add_topic_to_fopt(in3_filter_opt_t* fopt, uint32_t topic) {
-  uint32_t* t  = fopt->topics;
-  uint32_t* t_ = _realloc(t, sizeof(*t) * (fopt->topic_count + 1), sizeof(*t) * (fopt->topic_count));
+  uint32_t* t_ = _realloc(fopt->topics, sizeof(uint32_t) * (fopt->topic_count + 1), sizeof(uint32_t) * (fopt->topic_count));
   if (t_ == NULL) {
     return false;
   }
@@ -46,13 +44,13 @@ in3_filter_t* new_filter(in3_filter_type_t ft) {
 }
 
 static size_t add_filter(in3_t* in3, in3_filter_type_t type, in3_filter_opt_t* options) {
-  in3_filter_handler_t* fh = in3->filters;
   if (type == FILTER_PENDING) {
     printf("Pending Transactions are not supported!");
     return 0;
   }
 
-  in3_filter_t** arr_ = _realloc(fh->array, sizeof(in3_filter_t) * (fh->count + 1), sizeof in3_filter_t * (fh->count));
+  in3_filter_handler_t* fh   = in3->filters;
+  in3_filter_t**        arr_ = _realloc(fh->array, sizeof(in3_filter_t) * (fh->count + 1), sizeof in3_filter_t * (fh->count));
   if (arr_ == NULL) {
     return 0;
   }
