@@ -89,32 +89,32 @@ typedef enum {
 typedef in3_state_t in3_state_func_t(void);
 
 static in3_state_t in3_init(void) {
-  client = k_calloc(1, sizeof(struct in3_client));
-  timer = k_calloc(1, sizeof(struct k_timer));
+	client = k_calloc(1, sizeof(struct in3_client));
+	timer = k_calloc(1, sizeof(struct k_timer));
 	timer1 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 	timer2 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 	timer3 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 
-  client->in3               = in3_new();
-  client->in3->chainId      = 0x044d;
-  client->in3->requestCount = 1;
-  client->in3->max_attempts=1;
+	client->in3               = in3_new();
+	client->in3->chainId      = 0x044d;
+	client->in3->requestCount = 1;
+	client->in3->max_attempts=1;
 
-  client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
-  client->msg = k_calloc(1, sizeof(in3_msg_t));
+	client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
+	client->msg = k_calloc(1, sizeof(in3_msg_t));
 
-  in3_register_eth_nano();
-  bluetooth_setup(client);
+	in3_register_eth_nano();
+	bluetooth_setup(client);
  	gpio_setup();
 
-  k_sem_init(&client->sem, 0, 1);
-  k_mutex_init(&client->mutex);
-  k_timer_init(timer, timer_expired, NULL);
+	k_sem_init(&client->sem, 0, 1);
+	k_mutex_init(&client->mutex);
+	k_timer_init(timer, timer_expired, NULL);
 	k_timer_init(timer1, timer1_expired, NULL); // init timer, callback for expired, callback for stopped
 	k_timer_init(timer2, timer2_expired, NULL); // init timer, callback for expired, callback for stopped
 	k_timer_init(timer3, timer3_expired, NULL); // init timer, callback for expired, callback for stopped
 
-  return STATE_WAITING;
+	return STATE_WAITING;
 }
 
 static in3_state_t in3_waiting(void) {

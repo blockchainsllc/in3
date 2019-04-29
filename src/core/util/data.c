@@ -544,6 +544,8 @@ void json_get_str_value(char* js, char* prop, char* dst) {
         int8_to_char(t->data, t->len, dst + 2);        
         dst[t->len*2+2] = 0;
         break;
+      default: // EFmod added to remove warning
+        break;
     }
     free_json(ctx);
   }

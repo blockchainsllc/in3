@@ -16,7 +16,8 @@ bytes_t* b_new(char* data, int len) {
 }
 
 void ba_print(uint8_t* a, int l) {
-  size_t i;
+//  size_t i;
+  int i; // EFmod: changed to remove warning
   if (!a) return;
 
   printf("Bytes: ");

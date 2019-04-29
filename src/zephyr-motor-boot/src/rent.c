@@ -1,14 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <rtc.h>
-#include <client/client.h>
-#include "fsm.h"
-#include "util/debug.h"
-#include "util/stringbuilder.h"
-#include <crypto/secp256k1.h>
-#include <crypto/ecdsa.h>
-#include <util/data.h>
-#include <eth_nano.h>
+#include "project.h"
 
 msg_type_t msg_get_type(char *c)
 {
