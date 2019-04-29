@@ -296,6 +296,74 @@ uint64_t eth_gasPrice(in3_t* in3) {
   rpc_exec("eth_gasPrice", uint64_t, d_long(result));
 }
 
+static eth_log_t* parse_logs(d_token_t* result) {
+  eth_log_t *prev, *curr, *first;
+  prev = curr = first = NULL;
+  for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
+    eth_log_t* log         = malloc(sizeof(*log));
+    log->removed           = d_get_intk(it.token, K_REMOVED);
+    log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
+    log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
+    log->block_number      = d_get_longk(it.token, K_NUMBER);
+    copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
+    copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
+    log->data   = d_to_bytes(d_get(it.token, K_DATA));
+    log->topics = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
+    size_t i    = 0;
+    for (d_iterator_t t = d_iter(d_get(it.token, K_TOPICS)); t.left; d_iter_next(&t), i++) {
+      copy_fixed(log->topics[i], 32, d_to_bytes(t.token));
+      log->topic_count += 1;
+    }
+    log->next = NULL;
+    if (first == NULL)
+      first = log;
+    else if (prev != NULL)
+      prev->next = log;
+    prev = log;
+  }
+  return first;
+}
+
+eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
+  rpc_init;
+  bytes_t b;
+  sb_add_char(params, '{');
+  sb_add_chars(params, "\"fromBlock\":\"");
+  (fopt->from_block) ? sb_add_chars(params, fopt->from_block) : sb_add_chars(params, "latest");
+  sb_add_chars(params, "\",");
+  sb_add_chars(params, "\"toBlock\":\"");
+  (fopt->to_block) ? sb_add_chars(params, fopt->to_block) : sb_add_chars(params, "latest");
+  sb_add_char(params, '\"');
+
+  if (fopt->addresses) {
+    sb_add_chars(params, ",\"address\":[");
+    for (size_t i = 0; i < fopt->address_count; i++) {
+      if (i > 0)
+        sb_add_char(params, ',');
+      b = bytes(fopt->addresses[i], 32);
+      sb_add_bytes(params, "", &b, 1, false);
+    }
+    sb_add_chars(params, "],");
+  }
+  if (fopt->topics) {
+    sb_add_chars(params, ",\"topics\": [");
+    for (size_t i = 0; i < fopt->topic_count; i++) {
+      if (i > 0)
+        sb_add_char(params, ',');
+      if (fopt->topics[i] != NULL) {
+        b = bytes(*(fopt->topics[i]), 32);
+        sb_add_bytes(params, "", &b, 1, false);
+      } else {
+        sb_add_chars(params, "null");
+      }
+    }
+    sb_add_char(params, ']');
+  }
+  sb_add_char(params, '}');
+  printf("Params: %s\n", params->data);
+  rpc_exec("eth_getLogs", eth_log_t*, parse_logs(result));
+}
+
 static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   json_ctx_t* res = req_parse_result(req, d_to_bytes(result));
   req_free(req);

@@ -62,6 +62,19 @@ typedef struct eth_block {
   /* data */
 } eth_block_t;
 
+typedef struct eth_log {
+  bool            removed;
+  size_t          log_index;
+  size_t          transaction_index;
+  bytes32_t       block_hash;
+  uint64_t        block_number;
+  address_t       address;
+  bytes_t         data;
+  bytes32_t*      topics;
+  size_t          topic_count;
+  struct eth_log* next;
+} eth_log_t;
+
 uint256_t    eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block); /**< returns the storage value of a given address.*/
 bytes_t      eth_getCode(in3_t* in3, address_t account, uint64_t block);                     /**< returns the code of the account of given address. (Make sure you free the data-point of the result after use.) */
 uint256_t    eth_getBalance(in3_t* in3, address_t account, uint64_t block);                  /**< returns the balance of the account of given address. */
@@ -69,6 +82,7 @@ uint64_t     eth_blockNumber(in3_t* in3);                                       
 uint64_t     eth_gasPrice(in3_t* in3);                                                       /**< returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
 eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx);             /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
+eth_log_t*   eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt);                                /**< returns an array of logs. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...);                 /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 char*        eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);
 
