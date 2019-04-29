@@ -2,7 +2,12 @@
 #include <stdio.h>
 
 static void release_filter_opt(in3_filter_opt_t* fopt) {
-  if (fopt) _free(fopt->topics);
+  if (fopt) {
+    _free(fopt->addresses);
+    for (size_t i = 0; i < fopt->topic_count; i++)
+      _free(fopt->topics[i]);
+    _free(fopt->topics);
+  }
   _free(fopt);
 }
 
@@ -11,14 +16,30 @@ static void release_filter(in3_filter_t* f) {
   _free(f);
 }
 
-static bool add_topic_to_fopt(in3_filter_opt_t* fopt, uint32_t topic) {
-  uint32_t* t_ = _realloc(fopt->topics, sizeof(uint32_t) * (fopt->topic_count + 1),
-                          sizeof(uint32_t) * (fopt->topic_count));
+static bool add_address_to_fopt(in3_filter_opt_t* fopt, address_t address) {
+  address_t* a_ = _realloc(fopt->addresses, sizeof(*a_) * (fopt->address_count + 1),
+                           sizeof(*a_) * (fopt->address_count));
+  if (a_ == NULL) {
+    return false;
+  }
+  fopt->addresses = a_;
+  memcpy(fopt->addresses[fopt->address_count], &address, 32);
+  fopt->address_count += 1;
+  return true;
+}
+
+static bool add_topic_to_fopt(in3_filter_opt_t* fopt, bytes32_t* topic) {
+  bytes32_t** t_ = _realloc(fopt->topics, fopt->topic_count + 1, fopt->topic_count);
   if (t_ == NULL) {
     return false;
   }
-  fopt->topics                    = t_;
-  fopt->topics[fopt->topic_count] = topic;
+  fopt->topics = t_;
+  if (topic != NULL) {
+    fopt->topics[fopt->topic_count] = _malloc(sizeof(bytes32_t));
+    memcpy(fopt->topics[fopt->topic_count], topic, 32);
+  } else {
+    fopt->topics[fopt->topic_count] = NULL;
+  }
   fopt->topic_count += 1;
   return true;
 }
@@ -26,8 +47,9 @@ static bool add_topic_to_fopt(in3_filter_opt_t* fopt, uint32_t topic) {
 in3_filter_opt_t* new_filter_opt() {
   in3_filter_opt_t* fopt = _calloc(1, sizeof *fopt);
   if (fopt) {
-    fopt->add_topic = add_topic_to_fopt;
-    fopt->release   = release_filter_opt;
+    fopt->add_address = add_address_to_fopt;
+    fopt->add_topic   = add_topic_to_fopt;
+    fopt->release     = release_filter_opt;
   }
   return fopt;
 }
