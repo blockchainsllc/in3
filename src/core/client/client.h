@@ -193,12 +193,14 @@ typedef struct {
 typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
 
 typedef struct in3_filter_opt_t_ {
-  uint64_t  from_block;
-  uint64_t  to_block;
-  address_t address;
-  uint32_t* topics;
-  size_t    topic_count;
-  bool (*add_topic)(struct in3_filter_opt_t_* fopt, uint32_t topic);
+  char*       from_block;
+  char*       to_block;
+  address_t*  addresses;
+  size_t      address_count;
+  bytes32_t** topics;
+  size_t      topic_count;
+  bool (*add_address)(struct in3_filter_opt_t_* fopt, address_t address);
+  bool (*add_topic)(struct in3_filter_opt_t_* fopt, bytes32_t* topic);
   void (*release)(struct in3_filter_opt_t_* fopt);
 } in3_filter_opt_t;
 
