@@ -1,4 +1,4 @@
-#include "eth_api.h"
+#include "eth_filter.h"
 #include <stdio.h>
 
 static void release_filter_opt(in3_filter_opt_t* fopt) {
@@ -117,4 +117,31 @@ size_t eth_newPendingTransactionFilter(in3_t* in3, in3_filter_opt_t* options) {
 
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
   return remove_filter(in3, id);
+}
+
+int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
+  if (id == 0 || id > in3->filters->count)
+    return -1;
+
+  uint64_t      blkno = eth_blockNumber(in3);
+  in3_filter_t* f     = in3->filters->array[id - 1];
+  switch (f->type) {
+    case FILTER_EVENT:
+      *logs = eth_getLogs(in3, f->options);
+      return 0;
+    case FILTER_BLOCK:
+      if (blkno > f->last_block) {
+        block_hashes = malloc(sizeof(bytes32_t*) * (blkno - f->last_block));
+        for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
+          eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
+          memcpy(block_hashes[j], blk->hash, 32);
+        }
+        return (blkno - f->last_block);
+      } else {
+        *block_hashes = NULL;
+        return 0;
+        default:
+          return -2;
+      }
+  }
 }
