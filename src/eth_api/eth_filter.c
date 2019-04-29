@@ -12,7 +12,8 @@ static void release_filter(in3_filter_t* f) {
 }
 
 static bool add_topic_to_fopt(in3_filter_opt_t* fopt, uint32_t topic) {
-  uint32_t* t_ = _realloc(fopt->topics, sizeof(uint32_t) * (fopt->topic_count + 1), sizeof(uint32_t) * (fopt->topic_count));
+  uint32_t* t_ = _realloc(fopt->topics, sizeof(uint32_t) * (fopt->topic_count + 1),
+                          sizeof(uint32_t) * (fopt->topic_count));
   if (t_ == NULL) {
     return false;
   }
@@ -47,15 +48,24 @@ static size_t add_filter(in3_t* in3, in3_filter_type_t type, in3_filter_opt_t* o
     return 0;
   }
 
-  in3_filter_handler_t* fh   = in3->filters;
-  in3_filter_t**        arr_ = _realloc(fh->array, sizeof(in3_filter_t) * (fh->count + 1), sizeof in3_filter_t * (fh->count));
+  in3_filter_t* f = new_filter(type);
+  f->options      = options;
+  f->last_block   = eth_blockNumber(in3);
+
+  in3_filter_handler_t* fh = in3->filters;
+  for (size_t i = 0; i < fh->count; i++) {
+    if (fh->array[i] == NULL) {
+      fh->array[i] = f;
+      return i + 1;
+    }
+  }
+
+  in3_filter_t** arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1),
+                                 sizeof(in3_filter_t*) * (fh->count));
   if (arr_ == NULL) {
     return 0;
   }
   fh->array            = arr_;
-  in3_filter_t* f      = new_filter(type);
-  f->options           = options;
-  f->last_block        = eth_blockNumber(in3);
   fh->array[fh->count] = f;
   fh->count += 1;
   return fh->count;
