@@ -2,7 +2,5 @@ Testing
 .in3
 build
 _build
-.vscode/ipch/*
-src/.vscode/ipch/*
-src/zephyr-motor-boot/src/.vscode/ipch/
+**/.vscode/ipch/
 
