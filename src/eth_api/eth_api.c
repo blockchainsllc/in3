@@ -300,7 +300,7 @@ static eth_log_t* parse_logs(d_token_t* result) {
   eth_log_t *prev, *curr, *first;
   prev = curr = first = NULL;
   for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
-    eth_log_t* log         = malloc(sizeof(*log));
+    eth_log_t* log         = calloc(1, sizeof(*log));
     log->removed           = d_get_intk(it.token, K_REMOVED);
     log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
     log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
