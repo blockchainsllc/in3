@@ -52,6 +52,7 @@ void readData( char* url, char* payload, in3_response_t* r  ) {
       sb_add_chars(&r->error, (char*) curl_easy_strerror(res));
     }
  
+    curl_slist_free_all(headers);
     /* always cleanup */ 
     curl_easy_cleanup(curl);
   }
