@@ -342,7 +342,7 @@ eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
     for (size_t i = 0; i < fopt->address_count; i++) {
       if (i > 0)
         sb_add_char(params, ',');
-      b = bytes(fopt->addresses[i], 32);
+      b = bytes(fopt->addresses[i], 20);
       sb_add_bytes(params, "", &b, 1, false);
     }
     sb_add_chars(params, "],");

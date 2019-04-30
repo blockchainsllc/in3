@@ -23,7 +23,7 @@ static bool add_address_to_fopt(in3_filter_opt_t* fopt, address_t address) {
     return false;
   }
   fopt->addresses = a_;
-  memcpy(fopt->addresses[fopt->address_count], &address, 32);
+  memcpy(fopt->addresses[fopt->address_count], address, 20);
   fopt->address_count += 1;
   return true;
 }
