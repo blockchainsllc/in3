@@ -345,7 +345,7 @@ eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
       b = bytes(fopt->addresses[i], 20);
       sb_add_bytes(params, "", &b, 1, false);
     }
-    sb_add_chars(params, "],");
+    sb_add_chars(params, "]");
   }
   if (fopt->topics) {
     sb_add_chars(params, ",\"topics\": [");
