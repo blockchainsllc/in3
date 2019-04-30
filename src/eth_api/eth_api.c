@@ -304,7 +304,7 @@ static eth_log_t* parse_logs(d_token_t* result) {
     log->removed           = d_get_intk(it.token, K_REMOVED);
     log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
     log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
-    log->block_number      = d_get_longk(it.token, K_NUMBER);
+    log->block_number      = d_get_longk(it.token, K_BLOCK_NUMBER);
     copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
     copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
     log->data   = d_to_bytes(d_get(it.token, K_DATA));
