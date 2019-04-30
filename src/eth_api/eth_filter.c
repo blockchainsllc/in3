@@ -29,14 +29,14 @@ static bool add_address_to_fopt(in3_filter_opt_t* fopt, address_t address) {
 }
 
 static bool add_topic_to_fopt(in3_filter_opt_t* fopt, bytes32_t* topic) {
-  bytes32_t** t_ = _realloc(fopt->topics, fopt->topic_count + 1, fopt->topic_count);
+  bytes32_t** t_ = _realloc(fopt->topics, sizeof(*t_) * (fopt->topic_count + 1), sizeof(*t_) * fopt->topic_count);
   if (t_ == NULL) {
     return false;
   }
   fopt->topics = t_;
   if (topic != NULL) {
     fopt->topics[fopt->topic_count] = _malloc(sizeof(bytes32_t));
-    memcpy(fopt->topics[fopt->topic_count], topic, 32);
+    memcpy(fopt->topics[fopt->topic_count], *topic, 32);
   } else {
     fopt->topics[fopt->topic_count] = NULL;
   }
