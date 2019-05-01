@@ -136,7 +136,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
     // add in3
     in3_request_config_t* rc = c->requests_configs + i;
-    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%lx\"", rc->chainId));
+    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%lx\"", (long unsigned int)rc->chainId));
 // EFmod tried to use %j to print long long int (64bits) without compile warning (but doesn't work!)
 //    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%jx\"", rc->chainId));
     if (rc->clientSignature)

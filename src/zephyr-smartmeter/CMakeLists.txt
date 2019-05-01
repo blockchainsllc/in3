@@ -37,6 +37,7 @@ target_sources(app PRIVATE
 	src/main.c
 	src/fsm.c
 	src/rent.c
+  src/meterReadings.c
 )
 
 # include core in the headers
