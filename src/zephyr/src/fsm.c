@@ -4,63 +4,59 @@
 #include <string.h>
 
 #include "fsm.h"
-#include "rent.h"
 #include "util/utils.h"
-#include <eth_nano.h>
+#include <eth_full.h>
+#include <usn_api.h>
 
 #include "util/debug.h"
 
 // Global Client
-struct in3_client*  client;
-struct k_timer *timer, *timer1, *timer2, *timer3; // timer structures
-int                 undo;
+struct in3_client* client;
+struct k_timer *   timer, *timer1, *timer2, *timer3; // timer structures
+int                undo;
 
 // private
 static void timer_expired(struct k_timer* work) {
-  undo = 1;
   dbg_log("<--- timer expired\n");
+  undo = 1;
   k_sem_give(&client->sem);
 }
 
-static void timer1_expired(struct k_timer *work) // one shot timer (monitor led)
+static void timer1_expired(struct k_timer* work) // one shot timer (monitor led)
 {
-	ledpower_set(IO_ON); // power led on
+  dbg_log("<--- timer1 expired\n");
+  ledpower_set(IO_ON); // power led on
 }
 
-static void timer2_expired(struct k_timer *work) // one shot timer (led stripe)
+static void timer2_expired(struct k_timer* work) // one shot timer (led stripe)
 {
-	ledstrip_set(IO_OFF); // ledstrip off
+  dbg_log("<--- timer2 expired\n");
+  ledstrip_set(IO_OFF); // ledstrip off
 }
 
-static void timer3_expired(struct k_timer *work) // one shot timer (lock-coil)
+static void timer3_expired(struct k_timer* work) // one shot timer (lock-coil)
 {
-	lock_set(IO_OFF); // lock off
+  dbg_log("<--- timer3 expired\n");
+  lock_set(IO_OFF); // lock off
 }
 
-static void wait_for_event(void) {
-  if (!client)
-    return;
-
-//  k_sem_take(&client->sem, 600000); // EFnote: 600000 mS = 600 sec = 10 min
-  k_sem_take(&client->sem, K_SECONDS(60)); // 60 sec = 1 min
-}
-
-void do_action(action_type_t action)
-{
-	ledpower_set(IO_OFF); // power led off
-	k_timer_start(timer1, 250, 0); // start timer 1 initial duration 250mS, period = 0
-	if (action == LOCK)
-		{
-		dbg_log("<--- action: LOCK\n");
-		}
-	else
-		{
-		dbg_log("<--- action: UNLOCK\n");
-		ledstrip_set(IO_ON); // led on
-		k_timer_start(timer2, 10000, 0); // start timer 2 initial duration 10*1000mS, period = 0
-		lock_set(IO_ON); // lock on
-		k_timer_start(timer3, 1500, 0); // start timer 3 initial duration 1500mS, period = 0
-		}
+void do_action(action_type_t action) {
+  dbg_log("<--- action: led power off\n");
+  ledpower_set(IO_OFF);          // power led off
+  dbg_log("<--- action: start timer1\n");
+  k_timer_start(timer1, 250, 0); // start timer 1 initial duration 250mS, period = 0
+  if (action == LOCK) {
+    dbg_log("<--- action: LOCK; led stripe on 3 sec\n");
+    ledstrip_set(IO_ON);             // led on
+    k_timer_start(timer2, 3000, 0); // start timer 2 initial duration 3*1000mS, period = 0
+  } else {
+    dbg_log("<--- action: UNLOCK; led stripe on 10 sec\n");
+    ledstrip_set(IO_ON);             // led on
+    k_timer_start(timer2, 10000, 0); // start timer 2 initial duration 10*1000mS, period = 0
+    dbg_log("<--- action: lock on 1.5 sec\n");
+    lock_set(IO_ON);                 // lock on
+    k_timer_start(timer3, 1500, 0);  // start timer 3 initial duration 1500mS, period = 0
+  }
 }
 
 // PUBLIC API
@@ -88,41 +84,103 @@ typedef enum {
 
 typedef in3_state_t in3_state_func_t(void);
 
+// wait_for_message - called by send_ble
+static int wait_for_message(struct in3_client* c) {
+  int i = 100;
+
+  dbg_log("<--- wait_for_message\n");
+  while (c->msg->ready == 0 && i--)
+    k_sleep(100);
+
+  k_mutex_lock(&c->mutex, 30000);
+  k_mutex_unlock(&c->mutex);
+
+  if (c->msg->ready) {
+    dbg_log("<--- msg received!\n");
+    return 0;
+  }
+  dbg_log("<--- timeout error!\n");
+  return i; // -1 if timeout elapsed
+}
+
+int send_ble(char** urls, int urls_len, char* pl, in3_response_t* result) {
+  char payload[strlen(pl) + 100];
+
+  sprintf(payload, "{\"msgType\":\"in3Request\",\"msgId\":1,\"url\":\"%s\",\"method\":\"POST\",\"data\":%s}", *urls, pl);
+
+  clear_message(client);
+  bluetooth_write_req(payload);
+  int err = wait_for_message(client);
+  bluetooth_clear_req();
+  dbg_log("<--- buffer cleared\n");
+
+  if (err < 0) {
+    sb_add_chars(&result->error, "Error receiving this response");
+    dbg_log("<--- string builder added response\n");
+    return err;
+  }
+
+  if (!client->msg->ready)
+    return T_ERROR;
+
+  // get the response-data and add it to the rersult
+  char* val = json_get_json_value(client->msg->data, "responses");
+  sb_add_chars(&result->result, val);
+  _free(val);
+  return 0;
+}
+
 static in3_state_t in3_init(void) {
-	client = k_calloc(1, sizeof(struct in3_client));
-	timer = k_calloc(1, sizeof(struct k_timer));
-	timer1 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
-	timer2 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
-	timer3 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
+  client = k_calloc(1, sizeof(struct in3_client));
+  timer  = k_calloc(1, sizeof(struct k_timer));
+  timer1 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
+  timer2 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
+  timer3 = k_calloc(1, sizeof(struct k_timer)); // allocate 1 array element of K_timer size
 
-	client->in3               = in3_new();
-	client->in3->chainId      = 0x044d;
-	client->in3->requestCount = 1;
-	client->in3->max_attempts=1;
+  // configure the device
+  client->conf.chain_id = 0x044d;
+  client->conf.now      = 0;
+  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, client->conf.contract, 20);
 
-	client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
-	client->msg = k_calloc(1, sizeof(in3_msg_t));
+  // register one device
+//  usn_register_device(&client->conf, "in3-1@tobalaba");
+  usn_register_device(&client->conf, "in3-3@tobalaba");
 
-	in3_register_eth_nano();
-	bluetooth_setup(client);
- 	gpio_setup();
+  // configure the incubed client
+  in3_register_eth_full();
+  client->conf.c               = in3_new();
+  client->conf.c->chainId      = client->conf.chain_id;
+  client->conf.c->requestCount = 1;
+  client->conf.c->max_attempts = 1;
+  client->conf.c->transport    = send_ble;
+  client->conf.c->autoUpdateList = false;
+  client->conf.c->chains[1].needsUpdate=false;
+  
 
-	k_sem_init(&client->sem, 0, 1);
-	k_mutex_init(&client->mutex);
-	k_timer_init(timer, timer_expired, NULL);
-	k_timer_init(timer1, timer1_expired, NULL); // init timer, callback for expired, callback for stopped
-	k_timer_init(timer2, timer2_expired, NULL); // init timer, callback for expired, callback for stopped
-	k_timer_init(timer3, timer3_expired, NULL); // init timer, callback for expired, callback for stopped
+  // prepare the message-buffer
+  client->msg = k_calloc(1, sizeof(in3_msg_t));
 
-	return STATE_WAITING;
+  bluetooth_setup(client);
+
+  k_sem_init(&client->sem, 0, 1);
+  k_mutex_init(&client->mutex);
+  k_timer_init(timer, timer_expired, NULL);
+  k_timer_init(timer1, timer1_expired, NULL); // init timer, callback for expired, callback for stopped
+  k_timer_init(timer2, timer2_expired, NULL); // init timer, callback for expired, callback for stopped
+  k_timer_init(timer3, timer3_expired, NULL); // init timer, callback for expired, callback for stopped
+
+  return STATE_WAITING;
 }
 
 static in3_state_t in3_waiting(void) {
   k_mutex_lock(&client->mutex, 10000);
+	dbg_log("<--- check if there is a ready message...\n");
   if (client->msg->ready) {
-  	dbg_log("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
+    dbg_log("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
     client->msg->start = k_uptime_get_32();
-    if (msg_get_type(client->msg->data) == T_ACTION) {
+    // only if it contains msgType it is worth verifying
+    if (strstr(client->msg->data, "msgType")) {
+    	dbg_log("<--- yes, there is a message with msgType!\n");
       k_mutex_unlock(&client->mutex);
       return STATE_ACTION;
     }
@@ -132,42 +190,46 @@ static in3_state_t in3_waiting(void) {
   }
 
   k_mutex_unlock(&client->mutex);
-  wait_for_event();
+  if(client) { // if client is set 
+	  dbg_log("<--- now we check for semaphore (60 seconds)...\n");
+    //  k_sem_take(&client->sem, 600000); // EFnote: 600000 mS = 600 sec = 10 min
+    k_sem_take(&client->sem, K_SECONDS(60)); // 60 sec = 1 min
+  }
 
+	dbg_log("<--- check if UNDO is set...\n");
   if (undo) {
+  	dbg_log("<--- oops, it is set! do autonomous LOCK\n");
     do_action(LOCK);
     undo = 0;
   }
+	dbg_log("<--- ok\n");
 
   return STATE_WAITING;
 }
 
 static in3_state_t in3_action(void) {
-  int           err;
-  action_type_t action = msg_get_action(client->msg->data);
+  int  err;
+  char payload[100];
 
-  if (action != LOCK && action != UNLOCK)
-    return STATE_RESET;
+  // TODO if we can, we should try to set the real timestamp in client->conf->now, if now=0, it will take it from the message, which is not relieable.
+  usn_msg_result_t result = usn_verify_message(&client->conf, client->msg->data);
 
-  // reset rental
-  if (client->rent) {
-    k_free(client->rent->controller);
-    k_free(client->rent);
+  // send response
+  if (!result.accepted)
+    sprintf(payload, "{\"msgId\":%d,\"msgType\":\"error\",\"error\":\"%s\"}", result.id, result.error_msg);
+  else
+    sprintf(payload, "{\"msgId\":%d,\"msgType\":\"action\",\"result\":\"success\"}", result.id);
+  bluetooth_write_req(payload);
+
+  // execute
+  if (result.accepted && result.msg_type == USN_ACTION) {
+    if (strcmp(result.action, "lock")==0)
+      do_action(LOCK);
+    else if (strcmp(result.action, "unlock")==0) {
+      do_action(UNLOCK);
+      k_timer_start(timer, K_SECONDS(5), 0);
+    }
   }
-
-	client->rent = k_calloc(1, sizeof(in3_rental_t));
-	client->rent->when = json_get_int_value(client->msg->data, "timestamp");
-
-  err = verify_rent(client);
-  if (err) {
-    dbg_log("<--- Invalid rental\n");
-    return STATE_RESET;
-  }
-
-  do_action(action);
-
-  if (action == UNLOCK)
-    k_timer_start(timer, K_SECONDS(5), 0);
 
   return STATE_RESET;
 }
@@ -177,6 +239,7 @@ static in3_state_t in3_reset(void) {
 
   dbg_log("<--- Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
   clear_message(client);
+  dbg_log("<--- client message cleared\n");
 
   return STATE_WAITING;
 }
@@ -186,8 +249,7 @@ in3_state_func_t* const state_table[STATE_MAX] = {
     in3_waiting,
     in3_action,
     in3_reset,
-    NULL
-  };
+    NULL};
 
 static in3_state_t run_state(in3_state_t state) {
   return state_table[state]();
@@ -197,8 +259,7 @@ int in3_client_start(void) {
   in3_state_t state = STATE_INIT;
 
   while (1) {
-    switch(state)
-      {
+    switch (state) {
       case STATE_INIT:
         dbg_log("<--- INIT\n");
         break;
@@ -215,7 +276,7 @@ int in3_client_start(void) {
         dbg_log("<--- STATE MACHINE ERROR!\n");
         state = STATE_RESET; // force state to reset
         break;
-      }
+    }
     state = run_state(state);
   }
 }

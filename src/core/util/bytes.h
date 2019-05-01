@@ -9,8 +9,12 @@
 #ifndef BYTES_H
 #define BYTES_H
 
+typedef uint8_t      address_t[20]; /**< pointer to a 20byte address */
+typedef uint8_t      bytes32_t[32]; /**< pointer to a 32byte word */
+typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byte but usually a uint) */
+
 /** a byte array */
-typedef struct {
+typedef struct bytes {
   uint32_t len;  /**< the length of the array ion bytes */
   uint8_t* data; /**< the byte-data  */
 } bytes_t;
@@ -24,14 +28,17 @@ typedef struct {
 /** allocates a new byte array with 0 filled */
 bytes_t* b_new(char* data, int len);
 
-/** prints a the bytes as hey to stdout */
+/** prints a the bytes as hex to stdout */
 void b_print(bytes_t* a);
 
-/** prints a the bytes as hey to stdout */
-void ba_print(uint8_t* a, int l);
+/** prints a the bytes as hex to stdout */
+void ba_print(uint8_t* a, size_t l);
 
 /** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
 int b_cmp(bytes_t* a, bytes_t* b);
+
+/** compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+int bytes_cmp(bytes_t a, bytes_t b);
 
 /** frees the data */
 void b_free(bytes_t* a);
@@ -89,11 +96,19 @@ void bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, 
 /** frees the builder and moves the content in a newly created bytes struct (which needs to be freed later). */
 bytes_t* bb_move_to_bytes(bytes_builder_t* bb);
 
-// [len][data][len] [len][data][len] [len][data][len]
-//                  ^
-// [p1]
-//
 void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
-void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
+
+static inline bytes_t bytes(uint8_t* a, uint32_t len) {
+  return (bytes_t){.data = a, .len = len};
+}
+
+bytes_t cloned_bytes(bytes_t data);
+
+static inline void b_optimize_len(bytes_t* b) {
+  while (b->len > 1 && *b->data == 0) {
+    b->data++;
+    b->len--;
+  }
+}
 
 #endif

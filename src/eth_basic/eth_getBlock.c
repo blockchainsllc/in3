@@ -75,7 +75,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
       if ((t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != bnumber)
         res = vc_err(vc, "Wrong Blocknumber in tx");
 
-      if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != i)
+      if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != (uint32_t) i)
         res = vc_err(vc, "Wrong Transaction index in tx");
 
       if (h && txh) {
@@ -89,7 +89,9 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
       if (h) b_free(h);
     }
 
-    if (!b_cmp(&trie->root, d_get_bytesk(vc->result, K_TRANSACTIONS_ROOT)))
+    bytes_t t_root = d_to_bytes(d_get(vc->result, K_TRANSACTIONS_ROOT));
+
+    if (t_root.len != 32 || memcmp(t_root.data, trie->root, 32))
       res = vc_err(vc, "Wrong Transaction root");
 
     trie_free(trie);

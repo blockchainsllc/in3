@@ -7,7 +7,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
+#include "../util/debug.h"
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
@@ -24,17 +26,17 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
     }
 
     int        i;
-    d_token_t* t;
+    d_token_t* t = NULL;
 
-    if (d_type(c->request_context->items) == T_OBJECT) {
+    if (d_type(c->request_context->result) == T_OBJECT) {
       // it is a single result
       c->requests    = _malloc(sizeof(d_type_t*));
-      c->requests[0] = c->request_context->items;
+      c->requests[0] = c->request_context->result;
       c->len         = 1;
-    } else if (d_type(c->request_context->items) == T_ARRAY) {
-      c->len      = d_len(c->request_context->items);
+    } else if (d_type(c->request_context->result) == T_ARRAY) {
+      c->len      = d_len(c->request_context->result);
       c->requests = _malloc(sizeof(d_type_t*) * c->len);
-      for (i = 0, t = c->request_context->items + 1; i < c->len; i++, t += d_token_size(t))
+      for (i = 0, t = c->request_context->result + 1; i < c->len; i++, t = d_next(t))
         c->requests[i] = t;
     } else
       ctx_set_error(c, "The Request is not a valid structure!", 0);
@@ -48,22 +50,24 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
 int ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   int        i;
-  d_token_t* t;
+  d_token_t* t = NULL;
 
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
-  if (!ctx->response_context)
+  if (!ctx->response_context) {
+    // printf("\nresponse: %s\n", response_data);
     return ctx_set_error(ctx, "Error parsing the JSON-respomse!", IN3_ERR_INVALID_JSON);
+  }
 
-  if (d_type(ctx->response_context->items) == T_OBJECT) {
+  if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
     ctx->responses    = _malloc(sizeof(d_token_t*));
-    ctx->responses[0] = ctx->response_context->items;
+    ctx->responses[0] = ctx->response_context->result;
     if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_ERR_INVALID_JSON);
-  } else if (d_type(ctx->response_context->items) == T_ARRAY) {
-    if (d_len(ctx->response_context->items) != ctx->len)
+  } else if (d_type(ctx->response_context->result) == T_ARRAY) {
+    if (d_len(ctx->response_context->result) != ctx->len)
       return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_ERR_INVALID_JSON);
     ctx->responses = _malloc(sizeof(d_type_t*) * ctx->len);
-    for (i = 0, t = ctx->response_context->items + 1; i < ctx->len; i++, t += d_token_size(t))
+    for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
   } else
     return ctx_set_error(ctx, "The response must be a Object or Array", IN3_ERR_INVALID_JSON);
@@ -101,7 +105,6 @@ void free_ctx(in3_ctx_t* ctx) {
 static unsigned long counter = 1;
 
 int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
-
   int        i;
   d_token_t *r, *t;
   char       temp[100];
@@ -136,9 +139,8 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
     // add in3
     in3_request_config_t* rc = c->requests_configs + i;
-    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%lx\"", (long unsigned int)rc->chainId));
-// EFmod tried to use %j to print long long int (64bits) without compile warning (but doesn't work!)
-//    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%jx\"", rc->chainId));
+    //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
+    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int)rc->chainId));
     if (rc->clientSignature)
       sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
     if (rc->finality)
@@ -153,6 +155,8 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
       sb_add_chars(sb, ",\"includeCode\":true");
     if (rc->useFullProof)
       sb_add_chars(sb, ",\"useFullProof\":true");
+    if (rc->useBinary)
+      sb_add_chars(sb, ",\"useBinary\":true");
     if (rc->verification == VERIFICATION_PROOF)
       sb_add_chars(sb, ",\"verification\":\"proof\"");
     else if (rc->verification == VERIFICATION_PROOF_WITH_SIGNATURE)
@@ -168,7 +172,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
 int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
   int   l = strlen(msg);
-  char* dst;
+  char* dst = NULL;
   if (c->error) {
     dst = _malloc(l + 2 + strlen(c->error));
     strcpy(dst, msg);
@@ -192,7 +196,7 @@ int ctx_nodes_len(node_weight_t* c) {
   return all;
 }
 void free_ctx_nodes(node_weight_t* c) {
-  node_weight_t* p;
+  node_weight_t* p = NULL;
   while (c) {
     p = c;
     c = c->next;

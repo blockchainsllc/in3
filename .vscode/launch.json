@@ -49,7 +49,104 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "eth_call"
+                "-t",
+                "1",
+                "../test/testdata/requests/eth_getLogs.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "cmd",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-pk",
+                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
+                "-c",
+                "kovan",
+                "eth_sendTransaction",
+                "{\"from\":\"0x5338d77B5905CdEEa7c55a1F3A88d03559c36D73\",\"to\":\"0xb5049E77a70c4ea06355E3bcbfcF8fDADa912481\",\"value\": \"0x10000\"}"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "call",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-to",
+                "0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
+                "-c",
+                "kovan",
+                "call",
+                "servers(uint):(string,address,uint,uint,uint,address)",
+                "0"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "send",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-to",
+                "0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
+                "-c",
+                "kovan",
+                "-pk",
+                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
+                "send",
+                "registerServer(string,uint256)",
+                "https://in3.slock.it/kovan1",
+                "0xFF",
+                "-wait"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "vmrunner",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/vmrunner",
+            "args": [
+                "-t",
+                "1",
+                "-d",
+                "../test/testdata/evm/GeneralStateTests/stRandom2/randomStatetest572.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "vmtest",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/vmrunner",
+            "args": [
+                "-d",
+                "../test/testdata/evm/vmTests/vmPushDupSwapTest/push32AndSuicide.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

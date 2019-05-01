@@ -34,4 +34,9 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
  */
 void in3_register_eth_basic();
 
+/**
+ *  verify logs
+ */
+int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
+
 #endif // in3_eth_basic_h__

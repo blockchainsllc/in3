@@ -34,7 +34,7 @@ int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
  * \return the resulting bytes represent a 4bit-number each and are terminated with a 0xFF. 
  * 
  */
-uint8_t* trie_path_to_nibbles(bytes_t* path, int use_prefix);
+uint8_t* trie_path_to_nibbles(bytes_t path, int use_prefix);
 
 /**
  * helper function to find the number of nibbles matching both paths.

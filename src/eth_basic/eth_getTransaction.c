@@ -17,14 +17,14 @@
 static uint8_t* secp256k1n_2 = (uint8_t*) "\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x5D\x57\x6E\x73\x57\xA4\x50\x1D\xDF\xE9\x2F\x46\x68\x1B\x20\xA0";
 
 int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
-  d_token_t* t;
+  d_token_t* t = NULL;
   uint8_t    hash[32], pubkey[65], sdata[64];
   bytes_t    pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
 
   bytes_t* r        = d_get_bytesk(tx, K_R);
   bytes_t* s        = d_get_bytesk(tx, K_S);
-  int      v        = d_get_intk(tx, K_V);
-  int      chain_id = v > 35 ? (v - 35) / 2 : 0;
+  uint32_t v        = d_get_intk(tx, K_V);
+  uint32_t chain_id = v > 35 ? (v - 35) / 2 : 0;
 
   // check transaction hash
   if (sha3_to(raw ? raw : d_get_bytesk(tx, K_RAW), &hash) == 0 && memcmp(hash, d_get_bytesk(tx, K_HASH)->data, 32))
@@ -35,7 +35,7 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     return vc_err(vc, "invalid raw-value");
 
   // check standardV
-  if ((t = d_get(tx, K_STANDARD_V)) && raw && (chain_id ? v - chain_id * 2 - 8 : v) - 27 != d_int(t))
+  if ((t = d_get(tx, K_STANDARD_V)) && raw && (uint32_t)((chain_id ? (v - chain_id * 2 - 8) : v) - 27) != d_int(t))
     return vc_err(vc, "standardV is invalid");
 
   // check chain id
@@ -47,12 +47,13 @@ int eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     return vc_err(vc, "invalid v-value of the signature");
 
   // r & s have valid length?
-  if (r == NULL || s == NULL || r->len + s->len != 64)
+  if (r == NULL || s == NULL || r->len + s->len > 64)
     return vc_err(vc, "invalid r/s-value of the signature");
 
   // combine r+s
-  memcpy(sdata, r->data, r->len);
-  memcpy(sdata + r->len, s->data, s->len);
+  memset(sdata, 0, 64);
+  memcpy(sdata + 32 - r->len, r->data, r->len);
+  memcpy(sdata + 64 - s->len, s->data, s->len);
 
   // calculate the  messagehash
   bytes_builder_t* bb = bb_new();

@@ -47,6 +47,25 @@ void* t_calloc(size_t n, size_t size, char* file, const char* func, int line) {
   return ptr;
 }
 
+int mem_stack_size() {
+  int      n = 0;
+  mem_p_t* t = mem_tracker;
+  while (t) {
+    n++;
+    t = t->next;
+  }
+  return n;
+}
+
+void memstack() {
+  printf("\n M:");
+  mem_p_t* t = mem_tracker;
+  while (t) {
+    printf("[%p %zu ] ", t->ptr, t->size);
+    t = t->next;
+  }
+}
+
 void t_free(void* ptr, char* file, const char* func, int line) {
   if (ptr == NULL)
     printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
@@ -126,7 +145,7 @@ void mem_reset(int cnt) {
 #ifdef __ZEPHYR__
 
 void* k_realloc(void* ptr, size_t size, size_t oldsize) {
-  void* new;
+  void* new = NULL;
 
   new = k_malloc(size);
   if (!new)

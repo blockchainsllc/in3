@@ -1,6 +1,8 @@
-Testing
+Testing*
 .in3
-build
+build*/
 _build
 **/.vscode/ipch/
 **/.DS_Store
+/.metadata/
+/RemoteSystemsTempFiles/

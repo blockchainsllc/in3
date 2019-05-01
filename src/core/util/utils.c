@@ -49,6 +49,13 @@ uint8_t strtohex(char c) {
 }
 
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {
+  if (len == -1) {
+    len = strlen(buf);
+    if (*buf == '0' && buf[1] == 'x') {
+      buf += 2;
+      len -= 2;
+    }
+  }
   int i       = len - 1;
   int out_len = (len & 1) ? (len + 1) / 2 : len / 2;
   int j       = out_len - 1;
@@ -76,7 +83,7 @@ bytes_t* hex2byte_new_bytes(char* buf, int len) {
   return bytes;
 }
 
-void int8_to_char(uint8_t* buffer, int len, char* out) {
+int bytes_to_hex(uint8_t* buffer, int len, char* out) {
   const char hex[] = "0123456789abcdef";
   int        i = 0, j = 0;
   while (j < len) {
@@ -85,6 +92,7 @@ void int8_to_char(uint8_t* buffer, int len, char* out) {
     j++;
   }
   out[i] = '\0';
+  return len * 2;
 }
 
 int sha3_to(bytes_t* data, void* dst) {
@@ -97,7 +105,7 @@ int sha3_to(bytes_t* data, void* dst) {
 }
 
 bytes_t* sha3(bytes_t* data) {
-  bytes_t*        out;
+  bytes_t*        out = NULL;
   struct SHA3_CTX ctx;
 
   out = _calloc(1, sizeof(bytes_t));
@@ -121,7 +129,7 @@ uint64_t bytes_to_long(uint8_t* data, int len) {
   }
   return res;
 }
-long c_to_long(char* a, int l) {
+uint64_t c_to_long(char* a, int l) {
   if (a[0] == '0' && a[1] == 'x') {
     long val = 0;
     for (int i = l - 1; i > 1; i--)
@@ -136,7 +144,7 @@ long c_to_long(char* a, int l) {
   return -1;
 }
 
-char* _strdup(char* src, int len) {
+char* _strdupn(char* src, int len) {
   if (len < 0) len = strlen(src);
   char* dst = _malloc(len + 1);
   strncpy(dst, src, len);

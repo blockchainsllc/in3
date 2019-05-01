@@ -54,6 +54,7 @@ typedef struct {
   uint64_t           chainId;             /**< the chain to be used. this is holding the integer-value of the hexstring. */
   uint8_t            includeCode;         /**< if true the code needed will always be devlivered.  */
   uint8_t            useFullProof;        /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
+  uint8_t            useBinary;           /**< this flaqg is set, the client should use binary-format */
   bytes_t*           verifiedHashes;      /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
   uint16_t           verifiedHashesCount; /**< number of verified blockhashes*/
   uint16_t           latestBlock;         /**< the last blocknumber the nodelistz changed */
@@ -128,11 +129,11 @@ typedef struct {
   bytes_t* contract;
 
   /* optional chain specification*/
-  json_parsed_t* spec;
+  json_ctx_t* spec;
 
 } in3_chain_t;
 
-/* storage handler */
+/** storage handler */
 typedef bytes_t* (*in3_storage_get_item)(void* cptr, char*);
 typedef void (*in3_storage_set_item)(void* cptr, char*, bytes_t*);
 
@@ -147,6 +148,36 @@ typedef struct {
   void* cptr;
 
 } in3_storage_handler_t;
+
+#define IN3_SIGN_ERR_REJECTED -1
+#define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2
+#define IN3_SIGN_ERR_INVALID_MESSAGE -3
+#define IN3_SIGN_ERR_GENERAL_ERROR -4
+#define IN3_DEBUG 65536
+/** type of the requested signature */
+typedef enum {
+  SIGN_EC_RAW  = 0, /**< sign the data directly */
+  SIGN_EC_HASH = 1, /**< hash and sign the data */
+} d_signature_type_t;
+
+/** 
+ * signing function.
+ * 
+ * signs the given data and write the signature to dst.
+ * the return value must be the number of bytes written to dst.
+ * In case of an error a negativ value must be returned. It should be one of the IN3_SIGN_ERR... values.
+ * 
+*/
+typedef int (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+
+typedef struct {
+  /* function pointer returning a stored value for the given key.*/
+  in3_sign sign;
+
+  /* custom object whill will be passed to functions */
+  void* wallet;
+
+} in3_signer_t;
 
 /** response-object. 
  * 
@@ -210,17 +241,29 @@ typedef struct {
   /** a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
   in3_storage_handler_t* cacheStorage;
 
+  /** signer-struct managing a wallet */
+  in3_signer_t* signer;
+
   /** the transporthandler sending requests */
   in3_transport_send transport;
 
   /** includes the code when sending eth_call-requests */
   uint8_t includeCode;
 
+  /** if true the client will use binary format*/
+  uint8_t use_binary;
+
+  /** if true the client will try to use http instead of https*/
+  uint8_t use_http;
+
   /** chain spec and nodeList definitions*/
   in3_chain_t* chains;
 
   /** number of configured chains */
   uint16_t chainsCount;
+
+  /** flags for the evm (EIPs) */
+  uint32_t evm_flags;
 
 } in3_t;
 

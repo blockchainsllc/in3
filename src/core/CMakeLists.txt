@@ -29,5 +29,7 @@ add_library( core STATIC
 	crypto/blake256.c
 	crypto/blake2b.c
 	crypto/groestl.c
+	crypto/pbkdf2.c
 )
 include(compiler.cmake)
+target_include_directories(core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

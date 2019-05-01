@@ -11,7 +11,7 @@
 #include <util/utils.h>
 
 static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
-  d_token_t* tmp;
+  d_token_t* tmp = NULL;
   bytes_t ** validators = NULL, *proposer, b;
   int        validator_len, i;
 
@@ -131,15 +131,15 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
 
 /** verify the header */
 int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
-  int res = 0, i;
 
   if (!header)
     return vc_err(vc, "no header found");
 
+  int        res = 0, i;
+  uint8_t    block_hash[32];
   uint64_t   header_number = 0;
   d_token_t *sig, *signatures;
   bytes_t    temp, *sig_hash;
-  uint8_t    block_hash[32];
 
   // generate the blockhash;
   sha3_to(header, &block_hash);
@@ -158,7 +158,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
   if (res == 0 && vc->config->signaturesCount == 0) {
 
     // ... and the chain is a authority chain....
-    if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->items, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
+    if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->result, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
       // we merge the current header + finality blocks
       sig              = d_get(vc->proof, K_FINALITY_BLOCKS);
       bytes_t** blocks = _malloc((sig ? d_len(sig) + 1 : 2) * sizeof(bytes_t*));
@@ -168,7 +168,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
       }
       blocks[sig ? d_len(sig) : 1] = NULL;
       // now we verify these block headers
-      res = eth_verify_authority(vc, blocks, vc->chain->spec->items, vc->config->finality);
+      res = eth_verify_authority(vc, blocks, vc->chain->spec->result, vc->config->finality);
       _free(blocks);
     } else // we didn't request signatures so blockheader should be ok.
       res = 0;

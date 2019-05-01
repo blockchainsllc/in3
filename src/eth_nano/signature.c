@@ -31,7 +31,7 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
 
   // verify signature
   if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, sdata, msg_hash->data, v) == 0)
-    // hash it and return the last 320 bytes as address
+    // hash it and return the last 20 bytes as address
     return sha3_to(&pubkey_bytes, sdata) == 0 ? b_new((char*) sdata + 12, 20) : NULL;
   else
     return NULL;

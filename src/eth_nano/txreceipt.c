@@ -122,7 +122,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
         return vc_err(vc, "wrong block number in log");
       if (!d_eq(block_hash, d_get(l, K_BLOCK_HASH)))
         return vc_err(vc, "wrong block hash in log");
-      if (d_get_intk(l, K_LOG_INDEX) != i)
+      if (d_get_intk(l, K_LOG_INDEX) != (uint32_t) i)
         return vc_err(vc, "wrong log index");
       if (!b_cmp(d_get_bytesk(l, K_TRANSACTION_HASH), tx_hash))
         return vc_err(vc, "wrong tx Hash");

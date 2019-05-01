@@ -8,7 +8,7 @@
 
 bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* address, uint8_t* must_free) {
   bytes_t *  res = NULL, *code_hash = NULL, tmp[32];
-  d_token_t* t;
+  d_token_t* t = NULL;
 
   // first see, if this is part of the proof
   d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
@@ -60,12 +60,11 @@ cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
     if (en->key.len == 20 && memcmp(address, en->key.data, 20) == 0)
       return en;
   }
-  char key_str[42];
-  key_str[0]  = 'C';
-  key_str[41] = 0;
-  int8_to_char(address + 1, 20, key_str);
+  char key_str[43];
+  key_str[0] = 'C';
+  bytes_to_hex(address, 20, key_str + 1);
   bytes_t*       b = NULL;
-  cache_entry_t* entry;
+  cache_entry_t* entry = NULL;
   uint8_t        must_free = 0;
 
   // not cached yet

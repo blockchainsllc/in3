@@ -1,6 +1,7 @@
 #include "bytes.h"
 #include "mem.h"
 #include "utils.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,20 +16,20 @@ bytes_t* b_new(char* data, int len) {
   return b;
 }
 
-void ba_print(uint8_t* a, int l) {
-//  size_t i;
-  int i; // EFmod: changed to remove warning
+void ba_print(uint8_t* a, size_t l) {
+  size_t i;
   if (!a) return;
 
-  printf("Bytes: ");
+  printf(" 0x");
   for (i = 0; i < l; i++) printf("%02x", a[i]);
-  printf("\n");
+
+  if (l < 9)
+    printf(" ( %" PRId64 " ) ", bytes_to_long(a, l));
 }
 
 void b_print(bytes_t* a) {
   size_t i;
   if (!a) return;
-
 #ifdef __ZEPHYR__
   printk("Bytes: ");
   for (i = 0; i < a->len; i++) printk("%02x", a->data[i]);
@@ -41,17 +42,13 @@ void b_print(bytes_t* a) {
 }
 
 int b_cmp(bytes_t* a, bytes_t* b) {
-  size_t i;
-
   if ((a && b) == 0) return 1;
 
-  if (a->len != b->len) return 0;
+  return a->data && b->data && a->len == b->len && memcmp(a->data, b->data, a->len) == 0;
+}
 
-  for (i = 0; i < a->len; i++) {
-    if (a->data[i] != b->data[i]) return 0;
-  }
-
-  return 1;
+int bytes_cmp(bytes_t a, bytes_t b) {
+  return b_cmp(&a, &b);
 }
 
 void b_free(bytes_t* a) {
@@ -64,12 +61,16 @@ void b_free(bytes_t* a) {
 
 bytes_t* b_dup(bytes_t* a) {
   bytes_t* out = _calloc(1, sizeof(bytes_t));
-
-  out->data = _calloc(1, a->len);
-  out->data = memcpy(out->data, a->data, a->len);
-  out->len  = a->len;
+  out->data    = _calloc(1, a->len);
+  out->data    = memcpy(out->data, a->data, a->len);
+  out->len     = a->len;
 
   return out;
+}
+bytes_t cloned_bytes(bytes_t data) {
+  uint8_t* p = _malloc(data.len);
+  memcpy(p, data.data, data.len);
+  return (bytes_t){.data = p, .len = data.len};
 }
 
 uint8_t b_read_byte(bytes_t* b, size_t* pos) {

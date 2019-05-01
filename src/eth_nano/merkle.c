@@ -26,12 +26,12 @@ int trie_matching_nibbles(uint8_t* a, uint8_t* b) {
 }
 
 // converts the byte array to nibles of 4 bit each
-uint8_t* trie_path_to_nibbles(bytes_t* path, int use_prefix) {
-  uint8_t* n = _malloc(1 + (path->len * 2));
+uint8_t* trie_path_to_nibbles(bytes_t path, int use_prefix) {
+  uint8_t* n = _malloc(1 + (path.len * 2));
   size_t   j = 0, i = 0;
-  for (; i < path->len; i++) {
-    n[j++] = path->data[i] >> 4;
-    n[j++] = path->data[i] & 0x0F;
+  for (; i < path.len; i++) {
+    n[j++] = path.data[i] >> 4;
+    n[j++] = path.data[i] & 0x0F;
     if (i == 0 && use_prefix)
       n[0] = n[(j = n[0] & 1 ? 1 : 0)];
   }
@@ -80,7 +80,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
       if (rlp_decode(&node, 0, &val) != 1)
         return 0;
       else {
-        uint8_t* path_nibbles  = trie_path_to_nibbles(&val, 1);
+        uint8_t* path_nibbles  = trie_path_to_nibbles(val, 1);
         int      matching      = trie_matching_nibbles(path_nibbles, *key);
         int      node_path_len = nibble_len(path_nibbles);
         int      is_leaf       = val.data[0] & 32;
@@ -129,7 +129,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
 
 int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t* expectedValue) {
   int      res      = 1;
-  uint8_t* full_key = trie_path_to_nibbles(path, 0);
+  uint8_t* full_key = trie_path_to_nibbles(*path, 0);
   uint8_t *key      = full_key, expected_hash[32], node_hash[32];
   bytes_t  last_value;
 

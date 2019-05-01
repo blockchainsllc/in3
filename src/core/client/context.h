@@ -32,8 +32,8 @@ typedef struct {
   /*! reference to the client*/
   in3_t* client;
 
-  json_parsed_t* request_context;
-  json_parsed_t* response_context;
+  json_ctx_t* request_context;
+  json_ctx_t* response_context;
 
   /* in case of an error this will hold the message */
   char* error;

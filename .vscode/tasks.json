@@ -9,8 +9,11 @@
             "command": "cd build; make",
             "problemMatcher": [
                 "$gcc"
-            ]
-            
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "buildZephyr",
@@ -18,11 +21,7 @@
             "command": "cd src/zephyr/build; ninja",
             "problemMatcher": [
                 "$gcc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            ]
         }
     ]
 }

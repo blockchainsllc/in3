@@ -219,13 +219,20 @@ void clear_message(struct in3_client *c)
 {
 	// EFmod: in case of raw message received, msg->ready flag will NOT be reset
 	//  and this may hang the program; so, do this anyway:
+	dbg_log("<--- try to clear ready flag...\n");
 	c->msg->ready = 0; // EFmod - may be also this is unassigned
+	dbg_log("<--- ok\n");
 
-	if (!recv_buf)
+	if (!recv_buf) {
+		dbg_log("<--- recv_buf is empty; do not clear\n");
 		return;
+	}
 
+	dbg_log("<--- try to free recv_buf...\n");
 	k_free(recv_buf);
+	dbg_log("<--- ok\n");
 
+	dbg_log("<--- try to clear pointers...\n");
 	c->msg->size = 0;
 	c->msg->ready = 0;
 
@@ -234,6 +241,7 @@ void clear_message(struct in3_client *c)
 
 	recv_buf = 0;
 	c->msg->data = 0;
+	dbg_log("<--- ok\n");
 }
 
 static struct bt_gatt_service msg_svc = BT_GATT_SERVICE(msg_attrs);
@@ -294,16 +302,19 @@ void bluetooth_write_req(char *msg)
 
 	k_mutex_unlock(&client->mutex);
 
-	dbg_log("send notification for REQ\n");
-
+	dbg_log("<--- try to send notification for REQ...\n");
 	char *send = "REQ_READY";
 //  EFmod: the "normal" [3] does not work. Index [5] is out of bounds, but it works...
+//	bt_gatt_notify(NULL, &msg_attrs[3], send, strlen(send));
 	bt_gatt_notify(NULL, &msg_attrs[5], send, strlen(send));
+	dbg_log("<--- notify sent\n");
 }
 
 void bluetooth_clear_req(void)
 {
+//	dbg_log("<--- try to clear req_buf...\n");
 	memset(req_buf, 0, sizeof(recv_buf_static)); // EFmod: may be sizeof(req_buf) ?
+//	dbg_log("<--- req_buf zeroed (# %u bytes)\n", sizeof(recv_buf_static));
 }
 
 #ifdef BT_MAC // START block: next 3 functions needed only if hardcoded BT MAC is enabled
@@ -407,7 +418,7 @@ int bluetooth_setup(struct in3_client *c)
 	}
 
 	k_sleep(1000);
-	bt_dev_show_info();
+//	bt_dev_show_info();
 
 	param.id = 0;
 	param.interval_min = BT_GAP_ADV_FAST_INT_MIN_2;
@@ -428,7 +439,8 @@ int bluetooth_setup(struct in3_client *c)
     byte_to_hex((fmac & 0xFF00) >> 8, deviceName +lnam +4); // add MAC[1]
     byte_to_hex(fmac & 0xFF, deviceName +lnam +6); // add MAC[0] (byte_to_hex adds \0)
 //	bt_set_name(deviceName); // BT name built with "in3-" and NORDIC (almost) unique BT MAC (es: in3-84C8C54B)
-	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Ardo's App
+//	bt_set_name("in3-peripheral"); // EFmod: the normal one
+	bt_set_name("in3-emiliotest"); // EFmod: use ONLY this for testing with Arda's App
 
 	err = bt_le_adv_start(&param, ad, ad_len, scan_rsp, scan_rsp_len);
 	if (err < 0) {
@@ -511,6 +523,7 @@ int gpio_setup(void)
 void main(void)
 {
 	dbg_log("\n\n\n\n\n***\n*** Starting in3_client...\n");
+ 	gpio_setup(); // setup the GPIO
 	in3_client_start();
 
 	return;

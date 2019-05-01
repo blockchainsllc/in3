@@ -20,6 +20,8 @@ int ignore_property(char* name, int full_proof) {
 
   // size should be verified if proof = full
   if (!full_proof && strcmp(name, "size") == 0) return 1;
+  // size should be verified if proof = full
+  if (!full_proof && strcmp(name, "logIndex") == 0) return 1;
 
   // gasUsed should be verified if proof = full
   if (!full_proof && strcmp(name, "gasUsed") == 0) return 1;
@@ -75,8 +77,13 @@ static int      fuzz_pos = -1;
 static int find_hex(char* str, int start, int len) {
   int i;
   for (i = start, str += start; i < len; i++, str++) {
-    if (*str == 'x' && i > 2 && *(str - 1) == '0' && i < len + 1 && *(str + 1) != '"')
+    if (*str == 'x' && i > 2 && *(str - 1) == '0' && i < len + 1 && *(str + 1) != '"') {
+      char* end = strchr(str, '"');
+      if (end) end++;
+      while (end && (*end == ' ' || *end == '\n' || *end == '\t')) end++;
+      if (end && *end == ':') continue;
       return i + 1;
+    }
   }
   return -1;
 }
@@ -152,8 +159,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   d_token_t* request  = d_get(test, key("request"));
   d_token_t* response = d_get(test, key("response"));
   d_token_t* config   = d_get(request, key("config"));
-  d_token_t* t;
-  char*      method;
+  d_token_t* t = NULL;
+  char*      method = NULL;
   char       params[10000];
 
   // configure in3
@@ -220,7 +227,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
 
 int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   char  temp[300];
-  char* descr;
+  char* descr = NULL;
   int   i;
 
   if ((descr = d_get_string(test, "descr"))) {
@@ -290,7 +297,7 @@ int runRequests(char** names, int test_index, int mem_track) {
     // create client
 
     // TODO init the nodelist
-    json_parsed_t* parsed = parse_json(content);
+    json_ctx_t* parsed = parse_json(content);
     if (!parsed) {
       free(content);
       ERROR("Error parsing the requests");
@@ -299,11 +306,11 @@ int runRequests(char** names, int test_index, int mem_track) {
 
     // parse the data;
     int        i;
-    char*      str_proof;
-    d_token_t *t      = NULL, *tests, *test;
+    char*      str_proof = NULL;
+    d_token_t *t      = NULL, *tests = NULL, *test = NULL;
     d_token_t* tokens = NULL;
 
-    if ((tests = parsed->items)) {
+    if ((tests = parsed->result)) {
       for (i = 0, test = tests + 1; i < d_len(tests); i++, test = d_next(test)) {
 
         fuzz_pos          = -1;
@@ -345,10 +352,10 @@ int runRequests(char** names, int test_index, int mem_track) {
 
     free(content);
     for (i = 0; i < parsed->len; i++) {
-      if (parsed->items[i].data != NULL && d_type(parsed->items + i) < 2)
-        free(parsed->items[i].data);
+      if (parsed->result[i].data != NULL && d_type(parsed->result + i) < 2)
+        free(parsed->result[i].data);
     }
-    free(parsed->items);
+    free(parsed->result);
     free(parsed);
     name = names[++n];
   }

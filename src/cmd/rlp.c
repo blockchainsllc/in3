@@ -2,6 +2,7 @@
  * simple commandline-util parsing json and creating bin
  * */
 
+#include <inttypes.h>
 #include <math.h>
 #include <rlp.h>
 #include <stdint.h>
@@ -118,15 +119,16 @@ void write(bytes_t* data, char* l, char** tt) {
   bytes_t t;
   //  names
   char prefix[100];
-  int  i, j, type, p = strlen(l), d;
+  int  i, j, type, d;
   for (i = 0;; i++) {
     type = rlp_decode(data, i, &t);
     if (type == 0) return;
     if (type == 1) {
       printf("%s", l);
-      if (tt) {
+      if (tt)
         d = printf("%-20s : ", tt[i + 1]);
-      }
+      else
+        d = printf("%-3i : ", i);
 
       if (tt == TRIE_LEAF && i == 0)
         d = printf("%s (%s)", (t.data[0] & 32) ? "LEAF" : "EXTENSION", (t.data[0] & 16) ? "odd" : "even");
@@ -134,7 +136,7 @@ void write(bytes_t* data, char* l, char** tt) {
       else if (t.len == 0)
         d = printf("0");
       else if (t.len < 9)
-        d = printf("%llu", bytes_to_long(t.data, t.len));
+        d = printf("%" PRIu64 "", bytes_to_long(t.data, t.len));
       else if (t.len == 20)
         d = printf("<address>");
       else if (t.len == 32)
@@ -147,7 +149,7 @@ void write(bytes_t* data, char* l, char** tt) {
       else
         printf("<EMPTY>");
 
-      for (j = 0; j < t.len; j++) {
+      for (j = 0; j < (int) t.len; j++) {
         if (j > 0 && j % 32 == 0 && (!tt || strcmp(tt[i + 1], "value"))) {
           printf("\n%s", l);
           if (tt) printf("%-20s  ", "");
@@ -253,7 +255,7 @@ int main(int argc, char* argv[]) {
     if (output == 2)
       rlp_encode_to_list(bb);
     printf("0x");
-    for (int j = 0; j < bb->b.len; j++)
+    for (int j = 0; j < (int) bb->b.len; j++)
       printf("%02x", bb->b.data[j]);
 
     printf("\n");

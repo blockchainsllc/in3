@@ -1,13 +1,13 @@
 /** @file
  * Patricia Merkle Tree Imnpl
  * */
-#include <util/bytes.h>
+#include "../core/util/bytes.h"
 #ifndef in3_trie_h__
 #define in3_trie_h__
 /**
  *  hash-function
  */
-typedef void (*in3_hasher_t)(bytes_t* src, bytes_t* dst);
+typedef void (*in3_hasher_t)(bytes_t* src, uint8_t* dst);
 
 /**
  *  codec to organize the encoding of the nodes
@@ -31,12 +31,12 @@ typedef enum {
  * single node in the merkle trie.
  */
 typedef struct trie_node {
-  bytes_t           hash;        /**< the hash of the node */
-  bytes_t           data;        /**< the raw data */
-  bytes_t           items;       /**< the data as list  */
-  uint8_t           is_embedded; /**< if true this is a embedded node */
-  trie_node_type_t  type;        /**< type of the node */
-  struct trie_node* next;        /**< used as linked list */
+  uint8_t           hash[32];   /**< the hash of the node */
+  bytes_t           data;       /**< the raw data */
+  bytes_t           items;      /**< the data as list  */
+  uint8_t           own_memory; /**< if true this is a embedded node with own memory */
+  trie_node_type_t  type;       /**< type of the node */
+  struct trie_node* next;       /**< used as linked list */
 } trie_node_t;
 
 /**
@@ -56,10 +56,10 @@ typedef struct trie_codec {
  * This is a Patricia Merkle Tree.
  */
 typedef struct trie {
-  in3_hasher_t  hasher; /**< hash-function. */
-  trie_codec_t* codec;  /**< encoding of the nocds. */
-  bytes_t       root;   /**< The root-hash. */
-  trie_node_t*  nodes;  /**< linked list of containes nodes */
+  in3_hasher_t  hasher;   /**< hash-function. */
+  trie_codec_t* codec;    /**< encoding of the nocds. */
+  uint8_t       root[32]; /**< The root-hash. */
+  trie_node_t*  nodes;    /**< linked list of containes nodes */
 } trie_t;
 
 /**
@@ -78,4 +78,7 @@ void trie_free(trie_t* val);
  */
 void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value);
 
+#ifdef TEST
+void trie_dump(trie_t* trie, uint8_t with_hash);
+#endif
 #endif
