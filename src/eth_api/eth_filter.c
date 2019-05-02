@@ -112,12 +112,12 @@ size_t eth_newFilter(in3_t* in3, in3_filter_opt_t* options) {
   return add_filter(in3, FILTER_EVENT, options);
 }
 
-size_t eth_newBlockFilter(in3_t* in3, in3_filter_opt_t* options) {
-  return add_filter(in3, FILTER_BLOCK, options);
+size_t eth_newBlockFilter(in3_t* in3) {
+  return add_filter(in3, FILTER_BLOCK, NULL);
 }
 
-size_t eth_newPendingTransactionFilter(in3_t* in3, in3_filter_opt_t* options) {
-  return add_filter(in3, FILTER_PENDING, options);
+size_t eth_newPendingTransactionFilter(in3_t* in3) {
+  return add_filter(in3, FILTER_PENDING, NULL);
 }
 
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
