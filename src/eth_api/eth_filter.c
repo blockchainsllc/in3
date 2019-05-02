@@ -137,13 +137,15 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
       return 0;
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
-        block_hashes = malloc(sizeof(bytes32_t*) * (blkno - f->last_block));
+        int blkcount   = blkno - f->last_block;
+        *block_hashes  = malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
-          memcpy(block_hashes[j], blk->hash, 32);
+          memcpy((*block_hashes)[j], blk->hash, 32);
+          free(blk);
         }
         f->last_block = blkno;
-        return (blkno - f->last_block);
+        return blkcount;
       } else {
         *block_hashes = NULL;
         return 0;
