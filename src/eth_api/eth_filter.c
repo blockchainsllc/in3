@@ -127,7 +127,8 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
   in3_filter_t* f     = in3->filters->array[id - 1];
   switch (f->type) {
     case FILTER_EVENT:
-      *logs = eth_getLogs(in3, f->options);
+      *logs         = eth_getLogs(in3, f->options);
+      f->last_block = blkno + 1;
       return 0;
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
@@ -136,12 +137,13 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
           eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
           memcpy(block_hashes[j], blk->hash, 32);
         }
+        f->last_block = blkno;
         return (blkno - f->last_block);
       } else {
         *block_hashes = NULL;
         return 0;
-        default:
-          return -2;
       }
+    default:
+      return -2;
   }
 }
