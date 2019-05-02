@@ -62,18 +62,19 @@ typedef struct eth_block {
   /* data */
 } eth_block_t;
 
+/** a linked list of Ethereum Logs  */
 typedef struct eth_log {
-  bool            removed;
-  size_t          log_index;
-  size_t          transaction_index;
-  bytes32_t       transaction_hash;
-  bytes32_t       block_hash;
-  uint64_t        block_number;
-  address_t       address;
-  bytes_t         data;
-  bytes32_t*      topics;
-  size_t          topic_count;
-  struct eth_log* next;
+  bool            removed;           /**< true when the log was removed, due to a chain reorganization. false if its a valid log */
+  size_t          log_index;         /**< log index position in the block */
+  size_t          transaction_index; /**< transactions index position log was created from */
+  bytes32_t       transaction_hash;  /**< hash of the transactions this log was created from */
+  bytes32_t       block_hash;        /**< hash of the block where this log was in */
+  uint64_t        block_number;      /**< the block number where this log was in */
+  address_t       address;           /**< address from which this log originated */
+  bytes_t         data;              /**< non-indexed arguments of the log */
+  bytes32_t*      topics;            /**< array of 0 to 4 32 Bytes DATA of indexed log arguments */
+  size_t          topic_count;       /**< counter for topics */
+  struct eth_log* next;              /**< pointer to next log in list or NULL */
 } eth_log_t;
 
 uint256_t    eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block); /**< returns the storage value of a given address.*/
@@ -83,7 +84,7 @@ uint64_t     eth_blockNumber(in3_t* in3);                                       
 uint64_t     eth_gasPrice(in3_t* in3);                                                       /**< returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
 eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx);             /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
-eth_log_t*   eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt);                                /**< returns an array of logs. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
+eth_log_t*   eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt);                                /**< returns a linked list of logs. If result is null, check eth_last_error()! otherwise make sure to free the log, its topics and data after using it! */
 json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...);                 /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 char*        eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);
 

@@ -192,34 +192,59 @@ typedef struct {
  */
 typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
 
+/** filter options */
 typedef struct in3_filter_opt_t_ {
-  char*       from_block;
-  char*       to_block;
-  address_t*  addresses;
-  size_t      address_count;
+  /** from block number: (optional, block no. as char*, default: "latest") - user owned (i.e. to be freed manually if allocated) */
+  char* from_block;
+
+  /** to block number: (optional, block no. as char*, default: "latest") - user owned (i.e. to be freed manually if allocated) */
+  char* to_block;
+
+  /** addresses from which logs should originate: (optional) - do NOT modify directly, use add_address() method */
+  address_t* addresses;
+
+  /** counter for addresses */
+  size_t address_count;
+
+  /** array of 32 bytes topics: (optional) - do NOT modify directly, use add_topic() method */
   bytes32_t** topics;
-  size_t      topic_count;
+
+  /** counter for topics */
+  size_t topic_count;
+
+  /** method to add address to filter options */
   bool (*add_address)(struct in3_filter_opt_t_* fopt, address_t address);
+
+  /** method to add topics: topics are order-dependent and NULL is a valid value */
   bool (*add_topic)(struct in3_filter_opt_t_* fopt, bytes32_t* topic);
+
+  /** method to release owned resources */
   void (*release)(struct in3_filter_opt_t_* fopt);
 } in3_filter_opt_t;
 
 typedef enum {
-  FILTER_EVENT,
-  FILTER_BLOCK,
-  FILTER_PENDING,
+  FILTER_EVENT   = 0, /**< Event filter */
+  FILTER_BLOCK   = 1, /**< Block filter */
+  FILTER_PENDING = 2, /**< Pending filter (Unsupported) */
 } in3_filter_type_t;
 
 typedef struct in3_filter_t_ {
+  /** filter type: (event, block or pending) */
   in3_filter_type_t type;
+
+  /** associated filter options */
   in3_filter_opt_t* options;
-  uint64_t          last_block;
+
+  /** block no. when filter was created OR eth_getFilterChanges was called */
+  uint64_t last_block;
+
+  /** method to release owned resources */
   void (*release)(struct in3_filter_t_* f);
 } in3_filter_t;
 
 typedef struct in3_filter_handler_t_ {
-  in3_filter_t** array;
-  size_t         count;
+  in3_filter_t** array; /** array of filters */
+  size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
 typedef struct {

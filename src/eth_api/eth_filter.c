@@ -74,6 +74,9 @@ static size_t add_filter(in3_t* in3, in3_filter_type_t type, in3_filter_opt_t* o
   f->options      = options;
   f->last_block   = eth_blockNumber(in3);
 
+  // Reuse filter ids that have been uninstalled
+  // Note: filter ids are 1 indexed, and the associated in3_filter_t object is stored
+  // at pos (id - 1) internally in in3->filters->array
   in3_filter_handler_t* fh = in3->filters;
   for (size_t i = 0; i < fh->count; i++) {
     if (fh->array[i] == NULL) {
@@ -97,6 +100,8 @@ static bool remove_filter(in3_t* in3, size_t id) {
   in3_filter_handler_t* fh = in3->filters;
   if (id == 0 || id > fh->count) return false;
 
+  // We don't realloc the array here, instead we simply set this slot to NULL to indicate
+  // that it has been removed and reuse it in add_filter()
   in3_filter_t* f = fh->array[id - 1];
   f->release(f);
   fh->array[id - 1] = NULL;
