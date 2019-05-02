@@ -309,6 +309,7 @@ static eth_log_t* parse_logs(d_token_t* result) {
     log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
     log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
     copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
+    copy_fixed(log->transaction_hash, 32, d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)));
     copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
     copy_fixed(log->data.data, log->data.len, d_to_bytes(d_get(it.token, K_DATA)));
     size_t i = 0;

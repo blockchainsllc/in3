@@ -66,6 +66,7 @@ typedef struct eth_log {
   bool            removed;
   size_t          log_index;
   size_t          transaction_index;
+  bytes32_t       transaction_hash;
   bytes32_t       block_hash;
   uint64_t        block_number;
   address_t       address;
