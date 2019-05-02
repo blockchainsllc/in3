@@ -11,7 +11,7 @@
 #include <in3_curl.h>
 #include <in3_storage.h>
 #include <inttypes.h>
-#include <math.h>
+// #include <math.h>
 #include <signer.h>
 #include <stdint.h>
 #include <stdio.h>

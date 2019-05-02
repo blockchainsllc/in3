@@ -24,7 +24,7 @@ bytes_t get_bytes(d_token_t* t, uint8_t* tmp, uint8_t is_hex) {
   if (d_type(t) == T_BYTES && !is_hex) {
     tmp[0] = '0';
     tmp[1] = 'x';
-    int8_to_char(res.data, res.len, (char*) tmp + 2);
+    bytes_to_hex(res.data, res.len, (char*) tmp + 2);
     res.data = tmp;
     res.len  = res.len * 2 + 2;
   }

@@ -153,8 +153,8 @@ int in3_get_tx_receipt(struct in3_client *c, char *tx_hash, char **response)
 int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 	int res=-1,i;
     char tmp[256], mhash[256];
-	json_parsed_t*  response = parse_json(resp);
-	json_parsed_t*  message  = parse_json(amsg);
+	json_ctx_t*  response = parse_json(resp);
+	json_ctx_t*  message  = parse_json(amsg);
 	d_token_t* l, *log=NULL;
 	bytes_t* signer=NULL,  *hash=NULL;
 	bytes_t* log_rented = hex2byte_new_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8",64);
@@ -162,7 +162,7 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 
 	if (!response || !message) goto out; 
 
-	d_token_t* logs = d_get(response->items,key("logs"));
+	d_token_t* logs = d_get(response->result,key("logs"));
 	if (!logs)  goto out; 
 
 	for (i=0,l=logs+1;i<d_len(logs);i++,l=d_next(l)) {
@@ -175,7 +175,7 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
     // no event found,
 	if (!log) goto out; 
 
-	char* url         = d_get_string(message->items,"url");
+	char* url         = d_get_string(message->result,"url");
     //bytes_t* deviceId = d_get_bytes_at(d_get(log,key("topics")),1);  // we need to store and compare the deviceId
 	bytes_t* data     = d_get_bytes(log,"data");
 	
@@ -185,7 +185,7 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
     c->rent->controller = _malloc(43);
     c->rent->controller[0]='0';
     c->rent->controller[1]='x';
-	int8_to_char(data->data+12,20,c->rent->controller+2);
+	bytes_to_hex(data->data+12,20,c->rent->controller+2);
 
 
 	dbg_log("*** controller: '%s'\n", c->rent->controller);
@@ -198,13 +198,13 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 
 
     // prepare message hash
-	sprintf(tmp, "%s%d%s{}", url, c->rent->when, d_get_string(message->items,"action"));
+	sprintf(tmp, "%s%d%s{}", url, c->rent->when, d_get_string(message->result,"action"));
 	sprintf(mhash, "\031Ethereum Signed Message:\n%d%s", strlen(tmp), tmp);
 	bytes_t msg= { .data = (uint8_t*) &mhash, .len = strlen(mhash) };
     hash = sha3(&msg);
 
     // get the signature
-	signer = ecrecover_signature(hash,  d_get(message->items,key("signature")));
+	signer = ecrecover_signature(hash,  d_get(message->result,key("signature")));
 	if (signer==NULL) goto out; 
 
     // check if the signer is the same as the controller in the event.
