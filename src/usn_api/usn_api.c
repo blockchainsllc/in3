@@ -535,12 +535,10 @@ int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t 
 int usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash) {
   usn_device_conf_t conf = {.c = c};
   memcpy(conf.contract, contract, 20);
-  usn_url_t purl = usn_parse_url(url);
-  uint8_t   params[36];
-  memset(params, 0, 36);
+  usn_url_t purl       = usn_parse_url(url);
+  uint8_t   params[36] = {0};
 
   // now send the tx
-  memset(params, 0, 36);
   hex2byte_arr("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
 
