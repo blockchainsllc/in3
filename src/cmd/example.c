@@ -123,7 +123,7 @@ void watch_for_events(in3_t* c) {
   unsigned int wait_time = 5;
 
   // configure a device-config
-  usn_device_conf_t usn;
+  usn_device_conf_t usn = {0};
 
   // set a function which is called whenever a rent event starts or stops
   usn.booking_handler = handle_booking;
