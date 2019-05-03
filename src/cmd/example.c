@@ -26,7 +26,7 @@ void call_a_function(in3_t* c) {
   }
 
   int number_of_servers = d_int(response->result);
-  _free(response);
+  free_json(response);
 
   printf("Found %i servers registered : \n", number_of_servers);
 
@@ -46,7 +46,7 @@ void call_a_function(in3_t* c) {
     ba_print(owner->data, owner->len);
     printf(", deposit = %llu\n", deposit);
 
-    _free(response);
+    free_json(response);
   }
 }
 void show_transactions_in_block(in3_t* c, uint64_t block_number) {
