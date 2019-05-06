@@ -115,8 +115,7 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
       // copy the leafs data as last_value and next_hash
       last_value->data = val.data;
       last_value->len  = val.len;
-      memcpy(next_hash, val.data, 32);
-
+      memcpy(next_hash, val.data, (val.len >= 32) ? 32 : val.len);
       return 1;
 
     default: // empty node
