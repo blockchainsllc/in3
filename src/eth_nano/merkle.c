@@ -130,7 +130,7 @@ int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
   int      res      = 1;
   uint8_t* full_key = trie_path_to_nibbles(*path, 0);
   uint8_t *key      = full_key, expected_hash[32], node_hash[32];
-  bytes_t  last_value;
+  bytes_t  last_value = {0};
 
   // start with root hash
   memcpy(expected_hash, rootHash->data, 32);

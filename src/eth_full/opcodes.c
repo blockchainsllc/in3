@@ -565,7 +565,7 @@ static int op_jump(evm_t* evm, uint8_t cond) {
   int pos = evm_stack_pop_int(evm);
   if (pos < 0) return pos;
   if (cond) {
-    uint8_t c;
+    uint8_t c = 0;
     int     ret = evm_stack_pop_byte(evm, &c);
     if (ret == EVM_ERROR_EMPTY_STACK) return EVM_ERROR_EMPTY_STACK;
     if (!c && ret >= 0) return 0; // the condition was false
