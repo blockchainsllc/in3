@@ -5,7 +5,7 @@
 static int ref(bytes_t* d, bytes_t* b, size_t l, uint8_t* s, int r) {
   d->len  = l;
   d->data = s;
-  return (s >= b->data && s <= (b->data + b->len) && (s + l) >= b->data && (s + l) <= (b->data + b->len)) ? r : -1;
+  return (s >= b->data && (s + l) >= b->data && (s + l) <= (b->data + b->len)) ? r : -1;
 }
 
 void rlp_add_length(bytes_builder_t* bb, uint32_t len, uint8_t offset) {
