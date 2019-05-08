@@ -52,11 +52,11 @@ int rlp_decode(bytes_t* b, int index, bytes_t* dst) {
   }
 
   if (index < 0)
-    return i==b->len ? (int) p : -3;
+    return i == b->len ? (int) p : -3;
   else if (i > b->len)
-    return 0;
-  else
     return -1;
+  else
+    return 0;
 }
 
 int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst) {

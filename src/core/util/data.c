@@ -358,10 +358,8 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
 int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
-  if (jp->depth > DATA_DEPTH_MAX) {
-    printf("Depth of %lu exceeds max supported!\n", jp->depth);
+  if (jp->depth > DATA_DEPTH_MAX)
     return -3;
-  }
 
   switch (next_char(jp)) {
     case 0: return -2;
@@ -383,7 +381,7 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         res = parse_object(jp, p_index, res); // parse the value
         if (res < 0) return res;
         switch (next_char(jp)) {
-          case ',': break;    // we continue reading the next property
+          case ',': break; // we continue reading the next property
           case '}': {
             jp->depth--;
             return 0; // this was the last property, so we return successfully.
@@ -404,7 +402,7 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         res = parse_object(jp, p_index, jp->result[p_index].len & 0xFFFFFF); // parse the value
         if (res < 0) return res;
         switch (next_char(jp)) {
-          case ',': break;    // we continue reading the next property
+          case ',': break; // we continue reading the next property
           case ']': {
             jp->depth--;
             return 0; // this was the last element, so we return successfully.

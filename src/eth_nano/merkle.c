@@ -40,13 +40,11 @@ uint8_t* trie_path_to_nibbles(bytes_t path, int use_prefix) {
   return n;
 }
 
-static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, int is_last_node, bytes_t* last_value, uint8_t* next_hash, size_t *depth) {
+static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, int is_last_node, bytes_t* last_value, uint8_t* next_hash, size_t* depth) {
   bytes_t node, val;
   (*depth)++;
-  if (*depth > MERKLE_DEPTH_MAX) {
-    printf("Depth of %lu exceeds max supported!\n", *depth);
+  if (*depth > MERKLE_DEPTH_MAX)
     return 0;
-  }
 
   // decode the list into war values
   rlp_decode(raw_node, 0, &node);
