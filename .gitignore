@@ -1,8 +1,12 @@
 .vscode/ipch
 Testing*
+Testing
 .in3
 build*/
 _build
 /.metadata/
 .DS_Store
 /RemoteSystemsTempFiles/
+cmake-build-debug/
+.vscode/
+.idea/

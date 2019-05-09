@@ -26,6 +26,15 @@ IF(TEST)
   add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 16)
 ENDIF(TEST)
 
+OPTION(FAST_MATH "Math optimizations" OFF)
+IF(FAST_MATH)
+  MESSAGE ( STATUS "Enable math optimizations (excutable size may increase)" )
+  ADD_DEFINITIONS(-DIN3_MATH_FAST)
+ELSE()
+  MESSAGE ( STATUS "Disable math optimizations (optimised for executable size)" )
+  ADD_DEFINITIONS(-DIN3_MATH_LITE)
+ENDIF(FAST_MATH)
+
 # substiture __FILENAME__ as it is used in DEBUG
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 

@@ -25,6 +25,8 @@ IF(BT_MAC)
   ADD_DEFINITIONS(-DBT_MAC)
 ENDIF()
 
+ADD_DEFINITIONS(-DIN3_MATH_LITE)
+
 #######################################################
 
 include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
