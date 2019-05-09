@@ -8,6 +8,10 @@
 #ifndef MERKLE_H
 #define MERKLE_H
 
+#ifndef MERKLE_DEPTH_MAX
+#define MERKLE_DEPTH_MAX 64
+#endif
+
 /**
  *  verifies a merkle proof.
  * 

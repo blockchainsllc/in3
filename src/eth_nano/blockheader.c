@@ -145,7 +145,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
   sha3_to(header, &block_hash);
 
   // if we expect a certain blocknumber, it must match the 8th field in the BlockHeader
-  if (!res && rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp))
+  if (!res && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp) == 1))
     header_number = bytes_to_long(temp.data, temp.len);
   else
     res = vc_err(vc, "Could not rlpdecode the blocknumber");

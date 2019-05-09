@@ -369,7 +369,7 @@ static node_key_t handle_node(trie_t* trie, trie_node_t* n, uint8_t* path, bytes
 }
 
 void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
-  if (key == NULL || value == NULL || value->len == 0) return;
+  if (key == NULL || value == NULL || value->len == 0 || key->len > 32) return;
   // create path based on the key
   uint8_t* path = trie_path_to_nibbles(*key, false);
   uint8_t* root = handle_node(t, get_node(t, hash_key(t->root)), path, value, true).hash;
