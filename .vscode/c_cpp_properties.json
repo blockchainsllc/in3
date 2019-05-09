@@ -4,21 +4,17 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../zephyr/include/**",
-                "${workspaceFolder}/src/**",
-                "/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/include/**"
+                "/opt/zephyr-sdk/arm-zephyr-eabi/arm-zephyr-eabi/include/**",
+                "${workspaceFolder}/src/**"
             ],
             "defines": [
-                "EVM_GAS",
-                "TEST"
+                "DEBUG_OFF",
+                "USB_DONGLE"
             ],
-            "macFrameworkPath": [
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/System/Library/Frameworks"
-            ],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c11",
+            "compilerPath": "~/sysroots/x86_64-pokysdk-linux/usr/bin/arm-zephyr-eabi/arm-zephyr-eabi-gcc",
+            "cStandard":"c99",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode":"gcc-x64"
         }
     ],
     "version": 4

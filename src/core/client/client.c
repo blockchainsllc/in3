@@ -9,7 +9,7 @@
 #include <string.h>
 
 in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
-s  // generate the rpc-request
+  // generate the rpc-request
   char req[strlen(method) + strlen(params) + 200];
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 

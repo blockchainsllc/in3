@@ -145,4 +145,4 @@ action_type_t msg_get_action(char *c);
 // prototypes of functions in fsm.c
 void in3_signal_event(void);
 int in3_client_start(void);
-void do_action(action_type_t action);
+void do_action();

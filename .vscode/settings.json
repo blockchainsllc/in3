@@ -40,5 +40,6 @@
         "serialize.h": "c",
         "unistd.h": "c",
         "project.h": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

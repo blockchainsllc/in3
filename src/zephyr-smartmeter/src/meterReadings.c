@@ -2,6 +2,10 @@
  * Testing wrapper for contract "MeterReadings"
  * */
 
+// #include "/opt/zephyr-sdk/arm-zephyr-eabi/arm-zephyr-eabi/include/stdio.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <abi.h>
 #include <client/cache.h>
 #include <client/client.h>
@@ -10,19 +14,16 @@
 #include <evm.h>
 #include <in3_curl.h>
 #include <in3_storage.h>
-#include <inttypes.h>
-// #include <math.h>
 #include <signer.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <inttypes.h>
 #include <util/debug.h>
 #include <util/utils.h>
 
 #include <util/data.h>
-
 #include "meterReadings.h"
+
+
+
 
 
 extern in3_t* g_c;
@@ -87,7 +88,7 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
         int pos = 0;
         sprintf(&buf[pos],"0x");
         pos += 2;
-        for (int i = 0; i < t->len; i++) 
+        for (int i = 0; i < (int)(t->len); i++) 
         {
           sprintf(&buf[pos],"%02x", t->data[i]);
           pos += 2;
@@ -122,6 +123,7 @@ typedef struct
   getReading_RSP_t* pDataStruct;
 } fillDataStruct_t;
 
+
 void CB_fillDataStruct(const char* strVal, void* pUserData)
 {
   if (pUserData != NULL)
@@ -137,16 +139,16 @@ void CB_fillDataStruct(const char* strVal, void* pUserData)
       } break;
       case 1:
       {
-        sscanf(strVal, "%i", &pFillDataStruct->pDataStruct->readingEntry.i32Voltage_mV);
+        pFillDataStruct->pDataStruct->readingEntry.i32Voltage_mV = atoi(strVal);
       } break;
       case 2:
       {
-        sscanf(strVal, "%i", &pFillDataStruct->pDataStruct->readingEntry.i32Current_mA);
+        pFillDataStruct->pDataStruct->readingEntry.i32Current_mA = atoi(strVal);
       } break;
       case 3:
       {
-        sscanf(strVal, "%u", &pFillDataStruct->pDataStruct->readingEntry.u32EnergyMeter_mWh);
-      } break;
+        pFillDataStruct->pDataStruct->readingEntry.u32EnergyMeter_mWh = atoi(strVal);
+      } break;  
       default:
         break;
     }
@@ -196,6 +198,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
   char* error = NULL;
 
   int errID = in3_client_rpc(g_c, method, paramBuffer, &result, &error);
+  UNUSED_VAR(errID);
 
   // bool wait = false;
   // // if we need to wait
@@ -269,6 +272,7 @@ getReading_RSP_t* meterReadings_getLastReading()
   char* error = NULL;
 
   int errID = in3_client_rpc(g_c, method, paramBuffer, &pBuffer_Result, &error);
+  UNUSED_VAR(errID);
 
   // bool wait = false;
   // // if we need to wait
@@ -380,6 +384,7 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   char* error = NULL;
 
   int errID = in3_client_rpc(g_c, method, paramBuffer, &pBuffer_Result, &error);
+  UNUSED_VAR(errID);
 
   // bool wait = false;
   // // if we need to wait
