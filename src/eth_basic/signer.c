@@ -269,11 +269,35 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   ERR_FLT:
     return ret;
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
-
+    size_t id = filter_add(ctx->client, FILTER_BLOCK, NULL);
+    if (!id) return ctx_set_error(ctx, "filter creation failed", -1);
+    *response = _malloc(sizeof(in3_response_t));
+    sb_init(&response[0]->result);
+    sb_init(&response[0]->error);
+    sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": \"");
+    char* strid = stru64(id);
+    sb_add_chars(&response[0]->result, strid);
+    free(strid);
+    sb_add_chars(&response[0]->result, "\"}");
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newPendingTransactionFilter") == 0) {
-
+    return ctx_set_error(ctx, "pending filter not supported", -1);
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_uninstallFilter") == 0) {
+    d_token_t* tx_params = d_get(req, K_PARAMS);
+    if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+      return ctx_set_error(ctx, "invalid params", -1);
 
+    uint64_t id = d_get_longk(tx_params + 1, K_ID);
+    if (!id)
+      return ctx_set_error(ctx, "invalid params (id)", -1);
+
+    *response = _malloc(sizeof(in3_response_t));
+    sb_init(&response[0]->result);
+    sb_init(&response[0]->error);
+    if (filter_remove(ctx->client, id)) {
+      sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": true");
+    } else {
+      sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": false");
+    }
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
   }
   return 0;
