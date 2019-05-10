@@ -3,6 +3,7 @@
 #include "bytes.h"
 #include "debug.h"
 #include "mem.h"
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,4 +158,16 @@ int min_bytes_len(uint64_t val) {
     if (val == 0) return i;
   }
   return 8;
+}
+
+char* strdup(const char* str) {
+  char* s = malloc(strlen(str) + 1);
+  if (s) strcpy(s, str);
+  return s;
+}
+
+char* stru64(uint64_t u64) {
+  char* tmp = malloc(23); // Max 18446744073709551615
+  if (tmp) sprintf(tmp, "0x%" PRIu64, u64);
+  return tmp;
 }

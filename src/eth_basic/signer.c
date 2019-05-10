@@ -1,5 +1,7 @@
 #include "signer.h"
 #include "../eth_nano/serialize.h"
+#include "filter.h"
+#include <client/client.h>
 #include <client/context.h>
 #include <client/keys.h>
 #include <crypto/ecdsa.h>
@@ -129,7 +131,6 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
 
 // this is called before a request is send
 int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  UNUSED_VAR(response);
   if (ctx->len > 1) return 0; // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
@@ -166,6 +167,114 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
     ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) sb->data, sb->len));
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
+    int        ret       = 0;
+    d_token_t* tx_params = d_get(req, K_PARAMS);
+    if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+      return ctx_set_error(ctx, "invalid params", -1);
+
+    char*      from_block;
+    d_token_t* frmblk = d_get(tx_params + 1, K_FROM_BLOCK);
+    if (!frmblk) {
+      from_block = NULL;
+    } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
+      from_block = stru64(d_long(frmblk));
+    } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
+      from_block = strdup(d_string(frmblk));
+    } else {
+      ret = ctx_set_error(ctx, "invalid params (fromblock)", -1);
+      goto ERR_FLT;
+    }
+
+    char*      to_block;
+    d_token_t* toblk = d_get(tx_params + 1, K_TO_BLOCK);
+    if (!toblk) {
+      to_block = NULL;
+    } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
+      to_block = stru64(d_long(toblk));
+    } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
+      to_block = strdup(d_string(toblk));
+    } else {
+      ret = ctx_set_error(ctx, "invalid params (toblock)", -1);
+      goto ERR_FLT1;
+    }
+
+    char*      jaddr;
+    d_token_t* addrs = d_get(tx_params + 1, K_ADDRESS);
+    if (addrs == NULL) {
+      jaddr = NULL;
+    } else if (filter_valid_addrs(addrs)) {
+      jaddr = (d_type(addrs) == T_BYTES && d_len(addrs) == 20) ? stru64(d_long(addrs)) : strdup(d_string(addrs));
+      if (jaddr == NULL) {
+        ret = ctx_set_error(ctx, "ENOMEM", -1);
+        goto ERR_FLT2;
+      }
+    } else {
+      ret = ctx_set_error(ctx, "invalid params (address)", -1);
+      goto ERR_FLT2;
+    }
+
+    char*      jtopics;
+    d_token_t* topics = d_get(tx_params + 1, K_TOPICS);
+    if (topics == NULL) {
+      jtopics = NULL;
+    } else if (filter_valid_topics(topics)) {
+      jtopics = (d_type(topics) == T_BYTES && d_len(topics) == 20) ? stru64(d_long(topics)) : strdup(d_string(topics));
+      if (jtopics == NULL) {
+        ret = ctx_set_error(ctx, "ENOMEM", -1);
+        goto ERR_FLT3;
+      }
+    } else {
+      ret = ctx_set_error(ctx, "invalid params (topics)", -1);
+      goto ERR_FLT3;
+    }
+
+    in3_filter_opt_t* fopt = filter_new_opt();
+    if (!fopt) {
+      ret = ctx_set_error(ctx, "filter option creation failed", -1);
+      goto ERR_FLT4;
+    }
+    fopt->from_block = from_block;
+    fopt->to_block   = to_block;
+    fopt->addresses  = jaddr;
+    fopt->topics     = jtopics;
+
+    size_t id = filter_add(ctx->client, FILTER_EVENT, fopt);
+    if (!id) {
+      ret = ctx_set_error(ctx, "filter option creation failed", -1);
+      goto ERR_FLT5;
+    }
+
+    // prepare response-object
+    *response = _malloc(sizeof(in3_response_t));
+    sb_init(&response[0]->result);
+    sb_init(&response[0]->error);
+    sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": \"");
+    char* strid = stru64(id);
+    sb_add_chars(&response[0]->result, strid);
+    free(strid);
+    sb_add_chars(&response[0]->result, "\"}");
+    return 0;
+
+  ERR_FLT5:
+    fopt->release(fopt);
+  ERR_FLT4:
+    free(jtopics);
+  ERR_FLT3:
+    free(jaddr);
+  ERR_FLT2:
+    free(to_block);
+  ERR_FLT1:
+    free(from_block);
+  ERR_FLT:
+    return ret;
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
+
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newPendingTransactionFilter") == 0) {
+
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_uninstallFilter") == 0) {
+
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
   }
   return 0;
 }

@@ -201,22 +201,10 @@ typedef struct in3_filter_opt_t_ {
   char* to_block;
 
   /** addresses from which logs should originate: (optional) - do NOT modify directly, use add_address() method */
-  address_t* addresses;
-
-  /** counter for addresses */
-  size_t address_count;
+  char* addresses;
 
   /** array of 32 bytes topics: (optional) - do NOT modify directly, use add_topic() method */
-  bytes32_t** topics;
-
-  /** counter for topics */
-  size_t topic_count;
-
-  /** method to add address to filter options */
-  bool (*add_address)(struct in3_filter_opt_t_* fopt, address_t address);
-
-  /** method to add topics: topics are order-dependent and NULL is a valid value */
-  bool (*add_topic)(struct in3_filter_opt_t_* fopt, bytes32_t* topic);
+  char* topics;
 
   /** method to release owned resources */
   void (*release)(struct in3_filter_opt_t_* fopt);

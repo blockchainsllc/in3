@@ -1,6 +1,7 @@
 #include "./eth_api.h"
 #include "../core/client/context.h"
 #include "../core/client/keys.h"
+#include "../eth_basic/filter.h"
 #include "../eth_nano/rlp.h"
 #include "abi.h"
 #include <errno.h>
@@ -329,7 +330,6 @@ static eth_log_t* parse_logs(d_token_t* result) {
 
 eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
   rpc_init;
-  bytes_t b;
   sb_add_char(params, '{');
   sb_add_chars(params, "\"fromBlock\":\"");
   (fopt->from_block) ? sb_add_chars(params, fopt->from_block) : sb_add_chars(params, "latest");
@@ -339,32 +339,18 @@ eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
   sb_add_char(params, '\"');
 
   if (fopt->addresses) {
-    sb_add_chars(params, ",\"address\":[");
-    for (size_t i = 0; i < fopt->address_count; i++) {
-      if (i > 0)
-        sb_add_char(params, ',');
-      b = bytes(fopt->addresses[i], 20);
-      sb_add_bytes(params, "", &b, 1, false);
-    }
-    sb_add_chars(params, "]");
+    sb_add_chars(params, ",\"address\": \"");
+    sb_add_chars(params, fopt->addresses);
+    sb_add_char(params, '\"');
   }
   if (fopt->topics) {
-    sb_add_chars(params, ",\"topics\": [");
-    for (size_t i = 0; i < fopt->topic_count; i++) {
-      if (i > 0)
-        sb_add_char(params, ',');
-      if (fopt->topics[i] != NULL) {
-        b = bytes(*(fopt->topics[i]), 32);
-        sb_add_bytes(params, "", &b, 1, false);
-      } else {
-        sb_add_chars(params, "null");
-      }
-    }
-    sb_add_char(params, ']');
+    sb_add_chars(params, ",\"topics\": \"");
+    sb_add_chars(params, fopt->topics);
+    sb_add_char(params, '\"');
   }
   sb_add_char(params, '}');
-  printf("Params: %s\n", params->data);
   rpc_exec("eth_getLogs", eth_log_t*, parse_logs(result));
+  // printf("Params: %s\n", params->data);
 }
 
 static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
@@ -474,4 +460,51 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 500, 6);
   sb_free(params);
   return data;
+}
+
+size_t eth_newFilter(in3_t* in3, in3_filter_opt_t* options) {
+  return filter_add(in3, FILTER_EVENT, options);
+}
+
+size_t eth_newBlockFilter(in3_t* in3) {
+  return filter_add(in3, FILTER_BLOCK, NULL);
+}
+
+size_t eth_newPendingTransactionFilter(in3_t* in3) {
+  return filter_add(in3, FILTER_PENDING, NULL);
+}
+
+bool eth_uninstallFilter(in3_t* in3, size_t id) {
+  return filter_remove(in3, id);
+}
+
+int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
+  if (id == 0 || id > in3->filters->count)
+    return -1;
+
+  uint64_t      blkno = eth_blockNumber(in3);
+  in3_filter_t* f     = in3->filters->array[id - 1];
+  switch (f->type) {
+    case FILTER_EVENT:
+      *logs         = eth_getLogs(in3, f->options);
+      f->last_block = blkno + 1;
+      return 0;
+    case FILTER_BLOCK:
+      if (blkno > f->last_block) {
+        int blkcount  = blkno - f->last_block;
+        *block_hashes = malloc(sizeof(bytes32_t) * blkcount);
+        for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
+          eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
+          memcpy((*block_hashes)[j], blk->hash, 32);
+          free(blk);
+        }
+        f->last_block = blkno;
+        return blkcount;
+      } else {
+        *block_hashes = NULL;
+        return 0;
+      }
+    default:
+      return -2;
+  }
 }
