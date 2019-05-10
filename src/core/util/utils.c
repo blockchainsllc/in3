@@ -160,7 +160,7 @@ int min_bytes_len(uint64_t val) {
   return 8;
 }
 
-char* strdup(const char* str) {
+char* _strdup(const char* str) {
   char* s = malloc(strlen(str) + 1);
   if (s) strcpy(s, str);
   return s;

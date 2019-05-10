@@ -72,7 +72,7 @@ int hash_cmp(uint8_t* a, uint8_t* b);
 /** duplicate the string */
 char* _strdupn(char* src, int len);
 
-char* strdup(const char* str);
+char* _strdup(const char* str);
 
 char* stru64(uint64_t u64);
 

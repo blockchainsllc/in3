@@ -180,7 +180,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
       from_block = stru64(d_long(frmblk));
     } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
-      from_block = strdup(d_string(frmblk));
+      from_block = _strdup(d_string(frmblk));
     } else {
       ret = ctx_set_error(ctx, "invalid params (fromblock)", -1);
       goto ERR_FLT;
@@ -193,7 +193,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
       to_block = stru64(d_long(toblk));
     } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
-      to_block = strdup(d_string(toblk));
+      to_block = _strdup(d_string(toblk));
     } else {
       ret = ctx_set_error(ctx, "invalid params (toblock)", -1);
       goto ERR_FLT1;
@@ -204,7 +204,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (addrs == NULL) {
       jaddr = NULL;
     } else if (filter_valid_addrs(addrs)) {
-      jaddr = (d_type(addrs) == T_BYTES && d_len(addrs) == 20) ? stru64(d_long(addrs)) : strdup(d_string(addrs));
+      jaddr = (d_type(addrs) == T_BYTES && d_len(addrs) == 20) ? stru64(d_long(addrs)) : _strdup(d_string(addrs));
       if (jaddr == NULL) {
         ret = ctx_set_error(ctx, "ENOMEM", -1);
         goto ERR_FLT2;
@@ -219,7 +219,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (topics == NULL) {
       jtopics = NULL;
     } else if (filter_valid_topics(topics)) {
-      jtopics = (d_type(topics) == T_BYTES && d_len(topics) == 20) ? stru64(d_long(topics)) : strdup(d_string(topics));
+      jtopics = (d_type(topics) == T_BYTES && d_len(topics) == 20) ? stru64(d_long(topics)) : _strdup(d_string(topics));
       if (jtopics == NULL) {
         ret = ctx_set_error(ctx, "ENOMEM", -1);
         goto ERR_FLT3;
