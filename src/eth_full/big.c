@@ -79,7 +79,7 @@ void big_shift_right(uint8_t* a, wlen_t len, int bits) {
   }
   if ((r = (bits - r) >> 3)) {
     for (i = len - 1; i >= 0; i--)
-      a[i] = i - r >= 0 ? a[i - r] : 0;
+      a[i] = (i - r) >= 0 ? a[i - r] : 0;
   }
 }
 
