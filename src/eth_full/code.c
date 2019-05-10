@@ -15,8 +15,8 @@ bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* ad
   int        i;
   if (accounts) {
     for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-      if (memcmp(d_get_bytesk(t, K_ADDRESS)->data, address, 20) == 0) {
-        code_hash = d_get_bytesk(t, K_CODE_HASH);
+      if (memcmp(d_get_byteskl(t, K_ADDRESS, 20)->data, address, 20) == 0) {
+        code_hash = d_get_byteskl(t, K_CODE_HASH, 32);
         res       = d_get_bytesk(t, K_CODE);
         if (res) {
           sha3_to(res, tmp);

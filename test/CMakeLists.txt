@@ -11,6 +11,22 @@ target_link_libraries(vmrunner core eth_full)
 add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
 target_link_libraries(test_libcurl core eth_full transport_curl)
 
+add_executable(test_key_hash 
+                test_key_hash.c 
+                unity/unity.c
+                ../src/core/util/mem.c 
+                ../src/core/util/data.c 
+                ../src/core/util/bytes.c 
+                ../src/core/util/stringbuilder.c 
+                ../src/core/util/utils.c 
+                ../src/core/crypto/sha3.c 
+                ../src/core/crypto/memzero.c)
+add_test(
+    NAME              "in3_test_key_hash" 
+    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
 file(GLOB files "testdata/requests/*.json")
 foreach(file ${files})
   get_filename_component(testname "${file}" NAME_WE)

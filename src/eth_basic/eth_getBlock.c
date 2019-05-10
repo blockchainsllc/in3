@@ -18,7 +18,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
   d_token_t *transactions, *t, *t2, *tx_hashs, *txh = NULL;
   bytes_t    tmp, *bhash;
   uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
-  bhash              = d_get_bytesk(vc->result, K_HASH);
+  bhash              = d_get_byteskl(vc->result, K_HASH, 32);
   if (block_hash && !b_cmp(block_hash, bhash))
     return vc_err(vc, "The transactionHash does not match the required");
 
@@ -31,17 +31,17 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
 
   // verify the blockdata
   bytes_t* header_from_data = serialize_block_header(vc->result);
-  if (eth_verify_blockheader(vc, header_from_data, d_get_bytesk(vc->result, K_HASH))) {
+  if (eth_verify_blockheader(vc, header_from_data, d_get_byteskl(vc->result, K_HASH, 32))) {
     b_free(header_from_data);
     return vc_err(vc, "invalid blockheader!");
   }
   b_free(header_from_data);
 
   // check additional props
-  if ((t = d_get(vc->result, K_MINER)) && (t2 = d_get(vc->result, K_AUTHOR)) && !d_eq(t, t2))
+  if ((t = d_getl(vc->result, K_MINER, 20)) && (t2 = d_getl(vc->result, K_AUTHOR, 20)) && !d_eq(t, t2))
     return vc_err(vc, "invalid author");
 
-  if ((t = d_get(vc->result, K_MIX_HASH)) && (t2 = d_get(vc->result, K_SEAL_FIELDS))) {
+  if ((t = d_getl(vc->result, K_MIX_HASH, 32)) && (t2 = d_get(vc->result, K_SEAL_FIELDS))) {
     if (rlp_decode(d_get_bytes_at(t2, 0), 0, &tmp) != 1 || !b_cmp(d_bytes(t), &tmp))
       return vc_err(vc, "invalid mixhash");
     if (rlp_decode(d_get_bytes_at(t2, 1), 0, &tmp) != 1 || !b_cmp(d_get_bytesk(vc->result, K_NONCE), &tmp))
@@ -69,7 +69,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
 
       if (eth_verify_tx_values(vc, t, tx)) res = -1;
 
-      if ((t2 = d_get(t, K_BLOCK_HASH)) && !b_cmp(d_bytes(t2), bhash))
+      if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !b_cmp(d_bytes(t2), bhash))
         res = vc_err(vc, "Wrong Blockhash in tx");
 
       if ((t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != bnumber)
@@ -89,7 +89,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
       if (h) b_free(h);
     }
 
-    bytes_t t_root = d_to_bytes(d_get(vc->result, K_TRANSACTIONS_ROOT));
+    bytes_t t_root = d_to_bytes(d_getl(vc->result, K_TRANSACTIONS_ROOT, 32));
 
     if (t_root.len != 32 || memcmp(t_root.data, trie->root, 32))
       res = vc_err(vc, "Wrong Transaction root");

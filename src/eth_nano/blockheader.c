@@ -194,7 +194,7 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
     int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
     for (i = 0, sig = signatures + 1; i < d_len(signatures); i++, sig = d_next(sig)) {
       // only if this signature has the correct blockhash and blocknumber we will verify it.
-      if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_bytesk(sig, K_BLOCK_HASH)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
+      if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
