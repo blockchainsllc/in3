@@ -1,33 +1,21 @@
-cmake_minimum_required (VERSION 2.8)
-project (in3-wasm)
+include(${PROJECT_SOURCE_DIR}/src/core/compiler.cmake)
 
-set(CMAKE_EXECUTABLE_SUFFIX ".bc")
+get_property(DEAD_STRIP_LINKER_OPT GLOBAL PROPERTY DEAD_STRIP_LINKER_OPT)
 
-set(COMMON_CXX_FLAGS "-std=c++14 -Wall -Werror -Wno-c++11-narrowing -Wno-unused-local-typedef -pthread")
-set(WASM_CXX_FLAGS "-s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" -s DEMANGLE_SUPPORT=1")
-set(EMSCRIPTEN_OUT_FLAGS "--emrun")
+option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 
-# Set compile flags for emscripten clang
-if(UNIX)
-  set(CMAKE_CXX_FLAGS
-    "$ENV{CXXFLAGS} ${COMMON_CXX_FLAGS} ${WASM_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS_RELEASE
-    "$ENV{CXXFLAGS} -O3 -fomit-frame-pointer ${COMMON_CXX_FLAGS} ${WASM_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS_DEBUG
-    "$ENV{CXXFLAGS} -Og -fno-omit-frame-pointer -g -ggdb ${COMMON_CXX_FLAGS} ${WASM_CXX_FLAGS}")
-endif()
+add_definitions(-std=c99 -O3 -s FETCH=1)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public")
+add_executable(a wasm.c)
+target_link_libraries (a core eth_full ${DEAD_STRIP_LINKER_OPT})
 
-add_executable(in3-wasm wasm.c)
-
-
-target_link_libraries (in3-wasm core)
-set_property(TARGET in3-wasm PROPERTY C_STANDARD 99)
-
-#add_custom_target(
-#  in3-wasm.html
-#  "cp ${CMAKE_CURRENT_SOURCE_DIR}/test.jpg ${CMAKE_CURRENT_BINARY_DIR}/test.jpg && ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_BINARY_DIR}/imageprocessing-wasm.bc ${JPEG_LIBRARY}/libjpeg.dylib -o ${CMAKE_CURRENT_BINARY_DIR}/imageprocessing-wasm.html -s BINARYEN=1 -s \"BINARYEN_METHOD='native-wasm'\" -s DEMANGLE_SUPPORT=1 ${EMSCRIPTEN_OUT_FLAGS}"
-#  DEPENDS imageprocessing-wasm
-#  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-#  VERBATIM
-#  USES_TERMINAL)
+if(JS_ONLY)
+	message(STATUS "Setting compilation target to native JavaScript")
+	set(CMAKE_EXECUTABLE_SUFFIX ".js")
+	set_target_properties(a PROPERTIES LINK_FLAGS "-s EXPORTED_FUNCTIONS='[_main]'")
+else(JS_ONLY)
+	message(STATUS "Setting compilation target to WASM")
+	set(CMAKE_EXECUTABLE_SUFFIX ".wasm.js")
+	set_target_properties(a PROPERTIES LINK_FLAGS "-s WASM=1 -s BINARYEN_METHOD='native-wasm' -s EXPORTED_FUNCTIONS='[_main]'")
+endif(JS_ONLY)
