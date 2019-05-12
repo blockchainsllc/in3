@@ -32,7 +32,7 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
   call_request_t* req = parseSignature(fn_sig);
   if (req->in_data->type == A_TUPLE) {
     json_ctx_t* in_data = parse_json(args);
-    if (set_data(req, in_data->result, req->in_data) < 0) { printf("Error: could not set the data"); }
+    if (set_data(req, in_data->result, req->in_data) < 0) { debug_log("Error: could not set the data"); }
     free_json(in_data);
   }
   sb_t* params = sb_new("");
@@ -109,7 +109,7 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
 
 // void CB_printVal(const char* strVal, void* pUserData)
 // {
-//   printf("%s\n", strVal);
+//   debug_log("%s\n", strVal);
 // }
 
 // void print_val(d_token_t* t) 
