@@ -203,8 +203,8 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     d_token_t* addrs = d_get(tx_params + 1, K_ADDRESS);
     if (addrs == NULL) {
       jaddr = NULL;
-    } else if (filter_valid_addrs(addrs)) {
-      jaddr = (d_type(addrs) == T_BYTES && d_len(addrs) == 20) ? stru64(d_long(addrs)) : _strdup(d_string(addrs));
+    } else if (filter_addrs_valid(addrs)) {
+      jaddr = (d_type(addrs) == T_BYTES && d_len(addrs) == 20) ? stru64(d_long(addrs)) : d_create_json(addrs);
       if (jaddr == NULL) {
         ret = ctx_set_error(ctx, "ENOMEM", -1);
         goto ERR_FLT2;
@@ -218,8 +218,8 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     d_token_t* topics = d_get(tx_params + 1, K_TOPICS);
     if (topics == NULL) {
       jtopics = NULL;
-    } else if (filter_valid_topics(topics)) {
-      jtopics = (d_type(topics) == T_BYTES && d_len(topics) == 20) ? stru64(d_long(topics)) : _strdup(d_string(topics));
+    } else if (filter_topics_valid(topics)) {
+      jtopics = (d_type(topics) == T_BYTES && d_len(topics) == 20) ? stru64(d_long(topics)) : d_create_json(topics);
       if (jtopics == NULL) {
         ret = ctx_set_error(ctx, "ENOMEM", -1);
         goto ERR_FLT3;
