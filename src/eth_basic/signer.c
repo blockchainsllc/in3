@@ -286,8 +286,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       return ctx_set_error(ctx, "invalid params", -1);
 
     uint64_t id = d_get_longk(tx_params + 1, K_ID);
-    if (!id)
-      return ctx_set_error(ctx, "invalid params (id)", -1);
+    if (!id) return ctx_set_error(ctx, "invalid params (id)", -1);
 
     *response = _malloc(sizeof(in3_response_t));
     sb_init(&response[0]->result);
@@ -298,6 +297,117 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": false");
     }
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
+    d_token_t* tx_params = d_get(req, K_PARAMS);
+    if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
+      return ctx_set_error(ctx, "invalid params", -1);
+
+    uint64_t id = d_get_long_at(tx_params, 0);
+    if (id == 0 || id > ctx->client->filters->count)
+      return ctx_set_error(ctx, "invalid params (id)", -1);
+
+    in3_ctx_t* ctx_ = in3_client_rpc_ctx(ctx->client, "eth_blockNumber", "[]");
+    if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+      free_ctx(ctx_);
+      return ctx_set_error(ctx, "internal error (eth_blockNumber)", -1);
+    }
+    uint64_t blkno = d_get_longk(ctx_->responses[0], K_RESULT);
+    free_ctx(ctx_);
+
+    in3_filter_t*     f    = ctx->client->filters->array[id - 1];
+    in3_filter_opt_t* fopt = f->options;
+    switch (f->type) {
+      case FILTER_EVENT: {
+        sb_t* params = sb_new("[");
+        sb_add_char(params, '{');
+        sb_add_chars(params, "\"fromBlock\":\"");
+        (fopt->from_block) ? sb_add_chars(params, fopt->from_block) : sb_add_chars(params, "latest");
+        sb_add_chars(params, "\",");
+        sb_add_chars(params, "\"toBlock\":\"");
+        (fopt->to_block) ? sb_add_chars(params, fopt->to_block) : sb_add_chars(params, "latest");
+        sb_add_char(params, '\"');
+
+        if (fopt->addresses) {
+          sb_add_chars(params, ",\"address\": \"");
+          sb_add_chars(params, fopt->addresses);
+          sb_add_char(params, '\"');
+        }
+        if (fopt->topics) {
+          sb_add_chars(params, ",\"topics\": \"");
+          sb_add_chars(params, fopt->topics);
+          sb_add_char(params, '\"');
+        }
+        sb_add_char(params, '}');
+        printf("Params: %s\n", params->data);
+
+        ctx_ = in3_client_rpc_ctx(ctx->client, "eth_getLogs", sb_add_char(params, ']')->data);
+        sb_free(params);
+        if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+          free_ctx(ctx_);
+          return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
+        }
+
+        d_token_t* r = d_get(ctx_->responses[0], K_RESULT);
+        if (!r) {
+          free_ctx(ctx_);
+          return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
+        }
+
+        *response = _malloc(sizeof(in3_response_t));
+        sb_init(&response[0]->result);
+        sb_init(&response[0]->error);
+        sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": ");
+        char* jr = d_create_json(r);
+        sb_add_chars(&response[0]->result, jr);
+        free(r);
+        sb_add_chars(&response[0]->result, " }");
+
+        free_ctx(ctx_);
+        f->last_block = blkno + 1;
+        return 0;
+      }
+      case FILTER_BLOCK:
+        if (blkno > f->last_block) {
+          *response = _malloc(sizeof(in3_response_t));
+          sb_init(&response[0]->result);
+          sb_init(&response[0]->error);
+          sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": [");
+
+          char params[37] = {0};
+          for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
+            sprintf(params, "[\"0x%" PRIx64 "\", true]", i);
+            ctx_ = in3_client_rpc_ctx(ctx->client, "eth_getBlockByNumber", params);
+            if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+              free_ctx(ctx_);
+              return ctx_set_error(ctx, "internal error (eth_getBlockByNumber)", -1);
+            }
+            d_token_t* res = d_get(ctx_->responses[0], K_RESULT);
+            if (res == NULL || d_type(res) == T_NULL) {
+              // error or block doesn't exist
+              continue;
+            }
+            d_token_t* hash  = d_get(res, K_HASH);
+            char       h[67] = "0x";
+            bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
+            if (j != 0)
+              sb_add_char(&response[0]->result, ',');
+            sb_add_char(&response[0]->result, '"');
+            sb_add_chars(&response[0]->result, h);
+            sb_add_char(&response[0]->result, '"');
+            free_ctx(ctx_);
+          }
+          sb_add_chars(&response[0]->result, "]}");
+          f->last_block = blkno;
+          return 0;
+        } else {
+          *response = _malloc(sizeof(in3_response_t));
+          sb_init(&response[0]->result);
+          sb_init(&response[0]->error);
+          sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": [] }");
+          return 0;
+        }
+      default:
+        return ctx_set_error(ctx, "internal error", -1);
+    }
   }
   return 0;
 }
