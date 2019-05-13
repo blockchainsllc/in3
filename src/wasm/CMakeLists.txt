@@ -4,9 +4,9 @@ get_property(DEAD_STRIP_LINKER_OPT GLOBAL PROPERTY DEAD_STRIP_LINKER_OPT)
 
 option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 
-add_definitions(-std=c99 -O3 -s FETCH=1)
+add_definitions(-std=c99 -O3 -s FETCH=1 --bind)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public")
 add_executable(a wasm.c)
 target_link_libraries (a core eth_full ${DEAD_STRIP_LINKER_OPT})
 
