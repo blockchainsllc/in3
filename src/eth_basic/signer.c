@@ -241,11 +241,10 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     size_t id = filter_add(ctx->client, FILTER_EVENT, fopt);
     if (!id) {
-      ret = ctx_set_error(ctx, "filter option creation failed", -1);
+      ret = ctx_set_error(ctx, "filter creation failed", -1);
       goto ERR_FLT5;
     }
 
-    // prepare response-object
     *response = _malloc(sizeof(in3_response_t));
     sb_init(&response[0]->result);
     sb_init(&response[0]->error);
