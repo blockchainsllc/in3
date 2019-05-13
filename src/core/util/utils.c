@@ -168,6 +168,6 @@ char* _strdup(const char* str) {
 
 char* stru64(uint64_t u64) {
   char* tmp = malloc(23); // Max 18446744073709551615
-  if (tmp) sprintf(tmp, "0x%" PRIu64, u64);
+  if (tmp) sprintf(tmp, "0x%" PRIx64, u64);
   return tmp;
 }
