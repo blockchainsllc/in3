@@ -90,7 +90,7 @@ bool filter_remove(in3_t* in3, size_t id) {
   return true;
 }
 
-bool filter_valid_addrs(d_token_t* addr) {
+bool filter_addrs_valid(d_token_t* addr) {
   if (d_type(addr) == T_BYTES && d_len(addr) == 20)
     return true;
   else if (d_type(addr) != T_ARRAY)
@@ -103,7 +103,7 @@ bool filter_valid_addrs(d_token_t* addr) {
   return true;
 }
 
-bool filter_valid_topics(d_token_t* topics) {
+bool filter_topics_valid(d_token_t* topics) {
   if (d_type(topics) == T_BYTES && d_len(topics) == 32)
     return true;
   else if (!topics || d_type(topics) != T_ARRAY)
