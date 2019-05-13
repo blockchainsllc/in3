@@ -282,11 +282,12 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     return ctx_set_error(ctx, "pending filter not supported", -1);
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_uninstallFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+    if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
       return ctx_set_error(ctx, "invalid params", -1);
 
-    uint64_t id = d_get_longk(tx_params + 1, K_ID);
-    if (!id) return ctx_set_error(ctx, "invalid params (id)", -1);
+    uint64_t id = d_get_long_at(tx_params, 0);
+    if (id == 0 || id > ctx->client->filters->count)
+      return ctx_set_error(ctx, "invalid params (id)", -1);
 
     *response = _malloc(sizeof(in3_response_t));
     sb_init(&response[0]->result);
