@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
 #if defined(_WIN32) || defined(WIN32)
     Sleep(timeout);
 #else
-    usleep(timeout * 1000); // usleep takes sleep time in us (1 millionth of a second)
+    nanosleep((const struct timespec[]){{0, timeout * 1000000L}}, NULL);
 #endif
   }
 }

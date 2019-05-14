@@ -11,7 +11,7 @@
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #else
-#include <unistd.h>
+#include <time.h>
 #endif
 
 // create the params as stringbuilder
@@ -416,7 +416,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
 #else
-        usleep(timeout * 1000); // usleep takes sleep time in us (1 millionth of a second)
+        nanosleep((const struct timespec[]){{0, timeout * 1000000L}}, NULL);
 #endif
         return wait_for_receipt(in3, params, timeout + timeout, count - 1);
       } else {
