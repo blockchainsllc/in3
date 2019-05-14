@@ -173,76 +173,19 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid params", -1);
 
-    char*      from_block;
-    d_token_t* frmblk = d_get(tx_params + 1, K_FROM_BLOCK);
-    if (!frmblk) {
-      from_block = NULL;
-    } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
-      from_block = stru64(d_long(frmblk));
-    } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
-      from_block = _strdup(d_string(frmblk));
-    } else {
-      ret = ctx_set_error(ctx, "invalid params (fromblock)", -1);
-      goto ERR_FLT;
-    }
-
-    char*      to_block;
-    d_token_t* toblk = d_get(tx_params + 1, K_TO_BLOCK);
-    if (!toblk) {
-      to_block = NULL;
-    } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
-      to_block = stru64(d_long(toblk));
-    } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
-      to_block = _strdup(d_string(toblk));
-    } else {
-      ret = ctx_set_error(ctx, "invalid params (toblock)", -1);
-      goto ERR_FLT1;
-    }
-
-    char*      jaddr;
-    d_token_t* addrs = d_get(tx_params + 1, K_ADDRESS);
-    if (addrs == NULL) {
-      jaddr = NULL;
-    } else if (filter_addrs_valid(addrs)) {
-      jaddr = d_create_json(addrs);
-      if (jaddr == NULL) {
-        ret = ctx_set_error(ctx, "ENOMEM", -1);
-        goto ERR_FLT2;
-      }
-    } else {
-      ret = ctx_set_error(ctx, "invalid params (address)", -1);
-      goto ERR_FLT2;
-    }
-
-    char*      jtopics;
-    d_token_t* topics = d_get(tx_params + 1, K_TOPICS);
-    if (topics == NULL) {
-      jtopics = NULL;
-    } else if (filter_topics_valid(topics)) {
-      jtopics = d_create_json(topics);
-      if (jtopics == NULL) {
-        ret = ctx_set_error(ctx, "ENOMEM", -1);
-        goto ERR_FLT3;
-      }
-    } else {
-      ret = ctx_set_error(ctx, "invalid params (topics)", -1);
-      goto ERR_FLT3;
-    }
-
     in3_filter_opt_t* fopt = filter_opt_new();
-    if (!fopt) {
-      ret = ctx_set_error(ctx, "filter option creation failed", -1);
-      goto ERR_FLT4;
+    if (!fopt) return ctx_set_error(ctx, "filter option creation failed", -1);
+
+    ret = fopt->from_json(fopt, tx_params);
+    if (ret != 0) {
+      fopt->release(fopt);
+      return ctx_set_error(ctx, "filter option parsing failed", -1);
     }
-    fopt->from_block = from_block;
-    fopt->to_block   = to_block;
-    fopt->addresses  = jaddr;
-    fopt->topics     = jtopics;
 
     size_t id = filter_add(ctx->client, FILTER_EVENT, fopt);
     if (!id) {
-      ret = ctx_set_error(ctx, "filter creation failed", -1);
-      goto ERR_FLT5;
+      fopt->release(fopt);
+      return ctx_set_error(ctx, "filter creation failed", -1);
     }
 
     *response = _malloc(sizeof(in3_response_t));
@@ -254,19 +197,6 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     free(strid);
     sb_add_chars(&response[0]->result, "\"}");
     return 0;
-
-  ERR_FLT5:
-    fopt->release(fopt);
-  ERR_FLT4:
-    free(jtopics);
-  ERR_FLT3:
-    free(jaddr);
-  ERR_FLT2:
-    free(to_block);
-  ERR_FLT1:
-    free(from_block);
-  ERR_FLT:
-    return ret;
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
     size_t id = filter_add(ctx->client, FILTER_BLOCK, NULL);
     if (!id) return ctx_set_error(ctx, "filter creation failed", -1);
@@ -318,8 +248,9 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     in3_filter_opt_t* fopt = f->options;
     switch (f->type) {
       case FILTER_EVENT: {
-        sb_t* params = fopt->to_json_str(fopt);
-        ctx_ = in3_client_rpc_ctx(ctx->client, "eth_getLogs", sb_add_char(params, ']')->data);
+        sb_t* params = sb_new("[");
+        params       = fopt->to_json_str(fopt, params);
+        ctx_         = in3_client_rpc_ctx(ctx->client, "eth_getLogs", sb_add_char(params, ']')->data);
         sb_free(params);
         if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
           free_ctx(ctx_);

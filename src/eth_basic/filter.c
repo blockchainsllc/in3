@@ -13,9 +13,88 @@ static void filter_opt_release(in3_filter_opt_t* fopt) {
   _free(fopt);
 }
 
-static sb_t* filter_opt_to_json_str(in3_filter_opt_t* fopt) {
-  sb_t* sb = sb_new("[");
-  if (sb) {
+int filter_opt_from_json(struct in3_filter_opt_t_* fopt, d_token_t* tx_params) {
+  int        ret = 0;
+  char*      from_block;
+  d_token_t* frmblk = d_get(tx_params + 1, K_FROM_BLOCK);
+  if (!frmblk) {
+    from_block = NULL;
+  } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
+    from_block = stru64(d_long(frmblk));
+  } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
+    from_block = _strdup(d_string(frmblk));
+  } else {
+    ret = -2;
+    goto ERR_FLT;
+  }
+
+  char*      to_block;
+  d_token_t* toblk = d_get(tx_params + 1, K_TO_BLOCK);
+  if (!toblk) {
+    to_block = NULL;
+  } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
+    to_block = stru64(d_long(toblk));
+  } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
+    to_block = _strdup(d_string(toblk));
+  } else {
+    ret = -2;
+    goto ERR_FLT1;
+  }
+
+  char*      jaddr;
+  d_token_t* addrs = d_get(tx_params + 1, K_ADDRESS);
+  if (addrs == NULL) {
+    jaddr = NULL;
+  } else if (filter_addrs_valid(addrs)) {
+    jaddr = d_create_json(addrs);
+    if (jaddr == NULL) {
+      ret = -1;
+      goto ERR_FLT2;
+    }
+  } else {
+    ret = -2;
+    goto ERR_FLT2;
+  }
+
+  char*      jtopics;
+  d_token_t* topics = d_get(tx_params + 1, K_TOPICS);
+  if (topics == NULL) {
+    jtopics = NULL;
+  } else if (filter_topics_valid(topics)) {
+    jtopics = d_create_json(topics);
+    if (jtopics == NULL) {
+      ret = -1;
+      goto ERR_FLT3;
+    }
+  } else {
+    ret = -2;
+    goto ERR_FLT3;
+  }
+
+  if (!fopt) {
+    ret = -1;
+    goto ERR_FLT4;
+  }
+  fopt->from_block = from_block;
+  fopt->to_block   = to_block;
+  fopt->addresses  = jaddr;
+  fopt->topics     = jtopics;
+  return 0;
+
+ERR_FLT4:
+  free(jtopics);
+ERR_FLT3:
+  free(jaddr);
+ERR_FLT2:
+  free(to_block);
+ERR_FLT1:
+  free(from_block);
+ERR_FLT:
+  return ret;
+}
+
+static sb_t* filter_opt_to_json_str(in3_filter_opt_t* fopt, sb_t* sb) {
+  if (sb != NULL) {
     sb_add_char(sb, '{');
     sb_add_chars(sb, "\"fromBlock\":\"");
     (fopt->from_block) ? sb_add_chars(sb, fopt->from_block) : sb_add_chars(sb, "latest");
@@ -47,6 +126,7 @@ in3_filter_opt_t* filter_opt_new() {
   if (fopt) {
     fopt->addresses   = NULL;
     fopt->topics      = NULL;
+    fopt->from_json   = filter_opt_from_json;
     fopt->to_json_str = filter_opt_to_json_str;
     fopt->release     = filter_opt_release;
   }

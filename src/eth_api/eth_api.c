@@ -330,27 +330,8 @@ static eth_log_t* parse_logs(d_token_t* result) {
 
 eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
   rpc_init;
-  sb_add_char(params, '{');
-  sb_add_chars(params, "\"fromBlock\":\"");
-  (fopt->from_block) ? sb_add_chars(params, fopt->from_block) : sb_add_chars(params, "latest");
-  sb_add_chars(params, "\",");
-  sb_add_chars(params, "\"toBlock\":\"");
-  (fopt->to_block) ? sb_add_chars(params, fopt->to_block) : sb_add_chars(params, "latest");
-  sb_add_char(params, '\"');
-
-  if (fopt->addresses) {
-    sb_add_chars(params, ",\"address\": \"");
-    sb_add_chars(params, fopt->addresses);
-    sb_add_char(params, '\"');
-  }
-  if (fopt->topics) {
-    sb_add_chars(params, ",\"topics\": \"");
-    sb_add_chars(params, fopt->topics);
-    sb_add_char(params, '\"');
-  }
-  sb_add_char(params, '}');
+  params = fopt->to_json_str(fopt, params);
   rpc_exec("eth_getLogs", eth_log_t*, parse_logs(result));
-  // printf("Params: %s\n", params->data);
 }
 
 static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
