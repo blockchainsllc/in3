@@ -46,19 +46,6 @@ static void wait_for_event(void) {
 //   dbg_log("<--- k_sem_take(&client->sem -- POST\n");
 }
 
-// void printX(const char* format, ...)
-// {
-//   char str[256];
-//   va_list args;
-//   va_start(args, format);
-//   snprintf(str,sizeof(str),format, args);
-//   str[sizeof(str)-1]='\0';
-//   va_end (args);
-
-//   // printf(format,)
-//   // console_write(NULL,str,strlen(str));
-// }
-
 
 static char buffer[256];
 static unsigned short ixWrite;
@@ -76,82 +63,51 @@ void resetReceiveData(){
  *  @return -1 .. error (buffer is full/too small); 0 .. no data ready; 1 .. data available
  */
 int receiveData(){
-  int retval = -1;
+  int retval = 0; // go on reading
   char ch;
 
-  UartReadStatus_t readStatus = uart_getChar(&ch);
+  UartReadStatus_t readStatus;
 
-  switch (readStatus) {
-    case URS_err: {
-      dbg_log("<--- ERR could not read from console/ser'port: bytesRead = %d\n", bytesRead);
-      retval = -1; // err
-    } break;
-    case URS_dataReady:{
-      if (ixWrite >= sizeof(buffer)) { // cancel with error, if our buffer is full/too small
-        dbg_log("<--- ERR buffer too small\n");
+  do
+  {
+    readStatus = uart_getChar(&ch);
+
+    switch (readStatus) {
+      case URS_err: {
+        dbg_log("<--- ERR could not read from console/ser'port: readStatus = %d\n", readStatus);
         retval = -1; // err
-      }
-      if (ixWrite > 0 || ch == '~') { // we are in "read data"-mode
-        buffer[ixWrite++] = ch;
-        if (ch == '\n' || ch == '\r')                             // End Of Data
-        { 
-          dbg_log("<-- received EndOfData\n");
-          buffer[ixWrite-1] = '\0';
-          retval = 1; // OK, done receiving data
+      } break;
+      case URS_dataReady:{
+        if (ixWrite >= sizeof(buffer)) { // cancel with error, if our buffer is full/too small
+          dbg_log("<--- ERR buffer too small\n");
+          retval = -1; // err
         }
-      }
-    } break;
-    case URS_no_data: {
-      retval = 0; // no_data
-    } break;
-    default: // unknown return value
-      retval = -1;
-      break;
-  }
-
+        if (ixWrite > 0 || ch == '~') { // we are in "read data"-mode
+          buffer[ixWrite++] = ch;
+          if (ch == '\n' || ch == '\r')                             // End Of Data
+          { 
+            dbg_log("<-- received EndOfData\n");
+            buffer[ixWrite-1] = '\0';
+            retval = 1; // OK, done receiving data
+          } else {
+            printk("%c",ch);
+            retval = 0; // goon reading
+          }
+          
+        }
+      } break;
+      case URS_no_data: {
+        retval = 0; // no_data
+      } break;
+      default: // unknown return value
+        retval = -1;
+        break;
+    }
+  } while (     readStatus == URS_dataReady
+            &&  retval == 0 );
+    
+  printk("\n");
   return retval;
-}
-
-int receiveData_old() {
-  char ch;
-  printX("pre-console_read\n");
-  ssize_t bytesRead = console_read(NULL, &ch, 1);
-  printX("post-console_read: %d\n", bytesRead);
-  if (bytesRead < 0) {
-    if (bytesRead != -EAGAIN && bytesRead != -EBUSY) {
-      dbg_log("<--- ERR could not read from console/ser'port: bytesRead = %d\n", bytesRead);
-      return -1; // err
-    }
-  } else if (bytesRead > 0) {
-    // switch (ch) {
-    //   case '~': {
-    //     printf("^^^");
-    //   } break;
-    //   case '\r': {
-    //     printf("$r$\n");
-    //   } break;
-    //   case '\n': {
-    //     printf("$n$\n");
-    //   } break;
-    //   default: {
-    //     printf("%c", ch);
-    //   } break;
-    // }
-    if (ixWrite >= sizeof(buffer)) { // cancel with error, if our buffer is full/too small
-      dbg_log("<--- ERR buffer too small\n");
-      return -1; // err
-    }
-    if (ixWrite > 0 || ch == '~') { // we are in "read data"-mode
-      buffer[ixWrite++] = ch;
-      if (ch == '\n' || ch == '\r')                             // End Of Data
-      { 
-        dbg_log("<-- received EndOfData\n");
-        buffer[ixWrite-1] = '\0';
-        return 1; // OK, done receiving data
-      }
-    }
-  }
-  return 0;
 }
 
 int isReceivedData_Equal(char *strCMP) {
@@ -207,9 +163,7 @@ void do_action()
     {
       printX("AS_waitFor_Ready\n");
       
-      printX("pre-receive\n");
       int erg = receiveData();
-      printX("post-receive\n");
       switch (erg)
       {
         case -1: // err
@@ -250,7 +204,7 @@ void do_action()
       // ~[{"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}]\n
       printX("~[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[]}]\n");
       g_activityState = AS_waitFor_OkConnected;
-      timeOut = k_uptime_get_32() + 7000;
+      timeOut = k_uptime_get_32() + 10000;
     } break;
     case AS_waitFor_OkConnected:
     {
@@ -269,7 +223,7 @@ void do_action()
             dbg_log("<-- ok: received data is OK connected\n");
             resetReceiveData();      
             g_activityState = AS_waitFor_Response;
-            timeOut = k_uptime_get_32() + 7000;
+            timeOut = k_uptime_get_32() + 10000;
           } else {
             dbg_log("<-- err: received data not equal to OK connected: \"%s\"\n", &buffer[1]);
             g_activityState = AS_err;
@@ -467,24 +421,36 @@ static in3_state_t in3_TEST(void) {
   unsigned char recv_char;
 //   uart_poll_in(struct device *dev, unsigned char *p_char);
   printk("printk -- cntr = %u\n", cntr_TEST++);
-  unsigned char zchn;
-  UartReadStatus_t readStatus = uart_getChar(&zchn);
-  switch (readStatus)
-  {
-  case URS_dataReady:
-    printk("Received: %02x\n",zchn);
-    break;
-  case URS_no_data:
-    printk("(no data)\n");
-    break;
-  case URS_err:
-    printk("(error)\n");
-    break;
 
-  default:
-    printk("(UNKNOWN UART READ STATUS)\n");
-    break;
+  // unsigned char zchn;
+  // UartReadStatus_t readStatus = uart_getChar(&zchn);
+
+  int nLen = uart0_getNextDataSize();
+  printk("SzNextData: %d\n",nLen);
+  if (nLen >= 0){
+    int szBuf = nLen+1;
+    unsigned char *pBuf = k_malloc(nLen+1);
+    uart0_getNextData(pBuf, szBuf);
+    printk("Found data: %s\n", pBuf);
+    k_free(pBuf);
   }
+
+  // switch (readStatus)
+  // {
+  // case URS_dataReady:
+  //   printk("Received: %02x\n",zchn);
+  //   break;
+  // case URS_no_data:
+  //   printk("(no data)\n");
+  //   break;
+  // case URS_err:
+  //   printk("(error)\n");
+  //   break;
+
+  // default:
+  //   printk("(UNKNOWN UART READ STATUS)\n");
+  //   break;
+  // }
 
   // u32_t *size = (u32_t *)tx_buf;
 	// /* 4 bytes for the payload's length */
@@ -520,7 +486,7 @@ static in3_state_t run_state(in3_state_t state) {
   return state_table[state]();
 }
 
-// #define __MY_TEST__
+#define __MY_TEST__
 
 
 int in3_client_start(void) {
