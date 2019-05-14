@@ -10,6 +10,17 @@
 #include <stdio.h>
 #include <util/data.h>
 
+#define RESPONSE_START()                                                             \
+  do {                                                                               \
+    *response = _malloc(sizeof(in3_response_t));                                     \
+    sb_init(&response[0]->result);                                                   \
+    sb_init(&response[0]->error);                                                    \
+    sb_add_chars(&response[0]->result, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
+  } while (0)
+
+#define RESPONSE_END() \
+  do { sb_add_char(&response[0]->result, '}'); } while (0)
+
 static inline bytes_t get(d_token_t* t, uint16_t key) {
   return d_to_bytes(d_get(t, key));
 }
@@ -188,26 +199,25 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       return ctx_set_error(ctx, "filter creation failed", -1);
     }
 
-    *response = _malloc(sizeof(in3_response_t));
-    sb_init(&response[0]->result);
-    sb_init(&response[0]->error);
-    sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": \"");
+    RESPONSE_START();
+    sb_add_char(&response[0]->result, '"');
     char* strid = stru64(id);
     sb_add_chars(&response[0]->result, strid);
     free(strid);
-    sb_add_chars(&response[0]->result, "\"}");
+    sb_add_char(&response[0]->result, '"');
+    RESPONSE_END();
     return 0;
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
     size_t id = filter_add(ctx->client, FILTER_BLOCK, NULL);
     if (!id) return ctx_set_error(ctx, "filter creation failed", -1);
-    *response = _malloc(sizeof(in3_response_t));
-    sb_init(&response[0]->result);
-    sb_init(&response[0]->error);
-    sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": \"");
+
+    RESPONSE_START();
+    sb_add_char(&response[0]->result, '"');
     char* strid = stru64(id);
     sb_add_chars(&response[0]->result, strid);
     free(strid);
-    sb_add_chars(&response[0]->result, "\"}");
+    sb_add_char(&response[0]->result, '"');
+    RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newPendingTransactionFilter") == 0) {
     return ctx_set_error(ctx, "pending filter not supported", -1);
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_uninstallFilter") == 0) {
@@ -219,14 +229,9 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (id == 0 || id > ctx->client->filters->count)
       return ctx_set_error(ctx, "invalid params (id)", -1);
 
-    *response = _malloc(sizeof(in3_response_t));
-    sb_init(&response[0]->result);
-    sb_init(&response[0]->error);
-    if (filter_remove(ctx->client, id)) {
-      sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": true");
-    } else {
-      sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": false");
-    }
+    RESPONSE_START();
+    filter_remove(ctx->client, id) ? sb_add_chars(&response[0]->result, "true") : sb_add_chars(&response[0]->result, "false");
+    RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
@@ -256,21 +261,17 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
           free_ctx(ctx_);
           return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
         }
-
         d_token_t* r = d_get(ctx_->responses[0], K_RESULT);
         if (!r) {
           free_ctx(ctx_);
           return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
         }
 
-        *response = _malloc(sizeof(in3_response_t));
-        sb_init(&response[0]->result);
-        sb_init(&response[0]->error);
-        sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": ");
+        RESPONSE_START();
         char* jr = d_create_json(r);
         sb_add_chars(&response[0]->result, jr);
-        free(jr);
-        sb_add_chars(&response[0]->result, " }");
+        _free(jr);
+        RESPONSE_END();
 
         free_ctx(ctx_);
         f->last_block = blkno + 1;
@@ -278,12 +279,9 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       }
       case FILTER_BLOCK:
         if (blkno > f->last_block) {
-          *response = _malloc(sizeof(in3_response_t));
-          sb_init(&response[0]->result);
-          sb_init(&response[0]->error);
-          sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": [");
-
           char params[37] = {0};
+          RESPONSE_START();
+          sb_add_char(&response[0]->result, '[');
           for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
             sprintf(params, "[\"0x%" PRIx64 "\", true]", i);
             ctx_ = in3_client_rpc_ctx(ctx->client, "eth_getBlockByNumber", params);
@@ -306,14 +304,14 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
             sb_add_char(&response[0]->result, '"');
             free_ctx(ctx_);
           }
-          sb_add_chars(&response[0]->result, "]}");
+          sb_add_char(&response[0]->result, ']');
+          RESPONSE_END();
           f->last_block = blkno;
           return 0;
         } else {
-          *response = _malloc(sizeof(in3_response_t));
-          sb_init(&response[0]->result);
-          sb_init(&response[0]->error);
-          sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": [] }");
+          RESPONSE_START();
+          sb_add_chars(&response[0]->result, "[]");
+          RESPONSE_END();
           return 0;
         }
       default:
