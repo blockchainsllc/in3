@@ -357,7 +357,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
         sb_add_chars(&response[0]->result, "{ \"id\":1, \"jsonrpc\": \"2.0\", \"result\": ");
         char* jr = d_create_json(r);
         sb_add_chars(&response[0]->result, jr);
-        free(r);
+        free(jr);
         sb_add_chars(&response[0]->result, " }");
 
         free_ctx(ctx_);
