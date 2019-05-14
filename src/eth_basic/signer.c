@@ -201,7 +201,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     RESPONSE_START();
     sb_add_char(&response[0]->result, '"');
-    char* strid = stru64(id);
+    char* strid = hexstru64(id);
     sb_add_chars(&response[0]->result, strid);
     free(strid);
     sb_add_char(&response[0]->result, '"');
@@ -213,7 +213,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     RESPONSE_START();
     sb_add_char(&response[0]->result, '"');
-    char* strid = stru64(id);
+    char* strid = hexstru64(id);
     sb_add_chars(&response[0]->result, strid);
     free(strid);
     sb_add_char(&response[0]->result, '"');

@@ -20,7 +20,7 @@ int filter_opt_from_json(struct in3_filter_opt_t_* fopt, d_token_t* tx_params) {
   if (!frmblk) {
     from_block = NULL;
   } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
-    from_block = stru64(d_long(frmblk));
+    from_block = hexstru64(d_long(frmblk));
   } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
     from_block = _strdup(d_string(frmblk));
   } else {
@@ -33,7 +33,7 @@ int filter_opt_from_json(struct in3_filter_opt_t_* fopt, d_token_t* tx_params) {
   if (!toblk) {
     to_block = NULL;
   } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
-    to_block = stru64(d_long(toblk));
+    to_block = hexstru64(d_long(toblk));
   } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
     to_block = _strdup(d_string(toblk));
   } else {

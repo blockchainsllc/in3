@@ -74,7 +74,7 @@ char* _strdupn(char* src, int len);
 
 char* _strdup(const char* str);
 
-char* stru64(uint64_t u64);
+char* hexstru64(uint64_t u64);
 
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);

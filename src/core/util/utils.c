@@ -166,8 +166,8 @@ char* _strdup(const char* str) {
   return s;
 }
 
-char* stru64(uint64_t u64) {
-  char* tmp = malloc(23); // Max 18446744073709551615
+char* hexstru64(uint64_t u64) {
+  char* tmp = malloc(19); // Max 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
   if (tmp) sprintf(tmp, "0x%" PRIx64, u64);
   return tmp;
 }
