@@ -194,22 +194,28 @@ typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_
 
 /** filter options */
 typedef struct in3_filter_opt_t_ {
-  /** from block number: (optional, block no. as char*, default: "latest") - user owned (i.e. to be freed manually if allocated) */
+  /** from block number: (optional, block no. as char*, default: "latest") - will be freed in release() */
   char* from_block;
 
-  /** to block number: (optional, block no. as char*, default: "latest") - user owned (i.e. to be freed manually if allocated) */
+  /** to block number: (optional, block no. as char*, default: "latest") - will be freed in release() */
   char* to_block;
 
-  /** addresses from which logs should originate: (optional) - do NOT modify directly, use add_address() method */
+  /** addresses from which logs should originate: (optional) 
+   * MUST be a valid JSON string (incl. quotes) rep. of 20 bytes hex address or JSON array of such strings 
+   * will be freed in release()
+   */
   char* addresses;
 
-  /** array of 32 bytes topics: (optional) - do NOT modify directly, use add_topic() method */
+  /** array of 32 bytes topics: (optional) 
+   * MUST be a valid JSON string (incl. quotes) rep. of 32 bytes hex topic or JSON array of such strings 
+   * will be freed in release()
+   */
   char* topics;
 
-  /** method to create filter options from JSON token - to be freed by caller */
+  /** method to create filter options from JSON token - result to be freed by caller */
   int (*from_json)(struct in3_filter_opt_t_* fopt, d_token_t* tx_params);
 
-  /** method to get filter options as serialized JSON string - sb must have been initialized previously */
+  /** method to get filter options as serialized JSON string - sb MUST have been initialized previously and is to be freed by caller */
   sb_t* (*to_json_str)(struct in3_filter_opt_t_* fopt, sb_t* sb);
 
   /** method to release owned resources */

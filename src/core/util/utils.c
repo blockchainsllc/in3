@@ -161,13 +161,13 @@ int min_bytes_len(uint64_t val) {
 }
 
 char* _strdup(const char* str) {
-  char* s = malloc(strlen(str) + 1);
+  char* s = _malloc(strlen(str) + 1);
   if (s) strcpy(s, str);
   return s;
 }
 
 char* hexstru64(uint64_t u64) {
-  char* tmp = malloc(19); // Max 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  char* tmp = _malloc(19); // Max 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
   if (tmp) sprintf(tmp, "0x%" PRIx64, u64);
   return tmp;
 }

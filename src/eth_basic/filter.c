@@ -5,8 +5,8 @@
 
 static void filter_opt_release(in3_filter_opt_t* fopt) {
   if (fopt) {
-    free(fopt->from_block);
-    free(fopt->to_block);
+    _free(fopt->from_block);
+    _free(fopt->to_block);
     _free(fopt->addresses);
     _free(fopt->topics);
   }
