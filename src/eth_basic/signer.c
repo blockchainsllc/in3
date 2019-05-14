@@ -229,7 +229,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       goto ERR_FLT3;
     }
 
-    in3_filter_opt_t* fopt = filter_new_opt();
+    in3_filter_opt_t* fopt = filter_opt_new();
     if (!fopt) {
       ret = ctx_set_error(ctx, "filter option creation failed", -1);
       goto ERR_FLT4;
@@ -318,26 +318,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     in3_filter_opt_t* fopt = f->options;
     switch (f->type) {
       case FILTER_EVENT: {
-        sb_t* params = sb_new("[");
-        sb_add_char(params, '{');
-        sb_add_chars(params, "\"fromBlock\":\"");
-        (fopt->from_block) ? sb_add_chars(params, fopt->from_block) : sb_add_chars(params, "latest");
-        sb_add_chars(params, "\",");
-        sb_add_chars(params, "\"toBlock\":\"");
-        (fopt->to_block) ? sb_add_chars(params, fopt->to_block) : sb_add_chars(params, "latest");
-        sb_add_char(params, '"');
-
-        if (fopt->addresses) {
-          sb_add_chars(params, ",\"address\": ");
-          sb_add_chars(params, fopt->addresses);
-        }
-        if (fopt->topics) {
-          sb_add_chars(params, ",\"topics\": ");
-          sb_add_chars(params, fopt->topics);
-        }
-        sb_add_char(params, '}');
-        printf("Params: %s\n", params->data);
-
+        sb_t* params = fopt->to_json_str(fopt);
         ctx_ = in3_client_rpc_ctx(ctx->client, "eth_getLogs", sb_add_char(params, ']')->data);
         sb_free(params);
         if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {

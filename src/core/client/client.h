@@ -206,6 +206,9 @@ typedef struct in3_filter_opt_t_ {
   /** array of 32 bytes topics: (optional) - do NOT modify directly, use add_topic() method */
   char* topics;
 
+  /** method to get filter as a serialized JSON string*/
+  sb_t* (*to_json_str)(struct in3_filter_opt_t_* f);
+
   /** method to release owned resources */
   void (*release)(struct in3_filter_opt_t_* fopt);
 } in3_filter_opt_t;

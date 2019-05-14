@@ -3,7 +3,7 @@
 #include <client/keys.h>
 #include <stdio.h>
 
-static void filter_release_opt(in3_filter_opt_t* fopt) {
+static void filter_opt_release(in3_filter_opt_t* fopt) {
   if (fopt) {
     free(fopt->from_block);
     free(fopt->to_block);
@@ -13,17 +13,42 @@ static void filter_release_opt(in3_filter_opt_t* fopt) {
   _free(fopt);
 }
 
+static sb_t* filter_opt_to_json_str(in3_filter_opt_t* fopt) {
+  sb_t* sb = sb_new("[");
+  if (sb) {
+    sb_add_char(sb, '{');
+    sb_add_chars(sb, "\"fromBlock\":\"");
+    (fopt->from_block) ? sb_add_chars(sb, fopt->from_block) : sb_add_chars(sb, "latest");
+    sb_add_chars(sb, "\",");
+    sb_add_chars(sb, "\"toBlock\":\"");
+    (fopt->to_block) ? sb_add_chars(sb, fopt->to_block) : sb_add_chars(sb, "latest");
+    sb_add_char(sb, '"');
+
+    if (fopt->addresses) {
+      sb_add_chars(sb, ",\"address\": ");
+      sb_add_chars(sb, fopt->addresses);
+    }
+    if (fopt->topics) {
+      sb_add_chars(sb, ",\"topics\": ");
+      sb_add_chars(sb, fopt->topics);
+    }
+    sb_add_char(sb, '}');
+  }
+  return sb;
+}
+
 static void filter_release(in3_filter_t* f) {
   if (f && f->options) f->options->release(f->options);
   _free(f);
 }
 
-in3_filter_opt_t* filter_new_opt() {
+in3_filter_opt_t* filter_opt_new() {
   in3_filter_opt_t* fopt = _calloc(1, sizeof *fopt);
   if (fopt) {
-    fopt->release   = filter_release_opt;
-    fopt->addresses = NULL;
-    fopt->topics    = NULL;
+    fopt->addresses   = NULL;
+    fopt->topics      = NULL;
+    fopt->to_json_str = filter_opt_to_json_str;
+    fopt->release     = filter_opt_release;
   }
   return fopt;
 }
