@@ -286,12 +286,12 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
             sprintf(params, "[\"0x%" PRIx64 "\", true]", i);
             ctx_ = in3_client_rpc_ctx(ctx->client, "eth_getBlockByNumber", params);
             if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
-              free_ctx(ctx_);
-              return ctx_set_error(ctx, "internal error (eth_getBlockByNumber)", -1);
+              // error or block doesn't exist (unlikely)
+              continue;
             }
             d_token_t* res = d_get(ctx_->responses[0], K_RESULT);
             if (res == NULL || d_type(res) == T_NULL) {
-              // error or block doesn't exist
+              // error or block doesn't exist (unlikely)
               continue;
             }
             d_token_t* hash  = d_get(res, K_HASH);
