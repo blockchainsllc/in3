@@ -204,7 +204,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (addrs == NULL) {
       jaddr = NULL;
     } else if (filter_addrs_valid(addrs)) {
-      jaddr = (d_type(addrs) == T_BYTES && d_len(addrs) == 20) ? stru64(d_long(addrs)) : d_create_json(addrs);
+      jaddr = d_create_json(addrs);
       if (jaddr == NULL) {
         ret = ctx_set_error(ctx, "ENOMEM", -1);
         goto ERR_FLT2;
@@ -219,7 +219,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (topics == NULL) {
       jtopics = NULL;
     } else if (filter_topics_valid(topics)) {
-      jtopics = (d_type(topics) == T_BYTES && d_len(topics) == 20) ? stru64(d_long(topics)) : d_create_json(topics);
+      jtopics = d_create_json(topics);
       if (jtopics == NULL) {
         ret = ctx_set_error(ctx, "ENOMEM", -1);
         goto ERR_FLT3;
@@ -325,17 +325,15 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
         sb_add_chars(params, "\",");
         sb_add_chars(params, "\"toBlock\":\"");
         (fopt->to_block) ? sb_add_chars(params, fopt->to_block) : sb_add_chars(params, "latest");
-        sb_add_char(params, '\"');
+        sb_add_char(params, '"');
 
         if (fopt->addresses) {
-          sb_add_chars(params, ",\"address\": \"");
+          sb_add_chars(params, ",\"address\": ");
           sb_add_chars(params, fopt->addresses);
-          sb_add_char(params, '\"');
         }
         if (fopt->topics) {
-          sb_add_chars(params, ",\"topics\": \"");
+          sb_add_chars(params, ",\"topics\": ");
           sb_add_chars(params, fopt->topics);
-          sb_add_char(params, '\"');
         }
         sb_add_char(params, '}');
         printf("Params: %s\n", params->data);
