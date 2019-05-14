@@ -103,5 +103,5 @@
 #define K_RECEIPTS          key("receipts")
 #define K_REMOVED           key("removed")
 
-#define K_FROM_BLOCK        key("fromblock")
-#define K_TO_BLOCK          key("toblock")
+#define K_FROM_BLOCK        key("fromBlock")
+#define K_TO_BLOCK          key("toBlock")
