@@ -119,7 +119,7 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
 
 static int op_signextend(evm_t* evm) {
   uint8_t* val = NULL;
-  int32_t  k = evm_stack_pop_int(evm), l;
+  int32_t  k   = evm_stack_pop_int(evm), l;
 
   if (k < 0) return k;
   if (k > 31) return 0;
@@ -442,14 +442,16 @@ static int op_mload(evm_t* evm) {
   int      off_len = evm_stack_pop_ref(evm, &off);
   if (off_len < 0) return off_len;
 
+  uint8_t tmp[32] = {0};
+  memcpy(tmp + 32 - off_len, off, off_len);
   if (evm_stack_push_ref(evm, &dst, 32)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
-  return evm_mem_read(evm, bytes(off, off_len), dst, 32);
+  return evm_mem_read(evm, bytes(tmp, 32), dst, 32);
 }
 
 static int op_mstore(evm_t* evm, uint8_t len) {
   int offset = evm_stack_pop_int(evm);
   if (offset < 0) return offset;
-  uint8_t* data = NULL;
+  uint8_t* data     = NULL;
   int      data_len = evm_stack_pop_ref(evm, &data);
 
   if (data_len < 0) return data_len;
@@ -565,7 +567,7 @@ static int op_jump(evm_t* evm, uint8_t cond) {
   int pos = evm_stack_pop_int(evm);
   if (pos < 0) return pos;
   if (cond) {
-    uint8_t c = 0;
+    uint8_t c   = 0;
     int     ret = evm_stack_pop_byte(evm, &c);
     if (ret == EVM_ERROR_EMPTY_STACK) return EVM_ERROR_EMPTY_STACK;
     if (!c && ret >= 0) return 0; // the condition was false
@@ -621,7 +623,7 @@ static int op_push(evm_t* evm, wlen_t len) {
 
 static int op_dup(evm_t* evm, uint8_t pos) {
   uint8_t* data = NULL;
-  int      l = evm_stack_get_ref(evm, pos, &data);
+  int      l    = evm_stack_get_ref(evm, pos, &data);
   if (l < 0) return l;
   return evm_stack_push(evm, data, l);
 }
@@ -724,7 +726,7 @@ int op_selfdestruct(evm_t* evm) {
   memset(self_account->balance, 0, 32);
   memset(self_account->nonce, 0, 32);
   self_account->code.len = 0;
-  storage_t* s = NULL;
+  storage_t* s           = NULL;
   while (self_account->storage) {
     s                     = self_account->storage;
     self_account->storage = s->next;
@@ -746,7 +748,7 @@ int op_selfdestruct(evm_t* evm) {
 int op_create(evm_t* evm, uint_fast8_t use_salt) {
 #ifdef EVM_GAS
   bytes_t   in_data, tmp;
-  uint8_t*  value = NULL;
+  uint8_t*  value   = NULL;
   int32_t   l_value = 0, in_offset, in_len;
   bytes32_t hash;
   // read data from stack
