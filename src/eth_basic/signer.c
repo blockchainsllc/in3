@@ -226,9 +226,6 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       return ctx_set_error(ctx, "invalid params", -1);
 
     uint64_t id = d_get_long_at(tx_params, 0);
-    if (id == 0 || id > ctx->client->filters->count)
-      return ctx_set_error(ctx, "invalid params (id)", -1);
-
     RESPONSE_START();
     filter_remove(ctx->client, id) ? sb_add_chars(&response[0]->result, "true") : sb_add_chars(&response[0]->result, "false");
     RESPONSE_END();
@@ -237,10 +234,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
       return ctx_set_error(ctx, "invalid params", -1);
 
-    uint64_t id = d_get_long_at(tx_params, 0);
-    if (id == 0 || id > ctx->client->filters->count)
-      return ctx_set_error(ctx, "invalid params (id)", -1);
-
+    uint64_t   id   = d_get_long_at(tx_params, 0);
     in3_ctx_t* ctx_ = in3_client_rpc_ctx(ctx->client, "eth_blockNumber", "[]");
     if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
       free_ctx(ctx_);
