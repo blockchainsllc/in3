@@ -222,7 +222,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
-    filter_remove(ctx->client, id) ? sb_add_chars(&response[0]->result, "true") : sb_add_chars(&response[0]->result, "false");
+    sb_add_chars(&response[0]->result, filter_remove(ctx->client, id) ? "true" : "false");
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
