@@ -7,5 +7,7 @@ in3_filter_opt_t* filter_opt_new(); /**< creates and returns a in3_filter_opt_t 
 in3_filter_t*     filter_new(in3_filter_type_t ft);
 size_t            filter_add(in3_t* in3, in3_filter_type_t type, in3_filter_opt_t* options);
 bool              filter_remove(in3_t* in3, size_t id);
+int               filter_opt_from_json(in3_filter_opt_t** fopt, d_token_t* tx_params);
+sb_t*             filter_opt_to_json_str(in3_filter_opt_t* fopt, sb_t* sb);
 
 #endif //FILTER_H

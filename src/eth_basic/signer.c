@@ -184,18 +184,13 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid params", -1);
 
-    in3_filter_opt_t* fopt = filter_opt_new();
-    if (!fopt) return ctx_set_error(ctx, "filter option creation failed", -1);
-
-    ret = fopt->from_json(fopt, tx_params);
-    if (ret != 0) {
-      fopt->release(fopt);
-      return ctx_set_error(ctx, "filter option parsing failed", -1);
-    }
+    in3_filter_opt_t* fopt = NULL;
+    ret                    = filter_opt_from_json(&fopt, tx_params + 1);
+    if (ret != 0) return ctx_set_error(ctx, "filter option parsing failed", -1);
 
     size_t id = filter_add(ctx->client, FILTER_EVENT, fopt);
     if (!id) {
-      fopt->release(fopt);
+      _free(fopt->data);
       return ctx_set_error(ctx, "filter creation failed", -1);
     }
 
@@ -248,7 +243,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     switch (f->type) {
       case FILTER_EVENT: {
         sb_t* params = sb_new("[");
-        params       = fopt->to_json_str(fopt, params);
+        params       = filter_opt_to_json_str(fopt, params);
         ctx_         = in3_client_rpc_ctx(ctx->client, "eth_getLogs", sb_add_char(params, ']')->data);
         sb_free(params);
         if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {

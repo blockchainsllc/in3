@@ -3,134 +3,99 @@
 #include <client/keys.h>
 #include <stdio.h>
 
-static void filter_opt_release(in3_filter_opt_t* fopt) {
-  if (fopt) {
-    _free(fopt->from_block);
-    _free(fopt->to_block);
-    _free(fopt->addresses);
-    _free(fopt->topics);
-  }
-  _free(fopt);
+static bool filter_addrs_valid(d_token_t* addr) {
+  if (d_type(addr) == T_BYTES && d_len(addr) == 20)
+    return true;
+  else if (d_type(addr) != T_ARRAY)
+    return false;
+
+  int len = d_len(addr);
+  for (int i = 0; i < len; i++, addr = d_next(addr))
+    if (d_type(addr) != T_BYTES || d_len(addr) != 20)
+      return false;
+  return true;
 }
 
-int filter_opt_from_json(struct in3_filter_opt_t_* fopt, d_token_t* tx_params) {
-  int        ret = 0;
-  char*      from_block;
-  d_token_t* frmblk = d_get(tx_params + 1, K_FROM_BLOCK);
-  if (!frmblk) {
-    from_block = NULL;
+static bool filter_topics_valid(d_token_t* topics) {
+  if (d_type(topics) == T_BYTES && d_len(topics) == 32)
+    return true;
+  else if (!topics || d_type(topics) != T_ARRAY)
+    return false;
+
+  for (d_iterator_t it1 = d_iter(topics); it1.left; d_iter_next(&it1)) {
+    if (d_type(it1.token) == T_BYTES && d_len(it1.token) == 32)
+      continue;
+    else if (d_type(it1.token) == T_NULL)
+      continue;
+    else if (d_type(it1.token) == T_ARRAY) {
+      d_token_t* t = it1.token;
+      for (d_iterator_t it2 = d_iter(t); it2.left; d_iter_next(&it2)) {
+        if (d_type(it2.token) == T_BYTES && d_len(it2.token) == 32)
+          continue;
+        else if (d_type(it2.token) == T_NULL)
+          continue;
+        else
+          return false;
+      }
+    } else
+      return false;
+  }
+  return true;
+}
+
+int filter_opt_from_json(in3_filter_opt_t** fopt, d_token_t* tx_params) {
+  d_token_t* frmblk = d_get(tx_params, K_FROM_BLOCK);
+  if (!frmblk) { /* Optional */
   } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
-    from_block = hexstru64(d_long(frmblk));
   } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
-    from_block = _strdup(d_string(frmblk));
   } else {
-    ret = -2;
-    goto ERR_FLT;
+    return -1;
   }
 
-  char*      to_block;
-  d_token_t* toblk = d_get(tx_params + 1, K_TO_BLOCK);
-  if (!toblk) {
-    to_block = NULL;
+  d_token_t* toblk = d_get(tx_params, K_TO_BLOCK);
+  if (!toblk) { /* Optional */
   } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
-    to_block = hexstru64(d_long(toblk));
   } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
-    to_block = _strdup(d_string(toblk));
   } else {
-    ret = -2;
-    goto ERR_FLT1;
+    return -1;
   }
 
-  char*      jaddr;
-  d_token_t* addrs = d_get(tx_params + 1, K_ADDRESS);
-  if (addrs == NULL) {
-    jaddr = NULL;
+  d_token_t* addrs = d_get(tx_params, K_ADDRESS);
+  if (addrs == NULL) { /* Optional */
   } else if (filter_addrs_valid(addrs)) {
-    jaddr = d_create_json(addrs);
-    if (jaddr == NULL) {
-      ret = -1;
-      goto ERR_FLT2;
-    }
   } else {
-    ret = -2;
-    goto ERR_FLT2;
+    return -1;
   }
 
-  char*      jtopics;
-  d_token_t* topics = d_get(tx_params + 1, K_TOPICS);
-  if (topics == NULL) {
-    jtopics = NULL;
+  d_token_t* topics = d_get(tx_params, K_TOPICS);
+  if (topics == NULL) { /* Optional */
   } else if (filter_topics_valid(topics)) {
-    jtopics = d_create_json(topics);
-    if (jtopics == NULL) {
-      ret = -1;
-      goto ERR_FLT3;
-    }
   } else {
-    ret = -2;
-    goto ERR_FLT3;
+    return -1;
   }
 
-  if (!fopt) {
-    ret = -1;
-    goto ERR_FLT4;
-  }
-  fopt->from_block = from_block;
-  fopt->to_block   = to_block;
-  fopt->addresses  = jaddr;
-  fopt->topics     = jtopics;
+  *fopt = d_clone(tx_params);
+  if (*fopt == NULL) return -1;
   return 0;
-
-ERR_FLT4:
-  free(jtopics);
-ERR_FLT3:
-  free(jaddr);
-ERR_FLT2:
-  free(to_block);
-ERR_FLT1:
-  free(from_block);
-ERR_FLT:
-  return ret;
 }
 
-static sb_t* filter_opt_to_json_str(in3_filter_opt_t* fopt, sb_t* sb) {
+sb_t* filter_opt_to_json_str(in3_filter_opt_t* fopt, sb_t* sb) {
   if (sb != NULL) {
-    sb_add_char(sb, '{');
-    sb_add_chars(sb, "\"fromBlock\":\"");
-    (fopt->from_block) ? sb_add_chars(sb, fopt->from_block) : sb_add_chars(sb, "latest");
-    sb_add_chars(sb, "\",");
-    sb_add_chars(sb, "\"toBlock\":\"");
-    (fopt->to_block) ? sb_add_chars(sb, fopt->to_block) : sb_add_chars(sb, "latest");
-    sb_add_char(sb, '"');
-
-    if (fopt->addresses) {
-      sb_add_chars(sb, ",\"address\": ");
-      sb_add_chars(sb, fopt->addresses);
+    if (fopt) {
+      char* jfopt = d_create_json(fopt);
+      if (jfopt) sb_add_chars(sb, jfopt);
+      _free(jfopt);
     }
-    if (fopt->topics) {
-      sb_add_chars(sb, ",\"topics\": ");
-      sb_add_chars(sb, fopt->topics);
-    }
-    sb_add_char(sb, '}');
   }
   return sb;
 }
 
 static void filter_release(in3_filter_t* f) {
-  if (f && f->options) f->options->release(f->options);
-  _free(f);
-}
-
-in3_filter_opt_t* filter_opt_new() {
-  in3_filter_opt_t* fopt = _calloc(1, sizeof *fopt);
-  if (fopt) {
-    fopt->addresses   = NULL;
-    fopt->topics      = NULL;
-    fopt->from_json   = filter_opt_from_json;
-    fopt->to_json_str = filter_opt_to_json_str;
-    fopt->release     = filter_opt_release;
+  if (f && f->options) {
+    _free(f->options->data);
+    _free(f->options);
   }
-  return fopt;
+  _free(f);
 }
 
 in3_filter_t* filter_new(in3_filter_type_t ft) {
@@ -196,45 +161,5 @@ bool filter_remove(in3_t* in3, size_t id) {
   in3_filter_t* f = in3->filters->array[id - 1];
   f->release(f);
   in3->filters->array[id - 1] = NULL;
-  return true;
-}
-
-static bool filter_addrs_valid(d_token_t* addr) {
-  if (d_type(addr) == T_BYTES && d_len(addr) == 20)
-    return true;
-  else if (d_type(addr) != T_ARRAY)
-    return false;
-
-  int len = d_len(addr);
-  for (int i = 0; i < len; i++, addr = d_next(addr))
-    if (d_type(addr) != T_BYTES || d_len(addr) != 20)
-      return false;
-  return true;
-}
-
-static bool filter_topics_valid(d_token_t* topics) {
-  if (d_type(topics) == T_BYTES && d_len(topics) == 32)
-    return true;
-  else if (!topics || d_type(topics) != T_ARRAY)
-    return false;
-
-  for (d_iterator_t it1 = d_iter(topics); it1.left; d_iter_next(&it1)) {
-    if (d_type(it1.token) == T_BYTES && d_len(it1.token) == 32)
-      continue;
-    else if (d_type(it1.token) == T_NULL)
-      continue;
-    else if (d_type(it1.token) == T_ARRAY) {
-      d_token_t* t = it1.token;
-      for (d_iterator_t it2 = d_iter(t); it2.left; d_iter_next(&it2)) {
-        if (d_type(it2.token) == T_BYTES && d_len(it2.token) == 32)
-          continue;
-        else if (d_type(it2.token) == T_NULL)
-          continue;
-        else
-          return false;
-      }
-    } else
-      return false;
-  }
   return true;
 }

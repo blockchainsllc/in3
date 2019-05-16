@@ -193,34 +193,7 @@ typedef struct {
 typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
 
 /** filter options */
-typedef struct in3_filter_opt_t_ {
-  /** from block number: (optional, block no. as char*, default: "latest") - will be freed in release() */
-  char* from_block;
-
-  /** to block number: (optional, block no. as char*, default: "latest") - will be freed in release() */
-  char* to_block;
-
-  /** addresses from which logs should originate: (optional) 
-   * MUST be a valid JSON string (incl. quotes) rep. of 20 bytes hex address or JSON array of such strings 
-   * will be freed in release()
-   */
-  char* addresses;
-
-  /** array of 32 bytes topics: (optional) 
-   * MUST be a valid JSON string (incl. quotes) rep. of 32 bytes hex topic or JSON array of such strings 
-   * will be freed in release()
-   */
-  char* topics;
-
-  /** method to create filter options from JSON token - result to be freed by caller */
-  int (*from_json)(struct in3_filter_opt_t_* fopt, d_token_t* tx_params);
-
-  /** method to get filter options as serialized JSON string - sb MUST have been initialized previously and is to be freed by caller */
-  sb_t* (*to_json_str)(struct in3_filter_opt_t_* fopt, sb_t* sb);
-
-  /** method to release owned resources */
-  void (*release)(struct in3_filter_opt_t_* fopt);
-} in3_filter_opt_t;
+typedef d_token_t in3_filter_opt_t;
 
 typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
