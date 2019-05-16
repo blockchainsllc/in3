@@ -1,6 +1,7 @@
 #include "filter.h"
 #include <client/context.h>
 #include <client/keys.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 static bool filter_addrs_valid(d_token_t* addr) {
@@ -162,4 +163,78 @@ bool filter_remove(in3_t* in3, size_t id) {
   f->release(f);
   in3->filters->array[id - 1] = NULL;
   return true;
+}
+
+int filter_get_changes(in3_ctx_t* ctx, size_t id, void (*parse_result)(in3_filter_type_t type, void* result, size_t len, void* userdata), void* userdata) {
+  in3_t* in3 = ctx->client;
+  if (in3->filters == NULL)
+    return -1;
+  if (id == 0 || id > in3->filters->count)
+    return -2;
+  else if (parse_result == NULL)
+    return -2;
+
+  in3_ctx_t* ctx_ = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
+  if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+    free_ctx(ctx_);
+    return ctx_set_error(ctx, "internal error (eth_blockNumber)", -1);
+  }
+  uint64_t blkno = d_get_longk(ctx_->responses[0], K_RESULT);
+  free_ctx(ctx_);
+
+  in3_filter_t*     f    = in3->filters->array[id - 1];
+  in3_filter_opt_t* fopt = f->options;
+  switch (f->type) {
+    case FILTER_EVENT: {
+      sb_t* params = sb_new("[");
+      params       = filter_opt_to_json_str(fopt, params);
+      ctx_         = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
+      sb_free(params);
+      if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+        free_ctx(ctx_);
+        return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
+      }
+      d_token_t* r = d_get(ctx_->responses[0], K_RESULT);
+      if (!r) {
+        free_ctx(ctx_);
+        return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
+      }
+
+      parse_result(f->type, r, 0, userdata);
+      free_ctx(ctx_);
+      f->last_block = blkno + 1;
+      return 0;
+    }
+    case FILTER_BLOCK:
+      if (blkno > f->last_block) {
+        char        params[37]   = {0};
+        int         blkcount     = blkno - f->last_block;
+        bytes32_t** block_hashes = malloc(sizeof(bytes32_t) * blkcount);
+        for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
+          sprintf(params, "[\"0x%" PRIx64 "\", true]", i);
+          ctx_ = in3_client_rpc_ctx(in3, "eth_getBlockByNumber", params);
+          if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+            // error or block doesn't exist (unlikely)
+            continue;
+          }
+          d_token_t* res = d_get(ctx_->responses[0], K_RESULT);
+          if (res == NULL || d_type(res) == T_NULL) {
+            // error or block doesn't exist (unlikely)
+            continue;
+          }
+          bytes_t* hash = d_get_bytesk(res, K_HASH);
+          memcpy((*block_hashes)[j], hash->data, 32);
+          free_ctx(ctx_);
+        }
+        parse_result(FILTER_BLOCK, block_hashes, blkcount, userdata);
+        f->last_block = blkno;
+        return blkcount;
+      } else {
+        parse_result(FILTER_BLOCK, NULL, 0, userdata);
+        return 0;
+      }
+    default:
+      return ctx_set_error(ctx, "internal error", -1);
+  }
+  return 0;
 }

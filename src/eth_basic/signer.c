@@ -25,6 +25,38 @@ static inline bytes_t get(d_token_t* t, uint16_t key) {
   return d_to_bytes(d_get(t, key));
 }
 
+static void parse_log_result(in3_filter_type_t type, void* result, size_t len, void* userdata) {
+  sb_t* sb = userdata;
+  switch (type) {
+    case FILTER_EVENT:
+      if (result) {
+        char* jr = d_create_json(result);
+        sb_add_chars(sb, jr);
+        _free(jr);
+      }
+      break;
+    case FILTER_BLOCK:
+      if (result) {
+        bytes32_t** block_hashes = result;
+        sb_add_char(sb, '[');
+        char h[67] = "0x";
+        for (size_t i = 0; i <= len; i++) {
+          bytes_to_hex((*block_hashes)[i], 32, h + 2);
+          if (i != 0)
+            sb_add_char(sb, ',');
+          sb_add_char(sb, '"');
+          sb_add_chars(sb, h);
+          sb_add_char(sb, '"');
+        }
+        sb_add_char(sb, ']');
+        _free(block_hashes);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 /**
  * return data from the client.
  * 
@@ -229,83 +261,12 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
       return ctx_set_error(ctx, "invalid params", -1);
 
-    uint64_t   id   = d_get_long_at(tx_params, 0);
-    in3_ctx_t* ctx_ = in3_client_rpc_ctx(ctx->client, "eth_blockNumber", "[]");
-    if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
-      free_ctx(ctx_);
-      return ctx_set_error(ctx, "internal error (eth_blockNumber)", -1);
-    }
-    uint64_t blkno = d_get_longk(ctx_->responses[0], K_RESULT);
-    free_ctx(ctx_);
-
-    in3_filter_t*     f    = ctx->client->filters->array[id - 1];
-    in3_filter_opt_t* fopt = f->options;
-    switch (f->type) {
-      case FILTER_EVENT: {
-        sb_t* params = sb_new("[");
-        params       = filter_opt_to_json_str(fopt, params);
-        ctx_         = in3_client_rpc_ctx(ctx->client, "eth_getLogs", sb_add_char(params, ']')->data);
-        sb_free(params);
-        if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
-          free_ctx(ctx_);
-          return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
-        }
-        d_token_t* r = d_get(ctx_->responses[0], K_RESULT);
-        if (!r) {
-          free_ctx(ctx_);
-          return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
-        }
-
-        RESPONSE_START();
-        char* jr = d_create_json(r);
-        sb_add_chars(&response[0]->result, jr);
-        _free(jr);
-        RESPONSE_END();
-
-        free_ctx(ctx_);
-        f->last_block = blkno + 1;
-        return 0;
-      }
-      case FILTER_BLOCK:
-        if (blkno > f->last_block) {
-          char params[37] = {0};
-          RESPONSE_START();
-          sb_add_char(&response[0]->result, '[');
-          for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
-            sprintf(params, "[\"0x%" PRIx64 "\", true]", i);
-            ctx_ = in3_client_rpc_ctx(ctx->client, "eth_getBlockByNumber", params);
-            if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
-              // error or block doesn't exist (unlikely)
-              continue;
-            }
-            d_token_t* res = d_get(ctx_->responses[0], K_RESULT);
-            if (res == NULL || d_type(res) == T_NULL) {
-              // error or block doesn't exist (unlikely)
-              continue;
-            }
-            d_token_t* hash  = d_get(res, K_HASH);
-            char       h[67] = "0x";
-            bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
-            if (j != 0)
-              sb_add_char(&response[0]->result, ',');
-            sb_add_char(&response[0]->result, '"');
-            sb_add_chars(&response[0]->result, h);
-            sb_add_char(&response[0]->result, '"');
-            free_ctx(ctx_);
-          }
-          sb_add_char(&response[0]->result, ']');
-          RESPONSE_END();
-          f->last_block = blkno;
-          return 0;
-        } else {
-          RESPONSE_START();
-          sb_add_chars(&response[0]->result, "[]");
-          RESPONSE_END();
-          return 0;
-        }
-      default:
-        return ctx_set_error(ctx, "internal error", -1);
-    }
+    uint64_t id = d_get_long_at(tx_params, 0);
+    RESPONSE_START();
+    int ret = filter_get_changes(ctx, id, parse_log_result, &response[0]->result);
+    if (ret < 0)
+      return ctx_set_error(ctx, "failed to get changes", -1);
+    RESPONSE_END();
   }
   return 0;
 }
