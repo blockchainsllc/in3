@@ -460,8 +460,10 @@ bool eth_uninstallFilter(in3_t* in3, size_t id) {
 }
 
 int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
-  if (id == 0 || id > in3->filters->count)
+  if (in3->filters == NULL)
     return -1;
+  if (id == 0 || id > in3->filters->count)
+    return -2;
 
   uint64_t      blkno = eth_blockNumber(in3);
   in3_filter_t* f     = in3->filters->array[id - 1];
@@ -486,6 +488,6 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
         return 0;
       }
     default:
-      return -2;
+      return -3;
   }
 }
