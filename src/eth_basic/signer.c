@@ -179,18 +179,16 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
     ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) sb->data, sb->len));
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
-    int        ret       = 0;
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid type of params, expected object", -1);
+    else if (!filter_opt_valid(tx_params + 1))
+      return ctx_set_error(ctx, "filter option parsing failed", -1);
 
-    in3_filter_opt_t* fopt = NULL;
-    ret                    = filter_opt_from_json(&fopt, tx_params + 1);
-    if (ret != 0) return ctx_set_error(ctx, "filter option parsing failed", -1);
-
-    size_t id = filter_add(ctx->client, FILTER_EVENT, fopt);
+    char*  fopt = d_create_json(tx_params + 1);
+    size_t id   = filter_add(ctx->client, FILTER_EVENT, fopt);
     if (!id) {
-      _free(fopt->data);
+      _free(fopt);
       return ctx_set_error(ctx, "filter creation failed", -1);
     }
 

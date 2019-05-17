@@ -192,9 +192,6 @@ typedef struct {
  */
 typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
 
-/** filter options */
-typedef d_token_t in3_filter_opt_t;
-
 typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
   FILTER_BLOCK   = 1, /**< Block filter */
@@ -206,7 +203,7 @@ typedef struct in3_filter_t_ {
   in3_filter_type_t type;
 
   /** associated filter options */
-  in3_filter_opt_t* options;
+  char* options;
 
   /** block no. when filter was created OR eth_getFilterChanges was called */
   uint64_t last_block;

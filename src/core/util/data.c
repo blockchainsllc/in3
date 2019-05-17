@@ -527,21 +527,6 @@ char* d_create_json(d_token_t* item) {
   return NULL;
 }
 
-d_token_t* d_clone(d_token_t* item) {
-  d_token_t* t = _malloc(sizeof(*t));
-  if (t == NULL) return NULL;
-  size_t len = find_end(item->data);
-  t->data    = _malloc(len);
-  if (t->data == NULL) {
-    _free(t);
-    return NULL;
-  }
-  memcpy(t->data, item->data, len);
-  t->key = item->key;
-  t->len = item->len;
-  return t;
-}
-
 str_range_t d_to_json(d_token_t* item) {
   str_range_t s;
   s.data = (char*) item->data;

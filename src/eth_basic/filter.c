@@ -44,13 +44,13 @@ static bool filter_topics_valid(d_token_t* topics) {
   return true;
 }
 
-int filter_opt_from_json(in3_filter_opt_t** fopt, d_token_t* tx_params) {
+bool filter_opt_valid(d_token_t* tx_params) {
   d_token_t* frmblk = d_get(tx_params, K_FROM_BLOCK);
   if (!frmblk) { /* Optional */
   } else if (d_type(frmblk) == T_INTEGER || d_type(frmblk) == T_BYTES) {
   } else if (d_type(frmblk) == T_STRING && (!strcmp(d_string(frmblk), "latest") || !strcmp(d_string(frmblk), "earliest") || !strcmp(d_string(frmblk), "pending"))) {
   } else {
-    return -1;
+    return false;
   }
 
   d_token_t* toblk = d_get(tx_params, K_TO_BLOCK);
@@ -58,44 +58,29 @@ int filter_opt_from_json(in3_filter_opt_t** fopt, d_token_t* tx_params) {
   } else if (d_type(toblk) == T_INTEGER || d_type(toblk) == T_BYTES) {
   } else if (d_type(toblk) == T_STRING && (!strcmp(d_string(toblk), "latest") || !strcmp(d_string(toblk), "earliest") || !strcmp(d_string(toblk), "pending"))) {
   } else {
-    return -1;
+    return false;
   }
 
   d_token_t* addrs = d_get(tx_params, K_ADDRESS);
   if (addrs == NULL) { /* Optional */
   } else if (filter_addrs_valid(addrs)) {
   } else {
-    return -1;
+    return false;
   }
 
   d_token_t* topics = d_get(tx_params, K_TOPICS);
   if (topics == NULL) { /* Optional */
   } else if (filter_topics_valid(topics)) {
   } else {
-    return -1;
+    return false;
   }
 
-  *fopt = d_clone(tx_params);
-  if (*fopt == NULL) return -1;
-  return 0;
-}
-
-sb_t* filter_opt_to_json_str(in3_filter_opt_t* fopt, sb_t* sb) {
-  if (sb != NULL) {
-    if (fopt) {
-      char* jfopt = d_create_json(fopt);
-      if (jfopt) sb_add_chars(sb, jfopt);
-      _free(jfopt);
-    }
-  }
-  return sb;
+  return true;
 }
 
 static void filter_release(in3_filter_t* f) {
-  if (f && f->options) {
-    _free(f->options->data);
+  if (f && f->options)
     _free(f->options);
-  }
   _free(f);
 }
 
@@ -109,11 +94,9 @@ in3_filter_t* filter_new(in3_filter_type_t ft) {
   return f;
 }
 
-size_t filter_add(in3_t* in3, in3_filter_type_t type, in3_filter_opt_t* options) {
-  if (type == FILTER_PENDING) {
-    // printf("Pending Transactions are not supported!");
+size_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
+  if (type == FILTER_PENDING || options == NULL)
     return 0;
-  }
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
   if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
@@ -181,13 +164,13 @@ int filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   uint64_t blkno = d_get_longk(ctx_->responses[0], K_RESULT);
   free_ctx(ctx_);
 
-  in3_filter_t*     f    = in3->filters->array[id - 1];
-  in3_filter_opt_t* fopt = f->options;
+  in3_filter_t* f    = in3->filters->array[id - 1];
+  char*         fopt = f->options;
   switch (f->type) {
     case FILTER_EVENT: {
       sb_t* params = sb_new("[");
-      params       = filter_opt_to_json_str(fopt, params);
-      ctx_         = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
+      sb_add_chars(params, fopt);
+      ctx_ = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
       sb_free(params);
       if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
         ctx_set_error(ctx, ctx_->error, -1);

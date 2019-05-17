@@ -328,9 +328,9 @@ static eth_log_t* parse_logs(d_token_t* result) {
   return first;
 }
 
-eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
+eth_log_t* eth_getLogs(in3_t* in3, char* fopt) {
   rpc_init;
-  params = filter_opt_to_json_str(fopt, params);
+  sb_add_chars(params, fopt);
   rpc_exec("eth_getLogs", eth_log_t*, parse_logs(result));
 }
 
@@ -443,8 +443,13 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   return data;
 }
 
-size_t eth_newFilter(in3_t* in3, in3_filter_opt_t* options) {
-  return filter_add(in3, FILTER_EVENT, options);
+size_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
+  if (options == NULL) return 0;
+  if (!filter_opt_valid(&options->result[0])) return 0;
+  char* fopt = d_create_json(&options->result[0]);
+  int   ret  = filter_add(in3, FILTER_EVENT, fopt);
+  if (!ret) _free(fopt);
+  return ret;
 }
 
 size_t eth_newBlockFilter(in3_t* in3) {
