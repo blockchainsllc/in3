@@ -165,13 +165,11 @@ bool filter_remove(in3_t* in3, size_t id) {
   return true;
 }
 
-int filter_get_changes(in3_ctx_t* ctx, size_t id, void (*parse_result)(in3_filter_type_t type, void* result, size_t len, void* userdata), void* userdata) {
+int filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   in3_t* in3 = ctx->client;
   if (in3->filters == NULL)
     return -1;
   if (id == 0 || id > in3->filters->count)
-    return -2;
-  else if (parse_result == NULL)
     return -2;
 
   in3_ctx_t* ctx_ = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
@@ -200,18 +198,19 @@ int filter_get_changes(in3_ctx_t* ctx, size_t id, void (*parse_result)(in3_filte
         return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
       }
 
-      parse_result(f->type, r, 0, userdata);
+      char* jr = d_create_json(r);
+      sb_add_chars(result, jr);
+      _free(jr);
       free_ctx(ctx_);
       f->last_block = blkno + 1;
       return 0;
     }
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
-        char        params[37]   = {0};
-        int         blkcount     = blkno - f->last_block;
-        bytes32_t** block_hashes = malloc(sizeof(bytes32_t) * blkcount);
+        char params[37] = {0};
+        sb_add_char(result, '[');
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
-          sprintf(params, "[\"0x%" PRIx64 "\", true]", i);
+          sprintf(params, "[\"0x%" PRIx64 "\", false]", i);
           ctx_ = in3_client_rpc_ctx(in3, "eth_getBlockByNumber", params);
           if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
             // error or block doesn't exist (unlikely)
@@ -222,15 +221,21 @@ int filter_get_changes(in3_ctx_t* ctx, size_t id, void (*parse_result)(in3_filte
             // error or block doesn't exist (unlikely)
             continue;
           }
-          bytes_t* hash = d_get_bytesk(res, K_HASH);
-          memcpy((*block_hashes)[j], hash->data, 32);
+          d_token_t* hash  = d_get(res, K_HASH);
+          char       h[67] = "0x";
+          bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
+          if (j != 0)
+            sb_add_char(result, ',');
+          sb_add_char(result, '"');
+          sb_add_chars(result, h);
+          sb_add_char(result, '"');
           free_ctx(ctx_);
         }
-        parse_result(FILTER_BLOCK, block_hashes, blkcount, userdata);
+        sb_add_char(result, ']');
         f->last_block = blkno;
-        return blkcount;
+        return 0;
       } else {
-        parse_result(FILTER_BLOCK, NULL, 0, userdata);
+        sb_add_chars(result, "[]");
         return 0;
       }
     default:

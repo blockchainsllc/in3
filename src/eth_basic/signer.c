@@ -25,38 +25,6 @@ static inline bytes_t get(d_token_t* t, uint16_t key) {
   return d_to_bytes(d_get(t, key));
 }
 
-static void parse_log_result(in3_filter_type_t type, void* result, size_t len, void* userdata) {
-  sb_t* sb = userdata;
-  switch (type) {
-    case FILTER_EVENT:
-      if (result) {
-        char* jr = d_create_json(result);
-        sb_add_chars(sb, jr);
-        _free(jr);
-      }
-      break;
-    case FILTER_BLOCK:
-      if (result) {
-        bytes32_t** block_hashes = result;
-        sb_add_char(sb, '[');
-        char h[67] = "0x";
-        for (size_t i = 0; i <= len; i++) {
-          bytes_to_hex((*block_hashes)[i], 32, h + 2);
-          if (i != 0)
-            sb_add_char(sb, ',');
-          sb_add_char(sb, '"');
-          sb_add_chars(sb, h);
-          sb_add_char(sb, '"');
-        }
-        sb_add_char(sb, ']');
-        _free(block_hashes);
-      }
-      break;
-    default:
-      break;
-  }
-}
-
 /**
  * return data from the client.
  * 
@@ -263,7 +231,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
-    int ret = filter_get_changes(ctx, id, parse_log_result, &response[0]->result);
+    int ret = filter_get_changes(ctx, id, &response[0]->result);
     if (ret < 0)
       return ctx_set_error(ctx, "failed to get changes", -1);
     RESPONSE_END();
