@@ -168,14 +168,15 @@ bool filter_remove(in3_t* in3, size_t id) {
 int filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   in3_t* in3 = ctx->client;
   if (in3->filters == NULL)
-    return -1;
+    return ctx_set_error(ctx, "no filters found", -1);
   if (id == 0 || id > in3->filters->count)
-    return -2;
+    return ctx_set_error(ctx, "filter with id does not exist", -1);
 
   in3_ctx_t* ctx_ = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
   if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+    ctx_set_error(ctx, ctx_->error, -1);
     free_ctx(ctx_);
-    return ctx_set_error(ctx, "internal error (eth_blockNumber)", -1);
+    return ctx_set_error(ctx, "internal error, call to eth_blockNumber failed", -1);
   }
   uint64_t blkno = d_get_longk(ctx_->responses[0], K_RESULT);
   free_ctx(ctx_);
@@ -189,16 +190,12 @@ int filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
       ctx_         = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
       sb_free(params);
       if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+        ctx_set_error(ctx, ctx_->error, -1);
         free_ctx(ctx_);
-        return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
+        return ctx_set_error(ctx, "internal error, call to eth_getLogs failed", -1);
       }
-      d_token_t* r = d_get(ctx_->responses[0], K_RESULT);
-      if (!r) {
-        free_ctx(ctx_);
-        return ctx_set_error(ctx, "internal error (eth_getLogs)", -1);
-      }
-
-      char* jr = d_create_json(r);
+      d_token_t* r  = d_get(ctx_->responses[0], K_RESULT);
+      char*      jr = d_create_json(r);
       sb_add_chars(result, jr);
       _free(jr);
       free_ctx(ctx_);
@@ -239,7 +236,7 @@ int filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         return 0;
       }
     default:
-      return ctx_set_error(ctx, "internal error", -1);
+      return ctx_set_error(ctx, "unsupported filter type", -1);
   }
   return 0;
 }

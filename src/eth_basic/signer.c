@@ -182,7 +182,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     int        ret       = 0;
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
-      return ctx_set_error(ctx, "invalid params", -1);
+      return ctx_set_error(ctx, "invalid type of params, expected object", -1);
 
     in3_filter_opt_t* fopt = NULL;
     ret                    = filter_opt_from_json(&fopt, tx_params + 1);
@@ -214,7 +214,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_uninstallFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
-      return ctx_set_error(ctx, "invalid params", -1);
+      return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", -1);
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
@@ -223,13 +223,13 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
-      return ctx_set_error(ctx, "invalid params", -1);
+      return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", -1);
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
     int ret = filter_get_changes(ctx, id, &response[0]->result);
     if (ret < 0)
-      return ctx_set_error(ctx, "failed to get changes", -1);
+      return ctx_set_error(ctx, "failed to get filter changes", -1);
     RESPONSE_END();
   }
   return 0;
