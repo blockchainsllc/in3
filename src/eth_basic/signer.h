@@ -11,6 +11,6 @@ int eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account
 
 int eth_set_pk_signer(in3_t* in3, bytes32_t pk);
 
-int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response);
+bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx);
 
 #endif
