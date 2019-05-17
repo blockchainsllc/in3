@@ -98,5 +98,6 @@ long double as_double(uint256_t d); /**< converts a uint256_t in a long double. 
 uint64_t    as_long(uint256_t d);   /**< converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
 uint256_t   to_uint256(uint64_t value);
 int         decrypt_key(d_token_t* key_data, char* password, bytes32_t dst);
+void        free_log(eth_log_t* log);
 
 #endif

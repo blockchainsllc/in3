@@ -301,14 +301,14 @@ static eth_log_t* parse_logs(d_token_t* result) {
   eth_log_t *prev, *curr, *first;
   prev = curr = first = NULL;
   for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
-    eth_log_t* log         = calloc(1, sizeof(*log));
+    eth_log_t* log         = _calloc(1, sizeof(*log));
     log->removed           = d_get_intk(it.token, K_REMOVED);
     log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
     log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
     log->block_number      = d_get_longk(it.token, K_BLOCK_NUMBER);
     log->data.len          = d_len(d_get(it.token, K_DATA));
-    log->data.data         = malloc(sizeof(uint8_t) * log->data.len);
-    log->topics            = malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
+    log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
+    log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
     copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
     copy_fixed(log->transaction_hash, 32, d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)));
     copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
@@ -490,4 +490,10 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
     default:
       return -3;
   }
+}
+
+void free_log(eth_log_t* log) {
+  _free(log->data.data);
+  _free(log->topics);
+  _free(log);
 }
