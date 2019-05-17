@@ -297,46 +297,35 @@ uint64_t eth_gasPrice(in3_t* in3) {
   rpc_exec("eth_gasPrice", uint64_t, d_long(result));
 }
 
-static void parse_filter_changes(in3_filter_type_t type, void* result, size_t len, void* userdata) {
-  if (result == NULL) return;
-  (void*) len;
-  if (type == FILTER_EVENT) {
-    eth_log_t *prev, *curr, *first;
-    prev = curr = first = NULL;
-    for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
-      eth_log_t* log         = calloc(1, sizeof(*log));
-      log->removed           = d_get_intk(it.token, K_REMOVED);
-      log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
-      log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
-      log->block_number      = d_get_longk(it.token, K_BLOCK_NUMBER);
-      log->data.len          = d_len(d_get(it.token, K_DATA));
-      log->data.data         = malloc(sizeof(uint8_t) * log->data.len);
-      log->topics            = malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
-      copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
-      copy_fixed(log->transaction_hash, 32, d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)));
-      copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
-      copy_fixed(log->data.data, log->data.len, d_to_bytes(d_get(it.token, K_DATA)));
-      size_t i = 0;
-      for (d_iterator_t t = d_iter(d_get(it.token, K_TOPICS)); t.left; d_iter_next(&t), i++) {
-        copy_fixed(log->topics[i], 32, d_to_bytes(t.token));
-        log->topic_count += 1;
-      }
-      log->next = NULL;
-      if (first == NULL)
-        first = log;
-      else if (prev != NULL)
-        prev->next = log;
-      prev = log;
+static eth_log_t* parse_logs(d_token_t* result) {
+  eth_log_t *prev, *curr, *first;
+  prev = curr = first = NULL;
+  for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
+    eth_log_t* log         = calloc(1, sizeof(*log));
+    log->removed           = d_get_intk(it.token, K_REMOVED);
+    log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
+    log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
+    log->block_number      = d_get_longk(it.token, K_BLOCK_NUMBER);
+    log->data.len          = d_len(d_get(it.token, K_DATA));
+    log->data.data         = malloc(sizeof(uint8_t) * log->data.len);
+    log->topics            = malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
+    copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
+    copy_fixed(log->transaction_hash, 32, d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)));
+    copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
+    copy_fixed(log->data.data, log->data.len, d_to_bytes(d_get(it.token, K_DATA)));
+    size_t i = 0;
+    for (d_iterator_t t = d_iter(d_get(it.token, K_TOPICS)); t.left; d_iter_next(&t), i++) {
+      copy_fixed(log->topics[i], 32, d_to_bytes(t.token));
+      log->topic_count += 1;
     }
-    eth_log_t** logs = userdata;
-    *logs            = first;
+    log->next = NULL;
+    if (first == NULL)
+      first = log;
+    else if (prev != NULL)
+      prev->next = log;
+    prev = log;
   }
-}
-
-eth_log_t* parse_logs(d_token_t* result) {
-  eth_log_t* logs = NULL;
-  parse_filter_changes(FILTER_EVENT, result, 0, (void*) &logs);
-  return logs;
+  return first;
 }
 
 eth_log_t* eth_getLogs(in3_t* in3, in3_filter_opt_t* fopt) {
@@ -476,20 +465,29 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
   if (id == 0 || id > in3->filters->count)
     return -2;
 
-  in3_filter_t* f   = in3->filters->array[id - 1];
-  in3_ctx_t*    ctx = new_ctx(in3, "");
-  int           ret = 0;
+  uint64_t      blkno = eth_blockNumber(in3);
+  in3_filter_t* f     = in3->filters->array[id - 1];
   switch (f->type) {
     case FILTER_EVENT:
-      ret = filter_get_changes(ctx, id, parse_filter_changes, logs);
-      break;
+      *logs         = eth_getLogs(in3, f->options);
+      f->last_block = blkno + 1;
+      return 0;
     case FILTER_BLOCK:
-      ret = filter_get_changes(ctx, id, parse_filter_changes, block_hashes);
-      break;
+      if (blkno > f->last_block) {
+        int blkcount  = blkno - f->last_block;
+        *block_hashes = malloc(sizeof(bytes32_t) * blkcount);
+        for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
+          eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
+          memcpy((*block_hashes)[j], blk->hash, 32);
+          free(blk);
+        }
+        f->last_block = blkno;
+        return blkcount;
+      } else {
+        *block_hashes = NULL;
+        return 0;
+      }
     default:
-      ret = -3;
-      break;
+      return -3;
   }
-  free_ctx(ctx);
-  return ret;
 }
