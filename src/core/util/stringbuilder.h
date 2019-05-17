@@ -12,7 +12,7 @@
 #define sb_add_hexuint(sb, i) sb_add_hexuint_l(sb, i, sizeof(i))
 
 #ifdef __ZEPHYR__
-typedef unsigned long long uintmax_t
+typedef unsigned long long uintmax_t;
 #endif
 
 typedef struct sb {
