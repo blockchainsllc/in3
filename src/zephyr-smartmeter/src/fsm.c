@@ -425,8 +425,12 @@ static in3_state_t in3_TEST(void) {
   // unsigned char zchn;
   // UartReadStatus_t readStatus = uart_getChar(&zchn);
 
+
+  uart0_dumpBuffer();
+  extern int l_nNumDataPackets;
+
   int nLen = uart0_getNextDataSize();
-  printk("SzNextData: %d\n",nLen);
+  printk("l_nNumDataPackets: %d, SzNextData: %d\n",l_nNumDataPackets, nLen);
   if (nLen >= 0){
     int szBuf = nLen+1;
     unsigned char *pBuf = k_malloc(nLen+1);
@@ -434,6 +438,7 @@ static in3_state_t in3_TEST(void) {
     printk("Found data: %s\n", pBuf);
     k_free(pBuf);
   }
+
 
   // switch (readStatus)
   // {

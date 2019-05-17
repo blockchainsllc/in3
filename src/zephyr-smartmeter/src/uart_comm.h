@@ -11,6 +11,7 @@ typedef enum {
 extern void uart0_init(void);
 extern int uart0_getNextDataSize();
 extern int uart0_getNextData(unsigned char* pBuf, int szBuf);
+extern void uart0_dumpBuffer();
 // extern UartReadStatus_t uart_getChar(unsigned char* pZchn);
 
 #endif // _UART_COMM_H_
