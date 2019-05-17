@@ -196,9 +196,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     RESPONSE_START();
     sb_add_char(&response[0]->result, '"');
-    char* strid = hexstru64(id);
-    sb_add_chars(&response[0]->result, strid);
-    _free(strid);
+    sb_add_hexuint(&response[0]->result, id);
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
     return 0;
@@ -208,9 +206,7 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     RESPONSE_START();
     sb_add_char(&response[0]->result, '"');
-    char* strid = hexstru64(id);
-    sb_add_chars(&response[0]->result, strid);
-    _free(strid);
+    sb_add_hexuint(&response[0]->result, id);
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newPendingTransactionFilter") == 0) {
