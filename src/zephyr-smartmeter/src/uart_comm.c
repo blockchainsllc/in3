@@ -272,7 +272,7 @@ int uart0_getNextDataSize(){
     if (l_nNumDataPackets > 0){
         return (strlen(data_buf) - 1);
     } else {
-        return -1; // err
+        return -1; // no data
     }
 }
 
@@ -304,7 +304,7 @@ void uart0_dumpData(){
 
 
 int uart0_getNextData(unsigned char* pBuf, int szBuf){
-    // returns: -1 .. err; >= 0 szData
+    // returns: -2 .. err; -1 .. no data;  >= 0 szData
     int nLen = uart0_getNextDataSize(); // returns the len (without starting '~'-symbol)
     if (nLen >= 0){
         if (nLen < szBuf){

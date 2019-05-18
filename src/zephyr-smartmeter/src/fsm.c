@@ -47,12 +47,11 @@ static void wait_for_event(void) {
 }
 
 
-static char buffer[256];
+static char buffer[1024];
 static unsigned short ixWrite;
 
 void resetReceiveData(){
   memset(buffer, 0, sizeof(buffer));
-  ixWrite = 0;
 }
 
 /** @brief Receive data from UART
@@ -63,6 +62,25 @@ void resetReceiveData(){
  *  @return -1 .. error (buffer is full/too small); 0 .. no data ready; 1 .. data available
  */
 int receiveData(){
+  int retval = 0; // go on reading
+
+  int nLen = uart0_getNextData(buffer, sizeof(buffer));
+
+  if (nLen >= 0)
+  { // Data avail.
+    retval = 1; 
+  } else if (nLen == -1) {
+    // no data avail
+    retval = 0;
+  } else {
+    // err
+    retval = -1;
+  }
+
+  return retval;
+}
+
+int receiveData_old(){
   int retval = 0; // go on reading
   char ch;
 
@@ -111,15 +129,15 @@ int receiveData(){
 }
 
 int isReceivedData_Equal(char *strCMP) {
-  return strncmp(&buffer[1], strCMP, sizeof(buffer)) == 0;
+  return strncmp(&buffer[0], strCMP, sizeof(buffer)) == 0;
 }
 
 int isReceivedData_StartsWith(char *strCMP) {
   unsigned int nLen = strlen(strCMP);
-  if ( nLen > (sizeof(buffer)-1) ) {
-    nLen = (sizeof(buffer)-1);
+  if ( nLen > (sizeof(buffer)) ) {
+    nLen = (sizeof(buffer));
   }
-  return memcmp(&buffer[1], strCMP, nLen) == 0;
+  return memcmp(&buffer[0], strCMP, nLen) == 0;
 }
 
 
@@ -491,7 +509,7 @@ static in3_state_t run_state(in3_state_t state) {
   return state_table[state]();
 }
 
-#define __MY_TEST__
+// #define __MY_TEST__
 
 
 int in3_client_start(void) {
