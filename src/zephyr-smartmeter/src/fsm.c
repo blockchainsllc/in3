@@ -80,53 +80,6 @@ int receiveData(){
   return retval;
 }
 
-int receiveData_old(){
-  int retval = 0; // go on reading
-  char ch;
-
-  UartReadStatus_t readStatus;
-
-  do
-  {
-    readStatus = uart_getChar(&ch);
-
-    switch (readStatus) {
-      case URS_err: {
-        dbg_log("<--- ERR could not read from console/ser'port: readStatus = %d\n", readStatus);
-        retval = -1; // err
-      } break;
-      case URS_dataReady:{
-        if (ixWrite >= sizeof(buffer)) { // cancel with error, if our buffer is full/too small
-          dbg_log("<--- ERR buffer too small\n");
-          retval = -1; // err
-        }
-        if (ixWrite > 0 || ch == '~') { // we are in "read data"-mode
-          buffer[ixWrite++] = ch;
-          if (ch == '\n' || ch == '\r')                             // End Of Data
-          { 
-            dbg_log("<-- received EndOfData\n");
-            buffer[ixWrite-1] = '\0';
-            retval = 1; // OK, done receiving data
-          } else {
-            printk("%c",ch);
-            retval = 0; // goon reading
-          }
-          
-        }
-      } break;
-      case URS_no_data: {
-        retval = 0; // no_data
-      } break;
-      default: // unknown return value
-        retval = -1;
-        break;
-    }
-  } while (     readStatus == URS_dataReady
-            &&  retval == 0 );
-    
-  printk("\n");
-  return retval;
-}
 
 int isReceivedData_Equal(char *strCMP) {
   return strncmp(&buffer[0], strCMP, sizeof(buffer)) == 0;
@@ -292,9 +245,6 @@ void do_action()
       break;
   }
 
-
-  
-
 }
 
 // PUBLIC API
@@ -409,22 +359,6 @@ static in3_state_t in3_reset(void) {
   return STATE_WAITING;
 }
 
-struct device *uart_dev = NULL;
-
-
-
-
-// #define BUF_MAXSIZE	256
-// // #define SLEEP_TIME	500
-
-// static struct device *uart0_dev;
-// static u8_t rx_buf[BUF_MAXSIZE];
-// // static u8_t tx_buf[BUF_MAXSIZE];
-// // // static u8_t nci_reset[] = {0x20, 0x00, 0x01, 0x00};
-// // static u8_t nci_reset[] = { "HALLO" };
-
-
-
 
 static void in3_TEST_init(void) {
   printk("in3_TEST_init\n");
@@ -456,37 +390,6 @@ static in3_state_t in3_TEST(void) {
     printk("Found data: %s\n", pBuf);
     k_free(pBuf);
   }
-
-
-  // switch (readStatus)
-  // {
-  // case URS_dataReady:
-  //   printk("Received: %02x\n",zchn);
-  //   break;
-  // case URS_no_data:
-  //   printk("(no data)\n");
-  //   break;
-  // case URS_err:
-  //   printk("(error)\n");
-  //   break;
-
-  // default:
-  //   printk("(UNKNOWN UART READ STATUS)\n");
-  //   break;
-  // }
-
-  // u32_t *size = (u32_t *)tx_buf;
-	// /* 4 bytes for the payload's length */
-	// UNALIGNED_PUT(sys_cpu_to_be32(sizeof(nci_reset)), size);
-
-	// /* NFC Controller Interface reset cmd */
-	// memcpy(tx_buf + sizeof(u32_t), nci_reset, sizeof(nci_reset));
-
-	// /*
-	//  * Peer will receive: 0x00 0x00 0x00 0x04 0x20 0x00 0x01 0x00
-	//  *	                nci_reset size   +    nci_reset cmd
-	//  */
-	// uart_fifo_fill(uart0_dev, tx_buf, sizeof(u32_t) + sizeof(nci_reset));
 
   ledpower_set(IO_OFF); // power led on
   k_sleep(1000);
