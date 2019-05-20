@@ -26,13 +26,21 @@
 
 
 
-extern in3_t* g_c;
+static in3_t* l_pIN3;
+
+void meterReadingsSetIN3(in3_t* pIN3){
+  l_pIN3 = pIN3;
+}
+
+
 
 call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value) {
   call_request_t* req = parseSignature(fn_sig);
   if (req->in_data->type == A_TUPLE) {
     json_ctx_t* in_data = parse_json(args);
-    if (set_data(req, in_data->result, req->in_data) < 0) { debug_log("Error: could not set the data"); }
+    if (set_data(req, in_data->result, req->in_data) < 0) { 
+      dbg_log("Error: could not set the data"); 
+    }
     free_json(in_data);
   }
   sb_t* params = sb_new("");
@@ -109,7 +117,7 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
 
 // void CB_printVal(const char* strVal, void* pUserData)
 // {
-//   debug_log("%s\n", strVal);
+//   dbg_log("%s\n", strVal);
 // }
 
 // void print_val(d_token_t* t) 
@@ -181,7 +189,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
   char* block_number = "latest";
   char* sig = "getReading(uint256):(uint48,int24,int24,uint32)";
   
-  char* addrContract = g_c->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
+  char* addrContract = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
 
   // const char* paramBuffer = "[0,"Text",234]";
   char* method = "eth_call";
@@ -197,7 +205,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
   char* result = NULL;
   char* error = NULL;
 
-  int errID = in3_client_rpc(g_c, method, paramBuffer, &result, &error);
+  int errID = in3_client_rpc(l_pIN3, method, paramBuffer, &result, &error);
   UNUSED_VAR(errID);
 
   // bool wait = false;
@@ -205,7 +213,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
   // if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
   //   bytes32_t txHash;
   //   hex2byte_arr(result + 3, 64, txHash, 32);
-  //   result = eth_wait_for_receipt(g_c, txHash);
+  //   result = eth_wait_for_receipt(l_pIN3, txHash);
   // }
 
   if (error) {
@@ -255,7 +263,7 @@ getReading_RSP_t* meterReadings_getLastReading()
   char* block_number = "latest";
   char* sig = "getLastReading():(uint48,int24,int24,uint32)";
 
-  char* addrContract = g_c->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
+  char* addrContract = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
 
   char* method = "eth_call";
 
@@ -271,7 +279,7 @@ getReading_RSP_t* meterReadings_getLastReading()
   char* result = NULL;
   char* error = NULL;
 
-  int errID = in3_client_rpc(g_c, method, paramBuffer, &pBuffer_Result, &error);
+  int errID = in3_client_rpc(l_pIN3, method, paramBuffer, &pBuffer_Result, &error);
   UNUSED_VAR(errID);
 
   // bool wait = false;
@@ -279,7 +287,7 @@ getReading_RSP_t* meterReadings_getLastReading()
   // if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
   //   bytes32_t txHash;
   //   hex2byte_arr(result + 3, 64, txHash, 32);
-  //   result = eth_wait_for_receipt(g_c, txHash);
+  //   result = eth_wait_for_receipt(l_pIN3, txHash);
   // }
 
   if (error) {
@@ -367,7 +375,7 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   char* block_number = "latest";
   char* sig = "getContractVersion():(string)";
 
-  char* addrContract = g_c->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
+  char* addrContract = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
 
   char* method = "eth_call";
 
@@ -383,7 +391,7 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   char* result = NULL;
   char* error = NULL;
 
-  int errID = in3_client_rpc(g_c, method, paramBuffer, &pBuffer_Result, &error);
+  int errID = in3_client_rpc(l_pIN3, method, paramBuffer, &pBuffer_Result, &error);
   UNUSED_VAR(errID);
 
   // bool wait = false;
@@ -391,7 +399,7 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   // if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
   //   bytes32_t txHash;
   //   hex2byte_arr(result + 3, 64, txHash, 32);
-  //   result = eth_wait_for_receipt(g_c, txHash);
+  //   result = eth_wait_for_receipt(l_pIN3, txHash);
   // }
 
   if (error) {

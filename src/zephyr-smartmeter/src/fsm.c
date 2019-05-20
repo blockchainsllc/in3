@@ -2,7 +2,8 @@
 #include <console.h>
 #include <misc/byteorder.h>
 #include "uart_comm.h"
-
+#include "in3_comm_esp32.h"
+#include "meterReadings.h"
 
 // #define printX printk
 #define printX(...) 
@@ -73,6 +74,7 @@ typedef enum {
   AS_waitFor_OkConnected,
   AS_waitFor_Response,
   AS_sleep10s_before_waitForOkConnected,
+  AS_callMeterReadings_getContractVersion,
 } enmActivityState_t;
 
 volatile enmActivityState_t g_activityState = 0;
@@ -136,6 +138,17 @@ void do_action()
         printX("    now: %u\ntimeout: %u\n", now, timeOut);
       }
         
+    } break;
+    case AS_callMeterReadings_getContractVersion:
+    {
+      getContractVersion_RSP_t* pContractVersion_RSP = NULL;
+      pContractVersion_RSP = meterReadings_getContractVersion();
+      if (pContractVersion_RSP != NULL) 
+      {
+        printk("Contract-version: %s\n", pContractVersion_RSP->strVersion);
+      } else {
+        printk("An error occured: id %d\n", pContractVersion_RSP->nExecResult);
+      }
     } break;
     case AS_sendRequest:
     {
@@ -266,7 +279,7 @@ static in3_state_t in3_init(void) {
   // g_c->cacheStorage = NULL;
   // g_c->proof = PROOF_NONE;
   // g_c->transport = sendJsonRequest_serial;
-
+  client->in3->transport = in3_comm_esp32_sendJsonRequestAndWait;
 
 
 	client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
@@ -275,6 +288,8 @@ static in3_state_t in3_init(void) {
   in3_cache_init(client->in3);
 	in3_register_eth_nano();
 	// bluetooth_setup(client);
+
+  meterReadingsSetIN3(client->in3);
 
 	k_sem_init(&client->sem, 0, 1);
 	k_mutex_init(&client->mutex);

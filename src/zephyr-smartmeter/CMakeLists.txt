@@ -51,12 +51,11 @@ include_directories ("${PROJECT_SOURCE_DIR}/../eth_api")
 include_directories ("${PROJECT_SOURCE_DIR}/../eth_nano")
 include_directories ("${PROJECT_SOURCE_DIR}/../transport_curl")
 include_directories ("${PROJECT_SOURCE_DIR}/../eth_basic")
+
+# choose which module to include for LINKING
 include("${PROJECT_SOURCE_DIR}/include_eth_core.cmake")
 include("${PROJECT_SOURCE_DIR}/include_eth_nano.cmake")
-
-# choose which module to include
-#include(../eth_basic/include.cmake)
-#include(../eth_nano/include.cmake)
+include("${PROJECT_SOURCE_DIR}/include_eth_api.cmake")
 include(../core/compiler.cmake)
 
 # add dependency

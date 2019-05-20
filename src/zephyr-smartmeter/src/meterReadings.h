@@ -20,6 +20,7 @@ typedef struct
   char strVersion[50];
 } getContractVersion_RSP_t;
 
+extern void                         meterReadingsSetIN3(in3_t* pIN3);
 extern getContractVersion_RSP_t*    meterReadings_getContractVersion();
 extern getReading_RSP_t*            meterReadings_getLastReading();
 extern getReading_RSP_t*            meterReadings_getReading(uint32_t ixReading);
