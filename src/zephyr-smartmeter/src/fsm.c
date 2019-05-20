@@ -51,20 +51,6 @@ static void wait_for_event(void) {
 static char buffer[1024];
 static unsigned short ixWrite;
 
-
-int isReceivedData_Equal(char *strCMP) {
-  return strncmp(&buffer[0], strCMP, sizeof(buffer)) == 0;
-}
-
-int isReceivedData_StartsWith(char *strCMP) {
-  unsigned int nLen = strlen(strCMP);
-  if ( nLen > (sizeof(buffer)) ) {
-    nLen = (sizeof(buffer));
-  }
-  return memcmp(&buffer[0], strCMP, nLen) == 0;
-}
-
-
 typedef enum {
   AS_err = -1,
   AS_done = 0,
@@ -76,6 +62,9 @@ typedef enum {
   AS_sleep10s_before_waitForOkConnected,
   AS_callMeterReadings_getContractVersion,
 } enmActivityState_t;
+
+#define AS_AFTER_START  AS_sendRequest
+// #define AS_AFTER_START  AS_callMeterReadings_getContractVersion
 
 volatile enmActivityState_t g_activityState = 0;
 
@@ -99,7 +88,7 @@ void do_action()
         // printX("~>H\n");
         g_activityState = AS_waitFor_Ready;
       } else {
-        g_activityState = AS_sendRequest;
+        g_activityState = AS_AFTER_START;
       }    
       break;
     case AS_waitFor_Ready:
@@ -114,9 +103,9 @@ void do_action()
           dbg_log("<-- err: while receiving data\n");
           break;
         case 1: // data complete
-          if (isReceivedData_StartsWith("READY")){
+          if (isReceivedData_StartsWith("READY", buffer, sizeof(buffer))){
             l_bReady = 1;
-            g_activityState = AS_sendRequest;
+            g_activityState = AS_AFTER_START;
           } else {
             dbg_log("<-- err: received data not equal to READY: \"%s\"\n", &buffer[1]);
             g_activityState = AS_err;
@@ -177,7 +166,7 @@ void do_action()
           return;
           break;
         case 1: // data complete
-          if (isReceivedData_StartsWith("OK connected")){
+          if (isReceivedData_StartsWith("OK connected", buffer, sizeof(buffer))){
             dbg_log("<-- ok: received data is OK connected\n");
             resetReceiveData(buffer, sizeof(buffer));      
             g_activityState = AS_waitFor_Response;

@@ -15,5 +15,13 @@ extern void uart0_dumpBuffer();
 
 extern void resetReceiveData(char* pBuf, int szBuf);
 extern int  receiveData(char* pBuf, int szBuf);
+extern int isReceivedData_Equal(    char    *strCMP, 
+                                    void    *pReceivedDataBuf, 
+                                    int     szReceivedDataBuf
+                                );
+extern int isReceivedData_StartsWith(   char    *strCMP, 
+                                        void    *pReceivedDataBuf, 
+                                        int     szReceivedDataBuf
+                                    );
 
 #endif // _UART_COMM_H_

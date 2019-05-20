@@ -214,3 +214,15 @@ int receiveData(char* pBuf, int szBuf){
   return retval;
 }
 
+int isReceivedData_Equal(char *strCMP, void* pReceivedDataBuf, int szReceivedDataBuf) {
+  return strncmp(&pReceivedDataBuf[0], strCMP, szReceivedDataBuf) == 0;
+}
+
+int isReceivedData_StartsWith(char *strCMP, void* pReceivedDataBuf, int szReceivedDataBuf) {
+  unsigned int nLen = strlen(strCMP);
+  if ( nLen > (szReceivedDataBuf) ) {
+    nLen = szReceivedDataBuf;
+  }
+  return memcmp(&pReceivedDataBuf[0], strCMP, nLen) == 0;
+}
+
