@@ -106,7 +106,7 @@ sb_t* sb_add_bytes(sb_t* sb, char* prefix, bytes_t* bytes, int len, bool as_arra
 }
 
 sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l) {
-  char tmp[19]; // Max 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  char tmp[19]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
   switch (l) {
     case 1: l = sprintf(tmp, "0x%" PRIx8, (uint8_t) uint); break;
     case 2: l = sprintf(tmp, "0x%" PRIx16, (uint16_t) uint); break;

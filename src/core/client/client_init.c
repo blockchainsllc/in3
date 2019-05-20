@@ -105,8 +105,8 @@ void in3_free(in3_t* a) {
 
   if (a->filters != NULL) {
     in3_filter_t* f = NULL;
-    for (size_t i = 0; i < a->filters->count; i++) {
-      f = a->filters->array[i];
+    for (size_t j = 0; j < a->filters->count; j++) {
+      f = a->filters->array[j];
       if (f) f->release(f);
     }
     _free(a->filters->array);

@@ -298,8 +298,8 @@ uint64_t eth_gasPrice(in3_t* in3) {
 }
 
 static eth_log_t* parse_logs(d_token_t* result) {
-  eth_log_t *prev, *curr, *first;
-  prev = curr = first = NULL;
+  eth_log_t *prev, *first;
+  prev = first = NULL;
   for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
     eth_log_t* log         = _calloc(1, sizeof(*log));
     log->removed           = d_get_intk(it.token, K_REMOVED);
@@ -446,8 +446,8 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
 size_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
   if (options == NULL) return 0;
   if (!filter_opt_valid(&options->result[0])) return 0;
-  char* fopt = d_create_json(&options->result[0]);
-  int   ret  = filter_add(in3, FILTER_EVENT, fopt);
+  char*  fopt = d_create_json(&options->result[0]);
+  size_t ret  = filter_add(in3, FILTER_EVENT, fopt);
   if (!ret) _free(fopt);
   return ret;
 }
@@ -479,15 +479,15 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
       return 0;
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
-        int blkcount  = blkno - f->last_block;
-        *block_hashes = malloc(sizeof(bytes32_t) * blkcount);
+        uint64_t blkcount = blkno - f->last_block;
+        *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
           memcpy((*block_hashes)[j], blk->hash, 32);
           free(blk);
         }
         f->last_block = blkno;
-        return blkcount;
+        return (int) blkcount;
       } else {
         *block_hashes = NULL;
         return 0;
