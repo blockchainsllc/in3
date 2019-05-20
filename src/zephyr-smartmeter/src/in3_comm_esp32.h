@@ -5,7 +5,7 @@
 extern int in3_comm_esp32_sendJsonRequestAndWait(
                                     char** urls,
                                     int urls_len, 
-                                    char* pl, 
+                                    char* payload, 
                                     in3_response_t* result
                                 );
 

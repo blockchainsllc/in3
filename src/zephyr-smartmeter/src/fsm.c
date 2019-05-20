@@ -63,8 +63,8 @@ typedef enum {
   AS_callMeterReadings_getContractVersion,
 } enmActivityState_t;
 
-#define AS_AFTER_START  AS_sendRequest
-// #define AS_AFTER_START  AS_callMeterReadings_getContractVersion
+// #define AS_AFTER_START  AS_sendRequest
+#define AS_AFTER_START  AS_callMeterReadings_getContractVersion
 
 volatile enmActivityState_t g_activityState = 0;
 
@@ -266,7 +266,7 @@ static in3_state_t in3_init(void) {
 	client->in3->requestCount = 1;
 	client->in3->max_attempts=1;
   // g_c->cacheStorage = NULL;
-  // g_c->proof = PROOF_NONE;
+  client->in3->proof = PROOF_NONE;
   // g_c->transport = sendJsonRequest_serial;
   client->in3->transport = in3_comm_esp32_sendJsonRequestAndWait;
 
@@ -274,7 +274,7 @@ static in3_state_t in3_init(void) {
 	client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
 	client->msg = k_calloc(1, sizeof(in3_msg_t));
 
-  in3_cache_init(client->in3);
+  // in3_cache_init(client->in3);
 	in3_register_eth_nano();
 	// bluetooth_setup(client);
 

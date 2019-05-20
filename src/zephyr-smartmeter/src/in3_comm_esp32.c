@@ -71,6 +71,13 @@ static void sendRequestAndWaitForResponse( char* url, char* payload, in3_respons
 	int bufsize = sizeof(responseBuffer);
 	int nBytesReceived = 0;//serial_Read(responseBuffer, bufsize);
 
+    // empty "received-data-queue"
+    do 
+    {
+        nBytesReceived = receiveData(responseBuffer, bufsize);
+    } while (nBytesReceived > 0);
+
+
     //  transmit: SERVER, Path (=> URL: Server/Path) and Content
     // we have to split the url ==> server, path
 
@@ -116,153 +123,95 @@ static void sendRequestAndWaitForResponse( char* url, char* payload, in3_respons
         stateSendPath,
         stateSendPayload,
         stateWaitForACK,
-        stateReadACK,
-        stateExpectingStartOfData,
         stateReadData, 
         stateDone
     } stateAfterWait = stateNone, state = stateSendServerAddr;
 
-    // int nPos = 0;
-    // int bFound = 0;
-    // char* pDataStart = NULL;
-    // char* pDataEnd = NULL;
-    // nBytesReceived = 0;
-    // do
-    // {
-    //     if (    nPos >= nBytesReceived 
-    //         &&  state != stateSendServerAddr 
-    //         &&  state != stateSendPath 
-    //         &&  state != stateSendPayload )
-    //     {
-    //         nBytesReceived = waitForResponse(responseBuffer, bufsize, c_nTIME_OUT);
-    //         nPos = 0;
-    //     }        
-    //     responseBuffer[bufsize-1]='\0';
+    int nPos = 0;
+    int bFound = 0;
+    char* pDataStart = NULL;
+    char* pDataEnd = NULL;
+    nBytesReceived = 0;
+    do
+    {
+        if (    nPos >= nBytesReceived 
+            &&  state != stateSendServerAddr 
+            &&  state != stateSendPath 
+            &&  state != stateSendPayload )
+        {
+            nBytesReceived = waitForResponse(responseBuffer, bufsize, c_nTIME_OUT);
+            nPos = 0;
+        }        
+        responseBuffer[bufsize-1]='\0';
 
-    //     switch (state)
-    //     {
-    //         case stateSendServerAddr:
-    //         {
-    //             serial_Write("~U", 2);  // START-MARKER: "transmitting URL-server"
-    //             serial_Write(&url[0], nPosSlash);
-    //             serial_Write("\n",1);   // END-MARKER "transmission (URL-server) complete"
-    //             state = stateWaitForACK;
-    //             stateAfterWait = stateSendPath;
-    //         } break;
-    //         case stateSendPath:
-    //         {
-    //             serial_Write("~P", 2);  // START-MARKER: "transmitting URL-path"
-    //             if (bFoundSlash)
-    //             {
-    //                 serial_Write(&url[nPosSlash], nLenURL-nPosSlash);
-    //             }
-    //             else
-    //             {
-    //                 serial_Write("/", 1);
-    //             }
-    //             serial_Write("\n",1);   // END-MARKER "transmission (URL-path) complete"
+        switch (state)
+        {
+            case stateSendServerAddr:
+            {
+                serial_Write("~U", 2);  // START-MARKER: "transmitting URL-server"
+                serial_Write(&url[0], nPosSlash);
+                serial_Write("\n",1);   // END-MARKER "transmission (URL-server) complete"
+                state = stateWaitForACK;
+                stateAfterWait = stateSendPath;
+            } break;
+            case stateSendPath:
+            {
+                serial_Write("~P", 2);  // START-MARKER: "transmitting URL-path"
+                if (bFoundSlash)
+                {
+                    serial_Write(&url[nPosSlash], nLenURL-nPosSlash);
+                }
+                else
+                {
+                    serial_Write("/", 1);
+                }
+                serial_Write("\n",1);   // END-MARKER "transmission (URL-path) complete"
 
-    //             state = stateWaitForACK;
-    //             stateAfterWait = stateSendPayload;
-    //         } break;
-    //         case stateSendPayload:
-    //         {
-    //             serial_Write("~", 1);  // START-MARKER: "transmitting Content"
-    //             serial_Write(payload, strlen(payload));
-    //             serial_Write("\n",1);   // END-MARKER "transmission (Content) complete"
+                state = stateWaitForACK;
+                stateAfterWait = stateSendPayload;
+            } break;
+            case stateSendPayload:
+            {
+                serial_Write("~", 1);  // START-MARKER: "transmitting Content"
+                serial_Write(payload, strlen(payload));
+                serial_Write("\n",1);   // END-MARKER "transmission (Content) complete"
 
-    //             state = stateWaitForACK;
-    //             stateAfterWait = stateExpectingStartOfData;
-    //         } break;
-    //         case stateWaitForACK:
-    //         {
-    //             // look for '~'
-    //             for( bFound = 0; !bFound && nPos < nBytesReceived; nPos++)
-    //             {
-    //                 if (responseBuffer[nPos] == '~')
-    //                 {
-    //                     bFound = true;
-    //                     state = stateReadACK;
-    //                     nPos++;
-    //                 }
-    //             }
-    //         }break;
-    //         case stateReadACK:
-    //         {
-    //             // look for '\n'
-    //             for( bFound = 0; !bFound && nPos < nBytesReceived; nPos++)
-    //             {
-    //                 if (responseBuffer[nPos] == '\n')
-    //                 {
-    //                     bFound = true;
-    //                     state = stateDone;
-    //                 }
-    //             }
-    //             if (bFound)
-    //             {
-    //                 state = (stateAfterWait > stateNone) ? stateAfterWait : stateERR;
-    //                 stateAfterWait = stateNone;
-    //             }
-    //         } break;            
+                state = stateWaitForACK;
+                stateAfterWait = stateReadData;
+            } break;
+            case stateWaitForACK:
+            {
+                if (nBytesReceived > 0)
+                {
+                    nBytesReceived = 0;
+                    if (isReceivedData_StartsWith("OK", responseBuffer, sizeof(responseBuffer))){
+                        bFound = true;
+                        state = stateDone;
+                    }
+                    if (bFound)
+                    {
+                        state = (stateAfterWait > stateNone) ? stateAfterWait : stateERR;
+                        stateAfterWait = stateNone;
+                    }
+                }
+            }break;
+            case stateReadData:
+            {
+                if (nBytesReceived > 0)
+                {
+                    sb_add_range(&r->result, responseBuffer, 0, nBytesReceived );
+                    nBytesReceived = 0;
 
-    //         case stateExpectingStartOfData:
-    //         {
-    //             if (nBytesReceived == -1) 
-    //             {
-    //                 state = stateERR;
-    //                 break;
-    //             }
-    //             // look for '~'
-    //             for( bFound = 0; !bFound && nPos < nBytesReceived; nPos++)
-    //             {
-    //                 if (responseBuffer[nPos] == '~')
-    //                 {
-    //                     bFound = true;
-    //                     state = stateReadData;
-    //                     nPos++;
-    //                     pDataStart = &responseBuffer[nPos];
-    //                 }
-    //             }
-                
-    //         } break;
-    //         case stateReadData:
-    //         {
-    //             pDataEnd = NULL;                        
-    //             // look for '\n'
-    //             for( bFound = 0; !bFound && nPos < nBytesReceived; nPos++)
-    //             {
-    //                 if (responseBuffer[nPos] == '\n')
-    //                 {
-    //                     bFound = true;
-    //                     responseBuffer[nPos]='\0';
-    //                     if (responseBuffer[nPos-1]=='\r')
-    //                     {
-    //                         responseBuffer[nPos-1] = '\0';
-    //                         pDataEnd = &responseBuffer[nPos-1];
-    //                     }
-    //                     state = stateDone;
-    //                 }
-    //             }
-    //             if (!pDataEnd) { pDataEnd = &responseBuffer[nPos]; }
-    //             if ( (pDataEnd-pDataStart) > 0 )
-    //             {
-    //                 sb_add_range(&r->result, pDataStart, 0, (pDataEnd-pDataStart) );
-    //                 printf("%s", pDataStart);
-    //             } 
-    //             else
-    //             {
-    //                 sb_add_chars(&r->error, "in3_comm_serial() failed (nothing received).");
-    //             }
-    //         } break;            
-    //         default:
-    //             break;
-    //     }
+                    bFound = true;
+                    state = stateDone;
+                }
+            } break;            
+            default:
+                break;
+        }
 
-    // } while (state != stateDone && state != stateERR);
-    // printf("\n\n");
+    } while (state != stateDone && state != stateERR);
     
-
-    // serial_Close();
 }
 
 
