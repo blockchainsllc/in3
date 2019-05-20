@@ -183,3 +183,34 @@ void uart0_init(void)
 	uart_irq_rx_enable(uart0_dev);
 	printk("%s() done\n", __func__);
 }
+
+void resetReceiveData(char* pBuf, int szBuf){
+  memset(pBuf, 0, szBuf);
+}
+
+/** @brief Receive data from UART
+ *
+ *  Data is enclosed in <BEGIN_DATA>-symbol '~' and <END_DATA>-symbol '\n'.
+ *  Data is then written in the buffer (static/global).
+ * 
+ *  @return -1 .. error (buffer is full/too small); 0 .. no data ready; 1 .. data available
+ */
+int receiveData(char* pBuf, int szBuf){
+  int retval = 0; // go on reading
+
+  int nLen = uart0_getNextData(pBuf, szBuf);
+
+  if (nLen >= 0)
+  { // Data avail.
+    retval = 1; 
+  } else if (nLen == -1) {
+    // no data avail
+    retval = 0;
+  } else {
+    // err
+    retval = -1;
+  }
+
+  return retval;
+}
+

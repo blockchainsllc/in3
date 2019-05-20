@@ -4,8 +4,8 @@
 #include "uart_comm.h"
 
 
-#define printX printk
-
+// #define printX printk
+#define printX(...) 
 
 
 // Global Client
@@ -50,36 +50,6 @@ static void wait_for_event(void) {
 static char buffer[1024];
 static unsigned short ixWrite;
 
-void resetReceiveData(){
-  memset(buffer, 0, sizeof(buffer));
-}
-
-/** @brief Receive data from UART
- *
- *  Data is enclosed in <BEGIN_DATA>-symbol '~' and <END_DATA>-symbol '\n'.
- *  Data is then written in the buffer (static/global).
- * 
- *  @return -1 .. error (buffer is full/too small); 0 .. no data ready; 1 .. data available
- */
-int receiveData(){
-  int retval = 0; // go on reading
-
-  int nLen = uart0_getNextData(buffer, sizeof(buffer));
-
-  if (nLen >= 0)
-  { // Data avail.
-    retval = 1; 
-  } else if (nLen == -1) {
-    // no data avail
-    retval = 0;
-  } else {
-    // err
-    retval = -1;
-  }
-
-  return retval;
-}
-
 
 int isReceivedData_Equal(char *strCMP) {
   return strncmp(&buffer[0], strCMP, sizeof(buffer)) == 0;
@@ -120,7 +90,7 @@ void do_action()
     case AS_start: // send request (and then wait for "OK connected")
       // printf("~[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[]}]\n");
       printX("AS_start\n");
-      resetReceiveData();
+      resetReceiveData(buffer, sizeof(buffer));
       if (!l_bReady)
       {
         timeOut =  k_uptime_get_32(); // "now!"
@@ -134,7 +104,7 @@ void do_action()
     {
       printX("AS_waitFor_Ready\n");
       
-      int erg = receiveData();
+      int erg = receiveData(buffer, sizeof(buffer));
       switch (erg)
       {
         case -1: // err
@@ -160,7 +130,7 @@ void do_action()
       if (    g_activityState == AS_waitFor_Ready
           &&  now >= timeOut)  // timeout; send again RESET-Cmd.
       {
-        printX("~>H\n");
+        printk("~>H\n");
         timeOut = k_uptime_get_32() + 7000;
       } else {
         printX("    now: %u\ntimeout: %u\n", now, timeOut);
@@ -170,10 +140,14 @@ void do_action()
     case AS_sendRequest:
     {
       printX("AS_sendRequest\n");
-      resetReceiveData();
+      resetReceiveData(buffer, sizeof(buffer));
       // printX("~[{'jsonrpc':'2.0','method':'eth_blockNumber','params':[]}]\n");
       // ~[{"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}]\n
-      printX("~[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[]}]\n");
+      // printX("~[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[]}]\n");
+
+      // printk("~[{\"jsonrpc\":\"2.0\",\"id\":2571205111,\"method\":\"eth_call\",\"params\":[{\"from\":\"0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a\",\"to\":\"0xfe992bfe3adf0b61d0ca144fa4c5d6e81385384b\",\"data\":\"0x8aa10435\",\"value\":\"0x0\",\"gas\":\"0x2dc6c0\"},\"0x727948\"]}]\n");
+      printk("~{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_call\",\"params\":[{\"from\":\"0x0000000000000000000000000000000000000000\",\"to\":\"0x5bed06b162100cfa567d103795ea55c9368b6c06\",\"data\":\"0x0087a7880000000000000000000000000000000000000000000000000000000000000005\",\"value\":\"0x0\",\"gas\":\"0x2dc6c0\"}]}\n");
+
       g_activityState = AS_waitFor_OkConnected;
       timeOut = k_uptime_get_32() + 10000;
     } break;
@@ -181,7 +155,7 @@ void do_action()
     {
       printX("AS_waitFor_OkConnected\n");
 
-      int erg = receiveData();
+      int erg = receiveData(buffer, sizeof(buffer));
       switch (erg)
       {
         case -1: // err
@@ -192,7 +166,7 @@ void do_action()
         case 1: // data complete
           if (isReceivedData_StartsWith("OK connected")){
             dbg_log("<-- ok: received data is OK connected\n");
-            resetReceiveData();      
+            resetReceiveData(buffer, sizeof(buffer));      
             g_activityState = AS_waitFor_Response;
             timeOut = k_uptime_get_32() + 10000;
           } else {
@@ -214,7 +188,7 @@ void do_action()
     case AS_waitFor_Response: 
     {
       printX("AS_waitFor_Response\n");
-      int erg = receiveData();
+      int erg = receiveData(buffer, sizeof(buffer));
       switch (erg)
       {
         case -1: // err
@@ -224,9 +198,9 @@ void do_action()
           break;
         case 1: // data complete
           // print result:
-          printX("RESULT:\n");
-          printX(&buffer[1]);
-          printX("\n\n");
+          printk("> RESULT:\n>");
+          printk(&buffer[0]);
+          printk("\n\n");
           g_activityState = AS_done;
           return;
           break;
@@ -246,6 +220,7 @@ void do_action()
   }
 
 }
+
 
 // PUBLIC API
 void in3_signal_event(void) {
@@ -285,13 +260,19 @@ static in3_state_t in3_init(void) {
   uart0_init();
 
 	client->in3 = in3_new();
-	client->in3->chainId = 0x044d;
+	client->in3->chainId = 0x044d; // Tobalaba
 	client->in3->requestCount = 1;
 	client->in3->max_attempts=1;
+  // g_c->cacheStorage = NULL;
+  // g_c->proof = PROOF_NONE;
+  // g_c->transport = sendJsonRequest_serial;
+
+
 
 	client->txr = k_calloc(1, sizeof(in3_tx_receipt_t));
 	client->msg = k_calloc(1, sizeof(in3_msg_t));
 
+  in3_cache_init(client->in3);
 	in3_register_eth_nano();
 	// bluetooth_setup(client);
 
