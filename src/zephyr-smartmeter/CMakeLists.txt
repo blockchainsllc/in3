@@ -41,6 +41,7 @@ target_sources(app PRIVATE
 	src/rent.c
   src/meterReadings.c
   src/uart_comm.c
+  src/in3_comm_esp32.c
 )
 
 # include core in the headers

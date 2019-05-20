@@ -41,7 +41,12 @@
         "unistd.h": "c",
         "project.h": "c",
         "uart_console.h": "c",
-        "uart.h": "c"
+        "uart.h": "c",
+        "printk.h": "c",
+        "device.h": "c",
+        "gpio.h": "c",
+        "pwm.h": "c",
+        "uart_comm.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
