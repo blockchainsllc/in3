@@ -9,7 +9,9 @@
             ],
             "defines": [
                 "DEBUG_OFF",
-                "USB_DONGLE"
+                "DBG_FNCTRACE",
+                "USB_DONGLE",
+                "__ZEPHYR__"
             ],
             "compilerPath": "~/sysroots/x86_64-pokysdk-linux/usr/bin/arm-zephyr-eabi/arm-zephyr-eabi-gcc",
             "cStandard":"c99",

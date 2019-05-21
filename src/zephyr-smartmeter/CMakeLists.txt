@@ -10,6 +10,8 @@ OPTION(USB_DONGLE "Set this ON for USB dongle version" ON)
 OPTION(BT_MAC "Set this to force hardcoded BT MAC address" OFF)
 OPTION(DEBUG "Set this ON for debug mode (on SDK shows dbg_log messages)" OFF)
 
+ADD_DEFINITIONS( -DDBG_FNCTRACE )
+
 IF(USB_DONGLE)
   SET(BOARD nrf52840_pca10059)
   ADD_DEFINITIONS(-DUSB_DONGLE)

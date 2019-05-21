@@ -22,7 +22,11 @@
 #include <util/data.h>
 #include "meterReadings.h"
 
-
+#ifdef __ZEPHYR__
+  #define snprintX  snprintk
+#else
+  #define snprintX snprintf
+#endif
 
 
 
@@ -82,17 +86,20 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
         extract_vals(it.token, pFncCB, pUserData);
       break;
     case T_BOOLEAN:
-      sprintf(buf,"%s", d_int(t) ? "true" : "false");
+      snprintX(buf, sizeof(buf),"%s", d_int(t) ? "true" : "false");
       pFncCB(buf, pUserData);
       break;
     case T_INTEGER:
-      sprintf(buf,"%i", d_int(t));
+      printk("T_INTEGER: %i - ", d_int(t));
+      snprintX(buf, sizeof(buf)-1,"%i", d_int(t));
       pFncCB(buf, pUserData);
       break;
     case T_BYTES:
-      if (t->len < 9)
-        sprintf(buf,"%" PRId64 "", d_long(t));
-      else {
+      if (t->len < 9) {
+        printk("T_BYTES: %" PRId64 " - ", d_long(t));
+        // sprintf(buf,"%" PRId64 "", d_long(t));
+        snprintX(buf, sizeof(buf)-1,"%" PRId64, d_long(t));
+      } else {
         int pos = 0;
         sprintf(&buf[pos],"0x");
         pos += 2;
@@ -102,14 +109,15 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
           pos += 2;
         }
       }
+      printk("T_BYTES - (pre) pFncCB(..): buf=\"%s\"", buf);
       pFncCB(buf, pUserData);
       break;
     case T_NULL:
-      sprintf(buf,"NULL");
+      snprintX(buf, sizeof(buf),"NULL");
       pFncCB(buf, pUserData);
       break;
     case T_STRING:
-      sprintf(buf,"%s", d_string(t));
+      snprintX(buf, sizeof(buf),"%s", d_string(t));
       pFncCB(buf, pUserData);
       break;
   }
@@ -134,6 +142,7 @@ typedef struct
 
 void CB_fillDataStruct(const char* strVal, void* pUserData)
 {
+  printk("### CB_fillDataStrut: strVal=%s - ", (strVal?strVal:"NULL"));
   if (pUserData != NULL)
   {
     fillDataStruct_t *pFillDataStruct = pUserData;
@@ -196,7 +205,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
 
   char paramBuffer[1024]; // supply enough buffer; we use it later on in the prepare_tx!
   memset(paramBuffer, 0, sizeof(paramBuffer));
-  snprintf(paramBuffer, sizeof(paramBuffer)-1,"[%u]", ixReading);
+  snprintX(paramBuffer, sizeof(paramBuffer)-1,"[%u]", ixReading);
 
   call_request_t* req  = NULL;
   req    = prepare_tx(sig, addrContract, paramBuffer, block_number, 0, NULL);
@@ -218,7 +227,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
 
   if (error) {
     fprintf(stderr, "Error: %s\n", error);
-    free(error);
+    _free(error);
     getReading_Response.nExecResult = -1;
     return &getReading_Response;
   } else {
@@ -246,7 +255,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
         }
         // if not we simply print the result
       }
-      free(result);
+      _free(result);
     }
   }
   getReading_Response.nExecResult = 0;
@@ -262,6 +271,7 @@ getReading_RSP_t* meterReadings_getLastReading()
 
   char* block_number = "latest";
   char* sig = "getLastReading():(uint48,int24,int24,uint32)";
+  // char* sig = "getLastReading():(uint256,int256,int256,uint256)";
 
   char* addrContract = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
 
@@ -290,10 +300,11 @@ getReading_RSP_t* meterReadings_getLastReading()
   //   result = eth_wait_for_receipt(l_pIN3, txHash);
   // }
 
+  getLastReading_Response.nExecResult = 0;
   if (error) {
     fprintf(stderr, "Error: %s\n", error);
     getLastReading_Response.nExecResult = -1;
-    return &getLastReading_Response;
+    // return &getLastReading_Response;
   } else {
     if (pBuffer_Result) {
       // printf("result: %s\n", result);
@@ -315,11 +326,10 @@ getReading_RSP_t* meterReadings_getLastReading()
       }
     }
   }
-  getLastReading_Response.nExecResult = 0;
 
   if (req)            req_free(req);
-  if (pBuffer_Result) free(pBuffer_Result);
-  if (error)          free(error);
+  if (pBuffer_Result) _free(pBuffer_Result);
+  if (error)          _free(error);
 
   return &getLastReading_Response;
 }
@@ -369,6 +379,8 @@ void fillContractVersionString(getContractVersion_RSP_t* pRetValContainer, d_tok
 // function getContractVersion():(string memory)
 getContractVersion_RSP_t* meterReadings_getContractVersion()
 {
+  DBG_FNCTRACE_ENTER
+
   static getContractVersion_RSP_t getContractVersion_Response;
   memset(&getContractVersion_Response, 0, sizeof(getContractVersion_Response));
 
@@ -401,37 +413,49 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   //   hex2byte_arr(result + 3, 64, txHash, 32);
   //   result = eth_wait_for_receipt(l_pIN3, txHash);
   // }
-
+  getContractVersion_Response.nExecResult = 0;
   if (error) {
+    printk("### (pre) error-branch ###");
     fprintf(stderr, "Error: %s\n", error);
     getContractVersion_Response.nExecResult = -1;
-    return &getContractVersion_Response;
+    printk("### (post) error-branch ###");
+    // return &getContractVersion_Response;
   } else {
     if (pBuffer_Result) {
       // printf("result: %s\n", result);
       // if the result is a string, we remove the quotes
+      printk("### (enter) pBuffer_Result != NULL ###");
       int len     = strlen(pBuffer_Result);
       result      = (pBuffer_Result[0] == '"' && pBuffer_Result[len - 1] == '"') ? pBuffer_Result + 1 : pBuffer_Result;
       result[ (len -= (pBuffer_Result == result) ? 0:2) ] = '\0';
 
       // if the request was a eth_call, we decode the result
       if (req) {
+        printk("### (enter) if(req) ###");
         int l = len / 2 - 1;
+        printk("### len=%d, l=%d ###", len, l);
         if (l) {
-          uint8_t tmp[l + 1];
-          l               = hex2byte_arr(result, -1, tmp, l + 1);
-          json_ctx_t* res = req_parse_result(req, bytes(tmp, l));
+          bytes_t data;
+          data.data = _malloc(l + 1);
+          printk("### (pre) hex2byte_arr ###");
+          data.len        = hex2byte_arr(result, -1, data.data, l + 1);
+          printk("### (pre) req_parse_result: tmp = %0x, l = %d ###", data.data, data.len);
+          json_ctx_t* res = req_parse_result(req, data);
+          printk("### (pre) fillContractVersionString ###");
           fillContractVersionString(&getContractVersion_Response, res->result);
+          _free(data.data);
         }
         // if not we simply print the result
       }
     }
   }
-  getContractVersion_Response.nExecResult = 0;
+  printk("### (pre) free .. ###");
 
   if (req)            req_free(req);
-  if (pBuffer_Result) free(pBuffer_Result);
-  if (error)          free(error);
+  if (pBuffer_Result) _free(pBuffer_Result);
+  if (error)          _free(error);
+
+  DBG_FNCTRACE_LEAVE
 
   return &getContractVersion_Response;
 }

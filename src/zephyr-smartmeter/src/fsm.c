@@ -47,6 +47,19 @@ static void wait_for_event(void) {
 //   dbg_log("<--- k_sem_take(&client->sem -- POST\n");
 }
 
+void print_MeterReading(getReading_RSP_t* pReadingResponse) {
+  if (pReadingResponse != NULL) {
+    if (pReadingResponse->nExecResult >= 0) {
+      printf("TimeStp: %s\n", pReadingResponse->readingEntry.timestampYYYYMMDDhhmmss);
+      printf("Voltage: %d mV\n", pReadingResponse->readingEntry.i32Voltage_mV);
+      printf("Current: %d mA\n", pReadingResponse->readingEntry.i32Current_mA);
+      printf("Energy : %d mWh\n", pReadingResponse->readingEntry.u32EnergyMeter_mWh);
+    } else {
+      printf("An error occured: id %d\n", pReadingResponse->nExecResult);
+    }
+  }
+}
+
 
 static char buffer[1024];
 static unsigned short ixWrite;
@@ -61,6 +74,7 @@ typedef enum {
   AS_waitFor_Response,
   AS_sleep10s_before_waitForOkConnected,
   AS_callMeterReadings_getContractVersion,
+  AS_callMeterReadings_getLastReading,
 } enmActivityState_t;
 
 // #define AS_AFTER_START  AS_sendRequest
@@ -84,7 +98,7 @@ void do_action()
       resetReceiveData(buffer, sizeof(buffer));
       if (!l_bReady)
       {
-        timeOut =  k_uptime_get_32(); // "now!"
+        timeOut =  k_uptime_get_32() + 7000; // "in 7 sec"
         // printX("~>H\n");
         g_activityState = AS_waitFor_Ready;
       } else {
@@ -122,7 +136,7 @@ void do_action()
           &&  now >= timeOut)  // timeout; send again RESET-Cmd.
       {
         printk("~>H\n");
-        timeOut = k_uptime_get_32() + 7000;
+        timeOut = k_uptime_get_32() + 3000;
       } else {
         printX("    now: %u\ntimeout: %u\n", now, timeOut);
       }
@@ -138,6 +152,15 @@ void do_action()
       } else {
         printk("An error occured: id %d\n", pContractVersion_RSP->nExecResult);
       }
+      g_activityState = AS_callMeterReadings_getLastReading;
+    } break;
+    case AS_callMeterReadings_getLastReading:
+    {
+      getReading_RSP_t* pReading_RSP = NULL;
+      pReading_RSP = meterReadings_getLastReading();
+      print_MeterReading(pReading_RSP);
+
+      g_activityState = AS_callMeterReadings_getContractVersion;
     } break;
     case AS_sendRequest:
     {
