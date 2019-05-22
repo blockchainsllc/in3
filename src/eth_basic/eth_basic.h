@@ -39,4 +39,9 @@ void in3_register_eth_basic();
  */
 int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
 
+/**
+ * this is called before a request is send
+ */
+int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response);
+
 #endif // in3_eth_basic_h__

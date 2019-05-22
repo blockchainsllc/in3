@@ -100,3 +100,6 @@
 #define K_LOG_PROOF         key("logProof")
 #define K_RECEIPTS          key("receipts")
 #define K_REMOVED           key("removed")
+
+#define K_FROM_BLOCK        key("fromBlock")
+#define K_TO_BLOCK          key("toBlock")

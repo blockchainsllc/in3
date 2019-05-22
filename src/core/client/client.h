@@ -192,6 +192,31 @@ typedef struct {
  */
 typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
 
+typedef enum {
+  FILTER_EVENT   = 0, /**< Event filter */
+  FILTER_BLOCK   = 1, /**< Block filter */
+  FILTER_PENDING = 2, /**< Pending filter (Unsupported) */
+} in3_filter_type_t;
+
+typedef struct in3_filter_t_ {
+  /** filter type: (event, block or pending) */
+  in3_filter_type_t type;
+
+  /** associated filter options */
+  char* options;
+
+  /** block no. when filter was created OR eth_getFilterChanges was called */
+  uint64_t last_block;
+
+  /** method to release owned resources */
+  void (*release)(struct in3_filter_t_* f);
+} in3_filter_t;
+
+typedef struct in3_filter_handler_t_ {
+  in3_filter_t** array; /** array of filters */
+  size_t         count; /** counter for filters */
+} in3_filter_handler_t;
+
 typedef struct {
   /** number of seconds requests can be cached. */
   uint32_t cacheTimeout;
@@ -264,6 +289,9 @@ typedef struct {
 
   /** flags for the evm (EIPs) */
   uint32_t evm_flags;
+
+  /** filter handler */
+  in3_filter_handler_t* filters;
 
 } in3_t;
 
