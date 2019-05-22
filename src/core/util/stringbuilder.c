@@ -3,7 +3,9 @@
 #include "../util/utils.h"
 #include "debug.h"
 #include "mem.h"
+#include <inttypes.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -100,6 +102,22 @@ sb_t* sb_add_bytes(sb_t* sb, char* prefix, bytes_t* bytes, int len, bool as_arra
   if (as_array) sb->data[p++] = ']';
   sb->data[p] = 0;
   sb->len     = p;
+  return sb;
+}
+
+sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l) {
+  char tmp[19]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  switch (l) {
+    case 1: l = sprintf(tmp, "0x%" PRIx8, (uint8_t) uint); break;
+    case 2: l = sprintf(tmp, "0x%" PRIx16, (uint16_t) uint); break;
+    case 4: l = sprintf(tmp, "0x%" PRIx32, (uint32_t) uint); break;
+    case 8: l = sprintf(tmp, "0x%" PRIx64, (uint64_t) uint); break;
+    default: return sb; /** Other types not supported */
+  }
+  check_size(sb, l);
+  memcpy(sb->data + sb->len, tmp, l);
+  sb->len += l;
+  sb->data[sb->len] = 0;
   return sb;
 }
 

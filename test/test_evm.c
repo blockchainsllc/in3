@@ -466,7 +466,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.address = d_get_bytes(transaction, "to")->data;
     evm.account = evm.address;
 
-    if (d_get(transaction, K_TO) && d_len(d_get(transaction, K_TO)))
+    if (d_getl(transaction, K_TO, 20) && d_len(d_getl(transaction, K_TO, 20)))
       evm.code = d_to_bytes(d_get(vm_get_account(test, d_get_bytes(transaction, "to")->data), K_CODE));
     else
       evm.code = evm.call_data;
@@ -534,7 +534,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
       fail      = 0;
       uint8_t    gas_tmp[32], gas_tmp2[32];
       account_t* ac = NULL;
-      storage_t* s = NULL;
+      storage_t* s  = NULL;
       // reset all accounts except the sender
       while (evm.accounts) {
         ac = evm.accounts;
@@ -594,7 +594,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
       uint8_t state_root[32];
       generate_state_root(&evm, state_root);
       d_token_t* pp       = d_get_at(d_get(post, key(fork_name)), test_index);
-      bytes_t    expected = d_to_bytes(d_get(pp, K_HASH));
+      bytes_t    expected = d_to_bytes(d_getl(pp, K_HASH, 32));
       if (pp && (expected.len != 32 || memcmp(state_root, expected.data, 32))) {
         print_error("wrong state root : ");
         ba_print(state_root, 32);

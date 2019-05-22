@@ -11,13 +11,13 @@
 bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {
 
   // check messagehash
-  bytes_t* sig_msg_hash = d_get_bytesk(sig, K_MSG_HASH);
+  bytes_t* sig_msg_hash = d_get_byteskl(sig, K_MSG_HASH, 32);
   if (sig_msg_hash && !b_cmp(sig_msg_hash, msg_hash)) return NULL;
 
   uint8_t  pubkey[65], sdata[64];
   bytes_t  pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pubkey) + 1};
-  bytes_t* r            = d_get_bytesk(sig, K_R);
-  bytes_t* s            = d_get_bytesk(sig, K_S);
+  bytes_t* r            = d_get_byteskl(sig, K_R, 32);
+  bytes_t* s            = d_get_byteskl(sig, K_S, 32);
   int      v            = d_get_intk(sig, K_V);
 
   // correct v

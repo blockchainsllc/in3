@@ -15,7 +15,7 @@ static d_token_t* get_account(in3_vctx_t* vc, d_token_t* accounts, uint8_t* addr
     return NULL;
   }
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-    if (memcmp(d_get_bytesk(t, K_ADDRESS)->data, address, 20) == 0)
+    if (memcmp(d_get_byteskl(t, K_ADDRESS, 20)->data, address, 20) == 0)
       return t;
   }
   vc_err(vc, "The account could not be found!");
@@ -85,7 +85,7 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
       if (in_len != 20) return EVM_ERROR_INVALID_ENV;
       if (!(t = get_account(vc, d_get(vc->proof, K_ACCOUNTS), evm->address)) || !(t = d_get(t, K_STORAGE_PROOF)))
         return EVM_ERROR_INVALID_ENV;
-      t = d_get(t, K_CODE_HASH);
+      t = d_getl(t, K_CODE_HASH, 32);
       if (!t) return EVM_ERROR_INVALID_ENV;
       *out_data = t->data;
       return 32;

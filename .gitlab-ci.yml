@@ -17,6 +17,20 @@ build-in3:
     paths:
       - build/src
 
+wasm:
+  image: trzeci/emscripten:latest
+  stage: build
+  tags:
+    - short-jobs
+  script:
+    - mkdir build
+    - cd build
+    - emconfigure cmake -DWASM=true -DCMAKE_BUILD_TYPE=Release ..
+    - make
+  artifacts:
+    paths:
+      - build/src
+
 test-in3:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test

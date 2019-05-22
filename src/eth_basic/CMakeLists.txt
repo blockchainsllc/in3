@@ -8,6 +8,7 @@ add_library( eth_basic STATIC
   eth_getLog.c
   trie.c
   signer.c
+  filter.c 
 )
 
 # add dependency

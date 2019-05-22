@@ -1,15 +1,15 @@
 #include "signer.h"
 #include "../eth_nano/serialize.h"
-#include <client/context.h>
+#include <client/client.h>
 #include <client/keys.h>
 #include <crypto/ecdsa.h>
 #include <crypto/secp256k1.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <util/data.h>
 
 static inline bytes_t get(d_token_t* t, uint16_t key) {
   return d_to_bytes(d_get(t, key));
+}
+static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
+  return d_to_bytes(d_getl(t, key, l));
 }
 
 /**
@@ -73,7 +73,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   uint8_t   sig[65];
 
   // get the from-address
-  if ((tmp = d_to_bytes(d_get(tx, K_FROM))).len == 0) {
+  if ((tmp = d_to_bytes(d_getl(tx, K_FROM, 20))).len == 0) {
     if (!d_get(tx, K_NONCE)) {
       // Derive the from-address from pk if no nonce is given.
       // Note: This works because the signer->wallet points to the pk in the current signer implementation
@@ -104,7 +104,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   bytes_t nonce     = d_get(tx, K_NONCE) ? get(tx, K_NONCE) : get_from_nodes(ctx, "eth_getTransactionCount", sb->data, nonce_data),
           gas_price = d_get(tx, K_GAS_PRICE) ? get(tx, K_GAS_PRICE) : get_from_nodes(ctx, "eth_gasPrice", "[]", gas_price_data),
           gas_limit = d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x52\x08", 2),
-          to        = get(tx, K_TO),
+          to        = getl(tx, K_TO, 20),
           value     = get(tx, K_VALUE),
           data      = get(tx, K_DATA);
   uint64_t v        = ctx->requests_configs->chainId > 0xFF ? 0 : ctx->requests_configs->chainId;
@@ -126,47 +126,4 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   _free(raw); // we only free the struct, not the data!
 
   return raw_tx;
-}
-
-// this is called before a request is send
-int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  UNUSED_VAR(response);
-  if (ctx->len > 1) return 0; // internal handling is only possible for single requests (at least for now)
-  d_token_t* req = ctx->requests[0];
-
-  // check method
-  if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0) {
-    // get the transaction-object
-    d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", -1);
-    if (!ctx->client->signer) return ctx_set_error(ctx, "no signer set", -1);
-
-    // sign it.
-    bytes_t raw = sign_tx(tx_params + 1, ctx);
-    if (!raw.len) return ctx_set_error(ctx, "error signing the transaction", -1);
-
-    // build the RPC-request
-    uint64_t id = d_get_longk(req, K_ID);
-    sb_t*    sb = sb_new("{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[");
-    sb_add_bytes(sb, "", &raw, 1, false);
-    sb_add_chars(sb, "]");
-    if (id) {
-      char tmp[16];
-      sprintf(tmp, ", \"id\":%" PRId64 "", id);
-      sb_add_chars(sb, tmp);
-    }
-    sb_add_chars(sb, "}");
-
-    // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
-    _free(raw.data);
-    free_json(ctx->request_context);
-
-    // set the new RPC-Request.
-    ctx->request_context = parse_json(sb->data);
-    ctx->requests[0]     = ctx->request_context->result;
-
-    // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-    ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) sb->data, sb->len));
-  }
-  return 0;
 }

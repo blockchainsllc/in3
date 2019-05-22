@@ -70,8 +70,8 @@ bytes_t* serialize_account(d_token_t* a) {
   // clang-format off
   rlp_add(rlp, d_get(a,K_NONCE)              , UINT);
   rlp_add(rlp, d_get(a,K_BALANCE)            , UINT);
-  rlp_add(rlp, d_get(a,K_STORAGE_HASH)       , HASH);
-  rlp_add(rlp, d_get(a,K_CODE_HASH)          , HASH);
+  rlp_add(rlp, d_getl(a,K_STORAGE_HASH, 32)  , HASH);
+  rlp_add(rlp, d_getl(a,K_CODE_HASH, 32)     , HASH);
   // clang-format on
   return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
@@ -82,12 +82,12 @@ bytes_t* serialize_tx(d_token_t* tx) {
   rlp_add(rlp, d_get(tx,K_NONCE)             , UINT);
   rlp_add(rlp, d_get(tx,K_GAS_PRICE)         , UINT);
   rlp_add(rlp, d_get_or(tx,K_GAS,K_GAS_LIMIT), UINT);
-  rlp_add(rlp, d_get(tx,K_TO)                , ADDRESS);
+  rlp_add(rlp, d_getl(tx,K_TO, 20)           , ADDRESS);
   rlp_add(rlp, d_get(tx,K_VALUE)             , UINT);
   rlp_add(rlp, d_get_or(tx,K_INPUT,K_DATA)   , BYTES);
   rlp_add(rlp, d_get(tx,K_V)                 , UINT);
-  rlp_add(rlp, d_get(tx,K_R)                 , UINT);
-  rlp_add(rlp, d_get(tx,K_S)                 , UINT);
+  rlp_add(rlp, d_getl(tx,K_R, 32)            , UINT);
+  rlp_add(rlp, d_getl(tx,K_S, 32)            , UINT);
   // clang-format on
   return bb_move_to_bytes(rlp_encode_to_list(rlp));
 }
@@ -119,19 +119,25 @@ bytes_t* serialize_block_header(d_token_t* block) {
   d_token_t *      sealed_fields, *t;
   int              i;
   // clang-format off
-  rlp_add(rlp, d_get(block,K_PARENT_HASH)                    , HASH);
-  rlp_add(rlp, d_get(block,K_SHA3_UNCLES)                    , HASH);
-  rlp_add(rlp, d_get_or(block,K_MINER,K_COINBASE)            , ADDRESS);
-  rlp_add(rlp, d_get(block,K_STATE_ROOT)                     , HASH);
-  rlp_add(rlp, d_get(block,K_TRANSACTIONS_ROOT)              , HASH);
-  rlp_add(rlp, d_get_or(block,K_RECEIPT_ROOT,K_RECEIPTS_ROOT), HASH);
-  rlp_add(rlp, d_get(block,K_LOGS_BLOOM)                     , BLOOM);
-  rlp_add(rlp, d_get(block,K_DIFFICULTY)                     , UINT);
-  rlp_add(rlp, d_get(block,K_NUMBER)                         , UINT);
-  rlp_add(rlp, d_get(block,K_GAS_LIMIT)                      , UINT);
-  rlp_add(rlp, d_get(block,K_GAS_USED)                       , UINT);
-  rlp_add(rlp, d_get(block,K_TIMESTAMP)                      , UINT);
-  rlp_add(rlp, d_get(block,K_EXTRA_DATA)                     , BYTES);
+  rlp_add(rlp, d_getl(block,K_PARENT_HASH, 32)      , HASH);
+  rlp_add(rlp, d_get(block,K_SHA3_UNCLES)           , HASH);
+  
+  if ((t = d_getl(block, K_MINER, 20)) || (t = d_getl(block, K_COINBASE, 20)))
+    rlp_add(rlp, t                                  , ADDRESS);  
+
+  rlp_add(rlp, d_getl(block,K_STATE_ROOT, 32)       , HASH);
+  rlp_add(rlp, d_getl(block,K_TRANSACTIONS_ROOT, 32), HASH);
+
+  if ((t = d_getl(block, K_RECEIPT_ROOT, 32)) || (t = d_getl(block, K_RECEIPTS_ROOT, 32)))
+    rlp_add(rlp, t                                  , HASH);
+
+  rlp_add(rlp, d_getl(block,K_LOGS_BLOOM, 256)      , BLOOM);
+  rlp_add(rlp, d_get(block,K_DIFFICULTY)            , UINT);
+  rlp_add(rlp, d_get(block,K_NUMBER)                , UINT);
+  rlp_add(rlp, d_get(block,K_GAS_LIMIT)             , UINT);
+  rlp_add(rlp, d_get(block,K_GAS_USED)              , UINT);
+  rlp_add(rlp, d_get(block,K_TIMESTAMP)             , UINT);
+  rlp_add(rlp, d_get(block,K_EXTRA_DATA)            , BYTES);
 
   // if there are sealed field we take them as raw already rlp-encoded data and add them.
   if ((sealed_fields=d_get(block,K_SEAL_FIELDS))) {
@@ -140,7 +146,7 @@ bytes_t* serialize_block_header(d_token_t* block) {
   }
   else {
     // good old proof of work...
-    rlp_add(rlp, d_get(block,K_MIX_HASH)                     , HASH);
+    rlp_add(rlp, d_getl(block,K_MIX_HASH, 32)                     , HASH);
     rlp_add(rlp, d_get(block,K_NONCE)                        , BYTES);
   }
   // clang-format on
@@ -158,18 +164,18 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt) {
 
   // clang-format off
   // we only add it if it exists since this EIP came later.
-  if ((t = d_get_or(receipt, K_STATUS, K_ROOT)))
-    rlp_add(rlp, t                                  , UINT);
+  if ((t = d_get(receipt, K_STATUS)) || (t = d_getl(receipt, K_ROOT, 32)))
+    rlp_add(rlp, t                                 , UINT);
 
-  rlp_add(rlp, d_get(receipt,K_CUMULATIVE_GAS_USED) , UINT);
-  rlp_add(rlp, d_get(receipt,K_LOGS_BLOOM         ) , BLOOM);
+  rlp_add(rlp, d_get(receipt,K_CUMULATIVE_GAS_USED), UINT);
+  rlp_add(rlp, d_getl(receipt,K_LOGS_BLOOM, 256)   , BLOOM);
 
   if ((logs =  d_get(receipt,K_LOGS))) {
     // iterate over log-entries
     for (i = 0,l=logs+1; i < d_len(logs); i++, l=d_next(l)) {
       bb_clear(rlp_log);
 
-      rlp_add(rlp_log, d_get(l,K_ADDRESS)          , ADDRESS);
+      rlp_add(rlp_log, d_getl(l, K_ADDRESS, 20)    , ADDRESS);
 
       topics = d_get(l,K_TOPICS);
       bb_clear(rlp_topics);
@@ -178,7 +184,7 @@ bytes_t* serialize_tx_receipt(d_token_t* receipt) {
 
       rlp_encode_list(rlp_log, &rlp_topics->b);
 
-      rlp_add(rlp_log, d_get(l,K_DATA)              ,BYTES);
+      rlp_add(rlp_log, d_get(l,K_DATA)             ,BYTES);
       rlp_encode_list(rlp_loglist, &rlp_log->b);
     }
 

@@ -31,11 +31,11 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
   if (strcmp(method, "eth_call") == 0) {
     if (eth_verify_account_proof(vc) < 0) return vc_err(vc, "proof could not be validated");
     d_token_t* tx      = d_get_at(d_get(vc->request, K_PARAMS), 0);
-    bytes_t*   address = d_get_bytesk(tx, K_TO);
+    bytes_t*   address = d_get_byteskl(tx, K_TO, 20);
     address_t  zeros;
     memset(zeros, 0, 20);
     int      res       = 0;
-    bytes_t* from      = d_get_bytesk(tx, K_FROM);
+    bytes_t* from      = d_get_byteskl(tx, K_FROM, 20);
     bytes_t* value     = d_get_bytesk(tx, K_VALUE);
     bytes_t* data      = d_get_bytesk(tx, K_DATA);
     bytes_t  gas       = d_to_bytes(d_get(tx, K_GAS_LIMIT));

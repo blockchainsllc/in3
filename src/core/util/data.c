@@ -71,6 +71,19 @@ bytes_t* d_bytes(const d_token_t* item) {
   return (bytes_t*) item;
 }
 
+bytes_t* d_bytesl(d_token_t* item, size_t l) {
+  if (item == NULL || d_type(item) != T_BYTES)
+    return NULL;
+  else if (item->len >= l)
+    return d_bytes(item);
+
+  item->data = _realloc(item->data, l, item->len);
+  memmove(item->data + l - item->len, item->data, item->len);
+  memset(item->data, 0, l - item->len);
+  item->len = l;
+  return (bytes_t*) item;
+}
+
 bytes_t d_to_bytes(d_token_t* item) {
   switch (d_type(item)) {
     case T_BYTES:
@@ -104,8 +117,8 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
     switch (d_type(item)) {
       case T_BYTES:
         if (max > l) {
-          memset(dst, 0, max - l);
-          dst += max - l;
+          d_bytesl(item, max);
+          l = max;
         }
         memcpy(dst, item->data, l);
         return l;
@@ -351,9 +364,13 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
 int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
+  if (jp->depth > DATA_DEPTH_MAX)
+    return -3;
+
   switch (next_char(jp)) {
     case 0: return -2;
     case '{':
+      jp->depth++;
       parsed_next_item(jp, T_OBJECT, key, parent)->data = (uint8_t*) jp->c - 1;
       while (true) {
         switch (next_char(jp)) {
@@ -361,28 +378,41 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
             res = parse_key(jp);
             if (res < 0) return res;
             break;
-          case '}': return 0;
+          case '}': {
+            jp->depth--;
+            return 0;
+          }
           default: return -2; // invalid character or end
         }
         res = parse_object(jp, p_index, res); // parse the value
         if (res < 0) return res;
         switch (next_char(jp)) {
-          case ',': break;    // we continue reading the next property
-          case '}': return 0; // this was the last property, so we return successfully.
+          case ',': break; // we continue reading the next property
+          case '}': {
+            jp->depth--;
+            return 0; // this was the last property, so we return successfully.
+          }
           default: return -2; // unexpected character, throw.
         }
       }
     case '[':
+      jp->depth++;
       parsed_next_item(jp, T_ARRAY, key, parent)->data = (uint8_t*) jp->c - 1;
-      if (next_char(jp) == ']') return 0;
+      if (next_char(jp) == ']') {
+        jp->depth--;
+        return 0;
+      }
       jp->c--;
 
       while (true) {
         res = parse_object(jp, p_index, jp->result[p_index].len & 0xFFFFFF); // parse the value
         if (res < 0) return res;
         switch (next_char(jp)) {
-          case ',': break;    // we continue reading the next property
-          case ']': return 0; // this was the last element, so we return successfully.
+          case ',': break; // we continue reading the next property
+          case ']': {
+            jp->depth--;
+            return 0; // this was the last element, so we return successfully.
+          }
           default: return -2; // unexpected character, throw.
         }
       }
@@ -441,6 +471,7 @@ void free_json(json_ctx_t* jp) {
 json_ctx_t* parse_json(char* js) {
   json_ctx_t* parser = _malloc(sizeof(json_ctx_t));
   parser->len        = 0;
+  parser->depth      = 0;
   parser->result     = _malloc(sizeof(d_token_t) * 10);
   parser->c          = js;
   parser->allocated  = 10;
@@ -814,4 +845,14 @@ void d_clear_keynames() {
     __keynames = kn->next;
     free(kn);
   }
+}
+
+bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
+  d_token_t* t = d_get(r, k);
+  return d_bytesl(t, minl);
+}
+
+d_token_t* d_getl(d_token_t* item, uint16_t k, uint32_t minl) {
+  d_get_byteskl(item, k, minl);
+  return d_get(item, k);
 }

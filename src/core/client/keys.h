@@ -35,7 +35,6 @@
 #define K_NONCE             key("nonce")
 #define K_GAS               key("gas")
 #define K_GAS_PRICE         key("gasPrice")
-#define K_GAS_LIMIT         key("gasLimit")
 #define K_TO                key("to")
 #define K_VALUE             key("value")
 #define K_INPUT             key("input")
@@ -43,7 +42,6 @@
 #define K_STATUS            key("status")
 #define K_ROOT              key("root")
 #define K_CUMULATIVE_GAS_USED key("cumulativeGasUsed")
-#define K_LOGS_BLOOM        key("logsBloom")
 #define K_LOGS              key("logs")
 #define K_LOG_INDEX         key("logIndex")
 #define K_TOPICS            key("topics")
@@ -102,3 +100,6 @@
 #define K_LOG_PROOF         key("logProof")
 #define K_RECEIPTS          key("receipts")
 #define K_REMOVED           key("removed")
+
+#define K_FROM_BLOCK        key("fromBlock")
+#define K_TO_BLOCK          key("toBlock")

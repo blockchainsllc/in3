@@ -17,6 +17,10 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
+#ifndef DATA_DEPTH_MAX
+#define DATA_DEPTH_MAX 11
+#endif
+
 typedef uint16_t d_key_t;
 /** type of a token. */
 typedef enum {
@@ -50,6 +54,7 @@ typedef struct json_parser {
   d_token_t* result;    /**< the list of all tokens. the first token is the main-token as returned by the parser.*/
   size_t     allocated; /** amount of tokens allocated result */
   size_t     len;       /** number of tokens in result */
+  size_t     depth;     /** max depth of tokens in result */
   char*      c;         /** pointer to the src-data*/
 } json_ctx_t;
 
@@ -65,6 +70,7 @@ typedef struct json_parser {
 bytes_t                d_to_bytes(d_token_t* item);
 int                    d_bytes_to(d_token_t* item, uint8_t* dst, const int max);                                        /**< writes the byte-representation to the dst. details see d_to_bytes.*/
 bytes_t*               d_bytes(const d_token_t* item);                                                                  /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
+bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                             /**< returns the value as bytes with length l (may reallocates) */
 char*                  d_string(const d_token_t* item);                                                                 /**< converts the value as string. Make sure the type is string! */
 uint32_t               d_int(const d_token_t* item);                                                                    /**< returns the value as integer. only if type is integer */
 uint32_t               d_intd(const d_token_t* item, const uint32_t def_val);                                           /**< returns the value as integer or if NULL the default. only if type is integer */
@@ -130,6 +136,8 @@ static inline bytes_t* d_get_bytesk(d_token_t* r, d_key_t k) { return d_bytes(d_
 static inline bytes_t* d_get_bytes(d_token_t* r, char* k) { return d_get_bytesk(r, key(k)); }                /**< reads token of a property as bytes. */
 static inline bytes_t* d_get_bytes_at(d_token_t* r, uint32_t pos) { return d_bytes(d_get_at(r, pos)); }      /**< reads bytes at given pos of an array. */
 static inline bool     d_is_binary_ctx(json_ctx_t* ctx) { return ctx->allocated == 0; }                      /**< check if the parser context was created from binary data. */
+bytes_t*               d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl);
+d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
 
 /**
  * iterator over elements of a array opf object.

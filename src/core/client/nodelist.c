@@ -63,7 +63,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
       break;
     }
 
-    n->address = d_get_bytesk(node, K_ADDRESS);
+    n->address = d_get_byteskl(node, K_ADDRESS, 20);
     if (n->address)
       n->address = b_dup(n->address);
     else {
