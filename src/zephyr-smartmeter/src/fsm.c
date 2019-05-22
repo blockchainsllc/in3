@@ -304,7 +304,7 @@ static in3_state_t in3_init(void) {
 
 	client->in3 = in3_new();
 	client->in3->chainId = 0x044d; // Tobalaba
-	client->in3->requestCount = 5;
+	client->in3->requestCount = 1;
 	client->in3->max_attempts=3;
   // g_c->cacheStorage = NULL;
   

@@ -9,6 +9,19 @@
 #include "uart_comm.h"
 #include "../core/util/debug.h"
 
+
+#ifdef __ZEPHYR__
+  #define printX    printk
+  #define fprintX   fprintf   // (kg): fprintk caused link-problems!
+  #define snprintX  snprintk
+#else
+  #define printX    printf
+  #define fprintX   fprintf
+  #define snprintX  snprintf
+#endif
+
+
+
 const int c_nTIME_OUT = 5;
 
 
@@ -26,10 +39,11 @@ static int serial_Write(const void *pBuf, int szBuf)
     k_free(pStr);
 }
 
+static unsigned char l_strREQ[16] = {"n/a"};
 
 static int waitForResponse(char* responseBuffer, unsigned int bufsize, int nTimeOutInSeconds)
 {
-    printk("%s::%s\n",__FILE__,__func__);
+    printk("%s::%s (REQ: %s)\n",__FILE__,__func__, l_strREQ);
 
     int nBytesReceived = -1; // default: error
     
@@ -118,25 +132,24 @@ static void sendRequestAndWaitForResponse( char* url, char* payload, in3_respons
     }
 
     enum {
-        stateERR = -1,
-        stateNone = 0,
-        stateSendServerAddr,
-        stateSendPath,
-        stateSendPayload,
-        stateWaitForACK,
-        stateReadData, 
-        stateDone
-    } stateAfterWait = stateNone, state = stateSendServerAddr;
+        enmStateERR = -1,
+        enmStateNone = 0,
+        enmStateSendServerAddr,
+        enmStateSendPath,
+        enmStateSendPayload,
+        enmStateWaitForACK,
+        enmStateReadData, 
+        enmStateDone
+    } stateAfterWait = enmStateNone, state = enmStateSendServerAddr;
 
-    int bFound = 0;
     char* pDataStart = NULL;
     char* pDataEnd = NULL;
     nBytesReceived = 0;
     do
     {
-        if (    state != stateSendServerAddr 
-            &&  state != stateSendPath 
-            &&  state != stateSendPayload )
+        if (    state != enmStateSendServerAddr 
+            &&  state != enmStateSendPath 
+            &&  state != enmStateSendPayload )
         {
             nBytesReceived = waitForResponse(responseBuffer, bufsize, c_nTIME_OUT);
         }        
@@ -144,15 +157,16 @@ static void sendRequestAndWaitForResponse( char* url, char* payload, in3_respons
 
         switch (state)
         {
-            case stateSendServerAddr:
+            case enmStateSendServerAddr:
             {
                 serial_Write("~U", 2);  // START-MARKER: "transmitting URL-server"
                 serial_Write(&url[0], nPosSlash);
                 serial_Write("\n",1);   // END-MARKER "transmission (URL-server) complete"
-                state = stateWaitForACK;
-                stateAfterWait = stateSendPath;
+                snprintX(l_strREQ,sizeof(l_strREQ),"Set ServerAddr");
+                state = enmStateWaitForACK;
+                stateAfterWait = enmStateSendPath;
             } break;
-            case stateSendPath:
+            case enmStateSendPath:
             {
                 serial_Write("~P", 2);  // START-MARKER: "transmitting URL-path"
                 if (bFoundSlash)
@@ -165,50 +179,52 @@ static void sendRequestAndWaitForResponse( char* url, char* payload, in3_respons
                 }
                 serial_Write("\n",1);   // END-MARKER "transmission (URL-path) complete"
 
-                state = stateWaitForACK;
-                stateAfterWait = stateSendPayload;
+                snprintX(l_strREQ,sizeof(l_strREQ),"Set ServerPath");
+                state = enmStateWaitForACK;
+                stateAfterWait = enmStateSendPayload;
             } break;
-            case stateSendPayload:
+            case enmStateSendPayload:
             {
                 serial_Write("~", 1);  // START-MARKER: "transmitting Content"
                 serial_Write(payload, strlen(payload));
                 serial_Write("\n",1);   // END-MARKER "transmission (Content) complete"
 
-                state = stateWaitForACK;
-                stateAfterWait = stateReadData;
+                snprintX(l_strREQ,sizeof(l_strREQ),"Get Payload");
+                state = enmStateWaitForACK;
+                stateAfterWait = enmStateReadData;
             } break;
-            case stateWaitForACK:
+            case enmStateWaitForACK:
             {
                 if (nBytesReceived > 0)
                 {
                     nBytesReceived = 0;
                     if (isReceivedData_StartsWith("OK", responseBuffer, sizeof(responseBuffer))){
-                        bFound = true;
-                        state = stateDone;
-                    }
-                    if (bFound)
+                        state = (stateAfterWait > enmStateNone) ? stateAfterWait : enmStateERR;
+                        stateAfterWait = enmStateNone;
+                    } else if (isReceivedData_StartsWith("ERR", responseBuffer, sizeof(responseBuffer)))
                     {
-                        state = (stateAfterWait > stateNone) ? stateAfterWait : stateERR;
-                        stateAfterWait = stateNone;
+                        state = enmStateERR;
+                        stateAfterWait = enmStateNone;
                     }
                 }
             }break;
-            case stateReadData:
+            case enmStateReadData:
             {
                 if (nBytesReceived > 0)
                 {
                     sb_add_range(&r->result, responseBuffer, 0, nBytesReceived );
                     nBytesReceived = 0;
 
-                    bFound = true;
-                    state = stateDone;
+                    state = enmStateDone;
                 }
             } break;            
+            case enmStateERR:
+
             default:
                 break;
         }
 
-    } while (state != stateDone && state != stateERR);
+    } while (state != enmStateDone && state != enmStateERR);
     
 }
 

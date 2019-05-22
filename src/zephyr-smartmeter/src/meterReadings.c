@@ -79,10 +79,24 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
   return req;
 }
 
+const unsigned char *u64tostr(uint64_t u64Val){
+  static unsigned char strVal[21];
+  strVal[sizeof(strVal)-1] = '\0';
+  int pos = sizeof(strVal)-1;
+  do
+  {
+    strVal[--pos] = '0' + u64Val%10;
+    u64Val /= 10;
+  } while (u64Val > 0 && pos > 0);
+
+  return (&strVal[pos]);  
+}
+
 typedef void (*CB_extractVal_t)(const char*, void* pUserData);
 
 void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
-  char buf[65] = {0};
+  char buf[65];
+  memset(buf, 0, sizeof(buf));
   switch (d_type(t)) {
     case T_ARRAY:
     case T_OBJECT:
@@ -100,15 +114,15 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
       break;
     case T_BYTES:
       if (t->len < 9) {
-        // printk("### T_BYTES: %" PRId64 " - ", d_long(t));
-        snprintX(buf, sizeof(buf)-1,"%" PRId64, d_long(t));
+        // printk("### T_BYTES: %" PRId64 " - ",  d_long(t)); // does not work on nRF52
+        snprintX(buf, sizeof(buf)-1,"%s",u64tostr(d_long(t)));
       } else {
         int pos = 0;
-        sprintf(&buf[pos],"0x");
+        snprintX(&buf[pos],3,"0x");
         pos += 2;
         for (int i = 0; i < (int)(t->len); i++) 
         {
-          sprintf(&buf[pos],"%02x", t->data[i]);
+          snprintX(&buf[pos],3,"%02x", t->data[i]);
           pos += 2;
         }
       }
