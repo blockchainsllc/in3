@@ -24,4 +24,5 @@ extern int isReceivedData_StartsWith(   char    *strCMP,
                                         int     szReceivedDataBuf
                                     );
 
+
 #endif // _UART_COMM_H_

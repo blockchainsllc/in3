@@ -7,6 +7,7 @@
 #include <kernel.h>
 #include <misc/printk.h>
 #include "uart_comm.h"
+#include "../core/util/debug.h"
 
 const int c_nTIME_OUT = 5;
 
@@ -28,6 +29,8 @@ static int serial_Write(const void *pBuf, int szBuf)
 
 static int waitForResponse(char* responseBuffer, unsigned int bufsize, int nTimeOutInSeconds)
 {
+    printk("%s::%s\n",__FILE__,__func__);
+
     int nBytesReceived = -1; // default: error
     
     int nNumTries = nTimeOutInSeconds * 10; // because of k_sleep(100) later on in the loop
@@ -62,9 +65,7 @@ static int waitForResponse(char* responseBuffer, unsigned int bufsize, int nTime
 }
 
 static void sendRequestAndWaitForResponse( char* url, char* payload, in3_response_t* r  ) 
-{
-    printk("%s::%s\n",__FILE__,__func__);
-    // we expect here that the printk(..) output goes to the serial port
+{    // we expect here that the printk(..) output goes to the serial port
 
 
 	static char responseBuffer[4096];
@@ -127,20 +128,17 @@ static void sendRequestAndWaitForResponse( char* url, char* payload, in3_respons
         stateDone
     } stateAfterWait = stateNone, state = stateSendServerAddr;
 
-    int nPos = 0;
     int bFound = 0;
     char* pDataStart = NULL;
     char* pDataEnd = NULL;
     nBytesReceived = 0;
     do
     {
-        if (    nPos >= nBytesReceived 
-            &&  state != stateSendServerAddr 
+        if (    state != stateSendServerAddr 
             &&  state != stateSendPath 
             &&  state != stateSendPayload )
         {
             nBytesReceived = waitForResponse(responseBuffer, bufsize, c_nTIME_OUT);
-            nPos = 0;
         }        
         responseBuffer[bufsize-1]='\0';
 

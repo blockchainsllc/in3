@@ -1,26 +1,16 @@
 #include "uart_comm.h"
+#include "../core/util/debug.h"
 #include <misc/printk.h>
 #include <string.h>
 #include <uart.h>
 
 #define RXBUF_MAXSIZE	1024
-#define DTABUF_MAXSIZE	1024
+#define DTABUF_MAXSIZE	(8*1024)
 
 static struct device *uart0_dev;
 static unsigned char rx_buf[RXBUF_MAXSIZE];
 static unsigned char data_buf[DTABUF_MAXSIZE];
 
-
-static void msg_dump(const char *s, unsigned char *data, unsigned len)
-{
-	unsigned i;
-
-	printk("%s: ", s);
-	for (i = 0U; i < len; i++) {
-		printk("%02x ", data[i]);
-	}
-	printk("(%u bytes)\n", len);
-}
 
 static int l_ixRead = 0;
 static int l_ixWrite = 0;

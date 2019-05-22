@@ -23,9 +23,13 @@
 #include "meterReadings.h"
 
 #ifdef __ZEPHYR__
+  #define printX    printk
+  #define fprintX   fprintf   // (kg): fprintk caused link-problems!
   #define snprintX  snprintk
 #else
-  #define snprintX snprintf
+  #define printX    printf
+  #define fprintX   fprintf
+  #define snprintX  snprintf
 #endif
 
 
@@ -90,14 +94,13 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
       pFncCB(buf, pUserData);
       break;
     case T_INTEGER:
-      printk("T_INTEGER: %i - ", d_int(t));
+      // printk("### T_INTEGER: %i - ", d_int(t));
       snprintX(buf, sizeof(buf)-1,"%i", d_int(t));
       pFncCB(buf, pUserData);
       break;
     case T_BYTES:
       if (t->len < 9) {
-        printk("T_BYTES: %" PRId64 " - ", d_long(t));
-        // sprintf(buf,"%" PRId64 "", d_long(t));
+        // printk("### T_BYTES: %" PRId64 " - ", d_long(t));
         snprintX(buf, sizeof(buf)-1,"%" PRId64, d_long(t));
       } else {
         int pos = 0;
@@ -109,7 +112,7 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
           pos += 2;
         }
       }
-      printk("T_BYTES - (pre) pFncCB(..): buf=\"%s\"", buf);
+      // printk("### T_BYTES - (pre) pFncCB(..): buf=\"%s\"", buf);
       pFncCB(buf, pUserData);
       break;
     case T_NULL:
@@ -142,7 +145,6 @@ typedef struct
 
 void CB_fillDataStruct(const char* strVal, void* pUserData)
 {
-  printk("### CB_fillDataStrut: strVal=%s - ", (strVal?strVal:"NULL"));
   if (pUserData != NULL)
   {
     fillDataStruct_t *pFillDataStruct = pUserData;
@@ -173,7 +175,7 @@ void CB_fillDataStruct(const char* strVal, void* pUserData)
   }
   else
   {
-    printf("%s\n", strVal);
+    printX("%s\n", strVal);
   }
   
 }
@@ -217,23 +219,15 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
   int errID = in3_client_rpc(l_pIN3, method, paramBuffer, &result, &error);
   UNUSED_VAR(errID);
 
-  // bool wait = false;
-  // // if we need to wait
-  // if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
-  //   bytes32_t txHash;
-  //   hex2byte_arr(result + 3, 64, txHash, 32);
-  //   result = eth_wait_for_receipt(l_pIN3, txHash);
-  // }
 
   if (error) {
-    fprintf(stderr, "Error: %s\n", error);
+    fprintX(stderr, "Error: %s\n", error);
     _free(error);
     getReading_Response.nExecResult = -1;
     return &getReading_Response;
   } else {
     if (result)
     {
-      // printf("result: %s\n", result);
       // if the result is a string, we remove the quotes
       int len = strlen(result);
       if (result[0] == '"' && result[len - 1] == '"') {
@@ -292,17 +286,9 @@ getReading_RSP_t* meterReadings_getLastReading()
   int errID = in3_client_rpc(l_pIN3, method, paramBuffer, &pBuffer_Result, &error);
   UNUSED_VAR(errID);
 
-  // bool wait = false;
-  // // if we need to wait
-  // if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
-  //   bytes32_t txHash;
-  //   hex2byte_arr(result + 3, 64, txHash, 32);
-  //   result = eth_wait_for_receipt(l_pIN3, txHash);
-  // }
-
   getLastReading_Response.nExecResult = 0;
   if (error) {
-    fprintf(stderr, "Error: %s\n", error);
+    fprintX(stderr, "Error: %s\n", error);
     getLastReading_Response.nExecResult = -1;
     // return &getLastReading_Response;
   } else {
@@ -361,7 +347,7 @@ void CB_fillContractVersion(const char* strVal, void* pUserData)
   }
   else
   {
-    printf("%s\n", strVal);
+    printX("%s\n", strVal);
   }
   
 }
@@ -415,33 +401,24 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   // }
   getContractVersion_Response.nExecResult = 0;
   if (error) {
-    printk("### (pre) error-branch ###");
-    fprintf(stderr, "Error: %s\n", error);
+    fprintX(stderr, "Error: %s\n", error);
     getContractVersion_Response.nExecResult = -1;
-    printk("### (post) error-branch ###");
     // return &getContractVersion_Response;
   } else {
     if (pBuffer_Result) {
-      // printf("result: %s\n", result);
       // if the result is a string, we remove the quotes
-      printk("### (enter) pBuffer_Result != NULL ###");
       int len     = strlen(pBuffer_Result);
       result      = (pBuffer_Result[0] == '"' && pBuffer_Result[len - 1] == '"') ? pBuffer_Result + 1 : pBuffer_Result;
       result[ (len -= (pBuffer_Result == result) ? 0:2) ] = '\0';
 
       // if the request was a eth_call, we decode the result
       if (req) {
-        printk("### (enter) if(req) ###");
         int l = len / 2 - 1;
-        printk("### len=%d, l=%d ###", len, l);
         if (l) {
           bytes_t data;
           data.data = _malloc(l + 1);
-          printk("### (pre) hex2byte_arr ###");
           data.len        = hex2byte_arr(result, -1, data.data, l + 1);
-          printk("### (pre) req_parse_result: tmp = %0x, l = %d ###", data.data, data.len);
           json_ctx_t* res = req_parse_result(req, data);
-          printk("### (pre) fillContractVersionString ###");
           fillContractVersionString(&getContractVersion_Response, res->result);
           _free(data.data);
         }
@@ -449,7 +426,6 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
       }
     }
   }
-  printk("### (pre) free .. ###");
 
   if (req)            req_free(req);
   if (pBuffer_Result) _free(pBuffer_Result);

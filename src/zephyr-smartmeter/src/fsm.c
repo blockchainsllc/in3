@@ -50,12 +50,12 @@ static void wait_for_event(void) {
 void print_MeterReading(getReading_RSP_t* pReadingResponse) {
   if (pReadingResponse != NULL) {
     if (pReadingResponse->nExecResult >= 0) {
-      printf("TimeStp: %s\n", pReadingResponse->readingEntry.timestampYYYYMMDDhhmmss);
-      printf("Voltage: %d mV\n", pReadingResponse->readingEntry.i32Voltage_mV);
-      printf("Current: %d mA\n", pReadingResponse->readingEntry.i32Current_mA);
-      printf("Energy : %d mWh\n", pReadingResponse->readingEntry.u32EnergyMeter_mWh);
+      printk("TimeStp: %s\n", pReadingResponse->readingEntry.timestampYYYYMMDDhhmmss);
+      printk("Voltage: %d mV\n", pReadingResponse->readingEntry.i32Voltage_mV);
+      printk("Current: %d mA\n", pReadingResponse->readingEntry.i32Current_mA);
+      printk("Energy : %d mWh\n", pReadingResponse->readingEntry.u32EnergyMeter_mWh);
     } else {
-      printf("An error occured: id %d\n", pReadingResponse->nExecResult);
+      printk("An error occured: id %d\n", pReadingResponse->nExecResult);
     }
   }
 }
@@ -83,6 +83,8 @@ typedef enum {
 volatile enmActivityState_t g_activityState = 0;
 
 static unsigned char l_bReady = 0;
+static int cntErr = 0;
+
 // void do_action(action_type_t action)
 void do_action()
 {
@@ -98,7 +100,7 @@ void do_action()
       resetReceiveData(buffer, sizeof(buffer));
       if (!l_bReady)
       {
-        timeOut =  k_uptime_get_32() + 7000; // "in 7 sec"
+        timeOut =  k_uptime_get_32() + 4000; // "in 7 sec"
         // printX("~>H\n");
         g_activityState = AS_waitFor_Ready;
       } else {
@@ -153,6 +155,14 @@ void do_action()
         printk("An error occured: id %d\n", pContractVersion_RSP->nExecResult);
       }
       g_activityState = AS_callMeterReadings_getLastReading;
+      if (pContractVersion_RSP->nExecResult >= 0){
+        // ok
+        cntErr = 0;
+      } else if (cntErr++ % 5) { 
+        // 5-times error ==> restart
+        l_bReady = 0;
+        g_activityState = AS_start;
+      }
     } break;
     case AS_callMeterReadings_getLastReading:
     {
@@ -161,6 +171,14 @@ void do_action()
       print_MeterReading(pReading_RSP);
 
       g_activityState = AS_callMeterReadings_getContractVersion;
+      if (pReading_RSP->nExecResult >= 0){
+        // ok
+        cntErr = 0;
+      } else if (cntErr++ % 5) { 
+        // 5-times error ==> restart
+        l_bReady = 0;
+        g_activityState = AS_start;
+      }
     } break;
     case AS_sendRequest:
     {
@@ -286,10 +304,12 @@ static in3_state_t in3_init(void) {
 
 	client->in3 = in3_new();
 	client->in3->chainId = 0x044d; // Tobalaba
-	client->in3->requestCount = 1;
-	client->in3->max_attempts=1;
+	client->in3->requestCount = 5;
+	client->in3->max_attempts=3;
   // g_c->cacheStorage = NULL;
+  
   client->in3->proof = PROOF_NONE;
+
   // g_c->transport = sendJsonRequest_serial;
   client->in3->transport = in3_comm_esp32_sendJsonRequestAndWait;
 
