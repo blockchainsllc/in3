@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #ifdef TEST
 
@@ -163,3 +164,29 @@ error:
 }
 
 #endif
+
+bool _malloc_multi(size_t count, ...) {
+  bool    ret = true;
+  void**  p;
+  size_t  sz;
+  va_list args, argscpy;
+  va_start(args, count);
+  va_copy(argscpy, args);
+  for (size_t j = 0; j < count; j++) {
+    p  = va_arg(args, void**);
+    sz = va_arg(args, size_t);
+    *p = _malloc(sz);
+    if (*p == NULL) {
+      for (size_t k = j; k != 0; k--) {
+        _free(*va_arg(argscpy, void**));
+        UNUSED_VAR(va_arg(argscpy, size_t*));
+      }
+      ret = false;
+      goto END;
+    }
+  }
+END:
+  va_end(args);
+  va_end(argscpy);
+  return ret;
+}

@@ -57,4 +57,6 @@ int    mem_stack_size();
 
 #endif
 
+bool _malloc_multi(size_t count, ...);
+
 #endif

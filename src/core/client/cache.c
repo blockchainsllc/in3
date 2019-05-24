@@ -4,11 +4,11 @@
 #include "context.h"
 #include "nodelist.h"
 #include "stdio.h"
-#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
-#define NODE_LIST_KEY ("nodelist_%" PRIx64)
+#define NODE_LIST_KEY   ("nodelist_%" PRIx64)
 
 int in3_cache_init(in3_t* c) {
   int i;
@@ -39,30 +39,16 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
       return -1;
     }
 
-    count = b_read_int(b, &p);
-
-    in3_node_t* nl = _calloc(count, sizeof(in3_node_t));
-    if (nl == NULL) {
-      b_free(b);
-      return -1;
-    }
-    in3_node_weight_t* nw = _calloc(count, sizeof(in3_node_weight_t));
-    if (nw == NULL) {
-      b_free(b);
-      _free(nl);
-      return -1;
-    }
-
     // clean up old
     in3_nodelist_clear(chain);
 
     // fill data
     chain->contract       = b_new_fixed_bytes(b, &p, 20);
     chain->lastBlock      = b_read_long(b, &p);
-    chain->nodeListLength = count;
-    chain->nodeList       = nl;
-    chain->weights        = nw;
-    chain->needsUpdate    = false;
+    chain->nodeListLength = count = b_read_int(b, &p);
+    chain->nodeList               = _calloc(count, sizeof(in3_node_t));
+    chain->weights                = _calloc(count, sizeof(in3_node_weight_t));
+    chain->needsUpdate            = false;
     memcpy(chain->weights, b->data + p, count * sizeof(in3_node_weight_t));
     p += count * sizeof(in3_node_weight_t);
 
