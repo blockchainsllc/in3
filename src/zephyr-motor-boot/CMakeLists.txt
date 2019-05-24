@@ -8,7 +8,7 @@ set(QEMU_EXTRA_FLAGS -s)
 
 OPTION(USB_DONGLE "Set this ON for USB dongle version" ON)
 OPTION(BT_MAC "Set this to force hardcoded BT MAC address" OFF)
-OPTION(DEBUG "Set this ON for debug mode (on SDK shows dbg_log messages)" ON)
+OPTION(DEBUG "Set this ON for debug mode (on SDK shows dbg_log messages)" OFF)
 
 IF(USB_DONGLE)
   SET(BOARD nrf52840_pca10059)
@@ -27,8 +27,6 @@ IF(DEBUG)
 ENDIF()
 #######################################################
 
-# next line removes the >"unused parameter" warning when compiling
-ADD_DEFINITIONS(-Wno-unused-parameter)
 
 include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
 project(NONE)

@@ -1,6 +1,7 @@
 #include "./eth_api.h"
 #include "../core/client/context.h"
 #include "../core/client/keys.h"
+#include "../eth_basic/filter.h"
 #include "../eth_nano/rlp.h"
 #include "abi.h"
 #include <errno.h>
@@ -10,7 +11,7 @@
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #else
-#include <unistd.h>
+#include <time.h>
 #endif
 
 // create the params as stringbuilder
@@ -149,13 +150,13 @@ static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
   tx->transaction_index = d_get_intk(t, K_TRANSACTION_INDEX);
   memcpy(tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
-  copy_fixed(tx->block_hash, 32, d_to_bytes(d_get(t, K_BLOCK_HASH)));
-  copy_fixed(tx->from, 20, d_to_bytes(d_get(t, K_FROM)));
-  copy_fixed(tx->to, 20, d_to_bytes(d_get(t, K_TO)));
-  copy_fixed(tx->value.data, 32, d_to_bytes(d_get(t, K_VALUE)));
-  copy_fixed(tx->hash, 32, d_to_bytes(d_get(t, K_HASH)));
-  copy_fixed(tx->signature, 32, d_to_bytes(d_get(t, K_R)));
-  copy_fixed(tx->signature + 32, 32, d_to_bytes(d_get(t, K_S)));
+  copy_fixed(tx->block_hash, 32, d_to_bytes(d_getl(t, K_BLOCK_HASH, 32)));
+  copy_fixed(tx->from, 20, d_to_bytes(d_getl(t, K_FROM, 20)));
+  copy_fixed(tx->to, 20, d_to_bytes(d_getl(t, K_TO, 20)));
+  copy_fixed(tx->value.data, 32, d_to_bytes(d_getl(t, K_VALUE, 32)));
+  copy_fixed(tx->hash, 32, d_to_bytes(d_getl(t, K_HASH, 32)));
+  copy_fixed(tx->signature, 32, d_to_bytes(d_getl(t, K_R, 32)));
+  copy_fixed(tx->signature + 32, 32, d_to_bytes(d_getl(t, K_S, 32)));
 
   return sizeof(eth_tx_t) + b.len;
 }
@@ -207,15 +208,19 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
         return NULL;
       }
       uint8_t* p = (uint8_t*) b + sizeof(eth_block_t); // pointer where we add the next data after the block-struct
-      copy_fixed(b->author, 20, d_to_bytes(d_get(result, K_AUTHOR)));
+      copy_fixed(b->author, 20, d_to_bytes(d_getl(result, K_AUTHOR, 20)));
       copy_fixed(b->difficulty.data, 32, d_to_bytes(d_get(result, K_DIFFICULTY)));
-      copy_fixed(b->hash, 32, d_to_bytes(d_get(result, K_HASH)));
-      copy_fixed(b->logsBloom, 256, d_to_bytes(d_get(result, K_LOGS_BLOOM)));
-      copy_fixed(b->parent_hash, 32, d_to_bytes(d_get(result, K_PARENT_HASH)));
-      copy_fixed(b->transaction_root, 32, d_to_bytes(d_get(result, K_TRANSACTIONS_ROOT)));
-      copy_fixed(b->receipts_root, 32, d_to_bytes(d_get_or(result, K_RECEIPT_ROOT, K_RECEIPTS_ROOT)));
-      copy_fixed(b->sha3_uncles, 32, d_to_bytes(d_get(result, K_SHA3_UNCLES)));
-      copy_fixed(b->state_root, 32, d_to_bytes(d_get(result, K_STATE_ROOT)));
+      copy_fixed(b->hash, 32, d_to_bytes(d_getl(result, K_HASH, 32)));
+      copy_fixed(b->logsBloom, 256, d_to_bytes(d_getl(result, K_LOGS_BLOOM, 256)));
+      copy_fixed(b->parent_hash, 32, d_to_bytes(d_getl(result, K_PARENT_HASH, 32)));
+      copy_fixed(b->transaction_root, 32, d_to_bytes(d_getl(result, K_TRANSACTIONS_ROOT, 32)));
+
+      d_token_t* t = NULL;
+      if ((t = d_getl(result, K_RECEIPT_ROOT, 32)) || (t = d_getl(result, K_RECEIPTS_ROOT, 32)))
+        copy_fixed(b->receipts_root, 32, d_to_bytes(t));
+
+      copy_fixed(b->sha3_uncles, 32, d_to_bytes(d_getl(result, K_SHA3_UNCLES, 32)));
+      copy_fixed(b->state_root, 32, d_to_bytes(d_getl(result, K_STATE_ROOT, 32)));
       b->gasLimit          = d_get_longk(result, K_GAS_LIMIT);
       b->gasUsed           = d_get_longk(result, K_GAS_USED);
       b->number            = d_get_longk(result, K_NUMBER);
@@ -294,6 +299,43 @@ uint64_t eth_blockNumber(in3_t* in3) {
 uint64_t eth_gasPrice(in3_t* in3) {
   rpc_init;
   rpc_exec("eth_gasPrice", uint64_t, d_long(result));
+}
+
+static eth_log_t* parse_logs(d_token_t* result) {
+  eth_log_t *prev, *first;
+  prev = first = NULL;
+  for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
+    eth_log_t* log         = _calloc(1, sizeof(*log));
+    log->removed           = d_get_intk(it.token, K_REMOVED);
+    log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
+    log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
+    log->block_number      = d_get_longk(it.token, K_BLOCK_NUMBER);
+    log->data.len          = d_len(d_get(it.token, K_DATA));
+    log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
+    log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
+    copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
+    copy_fixed(log->transaction_hash, 32, d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)));
+    copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
+    copy_fixed(log->data.data, log->data.len, d_to_bytes(d_get(it.token, K_DATA)));
+    size_t i = 0;
+    for (d_iterator_t t = d_iter(d_get(it.token, K_TOPICS)); t.left; d_iter_next(&t), i++) {
+      copy_fixed(log->topics[i], 32, d_to_bytes(t.token));
+      log->topic_count += 1;
+    }
+    log->next = NULL;
+    if (first == NULL)
+      first = log;
+    else if (prev != NULL)
+      prev->next = log;
+    prev = log;
+  }
+  return first;
+}
+
+eth_log_t* eth_getLogs(in3_t* in3, char* fopt) {
+  rpc_init;
+  sb_add_chars(params, fopt);
+  rpc_exec("eth_getLogs", eth_log_t*, parse_logs(result));
 }
 
 static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
@@ -378,7 +420,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
 #else
-        usleep(timeout * 1000); // usleep takes sleep time in us (1 millionth of a second)
+        nanosleep((const struct timespec[]){{0, timeout * 1000000L}}, NULL);
 #endif
         return wait_for_receipt(in3, params, timeout + timeout, count - 1);
       } else {
@@ -403,4 +445,64 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 500, 6);
   sb_free(params);
   return data;
+}
+
+size_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
+  if (options == NULL) return 0;
+  if (!filter_opt_valid(&options->result[0])) return 0;
+  char*  fopt = d_create_json(&options->result[0]);
+  size_t ret  = filter_add(in3, FILTER_EVENT, fopt);
+  if (!ret) _free(fopt);
+  return ret;
+}
+
+size_t eth_newBlockFilter(in3_t* in3) {
+  return filter_add(in3, FILTER_BLOCK, NULL);
+}
+
+size_t eth_newPendingTransactionFilter(in3_t* in3) {
+  return filter_add(in3, FILTER_PENDING, NULL);
+}
+
+bool eth_uninstallFilter(in3_t* in3, size_t id) {
+  return filter_remove(in3, id);
+}
+
+int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
+  if (in3->filters == NULL)
+    return -1;
+  if (id == 0 || id > in3->filters->count)
+    return -2;
+
+  uint64_t      blkno = eth_blockNumber(in3);
+  in3_filter_t* f     = in3->filters->array[id - 1];
+  switch (f->type) {
+    case FILTER_EVENT:
+      *logs         = eth_getLogs(in3, f->options);
+      f->last_block = blkno + 1;
+      return 0;
+    case FILTER_BLOCK:
+      if (blkno > f->last_block) {
+        uint64_t blkcount = blkno - f->last_block;
+        *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
+        for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
+          eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
+          memcpy((*block_hashes)[j], blk->hash, 32);
+          free(blk);
+        }
+        f->last_block = blkno;
+        return (int) blkcount;
+      } else {
+        *block_hashes = NULL;
+        return 0;
+      }
+    default:
+      return -3;
+  }
+}
+
+void free_log(eth_log_t* log) {
+  _free(log->data.data);
+  _free(log->topics);
+  _free(log);
 }

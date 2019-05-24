@@ -1,5 +1,5 @@
 #include "big.h"
-#include "mini-gmp.h"
+#include "tommath/tommath.h"
 #include "util/utils.h"
 //#include <math.h>
 #include <stdlib.h>
@@ -79,7 +79,7 @@ void big_shift_right(uint8_t* a, wlen_t len, int bits) {
   }
   if ((r = (bits - r) >> 3)) {
     for (i = len - 1; i >= 0; i--)
-      a[i] = i - r >= 0 ? a[i - r] : 0;
+      a[i] = (i - r) >= 0 ? a[i - r] : 0;
   }
 }
 
@@ -218,26 +218,27 @@ int big_exp(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, uint8_t* res) {
     *mod = 1;
 
     // we use gmp for now
-    mpz_t ma, mb, mc, mm;
-    mpz_init(ma);
-    mpz_init(mb);
-    mpz_init(mc);
-    mpz_init(mm);
+    mp_int ma, mb, mc, mm;
+    mp_init(&ma);
+    mp_init(&mb);
+    mp_init(&mc);
+    mp_init(&mm);
 
     // Convert the 1024-bit number 'input' into an mpz_t, with the most significant byte
     // first and using native endianness within each byte.
-    mpz_import(ma, la, 1, sizeof(uint8_t), 1, 0, a);
-    mpz_import(mb, lb, 1, sizeof(uint8_t), 1, 0, b);
-    mpz_import(mm, 33, 1, sizeof(uint8_t), 1, 0, mod);
+    mp_import(&ma, la, 1, sizeof(uint8_t), 1, 0, a);
+    mp_import(&mb, lb, 1, sizeof(uint8_t), 1, 0, b);
+    mp_import(&mm, 33, 1, sizeof(uint8_t), 1, 0, mod);
 
-    mpz_powm(mc, ma, mb, mm);
+    ma.sign = mb.sign = mc.sign = 0;
+    mp_exptmod(&ma, &mb, &mm, &mc);
     size_t ml;
-    mpz_export(res, &ml, 1, sizeof(uint8_t), 1, 0, mc);
+    mp_export(res, &ml, 1, sizeof(uint8_t), 1, 0, &mc);
 
-    mpz_clear(ma);
-    mpz_clear(mb);
-    mpz_clear(mc);
-    mpz_clear(mm);
+    mp_clear(&ma);
+    mp_clear(&mb);
+    mp_clear(&mc);
+    mp_clear(&mm);
 
     if (ml == 0) {
       *res = 0;
@@ -306,30 +307,26 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
     }
     return 0;
   } else {
-
-    //    mpz_tdiv_qr
-
     size_t ql, rl;
 
-    // we use gmp for now
-    mpz_t mq, mr, mn, md;
-    mpz_init(mq);
-    mpz_init(mr);
-    mpz_init(mn);
-    mpz_init(md);
+    mp_int mq, mr, mn, md;
+    mp_init(&mq);
+    mp_init(&mr);
+    mp_init(&mn);
+    mp_init(&md);
 
-    mpz_import(mn, ln, 1, sizeof(uint8_t), 1, 0, n);
-    mpz_import(md, ld, 1, sizeof(uint8_t), 1, 0, d);
+    mp_import(&mn, ln, 1, sizeof(uint8_t), 1, 0, n);
+    mp_import(&md, ld, 1, sizeof(uint8_t), 1, 0, d);
 
     if (remain && q)
-      mpz_tdiv_qr(mq, mr, mn, md);
+      mp_div(&mn, &md, &mq, &mr);
     else if (remain)
-      mpz_tdiv_r(mr, mn, md);
+      mp_div(&mn, &md, NULL, &mr);
     else
-      mpz_tdiv_q(mq, mn, md);
+      mp_div(&mn, &md, &mq, NULL);
 
     if (q) {
-      mpz_export(q, &ql, 1, sizeof(uint8_t), 1, 0, mq);
+      mp_export(q, &ql, 1, sizeof(uint8_t), 1, 0, &mq);
       *qlen = ql;
       if (!ql) {
         *q    = 0;
@@ -337,7 +334,7 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
       }
     }
     if (remain) {
-      mpz_export(remain, &rl, 1, sizeof(uint8_t), 1, 0, mr);
+      mp_export(remain, &rl, 1, sizeof(uint8_t), 1, 0, &mr);
       *remain_len = rl;
       if (!rl) {
         *remain     = 0;
@@ -345,10 +342,10 @@ int big_divmod(uint8_t* n, wlen_t ln, uint8_t* d, wlen_t ld, uint8_t* q, wlen_t*
       }
     }
 
-    mpz_clear(mq);
-    mpz_clear(mr);
-    mpz_clear(mn);
-    mpz_clear(md);
+    mp_clear(&mq);
+    mp_clear(&mr);
+    mp_clear(&mn);
+    mp_clear(&md);
 
     return 0;
 

@@ -96,9 +96,6 @@ void stop_charging(in3_t* c) {
   hex2byte_arr("0x21c15ea1cd68229536fb71f713a538bc3f0f33201db773f4edf49602bf15e5df", -1, private_key, 32);
   eth_set_pk_signer(c, private_key);
 
-  // reserve charging for one hour (and pay for it)
-  uint32_t max_charging_seconds = 3600;
-
   // stop charging
   if (usn_return(c, contract, "wirelane1@tobalaba", tx_hash) < 0)
     printf("Could not stop charging\n");
@@ -157,6 +154,8 @@ void watch_for_events(in3_t* c) {
 
 int main(int argc, char* argv[]) {
 
+  char* example = argc ? argv[0] : NULL;
+
   // register a chain-verifier for full Ethereum-Support
   in3_register_eth_full();
 
@@ -172,19 +171,24 @@ int main(int argc, char* argv[]) {
   c->chainId      = 0x44d;     // use tobalaba
 
   // example 1 - getBlock
-  show_transactions_in_block(c, 11773341);
+  if (example == NULL || strcmp(example, "eth_getBlock") == 0)
+    show_transactions_in_block(c, 11773341);
 
   // example 2 - call a function
-  call_a_function(c);
+  if (example == NULL || strcmp(example, "eth_call") == 0)
+    call_a_function(c);
 
   // example 3 - start charging
-  start_charging(c);
+  if (example == NULL || strcmp(example, "usn_rent") == 0)
+    start_charging(c);
 
   // example 4 - stop charging
-  stop_charging(c);
+  if (example == NULL || strcmp(example, "usn_rent") == 0)
+    stop_charging(c);
 
   // example 5 - watch for events
-  watch_for_events(c);
+  if (example == NULL || strcmp(example, "usn_watch") == 0)
+    watch_for_events(c);
 
   // clean up
   in3_free(c);

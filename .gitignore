@@ -5,4 +5,8 @@ _build
 **/.vscode/ipch/
 **/.DS_Store
 /.metadata/
+.DS_Store
 /RemoteSystemsTempFiles/
+cmake-build-debug/
+.vscode/
+.idea/

@@ -19,7 +19,7 @@ static uint8_t* EMPTY_ROOT_HASH = (uint8_t*) "\x56\xe8\x1f\x17\x1b\xcc\x55\xa6\x
 static int      is_not_existened(d_token_t* account) {
   d_token_t* t = NULL;
   // TODO how do I determine the default nonce? It is in the chain-config
-  return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_get(account, K_CODE_HASH)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_longk(account, K_NONCE) == 0) && (t = d_get(account, K_STORAGE_HASH)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
+  return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_longk(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
 }
 
 int verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
@@ -33,7 +33,7 @@ int verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
   // verify the account proof
   if (rlp_decode_in_list(header, BLOCKHEADER_STATE_ROOT, &root) != 1) return vc_err(vc, "no state root in the header");
 
-  if ((tmp = d_get_bytesk(account, K_ADDRESS)))
+  if ((tmp = d_get_byteskl(account, K_ADDRESS, 20)))
     sha3_to(tmp, hash);
   else
     return vc_err(vc, "no address in the account");
@@ -53,7 +53,7 @@ int verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
   // now we verify the storage proofs
   if (!(storage_proof = d_get(account, K_STORAGE_PROOF))) return vc_err(vc, "no stortage-proof found!");
 
-  if ((t = d_get(account, K_STORAGE_HASH)))
+  if ((t = d_getl(account, K_STORAGE_HASH, 32)))
     root = *d_bytes(t);
   else
     return vc_err(vc, "no storage-hash found!");
@@ -107,14 +107,14 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
   if (!(contract = strcmp(method, "in3_nodeList") == 0 ? d_get(vc->result, K_CONTRACT) : d_get_at(d_get(vc->request, K_PARAMS), 0)))
     return vc_err(vc, "no account found in request");
   if (strcmp(method, "eth_call") == 0)
-    contract = d_get(d_get_at(d_get(vc->request, K_PARAMS), 0), K_TO);
+    contract = d_getl(d_get_at(d_get(vc->request, K_PARAMS), 0), K_TO, 20);
 
   //now check the results
   if (!(accounts = d_get(vc->proof, K_ACCOUNTS))) return vc_err(vc, "no accounts");
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     if (verify_proof(vc, header, t))
       return vc_err(vc, "failed verifying the account");
-    else if (proofed_account == NULL && d_eq(contract, d_get(t, K_ADDRESS)))
+    else if (proofed_account == NULL && d_eq(contract, d_getl(t, K_ADDRESS, 20)))
       proofed_account = t;
   }
 
@@ -128,9 +128,9 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
       return vc_err(vc, "the nonce in the proof is different");
   } else if (strcmp(method, "eth_getCode") == 0) {
     if (d_type(vc->result) == T_BYTES) {
-      if (sha3_to(d_bytes(vc->result), hash) != 0 || memcmp(d_get_bytesk(proofed_account, K_CODE_HASH)->data, hash, 32))
+      if (sha3_to(d_bytes(vc->result), hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
         return vc_err(vc, "the codehash in the proof is different");
-    } else if (memcmp(d_get_bytesk(proofed_account, K_CODE_HASH)->data, EMPTY_HASH, 32)) // must be empty
+    } else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");
   } else if (strcmp(method, "eth_getStorageAt") == 0) {
     uint8_t result[32], proofed_result[32];

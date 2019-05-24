@@ -17,7 +17,7 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int 
   chain->initAddresses  = NULL;
   chain->lastBlock      = 0;
   chain->contract       = hex2byte_new_bytes(contract, 40);
-  chain->needsUpdate    = 0;
+  chain->needsUpdate    = 1;
   chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
   chain->nodeListLength = boot_node_count;
   chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
@@ -64,6 +64,7 @@ static void in3_client_init(in3_t* c) {
   c->requestCount       = 1;
   c->chainsCount        = 5;
   c->chains             = _malloc(sizeof(in3_chain_t) * c->chainsCount);
+  c->filters            = NULL;
 
   // mainnet
   initChain(c->chains, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252", 2, CHAIN_ETH, NULL);
@@ -101,6 +102,16 @@ void in3_free(in3_t* a) {
   }
   if (a->signer) _free(a->signer);
   _free(a->chains);
+
+  if (a->filters != NULL) {
+    in3_filter_t* f = NULL;
+    for (size_t j = 0; j < a->filters->count; j++) {
+      f = a->filters->array[j];
+      if (f) f->release(f);
+    }
+    _free(a->filters->array);
+    _free(a->filters);
+  }
   _free(a);
 }
 
