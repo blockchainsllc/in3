@@ -308,8 +308,9 @@ static in3_state_t in3_init(void) {
 	client->in3->max_attempts=3;
   // g_c->cacheStorage = NULL;
   
-  client->in3->proof = PROOF_NONE;
-
+  client->in3->proof = PROOF_NONE; //PROOF_STANDARD //proof_standard nur mit eth_full mgl!
+  client->in3->use_http = true;
+  
   // g_c->transport = sendJsonRequest_serial;
   client->in3->transport = in3_comm_esp32_sendJsonRequestAndWait;
 

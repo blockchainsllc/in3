@@ -47,7 +47,8 @@
         "gpio.h": "c",
         "pwm.h": "c",
         "uart_comm.h": "c",
-        "meterreadings.h": "c"
+        "meterreadings.h": "c",
+        "inttypes.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

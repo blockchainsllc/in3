@@ -450,3 +450,17 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   return &getContractVersion_Response;
 }
 
+
+// function addReading(  uint48 _timestampYYYYMMDDhhmmss, 
+//                       int24 _voltage_mV, 
+//                       int24 _current_mA, 
+//                       uint32 _counter_mWh 
+//                     )
+uint64_t meterReadings_addReading(  uint64_t  _timestampYYYYMMDDhhmmss,
+                                    int32_t   _voltage_mV,
+                                    int32_t   _current_mA,
+                                    uint32_t  _counter_mWh
+                                  ){
+
+  return 0x0;
+}
