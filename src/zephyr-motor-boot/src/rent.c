@@ -175,7 +175,7 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
     // no event found,
 	if (!log) goto out; 
 
-	char* url         = d_get_string(message->items,"url");
+	char* url         = d_get_string(message->result,"url");
     //bytes_t* deviceId = d_get_bytes_at(d_get(log,key("topics")),1);  // we need to store and compare the deviceId
 	bytes_t* data     = d_get_bytes(log,"data");
 	
@@ -198,13 +198,13 @@ int in3_can_rent(struct in3_client *c, char *resp, char *amsg) {
 
 
     // prepare message hash
-	sprintf(tmp, "%s%d%s{}", url, c->rent->when, d_get_string(message->items,"action"));
+	sprintf(tmp, "%s%d%s{}", url, c->rent->when, d_get_string(message->result,"action"));
 	sprintf(mhash, "\031Ethereum Signed Message:\n%d%s", strlen(tmp), tmp);
 	bytes_t msg= { .data = (uint8_t*) &mhash, .len = strlen(mhash) };
     hash = sha3(&msg);
 
     // get the signature
-	signer = ecrecover_signature(hash,  d_get(message->items,key("signature")));
+	signer = ecrecover_signature(hash,  d_get(message->result,key("signature")));
 	if (signer==NULL) goto out; 
 
     // check if the signer is the same as the controller in the event.
