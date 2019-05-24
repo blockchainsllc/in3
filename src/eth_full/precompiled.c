@@ -21,8 +21,7 @@ int pre_ecrecover(evm_t* evm) {
   // verify signature
   if (ecdsa_recover_pub_from_sig(&secp256k1, pubkey, evm->call_data.data + 64, evm->call_data.data, *vdata >= 27 ? *vdata - 27 : *vdata) == 0) {
     evm->return_data.data = _malloc(20);
-    if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
-    evm->return_data.len = 20;
+    evm->return_data.len  = 20;
 
     uint8_t hash[32];
 
@@ -37,24 +36,21 @@ int pre_ecrecover(evm_t* evm) {
 int pre_sha256(evm_t* evm) {
   subgas(G_PRE_SHA256 + (evm->call_data.len + 31) / 32 * G_PRE_SHA256_WORD);
   evm->return_data.data = _malloc(32);
-  if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
-  evm->return_data.len = 32;
+  evm->return_data.len  = 32;
   sha3_to(&evm->call_data, evm->return_data.data);
   return 0;
 }
 int pre_ripemd160(evm_t* evm) {
   subgas(G_PRE_RIPEMD160 + (evm->call_data.len + 31) / 32 * G_PRE_RIPEMD160_WORD);
   evm->return_data.data = _malloc(20);
-  if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
-  evm->return_data.len = 20;
+  evm->return_data.len  = 20;
   ripemd160(evm->call_data.data, evm->call_data.len, evm->return_data.data);
   return 0;
 }
 int pre_identity(evm_t* evm) {
   subgas(G_PRE_IDENTITY + (evm->call_data.len + 31) / 32 * G_PRE_IDENTITY_WORD);
   evm->return_data.data = _malloc(evm->call_data.len);
-  if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
-  evm->return_data.len = evm->call_data.len;
+  evm->return_data.len  = evm->call_data.len;
   memcpy(evm->return_data.data, evm->call_data.data, evm->call_data.len);
   return 0;
 }

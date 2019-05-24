@@ -44,11 +44,9 @@ int in3_verify_eth_nano(in3_vctx_t* vc) {
     return vc_err(vc, "The Method cannot be verified with eth_nano!");
 }
 
-bool in3_register_eth_nano() {
+void in3_register_eth_nano() {
   in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  if (v == NULL) return false;
-  v->type   = CHAIN_ETH;
-  v->verify = in3_verify_eth_nano;
+  v->type           = CHAIN_ETH;
+  v->verify         = in3_verify_eth_nano;
   in3_register_verifier(v);
-  return true;
 }

@@ -301,14 +301,9 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
       return 0;
     }
   }
-  usn_booking_t* bks = device->bookings
-                           ? _realloc(device->bookings, sizeof(usn_booking_t) * (device->num_bookings + 1), sizeof(usn_booking_t) * device->num_bookings)
-                           : _malloc(sizeof(usn_booking_t) * device->num_bookings + 1);
-  if (bks == NULL) {
-    _free(device->bookings);
-    return -1;
-  }
-  device->bookings       = bks;
+  device->bookings = device->bookings
+                         ? _realloc(device->bookings, sizeof(usn_booking_t) * (device->num_bookings + 1), sizeof(usn_booking_t) * device->num_bookings)
+                         : _malloc(sizeof(usn_booking_t) * device->num_bookings + 1);
   usn_booking_t* booking = device->bookings + device->num_bookings;
   booking->rented_from   = rented_from;
   booking->rented_until  = rented_until;
@@ -342,7 +337,6 @@ int usn_update_bookings(usn_device_conf_t* conf) {
       int size             = bytes_to_int(tmp + 28, 4);
       device->bookings     = size ? _calloc(sizeof(usn_booking_t), size) : NULL;
       device->num_bookings = 0;
-      if (device->bookings == NULL) return -1;
 
       for (int n = 0; n < size; n++) {
         // create the input data ( the index )

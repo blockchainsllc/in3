@@ -8,10 +8,11 @@
 
 bytes_t* b_new(char* data, int len) {
   bytes_t* b = _calloc(1, sizeof(bytes_t));
-  if (b && (b->data = _calloc(1, len))) {
-    b->len  = len;
-    b->data = memcpy(b->data, data, len);
-  }
+
+  b->len  = len;
+  b->data = _calloc(1, len);
+  b->data = memcpy(b->data, data, len);
+
   return b;
 }
 
@@ -60,20 +61,16 @@ void b_free(bytes_t* a) {
 
 bytes_t* b_dup(bytes_t* a) {
   bytes_t* out = _calloc(1, sizeof(bytes_t));
-  if (out && (out->data = _calloc(1, a->len))) {
-    out->data = memcpy(out->data, a->data, a->len);
-    out->len  = a->len;
-  }
+  out->data    = _calloc(1, a->len);
+  out->data    = memcpy(out->data, a->data, a->len);
+  out->len     = a->len;
+
   return out;
 }
 bytes_t cloned_bytes(bytes_t data) {
   uint8_t* p = _malloc(data.len);
-  if (p != NULL) {
-    memcpy(p, data.data, data.len);
-    return (bytes_t){.data = p, .len = data.len};
-  } else {
-    return (bytes_t){.data = NULL, .len = 0};
-  }
+  memcpy(p, data.data, data.len);
+  return (bytes_t){.data = p, .len = data.len};
 }
 
 uint8_t b_read_byte(bytes_t* b, size_t* pos) {
@@ -99,8 +96,8 @@ uint64_t b_read_long(bytes_t* b, size_t* pos) {
 char* b_new_chars(bytes_t* b, size_t* pos) {
   size_t l = strlen((const char*) b->data + *pos);
   char*  r = _malloc(l + 1);
-  if (r != NULL) memcpy(r, b->data + *pos, l + 1);
-  *pos += l + 1; // increment even if malloc failed, so that next read may succeed
+  memcpy(r, b->data + *pos, l + 1);
+  *pos += l + 1;
   return r;
 }
 
@@ -114,30 +111,28 @@ uint32_t b_read_int_be(bytes_t* b, size_t* pos, size_t len) {
 bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos) {
   size_t   l = b_read_int(b, pos);
   bytes_t* r = _malloc(sizeof(bytes_t));
-  if (r && (r->data = _malloc(l))) {
-    r->len = l;
-    memcpy(r->data, b->data + *pos, l);
-  }
-  *pos += l; // increment even if malloc failed, so that next read may succeed
+  r->data    = _malloc(l);
+  r->len     = l;
+  memcpy(r->data, b->data + *pos, l);
+  *pos += l;
   return r;
 }
 bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len) {
   bytes_t* r = _malloc(sizeof(bytes_t));
-  if (r && (r->data = _malloc(len))) {
-    r->len = len;
-    memcpy(r->data, b->data + *pos, len);
-  }
-  *pos += len; // increment even if malloc failed, so that next read may succeed
+  r->data    = _malloc(len);
+  r->len     = len;
+
+  memcpy(r->data, b->data + *pos, len);
+  *pos += len;
   return r;
 }
 
 /* allocates a new byte array with 0 filled */
 bytes_builder_t* bb_new() {
   bytes_builder_t* r = _malloc(sizeof(bytes_builder_t));
-  if (r && (r->b.data = _malloc(32))) {
-    r->b.len = 0;
-    r->bsize = 32;
-  }
+  r->b.data          = _malloc(32);
+  r->b.len           = 0;
+  r->bsize           = 32;
   return r;
 }
 
@@ -215,14 +210,11 @@ void bb_write_byte(bytes_builder_t* bb, uint8_t val) {
   *(uint8_t*) (bb->b.data + bb->b.len) = val;
   bb->b.len++;
 }
-
 bytes_t* bb_move_to_bytes(bytes_builder_t* bb) {
   bytes_t* b = _malloc(sizeof(bytes_t));
-  if (b != NULL) {
-    b->len  = bb->b.len;
-    b->data = bb->b.data;
-    _free(bb);
-  }
+  b->len     = bb->b.len;
+  b->data    = bb->b.data;
+  _free(bb);
   return b;
 }
 void bb_clear(bytes_builder_t* bb) {

@@ -32,7 +32,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
 /**
  * this function should only be called once and will register the eth-nano verifier.
  */
-bool in3_register_eth_basic();
+void in3_register_eth_basic();
 
 /**
  *  verify logs

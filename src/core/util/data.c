@@ -78,7 +78,6 @@ bytes_t* d_bytesl(d_token_t* item, size_t l) {
     return d_bytes(item);
 
   item->data = _realloc(item->data, l, item->len);
-  if (item->data == NULL) return NULL;
   memmove(item->data + l - item->len, item->data, item->len);
   memset(item->data, 0, l - item->len);
   item->len = l;
@@ -184,12 +183,10 @@ uint32_t d_intd(const d_token_t* item, const uint32_t def_val) {
 
 bytes_t** d_create_bytes_vec(const d_token_t* arr) {
   if (arr == NULL) return NULL;
-  int       l   = d_len(arr), i;
-  bytes_t** dst = _calloc(l + 1, sizeof(bytes_t*));
-  if (dst != NULL) {
-    const d_token_t* t = arr + 1;
-    for (i = 0; i < l; i++, t += d_token_size(t)) dst[i] = d_bytes(t);
-  }
+  int              l   = d_len(arr), i;
+  bytes_t**        dst = _calloc(l + 1, sizeof(bytes_t*));
+  const d_token_t* t   = arr + 1;
+  for (i = 0; i < l; i++, t += d_token_size(t)) dst[i] = d_bytes(t);
   return dst;
 }
 
@@ -265,9 +262,7 @@ char next_char(json_ctx_t* jp) {
 
 d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
-    d_token_t* res = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
-    if (res == NULL) return NULL;
-    jp->result = res;
+    jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
   }
   d_token_t* n = jp->result + jp->len;
@@ -309,8 +304,7 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
       int res = atoi(temp); // modified for integers that doesn't fit in 28 bits
       if (res & 0XF0000000) {
         item->data = _malloc(4);
-        if (item->data == NULL) return -1;
-        item->len = 4;
+        item->len  = 4;
         int_to_bytes(res, item->data);
       } else
         item->len |= res;
@@ -345,22 +339,19 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
             // we need to allocate bytes for it. and so set the type to bytes
             item->len  = ((l & 1) ? l - 1 : l - 2) >> 1;
             item->data = _malloc(item->len);
-            if (item->data == NULL) return -1;
             if (l & 1) item->data[0] = strtohex(start[2]);
             l = (l & 1) + 2;
             for (i = l - 2, n = l; i < item->len; i++, n += 2)
               item->data[i] = strtohex(start[n]) << 4 | strtohex(start[n + 1]);
           }
         } else if (l == 6 && *start == '\\' && start[1] == 'u') {
-          item->len  = 1;
-          item->data = _malloc(1);
-          if (item->data == NULL) return -1;
+          item->len   = 1;
+          item->data  = _malloc(1);
           *item->data = strtohex(start[4]) << 4 | strtohex(start[5]);
         } else {
           item->len  = l | T_STRING << 28;
           item->data = (uint8_t*) start;
           item->data = _malloc(l + 1);
-          if (item->data == NULL) return -1;
           memcpy(item->data, start, l);
           item->data[l] = 0;
         }
@@ -484,12 +475,7 @@ json_ctx_t* parse_json(char* js) {
   parser->result     = _malloc(sizeof(d_token_t) * 10);
   parser->c          = js;
   parser->allocated  = 10;
-  if (!parser || !parser->result) {
-    _free(parser);
-    _free(parser->result);
-    return NULL;
-  }
-  int res = parse_object(parser, -1, 0);
+  int res            = parse_object(parser, -1, 0);
   if (res < 0) {
     free_json(parser);
     return NULL;
@@ -529,17 +515,12 @@ char* d_create_json(d_token_t* item) {
       if (item->data) {
         s   = d_to_json(item);
         dst = _malloc(s.len + 1);
-        if (dst == NULL) return NULL;
         memcpy(dst, s.data, s.len);
         dst[s.len] = 0;
       } else {
         sb_t* sb = sb_new(d_type(item) == T_ARRAY ? "[" : "{");
         for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
           char* p = d_create_json(it.token);
-          if (p == NULL) {
-            sb_free(sb);
-            return NULL;
-          }
           if (sb->len > 1) sb_add_char(sb, ',');
           sb_add_chars(sb, p);
           _free(p);
@@ -553,22 +534,19 @@ char* d_create_json(d_token_t* item) {
       return d_int(item) ? _strdupn("true", 4) : _strdupn("false", 5);
     case T_INTEGER:
       dst = _malloc(16);
-      if (dst == NULL) return NULL;
       sprintf(dst, "0x%x", d_int(item));
       return dst;
     case T_NULL:
       return _strdupn("null", 4);
     case T_STRING:
-      dst = _malloc(l + 3);
-      if (dst == NULL) return NULL;
+      dst        = _malloc(l + 3);
       dst[0]     = '"';
       dst[l + 1] = '"';
       dst[l + 2] = 0;
       memcpy(dst + 1, item->data, l);
       return dst;
     case T_BYTES:
-      dst = _malloc(l * 2 + 5);
-      if (dst == NULL) return NULL;
+      dst    = _malloc(l * 2 + 5);
       dst[0] = '"';
       dst[1] = '0';
       dst[2] = 'x';
@@ -648,16 +626,11 @@ char* json_get_json_value(char* js, char* prop) {
 //    bytes-parser
 
 static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
-  d_token_t* result = NULL;
   if (jp->allocated == 0) {
-    result = _malloc(10 * sizeof(d_token_t));
-    if (result == NULL) return NULL;
-    jp->result    = result;
+    jp->result    = _malloc(10 * sizeof(d_token_t));
     jp->allocated = 10;
   } else if (jp->len + 1 > jp->allocated) {
-    result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
-    if (result == NULL) return NULL;
-    jp->result = result;
+    jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
   }
   d_token_t* n = jp->result + jp->len;
@@ -669,9 +642,8 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
 }
 
 static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
-  uint16_t   key;
-  d_type_t   type   = d[*p] >> 5; // first 3 bits define the type
-  d_token_t* result = NULL;
+  uint16_t key;
+  d_type_t type = d[*p] >> 5; // first 3 bits define the type
 
   // calculate len
   uint32_t len = d[(*p)++] & 0x1F, i; // the other 5 bits  (0-31) the length
@@ -689,14 +661,10 @@ static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
   // special token giving the number of tokens, so we can allocate the exact number
   if (type == T_NULL && len > 0) {
     if (jp->allocated == 0) {
-      result = _malloc(sizeof(d_token_t) * len);
-      if (result == NULL) return -1;
-      jp->result    = result;
+      jp->result    = _malloc(sizeof(d_token_t) * len);
       jp->allocated = len;
     } else if (len > jp->allocated) {
-      result = _realloc(jp->result, len * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
-      if (result == NULL) return -1;
-      jp->result    = result;
+      jp->result    = _realloc(jp->result, len * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
       jp->allocated = len;
     }
     return 0;
@@ -749,18 +717,17 @@ json_ctx_t* parse_binary_str(char* data, int len) {
 json_ctx_t* parse_binary(bytes_t* data) {
   size_t      p = 0, error = 0;
   json_ctx_t* jp = _calloc(1, sizeof(json_ctx_t));
-  if (jp != NULL) {
-    jp->c = (char*) data->data;
-    while (!error && p < data->len)
-      error = read_token(jp, data->data, &p);
+  jp->c          = (char*) data->data;
 
-    if (error) {
-      _free(jp->result);
-      _free(jp);
-      return NULL;
-    }
-    jp->allocated = 0;
+  while (!error && p < data->len)
+    error = read_token(jp, data->data, &p);
+
+  if (error) {
+    _free(jp->result);
+    _free(jp);
+    return NULL;
   }
+  jp->allocated = 0;
   return jp;
 }
 
@@ -781,22 +748,20 @@ d_token_t* json_create_int(json_ctx_t* jp, uint64_t value) {
     optimize_len(p, l);
     d_token_t* r = next_item(jp, T_BYTES, l);
     r->data      = _malloc(l);
-    if (r->data != NULL) memcpy(r->data, p, l);
+    memcpy(r->data, p, l);
     return r;
   }
+
   return next_item(jp, T_INTEGER, value);
 }
 d_token_t* json_create_string(json_ctx_t* jp, char* value) {
   d_token_t* r = next_item(jp, T_STRING, strlen(value));
-  r->data      = _malloc(d_len(r) + 1);
-  if (r->data != NULL) strcpy((char*) r->data, value);
+  strcpy((char*) (r->data = _malloc(d_len(r) + 1)), value);
   return r;
 }
-
 d_token_t* json_create_bytes(json_ctx_t* jp, bytes_t value) {
   d_token_t* r = next_item(jp, T_BYTES, value.len);
-  r->data      = _malloc(value.len);
-  if (r->data != NULL) memcpy(r->data, value.data, value.len);
+  memcpy(r->data = _malloc(value.len), value.data, value.len);
   return r;
 }
 

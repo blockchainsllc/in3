@@ -65,12 +65,10 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
     if (ac) {
       // clone and add account
       account_t* a = _malloc(sizeof(account_t));
-      if (a != NULL) {
-        memcpy(a, ac, sizeof(account_t));
-        a->storage    = NULL;
-        a->next       = evm->accounts;
-        evm->accounts = a;
-      }
+      memcpy(a, ac, sizeof(account_t));
+      a->storage    = NULL;
+      a->next       = evm->accounts;
+      evm->accounts = a;
       return a;
     }
   }
@@ -88,7 +86,6 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   // is this a non-empty account? (or do we have to create one)
   if (create || l_balance > 1 || l_nonce > 1 || l_code_size > 1 || (l_balance == 1 && *balance) || (l_nonce == 1 && *nonce) || (l_code_size == 1 && *code_size)) {
     ac = _calloc(1, sizeof(account_t));
-    if (ac == NULL) return NULL;
     memcpy(ac->address, adr, 20);
 
     // get the code (if code_size>0)
@@ -131,11 +128,9 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
     if (parent_s) {
       // clone and add account
       s = _malloc(sizeof(storage_t));
-      if (s != NULL) {
-        memcpy(s, parent_s, sizeof(storage_t));
-        s->next     = ac->storage;
-        ac->storage = s;
-      }
+      memcpy(s, parent_s, sizeof(storage_t));
+      s->next     = ac->storage;
+      ac->storage = s;
       return s;
     }
   }
@@ -147,16 +142,14 @@ storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_k
   if (create || l > 1 || (l == 1 && *data)) {
     // create with key
     s = _malloc(sizeof(storage_t));
-    if (s != NULL) {
-      memcpy(s->key, key_data, 32);
+    memcpy(s->key, key_data, 32);
 
-      // add to account
-      s->next     = ac->storage;
-      ac->storage = s;
+    // add to account
+    s->next     = ac->storage;
+    ac->storage = s;
 
-      // set the value
-      uint256_set(data, l, s->value);
-    }
+    // set the value
+    uint256_set(data, l, s->value);
   }
   return s;
 }
@@ -307,18 +300,11 @@ int evm_prepare_evm(evm_t*      evm,
                     address_t   caller,
                     evm_get_env env,
                     void*       env_ptr) {
-  uint8_t *sdata = _malloc(64), *mdata = _calloc(32, 1);
-  if (!sdata || !mdata) {
-    _free(sdata);
-    _free(mdata);
-    return -1;
-  }
-
-  evm->stack.b.data = sdata;
+  evm->stack.b.data = _malloc(64);
   evm->stack.b.len  = 0;
   evm->stack.bsize  = 64;
 
-  evm->memory.b.data = mdata;
+  evm->memory.b.data = _calloc(32, 1);
   evm->memory.b.len  = 0;
   evm->memory.bsize  = 32;
   memset(evm->memory.b.data, 0, 32);
@@ -367,7 +353,7 @@ int evm_prepare_evm(evm_t*      evm,
   if (address) {
     // get the code
     uint8_t* tmp = NULL;
-    int      l   = env(evm, EVM_ENV_CODE_SIZE, account, 20, &tmp, 0, 32);
+    int      l = env(evm, EVM_ENV_CODE_SIZE, account, 20, &tmp, 0, 32);
     // error?
     if (l < 0) return l;
     evm->code.len = bytes_to_int(tmp, l);

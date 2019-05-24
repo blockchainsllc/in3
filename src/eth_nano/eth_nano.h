@@ -35,7 +35,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
 /**
  * this function should only be called once and will register the eth-nano verifier.
  */
-bool in3_register_eth_nano();
+void in3_register_eth_nano();
 
 /**
  * helper function to rlp-encode the transaction_index.

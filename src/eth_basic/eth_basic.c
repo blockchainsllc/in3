@@ -19,8 +19,6 @@
 #define RESPONSE_START()                                                             \
   do {                                                                               \
     *response = _malloc(sizeof(in3_response_t));                                     \
-    if (*response == NULL)                                                           \
-      return ctx_set_error(ctx, "failed to allocate memory for response", -1);       \
     sb_init(&response[0]->result);                                                   \
     sb_init(&response[0]->error);                                                    \
     sb_add_chars(&response[0]->result, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
@@ -160,12 +158,10 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   return 0;
 }
 
-bool in3_register_eth_basic() {
+void in3_register_eth_basic() {
   in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  if (v == NULL) return false;
-  v->type       = CHAIN_ETH;
-  v->pre_handle = eth_handle_intern;
-  v->verify     = in3_verify_eth_basic;
+  v->type           = CHAIN_ETH;
+  v->pre_handle     = eth_handle_intern;
+  v->verify         = in3_verify_eth_basic;
   in3_register_verifier(v);
-  return true;
 }

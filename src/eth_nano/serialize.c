@@ -20,7 +20,6 @@ static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
   if ((size_t) ml > b.len) {
     // we need to fill left
     uint8_t* tmp = _calloc(ml, 1);
-    if (tmp == NULL) return -1;
     memcpy(tmp + ml - b.len, b.data, b.len);
     b.data = tmp;
     b.len  = ml;

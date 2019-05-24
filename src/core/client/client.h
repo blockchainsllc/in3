@@ -21,7 +21,6 @@ enum in3err {
   IN3_ERR_NO_NODES_FOUND   = -5,
   IN3_ERR_CONFIG_ERROR     = -6,
   IN3_ERR_MAX_ATTEMPTS     = -7,
-  IN3_ERR_NO_MEM           = -8,
 };
 
 /** type of the chain */

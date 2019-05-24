@@ -40,10 +40,8 @@ static void set_errorn(int std_error, char* msg, int len) {
   errno = std_error;
   if (last_error) _free(last_error);
   last_error = _malloc(len + 1);
-  if (last_error) {
-    memcpy(last_error, msg, len);
-    last_error[len] = 0;
-  }
+  memcpy(last_error, msg, len);
+  last_error[len] = 0;
 }
 // sets the error and a message
 static void set_error(int std_error, char* msg) {
@@ -62,15 +60,6 @@ static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
   } else
     memset(dst, 0, len);
 }
-
-static void free_logs(eth_log_t* logs) {
-  while (logs) {
-    eth_log_t* l = logs;
-    free_log(l);
-    logs = logs->next;
-  }
-}
-
 uint256_t to_uint256(uint64_t value) {
   uint256_t data;
   memset(data.data, 0, 32);
@@ -316,11 +305,7 @@ static eth_log_t* parse_logs(d_token_t* result) {
   eth_log_t *prev, *first;
   prev = first = NULL;
   for (d_iterator_t it = d_iter(result); it.left; d_iter_next(&it)) {
-    eth_log_t* log = _calloc(1, sizeof(*log));
-    if (log == NULL) {
-      free_logs(first);
-      return NULL;
-    }
+    eth_log_t* log         = _calloc(1, sizeof(*log));
     log->removed           = d_get_intk(it.token, K_REMOVED);
     log->log_index         = d_get_intk(it.token, K_LOG_INDEX);
     log->transaction_index = d_get_intk(it.token, K_TRANSACTION_INDEX);
@@ -328,11 +313,6 @@ static eth_log_t* parse_logs(d_token_t* result) {
     log->data.len          = d_len(d_get(it.token, K_DATA));
     log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
     log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
-    if ((log->data.len && !log->data.data) || (d_len(d_get(it.token, K_TOPICS)) && !log->topics)) {
-      free_logs(first);
-      free_log(log);
-      return NULL;
-    }
     copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
     copy_fixed(log->transaction_hash, 32, d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)));
     copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));

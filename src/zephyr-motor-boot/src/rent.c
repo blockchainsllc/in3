@@ -184,8 +184,7 @@ int in3_can_rent(struct in3_client* c, char* resp, char* amsg) {
   c->rent->from  = bytes_to_long(data->data + 32, 32);
   c->rent->until = bytes_to_long(data->data + 64, 32);
   //TODO do we need to set it as string?
-  c->rent->controller = _malloc(43);
-  if (c->rent->controller == NULL) goto out;
+  c->rent->controller    = _malloc(43);
   c->rent->controller[0] = '0';
   c->rent->controller[1] = 'x';
   bytes_to_hex(data->data + 12, 20, c->rent->controller + 2);

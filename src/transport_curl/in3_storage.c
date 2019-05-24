@@ -22,21 +22,17 @@ static char* get_storage_dir() {
             char* home = getenv("USERPROFILE");
             if (!home) home = ".";
             _HOME_DIR = _malloc(strlen(home)+8);
-            if (_HOME_DIR) {
-                sprintf(_HOME_DIR,"%s\\.in3\\",home);
-                _mkdir(_HOME_DIR);
-            }
+            sprintf(_HOME_DIR,"%s\\.in3\\",home);
+            _mkdir(_HOME_DIR);
         #else 
             char* home = getenv("HOME");
             if (!home) home = ".";
             _HOME_DIR = _malloc(strlen(home)+8);
-            if (_HOME_DIR) {
-                sprintf(_HOME_DIR,"%s/.in3/",home);
-                mode_t old_umask;                                                                
-                old_umask = umask(0);                                                                   
-                mkdir(_HOME_DIR, 0777);
-                umask(old_umask);
-            }    
+            sprintf(_HOME_DIR,"%s/.in3/",home);
+            mode_t old_umask;                                                                
+            old_umask = umask(0);                                                                   
+            mkdir(_HOME_DIR, 0777);
+            umask(old_umask);                                                       
         #endif
     }
     return _HOME_DIR;
@@ -44,7 +40,7 @@ static char* get_storage_dir() {
 
 static char* create_path(char* key) {
     char* path = _malloc(strlen(get_storage_dir())+strlen(key)+5);
-    if (path != NULL) sprintf(path,"%s%s",get_storage_dir(),key);
+    sprintf(path,"%s%s",get_storage_dir(),key);
     return path;
 }
 
@@ -56,27 +52,22 @@ bytes_t* storage_get_item(void* cptr, char* key) {
    if (file) {
      size_t allocated = 1024;
      size_t len = 0;
+     uint8_t* buffer  = _malloc(1024);
      size_t r;
-     uint8_t* buffer  = _malloc(1024), *b_ = NULL;
-     bytes_t* res = _malloc(sizeof(bytes_t));
-    if (!buffer || !res) goto END;
 
      while (1) {
         r=fread(buffer+len, 1, allocated-len, file);
         len+=r;
         if (feof(file)) break;
-        b_ = _realloc(buffer, allocated*2,allocated);
-        if (b_ == NULL) goto END;
+        buffer = _realloc(buffer, allocated*2,allocated);
         allocated*=2;
      }
      fclose(file);
 
+     bytes_t* res = _malloc(sizeof(bytes_t));
      res->data = buffer;
      res->len = len;
      return res;
-END:
-   _free(buffer);
-   _free(res);
    }
    return NULL;
 }

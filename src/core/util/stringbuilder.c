@@ -12,11 +12,8 @@
 static const size_t MIN_SIZE = 32;
 
 sb_t* sb_new(char* chars) {
-  sb_t* sb = _malloc(sizeof(sb_t));
-  if (!sb || !(sb->data = _malloc(MIN_SIZE))) {
-    sb_free(sb);
-    return NULL;
-  }
+  sb_t* sb     = _malloc(sizeof(sb_t));
+  sb->data     = _malloc(MIN_SIZE);
   sb->allocted = MIN_SIZE;
   sb->data[0]  = 0;
   sb->len      = 0;
@@ -24,30 +21,23 @@ sb_t* sb_new(char* chars) {
   return sb;
 }
 sb_t* sb_init(sb_t* sb) {
-  sb->data = _malloc(MIN_SIZE);
-  if (sb->data == NULL) return NULL;
+  sb->data     = _malloc(MIN_SIZE);
   sb->allocted = MIN_SIZE;
   sb->data[0]  = 0;
   sb->len      = 0;
   return sb;
 }
-static bool check_size(sb_t* sb, size_t len) {
-  if (sb == NULL || len == 0)
-    return false;
-  else if (sb->len + len < sb->allocted)
-    return true;
+static void check_size(sb_t* sb, size_t len) {
+  if (sb == NULL || len == 0 || sb->len + len < sb->allocted) return;
 #ifdef __ZEPHYR__
   size_t l = sb->allocted;
 #endif
   while (sb->len + len >= sb->allocted) sb->allocted <<= 1;
 #ifdef __ZEPHYR__
-  char* data = _realloc(sb->data, sb->allocted, l);
+  sb->data = _realloc(sb->data, sb->allocted, l);
 #else
-  char* data = _realloc(sb->data, sb->allocted, 0);
+  sb->data = _realloc(sb->data, sb->allocted, 0);
 #endif
-  if (data == NULL) return false;
-  sb->data = data;
-  return true;
 }
 
 sb_t* sb_add_chars(sb_t* sb, char* chars) {

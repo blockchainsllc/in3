@@ -121,10 +121,9 @@ char* parse_tuple(bytes_builder_t* bb, char* c) {
 }
 
 call_request_t* parseSignature(char* sig) {
-  call_request_t* req = _malloc(sizeof(call_request_t));
-  if (req == NULL) return NULL;
-  int   l    = strlen(sig);
-  char *ends = memchr(sig, ':', l), *startb = memchr(sig, '(', l);
+  call_request_t* req  = _malloc(sizeof(call_request_t));
+  int             l    = strlen(sig);
+  char *          ends = memchr(sig, ':', l), *startb = memchr(sig, '(', l);
   if (!startb) {
     add_error(req, "Invalid call-signature");
     return req;
@@ -195,7 +194,7 @@ static int head_size(var_t* t, bool single) {
   int f = t->array_len > 0 ? t->array_len : 1, a = 32;
   if (t->type == A_TUPLE) {
     int i;
-    a        = 0;
+    a = 0;
     var_t* s = NULL;
     for (i = 0, s = t + 1; i < t->type_len; i++, s = t_next(s)) a += head_size(s, false);
   } else if (t->type == A_BYTES || t->type == A_STRING)
@@ -337,7 +336,7 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
         char tmp[len + 1];
         strncpy(tmp, (char*) (data.data + dst), len);
         tmp[len] = '\0';
-        res      = json_create_string(ctx, tmp);
+        res = json_create_string(ctx, tmp);
       } else
         res = json_create_bytes(ctx, bytes(data.data + dst, len));
       *offset += t->type_len ? word_size(len) : 32;
