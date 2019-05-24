@@ -13,6 +13,6 @@ int in3_verify_eth_full(in3_vctx_t* v);
 /**
  * this function should only be called once and will register the eth-full verifier.
  */
-void in3_register_eth_full();
+bool in3_register_eth_full();
 
 #endif // in3_eth_full_h__

@@ -60,7 +60,8 @@ int eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account
 /** sets the signer and a pk to the client*/
 int eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   if (in3->signer) _free(in3->signer);
-  in3->signer         = _malloc(sizeof(in3_signer_t));
+  in3->signer = _malloc(sizeof(in3_signer_t));
+  if (in3->signer == NULL) return -1;
   in3->signer->sign   = eth_sign;
   in3->signer->wallet = pk;
   return 0;

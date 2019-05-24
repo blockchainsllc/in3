@@ -109,8 +109,7 @@ size_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
   // Reuse filter ids that have been uninstalled
   // Note: filter ids are 1 indexed, and the associated in3_filter_t object is stored
   // at pos (id - 1) internally in in3->filters->array
-  if (in3->filters == NULL)
-    in3->filters = _calloc(1, sizeof *(in3->filters));
+  if (!in3->filters && !(in3->filters = _calloc(1, sizeof *(in3->filters)))) return 0;
   in3_filter_handler_t* fh = in3->filters;
   for (size_t i = 0; i < fh->count; i++) {
     if (fh->array[i] == NULL) {

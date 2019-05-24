@@ -11,7 +11,7 @@
 #include <util/utils.h>
 
 static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
-  d_token_t* tmp = NULL;
+  d_token_t* tmp        = NULL;
   bytes_t ** validators = NULL, *proposer, b;
   int        validator_len, i;
 
@@ -20,6 +20,11 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
     // create a validator list from spec.
     validator_len = d_len(tmp);
     validators    = _malloc(sizeof(bytes_t*) * validator_len);
+    if (validators == NULL) {
+      vc_err(vc, "failed to allocate memory for validators");
+      return NULL;
+    }
+
     // copy references
     for (i = 0, tmp += 1; i < validator_len; i++, tmp = d_next(tmp)) validators[i] = d_bytes(tmp);
     // copy the size of the validators to the given pointer, because it will be needed to ensure finality.
@@ -162,7 +167,8 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
       // we merge the current header + finality blocks
       sig              = d_get(vc->proof, K_FINALITY_BLOCKS);
       bytes_t** blocks = _malloc((sig ? d_len(sig) + 1 : 2) * sizeof(bytes_t*));
-      blocks[0]        = header;
+      if (blocks == NULL) vc_err(vc, "failed to allocate memory");
+      blocks[0] = header;
       if (sig) {
         for (i = 0; i < d_len(sig); i++) blocks[i + 1] = d_get_bytes_at(sig, i);
       }

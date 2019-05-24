@@ -28,6 +28,7 @@ typedef enum evm_state {
 #define EVM_ERROR_OUT_OF_GAS -10             /**< not enough gas to exewcute the opcode  */
 #define EVM_ERROR_BALANCE_TOO_LOW -11        /**< not enough funds to transfer the requested value.  */
 #define EVM_ERROR_STACK_LIMIT -12            /**< stack limit reached  */
+#define EVM_ERROR_OUT_OF_MEM -13             /**< failed to allocate memory */
 
 #define EVM_PROP_FRONTIER 1
 #define EVM_PROP_EIP150 2

@@ -40,6 +40,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
 
   // new nodelist
   in3_node_t* newList = _calloc((len = d_len(nodes)), sizeof(in3_node_t));
+  if (newList == NULL) return ctx_set_error(ctx, "Failed to allocate memory for node list", -1);
 
   // set new values
   for (i = 0; i < len; i++) {
@@ -47,7 +48,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
     node          = node ? d_next(node) : d_get_at(nodes, i);
     if (!node) {
       res = ctx_set_error(ctx, "node missing", -1);
-      break;
+      goto ERR;
     }
 
     n->capacity = d_get_intkd(node, K_CAPACITY, 1);
@@ -60,7 +61,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
       n->url = _strdupn(n->url, -1);
     else {
       res = ctx_set_error(ctx, "missing url in nodelist", -1);
-      break;
+      goto ERR;
     }
 
     n->address = d_get_byteskl(node, K_ADDRESS, 20);
@@ -68,23 +69,30 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
       n->address = b_dup(n->address);
     else {
       res = ctx_set_error(ctx, "missing address in nodelist", -1);
-      break;
+      goto ERR;
     }
   }
 
   if (res == 0) {
+    in3_node_weight_t* ws = _calloc(len, sizeof(in3_node_weight_t));
+    if (ws == NULL) {
+      res = ctx_set_error(ctx, "failed to allocate memory for weights", -1);
+      goto ERR;
+    }
+
     // successfull, so we can update the chain.
     free_nodeList(chain->nodeList, chain->nodeListLength);
     chain->nodeList       = newList;
     chain->nodeListLength = len;
 
     _free(chain->weights);
-    chain->weights = _calloc(len, sizeof(in3_node_weight_t));
+    chain->weights = ws;
     for (i = 0; i < len; i++)
       chain->weights[i].weight = 1;
-  } else
-    free_nodeList(newList, len);
-
+    return 0;
+  }
+ERR:
+  free_nodeList(newList, len);
   return res;
 }
 
@@ -124,7 +132,7 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
           str_range_t s = d_to_json(r);
           strncpy(req, s.data, s.len);
           req[s.len] = '\0';
-          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, -1));
+          res        = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, -1));
         } else
           res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, d_string(r), -1));
       } else
@@ -146,12 +154,12 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                          int len, _time_t now, float* total_weight, int* total_found) {
   int                i, p;
-  float              s = 0;
-  in3_node_t*        nodeDef    = NULL;
-  in3_node_weight_t* weightDef  = NULL;
-  node_weight_t*     prev       = NULL;
-  node_weight_t*     w          = NULL;
-  node_weight_t*     first        = NULL;
+  float              s         = 0;
+  in3_node_t*        nodeDef   = NULL;
+  in3_node_weight_t* weightDef = NULL;
+  node_weight_t*     prev      = NULL;
+  node_weight_t*     w         = NULL;
+  node_weight_t*     first     = NULL;
 
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
@@ -159,6 +167,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;
     w = _malloc(sizeof(node_weight_t));
+    if (w == NULL) continue;
     if (!first) first = w;
     w->node   = nodeDef;
     w->weight = weightDef;
@@ -177,8 +186,8 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
 
 int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
   int          i, res = IN3_ERR_CHAIN_NOT_FOUND;
-  in3_chain_t* chain  = NULL;
-  in3_t*       c = ctx->client;
+  in3_chain_t* chain = NULL;
+  in3_t*       c     = ctx->client;
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
     if (chain->chainId == chain_id) {
@@ -202,9 +211,9 @@ int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t
 int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 
   // get all nodes from the nodelist
-  _time_t            now        = _time();
-  in3_node_t*        all_nodes  = NULL;
-  in3_node_weight_t* weights    = NULL;
+  _time_t            now       = _time();
+  in3_node_t*        all_nodes = NULL;
+  in3_node_weight_t* weights   = NULL;
   float              total_weight;
   int                all_nodes_len, res, total_found, i, l;
 
@@ -268,8 +277,9 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
       }
 
       if (!wn) {
-        added++;
         wn         = _calloc(1, sizeof(node_weight_t));
+        if (wn == NULL) break; // FIXME: handle appropriately
+        added++;
         wn->s      = w->s;
         wn->w      = w->w;
         wn->weight = w->weight;

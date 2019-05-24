@@ -41,15 +41,12 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 
     count = b_read_int(b, &p);
 
-    in3_node_t* nl = _calloc(count, sizeof(in3_node_t));
-    if (nl == NULL) {
-      b_free(b);
-      return -1;
-    }
+    in3_node_t*        nl = _calloc(count, sizeof(in3_node_t));
     in3_node_weight_t* nw = _calloc(count, sizeof(in3_node_weight_t));
-    if (nw == NULL) {
+    if (!nl || !nw) {
       b_free(b);
       _free(nl);
+      _free(nw);
       return -1;
     }
 

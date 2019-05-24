@@ -32,14 +32,16 @@ static trie_codec_t rlp_codec = {.decode_item   = rlp_decode_in_list,
                                  .encode_finish = finish_rlp};
 
 trie_t* trie_new() {
-  trie_t* t              = _calloc(1, sizeof(trie_t));
-  t->hasher              = _sha3;
-  t->codec               = &rlp_codec;
-  bytes_builder_t* ll    = bb_new();
-  bytes_t          empty = bytes(NULL, 0);
-  t->codec->encode_add(ll, &empty);
-  t->hasher(&ll->b, t->root);
-  bb_free(ll);
+  trie_t* t = _calloc(1, sizeof(trie_t));
+  if (t != NULL) {
+    t->hasher              = _sha3;
+    t->codec               = &rlp_codec;
+    bytes_builder_t* ll    = bb_new();
+    bytes_t          empty = bytes(NULL, 0);
+    t->codec->encode_add(ll, &empty);
+    t->hasher(&ll->b, t->root);
+    bb_free(ll);
+  }
   return t;
 }
 void trie_free(trie_t* val) {
@@ -75,9 +77,10 @@ static bytes_t trie_node_get_item(trie_node_t* t, int index) {
 
 static trie_node_t* trie_node_new(uint8_t* data, size_t len, uint8_t own_memory) {
   trie_node_t* t = _malloc(sizeof(trie_node_t));
-  t->own_memory  = own_memory;
-  t->data.data   = data;
-  t->data.len    = len;
+  if (t == NULL) return NULL;
+  t->own_memory = own_memory;
+  t->data.data  = data;
+  t->data.len   = len;
   memset(t->hash, 0, 32);
   rlp_decode(&t->data, 0, &t->items);
 
@@ -92,10 +95,12 @@ static trie_node_t* trie_node_new(uint8_t* data, size_t len, uint8_t own_memory)
 static void ensure_own_memory(trie_node_t* n) {
   if (n->own_memory) return;
   uint8_t* new_buffer = _malloc(n->data.len);
-  memcpy(new_buffer, n->data.data, n->data.len);
-  n->items.data = n->items.data - n->data.data + new_buffer;
-  n->data.data  = new_buffer;
-  n->own_memory = true;
+  if (new_buffer) {
+    memcpy(new_buffer, n->data.data, n->data.len);
+    n->items.data = n->items.data - n->data.data + new_buffer;
+    n->data.data  = new_buffer;
+    n->own_memory = true;
+  }
 }
 
 static void trie_node_set_item(trie_node_t* t, int index, bytes_t* val, uint8_t is_list) {
@@ -150,6 +155,7 @@ static int trie_node_value_from_nibbles(trie_node_type_t type, uint8_t* val, byt
   if (dst->len < blen) {
     if (dst->data) _free(dst->data);
     dst->data = _malloc(blen);
+    if (dst->data == NULL) return -2;
   }
   dst->len     = blen;
   dst->data[0] = ((type == NODE_EXT ? 0 : 2) + odd) << 4 | (odd == 0 ? 0 : val[0]);

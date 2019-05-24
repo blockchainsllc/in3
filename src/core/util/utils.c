@@ -78,6 +78,11 @@ bytes_t* hex2byte_new_bytes(char* buf, int len) {
 
   uint8_t* b     = _malloc(bytes_len);
   bytes_t* bytes = _malloc(sizeof(bytes_t));
+  if (!b || !bytes) {
+    _free(b);
+    _free(bytes);
+    return NULL;
+  }
   hex2byte_arr(buf, len, b, bytes_len);
   bytes->data = b;
   bytes->len  = bytes_len;
@@ -110,14 +115,12 @@ bytes_t* sha3(bytes_t* data) {
   struct SHA3_CTX ctx;
 
   out = _calloc(1, sizeof(bytes_t));
-
-  sha3_256_Init(&ctx);
-  sha3_Update(&ctx, data->data, data->len);
-
-  out->data = _calloc(1, 32 * sizeof(uint8_t));
-  out->len  = 32;
-
-  keccak_Final(&ctx, out->data);
+  if (out && (out->data = _calloc(1, 32 * sizeof(uint8_t)))) {
+    sha3_256_Init(&ctx);
+    sha3_Update(&ctx, data->data, data->len);
+    out->len = 32;
+    keccak_Final(&ctx, out->data);
+  }
   return out;
 }
 
@@ -148,8 +151,10 @@ uint64_t c_to_long(char* a, int l) {
 char* _strdupn(char* src, int len) {
   if (len < 0) len = strlen(src);
   char* dst = _malloc(len + 1);
-  strncpy(dst, src, len);
-  dst[len] = 0;
+  if (dst != NULL) {
+    strncpy(dst, src, len);
+    dst[len] = 0;
+  }
   return dst;
 }
 int min_bytes_len(uint64_t val) {

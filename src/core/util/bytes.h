@@ -93,7 +93,7 @@ void bb_write_raw_bytes(bytes_builder_t* bb, void* ptr, size_t len);
 void bb_clear(bytes_builder_t* bb);
 /** replaces or deletes a part of the content. */
 void bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, int data_len);
-/** frees the builder and moves the content in a newly created bytes struct (which needs to be freed later). */
+/** frees the builder and moves the content in a newly created bytes struct (which needs to be freed later). Returns NULL on failure in which case bb is untouched. */
 bytes_t* bb_move_to_bytes(bytes_builder_t* bb);
 
 void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);

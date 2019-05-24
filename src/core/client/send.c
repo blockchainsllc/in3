@@ -37,10 +37,14 @@ static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token
       int            res       = in3_node_list_pick_nodes(ctx, &sig_nodes);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", IN3_ERR_NO_NODES_FOUND);
-      int node_count        = ctx_nodes_len(sig_nodes);
-      conf->signaturesCount = node_count;
-      conf->signatures      = _malloc(sizeof(bytes_t) * node_count);
+      int node_count   = ctx_nodes_len(sig_nodes);
+      conf->signatures = _malloc(sizeof(bytes_t) * node_count);
+      if (conf->signatures == NULL) {
+        free_ctx_nodes(sig_nodes);
+        return ctx_set_error(ctx, "Could not allocate memory for signatures", IN3_ERR_NO_MEM);
+      }
       node_weight_t* w      = sig_nodes;
+      conf->signaturesCount = node_count;
       for (i = 0; i < node_count; i++) {
         conf->signatures[i].len  = w->node->address->len;
         conf->signatures[i].data = w->node->address->data;
@@ -71,25 +75,41 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
   sb_t* payload = sb_new(NULL);
 
   // create url-array
-  char**         urls = _malloc(sizeof(char*) * nodes_count);
-  node_weight_t* w    = ctx->nodes;
+  char** urls = _malloc(sizeof(char*) * nodes_count);
+  if (urls == NULL) return ctx_set_error(ctx, "could not allocate memory for node urls", IN3_ERR_NO_MEM);
+
+  node_weight_t* w      = ctx->nodes;
+  bool           failed = false;
   for (n = 0; n < nodes_count; n++) {
     urls[n] = w->node->url;
     w       = w->next;
 
     if (ctx->client->use_http) {
       char* url = NULL;
-      int   l = strlen(urls[n]);
+      int   l   = strlen(urls[n]);
       if (strncmp(urls[n], "https://", 8) == 0) {
         url = _malloc(l);
+        if (url == NULL) {
+          failed = true;
+          break;
+        }
         strcpy(url, urls[n] + 1);
         url[0] = 'h';
         url[2] = 't';
         url[3] = 'p';
-      } else
+      } else {
         url = _strdupn(urls[n], l);
+        if (url == NULL) {
+          failed = true;
+          break;
+        }
+      }
       urls[n] = url;
     }
+  }
+  if (failed) {
+    free_urls(urls, nodes_count, ctx->client->use_http);
+    return ctx_set_error(ctx, "could not allocate memory for node url", IN3_ERR_NO_MEM);
   }
 
   res = ctx_create_payload(ctx, payload);
@@ -101,6 +121,11 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
 
   // prepare response-object
   in3_response_t* response = _malloc(sizeof(in3_response_t) * nodes_count);
+  if (response == NULL) {
+    sb_free(payload);
+    free_urls(urls, nodes_count, ctx->client->use_http);
+    return ctx_set_error(ctx, "could not allocate memory for response", IN3_ERR_NO_MEM);
+  }
   for (n = 0; n < nodes_count; n++) {
     sb_init(&response[n].error);
     sb_init(&response[n].result);

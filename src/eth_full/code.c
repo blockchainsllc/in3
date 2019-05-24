@@ -63,8 +63,8 @@ cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
   char key_str[43];
   key_str[0] = 'C';
   bytes_to_hex(address, 20, key_str + 1);
-  bytes_t*       b = NULL;
-  cache_entry_t* entry = NULL;
+  bytes_t*       b         = NULL;
+  cache_entry_t* entry     = NULL;
   uint8_t        must_free = 0;
 
   // not cached yet
@@ -78,9 +78,16 @@ cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
     b = in3_get_code_from_client(vc, key_str, address, &must_free);
 
   if (b) {
-    bytes_t key = {.len = 20, .data = _malloc(20)};
+    uint8_t*       d = _malloc(20);
+    cache_entry_t* e = _malloc(sizeof(cache_entry_t));
+    if (!d || !e) {
+      _free(d);
+      _free(e);
+      return NULL;
+    }
+    bytes_t key = {.len = 20, .data = d};
     memcpy(key.data, address, 20);
-    entry            = _malloc(sizeof(cache_entry_t));
+    entry            = e;
     entry->next      = vc->ctx->cache;
     entry->key       = key;
     entry->must_free = must_free;

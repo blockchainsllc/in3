@@ -1,24 +1,24 @@
 #include "context.h"
+#include "../util/debug.h"
 #include "../util/mem.h"
 #include "../util/stringbuilder.h"
 #include "client.h"
 #include "keys.h"
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
-#include "../util/debug.h"
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
   in3_ctx_t* c = _calloc(1, sizeof(in3_ctx_t));
   if (c == NULL) return NULL;
-  
-  c->attempt   = 0;
-  c->cache     = NULL;
-  c->client    = client;
+
+  c->attempt = 0;
+  c->cache   = NULL;
+  c->client  = client;
 
   if (req_data != NULL) {
     c->request_context = parse_json(req_data);
@@ -32,20 +32,30 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
     if (d_type(c->request_context->result) == T_OBJECT) {
       // it is a single result
-      c->requests    = _malloc(sizeof(d_type_t*));
+      c->requests = _malloc(sizeof(d_type_t*));
+      if (c->requests == NULL) {
+        ctx_set_error(c, "Failed to allocate memory for result!", 0);
+        return c;
+      }
       c->requests[0] = c->request_context->result;
       c->len         = 1;
     } else if (d_type(c->request_context->result) == T_ARRAY) {
       c->len      = d_len(c->request_context->result);
       c->requests = _malloc(sizeof(d_type_t*) * c->len);
+      if (c->requests == NULL) {
+        ctx_set_error(c, "Failed to allocate memory for result!", 0);
+        return c;
+      }
       for (i = 0, t = c->request_context->result + 1; i < c->len; i++, t = d_next(t))
         c->requests[i] = t;
     } else
       ctx_set_error(c, "The Request is not a valid structure!", 0);
   }
 
-  if (c->len)
+  if (c->len) {
     c->requests_configs = _calloc(c->len, sizeof(in3_request_config_t));
+    if (c->requests_configs == NULL) ctx_set_error(c, "Failed to allocate memory for request configs!", 0);
+  }
 
   return c;
 }
@@ -62,13 +72,15 @@ int ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
 
   if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
-    ctx->responses    = _malloc(sizeof(d_token_t*));
+    ctx->responses = _malloc(sizeof(d_token_t*));
+    if (ctx->responses == NULL) return ctx_set_error(ctx, "Failed to allocate memory for response!", IN3_ERR_NO_MEM);
     ctx->responses[0] = ctx->response_context->result;
     if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_ERR_INVALID_JSON);
   } else if (d_type(ctx->response_context->result) == T_ARRAY) {
     if (d_len(ctx->response_context->result) != ctx->len)
       return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_ERR_INVALID_JSON);
     ctx->responses = _malloc(sizeof(d_type_t*) * ctx->len);
+    if (ctx->responses == NULL) return ctx_set_error(ctx, "Failed to allocate memory for response!", IN3_ERR_NO_MEM);
     for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
   } else
@@ -142,7 +154,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
     // add in3
     in3_request_config_t* rc = c->requests_configs + i;
     //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int)rc->chainId));
+    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
     if (rc->clientSignature)
       sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
     if (rc->finality)
@@ -173,17 +185,19 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 }
 
 int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
-  int   l = strlen(msg);
+  int   l   = strlen(msg);
   char* dst = NULL;
   if (c->error) {
     dst = _malloc(l + 2 + strlen(c->error));
-    strcpy(dst, msg);
-    dst[l] = '\n';
-    strcpy(dst + l + 1, c->error);
-    _free(c->error);
+    if (dst != NULL) {
+      strcpy(dst, msg);
+      dst[l] = '\n';
+      strcpy(dst + l + 1, c->error);
+      _free(c->error);
+    }
   } else {
     dst = _malloc(l + 1);
-    strcpy(dst, msg);
+    if (dst != NULL) strcpy(dst, msg);
   }
   c->error = dst;
   return errnumber;

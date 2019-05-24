@@ -576,7 +576,9 @@ static int op_jump(evm_t* evm, uint8_t cond) {
 
   // check if this is a invalid jumpdest
   if (evm->invalid_jumpdest == NULL) {
-    uint32_t size = 8, p = 0, *list = _malloc(8 * sizeof(uint32_t)), i, cl = evm->code.len;
+    uint32_t* l_ = _malloc(8 * sizeof(uint32_t));
+    if (l_ == NULL) return EVM_ERROR_OUT_OF_MEM;
+    uint32_t size = 8, p = 0, *list = l_, i, cl = evm->code.len;
     uint8_t  op, jumpl = 0;
     for (i = 0; i < cl; i++) {
       op = evm->code.data[i];
@@ -584,7 +586,11 @@ static int op_jump(evm_t* evm, uint8_t cond) {
         if (op == 0x5B) {
           // add it
           if (p == size - 2) {
-            list = _realloc(list, (size + 8) * sizeof(uint32_t), size * sizeof(uint32_t));
+            l_ = _realloc(list, (size + 8) * sizeof(uint32_t), size * sizeof(uint32_t));
+            if (l_ == NULL) {
+              _free(list);
+              return EVM_ERROR_OUT_OF_MEM;
+            }
             size = size + 8;
           }
           list[p++] = i;
@@ -662,15 +668,23 @@ static int op_log(evm_t* evm, uint8_t len) {
 
   if (memlen) TRY(mem_check(evm, memoffset + memlen, true));
 
-  logs_t* log = _malloc(sizeof(logs_t));
+  logs_t*  log = _malloc(sizeof(logs_t));
+  uint8_t* d_   = _malloc(memlen);
+  uint8_t* t_   = _malloc(len * 32);
+  if (!log || !d_ || !t_) {
+    _free(log);
+    _free(d_);
+    _free(t_);
+    return EVM_ERROR_OUT_OF_MEM;
+  }
 
   log->next      = evm->logs;
   evm->logs      = log;
-  log->data.data = _malloc(memlen);
+  log->data.data = d_;
   log->data.len  = memlen;
 
   evm_mem_readi(evm, memoffset, log->data.data, memlen);
-  log->topics.data = _malloc(len * 32);
+  log->topics.data = t_;
   log->topics.len  = len * 32;
 
   uint8_t* t = NULL;
