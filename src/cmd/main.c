@@ -115,12 +115,7 @@ int main(int argc, char* argv[]) {
 
   in3_register_eth_full();
 
-  in3_t* c = in3_new();
-  if (c == NULL) {
-    printf("Failed to init client!\n");
-    exit(EXIT_FAILURE);
-  }
-
+  in3_t* c        = in3_new();
   c->transport    = send_curl;
   c->requestCount = 1;
   c->cacheStorage = &storage_handler;

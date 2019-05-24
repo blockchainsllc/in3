@@ -1,5 +1,4 @@
 #include <string.h>
-#include <stdbool.h>
 #ifndef __MEM_H__
 #define __MEM_H__
 
@@ -56,7 +55,5 @@ int    mem_stack_size();
 #define _rand() (uint32_t) rand()
 
 #endif
-
-bool _malloc_multi(size_t count, ...);
 
 #endif

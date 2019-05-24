@@ -443,9 +443,8 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
   UNUSED_VAR(env);
   UNUSED_VAR(ob);
   in3_t* in3 = in3_new();
-  if (in3 != NULL) {
-    in3_register_eth_full();
-    in3->transport = send_curl;
-  }
+  in3_register_eth_full();
+  in3->transport = send_curl;
+
   return (jlong)(size_t) in3;
 }

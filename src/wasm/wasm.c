@@ -36,8 +36,8 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
   // register a chain-verifier for full Ethereum-Support
   in3_register_eth_full();
 
-  in3_t* c = in3_new();
-  if (c != NULL) c->transport = fetch;
+  in3_t* c     = in3_new();
+  c->transport = fetch;
   printf("init in3\n");
   return c;
 }

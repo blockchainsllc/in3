@@ -161,10 +161,6 @@ int main(int argc, char* argv[]) {
 
   // create new incubed client
   in3_t* c = in3_new();
-  if (c == NULL) {
-    printf("Failed to init client!\n");
-    exit(EXIT_FAILURE);
-  }
 
   // uncomment this for more debug output
   //c->evm_flags = 65536;
