@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
   // fill from args
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) {
-      if (argv[i + 1][1] == '0' && argv[i][1] == 'x') {
+      if (argv[i + 1][0] == '0' && argv[i+1][1] == 'x') {
         hex2byte_arr(argv[++i], -1, pk, 32);
         eth_set_pk_signer(c, pk);
       } else
