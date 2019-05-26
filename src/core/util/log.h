@@ -15,12 +15,12 @@
 
 typedef void (*log_LockFn)(void* udata, int lock);
 
-enum { LOG_TRACE,
-       LOG_DEBUG,
-       LOG_INFO,
-       LOG_WARN,
-       LOG_ERROR,
-       LOG_FATAL };
+typedef enum { LOG_TRACE,
+               LOG_DEBUG,
+               LOG_INFO,
+               LOG_WARN,
+               LOG_ERROR,
+               LOG_FATAL } in3_log_t;
 
 #define in3_log_trace(...) in3_log(LOG_TRACE, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define in3_log_debug(...) in3_log(LOG_DEBUG, __FILE__, __func__, __LINE__, __VA_ARGS__)
@@ -37,10 +37,10 @@ enum { LOG_TRACE,
 void in3_log_set_udata(void* udata);
 void in3_log_set_lock(log_LockFn fn);
 void in3_log_set_fp(FILE* fp);
-void in3_log_set_level(int level);
+void in3_log_set_level(in3_log_t level);
 void in3_log_set_quiet(int enable);
 
 /* in3_log() function can be made thread-safe using the in3_log_set_lock() function */
-void in3_log(int level, const char* file, const char* function, int line, const char* fmt, ...);
+void in3_log(in3_log_t level, const char* file, const char* function, int line, const char* fmt, ...);
 
 #endif

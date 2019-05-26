@@ -32,7 +32,7 @@ static struct {
   void*      udata;
   log_LockFn lock;
   FILE*      fp;
-  int        level;
+  in3_log_t  level;
   int        quiet;
 } L;
 
@@ -68,7 +68,7 @@ void in3_log_set_fp(FILE* fp) {
   L.fp = fp;
 }
 
-void in3_log_set_level(int level) {
+void in3_log_set_level(in3_log_t level) {
   L.level = level;
 }
 
@@ -76,7 +76,7 @@ void in3_log_set_quiet(int enable) {
   L.quiet = enable ? 1 : 0;
 }
 
-void in3_log(int level, const char* file, const char* function, int line, const char* fmt, ...) {
+void in3_log(in3_log_t level, const char* file, const char* function, int line, const char* fmt, ...) {
   if (level < L.level) {
     return;
   } else if (L.quiet && !L.fp) {
