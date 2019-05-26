@@ -17,19 +17,19 @@ typedef void (*log_LockFn)(void *udata, int lock);
 
 enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 
-#define log_trace(...) log_log(LOG_TRACE, __FILE__, __func__, __LINE__, __VA_ARGS__)
-#define log_debug(...) log_log(LOG_DEBUG, __FILE__, __func__, __LINE__, __VA_ARGS__)
-#define log_info(...)  log_log(LOG_INFO,  __FILE__, __func__, __LINE__, __VA_ARGS__)
-#define log_warn(...)  log_log(LOG_WARN,  __FILE__, __func__, __LINE__, __VA_ARGS__)
-#define log_error(...) log_log(LOG_ERROR, __FILE__, __func__, __LINE__, __VA_ARGS__)
-#define log_fatal(...) log_log(LOG_FATAL, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define in3_log_trace(...) in3_log(LOG_TRACE, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define in3_log_debug(...) in3_log(LOG_DEBUG, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define in3_log_info(...)  in3_log(LOG_INFO,  __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define in3_log_warn(...)  in3_log(LOG_WARN,  __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define in3_log_error(...) in3_log(LOG_ERROR, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define in3_log_fatal(...) in3_log(LOG_FATAL, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
-void log_set_udata(void *udata);
-void log_set_lock(log_LockFn fn);
-void log_set_fp(FILE *fp);
-void log_set_level(int level);
-void log_set_quiet(int enable);
+void in3_log_set_udata(void *udata);
+void in3_log_set_lock(log_LockFn fn);
+void in3_log_set_fp(FILE *fp);
+void in3_log_set_level(int level);
+void in3_log_set_quiet(int enable);
 
-void log_log(int level, const char *file, const char *function, int line, const char *fmt, ...);
+void in3_log(int level, const char *file, const char *function, int line, const char *fmt, ...);
 
 #endif
