@@ -1,5 +1,6 @@
 #include "mem.h"
 #include "debug.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,13 +23,22 @@ static size_t   max_cnt     = 0;
 static int      track_count = -1;
 
 void* t_malloc(size_t size, char* file, const char* func, int line) {
-  void*    ptr = malloc(size);
-  mem_p_t* t   = malloc(sizeof(mem_p_t));
-  t->next      = mem_tracker;
-  t->ptr       = ptr;
-  t->size      = size;
-  t->ct        = ++mem_count;
-  t->next      = mem_tracker;
+  void* ptr = malloc(size);
+  if (size && !ptr) {
+    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
+#ifdef EXIT_OOM
+    exit(EXIT_OOM);
+#else
+    exit(EXIT_FAILURE);
+#endif
+  }
+
+  mem_p_t* t = malloc(sizeof(mem_p_t));
+  t->next    = mem_tracker;
+  t->ptr     = ptr;
+  t->size    = size;
+  t->ct      = ++mem_count;
+  t->next    = mem_tracker;
   if (track_count == mem_count)
     printf("Found allocated memory ( %zu bytes ) in %s : %s : %i\n", size, file, func, line);
   mem_tracker = t;

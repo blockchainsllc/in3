@@ -16,6 +16,7 @@ add_executable(test_key_hash
                 unity/unity.c
                 ../src/core/util/mem.c 
                 ../src/core/util/data.c 
+                ../src/core/util/log.c 
                 ../src/core/util/bytes.c 
                 ../src/core/util/stringbuilder.c 
                 ../src/core/util/utils.c 
