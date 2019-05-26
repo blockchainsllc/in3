@@ -90,6 +90,8 @@ void in3_log_set_quiet(int enable) {
 void in3_log(int level, const char *file, const char *function, int line, const char *fmt, ...) {
   if (level < L.level) {
     return;
+  } else if (L.quiet && !L.fp) {
+    return;
   }
 
   /* Acquire lock */
