@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include "log.h"
+#include "mem.h"
 
 static struct {
   void*          udata;
@@ -86,15 +87,11 @@ void in3_log(in3_log_lvl_t level, const char* file, const char* function, int li
   /* Acquire lock */
   lock();
 
-  /* Get current time */
-  time_t     t  = time(NULL);
-  struct tm* lt = localtime(&t);
-
   /* Log to stderr */
   if (!L.quiet) {
     va_list args;
     char    buf[16];
-    buf[strftime(buf, sizeof(buf), "%H:%M:%S", lt)] = '\0';
+    _localtime(buf);
 #ifdef LOG_USE_COLOR
     fprintf(
         stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
@@ -113,7 +110,7 @@ void in3_log(in3_log_lvl_t level, const char* file, const char* function, int li
   if (L.fp) {
     va_list args;
     char    buf[32];
-    buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", lt)] = '\0';
+    _localtime(buf);
     fprintf(L.fp, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
     va_start(args, fmt);
     vfprintf(L.fp, fmt, args);
