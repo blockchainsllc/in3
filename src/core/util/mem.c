@@ -5,6 +5,82 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void _exit_oom() {
+#ifdef EXIT_OOM
+  exit(EXIT_OOM);
+#else
+  exit(EXIT_FAILURE);
+#endif
+}
+
+#ifdef __ZEPHYR__
+void* k_realloc(void* ptr, size_t size, size_t oldsize) {
+  void* new = NULL;
+
+  new = k_malloc(size);
+  if (!new)
+    goto error;
+
+  if (ptr && oldsize) {
+    memcpy(new, ptr, oldsize);
+    k_free(ptr);
+  }
+
+  return new;
+
+error:
+  return NULL;
+}
+#endif /* __ZEPHYR__ */
+
+void* _malloc_(size_t size, char* file, const char* func, int line) {
+#ifdef __ZEPHYR__
+  void* ptr = k_malloc(size);
+#else
+  void* ptr = malloc(size);
+#endif
+  if (size && !ptr) {
+    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
+    _exit_oom();
+  }
+  return ptr;
+}
+
+void* _calloc_(size_t n, size_t size, char* file, const char* func, int line) {
+#ifdef __ZEPHYR__
+  void* ptr = k_calloc(n, size);
+#else
+  void* ptr = calloc(n, size);
+#endif
+  if (n && size && !ptr) {
+    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
+    _exit_oom();
+  }
+  return ptr;
+}
+
+void* _realloc_(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line) {
+#ifdef __ZEPHYR__
+  ptr = k_realloc(ptr, size, oldsize);
+#else
+  UNUSED_VAR(oldsize);
+  ptr = realloc(ptr, size);
+#endif
+  if (size && !ptr) {
+    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
+    _exit_oom();
+  }
+  return ptr;
+}
+
+void _free_(void* ptr) {
+#ifdef __ZEPHYR__
+  k_free(ptr);
+#else
+  free(ptr);
+#endif
+}
+
 #ifdef TEST
 
 typedef struct mem_p {
@@ -23,22 +99,13 @@ static size_t   max_cnt     = 0;
 static int      track_count = -1;
 
 void* t_malloc(size_t size, char* file, const char* func, int line) {
-  void* ptr = malloc(size);
-  if (size && !ptr) {
-    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
-#ifdef EXIT_OOM
-    exit(EXIT_OOM);
-#else
-    exit(EXIT_FAILURE);
-#endif
-  }
-
-  mem_p_t* t = malloc(sizeof(mem_p_t));
-  t->next    = mem_tracker;
-  t->ptr     = ptr;
-  t->size    = size;
-  t->ct      = ++mem_count;
-  t->next    = mem_tracker;
+  void*    ptr = _malloc_(size, file, func, line);
+  mem_p_t* t   = _malloc_(sizeof(mem_p_t), file, func, line);
+  t->next      = mem_tracker;
+  t->ptr       = ptr;
+  t->size      = size;
+  t->ct        = ++mem_count;
+  t->next      = mem_tracker;
   if (track_count == mem_count)
     printf("Found allocated memory ( %zu bytes ) in %s : %s : %i\n", size, file, func, line);
   mem_tracker = t;
@@ -85,13 +152,13 @@ void t_free(void* ptr, char* file, const char* func, int line) {
     if (ptr == t->ptr) {
       c_mem -= t->size;
       if (max_mem < c_mem) max_mem = c_mem;
-      free(ptr);
+      _free_(ptr);
       if (prev == NULL)
         mem_tracker = t->next;
       else
         prev->next = t->next;
 
-      free(t);
+      _free_(t);
       return;
     }
     prev = t;
@@ -99,9 +166,9 @@ void t_free(void* ptr, char* file, const char* func, int line) {
   }
 
   printf("freeing a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
-  free(ptr);
+  _free_(ptr);
 }
-void* t_realloc(void* ptr, size_t size, char* file, const char* func, int line) {
+void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line) {
   if (ptr == NULL)
     printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
 
@@ -113,14 +180,14 @@ void* t_realloc(void* ptr, size_t size, char* file, const char* func, int line) 
         max_mem = c_mem;
         //        printf("            .... realloc %zu                        %s : %s : %i\n", c_mem, file, func, line);
       }
-      t->ptr  = realloc(ptr, size);
+      t->ptr  = _realloc_(ptr, size, oldsize, file, func, line);
       t->size = size;
       return t->ptr;
     }
     t = t->next;
   }
   printf("realloc a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
-  return realloc(ptr, size);
+  return _realloc_(ptr, size, oldsize, file, func, line);
 }
 
 size_t mem_get_max_heap() {
@@ -141,35 +208,12 @@ void mem_reset(int cnt) {
   /*
 	mem_p_t* t = mem_tracker,*n;
 	while (t) {
-		free(t->ptr);
+		_free_(t->ptr);
 		n=t;
 		t=t->next;
-		free(n);
+		_free_(n);
 	}
     */
   mem_tracker = NULL;
 }
-
-#endif
-
-#ifdef __ZEPHYR__
-
-void* k_realloc(void* ptr, size_t size, size_t oldsize) {
-  void* new = NULL;
-
-  new = k_malloc(size);
-  if (!new)
-    goto error;
-
-  if (ptr && oldsize) {
-    memcpy(new, ptr, oldsize);
-    k_free(ptr);
-  }
-
-  return new;
-
-error:
-  return NULL;
-}
-
-#endif
+#endif /* TEST */
