@@ -21,3 +21,13 @@ in3_verifier_t* in3_get_verifier(in3_chain_type_t type) {
   }
   return NULL;
 }
+
+int vc_err(in3_vctx_t* vc, char* msg) {
+  sb_t* sb = sb_new("[");
+  sb_add_hexuint(sb, vc->id);
+  sb_add_chars(sb, "]:");
+  sb_add_chars(sb, msg);
+  (void) ctx_set_error(vc->ctx, sb->data, -1);
+  sb_free(sb);
+  return -1;
+}

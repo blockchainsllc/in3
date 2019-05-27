@@ -1,15 +1,15 @@
 #include "context.h"
+#include "../util/debug.h"
 #include "../util/mem.h"
 #include "../util/stringbuilder.h"
 #include "client.h"
 #include "keys.h"
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
-#include "../util/debug.h"
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
@@ -140,7 +140,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
     // add in3
     in3_request_config_t* rc = c->requests_configs + i;
     //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int)rc->chainId));
+    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
     if (rc->clientSignature)
       sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
     if (rc->finality)
@@ -171,7 +171,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 }
 
 int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
-  int   l = strlen(msg);
+  int   l   = strlen(msg);
   char* dst = NULL;
   if (c->error) {
     dst = _malloc(l + 2 + strlen(c->error));
