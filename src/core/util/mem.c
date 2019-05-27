@@ -1,19 +1,20 @@
 #include "mem.h"
 #include "debug.h"
 #include "log.h"
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-static void _exit_oom() {
-#ifdef EXIT_OOM
-  exit(EXIT_OOM);
-#else
-  exit(EXIT_FAILURE);
-#endif
-}
 
 #ifdef __ZEPHYR__
+// FIXME: Below hack is until af529d1 is merged
+// See https://github.com/zephyrproject-rtos/zephyr/commit/af529d1158c9c85f41a5c15fabf1b3a83bfd9ac2
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+
+static void exit(int status) {
+  UNUSED_VAR(status);
+  printk("in3 exit\n");
+  while (1) {}
+}
+
 void* k_realloc(void* ptr, size_t size, size_t oldsize) {
   void* new = NULL;
 
@@ -32,6 +33,14 @@ error:
   return NULL;
 }
 #endif /* __ZEPHYR__ */
+
+static void _exit_oom() {
+#ifdef EXIT_OOM
+  exit(EXIT_OOM);
+#else
+  exit(EXIT_FAILURE);
+#endif
+}
 
 void* _malloc_(size_t size, char* file, const char* func, int line) {
 #ifdef __ZEPHYR__

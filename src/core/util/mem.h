@@ -1,7 +1,7 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <inttypes.h>
 
 #ifndef __MEM_H__
 #define __MEM_H__
