@@ -21,7 +21,10 @@
   do {                                           \
     sprintf(b__, "%" PRId32, k_uptime_get_32()); \
   } while (0)
-#else /* __ZEPHYR__ */
+#define fflush(f_) \
+  do {             \
+  } while (0) // FIXME: Fix for zephyr
+#else         /* __ZEPHYR__ */
 #define _time() time(0)
 #define _time_t time_t
 #define _atol(p) atol(p)

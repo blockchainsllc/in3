@@ -12,6 +12,7 @@
 static void exit(int status) {
   UNUSED_VAR(status);
   printk("in3 exit\n");
+  fflush(stdout);
   while (1) {}
 }
 
