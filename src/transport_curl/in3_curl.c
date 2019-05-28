@@ -47,7 +47,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     sb_add_chars(&r->error, "no curl:");
 }
 
-int send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_error_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
   CURLM*   cm;
   CURLMsg* msg;
   int      transfers   = 0;
@@ -93,7 +93,10 @@ int send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_re
 
   curl_slist_free_all(headers);
   curl_multi_cleanup(cm);
-  return 0;
+
+  for (int i = 0; i < urls_len; i++)
+    if ((result + i)->error.len) return IN3_ETRANS; // return error if even one failed
+  return IN3_OK;
 }
 
 static void readDataBlocking(const char* url, char* payload, in3_response_t* r) {
@@ -132,15 +135,16 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r) 
     sb_add_chars(&r->error, "no curl:");
 }
 
-int send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_error_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
   int i;
-  for (i = 0; i < urls_len; i++) {
+  for (i = 0; i < urls_len; i++)
     readDataBlocking(urls[i], payload, result + i);
-  }
-  return 0;
+  for (i = 0; i < urls_len; i++)
+    if ((result + i)->error.len) return IN3_ETRANS; // return error if even one failed
+  return IN3_OK;
 }
 
-int send_curl(char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_error_t send_curl(char** urls, int urls_len, char* payload, in3_response_t* result) {
 #ifdef CURL_BLOCKING
   return send_curl_blocking((const char**) urls, urls_len, payload, result);
 #else

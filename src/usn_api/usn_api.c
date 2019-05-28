@@ -56,7 +56,7 @@ static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
   return NULL;
 }
 
-static int exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result, int max) {
+static in3_error_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result, int max) {
   int     l = 4 + 32 + data.len;
   uint8_t cdata[4 + 32 + data.len];
   hex2byte_arr(fn_hash, -1, cdata, 4);
@@ -74,15 +74,17 @@ static int exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t devic
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", op);
 
   // do we have a valid result?
-  if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+  in3_error_t res = ctx_get_error(ctx, 0);
+  if (res != IN3_OK) {
     free_ctx(ctx);
-    return -1;
+    return res;
   }
   l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, max);
   free_ctx(ctx);
-  return l;
+  return l == max ? l : IN3_EINVALDT;
 }
-static int exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t value, bytes32_t tx_hash) {
+
+static in3_error_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t value, bytes32_t tx_hash) {
   char  args[(4 + 32 + data.len) * 2 + 200];
   char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
   p += bytes_to_hex(data.data, data.len, p);
@@ -102,9 +104,10 @@ static int exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t value,
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_sendTransaction", op);
 
   // do we have a valid result?
-  if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+  in3_error_t res = ctx_get_error(ctx, 0);
+  if (res != IN3_OK) {
     free_ctx(ctx);
-    return -1;
+    return res;
   }
 
   int l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), tx_hash, 32);
@@ -152,7 +155,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
     sha3_to(&action_bytes, calldata + 32);   // add the hash of the action
     memset(calldata + 32 + 4, 0, 28);        // set the rest of the data to 0
 
-    int l = exec_eth_call(conf, "a0b0305f", result->device->id, bytes(calldata, 64), access, 32);
+    in3_error_t l = exec_eth_call(conf, "a0b0305f", result->device->id, bytes(calldata, 64), access, 32);
     rejectp_if(l < 0, "The has_access could not be verified");
     rejectp_if(access + l - 1 == 0, "Access rejected");
 
@@ -253,14 +256,14 @@ usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
   return result;
 }
 
-int usn_register_device(usn_device_conf_t* conf, char* url) {
+in3_error_t usn_register_device(usn_device_conf_t* conf, char* url) {
   usn_url_t parsed = usn_parse_url(url);
   if (!parsed.contract_name) return -1;
   if (conf->len_devices == 0)
     conf->devices = _malloc(sizeof(usn_device_t));
   else
     conf->devices = _realloc(conf->devices, sizeof(usn_device_t) * (conf->len_devices + 1), sizeof(usn_device_t) * conf->len_devices);
-  if (conf->devices == NULL) return -1;
+  if (conf->devices == NULL) return IN3_ENOMEM;
   usn_device_t* device    = conf->devices + conf->len_devices;
   device->url             = url;
   device->num_bookings    = 0;
@@ -268,8 +271,7 @@ int usn_register_device(usn_device_conf_t* conf, char* url) {
   device->bookings        = NULL;
   memcpy(device->id, parsed.device_id, 32);
   conf->len_devices++;
-
-  return 0;
+  return IN3_OK;
 }
 
 usn_url_t usn_parse_url(char* url) {
@@ -314,16 +316,17 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
   return 1;
 }
 
-int usn_update_bookings(usn_device_conf_t* conf) {
+in3_error_t usn_update_bookings(usn_device_conf_t* conf) {
   // first we get the current BlockNumber
-  in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
-  if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+  in3_ctx_t*  ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
+  in3_error_t res = ctx_get_error(ctx, 0);
+  if (res != IN3_OK) {
     free_ctx(ctx);
-    return -1;
+    return res;
   }
   uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
   free_ctx(ctx);
-  if (conf->last_checked_block == current_block) return 0;
+  if (conf->last_checked_block == current_block) return IN3_OK;
 
   if (!conf->last_checked_block) {
     // now we get all the current bookings
@@ -332,7 +335,7 @@ int usn_update_bookings(usn_device_conf_t* conf) {
       usn_device_t* device = conf->devices + i;
 
       // get the number of bookings and manage memory
-      if (exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp, 32) != 32) return -1;
+      if (0 > (res = exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp, 32))) return res;
       if (device->bookings) _free(device->bookings);
       int size             = bytes_to_int(tmp + 28, 4);
       device->bookings     = size ? _calloc(sizeof(usn_booking_t), size) : NULL;
@@ -344,7 +347,7 @@ int usn_update_bookings(usn_device_conf_t* conf) {
         int_to_bytes(n, tmp + 28);
 
         //  call the function in solidity: getState(bytes32 id, uint index) external view returns (address controller, uint64 rentedFrom, uint64 rentedUntil, uint128 properties);
-        if (exec_eth_call(conf, "0x29dd2f8e", device->id, bytes(tmp, 32), tmp, 128) != 128) return -1; // call getState()
+        if (0 > (res = exec_eth_call(conf, "0x29dd2f8e", device->id, bytes(tmp, 32), tmp, 128))) return res; // call getState()
         usn_booking_t* booking = device->bookings + device->num_bookings;
         booking->rented_from   = bytes_to_long(tmp + 32 + 24, 8);
         booking->rented_until  = bytes_to_long(tmp + 64 + 24, 8);
@@ -381,9 +384,9 @@ int usn_update_bookings(usn_device_conf_t* conf) {
     ctx = in3_client_rpc_ctx(conf->c, "eth_getLogs", params);
 
     // do we have a valid result?
-    if (ctx->error || !ctx->responses || !ctx->responses[0] || !d_get(ctx->responses[0], K_RESULT)) {
+    if ((res = ctx_get_error(ctx, 0))) {
       free_ctx(ctx);
-      return -1;
+      return res;
     }
 
     // let's iterate over the found events
@@ -406,7 +409,7 @@ int usn_update_bookings(usn_device_conf_t* conf) {
   // update the last_block
   conf->last_checked_block = current_block;
 
-  return 0;
+  return IN3_OK;
 }
 
 void usn_remove_old_bookings(usn_device_conf_t* conf) {
@@ -423,6 +426,7 @@ void usn_remove_old_bookings(usn_device_conf_t* conf) {
     }
   }
 }
+
 usn_event_t usn_get_next_event(usn_device_conf_t* conf) {
   usn_event_t e = {.ts = 0xFFFFFFFFFFFFFFFF, .device = NULL, .type = BOOKING_NONE};
   for (int i = 0; i < conf->len_devices; i++) {
@@ -445,7 +449,7 @@ usn_event_t usn_get_next_event(usn_device_conf_t* conf) {
   return e;
 }
 
-int usn_event_handled(usn_event_t* event) {
+static int usn_event_handled(usn_event_t* event) {
   usn_device_t* device = event->device;
   for (int n = 0; n < device->num_bookings; n++) {
     usn_booking_t* b = device->bookings + n;
@@ -465,7 +469,7 @@ int usn_event_handled(usn_event_t* event) {
   return -1;
 }
 
-uint64_t check_actions(usn_device_conf_t* conf) {
+static uint64_t check_actions(usn_device_conf_t* conf) {
   usn_event_t e;
   while (true) {
     e = usn_get_next_event(conf);
@@ -493,7 +497,7 @@ unsigned int usn_update_state(usn_device_conf_t* conf, unsigned int wait_time) {
   return next_action - conf->now < wait_time ? next_action - conf->now : wait_time;
 }
 
-int usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, address_t controller, bytes32_t price) {
+in3_error_t usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, address_t controller, bytes32_t price) {
   usn_device_conf_t conf = {.c = c};
   memcpy(conf.contract, contract, 20);
   usn_url_t purl = usn_parse_url(url);
@@ -502,11 +506,11 @@ int usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t
   if (controller) memcpy(params + 12, controller, 20);
   int_to_bytes(seconds, params + 60);
   if (token) memcpy(params + 64 + 12, token, 20);
-  return exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(NULL, 0), price, 32) == 32 ? 0 : -1;
+  return exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(NULL, 0), price, 32) < 0 ? IN3_EINVALDT : IN3_OK;
   //     function price(bytes32 id, address user, uint32 secondsToRent, address token) public constant returns (uint128);
 }
 
-int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, bytes32_t tx_hash) {
+in3_error_t usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, bytes32_t tx_hash) {
   usn_device_conf_t conf = {.c = c};
   memcpy(conf.contract, contract, 20);
   usn_url_t purl = usn_parse_url(url);
@@ -517,8 +521,9 @@ int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t 
   if (token) memcpy(params + 64 + 12, token, 20);
 
   // first get the price
-  bytes32_t price;
-  if (exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(params, 96), price, 32) != 32) return -1;
+  bytes32_t   price;
+  in3_error_t res = exec_eth_call(&conf, "0xf44fb0a4", purl.device_id, bytes(params, 96), price, 32);
+  if (res < 0) return res;
 
   // now send the tx
   memset(params, 0, 100);
@@ -527,12 +532,12 @@ int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t 
   int_to_bytes(seconds, params + 64);
   if (token) memcpy(params + 80, token, 20);
 
-  int res = exec_eth_send(&conf, bytes(params, 100), price, tx_hash);
+  res = exec_eth_send(&conf, bytes(params, 100), price, tx_hash);
   if (res < 0) return res;
-  return 0;
+  return IN3_OK;
 }
 
-int usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash) {
+in3_error_t usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash) {
   usn_device_conf_t conf = {.c = c};
   memcpy(conf.contract, contract, 20);
   usn_url_t purl       = usn_parse_url(url);
@@ -542,7 +547,7 @@ int usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash) {
   hex2byte_arr("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
 
-  int res = exec_eth_send(&conf, bytes(params, 100), NULL, tx_hash);
+  in3_error_t res = exec_eth_send(&conf, bytes(params, 100), NULL, tx_hash);
   if (res < 0) return res;
-  return 0;
+  return IN3_OK;
 }

@@ -1,24 +1,20 @@
+#include "../core/client/client.h"
 #include "aes/aes.h"
 #include <crypto/pbkdf2.h>
 #include <util/data.h>
 #include <util/utils.h>
 
-#define ERROR_WRONG_VERSION -1
-#define ERROR_INVALID_DATA -2
-#define ERROR_UNSUPPORTED -3
-#define ERROR_WRONG_PASSWORD -4
-
-int decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
-  if (d_get_int(key_data, "version") != 3) return ERROR_WRONG_VERSION;
+in3_error_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
+  if (d_get_int(key_data, "version") != 3) return IN3_EVERS;
   d_token_t* crypto = d_get(key_data, key("crypto"));
   char*      kdf    = d_get_string(crypto, "kdf");
-  if (!crypto || !kdf) return ERROR_INVALID_DATA;
+  if (!crypto || !kdf) return IN3_EINVALDT;
   if (strcmp(kdf, "scrypt") == 0)
-    return ERROR_UNSUPPORTED;
+    return IN3_ENOTSUP;
   else if (strcmp(kdf, "pbkdf2") == 0) {
     d_token_t* kdf_params = d_get(crypto, key("kdfparams"));
-    if (!kdf_params || strcmp(d_get_string(kdf_params, "prf"), "hmac-sha256")) return ERROR_UNSUPPORTED;
-    if (strcmp(d_get_string(crypto, "cipher"), "aes-128-ctr")) return ERROR_UNSUPPORTED;
+    if (!kdf_params || strcmp(d_get_string(kdf_params, "prf"), "hmac-sha256")) return IN3_ENOTSUP;
+    if (strcmp(d_get_string(crypto, "cipher"), "aes-128-ctr")) return IN3_ENOTSUP;
     char*   salt_hex = d_get_string(kdf_params, "salt");
     uint8_t salt_data[strlen(salt_hex) >> 1];
     bytes_t salt = bytes(salt_data, hex2byte_arr(salt_hex, -1, salt_data, 0xFF));
@@ -33,7 +29,7 @@ int decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
     sha3_to(&msgb, mac);
     bytes32_t mac_verify;
     hex2byte_arr(d_get_string(crypto, "mac"), -1, mac_verify, 32);
-    if (memcmp(mac, mac_verify, 32)) return ERROR_WRONG_PASSWORD;
+    if (memcmp(mac, mac_verify, 32)) return IN3_EPASS;
 
     // aes-128-ctr
     aes_init();
@@ -56,7 +52,7 @@ int decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
 
     return Account.fromPrivateKey(seed, accounts);
 */
-    return 0;
+    return IN3_OK;
   } else
-    return ERROR_UNSUPPORTED;
+    return IN3_ENOTSUP;
 }

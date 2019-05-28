@@ -12,13 +12,13 @@
 #include <util/mem.h>
 #include <util/utils.h>
 
-int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
+in3_error_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
 
-  int        res = 0, i;
-  d_token_t *transactions, *t, *t2, *tx_hashs, *txh = NULL;
-  bytes_t    tmp, *bhash;
-  uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
-  bhash              = d_get_byteskl(vc->result, K_HASH, 32);
+  in3_error_t res = IN3_OK, i;
+  d_token_t * transactions, *t, *t2, *tx_hashs, *txh = NULL;
+  bytes_t     tmp, *bhash;
+  uint64_t    bnumber = d_get_longk(vc->result, K_NUMBER);
+  bhash               = d_get_byteskl(vc->result, K_HASH, 32);
   if (block_hash && !b_cmp(block_hash, bhash))
     return vc_err(vc, "The transactionHash does not match the required");
 
@@ -67,7 +67,7 @@ int eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockN
       bytes_t* tx   = serialize_tx(t);
       bytes_t* h    = (full_proof || !include_full_tx) ? sha3(tx) : NULL;
 
-      if (eth_verify_tx_values(vc, t, tx)) res = -1;
+      if (eth_verify_tx_values(vc, t, tx)) res = IN3_EUNKNOWN;
 
       if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !b_cmp(d_bytes(t2), bhash))
         res = vc_err(vc, "Wrong Blockhash in tx");

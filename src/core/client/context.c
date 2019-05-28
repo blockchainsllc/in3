@@ -21,7 +21,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
   if (req_data != NULL) {
     c->request_context = parse_json(req_data);
     if (!c->request_context) {
-      ctx_set_error(c, "Error parsing the JSON-request!", 0);
+      ctx_set_error(c, "Error parsing the JSON-request!", IN3_EINVAL);
       return c;
     }
 
@@ -39,7 +39,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
       for (i = 0, t = c->request_context->result + 1; i < c->len; i++, t = d_next(t))
         c->requests[i] = t;
     } else
-      ctx_set_error(c, "The Request is not a valid structure!", 0);
+      ctx_set_error(c, "The Request is not a valid structure!", IN3_EINVAL);
   }
 
   if (c->len)
@@ -48,31 +48,31 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
   return c;
 }
 
-int ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
+in3_error_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   int        i;
   d_token_t* t = NULL;
 
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
   if (!ctx->response_context) {
     // printf("\nresponse: %s\n", response_data);
-    return ctx_set_error(ctx, "Error parsing the JSON-respomse!", IN3_ERR_INVALID_JSON);
+    return ctx_set_error(ctx, "Error parsing the JSON-respomse!", IN3_EINVALDT);
   }
 
   if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
     ctx->responses    = _malloc(sizeof(d_token_t*));
     ctx->responses[0] = ctx->response_context->result;
-    if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_ERR_INVALID_JSON);
+    if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_EINVALDT);
   } else if (d_type(ctx->response_context->result) == T_ARRAY) {
     if (d_len(ctx->response_context->result) != ctx->len)
-      return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_ERR_INVALID_JSON);
+      return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
     ctx->responses = _malloc(sizeof(d_type_t*) * ctx->len);
     for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
   } else
-    return ctx_set_error(ctx, "The response must be a Object or Array", IN3_ERR_INVALID_JSON);
+    return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
 
-  return 0;
+  return IN3_OK;
 }
 
 void free_ctx(in3_ctx_t* ctx) {
@@ -104,7 +104,7 @@ void free_ctx(in3_ctx_t* ctx) {
 
 static unsigned long counter = 1;
 
-int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
+in3_error_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
   int        i;
   d_token_t *r, *t;
   char       temp[100];
@@ -124,7 +124,7 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
     sb_add_key_value(sb, "jsonrpc", "2.0", 3, true);
     sb_add_char(sb, ',');
     if ((t = d_get(r, K_METHOD)) == NULL)
-      return ctx_set_error(c, "missing method-property in request", IN3_ERR_REQUEST_INVALID);
+      return ctx_set_error(c, "missing method-property in request", IN3_EINVAL);
     else
       sb_add_key_value(sb, "method", d_string(t), d_len(t), true);
     sb_add_char(sb, ',');
@@ -167,10 +167,10 @@ int ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
     sb_add_range(sb, "}}", 0, 2);
   }
   sb_add_char(sb, ']');
-  return 0;
+  return IN3_OK;
 }
 
-int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
+in3_error_t ctx_set_error(in3_ctx_t* c, char* msg, in3_error_t errnumber) {
   int   l   = strlen(msg);
   char* dst = NULL;
   if (c->error) {
@@ -187,6 +187,18 @@ int ctx_set_error(in3_ctx_t* c, char* msg, int errnumber) {
   return errnumber;
 }
 
+in3_error_t ctx_get_error(in3_ctx_t* ctx, int id) {
+  if (ctx->error)
+    return IN3_ERPC;
+  else if (id > ctx->len)
+    return IN3_EINVAL;
+  else if (!ctx->responses || !ctx->responses[id])
+    return IN3_ERPCNRES;
+  else if (!d_get(ctx->responses[0], K_RESULT))
+    return IN3_EINVALDT;
+  return IN3_OK;
+}
+
 int ctx_nodes_len(node_weight_t* c) {
   int all = 0;
   while (c) {
@@ -195,6 +207,7 @@ int ctx_nodes_len(node_weight_t* c) {
   }
   return all;
 }
+
 void free_ctx_nodes(node_weight_t* c) {
   node_weight_t* p = NULL;
   while (c) {

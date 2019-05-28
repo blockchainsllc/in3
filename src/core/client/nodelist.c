@@ -30,10 +30,10 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
   // read the nodes
   d_token_t *t, *nodes = d_get(result, K_NODES), *node = NULL;
   if (!nodes || d_type(nodes) != T_ARRAY)
-    return ctx_set_error(ctx, "No Nodes in the result", -1);
+    return ctx_set_error(ctx, "No Nodes in the result", IN3_EINVALDT);
 
   if (!(t = d_get(result, K_LAST_BLOCK_NUMBER)))
-    return ctx_set_error(ctx, "LastBlockNumer is missing", -1);
+    return ctx_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
 
   // update last blockNumber
   chain->lastBlock = d_long(t);
@@ -46,7 +46,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
     in3_node_t* n = newList + i;
     node          = node ? d_next(node) : d_get_at(nodes, i);
     if (!node) {
-      res = ctx_set_error(ctx, "node missing", -1);
+      res = ctx_set_error(ctx, "node missing", IN3_EINVALDT);
       break;
     }
 
@@ -59,7 +59,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
     if (n->url)
       n->url = _strdupn(n->url, -1);
     else {
-      res = ctx_set_error(ctx, "missing url in nodelist", -1);
+      res = ctx_set_error(ctx, "missing url in nodelist", IN3_EINVALDT);
       break;
     }
 
@@ -67,7 +67,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
     if (n->address)
       n->address = b_dup(n->address);
     else {
-      res = ctx_set_error(ctx, "missing address in nodelist", -1);
+      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
       break;
     }
   }
@@ -107,7 +107,7 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
   // new client
   in3_ctx_t* ctx = new_ctx(c, req);
   if (ctx->error)
-    res = ctx_set_error(parent_ctx, ctx->error, -1);
+    res = ctx_set_error(parent_ctx, ctx->error, IN3_ERPC);
   else {
     res = in3_send_ctx(ctx);
     if (res >= 0) {
@@ -118,21 +118,21 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
         if (res < 0)
           res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
       } else if (ctx->error)
-        res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, -1));
+        res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
       else if ((r = d_get(ctx->responses[0], K_ERROR))) {
         if (d_type(r) == T_OBJECT) {
           str_range_t s = d_to_json(r);
           strncpy(req, s.data, s.len);
           req[s.len] = '\0';
-          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, -1));
+          res        = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, IN3_ERPC));
         } else
-          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, d_string(r), -1));
+          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, d_string(r), IN3_ERPC));
       } else
-        res = ctx_set_error(parent_ctx, "Error updating node_list without any result", -1);
+        res = ctx_set_error(parent_ctx, "Error updating node_list without any result", IN3_ERPCNRES);
     } else if (ctx->error)
-      res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, -1));
+      res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
     else
-      res = ctx_set_error(parent_ctx, "Error updating node_list without any result", -1);
+      res = ctx_set_error(parent_ctx, "Error updating node_list without any result", IN3_ERPCNRES);
   }
 
   if (res >= 0 && c->cacheStorage)
@@ -146,12 +146,12 @@ static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) 
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                          int len, _time_t now, float* total_weight, int* total_found) {
   int                i, p;
-  float              s = 0;
-  in3_node_t*        nodeDef    = NULL;
-  in3_node_weight_t* weightDef  = NULL;
-  node_weight_t*     prev       = NULL;
-  node_weight_t*     w          = NULL;
-  node_weight_t*     first        = NULL;
+  float              s         = 0;
+  in3_node_t*        nodeDef   = NULL;
+  in3_node_weight_t* weightDef = NULL;
+  node_weight_t*     prev      = NULL;
+  node_weight_t*     w         = NULL;
+  node_weight_t*     first     = NULL;
 
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
@@ -175,10 +175,11 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   return first;
 }
 
-int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
-  int          i, res = IN3_ERR_CHAIN_NOT_FOUND;
-  in3_chain_t* chain  = NULL;
-  in3_t*       c = ctx->client;
+in3_error_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
+  int          i;
+  in3_error_t  res   = IN3_EFIND;
+  in3_chain_t* chain = NULL;
+  in3_t*       c     = ctx->client;
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
     if (chain->chainId == chain_id) {
@@ -199,16 +200,16 @@ int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t
   return res;
 }
 
-int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
+in3_error_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 
   // get all nodes from the nodelist
-  _time_t            now        = _time();
-  in3_node_t*        all_nodes  = NULL;
-  in3_node_weight_t* weights    = NULL;
+  _time_t            now       = _time();
+  in3_node_t*        all_nodes = NULL;
+  in3_node_weight_t* weights   = NULL;
   float              total_weight;
-  int                all_nodes_len, res, total_found, i, l;
+  int                all_nodes_len, total_found, i, l;
 
-  res = in3_node_list_get(ctx, ctx->client->chainId, false, &all_nodes, &all_nodes_len, &weights);
+  in3_error_t res = in3_node_list_get(ctx, ctx->client->chainId, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
     return ctx_set_error(ctx, "could not find the chain", res);
 
@@ -230,13 +231,13 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
     }
 
     if (total_found == 0)
-      return ctx_set_error(ctx, "No nodes found that match the criteria", IN3_ERR_NO_NODES_FOUND);
+      return ctx_set_error(ctx, "No nodes found that match the criteria", IN3_EFIND);
   }
 
   l = total_found < ctx->client->requestCount ? total_found : ctx->client->requestCount;
   if (total_found == l) {
     *nodes = found;
-    return 0;
+    return IN3_OK;
   }
 
   node_weight_t* last  = NULL;
@@ -289,7 +290,7 @@ int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 }
 
 /** removes all nodes and their weights from the nodelist */
-int in3_nodelist_clear(in3_chain_t* chain) {
+void in3_nodelist_clear(in3_chain_t* chain) {
   int i;
   for (i = 0; i < chain->nodeListLength; i++) {
     if (chain->nodeList[i].url)
@@ -299,5 +300,4 @@ int in3_nodelist_clear(in3_chain_t* chain) {
   }
   _free(chain->nodeList);
   _free(chain->weights);
-  return 0;
 }

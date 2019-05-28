@@ -123,7 +123,6 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
       return 1;
 
     default: // empty node
-
       // only if we expect no value we accept a empty node as last node
       return (expectedValue == NULL && is_last_node);
   }

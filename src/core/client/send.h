@@ -12,6 +12,6 @@
 /**
  * executes a request context by  picking nodes and sending it.
  */
-int in3_send_ctx(in3_ctx_t* ctx);
+in3_error_t in3_send_ctx(in3_ctx_t* ctx);
 
 #endif

@@ -15,7 +15,7 @@
 #include <string.h>
 #include <time.h>
 
-static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* req) {
+static in3_error_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* req) {
   int    i;
   in3_t* c = ctx->client;
 
@@ -34,9 +34,9 @@ static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token
 
     if (c->signatureCount) {
       node_weight_t* sig_nodes = NULL;
-      int            res       = in3_node_list_pick_nodes(ctx, &sig_nodes);
+      in3_error_t    res       = in3_node_list_pick_nodes(ctx, &sig_nodes);
       if (res < 0)
-        return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", IN3_ERR_NO_NODES_FOUND);
+        return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       int node_count        = ctx_nodes_len(sig_nodes);
       conf->signaturesCount = node_count;
       conf->signatures      = _malloc(sizeof(bytes_t) * node_count);
@@ -51,10 +51,10 @@ static int configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token
 
   if (req) {
     d_token_t* in3 = d_get(req, K_IN3);
-    if (in3 == NULL) return 0;
+    if (in3 == NULL) return IN3_OK;
     //TODO read config from request
   }
-  return 0;
+  return IN3_OK;
 }
 
 static void free_urls(char** urls, int len, uint8_t free_items) {
@@ -63,8 +63,10 @@ static void free_urls(char** urls, int len, uint8_t free_items) {
   }
   _free(urls);
 }
-static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** response_result) {
-  int n, res;
+
+static in3_error_t send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** response_result) {
+  int         n;
+  in3_error_t res;
 
   *response_result = NULL;
   // prepare the payload
@@ -96,7 +98,7 @@ static int send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** respon
   if (res < 0) {
     sb_free(payload);
     free_urls(urls, nodes_count, ctx->client->use_http);
-    return ctx_set_error(ctx, "could not generate the payload", IN3_ERR_CONFIG_ERROR);
+    return ctx_set_error(ctx, "could not generate the payload", res);
   }
 
   // prepare response-object
@@ -184,12 +186,12 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
   return false;
 }
 
-int in3_send_ctx(in3_ctx_t* ctx) {
+in3_error_t in3_send_ctx(in3_ctx_t* ctx) {
   // find the nodes to send the request to
   int             i, nodes_count;
   in3_response_t* response = NULL;
   in3_chain_t*    chain    = NULL;
-  int             res      = in3_node_list_pick_nodes(ctx, &ctx->nodes);
+  in3_error_t     res      = in3_node_list_pick_nodes(ctx, &ctx->nodes);
   if (res < 0)
     return ctx_set_error(ctx, "could not find any node", res);
   nodes_count = ctx_nodes_len(ctx->nodes);
@@ -202,7 +204,7 @@ int in3_send_ctx(in3_ctx_t* ctx) {
   }
   // now send the request
   if (!ctx->client->transport)
-    return ctx_set_error(ctx, "no transport set", IN3_ERR_CONFIG_ERROR);
+    return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
 
   // find the chain-config.
   for (i = 0; i < ctx->client->chainsCount; i++) {
@@ -211,13 +213,12 @@ int in3_send_ctx(in3_ctx_t* ctx) {
       break;
     }
   }
-  if (chain == NULL) return false;
+  if (chain == NULL) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
   // find the verifier
   in3_verifier_t* verifier = in3_get_verifier(chain->type);
   if (verifier == NULL) {
-    ctx_set_error(ctx, "No Verifier found", -1);
-    return false;
+    return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
   }
 
   // do we need to handle it inside?
@@ -268,8 +269,8 @@ int in3_send_ctx(in3_ctx_t* ctx) {
       return in3_send_ctx(ctx);
     } else
       // we give up
-      return ctx->client->max_attempts == 1 ? -1 : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ERR_MAX_ATTEMPTS);
+      return ctx->client->max_attempts == 1 ? IN3_EUNKNOWN : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
   } else
     // we have a result
-    return 0;
+    return IN3_OK;
 }

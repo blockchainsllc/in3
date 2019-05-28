@@ -22,7 +22,7 @@ static int      is_not_existened(d_token_t* account) {
   return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_longk(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
 }
 
-int verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
+static in3_error_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
   d_token_t *     t, *storage_proof, *p;
   int             i;
   uint8_t         hash[32], val[36];
@@ -78,10 +78,10 @@ int verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
     _free(proof);
   }
 
-  return 0;
+  return IN3_OK;
 }
 
-int eth_verify_account_proof(in3_vctx_t* vc) {
+in3_error_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   d_token_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
   char*      method = d_get_stringk(vc->request, K_METHOD);
@@ -90,7 +90,7 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
   int        i;
 
   // no result -> nothing to verify
-  if (!vc->result) return 0;
+  if (!vc->result) return IN3_OK;
   if (!vc->proof) return vc_err(vc, "no proof");
 
   // verify header
@@ -142,13 +142,13 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
       if (d_eq(skey, d_get(t, K_KEY))) {
         d_bytes_to(d_get(t, K_VALUE), proofed_result, 32);
         if (memcmp(result, proofed_result, 32) == 0)
-          return 0;
+          return IN3_OK;
         break;
       }
     }
     return vc_err(vc, "the storage result does not match");
   } else if (strcmp(method, "eth_call") == 0) {
-    return 0;
+    return IN3_OK;
   } else
     return vc_err(vc, "not supported method");
 
@@ -177,5 +177,5 @@ int eth_verify_account_proof(in3_vctx_t* vc) {
 
 */
 
-  return 0;
+  return IN3_OK;
 }

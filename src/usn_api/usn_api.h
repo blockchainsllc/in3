@@ -75,16 +75,16 @@ typedef struct {
 } usn_device_conf_t;
 
 usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message);
-int              usn_register_device(usn_device_conf_t* conf, char* url);
+in3_error_t      usn_register_device(usn_device_conf_t* conf, char* url);
 usn_url_t        usn_parse_url(char* url);
 
 unsigned int usn_update_state(usn_device_conf_t* conf, unsigned int wait_time);
-int          usn_update_bookings(usn_device_conf_t* conf);
+in3_error_t  usn_update_bookings(usn_device_conf_t* conf);
 void         usn_remove_old_bookings(usn_device_conf_t* conf);
 usn_event_t  usn_get_next_event(usn_device_conf_t* conf);
 
-int usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, bytes32_t tx_hash);
-int usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash);
-int usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, address_t controller, bytes32_t price);
+in3_error_t usn_rent(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, bytes32_t tx_hash);
+in3_error_t usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash);
+in3_error_t usn_price(in3_t* c, address_t contract, address_t token, char* url, uint32_t seconds, address_t controller, bytes32_t price);
 
 #endif

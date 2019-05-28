@@ -12,13 +12,13 @@
 #define NODELIST_H
 
 /** removes all nodes and their weights from the nodelist */
-int in3_nodelist_clear(in3_chain_t* chain);
+void in3_nodelist_clear(in3_chain_t* chain);
 
 /** check if the nodelist is up to date.
  * 
  * if not it will fetch a new version first (if the needs_update-flag is set).
  */
-int in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights);
+in3_error_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights);
 
 /**
  * filters and fills the weights on a returned linked list.

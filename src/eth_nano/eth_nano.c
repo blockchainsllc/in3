@@ -15,17 +15,17 @@
 #define MAX_METHODS 23
 char* ALLOWED_METHODS[MAX_METHODS] = {"eth_blockNumber", "web3_clientVersion", "web3_sha3", "net_version", "net_peerCount", "net_listening", "eth_protocolVersion", "eth_syncing", "eth_coinbase", "eth_mining", "eth_hashrate", "eth_gasPrice", "eth_accounts", "eth_sign", "eth_sendRawTransaction", "eth_estimateGas", "eth_getCompilers", "eth_compileLLL", "eth_compileSolidity", "eth_compileSerpent", "eth_getWork", "eth_submitWork", "eth_submitHashrate"};
 
-int in3_verify_eth_nano(in3_vctx_t* vc) {
+in3_error_t in3_verify_eth_nano(in3_vctx_t* vc) {
   char*      method = NULL;
   d_token_t* params = d_get(vc->request, K_PARAMS);
   int        i;
 
   if (vc->config->verification == VERIFICATION_NEVER)
-    return 0;
+    return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)
-    return 0;
+    return IN3_OK;
 
   // do we support this request?
   if (!(method = d_get_stringk(vc->request, K_METHOD)))
@@ -34,7 +34,7 @@ int in3_verify_eth_nano(in3_vctx_t* vc) {
   // check if this call is part of the not verifieable calls
   for (i = 0; i < MAX_METHODS; i++) {
     if (strcmp(ALLOWED_METHODS[i], method) == 0)
-      return 0;
+      return IN3_OK;
   }
 
   if (strcmp(method, "eth_getTransactionReceipt") == 0)

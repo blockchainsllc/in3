@@ -38,6 +38,7 @@
         "ripemd160.h": "c",
         "signer.h": "c",
         "serialize.h": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "log.h": "c"
     }
 }

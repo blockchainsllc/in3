@@ -11,7 +11,7 @@
 #include <util/utils.h>
 
 static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
-  d_token_t* tmp = NULL;
+  d_token_t* tmp        = NULL;
   bytes_t ** validators = NULL, *proposer, b;
   int        validator_len, i;
 
@@ -38,7 +38,7 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
   return proposer;
 }
 
-static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
+static in3_error_t get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;
   uint8_t         d[4], bare_hash[32], pub_key[65];
   bytes_builder_t ll = {.bsize = 4, .b = {.len = 0, .data = (uint8_t*) &d}};
@@ -87,10 +87,10 @@ static int get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   // and take the last 20 bytes as address
   memcpy(dst, bare_hash + 12, 20);
 
-  return 0;
+  return IN3_OK;
 }
 
-int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint16_t needed_finality) {
+in3_error_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint16_t needed_finality) {
   bytes_t tmp, *proposer, *b = blocks[0];
   uint8_t hash[32], signer[20];
   int     val_len = 0, passed = 0, i = 0;
@@ -126,36 +126,37 @@ int eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint
   if (val_len == 0)
     return vc_err(vc, "no validators");
 
-  return passed * 100 / val_len >= needed_finality ? 0 : vc_err(vc, "not enought blocks to reach finality");
+  return passed * 100 / val_len >= needed_finality ? IN3_OK : vc_err(vc, "not enought blocks to reach finality");
 }
 
 /** verify the header */
-int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
+in3_error_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
   if (!header)
     return vc_err(vc, "no header found");
 
-  int        res = 0, i;
-  uint8_t    block_hash[32];
-  uint64_t   header_number = 0;
-  d_token_t *sig, *signatures;
-  bytes_t    temp, *sig_hash;
+  in3_error_t res = IN3_OK;
+  int         i;
+  uint8_t     block_hash[32];
+  uint64_t    header_number = 0;
+  d_token_t * sig, *signatures;
+  bytes_t     temp, *sig_hash;
 
   // generate the blockhash;
   sha3_to(header, &block_hash);
 
   // if we expect a certain blocknumber, it must match the 8th field in the BlockHeader
-  if (!res && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp) == 1))
+  if (res == IN3_OK && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp) == 1))
     header_number = bytes_to_long(temp.data, temp.len);
   else
     res = vc_err(vc, "Could not rlpdecode the blocknumber");
 
   // if we have a blockhash we verify it
-  if (res == 0 && expected_blockhash && memcmp(block_hash, expected_blockhash->data, 32))
+  if (res == IN3_OK && expected_blockhash && memcmp(block_hash, expected_blockhash->data, 32))
     res = vc_err(vc, "wrong blockhash");
 
   // if we expect no signatures ...
-  if (res == 0 && vc->config->signaturesCount == 0) {
+  if (res == IN3_OK && vc->config->signaturesCount == 0) {
 
     // ... and the chain is a authority chain....
     if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->result, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
@@ -171,11 +172,11 @@ int eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_bl
       res = eth_verify_authority(vc, blocks, vc->chain->spec->result, vc->config->finality);
       _free(blocks);
     } else // we didn't request signatures so blockheader should be ok.
-      res = 0;
-  } else if (res == 0 && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
+      res = IN3_OK;
+  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
     // no signatures found,even though we expected some.
     res = vc_err(vc, "missing signatures");
-  else if (res == 0) {
+  else if (res == IN3_OK) {
     // prepare the message to be sigfned
     bytes_t msg;
     uint8_t msg_data[64];

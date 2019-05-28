@@ -10,18 +10,18 @@
 
 #define NODE_LIST_KEY   ("nodelist_%" PRIx64)
 
-int in3_cache_init(in3_t* c) {
+in3_error_t in3_cache_init(in3_t* c) {
   int i;
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
   for (i = 0; i < c->chainsCount; i++)
     in3_cache_update_nodelist(c, c->chains + i);
 
-  return 0;
+  return IN3_OK;
 }
 
-int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
+in3_error_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   // it is ok not to have a storage
-  if (!c->cacheStorage) return 0;
+  if (!c->cacheStorage) return IN3_OK;
 
   // define the key to use
   char key[200];
@@ -36,7 +36,7 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     // version check
     if (b_read_byte(b, &p) != 1) {
       b_free(b);
-      return -1;
+      return IN3_EVERS;
     }
 
     // clean up old
@@ -63,10 +63,10 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     }
     b_free(b);
   }
-  return 0;
+  return IN3_OK;
 }
 
-int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
+in3_error_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   int i;
 
   // write to bytes_buffer
@@ -96,5 +96,5 @@ int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
 
   // clear buffer
   bb_free(bb);
-  return 0;
+  return IN3_OK;
 }
