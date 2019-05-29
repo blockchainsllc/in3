@@ -44,11 +44,12 @@ void call_a_function(in3_t* c) {
 
     printf("Server %i : %s owner = ", i, url);
     ba_print(owner->data, owner->len);
-    printf(", deposit = %llu\n", deposit);
+    printf(", deposit = %" PRIu64 "\n", deposit);
 
     free_json(response);
   }
 }
+
 void show_transactions_in_block(in3_t* c, uint64_t block_number) {
   // use a ethereum-api instead of pure JSON-RPC-Requests
   eth_block_t* block = eth_getBlockByNumber(c, block_number, true);
@@ -147,7 +148,7 @@ void watch_for_events(in3_t* c) {
 #if defined(_WIN32) || defined(WIN32)
     Sleep(timeout);
 #else
-    usleep(timeout * 1000); // usleep takes sleep time in us (1 millionth of a second)
+    nanosleep((const struct timespec[]){{0, timeout * 1000000L}}, NULL);
 #endif
   }
 }

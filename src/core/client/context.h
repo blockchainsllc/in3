@@ -70,7 +70,7 @@ in3_ctx_t*  new_ctx(in3_t* client, char* req_data);
 in3_error_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len);
 void        free_ctx(in3_ctx_t* ctx);
 in3_error_t ctx_create_payload(in3_ctx_t* c, sb_t* sb);
-in3_error_t ctx_set_error(in3_ctx_t* c, char* msg, int errnumber);
+in3_error_t ctx_set_error(in3_ctx_t* c, char* msg, in3_error_t errnumber);
 in3_error_t ctx_get_error(in3_ctx_t* ctx, int id);
 
 /** 
