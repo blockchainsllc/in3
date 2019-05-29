@@ -60,7 +60,7 @@ bool filter_opt_valid(d_token_t* tx_params) {
   } else
     return false;
 
-  d_token_t* addrs = d_get(tx_params, K_ADDRESS);
+  d_token_t* addrs = d_getl(tx_params, K_ADDRESS, 20);
   if (addrs == NULL) { /* Optional */
   } else if (filter_addrs_valid(addrs)) {
   } else
@@ -198,7 +198,7 @@ in3_error_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
             in3_log_warn("Failed to get block by number!");
             continue;
           }
-          d_token_t* hash  = d_get(d_get(ctx_->responses[0], K_RESULT), K_HASH);
+          d_token_t* hash  = d_getl(d_get(ctx_->responses[0], K_RESULT), K_HASH, 32);
           char       h[67] = "0x";
           bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
           if (j != 0)
