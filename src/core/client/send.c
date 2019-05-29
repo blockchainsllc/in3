@@ -1,4 +1,5 @@
 #include "../util/data.h"
+#include "../util/log.h"
 #include "../util/mem.h"
 #include "../util/stringbuilder.h"
 #include "../util/utils.h"
@@ -106,13 +107,13 @@ static in3_error_t send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t*
   for (n = 0; n < nodes_count; n++) {
     sb_init(&response[n].error);
     sb_init(&response[n].result);
-    if (ctx->client->evm_flags & IN3_DEBUG) printf("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", urls[n], payload->data);
+    if (ctx->client->evm_flags & IN3_DEBUG) in3_log_debug("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", urls[n], payload->data);
   }
 
   // send requets
   res = ctx->client->transport(urls, nodes_count, payload->data, response);
 
-  if (ctx->client->evm_flags & IN3_DEBUG) printf("... response: \n... \x1B[32m%s\x1B[0m\n", response[0].error.len ? response[0].error.data : response[0].result.data);
+  if (ctx->client->evm_flags & IN3_DEBUG) in3_log_debug("... response: \n... \x1B[32m%s\x1B[0m\n", response[0].error.len ? response[0].error.data : response[0].result.data);
 
   // free resources
   sb_free(payload);
@@ -146,8 +147,9 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
       // blacklist the node
       w->weight->blacklistedUntil = _time() + 3600000;
       w->weight                   = NULL;
+      in3_log_info("Blacklisting node for empty response: %s", w->node->url);
     } else {
-      // we need to clean up the prev ios responses if set
+      // we need to clean up the previos responses if set
       if (ctx->responses) _free(ctx->responses);
       if (ctx->response_context) free_json(ctx->response_context);
 
@@ -157,6 +159,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
         // blacklist!
         w->weight->blacklistedUntil = _time() + 3600000;
         w->weight                   = NULL;
+        in3_log_info("Blacklisting node for invalid response: %s", w->node->url);
       } else {
         //        printf("res:%s",ctx->response_data);
         // check each request
@@ -172,6 +175,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
             // blacklist!
             w->weight->blacklistedUntil = _time() + 3600000;
             w->weight                   = NULL;
+            in3_log_info("Blacklisting node for verification failure: %s", w->node->url);
             break;
           }
         }
@@ -264,7 +268,7 @@ in3_error_t in3_send_ctx(in3_ctx_t* ctx) {
       }
       ctx->responses        = NULL;
       ctx->response_context = NULL;
-
+      in3_log_debug("Retrying send request...");
       // now try again
       return in3_send_ctx(ctx);
     } else

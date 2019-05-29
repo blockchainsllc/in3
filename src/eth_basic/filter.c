@@ -3,6 +3,7 @@
 #include <client/keys.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <util/log.h>
 
 static bool filter_addrs_valid(d_token_t* addr) {
   if (d_type(addr) == T_BYTES && d_len(addr) == 20)
@@ -192,16 +193,12 @@ in3_error_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           sprintf(params, "[\"0x%" PRIx64 "\", false]", i);
           ctx_ = in3_client_rpc_ctx(in3, "eth_getBlockByNumber", params);
-          if (ctx_->error || !ctx_->responses || !ctx_->responses[0] || !d_get(ctx_->responses[0], K_RESULT)) {
+          if ((res = ctx_get_error(ctx_, 0)) != IN3_OK) {
             // error or block doesn't exist (unlikely)
+            in3_log_warn("Failed to get block by number!");
             continue;
           }
-          d_token_t* res = d_get(ctx_->responses[0], K_RESULT);
-          if (res == NULL || d_type(res) == T_NULL) {
-            // error or block doesn't exist (unlikely)
-            continue;
-          }
-          d_token_t* hash  = d_get(res, K_HASH);
+          d_token_t* hash  = d_get(d_get(ctx_->responses[0], K_RESULT), K_HASH);
           char       h[67] = "0x";
           bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
           if (j != 0)

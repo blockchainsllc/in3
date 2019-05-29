@@ -1,5 +1,6 @@
 #include "context.h"
 #include "../util/debug.h"
+#include "../util/log.h"
 #include "../util/mem.h"
 #include "../util/stringbuilder.h"
 #include "client.h"
@@ -55,7 +56,7 @@ in3_error_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
   if (!ctx->response_context) {
     // printf("\nresponse: %s\n", response_data);
-    return ctx_set_error(ctx, "Error parsing the JSON-respomse!", IN3_EINVALDT);
+    return ctx_set_error(ctx, "Error parsing the JSON-response!", IN3_EINVALDT);
   }
 
   if (d_type(ctx->response_context->result) == T_OBJECT) {
@@ -184,17 +185,19 @@ in3_error_t ctx_set_error(in3_ctx_t* c, char* msg, in3_error_t errnumber) {
     strcpy(dst, msg);
   }
   c->error = dst;
+  in3_log_error("%s", msg);
   return errnumber;
 }
 
 in3_error_t ctx_get_error(in3_ctx_t* ctx, int id) {
+  d_token_t* res;
   if (ctx->error)
     return IN3_ERPC;
   else if (id > ctx->len)
     return IN3_EINVAL;
   else if (!ctx->responses || !ctx->responses[id])
     return IN3_ERPCNRES;
-  else if (!d_get(ctx->responses[0], K_RESULT))
+  else if (NULL == (res = d_get(ctx->responses[0], K_RESULT)) || d_type(res) == T_NULL)
     return IN3_EINVALDT;
   return IN3_OK;
 }

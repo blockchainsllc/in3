@@ -124,7 +124,7 @@ in3_t* in3_new() {
   in3_t* c = _calloc(1, sizeof(in3_t));
   in3_client_init(c);
 
-#ifndef DEBUG
+#ifndef TEST
   in3_log_set_quiet(1);
 #endif
   return c;

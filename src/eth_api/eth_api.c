@@ -1,6 +1,7 @@
 #include "./eth_api.h"
 #include "../core/client/context.h"
 #include "../core/client/keys.h"
+#include "../core/util/log.h"
 #include "../eth_basic/filter.h"
 #include "../eth_nano/rlp.h"
 #include "abi.h"
@@ -46,6 +47,7 @@ static void set_errorn(int std_error, char* msg, int len) {
 
 // sets the error and a message
 static void set_error(int std_error, char* msg) {
+  in3_log_error("Request failed due to %s - %s", strerror(std_error), msg);
   set_errorn(std_error, msg, strlen(msg));
 }
 

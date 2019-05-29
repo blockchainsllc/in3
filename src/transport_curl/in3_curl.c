@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "../core/client/client.h"
+#include "../core/util/log.h"
 #include "../core/util/stringbuilder.h"
 #include "in3_curl.h"
 #include <curl/curl.h>
@@ -94,8 +95,12 @@ in3_error_t send_curl_nonblocking(const char** urls, int urls_len, char* payload
   curl_slist_free_all(headers);
   curl_multi_cleanup(cm);
 
-  for (int i = 0; i < urls_len; i++)
-    if ((result + i)->error.len) return IN3_ETRANS; // return error if even one failed
+  for (int i = 0; i < urls_len; i++) {
+    if ((result + i)->error.len) {
+      in3_log_debug("curl: failed for %s", urls[i]);
+      return IN3_ETRANS; // return error if even one failed
+    }
+  }
   return IN3_OK;
 }
 
@@ -139,8 +144,12 @@ in3_error_t send_curl_blocking(const char** urls, int urls_len, char* payload, i
   int i;
   for (i = 0; i < urls_len; i++)
     readDataBlocking(urls[i], payload, result + i);
-  for (i = 0; i < urls_len; i++)
-    if ((result + i)->error.len) return IN3_ETRANS; // return error if even one failed
+  for (i = 0; i < urls_len; i++) {
+    if ((result + i)->error.len) {
+      in3_log_debug("curl: failed for %s", urls[i]);
+      return IN3_ETRANS; // return error if even one failed
+    }
+  }
   return IN3_OK;
 }
 

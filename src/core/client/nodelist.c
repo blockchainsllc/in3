@@ -15,7 +15,6 @@
 
 static void free_nodeList(in3_node_t* nodeList, int count) {
   int i;
-
   // clean chain..
   for (i = 0; i < count; i++) {
     if (nodeList[i].url) _free(nodeList[i].url);
@@ -24,8 +23,9 @@ static void free_nodeList(in3_node_t* nodeList, int count) {
   _free(nodeList);
 }
 
-static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
-  int i, res = 0, len;
+static in3_error_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+  int         i, len;
+  in3_error_t res = IN3_OK;
 
   // read the nodes
   d_token_t *t, *nodes = d_get(result, K_NODES), *node = NULL;
@@ -72,7 +72,7 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
     }
   }
 
-  if (res == 0) {
+  if (res == IN3_OK) {
     // successfull, so we can update the chain.
     free_nodeList(chain->nodeList, chain->nodeListLength);
     chain->nodeList       = newList;
@@ -88,8 +88,8 @@ static int in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* 
   return res;
 }
 
-static int update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
-  int res = 0;
+static in3_error_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+  in3_error_t res = IN3_OK;
 
   // create random seed
   char seed[67];
@@ -185,7 +185,6 @@ in3_error_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in
     if (chain->chainId == chain_id) {
       if (chain->needsUpdate || update) {
         chain->needsUpdate = false;
-
         // now update the nodeList
         res = update_nodelist(c, chain, ctx);
         if (res < 0) break;

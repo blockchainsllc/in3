@@ -1,21 +1,24 @@
 #include "cache.h"
+#include "../util/log.h"
 #include "../util/mem.h"
 #include "../util/utils.h"
 #include "context.h"
 #include "nodelist.h"
 #include "stdio.h"
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
-#define NODE_LIST_KEY   ("nodelist_%" PRIx64)
+#define NODE_LIST_KEY ("nodelist_%" PRIx64)
 
 in3_error_t in3_cache_init(in3_t* c) {
   int i;
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
-  for (i = 0; i < c->chainsCount; i++)
-    in3_cache_update_nodelist(c, c->chains + i);
-
+  for (i = 0; i < c->chainsCount; i++) {
+    if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) {
+      in3_log_debug("Failed to update cached nodelist");
+    }
+  }
   return IN3_OK;
 }
 
