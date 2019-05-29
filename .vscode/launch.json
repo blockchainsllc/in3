@@ -30,6 +30,28 @@
             "MIMode": "lldb"
         },
         {
+            "name": "(lldb) Launch (send)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-c",
+                "tobalaba",
+                "-debug",
+                "-proof", "none",
+                "-to", "0x5bed06b162100cfa567d103795ea55c9368b6c06",
+                "-pk", "0xF69D0B9DE3E6F7BE20C93B924CED4E009D167A50D321F870430AE9CD312B986C",
+                "send",
+                "addReading(uint48,int24,int24,uint32):(uint256)",
+                "20190527161800", "21", "22","23"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "test",
             "type": "cppdbg",
             "request": "launch",

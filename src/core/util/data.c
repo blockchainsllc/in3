@@ -196,7 +196,7 @@ uint64_t d_long(const d_token_t* item) {
 uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
   if (item == NULL) return def_val;
   if (d_type(item) == T_INTEGER)
-    return item->len & 0xFFFFFFF;
+    return item->len & 0x0FFFFFFF;
   else if (d_type(item) == T_BYTES)
     return bytes_to_long(item->data, item->len);
   return def_val;
@@ -291,24 +291,29 @@ int parse_key(json_ctx_t* jp) {
 }
 
 int parse_number(json_ctx_t* jp, d_token_t* item) {
-  char temp[20];
-  int  i = 0;
+  int      i      = 0;
+  uint64_t u64Val = 0;
+
   jp->c--;
   for (; i < 20; i++) {
     if (jp->c[i] >= '0' && jp->c[i] <= '9')
-      temp[i] = jp->c[i];
+      u64Val = u64Val * 10 + (jp->c[i] - '0');
     else {
-      temp[i] = 0;
       jp->c += i;
 
-      int res = atoi(temp); // modified for integers that doesn't fit in 28 bits
-      if (res & 0XF0000000) {
-        item->data = _malloc(4);
-        item->len  = 4;
-        int_to_bytes(res, item->data);
-      } else
-        item->len |= res;
-
+      if ((u64Val & 0xfffffffff0000000) == 0)
+        item->len |= (int) u64Val;
+      // 32-bit number / no 64-bit number
+      else {
+        uint8_t tmp[8];
+        // as it is a 64-bit number we have to change the type from T_INTEGER to T_BYTES and treat it accordingly
+        long_to_bytes(u64Val, tmp);
+        uint8_t *p = tmp, len = 8;
+        optimize_len(p, len);
+        item->data = _malloc(len);
+        item->len  = T_BYTES << 28 | len;
+        memcpy(item->data, p, len);
+      }
       return 0;
     }
   }
