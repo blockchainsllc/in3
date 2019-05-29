@@ -28,6 +28,6 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
 /**
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
-int in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes);
+in3_error_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes);
 
 #endif
