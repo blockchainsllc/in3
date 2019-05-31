@@ -38,7 +38,7 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
   return proposer;
 }
 
-static in3_error_t get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
+static in3_ret_t get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;
   uint8_t         d[4], bare_hash[32], pub_key[65];
   bytes_builder_t ll = {.bsize = 4, .b = {.len = 0, .data = (uint8_t*) &d}};
@@ -90,7 +90,7 @@ static in3_error_t get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   return IN3_OK;
 }
 
-in3_error_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint16_t needed_finality) {
+in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint16_t needed_finality) {
   bytes_t tmp, *proposer, *b = blocks[0];
   uint8_t hash[32], signer[20];
   int     val_len = 0, passed = 0, i = 0;
@@ -130,17 +130,17 @@ in3_error_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* sp
 }
 
 /** verify the header */
-in3_error_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
+in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
   if (!header)
     return vc_err(vc, "no header found");
 
-  in3_error_t res = IN3_OK;
-  int         i;
-  uint8_t     block_hash[32];
-  uint64_t    header_number = 0;
-  d_token_t * sig, *signatures;
-  bytes_t     temp, *sig_hash;
+  in3_ret_t  res = IN3_OK;
+  int        i;
+  uint8_t    block_hash[32];
+  uint64_t   header_number = 0;
+  d_token_t *sig, *signatures;
+  bytes_t    temp, *sig_hash;
 
   // generate the blockhash;
   sha3_to(header, &block_hash);

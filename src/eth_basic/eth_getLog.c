@@ -20,10 +20,10 @@ typedef struct receipt {
   uint32_t  transaction_index;
 } receipt_t;
 
-in3_error_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
-  in3_error_t res = IN3_OK, i = 0;
-  receipt_t   receipts[l_logs];
-  bytes_t     logddata, tmp, tops;
+in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
+  in3_ret_t res = IN3_OK, i = 0;
+  receipt_t receipts[l_logs];
+  bytes_t   logddata, tmp, tops;
 
   // invalid result-token
   if (!vc->result || d_type(vc->result) != T_ARRAY) return vc_err(vc, "The result must be an array");

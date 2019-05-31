@@ -49,7 +49,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
   return c;
 }
 
-in3_error_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
+in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   int        i;
   d_token_t* t = NULL;
 
@@ -105,7 +105,7 @@ void free_ctx(in3_ctx_t* ctx) {
 
 static unsigned long counter = 1;
 
-in3_error_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
+in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
   int        i;
   d_token_t *r, *t;
   char       temp[100];
@@ -171,7 +171,7 @@ in3_error_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
   return IN3_OK;
 }
 
-in3_error_t ctx_set_error(in3_ctx_t* c, char* msg, in3_error_t errnumber) {
+in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
   int   l   = strlen(msg);
   char* dst = NULL;
   if (c->error) {
@@ -189,7 +189,7 @@ in3_error_t ctx_set_error(in3_ctx_t* c, char* msg, in3_error_t errnumber) {
   return errnumber;
 }
 
-in3_error_t ctx_get_error(in3_ctx_t* ctx, int id) {
+in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   d_token_t* res;
   if (ctx->error)
     return IN3_ERPC;

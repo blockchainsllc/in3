@@ -11,7 +11,7 @@
 
 #define NODE_LIST_KEY ("nodelist_%" PRIx64)
 
-in3_error_t in3_cache_init(in3_t* c) {
+in3_ret_t in3_cache_init(in3_t* c) {
   int i;
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
   for (i = 0; i < c->chainsCount; i++) {
@@ -22,7 +22,7 @@ in3_error_t in3_cache_init(in3_t* c) {
   return IN3_OK;
 }
 
-in3_error_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
+in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   // it is ok not to have a storage
   if (!c->cacheStorage) return IN3_OK;
 
@@ -69,7 +69,7 @@ in3_error_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   return IN3_OK;
 }
 
-in3_error_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
+in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   int i;
 
   // write to bytes_buffer

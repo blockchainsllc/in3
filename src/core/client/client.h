@@ -180,7 +180,7 @@ typedef struct {
 
 /** the transport function to be implemented by the transport provider.
  */
-typedef in3_error_t (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
+typedef in3_ret_t (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
 
 typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
@@ -289,7 +289,7 @@ typedef struct {
 in3_t* in3_new();
 
 /** sends a request and stores the result in the provided buffer */
-in3_error_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error);
+in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error);
 
 /** frees the references of the client */
 void in3_free(in3_t* a);

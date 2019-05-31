@@ -22,7 +22,7 @@ static int      is_not_existened(d_token_t* account) {
   return ((t = d_get(account, K_BALANCE)) && d_type(t) == T_INTEGER && d_int(t) == 0 && (t = d_getl(account, K_CODE_HASH, 32)) && memcmp(t->data, EMPTY_HASH, 32) == 0 && d_get_longk(account, K_NONCE) == 0) && (t = d_getl(account, K_STORAGE_HASH, 32)) && memcmp(t->data, EMPTY_ROOT_HASH, 32) == 0;
 }
 
-static in3_error_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
+static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* account) {
   d_token_t *     t, *storage_proof, *p;
   int             i;
   uint8_t         hash[32], val[36];
@@ -81,7 +81,7 @@ static in3_error_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* acco
   return IN3_OK;
 }
 
-in3_error_t eth_verify_account_proof(in3_vctx_t* vc) {
+in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   d_token_t *t, *accounts, *contract = NULL, *proofed_account = NULL;
   char*      method = d_get_stringk(vc->request, K_METHOD);

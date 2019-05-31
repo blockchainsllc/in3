@@ -39,7 +39,7 @@ static bytes_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, byt
 }
 
 /** signs the given data */
-in3_error_t eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   UNUSED_VAR(account); // at least for now
   switch (type) {
     case SIGN_EC_RAW:
@@ -58,7 +58,7 @@ in3_error_t eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t
 }
 
 /** sets the signer and a pk to the client*/
-in3_error_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
+in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   if (in3->signer) _free(in3->signer);
   in3->signer         = _malloc(sizeof(in3_signer_t));
   in3->signer->sign   = eth_sign;

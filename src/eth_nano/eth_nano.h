@@ -8,10 +8,10 @@
 #include "../core/client/verifier.h"
 
 /** entry-function to execute the verification context. */
-in3_error_t in3_verify_eth_nano(in3_vctx_t* v);
+in3_ret_t in3_verify_eth_nano(in3_vctx_t* v);
 
 /** verifies a blockheader. */
-in3_error_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash);
+in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash);
 
 /** 
  * verifies a single signature blockheader.
@@ -30,7 +30,7 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig);
 /**
  * verifies a transaction receipt.
  */
-in3_error_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
+in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
 
 /**
  * this function should only be called once and will register the eth-nano verifier.

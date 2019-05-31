@@ -22,7 +22,7 @@ in3_verifier_t* in3_get_verifier(in3_chain_type_t type) {
   return NULL;
 }
 
-in3_error_t vc_err(in3_vctx_t* vc, char* msg) {
+in3_ret_t vc_err(in3_vctx_t* vc, char* msg) {
   sb_t* sb = sb_new("[");
   sb_add_hexuint(sb, vc->id);
   sb_add_chars(sb, "]:");

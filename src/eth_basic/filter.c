@@ -91,14 +91,14 @@ in3_filter_t* filter_new(in3_filter_type_t ft) {
   return f;
 }
 
-in3_error_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
+in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
   if (type == FILTER_PENDING)
     return IN3_ENOTSUP;
   else if (options == NULL)
     return IN3_EINVAL;
 
-  in3_error_t res = IN3_OK;
-  in3_ctx_t*  ctx = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
+  in3_ret_t  res = IN3_OK;
+  in3_ctx_t* ctx = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
   if (IN3_OK != (res = ctx_get_error(ctx, 0))) {
     free_ctx(ctx);
     return res;
@@ -148,15 +148,15 @@ bool filter_remove(in3_t* in3, size_t id) {
   return true;
 }
 
-in3_error_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
+in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   in3_t* in3 = ctx->client;
   if (in3->filters == NULL)
     return ctx_set_error(ctx, "no filters found", IN3_EUNKNOWN);
   if (id == 0 || id > in3->filters->count)
     return ctx_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
 
-  in3_ctx_t*  ctx_ = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
-  in3_error_t res  = ctx_get_error(ctx_, 0);
+  in3_ctx_t* ctx_ = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
+  in3_ret_t  res  = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {
     ctx_set_error(ctx, ctx_->error, res);
     free_ctx(ctx_);

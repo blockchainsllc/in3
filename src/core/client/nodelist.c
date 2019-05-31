@@ -23,9 +23,9 @@ static void free_nodeList(in3_node_t* nodeList, int count) {
   _free(nodeList);
 }
 
-static in3_error_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
-  int         i, len;
-  in3_error_t res = IN3_OK;
+static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+  int       i, len;
+  in3_ret_t res = IN3_OK;
 
   // read the nodes
   d_token_t *t, *nodes = d_get(result, K_NODES), *node = NULL;
@@ -88,8 +88,8 @@ static in3_error_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_t
   return res;
 }
 
-static in3_error_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
-  in3_error_t res = IN3_OK;
+static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+  in3_ret_t res = IN3_OK;
 
   // create random seed
   char seed[67];
@@ -175,9 +175,9 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   return first;
 }
 
-in3_error_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
+in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
   int          i;
-  in3_error_t  res   = IN3_EFIND;
+  in3_ret_t    res   = IN3_EFIND;
   in3_chain_t* chain = NULL;
   in3_t*       c     = ctx->client;
   for (i = 0; i < c->chainsCount; i++) {
@@ -199,7 +199,7 @@ in3_error_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in
   return res;
 }
 
-in3_error_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 
   // get all nodes from the nodelist
   _time_t            now       = _time();
@@ -208,7 +208,7 @@ in3_error_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
   float              total_weight;
   int                all_nodes_len, total_found, i, l;
 
-  in3_error_t res = in3_node_list_get(ctx, ctx->client->chainId, false, &all_nodes, &all_nodes_len, &weights);
+  in3_ret_t res = in3_node_list_get(ctx, ctx->client->chainId, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
     return ctx_set_error(ctx, "could not find the chain", res);
 

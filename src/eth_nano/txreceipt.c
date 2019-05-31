@@ -34,12 +34,12 @@ bytes_t* create_tx_path(uint32_t index) {
   return bb_move_to_bytes(bb);
 }
 
-in3_error_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
+in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
 
-  in3_error_t res = IN3_OK;
-  int         i;
-  bytes_t     root;
-  d_token_t*  block_hash = d_getl(vc->result, K_BLOCK_HASH, 32);
+  in3_ret_t  res = IN3_OK;
+  int        i;
+  bytes_t    root;
+  d_token_t* block_hash = d_getl(vc->result, K_BLOCK_HASH, 32);
 
   if (!tx_hash)
     return vc_err(vc, "No Transaction Hash found");

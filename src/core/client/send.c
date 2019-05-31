@@ -16,7 +16,7 @@
 #include <string.h>
 #include <time.h>
 
-static in3_error_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* req) {
+static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* req) {
   int    i;
   in3_t* c = ctx->client;
 
@@ -35,7 +35,7 @@ static in3_error_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf,
 
     if (c->signatureCount) {
       node_weight_t* sig_nodes = NULL;
-      in3_error_t    res       = in3_node_list_pick_nodes(ctx, &sig_nodes);
+      in3_ret_t      res       = in3_node_list_pick_nodes(ctx, &sig_nodes);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       int node_count        = ctx_nodes_len(sig_nodes);
@@ -65,9 +65,9 @@ static void free_urls(char** urls, int len, uint8_t free_items) {
   _free(urls);
 }
 
-static in3_error_t send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** response_result) {
-  int         n;
-  in3_error_t res;
+static in3_ret_t send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** response_result) {
+  int       n;
+  in3_ret_t res;
 
   *response_result = NULL;
   // prepare the payload
@@ -190,12 +190,12 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
   return false;
 }
 
-in3_error_t in3_send_ctx(in3_ctx_t* ctx) {
+in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   // find the nodes to send the request to
   int             i, nodes_count;
   in3_response_t* response = NULL;
   in3_chain_t*    chain    = NULL;
-  in3_error_t     res      = in3_node_list_pick_nodes(ctx, &ctx->nodes);
+  in3_ret_t       res      = in3_node_list_pick_nodes(ctx, &ctx->nodes);
   if (res < 0)
     return ctx_set_error(ctx, "could not find any node", res);
   nodes_count = ctx_nodes_len(ctx->nodes);

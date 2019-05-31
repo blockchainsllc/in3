@@ -1,6 +1,6 @@
 
 /** ERROR types  used as return values */
-typedef enum in3err {
+typedef enum {
   /* On success positive values (impl. defined) upto INT_MAX maybe returned */
   IN3_OK       = 0,   /* Success */
   IN3_EUNKNOWN = -1,  /* Unknown error - usually accompanied with specific error msg */
@@ -17,4 +17,4 @@ typedef enum in3err {
   IN3_ERPCNRES = -12, /* RPC no response */
   IN3_EUSNURL  = -13, /* USN URL parse error */
   IN3_ETRANS   = -14, /* Transport error */
-} in3_error_t;
+} in3_ret_t;

@@ -27,7 +27,7 @@
 #define RESPONSE_END() \
   do { sb_add_char(&response[0]->result, '}'); } while (0)
 
-in3_error_t in3_verify_eth_basic(in3_vctx_t* vc) {
+in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);
 
   // make sure we want to verify
@@ -65,7 +65,7 @@ in3_error_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return in3_verify_eth_nano(vc);
 }
 
-in3_error_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
+in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
@@ -110,8 +110,8 @@ in3_error_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       return ctx_set_error(ctx, "filter option parsing failed", IN3_EINVAL);
     if (!tx_params->data) return ctx_set_error(ctx, "binary request are not supported!", IN3_ENOTSUP);
 
-    char*       fopt = d_create_json(tx_params + 1);
-    in3_error_t res  = filter_add(ctx->client, FILTER_EVENT, fopt);
+    char*     fopt = d_create_json(tx_params + 1);
+    in3_ret_t res  = filter_add(ctx->client, FILTER_EVENT, fopt);
     if (res < 0) {
       _free(fopt);
       return ctx_set_error(ctx, "filter creation failed", res);
@@ -124,7 +124,7 @@ in3_error_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     RESPONSE_END();
     return IN3_OK;
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
-    in3_error_t res = filter_add(ctx->client, FILTER_BLOCK, NULL);
+    in3_ret_t res = filter_add(ctx->client, FILTER_BLOCK, NULL);
     if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
 
     RESPONSE_START();
@@ -150,7 +150,7 @@ in3_error_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
-    in3_error_t ret = filter_get_changes(ctx, id, &response[0]->result);
+    in3_ret_t ret = filter_get_changes(ctx, id, &response[0]->result);
     if (ret != IN3_OK)
       return ctx_set_error(ctx, "failed to get filter changes", ret);
     RESPONSE_END();

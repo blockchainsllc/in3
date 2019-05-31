@@ -30,8 +30,8 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   return ctx;
 }
 
-in3_error_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
-  in3_error_t res = IN3_OK;
+in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
+  in3_ret_t res = IN3_OK;
   // prepare request
   char req[strlen(method) + strlen(params) + 200];
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);

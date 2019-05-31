@@ -31,8 +31,8 @@ typedef struct {
 /**
  * function to verify the result.
  */
-typedef in3_error_t (*in3_verify)(in3_vctx_t* c);
-typedef in3_error_t (*in3_pre_handle)(in3_ctx_t* ctx, in3_response_t** response);
+typedef in3_ret_t (*in3_verify)(in3_vctx_t* c);
+typedef in3_ret_t (*in3_pre_handle)(in3_ctx_t* ctx, in3_response_t** response);
 
 typedef struct verifier {
   in3_verify       verify;
@@ -44,6 +44,6 @@ typedef struct verifier {
 /*! returns the verifier for the given chainType */
 in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
 void            in3_register_verifier(in3_verifier_t* verifier);
-in3_error_t     vc_err(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */
+in3_ret_t       vc_err(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */
 
 #endif

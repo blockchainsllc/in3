@@ -452,20 +452,20 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   return data;
 }
 
-in3_error_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
+in3_ret_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
   if (options == NULL) return 0;
   if (!filter_opt_valid(&options->result[0])) return 0;
-  char*       fopt = d_create_json(&options->result[0]);
-  in3_error_t res  = filter_add(in3, FILTER_EVENT, fopt);
+  char*     fopt = d_create_json(&options->result[0]);
+  in3_ret_t res  = filter_add(in3, FILTER_EVENT, fopt);
   if (res < 0) _free(fopt);
   return res;
 }
 
-in3_error_t eth_newBlockFilter(in3_t* in3) {
+in3_ret_t eth_newBlockFilter(in3_t* in3) {
   return filter_add(in3, FILTER_BLOCK, NULL);
 }
 
-in3_error_t eth_newPendingTransactionFilter(in3_t* in3) {
+in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
   return filter_add(in3, FILTER_PENDING, NULL);
 }
 
@@ -473,7 +473,7 @@ bool eth_uninstallFilter(in3_t* in3, size_t id) {
   return filter_remove(in3, id);
 }
 
-in3_error_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
+in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
   if (in3->filters == NULL)
     return IN3_EFIND;
   if (id == 0 || id > in3->filters->count)

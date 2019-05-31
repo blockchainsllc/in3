@@ -48,7 +48,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     sb_add_chars(&r->error, "no curl:");
 }
 
-in3_error_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
   CURLM*   cm;
   CURLMsg* msg;
   int      transfers   = 0;
@@ -140,7 +140,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r) 
     sb_add_chars(&r->error, "no curl:");
 }
 
-in3_error_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
   int i;
   for (i = 0; i < urls_len; i++)
     readDataBlocking(urls[i], payload, result + i);
@@ -153,7 +153,7 @@ in3_error_t send_curl_blocking(const char** urls, int urls_len, char* payload, i
   return IN3_OK;
 }
 
-in3_error_t send_curl(char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t send_curl(char** urls, int urls_len, char* payload, in3_response_t* result) {
 #ifdef CURL_BLOCKING
   return send_curl_blocking((const char**) urls, urls_len, payload, result);
 #else

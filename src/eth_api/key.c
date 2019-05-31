@@ -4,7 +4,7 @@
 #include <util/data.h>
 #include <util/utils.h>
 
-in3_error_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
+in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   if (d_get_int(key_data, "version") != 3) return IN3_EVERS;
   d_token_t* crypto = d_get(key_data, key("crypto"));
   char*      kdf    = d_get_string(crypto, "kdf");
