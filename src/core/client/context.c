@@ -197,7 +197,7 @@ in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
     return IN3_EINVAL;
   else if (!ctx->responses || !ctx->responses[id])
     return IN3_ERPCNRES;
-  else if (NULL == (res = d_get(ctx->responses[0], K_RESULT)) || d_type(res) == T_NULL)
+  else if (NULL == (res = d_get(ctx->responses[0], K_RESULT)))
     return IN3_EINVALDT;
   return IN3_OK;
 }
