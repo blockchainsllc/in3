@@ -1,31 +1,34 @@
 #include "cache.h"
+#include "../util/log.h"
 #include "../util/mem.h"
 #include "../util/utils.h"
 #include "context.h"
 #include "nodelist.h"
 #include "stdio.h"
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
-#define NODE_LIST_KEY   ("nodelist_%" PRIx64)
+#define NODE_LIST_KEY ("nodelist_%" PRIx64)
 
-int in3_cache_init(in3_t* c) {
+in3_ret_t in3_cache_init(in3_t* c) {
   int i;
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
-  for (i = 0; i < c->chainsCount; i++)
-    in3_cache_update_nodelist(c, c->chains + i);
-
-  return 0;
+  for (i = 0; i < c->chainsCount; i++) {
+    if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) {
+      in3_log_debug("Failed to update cached nodelist");
+    }
+  }
+  return IN3_OK;
 }
 
-int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
+in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   // it is ok not to have a storage
-  if (!c->cacheStorage) return 0;
+  if (!c->cacheStorage) return IN3_OK;
 
   // define the key to use
   char key[200];
-  sprintf(key, NODE_LIST_KEY, (unsigned long long) chain->chainId);
+  sprintf(key, NODE_LIST_KEY, chain->chainId);
 
   // get from cache
   bytes_t* b = c->cacheStorage->get_item(c->cacheStorage->cptr, key);
@@ -36,7 +39,7 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     // version check
     if (b_read_byte(b, &p) != 1) {
       b_free(b);
-      return -1;
+      return IN3_EVERS;
     }
 
     // clean up old
@@ -63,10 +66,10 @@ int in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     }
     b_free(b);
   }
-  return 0;
+  return IN3_OK;
 }
 
-int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
+in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   int i;
 
   // write to bytes_buffer
@@ -89,12 +92,12 @@ int in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
 
   // create key
   char key[200];
-  sprintf(key, NODE_LIST_KEY, (unsigned long long) chain->chainId);
+  sprintf(key, NODE_LIST_KEY, chain->chainId);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   ctx->client->cacheStorage->set_item(ctx->client->cacheStorage->cptr, key, &bb->b);
 
   // clear buffer
   bb_free(bb);
-  return 0;
+  return IN3_OK;
 }

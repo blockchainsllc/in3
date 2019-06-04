@@ -12,6 +12,7 @@ add_library( core STATIC
 	util/utils.c
 	util/scache.c
 	util/data.c
+	util/log.c
 	util/mem.c
 	util/stringbuilder.c
 	crypto/ecdsa.c

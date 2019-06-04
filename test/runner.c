@@ -118,10 +118,6 @@ static str_range_t find_prop_name(char* p, char* start) {
 }
 
 static void prepare_response(int count, d_token_t* response_array, int as_bin, int fuzz_pos) {
-  if (_tmp_response) {
-    free(_tmp_response->data);
-    free(_tmp_response);
-  }
   if (!as_bin) {
     sb_t*       sb = sb_new(NULL);
     str_range_t r  = d_to_json(d_get_at(response_array, 0));
@@ -152,6 +148,11 @@ static int send_mock(char** urls, int urls_len, char* payload, in3_response_t* r
     // rioght now we always add the same response
     // TODO later support array of responses.
     sb_add_range(&(result + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
+
+  if (_tmp_response) {
+    free(_tmp_response->data);
+    free(_tmp_response);
+  }
   return 0;
 }
 
@@ -159,8 +160,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   d_token_t* request  = d_get(test, key("request"));
   d_token_t* response = d_get(test, key("response"));
   d_token_t* config   = d_get(request, key("config"));
-  d_token_t* t = NULL;
-  char*      method = NULL;
+  d_token_t* t        = NULL;
+  char*      method   = NULL;
   char       params[10000];
 
   // configure in3
@@ -179,7 +180,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   strncpy(params, s.data, s.len);
   params[s.len] = 0;
 
-  char *res, *err;
+  char *res = NULL, *err = NULL;
   int   success = must_fail ? 0 : d_get_intkd(test, key("success"), 1);
 
   //  _tmp_response = response;
@@ -307,7 +308,7 @@ int runRequests(char** names, int test_index, int mem_track) {
     // parse the data;
     int        i;
     char*      str_proof = NULL;
-    d_token_t *t      = NULL, *tests = NULL, *test = NULL;
+    d_token_t *t = NULL, *tests = NULL, *test = NULL;
     d_token_t* tokens = NULL;
 
     if ((tests = parsed->result)) {
@@ -351,12 +352,7 @@ int runRequests(char** names, int test_index, int mem_track) {
     }
 
     free(content);
-    for (i = 0; i < parsed->len; i++) {
-      if (parsed->result[i].data != NULL && d_type(parsed->result + i) < 2)
-        free(parsed->result[i].data);
-    }
-    free(parsed->result);
-    free(parsed);
+    free_json(parsed);
     name = names[++n];
   }
   printf("\n%2i of %2i successfully tested", total - failed, total);

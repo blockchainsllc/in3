@@ -7,21 +7,11 @@
 
 #include "../util/bytes.h"
 #include "../util/data.h"
+#include "../util/error.h"
 #include "../util/stringbuilder.h"
 #include "../util/utils.h"
 #include <stdbool.h>
 #include <stdint.h>
-
-/** ERROR types  used as return values */
-enum in3err {
-  IN3_ERR_INVALID_JSON     = -1,
-  IN3_ERR_BUFFER_TOO_SMALL = -2,
-  IN3_ERR_REQUEST_INVALID  = -3,
-  IN3_ERR_CHAIN_NOT_FOUND  = -4,
-  IN3_ERR_NO_NODES_FOUND   = -5,
-  IN3_ERR_CONFIG_ERROR     = -6,
-  IN3_ERR_MAX_ATTEMPTS     = -7,
-};
 
 /** type of the chain */
 typedef enum {
@@ -190,7 +180,7 @@ typedef struct {
 
 /** the transport function to be implemented by the transport provider.
  */
-typedef int (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
+typedef in3_ret_t (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
 
 typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
@@ -299,7 +289,7 @@ typedef struct {
 in3_t* in3_new();
 
 /** sends a request and stores the result in the provided buffer */
-int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error);
+in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error);
 
 /** frees the references of the client */
 void in3_free(in3_t* a);

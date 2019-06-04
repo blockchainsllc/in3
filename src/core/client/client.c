@@ -20,7 +20,7 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   if (ctx->error) return ctx;
 
   // execute it
-  if (in3_send_ctx(ctx) == 0) {
+  if (in3_send_ctx(ctx) == IN3_OK) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
     ctx->error = NULL;
@@ -30,8 +30,8 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   return ctx;
 }
 
-int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
-  int res = 0;
+in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
+  in3_ret_t res = IN3_OK;
   // prepare request
   char req[strlen(method) + strlen(params) + 200];
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
@@ -50,7 +50,7 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
       *error = _malloc(strlen(ctx->error) + 1);
       strcpy(*error, ctx->error);
     }
-    res = -1;
+    res = IN3_EUNKNOWN;
   } else {
     // so far everything is good, so we send the request
     res = in3_send_ctx(ctx);
@@ -68,13 +68,13 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
           if (error != NULL) {
             *error = _malloc(s.len + 1);
             strncpy(*error, s.data, s.len);
-            (*error)[s.len ] = '\0';
+            (*error)[s.len] = '\0';
           }
         } else {
           if (error != NULL) {
             *error = _malloc(d_len(r) + 1);
             strncpy(*error, d_string(r), d_len(r));
-            (*error)[d_len(r) ] = '\0';
+            (*error)[d_len(r)] = '\0';
           }
         }
       } else if (ctx->error) {
@@ -107,6 +107,6 @@ int in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** e
   }
   free_ctx(ctx);
 
-  // if we have an error, we always return -1
-  return *error ? -1 : res;
+  // if we have an error, we always return IN3_EUNKNOWN
+  return *error ? IN3_EUNKNOWN : res;
 }

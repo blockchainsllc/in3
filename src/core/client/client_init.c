@@ -1,4 +1,5 @@
 #include "../util/data.h"
+#include "../util/log.h"
 #include "../util/mem.h"
 #include "cache.h"
 #include "client.h"
@@ -122,5 +123,9 @@ in3_t* in3_new() {
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
   in3_client_init(c);
+
+#ifndef TEST
+  in3_log_set_quiet(1);
+#endif
   return c;
 }

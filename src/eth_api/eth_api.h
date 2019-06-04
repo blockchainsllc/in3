@@ -84,20 +84,20 @@ uint64_t     eth_blockNumber(in3_t* in3);                                       
 uint64_t     eth_gasPrice(in3_t* in3);                                                       /**< returns the current blockNumber, if bn==0 an error occured and you should check eth_last_error() */
 eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx);             /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
-eth_log_t*   eth_getLogs(in3_t* in3, char* fopt);                                /**< returns a linked list of logs. If result is null, check eth_last_error()! otherwise make sure to free the log, its topics and data after using it! */
+eth_log_t*   eth_getLogs(in3_t* in3, char* fopt);                                            /**< returns a linked list of logs. If result is null, check eth_last_error()! otherwise make sure to free the log, its topics and data after using it! */
 json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...);                 /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 char*        eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);
-size_t       eth_newFilter(in3_t* in3, json_ctx_t* options);                                    /**< creates a new event filter with specified options and returns its id (>0) on success or 0 on failure; on failure options must be freed explicitly */
-size_t       eth_newBlockFilter(in3_t* in3);                                                          /**< creates a new block filter with specified options and returns its id (>0) on success or 0 on failure */
-size_t       eth_newPendingTransactionFilter(in3_t* in3);                                             /**< creates a new pending txn filter with specified options and returns its id on success or 0 on failure */
+in3_ret_t    eth_newFilter(in3_t* in3, json_ctx_t* options);
+in3_ret_t    eth_newBlockFilter(in3_t* in3);                                                          /**< creates a new block filter with specified options and returns its id (>0) on success or 0 on failure */
+in3_ret_t    eth_newPendingTransactionFilter(in3_t* in3);                                             /**< creates a new pending txn filter with specified options and returns its id on success or 0 on failure */
 bool         eth_uninstallFilter(in3_t* in3, size_t id);                                              /**< uninstalls a filter and returns true on success or false on failure */
-int          eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs); /**< sets the logs (for event filter) or blockhashes (for block filter) that match a filter; returns <0 on error, otherwise no. of block hashes matched (for block filter) or 0 (for log filer) */
+in3_ret_t    eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs); /**< sets the logs (for event filter) or blockhashes (for block filter) that match a filter; returns <0 on error, otherwise no. of block hashes matched (for block filter) or 0 (for log filer) */
 
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
 uint64_t    as_long(uint256_t d);   /**< converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
 uint256_t   to_uint256(uint64_t value);
-int         decrypt_key(d_token_t* key_data, char* password, bytes32_t dst);
+in3_ret_t   decrypt_key(d_token_t* key_data, char* password, bytes32_t dst);
 void        free_log(eth_log_t* log);
 
 #endif

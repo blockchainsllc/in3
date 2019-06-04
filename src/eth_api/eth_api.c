@@ -1,6 +1,7 @@
 #include "./eth_api.h"
 #include "../core/client/context.h"
 #include "../core/client/keys.h"
+#include "../core/util/log.h"
 #include "../eth_basic/filter.h"
 #include "../eth_nano/rlp.h"
 #include "abi.h"
@@ -43,8 +44,10 @@ static void set_errorn(int std_error, char* msg, int len) {
   memcpy(last_error, msg, len);
   last_error[len] = 0;
 }
+
 // sets the error and a message
 static void set_error(int std_error, char* msg) {
+  in3_log_error("Request failed due to %s - %s", strerror(std_error), msg);
   set_errorn(std_error, msg, strlen(msg));
 }
 
@@ -60,12 +63,14 @@ static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
   } else
     memset(dst, 0, len);
 }
+
 uint256_t to_uint256(uint64_t value) {
   uint256_t data;
   memset(data.data, 0, 32);
   long_to_bytes(value, data.data + 24);
   return data;
 }
+
 /** converts a uint256 to a long double */
 long double as_double(uint256_t d) {
   uint8_t* p = d.data;
@@ -313,12 +318,12 @@ static eth_log_t* parse_logs(d_token_t* result) {
     log->data.len          = d_len(d_get(it.token, K_DATA));
     log->data.data         = _malloc(sizeof(uint8_t) * log->data.len);
     log->topics            = _malloc(sizeof(bytes32_t) * d_len(d_get(it.token, K_TOPICS)));
-    copy_fixed(log->address, 20, d_to_bytes(d_get(it.token, K_ADDRESS)));
-    copy_fixed(log->transaction_hash, 32, d_to_bytes(d_get(it.token, K_TRANSACTION_HASH)));
-    copy_fixed(log->block_hash, 32, d_to_bytes(d_get(it.token, K_BLOCK_HASH)));
+    copy_fixed(log->address, 20, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)));
+    copy_fixed(log->transaction_hash, 32, d_to_bytes(d_getl(it.token, K_TRANSACTION_HASH, 32)));
+    copy_fixed(log->block_hash, 32, d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)));
     copy_fixed(log->data.data, log->data.len, d_to_bytes(d_get(it.token, K_DATA)));
     size_t i = 0;
-    for (d_iterator_t t = d_iter(d_get(it.token, K_TOPICS)); t.left; d_iter_next(&t), i++) {
+    for (d_iterator_t t = d_iter(d_getl(it.token, K_TOPICS, 32)); t.left; d_iter_next(&t), i++) {
       copy_fixed(log->topics[i], 32, d_to_bytes(t.token));
       log->topic_count += 1;
     }
@@ -447,20 +452,20 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   return data;
 }
 
-size_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
+in3_ret_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
   if (options == NULL) return 0;
   if (!filter_opt_valid(&options->result[0])) return 0;
-  char*  fopt = d_create_json(&options->result[0]);
-  size_t ret  = filter_add(in3, FILTER_EVENT, fopt);
-  if (!ret) _free(fopt);
-  return ret;
+  char*     fopt = d_create_json(&options->result[0]);
+  in3_ret_t res  = filter_add(in3, FILTER_EVENT, fopt);
+  if (res < 0) _free(fopt);
+  return res;
 }
 
-size_t eth_newBlockFilter(in3_t* in3) {
+in3_ret_t eth_newBlockFilter(in3_t* in3) {
   return filter_add(in3, FILTER_BLOCK, NULL);
 }
 
-size_t eth_newPendingTransactionFilter(in3_t* in3) {
+in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
   return filter_add(in3, FILTER_PENDING, NULL);
 }
 
@@ -468,11 +473,11 @@ bool eth_uninstallFilter(in3_t* in3, size_t id) {
   return filter_remove(in3, id);
 }
 
-int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
+in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs) {
   if (in3->filters == NULL)
-    return -1;
+    return IN3_EFIND;
   if (id == 0 || id > in3->filters->count)
-    return -2;
+    return IN3_EINVAL;
 
   uint64_t      blkno = eth_blockNumber(in3);
   in3_filter_t* f     = in3->filters->array[id - 1];
@@ -497,7 +502,7 @@ int eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_lo
         return 0;
       }
     default:
-      return -3;
+      return IN3_ENOTSUP;
   }
 }
 

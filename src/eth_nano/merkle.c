@@ -119,12 +119,10 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
       // copy the leafs data as last_value and next_hash
       last_value->data = val.data;
       last_value->len  = val.len;
-      memcpy(next_hash, val.data, 32);
-
+      memcpy(next_hash, val.data, (val.len >= 32) ? 32 : val.len);
       return 1;
 
     default: // empty node
-
       // only if we expect no value we accept a empty node as last node
       return (expectedValue == NULL && is_last_node);
   }
@@ -135,7 +133,7 @@ int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
   int      res      = 1;
   uint8_t* full_key = trie_path_to_nibbles(*path, 0);
   uint8_t *key      = full_key, expected_hash[32], node_hash[32];
-  bytes_t  last_value;
+  bytes_t  last_value = {0};
 
   // start with root hash
   memcpy(expected_hash, rootHash->data, 32);
