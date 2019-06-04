@@ -190,14 +190,13 @@ in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
 }
 
 in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
-  d_token_t* res;
   if (ctx->error)
     return IN3_ERPC;
   else if (id > ctx->len)
     return IN3_EINVAL;
   else if (!ctx->responses || !ctx->responses[id])
     return IN3_ERPCNRES;
-  else if (NULL == (res = d_get(ctx->responses[0], K_RESULT)))
+  else if (NULL == d_get(ctx->responses[id], K_RESULT) || d_get(ctx->responses[id], K_ERROR) )
     return IN3_EINVALDT;
   return IN3_OK;
 }
