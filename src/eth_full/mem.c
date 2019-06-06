@@ -50,7 +50,7 @@ int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only) {
   return 0;
 }
 
-int evm_mem_readi(evm_t* evm, uint32_t off, void* dst, uint32_t len) {
+int evm_mem_readi(evm_t* evm, uint32_t off, uint8_t* dst, uint32_t len) {
   if (!len) return 0;
   uint8_t* src     = NULL;
   uint32_t max_len = 0;
@@ -72,7 +72,7 @@ int evm_mem_readi(evm_t* evm, uint32_t off, void* dst, uint32_t len) {
   return 0;
 }
 
-int evm_mem_read(evm_t* evm, bytes_t mem_off, void* dst, uint32_t len) {
+int evm_mem_read(evm_t* evm, bytes_t mem_off, uint8_t* dst, uint32_t len) {
   b_optimize_len(&mem_off);
   if (mem_off.len > 4) return EVM_ERROR_OUT_OF_GAS;
   return evm_mem_readi(evm, bytes_to_int(mem_off.data, mem_off.len), dst, len);

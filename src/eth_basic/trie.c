@@ -68,7 +68,7 @@ static void free_node(trie_node_t* n) {
 // -- trie_node --
 
 static bytes_t trie_node_get_item(trie_node_t* t, int index) {
-  bytes_t b;
+  bytes_t b = {.data = NULL, .len = 0};
   rlp_decode(&t->items, index, &b);
   return b;
 }

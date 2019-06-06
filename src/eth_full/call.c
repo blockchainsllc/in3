@@ -85,7 +85,7 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
 
   // is this a non-empty account? (or do we have to create one)
   if (create || l_balance > 1 || l_nonce > 1 || l_code_size > 1 || (l_balance == 1 && *balance) || (l_nonce == 1 && *nonce) || (l_code_size == 1 && *code_size)) {
-    ac = _malloc(sizeof(account_t));
+    ac = _calloc(1, sizeof(account_t));
     memcpy(ac->address, adr, 20);
 
     // get the code (if code_size>0)

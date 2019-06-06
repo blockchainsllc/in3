@@ -22,11 +22,11 @@ static bytes_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, byt
   bytes_t    b   = bytes(NULL, 0);
   int        res = 0;
   if (ctx->error)
-    res = ctx_set_error(parent, ctx->error, -1);
+    res = ctx_set_error(parent, ctx->error, IN3_ERPC);
   else {
     d_token_t* result = d_get(ctx->responses[0], K_RESULT);
     if (!result)
-      res = ctx_set_error(parent, "No result found when fetching data for tx", -1);
+      res = ctx_set_error(parent, "No result found when fetching data for tx", IN3_ERPCNRES);
     else {
       b = d_to_bytes(result);
       if (b.len)
@@ -39,31 +39,31 @@ static bytes_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, byt
 }
 
 /** signs the given data */
-int eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   UNUSED_VAR(account); // at least for now
   switch (type) {
     case SIGN_EC_RAW:
       if (ecdsa_sign_digest(&secp256k1, pk, message.data, dst, dst + 64, NULL) < 0)
-        return -1;
+        return IN3_EUNKNOWN;
       break;
     case SIGN_EC_HASH:
       if (ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message.data, message.len, dst, dst + 64, NULL) < 0)
-        return -1;
+        return IN3_EUNKNOWN;
       break;
 
     default:
-      return -2;
+      return IN3_ENOTSUP;
   }
   return 65;
 }
 
 /** sets the signer and a pk to the client*/
-int eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
+in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   if (in3->signer) _free(in3->signer);
   in3->signer         = _malloc(sizeof(in3_signer_t));
   in3->signer->sign   = eth_sign;
   in3->signer->wallet = pk;
-  return 0;
+  return IN3_OK;
 }
 
 bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
@@ -80,7 +80,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
       if (ctx->client->signer->sign != eth_sign) {
-        ctx_set_error(ctx, "you need to specify the from-address in the tx!", -1);
+        ctx_set_error(ctx, "you need to specify the from-address in the tx!", IN3_EINVAL);
         return bytes(NULL, 0);
       }
 

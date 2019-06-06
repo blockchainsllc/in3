@@ -113,7 +113,6 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
       return -1;
     }
     d_track_keynames(1);
-    d_clear_keynames();
 
     json_ctx_t* parsed = parse_json(content);
     if (!parsed) {
@@ -139,12 +138,8 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
     }
 
     free(content);
-    for (i = 0; i < parsed->len; i++) {
-      if (parsed->result[i].data != NULL && d_type(parsed->result + i) < 2)
-        free(parsed->result[i].data);
-    }
-    free(parsed->result);
-    free(parsed);
+    free_json(parsed);
+    d_clear_keynames();
     name = names[++n];
   }
   printf("\n%2i of %2i successfully tested", total - failed, total);
@@ -188,5 +183,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  return runRequests(names, testIndex, membrk, props);
+  int ret = runRequests(names, testIndex, membrk, props);
+  free(names);
+  return ret;
 }

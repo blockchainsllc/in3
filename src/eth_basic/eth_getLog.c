@@ -20,15 +20,15 @@ typedef struct receipt {
   uint32_t  transaction_index;
 } receipt_t;
 
-int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
-  int       res = 0, i = 0;
+in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
+  in3_ret_t res = IN3_OK, i = 0;
   receipt_t receipts[l_logs];
   bytes_t   logddata, tmp, tops;
 
   // invalid result-token
   if (!vc->result || d_type(vc->result) != T_ARRAY) return vc_err(vc, "The result must be an array");
   // no results -> nothing to verify
-  if (l_logs == 0) return 0;
+  if (l_logs == 0) return IN3_OK;
   // we require proof
   if (!vc->proof) return vc_err(vc, "no proof for logs found");
 
@@ -60,7 +60,7 @@ int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       if (!proof || !trie_verify_proof(&tx_root, path, proof, &r->data))
         res = vc_err(vc, "invalid tx merkle proof");
       if (proof) _free(proof);
-      if (res != 0) {
+      if (res != IN3_OK) {
         if (path) b_free(path);
         return res;
       }
@@ -81,7 +81,7 @@ int eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
         res = vc_err(vc, "invalid receipt proof");
       if (proof) _free(proof);
       if (path) b_free(path);
-      if (res != 0) return res;
+      if (res != IN3_OK) return res;
     }
   }
 

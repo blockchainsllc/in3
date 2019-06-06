@@ -26,7 +26,7 @@ void call_a_function(in3_t* c) {
   }
 
   int number_of_servers = d_int(response->result);
-  _free(response);
+  free_json(response);
 
   printf("Found %i servers registered : \n", number_of_servers);
 
@@ -44,11 +44,12 @@ void call_a_function(in3_t* c) {
 
     printf("Server %i : %s owner = ", i, url);
     ba_print(owner->data, owner->len);
-    printf(", deposit = %llu\n", deposit);
+    printf(", deposit = %" PRIu64 "\n", deposit);
 
-    _free(response);
+    free_json(response);
   }
 }
+
 void show_transactions_in_block(in3_t* c, uint64_t block_number) {
   // use a ethereum-api instead of pure JSON-RPC-Requests
   eth_block_t* block = eth_getBlockByNumber(c, block_number, true);
@@ -120,7 +121,7 @@ void watch_for_events(in3_t* c) {
   unsigned int wait_time = 5;
 
   // configure a device-config
-  usn_device_conf_t usn;
+  usn_device_conf_t usn = {0};
 
   // set a function which is called whenever a rent event starts or stops
   usn.booking_handler = handle_booking;
@@ -147,7 +148,7 @@ void watch_for_events(in3_t* c) {
 #if defined(_WIN32) || defined(WIN32)
     Sleep(timeout);
 #else
-    usleep(timeout * 1000); // usleep takes sleep time in us (1 millionth of a second)
+    nanosleep((const struct timespec[]){{0, timeout * 1000000L}}, NULL);
 #endif
   }
 }

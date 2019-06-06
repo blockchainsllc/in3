@@ -13,10 +13,6 @@
 
 #ifndef VERIFIER_H
 #define VERIFIER_H
-/**
- * creates an error attaching it to the context and returns -1 as a return value.
- */
-#define vc_err(v, e) ctx_set_error(v->ctx, e, -1)
 
 /**
  * verification context holding the pointers to all relevant toknes.
@@ -26,6 +22,7 @@ typedef struct {
   in3_chain_t*          chain;   /**< the chain definition. */
   d_token_t*            result;  /**< the result to verify */
   d_token_t*            request; /**< the request sent. */
+  uint64_t              id;      /**< the id of sent request. */
   d_token_t*            proof;   /**< the delivered proof. */
   in3_request_config_t* config;  /**< Request configuration. */
 
@@ -34,8 +31,8 @@ typedef struct {
 /**
  * function to verify the result.
  */
-typedef int (*in3_verify)(in3_vctx_t* c);
-typedef int (*in3_pre_handle)(in3_ctx_t* ctx, in3_response_t** response);
+typedef in3_ret_t (*in3_verify)(in3_vctx_t* c);
+typedef in3_ret_t (*in3_pre_handle)(in3_ctx_t* ctx, in3_response_t** response);
 
 typedef struct verifier {
   in3_verify       verify;
@@ -47,5 +44,6 @@ typedef struct verifier {
 /*! returns the verifier for the given chainType */
 in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
 void            in3_register_verifier(in3_verifier_t* verifier);
+in3_ret_t       vc_err(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */
 
 #endif

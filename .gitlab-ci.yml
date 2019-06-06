@@ -144,8 +144,8 @@ clang50:
 #    IMAGE: linux-x64
 #    CONAN_OPTS: "-DLIBCURL_TYPE=shared"
 
-zephyr:
-  image: agustinhenze/zephyr-arm
+zephyr_arm-0_9_5__v1_14_0-rc1:
+  image: docker.slock.it/build-images/zephyr:arm-0_9_5__v1_14_0-rc1
   stage: build
   tags:
     - short-jobs
@@ -153,28 +153,27 @@ zephyr:
     paths:
       - src/zephyr/build
   script:
-    - apt-get update && eatmydata apt-get install -y curl qemu-system-arm --no-install-recommends && rm -rf /var/lib/apt
-    - curl -L https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2-Linux-x86_64.tar.gz | tar -xzf -
-    - export PATH="`pwd`/cmake-3.13.2-Linux-x86_64/bin:$PATH"
-    - wget --quiet https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
-    - chmod +x zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
-    - ./zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run --quiet -- -d /opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}
-    - rm zephyr-sdk-${ZEPHYR_SDK_VERSION}-setup.run
-    - git clone --branch ${ZEPHYR_VERSION} https://github.com/zephyrproject-rtos/zephyr.git
     - source zephyr/zephyr-env.sh
-    - export ZEPHYR_SDK_INSTALL_DIR="/opt/sdk/zephyr-sdk-${ZEPHYR_SDK_VERSION}"
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
     - make
 
-  variables:
-    LANG: C.UTF-8
-    LC_ALL: C.UTF-8
-    ZEPHYR_GCC_VARIANT: gccarmemb
-    GCCARMEMB_TOOLCHAIN_PATH: /usr
-    CROSS_COMPILE: /usr/bin/arm-none-eabi-
-    ZEPHYR_SDK_VERSION: "0.9.5"
-    ZEPHYR_VERSION: "v1.14.0-rc1"
+
+zephyr_arm-0_10_0__v1_14_0:
+  image: docker.slock.it/build-images/zephyr:arm-0_10_0__v1_14_0
+  stage: build
+  tags:
+    - short-jobs
+  artifacts:
+    paths:
+      - src/zephyr/build
+  script:
+    - source zephyr/zephyr-env.sh
+    - cd src/zephyr; mkdir build; cd build
+    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
+    - make
+
+
 #pages:
 #  tags:
 #    - short-jobs

@@ -27,14 +27,14 @@
 #define RESPONSE_END() \
   do { sb_add_char(&response[0]->result, '}'); } while (0)
 
-int in3_verify_eth_basic(in3_vctx_t* vc) {
+in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);
 
   // make sure we want to verify
-  if (vc->config->verification == VERIFICATION_NEVER) return 0;
+  if (vc->config->verification == VERIFICATION_NEVER) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
-  if (!vc->result || d_type(vc->result) == T_NULL) return 0;
+  if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
 
   // do we support this request?
   if (!method) return vc_err(vc, "No Method in request defined!");
@@ -52,33 +52,33 @@ int in3_verify_eth_basic(in3_vctx_t* vc) {
     // for txReceipt, we need the txhash
     return eth_verify_account_proof(vc);
   else if (strcmp(method, "eth_gasPrice") == 0)
-    return 0;
+    return IN3_OK;
   else if (!strcmp(method, "eth_newFilter") || !strcmp(method, "eth_newBlockFilter") || !strcmp(method, "eth_newPendingFilter") || !strcmp(method, "eth_uninstallFilter") || !strcmp(method, "eth_getFilterChanges"))
-    return 0;
+    return IN3_OK;
   else if (strcmp(method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
     return eth_verify_eth_getLog(vc, d_len(vc->result));
   else if (strcmp(method, "eth_sendRawTransaction") == 0) {
     bytes32_t hash;
     sha3_to(d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), hash);
-    return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? 0 : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
+    return bytes_cmp(*d_bytes(vc->result), bytes(hash, 32)) ? IN3_OK : vc_err(vc, "the transactionHash of the response does not match the raw transaction!");
   } else
     return in3_verify_eth_nano(vc);
 }
 
-int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  if (ctx->len > 1) return 0; // internal handling is only possible for single requests (at least for now)
+in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
+  if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
   // check method
   if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0) {
     // get the transaction-object
     d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", -1);
-    if (!ctx->client->signer) return ctx_set_error(ctx, "no signer set", -1);
+    if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
+    if (!ctx->client->signer) return ctx_set_error(ctx, "no signer set", IN3_EINVAL);
 
     // sign it.
     bytes_t raw = sign_tx(tx_params + 1, ctx);
-    if (!raw.len) return ctx_set_error(ctx, "error signing the transaction", -1);
+    if (!raw.len) return ctx_set_error(ctx, "error signing the transaction", IN3_EINVAL);
 
     // build the RPC-request
     uint64_t id = d_get_longk(req, K_ID);
@@ -111,39 +111,39 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
-      return ctx_set_error(ctx, "invalid type of params, expected object", -1);
+      return ctx_set_error(ctx, "invalid type of params, expected object", IN3_EINVAL);
     else if (!filter_opt_valid(tx_params + 1))
-      return ctx_set_error(ctx, "filter option parsing failed", -1);
-    if (!tx_params->data) return ctx_set_error(ctx, "binary request are not supported!", -1);
+      return ctx_set_error(ctx, "filter option parsing failed", IN3_EINVAL);
+    if (!tx_params->data) return ctx_set_error(ctx, "binary request are not supported!", IN3_ENOTSUP);
 
-    char*  fopt = d_create_json(tx_params + 1);
-    size_t id   = filter_add(ctx->client, FILTER_EVENT, fopt);
-    if (!id) {
+    char*     fopt = d_create_json(tx_params + 1);
+    in3_ret_t res  = filter_add(ctx->client, FILTER_EVENT, fopt);
+    if (res < 0) {
       _free(fopt);
-      return ctx_set_error(ctx, "filter creation failed", -1);
+      return ctx_set_error(ctx, "filter creation failed", res);
     }
 
     RESPONSE_START();
     sb_add_char(&response[0]->result, '"');
-    sb_add_hexuint(&response[0]->result, id);
+    sb_add_hexuint(&response[0]->result, res);
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
-    return 0;
+    return IN3_OK;
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
-    size_t id = filter_add(ctx->client, FILTER_BLOCK, NULL);
-    if (!id) return ctx_set_error(ctx, "filter creation failed", -1);
+    in3_ret_t res = filter_add(ctx->client, FILTER_BLOCK, NULL);
+    if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
 
     RESPONSE_START();
     sb_add_char(&response[0]->result, '"');
-    sb_add_hexuint(&response[0]->result, id);
+    sb_add_hexuint(&response[0]->result, res);
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newPendingTransactionFilter") == 0) {
-    return ctx_set_error(ctx, "pending filter not supported", -1);
+    return ctx_set_error(ctx, "pending filter not supported", IN3_ENOTSUP);
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_uninstallFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
-      return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", -1);
+      return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
@@ -152,16 +152,16 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
-      return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", -1);
+      return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
-    int ret = filter_get_changes(ctx, id, &response[0]->result);
-    if (ret < 0)
-      return ctx_set_error(ctx, "failed to get filter changes", -1);
+    in3_ret_t ret = filter_get_changes(ctx, id, &response[0]->result);
+    if (ret != IN3_OK)
+      return ctx_set_error(ctx, "failed to get filter changes", ret);
     RESPONSE_END();
   }
-  return 0;
+  return IN3_OK;
 }
 
 void in3_register_eth_basic() {

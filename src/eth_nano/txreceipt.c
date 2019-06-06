@@ -34,9 +34,10 @@ bytes_t* create_tx_path(uint32_t index) {
   return bb_move_to_bytes(bb);
 }
 
-int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
+in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
 
-  int        res = 0, i;
+  in3_ret_t  res = IN3_OK;
+  int        i;
   bytes_t    root;
   d_token_t* block_hash = d_getl(vc->result, K_BLOCK_HASH, 32);
 
@@ -47,7 +48,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
   if (!vc->result || d_type(vc->result) == T_NULL)
-    return 0;
+    return IN3_OK;
 
   if (!vc->proof)
     return vc_err(vc, "Proof is missing!");
@@ -60,10 +61,10 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
   res = eth_verify_blockheader(vc, blockHeader, d_bytes(block_hash));
 
   // make sure the blocknumner on the receipt is correct
-  if (res == 0 && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) != d_get_longk(vc->result, K_BLOCK_NUMBER)))
+  if (res == IN3_OK && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) != d_get_longk(vc->result, K_BLOCK_NUMBER)))
     res = vc_err(vc, "wrong blocknumber in the result");
 
-  if (res == 0) {
+  if (res == IN3_OK) {
     // encode the tx_path
     bytes_t* path = create_tx_path(d_get_intk(vc->proof, K_TX_INDEX));
 
@@ -82,7 +83,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
     }
 
     // now we need to verify the transactionIndex by making sure we can do the merkle proof for the same transactionhash and transaction index.
-    if (res == 0) {
+    if (res == IN3_OK) {
       bytes_t   raw_transaction = {.len = 0, .data = NULL};
       bytes_t** proof           = d_create_bytes_vec(d_get(vc->proof, K_TX_PROOF));
 
@@ -108,7 +109,7 @@ int eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash) {
   }
 
   // if this was all successfull, we still need to make sure all values are correct in the result.
-  if (res == 0) {
+  if (res == IN3_OK) {
 
     // check rest of the values
     if (!d_eq(d_get(vc->proof, K_TX_INDEX), d_get(vc->result, K_TRANSACTION_INDEX)))
