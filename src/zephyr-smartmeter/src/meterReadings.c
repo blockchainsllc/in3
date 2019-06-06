@@ -104,15 +104,14 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
       pFncCB(buf, pUserData);
       break;
     case T_INTEGER:
-      // printk("### T_INTEGER: %i - ", d_int(t));
       snprintX(buf, sizeof(buf)-1,"%i", d_int(t));
       pFncCB(buf, pUserData);
       break;
     case T_BYTES:
       if (t->len < 9) {
         // printk("### T_BYTES: %" PRId64 " - ",  d_long(t)); // does not work on nRF52
+
         snprintX(buf, sizeof(buf)-1,"%s",u64tostr(d_long(t)));
-        printk("### %s::%s: strVal = %s", __FILE__,__func__, buf);
       } else {
         int pos = 0;
         snprintX(&buf[pos],3,"0x");
@@ -123,7 +122,6 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
           pos += 2;
         }
       }
-      // printk("### T_BYTES - (pre) pFncCB(..): buf=\"%s\"", buf);
       pFncCB(buf, pUserData);
       break;
     case T_NULL:
@@ -448,8 +446,6 @@ addReading_RSP_t* meterReadings_addReading(
                                             int32_t   _current_mA,
                                             uint32_t  _counter_mWh)
 {
-  printk("%s::%s: ENTER\n", __FILE__, __func__);
-  printk("###### %s, %d, %d, %d\n",_timestampYYYYMMDDhhmmss, _voltage_mV, _current_mA, _counter_mWh);
   static addReading_RSP_t addReading_RSP;
   memset(&addReading_RSP, 0, sizeof(addReading_RSP));
   addReading_RSP.nExecResult = -1; // err
@@ -468,17 +464,13 @@ addReading_RSP_t* meterReadings_addReading(
   memset(paramBuffer, 0, sizeof(paramBuffer));
   snprintX(paramBuffer, sizeof(paramBuffer)-1, "[%s,%d,%d,%d]", _timestampYYYYMMDDhhmmss, _voltage_mV, _current_mA, _counter_mWh);
 
-  printk("###### %s -- params: %s\n", __func__, paramBuffer);
-
   // set signer (necessary for method "eth_sendTransaction")
   hex2byte_arr("F69D0B9DE3E6F7BE20C93B924CED4E009D167A50D321F870430AE9CD312B986C", -1, pk, 32);
 
   eth_set_pk_signer(l_pIN3, pk);
 
   call_request_t* req = NULL;
-  printk("### prepare_tx (pre): %s\n", paramBuffer);
   prepare_tx(sig, addrContract, paramBuffer, block_number, gas_limit, value);
-  printk("### prepare_tx (post): %s\n", paramBuffer);
 
   // send the request
   char* pBuffer_Result  = NULL;
@@ -486,9 +478,7 @@ addReading_RSP_t* meterReadings_addReading(
   char* error           = NULL;
 
   // send the request
-  printk("### in3_client_rpc (pre)\n");
   int errID = in3_client_rpc(l_pIN3, method, paramBuffer, &pBuffer_Result, &error);
-  printk("### in3_client_rpc (post)\n");
   UNUSED_VAR(errID);
 
   // //  only, if  strcmp(method, "eth_sendTransaction") == 0
@@ -533,7 +523,6 @@ addReading_RSP_t* meterReadings_addReading(
   if (pBuffer_Result) _free(pBuffer_Result);
   if (error)          _free(error);
 
-  printk("%s::%s: EXIT\n", __FILE__, __func__);
   return &addReading_RSP;
 }
 

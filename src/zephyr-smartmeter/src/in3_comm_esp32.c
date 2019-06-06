@@ -47,7 +47,7 @@ static unsigned char l_strREQ[16] = {"n/a"};
 
 static int waitForResponse(char* responseBuffer, unsigned int bufsize, int nTimeOutInSeconds)
 {
-    printk("%s::%s (REQ: %s)\n",__FILE__,__func__, l_strREQ);
+    // printk("%s::%s (REQ: %s)\n",__FILE__,__func__, l_strREQ);
 
     int nBytesReceived = -1; // default: error
     
@@ -85,10 +85,6 @@ static int waitForResponse(char* responseBuffer, unsigned int bufsize, int nTime
 static char sl_responseBuffer[4096];
 static void sendRequestAndWaitForResponse( char* url, char* payload, in3_response_t* r  ) 
 {    // we expect here that the printk(..) output goes to the serial port
-
-  printk("### %s::%s:\n", __FILE__, __func__);
-  printk("### url: %s\n", url);
-  printk("### dta: %s\n\n", payload);
 
 	int bufsize = sizeof(sl_responseBuffer);
 	int nBytesReceived = 0;//serial_Read(sl_responseBuffer, bufsize);
@@ -320,7 +316,6 @@ void in3_comm_esp32_Modbus_ReadOut(getReading_RSP_t* reading){
                     )
                 {   // seems to be hex-value
                     nBytesReceived = 0;
-                    printk("### %s: channel_%d => %s\n", __func__, i8Channel, sl_responseBuffer);
                     if (isReceivedData_StartsWith("ERR", sl_responseBuffer, sizeof(sl_responseBuffer)))
                     {
                         state = enmStateERR;
@@ -330,9 +325,6 @@ void in3_comm_esp32_Modbus_ReadOut(getReading_RSP_t* reading){
                         {
                         case 0: {// voltage
                             reading->nExecResult = 0;
-                            reading->readingEntry.i32Voltage_mV = strtol(&sl_responseBuffer[2],NULL,16);
-                            float fVoltage = *((float*)(&(reading->readingEntry.i32Voltage_mV)));
-                            printf("### Voltage as float: %f\n",fVoltage);
                             reading->readingEntry.i32Voltage_mV = (1000.0 * hexstrToFloat(sl_responseBuffer));
                         } break;
                         case 1: // current
@@ -420,7 +412,6 @@ char* in3_comm_esp32_getTimestamp()
                 sl_responseBuffer[bufsize-1]='\0';
                 if (  nBytesReceived >= 3 )
                 {
-                    printk("### %s: Timestamp received => %s (len: %d, bytesReceived: %d )\n", __func__, sl_responseBuffer, strlen(sl_responseBuffer), nBytesReceived);
                     if (    nBytesReceived < 14 // timestamp has to be of min. length 14: YYYYMMDDhhmmss   
                         ||  isReceivedData_StartsWith("ERR", sl_responseBuffer, sizeof(sl_responseBuffer)))
                     {

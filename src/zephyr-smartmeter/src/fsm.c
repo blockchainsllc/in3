@@ -52,12 +52,13 @@ static void wait_for_event(void) {
 void print_MeterReading(getReading_RSP_t* pReadingResponse) {
   if (pReadingResponse != NULL) {
     if (pReadingResponse->nExecResult >= 0) {
-      printk("TimeStp: %s\n", pReadingResponse->readingEntry.timestampYYYYMMDDhhmmss);
-      printk("Voltage: %d mV\n", pReadingResponse->readingEntry.i32Voltage_mV);
-      printk("Current: %d mA\n", pReadingResponse->readingEntry.i32Current_mA);
-      printk("Energy : %d mWh\n", pReadingResponse->readingEntry.u32EnergyMeter_mWh);
+      printk("\tTimeStp: %s\n", pReadingResponse->readingEntry.timestampYYYYMMDDhhmmss);
+      printk("\tVoltage: %d mV\n", pReadingResponse->readingEntry.i32Voltage_mV);
+      printk("\tCurrent: %d mA\n", pReadingResponse->readingEntry.i32Current_mA);
+      printk("\tPower  : %d mW\n", pReadingResponse->readingEntry.u32Power_mW);
+      printk("\tEnergy : %d mWh\n", pReadingResponse->readingEntry.u32EnergyMeter_mWh);
     } else {
-      printk("An error occured: id %d\n", pReadingResponse->nExecResult);
+      printk("\tAn error occured: id %d\n", pReadingResponse->nExecResult);
     }
   }
 }
@@ -106,16 +107,15 @@ static getReading_RSP_t* pElectricityMeterReading = NULL;
 void do_action()
 {
   l_u64Cntr++;
+  printk("~M%s\n", u64tostr(l_u64Cntr));
 
-  printX("do_action()\n");
-  k_sleep(900);
   static u32_t timeOut = 0;
   // action
   switch (g_activityState)
   {
     case AS_start: // send request (and then wait for "OK connected")
       // printf("~[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[]}]\n");
-      printX("AS_start\n");
+      cntErr = 0;
       resetReceiveData(buffer, sizeof(buffer));
       if (!l_bReady)
       {
@@ -128,23 +128,23 @@ void do_action()
       break;
     case AS_waitFor_Ready:
     {
-      printX("AS_waitFor_Ready\n");
       
       int erg = receiveData(buffer, sizeof(buffer));
       switch (erg)
       {
         case -1: // err
           g_activityState = AS_err;
-          dbg_log("<-- err: while receiving data\n");
+          printk("<-- err: while receiving data\n");
           break;
         case 1: // data complete
           if (isReceivedData_StartsWith("READY", buffer, sizeof(buffer))){
             l_bReady = 1;
             g_activityState = AS_AFTER_START;
           } else {
-            dbg_log("<-- err: received data not equal to READY: \"%s\"\n", &buffer[1]);
+            printk("<-- err: received data not equal to READY: \"%s\"\n", &buffer[1]);
             g_activityState = AS_err;
           }
+          return;
           break;
       
         default:
@@ -161,7 +161,7 @@ void do_action()
       } else {
         printX("    now: %u\ntimeout: %u\n", now, timeOut);
       }
-        
+      k_sleep(800);    
     } break;
     case AS_callMeterReadings_getContractVersion:
     {
@@ -177,17 +177,20 @@ void do_action()
       if (pContractVersion_RSP->nExecResult >= 0){
         // ok
         cntErr = 0;
-      } else if (cntErr++ % 5) { 
+      } else if (++cntErr % 5 == 0) { 
         // 5-times error ==> restart
         l_bReady = 0;
         printk("##### ---- AS_callMeterReadings_getContractVersion - starting after 5x ERR ---- #####\n");
         g_activityState = AS_start;
+      } else {
+        printk("Error while AS_callMeterReadings_getContractVersion (cntErr = %d)\n", cntErr);
       }
     } break;
     case AS_callMeterReadings_getLastReading:
     {
       getReading_RSP_t* pReading_RSP = NULL;
       pReading_RSP = meterReadings_getLastReading();
+      printk("Reading back from Chain:\n");
       print_MeterReading(pReading_RSP);
 
       if (    pReading_RSP != NULL 
@@ -201,23 +204,23 @@ void do_action()
 
         // g_activityState = AS_callMeterReadings_addReading;
         g_activityState = AS_readElectricityMeter;
-      } else if (cntErr++ % 5) { 
+      } else if (++cntErr % 5 == 0) { 
         // 5-times error ==> restart
+        printk("##### ---- AS_callMeterReadings_getLastReading - restarting after 5x ERR ---- #####\n");
         l_bReady = 0;
-        printk("##### ---- AS_callMeterReadings_getLastReading - starting after 5x ERR ---- #####\n");
         g_activityState = AS_start;
       } else {
         // error while reading values ... start cycle again with getContractVersion
+        printk("Error while AS_callMeterReadings_getLastReading (cntErr = %d)\n", cntErr);
         g_activityState = AS_callMeterReadings_getContractVersion;
       }
 
     } break;
     case AS_readElectricityMeter:
     {
+      printk("Reading Electricity Meter:\n");
       pElectricityMeterReading = electricityMeter_ReadOut();
-      printk("### AS_readElectricityMeter:\n");
       print_MeterReading(pElectricityMeterReading);
-      printk("###### after print_MeterReading -- Energy: %d mWh\n", pElectricityMeterReading->readingEntry.u32EnergyMeter_mWh);
       if (    pElectricityMeterReading != NULL 
           &&  pElectricityMeterReading->nExecResult >= 0 ) 
       {
@@ -225,13 +228,13 @@ void do_action()
       } else
       {
         // error while reading values ... start cycle again with getContractVersion
+        printk("Error while AS_readElectricityMeter\n");
         g_activityState = AS_callMeterReadings_getContractVersion;
       }
       
     }break;
     case AS_callMeterReadings_addReading:
     {
-      printk("### AS_callMeterReadings_addReading:\n");
       addReading_RSP_t *pAddReading_RSP = NULL; 
       pAddReading_RSP = meterReadings_addReading( pElectricityMeterReading->readingEntry.timestampYYYYMMDDhhmmss, 
                                                   pElectricityMeterReading->readingEntry.i32Voltage_mV, 
@@ -239,28 +242,21 @@ void do_action()
                                                   pElectricityMeterReading->readingEntry.u32EnergyMeter_mWh 
                                                 );
 
-      g_activityState = AS_callMeterReadings_getContractVersion;
-
-      if (pAddReading_RSP){
-        printk("pAddReading_RSP = %0x -- pAddReading_RSP->nExecResult = %d\n",pAddReading_RSP, pAddReading_RSP->nExecResult);
-      } else {
-        printk("pAddReading_RSP = %0x\n", pAddReading_RSP);
-      }
-      
+      g_activityState = AS_callMeterReadings_getContractVersion;      
 
       if (    pAddReading_RSP != NULL 
           &&  pAddReading_RSP->nExecResult >= 0 ) 
       {
         // ok
         cntErr = 0;
-      } else if (cntErr++ % 5) { 
+      } else if (++cntErr % 5 == 0) { 
         // 5-times error ==> restart
         l_bReady = 0;
         g_activityState = AS_start;
         printk("##### ---- AS_callMeterReadings_addReading - starting after 5x ERR ---- #####\n");
         // NVC_SystemReset();
       } else {
-        printk("Error while calling meterReadings_addReading\n");
+        printk("Error while calling meterReadings_addReading (cntErr = %d)\n", cntErr);
       }
 
     }break;
@@ -309,12 +305,14 @@ void do_action()
       if (    g_activityState == AS_waitFor_OkConnected
           &&  k_uptime_get_32() >= timeOut)  // timeout;
       {
-         g_activityState = AS_err; // timeout
+        printk("AS_waitFor_OkConnected timed out.\n");
+        g_activityState = AS_err; // timeout
       }
+      k_sleep(800);    
     } break;
     case AS_waitFor_Response: 
     {
-      printX("AS_waitFor_Response\n");
+      printX("### AS_waitFor_Response\n");
       int erg = receiveData(buffer, sizeof(buffer));
       switch (erg)
       {
@@ -338,16 +336,19 @@ void do_action()
       if (    g_activityState == AS_waitFor_Response
           &&  k_uptime_get_32() >= timeOut)  // timeout;
       {
+        printk("AS_waitFor_Response timed out.\n");
          g_activityState = AS_err; // timeout
       }
+      k_sleep(800);    
     } break;
   
     default:
+      k_sleep(800);    
       break;
   }
 
 }
-
+ 
 
 // PUBLIC API
 void in3_signal_event(void) {
