@@ -9,7 +9,6 @@
 #include "uart_comm.h"
 #include "../core/util/debug.h"
 #include "in3_comm_esp32.h"
-#include <time.h>
 
 #ifdef __ZEPHYR__
   #define printX    printk
@@ -33,8 +32,6 @@ const int c_nTIME_OUT = 5;
 static int serial_Read(void *pBuf, int szBuf)
 {
     return receiveData(pBuf, szBuf);
-    struct tm timeinfo;
-    getLocalTime(&timeinfo);
 }
 
 static void serial_Write(const void *pBuf, int szBuf)
