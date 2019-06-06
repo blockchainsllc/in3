@@ -1,9 +1,11 @@
 #include "project.h"
 #include <console.h>
 #include <misc/byteorder.h>
+#include "../eth_basic/eth_basic.h"
 #include "uart_comm.h"
 #include "in3_comm_esp32.h"
 #include "meterReadings.h"
+#include "electricityMeter.h"
 
 // #define printX printk
 #define printX(...) 
@@ -60,9 +62,17 @@ void print_MeterReading(getReading_RSP_t* pReadingResponse) {
   }
 }
 
+static uint64_t l_u64Cntr = 0;
+char* getTimestamp_asString(){
+  return in3_comm_esp32_getTimestamp();
+  // static char bufTmp[15];
+  // memset(bufTmp, 0, sizeof(bufTmp));
+  // sprintf( bufTmp, "%s", u64tostr(l_u64Cntr));
+  // return bufTmp;
+}
+
 
 static char buffer[1024];
-static unsigned short ixWrite;
 
 typedef enum {
   AS_err = -1,
@@ -75,6 +85,8 @@ typedef enum {
   AS_sleep10s_before_waitForOkConnected,
   AS_callMeterReadings_getContractVersion,
   AS_callMeterReadings_getLastReading,
+  AS_readElectricityMeter,
+  AS_callMeterReadings_addReading,
 } enmActivityState_t;
 
 // #define AS_AFTER_START  AS_sendRequest
@@ -84,10 +96,17 @@ volatile enmActivityState_t g_activityState = 0;
 
 static unsigned char l_bReady = 0;
 static int cntErr = 0;
+static int32_t l_i32U = 0;
+static int32_t l_i32I = 0;
+static uint32_t l_u32P = 0;
+static getReading_RSP_t* pElectricityMeterReading = NULL;
+
 
 // void do_action(action_type_t action)
 void do_action()
 {
+  l_u64Cntr++;
+
   printX("do_action()\n");
   k_sleep(900);
   static u32_t timeOut = 0;
@@ -138,7 +157,7 @@ void do_action()
           &&  now >= timeOut)  // timeout; send again RESET-Cmd.
       {
         printk("~>H\n");
-        timeOut = k_uptime_get_32() + 3000;
+        timeOut = k_uptime_get_32() + 4000;
       } else {
         printX("    now: %u\ntimeout: %u\n", now, timeOut);
       }
@@ -161,6 +180,7 @@ void do_action()
       } else if (cntErr++ % 5) { 
         // 5-times error ==> restart
         l_bReady = 0;
+        printk("##### ---- AS_callMeterReadings_getContractVersion - starting after 5x ERR ---- #####\n");
         g_activityState = AS_start;
       }
     } break;
@@ -170,16 +190,80 @@ void do_action()
       pReading_RSP = meterReadings_getLastReading();
       print_MeterReading(pReading_RSP);
 
+      if (    pReading_RSP != NULL 
+          &&  pReading_RSP->nExecResult >= 0 ) 
+      {
+        // ok
+        cntErr = 0;
+        l_i32I = pReading_RSP->readingEntry.i32Current_mA;
+        l_i32U = pReading_RSP->readingEntry.i32Voltage_mV;
+        l_u32P = pReading_RSP->readingEntry.u32EnergyMeter_mWh;
+
+        // g_activityState = AS_callMeterReadings_addReading;
+        g_activityState = AS_readElectricityMeter;
+      } else if (cntErr++ % 5) { 
+        // 5-times error ==> restart
+        l_bReady = 0;
+        printk("##### ---- AS_callMeterReadings_getLastReading - starting after 5x ERR ---- #####\n");
+        g_activityState = AS_start;
+      } else {
+        // error while reading values ... start cycle again with getContractVersion
+        g_activityState = AS_callMeterReadings_getContractVersion;
+      }
+
+    } break;
+    case AS_readElectricityMeter:
+    {
+      pElectricityMeterReading = electricityMeter_ReadOut();
+      printk("### AS_readElectricityMeter:\n");
+      print_MeterReading(pElectricityMeterReading);
+      printk("###### after print_MeterReading -- Energy: %d mWh\n", pElectricityMeterReading->readingEntry.u32EnergyMeter_mWh);
+      if (    pElectricityMeterReading != NULL 
+          &&  pElectricityMeterReading->nExecResult >= 0 ) 
+      {
+        g_activityState = AS_callMeterReadings_addReading;
+      } else
+      {
+        // error while reading values ... start cycle again with getContractVersion
+        g_activityState = AS_callMeterReadings_getContractVersion;
+      }
+      
+    }break;
+    case AS_callMeterReadings_addReading:
+    {
+      printk("### AS_callMeterReadings_addReading:\n");
+      addReading_RSP_t *pAddReading_RSP = NULL; 
+      pAddReading_RSP = meterReadings_addReading( pElectricityMeterReading->readingEntry.timestampYYYYMMDDhhmmss, 
+                                                  pElectricityMeterReading->readingEntry.i32Voltage_mV, 
+                                                  pElectricityMeterReading->readingEntry.i32Current_mA, 
+                                                  pElectricityMeterReading->readingEntry.u32EnergyMeter_mWh 
+                                                );
+
       g_activityState = AS_callMeterReadings_getContractVersion;
-      if (pReading_RSP->nExecResult >= 0){
+
+      if (pAddReading_RSP){
+        printk("pAddReading_RSP = %0x -- pAddReading_RSP->nExecResult = %d\n",pAddReading_RSP, pAddReading_RSP->nExecResult);
+      } else {
+        printk("pAddReading_RSP = %0x\n", pAddReading_RSP);
+      }
+      
+
+      if (    pAddReading_RSP != NULL 
+          &&  pAddReading_RSP->nExecResult >= 0 ) 
+      {
         // ok
         cntErr = 0;
       } else if (cntErr++ % 5) { 
         // 5-times error ==> restart
         l_bReady = 0;
         g_activityState = AS_start;
+        printk("##### ---- AS_callMeterReadings_addReading - starting after 5x ERR ---- #####\n");
+        // NVC_SystemReset();
+      } else {
+        printk("Error while calling meterReadings_addReading\n");
       }
-    } break;
+
+    }break;
     case AS_sendRequest:
     {
       printX("AS_sendRequest\n");
@@ -306,6 +390,7 @@ static in3_state_t in3_init(void) {
 	client->in3->chainId = 0x044d; // Tobalaba
 	client->in3->requestCount = 1;
 	client->in3->max_attempts=3;
+  client->in3->cacheStorage = NULL;
   // g_c->cacheStorage = NULL;
   
   client->in3->proof = PROOF_NONE; //PROOF_STANDARD //proof_standard nur mit eth_full mgl!
@@ -319,7 +404,8 @@ static in3_state_t in3_init(void) {
 	client->msg = k_calloc(1, sizeof(in3_msg_t));
 
   // in3_cache_init(client->in3);
-	in3_register_eth_nano();
+	in3_register_eth_basic();
+	// in3_register_eth_nano();
 	// bluetooth_setup(client);
 
   meterReadingsSetIN3(client->in3);
@@ -356,7 +442,6 @@ static in3_state_t in3_waiting(void) {
 }
 
 static in3_state_t in3_action(void) {
-  int           err;
   // dbg_log("<--- before msg_get_action(..)\n");
   // action_type_t action = msg_get_action(client->msg->data);
   // dbg_log("<--- after msg_get_action(..)\n");
@@ -399,7 +484,6 @@ static in3_state_t in3_TEST(void) {
   ledpower_set(IO_ON); // power led on
   k_sleep(1000);
 
-  unsigned char recv_char;
 //   uart_poll_in(struct device *dev, unsigned char *p_char);
   printk("printk -- cntr = %u\n", cntr_TEST++);
 

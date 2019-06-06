@@ -1,3 +1,6 @@
+#include "../core/client/client.h"
+#include "meterReadingTypes.h"
+
 #if !defined(IN3_COMM_ESP32_H)
 #define IN3_COMM_ESP32_H
 
@@ -9,7 +12,9 @@ extern int in3_comm_esp32_sendJsonRequestAndWait(
                                     in3_response_t* result
                                 );
 
+extern void in3_comm_esp32_Modbus_ReadOut(getReading_RSP_t* reading);
 
+extern char* in3_comm_esp32_getTimestamp();
 
 
 #endif // IN3_COMM_ESP32_H

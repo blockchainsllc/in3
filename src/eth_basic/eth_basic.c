@@ -87,7 +87,13 @@ int eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     sb_add_chars(sb, "]");
     if (id) {
       char tmp[16];
-      sprintf(tmp, ", \"id\":%" PRId64 "", id);
+  
+#ifdef __ZEPHYR__
+      snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64tostr(id));
+#else
+      snprintf(tmp, sizeof(tmp), ", \"id\":%" PRId64 "", id);
+      // sprintf(tmp, ", \"id\":%" PRId64 "", id);
+#endif
       sb_add_chars(sb, tmp);
     }
     sb_add_chars(sb, "}");

@@ -4,7 +4,7 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/opt/zephyr-sdk/arm-zephyr-eabi/arm-zephyr-eabi/include/**",
+                "/home/ef/sysroots/armv5-zephyr-eabi/usr/include/**",
                 "${workspaceFolder}/src/**"
             ],
             "defines": [

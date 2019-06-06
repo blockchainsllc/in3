@@ -253,6 +253,7 @@ static void disconnected(struct bt_conn *conn, u8_t reason)
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
 {
 int mtu = bt_gatt_get_mtu(conn);
+	UNUSED_VAR(mtu);
 
 	dbg_log("<--- req MTU=%d\n", mtu);
 	return true;
@@ -261,6 +262,7 @@ int mtu = bt_gatt_get_mtu(conn);
 static void le_param_updated(struct bt_conn *conn, u16_t interval, u16_t latency, u16_t timeout)
 {
 int mtu = bt_gatt_get_mtu(conn);
+	UNUSED_VAR(mtu);
 
 	dbg_log("<--- upd MTU=%d\n", mtu);
 	return;

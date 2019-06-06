@@ -248,8 +248,9 @@ int verify_rent(struct in3_client *c)
 	id = json_get_int_value(amsg, "msgId");
 
 	in3_get_tx_receipt(c, tx_hash, &r); // try to receive response 
-	if (r)
+	if (r){
 		dbg_log("<--- response:\n%s\n", r);
+	}
 
 	if (in3_can_rent(c, r, amsg) < 0)
 		goto out;

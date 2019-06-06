@@ -40,7 +40,16 @@ void meterReadingsSetIN3(in3_t* pIN3){
   l_pIN3 = pIN3;
 }
 
+static char* lc_addrContract_tobalaba = "0x5bed06b162100cfa567d103795ea55c9368b6c06"; // tobalaba-address
+static char* lc_addrContract_mainnet = "0xfe992bfe3adf0b61d0ca144fa4c5d6e81385384b";  // main net address
 
+static inline char *getContractAddress(){
+  char *pstrAddr = "";
+  if (l_pIN3) {
+    pstrAddr = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
+  }
+  return pstrAddr;
+}
 
 call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value) {
   call_request_t* req = parseSignature(fn_sig);
@@ -79,19 +88,6 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
   return req;
 }
 
-const unsigned char *u64tostr(uint64_t u64Val){
-  static unsigned char strVal[21];
-  strVal[sizeof(strVal)-1] = '\0';
-  int pos = sizeof(strVal)-1;
-  do
-  {
-    strVal[--pos] = '0' + u64Val%10;
-    u64Val /= 10;
-  } while (u64Val > 0 && pos > 0);
-
-  return (&strVal[pos]);  
-}
-
 typedef void (*CB_extractVal_t)(const char*, void* pUserData);
 
 void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
@@ -116,6 +112,7 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
       if (t->len < 9) {
         // printk("### T_BYTES: %" PRId64 " - ",  d_long(t)); // does not work on nRF52
         snprintX(buf, sizeof(buf)-1,"%s",u64tostr(d_long(t)));
+        printk("### %s::%s: strVal = %s", __FILE__,__func__, buf);
       } else {
         int pos = 0;
         snprintX(&buf[pos],3,"0x");
@@ -204,8 +201,6 @@ void fillDataStruct(getReading_RSP_t* pReadingRSP, d_token_t* t)
 }
 
 
-static char* lc_addrContract_tobalaba = "0x5bed06b162100cfa567d103795ea55c9368b6c06"; // tobalaba-address
-static char* lc_addrContract_mainnet = "0xfe992bfe3adf0b61d0ca144fa4c5d6e81385384b";  // main net address
 getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
 {
   static getReading_RSP_t getReading_Response;
@@ -214,7 +209,7 @@ getReading_RSP_t* meterReadings_getReading(uint32_t ixReading)
   char* block_number = "latest";
   char* sig = "getReading(uint256):(uint48,int24,int24,uint32)";
   
-  char* addrContract = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
+  char* addrContract = getContractAddress();
 
   // const char* paramBuffer = "[0,"Text",234]";
   char* method = "eth_call";
@@ -281,7 +276,7 @@ getReading_RSP_t* meterReadings_getLastReading()
   char* sig = "getLastReading():(uint48,int24,int24,uint32)";
   // char* sig = "getLastReading():(uint256,int256,int256,uint256)";
 
-  char* addrContract = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
+  char* addrContract = getContractAddress();
 
   char* method = "eth_call";
 
@@ -379,15 +374,13 @@ void fillContractVersionString(getContractVersion_RSP_t* pRetValContainer, d_tok
 // function getContractVersion():(string memory)
 getContractVersion_RSP_t* meterReadings_getContractVersion()
 {
-  DBG_FNCTRACE_ENTER
-
   static getContractVersion_RSP_t getContractVersion_Response;
   memset(&getContractVersion_Response, 0, sizeof(getContractVersion_Response));
 
   char* block_number = "latest";
   char* sig = "getContractVersion():(string)";
 
-  char* addrContract = l_pIN3->chainId == 0x01L ? lc_addrContract_mainnet : lc_addrContract_tobalaba;
+  char* addrContract = getContractAddress();
 
   char* method = "eth_call";
 
@@ -445,22 +438,102 @@ getContractVersion_RSP_t* meterReadings_getContractVersion()
   if (pBuffer_Result) _free(pBuffer_Result);
   if (error)          _free(error);
 
-  DBG_FNCTRACE_LEAVE
-
   return &getContractVersion_Response;
 }
 
 
-// function addReading(  uint48 _timestampYYYYMMDDhhmmss, 
-//                       int24 _voltage_mV, 
-//                       int24 _current_mA, 
-//                       uint32 _counter_mWh 
-//                     )
-uint64_t meterReadings_addReading(  uint64_t  _timestampYYYYMMDDhhmmss,
-                                    int32_t   _voltage_mV,
-                                    int32_t   _current_mA,
-                                    uint32_t  _counter_mWh
-                                  ){
+addReading_RSP_t* meterReadings_addReading(
+                                            char*     _timestampYYYYMMDDhhmmss,
+                                            int32_t   _voltage_mV,
+                                            int32_t   _current_mA,
+                                            uint32_t  _counter_mWh)
+{
+  printk("%s::%s: ENTER\n", __FILE__, __func__);
+  printk("###### %s, %d, %d, %d\n",_timestampYYYYMMDDhhmmss, _voltage_mV, _current_mA, _counter_mWh);
+  static addReading_RSP_t addReading_RSP;
+  memset(&addReading_RSP, 0, sizeof(addReading_RSP));
+  addReading_RSP.nExecResult = -1; // err
 
-  return 0x0;
+  char*     block_number  = NULL;
+  uint64_t  gas_limit     = 100000;
+  char*     value         = NULL;
+  char*     sig           = "addReading(uint48,int24,int24,uint32)";
+  char*     method        = "eth_sendTransaction";
+  int       bWait         = 0;//1;
+
+  char*     addrContract  = getContractAddress();
+  bytes32_t pk;
+
+  char paramBuffer[1024]; // supply enough buffer; we use it later on in the prepare_tx!
+  memset(paramBuffer, 0, sizeof(paramBuffer));
+  snprintX(paramBuffer, sizeof(paramBuffer)-1, "[%s,%d,%d,%d]", _timestampYYYYMMDDhhmmss, _voltage_mV, _current_mA, _counter_mWh);
+
+  printk("###### %s -- params: %s\n", __func__, paramBuffer);
+
+  // set signer (necessary for method "eth_sendTransaction")
+  hex2byte_arr("F69D0B9DE3E6F7BE20C93B924CED4E009D167A50D321F870430AE9CD312B986C", -1, pk, 32);
+
+  eth_set_pk_signer(l_pIN3, pk);
+
+  call_request_t* req = NULL;
+  printk("### prepare_tx (pre): %s\n", paramBuffer);
+  prepare_tx(sig, addrContract, paramBuffer, block_number, gas_limit, value);
+  printk("### prepare_tx (post): %s\n", paramBuffer);
+
+  // send the request
+  char* pBuffer_Result  = NULL;
+  char* result          = NULL;
+  char* error           = NULL;
+
+  // send the request
+  printk("### in3_client_rpc (pre)\n");
+  int errID = in3_client_rpc(l_pIN3, method, paramBuffer, &pBuffer_Result, &error);
+  printk("### in3_client_rpc (post)\n");
+  UNUSED_VAR(errID);
+
+  // //  only, if  strcmp(method, "eth_sendTransaction") == 0
+  // if (!error && pBuffer_Result && bWait) {
+  //   bytes32_t txHash;
+  //   hex2byte_arr(pBuffer_Result + 3, 64, txHash, 32);
+  //   result = eth_wait_for_receipt(l_pIN3, txHash);
+  // }
+
+  // freeing has to be done in "main"-program
+  // in3_free(l_pIN3); 
+
+  if (error) {
+    printk("### Error: %s\n", error);
+    addReading_RSP.nExecResult = -1;
+    // return &getContractVersion_Response;
+  } else {
+    addReading_RSP.nExecResult = 0;
+    if (pBuffer_Result) {
+      // if the result is a string, we remove the quotes
+      int len     = strlen(pBuffer_Result);
+      result      = (pBuffer_Result[0] == '"' && pBuffer_Result[len - 1] == '"') ? pBuffer_Result + 1 : pBuffer_Result;
+      result[ (len -= (pBuffer_Result == result) ? 0:2) ] = '\0';
+
+      // if the request was a eth_call, we decode the result
+      if (req) {
+        int l = len / 2 - 1;
+        if (l) {
+          bytes_t data;
+          data.data       = _malloc(l + 1);
+          data.len        = hex2byte_arr(result, -1, data.data, l + 1);
+          json_ctx_t* res = req_parse_result(req, data);
+          // fillContractVersionString(&getContractVersion_Response, res->result);
+          _free(data.data);
+        }
+        // if not we simply print the result
+      }
+    }
+  }
+
+  if (req)            req_free(req);
+  if (pBuffer_Result) _free(pBuffer_Result);
+  if (error)          _free(error);
+
+  printk("%s::%s: EXIT\n", __FILE__, __func__);
+  return &addReading_RSP;
 }
+

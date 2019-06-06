@@ -47,6 +47,9 @@ int size_of_bytes(int str_len);
 /**  converts a hexchar to byte (4bit) */
 uint8_t strtohex(char c);
 
+/** converts a uint64_t to string (char*) */
+extern const unsigned char *u64tostr(uint64_t u64Val);
+
 /** convert a c string to a byte array storing it into a existing buffer */
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size);
 

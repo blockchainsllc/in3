@@ -44,6 +44,7 @@ target_sources(app PRIVATE
   src/meterReadings.c
   src/uart_comm.c
   src/in3_comm_esp32.c
+  src/electricityMeter.c
 )
 
 # include core in the headers
@@ -58,6 +59,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/../eth_basic")
 include("${PROJECT_SOURCE_DIR}/include_eth_core.cmake")
 include("${PROJECT_SOURCE_DIR}/include_eth_nano.cmake")
 include("${PROJECT_SOURCE_DIR}/include_eth_api.cmake")
+include("${PROJECT_SOURCE_DIR}/include_eth_basic.cmake")
 include(../core/compiler.cmake)
 
 # add dependency
