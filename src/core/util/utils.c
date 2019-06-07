@@ -49,17 +49,16 @@ uint8_t strtohex(char c) {
   return 255;
 }
 
-const unsigned char *u64tostr(uint64_t u64Val){
-  static unsigned char strVal[21];
-  strVal[sizeof(strVal)-1] = '\0';
-  int pos = sizeof(strVal)-1;
-  do
-  {
-    strVal[--pos] = '0' + u64Val%10;
-    u64Val /= 10;
-  } while (u64Val > 0 && pos > 0);
+const unsigned char* u64tostr(uint64_t value) {
+  static unsigned char str[21];
+  str[sizeof(str) - 1] = '\0';
+  int pos              = sizeof(str) - 1;
+  do {
+    str[--pos] = '0' + value % 10;
+    value /= 10;
+  } while (value > 0 && pos > 0);
 
-  return (&strVal[pos]);  
+  return &str[pos];
 }
 
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {

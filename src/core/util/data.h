@@ -13,6 +13,7 @@
 #include "bytes.h"
 #include "stringbuilder.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #ifndef __DATA_H__
 #define __DATA_H__
@@ -159,5 +160,17 @@ static inline bool         d_iter_next(d_iterator_t* const iter) {
   iter->token = d_next(iter->token);
   return iter->left--;
 } /**< fetched the next token an returns a boolean indicating whther there is a next or not.*/
+
+#ifdef __ZEPHYR__
+#define printX printk
+#define fprintX fprintf // (kg): fprintk caused link-problems!
+#define snprintX snprintk
+#define vprintX vprintk
+#else
+#define printX printf
+#define fprintX fprintf
+#define snprintX snprintf
+#define vprintX vprintf
+#endif
 
 #endif
