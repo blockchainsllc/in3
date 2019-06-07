@@ -11,7 +11,8 @@
                 "DEBUG_OFF",
                 "DBG_FNCTRACE",
                 "USB_DONGLE",
-                "__ZEPHYR__"
+                "__ZEPHYR__",
+                "IN3_EXIT_SYSTEMRESET"
             ],
             "compilerPath": "~/sysroots/x86_64-pokysdk-linux/usr/bin/arm-zephyr-eabi/arm-zephyr-eabi-gcc",
             "cStandard":"c99",

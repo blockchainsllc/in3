@@ -13,6 +13,9 @@ static void exit(int status) {
   UNUSED_VAR(status);
   printk("in3 exit\n");
   fflush(stdout);
+#ifdef IN3_EXIT_SYSTEMRESET
+  NVIC_SystemReset();
+#endif
   while (1) {}
 }
 

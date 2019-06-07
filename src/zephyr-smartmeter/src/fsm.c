@@ -181,6 +181,7 @@ void do_action()
         // 5-times error ==> restart
         l_bReady = 0;
         printk("##### ---- AS_callMeterReadings_getContractVersion - starting after 5x ERR ---- #####\n");
+        NVIC_SystemReset();
         g_activityState = AS_start;
       } else {
         printk("Error while AS_callMeterReadings_getContractVersion (cntErr = %d)\n", cntErr);
