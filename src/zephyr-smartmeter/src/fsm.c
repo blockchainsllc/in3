@@ -63,10 +63,6 @@ void print_MeterReading(getReading_RSP_t* pReadingResponse) {
 static uint64_t l_u64Cntr = 0;
 char* getTimestamp_asString(){
   return in3_comm_esp32_getTimestamp();
-  // static char bufTmp[15];
-  // memset(bufTmp, 0, sizeof(bufTmp));
-  // sprintf( bufTmp, "%s", u64tostr(l_u64Cntr));
-  // return bufTmp;
 }
 
 
@@ -104,7 +100,8 @@ static getReading_RSP_t* pElectricityMeterReading = NULL;
 void do_action()
 {
   l_u64Cntr++;
-  printk("~M%s\n", u64tostr(l_u64Cntr));
+  char bufTmp[21];
+  printk("~M%s\n", u64tostr(l_u64Cntr, bufTmp, sizeof(bufTmp)));
 
   static u32_t timeOut = 0;
   // action

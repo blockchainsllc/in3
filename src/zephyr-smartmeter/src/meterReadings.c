@@ -110,8 +110,8 @@ void extract_vals(d_token_t* t, CB_extractVal_t pFncCB, void* pUserData) {
     case T_BYTES:
       if (t->len < 9) {
         // printk("### T_BYTES: %" PRId64 " - ",  d_long(t)); // does not work on nRF52
-
-        snprintX(buf, sizeof(buf)-1,"%s",u64tostr(d_long(t)));
+        char bufTmp[21];
+        snprintX(buf, sizeof(buf)-1,"%s",u64tostr(d_long(t), bufTmp, sizeof(bufTmp)));
       } else {
         int pos = 0;
         snprintX(&buf[pos],3,"0x");
@@ -456,6 +456,7 @@ addReading_RSP_t* meterReadings_addReading(
   char*     sig           = "addReading(uint48,int24,int24,uint32)";
   char*     method        = "eth_sendTransaction";
   int       bWait         = 0;//1;
+  UNUSED_VAR(bWait);
 
   char*     addrContract  = getContractAddress();
   bytes32_t pk;
@@ -510,8 +511,7 @@ addReading_RSP_t* meterReadings_addReading(
           bytes_t data;
           data.data       = _malloc(l + 1);
           data.len        = hex2byte_arr(result, -1, data.data, l + 1);
-          json_ctx_t* res = req_parse_result(req, data);
-          // fillContractVersionString(&getContractVersion_Response, res->result);
+          req_parse_result(req, data);
           _free(data.data);
         }
         // if not we simply print the result
