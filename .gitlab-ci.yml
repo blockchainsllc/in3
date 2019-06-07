@@ -145,7 +145,7 @@ clang50:
 #    CONAN_OPTS: "-DLIBCURL_TYPE=shared"
 
 zephyr_arm-0_9_5__v1_14_0-rc1:
-  image: docker.slock.it/build-images/zephyr:arm-0_9_5__v1_14_0-rc1
+  image: docker.slock.it/sufialhussaini/zephyr:arm-0_9_5__v1_14_0-rc1
   stage: build
   tags:
     - short-jobs
@@ -156,11 +156,11 @@ zephyr_arm-0_9_5__v1_14_0-rc1:
     - source zephyr/zephyr-env.sh
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-    - make
+    - make  -j8
 
 
 zephyr_arm-0_10_0__v1_14_0:
-  image: docker.slock.it/build-images/zephyr:arm-0_10_0__v1_14_0
+  image: docker.slock.it/sufialhussaini/zephyr:arm-0_10_0__v1_14_0
   stage: build
   tags:
     - short-jobs
@@ -171,7 +171,7 @@ zephyr_arm-0_10_0__v1_14_0:
     - source zephyr/zephyr-env.sh
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-    - make
+    - make -j8
 
 
 #pages:
