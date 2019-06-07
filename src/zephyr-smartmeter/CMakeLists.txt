@@ -41,7 +41,6 @@ set_property(GLOBAL PROPERTY C_STANDARD 99)
 target_sources(app PRIVATE
 	src/main.c
 	src/fsm.c
-	src/rent.c
   src/meterReadings.c
   src/uart_comm.c
   src/in3_comm_esp32.c

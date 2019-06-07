@@ -7,9 +7,6 @@
 #include "meterReadings.h"
 #include "electricityMeter.h"
 
-// #define printX printk
-#define printX(...) 
-
 
 // Global Client
 struct in3_client*  client;
@@ -120,7 +117,6 @@ void do_action()
       if (!l_bReady)
       {
         timeOut =  k_uptime_get_32() + 4000; // "in 7 sec"
-        // printX("~>H\n");
         g_activityState = AS_waitFor_Ready;
       } else {
         g_activityState = AS_AFTER_START;
@@ -148,7 +144,7 @@ void do_action()
           break;
       
         default:
-          printX("no data received (%d)\n", erg);
+          dbg_log("no data received (%d)\n", erg);
           break;
       }
 
@@ -159,7 +155,7 @@ void do_action()
         printk("~>H\n");
         timeOut = k_uptime_get_32() + 4000;
       } else {
-        printX("    now: %u\ntimeout: %u\n", now, timeOut);
+        dbg_log("    now: %u\ntimeout: %u\n", now, timeOut);
       }
       k_sleep(800);    
     } break;
@@ -263,13 +259,8 @@ void do_action()
     }break;
     case AS_sendRequest:
     {
-      printX("AS_sendRequest\n");
+      dbg_log("AS_sendRequest\n");
       resetReceiveData(buffer, sizeof(buffer));
-      // printX("~[{'jsonrpc':'2.0','method':'eth_blockNumber','params':[]}]\n");
-      // ~[{"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}]\n
-      // printX("~[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[]}]\n");
-
-      // printk("~[{\"jsonrpc\":\"2.0\",\"id\":2571205111,\"method\":\"eth_call\",\"params\":[{\"from\":\"0x784bfa9eb182c3a02dbeb5285e3dba92d717e07a\",\"to\":\"0xfe992bfe3adf0b61d0ca144fa4c5d6e81385384b\",\"data\":\"0x8aa10435\",\"value\":\"0x0\",\"gas\":\"0x2dc6c0\"},\"0x727948\"]}]\n");
       printk("~{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_call\",\"params\":[{\"from\":\"0x0000000000000000000000000000000000000000\",\"to\":\"0x5bed06b162100cfa567d103795ea55c9368b6c06\",\"data\":\"0x0087a7880000000000000000000000000000000000000000000000000000000000000005\",\"value\":\"0x0\",\"gas\":\"0x2dc6c0\"}]}\n");
 
       g_activityState = AS_waitFor_OkConnected;
@@ -277,7 +268,7 @@ void do_action()
     } break;
     case AS_waitFor_OkConnected:
     {
-      printX("AS_waitFor_OkConnected\n");
+      dbg_log("AS_waitFor_OkConnected\n");
 
       int erg = receiveData(buffer, sizeof(buffer));
       switch (erg)
@@ -313,7 +304,7 @@ void do_action()
     } break;
     case AS_waitFor_Response: 
     {
-      printX("### AS_waitFor_Response\n");
+      dbg_log("### AS_waitFor_Response\n");
       int erg = receiveData(buffer, sizeof(buffer));
       switch (erg)
       {
@@ -426,7 +417,7 @@ static in3_state_t in3_waiting(void) {
   static int cntr = 0;
   cntr++;
 
-  printX("in3_waiting()\n");
+  dbg_log("in3_waiting()\n");
 
   k_mutex_lock(&client->mutex, 10000);
   // do client-zeugs
@@ -438,7 +429,7 @@ static in3_state_t in3_waiting(void) {
   if (cntr & 0x01) {
     return STATE_WAITING;
   } else {
-    printX("returning \"STATE_ACTION\"\n");
+    dbg_log("returning \"STATE_ACTION\"\n");
     return STATE_ACTION;
   }
 }
