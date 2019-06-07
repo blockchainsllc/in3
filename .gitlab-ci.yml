@@ -153,7 +153,7 @@ zephyr_arm-0_9_5__v1_14_0-rc1:
     paths:
       - src/zephyr/build
   script:
-    - source zephyr/zephyr-env.sh
+    - source /zephyr/zephyr-env.sh
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
     - make  -j8
@@ -168,7 +168,7 @@ zephyr_arm-0_10_0__v1_14_0:
     paths:
       - src/zephyr/build
   script:
-    - source zephyr/zephyr-env.sh
+    - source /zephyr/zephyr-env.sh
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
     - make -j8
