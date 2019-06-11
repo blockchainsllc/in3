@@ -453,8 +453,7 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
 }
 
 in3_ret_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
-  if (options == NULL) return 0;
-  if (!filter_opt_valid(&options->result[0])) return 0;
+  if (options == NULL || !filter_opt_valid(&options->result[0])) return IN3_EINVAL;
   char*     fopt = d_create_json(&options->result[0]);
   in3_ret_t res  = filter_add(in3, FILTER_EVENT, fopt);
   if (res < 0) _free(fopt);
