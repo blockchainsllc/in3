@@ -81,7 +81,7 @@ static void filter_release(in3_filter_t* f) {
   _free(f);
 }
 
-in3_filter_t* filter_new(in3_filter_type_t ft) {
+static in3_filter_t* filter_new(in3_filter_type_t ft) {
   in3_filter_t* f = _malloc(sizeof *f);
   if (f) {
     f->type       = ft;
