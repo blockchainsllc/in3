@@ -19,9 +19,7 @@ static bool filter_addrs_valid(d_token_t* addr) {
 }
 
 static bool filter_topics_valid(d_token_t* topics) {
-  if (d_type(topics) == T_BYTES && d_len(topics) == 32)
-    return true;
-  else if (!topics || d_type(topics) != T_ARRAY)
+  if (!topics || d_type(topics) != T_ARRAY)
     return false;
 
   for (d_iterator_t it1 = d_iter(topics); it1.left; d_iter_next(&it1)) {
