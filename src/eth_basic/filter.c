@@ -60,6 +60,13 @@ bool filter_opt_valid(d_token_t* tx_params) {
   } else
     return false;
 
+  d_token_t* blockhash = d_getl(tx_params, K_BLOCK_HASH, 32);
+  if (blockhash == NULL) { /* Optional */
+  } else if ((d_type(blockhash) == T_BYTES && d_len(blockhash) == 32) && !frmblk && !toblk) {
+    /* If blockHash is present, then neither fromBlock nor toBlock are allowed. */
+  } else
+    return false;
+
   d_token_t* addrs = d_getl(tx_params, K_ADDRESS, 20);
   if (addrs == NULL) { /* Optional */
   } else if (filter_addrs_valid(addrs)) {
