@@ -80,7 +80,7 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
       return false;
     } else if (d_type(it1.token) == T_ARRAY) { // must match atleast one in array
       bool found = false;
-      for (d_iterator_t it_ = d_iter(topics); it_.left; d_iter_next(&it_)) {
+      for (d_iterator_t it_ = d_iter(it1.token); it_.left; d_iter_next(&it_)) {
         if (bytes_cmp(d_to_bytes(it_.token), d_to_bytes(it2.token))) {
           found = true;
           break;
