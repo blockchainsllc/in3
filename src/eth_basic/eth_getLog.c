@@ -56,7 +56,7 @@ static bool matches_filter_range(d_token_t* tx_params, uint64_t blockno, bytes_t
   } else if (d_type(jblkhash) == T_BYTES) {
     return !!bytes_cmp(blockhash, d_to_bytes(jblkhash));
   }
-  return false;
+  return true;
 }
 
 static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
