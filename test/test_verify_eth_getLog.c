@@ -118,7 +118,6 @@ static void test_verify_eth_getLog_filter_topics() {
 }
 
 int main() {
-  in3_log_set_quiet(1);
   TESTS_BEGIN();
   RUN_TEST(test_verify_eth_getLog_filter_default);
   RUN_TEST(test_verify_eth_getLog_filter_address);
