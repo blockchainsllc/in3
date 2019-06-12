@@ -9,6 +9,7 @@
 #include <client/keys.h>
 #include <string.h>
 #include <util/data.h>
+#include <util/log.h>
 #include <util/mem.h>
 #include <util/utils.h>
 
@@ -91,10 +92,21 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
   return true;
 }
 
-static bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blockhash, d_token_t* topics) {
+bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blockhash, d_token_t* topics) {
   d_token_t* tx_params = d_get(req, K_PARAMS);
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return false;
-  return matches_filter_address(tx_params + 1, addrs) && matches_filter_range(tx_params + 1, blockno, blockhash) && matches_filter_topics(tx_params + 1, topics);
+  if (!matches_filter_address(tx_params + 1, addrs)) {
+    in3_log_error("filter address mismatch");
+    return false;
+  } else if (!matches_filter_range(tx_params + 1, blockno, blockhash)) {
+    in3_log_error("filter range mismatch");
+    return false;
+  } else if (!matches_filter_topics(tx_params + 1, topics)) {
+    in3_log_error("filter topics mismatch");
+    return false;
+  } else {
+    return true;
+  }
 }
 
 in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
