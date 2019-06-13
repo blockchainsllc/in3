@@ -28,17 +28,7 @@ add_test(
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
-add_executable(test_verify_eth_getLog
-                test_verify_eth_getLog.c
-                unity/unity.c 
-                ../src/core/util/mem.c 
-                ../src/core/util/data.c 
-                ../src/core/util/log.c 
-                ../src/core/util/bytes.c 
-                ../src/core/util/stringbuilder.c 
-                ../src/core/util/utils.c
-                ../src/core/crypto/sha3.c 
-                ../src/core/crypto/memzero.c)
+add_executable(test_verify_eth_getLog test_verify_eth_getLog.c unity/unity.c)
 target_link_libraries(test_verify_eth_getLog eth_basic ${DEAD_STRIP_LINKER_OPT})
 add_test(
     NAME              "test_verify_eth_getLog" 
