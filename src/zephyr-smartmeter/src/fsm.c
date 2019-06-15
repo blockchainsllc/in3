@@ -1,10 +1,12 @@
 #include "project.h"
+#include "../core/util/log.h"
 #include <console.h>
 #include <misc/byteorder.h>
 #include "../eth_basic/eth_basic.h"
 #include "uart_comm.h"
 #include "in3_comm_esp32.h"
-#include "meterReadings.h"
+#include "meterReadStorage.h"
+// #include "meterReadings.h"
 #include "electricityMeter.h"
 
 
@@ -79,6 +81,8 @@ typedef enum {
   AS_sleep10s_before_waitForOkConnected,
   AS_callMeterReadings_getContractVersion,
   AS_callMeterReadings_getLastReading,
+  AS_callMeterReadings_getLastUnverifiedReadingId,
+  AS_callMeterReadings_verify,
   AS_readElectricityMeter,
   AS_callMeterReadings_addReading,
 } enmActivityState_t;
@@ -94,7 +98,7 @@ static int32_t l_i32U = 0;
 static int32_t l_i32I = 0;
 static uint32_t l_u32P = 0;
 static getReading_RSP_t* pElectricityMeterReading = NULL;
-
+static uint32_t u32LastUnverifiedReadingId = 0;
 
 // void do_action(action_type_t action)
 void do_action()
@@ -159,7 +163,7 @@ void do_action()
     case AS_callMeterReadings_getContractVersion:
     {
       getContractVersion_RSP_t* pContractVersion_RSP = NULL;
-      pContractVersion_RSP = meterReadings_getContractVersion();
+      pContractVersion_RSP = meterReadStorage_getContractVersion();
       if (pContractVersion_RSP != NULL) 
       {
         printk("Contract-version: %s\n", pContractVersion_RSP->strVersion);
@@ -183,7 +187,7 @@ void do_action()
     case AS_callMeterReadings_getLastReading:
     {
       getReading_RSP_t* pReading_RSP = NULL;
-      pReading_RSP = meterReadings_getLastReading();
+      pReading_RSP = meterReadStorage_getLastReading();
       printk("Reading back from Chain:\n");
       print_MeterReading(pReading_RSP);
 
@@ -230,13 +234,13 @@ void do_action()
     case AS_callMeterReadings_addReading:
     {
       addReading_RSP_t *pAddReading_RSP = NULL; 
-      pAddReading_RSP = meterReadings_addReading( pElectricityMeterReading->readingEntry.timestampYYYYMMDDhhmmss, 
+      pAddReading_RSP = meterReadStorage_addReading( pElectricityMeterReading->readingEntry.timestampYYYYMMDDhhmmss, 
                                                   pElectricityMeterReading->readingEntry.i32Voltage_mV, 
                                                   pElectricityMeterReading->readingEntry.i32Current_mA, 
                                                   pElectricityMeterReading->readingEntry.u32EnergyMeter_mWh 
                                                 );
 
-      g_activityState = AS_callMeterReadings_getContractVersion;      
+      g_activityState = AS_callMeterReadings_getLastUnverifiedReadingId;      
 
       if (    pAddReading_RSP != NULL 
           &&  pAddReading_RSP->nExecResult >= 0 ) 
@@ -254,6 +258,62 @@ void do_action()
       }
 
     }break;
+    case AS_callMeterReadings_getLastUnverifiedReadingId:
+    {
+      getLastUnverifiedReadingId_RSP_t* pLastUnverifiedReadingId_RSP = NULL;
+      pLastUnverifiedReadingId_RSP = meterReadStorage_getLastUnverifiedReadingId();
+
+      g_activityState = AS_callMeterReadings_getContractVersion;      
+
+      if (    pLastUnverifiedReadingId_RSP != NULL 
+          &&  pLastUnverifiedReadingId_RSP->nExecResult >= 0 ) 
+      { // ok
+        cntErr = 0;
+        int bUnverifiedReadingAvail = pLastUnverifiedReadingId_RSP->bUnverifiedReadingAvailable;
+        
+        if ( pLastUnverifiedReadingId_RSP->readingID <= u32LastUnverifiedReadingId )
+        {
+          bUnverifiedReadingAvail =  0;
+        }
+
+        if (bUnverifiedReadingAvail) 
+        {
+          u32LastUnverifiedReadingId  = pLastUnverifiedReadingId_RSP->readingID;
+        }
+
+        printk("#### meterReadStorage_getLastUnverifiedReadingId(): readingID = %d, do_verifiy = %d\n", u32LastUnverifiedReadingId, bUnverifiedReadingAvail);
+        g_activityState = bUnverifiedReadingAvail ? AS_callMeterReadings_verify : AS_readElectricityMeter; //AS_callMeterReadings_getContractVersion;      
+      } else if (++cntErr % 5 == 0) { 
+        // 5-times error ==> restart
+        l_bReady = 0;
+        g_activityState = AS_start;
+        printk("##### ---- AS_callMeterReadings_getLastUnverifiedReadingId - starting after 5x ERR ---- #####\n");
+        // NVC_SystemReset();
+      } else {
+        printk("Error while calling meterReadStorage_getLastUnverifiedReadingId (cntErr = %d)\n", cntErr);
+      }
+    } break;
+    case AS_callMeterReadings_verify:
+    { // meterReadStorage_verify(uint32_t  _meterReadId)
+      printk("#### AS_callMeterReadings_verify: verifying #%d\n", u32LastUnverifiedReadingId);
+      int nExecResult = meterReadStorage_verify(u32LastUnverifiedReadingId);
+
+      g_activityState = AS_callMeterReadings_getLastUnverifiedReadingId;      
+
+      if ( nExecResult >= 0 ) 
+      { // ok
+        cntErr = 0;
+        printk("#### AS_callMeterReadings_verify(): executed OK\n");
+      } else if (++cntErr % 5 == 0) { 
+        // 5-times error ==> restart
+        l_bReady = 0;
+        g_activityState = AS_start;
+        printk("##### ----- AS_callMeterReadings_verify - restarting after 5x ERR ---- #####\n");
+        // NVC_SystemReset();
+      } else {
+        printk("Error while AS_callMeterReadings_verify (cntErr = %d)\n", cntErr);
+      }
+    } break;
     case AS_sendRequest:
     {
       dbg_log("AS_sendRequest\n");
@@ -377,7 +437,11 @@ static in3_state_t in3_init(void) {
   uart0_init();
 
 	client->in3 = in3_new();
-	client->in3->chainId = 0x044d; // Tobalaba
+
+  in3_log_set_quiet(0/*false*/);
+
+	// client->in3->chainId = 0x044d; // Tobalaba
+	client->in3->chainId = 0x12046; // Volta
 	client->in3->requestCount = 1;
 	client->in3->max_attempts=3;
   client->in3->cacheStorage = NULL;
@@ -385,7 +449,10 @@ static in3_state_t in3_init(void) {
   
   client->in3->proof = PROOF_NONE; //PROOF_STANDARD //proof_standard nur mit eth_full mgl!
   client->in3->use_http = true;
-  
+
+  client->in3->nodeLimit = 5;
+  client->in3->autoUpdateList = 0;
+
   // g_c->transport = sendJsonRequest_serial;
   client->in3->transport = in3_comm_esp32_sendJsonRequestAndWait;
 
@@ -398,7 +465,7 @@ static in3_state_t in3_init(void) {
 	// in3_register_eth_nano();
 	// bluetooth_setup(client);
 
-  meterReadingsSetIN3(client->in3);
+  meterReadStorageSetIN3(client->in3);
 
 	k_sem_init(&client->sem, 0, 1);
 	k_mutex_init(&client->mutex);
@@ -519,6 +586,7 @@ static in3_state_t run_state(in3_state_t state) {
 
 
 int in3_client_start(void) {
+
   // in3_state_t state = STATE_TEST;
   in3_state_t state = STATE_INIT;
   in3_state_t state_prev = STATE_MAX;

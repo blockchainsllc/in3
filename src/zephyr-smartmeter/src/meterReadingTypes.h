@@ -25,6 +25,13 @@
     uint32_t  readingID;
   } addReading_RSP_t;
 
+  typedef struct
+  {
+    int       nExecResult;
+    uint32_t  readingID;
+    int       bUnverifiedReadingAvailable;
+  } getLastUnverifiedReadingId_RSP_t;
+
 #endif // _METERREADINGTYPES_H_
 
 

@@ -42,6 +42,8 @@ target_sources(app PRIVATE
 	src/main.c
 	src/fsm.c
   src/meterReadings.c
+  src/meterReadStorage.c
+  src/fncWrapperHelper.c
   src/uart_comm.c
   src/in3_comm_esp32.c
   src/electricityMeter.c
