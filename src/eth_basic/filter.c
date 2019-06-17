@@ -19,9 +19,7 @@ static bool filter_addrs_valid(d_token_t* addr) {
 }
 
 static bool filter_topics_valid(d_token_t* topics) {
-  if (d_type(topics) == T_BYTES && d_len(topics) == 32)
-    return true;
-  else if (!topics || d_type(topics) != T_ARRAY)
+  if (!topics || d_type(topics) != T_ARRAY)
     return false;
 
   for (d_iterator_t it1 = d_iter(topics); it1.left; d_iter_next(&it1)) {
@@ -60,6 +58,13 @@ bool filter_opt_valid(d_token_t* tx_params) {
   } else
     return false;
 
+  d_token_t* blockhash = d_getl(tx_params, K_BLOCK_HASH, 32);
+  if (blockhash == NULL) { /* Optional */
+  } else if ((d_type(blockhash) == T_BYTES && d_len(blockhash) == 32) && !frmblk && !toblk) {
+    /* If blockHash is present, then neither fromBlock nor toBlock are allowed. */
+  } else
+    return false;
+
   d_token_t* addrs = d_getl(tx_params, K_ADDRESS, 20);
   if (addrs == NULL) { /* Optional */
   } else if (filter_addrs_valid(addrs)) {
@@ -81,7 +86,7 @@ static void filter_release(in3_filter_t* f) {
   _free(f);
 }
 
-in3_filter_t* filter_new(in3_filter_type_t ft) {
+static in3_filter_t* filter_new(in3_filter_type_t ft) {
   in3_filter_t* f = _malloc(sizeof *f);
   if (f) {
     f->type       = ft;
