@@ -46,16 +46,17 @@ static bool matches_filter_from_to(d_token_t* tx_params, const d_key_t k, uint64
   }
   return true;
 }
-
 static bool matches_filter_range(d_token_t* tx_params, uint64_t blockno, bytes_t blockhash) {
   d_token_t* jblkhash = d_getl(tx_params, K_BLOCK_HASH, 32);
-  if (jblkhash == NULL) {
-    if (!matches_filter_from_to(tx_params, K_FROM_BLOCK, blockno) || !matches_filter_from_to(tx_params, K_TO_BLOCK, blockno)) {
-      return false;
-    }
-  } else if (d_type(jblkhash) == T_BYTES) {
+  if (jblkhash == NULL)
+    // check block from/to
+    return matches_filter_from_to(tx_params, K_FROM_BLOCK, blockno) && matches_filter_from_to(tx_params, K_TO_BLOCK, blockno);
+  else if (d_type(jblkhash) == T_BYTES)
+    // checl blockhash
     return !!bytes_cmp(blockhash, d_to_bytes(jblkhash));
-  }
+  else
+    // we have a blockhash-property, which is not a bytes-type
+    return false;
   return true;
 }
 
@@ -71,14 +72,13 @@ static bool matches_filter_topics(d_token_t* tx_params, d_token_t* topics) {
   else if (d_type(topics) != T_ARRAY || d_len(topics) > 4 || l > d_len(topics))
     return false;
 
-  d_iterator_t it1 = d_iter(jts);
-  d_iterator_t it2 = d_iter(topics);
+  d_iterator_t it1 = d_iter(jts), it2 = d_iter(topics);
   for (int i = 0; i < l; i++, d_iter_next(&it1), d_iter_next(&it2)) {
-    if (d_type(it1.token) == T_NULL) {
+    if (d_type(it1.token) == T_NULL)
       continue; // null matches anything in this position
-    } else if (d_type(it1.token) == T_BYTES && !bytes_cmp(d_to_bytes(it1.token), d_to_bytes(it2.token))) {
+    else if (d_type(it1.token) == T_BYTES && !bytes_cmp(d_to_bytes(it1.token), d_to_bytes(it2.token)))
       return false;
-    } else if (d_type(it1.token) == T_ARRAY) { // must match atleast one in array
+    else if (d_type(it1.token) == T_ARRAY) { // must match atleast one in array
       bool found = false;
       for (d_iterator_t it_ = d_iter(it1.token); it_.left; d_iter_next(&it_)) {
         if (d_type(it_.token) != T_BYTES) {
