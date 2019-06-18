@@ -40,6 +40,8 @@ in3_ret_t in3_verify_eth_nano(in3_vctx_t* vc) {
   if (strcmp(method, "eth_getTransactionReceipt") == 0)
     // for txReceipt, we need the txhash
     return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(params, 0));
+  else if (strcmp(method, "in3_nodeList") == 0)
+    return eth_verify_in3_nodelist(vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
   else
     return vc_err(vc, "The Method cannot be verified with eth_nano!");
 }

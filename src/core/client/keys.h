@@ -11,6 +11,8 @@
 
 #define K_NODES             key("nodes")
 #define K_LAST_BLOCK_NUMBER key("lastBlockNumber")
+#define K_LAST_NODE_LIST    key("lastNodeList")
+
 #define K_CAPACITY          key("capacity")
 #define K_INDEX             key("index")
 #define K_DEPOSIT           key("deposit")
@@ -68,6 +70,7 @@
 #define K_GAS_LIMIT         key("gasLimit")
 #define K_GAS_USED          key("gasUsed")
 #define K_TIMESTAMP         key("timestamp")
+#define K_TIMEOUT           key("timeout")
 #define K_EXTRA_DATA        key("extraData")
 #define K_SEAL_FIELDS       key("sealFields")
 #define K_MIX_HASH          key("mixHash")
@@ -85,6 +88,7 @@
 #define K_ENGINE            key("engine")
 #define K_VALIDATOR_LIST    key("validatorList")
 
+#define K_TOTAL_SERVERS     key("totalServers")
 
 
 #define K_CODE_HASH         key("codeHash")

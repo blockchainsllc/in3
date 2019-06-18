@@ -175,7 +175,7 @@ void t_free(void* ptr, char* file, const char* func, int line) {
     t    = t->next;
   }
 
-  printf("freeing a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
+  //  printf("freeing a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
   _free_(ptr);
 }
 void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line) {

@@ -33,6 +33,11 @@ bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig);
 in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
 
 /**
+ * verifies the nodelist.
+ */
+in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses);
+
+/**
  * this function should only be called once and will register the eth-nano verifier.
  */
 void in3_register_eth_nano();

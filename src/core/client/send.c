@@ -274,7 +274,19 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
     } else
       // we give up
       return ctx->client->max_attempts == 1 ? IN3_EUNKNOWN : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
-  } else
+  } else {
+    //  check nodelist update
+    d_token_t* in3 = d_get(ctx->responses[0], K_IN3);
+    if (in3 && ctx->client->autoUpdateList && !chain->needsUpdate) {
+      uint64_t last_nodelist = d_get_longk(in3, K_LAST_NODE_LIST);
+      if (last_nodelist > chain->lastBlock) {
+        in3_log_debug("found newer block, so we will update the nodelist next time.");
+        chain->lastBlock   = last_nodelist;
+        chain->needsUpdate = true;
+      }
+    }
+
     // we have a result
     return IN3_OK;
+  }
 }

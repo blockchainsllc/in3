@@ -110,10 +110,11 @@ bytes_t d_to_bytes(d_token_t* item) {
   }
 }
 
-int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
+int d_bytes_to(d_token_t* item, uint8_t* dst, const int max_size) {
+  int max = max_size;
   if (item) {
     int l = d_len(item), i, val;
-    if (l > max) l = max;
+    if (l > max && max != -1) l = max;
     switch (d_type(item)) {
       case T_BYTES:
         if (max > l) {
@@ -137,6 +138,7 @@ int d_bytes_to(d_token_t* item, uint8_t* dst, const int max) {
         return 1;
       case T_INTEGER:
         val = item->len & 0xFFFFFFF;
+        if (max == -1) max = val & 0xFF000000 ? 4 : (val & 0xFF0000 ? 3 : (val & 0xFF00 ? 2 : 1));
         for (i = max < 3 ? max : 3; i >= 0; i--) {
           if (val & 0xFF << (i << 3)) {
             l = i + 1;
