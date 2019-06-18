@@ -87,7 +87,7 @@ static void create_random_indexes(const uint32_t total_servers, const uint32_t n
       sha3_to(&seed, seed_data);
       step = bytes_to_long(seed_data, 6);
     } else
-      indexes[len] = pos;
+      indexes[len++] = pos;
     pos = (pos + step) % total_servers;
   }
 }
