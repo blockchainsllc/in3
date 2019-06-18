@@ -1,5 +1,6 @@
 #include "nodelist.h"
 #include "../util/data.h"
+#include "../util/log.h"
 #include "../util/mem.h"
 #include "cache.h"
 #include "client.h"
@@ -90,6 +91,7 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
 
 static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   in3_ret_t res = IN3_OK;
+  in3_log_debug("update the nodelist...");
 
   // create random seed
   char seed[67];
