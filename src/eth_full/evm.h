@@ -139,6 +139,8 @@ int     evm_stack_peek_len(evm_t* evm);
 int evm_run(evm_t* evm);
 #define EVM_CALL_MODE_STATIC 1
 #define EVM_CALL_MODE_DELEGATE 2
+#define EVM_CALL_MODE_CALLCODE 3
+#define EVM_CALL_MODE_CALL 4
 
 int evm_sub_call(evm_t*   parent,
                  uint8_t  address[20],
