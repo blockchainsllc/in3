@@ -1,8 +1,12 @@
 #ifndef TEST
 #define TEST
 #endif
+#define DEBUG
 
+#include <core/client/keys.h>
 #include <core/util/bitset.h>
+#include <core/util/data.h>
+#include <core/util/log.h>
 #include <core/util/mem.h>
 #include <inttypes.h>
 
@@ -141,6 +145,139 @@ static void test_bitset_out_of_range() {
   bs_free(bs);
 }
 
+static char* filetostr(const char* filename) {
+  char* buffer = NULL;
+  long  length;
+  FILE* f = fopen(filename, "r");
+  if (f) {
+    fseek(f, 0, SEEK_END);
+    length = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    buffer = _malloc(length);
+    if (buffer) {
+      fread(buffer, 1, length, f);
+    }
+    fclose(f);
+  }
+  return buffer;
+}
+
+static in3_ret_t incache(uint8_t* varr, size_t l, uint8_t* v) {
+  for (int i = 0; i < l; i += 20)
+    if (!memcmp(varr + i, v, 20))
+      return (i / 20);
+  return IN3_EFIND;
+}
+
+static void printcache(uint8_t* varr, size_t l) {
+  for (int i = 0; i < l; i += 20) {
+    ba_print(&varr[i], 20);
+    printf("\n");
+  }
+}
+
+static void test_bitset_ordering() {
+  char*       nodeliststr = filetostr("/Users/sufi-al-hussaini/in3-core/test/tobalaba_nodelist.json");
+  json_ctx_t* jnl         = parse_json(nodeliststr);
+  if (jnl == NULL) return;
+
+  d_token_t *      ss = d_get(jnl->result, K_STATES), *vs = NULL;
+  bytes_builder_t* bb  = bb_new();
+  bytes_t*         b   = NULL;
+  in3_ret_t        ret = IN3_OK;
+  int              i   = 0;
+
+  for (d_iterator_t sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
+    vs = d_get(sitr.token, K_VALIDATORS);
+    printf("--- %" PRIu64 "\n", d_get_longk(sitr.token, K_BLOCK));
+    if (d_type(vs) == T_ARRAY) {
+      i = 0;
+      for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
+        b   = d_bytesl(vitr.token, 20);
+        ret = incache(bb->b.data, bb->b.len, b->data);
+        if (ret == IN3_EFIND)
+          bb_write_fixed_bytes(bb, b);
+        else if (ret != i) {
+          //          b_print(b);
+          printf(": order changed -> %d to %d!\n", ret, i);
+        } else if (ret == i) {
+          printf(": order unchanged\n");
+        }
+        i++;
+      }
+    }
+  }
+  //  printcache(bb->b.data, bb->b.len);
+  _free(nodeliststr);
+}
+
+typedef struct {
+  uint16_t pos;
+  uint8_t* v;
+  uint64_t blk;
+} vdiff_t;
+
+typedef struct {
+  vdiff_t* diffs;
+  size_t   len;
+} vhist_t;
+
+in3_ret_t diff_emplace(vhist_t* h, uint16_t pos, bytes_t* b, uint64_t blk) {
+  vdiff_t* d_ = _realloc(h->diffs, sizeof(*d_) * (h->len + 1), sizeof(*d_) * h->len);
+  if (d_ == NULL) return IN3_ENOMEM;
+  d_[h->len].pos = pos;
+  d_[h->len].v   = _malloc(20);
+  if (d_[h->len].v == NULL) {
+    _free(d_);
+    return IN3_ENOMEM;
+  }
+  memcpy(d_[h->len].v, b->data, b->len);
+  d_[h->len].blk = blk;
+  h->diffs       = d_;
+  h->len++;
+  return h->len;
+}
+
+static void test_vlist_diff() {
+  char*       nodeliststr = filetostr("/Users/sufi-al-hussaini/in3-core/test/tobalaba_nodelist.json");
+  json_ctx_t* jnl         = parse_json(nodeliststr);
+  if (jnl == NULL) return;
+
+  d_token_t *      ss = d_get(jnl->result, K_STATES), *vs = NULL;
+  bytes_builder_t* bb  = bb_new();
+  bytes_t*         b   = NULL;
+  in3_ret_t        ret = IN3_OK;
+  int              i   = 0;
+
+  for (d_iterator_t sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
+    vs = d_get(sitr.token, K_VALIDATORS);
+    //    printf("----\n");
+    //    printf("Block [%" PRIu64 "]\n", d_get_longk(sitr.token, K_BLOCK));
+    if (d_type(vs) == T_ARRAY) {
+      i = 0;
+      for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
+        b   = d_bytesl(vitr.token, 20);
+        ret = incache(bb->b.data, bb->b.len, b->data);
+        if (ret == IN3_EFIND) {
+          //          printf("+ %d\n", i);
+          bb_write_fixed_bytes(bb, b);
+        } else if (ret != i) {
+          //          printf("-/+ %d, %d\n", i, ret);
+          bb_replace(bb, i * 20, 20, bb->b.data + (ret * 20), 20);
+          for (int k = (ret * 20); k + 20 < bb->b.len / 20; k += 20) {
+            memmove(&bb->b.data + k, &bb->b.data + k + 20, 20);
+          }
+        }
+        i++;
+      }
+      bb->b.len = d_len(vs) * 20;
+    }
+    printcache(bb->b.data, bb->b.len);
+  }
+  bb_free(bb);
+  _free(nodeliststr);
+}
+
 /*
  * Main
  */
@@ -153,4 +290,4 @@ int main() {
   RUN_TEST(test_bitset_clone);
   RUN_TEST(test_bitset_out_of_range);
   return TESTS_END();
-}
+}}
