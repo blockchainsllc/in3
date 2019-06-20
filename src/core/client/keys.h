@@ -84,6 +84,9 @@
 //# chainspec
 #define K_ENGINE            key("engine")
 #define K_VALIDATOR_LIST    key("validatorList")
+#define K_VALIDATOR_CONTRACT key("validatorContract")
+#define K_VALIDATORS        key("validators")
+#define K_STATES            key("states")
 
 
 
