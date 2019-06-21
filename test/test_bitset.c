@@ -8,6 +8,7 @@
 #include <core/util/data.h>
 #include <core/util/log.h>
 #include <core/util/mem.h>
+#include <eth_nano/vhist.h>
 #include <inttypes.h>
 
 #include "test_utils.h"
@@ -219,15 +220,15 @@ typedef struct {
   uint8_t* v;
   uint64_t blk;
   size_t   len;
-} vdiff_t;
+} vdiff2_t;
 
 typedef struct {
-  vdiff_t* diffs;
-  size_t   len;
-} vhist_t;
+  vdiff2_t* diffs;
+  size_t    len;
+} vhist2_t;
 
-in3_ret_t diff_emplace(vhist_t* h, uint16_t pos, bytes_t* b, uint64_t blk, size_t len) {
-  vdiff_t* d_ = _realloc(h->diffs, sizeof(*d_) * (h->len + 1), sizeof(*d_) * h->len);
+in3_ret_t diff_emplace2(vhist2_t* h, uint16_t pos, bytes_t* b, uint64_t blk, size_t len) {
+  vdiff2_t* d_ = _realloc(h->diffs, sizeof(*d_) * (h->len + 1), sizeof(*d_) * h->len);
   if (d_ == NULL) return IN3_ENOMEM;
   d_[h->len].pos = pos;
   if (b) {
@@ -247,7 +248,7 @@ in3_ret_t diff_emplace(vhist_t* h, uint16_t pos, bytes_t* b, uint64_t blk, size_
   return h->len;
 }
 
-static void test_vlist_diff() {
+static void test_vlist_diff2() {
   char*       nodeliststr = filetostr("/Users/sufi-al-hussaini/in3-core/test/tobalaba_nodelist.json");
   json_ctx_t* jnl         = parse_json(nodeliststr);
   if (jnl == NULL) return;
@@ -256,7 +257,7 @@ static void test_vlist_diff() {
   bytes_builder_t* bb  = bb_new();
   bytes_t*         b   = NULL;
   in3_ret_t        ret = IN3_OK;
-  vhist_t          h   = {.diffs = NULL, .len = 0};
+  vhist2_t         h   = {.diffs = NULL, .len = 0};
   int              i   = 0;
   uint64_t         blk = 0;
 
@@ -270,11 +271,11 @@ static void test_vlist_diff() {
         ret = incache(bb->b.data, bb->b.len, b->data);
         if (ret == IN3_EFIND) {
           //          printf("+ %d [%" PRIu64 "]\n", i, blk);
-          diff_emplace(&h, i, b, blk, d_len(vs) * 20);
+          diff_emplace2(&h, i, b, blk, d_len(vs) * 20);
           bb_write_fixed_bytes(bb, b);
         } else if (ret != i) {
           //          printf("-/+ %d, %d [%" PRIu64 "]\n", ret, i, blk);
-          diff_emplace(&h, i, b, blk, d_len(vs) * 20);
+          diff_emplace2(&h, i, b, blk, d_len(vs) * 20);
           bb_replace(bb, i * 20, 20, bb->b.data + (ret * 20), 20);
           for (int k = (ret * 20); k + 20 < bb->b.len / 20; k += 20) {
             memmove(&bb->b.data + k, &bb->b.data + k + 20, 20);
@@ -288,8 +289,8 @@ static void test_vlist_diff() {
   }
 
   bb_free(bb);
-  bb         = bb_new();
-  vdiff_t* d = NULL;
+  bb          = bb_new();
+  vdiff2_t* d = NULL;
   for (int j = 0; j < h.len; ++j) {
     d   = &h.diffs[j];
     ret = incache(bb->b.data, bb->b.len, d->v);
@@ -314,6 +315,16 @@ static void test_vlist_diff() {
   _free(nodeliststr);
 }
 
+static void test_vlist_diff() {
+  char*       nodeliststr = filetostr("/Users/sufi-al-hussaini/in3-core/test/tobalaba_nodelist.json");
+  json_ctx_t* jnl         = parse_json(nodeliststr);
+  if (jnl == NULL) return;
+  vhist_t* vh = vhist_init(jnl);
+  vhist_get_for_block(vh, 7157871);
+  printcache(vh->vect->b.data, vh->vect->b.len);
+  vhist_free(vh);
+}
+
 /*
  * Main
  */
@@ -325,6 +336,7 @@ int main() {
   //  RUN_TEST(test_bitset_edge_cases);
   //  RUN_TEST(test_bitset_clone);
   //  RUN_TEST(test_bitset_out_of_range);
+  //  RUN_TEST(test_vlist_diff2);
   RUN_TEST(test_vlist_diff);
   return TESTS_END();
 }
