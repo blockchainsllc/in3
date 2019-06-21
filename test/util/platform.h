@@ -61,4 +61,6 @@
 #define PLATFORM_IS_WINDOWS(p_) (p_ == PLATFORM_WINDOWS_32 || p_ == PLATFORM_WINDOWS_64)
 #define PLATFORM_IS_POSIX(p_)   (p_ == PLATFORM_WINDOWS_CYGWIN || p_ == PLATFORM_LINUX || p_ == PLATFORM_OSX)
 
+#define IS_BIG_ENDIAN (!*(unsigned char*) &(uint16_t){1})
+
 #endif //IN3_PLATFORM_H

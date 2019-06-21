@@ -98,6 +98,9 @@ bytes_t* bb_move_to_bytes(bytes_builder_t* bb);
 
 void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
 
+uint64_t bb_read_long(bytes_builder_t* bb, size_t* i);
+uint32_t bb_read_int(bytes_builder_t* bb, size_t* i);
+
 static inline bytes_t bytes(uint8_t* a, uint32_t len) {
   return (bytes_t){.data = a, .len = len};
 }
