@@ -147,3 +147,85 @@ in3_ret_t vhist_get_for_block(vhist_t* vh, uint64_t block) {
   }
   return ret;
 }
+
+vh_t* vh_init(json_ctx_t* nodelist) {
+  if (nodelist == NULL) return NULL;
+  bytes_t*  b   = NULL;
+  in3_ret_t ret = IN3_OK;
+  uint64_t  blk = 0;
+
+  d_token_t *ss = d_get(nodelist->result, K_STATES), *vs = NULL;
+  if (ss == NULL) return NULL;
+
+  vh_t* vh = _malloc(sizeof(*vh));
+  if (vh == NULL) return NULL;
+  vh->vldtrs = bb_new();
+  vh->diffs  = bb_new();
+  if (!vh->vldtrs || !vh->diffs) {
+    _free(vh);
+    _free(vh->vldtrs);
+    _free(vh->diffs);
+    return NULL;
+  }
+
+  for (d_iterator_t sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
+    vs  = d_get(sitr.token, K_VALIDATORS);
+    blk = d_get_longk(sitr.token, K_BLOCK);
+    bb_write_long(vh->diffs, blk);
+    bb_write_int(vh->diffs, d_len(vs));
+    if (d_type(vs) == T_ARRAY) {
+      for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
+        b   = d_bytesl(vitr.token, 20);
+        ret = vec_find(vh->vldtrs, b->data);
+        if (ret == IN3_EFIND) {
+          bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
+          bb_write_fixed_bytes(vh->vldtrs, b);
+        } else {
+          bb_write_int(vh->diffs, ret);
+        }
+      }
+    }
+  }
+  return vh;
+}
+
+void vh_free(vh_t* vh) {
+  bb_free(vh->diffs);
+  bb_free(vh->vldtrs);
+  _free(vh);
+}
+
+uint64_t bb_read_long(bytes_builder_t* bb, size_t* i) {
+  if (bb->b.len < *i + 3) return 0;
+  *i += 8;
+  return bb->b.data[*i - 8] + ((uint64_t) bb->b.data[*i - 7] << 8)                        //
+         + ((uint64_t) bb->b.data[*i - 6] << 16) + ((uint64_t) bb->b.data[*i - 5] << 24)  //
+         + ((uint64_t) bb->b.data[*i - 4] << 32) + ((uint64_t) bb->b.data[*i - 3] << 40)  //
+         + ((uint64_t) bb->b.data[*i - 2] << 48) + ((uint64_t) bb->b.data[*i - 1] << 56); //
+}
+
+uint32_t bb_read_int(bytes_builder_t* bb, size_t* i) {
+  if (bb->b.len < *i + 2) return 0;
+  *i += 4;
+  return bb->b.data[*i - 4] + ((uint32_t) bb->b.data[*i - 3] << 8)                        //
+         + ((uint32_t) bb->b.data[*i - 2] << 16) + ((uint32_t) bb->b.data[*i - 1] << 24); //
+}
+
+bytes_builder_t* vh_get_for_block(vh_t* vh, uint64_t block) {
+  bytes_builder_t* bb  = bb_new();
+  uint64_t         blk = 0;
+  uint32_t         sz = 0, pos = 0;
+  if (bb == NULL) return NULL;
+
+  for (size_t i = 0; i < vh->diffs->b.len;) {
+    blk = bb_read_long(vh->diffs, &i);
+    sz  = bb_read_int(vh->diffs, &i);
+    bb_clear(bb);
+    for (size_t j = 0; j < sz; ++j) {
+      pos = bb_read_int(vh->diffs, &i);
+      bb_write_raw_bytes(bb, vh->vldtrs->b.data + (pos * 20), 20);
+    }
+    if (blk >= block) break;
+  }
+  return bb;
+}
