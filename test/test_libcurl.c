@@ -3,9 +3,7 @@
 #endif
 
 #include <curl/curl.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <transport_curl/in3_curl.h>
 
 #include "test_utils.h"

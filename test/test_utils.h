@@ -2,6 +2,7 @@
 #define IN3_TEST_UTILS_H
 
 #include "unity/unity.h"
+#include <sys/time.h>
 
 #ifdef __cplusplus
 extern "C" {
