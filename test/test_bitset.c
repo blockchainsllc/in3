@@ -323,6 +323,8 @@ static void test_vlist_diff() {
   vhist_get_for_block(vh, 7157871);
   printcache(vh->vect->b.data, vh->vect->b.len);
   vhist_free(vh);
+  free_json(jnl);
+  _free(nodeliststr);
 }
 
 /*
