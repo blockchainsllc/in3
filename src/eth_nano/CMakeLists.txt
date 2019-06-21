@@ -8,6 +8,7 @@ add_library( eth_nano STATIC
   blockheader.c
   signature.c
   txreceipt.c
+  vhist.c
 )
 
 # add dependency

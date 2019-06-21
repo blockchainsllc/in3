@@ -2,24 +2,31 @@
 #define IN3_VHIST_H
 
 #include "../core/util/bytes.h"
+#include "../core/util/data.h"
 #include "../core/util/error.h"
 #include "../core/util/utils.h"
 #include <stdint.h>
 
 typedef struct {
-  uint64_t   block;
-  size_t     start;
-  size_t     len;
-  address_t* validators;
+  uint16_t pos;
+  uint8_t* v;
 } vdiff_t;
 
 typedef struct {
-  vdiff_t** diffs;
+  vdiff_t* df;
+  uint64_t blk;
   size_t   len;
+  size_t   vlen;
+} vblkdiff_t;
+
+typedef struct {
+  vblkdiff_t*      bdf;
+  bytes_builder_t* vect;
+  size_t           len;
 } vhist_t;
 
-vhist_t*  vhist_init(address_t* validators, size_t* len);
-in3_ret_t vhist_update(vhist_t* history, address_t* validators, size_t len, uint64_t start);
-in3_ret_t vhist_get_for_block(vhist_t* history, uint64_t block, address_t** validators);
+vhist_t*  vhist_init(json_ctx_t* nodelist);
+void      vhist_free(vhist_t* vh);
+in3_ret_t vhist_get_for_block(vhist_t* vh, uint64_t block);
 
 #endif //IN3_VHIST_H
