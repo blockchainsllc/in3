@@ -269,11 +269,11 @@ static void test_vlist_diff() {
         b   = d_bytesl(vitr.token, 20);
         ret = incache(bb->b.data, bb->b.len, b->data);
         if (ret == IN3_EFIND) {
-          printf("+ %d [%" PRIu64 "]\n", i, blk);
+          //          printf("+ %d [%" PRIu64 "]\n", i, blk);
           diff_emplace(&h, i, b, blk, d_len(vs) * 20);
           bb_write_fixed_bytes(bb, b);
         } else if (ret != i) {
-          printf("-/+ %d, %d [%" PRIu64 "]\n", i, ret, blk);
+          //          printf("-/+ %d, %d [%" PRIu64 "]\n", ret, i, blk);
           diff_emplace(&h, i, b, blk, d_len(vs) * 20);
           bb_replace(bb, i * 20, 20, bb->b.data + (ret * 20), 20);
           for (int k = (ret * 20); k + 20 < bb->b.len / 20; k += 20) {
@@ -283,6 +283,7 @@ static void test_vlist_diff() {
         i++;
       }
       bb->b.len = d_len(vs) * 20;
+      //      printcache(bb->b.data, bb->b.len);
     }
   }
 
@@ -290,22 +291,22 @@ static void test_vlist_diff() {
   bb         = bb_new();
   vdiff_t* d = NULL;
   for (int j = 0; j < h.len; ++j) {
-    d = &h.diffs[j];
+    d   = &h.diffs[j];
     ret = incache(bb->b.data, bb->b.len, d->v);
     if (ret == IN3_EFIND) {
       printf("+ %d [%" PRIu64 "]\n", d->pos, d->blk);
       bytes_t b_ = {.data = d->v, .len = 20};
       bb_write_fixed_bytes(bb, &b_);
-    } else if (ret != d->pos) {
-      printf("-/+ %d, %d [%" PRIu64 "]\n", d->pos, ret, d->blk);
-      bb_replace(bb, d->pos * 20, 20, bb->b.data + (ret * 20), 20);
-      for (int k = (ret * 20); k + 20 < bb->b.len / 20; k += 20) {
-        memmove(&bb->b.data + k, &bb->b.data + k + 20, 20);
+      if (bb->b.len / 20 == (d->pos + 2)) {
+        bb_replace(bb, d->pos * 20, 20, bb->b.data + bb->b.len - 20, 20);
+        bb->b.len -= 20;
       }
-    } else {
-      printf("In place... [%llu]\n", d->blk);
+    } else if (ret != d->pos) {
+      printf("-/+ %d, %d [%" PRIu64 "]\n", ret, d->pos, d->blk);
+      bb_replace(bb, d->pos * 20, 20, bb->b.data + (ret * 20), 20);
+      bb->b.len = d->len;
     }
-    bb->b.len = d->len;
+    printcache(bb->b.data, bb->b.len);
   }
 
   _free(h.diffs);
