@@ -1,3 +1,5 @@
+#ifndef IN3_ERROR_H
+#define IN3_ERROR_H
 
 /** ERROR types  used as return values */
 typedef enum {
@@ -18,3 +20,5 @@ typedef enum {
   IN3_EUSNURL  = -13, /* USN URL parse error */
   IN3_ETRANS   = -14, /* Transport error */
 } in3_ret_t;
+
+#endif //IN3_ERROR_H
