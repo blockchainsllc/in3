@@ -9,6 +9,7 @@
 #ifndef BYTES_H
 #define BYTES_H
 
+#define bb_new() bb_newl(32)
 #define bb_read(_bb_, _i_, _vptr_) bb_readl(_bb_, _i_, _vptr_, sizeof(*_vptr_))
 #define bb_read_next(_bb_, _iptr_, _vptr_) \
   do {                                     \
@@ -75,7 +76,7 @@ bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);
 bytes_t b_from_hexstr(const char* hexstr);
 
 /* creates a new bytes_builder */
-bytes_builder_t* bb_new();
+bytes_builder_t* bb_newl();
 /** frees a bytebuilder and its content. */
 void bb_free(bytes_builder_t* bb);
 

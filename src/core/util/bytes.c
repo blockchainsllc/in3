@@ -153,11 +153,11 @@ bytes_t b_from_hexstr(const char* hexstr) {
 }
 
 /* allocates a new byte array with 0 filled */
-bytes_builder_t* bb_new() {
+bytes_builder_t* bb_newl(size_t l) {
   bytes_builder_t* r = _malloc(sizeof(bytes_builder_t));
-  r->b.data          = _malloc(32);
+  r->b.data          = _malloc(l);
   r->b.len           = 0;
-  r->bsize           = 32;
+  r->bsize           = l;
   return r;
 }
 
