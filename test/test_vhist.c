@@ -38,7 +38,7 @@ static void bb_print(bytes_builder_t* bb) {
 }
 
 static bool vh_diff_matches(uint64_t block) {
-  char*       nodeliststr = filetostr("/Users/sufi-al-hussaini/in3-core/test/testdata/tobalaba_nodelist.json");
+  char*       nodeliststr = filetostr("../test/testdata/tobalaba_nodelist.json");
   json_ctx_t* jnl         = parse_json(nodeliststr);
   if (jnl == NULL) return false;
   vhist_t*         vh = vh_init(jnl);
