@@ -16,7 +16,7 @@ static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
 
 vhist_t* vh_init(json_ctx_t* nodelist) {
   if (nodelist == NULL) return NULL;
-  bytes_t*  b   = NULL;
+  bytes_t   b   = {.data = NULL, .len = 0};
   in3_ret_t ret = IN3_OK;
   uint64_t  blk = 0;
 
@@ -41,14 +41,15 @@ vhist_t* vh_init(json_ctx_t* nodelist) {
     bb_write_int(vh->diffs, d_len(vs));
     if (d_type(vs) == T_ARRAY) {
       for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-        b   = d_bytesl(vitr.token, 20);
-        ret = bb_find(vh->vldtrs, b->data, 20);
+        b   = (d_type(vitr.token) == T_STRING) ? b_from_hexstr(d_string(vitr.token)) : *d_bytesl(vitr.token, 20);
+        ret = bb_find(vh->vldtrs, b.data, 20);
         if (ret == IN3_EFIND) {
           bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
-          bb_write_fixed_bytes(vh->vldtrs, b);
+          bb_write_fixed_bytes(vh->vldtrs, &b);
         } else {
           bb_write_int(vh->diffs, ret);
         }
+        if (d_type(vitr.token) == T_STRING) _free(b.data);
       }
     }
   }
