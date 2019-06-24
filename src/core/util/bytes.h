@@ -9,6 +9,15 @@
 #ifndef BYTES_H
 #define BYTES_H
 
+#define bb_read(_bb_, _i_, _vptr_) bb_readl(_bb_, _i_, _vptr_, sizeof(*_vptr_))
+#define bb_read_next(_bb_, _iptr_, _vptr_) \
+  do {                                     \
+    size_t _l_ = sizeof(*_vptr_);          \
+    bb_readl(_bb_, *_iptr_, _vptr_, _l_);  \
+    *_iptr_ += _l_;                        \
+  } while (0)
+#define bb_readl(_bb_, _i_, _vptr_, _l_) memcpy(_vptr_, _bb_->b.data + _i_, _l_);
+
 typedef uint8_t      address_t[20]; /**< pointer to a 20byte address */
 typedef uint8_t      bytes32_t[32]; /**< pointer to a 32byte word */
 typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byte but usually a uint) */
