@@ -8,6 +8,7 @@
 typedef struct {
   bytes_builder_t* diffs;
   bytes_builder_t* vldtrs;
+  uint64_t         last_change_block;
 } vhist_t;
 
 vhist_t*         vh_init(d_token_t* nodelist);

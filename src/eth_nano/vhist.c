@@ -53,6 +53,7 @@ vhist_t* vh_init(d_token_t* nodelist) {
       }
     }
   }
+  vh->last_change_block = blk;
   return vh;
 }
 
