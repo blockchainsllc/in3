@@ -228,31 +228,3 @@ void bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, 
   if (data_len) memcpy(bb->b.data + offset, data, data_len);
   bb->b.len += data_len - delete_len;
 }
-
-uint64_t bb_read_long(bytes_builder_t* bb, size_t* i) {
-  if (bb->b.len < *i + 3) return 0;
-  *i += 8;
-#if IS_BIG_ENDIAN
-  return ((uint64_t) bb->b.data[*i - 8] << 56) + ((uint64_t) bb->b.data[*i - 7] << 48)   //
-         + ((uint64_t) bb->b.data[*i - 6] << 40) + ((uint64_t) bb->b.data[*i - 5] << 32) //
-         + ((uint64_t) bb->b.data[*i - 4] << 24) + ((uint64_t) bb->b.data[*i - 3] << 16) //
-         + ((uint64_t) bb->b.data[*i - 2] << 8) + bb->b.data[*i - 1];                    //
-#else
-  return bb->b.data[*i - 8] + ((uint64_t) bb->b.data[*i - 7] << 8)                        //
-         + ((uint64_t) bb->b.data[*i - 6] << 16) + ((uint64_t) bb->b.data[*i - 5] << 24)  //
-         + ((uint64_t) bb->b.data[*i - 4] << 32) + ((uint64_t) bb->b.data[*i - 3] << 40)  //
-         + ((uint64_t) bb->b.data[*i - 2] << 48) + ((uint64_t) bb->b.data[*i - 1] << 56); //
-#endif
-}
-
-uint32_t bb_read_int(bytes_builder_t* bb, size_t* i) {
-  if (bb->b.len < *i + 2) return 0;
-  *i += 4;
-#if IS_BIG_ENDIAN
-  return ((uint32_t) bb->b.data[*i - 3] << 24) + ((uint32_t) bb->b.data[*i - 3] << 16) //
-         + ((uint32_t) bb->b.data[*i - 2] << 8) + bb->b.data[*i - 1];                  //
-#else
-  return bb->b.data[*i - 4] + ((uint32_t) bb->b.data[*i - 3] << 8)                        //
-         + ((uint32_t) bb->b.data[*i - 2] << 16) + ((uint32_t) bb->b.data[*i - 1] << 24); //
-#endif
-}

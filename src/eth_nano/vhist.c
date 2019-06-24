@@ -64,18 +64,28 @@ void vh_free(vhist_t* vh) {
 bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block) {
   bytes_builder_t* bb  = bb_new();
   uint64_t         blk = 0;
-  uint32_t         sz = 0, pos = 0;
+  uint32_t         sz = 0, pos = 0, prevsz = 0;
+  size_t           i = 0;
   if (bb == NULL) return NULL;
 
-  for (size_t i = 0; i < vh->diffs->b.len;) {
-    blk = bb_read_long(vh->diffs, &i);
-    sz  = bb_read_int(vh->diffs, &i);
-    bb_clear(bb);
-    for (size_t j = 0; j < sz; ++j) {
-      pos = bb_read_int(vh->diffs, &i);
-      bb_write_raw_bytes(bb, vh->vldtrs->b.data + (pos * 20), 20);
+  for (i = 0; i < vh->diffs->b.len;) {
+    bb_read_next(vh->diffs, &i, &blk);
+    bb_read_next(vh->diffs, &i, &sz);
+    if (blk > block) {
+      i -= ((prevsz * 4) + 12);
+      break;
     }
-    if (blk >= block) break;
+    i += sz * 4;
+    prevsz = sz;
+  }
+
+  // If block exceeds last block at which there was a validator list change,
+  // send latest validator list
+  if (i >= vh->diffs->b.len) i -= prevsz * 4;
+
+  for (size_t j = 0; j < prevsz; ++j) {
+    bb_read_next(vh->diffs, &i, &pos);
+    bb_write_raw_bytes(bb, vh->vldtrs->b.data + (pos * 20), 20);
   }
   return bb;
 }
