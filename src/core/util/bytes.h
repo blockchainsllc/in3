@@ -71,6 +71,8 @@ char* b_new_chars(bytes_t* b, size_t* pos);
 bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos);
 /** reads bytes with a fixed length on the current position and updates the pos afterwards. */
 bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);
+/** constructs a byte_t object with a hex string repr of bytes */
+bytes_t b_from_hexstr(const char* hexstr);
 
 /* creates a new bytes_builder */
 bytes_builder_t* bb_new();
