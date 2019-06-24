@@ -10,7 +10,7 @@ typedef struct {
   bytes_builder_t* vldtrs;
 } vhist_t;
 
-vhist_t*         vh_init(json_ctx_t* nodelist);
+vhist_t*         vh_init(d_token_t* nodelist);
 void             vh_free(vhist_t* vh);
 bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block);
 

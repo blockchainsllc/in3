@@ -14,13 +14,13 @@ static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
   return IN3_EFIND;
 }
 
-vhist_t* vh_init(json_ctx_t* nodelist) {
+vhist_t* vh_init(d_token_t* nodelist) {
   if (nodelist == NULL) return NULL;
   bytes_t   b   = {.data = NULL, .len = 0};
   in3_ret_t ret = IN3_OK;
   uint64_t  blk = 0;
 
-  d_token_t *ss = d_get(nodelist->result, K_STATES), *vs = NULL;
+  d_token_t *ss = d_get(nodelist, K_STATES), *vs = NULL;
   if (ss == NULL) return NULL;
 
   vhist_t* vh = _malloc(sizeof(*vh));
