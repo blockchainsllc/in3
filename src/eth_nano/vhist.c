@@ -14,7 +14,7 @@ static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
   return IN3_EFIND;
 }
 
-vh_t* vh_init(json_ctx_t* nodelist) {
+vhist_t* vh_init(json_ctx_t* nodelist) {
   if (nodelist == NULL) return NULL;
   bytes_t*  b   = NULL;
   in3_ret_t ret = IN3_OK;
@@ -23,7 +23,7 @@ vh_t* vh_init(json_ctx_t* nodelist) {
   d_token_t *ss = d_get(nodelist->result, K_STATES), *vs = NULL;
   if (ss == NULL) return NULL;
 
-  vh_t* vh = _malloc(sizeof(*vh));
+  vhist_t* vh = _malloc(sizeof(*vh));
   if (vh == NULL) return NULL;
   vh->vldtrs = bb_new();
   vh->diffs  = bb_new();
@@ -55,13 +55,13 @@ vh_t* vh_init(json_ctx_t* nodelist) {
   return vh;
 }
 
-void vh_free(vh_t* vh) {
+void vh_free(vhist_t* vh) {
   bb_free(vh->diffs);
   bb_free(vh->vldtrs);
   _free(vh);
 }
 
-bytes_builder_t* vh_get_for_block(vh_t* vh, uint64_t block) {
+bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block) {
   bytes_builder_t* bb  = bb_new();
   uint64_t         blk = 0;
   uint32_t         sz = 0, pos = 0;
