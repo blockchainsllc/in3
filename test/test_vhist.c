@@ -38,18 +38,22 @@ static void bb_print(bytes_builder_t* bb) {
 }
 
 static bool vh_diff_matches(uint64_t block) {
-  char*       nodeliststr = filetostr("../test/testdata/tobalaba_nodelist.json");
-  json_ctx_t* jnl         = parse_json(nodeliststr);
+  d_iterator_t sitr;
+  char*        nodeliststr = filetostr("/Users/sufi-al-hussaini/in3-core/test/testdata/tobalaba_nodelist.json");
+  json_ctx_t*  jnl         = parse_json(nodeliststr);
   if (jnl == NULL) return false;
-  vhist_t*         vh = vh_init(jnl->result);
-  bytes_builder_t* bb = vh_get_for_block(vh, block);
-  //  bb_print(bb);
 
+  d_token_t *ss = d_get(jnl->result, K_STATES), *vs = NULL;
+  vhist_t*   vh = vh_new();
+  for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
+    vh_add_state(vh, sitr.token);
+  }
+
+  bytes_builder_t* bb  = vh_get_for_block(vh, block);
   uint64_t         blk = 0;
-  bytes_t          b   = {.data = NULL, .len = 0};
+  bytes_t          b;
   bytes_builder_t* bb_ = bb_new();
-  d_token_t *      ss = d_get(jnl->result, K_STATES), *vs = NULL;
-  for (d_iterator_t sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
+  for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
     vs  = d_get(sitr.token, K_VALIDATORS);
     blk = d_get_longk(sitr.token, K_BLOCK);
     if (blk > block) break;
