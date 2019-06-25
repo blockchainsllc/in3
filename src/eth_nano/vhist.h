@@ -11,8 +11,10 @@ typedef struct {
   uint64_t         last_change_block;
 } vhist_t;
 
+vhist_t*         vh_new();
 vhist_t*         vh_init(d_token_t* nodelist);
 void             vh_free(vhist_t* vh);
 bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block);
+void             vh_add_state(vhist_t* vh, d_token_t* state);
 
 #endif //IN3_VHIST_H

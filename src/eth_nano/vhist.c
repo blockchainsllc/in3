@@ -14,15 +14,7 @@ static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
   return IN3_EFIND;
 }
 
-vhist_t* vh_init(d_token_t* nodelist) {
-  if (nodelist == NULL) return NULL;
-  bytes_t   b   = {.data = NULL, .len = 0};
-  in3_ret_t ret = IN3_OK;
-  uint64_t  blk = 0;
-
-  d_token_t *ss = d_get(nodelist, K_STATES), *vs = NULL;
-  if (ss == NULL) return NULL;
-
+vhist_t* vh_new() {
   vhist_t* vh = _malloc(sizeof(*vh));
   if (vh == NULL) return NULL;
   vh->vldtrs = bb_new();
@@ -33,27 +25,23 @@ vhist_t* vh_init(d_token_t* nodelist) {
     _free(vh->diffs);
     return NULL;
   }
+  return vh;
+}
 
-  for (d_iterator_t sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
-    vs  = d_get(sitr.token, K_VALIDATORS);
-    blk = d_get_longk(sitr.token, K_BLOCK);
-    bb_write_long(vh->diffs, blk);
-    bb_write_int(vh->diffs, d_len(vs));
-    if (d_type(vs) == T_ARRAY) {
-      for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-        b   = (d_type(vitr.token) == T_STRING) ? b_from_hexstr(d_string(vitr.token)) : *d_bytesl(vitr.token, 20);
-        ret = bb_find(vh->vldtrs, b.data, 20);
-        if (ret == IN3_EFIND) {
-          bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
-          bb_write_fixed_bytes(vh->vldtrs, &b);
-        } else {
-          bb_write_int(vh->diffs, ret);
-        }
-        if (d_type(vitr.token) == T_STRING) _free(b.data);
-      }
-    }
+vhist_t* vh_init(d_token_t* nodelist) {
+  if (nodelist == NULL) return NULL;
+  d_token_t* ss = d_get(nodelist, K_STATES);
+  if (ss == NULL) return NULL;
+
+  vhist_t* vh = vh_new();
+  if (vh == NULL) return NULL;
+
+  d_iterator_t sitr;
+  for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
+    vh_add_state(vh, sitr.token);
   }
-  vh->last_change_block = blk;
+  d_iter_prev(&sitr);
+  vh->last_change_block = d_get_longk(sitr.token, K_BLOCK);
   return vh;
 }
 
@@ -90,4 +78,29 @@ bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block) {
     bb_write_raw_bytes(bb, vh->vldtrs->b.data + (pos * 20), 20);
   }
   return bb;
+}
+
+void vh_add_state(vhist_t* vh, d_token_t* state) {
+  bytes_t    b;
+  in3_ret_t  ret;
+  uint64_t   blk = 0;
+  d_token_t* vs  = NULL;
+
+  vs  = d_get(state, K_VALIDATORS);
+  blk = d_get_longk(state, K_BLOCK);
+  bb_write_long(vh->diffs, blk);
+  bb_write_int(vh->diffs, d_len(vs));
+  if (d_type(vs) == T_ARRAY) {
+    for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
+      b   = (d_type(vitr.token) == T_STRING) ? b_from_hexstr(d_string(vitr.token)) : *d_bytesl(vitr.token, 20);
+      ret = bb_find(vh->vldtrs, b.data, 20);
+      if (ret == IN3_EFIND) {
+        bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
+        bb_write_fixed_bytes(vh->vldtrs, &b);
+      } else {
+        bb_write_int(vh->diffs, ret);
+      }
+      if (d_type(vitr.token) == T_STRING) _free(b.data);
+    }
+  }
 }
