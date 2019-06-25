@@ -86,6 +86,7 @@ d_token_t* d_get(d_token_t* item, const uint16_t key);                          
 d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
+d_token_t* d_prev(d_token_t* item);                                             /**< returns the prev sibling of an array or object */
 
 void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
 json_ctx_t* parse_binary(bytes_t* data);                           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
@@ -159,5 +160,9 @@ static inline bool         d_iter_next(d_iterator_t* const iter) {
   iter->token = d_next(iter->token);
   return iter->left--;
 } /**< fetched the next token an returns a boolean indicating whther there is a next or not.*/
+static inline bool d_iter_prev(d_iterator_t* const iter) {
+  iter->token = d_prev(iter->token);
+  return iter->left++;
+}
 
 #endif
