@@ -678,7 +678,7 @@ static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
   }
   // special handling for references
   if (type == T_BOOLEAN && len > 1) {
-    uint32_t idx = len - 1;
+    uint32_t idx = len - 2;
     if (jp->len < idx) return -1;
     memcpy(next_item(jp, type, len), jp->result + idx, sizeof(d_token_t));
     return 0;
