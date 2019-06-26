@@ -8,6 +8,7 @@
 #include <core/util/mem.h>
 #include <eth_nano/vhist.h>
 #include <inttypes.h>
+#include <transport_curl/in3_storage.h>
 
 #include "test_utils.h"
 
@@ -39,7 +40,7 @@ static void bb_print(bytes_builder_t* bb) {
 
 static bool vh_diff_matches(uint64_t block) {
   d_iterator_t sitr;
-  char*        nodeliststr = filetostr("/Users/sufi-al-hussaini/in3-core/test/testdata/tobalaba_nodelist.json");
+  char*        nodeliststr = filetostr("../test/testdata/tobalaba_nodelist.json");
   json_ctx_t*  jnl         = parse_json(nodeliststr);
   if (jnl == NULL) return false;
 
@@ -92,11 +93,41 @@ static void test_vh_diff() {
   TEST_ASSERT_TRUE(vh_diff_matches(0));
 }
 
+static void test_vh_cache() {
+  char*       nodeliststr = filetostr("../test/testdata/tobalaba_nodelist.json");
+  json_ctx_t* jnl         = parse_json(nodeliststr);
+  TEST_ASSERT_NOT_NULL(jnl);
+
+  in3_storage_handler_t storage_handler;
+  storage_handler.get_item = storage_get_item;
+  storage_handler.set_item = storage_set_item;
+
+  in3_t* c        = in3_new();
+  c->requestCount = 1;
+  c->cacheStorage = &storage_handler;
+
+  vhist_t* vh = vh_init(jnl->result);
+  TEST_ASSERT_NOT_NULL(vh);
+  vh_cache_save(vh, c);
+
+  vhist_t* vh_cached = vh_cache_retrieve(c);
+  TEST_ASSERT_NOT_NULL(vh_cached);
+  TEST_ASSERT_EQUAL_MEMORY(vh->diffs->b.data, vh_cached->diffs->b.data, vh->diffs->b.len);
+  TEST_ASSERT_EQUAL_MEMORY(vh->vldtrs->b.data, vh_cached->vldtrs->b.data, vh->vldtrs->b.len);
+  TEST_ASSERT_EQUAL_UINT64(vh->last_change_block, vh_cached->last_change_block);
+  vh_free(vh_cached);
+  vh_free(vh);
+  in3_free(c);
+  free_json(jnl);
+  _free(nodeliststr);
+}
+
 /*
  * Main
  */
 int main() {
   TESTS_BEGIN();
   RUN_TIMED_TEST(test_vh_diff);
+  RUN_TIMED_TEST(test_vh_cache);
   return TESTS_END();
 }
