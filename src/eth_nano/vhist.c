@@ -2,8 +2,12 @@
 #include "../core/client/keys.h"
 #include "../core/util/error.h"
 #include "../core/util/mem.h"
+#include "rlp.h"
 #include <stdbool.h>
 #include <string.h>
+#include <util/log.h>
+
+#define VALIDATOR_LIST_KEY ("validatorlist_%" PRIx64)
 
 static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
   if (v) {
@@ -103,4 +107,50 @@ void vh_add_state(vhist_t* vh, d_token_t* state) {
       if (d_type(vitr.token) == T_STRING) _free(b.data);
     }
   }
+}
+
+void vh_cache_save(vhist_t* vh, in3_t* c) {
+  char             k[35];
+  bytes_builder_t* cbb  = bb_new();
+  uint8_t          vers = 1;
+  bytes_t          b    = {.data = &vers, .len = sizeof(vers)};
+  rlp_encode_item(cbb, &b); // Version flag
+  rlp_encode_item(cbb, &vh->diffs->b);
+  rlp_encode_item(cbb, &vh->vldtrs->b);
+  b.data = (uint8_t*) &vh->last_change_block;
+  b.len  = sizeof(vh->last_change_block);
+  rlp_encode_item(cbb, &b);
+  sprintf(k, VALIDATOR_LIST_KEY, c->chainId);
+  c->cacheStorage->set_item(c->cacheStorage->cptr, k, &cbb->b);
+  bb_free(cbb);
+}
+
+vhist_t* vh_cache_retrieve(in3_t* c) {
+  char     k[35];
+  bytes_t *v_ = NULL, b_;
+  vhist_t* vh = NULL;
+  if (c->cacheStorage) {
+    sprintf(k, VALIDATOR_LIST_KEY, c->chainId);
+    v_ = c->cacheStorage->get_item(c->cacheStorage->cptr, k);
+    if (v_) {
+      //            b_print(v_);
+      rlp_decode(v_, 0, &b_);
+      uint8_t vers;
+      b_read(&b_, 0, &vers);
+      if (vers == 1) {
+        vh = vh_new();
+        if (vh == NULL) return NULL;
+        rlp_decode(v_, 1, &b_);
+        bb_write_raw_bytes(vh->diffs, b_.data, b_.len);
+        vh->diffs->b.len = b_.len;
+        rlp_decode(v_, 2, &b_);
+        bb_write_raw_bytes(vh->vldtrs, b_.data, b_.len);
+        vh->vldtrs->b.len = b_.len;
+        rlp_decode(v_, 3, &b_);
+        b_read(&b_, 0, &vh->last_change_block);
+      }
+      b_free(v_);
+    }
+  }
+  return vh;
 }

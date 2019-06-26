@@ -12,9 +12,6 @@
 #include <util/mem.h>
 #include <util/utils.h>
 
-#define VALIDATOR_LIST_KEY ("validatorlist_%" PRIx64)
-#define VALIDATOR_DIFF_KEY ("validatordiff_%" PRIx64)
-
 static in3_ret_t get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;
   uint8_t         d[4], bare_hash[32], pub_key[65];
@@ -172,9 +169,19 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     rlp_decode_in_list(&log_data, 2, &tmp);
     bytes_t         b;
     bytes_builder_t vbb;
-    for (d_iterator_t vitr = d_iter(d_get(sitr.token, K_VALIDATORS)); vitr.left; d_iter_next(&vitr)) {
+    uint8_t         abi[32] = {0};
+    int_to_bytes(32, abi + 28);
+    bb_write_raw_bytes(&vbb, abi, 32);
+
+    d_token_t* vs = d_get(sitr.token, K_VALIDATORS);
+    int_to_bytes(d_len(vs), abi + 28);
+    bb_write_raw_bytes(&vbb, abi, 32);
+
+    for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
       b = (d_type(vitr.token) == T_STRING) ? b_from_hexstr(d_string(vitr.token)) : *d_bytesl(vitr.token, 20);
-      bb_write_fixed_bytes(&vbb, &b);
+      memset(abi, 0, 32 - b.len);
+      memcpy(abi + 32 - b.len, b.data, b.len);
+      bb_write_raw_bytes(&vbb, abi, 32);
       if (d_type(vitr.token) == T_STRING) _free(b.data);
     }
     if (!bytes_cmp(tmp, vbb.b))
@@ -187,7 +194,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   }
 
   vh_free(vh);
-  vh = vh_init(d_get(ctx_->responses[0], K_RESULT));
+  *vhp = vh_init(d_get(ctx_->responses[0], K_RESULT));
   free_ctx(ctx_);
   return res;
 }
@@ -197,8 +204,7 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
   bytes_builder_t* validators = NULL;
   bytes_t *        proposer, b;
   size_t           i;
-  vhist_t*         vh     = NULL;
-  char             k[200] = {0};
+  vhist_t*         vh = NULL;
 
   // if we have a fixed validator list,
   if ((tmp = d_get(spec, K_VALIDATOR_LIST)) && !d_get(spec, K_VALIDATOR_CONTRACT)) {
@@ -212,25 +218,10 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
     if (val_len) *val_len = l;
   } else {
     // try to get from cache
-    bytes_t *v_ = NULL, *d_ = NULL;
-    if (vc->ctx->client->cacheStorage) {
-      sprintf(k, VALIDATOR_LIST_KEY, vc->chain->chainId);
-      v_ = vc->ctx->client->cacheStorage->get_item(vc->ctx->client->cacheStorage->cptr, k);
-      sprintf(k, VALIDATOR_DIFF_KEY, vc->chain->chainId);
-      d_ = vc->ctx->client->cacheStorage->get_item(vc->ctx->client->cacheStorage->cptr, k);
-    }
+    vh = vh_cache_retrieve(vc->ctx->client);
 
     // if no validators in cache, get them from spec
-    if (v_) {
-      vh = _malloc(sizeof(*vh));
-      if (vh == NULL) return NULL;
-      vh->vldtrs->b.data = v_->data;
-      vh->vldtrs->b.len  = v_->len;
-      vh->diffs->b.data  = d_->data;
-      vh->diffs->b.len   = d_->len;
-      _free(v_);
-      _free(d_);
-    } else {
+    if (!vh) {
       vh = vh_init(spec);
       if (vh == NULL) {
         vc_err(vc, "Invalid spec");
@@ -240,14 +231,8 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
 
     if (vc->ctx->last_validator_change > vh->last_change_block) {
       add_aura_validators(vc, &vh);
-
-      // save to cache
-      sprintf(k, VALIDATOR_LIST_KEY, vc->chain->chainId);
-      vc->ctx->client->cacheStorage->set_item(vc->ctx->client->cacheStorage->cptr, k, &vh->vldtrs->b);
-      sprintf(k, VALIDATOR_DIFF_KEY, vc->chain->chainId);
-      vc->ctx->client->cacheStorage->set_item(vc->ctx->client->cacheStorage->cptr, k, &vh->diffs->b);
+      vh_cache_save(vh, vc->ctx->client);
     }
-
     vh_free(vh);
 
     rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &b);
