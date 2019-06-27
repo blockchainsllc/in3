@@ -188,6 +188,20 @@ zephyr_arm-0_9_5__0b9cfe7:
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
     - make -j8
 
+mac_os:
+  stage: build
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared .. 
+    - make 
+    - make ptest
+  artifacts:
+    paths:
+      - build/src
+  tags:
+    - mac-mini-runner
+
 
 #pages:
 #  tags:
