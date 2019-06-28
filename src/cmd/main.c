@@ -17,10 +17,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <util/data.h>
 #include <util/debug.h>
 #include <util/utils.h>
 
-#include <util/data.h>
+bytes_t readFile(FILE* f) {
+  size_t   allocated = 1024, len = 0, r;
+  uint8_t* buffer = _malloc(1025);
+  while (1) {
+    r = fread(buffer + len, 1, allocated - len, f);
+    len += r;
+    if (feof(f)) break;
+    buffer = _realloc(buffer, allocated * 2 + 1, allocated + 1);
+    allocated *= 2;
+  }
+  buffer[len] = 0;
+  return bytes(buffer, len);
+}
+
+bytes_t* get_std_in() {
+  if (feof(stdin)) return NULL;
+  bytes_t content = readFile(stdin);
+
+  char* bin = strstr((char*) content.data, "\nBinary: \n");
+  if (bin) {
+    bin += 10;
+    char* end = strstr(bin, "\n");
+    if (end)
+      return hex2byte_new_bytes(bin, end - bin);
+  }
+
+  bytes_t* res = (content.len > 1 && *content.data == '0' && content.data[1] == 'x') ? hex2byte_new_bytes((char*) content.data + 2, content.len - 2) : hex2byte_new_bytes((char*) content.data, content.len);
+  _free(content.data);
+  return res;
+}
 
 uint64_t getChainId(char* name) {
   if (strcmp(name, "mainnet") == 0) return 0x01L;
@@ -28,21 +59,36 @@ uint64_t getChainId(char* name) {
   if (strcmp(name, "tobalaba") == 0) return 0x44dL;
   if (strcmp(name, "evan") == 0) return 0x4b1L;
   if (strcmp(name, "ipfs") == 0) return 0x7d0;
+  if (strcmp(name, "local") == 0) return 0xFFFFL;
   return atoi(name);
 }
 
-call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value) {
-  call_request_t* req = parseSignature(fn_sig);
-  if (req->in_data->type == A_TUPLE) {
+call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
+  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;
+  if (req && req->in_data->type == A_TUPLE) {
     json_ctx_t* in_data = parse_json(args);
     if (set_data(req, in_data->result, req->in_data) < 0) { printf("Error: could not set the data"); }
     free_json(in_data);
   }
   sb_t* params = sb_new("");
-  sb_add_chars(params, "[{\"to\":\"");
-  sb_add_chars(params, to);
-  sb_add_chars(params, "\", \"data\":");
-  sb_add_bytes(params, "", &req->call_data->b, 1, false);
+  if (to) {
+    sb_add_chars(params, "[{\"to\":\"");
+    sb_add_chars(params, to);
+    sb_add_chars(params, "\", \"data\":");
+  } else
+    sb_add_chars(params, "[{\"data\":");
+  if (req) {
+    if (data) {
+      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len);
+      memcpy(full, data->data, data->len);
+      memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
+      bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
+      sb_add_bytes(params, "", &bb, 1, false);
+      _free(full);
+    } else
+      sb_add_bytes(params, "", &req->call_data->b, 1, false);
+  } else if (data)
+    sb_add_bytes(params, "", data, 1, false);
   if (block_number) {
     sb_add_chars(params, "},\"");
     sb_add_chars(params, block_number);
@@ -105,7 +151,7 @@ int main(int argc, char* argv[]) {
   }
 
   char* method = NULL;
-  char  params[5000];
+  char  params[50000];
   params[0] = '[';
   int p     = 1;
 
@@ -132,6 +178,7 @@ int main(int argc, char* argv[]) {
   bool            wait         = false;
   char*           pwd          = NULL;
   char*           pk_file      = NULL;
+  bytes_t*        data         = NULL;
 
   if (getenv("IN3_PK")) {
     hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
@@ -141,7 +188,7 @@ int main(int argc, char* argv[]) {
   // fill from args
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) {
-      if (argv[i + 1][0] == '0' && argv[i+1][1] == 'x') {
+      if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex2byte_arr(argv[++i], -1, pk, 32);
         eth_set_pk_signer(c, pk);
       } else
@@ -149,7 +196,23 @@ int main(int argc, char* argv[]) {
 
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
       c->chainId = getChainId(argv[++i]);
-    else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
+    else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) {
+      char* d = argv[++i];
+      if (strcmp(d, "-") == 0)
+        data = get_std_in();
+      else if (*d == '0' && d[1] == 'x')
+        data = hex2byte_new_bytes(d + 2, strlen(d) - 2);
+      else {
+        FILE* f = fopen(d, "r");
+        if (!f) {
+          printf("data could not be read from file %s", d);
+          return 1;
+        }
+        bytes_t content = readFile(f);
+        data            = hex2byte_new_bytes((char*) content.data + 2, content.len - 2);
+        fclose(f);
+      }
+    } else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
       block_number = argv[++i];
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
@@ -165,6 +228,8 @@ int main(int argc, char* argv[]) {
       wait = true;
     else if (strcmp(argv[i], "-json") == 0)
       json = true;
+    else if (strcmp(argv[i], "-np") == 0)
+      c->proof = PROOF_NONE;
     else if (strcmp(argv[i], "-debug") == 0)
       c->evm_flags = EVM_PROP_DEBUG;
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
@@ -251,12 +316,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  if (c->chainId == 0xFFFF) c->proof = PROOF_NONE;
+
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, to, params, block_number, 0, NULL);
+    req    = prepare_tx(sig, to, params, block_number, 0, NULL, data);
     method = "eth_call";
     //    printf(" new params %s\n", params);
   } else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, to, params, NULL, gas_limit, value);
+    prepare_tx(sig, to, params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
     //    printf(" new params %s\n", params);
   }
