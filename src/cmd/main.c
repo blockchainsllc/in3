@@ -22,6 +22,52 @@
 #include <util/debug.h>
 #include <util/utils.h>
 
+char* get_wei(char* val) {
+  if (*val == '0' && val[1] == 'x') return val;
+  int    l     = strlen(val);
+  double value = 0;
+  if (l > 3 && val[l - 1] > '9') {
+    char unit[4];
+    strcpy(unit, val + l - 3);
+    double f = 1;
+    if (val[l - 4] == 'k')
+      f = 1000;
+    else if (val[l - 4] == 'M')
+      f = 1000000;
+    else if (val[l - 4] == 'm')
+      f = 0.001;
+    val[l - ((f == 1) ? 3 : 4)] = 0;
+    value                       = atof(val);
+    if (strcmp(unit, "eth") == 0)
+      value *= 1000000000000000000l;
+    else if (strcmp(unit, "wei") == 0)
+      value *= 1000000000000000000l;
+    value *= f;
+  } else
+    value = atof(val);
+
+  value            = floor(value);
+  char* res        = _malloc(200);
+  res[199]         = 0;
+  char*      p     = res + 199;
+  const char hex[] = "0123456789abcdef";
+  while (value > 0.999999) {
+    p--;
+    *p    = hex[(int) (fmod(value, 16))];
+    value = floor(value / 16);
+  }
+  res[0] = '0';
+  res[1] = 'x';
+  if (p == res + 199) {
+    res[2] = '0';
+    res[3] = 0;
+  } else {
+    memmove(res + 2, p, res + 199 - p);
+    res[res + 201 - p] = 0;
+  }
+  return res;
+}
+
 bytes_t readFile(FILE* f) {
   size_t   allocated = 1024, len = 0, r;
   uint8_t* buffer = _malloc(1025);
@@ -63,6 +109,14 @@ uint64_t getChainId(char* name) {
   return atoi(name);
 }
 
+void set_chain_id(in3_t* c, char* id) {
+  if (strstr(id, "://")) {
+    c->chainId                   = 0xFFFFL;
+    c->chains[5].nodeList[0].url = id;
+  } else
+    c->chainId = getChainId(id);
+}
+
 call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
   call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;
   if (req && req->in_data->type == A_TUPLE) {
@@ -70,25 +124,30 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
     if (set_data(req, in_data->result, req->in_data) < 0) { printf("Error: could not set the data"); }
     free_json(in_data);
   }
-  sb_t* params = sb_new("");
+  sb_t* params = sb_new("[{");
   if (to) {
-    sb_add_chars(params, "[{\"to\":\"");
+    sb_add_chars(params, "\"to\":\"");
     sb_add_chars(params, to);
-    sb_add_chars(params, "\", \"data\":");
-  } else
-    sb_add_chars(params, "[{\"data\":");
-  if (req) {
-    if (data) {
-      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len);
-      memcpy(full, data->data, data->len);
-      memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
-      bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
-      sb_add_bytes(params, "", &bb, 1, false);
-      _free(full);
-    } else
-      sb_add_bytes(params, "", &req->call_data->b, 1, false);
-  } else if (data)
-    sb_add_bytes(params, "", data, 1, false);
+    sb_add_chars(params, "\" ");
+    if (req || data) {
+      if (to)
+        sb_add_chars(params, ",\"data\":");
+      else
+        sb_add_chars(params, "\"data\":");
+    }
+    if (req) {
+      if (data) {
+        uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len);
+        memcpy(full, data->data, data->len);
+        memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
+        bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
+        sb_add_bytes(params, "", &bb, 1, false);
+        _free(full);
+      } else
+        sb_add_bytes(params, "", &req->call_data->b, 1, false);
+    } else if (data)
+      sb_add_bytes(params, "", data, 1, false);
+  }
   if (block_number) {
     sb_add_chars(params, "},\"");
     sb_add_chars(params, block_number);
@@ -185,6 +244,8 @@ int main(int argc, char* argv[]) {
     eth_set_pk_signer(c, pk);
   }
 
+  if (getenv("IN3_CHAIN")) set_chain_id(c, getenv("IN3_CHAIN"));
+
   // fill from args
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) {
@@ -195,7 +256,7 @@ int main(int argc, char* argv[]) {
         pk_file = argv[++i];
 
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
-      c->chainId = getChainId(argv[++i]);
+      set_chain_id(c, argv[++i]);
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) {
       char* d = argv[++i];
       if (strcmp(d, "-") == 0)
@@ -221,10 +282,10 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
     else if (strcmp(argv[i], "-value") == 0)
-      value = argv[++i];
+      value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-hex") == 0)
       force_hex = true;
-    else if (strcmp(argv[i], "-wait") == 0)
+    else if (strcmp(argv[i], "-wait") == 0 || strcmp(argv[i], "-w") == 0)
       wait = true;
     else if (strcmp(argv[i], "-json") == 0)
       json = true;
@@ -326,6 +387,9 @@ int main(int argc, char* argv[]) {
     prepare_tx(sig, to, params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
     //    printf(" new params %s\n", params);
+  } else if (strcmp(method, "autocompletelist") == 0) {
+    printf("send call mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    return 0;
   }
 
   // send the request
