@@ -222,14 +222,14 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
 
     // if no validators in cache, get them from spec
     if (!vh) {
-      vh = vh_init(spec);
+      vh = vh_init_spec(spec);
       if (vh == NULL) {
         vc_err(vc, "Invalid spec");
         return NULL;
       }
     }
 
-    if (vc->ctx->last_validator_change > vh->last_change_block) {
+    if (vc->last_validator_change > vh->last_change_block) {
       add_aura_validators(vc, &vh);
       vh_cache_save(vh, vc->ctx->client);
     }
