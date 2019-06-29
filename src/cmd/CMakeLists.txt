@@ -21,3 +21,9 @@ target_link_libraries (example core transport_curl eth_full eth_api usn_api ${DE
 target_link_libraries (rlp core eth_nano ${DEAD_STRIP_LINKER_OPT})
 target_link_libraries (json core ${DEAD_STRIP_LINKER_OPT})
 
+install(TARGETS in3
+        DESTINATION /usr/local/bin/
+        PERMISSIONS
+          OWNER_READ OWNER_WRITE OWNER_EXECUTE
+          GROUP_READ GROUP_EXECUTE
+          WORLD_READ WORLD_EXECUTE)
