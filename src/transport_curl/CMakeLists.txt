@@ -72,5 +72,9 @@ include(../core/compiler.cmake)
 
 # add dependency
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
+if(MSVC OR MSYS OR MINGW)
+    # for detecting Windows compilers
+    target_link_libraries(transport_curl ws2_32 wsock32 pthread)
+endif()
 
 target_include_directories(transport_curl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
