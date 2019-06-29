@@ -160,14 +160,13 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
     rlp_decode_in_list(&log_data, 1, &tmp);
     rlp_decode_in_list(&tmp, 0, &tmp);
-    bytes_t t = b_from_hexstr("0x55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89");
-    if (!bytes_cmp(tmp, t))
+    bytes_t* t = hex2byte_new_bytes("0x55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 66);
+    if (!bytes_cmp(tmp, *t))
       return vc_err(vc, "Wrong topic in log");
-
-    _free(t.data);
+    b_free(t);
 
     rlp_decode_in_list(&log_data, 2, &tmp);
-    bytes_t         b;
+    bytes_t*        b;
     bytes_builder_t vbb;
     uint8_t         abi[32] = {0};
     int_to_bytes(32, abi + 28);
@@ -178,11 +177,11 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     bb_write_raw_bytes(&vbb, abi, 32);
 
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-      b = (d_type(vitr.token) == T_STRING) ? b_from_hexstr(d_string(vitr.token)) : *d_bytesl(vitr.token, 20);
-      memset(abi, 0, 32 - b.len);
-      memcpy(abi + 32 - b.len, b.data, b.len);
+      b = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+      memset(abi, 0, 32 - b->len);
+      memcpy(abi + 32 - b->len, b->data, b->len);
       bb_write_raw_bytes(&vbb, abi, 32);
-      if (d_type(vitr.token) == T_STRING) _free(b.data);
+      if (d_type(vitr.token) == T_STRING) _free(b->data);
     }
     if (!bytes_cmp(tmp, vbb.b))
       return vc_err(vc, "wrong data in log");

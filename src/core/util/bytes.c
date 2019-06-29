@@ -127,31 +127,6 @@ bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len) {
   return r;
 }
 
-bytes_t b_from_hexstr(const char* hexstr) {
-  bytes_t     b   = {.data = NULL, .len = 0};
-  size_t      sz  = strlen(hexstr);
-  const char* pos = hexstr;
-  if (pos[0] == '0' && pos[1] == 'x') {
-    pos += 2;
-    sz -= 2;
-  }
-  const uint8_t odd   = ((sz % 2) == 1);
-  const uint8_t bytes = (sz / 2) + odd;
-  uint8_t*      val   = _malloc(bytes);
-  if (val != NULL) {
-    for (size_t i = 0; i < bytes; i++) {
-      if (sscanf(pos, (!i && odd) ? "%1hhx" : "%2hhx", (unsigned char*) &val[i]) != 1) {
-        free(val);
-        return b;
-      }
-      pos += (!i && odd) ? 1 : 2;
-    }
-  }
-  b.data = val;
-  b.len  = bytes;
-  return b;
-}
-
 /* allocates a new byte array with 0 filled */
 bytes_builder_t* bb_newl(size_t l) {
   bytes_builder_t* r = _malloc(sizeof(bytes_builder_t));

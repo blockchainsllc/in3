@@ -98,7 +98,7 @@ bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block) {
 }
 
 void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
-  bytes_t    b;
+  bytes_t*   b;
   in3_ret_t  ret;
   uint64_t   blk = 0;
   d_token_t* vs  = NULL;
@@ -109,15 +109,15 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   bb_write_int(vh->diffs, d_len(vs));
   if (d_type(vs) == T_ARRAY) {
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-      b   = (d_type(vitr.token) == T_STRING) ? b_from_hexstr(d_string(vitr.token)) : *d_bytesl(vitr.token, 20);
-      ret = bb_find(vh->vldtrs, b.data, 20);
+      b   = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+      ret = bb_find(vh->vldtrs, b->data, 20);
       if (ret == IN3_EFIND) {
         bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
-        bb_write_fixed_bytes(vh->vldtrs, &b);
+        bb_write_fixed_bytes(vh->vldtrs, b);
       } else {
         bb_write_int(vh->diffs, ret);
       }
-      if (d_type(vitr.token) == T_STRING) _free(b.data);
+      if (d_type(vitr.token) == T_STRING) _free(b->data);
     }
   }
 }

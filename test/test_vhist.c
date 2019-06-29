@@ -52,7 +52,7 @@ static bool vh_diff_matches(uint64_t block) {
 
   bytes_builder_t* bb  = vh_get_for_block(vh, block);
   uint64_t         blk = 0;
-  bytes_t          b;
+  bytes_t          *b;
   bytes_builder_t* bb_ = bb_new();
   for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
     vs  = d_get(sitr.token, K_VALIDATORS);
@@ -61,9 +61,9 @@ static bool vh_diff_matches(uint64_t block) {
     bb_clear(bb_);
     if (d_type(vs) == T_ARRAY) {
       for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-        b = (d_type(vitr.token) == T_STRING) ? b_from_hexstr(d_string(vitr.token)) : *d_bytesl(vitr.token, 20);
-        bb_write_fixed_bytes(bb_, &b);
-        if (d_type(vitr.token) == T_STRING) _free(b.data);
+        b = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+        bb_write_fixed_bytes(bb_, b);
+        if (d_type(vitr.token) == T_STRING) _free(b->data);
       }
     }
   }
