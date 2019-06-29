@@ -22,7 +22,7 @@ else()
 endif()
 message(STATUS "check for curl....: ${CURL_FOUND} ")
 
-
+#ADD_DEFINITIONS(-DCURL_BLOCKING)
 
 if( CURL_FOUND)
     message(STATUS "Found CURL version: ${CURL_VERSION_STRING} shoudl be type=${LIBCURL_LINKTYPE} but  ${LIBCURL_TYPE}")
@@ -74,7 +74,8 @@ include(../core/compiler.cmake)
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
 if(MSVC OR MSYS OR MINGW)
     # for detecting Windows compilers
-    target_link_libraries(transport_curl ws2_32 wsock32 pthread)
+#    target_link_libraries(transport_curl ws2_32 wsock32 pthread )
+    target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic )
 endif()
 
 target_include_directories(transport_curl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

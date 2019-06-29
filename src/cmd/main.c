@@ -225,6 +225,7 @@ int main(int argc, char* argv[]) {
   in3_t* c        = in3_new();
   c->transport    = send_curl;
   c->requestCount = 1;
+  c->use_http     = true;
   c->cacheStorage = &storage_handler;
   in3_cache_init(c);
   bytes32_t       pk;
