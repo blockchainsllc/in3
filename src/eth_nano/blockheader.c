@@ -190,11 +190,11 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     _free(raw_receipt.data);
     _free(proof);
 
-    vh_add_state(vh, sitr.token);
+    vh_add_state(vh, sitr.token, false);
   }
 
   vh_free(vh);
-  *vhp = vh_init(d_get(ctx_->responses[0], K_RESULT));
+  *vhp = vh_init_nodelist(d_get(ctx_->responses[0], K_RESULT));
   free_ctx(ctx_);
   return res;
 }
@@ -241,7 +241,10 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
 
   // the nonce used to find out who's turn it is to sign.
   rlp_decode_in_list(header, BLOCKHEADER_SEALED_FIELD1, &b);
-  proposer = b_dup(&validators[bytes_to_long(b.data, 4) % (validators->b.len / 20)].b);
+
+  b.data   = &validators->b.data[(bytes_to_long(b.data, 4) % (validators->b.len / 20)) * 20];
+  b.len    = 20;
+  proposer = b_dup(&b);
   bb_free(validators);
   return proposer;
 }
@@ -282,7 +285,7 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec
   if (val_len == 0)
     return vc_err(vc, "no validators");
 
-  return passed * 100 / val_len >= needed_finality ? IN3_OK : vc_err(vc, "not enought blocks to reach finality");
+  return passed * 100 / val_len >= needed_finality ? IN3_OK : vc_err(vc, "not enough blocks to reach finality");
 }
 
 /** verify the header */

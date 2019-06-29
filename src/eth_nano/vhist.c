@@ -146,7 +146,6 @@ vhist_t* vh_cache_retrieve(in3_t* c) {
     sprintf(k, VALIDATOR_LIST_KEY, c->chainId);
     v_ = c->cacheStorage->get_item(c->cacheStorage->cptr, k);
     if (v_) {
-      //            b_print(v_);
       rlp_decode(v_, 0, &b_);
       uint8_t vers;
       b_read(&b_, 0, &vers);
