@@ -88,6 +88,7 @@
 #define K_VALIDATORS        key("validators")
 #define K_STATES            key("states")
 #define K_LAST_VALIDATOR_CHANGE key("lastValidatorChange")
+#define K_LIST              key("list")
 
 
 #define K_CODE_HASH         key("codeHash")

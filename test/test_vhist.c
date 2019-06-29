@@ -47,7 +47,7 @@ static bool vh_diff_matches(uint64_t block) {
   d_token_t *ss = d_get(jnl->result, K_STATES), *vs = NULL;
   vhist_t*   vh = vh_new();
   for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
-    vh_add_state(vh, sitr.token);
+    vh_add_state(vh, sitr.token, false);
   }
 
   bytes_builder_t* bb  = vh_get_for_block(vh, block);
@@ -106,7 +106,7 @@ static void test_vh_cache() {
   c->requestCount = 1;
   c->cacheStorage = &storage_handler;
 
-  vhist_t* vh = vh_init(jnl->result);
+  vhist_t* vh = vh_init_nodelist(jnl->result);
   TEST_ASSERT_NOT_NULL(vh);
   vh_cache_save(vh, c);
 

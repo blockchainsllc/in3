@@ -32,7 +32,20 @@ vhist_t* vh_new() {
   return vh;
 }
 
-vhist_t* vh_init(d_token_t* nodelist) {
+vhist_t* vh_init_spec(d_token_t* spec) {
+  if (spec == NULL || d_type(spec) != T_ARRAY) return NULL;
+  vhist_t* vh = vh_new();
+  if (vh == NULL) return NULL;
+
+  d_iterator_t sitr;
+  for (sitr = d_iter(spec); sitr.left; d_iter_next(&sitr)) {
+    vh->last_change_block = d_get_longk(sitr.token, K_BLOCK);
+    vh_add_state(vh, sitr.token, true);
+  }
+  return vh;
+}
+
+vhist_t* vh_init_nodelist(d_token_t* nodelist) {
   if (nodelist == NULL) return NULL;
   d_token_t* ss = d_get(nodelist, K_STATES);
   if (ss == NULL) return NULL;
@@ -42,7 +55,7 @@ vhist_t* vh_init(d_token_t* nodelist) {
 
   d_iterator_t sitr;
   for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
-    vh_add_state(vh, sitr.token);
+    vh_add_state(vh, sitr.token, false);
   }
   d_iter_prev(&sitr);
   vh->last_change_block = d_get_longk(sitr.token, K_BLOCK);
@@ -84,13 +97,13 @@ bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block) {
   return bb;
 }
 
-void vh_add_state(vhist_t* vh, d_token_t* state) {
+void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   bytes_t    b;
   in3_ret_t  ret;
   uint64_t   blk = 0;
   d_token_t* vs  = NULL;
 
-  vs  = d_get(state, K_VALIDATORS);
+  vs  = d_get(state, is_spec ? K_LIST : K_VALIDATORS);
   blk = d_get_longk(state, K_BLOCK);
   bb_write_long(vh->diffs, blk);
   bb_write_int(vh->diffs, d_len(vs));
