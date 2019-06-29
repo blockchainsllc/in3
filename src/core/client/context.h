@@ -59,9 +59,6 @@ typedef struct {
   /** optional cache-entries */
   cache_entry_t* cache;
 
-  /** block number of last change of the validator list */
-  uint64_t last_validator_change;
-
 } in3_ctx_t;
 
 /** 

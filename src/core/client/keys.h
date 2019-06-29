@@ -87,7 +87,7 @@
 #define K_VALIDATOR_CONTRACT key("validatorContract")
 #define K_VALIDATORS        key("validators")
 #define K_STATES            key("states")
-
+#define K_LAST_VALIDATOR_CHANGE key("lastValidatorChange")
 
 
 #define K_CODE_HASH         key("codeHash")
