@@ -123,6 +123,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
 }
 
 void vh_cache_save(vhist_t* vh, in3_t* c) {
+  if (!c->cacheStorage) return;
   char             k[35];
   bytes_builder_t* cbb  = bb_new();
   uint8_t          vers = 1;
