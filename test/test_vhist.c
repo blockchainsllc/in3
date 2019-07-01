@@ -50,7 +50,7 @@ static bool vh_diff_matches(uint64_t block) {
     vh_add_state(vh, sitr.token, false);
   }
 
-  bytes_builder_t* bb  = vh_get_for_block(vh, block);
+  bytes_builder_t* bb  = vh_get_validators_for_block(vh, block);
   uint64_t         blk = 0;
   bytes_t          *b;
   bytes_builder_t* bb_ = bb_new();
