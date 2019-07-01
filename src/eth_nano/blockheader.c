@@ -199,44 +199,31 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 }
 
 static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
-  d_token_t*       tmp        = NULL;
   bytes_builder_t* validators = NULL;
   bytes_t *        proposer, b;
-  size_t           i;
   vhist_t*         vh = NULL;
 
-  // if we have a fixed validator list,
-  if ((tmp = d_get(spec, K_VALIDATOR_LIST)) && !d_get(spec, K_VALIDATOR_CONTRACT)) {
-    size_t l = d_len(tmp);
-    // create a validator list from spec.
-    validators = bb_newl(l * 20);
-    // copy references
-    for (i = 0, tmp += 1; i < l; i++, tmp = d_next(tmp))
-      bb_write_fixed_bytes(validators, d_bytesl(tmp, 20));
-    // copy the size of the validators to the given pointer, because it will be needed to ensure finality.
-    if (val_len) *val_len = l;
-  } else {
-    // try to get from cache
-    vh = vh_cache_retrieve(vc->ctx->client);
+  // try to get from cache
+  vh = vh_cache_retrieve(vc->ctx->client);
 
-    // if no validators in cache, get them from spec
-    if (!vh) {
-      vh = vh_init_spec(spec);
-      if (vh == NULL) {
-        vc_err(vc, "Invalid spec");
-        return NULL;
-      }
+  // if no validators in cache, get them from spec
+  if (!vh) {
+    vh = vh_init_spec(spec);
+    if (vh == NULL) {
+      vc_err(vc, "Invalid spec");
+      return NULL;
     }
-
-    if (vc->last_validator_change > vh->last_change_block) {
-      add_aura_validators(vc, &vh);
-      vh_cache_save(vh, vc->ctx->client);
-    }
-    vh_free(vh);
-
-    rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &b);
-    validators = vh_get_for_block(vh, bytes_to_long(b.data, b.len));
+    vh_cache_save(vh, vc->ctx->client);
   }
+
+  if (vc->last_validator_change > vh->last_change_block) {
+    add_aura_validators(vc, &vh);
+    vh_cache_save(vh, vc->ctx->client);
+  }
+
+  rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &b);
+  validators = vh_get_for_block(vh, bytes_to_long(b.data, b.len));
+  if (val_len) *val_len = validators->b.len / 20;
 
   // the nonce used to find out who's turn it is to sign.
   rlp_decode_in_list(header, BLOCKHEADER_SEALED_FIELD1, &b);
@@ -244,6 +231,7 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
   b.data   = &validators->b.data[(bytes_to_long(b.data, 4) % (validators->b.len / 20)) * 20];
   b.len    = 20;
   proposer = b_dup(&b);
+  vh_free(vh);
   bb_free(validators);
   return proposer;
 }
@@ -317,7 +305,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   if (res == IN3_OK && vc->config->signaturesCount == 0) {
 
     // ... and the chain is a authority chain....
-    if (vc->chain && vc->chain->spec && (sig = d_get(vc->chain->spec->result, K_ENGINE)) && strcmp(d_string(sig), "authorityRound") == 0) {
+    if (vc->chain && vc->chain->spec && eth_get_validator(vc, header, vc->chain->spec->result, NULL)) {
       // we merge the current header + finality blocks
       sig              = d_get(vc->proof, K_FINALITY_BLOCKS);
       bytes_t** blocks = _malloc((sig ? d_len(sig) + 1 : 2) * sizeof(bytes_t*));
