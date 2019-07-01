@@ -79,35 +79,49 @@ void vh_free(vhist_t* vh) {
   _free(vh);
 }
 
-bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block) {
-  bytes_builder_t* bb  = bb_new();
-  uint64_t         blk = 0;
-  uint32_t         sz = 0, pos = 0, prevsz = 0;
-  size_t           i = 0;
-  vhist_engine_t   engine = ENGINE_UNKNOWN;
-  if (bb == NULL) return NULL;
+uint32_t vh_find_block(vhist_t* vh, uint64_t block, uint32_t* prevsz) {
+  uint64_t       blk    = 0;
+  uint32_t       sz     = 0;
+  size_t         i      = 0;
+  vhist_engine_t engine = ENGINE_UNKNOWN;
 
   for (i = 0; i < vh->diffs->b.len;) {
     bb_read_next(vh->diffs, &i, &blk);
     bb_read_next(vh->diffs, &i, &engine);
     bb_read_next(vh->diffs, &i, &sz);
     if (blk > block) {
-      i -= ((prevsz * 4) + 12 + sizeof(vhist_engine_t));
+      i -= ((*prevsz * 4) + 12 + sizeof(engine));
       break;
     }
     i += sz * 4;
-    prevsz = sz;
+    *prevsz = sz;
   }
 
   // If block exceeds last block at which there was a validator list change,
   // send latest validator list
-  if (i >= vh->diffs->b.len) i -= prevsz * 4;
+  if (i >= vh->diffs->b.len) i -= (*prevsz) * 4;
+  return i;
+}
 
+bytes_builder_t* vh_get_validators_for_block(vhist_t* vh, uint64_t block) {
+  bytes_builder_t* bb  = bb_new();
+  uint32_t         pos = 0, prevsz = 0;
+  if (bb == NULL) return NULL;
+  uint32_t i = vh_find_block(vh, block, &prevsz);
   for (size_t j = 0; j < prevsz; ++j) {
     bb_read_next(vh->diffs, &i, &pos);
     bb_write_raw_bytes(bb, vh->vldtrs->b.data + (pos * 20), 20);
   }
   return bb;
+}
+
+vhist_engine_t vh_get_engine_for_block(vhist_t* vh, uint64_t block) {
+  vhist_engine_t engine = ENGINE_UNKNOWN;
+  uint32_t       prevsz = 0;
+  uint32_t       i      = vh_find_block(vh, block, &prevsz);
+  i -= (4 + sizeof(vhist_engine_t));
+  bb_read_next(vh->diffs, &i, &engine);
+  return engine;
 }
 
 void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {

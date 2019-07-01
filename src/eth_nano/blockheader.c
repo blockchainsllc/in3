@@ -112,7 +112,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     uint8_t          hash[32], signer[20];
     int              passed   = 0;
     uint8_t*         proposer = NULL;
-    bytes_builder_t* curr     = vh_get_for_block(vh, prf_blkno);
+    bytes_builder_t* curr     = vh_get_validators_for_block(vh, prf_blkno);
 
     while (fblk) {
       // check signature of proposer
@@ -198,31 +198,37 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   return res;
 }
 
-static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, int* val_len) {
-  bytes_builder_t* validators = NULL;
-  bytes_t *        proposer, b;
-  vhist_t*         vh = NULL;
+static vhist_engine_t eth_get_engine(in3_vctx_t* vc, bytes_t* header, d_token_t* spec, vhist_t** vh) {
+  bytes_t b;
 
   // try to get from cache
-  vh = vh_cache_retrieve(vc->ctx->client);
+  *vh = vh_cache_retrieve(vc->ctx->client);
 
   // if no validators in cache, get them from spec
-  if (!vh) {
-    vh = vh_init_spec(spec);
-    if (vh == NULL) {
+  if (!*vh) {
+    *vh = vh_init_spec(spec);
+    if (*vh == NULL) {
       vc_err(vc, "Invalid spec");
-      return NULL;
+      return ENGINE_UNKNOWN;
     }
-    vh_cache_save(vh, vc->ctx->client);
+    vh_cache_save(*vh, vc->ctx->client);
   }
 
-  if (vc->last_validator_change > vh->last_change_block) {
-    add_aura_validators(vc, &vh);
-    vh_cache_save(vh, vc->ctx->client);
+  if (vc->last_validator_change > (*vh)->last_change_block) {
+    add_aura_validators(vc, vh);
+    vh_cache_save(*vh, vc->ctx->client);
   }
 
   rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &b);
-  validators = vh_get_for_block(vh, bytes_to_long(b.data, b.len));
+  return vh_get_engine_for_block(*vh, bytes_to_long(b.data, b.len));
+}
+
+static bytes_t* eth_get_validator(bytes_t* header, int* val_len, vhist_t* vh) {
+  bytes_builder_t* validators = NULL;
+  bytes_t *        proposer, b;
+
+  rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &b);
+  validators = vh_get_validators_for_block(vh, bytes_to_long(b.data, b.len));
   if (val_len) *val_len = validators->b.len / 20;
 
   // the nonce used to find out who's turn it is to sign.
@@ -236,7 +242,7 @@ static bytes_t* eth_get_validator(in3_vctx_t* vc, bytes_t* header, d_token_t* sp
   return proposer;
 }
 
-in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec, uint16_t needed_finality) {
+in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed_finality, vhist_t* vh) {
   bytes_t tmp, *proposer, *b = blocks[0];
   uint8_t hash[32], signer[20];
   int     val_len = 0, passed = 0, i = 0;
@@ -244,7 +250,7 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, d_token_t* spec
   // check if the parent hashes match
   while (b) {
     // find the validator with permission to sign this block.
-    if ((proposer = eth_get_validator(vc, b, spec, b == blocks[0] ? &val_len : NULL)) == NULL)
+    if ((proposer = eth_get_validator(b, b == blocks[0] ? &val_len : NULL, vh)) == NULL)
       return vc_err(vc, "could not find the validator for the block");
 
     // check signature of proposer
@@ -303,9 +309,9 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   // if we expect no signatures ...
   if (res == IN3_OK && vc->config->signaturesCount == 0) {
-
+    vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
-    if (vc->chain && vc->chain->spec && eth_get_validator(vc, header, vc->chain->spec->result, NULL)) {
+    if (vc->chain && vc->chain->spec && eth_get_engine(vc, header, vc->chain->spec->result, &vh) == ENGINE_AURA) {
       // we merge the current header + finality blocks
       sig              = d_get(vc->proof, K_FINALITY_BLOCKS);
       bytes_t** blocks = _malloc((sig ? d_len(sig) + 1 : 2) * sizeof(bytes_t*));
@@ -315,7 +321,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       }
       blocks[sig ? d_len(sig) : 1] = NULL;
       // now we verify these block headers
-      res = eth_verify_authority(vc, blocks, vc->chain->spec->result, vc->config->finality);
+      res = eth_verify_authority(vc, blocks, vc->config->finality, vh);
       _free(blocks);
     } else // we didn't request signatures so blockheader should be ok.
       res = IN3_OK;
