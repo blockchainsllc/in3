@@ -63,7 +63,7 @@ static bool vh_diff_matches(uint64_t block) {
       for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
         b = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
         bb_write_fixed_bytes(bb_, b);
-        if (d_type(vitr.token) == T_STRING) _free(b->data);
+        if (d_type(vitr.token) == T_STRING) b_free(b);
       }
     }
   }

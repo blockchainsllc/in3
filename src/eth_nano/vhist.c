@@ -133,7 +133,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
       } else {
         bb_write_int(vh->diffs, ret);
       }
-      if (d_type(vitr.token) == T_STRING) _free(b->data);
+      if (d_type(vitr.token) == T_STRING) b_free(b);
     }
   }
 }
