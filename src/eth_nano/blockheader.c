@@ -83,7 +83,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   }
 
   // Validate proof
-  d_token_t *ss = d_get(ctx_->responses[0], K_STATES), *prf = NULL;
+  d_token_t *ss = d_get(d_get(ctx_->responses[0], K_RESULT), K_STATES), *prf = NULL;
   for (d_iterator_t sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
     blk = d_get_longk(sitr.token, K_BLOCK);
     if (blk <= vh->last_change_block) continue;
@@ -152,42 +152,47 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     if (!proof || !trie_verify_proof(&tmp, path, proof, &raw_receipt))
       return vc_err(vc, "Could not verify the merkle proof");
 
+    rlp_decode(&raw_receipt, 0, &raw_receipt);
+
     bytes_t log_data;
-    rlp_decode_in_list(&raw_receipt, rlp_decode_len(&raw_receipt) - 1, &log_data);
-    rlp_decode_in_list(&log_data, 0, &tmp);
+    rlp_decode(&raw_receipt, rlp_decode_len(&raw_receipt) - 1, &log_data);
+    rlp_decode(&log_data, d_get_intk(prf, K_LOG_INDEX), &log_data);
+
+    rlp_decode(&log_data, 0, &tmp);
     if (!b_cmp(&tmp, d_get_bytesk(vc->chain->spec->result, K_VALIDATOR_CONTRACT)))
       return vc_err(vc, "Wrong address in log");
 
-    rlp_decode_in_list(&log_data, 1, &tmp);
+    rlp_decode(&log_data, 1, &tmp);
     rlp_decode_in_list(&tmp, 0, &tmp);
-    bytes_t* t = hex2byte_new_bytes("0x55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 66);
+    bytes_t* t = hex2byte_new_bytes("55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 64);
     if (!bytes_cmp(tmp, *t))
       return vc_err(vc, "Wrong topic in log");
     b_free(t);
 
-    rlp_decode_in_list(&log_data, 2, &tmp);
+    rlp_decode(&log_data, 2, &tmp);
+
     bytes_t*        b;
-    bytes_builder_t vbb;
+    bytes_builder_t* vbb     = bb_new();
     uint8_t         abi[32] = {0};
     int_to_bytes(32, abi + 28);
-    bb_write_raw_bytes(&vbb, abi, 32);
-
+    bb_write_raw_bytes(vbb, abi, 32);
     d_token_t* vs = d_get(sitr.token, K_VALIDATORS);
     int_to_bytes(d_len(vs), abi + 28);
-    bb_write_raw_bytes(&vbb, abi, 32);
+    bb_write_raw_bytes(vbb, abi, 32);
 
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
       b = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
       memset(abi, 0, 32 - b->len);
       memcpy(abi + 32 - b->len, b->data, b->len);
-      bb_write_raw_bytes(&vbb, abi, 32);
+      bb_write_raw_bytes(vbb, abi, 32);
       if (d_type(vitr.token) == T_STRING) _free(b->data);
     }
-    if (!bytes_cmp(tmp, vbb.b))
+
+    if (!bytes_cmp(tmp, vbb->b))
       return vc_err(vc, "wrong data in log");
 
-    _free(raw_receipt.data);
     _free(proof);
+    bb_free(vbb);
 
     vh_add_state(vh, sitr.token, false);
   }
@@ -215,7 +220,8 @@ static vhist_engine_t eth_get_engine(in3_vctx_t* vc, bytes_t* header, d_token_t*
   }
 
   if (vc->last_validator_change > (*vh)->last_change_block) {
-    add_aura_validators(vc, vh);
+    in3_ret_t res = add_aura_validators(vc, vh);
+    if (res != IN3_OK) return res;
     vh_cache_save(*vh, vc->ctx->client);
   }
 
