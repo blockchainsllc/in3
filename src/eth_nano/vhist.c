@@ -18,6 +18,17 @@ static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
   return IN3_EFIND;
 }
 
+static vhist_engine_t stoengine(const char* str) {
+  vhist_engine_t vhe = ENGINE_UNKNOWN;
+  if (!str)
+    vhe = ENGINE_UNKNOWN;
+  else if (!strcmp(str, "authorityRound"))
+    vhe = ENGINE_AURA;
+  else if (!strcmp(str, "clique"))
+    vhe = ENGINE_CLIQUE;
+  return vhe;
+}
+
 vhist_t* vh_new() {
   vhist_t* vh = _malloc(sizeof(*vh));
   if (vh == NULL) return NULL;
@@ -73,13 +84,15 @@ bytes_builder_t* vh_get_for_block(vhist_t* vh, uint64_t block) {
   uint64_t         blk = 0;
   uint32_t         sz = 0, pos = 0, prevsz = 0;
   size_t           i = 0;
+  vhist_engine_t   engine = ENGINE_UNKNOWN;
   if (bb == NULL) return NULL;
 
   for (i = 0; i < vh->diffs->b.len;) {
     bb_read_next(vh->diffs, &i, &blk);
+    bb_read_next(vh->diffs, &i, &engine);
     bb_read_next(vh->diffs, &i, &sz);
     if (blk > block) {
-      i -= ((prevsz * 4) + 12);
+      i -= ((prevsz * 4) + 12 + sizeof(vhist_engine_t));
       break;
     }
     i += sz * 4;
@@ -102,10 +115,13 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   in3_ret_t  ret;
   uint64_t   blk = 0;
   d_token_t* vs  = NULL;
+  vhist_engine_t engine = ENGINE_UNKNOWN;
 
   vs  = d_get(state, is_spec ? K_LIST : K_VALIDATORS);
   blk = d_get_longk(state, K_BLOCK);
+  engine = stoengine(d_get_stringk(state, K_ENGINE));
   bb_write_long(vh->diffs, blk);
+  bb_write_raw_bytes(vh->diffs, &engine, sizeof(engine));
   bb_write_int(vh->diffs, d_len(vs));
   if (d_type(vs) == T_ARRAY) {
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {

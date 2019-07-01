@@ -6,6 +6,12 @@
 #include "../core/util/data.h"
 #include <stdint.h>
 
+typedef enum {
+  ENGINE_UNKNOWN,
+  ENGINE_AURA,
+  ENGINE_CLIQUE
+} vhist_engine_t;
+
 typedef struct {
   bytes_builder_t* diffs;
   bytes_builder_t* vldtrs;
