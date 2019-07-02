@@ -251,7 +251,7 @@ static bytes_t* eth_get_validator(bytes_t* header, int* val_len, vhist_t* vh) {
 in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed_finality, vhist_t* vh) {
   bytes_t tmp, *proposer, *b = blocks[0];
   uint8_t hash[32], signer[20];
-  int     val_len = 0, passed = 0, i = 0;
+  int     val_len = 0, passed = 0, i = 0, ret = 0;
 
   // check if the parent hashes match
   while (b) {
@@ -264,8 +264,11 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
       return vc_err(vc, "could not get the signer");
 
     // check if it was signed by the right validator
-    if (memcmp(signer, proposer->data, 20) != 0)
+    ret = memcmp(signer, proposer->data, 20);
+    b_free(proposer);
+    if (ret != 0) {
       return vc_err(vc, "the block was signed by the wrong key");
+    }
 
     // calculate the blockhash
     sha3_to(b, &hash);
