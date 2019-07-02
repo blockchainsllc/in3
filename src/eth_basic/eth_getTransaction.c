@@ -62,9 +62,12 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
   rlp_decode(&raw_list, 5, &item);
   bb_write_raw_bytes(bb, raw_list.data, item.data + item.len - raw_list.data);
   if (chain_id) {
-    uint8_t v_chain = chain_id;
-    item.len        = 1;
-    item.data       = &v_chain;
+    uint8_t  chain_data[4];
+    uint8_t *pc = chain_data, lc = 4;
+    int_to_bytes(chain_id, chain_data);
+    optimize_len(pc, lc);
+    item.len  = lc;
+    item.data = pc;
     rlp_encode_item(bb, &item);
     item.len = 0;
     rlp_encode_item(bb, &item);
