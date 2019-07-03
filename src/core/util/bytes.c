@@ -138,7 +138,7 @@ bytes_builder_t* bb_newl(size_t l) {
 
 /* allocates a new byte array with 0 filled */
 void bb_free(bytes_builder_t* bb) {
-  _free(bb->b.data);
+  if (bb) _free(bb->b.data);
   _free(bb);
 }
 

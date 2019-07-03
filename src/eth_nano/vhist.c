@@ -74,8 +74,10 @@ vhist_t* vh_init_nodelist(d_token_t* nodelist) {
 }
 
 void vh_free(vhist_t* vh) {
-  bb_free(vh->diffs);
-  bb_free(vh->vldtrs);
+  if (vh) {
+    bb_free(vh->diffs);
+    bb_free(vh->vldtrs);
+  }
   _free(vh);
 }
 
