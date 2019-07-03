@@ -113,6 +113,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     int              passed   = 0;
     uint8_t*         proposer = NULL;
     bytes_builder_t* curr     = vh_get_validators_for_block(vh, prf_blkno);
+    i                         = 0;
 
     while (fblk) {
       // check signature of proposer
