@@ -89,6 +89,7 @@
 #define K_STATES            key("states")
 #define K_LAST_VALIDATOR_CHANGE key("lastValidatorChange")
 #define K_LIST              key("list")
+#define K_BYPASS_FINALITY   key("bypassFinality")
 
 
 #define K_CODE_HASH         key("codeHash")

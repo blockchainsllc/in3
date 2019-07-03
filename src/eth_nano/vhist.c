@@ -3,6 +3,7 @@
 #include "../core/util/error.h"
 #include "../core/util/mem.h"
 #include "rlp.h"
+#include "serialize.h"
 #include <stdbool.h>
 #include <string.h>
 #include <util/log.h>
@@ -131,8 +132,18 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   vhist_engine_t engine = ENGINE_UNKNOWN;
 
   vs  = d_get(state, is_spec ? K_LIST : K_VALIDATORS);
-  blk = d_get_longk(state, K_BLOCK);
   engine = stoengine(d_get_stringk(state, K_ENGINE));
+
+  d_token_t* tmp;
+  if ((tmp = d_get(state, K_BYPASS_FINALITY))) {
+    blk = d_long(tmp);
+  } else if ((tmp = d_get(d_get(state, K_PROOF), K_FINALITY_BLOCKS)) && d_len(tmp)) {
+    b = d_get_bytes_at(tmp, d_len(tmp) - 1);
+    rlp_decode_in_list(b, BLOCKHEADER_NUMBER, b);
+    blk = bytes_to_long(b->data, b->len);
+  } else
+    blk = d_get_longk(state, K_BLOCK);
+
   bb_write_long(vh->diffs, blk);
   bb_write_raw_bytes(vh->diffs, &engine, sizeof(engine));
   bb_write_int(vh->diffs, d_len(vs));
