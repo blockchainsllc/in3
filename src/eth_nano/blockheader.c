@@ -113,6 +113,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     int              passed   = 0;
     uint8_t*         proposer = NULL;
     bytes_builder_t* curr     = vh_get_validators_for_block(vh, prf_blkno);
+    size_t           currl    = curr->b.len / 20;
     i                         = 0;
 
     while (fblk) {
@@ -122,8 +123,12 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
       // check if it was signed by the right validator
       rlp_decode_in_list(fblk, BLOCKHEADER_SEALED_FIELD1, &tmp);
-      proposer = &curr->b.data[bytes_to_long(tmp.data, tmp.len) % (curr->b.len / 20)];
-      if (memcmp(signer, proposer, 20) != 0) return vc_err(vc, "the block was signed by the wrong key");
+      proposer = &curr->b.data[(bytes_to_long(tmp.data, tmp.len) % currl) * 20];
+      bb_free(curr);
+      if (memcmp(signer, proposer, 20) != 0) {
+        _free(blocks);
+        return vc_err(vc, "the block was signed by the wrong key");
+      }
 
       // calculate the blockhash
       sha3_to(fblk, &hash);
@@ -132,13 +137,16 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
       fblk = blocks[++i];
 
       // check if the next blocks parent_hash matches
-      if (fblk && (rlp_decode_in_list(fblk, BLOCKHEADER_PARENT_HASH, &tmp) != 1 || memcmp(hash, tmp.data, 32) != 0))
+      if (fblk && (rlp_decode_in_list(fblk, BLOCKHEADER_PARENT_HASH, &tmp) != 1 || memcmp(hash, tmp.data, 32) != 0)) {
+        _free(blocks);
         return vc_err(vc, "The parent hashes of the finality blocks don't match");
+      }
 
       passed++;
     }
+    _free(blocks);
 
-    if (passed * 100 / (curr->b.len / 20) < vc->config->finality)
+    if (passed * 100 / currl < vc->config->finality)
       return vc_err(vc, "not enough finality to accept state");
 
     // Verify receipt
@@ -241,10 +249,9 @@ static bytes_t* eth_get_validator(bytes_t* header, int* val_len, vhist_t* vh) {
   // the nonce used to find out who's turn it is to sign.
   rlp_decode_in_list(header, BLOCKHEADER_SEALED_FIELD1, &b);
 
-  b.data   = &validators->b.data[(bytes_to_long(b.data, 4) % (validators->b.len / 20)) * 20];
+  b.data   = &validators->b.data[(bytes_to_long(b.data, b.len) % (validators->b.len / 20)) * 20];
   b.len    = 20;
   proposer = b_dup(&b);
-  vh_free(vh);
   bb_free(validators);
   return proposer;
 }
@@ -267,9 +274,8 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
     // check if it was signed by the right validator
     ret = memcmp(signer, proposer->data, 20);
     b_free(proposer);
-    if (ret != 0) {
+    if (ret != 0)
       return vc_err(vc, "the block was signed by the wrong key");
-    }
 
     // calculate the blockhash
     sha3_to(b, &hash);
@@ -333,8 +339,10 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       // now we verify these block headers
       res = eth_verify_authority(vc, blocks, vc->config->finality, vh);
       _free(blocks);
-    } else // we didn't request signatures so blockheader should be ok.
-      res = IN3_OK;
+    } else {
+      res = IN3_OK; // we didn't request signatures so blockheader should be ok.
+    }
+    vh_free(vh);
   } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
     // no signatures found,even though we expected some.
     res = vc_err(vc, "missing signatures");
