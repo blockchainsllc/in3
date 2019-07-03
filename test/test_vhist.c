@@ -40,7 +40,7 @@ static void bb_print(bytes_builder_t* bb) {
 
 static bool vh_diff_matches(uint64_t block) {
   d_iterator_t sitr;
-  char*        nodeliststr = filetostr("../test/testdata/tobalaba_nodelist.json");
+  char*        nodeliststr = filetostr("../test/testdata/validatorlist_tobalaba.json");
   json_ctx_t*  jnl         = parse_json(nodeliststr);
   if (jnl == NULL) return false;
 
@@ -94,7 +94,7 @@ static void test_vh_diff() {
 }
 
 static void test_vh_cache() {
-  char*       nodeliststr = filetostr("../test/testdata/tobalaba_nodelist.json");
+  char*       nodeliststr = filetostr("../test/testdata/validatorlist_tobalaba.json");
   json_ctx_t* jnl         = parse_json(nodeliststr);
   TEST_ASSERT_NOT_NULL(jnl);
 
