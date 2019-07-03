@@ -160,9 +160,5 @@ static inline bool         d_iter_next(d_iterator_t* const iter) {
   iter->token = d_next(iter->token);
   return iter->left--;
 } /**< fetched the next token an returns a boolean indicating whther there is a next or not.*/
-static inline bool d_iter_prev(d_iterator_t* const iter) {
-  iter->token = d_prev(iter->token);
-  return iter->left++;
-}
 
 #endif

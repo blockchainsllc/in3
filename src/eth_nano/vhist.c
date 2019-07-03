@@ -66,10 +66,9 @@ vhist_t* vh_init_nodelist(d_token_t* nodelist) {
 
   d_iterator_t sitr;
   for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
+    vh->last_change_block = d_get_longk(sitr.token, K_BLOCK);
     vh_add_state(vh, sitr.token, false);
   }
-  d_iter_prev(&sitr);
-  vh->last_change_block = d_get_longk(sitr.token, K_BLOCK);
   return vh;
 }
 
