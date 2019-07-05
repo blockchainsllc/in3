@@ -414,6 +414,10 @@ int main(int argc, char* argv[]) {
     bytes32_t txHash;
     hex2byte_arr(result + 3, 64, txHash, 32);
     result = eth_wait_for_receipt(c, txHash);
+    if (!result) {
+      fprintf(stderr, "Error waiting for the confirmation of the transaction\n");
+      return 1;
+    }
   }
   in3_free(c);
 

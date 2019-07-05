@@ -447,7 +447,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_init;
   params_add_bytes(params, bytes(tx_hash, 32));
-  char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 500, 6);
+  char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 1500, 6);
   sb_free(params);
   return data;
 }
