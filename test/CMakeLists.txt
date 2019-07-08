@@ -25,6 +25,7 @@ add_test(
     NAME              "test_verify_eth_getLog" 
     COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash 
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
 add_executable(test_bitset test_bitset.c unity/unity.c)
 target_link_libraries(test_bitset core ${DEAD_STRIP_LINKER_OPT})
 add_test(
