@@ -17,8 +17,8 @@
 #include <string.h>
 #ifndef __DATA_H__
 #define __DATA_H__
-
 #ifndef DATA_DEPTH_MAX
+/** the max DEPTH of the JSON-data allowed. It will throw an error if reached. */
 #define DATA_DEPTH_MAX 11
 #endif
 
@@ -162,15 +162,19 @@ static inline bool         d_iter_next(d_iterator_t* const iter) {
 } /**< fetched the next token an returns a boolean indicating whther there is a next or not.*/
 
 #ifdef __ZEPHYR__
+
 #define printX printk
 #define fprintX fprintf // (kg): fprintk caused link-problems!
 #define snprintX snprintk
 #define vprintX vprintk
+
 #else
+
 #define printX printf
 #define fprintX fprintf
 #define snprintX snprintf
 #define vprintX vprintf
+
 #endif
 
 #endif

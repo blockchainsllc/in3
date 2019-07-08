@@ -109,13 +109,14 @@ uint64_t getChainId(char* name) {
   if (strcmp(name, "evan") == 0) return 0x4b1L;
   if (strcmp(name, "ipfs") == 0) return 0x7d0;
   if (strcmp(name, "local") == 0) return 0xFFFFL;
+  if (strcmp(name, "volta") == 0) return 0x12046;
   return atoi(name);
 }
 
 void set_chain_id(in3_t* c, char* id) {
   if (strstr(id, "://")) {
     c->chainId                   = 0xFFFFL;
-    c->chains[5].nodeList[0].url = id;
+    c->chains[6].nodeList[0].url = id;
   } else
     c->chainId = getChainId(id);
 }

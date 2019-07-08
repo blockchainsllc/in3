@@ -49,18 +49,18 @@ uint8_t strtohex(char c) {
   return 255;
 }
 
-const unsigned char* u64tostr(uint64_t value, char* pBuf, int szBuf) {
+const unsigned char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
   // buffer has to be at least 21 bytes (max u64 val = 18446744073709551615 has 20 digits + '\0')
-  if (szBuf <21) return "<ERR(u64tostr): buffer too small>";
+  if (buffer_len < 21) return "<ERR(u64tostr): buffer too small>";
 
-  pBuf[szBuf - 1] = '\0';
-  int pos        = szBuf - 1;
+  buffer[buffer_len - 1] = '\0';
+  int pos                = buffer_len - 1;
   do {
-    pBuf[--pos] = '0' + value % 10;
+    buffer[--pos] = '0' + value % 10;
     value /= 10;
   } while (value > 0 && pos > 0);
 
-  return &pBuf[pos];
+  return &buffer[pos];
 }
 
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {

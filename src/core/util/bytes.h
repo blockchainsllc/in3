@@ -4,8 +4,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
-
 #ifndef BYTES_H
 #define BYTES_H
 
