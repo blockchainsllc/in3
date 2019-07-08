@@ -1074,9 +1074,17 @@ int evm_run(evm_t* evm) {
   if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
 #endif
 
-  // finalize and refund
-  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0)
-    evm->gas += min(evm->refund, (evm->init_gas - evm->gas) >> 1);
+  uint64_t gas_used = evm->init_gas - evm->gas;
+  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0){
+    // finalize and refund
+    if(evm->refund && evm->parent){
+      evm->parent->gas -= gas_used;
+      evm->gas += gas_used + evm->refund;
+    }
+    else{
+      evm->gas += min(evm->refund, gas_used >> 1);
+    }
+  }
 
 #endif
 
