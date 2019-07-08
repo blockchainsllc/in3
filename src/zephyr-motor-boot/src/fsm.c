@@ -1,14 +1,4 @@
-#include <kernel.h>
-#include <misc/printk.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "fsm.h"
-#include "rent.h"
-#include "util/utils.h"
-#include <eth_nano.h>
-
-#include "util/debug.h"
+#include "project.h"
 
 // Global Client
 struct in3_client*  client;
@@ -18,7 +8,7 @@ int                 undo;
 // private
 static void timer_expired(struct k_timer* work) {
   undo = 1;
-  printk("<--- timer expired\n");
+  dbg_log("<--- timer expired\n");
   k_sem_give(&client->sem);
 }
 
@@ -51,14 +41,14 @@ void do_action(action_type_t action)
 	k_timer_start(timer1, 250, 0); // start timer 1 initial duration 250mS, period = 0
 	if (action == LOCK)
 		{
-		printk("<--- action: LOCK\n");
+		dbg_log("<--- action: LOCK\n");
 		ledstrip_set(IO_ON); // led on
 		k_timer_start(timer2, 2000, 0); // start timer 2 initial duration 2*1000mS, period = 0
 		door_control('c'); // close the door
 		}
 	else
 		{
-		printk("<--- action: UNLOCK\n");
+		dbg_log("<--- action: UNLOCK\n");
 		ledstrip_set(IO_ON); // led on
 		k_timer_start(timer2, 10000, 0); // start timer 2 initial duration 10*1000mS, period = 0
 		lock_set(IO_ON); // lock on
@@ -72,7 +62,7 @@ void in3_signal_event(void) {
   if (!client)
     return;
 
-  printk("<--- signalling event\n");
+  dbg_log("<--- signalling event\n");
   k_sem_give(&client->sem);
 }
 
@@ -123,14 +113,14 @@ static in3_state_t in3_init(void) {
 static in3_state_t in3_waiting(void) {
   k_mutex_lock(&client->mutex, 10000);
   if (client->msg->ready) {
-  	printk("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
+  	dbg_log("<--- data received (len=%i):\n\n%s\n\n", strlen(client->msg->data), client->msg->data);
     client->msg->start = k_uptime_get_32();
     if (msg_get_type(client->msg->data) == T_ACTION) {
       k_mutex_unlock(&client->mutex);
       return STATE_ACTION;
     }
     client->msg->end = k_uptime_get_32();
-    printk("<--- total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+    dbg_log("<--- total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
     clear_message(client);
   }
 
@@ -163,7 +153,7 @@ static in3_state_t in3_action(void) {
 
   err = verify_rent(client);
   if (err) {
-    printk("<--- Invalid rental\n");
+    dbg_log("<--- Invalid rental\n");
     return STATE_RESET;
   }
 
@@ -178,7 +168,7 @@ static in3_state_t in3_action(void) {
 static in3_state_t in3_reset(void) {
   client->msg->end = k_uptime_get_32();
 
-  printk("<--- Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
+  dbg_log("<--- Total time: %lums\n", (unsigned long) client->msg->end - client->msg->start);
   clear_message(client);
 
   return STATE_WAITING;
@@ -203,19 +193,19 @@ int in3_client_start(void) {
     switch(state)
       {
       case STATE_INIT:
-        printk("<--- INIT\n");
+        dbg_log("<--- INIT\n");
         break;
       case STATE_WAITING:
-        printk("<--- WAITING\n");
+        dbg_log("<--- WAITING\n");
         break;
       case STATE_ACTION:
-        printk("<--- ACTION\n");
+        dbg_log("<--- ACTION\n");
         break;
       case STATE_RESET:
-        printk("<--- RESET\n");
+        dbg_log("<--- RESET\n");
         break;
       default:
-        printk("<--- STATE MACHINE ERROR!\n");
+        dbg_log("<--- STATE MACHINE ERROR!\n");
         state = STATE_RESET; // force state to reset
         break;
       }

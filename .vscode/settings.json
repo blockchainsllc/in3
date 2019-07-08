@@ -40,5 +40,24 @@
         "serialize.h": "c",
         "unistd.h": "c",
         "log.h": "c"
-    }
+        "project.h": "c",
+        "uart_console.h": "c",
+        "uart.h": "c",
+        "printk.h": "c",
+        "device.h": "c",
+        "gpio.h": "c",
+        "pwm.h": "c",
+        "uart_comm.h": "c",
+        "meterreadings.h": "c",
+        "inttypes.h": "c",
+        "time.h": "c",
+        "signal.h": "c",
+        "types.h": "c",
+        "_time.h": "c",
+        "electricitymeter.h": "c",
+        "meterreadingtypes.h": "c",
+        "in3_comm_esp32.h": "c",
+        "ctype.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -11,7 +11,7 @@
 in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   // generate the rpc-request
   char req[strlen(method) + strlen(params) + 200];
-  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  snprintX(req, sizeof(req), "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // create a new context by parsing the request
   in3_ctx_t* ctx = new_ctx(c, req);
@@ -34,7 +34,7 @@ in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, ch
   in3_ret_t res = IN3_OK;
   // prepare request
   char req[strlen(method) + strlen(params) + 200];
-  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  snprintX(req, sizeof(req), "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // parse it
   in3_ctx_t*  ctx = new_ctx(c, req);
