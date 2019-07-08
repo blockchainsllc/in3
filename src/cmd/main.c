@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <util/data.h>
 #include <util/debug.h>
+#include <util/log.h>
 #include <util/utils.h>
 
 char* get_wei(char* val) {
@@ -407,6 +408,9 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
+  if (c->evm_flags == EVM_PROP_DEBUG)
+    in3_log_debug("..sending request %s %s", method, params);
+
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
   // if we need to wait
@@ -419,7 +423,6 @@ int main(int argc, char* argv[]) {
       return 1;
     }
   }
-  in3_free(c);
 
   if (error) {
     fprintf(stderr, "Error: %s\n", error);
@@ -453,7 +456,6 @@ int main(int argc, char* argv[]) {
       } else
         printf("%s\n", result);
     }
-    free(result);
   }
   return 0;
 }
