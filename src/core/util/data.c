@@ -247,6 +247,10 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
+d_token_t* d_prev(d_token_t* item) {
+  return item == NULL ? NULL : item - d_token_size(item);
+}
+
 char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {

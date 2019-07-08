@@ -19,6 +19,7 @@ add_library( core STATIC
 	util/log.c
 	util/mem.c
 	util/stringbuilder.c
+	util/bitset.c
 	crypto/ecdsa.c
 	crypto/address.c
 	crypto/bignum.c

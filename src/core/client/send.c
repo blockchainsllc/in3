@@ -169,7 +169,10 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
           vc.id      = d_get_longk(ctx->responses[i], K_ID);
           vc.config  = ctx->requests_configs + i;
 
-          if ((vc.proof = d_get(ctx->responses[i], K_IN3))) vc.proof = d_get(vc.proof, K_PROOF);
+          if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
+            vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
+            vc.proof = d_get(vc.proof, K_PROOF);
+          }
 
           if (verifier && verifier->verify(&vc)) {
             // blacklist!

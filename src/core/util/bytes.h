@@ -9,6 +9,18 @@
 #ifndef BYTES_H
 #define BYTES_H
 
+#define bb_new() bb_newl(32)
+#define bb_read(_bb_, _i_, _vptr_) bb_readl((_bb_), (_i_), (_vptr_), sizeof(*_vptr_))
+#define bb_read_next(_bb_, _iptr_, _vptr_)      \
+  do {                                          \
+    size_t _l_ = sizeof(*_vptr_);               \
+    bb_readl((_bb_), *(_iptr_), (_vptr_), _l_); \
+    *(_iptr_) += _l_;                           \
+  } while (0)
+#define bb_readl(_bb_, _i_, _vptr_, _l_) memcpy((_vptr_), (_bb_)->b.data + (_i_), _l_)
+#define b_read(_b_, _i_, _vptr_) b_readl((_b_), (_i_), _vptr_, sizeof(*_vptr_))
+#define b_readl(_b_, _i_, _vptr_, _l_) memcpy(_vptr_, (_b_)->data + (_i_), (_l_))
+
 typedef uint8_t      address_t[20]; /**< pointer to a 20byte address */
 typedef uint8_t      bytes32_t[32]; /**< pointer to a 32byte word */
 typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byte but usually a uint) */
@@ -64,7 +76,7 @@ bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos);
 bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);
 
 /* creates a new bytes_builder */
-bytes_builder_t* bb_new();
+bytes_builder_t* bb_newl();
 /** frees a bytebuilder and its content. */
 void bb_free(bytes_builder_t* bb);
 
@@ -97,6 +109,9 @@ void bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, 
 bytes_t* bb_move_to_bytes(bytes_builder_t* bb);
 
 void bb_push(bytes_builder_t* bb, uint8_t* data, uint8_t len);
+
+uint64_t bb_read_long(bytes_builder_t* bb, size_t* i);
+uint32_t bb_read_int(bytes_builder_t* bb, size_t* i);
 
 static inline bytes_t bytes(uint8_t* a, uint32_t len) {
   return (bytes_t){.data = a, .len = len};

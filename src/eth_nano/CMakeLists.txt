@@ -9,6 +9,7 @@ add_library( eth_nano STATIC
   signature.c
   txreceipt.c
   registry.c
+  vhist.c
 )
 
 # add dependency

@@ -128,17 +128,17 @@ bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len) {
 }
 
 /* allocates a new byte array with 0 filled */
-bytes_builder_t* bb_new() {
+bytes_builder_t* bb_newl(size_t l) {
   bytes_builder_t* r = _malloc(sizeof(bytes_builder_t));
-  r->b.data          = _malloc(32);
+  r->b.data          = _malloc(l);
   r->b.len           = 0;
-  r->bsize           = 32;
+  r->bsize           = l;
   return r;
 }
 
 /* allocates a new byte array with 0 filled */
 void bb_free(bytes_builder_t* bb) {
-  _free(bb->b.data);
+  if (bb) _free(bb->b.data);
   _free(bb);
 }
 

@@ -18,14 +18,14 @@
  * verification context holding the pointers to all relevant toknes.
  */
 typedef struct {
-  in3_ctx_t*            ctx;     /**< Request context. */
-  in3_chain_t*          chain;   /**< the chain definition. */
-  d_token_t*            result;  /**< the result to verify */
-  d_token_t*            request; /**< the request sent. */
-  uint64_t              id;      /**< the id of sent request. */
-  d_token_t*            proof;   /**< the delivered proof. */
-  in3_request_config_t* config;  /**< Request configuration. */
-
+  in3_ctx_t*            ctx;                   /**< Request context. */
+  in3_chain_t*          chain;                 /**< the chain definition. */
+  d_token_t*            result;                /**< the result to verify */
+  d_token_t*            request;               /**< the request sent. */
+  uint64_t              id;                    /**< the id of sent request. */
+  d_token_t*            proof;                 /**< the delivered proof. */
+  in3_request_config_t* config;                /**< Request configuration. */
+  uint64_t              last_validator_change; /**< Block number of last change of the validator list */
 } in3_vctx_t;
 
 /**
