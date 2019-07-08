@@ -76,7 +76,7 @@ bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos);
 bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);
 
 /* creates a new bytes_builder */
-bytes_builder_t* bb_newl();
+bytes_builder_t* bb_newl(size_t l);
 /** frees a bytebuilder and its content. */
 void bb_free(bytes_builder_t* bb);
 
