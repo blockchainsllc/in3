@@ -299,7 +299,8 @@ int evm_prepare_evm(evm_t*      evm,
                     address_t   origin,
                     address_t   caller,
                     evm_get_env env,
-                    void*       env_ptr) {
+                    void*       env_ptr,
+                    wlen_t mode) {
   evm->stack.b.data = _malloc(64);
   evm->stack.b.len  = 0;
   evm->stack.bsize  = 64;
@@ -337,7 +338,10 @@ int evm_prepare_evm(evm_t*      evm,
 
   evm->caller  = caller;
   evm->origin  = origin;
-  evm->account = account;
+  if (mode == EVM_CALL_MODE_CALLCODE)
+    evm->account = address;
+  else 
+    evm->account = account;
   evm->address = address;
 
 #ifdef EVM_GAS
@@ -382,11 +386,13 @@ int evm_sub_call(evm_t*    parent,
 ) {
   // create a new evm
   evm_t evm;
-  int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr), success = 0;
+  int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
 
   evm.properties     = parent->properties;
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
+  evm.call_value.data = value;
+  evm.call_value.len = l_value;
 
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
@@ -419,6 +425,8 @@ int evm_sub_call(evm_t*    parent,
 
   // give the call the amount of gas
   evm.gas = gas;
+  evm.gas_price.data = parent->gas_price.data;
+  evm.gas_price.len = parent->gas_price.len;
 
   // and try to transfer the value
   if (res == 0 && !big_is_zero(value, l_value)) {
@@ -427,8 +435,12 @@ int evm_sub_call(evm_t*    parent,
       res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
     else {
       // only for CALL or CALLCODE we add the CALLSTIPEND
-      if (!mode && address) evm.gas += G_CALLSTIPEND;
-      res = transfer_value(&evm, parent->address, evm.address, value, l_value, (!mode && address) ? G_CALLVALUE : 0);
+      uint32_t gas_call_value = 0;
+      if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE){
+          evm.gas += G_CALLSTIPEND;
+          gas_call_value = G_CALLVALUE;
+      }
+      res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);
     }
   }
   if (res == 0) {
@@ -502,7 +514,7 @@ int evm_call(in3_vctx_t* vc,
              bytes_t** result) {
 
   evm_t evm;
-  int   res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc);
+  int   res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc, 0);
 
   evm.properties |= vc->ctx->client->evm_flags;
 

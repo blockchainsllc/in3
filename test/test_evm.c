@@ -262,7 +262,7 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
 bytes_t* serialize_ac(evm_t* evm, account_t* ac) {
 
   bytes_builder_t* rlp = bb_new();
-  bytes_t          tmp;
+  bytes_t          tmp = {0};
   uint8_t          hash[32];
 
   rlp_encode_item(rlp, to_uint256(&tmp, ac->nonce));
