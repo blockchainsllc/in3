@@ -107,7 +107,7 @@ RLPTests
     # exclude tests, but fix them later    
     list(FILTER files EXCLUDE REGEX ".*randomStatetest(579|85|150|154|159|178|184|205|248|306|48|458|467|498|554|572|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
-    list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|SuicideEnd|SuicideMiddle|callcodeNonConst|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
+    list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|callcodeNonConst|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
 
     
 
