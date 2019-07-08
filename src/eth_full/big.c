@@ -56,13 +56,13 @@ void big_shift_left(uint8_t* a, wlen_t len, int bits) {
   uint_fast16_t carry = 0;
   int           i;
   if ((r = bits % 8)) {
-    for (i = len - 1; i >= 0; i--) {
+    for (i = ((int) len) - 1; i >= 0; i--) {
       a[i] = (carry |= a[i] << r) & 0xFF;
       carry >>= 8;
     }
   }
   if ((r = (bits - r) >> 3)) {
-    for (i = 0; i < len; i++)
+    for (i = 0; i < (int) len; i++)
       a[i] = i + r < len ? a[i + r] : 0;
   }
 }
@@ -78,7 +78,7 @@ void big_shift_right(uint8_t* a, wlen_t len, int bits) {
     }
   }
   if ((r = (bits - r) >> 3)) {
-    for (i = len - 1; i >= 0; i--)
+    for (i = ((int) len) - 1; i >= 0; i--)
       a[i] = (i - r) >= 0 ? a[i - r] : 0;
   }
 }

@@ -1,5 +1,8 @@
 /** @file 
  * incubed main client file.
+ * 
+ * This includes the definition of the client and used enum values.
+ * 
  * */
 
 #ifndef CLIENT_H
@@ -13,34 +16,44 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/** type of the chain */
+/** the type of the chain. 
+ * 
+ * for incubed a chain can be any distributed network or database with incubed support.
+ * Depending on this chain-type the previously registered verifyer will be choosen and used.
+ */
 typedef enum {
   CHAIN_ETH       = 0, /**< Ethereum chain */
   CHAIN_SUBSTRATE = 1, /**< substrate chain */
   CHAIN_IPFS      = 2, /**< ipfs verifiaction */
   CHAIN_BTC       = 3, /**< Bitcoin chain */
   CHAIN_IOTA      = 4, /**< IOTA chain */
-  CHAIN_GENERIC   = 5,
+  CHAIN_GENERIC   = 5, /**< other chains */
 } in3_chain_type_t;
 
-/** type of proof */
+/** the type of proof.
+ * 
+ * Depending on the proof-type different levels of proof will be requested from the node.
+*/
 typedef enum {
   PROOF_NONE     = 0, /**< No Verification */
   PROOF_STANDARD = 1, /**< Standard Verification of the important properties */
   PROOF_FULL     = 2  /**< All field will be validated including uncles */
 } in3_proof_t;
 
-/** verification as delivered by the server. This will be part of the in3-request.*/
+/** verification as delivered by the server. 
+ * 
+ * This will be part of the in3-request and will be generated based on the prooftype.*/
 typedef enum {
   VERIFICATION_NEVER                = 0, /**< No Verifacation */
   VERIFICATION_PROOF                = 1, /**< Includes the proof of the data */
-  VERIFICATION_PROOF_WITH_SIGNATURE = 2  /**< Proof + Signmatures */
+  VERIFICATION_PROOF_WITH_SIGNATURE = 2  /**< Proof + Signatures */
 } in3_verification_t;
 
 /** the configuration as part of each incubed request. 
- * This will be generated based on the client-configuration. 
+ * This will be generated for each request based on the client-configuration. the verifier may access this during verification in order to check against the request. 
+ * 
  */
-typedef struct {
+typedef struct in3_request_config {
   uint64_t           chainId;             /**< the chain to be used. this is holding the integer-value of the hexstring. */
   uint8_t            includeCode;         /**< if true the code needed will always be devlivered.  */
   uint8_t            useFullProof;        /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
@@ -49,101 +62,89 @@ typedef struct {
   uint16_t           verifiedHashesCount; /**< number of verified blockhashes*/
   uint16_t           latestBlock;         /**< the last blocknumber the nodelistz changed */
   uint16_t           finality;            /**< number of signatures( in percent) needed in order to reach finality. */
-  in3_verification_t verification;        /**< Verification-tyüe */
+  in3_verification_t verification;        /**< Verification-type */
   bytes_t*           clientSignature;     /**< the signature of the client with the client key */
   bytes_t*           signatures;          /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signaturesCount;     /**< number or addresses */
 
 } in3_request_config_t;
 
-/** node-configuration */
-typedef struct {
-  uint32_t index;   /**< index within the nodelist, also used in the contract as key */
-  bytes_t* address; /**< address of the server */
-
-  /* stored deposit */
-  uint64_t deposit;
-
-  /* the maximal capacity able to handle*/
-  uint32_t capacity;
-
-  /* the properties*/
-  uint64_t props;
-
-  /* url of the node*/
-  char* url;
-
+/** incubed node-configuration. 
+ * 
+ * These information are read from the Registry contract and stored in this struct representing a server or node.
+ */
+typedef struct in3_node {
+  uint32_t index;    /**< index within the nodelist, also used in the contract as key */
+  bytes_t* address;  /**< address of the server */
+  uint64_t deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t capacity; /**< the maximal capacity able to handle */
+  uint64_t props;    /**< a bit set used to identify the cabalilities of the server. */
+  char*    url;      /**< the url of the node */
 } in3_node_t;
 
-typedef struct {
-  /** current weight*/
-  float weight;
-
-  /* counter for responses */
-  uint32_t response_count;
-
-  /* total of all response times */
-  uint32_t total_response_time;
-
-  /** if >0 this node is blacklisted  untilk the ts */
-  uint64_t blacklistedUntil;
-
+/**
+ * Weight or reputation of a node.
+ * 
+ * Based on the past performance of the node a weight is calulcated given faster nodes a heigher weight 
+ * and chance when selecting the next node from the nodelist.
+ * These weights will also be stored in the cache (if available)
+ */
+typedef struct in3_node_weight {
+  float    weight;              /**< current weight*/
+  uint32_t response_count;      /**< counter for responses */
+  uint32_t total_response_time; /**< total of all response times */
+  uint64_t blacklistedUntil;    /**< if >0 this node is blacklisted until k. k is a unix timestamp */
 } in3_node_weight_t;
 
-typedef struct {
-  /* chainId */
-  uint64_t chainId;
-
-  /*! chaintype */
-  in3_chain_type_t type;
-
-  /* last blocknumber the nodeList was updated*/
-  uint64_t lastBlock;
-
-  /* if true the nodelist should be updated. */
-  bool needsUpdate;
-
-  /* number of nodes in the nodeList */
-  int nodeListLength;
-
-  /* array of nodes */
-  in3_node_t* nodeList;
-
-  /* stats and weights recorded for each node */
-  in3_node_weight_t* weights;
-
-  /* array of addresses of nodes that should always part of the nodeList */
-  bytes_t** initAddresses;
-
-  /* the address of the registry contract */
-  bytes_t* contract;
-
-  /* optional chain specification*/
-  json_ctx_t* spec;
-
+/**
+ * Chain definition inside incubed.
+ * 
+ * for incubed a chain can be any distributed network or database with incubed support.
+ */
+typedef struct in3_chain {
+  uint64_t           chainId;        /**< chainId, which could be a free or based on the public ethereum networkId*/
+  in3_chain_type_t   type;           /**< chaintype */
+  uint64_t           lastBlock;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  bool               needsUpdate;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+  int                nodeListLength; /**< number of nodes in the nodeList */
+  in3_node_t*        nodeList;       /**< array of nodes */
+  in3_node_weight_t* weights;        /**< stats and weights recorded for each node */
+  bytes_t**          initAddresses;  /**< array of addresses of nodes that should always part of the nodeList */
+  bytes_t*           contract;       /**< the address of the registry contract */
+  json_ctx_t*        spec;           /**< optional chain specification, defining the transaitions and forks*/
 } in3_chain_t;
 
-/** storage handler */
-typedef bytes_t* (*in3_storage_get_item)(void* cptr, char*);
-typedef void (*in3_storage_set_item)(void* cptr, char*, bytes_t*);
+/** 
+ * storage handler function for reading from cache.
+ * @returns the found result. if the key is found this function should return the values as bytes otherwise `NULL`.
+ **/
+typedef bytes_t* (*in3_storage_get_item)(
+    void* cptr, /**< a custom pointer as set in the storage handler*/
+    char* key /**< the key to search in the cache */);
 
-typedef struct {
-  /* function pointer returning a stored value for the given key.*/
-  in3_storage_get_item get_item;
+/** 
+ * storage handler function for writing to the cache.
+ **/
+typedef void (*in3_storage_set_item)(
+    void*    cptr, /**< a custom pointer as set in the storage handler*/
+    char*    key,  /**< the key to store the value.*/
+    bytes_t* value /**< the value to store.*/);
 
-  /* function pointer setting a stored value for the given key.*/
-  in3_storage_set_item set_item;
-
-  /* custom object whill will be passed to functions */
-  void* cptr;
-
+/** 
+ * storage handler to handle cache.
+ **/
+typedef struct in3_storage_handler {
+  in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
+  in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
+  void*                cptr;     /**< custom pointer which will will be passed to functions */
 } in3_storage_handler_t;
 
-#define IN3_SIGN_ERR_REJECTED -1
-#define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2
-#define IN3_SIGN_ERR_INVALID_MESSAGE -3
-#define IN3_SIGN_ERR_GENERAL_ERROR -4
-#define IN3_DEBUG 65536
+#define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
+#define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
+#define IN3_SIGN_ERR_INVALID_MESSAGE -3   /**< return value used by the signer if the message was invalid. */
+#define IN3_SIGN_ERR_GENERAL_ERROR -4     /**< return value used by the signer for unspecified errors. */
+#define IN3_DEBUG 65536                   /**< flag used in the EVM (or the `evm_flags`) to turn on debug output. */
+
 /** type of the requested signature */
 typedef enum {
   SIGN_EC_RAW  = 0, /**< sign the data directly */
@@ -158,9 +159,9 @@ typedef enum {
  * In case of an error a negativ value must be returned. It should be one of the IN3_SIGN_ERR... values.
  * 
 */
-typedef int (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+typedef in3_ret_t (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
-typedef struct {
+typedef struct in3_signer {
   /* function pointer returning a stored value for the given key.*/
   in3_sign sign;
 
@@ -173,7 +174,7 @@ typedef struct {
  * 
  * if the error has a length>0 the response will be rejected
  */
-typedef struct {
+typedef struct n3_response {
   sb_t error;  /**< a stringbuilder to add any errors! */
   sb_t result; /**< a stringbuilder to add the result */
 } in3_response_t;
@@ -207,7 +208,12 @@ typedef struct in3_filter_handler_t_ {
   size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
-typedef struct {
+/** Incubed Configuration. 
+   * 
+   * This struct holds the configuration and also point to internal resources such as filters or chain configs.
+   * 
+  */
+typedef struct in3_t_ {
   /** number of seconds requests can be cached. */
   uint32_t cacheTimeout;
 
@@ -285,13 +291,50 @@ typedef struct {
 
 } in3_t;
 
-/** allocates a new byte array with 0 filled */
+/** creates a new Incubes configuration and returns the pointer.
+ * 
+ * you need to free this instance with `in3_free` after use!
+ * 
+ * Before using the client you still need to set the tramsport and optional the storage handlers:
+ * 
+ *  * example of initialization:
+ * ```c
+ * // register verifiers
+ * in3_register_eth_full();
+ * 
+ * // create new client
+ * in3_t* client = in3_new();
+ * 
+ * // configure storage...
+ * in3_storage_handler_t storage_handler;
+ * storage_handler.get_item = storage_get_item;
+ * storage_handler.set_item = storage_set_item;
+ *
+ * // configure transport
+ * client->transport    = send_curl;
+ *
+ * // configure storage
+ * client->cacheStorage = &storage_handler;
+ * 
+ * // init cache
+ * in3_cache_init(client);
+ * 
+ * // ready to use ...
+ * ```
+ * 
+ * @returns the incubed instance.
+ */
 in3_t* in3_new();
 
 /** sends a request and stores the result in the provided buffer */
-in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error);
+in3_ret_t in3_client_rpc(
+    in3_t* c,      /**< [in] the pointer to the incubed client config. */
+    char*  method, /**< [in] the name of the rpc-funcgtion to call. */
+    char*  params, /**< [in] docs for input parameter v. */
+    char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
+    char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** frees the references of the client */
-void in3_free(in3_t* a);
+void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
 #endif

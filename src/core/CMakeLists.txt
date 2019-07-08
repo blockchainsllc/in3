@@ -1,3 +1,7 @@
+# main incubed module defining the interfaces for transport, verifier and storage. 
+#
+# This module does not have any dependencies and cannot be used without additional modules providing verification and transport.
+
 
 add_library( core STATIC 
 	client/context.c

@@ -150,7 +150,7 @@ d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
  * }
  * ```
  */
-typedef struct {
+typedef struct d_iterator {
   int        left;  /**< number of result left */
   d_token_t* token; /**< current token */
 } d_iterator_t;

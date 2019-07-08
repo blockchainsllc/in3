@@ -67,8 +67,17 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
 
     // rlp encode the value.
     if ((bb.b.len = d_bytes_to(d_get(p, K_VALUE), val, 32))) {
-      if (bb.b.len < 32) memmove(val, val + 32 - bb.b.len, bb.b.len);
-      rlp_encode_to_item(&bb);
+      // remove leading zeros!
+      uint8_t*     pp = bb.b.data;
+      uint_fast8_t l  = 32;
+      optimize_len(pp, l);
+      if (l == 0 || (l == 1 && *pp == 0))
+        bb.b.len = 0;
+      else {
+        if (pp != bb.b.data) memmove(bb.b.data, pp, l);
+        bb.b.len = l;
+        rlp_encode_to_item(&bb);
+      }
     }
 
     if (!trie_verify_proof(&root, &path, proof, bb.b.len ? &bb.b : NULL)) {

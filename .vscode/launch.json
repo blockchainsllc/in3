@@ -18,10 +18,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/src/cmd/in3",
             "args": [
-                "-c",
-                "tobalaba",
-                "eth_getTransactionReceipt",
-                "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
+                "-debug",
+                "eth_getTransactionByHash",
+                "0xf5a47818d4f7465ff6edcb4b9af6b7913e514970738c9561457dc862ffc875e2"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
@@ -38,12 +37,34 @@
                 "-c",
                 "tobalaba",
                 "-debug",
-                "-proof", "none",
-                "-to", "0x5bed06b162100cfa567d103795ea55c9368b6c06",
-                "-pk", "0xF69D0B9DE3E6F7BE20C93B924CED4E009D167A50D321F870430AE9CD312B986C",
+                "eth_getBlockByNumber",
+                "0xb01878",
+                "true"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "(lldb) Launch (send money)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-c",
+                "kovan",
+                "-pk",
+                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
+                "-debug",
                 "send",
-                "addReading(uint48,int24,int24,uint32):(uint256)",
-                "20190527161800", "21", "22","23"
+                "-np",
+                "-to",
+                "0xC75cb88EEB3bdeD09101447A224d1467bc236586",
+                "-value",
+                "0.00001eth",
+                "-w"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
@@ -73,7 +94,7 @@
             "args": [
                 "-t",
                 "1",
-                "../test/testdata/requests/eth_getLogs.json"
+                "../test/testdata/requests/eth_call.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
@@ -101,6 +122,32 @@
             "MIMode": "lldb"
         },
         {
+            "name": "send",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "args": [
+                "-pk",
+                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
+                "-debug",
+                "-value",
+                "3.5eth",
+                "send",
+                "-to",
+                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db4"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [
+                {
+                    "Name": "IN3_CHAIN",
+                    "Value": "local"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "call",
             "type": "cppdbg",
             "request": "launch",
@@ -108,11 +155,8 @@
             "args": [
                 "-to",
                 "0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
-                "-c",
-                "kovan",
                 "call",
-                "servers(uint):(string,address,uint,uint,uint,address)",
-                "0"
+                "totalServers():uint256"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

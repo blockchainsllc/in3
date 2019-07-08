@@ -136,36 +136,39 @@ in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
       str_range_t ps = d_to_json(t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
     }
-    sb_add_char(sb, ',');
 
-    // add in3
     in3_request_config_t* rc = c->requests_configs + i;
-    //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-    sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
-    if (rc->clientSignature)
-      sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
-    if (rc->finality)
-      sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
-    if (rc->includeCode)
-      sb_add_chars(sb, ",\"includeCode\":true");
-    if (rc->latestBlock)
-      sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
-    if (rc->signaturesCount)
-      sb_add_bytes(sb, ",\"signatures\":", rc->signatures, rc->signaturesCount, true);
-    if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
-      sb_add_chars(sb, ",\"includeCode\":true");
-    if (rc->useFullProof)
-      sb_add_chars(sb, ",\"useFullProof\":true");
-    if (rc->useBinary)
-      sb_add_chars(sb, ",\"useBinary\":true");
-    if (rc->verification == VERIFICATION_PROOF)
-      sb_add_chars(sb, ",\"verification\":\"proof\"");
-    else if (rc->verification == VERIFICATION_PROOF_WITH_SIGNATURE)
-      sb_add_chars(sb, ",\"verification\":\"proofWithSignature\"");
-    if (rc->verifiedHashesCount)
-      sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verifiedHashes, rc->verifiedHashesCount, true);
+    if (rc->verification != VERIFICATION_NEVER) {
+      sb_add_char(sb, ',');
 
-    sb_add_range(sb, "}}", 0, 2);
+      // add in3
+      //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
+      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
+      if (rc->clientSignature)
+        sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
+      if (rc->finality)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
+      if (rc->includeCode)
+        sb_add_chars(sb, ",\"includeCode\":true");
+      if (rc->latestBlock)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
+      if (rc->signaturesCount)
+        sb_add_bytes(sb, ",\"signatures\":", rc->signatures, rc->signaturesCount, true);
+      if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
+        sb_add_chars(sb, ",\"includeCode\":true");
+      if (rc->useFullProof)
+        sb_add_chars(sb, ",\"useFullProof\":true");
+      if (rc->useBinary)
+        sb_add_chars(sb, ",\"useBinary\":true");
+      if (rc->verification == VERIFICATION_PROOF)
+        sb_add_chars(sb, ",\"verification\":\"proof\"");
+      else if (rc->verification == VERIFICATION_PROOF_WITH_SIGNATURE)
+        sb_add_chars(sb, ",\"verification\":\"proofWithSignature\"");
+      if (rc->verifiedHashesCount)
+        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verifiedHashes, rc->verifiedHashesCount, true);
+      sb_add_range(sb, "}}", 0, 2);
+    } else
+      sb_add_char(sb, '}');
   }
   sb_add_char(sb, ']');
   return IN3_OK;
@@ -196,7 +199,7 @@ in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
     return IN3_EINVAL;
   else if (!ctx->responses || !ctx->responses[id])
     return IN3_ERPCNRES;
-  else if (NULL == d_get(ctx->responses[id], K_RESULT) || d_get(ctx->responses[id], K_ERROR) )
+  else if (NULL == d_get(ctx->responses[id], K_RESULT) || d_get(ctx->responses[id], K_ERROR))
     return IN3_EINVALDT;
   return IN3_OK;
 }

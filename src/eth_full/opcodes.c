@@ -828,14 +828,14 @@ int op_call(evm_t* evm, uint8_t mode) {
                           value, l_value,
                           evm->memory.b.data + in_offset, in_len,
                           evm->address,
-                          evm->origin, gas, 0, out_offset, out_len);
+                          evm->origin, gas, EVM_CALL_MODE_CALL, out_offset, out_len);
     case CALL_CODE:
       return evm_sub_call(evm,
                           evm->address, address,
                           value, l_value,
                           evm->memory.b.data + in_offset, in_len,
                           evm->address,
-                          evm->origin, gas, 0, out_offset, out_len);
+                          evm->origin, gas, EVM_CALL_MODE_CALLCODE, out_offset, out_len);
     case CALL_DELEGATE:
       return evm_sub_call(evm,
                           evm->address, address,

@@ -14,7 +14,7 @@ endif()
 message(STATUS "check for curl: $ENV{CURL_LIBRARY} ")
 if(DEFINED ENV{CURL_LIBRARY})
   SET(CURL_LIBRARIES "$ENV{CURL_LIBRARY}/libcurl.a")
-  SET(CURL_INCLUDE_DIRS $ENV{CURL_INCLUDE_DIRS})
+  SET(CURL_INCLUDE_DIRS $ENV{CURL_INCLUDE_DIR})
   message(STATUS "found a set curl:libs=$ENV{CURL_LIBRARIES} includeDirs= ${CURL_INCLUDE_DIRS} ")
   set(CURL_FOUND True)
 else() 
@@ -22,7 +22,7 @@ else()
 endif()
 message(STATUS "check for curl....: ${CURL_FOUND} ")
 
-
+#ADD_DEFINITIONS(-DCURL_BLOCKING)
 
 if( CURL_FOUND)
     message(STATUS "Found CURL version: ${CURL_VERSION_STRING} shoudl be type=${LIBCURL_LINKTYPE} but  ${LIBCURL_TYPE}")
@@ -72,5 +72,10 @@ include(../core/compiler.cmake)
 
 # add dependency
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
+if(MSVC OR MSYS OR MINGW)
+    # for detecting Windows compilers
+#    target_link_libraries(transport_curl ws2_32 wsock32 pthread )
+    target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic )
+endif()
 
 target_include_directories(transport_curl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

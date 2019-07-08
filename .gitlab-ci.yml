@@ -76,17 +76,19 @@ test-in3:
   script:
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release ..
     - make
+  variables:
+    CONAN_OPTS: ""
 
-#gcc7-mingw-static:
-# image: docker.slock.it/build-images/cmake:gcc7-mingw
-# extends: .conanbuild
-# variables:
-#   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static"
-# artifacts:
-#   paths:
-#     - build/src
+gcc7-mingw-static:
+ image: docker.slock.it/build-images/cmake:gcc7-mingw
+ extends: .conanbuild
+ variables:
+   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static"
+ artifacts:
+   paths:
+     - build/src
 
 #gcc7-mingw-shared:
 # image: docker.slock.it/build-images/cmake:gcc7-mingw
@@ -187,6 +189,20 @@ zephyr_arm-0_9_5__0b9cfe7:
     - cd src/zephyr; mkdir build; cd build
     - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
     - make -j8
+
+mac_os:
+  stage: build
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared .. 
+    - make 
+    - make ptest
+  artifacts:
+    paths:
+      - build/src
+  tags:
+    - mac-mini-runner
 
 
 #pages:

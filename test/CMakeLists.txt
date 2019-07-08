@@ -11,19 +11,18 @@ target_link_libraries(vmrunner core eth_full)
 add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
 target_link_libraries(test_libcurl core eth_full transport_curl)
 
-add_executable(test_key_hash 
-                test_key_hash.c 
-                unity/unity.c
-                ../src/core/util/mem.c 
-                ../src/core/util/data.c 
-                ../src/core/util/log.c 
-                ../src/core/util/bytes.c 
-                ../src/core/util/stringbuilder.c 
-                ../src/core/util/utils.c 
-                ../src/core/crypto/sha3.c 
-                ../src/core/crypto/memzero.c)
+add_executable(test_key_hash test_key_hash.c unity/unity.c)
+target_link_libraries(test_key_hash core ${DEAD_STRIP_LINKER_OPT})
 add_test(
     NAME              "in3_test_key_hash" 
+    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
+add_executable(test_verify_eth_getLog test_verify_eth_getLog.c unity/unity.c)
+target_link_libraries(test_verify_eth_getLog eth_basic ${DEAD_STRIP_LINKER_OPT})
+add_test(
+    NAME              "test_verify_eth_getLog" 
     COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash 
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
@@ -64,7 +63,7 @@ GeneralStateTests/stCodeCopyTest
 #GeneralStateTests/stBugs
 GeneralStateTests/stExample
 #GeneralStateTests/stTransitionTest
-#GeneralStateTests/stCallCodes
+GeneralStateTests/stCallCodes
 #GeneralStateTests/stPreCompiledContracts2
 #GeneralStateTests/stZeroCallsTest
 #GeneralStateTests/stBadOpcode
@@ -106,9 +105,9 @@ RLPTests
     file(GLOB files "testdata/evm/${testdir}/*.json")
 
     # exclude tests, but fix them later    
-    list(FILTER files EXCLUDE REGEX ".*randomStatetest(150|154|159|178|184|205|248|306|48|458|467|498|554|572|636|639).json$")
+    list(FILTER files EXCLUDE REGEX ".*randomStatetest(579|85|150|154|159|178|184|205|248|306|48|458|467|498|554|572|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
-    list(FILTER files EXCLUDE REGEX ".*(ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
+    list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|SuicideEnd|SuicideMiddle|callcodeNonConst|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
 
     
 

@@ -9,6 +9,12 @@
 #include <util/utils.h>
 
 static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
+  // if this is a unit we need to make sure we remove the leading zeros.
+  while (ml == 0 && b.len > 1 && *b.data == 0) {
+    b.len--;
+    b.data++;
+  }
+
   if (ml == 0 && b.len == 1 && b.data[0] == 0) b.len = 0;
   if (ml < 0) {
     if (b.len == 0)

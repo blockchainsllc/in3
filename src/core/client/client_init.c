@@ -18,7 +18,7 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, int 
   chain->initAddresses  = NULL;
   chain->lastBlock      = 0;
   chain->contract       = hex2byte_new_bytes(contract, 40);
-  chain->needsUpdate    = 1;
+  chain->needsUpdate    = chainId == 0xffff ? 0 : 1;
   chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
   chain->nodeListLength = boot_node_count;
   chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
@@ -32,7 +32,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->index      = node_index;
   node->capacity   = 1;
   node->deposit    = 0;
-  node->props      = 0xFF;
+  node->props      = chain->chainId == 0xFFFF ? 0x0 : 0xFF;
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
 
@@ -63,7 +63,7 @@ static void in3_client_init(in3_t* c) {
   c->proof              = PROOF_STANDARD;
   c->replaceLatestBlock = 0;
   c->requestCount       = 1;
-  c->chainsCount        = 6;
+  c->chainsCount        = 7;
   c->chains             = _malloc(sizeof(in3_chain_t) * c->chainsCount);
   c->filters            = NULL;
 
@@ -96,6 +96,10 @@ static void in3_client_init(in3_t* c) {
   initChain(c->chains + 5, 0x12046, "8d8Fd38311d57163524478404C75008fBEaACccB", 2, CHAIN_ETH, NULL);
   initNode(c->chains + 5, 0, "784bfa9eb182C3a02DbeB5285e3dBa92d717E07a", "https://in3.slock.it/volta/nd-1");
   initNode(c->chains + 5, 1, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/volta/nd-3");
+  
+  // local
+  initChain(c->chains + 6, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", 1, CHAIN_ETH, NULL);
+  initNode(c->chains + 6, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
 }
 
 /* frees the data */

@@ -425,7 +425,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
 #else
-        nanosleep((const struct timespec[]){{0, timeout * 1000000L}}, NULL);
+        nanosleep((const struct timespec[]){{timeout / 1000, ((long) timeout % 1000) * 1000000L}}, NULL);
 #endif
         return wait_for_receipt(in3, params, timeout + timeout, count - 1);
       } else {
@@ -447,14 +447,13 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_init;
   params_add_bytes(params, bytes(tx_hash, 32));
-  char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 500, 6);
+  char* data = wait_for_receipt(in3, sb_add_char(params, ']')->data, 1000, 8);
   sb_free(params);
   return data;
 }
 
 in3_ret_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
-  if (options == NULL) return 0;
-  if (!filter_opt_valid(&options->result[0])) return 0;
+  if (options == NULL || !filter_opt_valid(&options->result[0])) return IN3_EINVAL;
   char*     fopt = d_create_json(&options->result[0]);
   in3_ret_t res  = filter_add(in3, FILTER_EVENT, fopt);
   if (res < 0) _free(fopt);
