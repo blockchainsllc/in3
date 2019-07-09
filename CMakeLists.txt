@@ -42,7 +42,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE
 
 #  build modules
 add_subdirectory( src/core )
-add_subdirectory( src/third-party/crypto )
+add_subdirectory( src/third-party )
+add_subdirectory( src/transport )
 #add_subdirectory( src/verifier )
 #add_subdirectory( src/bindings )
 #IF(WASM)

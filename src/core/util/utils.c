@@ -1,5 +1,5 @@
 #include "utils.h"
-#include "../crypto/sha3.h"
+#include <crypto/sha3.h>
 #include "bytes.h"
 #include "debug.h"
 #include "mem.h"

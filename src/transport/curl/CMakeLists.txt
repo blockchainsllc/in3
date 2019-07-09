@@ -68,7 +68,7 @@ endif()
 add_library( transport_curl STATIC in3_curl.c in3_storage.c)
 
 # props
-include(../core/compiler.cmake)
+include("${PROJECT_SOURCE_DIR}/compiler.cmake")
 
 # add dependency
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
@@ -78,4 +78,4 @@ if(MSVC OR MSYS OR MINGW)
     target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic )
 endif()
 
-target_include_directories(transport_curl PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(transport_curl PUBLIC "${PROJECT_SOURCE_DIR}/src/core")

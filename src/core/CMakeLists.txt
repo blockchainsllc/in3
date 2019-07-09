@@ -21,5 +21,5 @@ add_library( core STATIC
 	util/stringbuilder.c
 	util/bitset.c
 )
-include(compiler.cmake)
-target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}/src/third-party/crypto")
+include("${PROJECT_SOURCE_DIR}/compiler.cmake")
+target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}/src/third-party")
