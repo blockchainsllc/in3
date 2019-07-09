@@ -40,11 +40,13 @@ ENDIF(FAST_MATH)
 # substiture __FILENAME__ as it is used in DEBUG
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
+include("${PROJECT_SOURCE_DIR}/compiler.cmake")
+
 #  build modules
 add_subdirectory( src/core )
 add_subdirectory( src/third-party )
 add_subdirectory( src/transport )
-#add_subdirectory( src/verifier )
+add_subdirectory( src/verifier )
 #add_subdirectory( src/bindings )
 #IF(WASM)
 #  add_subdirectory( src/bindings/wasm )

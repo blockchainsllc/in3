@@ -2,8 +2,8 @@
 #include "../core/client/context.h"
 #include "../core/client/keys.h"
 #include "../core/util/log.h"
-#include "../eth_basic/filter.h"
-#include "../eth_nano/rlp.h"
+#include "../basic/filter.h"
+#include "../nano/rlp.h"
 #include "abi.h"
 #include <errno.h>
 #include <inttypes.h>

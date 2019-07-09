@@ -2,7 +2,7 @@
 #include "../core/client/context.h"
 #include "../core/client/keys.h"
 #include "../core/util/debug.h"
-#include "../eth_nano/eth_nano.h"
+#include "../nano/eth_nano.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>

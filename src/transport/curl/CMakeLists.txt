@@ -67,9 +67,6 @@ endif()
 # static lib
 add_library( transport_curl STATIC in3_curl.c in3_storage.c)
 
-# props
-include("${PROJECT_SOURCE_DIR}/compiler.cmake")
-
 # add dependency
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
 if(MSVC OR MSYS OR MINGW)

@@ -7,8 +7,7 @@ set_property(GLOBAL PROPERTY C_STANDARD 99)
 if(NOT CYGWIN AND NOT MINGW)
   if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS}  -ffunction-sections -fdata-sections"
-            PARENT_SCOPE)
+            "${CMAKE_CXX_FLAGS}  -ffunction-sections -fdata-sections")
   endif()
 endif()
 if(NOT LLVM_NO_DEAD_STRIP)

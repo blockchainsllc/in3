@@ -14,8 +14,4 @@ add_library( eth_nano STATIC
 
 # add dependency
 target_link_libraries(eth_nano core)
-
-# props
-include(../core/compiler.cmake)
-
-target_include_directories(eth_nano PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(eth_nano PUBLIC "${PROJECT_SOURCE_DIR}/src/core")

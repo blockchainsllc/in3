@@ -1,10 +1,10 @@
 #include "eth_full.h"
-#include "../eth_basic/eth_basic.h"
-#include "../eth_basic/signer.h"
-#include "../eth_nano/eth_nano.h"
-#include "../eth_nano/merkle.h"
-#include "../eth_nano/rlp.h"
-#include "../eth_nano/serialize.h"
+#include "../basic/eth_basic.h"
+#include "../basic/signer.h"
+#include "../nano/eth_nano.h"
+#include "../nano/merkle.h"
+#include "../nano/rlp.h"
+#include "../nano/serialize.h"
 #include "evm.h"
 #include <client/context.h>
 #include <client/keys.h>

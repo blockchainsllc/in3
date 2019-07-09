@@ -1,5 +1,5 @@
 #include "signer.h"
-#include "../eth_nano/serialize.h"
+#include "../nano/serialize.h"
 #include <client/client.h>
 #include <client/keys.h>
 #include <crypto/ecdsa.h>

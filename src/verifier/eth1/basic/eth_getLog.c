@@ -1,8 +1,8 @@
 
-#include "../eth_nano/eth_nano.h"
-#include "../eth_nano/merkle.h"
-#include "../eth_nano/rlp.h"
-#include "../eth_nano/serialize.h"
+#include "../nano/eth_nano.h"
+#include "../nano/merkle.h"
+#include "../nano/rlp.h"
+#include "../nano/serialize.h"
 #include "eth_basic.h"
 #include "trie.h"
 #include <client/context.h>
