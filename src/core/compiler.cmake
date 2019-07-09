@@ -27,8 +27,3 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.12.4")
   set_property(GLOBAL PROPERTY DEAD_STRIP_LINKER_OPT "")
 endif()
 
-OPTION(ZEPHYR "ZEPHYR" OFF)
-IF(ZEPHYR)
-  add_definitions(-DZEPHYR_OS)
-  add_definitions(-DZEPHYR)
-ENDIF(ZEPHYR)

@@ -42,20 +42,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE
 
 #  build modules
 add_subdirectory( src/core )
-add_subdirectory( src/eth_nano )
-add_subdirectory( src/eth_basic )
-add_subdirectory( src/eth_full )
-IF(WASM)
-  add_subdirectory( src/wasm )
-ELSE()
-  add_subdirectory( src/eth_api )
-  add_subdirectory( src/usn_api )
-#  add_subdirectory( src/libin3 )
-  add_subdirectory( src/transport_curl )
-  add_subdirectory( src/cmd )
-#  add_subdirectory( src/java )
-  add_subdirectory( docs )
-ENDIF()
+add_subdirectory( src/third-party/crypto )
+#add_subdirectory( src/verifier )
+#add_subdirectory( src/bindings )
+#IF(WASM)
+#  add_subdirectory( src/bindings/wasm )
+#ELSE(WASM)
+#  add_subdirectory( src/api/eth1 )
+#  add_subdirectory( src/api/usn )
+#  add_subdirectory( src/transport )
+#  add_subdirectory( src/cmd )
+#  add_subdirectory( docs )
+#ENDIF()
 
 
 

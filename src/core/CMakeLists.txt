@@ -20,22 +20,6 @@ add_library( core STATIC
 	util/mem.c
 	util/stringbuilder.c
 	util/bitset.c
-	crypto/ecdsa.c
-	crypto/address.c
-	crypto/bignum.c
-	crypto/rand.c
-	crypto/hmac.c
-	crypto/secp256k1.c
-	crypto/memzero.c
-	crypto/sha3.c
-	crypto/ripemd160.c
-	crypto/base58.c
-	crypto/hasher.c
-	crypto/sha2.c
-	crypto/blake256.c
-	crypto/blake2b.c
-	crypto/groestl.c
-	crypto/pbkdf2.c
 )
 include(compiler.cmake)
-target_include_directories(core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}/src/third-party/crypto")
