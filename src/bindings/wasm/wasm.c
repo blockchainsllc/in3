@@ -1,5 +1,5 @@
-#include "../core/client/client.h"
-#include "../eth_full/eth_full.h"
+#include "../../core/client/client.h"
+#include "../../verifier/eth1/full/eth_full.h"
 #include <emscripten.h>
 #include <emscripten/fetch.h>
 #include <stdio.h>
