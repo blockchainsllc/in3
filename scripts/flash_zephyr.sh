@@ -6,4 +6,3 @@ cd build
 rm -rf *
 cmake -GNinja -DBOARD=nrf52840_pca10056 ..
 ninja flash
-
