@@ -8,4 +8,4 @@ docker run \
   -v $(pwd):/src \
   -u emscripten \
   trzeci/emscripten \
-  /bin/bash -c "rm -rf build; mkdir build; cd build; emconfigure cmake -DWASM=true .. && make -j8"
+  /bin/bash -c "cd build; emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false .. && make -j8"

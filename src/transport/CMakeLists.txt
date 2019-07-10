@@ -1,1 +1,4 @@
-add_subdirectory(curl)
+OPTION(TRANSPORTS "transports" ON)
+IF (TRANSPORTS)
+   add_subdirectory(curl)
+ENDIF (TRANSPORTS)
