@@ -2,6 +2,7 @@
  * simple commandline-util sending in3-requests.
  * */
 
+#include "in3_storage.h"
 #include <abi.h>
 #include <client/cache.h>
 #include <client/client.h>
@@ -11,7 +12,6 @@
 #include <eth_full.h>
 #include <evm.h>
 #include <in3_curl.h>
-#include <in3_storage.h>
 #include <inttypes.h>
 #include <math.h>
 #include <signer.h>

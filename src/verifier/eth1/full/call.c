@@ -300,7 +300,7 @@ int evm_prepare_evm(evm_t*      evm,
                     address_t   caller,
                     evm_get_env env,
                     void*       env_ptr,
-                    wlen_t mode) {
+                    wlen_t      mode) {
   evm->stack.b.data = _malloc(64);
   evm->stack.b.len  = 0;
   evm->stack.bsize  = 64;
@@ -336,11 +336,11 @@ int evm_prepare_evm(evm_t*      evm,
   evm->return_data.data = NULL;
   evm->return_data.len  = 0;
 
-  evm->caller  = caller;
-  evm->origin  = origin;
+  evm->caller = caller;
+  evm->origin = origin;
   if (mode == EVM_CALL_MODE_CALLCODE)
     evm->account = address;
-  else 
+  else
     evm->account = account;
   evm->address = address;
 
@@ -357,7 +357,7 @@ int evm_prepare_evm(evm_t*      evm,
   if (address) {
     // get the code
     uint8_t* tmp = NULL;
-    int      l = env(evm, EVM_ENV_CODE_SIZE, account, 20, &tmp, 0, 32);
+    int      l   = env(evm, EVM_ENV_CODE_SIZE, account, 20, &tmp, 0, 32);
     // error?
     if (l < 0) return l;
     evm->code.len = bytes_to_int(tmp, l);
@@ -388,11 +388,11 @@ int evm_sub_call(evm_t*    parent,
   evm_t evm;
   int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
 
-  evm.properties     = parent->properties;
-  evm.call_data.data = data;
-  evm.call_data.len  = l_data;
+  evm.properties      = parent->properties;
+  evm.call_data.data  = data;
+  evm.call_data.len   = l_data;
   evm.call_value.data = value;
-  evm.call_value.len = l_value;
+  evm.call_value.len  = l_value;
 
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
@@ -424,9 +424,9 @@ int evm_sub_call(evm_t*    parent,
     gas = min(gas, max_gas_provided);
 
   // give the call the amount of gas
-  evm.gas = gas;
+  evm.gas            = gas;
   evm.gas_price.data = parent->gas_price.data;
-  evm.gas_price.len = parent->gas_price.len;
+  evm.gas_price.len  = parent->gas_price.len;
 
   // and try to transfer the value
   if (res == 0 && !big_is_zero(value, l_value)) {
@@ -436,9 +436,9 @@ int evm_sub_call(evm_t*    parent,
     else {
       // only for CALL or CALLCODE we add the CALLSTIPEND
       uint32_t gas_call_value = 0;
-      if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE){
-          evm.gas += G_CALLSTIPEND;
-          gas_call_value = G_CALLVALUE;
+      if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {
+        evm.gas += G_CALLSTIPEND;
+        gas_call_value = G_CALLVALUE;
       }
       res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);
     }

@@ -180,9 +180,9 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
     rlp_decode(&log_data, 2, &tmp);
 
-    bytes_t*        b;
+    bytes_t*         b;
     bytes_builder_t* vbb     = bb_new();
-    uint8_t         abi[32] = {0};
+    uint8_t          abi[32] = {0};
     int_to_bytes(32, abi + 28);
     bb_write_raw_bytes(vbb, abi, 32);
     d_token_t* vs = d_get(sitr.token, K_VALIDATORS);

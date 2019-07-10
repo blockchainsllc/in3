@@ -4,7 +4,7 @@
 
 #include <curl/curl.h>
 #include <string.h>
-#include <transport_curl/in3_curl.h>
+#include <transport/curl/in3_curl.h>
 
 #include "test_utils.h"
 

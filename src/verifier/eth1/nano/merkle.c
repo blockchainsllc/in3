@@ -130,9 +130,9 @@ static int check_node(bytes_t* raw_node, uint8_t** key, bytes_t* expectedValue, 
 }
 
 int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t* expectedValue) {
-  int      res      = 1;
-  uint8_t* full_key = trie_path_to_nibbles(*path, 0);
-  uint8_t *key      = full_key, expected_hash[32], node_hash[32];
+  int      res        = 1;
+  uint8_t* full_key   = trie_path_to_nibbles(*path, 0);
+  uint8_t *key        = full_key, expected_hash[32], node_hash[32];
   bytes_t  last_value = {0};
 
   // start with root hash

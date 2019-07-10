@@ -127,13 +127,13 @@ vhist_engine_t vh_get_engine_for_block(vhist_t* vh, uint64_t block) {
 }
 
 void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
-  bytes_t*   b;
-  in3_ret_t  ret;
-  uint64_t   blk = 0;
-  d_token_t* vs  = NULL;
+  bytes_t*       b;
+  in3_ret_t      ret;
+  uint64_t       blk    = 0;
+  d_token_t*     vs     = NULL;
   vhist_engine_t engine = ENGINE_UNKNOWN;
 
-  vs  = d_get(state, is_spec ? K_LIST : K_VALIDATORS);
+  vs     = d_get(state, is_spec ? K_LIST : K_VALIDATORS);
   engine = stoengine(d_get_stringk(state, K_ENGINE));
 
   d_token_t* tmp;

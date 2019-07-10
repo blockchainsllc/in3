@@ -1,14 +1,3 @@
-
-# static lib
-add_library( usn_api STATIC usn_api.c )
-
-
-# include core in the headers
-include_directories ("${PROJECT_SOURCE_DIR}/src/core")
-
-# add dependency
+add_library(usn_api STATIC usn_api.c)
 target_link_libraries(usn_api core)
-
-# props
-include(../core/compiler.cmake)
-target_include_directories(usn_api PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}/src/verifier/eth1/nano")

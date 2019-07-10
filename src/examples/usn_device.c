@@ -7,12 +7,12 @@
 #include <unistd.h>
 #endif
 
+#include "../cmd/in3/in3_storage.h"
 #include <client/cache.h>
 #include <client/client.h>
 #include <eth_full.h>
 #include <evm.h>
 #include <in3_curl.h>
-#include <in3_storage.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>

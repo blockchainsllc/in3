@@ -1075,13 +1075,12 @@ int evm_run(evm_t* evm) {
 #endif
 
   uint64_t gas_used = evm->init_gas - evm->gas;
-  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0){
+  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0) {
     // finalize and refund
-    if(evm->refund && evm->parent){
+    if (evm->refund && evm->parent) {
       evm->parent->gas -= gas_used;
       evm->gas += gas_used + evm->refund;
-    }
-    else{
+    } else {
       evm->gas += min(evm->refund, gas_used >> 1);
     }
   }
