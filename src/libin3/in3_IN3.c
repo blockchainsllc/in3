@@ -434,6 +434,37 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv* env, jobject ob, jstring jre
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_free(get_in3(env, ob));
 }
+
+in3_ret_t Java_in3_IN3_transport(char** urls, int urls_len, char* payload, in3_response_t* res) {
+
+  in3_ret_t success = IN3_OK;
+  //payload
+  size_t     payload_len = strlen(payload);
+  jbyteArray jpayload    = (*jni)->NewByteArray(jni, payload_len);
+  (*jni)->SetByteArrayRegion(jni, jpayload, 0, payload_len, (jbyte*) payload);
+
+  // url-array
+  jobject jurls = (*jni)->NewObjectArray(jni, urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
+  for (int i = 0; i < urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, urls[i]));
+
+  jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
+  jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "([Ljava/lang/String;[B)[[B");
+  jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
+
+  for (int i = 0; i < urls_len; i++) {
+    jbyteArray content = (*jni)->GetObjectArrayElement(jni, result, i);
+    if (content) {
+      const size_t l = (*jni)->GetArrayLength(jni, content);
+      uint8_t      bytes[l];
+      (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
+      sb_add_range(&res[i].result, (char*) bytes, 0, l);
+    } else
+      sb_add_chars(&res[i].error, "Could not fetch the data!");
+  }
+
+  return success;
+}
+
 /*
  * Class:     in3_IN3
  * Method:    init
@@ -444,7 +475,8 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
   UNUSED_VAR(ob);
   in3_t* in3 = in3_new();
   in3_register_eth_full();
-  in3->transport = send_curl;
+  in3->transport = Java_in3_IN3_transport;
+  //  in3->transport = send_curl;
 
   return (jlong)(size_t) in3;
 }
