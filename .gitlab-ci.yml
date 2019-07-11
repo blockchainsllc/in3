@@ -146,49 +146,48 @@ clang50:
 #    IMAGE: linux-x64
 #    CONAN_OPTS: "-DLIBCURL_TYPE=shared"
 
-zephyr_arm-0_9_5__v1_14_0-rc1:
-  image: docker.slock.it/build-images/zephyr:arm-0_9_5__v1_14_0-rc1
-  stage: build
-  tags:
-    - short-jobs
-  artifacts:
-    paths:
-      - src/zephyr/build
-  script:
-    - source /zephyr/zephyr-env.sh
-    - cd src/zephyr; mkdir build; cd build
-    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-    - make  -j8
+#zephyr_arm-0_9_5__v1_14_0-rc1:
+#  image: docker.slock.it/build-images/zephyr:arm-0_9_5__v1_14_0-rc1
+#  stage: build
+#  tags:
+#    - short-jobs
+#  artifacts:
+#    paths:
+#      - src/zephyr/build
+#  script:
+#    - source /zephyr/zephyr-env.sh
+#    - cd src/zephyr; mkdir build; cd build
+#    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
+#    - make  -j8
+
+#zephyr_arm-0_10_0__v1_14_0:
+#  image: docker.slock.it/build-images/zephyr:arm-0_10_0__v1_14_0
+#  stage: build
+#  tags:
+#    - short-jobs
+#  artifacts:
+#    paths:
+#      - src/zephyr/build
+#  script:
+#    - source /zephyr/zephyr-env.sh
+#    - cd src/zephyr; mkdir build; cd build
+#    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
+#    - make -j8
 
 
-zephyr_arm-0_10_0__v1_14_0:
-  image: docker.slock.it/build-images/zephyr:arm-0_10_0__v1_14_0
-  stage: build
-  tags:
-    - short-jobs
-  artifacts:
-    paths:
-      - src/zephyr/build
-  script:
-    - source /zephyr/zephyr-env.sh
-    - cd src/zephyr; mkdir build; cd build
-    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-    - make -j8
-
-
-zephyr_arm-0_9_5__0b9cfe7:
-  image: docker.slock.it/build-images/zephyr:arm-0_9_5__0b9cfe7
-  stage: build
-  tags:
-    - short-jobs
-  artifacts:
-    paths:
-      - src/zephyr/build
-  script:
-    - source /zephyr/zephyr-env.sh
-    - cd src/zephyr; mkdir build; cd build
-    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-    - make -j8
+#zephyr_arm-0_9_5__0b9cfe7:
+#  image: docker.slock.it/build-images/zephyr:arm-0_9_5__0b9cfe7
+#  stage: build
+#  tags:
+#    - short-jobs
+#  artifacts:
+#    paths:
+#      - src/zephyr/build
+#  script:
+#    - source /zephyr/zephyr-env.sh
+#    - cd src/zephyr; mkdir build; cd build
+#    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
+#    - make -j8
 
 mac_os:
   stage: build
