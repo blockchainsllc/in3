@@ -25,7 +25,7 @@ wasm:
   script:
     - mkdir build
     - cd build
-    - emconfigure cmake -DWASM=true -DCMAKE_BUILD_TYPE=Release ..
+    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DCMAKE_BUILD_TYPE=Release ..
     - make
   artifacts:
     paths:
