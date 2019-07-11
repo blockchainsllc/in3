@@ -2,17 +2,21 @@
  * simple commandline-util sending in3-requests.
  * */
 
-#include "in3_storage.h"
 #include "../../api/eth1/abi.h"
+#include "../../api/eth1/eth_api.h"
 #include "../../core/client/cache.h"
 #include "../../core/client/client.h"
+#include "../../core/util/data.h"
+#include "../../core/util/debug.h"
+#include "../../core/util/log.h"
+#include "../../core/util/utils.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
-#include "../../api/eth1/eth_api.h"
-#include "../../verifier/eth1/full/eth_full.h"
-#include "../../verifier/eth1/basic/signer.h"
-#include "../../verifier/eth1/full/evm.h"
 #include "../../transport/curl/in3_curl.h"
+#include "../../verifier/eth1/basic/signer.h"
+#include "../../verifier/eth1/full/eth_full.h"
+#include "../../verifier/eth1/full/evm.h"
+#include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
@@ -20,10 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "../../core/util/data.h"
-#include "../../core/util/debug.h"
-#include "../../core/util/log.h"
-#include "../../core/util/utils.h"
 
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;
