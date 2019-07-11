@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * incubed main client file.
  * 
  * This includes the definition of the client and used enum values.
