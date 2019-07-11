@@ -3,8 +3,6 @@ add_library(libin3 SHARED in3.c in3_IN3.c)
 SET_TARGET_PROPERTIES(libin3 PROPERTIES OUTPUT_NAME in3)
 
 target_link_libraries(libin3 crypto tommath core transport_curl eth_full)
-target_include_directories(libin3 PUBLIC "${PROJECT_SOURCE_DIR}/src/transport/curl")
-target_include_directories(libin3 PUBLIC "${PROJECT_SOURCE_DIR}/src/verifier/eth1/full")
 
 find_package(Java REQUIRED)
 find_package(JNI REQUIRED)

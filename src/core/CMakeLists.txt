@@ -22,6 +22,3 @@ add_library(core STATIC
         util/bitset.c
         )
 target_link_libraries(core tommath crypto)
-target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}/src/third-party/tommath")
-target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}/src/third-party/crypto")
-target_include_directories(core PUBLIC "${PROJECT_SOURCE_DIR}/src/third-party")

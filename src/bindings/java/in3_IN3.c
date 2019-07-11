@@ -1,10 +1,10 @@
 #include "in3_IN3.h"
-#include <client/client.h>
-#include <client/context.h>
-#include <client/keys.h>
-#include <client/send.h>
-#include <eth_full.h>
-#include <in3_curl.h>
+#include "../../core/client.h"
+#include "../../core/context.h"
+#include "../../core/keys.h"
+#include "../../core/send.h"
+#include "../../verifier/eth1/full/eth_full.h"
+#include "../../transport/curl/in3_curl.h"
 #include <util/mem.h>
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
