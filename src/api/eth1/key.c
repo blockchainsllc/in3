@@ -1,6 +1,6 @@
+#include "../../core/client/client.h"
 #include "../../core/util/data.h"
 #include "../../core/util/utils.h"
-#include "../../core/client/client.h"
 #include "../../third-party/crypto/aes/aes.h"
 #include "../../third-party/crypto/pbkdf2.h"
 

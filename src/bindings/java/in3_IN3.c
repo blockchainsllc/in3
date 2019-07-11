@@ -3,8 +3,8 @@
 #include "../../core/context.h"
 #include "../../core/keys.h"
 #include "../../core/send.h"
-#include "../../verifier/eth1/full/eth_full.h"
 #include "../../transport/curl/in3_curl.h"
+#include "../../verifier/eth1/full/eth_full.h"
 #include <util/mem.h>
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
