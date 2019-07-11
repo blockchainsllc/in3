@@ -14,4 +14,3 @@ add_library(eth_nano STATIC
 
 # add dependency
 target_link_libraries(eth_nano core)
-target_include_directories(eth_nano PUBLIC "${PROJECT_SOURCE_DIR}/src/core")

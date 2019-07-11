@@ -1,8 +1,8 @@
 #ifndef FILTER_H
 #define FILTER_H
 
-#include <client/client.h>
-#include <client/context.h>
+#include "../../core/client/client.h"
+#include "../../core/client/context.h"
 
 in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options);
 bool      filter_remove(in3_t* in3, size_t id);

@@ -1,10 +1,10 @@
 
 
-#include "client/verifier.h"
-#include <client/keys.h>
+#include "../../core/client/keys.h"
+#include "../../core/client/verifier.h"
+#include "../../core/util/utils.h"
 #include <stdio.h>
 #include <string.h>
-#include <util/utils.h>
 
 bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* address, uint8_t* must_free) {
   bytes_t *  res = NULL, *code_hash = NULL, tmp[32];

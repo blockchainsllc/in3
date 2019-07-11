@@ -1,4 +1,5 @@
 #include "vhist.h"
+#include "../../core/util/log.h"
 #include "../core/client/keys.h"
 #include "../core/util/error.h"
 #include "../core/util/mem.h"
@@ -6,7 +7,6 @@
 #include "serialize.h"
 #include <stdbool.h>
 #include <string.h>
-#include <util/log.h>
 
 #define VALIDATOR_LIST_KEY ("validatorlist_%" PRIx64)
 

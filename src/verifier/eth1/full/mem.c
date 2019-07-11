@@ -1,4 +1,11 @@
 #include "mem.h"
+#include "../../core/client/context.h"
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/bignum.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../basic/eth_basic.h"
 #include "../nano/eth_nano.h"
 #include "../nano/merkle.h"
@@ -8,16 +15,9 @@
 #include "eth_full.h"
 #include "evm.h"
 #include "gas.h"
-#include <client/context.h>
-#include <crypto/bignum.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <util/data.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only) {
   if (max_pos >= MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;

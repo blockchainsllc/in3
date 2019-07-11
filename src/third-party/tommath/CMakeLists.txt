@@ -213,5 +213,3 @@ ELSE (FAST_MATH)
             tommath_private.h
             tommath_superclass.h)
 ENDIF (FAST_MATH)
-
-include("${PROJECT_SOURCE_DIR}/compiler.cmake")

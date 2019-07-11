@@ -1,20 +1,20 @@
 #include "eth_basic.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../nano/eth_nano.h"
 #include "../nano/merkle.h"
 #include "../nano/rlp.h"
 #include "../nano/serialize.h"
 #include "filter.h"
 #include "signer.h"
-#include <client/context.h>
-#include <client/keys.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-#include <util/data.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 #define RESPONSE_START()                                                             \
   do {                                                                               \

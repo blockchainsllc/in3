@@ -1,9 +1,9 @@
 #include "signer.h"
+#include "../../core/client/client.h"
+#include "../../core/client/keys.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../nano/serialize.h"
-#include <client/client.h>
-#include <client/keys.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 
 static inline bytes_t get(d_token_t* t, uint16_t key) {
   return d_to_bytes(d_get(t, key));

@@ -1,12 +1,12 @@
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "eth_nano.h"
 #include "merkle.h"
 #include "rlp.h"
 #include "serialize.h"
-#include <client/context.h>
-#include <client/keys.h>
 #include <string.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 #define SERVER_STRUCT_SIZE 6
 

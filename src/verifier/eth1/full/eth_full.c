@@ -1,4 +1,11 @@
 #include "eth_full.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../basic/eth_basic.h"
 #include "../basic/signer.h"
 #include "../nano/eth_nano.h"
@@ -6,14 +13,7 @@
 #include "../nano/rlp.h"
 #include "../nano/serialize.h"
 #include "evm.h"
-#include <client/context.h>
-#include <client/keys.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 #include <string.h>
-#include <util/data.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 int in3_verify_eth_full(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);

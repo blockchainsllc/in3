@@ -20,4 +20,3 @@ add_library(crypto STATIC
         aes/aeskey.c
         aes/aestab.c
         )
-include("${PROJECT_SOURCE_DIR}/compiler.cmake")

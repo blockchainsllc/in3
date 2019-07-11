@@ -1,18 +1,18 @@
 
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/bignum.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../nano/eth_nano.h"
 #include "../nano/merkle.h"
 #include "../nano/rlp.h"
 #include "../nano/serialize.h"
 #include "eth_basic.h"
-#include <client/context.h>
-#include <client/keys.h>
-#include <crypto/bignum.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 #include <string.h>
-#include <util/data.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 static uint8_t* secp256k1n_2 = (uint8_t*) "\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x5D\x57\x6E\x73\x57\xA4\x50\x1D\xDF\xE9\x2F\x46\x68\x1B\x20\xA0";
 

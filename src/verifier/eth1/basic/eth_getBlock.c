@@ -1,16 +1,16 @@
 
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "../nano/eth_nano.h"
 #include "../nano/merkle.h"
 #include "../nano/rlp.h"
 #include "../nano/serialize.h"
 #include "eth_basic.h"
 #include "trie.h"
-#include <client/context.h>
-#include <client/keys.h>
 #include <string.h>
-#include <util/data.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
 

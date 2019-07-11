@@ -1,15 +1,15 @@
 #include "eth_nano.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/client/verifier.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "merkle.h"
 #include "rlp.h"
 #include "serialize.h"
-#include <client/context.h>
-#include <client/keys.h>
-#include <client/verifier.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 #include <string.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 // list of methods allowed withoput proof
 #define MAX_METHODS 23

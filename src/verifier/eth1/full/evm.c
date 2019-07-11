@@ -1,4 +1,11 @@
 #include "evm.h"
+#include "../../core/client/context.h"
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/bignum.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../basic/eth_basic.h"
 #include "../nano/eth_nano.h"
 #include "../nano/merkle.h"
@@ -7,17 +14,10 @@
 #include "big.h"
 #include "eth_full.h"
 #include "gas.h"
-#include <client/context.h>
-#include <crypto/bignum.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <util/data.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
   if (evm->stack_size == EVM_STACK_LIMIT || len > 32) return EVM_ERROR_STACK_LIMIT;

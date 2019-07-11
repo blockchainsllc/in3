@@ -1,8 +1,8 @@
 
 
+#include "../../core/client/keys.h"
+#include "../../core/client/verifier.h"
 #include "big.h"
-#include "client/keys.h"
-#include "client/verifier.h"
 #include "code.h"
 #include "evm.h"
 

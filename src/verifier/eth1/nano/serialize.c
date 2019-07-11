@@ -1,12 +1,12 @@
 #include "serialize.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/client/verifier.h"
+#include "../../core/util/bytes.h"
+#include "../../core/util/data.h"
+#include "../../core/util/utils.h"
 #include "rlp.h"
-#include <client/context.h>
-#include <client/keys.h>
-#include <client/verifier.h>
 #include <string.h>
-#include <util/bytes.h>
-#include <util/data.h>
-#include <util/utils.h>
 
 static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {
   // if this is a unit we need to make sure we remove the leading zeros.

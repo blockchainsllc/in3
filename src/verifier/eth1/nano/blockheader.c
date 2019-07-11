@@ -1,16 +1,16 @@
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/log.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "eth_nano.h"
 #include "merkle.h"
 #include "rlp.h"
 #include "serialize.h"
 #include "vhist.h"
-#include <client/context.h>
-#include <client/keys.h>
-#include <crypto/ecdsa.h>
-#include <crypto/secp256k1.h>
 #include <string.h>
-#include <util/log.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 static in3_ret_t get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;

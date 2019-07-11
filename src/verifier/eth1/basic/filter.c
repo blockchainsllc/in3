@@ -1,9 +1,9 @@
 #include "filter.h"
-#include <client/context.h>
-#include <client/keys.h>
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/log.h"
 #include <inttypes.h>
 #include <stdio.h>
-#include <util/log.h>
 
 static bool filter_addrs_valid(d_token_t* addr) {
   if (d_type(addr) == T_BYTES && d_len(addr) == 20)

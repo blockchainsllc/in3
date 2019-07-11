@@ -1,17 +1,17 @@
 
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/data.h"
+#include "../../core/util/log.h"
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "../nano/eth_nano.h"
 #include "../nano/merkle.h"
 #include "../nano/rlp.h"
 #include "../nano/serialize.h"
 #include "eth_basic.h"
 #include "trie.h"
-#include <client/context.h>
-#include <client/keys.h>
 #include <string.h>
-#include <util/data.h>
-#include <util/log.h>
-#include <util/mem.h>
-#include <util/utils.h>
 
 typedef struct receipt {
   bytes32_t tx_hash;

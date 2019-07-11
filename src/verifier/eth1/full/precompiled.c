@@ -1,8 +1,8 @@
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/ripemd160.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "evm.h"
 #include "gas.h"
-#include <crypto/ecdsa.h>
-#include <crypto/ripemd160.h>
-#include <crypto/secp256k1.h>
 
 uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   UNUSED_VAR(evm);

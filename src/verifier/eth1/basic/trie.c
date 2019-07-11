@@ -1,11 +1,12 @@
 #include "trie.h"
-#include <crypto/sha3.h>
-#include <merkle.h>
-#include <rlp.h>
+#include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/sha3.h"
+#include "../nano/merkle.h"
+#include "../nano/rlp.h"
 #include <stdio.h>
 #include <string.h>
-#include <util/mem.h>
-#include <util/utils.h>
+
 typedef struct {
   uint8_t*     hash;
   trie_node_t* node;
