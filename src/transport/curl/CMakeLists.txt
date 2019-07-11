@@ -75,4 +75,3 @@ if (MSVC OR MSYS OR MINGW)
     target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
 endif ()
 
-target_include_directories(transport_curl PUBLIC "${PROJECT_SOURCE_DIR}/src/core")

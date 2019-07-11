@@ -1,6 +1,6 @@
 #include "in3.h"
 #include "in3_curl.h"
-#include <client/client.h>
+#include "../../core/client.h"
 
 in3_t* in3_create() {
   in3_t* i     = in3_new();

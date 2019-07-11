@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <util/data.h>
-#include <util/mem.h>
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
 
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {

@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../core/client/client.h"
-#include "../core/util/log.h"
-#include "../core/util/stringbuilder.h"
+#include "../../core/client/client.h"
+#include "../../core/util/log.h"
+#include "../../core/util/stringbuilder.h"
 #include "in3_curl.h"
 #include <curl/curl.h>
 
