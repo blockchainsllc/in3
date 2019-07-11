@@ -7,9 +7,9 @@
 #ifndef USN_API_H
 #define USN_API_H
 
-#include "../core/client/client.h"
-#include "../core/util/data.h"
-#include "../core/util/utils.h"
+#include "../../core/client/client.h"
+#include "../../core/util/data.h"
+#include "../../core/util/utils.h"
 
 typedef enum {
   USN_ACTION,

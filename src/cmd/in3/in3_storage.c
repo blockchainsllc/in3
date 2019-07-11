@@ -1,6 +1,6 @@
 
-#include "../core/client/client.h"
-#include "../core/util/mem.h"
+#include "../../core/client/client.h"
+#include "../../core/util/mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

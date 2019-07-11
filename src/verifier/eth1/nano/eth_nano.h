@@ -5,7 +5,7 @@
 #ifndef in3_eth_nano_h__
 #define in3_eth_nano_h__
 
-#include "../core/client/verifier.h"
+#include "../../../core/client/verifier.h"
 
 /** entry-function to execute the verification context. */
 in3_ret_t in3_verify_eth_nano(in3_vctx_t* v);

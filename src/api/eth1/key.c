@@ -1,8 +1,8 @@
 #include "../../core/util/data.h"
 #include "../../core/util/utils.h"
-#include "../core/client/client.h"
-#include <crypto/aes/aes.h>
-#include <crypto/pbkdf2.h>
+#include "../../core/client/client.h"
+#include "../../third-party/crypto/aes/aes.h"
+#include "../../third-party/crypto/pbkdf2.h"
 
 in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   if (d_get_int(key_data, "version") != 3) return IN3_EVERS;

@@ -1,7 +1,7 @@
 
 
-#include "../../core/client/keys.h"
-#include "../../core/client/verifier.h"
+#include "../../../core/client/keys.h"
+#include "../../../core/client/verifier.h"
 #include "big.h"
 #include "code.h"
 #include "evm.h"

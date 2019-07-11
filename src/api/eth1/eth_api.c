@@ -1,9 +1,9 @@
 #include "eth_api.h"
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
-#include "../core/client/context.h"
-#include "../core/client/keys.h"
-#include "../core/util/log.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/log.h"
 #include "abi.h"
 #include <errno.h>
 #include <inttypes.h>

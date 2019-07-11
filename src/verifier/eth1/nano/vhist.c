@@ -1,10 +1,10 @@
 #include "vhist.h"
-#include "../../core/util/log.h"
-#include "../core/client/keys.h"
-#include "../core/util/error.h"
-#include "../core/util/mem.h"
-#include "rlp.h"
-#include "serialize.h"
+#include "../../../core/util/log.h"
+#include "../../../core/client/keys.h"
+#include "../../../core/util/error.h"
+#include "../../../core/util/mem.h"
+#include "../../../verifier/eth1/nano/rlp.h"
+#include "../../../verifier/eth1/nano/serialize.h"
 #include <stdbool.h>
 #include <string.h>
 

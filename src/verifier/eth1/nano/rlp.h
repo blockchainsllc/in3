@@ -7,7 +7,7 @@
 #ifndef rlp_h__
 #define rlp_h__
 
-#include "../core/util/bytes.h"
+#include "../../../core/util/bytes.h"
 
 /**
  * this function decodes the given bytes and returns the element with the given index by updating the reference of dst.

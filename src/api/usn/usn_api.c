@@ -1,8 +1,8 @@
 #include "usn_api.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
-#include "../core/client/context.h"
-#include "../core/client/keys.h"
-#include "../core/util/debug.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/debug.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>

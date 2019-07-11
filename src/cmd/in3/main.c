@@ -20,10 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util/data.h>
-#include <util/debug.h>
-#include <util/log.h>
-#include <util/utils.h>
+#include "../../core/util/data.h"
+#include "../../core/util/debug.h"
+#include "../../core/util/log.h"
+#include "../../core/util/utils.h"
 
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;

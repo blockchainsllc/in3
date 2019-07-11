@@ -1,7 +1,7 @@
 #include "abi.h"
-#include "../core/util/bytes.h"
-#include "../core/util/data.h"
-#include "../core/util/utils.h"
+#include "../../core/util/bytes.h"
+#include "../../core/util/data.h"
+#include "../../core/util/utils.h"
 #include <string.h>
 
 //balanceOf(address):(uint256)

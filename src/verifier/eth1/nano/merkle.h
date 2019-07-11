@@ -3,7 +3,7 @@
  * 
  * */
 
-#include "../../core/util/bytes.h"
+#include "../../../core/util/bytes.h"
 
 #ifndef MERKLE_H
 #define MERKLE_H

@@ -1,11 +1,11 @@
-#include "../../core/client/context.h"
-#include "../../core/client/keys.h"
-#include "../../core/util/data.h"
-#include "../../core/util/mem.h"
-#include "../../core/util/utils.h"
-#include "../../third-party/crypto/ecdsa.h"
-#include "../../third-party/crypto/secp256k1.h"
-#include "eth_nano.h"
+#include "../../../core/client/context.h"
+#include "../../../core/client/keys.h"
+#include "../../../core/util/data.h"
+#include "../../../core/util/mem.h"
+#include "../../../core/util/utils.h"
+#include "../../../third-party/crypto/ecdsa.h"
+#include "../../../third-party/crypto/secp256k1.h"
+#include "../../../verifier/eth1/nano/eth_nano.h"
 #include <string.h>
 
 bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig) {

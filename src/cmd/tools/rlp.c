@@ -4,14 +4,13 @@
 
 #include <inttypes.h>
 #include <math.h>
-#include <rlp.h>
+#include "../../verifier/eth1/nano/rlp.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <util/data.h>
-#include <util/utils.h>
+#include "../../core/util/data.h"
+#include "../../core/util/utils.h"
 
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {

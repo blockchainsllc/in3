@@ -1,11 +1,11 @@
 #include "serialize.h"
-#include "../../core/client/context.h"
-#include "../../core/client/keys.h"
-#include "../../core/client/verifier.h"
-#include "../../core/util/bytes.h"
-#include "../../core/util/data.h"
-#include "../../core/util/utils.h"
-#include "rlp.h"
+#include "../../../core/client/context.h"
+#include "../../../core/client/keys.h"
+#include "../../../core/client/verifier.h"
+#include "../../../core/util/bytes.h"
+#include "../../../core/util/data.h"
+#include "../../../core/util/utils.h"
+#include "../../../verifier/eth1/nano/rlp.h"
 #include <string.h>
 
 static int rlp_add_bytes(bytes_builder_t* rlp, bytes_t b, int ml) {

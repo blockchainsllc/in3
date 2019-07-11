@@ -1,9 +1,9 @@
 #ifndef IN3_VHIST_H
 #define IN3_VHIST_H
 
-#include "../core/client/client.h"
-#include "../core/util/bytes.h"
-#include "../core/util/data.h"
+#include "../../../core/client/client.h"
+#include "../../../core/util/bytes.h"
+#include "../../../core/util/data.h"
 #include <stdint.h>
 
 typedef enum {

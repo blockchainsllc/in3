@@ -1,8 +1,8 @@
 
 
-#include "../../core/client/keys.h"
-#include "../../core/client/verifier.h"
-#include "../../core/util/utils.h"
+#include "../../../core/client/keys.h"
+#include "../../../core/client/verifier.h"
+#include "../../../core/util/utils.h"
 #include <stdio.h>
 #include <string.h>
 
