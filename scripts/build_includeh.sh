@@ -16,12 +16,15 @@ while read path; do
       projectdir=`pwd`
       fdir=`dirname "$file"`
       cd "$fdir"
-      # echo "$fdir"
+      echo "$file"
+      echo "============================"
       # extract and copy public includes
-      grep "#include \"" `basename "$file"` | while read incl
+      gcc -MM `basename $file` | tail -n +2  | while read -r incl;
       do
-        header=`echo "$incl" | sed -e "s/.*include \"\(.*\)\".*/\1/"`
-        cp "$header" "$projectdir/include/in3/$fdir/$header"
+#        header=`echo "$incl" | sed -e "s/.*include \"\(.*\)\".*/\1/"`
+#        cp "$header" "$projectdir/include/in3/$fdir/$header"
+        echo "$incl"
+
       done
     fi
     done' none {} \;
