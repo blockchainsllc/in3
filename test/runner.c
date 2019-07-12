@@ -4,7 +4,7 @@
 #include <core/client/client.h>
 #include <core/client/context.h>
 #include <core/util/utils.h>
-#include <eth_full/eth_full.h>
+#include <verifier/eth1/full/eth_full.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

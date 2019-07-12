@@ -1,122 +1,128 @@
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/test/cmake/")
-
 include_directories(. ../src)
 
 add_executable(runner runner.c)
-target_link_libraries(runner core eth_full)
+target_link_libraries(runner tommath crypto core eth_full)
+target_include_directories(runner PUBLIC "${PROJECT_SOURCE_DIR}/src")
+
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
-target_link_libraries(vmrunner core eth_full)
+target_link_libraries(vmrunner tommath crypto core eth_full)
+target_include_directories(vmrunner PUBLIC "${PROJECT_SOURCE_DIR}/src")
+target_include_directories(vmrunner PUBLIC "${PROJECT_SOURCE_DIR}/src/third-party")
 
 add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
-target_link_libraries(test_libcurl core eth_full transport_curl)
+target_link_libraries(test_libcurl tommath crypto core eth_full transport_curl)
+target_include_directories(test_libcurl PUBLIC "${PROJECT_SOURCE_DIR}/src")
 
 add_executable(test_key_hash test_key_hash.c unity/unity.c)
-target_link_libraries(test_key_hash core ${DEAD_STRIP_LINKER_OPT})
-add_test(
-    NAME              "in3_test_key_hash" 
-    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-)
+target_link_libraries(test_key_hash core)
+target_include_directories(test_key_hash PUBLIC "${PROJECT_SOURCE_DIR}/src")
 
-add_executable(test_verify_eth_getLog test_verify_eth_getLog.c unity/unity.c)
-target_link_libraries(test_verify_eth_getLog eth_basic ${DEAD_STRIP_LINKER_OPT})
 add_test(
-    NAME              "test_verify_eth_getLog" 
-    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-)
-add_executable(test_bitset test_bitset.c unity/unity.c)
-target_link_libraries(test_bitset core ${DEAD_STRIP_LINKER_OPT})
-add_test(
-        NAME              "in3_test_bitset"
-        COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
+        NAME "in3_test_key_hash"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
-add_executable(test_vhist test_vhist.c unity/unity.c)
-target_link_libraries(test_vhist eth_nano transport_curl ${DEAD_STRIP_LINKER_OPT})
+add_executable(test_verify_eth_getLog test_verify_eth_getLog.c unity/unity.c)
+target_link_libraries(test_verify_eth_getLog tommath crypto core eth_basic)
 add_test(
-        NAME              "in3_test_vhist"
-        COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
+        NAME "test_verify_eth_getLog"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
+add_executable(test_bitset test_bitset.c unity/unity.c)
+target_link_libraries(test_bitset core ${DEAD_STRIP_LINKER_OPT})
+add_test(
+        NAME "in3_test_bitset"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
+add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
+target_link_libraries(test_vhist crypto eth_nano transport_curl ${DEAD_STRIP_LINKER_OPT})
+add_test(
+        NAME "in3_test_vhist"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
 file(GLOB files "testdata/requests/*.json")
-foreach(file ${files})
-  get_filename_component(testname "${file}" NAME_WE)
-  add_test(
-    NAME              "in3_${testname}" 
-    COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/runner ${file} 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-)
-endforeach()
+foreach (file ${files})
+    get_filename_component(testname "${file}" NAME_WE)
+    add_test(
+            NAME "in3_${testname}"
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/runner ${file}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+    )
+endforeach ()
 
-foreach(testdir 
-vmTests/vmBitwiseLogicOperation 
-vmTests/vmBlockInfoTest 
-vmTests/vmEnviromentalInfo 
-vmTests/vmLogTest 
-vmTests/vmSha3Test 
-vmTests/vmSystemOperations 
-vmTests/vmTests 
-vmTests/vmIOandFlowOperations 
-vmTests/vmRandomTest 
-vmTests/vmPushDupSwapTest 
-vmTests/vmArithmeticTest
-GeneralStateTests/stRandom
-#GeneralStateTests/stRevertTest
-#GeneralStateTests/stInitCodeTest
-#GeneralStateTests/stCreateTest
-GeneralStateTests/stRandom2
-#GeneralStateTests/stWalletTest
-GeneralStateTests/stCodeCopyTest
-#GeneralStateTests/stRefundTest
-#GeneralStateTests/stRecursiveCreate
-#GeneralStateTests/stPreCompiledContracts
-#GeneralStateTests/stExtCodeHash
-#GeneralStateTests/stBugs
-GeneralStateTests/stExample
-#GeneralStateTests/stTransitionTest
-GeneralStateTests/stCallCodes
-#GeneralStateTests/stPreCompiledContracts2
-#GeneralStateTests/stZeroCallsTest
-#GeneralStateTests/stBadOpcode
-#GeneralStateTests/stMemoryStressTest
-GeneralStateTests/stShift
-#GeneralStateTests/stSpecialTest
-#GeneralStateTests/stCallCreateCallCodeTest
-#GeneralStateTests/stQuadraticComplexityTest
-#GeneralStateTests/stStackTests
-#GeneralStateTests/stChangedEIP150
-#GeneralStateTests/stSolidityTest
-GeneralStateTests/stMemoryTest
-#GeneralStateTests/stEWASMTests
-#GeneralStateTests/stNonZeroCallsTest
-#GeneralStateTests/stCodeSizeLimit
-#GeneralStateTests/stSystemOperationsTest
-#GeneralStateTests/stHomesteadSpecific
-#GeneralStateTests/stCreate2
-#GeneralStateTests/stCallDelegateCodesHomestead
-#GeneralStateTests/stSStoreTest
-#GeneralStateTests/stCallDelegateCodesCallCodeHomestead
-#GeneralStateTests/stDelegatecallTestHomestead
-#GeneralStateTests/stEIP150Specific
-#GeneralStateTests/stEIP150singleCodeGasPrices
-#GeneralStateTests/stZeroKnowledge2
-GeneralStateTests/stLogTests
-#GeneralStateTests/stEIP158Specific
-#GeneralStateTests/stZeroCallsRevert
-#GeneralStateTests/stTransactionTest
-#GeneralStateTests/stZeroKnowledge
-#GeneralStateTests/stStaticCall
-#GeneralStateTests/stMemExpandingEIP150Calls
-GeneralStateTests/stArgsZeroOneBalance
-#GeneralStateTests/stAttackTest
-#GeneralStateTests/stReturnDataTest
-TrieTests
-RLPTests
-)
+foreach (testdir
+        vmTests/vmBitwiseLogicOperation
+        vmTests/vmBlockInfoTest
+        vmTests/vmEnviromentalInfo
+        vmTests/vmLogTest
+        vmTests/vmSha3Test
+        vmTests/vmSystemOperations
+        vmTests/vmTests
+        vmTests/vmIOandFlowOperations
+        vmTests/vmRandomTest
+        vmTests/vmPushDupSwapTest
+        vmTests/vmArithmeticTest
+        GeneralStateTests/stRandom
+        #GeneralStateTests/stRevertTest
+        #GeneralStateTests/stInitCodeTest
+        #GeneralStateTests/stCreateTest
+        GeneralStateTests/stRandom2
+        #GeneralStateTests/stWalletTest
+        GeneralStateTests/stCodeCopyTest
+        #GeneralStateTests/stRefundTest
+        #GeneralStateTests/stRecursiveCreate
+        #GeneralStateTests/stPreCompiledContracts
+        #GeneralStateTests/stExtCodeHash
+        #GeneralStateTests/stBugs
+        GeneralStateTests/stExample
+        #GeneralStateTests/stTransitionTest
+        GeneralStateTests/stCallCodes
+        #GeneralStateTests/stPreCompiledContracts2
+        #GeneralStateTests/stZeroCallsTest
+        #GeneralStateTests/stBadOpcode
+        #GeneralStateTests/stMemoryStressTest
+        GeneralStateTests/stShift
+        #GeneralStateTests/stSpecialTest
+        #GeneralStateTests/stCallCreateCallCodeTest
+        #GeneralStateTests/stQuadraticComplexityTest
+        #GeneralStateTests/stStackTests
+        #GeneralStateTests/stChangedEIP150
+        #GeneralStateTests/stSolidityTest
+        GeneralStateTests/stMemoryTest
+        #GeneralStateTests/stEWASMTests
+        #GeneralStateTests/stNonZeroCallsTest
+        #GeneralStateTests/stCodeSizeLimit
+        #GeneralStateTests/stSystemOperationsTest
+        #GeneralStateTests/stHomesteadSpecific
+        #GeneralStateTests/stCreate2
+        #GeneralStateTests/stCallDelegateCodesHomestead
+        #GeneralStateTests/stSStoreTest
+        #GeneralStateTests/stCallDelegateCodesCallCodeHomestead
+        #GeneralStateTests/stDelegatecallTestHomestead
+        #GeneralStateTests/stEIP150Specific
+        #GeneralStateTests/stEIP150singleCodeGasPrices
+        #GeneralStateTests/stZeroKnowledge2
+        GeneralStateTests/stLogTests
+        #GeneralStateTests/stEIP158Specific
+        #GeneralStateTests/stZeroCallsRevert
+        #GeneralStateTests/stTransactionTest
+        #GeneralStateTests/stZeroKnowledge
+        #GeneralStateTests/stStaticCall
+        #GeneralStateTests/stMemExpandingEIP150Calls
+        GeneralStateTests/stArgsZeroOneBalance
+        #GeneralStateTests/stAttackTest
+        #GeneralStateTests/stReturnDataTest
+        TrieTests
+        RLPTests
+        )
     file(GLOB files "testdata/evm/${testdir}/*.json")
 
     # exclude tests, but fix them later    
@@ -124,21 +130,17 @@ RLPTests
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|callcodeNonConst|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
 
-    
 
-
-    foreach(file ${files})
-    get_filename_component(testname "${file}" NAME_WE)
-    add_test(
-        NAME              "evm/${testdir}/${testname}" 
-        COMMAND           ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file} 
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-    )
-    set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 1) 
-    endforeach()
-endforeach()
-
-
+    foreach (file ${files})
+        get_filename_component(testname "${file}" NAME_WE)
+        add_test(
+                NAME "evm/${testdir}/${testname}"
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+        )
+        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 1)
+    endforeach ()
+endforeach ()
 
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)

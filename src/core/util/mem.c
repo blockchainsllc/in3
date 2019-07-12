@@ -157,8 +157,8 @@ void memstack() {
 }
 
 void t_free(void* ptr, char* file, const char* func, int line) {
-  if (ptr == NULL)
-    printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
+  //  if (ptr == NULL)
+  //    printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
 
   mem_p_t *t = mem_tracker, *prev = NULL;
   while (t) {

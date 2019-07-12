@@ -7,9 +7,9 @@
 #include <core/client/keys.h>
 #include <core/util/data.h>
 #include <core/util/utils.h>
-#include <eth_full/big.h>
-#include <eth_full/evm.h>
-#include <eth_nano/rlp.h>
+#include <verifier/eth1/full/big.h>
+#include <verifier/eth1/full/evm.h>
+#include <verifier/eth1/nano/rlp.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

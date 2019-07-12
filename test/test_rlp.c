@@ -5,10 +5,10 @@
 #endif
 #include <core/util/data.h>
 #include <core/util/utils.h>
-#include <eth_basic/trie.h>
-#include <eth_full/evm.h>
-#include <eth_nano/rlp.h>
-#include <eth_nano/serialize.h>
+#include <verifier/eth1/basic/trie.h>
+#include <verifier/eth1/full/evm.h>
+#include <verifier/eth1/nano/rlp.h>
+#include <verifier/eth1/nano/serialize.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

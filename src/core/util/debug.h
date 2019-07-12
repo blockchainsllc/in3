@@ -13,8 +13,10 @@ void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...);
 #endif
 
 #ifdef DBG_FNCTRACE
-    #define DBG_FNCTRACE_ENTER {printk("ENTER %s::%s\n",__FILE__,__func__);}
-    #define DBG_FNCTRACE_LEAVE {printk("LEAVE %s::%s\n",__FILE__,__func__);}
+#define DBG_FNCTRACE_ENTER \
+  { printk("ENTER %s::%s\n", __FILE__, __func__); }
+#define DBG_FNCTRACE_LEAVE \
+  { printk("LEAVE %s::%s\n", __FILE__, __func__); }
 #endif //DBG_FNCTRACE
 
-extern void msg_dump(const char *s, unsigned char *data, unsigned len);
+extern void msg_dump(const char* s, unsigned char* data, unsigned len);

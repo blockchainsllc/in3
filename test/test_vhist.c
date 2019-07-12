@@ -3,12 +3,12 @@
 #endif
 #define DEBUG
 
+#include <cmd/in3/in3_storage.h>
 #include <core/client/keys.h>
 #include <core/util/data.h>
 #include <core/util/mem.h>
-#include <eth_nano/vhist.h>
 #include <inttypes.h>
-#include <transport_curl/in3_storage.h>
+#include <verifier/eth1/nano/vhist.h>
 
 #include "test_utils.h"
 
@@ -52,7 +52,7 @@ static bool vh_diff_matches(uint64_t block) {
 
   bytes_builder_t* bb  = vh_get_validators_for_block(vh, block);
   uint64_t         blk = 0;
-  bytes_t          *b;
+  bytes_t*         b;
   bytes_builder_t* bb_ = bb_new();
   for (sitr = d_iter(ss); sitr.left; d_iter_next(&sitr)) {
     vs  = d_get(sitr.token, K_VALIDATORS);
