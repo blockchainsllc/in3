@@ -1,11 +1,10 @@
 #include "in3_IN3.h"
-#include "../../core/client.h"
-#include "../../core/context.h"
-#include "../../core/keys.h"
-#include "../../core/send.h"
-#include "../../transport/curl/in3_curl.h"
+#include "../../core/client/client.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/client/send.h"
 #include "../../verifier/eth1/full/eth_full.h"
-#include <util/mem.h>
+#include "../../core/util/mem.h"
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   jlong l = (*env)->GetLongField(env, obj, (*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), "ptr", "J"));
