@@ -8,21 +8,20 @@
 #endif
 
 #include "../cmd/in3/in3_storage.h"
-#include <client/cache.h>
-#include <client/client.h>
-#include <eth_full.h>
-#include <evm.h>
-#include <in3_curl.h>
+#include <in3/api/usn/usn_api.h>
+#include <in3/core/client/cache.h>
+#include <in3/core/client/client.h>
+#include <in3/core/util/data.h>
+#include <in3/core/util/utils.h>
+#include <in3/transport/curl/in3_curl.h>
+#include <in3/verifier/eth1/full/eth_full.h>
+#include <in3/verifier/eth1/full/evm.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <usn_api.h>
-#include <util/data.h>
-#include <util/debug.h>
-#include <util/utils.h>
 
 uint64_t getChainId(char* name) {
   if (strcmp(name, "mainnet") == 0) return 0x01L;

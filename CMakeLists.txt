@@ -55,15 +55,5 @@ add_subdirectory(src/bindings)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
 add_subdirectory(src/examples)
-add_subdirectory( docs )
-#IF(WASM)
-#  add_subdirectory( src/bindings/wasm )
-#ELSE(WASM)
-#  add_subdirectory( src/api/eth1 )
-#  add_subdirectory( src/api/usn )
-#  add_subdirectory( src/transport )
-#
-#ENDIF()
-
-
+add_subdirectory(docs)
 
