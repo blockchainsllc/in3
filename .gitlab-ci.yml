@@ -12,7 +12,7 @@ build-in3:
     - mkdir build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true  .. 
-    - make && cp build/src/bindings/java/*.jar build/lib
+    - make && cp src/bindings/java/*.jar lib/
   artifacts:
     paths:
       - build/bin
