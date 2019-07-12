@@ -11,13 +11,13 @@ build-in3:
   script:
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true  .. 
+    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - make && cp src/bindings/java/*.jar lib/
   artifacts:
     paths:
       - build/bin
       - build/lib
-      - build/docs
+      - build/docs/doc_doxygen
 
 wasm:
   image: trzeci/emscripten:latest
@@ -33,7 +33,6 @@ wasm:
     paths:
       - build/bin
       - build/lib
-      - build/docs
 
 test-in3:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -62,7 +61,6 @@ test-in3:
     paths:
       - build/bin
       - build/lib
-      - build/docs
 
   script:
     - apk add --no-cache bash
@@ -89,7 +87,6 @@ test-in3:
     paths:
       - build/bin
       - build/lib
-      - build/docs
 
 
 gcc7-mingw-static:
