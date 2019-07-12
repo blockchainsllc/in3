@@ -305,6 +305,28 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
   bytes_t    tmp;
   int        len = t->type_len, dst = *offset;
 
+  if (t->array_len) {
+    if (t->array_len == -1) { // dynamic
+      dst = bytes_to_int(data.data + dst + 28, 4);
+      len = bytes_to_int(data.data + dst + 28, 4);
+      dst += 32;
+    } else
+      len = t->array_len;
+
+    int ol       = t->array_len; // we store the old array-indentifier
+    t->array_len = 0;            // because we need to temporarly deactivate it so we can fetch the single type.
+    res          = json_create_array(ctx);
+    for (int n = 0; n < len; n++)
+      json_array_add_value(res, get_data(ctx, t, data, &dst));
+
+    t->array_len = ol; // restore the array-identifier
+    if (ol == -1)      // move offset
+      *offset += 32;
+    else
+      *offset = dst;
+    return res;
+  }
+
   switch (t->type) {
     case A_TUPLE:
       res      = json_create_array(ctx);
