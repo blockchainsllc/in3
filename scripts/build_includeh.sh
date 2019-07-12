@@ -16,21 +16,19 @@ while read path; do
       projectdir=`pwd`
       fdir=`dirname "$file"`
       cd "$fdir"
-      #echo "$file" $fdir
-      #echo "============================"
       # extract and copy public includes
-      gcc -MM `basename $file` | tail -n +2  | while read -r incl;
+      gcc -MM `basename $file` | tail -n +1  | while read -r incl;
       do
-	headers=`echo "$incl" | sed "s/[\]//g"` 
-	for header in $headers;
-	do
-            cp  "$header" "$projectdir/include/in3/$fdir/$header"
-	done
+        headers=`echo "$incl" | sed "s/[\]//g"`
+        for header in $headers;
+        do
+          cp "$header" "$projectdir/include/in3/$fdir/$header" 2>/dev/null
+        done
       done
     fi
     done' none {} \;
 done <include/in3/.dirs
 find include -type d -empty -delete
-mv include/in3/src/* include/in3/ 
-rm include/in3/.dirs 
+mv include/in3/src/* include/in3/
+rm include/in3/.dirs
 rm -r include/in3/src
