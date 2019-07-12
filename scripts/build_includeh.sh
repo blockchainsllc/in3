@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 cd ..
 rm -rf include
 mkdir -p include/in3
@@ -16,17 +16,21 @@ while read path; do
       projectdir=`pwd`
       fdir=`dirname "$file"`
       cd "$fdir"
-      echo "$file"
-      echo "============================"
+      #echo "$file" $fdir
+      #echo "============================"
       # extract and copy public includes
       gcc -MM `basename $file` | tail -n +2  | while read -r incl;
       do
-#        header=`echo "$incl" | sed -e "s/.*include \"\(.*\)\".*/\1/"`
-#        cp "$header" "$projectdir/include/in3/$fdir/$header"
-        echo "$incl"
-
+	headers=`echo "$incl" | sed "s/[\]//g"` 
+	for header in $headers;
+	do
+            cp  "$header" "$projectdir/include/in3/$fdir/$header"
+	done
       done
     fi
     done' none {} \;
 done <include/in3/.dirs
-rm include/in3/.dirs
+find include -type d -empty -delete
+mv include/in3/src/* include/in3/ 
+rm include/in3/.dirs 
+rm -r include/in3/src
