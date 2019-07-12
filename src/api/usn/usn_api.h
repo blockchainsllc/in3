@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * USN API.
  * 
  * This header-file defines easy to use function, which are verifying USN-Messages.

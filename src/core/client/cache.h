@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * handles caching and storage.
  * 
  * storing nodelists and other caches with the storage handler as specified in the client.

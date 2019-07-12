@@ -1,4 +1,4 @@
-
+// @PUBLIC_HEADER
 /** @file 
  * transport-handler using libcurl.
  */

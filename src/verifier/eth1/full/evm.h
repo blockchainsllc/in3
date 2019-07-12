@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * main evm-file.
  * */
 
