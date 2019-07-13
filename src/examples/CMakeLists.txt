@@ -1,4 +1,4 @@
-OPTION(EXAMPLES "examples" OFF)
+OPTION(EXAMPLES "build the examples." OFF)
 IF (EXAMPLES)
 
     add_executable(example example.c)
