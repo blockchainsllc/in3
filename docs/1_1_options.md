@@ -18,7 +18,7 @@
 
   if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes.
 
-  Type: `BOOL ` ,    Default-Value: `true`
+  Type: `BOOL ` ,    Default-Value: `ON`
 
 
 ### EXAMPLES
@@ -46,14 +46,14 @@
 
   build the java-binding (shared-lib and jar-file)
 
-  Type: `BOOL ` ,    Default-Value: `true`
+  Type: `BOOL ` ,    Default-Value: `OFF`
 
 
 ### TEST
 
   builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance
 
-  Type: `BOOL ` ,    Default-Value: `true`
+  Type: `BOOL ` ,    Default-Value: `OFF`
 
 
 ### TRANSPORTS
