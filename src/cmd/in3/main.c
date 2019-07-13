@@ -25,6 +25,29 @@
 #include <string.h>
 #include <unistd.h>
 
+void read_pass(char* pw, int pwsize) {
+  int i  = 0;
+  int ch = 0;
+
+  fprintf(stderr, "\033[8m"); //conceal typing
+  while (1) {
+    ch = getchar();
+    if (ch == '\r' || ch == '\n' || ch == EOF) break; //get characters until CR or NL
+    if (i < pwsize - 1) {                             //do not save pw longer than space in pw
+      pw[i]     = ch;                                 //longer pw can be entered but excess is ignored
+      pw[i + 1] = '\0';
+    }
+    i++;
+  }
+  fprintf(stderr, "\033[0A");  //move cursor up one line
+  fprintf(stderr, "\033[21C"); //move cursor 21 places
+  while (i) {
+    fprintf(stderr, "*"); //overwrite password on screen. this is still concealed
+    i--;
+  }
+  fprintf(stderr, "\033[28m"); //reveal typing
+}
+
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;
   int    l     = strlen(val);
@@ -125,7 +148,7 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
   call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;
   if (req && req->in_data->type == A_TUPLE) {
     json_ctx_t* in_data = parse_json(args);
-    if (set_data(req, in_data->result, req->in_data) < 0) { printf("Error: could not set the data"); }
+    if (set_data(req, in_data->result, req->in_data) < 0) { fprintf(stderr, "Error: could not set the data"); }
     free_json(in_data);
   }
   sb_t* params = sb_new("[{");
@@ -272,7 +295,7 @@ int main(int argc, char* argv[]) {
       else {
         FILE* f = fopen(d, "r");
         if (!f) {
-          printf("data could not be read from file %s", d);
+          fprintf(stderr, "data could not be read from file %s", d);
           return 1;
         }
         bytes_t content = readFile(f);
@@ -309,10 +332,12 @@ int main(int argc, char* argv[]) {
       else if (strcmp(argv[i + 1], "full") == 0)
         c->proof = PROOF_FULL;
       else {
-        printf("Invalid Argument for proof: %s\n", argv[i + 1]);
+        fprintf(stderr, "Invalid Argument for proof: %s\n", argv[i + 1]);
         return 1;
       }
       i++;
+    } else if (method && (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)) {
+      pk_file = argv[i];
     } else {
       if (method == NULL)
         method = argv[i];
@@ -337,36 +362,25 @@ int main(int argc, char* argv[]) {
 
   if (pk_file) {
     if (!pwd) {
-      //TODO ask for password
+      fprintf(stderr, "Passphrase:\n");
+      pwd = malloc(500);
+      read_pass(pwd, 500);
     }
-    FILE* pkf = fopen(pk_file, "r");
-    if (!pkf) {
-      printf("pk file not found!\n");
-      return -1;
-    }
+    char* content;
+    if (strcmp(pk_file, "-") == 0)
+      content = (char*) readFile(stdin).data;
+    else if (pk_file[0] == '{')
+      content = pk_file;
+    else
+      content = (char*) readFile(fopen(pk_file, "r")).data;
 
-    char*  buffer    = _malloc(1024);
-    size_t allocated = 1024;
-    size_t len       = 0;
-    size_t r;
-
-    while (1) {
-      r = fread(buffer + len, 1, allocated - len, pkf);
-      len += r;
-      if (feof(pkf)) break;
-      buffer = _realloc(buffer, allocated * 2, allocated);
-      allocated *= 2;
-    }
-    fclose(pkf);
-    buffer[len]          = 0;
-    json_ctx_t* key_json = parse_json(buffer);
+    json_ctx_t* key_json = parse_json(content);
     if (!key_json) {
       printf("invalid json in pk file!\n");
       return -1;
     }
 
     bytes32_t pk_seed;
-
     switch (decrypt_key(key_json->result, pwd, pk_seed)) {
       case 0:
         break;
@@ -375,12 +389,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    if (!method) {
+    if (!method || strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0) {
       char tmp[64];
       bytes_to_hex(pk_seed, 32, tmp);
-      printf("%s", tmp);
+      printf("0x%s\n", tmp);
       return 0;
-    }
+    } else
+      eth_set_pk_signer(c, pk_seed);
   }
 
   if (c->chainId == 0xFFFF) c->proof = PROOF_NONE;
@@ -421,7 +436,7 @@ int main(int argc, char* argv[]) {
     method = "eth_sendTransaction";
     //    printf(" new params %s\n", params);
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode key keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
     return 0;
   } else if (strcmp(method, "pk2address") == 0) {
     bytes32_t prv_key;

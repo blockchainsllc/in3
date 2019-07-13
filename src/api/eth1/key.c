@@ -9,9 +9,11 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   d_token_t* crypto = d_get(key_data, key("crypto"));
   char*      kdf    = d_get_string(crypto, "kdf");
   if (!crypto || !kdf) return IN3_EINVALDT;
-  if (strcmp(kdf, "scrypt") == 0)
+  if (strcmp(kdf, "scrypt") == 0) {
+    //TODO implement scrypt
     return IN3_ENOTSUP;
-  else if (strcmp(kdf, "pbkdf2") == 0) {
+
+  } else if (strcmp(kdf, "pbkdf2") == 0) {
     d_token_t* kdf_params = d_get(crypto, key("kdfparams"));
     if (!kdf_params || strcmp(d_get_string(kdf_params, "prf"), "hmac-sha256")) return IN3_ENOTSUP;
     if (strcmp(d_get_string(crypto, "cipher"), "aes-128-ctr")) return IN3_ENOTSUP;
@@ -35,24 +37,12 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
     aes_init();
     aes_encrypt_ctx cx[1];
     char*           iv_hex = d_get_string(d_get(crypto, key("cipherparams")), "iv");
-    uint8_t         iv_data[strlen(iv_hex) >> 1];
-    aes_decrypt_key128(aeskey, (aes_decrypt_ctx*) cx);
-    aes_ctr_crypt(cipher.data, dst, 16, iv_data, aes_ctr_cbuf_inc, cx);
+    int             iv_len = strlen(iv_hex) / 2;
+    uint8_t         iv_data[iv_len];
+    hex2byte_arr(iv_hex, -1, iv_data, iv_len);
 
-    /*
-    aes_decrypt_key128
-
-    aes_ctr_decrypt(key,dst,16,cipher.data,aes_ctr_cbuf_inc,)
-
-    const decipher = crypto.createDecipheriv(
-        json.crypto.cipher,
-        derivedKey.slice(0, 16),
-        Buffer.from(json.crypto.cipherparams.iv, 'hex'));
-    const seed = `0x $ { Buffer.concat([ decipher.update(ciphertext), decipher.final() ]).toString('hex') }`;
-
-    return Account.fromPrivateKey(seed, accounts);
-*/
-    return IN3_OK;
+    aes_encrypt_key128(aeskey, cx);
+    return aes_ctr_decrypt(cipher.data, dst, cipher.len, iv_data, aes_ctr_cbuf_inc, cx) ? IN3_EPASS : IN3_OK;
   } else
     return IN3_ENOTSUP;
 }
