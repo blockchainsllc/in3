@@ -7,7 +7,7 @@ BEGIN {
     print ""
     print "While we provide binaries (TODO put link to releases), you can also build from source:"
     print ""
-    print "## requirements"
+    print "### requirements"
     print ""
     print "- cmake"
     print "- curl : curl is used as transport for the comandline-tools"
@@ -21,7 +21,7 @@ BEGIN {
     print "make install"
     print "```"
     print ""
-    print "## CMake options"; 
+    print "### CMake options"; 
     print "" ;
     RS = "" ; 
     FS = "\n"  
@@ -31,7 +31,7 @@ BEGIN {
     if (split($1, d, /\/\//) == 2 && index($2,"CMAKE") == 0 && index($2,"CURL_") == 0 &&  index($2,"JAVA_")==0 && index($2,"DOXYGEN_")==0 && index($2,"Java_") == 0 && index($2,"scrypt_") == 0) 
     {
       split($2, a, /[:=]/)
-      print "### "a[1]
+      print "#### "a[1]
       print ""
       print " "d[2]
       print ""
