@@ -48,23 +48,28 @@
             "MIMode": "lldb"
         },
         {
-            "name": "(lldb) Launch (send money)",
+            "name": "(lldb) abi_encode)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "program": "${workspaceFolder}/build/bin/in3",
             "args": [
-                "-c",
-                "kovan",
-                "-pk",
-                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
-                "-debug",
-                "send",
-                "-np",
-                "-to",
-                "0xC75cb88EEB3bdeD09101447A224d1467bc236586",
-                "-value",
-                "0.00001eth",
-                "-w"
+                "abi_encode",
+                "getOwners():address[]"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "(lldb) decode)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "args": [
+                "keystore",
+                "parity.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
