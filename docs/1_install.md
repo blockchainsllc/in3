@@ -6,13 +6,14 @@ While we provide binaries (TODO put link to releases), you can also build from s
 
 - cmake
 - curl : curl is used as transport for the comandline-tools
-- optional: libsycrypt, which would be used for unlocking keystore files using `scrypt` as kdf method. if it does not exist you can still build, but not decrypt such keys.
+- optional: libsycrypt, which would be used for unlocking keystore files using `scrypt` as kdf method. if it does not exist you can still build, but not decrypt such keys.   
+  for osx `brew install libscrypt` and for debian `sudo apt-get install libscrypt-dev`
 
 Incubed uses cmake for configuring:
 
 ```sh
 mkdir build && cd build
-cmake -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Release .. && make
+cmake -DCMAKE_BUILD_TYPE=Release .. && make
 make install
 ```
 
