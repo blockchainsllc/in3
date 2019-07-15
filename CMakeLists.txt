@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.7.2)
 project(in3)
 
 # options
-OPTION(WASM "Wasm" OFF)
 OPTION(DEBUG "Debug" OFF)
 IF (DEBUG)
     ADD_DEFINITIONS(-DDEBUG)

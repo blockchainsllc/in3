@@ -3,9 +3,9 @@
  * This context is passed to the verifier.
  * */
 
-#include "../util/data.h"
-#include "../util/stringbuilder.h"
-#include "../util/utils.h"
+#include "data.h"
+#include "stringbuilder.h"
+#include "utils.h"
 #include "client.h"
 #include "context.h"
 #include <stdbool.h>

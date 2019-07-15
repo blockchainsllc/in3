@@ -8,9 +8,9 @@
 #ifndef ETH_API_H
 #define ETH_API_H
 
-#include "../../core/client/client.h"
-#include "../../core/util/data.h"
-#include "../../core/util/utils.h"
+#include "client.h"
+#include "data.h"
+#include "utils.h"
 #include <stdarg.h>
 
 /** 

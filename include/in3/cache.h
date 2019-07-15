@@ -6,7 +6,7 @@
  * If no storage handler is specified nothing will be cached.
  * */
 
-#include "../util/bytes.h"
+#include "bytes.h"
 #include "client.h"
 #include "context.h"
 

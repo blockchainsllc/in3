@@ -6,7 +6,7 @@
 #ifndef in3_eth_basic_h__
 #define in3_eth_basic_h__
 
-#include "../../../core/client/verifier.h"
+#include "verifier.h"
 
 /** entry-function to execute the verification context. */
 in3_ret_t in3_verify_eth_basic(in3_vctx_t* v);

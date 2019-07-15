@@ -1,9 +1,9 @@
-#include <in3/api/eth1/eth_api.h>            // wrapper for easier use
-#include <in3/api/usn/usn_api.h>             // for usn-specific functions
-#include <in3/core/client/client.h>          // the core client
-#include <in3/transport/curl/in3_curl.h>     // transport implementation
-#include <in3/verifier/eth1/basic/signer.h>  //
-#include <in3/verifier/eth1/full/eth_full.h> // the full ethereum verifier containing the EVM
+#include <in3/eth_api.h>            // wrapper for easier use
+#include <in3/usn_api.h>             // for usn-specific functions
+#include <in3/client.h>          // the core client
+#include <in3/in3_curl.h>     // transport implementation
+#include <in3/signer.h>  //
+#include <in3/eth_full.h> // the full ethereum verifier containing the EVM
 #include <stdio.h>
 #include <time.h>
 #if defined(_WIN32) || defined(WIN32)

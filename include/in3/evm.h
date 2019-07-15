@@ -3,8 +3,8 @@
  * main evm-file.
  * */
 
-#include "../../../core/client/verifier.h"
-#include "../../../core/util/bytes.h"
+#include "verifier.h"
+#include "bytes.h"
 #ifndef evm_h__
 #define evm_h__
 
