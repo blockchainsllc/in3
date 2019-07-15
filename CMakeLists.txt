@@ -3,6 +3,14 @@ cmake_minimum_required(VERSION 3.7.2)
 # project name
 project(in3)
 
+set(PROJECT_VERSION "0.0.2-alpha.0-alpha.0")
+
+string(REPLACE "." ";" VERSION_LIST ${PROJECT_VERSION})
+list(GET VERSION_LIST 0 PROJECT_VERSION_MAJOR)
+list(GET VERSION_LIST 1 PROJECT_VERSION_MINOR)
+list(GET VERSION_LIST 2 PROJECT_VERSION_PATCH)
+
+
 # options
 OPTION(DEBUG "Debug" OFF)
 IF (DEBUG)
