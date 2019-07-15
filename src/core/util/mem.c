@@ -157,6 +157,9 @@ void memstack() {
 }
 
 void t_free(void* ptr, char* file, const char* func, int line) {
+  UNUSED_VAR(file);
+  UNUSED_VAR(func);
+  UNUSED_VAR(line);
   //  if (ptr == NULL)
   //    printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
 

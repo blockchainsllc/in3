@@ -46,7 +46,7 @@ uint8_t strtohex(char c) {
   return 255;
 }
 
-const unsigned char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
+const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
   // buffer has to be at least 21 bytes (max u64 val = 18446744073709551615 has 20 digits + '\0')
   if (buffer_len < 21) return "<ERR(u64tostr): buffer too small>";
 
