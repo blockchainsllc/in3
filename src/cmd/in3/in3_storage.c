@@ -9,6 +9,7 @@
 #include <direct.h>
 #else
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 static char* _HOME_DIR = NULL;
