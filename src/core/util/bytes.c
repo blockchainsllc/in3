@@ -3,7 +3,6 @@
 #include "utils.h"
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 bytes_t* b_new(char* data, int len) {

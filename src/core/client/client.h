@@ -13,7 +13,6 @@
 #include "../util/data.h"
 #include "../util/error.h"
 #include "../util/stringbuilder.h"
-#include "../util/utils.h"
 #include <stdbool.h>
 #include <stdint.h>
 

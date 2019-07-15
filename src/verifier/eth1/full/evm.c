@@ -2,21 +2,12 @@
 #include "../../../core/client/context.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/bignum.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
-#include "../../../verifier/eth1/basic/eth_basic.h"
-#include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
-#include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
-#include "big.h"
-#include "eth_full.h"
 #include "gas.h"
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {

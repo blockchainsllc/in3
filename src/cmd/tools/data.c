@@ -2,14 +2,12 @@
  * simple commandline-util parsing json and creating bin
  * */
 
-#include <math.h>
+#include "../../core/util/data.h"
+#include "../../core/util/mem.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "../../core/util/data.h"
-#include "../../core/util/mem.h"
 
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {

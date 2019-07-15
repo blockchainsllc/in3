@@ -7,6 +7,7 @@
 #include <core/client/keys.h>
 #include <core/util/data.h>
 #include <core/util/mem.h>
+#include <core/util/utils.h>
 #include <inttypes.h>
 #include <verifier/eth1/nano/vhist.h>
 

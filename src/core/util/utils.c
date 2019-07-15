@@ -1,11 +1,8 @@
-#include "utils.h"
 #include "../../third-party/crypto/sha3.h"
 #include "bytes.h"
 #include "debug.h"
 #include "mem.h"
-#include <inttypes.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

@@ -8,14 +8,13 @@
 #endif
 
 #include "../cmd/in3/in3_storage.h"
-#include <in3/usn_api.h>
 #include <in3/cache.h>
 #include <in3/client.h>
 #include <in3/data.h>
-#include <in3/utils.h>
-#include <in3/in3_curl.h>
 #include <in3/eth_full.h>
 #include <in3/evm.h>
+#include <in3/in3_curl.h>
+#include <in3/usn_api.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>

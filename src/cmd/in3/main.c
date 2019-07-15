@@ -5,11 +5,10 @@
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
 #include "../../core/client/cache.h"
-#include "../../core/client/client.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
-#include "../../core/util/utils.h"
+#include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
 #include "../../transport/curl/in3_curl.h"
@@ -23,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;

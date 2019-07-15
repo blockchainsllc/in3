@@ -9,8 +9,6 @@
 #define USN_API_H
 
 #include "../../core/client/client.h"
-#include "../../core/util/data.h"
-#include "../../core/util/utils.h"
 
 typedef enum {
   USN_ACTION,

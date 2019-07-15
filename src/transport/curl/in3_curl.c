@@ -1,13 +1,9 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include "in3_curl.h"
 #include "../../core/client/client.h"
 #include "../../core/util/log.h"
-#include "../../core/util/stringbuilder.h"
-#include "in3_curl.h"
+#include "../../core/util/utils.h"
 #include <curl/curl.h>
+#include <string.h>
 
 #ifndef CURL_MAX_PARALLEL
 #define CURL_MAX_PARALLEL 50

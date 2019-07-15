@@ -5,6 +5,7 @@
 #include <core/client/context.h>
 #include <core/util/utils.h>
 #include <verifier/eth1/full/eth_full.h>
+#include "../src/core/util/mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

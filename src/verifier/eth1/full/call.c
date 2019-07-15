@@ -1,11 +1,9 @@
 #include "../../../core/client/verifier.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "big.h"
 #include "evm.h"
 #include "gas.h"
 #include "mem.h"
-#include <stdlib.h>
 #include <string.h>
 
 // free a evm-instance

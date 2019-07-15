@@ -9,10 +9,7 @@
 #include "keys.h"
 #include "nodelist.h"
 #include "verifier.h"
-#include <errno.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 

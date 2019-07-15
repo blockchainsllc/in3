@@ -5,11 +5,7 @@
 #include "../util/stringbuilder.h"
 #include "client.h"
 #include "keys.h"
-#include <inttypes.h>
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {

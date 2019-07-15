@@ -4,9 +4,7 @@
 #include "debug.h"
 #include "mem.h"
 #include <inttypes.h>
-#include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 static const size_t MIN_SIZE = 32;

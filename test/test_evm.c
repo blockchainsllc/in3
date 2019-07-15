@@ -10,6 +10,7 @@
 #include <crypto/secp256k1.h>
 #include <core/util/data.h>
 #include <core/util/utils.h>
+#include <core/util/mem.h>
 #include <verifier/eth1/basic/trie.h>
 #include <verifier/eth1/full/big.h>
 #include <verifier/eth1/full/evm.h>

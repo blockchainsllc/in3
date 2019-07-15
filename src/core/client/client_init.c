@@ -1,10 +1,8 @@
 #include "../util/data.h"
-#include "../util/log.h"
 #include "../util/mem.h"
 #include "cache.h"
 #include "client.h"
 #include "nodelist.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

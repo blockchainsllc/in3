@@ -8,7 +8,6 @@
 #define UTILS_H
 
 #include "bytes.h"
-#include "mem.h"
 #include <stdint.h>
 
 #define SWAP(a, b) \

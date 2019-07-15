@@ -6,7 +6,6 @@
 #include "nodelist.h"
 #include "stdio.h"
 #include <inttypes.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define NODE_LIST_KEY ("nodelist_%" PRIx64)

@@ -1,6 +1,7 @@
 #include "signer.h"
 #include "../../../core/client/client.h"
 #include "../../../core/client/keys.h"
+#include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/nano/serialize.h"

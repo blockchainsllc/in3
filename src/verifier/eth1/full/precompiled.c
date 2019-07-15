@@ -1,3 +1,4 @@
+#include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/ripemd160.h"
 #include "../../../third-party/crypto/secp256k1.h"
