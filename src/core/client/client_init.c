@@ -1,4 +1,5 @@
 #include "../util/data.h"
+#include "../util/log.h"
 #include "../util/mem.h"
 #include "cache.h"
 #include "client.h"
