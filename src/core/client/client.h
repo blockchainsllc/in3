@@ -16,6 +16,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define IN3_PROTO_VER "1"
+
 /** the type of the chain. 
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
