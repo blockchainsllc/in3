@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define IN3_PROTO_VER "1"
+#define IN3_PROTO_VER 0x1
 
 /** the type of the chain. 
  * 
