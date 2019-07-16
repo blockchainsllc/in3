@@ -335,6 +335,34 @@ in3_ret_t in3_client_rpc(
     char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
+/** registers a new chain or replaces a existing (but keeps the nodelist)*/
+in3_ret_t in3_client_register_chain(
+    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
+    uint64_t         chain_id, /**< [in] the chain id. */
+    in3_chain_type_t type,     /**< [in] the verification type of the chain. */
+    address_t        contract, /**< [in] contract of the registry. */
+    json_ctx_t*      spec      /**< [in] chainspec or NULL. */
+);
+
+/** adds a node to a chain ore updates a existing node */
+in3_ret_t in3_client_add_node(
+    in3_t*    client,   /**< [in] the pointer to the incubed client config. */
+    uint64_t  chain_id, /**< [in] the chain id. */
+    char*     url,      /**< [in] url of the nodes. */
+    uint64_t  props,    /**< [in]properties of the node. */
+    address_t address); /**< [in] public address of the signer. */
+
+/** removes a node from a nodelist */
+in3_ret_t in3_client_remove_node(
+    in3_t*    client,   /**< [in] the pointer to the incubed client config. */
+    uint64_t  chain_id, /**< [in] the chain id. */
+    address_t address); /**< [in] public address of the signer. */
+
+/** removes all nodes from the nodelist */
+in3_ret_t in3_client_clear_nodes(
+    in3_t*   client,    /**< [in] the pointer to the incubed client config. */
+    uint64_t chain_id); /**< [in] the chain id. */
+
 /** frees the references of the client */
 void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
