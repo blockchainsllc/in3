@@ -54,7 +54,7 @@ sb_t* sb_add_char(sb_t* sb, char c) {
   return sb;
 }
 
-sb_t* sb_add_range(sb_t* sb, char* chars, int start, int len) {
+sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len) {
   if (chars == NULL) return sb;
   check_size(sb, len);
   memcpy(sb->data + sb->len, chars + start, len);
