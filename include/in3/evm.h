@@ -35,7 +35,6 @@ typedef enum evm_state {
 #define EVM_PROP_EIP158 4
 #define EVM_PROP_CONSTANTINOPL 16
 #define EVM_PROP_NO_FINALIZE 32768
-#define EVM_PROP_DEBUG 65536
 #define EVM_PROP_STATIC 256
 
 #define EVM_ENV_BALANCE 1

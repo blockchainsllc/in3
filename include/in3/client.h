@@ -16,6 +16,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define IN3_PROTO_VER 0x1
+
 /** the type of the chain. 
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
@@ -336,5 +338,12 @@ in3_ret_t in3_client_rpc(
 
 /** frees the references of the client */
 void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
+
+
+/**
+ * inits the cache.
+ *
+ */
+in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
 
 #endif
