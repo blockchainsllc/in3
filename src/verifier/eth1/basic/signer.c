@@ -1,4 +1,4 @@
-#include "signer.h"
+#include "signer-priv.h"
 #include "../../../core/client/client.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/mem.h"
