@@ -1,6 +1,6 @@
 
 # static lib
-add_library(eth_nano STATIC
+add_library(eth_nano OBJECT
         eth_nano.c
         rlp.c
         merkle.c

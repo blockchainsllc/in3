@@ -1,4 +1,4 @@
-add_library(eth_full STATIC
+add_library(eth_full OBJECT
         eth_full.c
         evm.c
         opcodes.c

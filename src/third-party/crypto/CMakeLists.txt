@@ -1,4 +1,4 @@
-add_library(crypto STATIC
+add_library(crypto OBJECT
         ecdsa.c
         address.c
         bignum.c

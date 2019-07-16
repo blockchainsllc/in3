@@ -1,6 +1,6 @@
 
 # static lib
-add_library(eth_basic STATIC
+add_library(eth_basic OBJECT
         eth_basic.c
         eth_getTransaction.c
         eth_getBlock.c

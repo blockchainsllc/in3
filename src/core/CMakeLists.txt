@@ -3,7 +3,7 @@
 # This module does not have any dependencies and cannot be used without additional modules providing verification and transport.
 
 
-add_library(core STATIC
+add_library(core OBJECT
         client/context.c
         client/client.c
         client/cache.c
