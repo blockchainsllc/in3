@@ -4,7 +4,6 @@
 
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
-#include "../../core/client/cache.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
