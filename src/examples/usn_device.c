@@ -8,7 +8,6 @@
 #endif
 
 #include "../cmd/in3/in3_storage.h"
-#include <in3/cache.h>
 #include <in3/client.h>
 #include <in3/data.h>
 #include <in3/eth_full.h>
