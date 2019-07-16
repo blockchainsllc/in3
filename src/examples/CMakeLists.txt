@@ -1,6 +1,5 @@
 OPTION(EXAMPLES "examples" ON)
 IF (EXAMPLES)
-    set(CMAKE_VERBOSE_MAKEFILE ON)
     add_executable(in3_example in3_example.c)
     target_link_libraries(in3_example in3)
     target_compile_definitions(in3_example PRIVATE -D_POSIX_C_SOURCE=199309L)
