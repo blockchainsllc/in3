@@ -68,6 +68,7 @@ add_subdirectory(src/cmd)
 add_subdirectory(src/examples)
 add_subdirectory(docs)
 
-add_library(in3 STATIC $<TARGET_OBJECTS:core> $<TARGET_OBJECTS:crypto> $<TARGET_OBJECTS:tommath> $<TARGET_OBJECTS:eth_full> $<TARGET_OBJECTS:eth_api>  $<TARGET_OBJECTS:eth_basic> $<TARGET_OBJECTS:eth_nano> )
-target_link_libraries(in3 PUBLIC transport_curl)
-
+IF (EXAMPLES)
+    add_library(in3 STATIC $<TARGET_OBJECTS:core> $<TARGET_OBJECTS:crypto> $<TARGET_OBJECTS:tommath> $<TARGET_OBJECTS:eth_full> $<TARGET_OBJECTS:eth_api> $<TARGET_OBJECTS:eth_basic> $<TARGET_OBJECTS:eth_nano>)
+    target_link_libraries(in3 PUBLIC transport_curl)
+endif (EXAMPLES)

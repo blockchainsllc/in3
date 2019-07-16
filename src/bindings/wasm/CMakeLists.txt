@@ -5,7 +5,7 @@ option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 add_definitions(-std=c99 -O3 -s FETCH=1 --bind)
 
 add_executable(a wasm.c)
-target_link_libraries(a crypto tommath core eth_full)
+target_link_libraries(a crypto tommath core eth_full eth_basic eth_nano)
 
 if (JS_ONLY)
     message(STATUS "Setting compilation target to native JavaScript")
