@@ -1,16 +1,16 @@
 #include <in3/client.h>   // the core client
 #include <in3/eth_api.h>  // wrapper for easier use
 #include <in3/eth_full.h> // the full ethereum verifier containing the EVM
-#include <in3/evm.h>
-#include <in3/signer.h>
 #include <in3/in3_curl.h> // transport implementation
-#include <in3/usn_api.h>  // for usn-specific functions
+#include <in3/signer.h>
+#include <in3/usn_api.h> // for usn-specific functions
 #include <inttypes.h>
 #include <stdio.h>
 #include <time.h>
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #else
+#include "../core/util/log.h"
 #include <unistd.h>
 #endif
 
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
   c->transport    = send_curl; // use curl to handle the requests
   c->requestCount = 1;         // number of requests to send
   c->chainId      = 0x44d;     // use tobalaba
-  c->evm_flags |= EVM_PROP_DEBUG;
+  in3_log_set_level(LOG_TRACE);
 
   // example 1 - getBlock
   if (example == NULL || strcmp(example, "eth_getBlock") == 0)

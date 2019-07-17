@@ -5,15 +5,15 @@
 #endif
 #include <core/util/data.h>
 #include <core/util/utils.h>
-#include <verifier/eth1/basic/trie.h>
-#include <verifier/eth1/full/evm.h>
-#include <verifier/eth1/nano/rlp.h>
-#include <verifier/eth1/nano/serialize.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <verifier/eth1/basic/trie.h>
+#include <verifier/eth1/full/evm.h>
+#include <verifier/eth1/nano/rlp.h>
+#include <verifier/eth1/nano/serialize.h>
 
 #include "vm_runner.h"
 
@@ -21,7 +21,7 @@ void append_rlp(bytes_builder_t* bb, d_token_t* in) {
   int i;
   if (d_type(in) == T_ARRAY) {
     bytes_builder_t* tmp = bb_new();
-    d_token_t*       t = NULL;
+    d_token_t*       t   = NULL;
     for (i = 0, t = in + 1; i < d_len(in); i++, t = d_next(t))
       append_rlp(tmp, t);
     rlp_encode_list(bb, &tmp->b);

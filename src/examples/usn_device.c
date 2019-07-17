@@ -8,10 +8,10 @@
 #endif
 
 #include "../cmd/in3/in3_storage.h"
+#include "../core/util/log.h"
 #include <in3/client.h>
 #include <in3/data.h>
 #include <in3/eth_full.h>
-#include <in3/evm.h>
 #include <in3/in3_curl.h>
 #include <in3/usn_api.h>
 #include <inttypes.h>
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
       usn.chain_id = c->chainId = getChainId(argv[++i]);
     else if (strcmp(argv[i], "-debug") == 0)
-      c->evm_flags = EVM_PROP_DEBUG;
+      in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signatureCount = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {

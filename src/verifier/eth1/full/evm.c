@@ -1,6 +1,7 @@
 #include "evm.h"
 #include "../../../core/client/context.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/bignum.h"
 #include "../../../verifier/eth1/nano/merkle.h"
@@ -169,44 +170,44 @@ I:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06
 P:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06ae28d285a71b5 | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff |
 
 */
-#define __code(n)                      \
-  {                                    \
-    printf("\x1B[32m%-10s\x1B[0m", n); \
-    return;                            \
+#define __code(n)                             \
+  {                                           \
+    in3_log_trace("\x1B[32m%-10s\x1B[0m", n); \
+    return;                                   \
   }
 void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   uint8_t op = evm->code.data[pos];
 #ifdef EVM_GAS
-  printf("\n::: ");
+  in3_log_trace("\n::: ");
   evm_t* pp = evm->parent;
   while (pp) {
-    printf(" .. ");
+    in3_log_trace(" .. ");
     pp = pp->parent;
   }
 
   if (last_gas > evm->gas)
-    printf("%08" PRIx64 " %03i \x1B[33m%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
+    in3_log_trace("%08" PRIx64 " %03i \x1B[33m%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
   else
-    printf("%08" PRIx64 " %03i \x1B[33m+%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
+    in3_log_trace("%08" PRIx64 " %03i \x1B[33m+%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
 #else
   UNUSED_VAR(last_gas);
-  printf("\n%03i       %02x : ", pos, op);
+  in3_log_trace("\n%03i       %02x : ", pos, op);
 #endif
   if (op >= 0x60 && op <= 0x7F) {
-    printf("\x1B[32mPUSH%i\x1B[0m    %s", op - 0x5F, (op - 0x05F) < 10 ? " " : "");
+    in3_log_trace("\x1B[32mPUSH%i\x1B[0m    %s", op - 0x5F, (op - 0x05F) < 10 ? " " : "");
     //    for (int j = 0; j < op - 0x5F; j++) printf("%02x", evm->code.data[evm->pos + j + 1]);
     return;
   }
   if (op >= 0x80 && op <= 0x8F) {
-    printf("\x1B[32mDUP%i\x1B[0m     %s", op - 0x7F, (op - 0x7F) < 10 ? " " : "");
+    in3_log_trace("\x1B[32mDUP%i\x1B[0m     %s", op - 0x7F, (op - 0x7F) < 10 ? " " : "");
     return;
   }
   if (op >= 0x90 && op <= 0x9F) {
-    printf("\x1B[32mSWAP%i\x1B[0m    %s", op - 0x8F, (op - 0x8F) < 10 ? " " : "");
+    in3_log_trace("\x1B[32mSWAP%i\x1B[0m    %s", op - 0x8F, (op - 0x8F) < 10 ? " " : "");
     return;
   }
   if (op >= 0xA0 && op <= 0xA4) {
-    printf("\x1B[32mLOG%i\x1B[0m      ", op - 0xA0);
+    in3_log_trace("\x1B[32mLOG%i\x1B[0m      ", op - 0xA0);
     return;
   }
 
@@ -283,20 +284,21 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     case 0xFF: __code("SELFDESTRUCT");
   }
 }
+
 void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos) {
 
   evm_print_op(evm, last_gas, pos);
-  printf(" [ ");
+  in3_log_trace(" [ ");
   for (int i = 0; i < evm->stack_size; i++) {
     uint8_t* dst = NULL;
     int      l   = evm_stack_get_ref(evm, i + 1, &dst);
     optimize_len(dst, l);
     for (int j = 0; j < l; j++) {
       if (j == 0 && dst[j] < 16)
-        printf("%x", dst[j]);
+        in3_log_trace("%x", dst[j]);
       else
-        printf("%02x", dst[j]);
+        in3_log_trace("%02x", dst[j]);
     }
-    printf(" | ");
+    in3_log_trace(" | ");
   }
 }

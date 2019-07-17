@@ -28,17 +28,19 @@ typedef enum { LOG_TRACE,
 #define in3_log_warn(...) in3_log(LOG_WARN, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define in3_log_error(...) in3_log(LOG_ERROR, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define in3_log_fatal(...) in3_log(LOG_FATAL, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define in3_log_level_is(lvl) ((lvl) == in3_log_get_level())
 
 /**
  * in3_log_set_*() functions are not thread-safe. 
  * It is expected that these initialization functions will be called from the main thread before 
  * spawning more threads.
  */
-void in3_log_set_udata(void* udata);
-void in3_log_set_lock(in3_log_LockFn fn);
-void in3_log_set_fp(FILE* fp);
-void in3_log_set_level(in3_log_lvl_t level);
-void in3_log_set_quiet(int enable);
+void          in3_log_set_udata(void* udata);
+void          in3_log_set_lock(in3_log_LockFn fn);
+void          in3_log_set_fp(FILE* fp);
+void          in3_log_set_level(in3_log_lvl_t level);
+in3_log_lvl_t in3_log_get_level();
+void          in3_log_set_quiet(int enable);
 
 /* in3_log() function can be made thread-safe using the in3_log_set_lock() function */
 void in3_log(in3_log_lvl_t level, const char* file, const char* function, int line, const char* fmt, ...);

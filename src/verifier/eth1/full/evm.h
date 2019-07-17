@@ -1,4 +1,3 @@
-// @PUBLIC_HEADER
 /** @file
  * main evm-file.
  * */
@@ -35,7 +34,6 @@ typedef enum evm_state {
 #define EVM_PROP_EIP158 4
 #define EVM_PROP_CONSTANTINOPL 16
 #define EVM_PROP_NO_FINALIZE 32768
-#define EVM_PROP_DEBUG 65536
 #define EVM_PROP_STATIC 256
 
 #define EVM_ENV_BALANCE 1
@@ -46,6 +44,13 @@ typedef enum evm_state {
 #define EVM_ENV_BLOCKHEADER 6
 #define EVM_ENV_CODE_HASH 7
 #define EVM_ENV_NONCE 8
+
+#if !defined(DEBUG)
+#define EVM_DEBUG_BLOCK(_code_block_) \
+  if (in3_log_level_is(LOG_TRACE)) (_code_block_)
+#else
+#define EVM_DEBUG_BLOCK(...)
+#endif
 
 /**
  * This function provides data from the enviroment.

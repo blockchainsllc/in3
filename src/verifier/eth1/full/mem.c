@@ -1,6 +1,7 @@
 #include "mem.h"
 #include "../../../core/client/context.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/bignum.h"
 #include "../../../verifier/eth1/nano/merkle.h"
@@ -81,11 +82,10 @@ int evm_mem_read_ref(evm_t* evm, uint32_t off, uint32_t len, bytes_t* src) {
 
 int evm_mem_write(evm_t* evm, uint32_t off, bytes_t src, uint32_t len) {
   if (mem_check(evm, off + len, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
-  if (evm->properties & EVM_PROP_DEBUG) {
-    printf("\n   MEM: writing %i bytes to %i : ", len, off);
+  EVM_DEBUG_BLOCK({
+    in3_log_trace("\n   MEM: writing %i bytes to %i : ", len, off);
     b_print(&src);
-  }
-
+  });
   if (src.data == NULL)
     memset(evm->memory.b.data + off, 0, len);
   else {

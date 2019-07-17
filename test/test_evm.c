@@ -6,22 +6,23 @@
 #include <core/client/client.h>
 #include <core/client/context.h>
 #include <core/client/keys.h>
+#include <core/util/data.h>
+#include <core/util/log.h>
+#include <core/util/mem.h>
+#include <core/util/utils.h>
 #include <crypto/ecdsa.h>
 #include <crypto/secp256k1.h>
-#include <core/util/data.h>
-#include <core/util/utils.h>
-#include <core/util/mem.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <verifier/eth1/basic/trie.h>
 #include <verifier/eth1/full/big.h>
 #include <verifier/eth1/full/evm.h>
 #include <verifier/eth1/full/gas.h>
 #include <verifier/eth1/nano/rlp.h>
 #include <verifier/eth1/nano/serialize.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
 #include "vm_runner.h"
 
@@ -236,21 +237,20 @@ void generate_storage_hash(evm_t* evm, storage_t* s, uint8_t* dst) {
       sha3_to(&k, dst);
       k.data = dst;
       trie_set_value(trie, &k, &bb->b);
-      if (evm->properties & EVM_PROP_DEBUG) {
+      EVM_DEBUG_BLOCK({
         to_uint256(&k, s->key);
-        printf(":::    - ");
+        in3_log_trace(":::    - ");
         if (k.len)
           ba_print(k.data, k.len);
         else
-          printf(" 0x00");
-        printf(" : ");
+          in3_log_trace(" 0x00");
+        in3_log_trace(" : ");
         if (tmp.len)
           ba_print(tmp.data, tmp.len);
         else
-          printf(" 0x00");
-
-        printf("\n");
-      }
+          in3_log_trace(" 0x00");
+        in3_log_trace("\n");
+      });
     }
 
     s = s->next;
@@ -268,28 +268,27 @@ bytes_t* serialize_ac(evm_t* evm, account_t* ac) {
 
   rlp_encode_item(rlp, to_uint256(&tmp, ac->nonce));
 
-  if (evm->properties & EVM_PROP_DEBUG) {
-    printf(":::   nonce   : ");
+  EVM_DEBUG_BLOCK({
+    in3_log_trace(":::   nonce   : ");
     ba_print(tmp.data, tmp.len);
-  }
+  });
 
   rlp_encode_item(rlp, to_uint256(&tmp, ac->balance));
-  if (evm->properties & EVM_PROP_DEBUG) {
-    printf("\n:::   balance : ");
+  EVM_DEBUG_BLOCK({
+    in3_log_trace("\n:::   balance : ");
     ba_print(tmp.data, tmp.len);
-    printf("\n:::   code    : ");
+    in3_log_trace("\n:::   code    : ");
     ba_print(ac->code.data, ac->code.len);
-    printf("\n:::   storage : \n");
-  }
+    in3_log_trace("\n:::   storage : \n");
+  });
 
   generate_storage_hash(evm, ac->storage, hash);
 
-  if (evm->properties & EVM_PROP_DEBUG) {
-    printf("\n  storageHash : \n");
+  EVM_DEBUG_BLOCK({
+    in3_log_trace("\n  storageHash : \n");
     ba_print(hash, 32);
-    printf("\n");
-  }
-
+    in3_log_trace("\n");
+  });
   tmp.data = hash;
   tmp.len  = 32;
   rlp_encode_item(rlp, &tmp);
@@ -319,8 +318,9 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
     hex2byte_arr(d_get_keystr(t->key) + 2, 40, adr, 20);
     evm_get_account(evm, adr, 1);
   }
-  if (evm->properties & EVM_PROP_DEBUG)
-    printf("\n::: ================ ");
+  EVM_DEBUG_BLOCK({
+    in3_log_trace("\n::: ================ ");
+  });
 
   //
   account_t* ac = evm->accounts;
@@ -330,12 +330,11 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
       continue;
     }
 
-    if (evm->properties & EVM_PROP_DEBUG) {
-      printf("\n::: Account ");
+    EVM_DEBUG_BLOCK({
+      in3_log_trace("\n::: Account ");
       ba_print(ac->address, 20);
-      printf("  ##\n");
-    }
-
+      in3_log_trace("  ##\n");
+    });
     bytes_t  adr = {.data = ac->address, .len = 20};
     bytes_t* b   = serialize_ac(evm, ac);
 

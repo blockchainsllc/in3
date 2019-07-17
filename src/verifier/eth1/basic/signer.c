@@ -1,10 +1,10 @@
-#include "signer-priv.h"
 #include "../../../core/client/client.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/nano/serialize.h"
+#include "signer-priv.h"
 
 static inline bytes_t get(d_token_t* t, uint16_t key) {
   return d_to_bytes(d_get(t, key));

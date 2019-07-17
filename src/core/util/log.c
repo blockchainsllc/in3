@@ -73,6 +73,10 @@ void in3_log_set_level(in3_log_lvl_t level) {
   L.level = level;
 }
 
+in3_log_lvl_t in3_log_get_level() {
+  return L.level;
+}
+
 void in3_log_set_quiet(int enable) {
   L.quiet = enable ? 1 : 0;
 }
@@ -102,7 +106,7 @@ void in3_log(in3_log_lvl_t level, const char* file, const char* function, int li
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n");
+    //    fprintf(stderr, "\n");
     fflush(stderr);
   }
 
@@ -115,7 +119,7 @@ void in3_log(in3_log_lvl_t level, const char* file, const char* function, int li
     va_start(args, fmt);
     vfprintf(L.fp, fmt, args);
     va_end(args);
-    fprintf(L.fp, "\n");
+    //    fprintf(L.fp, "\n");
     fflush(L.fp);
   }
 
