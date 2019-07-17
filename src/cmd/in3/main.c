@@ -416,7 +416,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  in3_log_debug("..sending request %s %s", method, params);
+  in3_log_debug("..sending request %s %s\n", method, params);
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);

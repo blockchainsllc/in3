@@ -184,7 +184,7 @@ in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
     strcpy(dst, msg);
   }
   c->error = dst;
-  in3_log_error("%s", msg);
+  in3_log_error("%s\n", msg);
   return errnumber;
 }
 

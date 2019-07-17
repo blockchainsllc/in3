@@ -48,7 +48,7 @@ static void set_errorn(int std_error, char* msg, int len) {
 
 // sets the error and a message
 static void set_error(int std_error, char* msg) {
-  in3_log_error("Request failed due to %s - %s", strerror(std_error), msg);
+  in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
   set_errorn(std_error, msg, strlen(msg));
 }
 

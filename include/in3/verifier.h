@@ -3,11 +3,11 @@
  * This context is passed to the verifier.
  * */
 
+#include "client.h"
+#include "context.h"
 #include "data.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
-#include "context.h"
 #include <stdbool.h>
 #include <stdint.h>
 

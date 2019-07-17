@@ -22,15 +22,15 @@ static int use_color = 1;
 
 void print_error(char* msg) {
   if (use_color)
-    in3_log_trace("\x1B[31m%s\x1B[0m", msg);
+    in3_log_debug("\x1B[31m%s\x1B[0m", msg);
   else
-    in3_log_trace("!! %s", msg);
+    in3_log_debug("!! %s", msg);
 }
 void print_success(char* msg) {
   if (use_color)
-    in3_log_trace("\x1B[32m%s\x1B[0m", msg);
+    in3_log_debug("\x1B[32m%s\x1B[0m", msg);
   else
-    in3_log_trace(".. %s", msg);
+    in3_log_debug(".. %s", msg);
 }
 
 char* readContent(char* name) {
@@ -75,7 +75,7 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
     sprintf(temp, "%s : %s", name, tname);
   else
     sprintf(temp, "%s #%i", name, counter);
-  in3_log_trace("\n%2i : %-80s ", counter, temp);
+  in3_log_debug("\n%2i : %-80s ", counter, temp);
   fflush(stdout);
 
   d_token_t* exec        = d_get(test, key("exec"));
@@ -93,12 +93,12 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   }
 
   if (mem_get_memleak_cnt()) {
-    in3_log_trace(" -- Memory Leak detected by malloc #%i!", mem_get_memleak_cnt());
+    in3_log_debug(" -- Memory Leak detected by malloc #%i!", mem_get_memleak_cnt());
     if (!fail) fail = 1;
   }
   if (!fail) print_success("OK");
 
-  in3_log_trace(" ( heap: %zu, %" PRIu64 " ms) ", mem_get_max_heap(), ms);
+  in3_log_debug(" ( heap: %zu, %" PRIu64 " ms) ", mem_get_max_heap(), ms);
 
   return fail;
 }
@@ -144,13 +144,13 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
     d_clear_keynames();
     name = names[++n];
   }
-  in3_log_trace("\n%2i of %2i successfully tested", total - failed, total);
+  in3_log_debug("\n%2i of %2i successfully tested", total - failed, total);
 
   if (failed) {
-    in3_log_trace("\n%2i tests failed", failed);
+    in3_log_debug("\n%2i tests failed", failed);
     res = failed;
   }
-  in3_log_trace("\n");
+  in3_log_debug("\n");
 
   return failed;
 }
@@ -158,18 +158,20 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
 int main(int argc, char* argv[]) {
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
-  in3_log_set_level(LOG_DEBUG);
-
   char** names   = malloc(sizeof(char*));
   names[0]       = NULL;
   uint32_t props = 0;
+
+  in3_log_set_level(LOG_DEBUG);
+  in3_log_set_prefix("");
+
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)
       testIndex = atoi(argv[++i]);
     else if (strcmp(argv[i], "-m") == 0)
       membrk = atoi(argv[++i]);
     else if (strcmp(argv[i], "-d") == 0)
-      in3_log_set_level(LOG_DEBUG);
+      in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-c") == 0)
       props |= EVM_PROP_CONSTANTINOPL;
     else {

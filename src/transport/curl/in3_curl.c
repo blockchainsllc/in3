@@ -93,7 +93,7 @@ in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, 
 
   for (int i = 0; i < urls_len; i++) {
     if ((result + i)->error.len) {
-      in3_log_debug("curl: failed for %s", urls[i]);
+      in3_log_debug("curl: failed for %s\n", urls[i]);
       return IN3_ETRANS; // return error if even one failed
     }
   }
@@ -142,7 +142,7 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
     readDataBlocking(urls[i], payload, result + i);
   for (i = 0; i < urls_len; i++) {
     if ((result + i)->error.len) {
-      in3_log_debug("curl: failed for %s", urls[i]);
+      in3_log_debug("curl: failed for %s\n", urls[i]);
       return IN3_ETRANS; // return error if even one failed
     }
   }
