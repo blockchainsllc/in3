@@ -41,6 +41,7 @@ void          in3_log_set_fp(FILE* fp);
 void          in3_log_set_level(in3_log_lvl_t level);
 in3_log_lvl_t in3_log_get_level();
 void          in3_log_set_quiet(int enable);
+void          in3_log_set_prefix(const char* prefix);
 
 /* in3_log() function can be made thread-safe using the in3_log_set_lock() function */
 void in3_log(in3_log_lvl_t level, const char* file, const char* function, int line, const char* fmt, ...);

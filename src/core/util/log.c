@@ -35,6 +35,7 @@ static struct {
   FILE*          fp;
   in3_log_lvl_t  level;
   int            quiet;
+  const char*    prefix;
 } L;
 
 static const char* level_names[] = {
@@ -81,6 +82,10 @@ void in3_log_set_quiet(int enable) {
   L.quiet = enable ? 1 : 0;
 }
 
+void in3_log_set_prefix(const char* prefix) {
+  L.prefix = prefix;
+}
+
 void in3_log(in3_log_lvl_t level, const char* file, const char* function, int line, const char* fmt, ...) {
   if (level < L.level) {
     return;
@@ -96,17 +101,22 @@ void in3_log(in3_log_lvl_t level, const char* file, const char* function, int li
     va_list args;
     char    buf[16];
     _localtime(buf);
+
+    if (L.prefix == NULL) {
 #ifdef LOG_USE_COLOR
-    fprintf(
-        stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
-        buf, level_colors[level], level_names[level], file, function, line);
+      fprintf(
+          stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
+          buf, level_colors[level], level_names[level], file, function, line);
 #else
-    fprintf(stderr, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+      fprintf(stderr, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
 #endif
+    } else {
+      fprintf(stderr, "%s", L.prefix);
+    }
+
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    //    fprintf(stderr, "\n");
     fflush(stderr);
   }
 
@@ -115,11 +125,13 @@ void in3_log(in3_log_lvl_t level, const char* file, const char* function, int li
     va_list args;
     char    buf[32];
     _localtime(buf);
-    fprintf(L.fp, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+    if (L.prefix == NULL)
+      fprintf(L.fp, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+    else
+      fprintf(L.fp, "%s", L.prefix);
     va_start(args, fmt);
     vfprintf(L.fp, fmt, args);
     va_end(args);
-    //    fprintf(L.fp, "\n");
     fflush(L.fp);
   }
 
