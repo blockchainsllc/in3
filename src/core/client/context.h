@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * Request Context.
  * This is used for each request holding request and response-pointers.
  * */

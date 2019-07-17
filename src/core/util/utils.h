@@ -1,6 +1,5 @@
-
-
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * utility functions.
  * */
 

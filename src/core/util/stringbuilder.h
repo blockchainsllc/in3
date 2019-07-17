@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * simple string buffer used to dynamicly add content.
  * */
 

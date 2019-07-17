@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * Verification Context.
  * This context is passed to the verifier.
  * */

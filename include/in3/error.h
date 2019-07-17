@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * defines the return-values of a function call.
  * */
 #ifndef IN3_ERROR_H
