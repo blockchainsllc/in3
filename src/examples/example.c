@@ -2,6 +2,7 @@
 #include <in3/eth_api.h>  // wrapper for easier use
 #include <in3/eth_full.h> // the full ethereum verifier containing the EVM
 #include <in3/in3_curl.h> // transport implementation
+#include <in3/log.h>
 #include <in3/signer.h>
 #include <in3/usn_api.h> // for usn-specific functions
 #include <inttypes.h>
@@ -10,7 +11,6 @@
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #else
-#include "../core/util/log.h"
 #include <unistd.h>
 #endif
 

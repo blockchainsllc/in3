@@ -8,11 +8,11 @@
 #endif
 
 #include "../cmd/in3/in3_storage.h"
-#include "../core/util/log.h"
 #include <in3/client.h>
 #include <in3/data.h>
 #include <in3/eth_full.h>
 #include <in3/in3_curl.h>
+#include <in3/log.h>
 #include <in3/usn_api.h>
 #include <inttypes.h>
 #include <stdint.h>
