@@ -1,15 +1,13 @@
 #ifndef TEST
 #define TEST
 #endif
+#include "../src/core/client/client.h"
+#include "../src/core/client/context.h"
 #include "../src/core/util/mem.h"
-#include <core/client/client.h>
-#include <core/client/context.h>
-#include <core/util/log.h>
-#include <core/util/utils.h>
+#include "../src/verifier/eth1/full/eth_full.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <verifier/eth1/full/eth_full.h>
 
 int ignore_property(char* name, int full_proof) {
   // we cannot add all difiiculties from the beginning in order to verify it,

@@ -2,9 +2,8 @@
 #define TEST
 #endif
 
-#include <core/util/bytes.h>
-#include <core/util/data.h>
-#include <core/util/log.h>
+#include "../src/core/util/bytes.h"
+#include "../src/core/util/data.h"
 #include <stdio.h>
 #include <string.h>
 

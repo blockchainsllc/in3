@@ -2,21 +2,17 @@
 #define TEST
 #endif
 #include "vm_runner.h"
-#include <core/client/client.h>
-#include <core/client/context.h>
-#include <core/client/keys.h>
-#include <core/util/data.h>
-#include <core/util/log.h>
-#include <core/util/mem.h>
-#include <core/util/utils.h>
+#include "../src/core/client/context.h"
+#include "../src/core/client/keys.h"
+#include "../src/core/util/data.h"
+#include "../src/core/util/log.h"
+#include "../src/core/util/mem.h"
+#include "../src/verifier/eth1/full/evm.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <verifier/eth1/full/big.h>
-#include <verifier/eth1/full/evm.h>
-#include <verifier/eth1/nano/rlp.h>
 
 static int use_color = 1;
 

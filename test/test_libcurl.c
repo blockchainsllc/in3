@@ -3,11 +3,9 @@
 #endif
 
 #include "../src/core/util/mem.h"
-#include "../src/core/util/utils.h"
+#include "../src/transport/curl/in3_curl.h"
 #include "test_utils.h"
-#include <curl/curl.h>
 #include <string.h>
-#include <transport/curl/in3_curl.h>
 
 static struct timeval begin, end;
 
