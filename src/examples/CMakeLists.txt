@@ -14,7 +14,4 @@ IF (EXAMPLES)
     target_compile_definitions(usn_device PRIVATE -D_POSIX_C_SOURCE=199309L)
     target_link_libraries(usn_device tommath crypto core transport_curl eth_full usn_api eth_basic eth_nano)
     target_include_directories(usn_device PUBLIC "${PROJECT_SOURCE_DIR}/include")
-
 ENDIF (EXAMPLES)
-
-
