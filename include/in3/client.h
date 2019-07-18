@@ -145,7 +145,6 @@ typedef struct in3_storage_handler {
 #define IN3_SIGN_ERR_ACCOUNT_NOT_FOUND -2 /**< return value used by the signer if the requested account was not found. */
 #define IN3_SIGN_ERR_INVALID_MESSAGE -3   /**< return value used by the signer if the message was invalid. */
 #define IN3_SIGN_ERR_GENERAL_ERROR -4     /**< return value used by the signer for unspecified errors. */
-#define IN3_DEBUG 65536                   /**< flag used in the EVM (or the `evm_flags`) to turn on debug output. */
 
 /** type of the requested signature */
 typedef enum {
@@ -284,9 +283,6 @@ typedef struct in3_t_ {
 
   /** number of configured chains */
   uint16_t chainsCount;
-
-  /** flags for the evm (EIPs) */
-  uint32_t evm_flags;
 
   /** filter handler */
   in3_filter_handler_t* filters;

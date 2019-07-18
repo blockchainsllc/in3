@@ -2,7 +2,6 @@
  * main evm-file.
  * */
 
-#include "../../../core/client/verifier.h"
 #include "../../../core/util/bytes.h"
 #ifndef evm_h__
 #define evm_h__
@@ -115,7 +114,6 @@ typedef struct evm {
   bytes_t  call_value; /**< value send */
   bytes_t  call_data;  /**< data send in the tx */
   bytes_t  gas_price;  /**< current gasprice */
-
 #ifdef EVM_GAS
 
   // gas values
@@ -161,8 +159,8 @@ int evm_sub_call(evm_t*   parent,
 
 int     evm_ensure_memory(evm_t* evm, uint32_t max_pos);
 int     in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
-int     evm_call(in3_vctx_t* vc,
-                 uint8_t     address[20],
+int     evm_call(void*    vc,
+                 uint8_t  address[20],
                  uint8_t* value, wlen_t l_value,
                  uint8_t* data, uint32_t l_data,
                  uint8_t   caller[20],
