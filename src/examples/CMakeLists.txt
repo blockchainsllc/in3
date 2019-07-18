@@ -1,7 +1,7 @@
 OPTION(EXAMPLES "examples" ON)
 IF (EXAMPLES)
     add_executable(in3_example in3_example.c)
-    target_link_libraries(in3_example in3_bundle)
+    target_link_libraries(in3_example in3_bundle -lcurl)
     target_compile_definitions(in3_example PRIVATE -D_POSIX_C_SOURCE=199309L)
     target_include_directories(in3_example PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
