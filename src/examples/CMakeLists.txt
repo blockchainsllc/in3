@@ -1,4 +1,4 @@
-OPTION(EXAMPLES "examples" ON)
+OPTION(EXAMPLES "build the examples." ON)
 IF (EXAMPLES)
     add_executable(in3_example in3_example.c)
     target_link_libraries(in3_example in3_bundle)

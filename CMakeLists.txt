@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7.2)
-
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 # project name
 project(in3)
 
@@ -19,14 +19,13 @@ IF (CMAKE_BUILD_TYPE MATCHES Debug)
     ADD_DEFINITIONS(-DDEBUG)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
-# options
-OPTION(EVM_GAS "Evm Gas" ON)
+OPTION(EVM_GAS "if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes." ON)
 IF (EVM_GAS)
     MESSAGE(STATUS "Enable GAS in EVM")
     ADD_DEFINITIONS(-DEVM_GAS)
 ENDIF (EVM_GAS)
 
-OPTION(TEST "Test" OFF)
+OPTION(TEST "builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance" OFF)
 IF (TEST)
     MESSAGE(STATUS "Build Tests and add debug infos")
     ADD_DEFINITIONS(-DTEST)
@@ -37,7 +36,7 @@ IF (TEST)
     add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 16)
 ENDIF (TEST)
 
-OPTION(FAST_MATH "Math optimizations" OFF)
+OPTION(FAST_MATH "Math optimizations used in the EVM. This will also increase the filesize." OFF)
 IF (FAST_MATH)
     MESSAGE(STATUS "Enable math optimizations (excutable size may increase)")
     ADD_DEFINITIONS(-DIN3_MATH_FAST)

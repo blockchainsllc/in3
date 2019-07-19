@@ -1,10 +1,9 @@
 #include "in3.h"
-#include "../../core/client.h"
-#include "in3_curl.h"
+#include "../../core/client/client.h"
 
 in3_t* in3_create() {
-  in3_t* i     = in3_new();
-  i->transport = send_curl;
+  in3_t* i = in3_new();
+  //  i->transport = send_curl;
   return i;
 }
 /* sends a request and stores the result in the provided buffer */

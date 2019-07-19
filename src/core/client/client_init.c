@@ -99,6 +99,116 @@ static void in3_client_init(in3_t* c) {
   initNode(c->chains + 6, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
 }
 
+static in3_chain_t* find_chain(in3_t* c, uint64_t chain_id) {
+  for (int i = 0; i < c->chainsCount; i++) {
+    if (c->chains[i].chainId == chain_id) return &c->chains[i];
+  }
+  return NULL;
+}
+
+in3_ret_t in3_client_register_chain(in3_t* c, uint64_t chain_id, in3_chain_type_t type, address_t contract, json_ctx_t* spec) {
+  in3_chain_t* chain = find_chain(c, chain_id);
+  if (!chain) {
+    c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chainsCount + 1), sizeof(in3_chain_t) * c->chainsCount);
+    if (c->chains == NULL) return IN3_ENOMEM;
+    chain                 = c->chains + c->chainsCount;
+    chain->nodeList       = NULL;
+    chain->nodeListLength = 0;
+    chain->weights        = NULL;
+    chain->initAddresses  = NULL;
+    chain->lastBlock      = 0;
+    c->chainsCount++;
+
+  } else if (chain->contract)
+    b_free(chain->contract);
+
+  chain->chainId     = chain_id;
+  chain->contract    = b_new((char*) contract, 20);
+  chain->needsUpdate = 0;
+  chain->type        = type;
+  chain->spec        = spec;
+  return chain->contract ? IN3_OK : IN3_ENOMEM;
+}
+
+in3_ret_t in3_client_add_node(in3_t* c, uint64_t chain_id, char* url, uint64_t props, address_t address) {
+  in3_chain_t* chain = find_chain(c, chain_id);
+  if (!chain) return IN3_EFIND;
+  in3_node_t* node       = NULL;
+  int         node_index = chain->nodeListLength;
+  for (int i = 0; i < chain->nodeListLength; i++) {
+    if (memcmp(chain->nodeList[i].address->data, address, 20) == 0) {
+      node       = chain->nodeList + i;
+      node_index = i;
+      break;
+    }
+  }
+  if (!node) {
+    chain->nodeList = chain->nodeList
+                          ? _realloc(chain->nodeList, sizeof(in3_node_t) * (chain->nodeListLength + 1), sizeof(in3_node_t) * chain->nodeListLength)
+                          : _calloc(chain->nodeListLength + 1, sizeof(in3_node_t));
+    chain->weights = chain->weights
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodeListLength + 1), sizeof(in3_node_weight_t) * chain->nodeListLength)
+                         : _calloc(chain->nodeListLength + 1, sizeof(in3_node_weight_t));
+    if (!chain->nodeList || !chain->weights) return IN3_ENOMEM;
+    node           = chain->nodeList + chain->nodeListLength;
+    node->address  = b_new((char*) address, 20);
+    node->index    = chain->nodeListLength;
+    node->capacity = 1;
+    node->deposit  = 0;
+    chain->nodeListLength++;
+  } else
+    _free(node->url);
+
+  node->props = props;
+  node->url   = _malloc(strlen(url) + 1);
+  memcpy(node->url, url, strlen(url) + 1);
+
+  in3_node_weight_t* weight   = chain->weights + node_index;
+  weight->blacklistedUntil    = 0;
+  weight->response_count      = 0;
+  weight->total_response_time = 0;
+  weight->weight              = 1;
+  return IN3_OK;
+}
+in3_ret_t in3_client_remove_node(in3_t* c, uint64_t chain_id, address_t address) {
+  in3_chain_t* chain = find_chain(c, chain_id);
+  if (!chain) return IN3_EFIND;
+  int node_index = -1;
+  for (int i = 0; i < chain->nodeListLength; i++) {
+    if (memcmp(chain->nodeList[i].address->data, address, 20) == 0) {
+      node_index = i;
+      break;
+    }
+  }
+  if (node_index == -1) return IN3_EFIND;
+  if (chain->nodeList[node_index].url)
+    _free(chain->nodeList[node_index].url);
+  if (chain->nodeList[node_index].address)
+    b_free(chain->nodeList[node_index].address);
+
+  if (node_index < chain->nodeListLength - 1) {
+    memmove(chain->nodeList + node_index, chain->nodeList + node_index + 1, sizeof(in3_node_t) * (chain->nodeListLength - 1 - node_index));
+    memmove(chain->weights + node_index, chain->weights + node_index + 1, sizeof(in3_node_weight_t) * (chain->nodeListLength - 1 - node_index));
+  }
+  chain->nodeListLength--;
+  if (!chain->nodeListLength) {
+    _free(chain->nodeList);
+    _free(chain->weights);
+    chain->nodeList = NULL;
+    chain->weights  = NULL;
+  }
+  return IN3_OK;
+}
+in3_ret_t in3_client_clear_nodes(in3_t* c, uint64_t chain_id) {
+  in3_chain_t* chain = find_chain(c, chain_id);
+  if (!chain) return IN3_EFIND;
+  in3_nodelist_clear(chain);
+  chain->nodeList       = NULL;
+  chain->weights        = NULL;
+  chain->nodeListLength = 0;
+  return IN3_OK;
+}
+
 /* frees the data */
 void in3_free(in3_t* a) {
   int i;

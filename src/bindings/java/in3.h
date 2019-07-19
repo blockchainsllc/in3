@@ -4,7 +4,7 @@
  * */
 #ifndef in3_h__
 #define in3_h__
-#include "../../core/client.h>
+#include "../../core/client/client.h"
 
 /** creates a new client */
 extern in3_t* in3_create();
