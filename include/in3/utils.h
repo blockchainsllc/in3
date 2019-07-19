@@ -20,6 +20,20 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
+
+/* Macro magic to mark var args(...) as unused, works for upto 5 fields, to extend simply add more UNUSED() macros */
+#define UNUSED1(x) (void) (x)
+#define UNUSED2(x, y) (void) (x), (void) (y)
+#define UNUSED3(x, y, z) (void) (x), (void) (y), (void) (z)
+#define UNUSED4(a, x, y, z) (void) (a), (void) (x), (void) (y), (void) (z)
+#define UNUSED5(a, b, x, y, z) (void) (a), (void) (b), (void) (x), (void) (y), (void) (z)
+#define VA_NUM_ARGS_IMPL(_1, _2, _3, _4, _5, N, ...) N
+#define VA_NUM_ARGS(...) VA_NUM_ARGS_IMPL(__VA_ARGS__, 5, 4, 3, 2, 1)
+#define ALL_UNUSED_IMPL_(nargs) UNUSED##nargs
+#define ALL_UNUSED_IMPL(nargs) ALL_UNUSED_IMPL_(nargs)
+#define ALL_UNUSED(...) ALL_UNUSED_IMPL(VA_NUM_ARGS(__VA_ARGS__)) \
+(__VA_ARGS__)
+
 typedef uint32_t      pb_size_t;
 typedef uint_least8_t pb_byte_t;
 
