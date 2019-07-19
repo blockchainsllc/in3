@@ -55,7 +55,13 @@ typedef enum { LOG_TRACE,
 #define in3_log_get_level()
 #define in3_log_set_quiet(enable)
 #define in3_log_set_prefix(prefix)
-#define in3_log(...) ALL_UNUSED(__VA_ARGS__)
+#define in3_log(level, file, function, line, ...) \
+  do {                                            \
+    (void) (level);                               \
+    (void) (file);                                \
+    (void) (function);                            \
+    (void) (line);                                \
+  } while (0)
 #endif
 
 /**
