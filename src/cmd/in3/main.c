@@ -220,6 +220,7 @@ int main(int argc, char* argv[]) {
   storage_handler.set_item = storage_set_item;
 
   in3_register_eth_full();
+  in3_log_set_level(LOG_INFO);
 
   in3_t* c        = in3_new();
   c->transport    = send_curl;
