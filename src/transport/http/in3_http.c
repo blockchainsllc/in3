@@ -14,10 +14,6 @@
 #endif
 #include "../../core/client/client.h"
 #include "in3_http.h"
-void error(const char* msg) {
-  perror(msg);
-  exit(0);
-}
 
 in3_ret_t send_http(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int n = 0; n < urls_len; n++) {
@@ -27,8 +23,6 @@ in3_ret_t send_http(char** urls, int urls_len, char* payload, in3_response_t* re
     char               message[strlen(payload) + 200], response[4096], *url = urls[n], host[256];
 
     // parse url
-    // http://test.com/path
-
     if (strncmp(url, "http://", 7)) {
       sb_add_chars(&result[n].error, "invalid url must sart with http");
       continue;
@@ -42,8 +36,14 @@ in3_ret_t send_http(char** urls, int urls_len, char* payload, in3_response_t* re
       path = "/";
       strcpy(host, url + 7);
     }
-    int portno = 80;
+    int   portno = 80;
+    char* port   = strchr(host, ':');
+    if (port) {
+      *port  = 0;
+      portno = atoi(port + 1);
+    }
 
+    // create message
     sprintf(message, "POST %s HTTP/1.0\r\nHost: %s\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s", path, host, (int) strlen(payload), payload);
     total = strlen(message);
 
