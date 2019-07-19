@@ -1,6 +1,6 @@
 add_executable(in3 main.c in3_storage.c)
 
-target_link_libraries(in3 tommath core transport_curl eth_full eth_api -lm crypto eth_nano eth_basic)
+target_link_libraries(in3 transport_curl eth_full eth_api -lm)
 
 
 install(TARGETS in3

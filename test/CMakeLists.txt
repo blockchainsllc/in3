@@ -1,16 +1,16 @@
 include_directories(. ../src)
 
 add_executable(runner runner.c)
-target_link_libraries(runner tommath crypto core eth_full eth_nano eth_basic)
+target_link_libraries(runner eth_full)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
-target_link_libraries(vmrunner tommath crypto core eth_full eth_nano eth_basic)
+target_link_libraries(vmrunner eth_full)
 
 add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
-target_link_libraries(test_libcurl tommath crypto core transport_curl crypto eth_nano)
+target_link_libraries(test_libcurl transport_curl eth_nano)
 
 add_executable(test_key_hash test_key_hash.c unity/unity.c)
-target_link_libraries(test_key_hash core crypto)
+target_link_libraries(test_key_hash core)
 
 add_test(
         NAME "in3_test_key_hash"
@@ -19,7 +19,7 @@ add_test(
 )
 
 add_executable(test_verify_eth_getLog test_verify_eth_getLog.c unity/unity.c)
-target_link_libraries(test_verify_eth_getLog tommath crypto core eth_basic eth_nano)
+target_link_libraries(test_verify_eth_getLog eth_basic)
 add_test(
         NAME "test_verify_eth_getLog"
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_key_hash
@@ -27,7 +27,7 @@ add_test(
 )
 
 add_executable(test_bitset test_bitset.c unity/unity.c)
-target_link_libraries(test_bitset core crypto ${DEAD_STRIP_LINKER_OPT})
+target_link_libraries(test_bitset core)
 add_test(
         NAME "in3_test_bitset"
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
@@ -35,7 +35,7 @@ add_test(
 )
 
 add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
-target_link_libraries(test_vhist core crypto eth_nano transport_curl ${DEAD_STRIP_LINKER_OPT})
+target_link_libraries(test_vhist eth_nano transport_curl)
 add_test(
         NAME "in3_test_vhist"
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset

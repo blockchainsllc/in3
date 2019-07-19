@@ -14,4 +14,4 @@ add_library(eth_full_o OBJECT
 
 # add dependency
 add_library(eth_full STATIC $<TARGET_OBJECTS:eth_full_o>)
-target_link_libraries(eth_full tommath crypto core eth_basic)
+target_link_libraries(eth_full eth_basic)
