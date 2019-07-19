@@ -1,7 +1,9 @@
 #ifndef TEST
 #define TEST
 #endif
+#ifndef TEST
 #define DEBUG
+#endif
 
 #include "../src/core/util/bitset.h"
 #include "test_utils.h"

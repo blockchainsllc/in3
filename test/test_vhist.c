@@ -1,8 +1,9 @@
 #ifndef TEST
 #define TEST
 #endif
+#ifndef TEST
 #define DEBUG
-
+#endif
 #include "../src/cmd/in3/in3_storage.h"
 #include "../src/core/client/keys.h"
 #include "../src/core/util/data.h"
