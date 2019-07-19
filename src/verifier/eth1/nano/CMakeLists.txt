@@ -1,6 +1,6 @@
 
 # static lib
-add_library(eth_nano OBJECT
+add_library(eth_nano_o OBJECT
         eth_nano.c
         rlp.c
         merkle.c
@@ -12,5 +12,5 @@ add_library(eth_nano OBJECT
         vhist.c
         )
 
-# add dependency
+add_library(eth_nano STATIC $<TARGET_OBJECTS:eth_nano_o>)
 target_link_libraries(eth_nano core)

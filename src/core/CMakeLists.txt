@@ -3,7 +3,7 @@
 # This module does not have any dependencies and cannot be used without additional modules providing verification and transport.
 
 
-add_library(core OBJECT
+add_library(core_o OBJECT
         client/context.c
         client/client.c
         client/cache.c
@@ -21,4 +21,5 @@ add_library(core OBJECT
         util/stringbuilder.c
         util/bitset.c
         )
+add_library(core STATIC $<TARGET_OBJECTS:core_o>)
 target_link_libraries(core tommath crypto)

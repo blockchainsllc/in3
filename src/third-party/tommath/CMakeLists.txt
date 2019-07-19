@@ -1,5 +1,5 @@
 IF (FAST_MATH)
-	add_library(tommath OBJECT
+    add_library(tommath_o OBJECT
             #  bn_error.c
             bn_fast_mp_invmod.c
             bn_fast_mp_montgomery_reduce.c
@@ -151,7 +151,7 @@ IF (FAST_MATH)
             tommath_private.h
             tommath_superclass.h)
 ELSE (FAST_MATH)
-	add_library(tommath OBJECT
+    add_library(tommath_o OBJECT
             bn_fast_mp_montgomery_reduce.c
             bn_fast_s_mp_mul_digs.c
             bn_fast_s_mp_mul_high_digs.c
@@ -213,3 +213,5 @@ ELSE (FAST_MATH)
             tommath_private.h
             tommath_superclass.h)
 ENDIF (FAST_MATH)
+
+add_library(tommath STATIC $<TARGET_OBJECTS:tommath_o>)

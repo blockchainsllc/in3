@@ -69,5 +69,5 @@ add_subdirectory(src/examples)
 add_subdirectory(docs)
 
 IF (EXAMPLES)
-    add_library(in3_bundle STATIC $<TARGET_OBJECTS:core> $<TARGET_OBJECTS:crypto> $<TARGET_OBJECTS:tommath> $<TARGET_OBJECTS:eth_full> $<TARGET_OBJECTS:eth_api> $<TARGET_OBJECTS:eth_basic> $<TARGET_OBJECTS:eth_nano> $<TARGET_OBJECTS:transport_curl>)
+    add_library(in3_bundle STATIC $<TARGET_OBJECTS:core_o> $<TARGET_OBJECTS:crypto_o> $<TARGET_OBJECTS:tommath_o> $<TARGET_OBJECTS:eth_full_o> $<TARGET_OBJECTS:eth_api_o> $<TARGET_OBJECTS:eth_basic_o> $<TARGET_OBJECTS:eth_nano_o> $<TARGET_OBJECTS:transport_curl_o>)
 endif (EXAMPLES)
