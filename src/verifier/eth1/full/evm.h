@@ -44,7 +44,7 @@ typedef enum evm_state {
 #define EVM_ENV_CODE_HASH 7
 #define EVM_ENV_NONCE 8
 
-#if !defined(DEBUG)
+#if defined(DEBUG)
 #define EVM_DEBUG_BLOCK(_code_block_) \
   if (in3_log_level_is(LOG_TRACE)) (_code_block_)
 #else
