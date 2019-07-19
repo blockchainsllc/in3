@@ -65,8 +65,7 @@ else ()
 endif ()
 
 # static lib
-add_library(transport_curl_o OBJECT in3_curl.c)
-add_library(transport_curl STATIC $<TARGET_OBJECTS:transport_curl_o>)
+add_library(transport_curl STATIC in3_curl.c)
 
 # add dependency
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
