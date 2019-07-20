@@ -187,6 +187,10 @@ mac_os:
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared .. 
     - make 
     - make ptest
+    - rm -rf *
+    - cmake -DCMAKE_BUILD_TYPE=Release .. 
+    - make 
+
   artifacts:
     paths:
       - build/docs
