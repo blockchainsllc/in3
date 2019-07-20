@@ -19,12 +19,6 @@ IF (CMAKE_BUILD_TYPE MATCHES Debug)
     ADD_DEFINITIONS(-DDEBUG)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
-OPTION(EVM_GAS "if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes." ON)
-IF (EVM_GAS)
-    MESSAGE(STATUS "Enable GAS in EVM")
-    ADD_DEFINITIONS(-DEVM_GAS)
-ENDIF (EVM_GAS)
-
 OPTION(TEST "builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance" OFF)
 IF (TEST)
     MESSAGE(STATUS "Build Tests and add debug infos")

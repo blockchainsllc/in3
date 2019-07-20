@@ -10,7 +10,11 @@
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
+#ifdef USE_CURL
 #include "../../transport/curl/in3_curl.h"
+#else
+#include "../../transport/http/in3_http.h"
+#endif
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/full/evm.h"
@@ -344,8 +348,12 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c        = in3_new();
-  c->transport    = send_curl;
+  in3_t* c = in3_new();
+#ifdef USE_CURL
+  c->transport = send_curl;
+#else
+  c->transport = send_http;
+#endif
   c->requestCount = 1;
   c->use_http     = true;
   c->cacheStorage = &storage_handler;
