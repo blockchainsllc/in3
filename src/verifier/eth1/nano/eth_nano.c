@@ -3,11 +3,8 @@
 #include "../../../core/client/keys.h"
 #include "../../../core/client/verifier.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "merkle.h"
-#include "rlp.h"
 #include "serialize.h"
 #include <string.h>
 

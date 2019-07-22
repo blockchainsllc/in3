@@ -4,9 +4,9 @@
 
 #include "../../verifier/eth1/nano/rlp.h"
 #include "../../core/util/data.h"
+#include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include <inttypes.h>
-#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

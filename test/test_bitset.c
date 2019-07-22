@@ -1,11 +1,11 @@
 #ifndef TEST
 #define TEST
 #endif
+#ifndef TEST
 #define DEBUG
+#endif
 
-#include <core/util/bitset.h>
-#include <inttypes.h>
-
+#include "../src/core/util/bitset.h"
 #include "test_utils.h"
 
 static void bs_print(bitset_t* bs) {

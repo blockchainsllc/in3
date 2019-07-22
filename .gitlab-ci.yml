@@ -27,7 +27,7 @@ wasm:
   script:
     - mkdir build
     - cd build
-    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DCMAKE_BUILD_TYPE=Release ..
+    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DEXAMPLES=false -DCMAKE_BUILD_TYPE=Release ..
     - make
   artifacts:
     paths:
@@ -187,6 +187,10 @@ mac_os:
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared .. 
     - make 
     - make ptest
+    - rm -rf *
+    - cmake -DCMAKE_BUILD_TYPE=Release .. 
+    - make 
+
   artifacts:
     paths:
       - build/docs

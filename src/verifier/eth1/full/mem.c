@@ -1,22 +1,14 @@
 #include "mem.h"
 #include "../../../core/client/context.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/bignum.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
-#include "../../../verifier/eth1/basic/eth_basic.h"
-#include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
-#include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
-#include "big.h"
-#include "eth_full.h"
 #include "evm.h"
 #include "gas.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 int mem_check(evm_t* evm, uint32_t max_pos, uint8_t read_only) {
@@ -90,11 +82,10 @@ int evm_mem_read_ref(evm_t* evm, uint32_t off, uint32_t len, bytes_t* src) {
 
 int evm_mem_write(evm_t* evm, uint32_t off, bytes_t src, uint32_t len) {
   if (mem_check(evm, off + len, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
-  if (evm->properties & EVM_PROP_DEBUG) {
-    printf("\n   MEM: writing %i bytes to %i : ", len, off);
+  EVM_DEBUG_BLOCK({
+    in3_log_trace("\n   MEM: writing %i bytes to %i : ", len, off);
     b_print(&src);
-  }
-
+  });
   if (src.data == NULL)
     memset(evm->memory.b.data + off, 0, len);
   else {

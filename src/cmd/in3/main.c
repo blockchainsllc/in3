@@ -4,15 +4,17 @@
 
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
-#include "../../core/client/cache.h"
-#include "../../core/client/client.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
-#include "../../core/util/utils.h"
+#include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
+#ifdef USE_CURL
 #include "../../transport/curl/in3_curl.h"
+#else
+#include "../../transport/http/in3_http.h"
+#endif
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/full/evm.h"
@@ -23,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 // helpstring
 void show_help(char* name) {
@@ -344,10 +345,15 @@ int main(int argc, char* argv[]) {
 
   // we want to verify all
   in3_register_eth_full();
+  in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c        = in3_new();
-  c->transport    = send_curl;
+  in3_t* c = in3_new();
+#ifdef USE_CURL
+  c->transport = send_curl;
+#else
+  c->transport = send_http;
+#endif
   c->requestCount = 1;
   c->use_http     = true;
   c->cacheStorage = &storage_handler;
@@ -418,7 +424,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;
     else if (strcmp(argv[i], "-debug") == 0)
-      c->evm_flags = EVM_PROP_DEBUG;
+      in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signatureCount = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
@@ -514,8 +520,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  if (c->evm_flags == EVM_PROP_DEBUG)
-    in3_log_debug("..sending request %s %s", method, params);
+  in3_log_debug("..sending request %s %s\n", method, params);
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);

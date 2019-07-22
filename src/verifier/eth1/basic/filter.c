@@ -2,6 +2,7 @@
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/log.h"
+#include "../../../core/util/mem.h"
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -200,7 +201,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
           ctx_ = in3_client_rpc_ctx(in3, "eth_getBlockByNumber", params);
           if ((res = ctx_get_error(ctx_, 0)) != IN3_OK) {
             // error or block doesn't exist (unlikely)
-            in3_log_warn("Failed to get block by number!");
+            in3_log_warn("Failed to get block by number!\n");
             continue;
           }
           d_token_t* hash  = d_getl(d_get(ctx_->responses[0], K_RESULT), K_HASH, 32);

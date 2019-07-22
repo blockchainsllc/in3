@@ -7,7 +7,7 @@
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
-#include "../../../verifier/eth1/basic/signer.h"
+#include "../../../verifier/eth1/basic/signer-priv.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"

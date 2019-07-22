@@ -1,4 +1,4 @@
-add_library(crypto STATIC
+add_library(crypto_o OBJECT
         ecdsa.c
         address.c
         bignum.c
@@ -20,3 +20,4 @@ add_library(crypto STATIC
         aes/aeskey.c
         aes/aestab.c
         )
+add_library(crypto STATIC $<TARGET_OBJECTS:crypto_o>)

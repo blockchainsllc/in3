@@ -1,6 +1,6 @@
 #include "trie.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/sha3.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
@@ -381,16 +381,16 @@ void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
 #ifdef TEST
 static void hexprint(uint8_t* a, int l) {
   int i;
-  for (i = 0; i < l; i++) printf("%02x", a[i]);
+  for (i = 0; i < l; i++) in3_log_trace("%02x", a[i]);
 }
 static void print_nibbles(bytes_t* path) {
   uint8_t *nibbles = trie_path_to_nibbles(*path, true), *p = nibbles;
-  printf("\x1B[32m");
+  in3_log_trace("\x1B[32m");
   while (*p != 0xFF) {
-    printf("%01x", *p);
+    in3_log_trace("%01x", *p);
     p++;
   }
-  printf("\x1B[0m");
+  in3_log_trace("\x1B[0m");
   _free(nibbles);
 }
 
@@ -398,20 +398,20 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
   int     i;
   bytes_t tmp;
   char    _prefix[100];
-  printf("\n");
-  for (i = 0; i < level; i++) printf("  ");
-  if (prefix) printf("%s", prefix);
+  in3_log_trace("\n");
+  for (i = 0; i < level; i++) in3_log_trace("  ");
+  if (prefix) in3_log_trace("%s", prefix);
   if (n == NULL) {
-    printf("##MISSING NODE##");
+    in3_log_trace("##MISSING NODE##");
     return;
   }
-  if (with_hash) printf("<%02x%02x%02x>", n->hash[0], n->hash[1], n->hash[2]);
+  if (with_hash) in3_log_trace("<%02x%02x%02x>", n->hash[0], n->hash[1], n->hash[2]);
   switch (n->type) {
     case NODE_BRANCH:
-      printf("\x1B[33m<BRANCH>\x1B[0m ");
+      in3_log_trace("\x1B[33m<BRANCH>\x1B[0m ");
       tmp = trie_node_get_item(n, 16);
       if (tmp.len) {
-        printf(" = ");
+        in3_log_trace(" = ");
         hexprint(tmp.data, tmp.len);
       }
       for (i = 0; i < 16; i++) {
@@ -428,39 +428,40 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
       }
       break;
     case NODE_LEAF:
-      printf("\x1B[33m<LEAF \x1B[0m");
+      in3_log_trace("\x1B[33m<LEAF \x1B[0m");
       tmp = trie_node_get_item(n, 0);
       print_nibbles(&tmp);
-      printf(">");
+      in3_log_trace(">");
       tmp = trie_node_get_item(n, 1);
-      printf(" = 0x");
+      in3_log_trace(" = 0x");
       hexprint(tmp.data, tmp.len);
       break;
     case NODE_EXT:
-      printf("\x1B[33m<EXT \x1B[0m");
+      in3_log_trace("\x1B[33m<EXT \x1B[0m");
       tmp = trie_node_get_item(n, 0);
       print_nibbles(&tmp);
-      printf(">");
+      in3_log_trace(">");
 
       if (rlp_decode(&n->items, 1, &tmp) == 2) {
-        printf(" ==> (EMBED) ");
+        in3_log_trace(" ==> (EMBED) ");
         _prefix[0]     = 0;
         trie_node_t* t = get_node_target(trie, n, 1);
         dump_handle(trie, t, with_hash, level + 1, _prefix);
         _free(t);
       } else {
-        printf(" ==> ");
+        in3_log_trace(" ==> ");
         _prefix[0] = 0;
         dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);
       }
       break;
     case NODE_EMPTY:
-      printf("<EMPTY>");
+      in3_log_trace("<EMPTY>");
       break;
   }
 }
+
 void trie_dump(trie_t* trie, uint8_t with_hash) {
-  printf("\n\n root = ");
+  in3_log_trace("\n\n root = ");
   hexprint(trie->root, 32);
   dump_handle(trie, get_node(trie, hash_key(trie->root)), with_hash, 2, "");
 }

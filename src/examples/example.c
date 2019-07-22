@@ -1,11 +1,13 @@
-#include <client/client.h> // the core client
-#include <eth_api.h>       // wrapper for easier use
-#include <eth_full.h>      // the full ethereum verifier containing the EVM
-#include <in3_curl.h>      // transport implementation
-#include <signer.h>        // the full ethereum verifier containing the EVM
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // wrapper for easier use
+#include <in3/eth_full.h> // the full ethereum verifier containing the EVM
+#include <in3/in3_curl.h> // transport implementation
+#include <in3/log.h>
+#include <in3/signer.h>
+#include <in3/usn_api.h> // for usn-specific functions
+#include <inttypes.h>
 #include <stdio.h>
 #include <time.h>
-#include <usn_api.h> // for usn-specific functions
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #else
@@ -155,7 +157,7 @@ void watch_for_events(in3_t* c) {
 
 int main(int argc, char* argv[]) {
 
-  char* example = argc ? argv[0] : NULL;
+  char* example = argc ? argv[1] : NULL;
 
   // register a chain-verifier for full Ethereum-Support
   in3_register_eth_full();
@@ -170,6 +172,7 @@ int main(int argc, char* argv[]) {
   c->transport    = send_curl; // use curl to handle the requests
   c->requestCount = 1;         // number of requests to send
   c->chainId      = 0x44d;     // use tobalaba
+  in3_log_set_level(LOG_TRACE);
 
   // example 1 - getBlock
   if (example == NULL || strcmp(example, "eth_getBlock") == 0)

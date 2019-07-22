@@ -1,7 +1,6 @@
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"

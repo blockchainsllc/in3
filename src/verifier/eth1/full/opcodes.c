@@ -1,24 +1,18 @@
-
 #include "../../../core/client/context.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/bignum.h"
 #include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
-#include "../../../verifier/eth1/basic/eth_basic.h"
-#include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "big.h"
-#include "eth_full.h"
 #include "evm.h"
 #include "gas.h"
 #include "mem.h"
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 /*
 int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
@@ -1058,7 +1052,7 @@ int evm_run(evm_t* evm) {
     res = evm_execute(evm);
 
     // display the result of the opcode (only if the debug flag is set)
-    if (evm->properties & EVM_PROP_DEBUG) evm_print_stack(evm, last_gas, last);
+    EVM_DEBUG_BLOCK({ evm_print_stack(evm, last_gas, last); });
 #else
     // execute the opcode
     res = evm_execute(evm);
@@ -1071,7 +1065,9 @@ int evm_run(evm_t* evm) {
 #ifdef EVM_GAS
 #ifdef TEST
   // debug gas output
-  if (evm->properties & EVM_PROP_DEBUG) printf("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
+  EVM_DEBUG_BLOCK({
+    in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
+  });
 #endif
 
   uint64_t gas_used = evm->init_gas - evm->gas;

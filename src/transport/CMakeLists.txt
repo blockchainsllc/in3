@@ -1,4 +1,5 @@
 OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 IF (TRANSPORTS)
-    add_subdirectory(curl)
+add_subdirectory(curl)
+add_subdirectory(http)
 ENDIF (TRANSPORTS)

@@ -1,14 +1,11 @@
 include(${PROJECT_SOURCE_DIR}/compiler.cmake)
 
-get_property(DEAD_STRIP_LINKER_OPT GLOBAL PROPERTY DEAD_STRIP_LINKER_OPT)
-
 option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 
 add_definitions(-std=c99 -O3 -s FETCH=1 --bind)
 
-#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public")
 add_executable(a wasm.c)
-target_link_libraries(a crypto tommath core eth_full ${DEAD_STRIP_LINKER_OPT})
+target_link_libraries(a eth_full)
 
 if (JS_ONLY)
     message(STATUS "Setting compilation target to native JavaScript")

@@ -8,21 +8,18 @@
 #endif
 
 #include "../cmd/in3/in3_storage.h"
-#include <client/cache.h>
-#include <client/client.h>
-#include <eth_full.h>
-#include <evm.h>
-#include <in3_curl.h>
+#include <in3/client.h>
+#include <in3/data.h>
+#include <in3/eth_full.h>
+#include <in3/in3_curl.h>
+#include <in3/log.h>
+#include <in3/usn_api.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <usn_api.h>
-#include <util/data.h>
-#include <util/debug.h>
-#include <util/utils.h>
 
 uint64_t getChainId(char* name) {
   if (strcmp(name, "mainnet") == 0) return 0x01L;
@@ -79,7 +76,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0)
       usn.chain_id = c->chainId = getChainId(argv[++i]);
     else if (strcmp(argv[i], "-debug") == 0)
-      c->evm_flags = EVM_PROP_DEBUG;
+      in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signatureCount = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {

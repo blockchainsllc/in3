@@ -1,3 +1,5 @@
+#include "../../../core/util/mem.h"
+#include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/ripemd160.h"
 #include "../../../third-party/crypto/secp256k1.h"
@@ -10,6 +12,7 @@ uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   optimize_len(address, l);
   return (l == 1 && *address && *address < 9);
 }
+
 int pre_ecrecover(evm_t* evm) {
   subgas(G_PRE_EC_RECOVER);
   if (evm->call_data.len < 128) return 0;

@@ -1,5 +1,3 @@
-
-
 #include "../../../core/client/keys.h"
 #include "../../../core/client/verifier.h"
 #include "big.h"

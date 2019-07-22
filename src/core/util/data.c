@@ -1,12 +1,11 @@
+#include "data.h"
 #include "bytes.h"
+#include "mem.h"
+#include "stringbuilder.h"
 #include "utils.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "data.h"
-#include "mem.h"
-#include "stringbuilder.h"
 
 #include "debug.h" // DEBUG !!!
 

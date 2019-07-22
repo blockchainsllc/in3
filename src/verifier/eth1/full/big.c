@@ -1,7 +1,6 @@
 #include "big.h"
 #include "../../../core/util/utils.h"
 #include "../../../third-party/tommath/tommath.h"
-//#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 

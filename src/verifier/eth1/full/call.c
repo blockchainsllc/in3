@@ -1,11 +1,9 @@
 #include "../../../core/client/verifier.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "big.h"
 #include "evm.h"
 #include "gas.h"
 #include "mem.h"
-#include <stdlib.h>
 #include <string.h>
 
 // free a evm-instance
@@ -505,7 +503,7 @@ int evm_sub_call(evm_t*    parent,
 /**
  * run a evm-call
  */
-int evm_call(in3_vctx_t* vc,
+int evm_call(void* vc,
              address_t   address,
              uint8_t* value, wlen_t l_value,
              uint8_t* data, uint32_t l_data,
@@ -515,8 +513,6 @@ int evm_call(in3_vctx_t* vc,
 
   evm_t evm;
   int   res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc, 0);
-
-  evm.properties |= vc->ctx->client->evm_flags;
 
   // check if the caller is empty
   uint8_t* ccaller = caller;

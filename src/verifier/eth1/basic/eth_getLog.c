@@ -4,12 +4,10 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
-#include "../../../core/util/utils.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
-#include "eth_basic.h"
 #include "trie.h"
 #include <string.h>
 
@@ -98,13 +96,13 @@ bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blo
   d_token_t* tx_params = d_get(req, K_PARAMS);
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return false;
   if (!matches_filter_address(tx_params + 1, addrs)) {
-    in3_log_error("filter address mismatch");
+    in3_log_error("filter address mismatch\n");
     return false;
   } else if (!matches_filter_range(tx_params + 1, blockno, blockhash)) {
-    in3_log_error("filter range mismatch");
+    in3_log_error("filter range mismatch\n");
     return false;
   } else if (!matches_filter_topics(tx_params + 1, topics)) {
-    in3_log_error("filter topics mismatch");
+    in3_log_error("filter topics mismatch\n");
     return false;
   } else {
     return true;

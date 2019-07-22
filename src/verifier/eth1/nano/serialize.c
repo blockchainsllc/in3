@@ -4,7 +4,7 @@
 #include "../../../core/client/verifier.h"
 #include "../../../core/util/bytes.h"
 #include "../../../core/util/data.h"
-#include "../../../core/util/utils.h"
+#include "../../../core/util/mem.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include <string.h>
 

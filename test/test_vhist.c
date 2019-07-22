@@ -1,14 +1,16 @@
 #ifndef TEST
 #define TEST
 #endif
+#ifndef TEST
 #define DEBUG
-
-#include <cmd/in3/in3_storage.h>
-#include <core/client/keys.h>
-#include <core/util/data.h>
-#include <core/util/mem.h>
+#endif
+#include "../src/cmd/in3/in3_storage.h"
+#include "../src/core/client/keys.h"
+#include "../src/core/util/data.h"
+#include "../src/core/util/mem.h"
+#include "../src/core/util/utils.h"
+#include "../src/verifier/eth1/nano/vhist.h"
 #include <inttypes.h>
-#include <verifier/eth1/nano/vhist.h>
 
 #include "test_utils.h"
 

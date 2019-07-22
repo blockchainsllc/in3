@@ -1,4 +1,4 @@
-/** @file 
+/** @file
  * handles caching and storage.
  * 
  * storing nodelists and other caches with the storage handler as specified in the client.
@@ -11,39 +11,6 @@
 
 #ifndef CACHE_H
 #define CACHE_H
-
-/**
- * inits the client.
- * 
- * This is done by checking the cache and updating the local storage.
- * This function should be called after creating a new incubed instance.
- * 
- * example
- * ```c
- * // register verifiers
- * in3_register_eth_full();
- * 
- * // create new client
- * in3_t* client = in3_new();
- * 
- * // configure storage...
- * in3_storage_handler_t storage_handler;
- * storage_handler.get_item = storage_get_item;
- * storage_handler.set_item = storage_set_item;
- *
- * // configure transport
- * client->transport    = send_curl;
- *
- * // configure storage
- * client->cacheStorage = &storage_handler;
- * 
- * // init cache
- * in3_cache_init(client);
- * 
- * // ready to use ...
- * ```
- */
-in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
 
 /**
  * reads the nodelist from cache. 
