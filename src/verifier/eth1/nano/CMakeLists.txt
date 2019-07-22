@@ -10,6 +10,7 @@ add_library(eth_nano STATIC
         txreceipt.c
         registry.c
         vhist.c
+        chainspec.c
         )
 
 # add dependency

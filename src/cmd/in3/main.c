@@ -16,6 +16,7 @@
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/full/evm.h"
+#include "../../verifier/eth1/nano/chainspec.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
@@ -498,6 +499,22 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, to, params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
+  } else if (strcmp(method, "chainspec") == 0) {
+    char* json;
+    if (strlen(params) > 2) {
+      params[strlen(params) - 2] = 0;
+      json                       = (char*) readFile(fopen(params + 2, "r")).data;
+    } else
+      json = (char*) readFile(stdin).data;
+    d_track_keynames(1);
+    json_ctx_t*      j    = parse_json(json);
+    chainspec_t*     spec = chainspec_create_from_json(j->result);
+    bytes_builder_t* bb   = bb_new();
+    chainspec_to_bin(spec, bb);
+    printf("0x");
+    for (i = 0; i < (int) bb->b.len; i++) printf("%02x", bb->b.data[i]);
+    printf("\n");
+    return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
     printf("send call abi_encode abi_decode key keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
     return 0;
