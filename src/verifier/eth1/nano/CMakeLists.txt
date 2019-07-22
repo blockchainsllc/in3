@@ -10,6 +10,7 @@ add_library(eth_nano_o OBJECT
         txreceipt.c
         registry.c
         vhist.c
+        chainspec.c
         )
 
 add_library(eth_nano STATIC $<TARGET_OBJECTS:eth_nano_o>)
