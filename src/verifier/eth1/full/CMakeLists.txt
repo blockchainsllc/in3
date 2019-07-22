@@ -1,4 +1,4 @@
-add_library(eth_full STATIC
+add_library(eth_full_o OBJECT
         eth_full.c
         evm.c
         opcodes.c
@@ -13,4 +13,5 @@ add_library(eth_full STATIC
 #ADD_DEFINITIONS(-DEVM_GAS)
 
 # add dependency
-target_link_libraries(eth_full tommath crypto core eth_basic)
+add_library(eth_full STATIC $<TARGET_OBJECTS:eth_full_o>)
+target_link_libraries(eth_full eth_basic)

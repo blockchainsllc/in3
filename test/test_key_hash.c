@@ -2,8 +2,8 @@
 #define TEST
 #endif
 
-#include <core/util/data.h>
-#include <core/util/mem.h>
+#include "../src/core/util/data.h"
+#include "../src/core/util/mem.h"
 #include <stdio.h>
 #include <string.h>
 

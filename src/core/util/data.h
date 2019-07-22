@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * json-parser.
  * 
  * The parser can read from :

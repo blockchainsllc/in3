@@ -1,9 +1,6 @@
 #include "verifier.h"
 #include "../util/stringbuilder.h"
-#include "../util/utils.h"
 #include "client.h"
-#include <stdbool.h>
-#include <stdint.h>
 
 static in3_verifier_t* verifiers = NULL;
 

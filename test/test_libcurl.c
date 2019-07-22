@@ -2,11 +2,10 @@
 #define TEST
 #endif
 
-#include <curl/curl.h>
-#include <string.h>
-#include <transport/curl/in3_curl.h>
-
+#include "../src/core/util/mem.h"
+#include "../src/transport/curl/in3_curl.h"
 #include "test_utils.h"
+#include <string.h>
 
 static struct timeval begin, end;
 

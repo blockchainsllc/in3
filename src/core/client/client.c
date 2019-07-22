@@ -1,5 +1,6 @@
 #include "client.h"
 #include "../util/data.h"
+#include "../util/mem.h"
 #include "context.h"
 #include "keys.h"
 #include "send.h"

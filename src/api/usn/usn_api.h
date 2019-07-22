@@ -1,4 +1,5 @@
-/** @file 
+// @PUBLIC_HEADER
+/** @file
  * USN API.
  * 
  * This header-file defines easy to use function, which are verifying USN-Messages.
@@ -8,8 +9,6 @@
 #define USN_API_H
 
 #include "../../core/client/client.h"
-#include "../../core/util/data.h"
-#include "../../core/util/utils.h"
 
 typedef enum {
   USN_ACTION,

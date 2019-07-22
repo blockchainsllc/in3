@@ -1,10 +1,10 @@
 #ifndef TEST
 #define TEST
 #endif
-#include <core/client/client.h>
-#include <core/client/context.h>
-#include <core/util/utils.h>
-#include <verifier/eth1/full/eth_full.h>
+#include "../src/core/client/client.h"
+#include "../src/core/client/context.h"
+#include "../src/core/util/mem.h"
+#include "../src/verifier/eth1/full/eth_full.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

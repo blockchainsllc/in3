@@ -3,12 +3,21 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_mo
 # project name
 project(in3)
 
-# options
-OPTION(DEBUG "Turns on Debug output in the code. This would be required if the tests should output additional debug infos." OFF)
-IF (DEBUG)
+set(PROJECT_VERSION "0.0.0-alpha.0")
+
+string(REPLACE "." ";" VERSION_LIST ${PROJECT_VERSION})
+list(GET VERSION_LIST 0 PROJECT_VERSION_MAJOR)
+list(GET VERSION_LIST 1 PROJECT_VERSION_MINOR)
+list(GET VERSION_LIST 2 PROJECT_VERSION_PATCH)
+
+ADD_DEFINITIONS(-DIN3_VERSION=${PROJECT_VERSION})
+ADD_DEFINITIONS(-DIN3_VERSION_MAJOR=${PROJECT_VERSION_MINOR})
+ADD_DEFINITIONS(-DIN3_VERSION_MINOR=${PROJECT_VERSION_MINOR})
+ADD_DEFINITIONS(-DIN3_VERSION_PATCH=${PROJECT_VERSION_PATCH})
+
+IF (CMAKE_BUILD_TYPE MATCHES Debug)
     ADD_DEFINITIONS(-DDEBUG)
-    SET(CMAKE_BUILD_TYPE Debug)
-ENDIF (DEBUG)
+ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 OPTION(EVM_GAS "if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes." ON)
 IF (EVM_GAS)
@@ -54,7 +63,9 @@ add_subdirectory(src/bindings)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
 add_subdirectory(src/examples)
-add_subdirectory( docs )
+add_subdirectory(docs)
 
-
-
+IF (EXAMPLES)
+    add_library(in3_bundle STATIC $<TARGET_OBJECTS:core_o> $<TARGET_OBJECTS:crypto_o> $<TARGET_OBJECTS:tommath_o> $<TARGET_OBJECTS:eth_full_o> $<TARGET_OBJECTS:eth_api_o> $<TARGET_OBJECTS:eth_basic_o> $<TARGET_OBJECTS:eth_nano_o>)
+    target_link_libraries(in3_bundle transport_curl)
+endif (EXAMPLES)

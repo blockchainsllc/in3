@@ -53,7 +53,7 @@ void* _malloc_(size_t size, char* file, const char* func, int line) {
   void* ptr = malloc(size);
 #endif
   if (size && !ptr) {
-    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
+    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!\n");
     _exit_oom();
   }
   return ptr;
@@ -66,7 +66,7 @@ void* _calloc_(size_t n, size_t size, char* file, const char* func, int line) {
   void* ptr = calloc(n, size);
 #endif
   if (n && size && !ptr) {
-    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
+    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!\n");
     _exit_oom();
   }
   return ptr;
@@ -80,7 +80,7 @@ void* _realloc_(void* ptr, size_t size, size_t oldsize, char* file, const char* 
   ptr = realloc(ptr, size);
 #endif
   if (size && !ptr) {
-    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!");
+    in3_log(LOG_FATAL, file, func, line, "Failed to allocate memory!\n");
     _exit_oom();
   }
   return ptr;
@@ -157,6 +157,9 @@ void memstack() {
 }
 
 void t_free(void* ptr, char* file, const char* func, int line) {
+  UNUSED_VAR(file);
+  UNUSED_VAR(func);
+  UNUSED_VAR(line);
   //  if (ptr == NULL)
   //    printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
 

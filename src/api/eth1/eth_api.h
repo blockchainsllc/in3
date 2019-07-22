@@ -9,8 +9,6 @@
 #define ETH_API_H
 
 #include "../../core/client/client.h"
-#include "../../core/util/data.h"
-#include "../../core/util/utils.h"
 #include <stdarg.h>
 
 /** 

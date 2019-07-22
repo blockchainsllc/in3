@@ -72,6 +72,8 @@ void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
 }
 
 int main(int argc, char* argv[]) {
+  (void) argc;
+  (void) argv;
   in3_t* c   = in3_create();
   char*  res = in3_send(c, "eth_blockNumber", "[]");
   if (!res) res = in3_last_error();

@@ -5,11 +5,7 @@
 #include "../util/stringbuilder.h"
 #include "client.h"
 #include "keys.h"
-#include <inttypes.h>
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
@@ -143,7 +139,7 @@ in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
       // add in3
       //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
+      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"0x%x\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
       if (rc->clientSignature)
         sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
       if (rc->finality)
@@ -188,7 +184,7 @@ in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
     strcpy(dst, msg);
   }
   c->error = dst;
-  in3_log_error("%s", msg);
+  in3_log_error("%s\n", msg);
   return errnumber;
 }
 

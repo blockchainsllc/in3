@@ -3,15 +3,13 @@
 #ifndef TEST
 #define TEST
 #endif
-#include <core/util/data.h>
-#include <core/util/utils.h>
-#include <verifier/eth1/basic/trie.h>
-#include <verifier/eth1/full/evm.h>
-#include <verifier/eth1/nano/rlp.h>
-#include <verifier/eth1/nano/serialize.h>
+#include "../src/core/util/data.h"
+#include "../src/core/util/log.h"
+#include "../src/core/util/utils.h"
+#include "../src/verifier/eth1/basic/trie.h"
+#include "../src/verifier/eth1/full/evm.h"
+#include "../src/verifier/eth1/nano/serialize.h"
 #include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -34,8 +32,11 @@ bytes_t get_bytes(d_token_t* t, uint8_t* tmp, uint8_t is_hex) {
 
 int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
 
-  if (props & EVM_PROP_DEBUG & 2)
-    printf("\n using secure trie and hashing the key...\n");
+  if (props & 2) {
+    EVM_DEBUG_BLOCK({
+      in3_log_trace("\n using secure trie and hashing the key...\n");
+    });
+  }
   uint64_t   start  = clock();
   trie_t*    trie   = trie_new();
   d_token_t *in     = d_get(test, key("in")), *t, *el;
@@ -63,14 +64,13 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
       if (!will_be_null)
         trie_set_value(trie, &key_bytes, &value_bytes);
 
-      if (props & EVM_PROP_DEBUG) {
-        printf(will_be_null ? "\n\n_____________________\n%i:####### SKIP " : "\n\n_____________________\n%i:####### SET ", i + 1);
+      EVM_DEBUG_BLOCK({
+        in3_log_trace(will_be_null ? "\n\n_____________________\n%i:####### SKIP " : "\n\n_____________________\n%i:####### SET ", i + 1);
         ba_print(key_bytes.data, key_bytes.len);
-        printf(" = ");
+        in3_log_trace(" = ");
         ba_print(value_bytes.data, value_bytes.len);
-
         trie_dump(trie, 0);
-      }
+      });
     }
   } else {
 
@@ -91,27 +91,23 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         key_bytes.len  = 32;
       }
       trie_set_value(trie, &key_bytes, &value_bytes);
-      if (props & EVM_PROP_DEBUG) {
-        printf("\n\n_____________________\n%i:####### SET ", i + 1);
+      EVM_DEBUG_BLOCK({
+        in3_log_trace("\n\n_____________________\n%i:####### SET ", i + 1);
         ba_print(key_bytes.data, key_bytes.len);
-        printf(" = ");
+        in3_log_trace(" = ");
         ba_print(value_bytes.data, value_bytes.len);
-
         trie_dump(trie, 0);
-      }
+      });
     }
   }
   bytes_t root_bytes = d_to_bytes(d_get(test, key("root")));
   if (root_bytes.len == 32 && memcmp(root_bytes.data, trie->root, 32)) {
-
-    if (props & EVM_PROP_DEBUG) {
-      printf("\n expected : ");
+    EVM_DEBUG_BLOCK({
+      in3_log_trace("\n expected : ");
       ba_print(root_bytes.data, 32);
-      printf("\n       is : ");
+      in3_log_trace("\n       is : ");
       ba_print(trie->root, 32);
-      printf("\n");
-    }
-
+    });
     print_error("wrong root-hash");
     res = 1;
   }

@@ -1,8 +1,7 @@
-/** @file 
+/** @file
  * main evm-file.
  * */
 
-#include "../../../core/client/verifier.h"
 #include "../../../core/util/bytes.h"
 #ifndef evm_h__
 #define evm_h__
@@ -34,7 +33,6 @@ typedef enum evm_state {
 #define EVM_PROP_EIP158 4
 #define EVM_PROP_CONSTANTINOPL 16
 #define EVM_PROP_NO_FINALIZE 32768
-#define EVM_PROP_DEBUG 65536
 #define EVM_PROP_STATIC 256
 
 #define EVM_ENV_BALANCE 1
@@ -45,6 +43,13 @@ typedef enum evm_state {
 #define EVM_ENV_BLOCKHEADER 6
 #define EVM_ENV_CODE_HASH 7
 #define EVM_ENV_NONCE 8
+
+#if defined(DEBUG)
+#define EVM_DEBUG_BLOCK(_code_block_) \
+  if (in3_log_level_is(LOG_TRACE)) (_code_block_)
+#else
+#define EVM_DEBUG_BLOCK(...)
+#endif
 
 /**
  * This function provides data from the enviroment.
@@ -109,7 +114,6 @@ typedef struct evm {
   bytes_t  call_value; /**< value send */
   bytes_t  call_data;  /**< data send in the tx */
   bytes_t  gas_price;  /**< current gasprice */
-
 #ifdef EVM_GAS
 
   // gas values
@@ -155,8 +159,8 @@ int evm_sub_call(evm_t*   parent,
 
 int     evm_ensure_memory(evm_t* evm, uint32_t max_pos);
 int     in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
-int     evm_call(in3_vctx_t* vc,
-                 uint8_t     address[20],
+int     evm_call(void*    vc,
+                 uint8_t  address[20],
                  uint8_t* value, wlen_t l_value,
                  uint8_t* data, uint32_t l_data,
                  uint8_t   caller[20],
