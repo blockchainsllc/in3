@@ -2,7 +2,16 @@
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
+#include "chains.h"
 #include "rlp.h"
+
+typedef struct spec_ {
+  uint64_t      chain_id;
+  chainspec_t*  spec;
+  struct spec_* next;
+} spec_t;
+
+static spec_t* specs = NULL;
 
 static void* log_error(char* msg) {
   in3_log_error(msg);
@@ -184,16 +193,21 @@ in3_ret_t chainspec_to_bin(chainspec_t* spec, bytes_builder_t* bb) {
   bb_clear(t);
   for (unsigned int i = 0; i < spec->consensus_transitions_len; i++) {
     add_rlp(t, spec->consensus_transitions[i].transition_block);
+    add_rlp(t, (uint64_t) spec->consensus_transitions[i].type);
     rlp_encode_item(t, &spec->consensus_transitions[i].validators);
     bytes_t tmp = {.data = spec->consensus_transitions[i].contract, .len = spec->consensus_transitions[i].contract ? 20 : 0};
     rlp_encode_item(t, &tmp);
   }
   rlp_encode_list(bb, &t->b);
+  rlp_encode_to_list(bb);
   bb_free(t);
   return IN3_OK;
 }
 
-chainspec_t* chainspec_from_bin(bytes_t data) {
+chainspec_t* chainspec_from_bin(void* raw) {
+  bytes_t data = bytes(raw, 0xFFFFFF); // since we ond't know the length we give a max size, but the length is encoded in the first bytes
+
+  if (rlp_decode(&data, 0, &data) != 2) return log_error("invalid data");
   bytes_t      tmp, t2;
   unsigned int n;
   if (rlp_decode(&data, 0, &tmp) != 1 || tmp.len != 1 || *tmp.data != 1)
@@ -214,16 +228,61 @@ chainspec_t* chainspec_from_bin(bytes_t data) {
     memcpy(&spec->eip_transitions[n].eips, t2.data, sizeof(eip_t));
   }
   if (rlp_decode(&data, 4, &tmp) != 2) return log_error("Invalid consensus list");
-  spec->consensus_transitions_len = rlp_decode_len(&tmp) / 3;
+  spec->consensus_transitions_len = rlp_decode_len(&tmp) / 4;
   spec->consensus_transitions     = _malloc(sizeof(consensus_transition_t) * spec->consensus_transitions_len);
   for (n = 0; n < spec->consensus_transitions_len; n++) {
-    if (rlp_decode(&tmp, n * 3, &t2) != 1) return log_error("Invalid block");
-    spec->consensus_transitions[n].transition_block = bytes_to_long(t2.data, t2.len);
-    if (rlp_decode(&tmp, n * 3 + 1, &t2) != 1) return log_error("Invalid validators");
-    spec->consensus_transitions[n].validators = t2;
-    if (rlp_decode(&tmp, n * 3 + 2, &t2) != 1) return log_error("Invalid contract");
-    spec->consensus_transitions[n].contract = t2.len == 0 ? NULL : t2.data;
+    consensus_transition_t* tr = spec->consensus_transitions + n;
+    if (rlp_decode(&tmp, n * 4, &t2) != 1) return log_error("Invalid block");
+    tr->transition_block = bytes_to_long(t2.data, t2.len);
+    if (rlp_decode(&tmp, n * 4 + 1, &t2) != 1) return log_error("Invalid type");
+    tr->type = bytes_to_int(t2.data, t2.len);
+    if (rlp_decode(&tmp, n * 4 + 2, &t2) != 1) return log_error("Invalid validators");
+    tr->validators = t2;
+    if (rlp_decode(&tmp, n * 4 + 3, &t2) != 1) return log_error("Invalid contract");
+    tr->contract = t2.len == 0 ? NULL : t2.data;
   }
 
   return spec;
+}
+
+chainspec_t* chainspec_get(uint64_t chain_id) {
+  spec_t* s = specs;
+  while (s) {
+    if (s->chain_id == chain_id) return s->spec;
+    s = s->next;
+  }
+
+  chainspec_t* spec = NULL;
+
+  // not found -> lazy init
+  if (chain_id == 0x2a) // KOVAN
+    spec = chainspec_from_bin(CHAINSPEC_KOVAN);
+  else if (chain_id == 0x1) // MAINNET
+    spec = chainspec_from_bin(CHAINSPEC_MAINNET);
+  else if (chain_id == 0x5) // GOERLI
+    spec = chainspec_from_bin(CHAINSPEC_GOERLI);
+
+  if (spec) {
+    s           = _malloc(sizeof(spec_t));
+    s->chain_id = chain_id;
+    s->next     = specs;
+    s->spec     = spec;
+    specs       = s;
+  }
+  return spec;
+}
+void chainspec_put(uint64_t chain_id, chainspec_t* spec) {
+  spec_t* s = specs;
+  while (s) {
+    if (s->chain_id == chain_id) {
+      s->spec = spec;
+      return;
+    }
+    s = s->next;
+  }
+  s           = _malloc(sizeof(spec_t));
+  s->chain_id = chain_id;
+  s->next     = specs;
+  s->spec     = spec;
+  specs       = s;
 }

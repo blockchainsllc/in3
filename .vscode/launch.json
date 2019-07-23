@@ -127,6 +127,20 @@
             "MIMode": "lldb"
         },
         {
+            "name": "rlp",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/rlp",
+            "args": [
+                ":2a"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "send",
             "type": "cppdbg",
             "request": "launch",

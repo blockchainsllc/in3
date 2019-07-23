@@ -6,6 +6,7 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "../../verifier/eth1/nano/chainspec.h"
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -32,6 +33,8 @@ char* read_from_stdin(FILE* file) {
     allocated *= 2;
   }
 
+  if (len && buffer[len - 1] == '\n') buffer[len - 1] = 0;
+
   buffer[len] = 0;
   if (file != stdin) fclose(file);
   return (char*) buffer;
@@ -41,7 +44,15 @@ static char* ACCOUNT[] = {
     "nonce",
     "balance",
     "storage hash",
-    "code hash"};
+    "code hash", 0};
+
+static char* CHAINSPEC[] = {
+    "CHAINSPEC",
+    "version",
+    "network id",
+    "start nonce",
+    "eip transitions",
+    "consensus transitions", 0};
 
 static char* BLOCK_HEADER[] = {
     "BLOCKHEADER",
@@ -60,7 +71,7 @@ static char* BLOCK_HEADER[] = {
     "extra data",
     "mixhash/proposerSeed",
     "nonce/signature",
-    "extra sealed field"};
+    "extra sealed field", 0};
 
 static char* TX[] = {
     "TRANSACTION",
@@ -72,25 +83,37 @@ static char* TX[] = {
     "data",
     "v",
     "r",
-    "s"};
+    "s", 0};
 
 static char* TX_RECEIPT[] = {
     "TRANSACTION RECEIPT",
     "status",
     "cumulative gas",
     "logs bloom",
-    "logs"};
+    "logs", 0};
 
 static char* LOG[] = {
     "EVENT",
     "address",
     "topics",
-    "data"};
+    "data", 0};
 
 static char* TRIE_LEAF[] = {
     "MERKLE LEAF",
     "path",
-    "value"};
+    "value", 0};
+
+static char* EIP_TRANSITION[] = {
+    "EIP TRANSITIONS",
+    "block",
+    "eips", 0};
+
+static char* CONSENSUS_TRANSITION[] = {
+    "CONSENSUS TRANSITIONS",
+    "block",
+    "type",
+    "validators",
+    "contract", 0};
 
 static char* TRIE_BRANCH[] = {
     "MERKLE BRANCH",
@@ -110,9 +133,46 @@ static char* TRIE_BRANCH[] = {
     "D",
     "E",
     "F",
-    "value"};
+    "value", 0};
 
 static int first = 1;
+
+int alen(char** tt) {
+  if (!tt) return 0;
+  for (int i = 0; i < 20; i++) {
+    if (tt[i] == NULL) return i - 1;
+  }
+  return 0;
+}
+void print_special(bytes_t data, char** ctx, int i) {
+  if (ctx == EIP_TRANSITION && i % 2) {
+    eip_t* eip = (eip_t*) data.data;
+    printf("      EIP: ");
+    if (eip->eip140) printf("140 ");
+    if (eip->eip145) printf("145 ");
+    if (eip->eip150) printf("150 ");
+    if (eip->eip155) printf("155 ");
+    if (eip->eip160) printf("160 ");
+    if (eip->eip170) printf("170 ");
+    if (eip->eip196) printf("196 ");
+    if (eip->eip197) printf("197 ");
+    if (eip->eip198) printf("198 ");
+    if (eip->eip211) printf("211 ");
+    if (eip->eip214) printf("214 ");
+    if (eip->eip658) printf("658 ");
+    if (eip->eip1014) printf("1014 ");
+    if (eip->eip1052) printf("1052 ");
+    if (eip->eip1283) printf("eip1283 ");
+  }
+  if (ctx == CONSENSUS_TRANSITION && i % 4 == 1) {
+    if (data.len == 0)
+      printf("     PoW Ethash");
+    else if (*data.data == 1)
+      printf("     PoA Aura");
+    else if (*data.data == 2)
+      printf("     PoA Clique");
+  }
+}
 
 void write(bytes_t* data, char* l, char** tt) {
   bytes_t t;
@@ -129,7 +189,7 @@ void write(bytes_t* data, char* l, char** tt) {
     } else if (type == 1) {
       printf("%s", l);
       if (tt)
-        d = printf("%-20s : ", tt[i + 1]);
+        d = printf("%-20s : ", tt[(i % alen(tt)) + 1]);
       else
         d = printf("%-3i : ", i);
 
@@ -152,8 +212,18 @@ void write(bytes_t* data, char* l, char** tt) {
       else
         printf("<EMPTY>");
 
+      // split content
+      int split_len    = 32;
+      int split_prefix = 0;
+
+      if (t.len % 20 == 0) split_len = 20;
+      if (tt == TX && i == 5) {
+        split_len    = 32;
+        split_prefix = 4;
+      }
+
       for (j = 0; j < (int) t.len; j++) {
-        if (j > 0 && j % 32 == 0 && (!tt || strcmp(tt[i + 1], "value"))) {
+        if (j > 0 && ((split_prefix && split_prefix == j) || (j - split_prefix) % split_len == 0) && (!tt || strcmp(tt[i + 1], "value"))) {
           printf("\n%s", l);
           if (tt) printf("%-20s  ", "");
           printf("%-17s 0x", "");
@@ -161,33 +231,43 @@ void write(bytes_t* data, char* l, char** tt) {
         printf("%02x", t.data[j]);
       }
 
+      // special values
+      print_special(t, tt, i);
+
       printf("\n");
 
     } else if (type == 2) {
       int    l2 = rlp_decode_len(&t);
       char** t2 = NULL;
-      switch (l2) {
-        case 15:
-        case 16:
-          t2 = BLOCK_HEADER;
-          break;
-        case 17:
-          t2 = TRIE_BRANCH;
-          break;
-        case 2:
-          t2 = TRIE_LEAF;
-          break;
-        case 9:
-          t2 = TX;
-          break;
-        case 3:
-          t2 = LOG;
-          break;
-        case 4:
-          t2 = rlp_decode_item_type(&t, 3) == 2 ? TX_RECEIPT : ACCOUNT;
-          break;
-      }
-      if (tt) t2 = NULL;
+      if (tt == CHAINSPEC) {
+        if (i == 3) t2 = EIP_TRANSITION;
+        if (i == 4) t2 = CONSENSUS_TRANSITION;
+      } else
+        switch (l2) {
+          case 15:
+          case 16:
+            t2 = BLOCK_HEADER;
+            break;
+          case 17:
+            t2 = TRIE_BRANCH;
+            break;
+          case 2:
+            t2 = TRIE_LEAF;
+            break;
+          case 9:
+            t2 = TX;
+            break;
+          case 5:
+            t2 = CHAINSPEC;
+            break;
+          case 3:
+            t2 = LOG;
+            break;
+          case 4:
+            t2 = rlp_decode_item_type(&t, 3) == 2 ? TX_RECEIPT : ACCOUNT;
+            break;
+        }
+      if (tt && tt != CHAINSPEC) t2 = NULL;
       printf("%s", l);
       if (tt) {
         d = printf("%-20s : ", tt[i + 1]);
@@ -250,7 +330,10 @@ int main(int argc, char* argv[]) {
       output = 2;
     else if (output)
       add_rlp(bb, argv[i]);
-    else
+    else if (input) {
+      input = _realloc(input, strlen(input) + 1 + strlen(argv[i]), strlen(input) + 1);
+      strcat(input, argv[i]);
+    } else
       input = argv[i];
   }
 
@@ -268,9 +351,42 @@ int main(int argc, char* argv[]) {
 
   if (input == NULL) input = read_from_stdin(stdin);
 
+  bytes_t* bytes;
   if (input[0] == '0' && input[1] == 'x') input += 2;
+  if (*input == '\"') {
+    int la        = strlen(input);
+    input[la - 1] = 0;
+    la -= 2;
+    input++;
+    for (int i = 0; input[i]; i++) {
+      if (input[i] == '\"') {
+        memmove(input + i, input + i + 3, la - i - 2);
+        la -= 3;
+      }
+    }
+  }
+  if (strchr(input, '\\')) {
+    bytes       = _malloc(sizeof(bytes_t));
+    bytes->data = _malloc(strlen(input));
+    bytes->len  = 0;
 
-  bytes_t* bytes = hex2byte_new_bytes(input, strlen(input));
+    for (int n = 0; input[n]; n++) {
+      if (input[n] == '\\' && input[n + 1] == 'x') {
+        bytes->data[bytes->len++] = strtohex(input[n + 2]) << 4 | strtohex(input[n + 3]);
+        n += 3;
+      } else
+        bytes->data[bytes->len++] = input[n];
+    }
+  } else if (*input == ':') {
+    bytes                     = hex2byte_new_bytes(input + 1, strlen(input + 1));
+    uint64_t         chain_id = bytes_to_long(bytes->data, bytes->len);
+    chainspec_t*     spec     = chainspec_get(chain_id);
+    bytes_builder_t* bb       = bb_new();
+    chainspec_to_bin(spec, bb);
+    bytes = &bb->b;
+  } else
+    bytes = hex2byte_new_bytes(input, strlen(input));
+
   write(bytes, "", NULL);
 
   return 0;

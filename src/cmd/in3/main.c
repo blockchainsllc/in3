@@ -366,6 +366,7 @@ int main(int argc, char* argv[]) {
   char*           sig          = NULL;
   char*           to           = NULL;
   char*           block_number = "latest";
+  char*           name         = NULL;
   call_request_t* req          = NULL;
   bool            json         = false;
   uint64_t        gas_limit    = 100000;
@@ -416,6 +417,8 @@ int main(int argc, char* argv[]) {
       pwd = argv[++i];
     else if (strcmp(argv[i], "-value") == 0)
       value = get_wei(argv[++i]);
+    else if (strcmp(argv[i], "-name") == 0)
+      name = argv[++i];
     else if (strcmp(argv[i], "-hex") == 0)
       force_hex = true;
     else if (strcmp(argv[i], "-wait") == 0 || strcmp(argv[i], "-w") == 0)
@@ -517,9 +520,23 @@ int main(int argc, char* argv[]) {
     chainspec_t*     spec = chainspec_create_from_json(j->result);
     bytes_builder_t* bb   = bb_new();
     chainspec_to_bin(spec, bb);
-    printf("0x");
-    for (i = 0; i < (int) bb->b.len; i++) printf("%02x", bb->b.data[i]);
-    printf("\n");
+
+    if (force_hex) {
+      printf("0x");
+      for (i = 0; i < (int) bb->b.len; i++) printf("%02x", bb->b.data[i]);
+      printf("\n");
+    } else {
+      bool is_hex = false;
+      printf("#define CHAINSPEC_%s \"", name);
+      for (i = 0; i < (int) bb->b.len; i++) {
+        uint8_t c = bb->b.data[i];
+        if (is_hex && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) printf("\" \"");
+        is_hex = c < ' ' || c > 0x7E || c == 0x5C || c == '"';
+        printf(is_hex ? "\\x%02x" : "%c", c);
+      }
+      printf("\"\n");
+    }
+
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
     printf("send call abi_encode abi_decode key keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
