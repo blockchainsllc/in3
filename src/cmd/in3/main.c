@@ -374,6 +374,7 @@ int main(int argc, char* argv[]) {
   bool            wait         = false;
   char*           pwd          = NULL;
   char*           pk_file      = NULL;
+  char*           validators   = NULL;
   bytes_t*        data         = NULL;
 
   // check env
@@ -419,6 +420,8 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-name") == 0)
       name = argv[++i];
+    else if (strcmp(argv[i], "-validators") == 0)
+      validators = argv[++i];
     else if (strcmp(argv[i], "-hex") == 0)
       force_hex = true;
     else if (strcmp(argv[i], "-wait") == 0 || strcmp(argv[i], "-w") == 0)
@@ -516,9 +519,18 @@ int main(int argc, char* argv[]) {
     } else
       json = (char*) readFile(stdin).data;
     d_track_keynames(1);
-    json_ctx_t*      j    = parse_json(json);
-    chainspec_t*     spec = chainspec_create_from_json(j->result);
-    bytes_builder_t* bb   = bb_new();
+    json_ctx_t*  j    = parse_json(json);
+    chainspec_t* spec = chainspec_create_from_json(j->result);
+    if (validators) {
+      // first PoA without validators-list
+      for (uint32_t i = 0; i < spec->consensus_transitions_len; i++) {
+        if (spec->consensus_transitions[i].validators.len == 0) {
+          spec->consensus_transitions[i].validators = *hex2byte_new_bytes(validators + 2, strlen(validators) - 2);
+          break;
+        }
+      }
+    }
+    bytes_builder_t* bb = bb_new();
     chainspec_to_bin(spec, bb);
 
     if (force_hex) {
