@@ -1,0 +1,23 @@
+<html>
+
+<head>
+    <script src="in3.js"></script>
+</head>
+
+<body>
+    IN3-Demo
+    <div>
+        result:
+        <pre id="result">
+            ...waiting...
+        </pre>
+    </div>
+    <script>
+        var c = new IN3();
+        c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+            .then(r => document.getElementById('result').innerHTML = JSON.stringify(r, null, 2))
+            .catch(alert)
+    </script>
+</body>
+
+</html>
