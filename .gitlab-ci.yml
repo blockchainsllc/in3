@@ -20,7 +20,7 @@ build-in3:
       - build/docs/doc_doxygen
 
 wasm:
-  image: trzeci/emscripten:latest
+  image: trzeci/emscripten:sdk-tag-1.38.32-64bit
   stage: build
   tags:
     - short-jobs
