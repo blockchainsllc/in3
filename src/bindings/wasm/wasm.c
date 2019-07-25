@@ -2,8 +2,41 @@
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/send.h"
+#include "../../core/util/mem.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include <emscripten.h>
+
+// --------------- storage -------------------
+// clang-format off
+EM_JS(char*, in3_cache_get, (char* key), {
+  var val = Module.in3_cache.get(UTF8ToString(key));
+  if (val) {
+    var len = (val.length << 2) + 1;
+    var ret = stackAlloc(len); 
+    stringToUTF8(val, ret, len);
+    return ret;
+  }
+  return 0;
+})
+EM_JS(void, in3_cache_set, (char* key, char* val), {
+  Module.in3_cache.set(UTF8ToString(key),UTF8ToString(val));
+})
+// clang-format on
+
+bytes_t* storage_get_item(void* cptr, char* key) {
+  UNUSED_VAR(cptr);
+  char*    val = in3_cache_get(key);
+  bytes_t* res = val ? hex2byte_new_bytes(val, strlen(val)) : NULL;
+  if (val) free(val);
+  return res;
+}
+
+void storage_set_item(void* cptr, char* key, bytes_t* content) {
+  UNUSED_VAR(cptr);
+  char buffer[content->len * 2 + 1];
+  bytes_to_hex(content->data, content->len, buffer);
+  in3_cache_set(key, buffer);
+}
 
 // clang-format off
 EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload), {
@@ -39,8 +72,14 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
   // register a chain-verifier for full Ethereum-Support
   in3_register_eth_full();
 
-  in3_t* c     = in3_new();
-  c->transport = in3_fetch;
+  in3_t* c                  = in3_new();
+  c->transport              = in3_fetch;
+  c->cacheStorage           = malloc(sizeof(in3_storage_handler_t));
+  c->cacheStorage->get_item = storage_get_item;
+  c->cacheStorage->set_item = storage_set_item;
+
+  in3_cache_init(c);
+
   in3_set_error(NULL);
   return c;
 }

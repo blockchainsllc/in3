@@ -1,17 +1,27 @@
 
-in3w.transport = (url, payload) => {
-    return fetch(url, {
-        method: 'POST', // *GET, POST, PUT, DELETE, etc.
-        mode: 'cors', // no-cors, cors, *same-origin
-        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-        headers: {
-            'Content-Type': 'application/json'
+if (fetch) {
+    in3w.in3_cache = {
+        get(key) {
+            return window.localStorage.getItem(key)
         },
-        body: payload // body data type must match "Content-Type" header
-    }).then(res => {
-        if (res.status < 200 || res.status >= 400) throw new Error("Error fetrching" + url + ":" + res.statusText)
-        return res.text()
-    })
+        set(key, value) {
+            return window.localStorage.setItem(key, value)
+        }
+    }
+    in3w.transport = (url, payload) => {
+        return fetch(url, {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            mode: 'cors', // no-cors, cors, *same-origin
+            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: payload // body data type must match "Content-Type" header
+        }).then(res => {
+            if (res.status < 200 || res.status >= 400) throw new Error("Error fetrching" + url + ":" + res.statusText)
+            return res.text()
+        })
+    }
 }
 _in3_ready = false;
 in3w.onRuntimeInitialized = _ => _in3_ready = true
