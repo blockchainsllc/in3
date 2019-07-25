@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARGET_JS="in3ws.js"
+TARGET_JS="in3.js"
 
 printf "var wasmdata=\"" > $TARGET_JS
 base64 -i in3w.wasm | tr -d '\n' >> $TARGET_JS
