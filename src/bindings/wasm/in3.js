@@ -1,5 +1,5 @@
 
-if (fetch) {
+if (typeof fetch === 'function') {
     in3w.in3_cache = {
         get(key) {
             return window.localStorage.getItem(key)
@@ -23,6 +23,54 @@ if (fetch) {
         })
     }
 }
+else {
+    // nodejs
+    fs = require('' + 'fs')
+    try { fs.mkdirSync('.in3') } catch (x) { }
+    in3w.in3_cache = {
+        get(key) {
+            try {
+                return fs.readFileSync('.in3/' + key).toString('hex');
+            } catch (x) { }
+            return null
+        },
+        set(key, value) {
+            fs.writeFile('.in3/' + key, Buffer.from(value, 'hex'), err => err ? console.error('Error caching ' + err) : '')
+        }
+    }
+
+    in3w.transport = (url, payload) => new Promise((resolve, reject) => {
+        try {
+            const postData = payload;//JSON.stringify(payload);
+            const m = require(url.startsWith('https') ? 'https' : 'http')
+            const req = m.request(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(postData)
+                },
+                body: payload // body data type must match "Content-Type" header
+            }, (res) => {
+                if (res.statusCode < 200 || res.statusCode >= 400)
+                    reject(new Error("Invalid Status (" + res.statusCode + ') from server'))
+                else {
+                    res.setEncoding('utf8');
+                    let result = ''
+                    res.on('data', _ => result += _)
+                    res.on('end', () => resolve(result))
+                }
+            })
+            req.on('error', (e) => reject(new Error(e.message)))
+            req.write(postData);
+            req.end();
+
+        }
+        catch (er) {
+            console.error('...ERROR : ', er)
+            throw er
+        }
+    })
+}
 _in3_ready = false;
 in3w.onRuntimeInitialized = _ => _in3_ready = true
 
@@ -32,8 +80,6 @@ function throwLastError() {
 }
 
 class IN3 {
-    ptr = 0;
-    static fn = {};
 
     async _ensure_ptr() {
         while (!this.ptr) {
