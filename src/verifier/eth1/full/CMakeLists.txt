@@ -8,6 +8,7 @@ add_library(eth_full_o OBJECT
         env.c
         mem.c
         accounts.c
+        gas.c
         precompiled.c)
 
 # add gas-calculation

@@ -3,6 +3,10 @@
  * */
 
 #include "evm.h"
+#include "accounts.h"
+#include "big.h"
+#include "../../../core/util/utils.h"
+#include "../../../core/util/mem.h"
 
 #ifdef EVM_GAS
 #define subgas(g)                  \
@@ -22,6 +26,10 @@
 #define op_exec(m, gas) return m;
 #define subgas(g)
 #endif
+
+
+
+
 
 #define GAS_CC_NET_SSTORE_NOOP_GAS 200             /**< Once per SSTORE operation if the value doesn't change*/
 #define GAS_CC_NET_SSTORE_INIT_GAS 20000           /**< Once per SSTORE operation from clean zero*/
@@ -86,3 +94,36 @@
 ///  fork values
 #define FRONTIER_G_EXPBYTE 10 /**< This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.*/
 #define FRONTIER_G_SLOAD 50   /**< This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.*/
+
+#ifdef EVM_GAS
+void init_gas(evm_t *evm) ;
+void evm_init(evm_t *evm) ;
+void finalize_and_refund_gas(evm_t *evm) ;
+void finalize_subcall_gas(evm_t evm, int success, evm_t *parent);
+void evm_create_account(evm_t evm, account_t *new_account, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller);
+void update_gas(evm_t evm, account_t *new_account, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
+       wlen_t mode) ;
+int selfdestruct_gas(evm_t *evm) ;
+#endif
+
+#ifdef EVM_GAS
+#define FREE_EVM(evm) evm_free(evm)
+#define INIT_EVM(evm) evm_init(evm)
+#define INIT_GAS(evm) init_gas(evm)
+#define SUBGAS(evm, g) subgas(evm, g)
+#define SELFDESTRUCT_GAS(evm, g) selfdestruct_gas(evm)
+#define KEEP_TRACK_GAS(evm) evm-->gas
+#define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
+#define UPDATE_GAS(evm, new_account, res, parent, address, code_address, caller, gas, mode) update_gas(evm, new_account, res, parent, address, code_address, caller, gas, mode)
+#define FINALIZE_AND_REFUND_GAS(evm) finalize_and_refund_gas(evm)
+#else
+#define FREE_EVM(...)
+#define INIT_EVM(...)
+#define INIT_GAS(...)
+#define SUBGAS(...)
+#define FINALIZE_SUBCALL_GAS(...)
+#define UPDATE_GAS(...)
+#define FINALIZE_AND_REFUND_GAS(...)
+#define KEEP_TRACK_GAS(evm) 0
+#define SELFDESTRUCT_GAS(evm, g) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
+#endif

@@ -14,6 +14,7 @@ typedef enum evm_state {
   EVM_STATE_STOPPED  = 2, /**< successfully stopped */
   EVM_STATE_REVERTED = 3  /**< stopped, but results must be reverted */
 } evm_state_t;
+
 #ifdef EVM_GAS
 #define gas_options struct{ \
 account_t *accounts;\

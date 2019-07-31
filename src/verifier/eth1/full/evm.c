@@ -475,11 +475,8 @@ int evm_execute(evm_t* evm) {
 
 int evm_run(evm_t* evm) {
 
-#ifdef EVM_GAS
-    // prepare evm gas
-    evm->refund = 0;
-    if (!evm->init_gas) evm->init_gas = evm->gas;
-#endif
+//INIT_EVM(&evm);
+    init_gas(evm);
 
     // for precompiled we simply execute it there
     if (evm_is_precompiled(evm, evm->account))
