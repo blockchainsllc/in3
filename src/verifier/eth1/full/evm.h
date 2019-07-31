@@ -16,7 +16,6 @@ typedef enum evm_state {
 } evm_state_t;
 #ifdef EVM_GAS
 #define gas_options struct{ \
-uint64_t    gas;\
 account_t *accounts;\
 struct evm *parent;\
 logs_t *logs;\
@@ -57,11 +56,99 @@ uint64_t init_gas;\
 #define EVM_ENV_CODE_HASH 7
 #define EVM_ENV_NONCE 8
 
+#define MATH_ADD 1
+#define MATH_SUB 2
+#define MATH_MUL 3
+#define MATH_DIV 4
+#define MATH_SDIV 5
+#define MATH_MOD 6
+#define MATH_SMOD 7
+#define MATH_EXP 8
+#define MATH_SIGNEXP 9
+
+#define CALL_CALL 0
+#define CALL_CODE 1
+#define CALL_DELEGATE 2
+#define CALL_STATIC 3
+#define OP_AND 0
+#define OP_OR 1
+#define OP_XOR 2
+
 #if defined(DEBUG)
 #define EVM_DEBUG_BLOCK(_code_block_) \
   if (in3_log_level_is(LOG_TRACE)) (_code_block_)
 #else
 #define EVM_DEBUG_BLOCK(...)
+#endif
+#ifdef EVM_GAS
+
+#define OP_EXTCODECOPY_GAS(evm)                         \
+do {                                                    \
+    account_t* ac = evm_get_account(evm, address, 0);\
+    if (ac && ac->code.len)\
+        return evm_mem_write(evm, mem_pos, bytes(ac->code.data + code_pos, ac->code.len > (uint32_t) code_pos ? ac->code.len - code_pos : 0), data_len);\
+} while(0)
+
+#define OP_SLOAD_GAS(evm)                              \
+do {                                                   \
+  storage_t* s = evm_get_storage(evm, evm->account, key, l, 0);\
+  if (s) {\
+    value = s->value;\
+    l     = 32;\
+    while (value[0] == 0 && l > 1) {\
+      l--;\
+      value++;\
+    }\
+    return evm_stack_push(evm, value, l);\
+  } \
+} while(0)
+
+#define OP_ACCOUNT_GAS(evm, key, address, data, l) \
+do {                                                     \
+     if (key != EVM_ENV_BLOCKHASH) {\
+        account_t* ac = evm_get_account(evm, address, 0);\
+        uint8_t    tmp[4];\
+        if (ac) {\
+            data = NULL;\
+            if (key == EVM_ENV_BALANCE) {\
+                data = ac->balance;\
+                l    = 32;\
+            } else if (key == EVM_ENV_CODE_SIZE && ac->code.len) {\
+                int_to_bytes(ac->code.len, tmp);\
+                data = tmp;\
+                l    = 4;\
+            } else if (key == EVM_ENV_CODE_COPY && ac->code.len) {\
+                data = ac->code.data;\
+                l    = ac->code.len;\
+            } else if (key == EVM_ENV_CODE_HASH && ac->code.len) {\
+                uint8_t hash[32];\
+                sha3_to(&ac->code, hash);\
+                data = hash;\
+                l    = 32;\
+            }\
+            if (data) {\
+                while (data[0] == 0 && l > 1) {\
+                    l--;\
+                    data++;\
+                }\
+                return evm_stack_push(evm, data, l);\
+            }\
+        }\
+    }\
+} while(0)
+
+#define OP_CREATE(evm, use_salt) op_create(evm, use_salt)
+#define OP_SELFDESTRUCT(evm) op_selfdestruct(evm)
+#define OP_LOG(evm, len) op_log(evm, len)
+#define OP_SSTORE(evm)  op_sstore(evm)
+#else
+#define OP_LOG(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
+#define OP_SLOAD_GAS(...)
+#define OP_CREATE(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
+#define OP_ACCOUNT_GAS(...) 0
+#define OP_SELFDESTRUCT(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
+#define OP_EXTCODECOPY_GAS(evm)
+#define OP_SSTORE(...)  EVM_ERROR_UNSUPPORTED_CALL_OPCODE
 #endif
 
 /**
@@ -127,17 +214,8 @@ typedef struct evm {
   bytes_t  call_value; /**< value send */
   bytes_t  call_data;  /**< data send in the tx */
   bytes_t  gas_price;  /**< current gasprice */
-
+  uint64_t    gas;
   gas_options;
-
-    /*struct {
-        uint64_t gas;
-        account_t *accounts;
-        struct evm *parent;
-        logs_t *logs;
-        uint64_t refund;
-        uint64_t init_gas;
-    };*/
 
 } evm_t;
 
@@ -184,6 +262,10 @@ void    evm_free(evm_t* evm);
 int     evm_run_precompiled(evm_t* evm, uint8_t address[20]);
 uint8_t evm_is_precompiled(evm_t* evm, uint8_t address[20]);
 void    uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
+
+int evm_execute(evm_t* evm);
+
+int evm_run(evm_t* evm);
 
 #ifdef EVM_GAS
 account_t* evm_get_account(evm_t* evm, uint8_t adr[20], wlen_t create);

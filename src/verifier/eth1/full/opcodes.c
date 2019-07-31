@@ -8,12 +8,12 @@
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
 #include "big.h"
-#include "evm.h"
 #include "gas.h"
 #include "mem.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include "opcodes.h"
 /*
 int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
 
@@ -47,17 +47,9 @@ int evm_ensure_memory(evm_t* evm, uint32_t max_pos) {
     return 0;
 }
 */
-#define MATH_ADD 1
-#define MATH_SUB 2
-#define MATH_MUL 3
-#define MATH_DIV 4
-#define MATH_SDIV 5
-#define MATH_MOD 6
-#define MATH_SMOD 7
-#define MATH_EXP 8
-#define MATH_SIGNEXP 9
 
-static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
+
+ int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
   uint8_t *a, *b, res[65], *r = res;
   int      la = evm_stack_pop_ref(evm, &a), lb = evm_stack_pop_ref(evm, &b), l;
   if (la < 0 || lb < 0) return EVM_ERROR_EMPTY_STACK;
@@ -111,7 +103,7 @@ static int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
   return evm_stack_push(evm, r, l);
 }
 
-static int op_signextend(evm_t* evm) {
+ int op_signextend(evm_t* evm) {
   uint8_t* val = NULL;
   int32_t  k   = evm_stack_pop_int(evm), l;
 
@@ -134,7 +126,7 @@ static int op_signextend(evm_t* evm) {
   return evm_stack_push(evm, val, l);
 }
 
-static int op_is_zero(evm_t* evm) {
+ int op_is_zero(evm_t* evm) {
   uint8_t res = 1, *a;
   int     l   = evm_stack_pop_ref(evm, &a), i;
   if (l < 0) return l;
@@ -148,7 +140,7 @@ static int op_is_zero(evm_t* evm) {
   return evm_stack_push(evm, &res, 1);
 }
 
-static int op_not(evm_t* evm) {
+ int op_not(evm_t* evm) {
   uint8_t res[32], *a;
   int     l = evm_stack_pop_ref(evm, &a), i;
   if (l < 0) return l;
@@ -165,11 +157,8 @@ static int op_not(evm_t* evm) {
   return evm_stack_push(evm, a, l);
 }
 
-#define OP_AND 0
-#define OP_OR 1
-#define OP_XOR 2
 
-static int op_bit(evm_t* evm, uint8_t op) {
+ int op_bit(evm_t* evm, uint8_t op) {
   uint8_t result[32], *res = result, *a;
   int     l, l1            = evm_stack_pop_ref(evm, &a), i, j;
   if (l1 < 0) return l1;
@@ -200,7 +189,7 @@ static int op_bit(evm_t* evm, uint8_t op) {
   return evm_stack_push(evm, res, l1);
 }
 
-static int op_byte(evm_t* evm) {
+ int op_byte(evm_t* evm) {
   uint8_t pos, *b, res = 0xFF;
   int     l = evm_stack_pop_byte(evm, &pos);
   if (l == EVM_ERROR_EMPTY_STACK) return l;
@@ -210,7 +199,7 @@ static int op_byte(evm_t* evm) {
   return evm_stack_push(evm, &res, 1);
 }
 
-static int op_cmp(evm_t* evm, int8_t eq, uint8_t sig) {
+ int op_cmp(evm_t* evm, int8_t eq, uint8_t sig) {
   uint8_t *a, *b, res = 0, sig_a = 0, sig_b = 0;
   int      len_a, len_b;
   // try fetch the 2 values from the stack
@@ -287,7 +276,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   return evm_stack_push(evm, b, pos);
 }
 
-static int op_sha3(evm_t* evm) {
+ int op_sha3(evm_t* evm) {
   int offset = evm_stack_pop_int(evm);
   if (offset < 0) return offset;
   //  if (offset == MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
@@ -323,7 +312,7 @@ static int op_sha3(evm_t* evm) {
   return evm_stack_push(evm, res, 32);
 }
 
-static int op_account(evm_t* evm, uint8_t key) {
+ int op_account(evm_t* evm, uint8_t key) {
   uint8_t *address, *data;
   int      l = evm_stack_pop_ref(evm, &address);
   if (l < 0) return EVM_ERROR_EMPTY_STACK;
@@ -364,7 +353,7 @@ static int op_account(evm_t* evm, uint8_t key) {
   l = evm->env(evm, key, address, l, &data, 0, 0);
   return l < 0 ? l : evm_stack_push(evm, data, l);
 }
-static int op_dataload(evm_t* evm) {
+ int op_dataload(evm_t* evm) {
   int pos = evm_stack_pop_int(evm);
   if (pos < 0) return pos;
   if (evm->call_data.len < (uint32_t) pos) return evm_stack_push_int(evm, 0);
@@ -381,7 +370,7 @@ static int op_dataload(evm_t* evm) {
   }
 }
 
-static int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
+ int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm), res = 0;
   if (mem_pos < 0 || data_len < 0 || data_pos < 0) return EVM_ERROR_EMPTY_STACK;
   subgas(((data_len + 31) / 32) * G_COPY);
@@ -397,7 +386,7 @@ static int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   return res;
 }
 
-static int op_extcodecopy(evm_t* evm) {
+ int op_extcodecopy(evm_t* evm) {
   address_t address;
   uint8_t*  data = NULL;
   int       l = evm_stack_pop(evm, address, 20), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
@@ -419,7 +408,7 @@ static int op_extcodecopy(evm_t* evm) {
     return evm_mem_write(evm, mem_pos, bytes(data, res), data_len);
 }
 
-static int op_header(evm_t* evm, uint8_t index) {
+ int op_header(evm_t* evm, uint8_t index) {
   bytes_t b;
   int     l;
   if ((l = evm->env(evm, EVM_ENV_BLOCKHEADER, NULL, 0, &b.data, 0, 0)) < 0) return l;
@@ -431,7 +420,7 @@ static int op_header(evm_t* evm, uint8_t index) {
     return evm_stack_push_int(evm, 0);
 }
 
-static int op_mload(evm_t* evm) {
+ int op_mload(evm_t* evm) {
   uint8_t *off, *dst;
   int      off_len = evm_stack_pop_ref(evm, &off);
   if (off_len < 0) return off_len;
@@ -442,7 +431,7 @@ static int op_mload(evm_t* evm) {
   return evm_mem_read(evm, bytes(tmp, 32), dst, 32);
 }
 
-static int op_mstore(evm_t* evm, uint8_t len) {
+ int op_mstore(evm_t* evm, uint8_t len) {
   int offset = evm_stack_pop_int(evm);
   if (offset < 0) return offset;
   uint8_t* data     = NULL;
@@ -459,7 +448,7 @@ static int op_mstore(evm_t* evm, uint8_t len) {
   return evm_mem_write(evm, offset, bytes(data, data_len), len);
 }
 
-static int op_sload(evm_t* evm) {
+ int op_sload(evm_t* evm) {
   uint8_t *key, *value;
   int      l;
   if ((l = evm_stack_pop_ref(evm, &key)) < 0) return l;
@@ -479,7 +468,7 @@ static int op_sload(evm_t* evm) {
   return evm_stack_push(evm, value, l);
 }
 
-static int op_sstore(evm_t* evm) {
+ int op_sstore(evm_t* evm) {
   uint8_t *key, *value;
   int      l_key, l_val;
   if ((l_key = evm_stack_pop_ref(evm, &key)) < 0) return l_key;
@@ -557,7 +546,7 @@ static int op_sstore(evm_t* evm) {
 #endif
 }
 
-static int op_jump(evm_t* evm, uint8_t cond) {
+ int op_jump(evm_t* evm, uint8_t cond) {
   int pos = evm_stack_pop_int(evm);
   if (pos < 0) return pos;
   if (cond) {
@@ -601,7 +590,7 @@ static int op_jump(evm_t* evm, uint8_t cond) {
   return 0;
 }
 
-static int op_push(evm_t* evm, wlen_t len) {
+ int op_push(evm_t* evm, wlen_t len) {
   if (evm->code.len < (uint32_t) evm->pos + len) {
     bytes32_t tmp;
     memset(tmp, 0, 32);
@@ -615,14 +604,14 @@ static int op_push(evm_t* evm, wlen_t len) {
   return 0;
 }
 
-static int op_dup(evm_t* evm, uint8_t pos) {
+ int op_dup(evm_t* evm, uint8_t pos) {
   uint8_t* data = NULL;
   int      l    = evm_stack_get_ref(evm, pos, &data);
   if (l < 0) return l;
   return evm_stack_push(evm, data, l);
 }
 
-static int op_swap(evm_t* evm, uint8_t pos) {
+ int op_swap(evm_t* evm, uint8_t pos) {
   uint8_t data[33], *a, *b;
   int     l1 = evm_stack_get_ref(evm, 1, &a);
   if (l1 < 0) return l1;
@@ -646,7 +635,7 @@ static int op_swap(evm_t* evm, uint8_t pos) {
   return 0;
 }
 
-static int op_log(evm_t* evm, uint8_t len) {
+ int op_log(evm_t* evm, uint8_t len) {
 #ifdef EVM_GAS
   int memoffset = evm_stack_pop_int(evm);
   if (memoffset < 0) return memoffset;
@@ -734,10 +723,6 @@ int op_selfdestruct(evm_t* evm) {
 
   return 0;
 }
-#define CALL_CALL 0
-#define CALL_CODE 1
-#define CALL_DELEGATE 2
-#define CALL_STATIC 3
 
 int op_create(evm_t* evm, uint_fast8_t use_salt) {
 #ifdef EVM_GAS
@@ -848,241 +833,3 @@ int op_call(evm_t* evm, uint8_t mode) {
   return EVM_ERROR_INVALID_OPCODE;
 }
 
-int evm_execute(evm_t* evm) {
-
-  uint8_t op = evm->code.data[evm->pos++];
-  if (op >= 0x60 && op <= 0x7F) // PUSH
-    op_exec(op_push(evm, op - 0x5F), G_VERY_LOW);
-  if (op >= 0x80 && op <= 0x8F) // DUP
-    op_exec(op_dup(evm, op - 0x7F), G_VERY_LOW);
-  if (op >= 0x90 && op <= 0x9F) // SWAP
-    op_exec(op_swap(evm, op - 0x8E), G_VERY_LOW);
-  if (op >= 0xA0 && op <= 0xA4) // LOG
-    op_exec(op_log(evm, op - 0xA0), G_LOG);
-
-  switch (op) {
-    case 0x00: // STOP
-      evm->state = EVM_STATE_STOPPED;
-      return 0;
-
-    case 0x01: //  ADD
-      op_exec(op_math(evm, MATH_ADD, 0), G_VERY_LOW);
-    case 0x02: //  MUL
-      op_exec(op_math(evm, MATH_MUL, 0), G_LOW);
-    case 0x03: //  SUB
-      op_exec(op_math(evm, MATH_SUB, 0), G_VERY_LOW);
-    case 0x04: //  DIV
-      op_exec(op_math(evm, MATH_DIV, 0), G_LOW);
-    case 0x05: //  SDIV
-      op_exec(op_math(evm, MATH_SDIV, 0), G_LOW);
-    case 0x06: //  MOD
-      op_exec(op_math(evm, MATH_MOD, 0), G_LOW);
-    case 0x07: //  SMOD
-      op_exec(op_math(evm, MATH_SMOD, 0), G_LOW);
-    case 0x08: //  ADDMOD
-      op_exec(op_math(evm, MATH_ADD, 1), G_MID);
-    case 0x09: //  MULMOD
-      op_exec(op_math(evm, MATH_MUL, 1), G_MID);
-    case 0x0A: //  EXP
-      op_exec(op_math(evm, MATH_EXP, 0), G_EXP);
-    case 0x0B: //  SIGNEXTEND
-      op_exec(op_signextend(evm), G_LOW);
-
-    case 0x10: // LT
-      op_exec(op_cmp(evm, -1, 0), G_VERY_LOW);
-    case 0x11: // GT
-      op_exec(op_cmp(evm, 1, 0), G_VERY_LOW);
-    case 0x12: // SLT
-      op_exec(op_cmp(evm, -1, 1), G_VERY_LOW);
-    case 0x13: // SGT
-      op_exec(op_cmp(evm, 1, 1), G_VERY_LOW);
-    case 0x14: // EQ
-      op_exec(op_cmp(evm, 0, 0), G_VERY_LOW);
-    case 0x15: // IS_ZERO
-      op_exec(op_is_zero(evm), G_VERY_LOW);
-    case 0x16: // AND
-      op_exec(op_bit(evm, OP_AND), G_VERY_LOW);
-    case 0x17: // OR
-      op_exec(op_bit(evm, OP_OR), G_VERY_LOW);
-    case 0x18: // XOR
-      op_exec(op_bit(evm, OP_XOR), G_VERY_LOW);
-    case 0x19: // NOT
-      op_exec(op_not(evm), G_VERY_LOW);
-    case 0x1a: // BYTE
-      op_exec(op_byte(evm), G_VERY_LOW);
-    case 0x1b: // SHL
-      op_exec(op_shift(evm, 1), G_VERY_LOW);
-    case 0x1c: // SHR
-      op_exec(op_shift(evm, 0), G_VERY_LOW);
-    case 0x1d: // SAR
-      op_exec(op_shift(evm, 2), G_VERY_LOW);
-    case 0x20: // SHA3
-      op_exec(op_sha3(evm), G_SHA3);
-    case 0x30: // ADDRESS
-      op_exec(evm_stack_push(evm, evm->address, 20), G_BASE);
-    case 0x31: // BALANCE
-      op_exec(op_account(evm, EVM_ENV_BALANCE), G_BALANCE);
-    case 0x32: // ORIGIN
-      op_exec(evm_stack_push(evm, evm->origin, 20), G_BASE);
-    case 0x33: // CALLER
-      op_exec(evm_stack_push(evm, evm->caller, 20), G_BASE);
-    case 0x34: // CALLVALUE
-      op_exec(evm_stack_push(evm, evm->call_value.data, evm->call_value.len), G_BASE);
-    case 0x35: // CALLDATALOAD
-      op_exec(op_dataload(evm), G_VERY_LOW);
-    case 0x36: // CALLDATA_SIZE
-      op_exec(evm_stack_push_int(evm, evm->call_data.len), G_BASE);
-    case 0x37: // CALLDATACOPY
-      op_exec(op_datacopy(evm, &evm->call_data, 0), G_VERY_LOW);
-    case 0x38: // CODESIZE
-      op_exec(evm_stack_push_int(evm, evm->code.len), G_BASE);
-    case 0x39: // CODECOPY
-      op_exec(op_datacopy(evm, &evm->code, 0), G_VERY_LOW);
-    case 0x3a: // GASPRICE
-      op_exec(evm_stack_push(evm, evm->gas_price.data, evm->gas_price.len), G_BASE);
-    case 0x3b: // EXTCODESIZE
-      op_exec(op_account(evm, EVM_ENV_CODE_SIZE), G_EXTCODE);
-    case 0x3c: // EXTCODECOPY
-      op_exec(op_extcodecopy(evm), G_EXTCODE);
-    case 0x3d: // RETURNDATASIZE
-      op_exec(evm_stack_push_int(evm, evm->last_returned.len), G_BASE);
-    case 0x3e: // RETURNDATACOPY
-      op_exec(op_datacopy(evm, &evm->last_returned, 1), G_VERY_LOW);
-    case 0x3f: // EXTCODEHASH
-      op_exec(op_account(evm, EVM_ENV_CODE_HASH), G_BALANCE);
-    case 0x40: // BLOCKHASH
-      op_exec(op_account(evm, EVM_ENV_BLOCKHASH), G_BLOCKHASH);
-    case 0x41: // COINBASE
-      op_exec(op_header(evm, BLOCKHEADER_MINER), G_BASE);
-    case 0x42: // TIMESTAMP
-      op_exec(op_header(evm, BLOCKHEADER_TIMESTAMP), G_BASE);
-    case 0x43: // NUMBER
-      op_exec(op_header(evm, BLOCKHEADER_NUMBER), G_BASE);
-    case 0x44: // DIFFICULTY
-      op_exec(op_header(evm, BLOCKHEADER_DIFFICULTY), G_BASE);
-    case 0x45: // GASLIMIT
-      op_exec(op_header(evm, BLOCKHEADER_GAS_LIMIT), G_BASE);
-
-    case 0x50: // POP
-      op_exec(evm_stack_pop(evm, NULL, 0), G_BASE);
-    case 0x51: // MLOAD
-      op_exec(op_mload(evm), G_VERY_LOW);
-    case 0x52: // MSTORE
-      op_exec(op_mstore(evm, 32), G_VERY_LOW);
-    case 0x53: // MSTORE8
-      op_exec(op_mstore(evm, 1), G_VERY_LOW);
-    case 0x54: // SLOAD
-      op_exec(op_sload(evm), evm->properties & EVM_PROP_FRONTIER ? FRONTIER_G_SLOAD : G_SLOAD);
-    case 0x55: // SSTORE
-      return op_sstore(evm);
-    case 0x56: // JUMP
-      op_exec(op_jump(evm, 0), G_MID);
-    case 0x57: // JUMPI
-      op_exec(op_jump(evm, 1), G_HIGH);
-    case 0x58: // PC
-      op_exec(evm_stack_push_int(evm, evm->pos - 1), G_BASE);
-    case 0x59: // MSIZE
-      op_exec(evm_stack_push_int(evm, evm->memory.b.len), G_BASE);
-    case 0x5a: // GAS     --> here we always return enough gas to keep going, since eth call should not use it anyway
-#ifdef EVM_GAS
-      op_exec(evm_stack_push_long(evm, evm->gas), G_BASE);
-#else
-      return evm_stack_push_int(evm, 0xFFFFFFF);
-#endif
-    case 0x5b: // JUMPDEST
-      op_exec(0, G_JUMPDEST);
-    case 0xF0: // CREATE
-      op_exec(op_create(evm, 0), G_CREATE);
-    case 0xF1: // CALL
-      op_exec(op_call(evm, CALL_CALL), G_CALL);
-    case 0xF2: // CALLCODE
-      op_exec(op_call(evm, CALL_CODE), G_CALL);
-    case 0xF3: // RETURN
-      return op_return(evm, 0);
-    case 0xF4: // DELEGATE_CALL
-      op_exec(op_call(evm, CALL_DELEGATE), G_CALL);
-    case 0xF5: // CREATE2
-      op_exec(op_create(evm, 1), G_CREATE);
-    case 0xFA: // STATIC_CALL
-      op_exec(op_call(evm, CALL_STATIC), G_CALL);
-    case 0xFD: // REVERT
-      return op_return(evm, 1);
-    case 0xFE: // INVALID OPCODE
-      return EVM_ERROR_INVALID_OPCODE;
-    case 0xFF: // SELFDESTRUCT
-      op_exec(op_selfdestruct(evm), (evm->properties & EVM_PROP_FRONTIER) ? 0 : G_SELFDESTRUCT);
-
-    default:
-      return EVM_ERROR_INVALID_OPCODE;
-  }
-}
-
-int evm_run(evm_t* evm) {
-
-#ifdef EVM_GAS
-  // prepare evm gas
-  evm->refund = 0;
-  if (!evm->init_gas) evm->init_gas = evm->gas;
-#endif
-
-  // for precompiled we simply execute it there
-  if (evm_is_precompiled(evm, evm->account))
-    return evm_run_precompiled(evm, evm->account);
-
-  // timeout is simply used in case we don't use gas to make sure we don't run a infite loop.
-  uint32_t timeout = 0xFFFFFFFF;
-  int      res     = 0;
-
-  // inital state
-  evm->state = EVM_STATE_RUNNING;
-
-  // loop opcodes
-  while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
-#ifdef TEST
-    // keeping track of the previous pos only in order to display the position.
-    uint32_t last = evm->pos;
-#ifdef EVM_GAS
-    // keeping track of the previous gas only in order to display the used gas.
-    uint64_t last_gas = evm->gas;
-#else
-    uint64_t last_gas = 0;
-#endif
-
-    // execute the opcode
-    res = evm_execute(evm);
-
-    // display the result of the opcode (only if the debug flag is set)
-    EVM_DEBUG_BLOCK({ evm_print_stack(evm, last_gas, last); });
-#else
-    // execute the opcode
-    res = evm_execute(evm);
-#endif
-    if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
-  }
-
-  // done...
-
-#ifdef EVM_GAS
-#ifdef TEST
-  // debug gas output
-  EVM_DEBUG_BLOCK({
-    in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
-  });
-#endif
-
-  uint64_t gas_used = evm->init_gas - evm->gas;
-  if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0) {
-    // finalize and refund
-    if (evm->refund && evm->parent) {
-      evm->parent->gas -= gas_used;
-      evm->gas += gas_used + evm->refund;
-    } else {
-      evm->gas += min(evm->refund, gas_used >> 1);
-    }
-  }
-
-#endif
-
-  // return result
-  return res;
-}
