@@ -314,7 +314,7 @@ int evm_execute(evm_t* evm) {
     if (op >= 0x90 && op <= 0x9F) // SWAP
     op_exec(op_swap(evm, op - 0x8E), G_VERY_LOW);
     if (op >= 0xA0 && op <= 0xA4) // LOG
-    op_exec(op_log(evm, op - 0xA0), G_LOG);
+    op_exec(OP_LOG(evm, op - 0xA0), G_LOG);
 
     switch (op) {
         case 0x00: // STOP
@@ -430,7 +430,7 @@ int evm_execute(evm_t* evm) {
         case 0x54: // SLOAD
         op_exec(op_sload(evm), evm->properties & EVM_PROP_FRONTIER ? FRONTIER_G_SLOAD : G_SLOAD);
         case 0x55: // SSTORE
-            return op_sstore(evm);
+            return OP_SSTORE(evm);
         case 0x56: // JUMP
         op_exec(op_jump(evm, 0), G_MID);
         case 0x57: // JUMPI
@@ -448,7 +448,7 @@ int evm_execute(evm_t* evm) {
         case 0x5b: // JUMPDEST
         op_exec(0, G_JUMPDEST);
         case 0xF0: // CREATE
-        op_exec(op_create(evm, 0), G_CREATE);
+        op_exec(OP_CREATE(evm, 0), G_CREATE);
         case 0xF1: // CALL
         op_exec(op_call(evm, CALL_CALL), G_CALL);
         case 0xF2: // CALLCODE
@@ -458,7 +458,7 @@ int evm_execute(evm_t* evm) {
         case 0xF4: // DELEGATE_CALL
         op_exec(op_call(evm, CALL_DELEGATE), G_CALL);
         case 0xF5: // CREATE2
-        op_exec(op_create(evm, 1), G_CREATE);
+        op_exec(OP_CREATE(evm, 1), G_CREATE);
         case 0xFA: // STATIC_CALL
         op_exec(op_call(evm, CALL_STATIC), G_CALL);
         case 0xFD: // REVERT
@@ -466,7 +466,7 @@ int evm_execute(evm_t* evm) {
         case 0xFE: // INVALID OPCODE
             return EVM_ERROR_INVALID_OPCODE;
         case 0xFF: // SELFDESTRUCT
-        op_exec(op_selfdestruct(evm), (evm->properties & EVM_PROP_FRONTIER) ? 0 : G_SELFDESTRUCT);
+        op_exec(OP_SELFDESTRUCT(evm), (evm->properties & EVM_PROP_FRONTIER) ? 0 : G_SELFDESTRUCT);
 
         default:
             return EVM_ERROR_INVALID_OPCODE;
