@@ -15,8 +15,7 @@
   }
 #define op_exec(m, gc)                                \
   {                                                   \
-    if (evm->gas < (gc)) return EVM_ERROR_OUT_OF_GAS; \
-    evm->gas -= (gc);                                 \
+    subgas(gc)                                        \
     return m;                                         \
   }
 #else

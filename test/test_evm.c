@@ -359,26 +359,28 @@ static void uint256_setb(uint8_t* dst, uint8_t* data, int len) {
   if (len < 32) memset(dst, 0, 32 - len);
   memcpy(dst + 32 - len, data, len);
 }
-
+#ifdef EVM_GAS
 static void read_accounts(evm_t* evm, d_token_t* accounts) {
-  int        i, j;
-  d_token_t *t, *storage, *s;
-  for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-    char*   adr_str = d_get_keystr(t->key);
-    uint8_t address[20];
-    hex2byte_arr(adr_str + 2, strlen(adr_str) - 2, address, 20);
-    evm_get_account(evm, address, true);
-    storage = d_get(t, key("storage"));
-    if (storage) {
-      for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
-        char*   k = d_get_keystr(s->key);
-        uint8_t kk[32];
-        hex2byte_arr(k + 2, strlen(k) - 2, kk, 32);
-        evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true);
-      }
+    int        i, j;
+    d_token_t *t, *storage, *s;
+    for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
+        char*   adr_str = d_get_keystr(t->key);
+        uint8_t address[20];
+        hex2byte_arr(adr_str + 2, strlen(adr_str) - 2, address, 20);
+        evm_get_account(evm, address, true);
+        storage = d_get(t, key("storage"));
+        if (storage) {
+            for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
+                char*   k = d_get_keystr(s->key);
+                uint8_t kk[32];
+                hex2byte_arr(k + 2, strlen(k) - 2, kk, 32);
+                evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true);
+            }
+        }
     }
-  }
 }
+#endif
+
 
 static d_token_t* get_test_val(d_token_t* root, char* name, d_token_t* indexes) {
   d_token_t* array = d_get(root, key(name));
@@ -517,12 +519,13 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 
   prepare_header(d_get(test, key("env")));
 
-  uint64_t start = clock(), gas_before = evm.gas;
+  uint64_t start = clock();
   int      fail = evm_run(&evm);
   *ms           = (clock() - start) / 1000;
 
   if (transaction) {
 #ifdef EVM_GAS
+    uint16_t gas_before = evm.gas;
     total_gas += gas_before - evm.gas;
     if (fail) {
       // it failed, so the transaction used up all the gas and we reverse all accounts

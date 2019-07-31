@@ -14,6 +14,19 @@ typedef enum evm_state {
   EVM_STATE_STOPPED  = 2, /**< successfully stopped */
   EVM_STATE_REVERTED = 3  /**< stopped, but results must be reverted */
 } evm_state_t;
+#ifdef EVM_GAS
+#define gas_options struct{ \
+uint64_t    gas;\
+account_t *accounts;\
+struct evm *parent;\
+logs_t *logs;\
+uint64_t refund;\
+uint64_t init_gas;\
+}
+#else
+#define gas_options
+#endif
+
 
 #define EVM_ERROR_EMPTY_STACK -1             /**< the no more elements on the stack  */
 #define EVM_ERROR_INVALID_OPCODE -2          /**< the opcode is not supported  */
@@ -114,17 +127,17 @@ typedef struct evm {
   bytes_t  call_value; /**< value send */
   bytes_t  call_data;  /**< data send in the tx */
   bytes_t  gas_price;  /**< current gasprice */
-#ifdef EVM_GAS
 
-  // gas values
-  uint64_t    gas;      /**< gas left in the tx */
-  account_t*  accounts; /**< linked list of the accounts read or modified */
-  struct evm* parent;   /**< link to the parent-tx that called or crteated this one */
-  logs_t*     logs;     /**< linked list of log-entries */
-  uint64_t    refund;   /**< amount of wei reserved for refund */
-  uint64_t    init_gas; /**< inital gasLimit set in the tx */
+  gas_options;
 
-#endif
+    /*struct {
+        uint64_t gas;
+        account_t *accounts;
+        struct evm *parent;
+        logs_t *logs;
+        uint64_t refund;
+        uint64_t init_gas;
+    };*/
 
 } evm_t;
 
