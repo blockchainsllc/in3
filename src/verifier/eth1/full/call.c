@@ -150,53 +150,8 @@ int evm_sub_call(evm_t*    parent,
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
 
-#ifdef EVM_GAS
-  // inherit root-evm
-  evm.parent = parent;
-
-  uint64_t   max_gas_provided = parent->gas - (parent->gas >> 6);
-  account_t* new_account      = NULL;
-
-  if (!address) {
-    new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller);
-    // handle gas
-    gas = max_gas_provided;
-  } else
-    gas = min(gas, max_gas_provided);
-
-  // give the call the amount of gas
-  evm.gas            = gas;
-  evm.gas_price.data = parent->gas_price.data;
-  evm.gas_price.len  = parent->gas_price.len;
-
-  // and try to transfer the value
-  if (res == 0 && !big_is_zero(value, l_value)) {
-    // if we have a value and this should be static we throw
-    if (mode == EVM_CALL_MODE_STATIC)
-      res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
-    else {
-      // only for CALL or CALLCODE we add the CALLSTIPEND
-      uint32_t gas_call_value = 0;
-      if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {
-        evm.gas += G_CALLSTIPEND;
-        gas_call_value = G_CALLVALUE;
-      }
-      res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);
-    }
-  }
-  if (res == 0) {
-    // if we don't even have enough gas
-    if (parent->gas < gas)
-      res = EVM_ERROR_OUT_OF_GAS;
-    else
-      parent->gas -= gas;
-  }
-
-#else
-  UNUSED_VAR(value);
-  UNUSED_VAR(gas);
-  UNUSED_VAR(l_value);
-#endif
+    account_t* new_account      = NULL;
+    UPDATE_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call
   if (res == 0) success = evm_run(&evm);
@@ -212,11 +167,7 @@ int evm_sub_call(evm_t*    parent,
     // if we have a target to write the result to we do.
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
 
-#ifdef EVM_GAS
-    // if we created a new account, we can now copy the return_data as code
-    if (new_account)
-      new_account->code = evm.return_data;
-#endif
+    UPDATE_ACCOUNT_CODE(&evm, new_account);
 
     // move the return_data to parent.
     if (res == 0) {
@@ -226,19 +177,9 @@ int evm_sub_call(evm_t*    parent,
       evm.return_data.len   = 0;
     }
   }
-
-#ifdef EVM_GAS
-  // if it was successfull we copy the new state to the parent
-  if (success == 0 && evm.state != EVM_STATE_REVERTED)
-    copy_state(parent, &evm);
-
-  // if we have gas left and it was successfull we returen it to the parent process.
-  if (success == 0) parent->gas += evm.gas;
-#endif
-
+    FINALIZE_SUBCALL_GAS(&evm, success, parent);
   // clean up
   evm_free(&evm);
-
   // we always return 0 since a failure simply means we write a 0 on the stack.
   return res;
 }
