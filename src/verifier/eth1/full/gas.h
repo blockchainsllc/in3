@@ -112,7 +112,7 @@ int selfdestruct_gas(evm_t *evm) ;
 #define INIT_GAS(evm) init_gas(evm)
 #define SUBGAS(evm, g) subgas(evm, g)
 #define SELFDESTRUCT_GAS(evm, g) selfdestruct_gas(evm)
-#define KEEP_TRACK_GAS(evm) evm-->gas
+#define KEEP_TRACK_GAS(evm) evm->gas
 #define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
 #define UPDATE_GAS(evm, new_account, res, parent, address, code_address, caller, gas, mode) update_gas(evm, new_account, res, parent, address, code_address, caller, gas, mode)
 #define FINALIZE_AND_REFUND_GAS(evm) finalize_and_refund_gas(evm)

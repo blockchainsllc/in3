@@ -475,31 +475,23 @@ int evm_execute(evm_t* evm) {
 
 int evm_run(evm_t* evm) {
 
-//INIT_EVM(&evm);
-    init_gas(evm);
+    INIT_GAS(evm);
 
     // for precompiled we simply execute it there
     if (evm_is_precompiled(evm, evm->account))
         return evm_run_precompiled(evm, evm->account);
-
     // timeout is simply used in case we don't use gas to make sure we don't run a infite loop.
     uint32_t timeout = 0xFFFFFFFF;
     int      res     = 0;
-
     // inital state
     evm->state = EVM_STATE_RUNNING;
 
     // loop opcodes
     while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
 #ifdef TEST
-        // keeping track of the previous pos only in order to display the position.
+    // keeping track of the previous pos only in order to display the position.
     uint32_t last = evm->pos;
-#ifdef EVM_GAS
-    // keeping track of the previous gas only in order to display the used gas.
-    uint64_t last_gas = evm->gas;
-#else
-    uint64_t last_gas = 0;
-#endif
+    uint64_t last_gas = KEEP_TRACK_GAS(evm);
 
     // execute the opcode
     res = evm_execute(evm);
