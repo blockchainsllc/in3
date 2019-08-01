@@ -81,6 +81,9 @@ uint64_t init_gas;\
 #else
 #define EVM_DEBUG_BLOCK(...)
 #endif
+
+
+
 #ifdef EVM_GAS
 
 #define OP_EXTCODECOPY_GAS(evm)                         \

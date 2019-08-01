@@ -476,7 +476,6 @@ int evm_execute(evm_t* evm) {
 int evm_run(evm_t* evm) {
 
     INIT_GAS(evm);
-
     // for precompiled we simply execute it there
     if (evm_is_precompiled(evm, evm->account))
         return evm_run_precompiled(evm, evm->account);
@@ -485,49 +484,23 @@ int evm_run(evm_t* evm) {
     int      res     = 0;
     // inital state
     evm->state = EVM_STATE_RUNNING;
-
     // loop opcodes
     while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
-#ifdef TEST
-    // keeping track of the previous pos only in order to display the position.
-    uint32_t last = evm->pos;
-    uint64_t last_gas = KEEP_TRACK_GAS(evm);
-
-    // execute the opcode
-    res = evm_execute(evm);
-
-    // display the result of the opcode (only if the debug flag is set)
-    EVM_DEBUG_BLOCK({ evm_print_stack(evm, last_gas, last); });
-#else
         // execute the opcode
         res = evm_execute(evm);
-#endif
+        // display the result of the opcode (only if the debug flag is set)
+        EVM_DEBUG_BLOCK({
+            uint32_t last = evm->pos;
+            uint64_t last_gas = KEEP_TRACK_GAS(evm);
+            evm_print_stack(evm, last_gas, last); });
         if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
     }
-
     // done...
-
-#ifdef EVM_GAS
-#ifdef TEST
     // debug gas output
-  EVM_DEBUG_BLOCK({
-    in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
-  });
-#endif
-
-    uint64_t gas_used = evm->init_gas - evm->gas;
-    if (res == 0 && (evm->properties & EVM_PROP_NO_FINALIZE) == 0) {
-        // finalize and refund
-        if (evm->refund && evm->parent) {
-            evm->parent->gas -= gas_used;
-            evm->gas += gas_used + evm->refund;
-        } else {
-            evm->gas += min(evm->refund, gas_used >> 1);
-        }
-    }
-
-#endif
-
+    EVM_DEBUG_BLOCK({
+        in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
+    });
+    if (res == 0) FINALIZE_AND_REFUND_GAS(evm);
     // return result
     return res;
 }
