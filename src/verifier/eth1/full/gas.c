@@ -61,27 +61,27 @@ account_t * evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, addre
     return new_account;
 }
  void
-update_gas(evm_t evm, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
+update_gas(evm_t* evm, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
            wlen_t mode) {
-    evm.parent = parent;
+    evm->parent = parent;
      account_t* new_account      = NULL;
 
     uint64_t max_gas_provided = parent->gas - (parent->gas >> 6);
 
     if (!address) {
-        new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller);
+        new_account = evm_create_account(evm, evm->call_data.data, evm->call_data.len, code_address, caller);
         // handle gas
         gas = max_gas_provided;
     } else
         gas = min(gas, max_gas_provided);
 
     // give the call the amount of gas
-    evm.gas = gas;
-    evm.gas_price.data = parent->gas_price.data;
-    evm.gas_price.len = parent->gas_price.len;
+    evm->gas = gas;
+    evm->gas_price.data = parent->gas_price.data;
+    evm->gas_price.len = parent->gas_price.len;
 
     // and try to transfer the value
-    if (res == 0 && !big_is_zero(evm.call_value.data, evm.call_value.len)) {
+    if (res == 0 && !big_is_zero(evm->call_value.data, evm->call_value.len)) {
         // if we have a value and this should be we throw
         if (mode == EVM_CALL_MODE_STATIC)
             *res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
@@ -89,10 +89,10 @@ update_gas(evm_t evm, int *res, evm_t *parent, address_t address, address_t code
             // only for CALL or CALLCODE we add the CALLSTIPEND
             uint32_t gas_call_value = 0;
             if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {
-                evm.gas += G_CALLSTIPEND;
+                evm->gas += G_CALLSTIPEND;
                 gas_call_value = G_CALLVALUE;
             }
-            *res = transfer_value(&evm, parent->address, evm.address, evm.call_value.data, evm.call_value.len, gas_call_value);
+            *res = transfer_value(evm, parent->address, evm->address, evm->call_value.data, evm->call_value.len, gas_call_value);
         }
     }
     if (res == 0) {
