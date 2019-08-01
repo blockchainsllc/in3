@@ -43,31 +43,33 @@ void init_gas(evm_t *evm) {
     if (success == 0) parent->gas += evm.gas;
 
 }
- void evm_create_account(evm_t evm, account_t *new_account, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller){
+account_t * evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller){
 
-    new_account = evm_get_account(&evm, code_address, 1);
+    account_t* new_account      = NULL;
+    new_account = evm_get_account(evm, code_address, 1);
     // this is a create-call
-    evm.code               = bytes(data, l_data);
-    evm.call_data.len      = 0;
-    evm.address            = code_address;
+    evm->code               = bytes(data, l_data);
+    evm->call_data.len      = 0;
+    evm->address            = code_address;
     new_account->nonce[31] = 1;
 
     // increment the nonce of the sender
-    account_t* sender_account = evm_get_account(&evm, caller, 1);
+    account_t* sender_account = evm_get_account(evm, caller, 1);
     bytes32_t  new_nonce;
     uint8_t    one = 1;
     uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
-
+    return new_account;
 }
  void
-update_gas(evm_t evm, account_t *new_account, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
+update_gas(evm_t evm, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
            wlen_t mode) {
     evm.parent = parent;
+     account_t* new_account      = NULL;
 
     uint64_t max_gas_provided = parent->gas - (parent->gas >> 6);
 
     if (!address) {
-        evm_create_account(evm, new_account, evm.call_data.data, evm.call_data.len, code_address, caller);
+        new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller);
         // handle gas
         gas = max_gas_provided;
     } else

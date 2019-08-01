@@ -476,6 +476,7 @@ int evm_execute(evm_t* evm) {
 int evm_run(evm_t* evm) {
 
     INIT_GAS(evm);
+
     // for precompiled we simply execute it there
     if (evm_is_precompiled(evm, evm->account))
         return evm_run_precompiled(evm, evm->account);
@@ -484,23 +485,32 @@ int evm_run(evm_t* evm) {
     int      res     = 0;
     // inital state
     evm->state = EVM_STATE_RUNNING;
+
     // loop opcodes
     while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
         // execute the opcode
         res = evm_execute(evm);
         // display the result of the opcode (only if the debug flag is set)
+#ifdef EVM_GAS
+        // debug gas output
         EVM_DEBUG_BLOCK({
-            uint32_t last = evm->pos;
-            uint64_t last_gas = KEEP_TRACK_GAS(evm);
-            evm_print_stack(evm, last_gas, last); });
+                            uint32_t last = evm->pos;
+                            uint64_t last_gas = KEEP_TRACK_GAS(evm);
+                            evm_print_stack(evm, last_gas, last); });
+#endif
         if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
     }
     // done...
+
+
+#ifdef EVM_GAS
     // debug gas output
-    EVM_DEBUG_BLOCK({
-        in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
-    });
+  EVM_DEBUG_BLOCK({
+    in3_log_trace("\n Result-code (%i)   init_gas: %" PRIu64 "   gas_left: %" PRIu64 "  refund: %" PRIu64 "  gas_used: %" PRIu64 "  ", res, evm->init_gas, evm->gas, evm->refund, evm->init_gas - evm->gas);
+  });
+#endif
     if (res == 0) FINALIZE_AND_REFUND_GAS(evm);
+
     // return result
     return res;
 }

@@ -158,19 +158,15 @@ int evm_sub_call(evm_t*    parent,
   account_t* new_account      = NULL;
 
   if (!address) {
-    new_account = evm_get_account(&evm, code_address, 1);
-    // this is a create-call
-    evm.code               = bytes(data, l_data);
-    evm.call_data.len      = 0;
-    evm.address            = code_address;
-    new_account->nonce[31] = 1;
+    new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller);
 
-    // increment the nonce of the sender
-    account_t* sender_account = evm_get_account(&evm, caller, 1);
+
+      // increment the nonce of the sender
+    /*account_t* sender_account = evm_get_account(&evm, caller, 1);
     bytes32_t  new_nonce;
     uint8_t    one = 1;
     uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
-
+*/
     // handle gas
     gas = max_gas_provided;
   } else
