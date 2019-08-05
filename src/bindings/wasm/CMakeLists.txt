@@ -2,8 +2,6 @@ include(${PROJECT_SOURCE_DIR}/compiler.cmake)
 
 option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 
-#add_definitions(-std=c99 -O3 -s FETCH=1 --bind)
-
 add_executable(in3w wasm.c)
 target_link_libraries(in3w eth_full)
 

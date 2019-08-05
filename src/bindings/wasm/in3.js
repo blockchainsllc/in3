@@ -1,27 +1,19 @@
 
 if (typeof fetch === 'function') {
+    // browser
     in3w.in3_cache = {
-        get(key) {
-            return window.localStorage.getItem(key)
-        },
-        set(key, value) {
-            return window.localStorage.setItem(key, value)
-        }
+        get: key => window.localStorage.getItem('in3.' + key),
+        set: (key, value) => window.localStorage.setItem('in3.' + key, value)
     }
-    in3w.transport = (url, payload) => {
-        return fetch(url, {
-            method: 'POST', // *GET, POST, PUT, DELETE, etc.
-            mode: 'cors', // no-cors, cors, *same-origin
-            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: payload // body data type must match "Content-Type" header
-        }).then(res => {
-            if (res.status < 200 || res.status >= 400) throw new Error("Error fetrching" + url + ":" + res.statusText)
-            return res.text()
-        })
-    }
+    in3w.transport = (url, payload) => fetch(url, {
+        method: 'POST',
+        mode: 'cors', // makes it possible to access them even from the filesystem.
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+    }).then(res => {
+        if (res.status < 200 || res.status >= 400) throw new Error("Error fetrching" + url + ":" + res.statusText)
+        return res.text()
+    })
 }
 else {
     // nodejs
@@ -128,8 +120,7 @@ class IN3 {
     }
 }
 
-
-
+IN3.default = IN3
 
 if (typeof module !== "undefined")
     module.exports = IN3
