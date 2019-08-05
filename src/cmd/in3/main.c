@@ -479,6 +479,8 @@ int main(int argc, char* argv[]) {
   if (c->chainId == 0xFFFF) c->proof = PROOF_NONE;
 
   // execute the method
+  if (sig && *sig == '-') die("unknown option");
+  if (method && *method == '-') die("unknown option");
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
