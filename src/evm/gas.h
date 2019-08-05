@@ -5,8 +5,8 @@
 #include "evm.h"
 #include "accounts.h"
 #include "big.h"
-#include "../../../core/util/utils.h"
-#include "../../../core/util/mem.h"
+#include "../core/util/utils.h"
+#include "../core/util/mem.h"
 
 #ifdef EVM_GAS
 #define subgas(g)                  \
