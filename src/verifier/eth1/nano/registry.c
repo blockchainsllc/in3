@@ -148,23 +148,20 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it)) {
     uint32_t index = d_get_intk(it.token, K_INDEX);
     if (vc->chain->version > 1) {
-      int     l = 84 + d_len(it.token);
+      bytes_t url = d_to_bytes(d_get(it.token, K_URL));
+      int     l   = 84 + url.len;
       uint8_t buffer[l];
       memset(buffer, 0, l);
 
       // new storage layout
-      bytes_t val = d_to_bytes(d_get(it.token, K_DEPOSIT)), data = bytes(buffer, l);
-      memcpy(buffer + 32 - val.len, val.data, val.len);
-      val = d_to_bytes(d_get(it.token, K_TIMEOUT));
-      memcpy(buffer + 32 + 8 - val.len, val.data, val.len);
-      val = d_to_bytes(d_get(it.token, K_REGISTER_TIME));
-      memcpy(buffer + 32 + 16 - val.len, val.data, val.len);
-      val = d_to_bytes(d_get(it.token, K_PROPS));
-      memcpy(buffer + 64 - val.len, val.data, val.len);
-      val = d_to_bytes(d_get(it.token, K_ADDRESS));
+      bytes_t val = d_to_bytes(d_get(it.token, K_ADDRESS)), data = bytes(buffer, l);
+      long_to_bytes(d_get_longk(it.token, K_DEPOSIT), buffer + 24); // TODO deposit is read as uint64, which means max 18 ETH!
+      long_to_bytes(d_get_longk(it.token, K_TIMEOUT), buffer + 32);
+      long_to_bytes(d_get_longk(it.token, K_REGISTER_TIME), buffer + 40);
+      long_to_bytes(d_get_longk(it.token, K_PROPS), buffer + 56); // TODO at the moment we only support 64bit instead of 128bit, which might cause issues, if someone registeres a server with 128bit props.
+
       memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
-      val = d_to_bytes(d_get(it.token, K_URL));
-      memcpy(buffer + 64 + 20, val.data, val.len);
+      memcpy(buffer + 64 + 20, url.data, url.len);
 
       sha3_to(&data, buffer);
       TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), buffer));

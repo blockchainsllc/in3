@@ -3,6 +3,7 @@
 #endif
 #include "../src/core/client/client.h"
 #include "../src/core/client/context.h"
+#include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include <stdio.h>
@@ -17,6 +18,12 @@ int ignore_property(char* name, int full_proof) {
 
   // this is not part of the standatd RPC
   if (strcmp(name, "transactionLogIndex") == 0) return 1;
+  // this is not part of the standatd RPC, its part of the nodelisz, but not used anymore
+  if (strcmp(name, "chainIds") == 0) return 1;
+  // the registryId is taken from the local config - no need to verify
+  if (strcmp(name, "registryId") == 0) return 1;
+  // it is calculated, so need to check
+  if (strcmp(name, "proofHash") == 0) return 1;
 
   // size should be verified if proof = full
   if (!full_proof && strcmp(name, "size") == 0) return 1;
@@ -230,6 +237,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   char  temp[300];
   char* descr = NULL;
   int   i;
+  in3_log_set_prefix("");
 
   if ((descr = d_get_string(test, "descr"))) {
     if (fuzz_prop)
@@ -242,11 +250,19 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
 
   in3_t* c = in3_new();
   int    j;
-  c->max_attempts = 1;
-  c->includeCode  = 1;
-  c->transport    = send_mock;
-  for (j = 0; j < c->chainsCount; j++)
+  c->max_attempts        = 1;
+  c->includeCode         = 1;
+  c->transport           = send_mock;
+  d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
+  d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
+  for (j = 0; j < c->chainsCount; j++) {
     c->chains[j].needsUpdate = false;
+    if (registry_id) {
+      c->chains[j].version = 2;
+      memcpy(c->chains[j].registry_id, d_bytesl(registry_id, 32)->data, 32);
+      memcpy(c->chains[j].contract->data, d_get_byteskl(first_res, key("contract"), 20)->data, 20);
+    }
+  }
   c->proof = proof;
 
   d_token_t* signatures = d_get(test, key("signatures"));
