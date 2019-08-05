@@ -1,9 +1,5 @@
 #include "gas.h"
 
-
-
-
-
 #ifdef EVM_GAS
 void init_gas(evm_t *evm) {
     // prepare evm gas
@@ -17,7 +13,6 @@ void update_account_code(evm_t *evm, account_t* new_account) {
         new_account->code = evm->return_data;
 }
 
-
  void evm_init(evm_t *evm) {
     evm->accounts = NULL;
     evm->gas = 0;
@@ -26,7 +21,6 @@ void update_account_code(evm_t *evm, account_t* new_account) {
     evm->refund = 0;
     evm->init_gas = 0;
 }
-
 
  void finalize_and_refund_gas(evm_t *evm) {
     uint64_t gas_used = evm->init_gas - evm->gas;

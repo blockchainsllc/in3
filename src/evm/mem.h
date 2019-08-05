@@ -1,4 +1,4 @@
-#include "../../../core/util/bytes.h"
+#include "../core/util/bytes.h"
 #include "evm.h"
 #ifndef evm_mem_h__
 #define evm_mem_h__
