@@ -147,39 +147,64 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
   // now check the content of the nodelist
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it)) {
     uint32_t index = d_get_intk(it.token, K_INDEX);
+    if (vc->chain->version > 1) {
+      int     l = 84 + d_len(it.token);
+      uint8_t buffer[l];
+      memset(buffer, 0, l);
 
-    // check the owner
-    if (!d_get(it.token, K_ADDRESS)) return vc_err(vc, "no owner in nodelist");
-    memset(svalue, 0, 32);
-    long_to_bytes(d_get_longkd(it.token, K_TIMEOUT, 0), svalue + 4);
-    memcpy(svalue + 12, d_get_byteskl(it.token, K_ADDRESS, 20)->data, 20);
-    TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 1, skey), svalue));
+      // new storage layout
+      bytes_t val = d_to_bytes(d_get(it.token, K_DEPOSIT)), data = bytes(buffer, l);
+      memcpy(buffer + 32 - val.len, val.data, val.len);
+      val = d_to_bytes(d_get(it.token, K_TIMEOUT));
+      memcpy(buffer + 32 + 8 - val.len, val.data, val.len);
+      val = d_to_bytes(d_get(it.token, K_REGISTER_TIME));
+      memcpy(buffer + 32 + 16 - val.len, val.data, val.len);
+      val = d_to_bytes(d_get(it.token, K_PROPS));
+      memcpy(buffer + 64 - val.len, val.data, val.len);
+      val = d_to_bytes(d_get(it.token, K_ADDRESS));
+      memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
+      val = d_to_bytes(d_get(it.token, K_URL));
+      memcpy(buffer + 64 + 20, val.data, val.len);
 
-    // check the deposit
-    TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 2, skey), svalue));
-    uint64_t deposit = bytes_to_long(svalue, 32);
-    if (d_get_longk(it.token, K_DEPOSIT) != deposit) return vc_err(vc, "wrong deposit");
+      sha3_to(&data, buffer);
+      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), buffer));
 
-    // check props
-    TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 3, skey), as_bytes32(svalue, d_to_bytes(d_get(it.token, K_PROPS)))));
+    } else {
+      // old storage-layout
 
-    // check url
-    TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 0, skey), svalue));
-    const char* url = d_get_stringk(it.token, K_URL);
-    if (!url) return vc_err(vc, "missing url");
-    if (svalue[31] % 2) {
-      // the url-value is concated from multiple values.
-      uint32_t len  = (bytes_to_int(svalue + 28, 4) - 1) >> 1;
-      uint8_t  inc  = 1;
-      bytes_t  hash = bytes(skey, 32);
-      sha3_to(&hash, skey);
-      if (len != strlen(url)) return vc_err(vc, "wrong url");
-      for (uint32_t n = 0; n <= len >> 5; n++, big_add(skey, &inc, 1)) {
-        TRY(get_storage_value(storage_proofs, skey, svalue));
-        if (memcmp(svalue, url + (n << 5), min(32, len - (n << 5)))) return vc_err(vc, "wrong url");
-      }
-    } else if (strlen(url) != svalue[31] >> 1 || memcmp(url, svalue, svalue[31] >> 1))
-      return vc_err(vc, "wrong url");
+      // check the owner
+      if (!d_get(it.token, K_ADDRESS)) return vc_err(vc, "no owner in nodelist");
+      memset(svalue, 0, 32);
+      long_to_bytes(d_get_longkd(it.token, K_TIMEOUT, 0), svalue + 4);
+      memcpy(svalue + 12, d_get_byteskl(it.token, K_ADDRESS, 20)->data, 20);
+      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 1, skey), svalue));
+
+      // check the deposit
+      TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 2, skey), svalue));
+      uint64_t deposit = bytes_to_long(svalue, 32);
+      if (d_get_longk(it.token, K_DEPOSIT) != deposit) return vc_err(vc, "wrong deposit");
+
+      // check props
+      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 3, skey), as_bytes32(svalue, d_to_bytes(d_get(it.token, K_PROPS)))));
+
+      // check url
+      TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 0, skey), svalue));
+      const char* url = d_get_stringk(it.token, K_URL);
+      if (!url) return vc_err(vc, "missing url");
+      if (svalue[31] % 2) {
+        // the url-value is concated from multiple values.
+        uint32_t len  = (bytes_to_int(svalue + 28, 4) - 1) >> 1;
+        uint8_t  inc  = 1;
+        bytes_t  hash = bytes(skey, 32);
+        sha3_to(&hash, skey);
+        if (len != strlen(url)) return vc_err(vc, "wrong url");
+        for (uint32_t n = 0; n <= len >> 5; n++, big_add(skey, &inc, 1)) {
+          TRY(get_storage_value(storage_proofs, skey, svalue));
+          if (memcmp(svalue, url + (n << 5), min(32, len - (n << 5)))) return vc_err(vc, "wrong url");
+        }
+      } else if (strlen(url) != svalue[31] >> 1 || memcmp(url, svalue, svalue[31] >> 1))
+        return vc_err(vc, "wrong url");
+    }
   }
 
   return IN3_OK;
@@ -190,6 +215,7 @@ in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* 
   bytes_t         root, **proof, *account_raw, path = {.data = hash, .len = 32};
   d_token_t *     server_list = d_get(vc->result, K_NODES), *storage_proof, *t;
   bytes_builder_t bb          = {.bsize = 36, .b = {.data = val, .len = 0}};
+
   if (d_type(vc->result) != T_OBJECT || !vc->proof || !server_list) return vc_err(vc, "Invalid nodeList response!");
 
   // verify the header
