@@ -38,7 +38,7 @@ void show_help(char* name) {
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
--gas_limit     the gas_limit to use when sending transactions. (default: 100000) \n\
+-gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
 -pwd           password to unlock the key \n\
 -value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
@@ -412,7 +412,7 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
-    else if (strcmp(argv[i], "-gas") == 0)
+    else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
       gas_limit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
