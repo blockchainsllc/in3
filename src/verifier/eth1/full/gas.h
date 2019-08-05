@@ -100,7 +100,7 @@ void init_gas(evm_t *evm) ;
 void evm_init(evm_t *evm) ;
 void finalize_and_refund_gas(evm_t* evm) ;
 void finalize_subcall_gas(evm_t* evm, int success, evm_t *parent);
-account_t * evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller);
+
 void update_gas(evm_t* evm, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
        wlen_t mode, uint8_t* value, wlen_t l_value) ;
 int selfdestruct_gas(evm_t *evm) ;

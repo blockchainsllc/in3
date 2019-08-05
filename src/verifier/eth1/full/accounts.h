@@ -18,3 +18,5 @@ void copy_state(evm_t* dst, evm_t* src);
 
 int transfer_value(evm_t* current, address_t from_account, address_t to_account, uint8_t* value, wlen_t value_len, uint32_t base_gas);
 
+account_t * evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller);
+

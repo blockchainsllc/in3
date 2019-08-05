@@ -72,6 +72,24 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   return ac;
 }
 
+account_t * evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller){
+
+    account_t* new_account      = NULL;
+    new_account = evm_get_account(evm, code_address, 1);
+    // this is a create-call
+    evm->code               = bytes(data, l_data);
+    evm->call_data.len      = 0;
+    evm->address            = code_address;
+    new_account->nonce[31] = 1;
+
+    // increment the nonce of the sender
+    account_t* sender_account = evm_get_account(evm, caller, 1);
+    bytes32_t  new_nonce;
+    uint8_t    one = 1;
+    uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
+    return new_account;
+}
+
 storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_key_len, wlen_t create) {
   account_t* ac = evm_get_account(evm, adr, create);
   if (!ac) return NULL;

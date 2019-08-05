@@ -49,23 +49,7 @@ void update_account_code(evm_t *evm, account_t* new_account) {
     if (success == 0) parent->gas += evm->gas;
 
 }
-account_t * evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller){
 
-    account_t* new_account      = NULL;
-    new_account = evm_get_account(evm, code_address, 1);
-    // this is a create-call
-    evm->code               = bytes(data, l_data);
-    evm->call_data.len      = 0;
-    evm->address            = code_address;
-    new_account->nonce[31] = 1;
-
-    // increment the nonce of the sender
-    account_t* sender_account = evm_get_account(evm, caller, 1);
-    bytes32_t  new_nonce;
-    uint8_t    one = 1;
-    uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
-    return new_account;
-}
 
 int selfdestruct_gas(evm_t *evm) {
     uint8_t adr[20], l, *p;
