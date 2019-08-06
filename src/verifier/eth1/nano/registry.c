@@ -195,7 +195,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
         bytes_t  hash = bytes(skey, 32);
         sha3_to(&hash, skey);
         if (len != strlen(url)) return vc_err(vc, "wrong url");
-        for (uint32_t n = 0; n <= len >> 5; n++, big_add(skey, &inc, 1)) {
+        for (uint32_t n = 0; n <= (len - 1) >> 5; n++, big_add(skey, &inc, 1)) {
           TRY(get_storage_value(storage_proofs, skey, svalue));
           if (memcmp(svalue, url + (n << 5), min(32, len - (n << 5)))) return vc_err(vc, "wrong url");
         }

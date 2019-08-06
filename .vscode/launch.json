@@ -99,7 +99,7 @@
             "args": [
                 "-t",
                 "1",
-                "../test/testdata/requests/eth_call.json"
+                "../test/testdata/requests/in3_nodeList.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
@@ -111,14 +111,11 @@
             "name": "cmd",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "program": "${workspaceFolder}/build/bin/in3",
             "args": [
-                "-pk",
-                "0xb858a0f49ce12df65031ba0eb0b353abc74f93f8ccd43df9682fd2e2293a4db3",
                 "-c",
-                "kovan",
-                "eth_sendTransaction",
-                "{\"from\":\"0x5338d77B5905CdEEa7c55a1F3A88d03559c36D73\",\"to\":\"0xb5049E77a70c4ea06355E3bcbfcF8fDADa912481\",\"value\": \"0x10000\"}"
+                "goerli",
+                "eth_blockNummber"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
@@ -241,6 +238,22 @@
         },
         {
             "name": "json",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/cmd/json",
+            "args": [
+                "-o",
+                "cstr",
+                "{ \"name\":1,\"name2\":2  }"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "runnerd",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/src/cmd/json",
