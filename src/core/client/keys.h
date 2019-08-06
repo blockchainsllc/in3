@@ -71,6 +71,7 @@
 #define K_GAS_USED          key("gasUsed")
 #define K_TIMESTAMP         key("timestamp")
 #define K_TIMEOUT           key("timeout")
+#define K_REGISTER_TIME     key("registerTime")
 #define K_EXTRA_DATA        key("extraData")
 #define K_SEAL_FIELDS       key("sealFields")
 #define K_MIX_HASH          key("mixHash")

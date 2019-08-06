@@ -177,6 +177,8 @@ uint32_t d_intd(const d_token_t* item, const uint32_t def_val) {
       if (item->len == 0) return 0;
       return bytes_to_int(item->data, min(4, item->len));
     }
+    case T_STRING:
+      return atoi((char*) item->data);
     default:
       return def_val;
   }
@@ -200,6 +202,8 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
     return item->len & 0x0FFFFFFF;
   else if (d_type(item) == T_BYTES)
     return bytes_to_long(item->data, item->len);
+  else if (d_type(item) == T_STRING)
+    return strtoull((char*) item->data, NULL, 10);
   return def_val;
 }
 

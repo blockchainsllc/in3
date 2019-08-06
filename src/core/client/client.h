@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define IN3_PROTO_VER 0x1
+#define IN3_PROTO_VER 0x2
 
 /** the type of the chain. 
  * 
@@ -113,6 +113,8 @@ typedef struct in3_chain {
   in3_node_weight_t* weights;        /**< stats and weights recorded for each node */
   bytes_t**          initAddresses;  /**< array of addresses of nodes that should always part of the nodeList */
   bytes_t*           contract;       /**< the address of the registry contract */
+  bytes32_t          registry_id;    /**< the identifier of the registry */
+  uint8_t            version;        /**< version of the chain */
   json_ctx_t*        spec;           /**< optional chain specification, defining the transaitions and forks*/
 } in3_chain_t;
 
@@ -334,11 +336,13 @@ in3_ret_t in3_client_rpc(
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
 in3_ret_t in3_client_register_chain(
-    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
-    uint64_t         chain_id, /**< [in] the chain id. */
-    in3_chain_type_t type,     /**< [in] the verification type of the chain. */
-    address_t        contract, /**< [in] contract of the registry. */
-    json_ctx_t*      spec      /**< [in] chainspec or NULL. */
+    in3_t*           client,      /**< [in] the pointer to the incubed client config. */
+    uint64_t         chain_id,    /**< [in] the chain id. */
+    in3_chain_type_t type,        /**< [in] the verification type of the chain. */
+    address_t        contract,    /**< [in] contract of the registry. */
+    bytes32_t        registry_id, /**< [in] the identifier of the registry. */
+    uint8_t          version,     /**< [in] the chain version. */
+    json_ctx_t*      spec         /**< [in] chainspec or NULL. */
 );
 
 /** adds a node to a chain ore updates a existing node */

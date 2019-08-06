@@ -189,6 +189,7 @@ uint64_t getChainId(char* name) {
   if (strcmp(name, "mainnet") == 0) return 0x01L;
   if (strcmp(name, "kovan") == 0) return 0x2aL;
   if (strcmp(name, "tobalaba") == 0) return 0x44dL;
+  if (strcmp(name, "goerli") == 0) return 0x5L;
   if (strcmp(name, "evan") == 0) return 0x4b1L;
   if (strcmp(name, "ipfs") == 0) return 0x7d0;
   if (strcmp(name, "local") == 0) return 0xFFFFL;

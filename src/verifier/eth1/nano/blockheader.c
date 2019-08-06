@@ -346,14 +346,17 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     res = vc_err(vc, "missing signatures");
   else if (res == IN3_OK) {
     // prepare the message to be sigfned
+
     bytes_t msg;
-    uint8_t msg_data[64];
+    uint8_t msg_data[96];
     msg.data = (uint8_t*) &msg_data;
-    msg.len  = 64;
+    msg.len  = vc->chain->version > 1 ? 96 : 64;
+
     // first the blockhash + blocknumber
     memcpy(msg_data, block_hash, 32);
     memset(msg_data + 32, 0, 32);
     long_to_bytes(header_number, msg_data + 56);
+    if (vc->chain->version > 1) memcpy(msg_data + 64, vc->chain->registry_id, 32);
 
     // hash it to create the message hash
     sha3_to(&msg, msg_data);
