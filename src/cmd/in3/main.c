@@ -46,6 +46,8 @@ void show_help(char* name) {
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
 -debug         if given incubed will output debug information when executing. \n\
+-ri            read response from stdin \n\
+-ro            write raw response to stdout \n\
 \n\
 As method, the following can be used:\n\
 \n\
@@ -328,6 +330,23 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
   }
 }
 
+static bytes_t*  last_response;
+static bytes_t   in_response = {.data = NULL, .len = 0};
+static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+  if (in_response.len) {
+    for (int i = 0; i < urls_len; i++)
+      sb_add_range(&result[i].result, (char*) in_response.data, 0, in_response.len);
+    return 0;
+  }
+#ifdef USE_CURL
+  in3_ret_t r = send_curl(urls, urls_len, payload, result);
+#else
+  in3_ret_t r = send_http(urls, urls_len, payload, result);
+#endif
+  last_response = b_new(result[0].result.data, result[0].result.len);
+  return r;
+}
+
 int main(int argc, char* argv[]) {
   // check for usage
   if (argc < 2 || strcmp(argv[1], "--help") == 0) {
@@ -350,12 +369,8 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c = in3_new();
-#ifdef USE_CURL
-  c->transport = send_curl;
-#else
-  c->transport = send_http;
-#endif
+  in3_t* c        = in3_new();
+  c->transport    = debug_transport;
   c->requestCount = 1;
   c->use_http     = true;
   c->cacheStorage = &storage_handler;
@@ -363,6 +378,7 @@ int main(int argc, char* argv[]) {
   // read data from cache
   in3_cache_init(c);
   bytes32_t       pk;
+  bool            out_response = false;
   bool            force_hex    = false;
   char*           sig          = NULL;
   char*           to           = NULL;
@@ -425,6 +441,10 @@ int main(int argc, char* argv[]) {
       validators = argv[++i];
     else if (strcmp(argv[i], "-hex") == 0)
       force_hex = true;
+    else if (strcmp(argv[i], "-response-out") == 0 || strcmp(argv[i], "-ro") == 0)
+      out_response = true;
+    else if (strcmp(argv[i], "-response-in") == 0 || strcmp(argv[i], "-ri") == 0)
+      in_response = readFile(stdin);
     else if (strcmp(argv[i], "-wait") == 0 || strcmp(argv[i], "-w") == 0)
       wait = true;
     else if (strcmp(argv[i], "-json") == 0)
@@ -459,11 +479,14 @@ int main(int argc, char* argv[]) {
       else {
         // otherwise we add it to the params
         if (p > 1) params[p++] = ',';
-        p += sprintf(params + p,
-                     (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
-                         ? "%s"
-                         : "\"%s\"",
-                     argv[i]);
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x')
+          p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
+        else
+          p += sprintf(params + p,
+                       (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
+                           ? "%s"
+                           : "\"%s\"",
+                       argv[i]);
       }
     }
   }
@@ -584,6 +607,14 @@ int main(int argc, char* argv[]) {
   if (error)
     die(error);
   else {
+
+    if (out_response && last_response) {
+      char r[last_response->len + 1];
+      memcpy(r, last_response->data, last_response->len);
+      r[last_response->len] = 0;
+      printf("%s\n", r);
+      return 0;
+    }
 
     // if the result is a string, we remove the quotes
     if (result[0] == '"' && result[strlen(result) - 1] == '"') {
