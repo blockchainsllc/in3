@@ -5,7 +5,7 @@
 #ifndef in3_bignum_h__
 #define in3_bignum_h__
 
-#include "../core/util/bytes.h"
+#include "../../../core/util/bytes.h"
 #include <stdint.h>
 
 uint8_t big_is_zero(uint8_t* data, wlen_t l);

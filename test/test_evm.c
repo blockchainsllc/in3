@@ -11,9 +11,9 @@
 #include "../src/third-party/crypto/ecdsa.h"
 #include "../src/third-party/crypto/secp256k1.h"
 #include "../src/verifier/eth1/basic/trie.h"
-#include "../src/evm/big.h"
-#include "../src/evm/evm.h"
-#include "../src/evm/gas.h"
+#include "../src/verifier/eth1/evm/big.h"
+#include "../src/verifier/eth1/evm/evm.h"
+#include "../src/verifier/eth1/evm/gas.h"
 #include "../src/verifier/eth1/nano/rlp.h"
 #include "../src/verifier/eth1/nano/serialize.h"
 #include <inttypes.h>

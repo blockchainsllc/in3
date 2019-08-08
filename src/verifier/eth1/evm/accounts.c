@@ -1,16 +1,13 @@
 #include "accounts.h"
 #include "gas.h"
-#include "../core/util/mem.h"
-#include "../core/util/utils.h"
+#include "../../../core/util/mem.h"
+#include "../../../core/util/utils.h"
 #include "big.h"
 #ifdef EVM_GAS
 /**
  * sets a variable value to 32byte word.
  */
-void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
-    if (src_len < 32) memset(dst, 0, 32 - src_len);
-    memcpy(dst + 32 - src_len, src, src_len);
-}
+
 
 account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   if (!adr) return NULL;

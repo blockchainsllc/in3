@@ -7,7 +7,7 @@
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
-#include "../src/evm/evm.h"
+#include "../src/verifier/eth1/evm/evm.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

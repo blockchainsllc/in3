@@ -6,6 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
+    if (src_len < 32) memset(dst, 0, 32 - src_len);
+    memcpy(dst + 32 - src_len, src, src_len);
+}
+
+
 int hash_cmp(uint8_t* a, uint8_t* b) {
   int len = 31;
 

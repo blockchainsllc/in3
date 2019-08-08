@@ -1,6 +1,6 @@
-#include "../core/client/keys.h"
-#include "../core/client/verifier.h"
-#include "../core/util/mem.h"
+#include "../../../core/client/keys.h"
+#include "../../../core/client/verifier.h"
+#include "../../../core/util/mem.h"
 #include <stdio.h>
 #include <string.h>
 

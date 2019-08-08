@@ -1,5 +1,5 @@
-#include "../core/client/verifier.h"
-#include "../core/util/mem.h"
+#include "../../../core/client/verifier.h"
+#include "../../../core/util/mem.h"
 #include "big.h"
 #include "evm.h"
 #include "gas.h"
@@ -151,7 +151,7 @@ int evm_sub_call(evm_t*    parent,
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
 
     account_t* new_account      = NULL;
-    UPDATE_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
+    UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call
   if (res == 0) success = evm_run(&evm);

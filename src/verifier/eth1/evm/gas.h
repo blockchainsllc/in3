@@ -5,8 +5,8 @@
 #include "evm.h"
 #include "accounts.h"
 #include "big.h"
-#include "../core/util/utils.h"
-#include "../core/util/mem.h"
+#include "../../../core/util/utils.h"
+#include "../../../core/util/mem.h"
 
 #ifdef EVM_GAS
 #define subgas(g)                  \
@@ -115,7 +115,7 @@ void update_account_code(evm_t *evm, account_t* new_account);
 #define SELFDESTRUCT_GAS(evm, g) selfdestruct_gas(evm)
 #define KEEP_TRACK_GAS(evm) evm->gas
 #define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
-#define UPDATE_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value) \
+#define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value) \
 do {                                                                                      \
   evm.parent = parent;                                                                    \
   uint64_t   max_gas_provided = parent->gas - (parent->gas >> 6);                         \
@@ -155,7 +155,7 @@ do {                                                                            
 #define INIT_GAS(...)
 #define SUBGAS(...)
 #define FINALIZE_SUBCALL_GAS(...)
-#define UPDATE_GAS(...)
+#define UPDATE_SUBCALL_GAS(...)
 #define FINALIZE_AND_REFUND_GAS(...)
 #define KEEP_TRACK_GAS(evm) 0
 #define SELFDESTRUCT_GAS(evm, g) EVM_ERROR_UNSUPPORTED_CALL_OPCODE

@@ -1,8 +1,8 @@
-#include "../core/util/mem.h"
-#include "../core/util/utils.h"
-#include "../third-party/crypto/ecdsa.h"
-#include "../third-party/crypto/ripemd160.h"
-#include "../third-party/crypto/secp256k1.h"
+#include "../../../core/util/mem.h"
+#include "../../../core/util/utils.h"
+#include "../../../third-party/crypto/ecdsa.h"
+#include "../../../third-party/crypto/ripemd160.h"
+#include "../../../third-party/crypto/secp256k1.h"
 #include "evm.h"
 #include "gas.h"
 
