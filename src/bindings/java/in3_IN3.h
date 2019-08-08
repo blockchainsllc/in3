@@ -252,6 +252,10 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv*, jobject);
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject);
 
+JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstring jreq);
+
+JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv* env, jobject ob, jstring jreq);
+
 #ifdef __cplusplus
 }
 #endif

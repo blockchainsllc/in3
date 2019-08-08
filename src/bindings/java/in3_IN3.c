@@ -3,8 +3,8 @@
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/send.h"
-#include "../../verifier/eth1/full/eth_full.h"
 #include "../../core/util/mem.h"
+#include "../../verifier/eth1/full/eth_full.h"
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   jlong l = (*env)->GetLongField(env, obj, (*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), "ptr", "J"));
@@ -423,6 +423,108 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv* env, jobject ob, jstring jre
     (*env)->ThrowNew(env, Exception, error);
   }
   return js;
+}
+
+static jobject toObject(JNIEnv* env, d_token_t* t) {
+  jclass clz;
+  switch (d_type(t)) {
+    case T_NULL:
+      return NULL;
+    case T_BOOLEAN:
+      clz = (*env)->FindClass(env, "java/lang/Boolean");
+      return (*env)->CallStaticObjectMethod(env, clz, (*env)->GetStaticMethodID(env, clz, "valueOf", "(Z)Ljava/lang/Boolean;"), (bool) d_int(t));
+    case T_INTEGER:
+      clz = (*env)->FindClass(env, "java/lang/Integer");
+      return (*env)->CallStaticObjectMethod(env, clz, (*env)->GetStaticMethodID(env, clz, "valueOf", "(I)Ljava/lang/Integer;"), d_int(t));
+    case T_STRING:
+      return (*env)->NewStringUTF(env, d_string(t));
+    case T_BYTES: {
+      char tmp[t->len * 2 + 3];
+      tmp[0] = '0';
+      tmp[1] = 'x';
+      bytes_to_hex(t->data, t->len, tmp + 2);
+      return (*env)->NewStringUTF(env, tmp);
+    }
+    case T_OBJECT: {
+      clz           = (*env)->FindClass(env, "in3/JSON");
+      jobject   map = (*env)->NewObject(env, clz, (*env)->GetMethodID(env, clz, "<init>", "()V"));
+      jmethodID put = (*env)->GetMethodID(env, clz, "put", "(ILjava/lang/Object;)V");
+      for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter))
+        (*env)->CallVoidMethod(env, map, put, iter.token->key, toObject(env, iter.token));
+      return map;
+    }
+    case T_ARRAY: {
+      jobject array = (*env)->NewObjectArray(env, d_len(t), (*env)->FindClass(env, "java/lang/Object"), NULL);
+      for (int i = 0; i < d_len(t); i++) (*env)->SetObjectArrayElement(env, array, i, toObject(env, d_get_at(t, i)));
+      return array;
+    }
+  }
+}
+
+JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv* env, jobject ob, jstring k) {
+  jint        val = 0;
+  const char* str = (*env)->GetStringUTFChars(env, k, 0);
+  val             = key(str);
+  (*env)->ReleaseStringUTFChars(env, k, str);
+  return ob ? val : 0;
+}
+
+/*
+ * Class:     in3_IN3
+ * Method:    send
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstring jreq) {
+  jni = env;
+
+  const char* str    = (*env)->GetStringUTFChars(env, jreq, 0);
+  d_token_t*  result = NULL;
+  char        error[10000];
+  int         res;
+  jobject     js = NULL;
+
+  in3_ctx_t* ctx = new_ctx(get_in3(env, ob), (char*) str);
+
+  if (!ctx->error) {
+    res = in3_send_ctx(ctx);
+    if (res >= 0) {
+      d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+      if (r)
+        js = toObject(env, result = r);
+      else if ((r = d_get(ctx->responses[0], K_ERROR))) {
+        if (d_type(r) == T_OBJECT) {
+          str_range_t s = d_to_json(r);
+          strncpy(error, s.data, s.len);
+          error[s.len] = '\0';
+        } else {
+          strncpy(error, d_string(r), d_len(r));
+          error[d_len(r)] = '\0';
+        }
+      } else if (ctx->error)
+        strcpy(error, ctx->error);
+      else
+        strcpy(error, "No Result and also no error");
+
+    } else if (ctx->error)
+      strcpy(error, ctx->error);
+    else
+      strcpy(error, "Error sending the request");
+  } else
+    strcpy(error, ctx->error);
+
+  //need to release this string when done with it in order to
+  //avoid memory leak
+  (*env)->ReleaseStringUTFChars(env, jreq, str);
+
+  free_ctx(ctx);
+
+  if (result)
+    return js;
+  else {
+    jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
+    (*env)->ThrowNew(env, Exception, error);
+  }
+  return NULL;
 }
 
 /*
