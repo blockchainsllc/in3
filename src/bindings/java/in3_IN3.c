@@ -591,6 +591,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env, jclass clz, jstring fn, jstring json) {
+  UNUSED_VAR(clz);
   const char*     fnc = (*env)->GetStringUTFChars(env, fn, 0);
   call_request_t* rq  = parseSignature((char*) fnc);
   (*env)->ReleaseStringUTFChars(env, fn, fnc);
@@ -630,6 +631,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Lin3/JSON;
  */
 JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env, jclass clz, jstring fn, jstring data) {
+  UNUSED_VAR(clz);
   const char*     fnc = (*env)->GetStringUTFChars(env, fn, 0);
   call_request_t* rq  = parseSignature((char*) fnc);
   (*env)->ReleaseStringUTFChars(env, fn, fnc);
