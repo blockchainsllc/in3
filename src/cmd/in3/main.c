@@ -18,7 +18,7 @@
 #endif
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/full/eth_full.h"
-#include "../../verifier/eth1/full/evm.h"
+#include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "in3_storage.h"
 #include <inttypes.h>

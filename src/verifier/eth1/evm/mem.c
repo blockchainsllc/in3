@@ -4,8 +4,8 @@
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/bignum.h"
-#include "../../../verifier/eth1/nano/merkle.h"
-#include "../../../verifier/eth1/nano/serialize.h"
+#include "../nano/merkle.h"
+#include "../nano/serialize.h"
 #include "evm.h"
 #include "gas.h"
 #include <stdio.h>

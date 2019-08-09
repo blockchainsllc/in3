@@ -7,7 +7,7 @@
 #include "../src/core/util/log.h"
 #include "../src/core/util/utils.h"
 #include "../src/verifier/eth1/basic/trie.h"
-#include "../src/verifier/eth1/full/evm.h"
+#include "../src/verifier/eth1/evm/evm.h"
 #include "../src/verifier/eth1/nano/serialize.h"
 #include <inttypes.h>
 #include <string.h>
