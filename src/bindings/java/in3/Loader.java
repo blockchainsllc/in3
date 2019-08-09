@@ -46,13 +46,8 @@ public class Loader {
 
         // ok, not found, so we use the one in the package.
 
-        String OS = System.getProperty("os.name").toLowerCase();
-
         String libFileName = System.mapLibraryName("in3");
-        String jarPath = "/in3/native/";
-        if (OS.indexOf("mac") >= 0) { // MacOs
-            jarPath += "macos/" + libFileName;
-        }
+        String jarPath = "/in3/native/" + libFileName;
 
         URL src = Loader.class.getResource(jarPath);
         if (src == null)

@@ -25,7 +25,9 @@ add_jar(in3j
   in3/eth1/Transaction.java
   in3/eth1/TransactionRequest.java
 
-  in3/native/macos/libin3.dylib
+  in3/native/libin3.dylib
+  in3/native/libin3.so
+  in3/native/in3.dll
   
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
   OUTPUT_NAME in3
