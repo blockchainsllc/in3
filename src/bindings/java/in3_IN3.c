@@ -461,6 +461,7 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
       return array;
     }
   }
+  return NULL;
 }
 
 JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv* env, jclass ob, jstring k) {
