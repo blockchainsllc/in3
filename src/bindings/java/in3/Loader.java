@@ -56,20 +56,32 @@ public class Loader {
                 throw new IOException(
                         "Could not delete the library from temp-file! Maybe some other proccess is still using it ");
 
-            if (!lib.exists())
-                try (InputStream is = src.openStream(); OutputStream os = new FileOutputStream(lib)) {
+            if (!lib.exists()) {
+                InputStream is = null;
+                OutputStream os = null;
+                try {
+                    is = src.openStream();
+                    os = new FileOutputStream(lib);
                     byte[] buffer = new byte[4096];
                     int read = 0;
                     while ((read = is.read(buffer)) >= 0)
                         os.write(buffer, 0, read);
-                    if (!System.getProperty("os.name").contains("Windows")) {
-                        try {
-                            Runtime.getRuntime().exec(new String[] { "chmod", "755", lib.getAbsolutePath() }).waitFor();
-                        } catch (Throwable e) {
-                        }
+                } finally {
+                    if (is != null)
+                        is.close();
+                    if (os != null)
+                        os.close();
+                }
+                if (!System.getProperty("os.name").contains("Windows")) {
+                    try {
+                        Runtime.getRuntime().exec(new String[] { "chmod", "755", lib.getAbsolutePath() }).waitFor();
+                    } catch (Throwable e) {
                     }
                 }
-            System.load(lib.getAbsolutePath());
+                System.load(lib.getAbsolutePath());
+
+            }
+
         } catch (Exception ex) {
             throw new RuntimeException("Could not load the native library ", ex);
         }
