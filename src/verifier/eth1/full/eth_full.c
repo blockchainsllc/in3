@@ -7,7 +7,7 @@
 #include "../../../verifier/eth1/basic/eth_basic.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/serialize.h"
-#include "evm.h"
+#include "../evm/evm.h"
 #include <string.h>
 
 int in3_verify_eth_full(in3_vctx_t* vc) {

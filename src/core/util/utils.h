@@ -77,6 +77,11 @@ char* _strdupn(char* src, int len);
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);
 
+/**
+ * sets a variable value to 32byte word.
+ */
+void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
+
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \
     l--;                     \

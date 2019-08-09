@@ -3,6 +3,10 @@
  * */
 
 #include "evm.h"
+#include "accounts.h"
+#include "big.h"
+#include "../../../core/util/utils.h"
+#include "../../../core/util/mem.h"
 
 #ifdef EVM_GAS
 #define subgas(g)                  \
@@ -15,14 +19,17 @@
   }
 #define op_exec(m, gc)                                \
   {                                                   \
-    if (evm->gas < (gc)) return EVM_ERROR_OUT_OF_GAS; \
-    evm->gas -= (gc);                                 \
+    subgas(gc)                                        \
     return m;                                         \
   }
 #else
 #define op_exec(m, gas) return m;
 #define subgas(g)
 #endif
+
+
+
+
 
 #define GAS_CC_NET_SSTORE_NOOP_GAS 200             /**< Once per SSTORE operation if the value doesn't change*/
 #define GAS_CC_NET_SSTORE_INIT_GAS 20000           /**< Once per SSTORE operation from clean zero*/
@@ -87,3 +94,70 @@
 ///  fork values
 #define FRONTIER_G_EXPBYTE 10 /**< This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.*/
 #define FRONTIER_G_SLOAD 50   /**< This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.*/
+
+#ifdef EVM_GAS
+void init_gas(evm_t *evm) ;
+void evm_init(evm_t *evm) ;
+void finalize_and_refund_gas(evm_t* evm) ;
+void finalize_subcall_gas(evm_t* evm, int success, evm_t *parent);
+
+void update_gas(evm_t* evm, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
+       wlen_t mode, uint8_t* value, wlen_t l_value) ;
+int selfdestruct_gas(evm_t *evm) ;
+void update_account_code(evm_t *evm, account_t* new_account);
+#endif
+
+#ifdef EVM_GAS
+#define FREE_EVM(evm) evm_free(evm)
+#define INIT_EVM(evm) evm_init(evm)
+#define INIT_GAS(evm) init_gas(evm)
+#define SUBGAS(evm, g) subgas(evm, g)
+#define SELFDESTRUCT_GAS(evm, g) selfdestruct_gas(evm)
+#define KEEP_TRACK_GAS(evm) evm->gas
+#define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
+#define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value) \
+do {                                                                                      \
+  evm.parent = parent;                                                                    \
+  uint64_t   max_gas_provided = parent->gas - (parent->gas >> 6);                         \
+  if (!address) {                                                                         \
+    new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller);\
+    gas = max_gas_provided;                                                               \
+  } else                                                                                  \
+    gas = min(gas, max_gas_provided);                                                     \
+  evm.gas            = gas;                                                               \
+  evm.gas_price.data = parent->gas_price.data;                                            \
+  evm.gas_price.len  = parent->gas_price.len;                                             \
+  if (res == 0 && !big_is_zero(value, l_value)) {                                         \
+    if (mode == EVM_CALL_MODE_STATIC)                                                     \
+      res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;                                            \
+    else {                                                                                \
+      uint32_t gas_call_value = 0;                                                        \
+      if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {                 \
+        evm.gas += G_CALLSTIPEND;                                                         \
+        gas_call_value = G_CALLVALUE;                                                     \
+      }                                                                                   \
+      res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);\
+    }                                                                                     \
+  }                                                                                       \
+  if (res == 0) {                                                                         \
+    if (parent->gas < gas)                                                                \
+      res = EVM_ERROR_OUT_OF_GAS;                                                         \
+    else                                                                                  \
+      parent->gas -= gas;                                                                 \
+  }                                                                                       \
+} while(0)
+
+#define FINALIZE_AND_REFUND_GAS(evm) finalize_and_refund_gas(evm)
+#define UPDATE_ACCOUNT_CODE(evm, new_account) update_account_code(evm, new_account)
+#else
+#define FREE_EVM(...)
+#define INIT_EVM(...)
+#define INIT_GAS(...)
+#define SUBGAS(...)
+#define FINALIZE_SUBCALL_GAS(...)
+#define UPDATE_SUBCALL_GAS(...)
+#define FINALIZE_AND_REFUND_GAS(...)
+#define KEEP_TRACK_GAS(evm) 0
+#define SELFDESTRUCT_GAS(evm, g) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
+#define UPDATE_ACCOUNT_CODE(...)
+#endif
