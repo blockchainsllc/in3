@@ -4,32 +4,35 @@ SET_TARGET_PROPERTIES(libin3 PROPERTIES OUTPUT_NAME in3)
 
 target_link_libraries(libin3  eth_full eth_api)
 
-find_package(Java REQUIRED)
-find_package(JNI REQUIRED)
-include(UseJava)
+IF (NOT DEFINED ANDROID_ABI)
 
-project(in3j)
+  find_package(Java REQUIRED)
+  find_package(JNI REQUIRED)
+  include(UseJava)
 
-include_directories(${JNI_INCLUDE_DIRS})
-#set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.6" "-target" "1.6")
+  project(in3j)
 
-add_jar(in3j 
-  in3/IN3.java 
-  in3/JSON.java 
-  in3/StorageProvider.java 
-  in3/Proof.java 
-  in3/Loader.java
+  include_directories(${JNI_INCLUDE_DIRS})
+  #set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.6" "-target" "1.6")
 
-  in3/eth1/API.java
-  in3/eth1/Block.java
-  in3/eth1/Transaction.java
-  in3/eth1/TransactionRequest.java
+  add_jar(in3j 
+    in3/IN3.java 
+    in3/JSON.java 
+    in3/StorageProvider.java 
+    in3/Proof.java 
+    in3/Loader.java
 
-  in3/native/libin3.dylib
-  in3/native/libin3.so
-  in3/native/in3.dll
-  
-  OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
-  OUTPUT_NAME in3
-)
+    in3/eth1/API.java
+    in3/eth1/Block.java
+    in3/eth1/Transaction.java
+    in3/eth1/TransactionRequest.java
 
+    in3/native/libin3.dylib 
+    in3/native/libin3.so 
+    in3/native/in3.dll
+
+    OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
+    OUTPUT_NAME in3
+  )
+
+ENDIF ()
