@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Loader {
@@ -20,11 +19,9 @@ public class Loader {
 
     private static String md5(InputStream input) throws IOException {
         BufferedInputStream in = new BufferedInputStream(input);
-
         try {
-            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
-            new DigestInputStream(in, digest).readAllBytes();
-            return new String(digest.digest());
+            DigestInputStream dis = new DigestInputStream(in, java.security.MessageDigest.getInstance("MD5"));
+            return new java.math.BigInteger(1, dis.getMessageDigest().digest()).toString(16);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("MD5 algorithm is not available: " + e);
         } finally {
