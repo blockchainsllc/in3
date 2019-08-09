@@ -1,0 +1,5 @@
+in3 (0.1.12~bionic) bionic; urgency=medium
+
+  * Initial Release. Updated install file. Trying to link libcurl. Overriding build depends. removed install file. modified make file to include destdir. attempting to include tutorial example.
+
+ -- devops_slock.it <devops@slock.it>  Mon, 05 Aug 2019 12:09:34 +0400
