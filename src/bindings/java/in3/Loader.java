@@ -58,7 +58,10 @@ public class Loader {
 
             if (!lib.exists())
                 try (InputStream is = src.openStream(); OutputStream os = new FileOutputStream(lib)) {
-                    is.transferTo(os);
+                    byte[] buffer = new byte[4096];
+                    int read = 0;
+                    while ((read = is.read(buffer)) >= 0)
+                        os.write(buffer, 0, read);
                     if (!System.getProperty("os.name").contains("Windows")) {
                         try {
                             Runtime.getRuntime().exec(new String[] { "chmod", "755", lib.getAbsolutePath() }).waitFor();
