@@ -196,26 +196,4 @@ public class Block {
         return data.getStringArray("uncles");
     }
 
-    // Test it
-    public static void main(String[] args) {
-        in3.eth1.EthAPI api = new in3.eth1.EthAPI(new IN3());
-
-        Object[] result = (Object[]) api.call("0x2736D225f85740f42D17987100dc8d58e9e16252",
-                "servers(uint256):(string,address,uint256,uint256,uint256,address)", 1);
-
-        /*
-         * 
-         * 
-         * TransactionRequest r = new TransactionRequest(); r.to =
-         * "0x2736D225f85740f42D17987100dc8d58e9e16252"; r.function =
-         * "servers(uint256):(string,address,uint256,uint256,uint256,address)"; r.params
-         * = new Object[] { 1 };
-         * 
-         * Object[] result = (Object[]) api.call(r, Block.LATEST);
-         */
-        System.out.println("url : " + result[0]);
-        System.out.println("owner : " + result[1]);
-        System.out.println("deposit : " + result[2]);
-        System.out.println("props : " + result[3]);
-    }
 }

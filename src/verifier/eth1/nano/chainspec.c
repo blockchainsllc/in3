@@ -14,6 +14,7 @@ typedef struct spec_ {
 static spec_t* specs = NULL;
 
 static void* log_error(char* msg) {
+  UNUSED_VAR(msg);
   in3_log_error(msg);
   return NULL;
 }

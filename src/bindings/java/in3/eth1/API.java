@@ -9,14 +9,14 @@ import java.math.BigInteger;
  * a Wrapper for the incubed client offering Type-safe Access and additional
  * helper functions.
  */
-public class EthAPI {
+public class API {
 
     private IN3 in3;
 
     /**
      * creates a API using the given incubed instance.
      */
-    public EthAPI(IN3 in3) {
+    public API(IN3 in3) {
         this.in3 = in3;
     }
 

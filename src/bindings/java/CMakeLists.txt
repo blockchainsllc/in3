@@ -19,7 +19,7 @@ add_jar(in3j
   in3/StorageProvider.java 
   in3/Proof.java 
 
-  in3/eth1/EthAPI.java
+  in3/eth1/API.java
   in3/eth1/Block.java
   in3/eth1/Transaction.java
   in3/eth1/TransactionRequest.java

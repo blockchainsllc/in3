@@ -81,7 +81,7 @@ public class HelloIN3 {
         in3.setChainId(0x1); // set it to mainnet (which is also dthe default)
 
         // create a API instance which uses our incubed.
-        EthAPI api = new EthAPI(in3);
+        API api = new API(in3);
 
         // read the latest Block including all Transactions.
         Block latestBlock = api.getBlockByNumber(Block.LATEST, true);
@@ -123,7 +123,7 @@ public class HelloIN3 {
        in3.setChainId(0x1);  // set it to mainnet (which is also dthe default)
 
        // create a API instance which uses our incubed.
-       EthAPI api = new EthAPI(in3);
+       API api = new API(in3);
 
        // call a contract, which uses eth_call to get the result. 
        Object[] result = (Object[]) api.call(                                   // call a function of a contract
