@@ -240,6 +240,13 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv*, jobject, jstring);
 
 /*
  * Class:     in3_IN3
+ * Method:    sendobject
+ * Signature: (Ljava/lang/String;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv*, jobject, jstring);
+
+/*
+ * Class:     in3_IN3
  * Method:    free
  * Signature: ()V
  */
@@ -252,9 +259,48 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv*, jobject);
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject);
 
-JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstring jreq);
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* Header for class in3_JSON */
 
-JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv* env, jobject ob, jstring jreq);
+#ifndef _Included_in3_JSON
+#define _Included_in3_JSON
+#ifdef __cplusplus
+extern "C" {
+#endif
+/*
+ * Class:     in3_JSON
+ * Method:    key
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv*, jclass, jstring);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* Header for class in3_eth1_TransactionRequest */
+
+#ifndef _Included_in3_eth1_TransactionRequest
+#define _Included_in3_eth1_TransactionRequest
+#ifdef __cplusplus
+extern "C" {
+#endif
+/*
+ * Class:     in3_eth1_TransactionRequest
+ * Method:    abiEncode
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv*, jclass, jstring, jstring);
+
+/*
+ * Class:     in3_eth1_TransactionRequest
+ * Method:    abiDecode
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Lin3/JSON;
+ */
+JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv*, jclass, jstring, jstring);
 
 #ifdef __cplusplus
 }

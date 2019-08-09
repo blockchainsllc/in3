@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "CodeLens (Launch) - IN3",
+            "request": "launch",
+            "mainClass": "in3.IN3",
+            "projectName": "in3-core_90a61d4f"
+        },
+        {
             "name": "(lldb) Attach",
             "type": "cppdbg",
             "request": "attach",
@@ -16,7 +23,7 @@
             "name": "(lldb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/cmd/in3",
+            "program": "${workspaceFolder}/build/bin/in3",
             "args": [
                 "-debug",
                 "eth_getTransactionByHash",
@@ -103,6 +110,22 @@
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "java",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/bin/java",
+            "args": [
+                "-cp",
+                "in3.jar",
+                "in3.eth1.Block"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build/lib",
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb"

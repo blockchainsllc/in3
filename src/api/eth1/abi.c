@@ -122,9 +122,10 @@ char* parse_tuple(bytes_builder_t* bb, char* c) {
 }
 
 call_request_t* parseSignature(char* sig) {
-  call_request_t* req  = _malloc(sizeof(call_request_t));
-  int             l    = strlen(sig);
-  char *          ends = memchr(sig, ':', l), *startb = memchr(sig, '(', l);
+  call_request_t* req = _malloc(sizeof(call_request_t));
+  req->error          = NULL;
+  int   l             = strlen(sig);
+  char *ends = memchr(sig, ':', l), *startb = memchr(sig, '(', l);
   if (!startb) {
     add_error(req, "Invalid call-signature");
     return req;

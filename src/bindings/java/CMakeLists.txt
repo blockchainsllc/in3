@@ -2,7 +2,7 @@
 add_library(libin3 SHARED in3.c in3_IN3.c)
 SET_TARGET_PROPERTIES(libin3 PROPERTIES OUTPUT_NAME in3)
 
-target_link_libraries(libin3  eth_full)
+target_link_libraries(libin3  eth_full eth_api)
 
 find_package(Java REQUIRED)
 find_package(JNI REQUIRED)
@@ -21,11 +21,10 @@ add_jar(in3j
 
   in3/eth1/EthAPI.java
   in3/eth1/Block.java
+  in3/eth1/Transaction.java
+  in3/eth1/TransactionRequest.java
   
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
   OUTPUT_NAME in3
 )
 
-
-message(STATUS "Jar file ${_jarFile}")
-message(STATUS "Class compiled to ${_classDir}")

@@ -1,8 +1,10 @@
 #include "in3_IN3.h"
+#include "../../api/eth1/abi.h"
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/send.h"
+#include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/full/eth_full.h"
 
@@ -461,7 +463,7 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
   }
 }
 
-JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv* env, jobject ob, jstring k) {
+JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv* env, jclass ob, jstring k) {
   jint        val = 0;
   const char* str = (*env)->GetStringUTFChars(env, k, 0);
   val             = key(str);
@@ -576,8 +578,80 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
   UNUSED_VAR(ob);
   in3_t* in3 = in3_new();
   in3_register_eth_full();
+  in3_log_set_level(LOG_DEBUG);
   in3->transport = Java_in3_IN3_transport;
   //  in3->transport = send_curl;
 
   return (jlong)(size_t) in3;
+}
+
+/*
+ * Class:     in3_eth1_TransactionRequest
+ * Method:    abiEncode
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env, jclass clz, jstring fn, jstring json) {
+  const char*     fnc = (*env)->GetStringUTFChars(env, fn, 0);
+  call_request_t* rq  = parseSignature((char*) fnc);
+  (*env)->ReleaseStringUTFChars(env, fn, fnc);
+  if (rq->error) {
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), rq->error);
+    req_free(rq);
+    return NULL;
+  }
+
+  const char* json_data = (*env)->GetStringUTFChars(env, json, 0);
+  json_ctx_t* json_ctx  = parse_json((char*) json_data);
+  if (!json_ctx) {
+    req_free(rq);
+    (*env)->ReleaseStringUTFChars(env, json, json_data);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error parsing the data");
+    return NULL;
+  }
+
+  if (set_data(rq, json_ctx->result, rq->in_data) < 0) {
+    req_free(rq);
+    free_json(json_ctx);
+    (*env)->ReleaseStringUTFChars(env, json, json_data);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "invalid data for the given signature");
+    return NULL;
+  }
+
+  jstring res = (jstring) toObject(env, (d_token_t*) &rq->call_data->b);
+  req_free(rq);
+  free_json(json_ctx);
+  (*env)->ReleaseStringUTFChars(env, json, json_data);
+  return res;
+}
+
+/*
+ * Class:     in3_eth1_TransactionRequest
+ * Method:    abiDecode
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Lin3/JSON;
+ */
+JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env, jclass clz, jstring fn, jstring data) {
+  const char*     fnc = (*env)->GetStringUTFChars(env, fn, 0);
+  call_request_t* rq  = parseSignature((char*) fnc);
+  (*env)->ReleaseStringUTFChars(env, fn, fnc);
+  if (rq->error) {
+    req_free(rq);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), rq->error);
+    return NULL;
+  }
+
+  const char* jdata = (*env)->GetStringUTFChars(env, data, 0);
+  int         l     = strlen(jdata);
+  uint8_t     bdata[l >> 1];
+  l = hex2byte_arr((char*) jdata + 2, l - 2, bdata, l);
+  (*env)->ReleaseStringUTFChars(env, data, jdata);
+
+  json_ctx_t* res    = req_parse_result(rq, bytes(bdata, l));
+  jobject     result = res ? toObject(env, res->result) : NULL;
+  req_free(rq);
+  if (res)
+    free_json(res);
+  else
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error decoding the data");
+
+  return result;
 }
