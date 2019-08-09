@@ -95,7 +95,7 @@ gcc7-mingw-static:
  image: docker.slock.it/build-images/cmake:gcc7-mingw
  extends: .conanbuild
  variables:
-   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static"
+   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true" 
 
 #gcc7-mingw-shared:
 # image: docker.slock.it/build-images/cmake:gcc7-mingw
@@ -117,6 +117,8 @@ gcc8-armv7hf:
 gcc8-x86:
   image: docker.slock.it/build-images/cmake:gcc8-x86
   extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DJAVA=true" 
       
 gcc5:
   image: docker.slock.it/build-images/cmake:gcc5

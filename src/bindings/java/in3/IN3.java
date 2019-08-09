@@ -195,7 +195,7 @@ public class IN3 {
     }
 
     static {
-        System.loadLibrary("in3");
+        Loader.loadLibrary();
     }
 
     /** internal function to handle the internal requests */

@@ -11,7 +11,7 @@ import java.math.*;
  */
 public class JSON {
     static {
-        System.loadLibrary("in3");
+        Loader.loadLibrary();
     }
 
     private HashMap<Integer, Object> map = new HashMap<Integer, Object>();

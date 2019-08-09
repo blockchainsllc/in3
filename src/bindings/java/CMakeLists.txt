@@ -18,11 +18,14 @@ add_jar(in3j
   in3/JSON.java 
   in3/StorageProvider.java 
   in3/Proof.java 
+  in3/Loader.java
 
   in3/eth1/API.java
   in3/eth1/Block.java
   in3/eth1/Transaction.java
   in3/eth1/TransactionRequest.java
+
+  in3/native/macos/libin3.dylib
   
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
   OUTPUT_NAME in3

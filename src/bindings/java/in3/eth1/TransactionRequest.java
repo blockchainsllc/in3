@@ -78,7 +78,7 @@ public class TransactionRequest {
     }
 
     static {
-        System.loadLibrary("in3");
+        Loader.loadLibrary();
     }
 
     private static native String abiEncode(String function, String jsonParams);
