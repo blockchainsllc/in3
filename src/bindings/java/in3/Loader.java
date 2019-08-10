@@ -38,14 +38,14 @@ public class Loader {
 
         try {
             // try to load it from the path
-            System.loadLibrary("in3");
+            System.loadLibrary("in3_jni");
             return;
         } catch (java.lang.UnsatisfiedLinkError x) {
         }
 
         // ok, not found, so we use the one in the package.
 
-        String libFileName = System.mapLibraryName("in3");
+        String libFileName = System.mapLibraryName("in3_jni");
         String jarPath = "/in3/native/" + libFileName;
 
         URL src = Loader.class.getResource(jarPath);

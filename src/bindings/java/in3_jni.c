@@ -1,4 +1,4 @@
-#include "in3_IN3.h"
+#include "in3_jni.h"
 #include "../../api/eth1/abi.h"
 #include "../../core/client/cache.h"
 #include "../../core/client/client.h"

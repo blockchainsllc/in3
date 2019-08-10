@@ -1,8 +1,6 @@
 
-add_library(libin3 SHARED in3.c in3_IN3.c)
-SET_TARGET_PROPERTIES(libin3 PROPERTIES OUTPUT_NAME in3)
-
-target_link_libraries(libin3  eth_full eth_api)
+add_library(in3_jni SHARED in3_jni.c)
+target_link_libraries(in3_jni  eth_full eth_api)
 
 IF (NOT DEFINED ANDROID_ABI)
 
@@ -28,9 +26,9 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/eth1/Transaction.java
     in3/eth1/TransactionRequest.java
 
-    in3/native/libin3.dylib 
-    in3/native/libin3.so 
-    in3/native/in3.dll
+    in3/native/libin3_jni.dylib 
+    in3/native/libin3_jni.so 
+    in3/native/in3_jni.dll
 
     OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
     OUTPUT_NAME in3
