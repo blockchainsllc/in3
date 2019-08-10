@@ -59,7 +59,6 @@ public class Loader {
                         "Could not delete the library from temp-file! Maybe some other proccess is still using it ");
 
             if (!lib.exists()) {
-                System.out.println("copying... " + src);
                 InputStream is = null;
                 OutputStream os = null;
                 try {
