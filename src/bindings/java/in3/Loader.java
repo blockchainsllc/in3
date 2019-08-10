@@ -1,31 +1,33 @@
 package in3;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
-import java.security.DigestInputStream;
-import java.security.NoSuchAlgorithmException;
+import java.security.MessageDigest;
+import java.util.Arrays;
 
 public class Loader {
 
     private static boolean loaded = false;
 
-    private static String md5(InputStream input) throws IOException {
-        BufferedInputStream in = new BufferedInputStream(input);
+    private static byte[] md5(InputStream is) throws IOException {
         try {
-            DigestInputStream dis = new DigestInputStream(in, java.security.MessageDigest.getInstance("MD5"));
-            return new java.math.BigInteger(1, dis.getMessageDigest().digest()).toString(16);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("MD5 algorithm is not available: " + e);
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.reset();
+            byte[] bytes = new byte[2048];
+            int numBytes;
+            while ((numBytes = is.read(bytes)) != -1)
+                md.update(bytes, 0, numBytes);
+            return md.digest();
+
+        } catch (Exception ex) {
+            throw new IOException(ex);
         } finally {
-            in.close();
+            is.close();
         }
     }
 
@@ -52,11 +54,12 @@ public class Loader {
 
         try {
             File lib = new File(new File(System.getProperty("java.io.tmpdir")), libFileName);
-            if (lib.exists() && !md5(src.openStream()).equals(md5(new FileInputStream(lib))) && !lib.delete())
+            if (lib.exists() && !Arrays.equals(md5(src.openStream()), md5(new FileInputStream(lib))) && !lib.delete())
                 throw new IOException(
                         "Could not delete the library from temp-file! Maybe some other proccess is still using it ");
 
             if (!lib.exists()) {
+                System.out.println("copying... " + src);
                 InputStream is = null;
                 OutputStream os = null;
                 try {
@@ -78,9 +81,9 @@ public class Loader {
                     } catch (Throwable e) {
                     }
                 }
-                System.load(lib.getAbsolutePath());
 
             }
+            System.load(lib.getAbsolutePath());
 
         } catch (Exception ex) {
             throw new RuntimeException("Could not load the native library ", ex);
