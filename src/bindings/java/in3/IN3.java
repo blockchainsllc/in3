@@ -14,6 +14,7 @@ import in3.StorageProvider;
 public class IN3 {
 
     private long ptr;
+    private StorageProvider provider;
 
     /** number of seconds requests can be cached. */
     public native int getCacheTimeout();
@@ -126,13 +127,18 @@ public class IN3 {
     public native void setAutoUpdateList(boolean val);
 
     /** provides the ability to cache content */
-    public native StorageProvider getStorageProvider();
+    public StorageProvider getStorageProvider() {
+        return provider;
+    }
 
     /**
      * provides the ability to cache content like nodelists, contract codes and
      * validatorlists
      */
-    public native void setStorageProvider(StorageProvider val);
+    public void setStorageProvider(StorageProvider val) {
+        provider = val;
+        initcache();
+    }
 
     /**
      * send a request. The request must a valid json-string with method and params
@@ -184,6 +190,8 @@ public class IN3 {
     private native void free();
 
     private native long init();
+
+    private native void initcache();
 
     /** constrcutor. creates a new Incubed client. */
     public IN3() {
@@ -239,6 +247,14 @@ public class IN3 {
         Object[] params = new Object[args.length - 1];
         for (int i = 1; i < args.length; i++)
             params[i - 1] = args[i];
-        System.out.println(new IN3().sendRPC(args[0], params));
+
+        // create client
+        IN3 in3 = new IN3();
+
+        // set cache in tempfolder
+        in3.setStorageProvider(new in3.TempStorageProvider());
+
+        // execute the command
+        System.out.println(in3.sendRPC(args[0], params));
     }
 }

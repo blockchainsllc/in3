@@ -1,5 +1,6 @@
 #include "in3_IN3.h"
 #include "../../api/eth1/abi.h"
+#include "../../core/client/cache.h"
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
@@ -327,13 +328,20 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider(JNIEnv* env, jobject o
 
 static JNIEnv* jni = NULL;
 
-bytes_t* storage_get_item(void* cptr, char* key) {
-  jobject   handler = (jobject) cptr;
-  jclass    cls     = (*jni)->GetObjectClass(jni, handler);
-  jmethodID mid     = (*jni)->GetMethodID(jni, cls, "getItem", "(Ljava/lang/String;)[B");
-  jstring   js      = (*jni)->NewStringUTF(jni, key);
+static jobject get_storage_handler(void* cptr) {
+  jclass    cls = (*jni)->GetObjectClass(jni, (jobject) cptr);
+  jmethodID mid = (*jni)->GetMethodID(jni, cls, "getStorageProvider", "()Lin3/StorageProvider;");
+  return (*jni)->CallObjectMethod(jni, (jobject) cptr, mid);
+}
 
-  jbyteArray result = (jbyteArray)(*jni)->CallObjectMethod(jni, handler, mid, js);
+bytes_t* storage_get_item(void* cptr, char* key) {
+  jobject handler = get_storage_handler(cptr);
+  if (!handler) return NULL;
+
+  jstring    js     = (*jni)->NewStringUTF(jni, key);
+  jbyteArray result = (jbyteArray)(*jni)->CallObjectMethod(jni, handler,
+                                                           (*jni)->GetMethodID(jni, (*jni)->GetObjectClass(jni, handler), "getItem", "(Ljava/lang/String;)[B"),
+                                                           js);
   if (result == NULL) return NULL;
 
   bytes_t* res = _malloc(sizeof(bytes_t));
@@ -345,27 +353,16 @@ bytes_t* storage_get_item(void* cptr, char* key) {
 }
 
 void storage_set_item(void* cptr, char* key, bytes_t* content) {
-  jobject    handler = (jobject) cptr;
-  jclass     cls     = (*jni)->GetObjectClass(jni, handler);
-  jmethodID  mid     = (*jni)->GetMethodID(jni, cls, "setItem", "(Ljava/lang/String;[B)V");
-  jstring    js      = (*jni)->NewStringUTF(jni, key);
-  jbyteArray bytes   = (*jni)->NewByteArray(jni, content->len);
+  jobject handler = get_storage_handler(cptr);
+  if (!handler) return;
+
+  jbyteArray bytes = (*jni)->NewByteArray(jni, content->len);
   (*jni)->SetByteArrayRegion(jni, bytes, 0, content->len, (jbyte*) content->data);
-  (*jni)->CallVoidMethod(jni, handler, mid, js, bytes);
+  (*jni)->CallVoidMethod(jni, handler, (*jni)->GetMethodID(jni, (*jni)->GetObjectClass(jni, handler), "setItem", "(Ljava/lang/String;[B)V"), (*jni)->NewStringUTF(jni, key), bytes);
 }
 
-/*
- * Class:     in3_IN3
- * Method:    setStorageProvider
- * Signature: (Lin3/StorageProvider;)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setStorageProvider(JNIEnv* env, jobject ob, jobject provider) {
-  in3_t* in3 = get_in3(env, ob);
-  if (in3->cacheStorage) _free(in3->cacheStorage);
-  in3->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
-  in3->cacheStorage->cptr     = provider;
-  in3->cacheStorage->get_item = storage_get_item;
-  in3->cacheStorage->set_item = storage_set_item;
+JNIEXPORT void JNICALL Java_in3_IN3_initcache(JNIEnv* env, jobject ob) {
+  in3_cache_init(get_in3(env, ob));
 }
 
 /*
@@ -536,7 +533,11 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstri
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
-  in3_free(get_in3(env, ob));
+  in3_t* in3 = get_in3(env, ob);
+  if (in3->cacheStorage)
+    (*env)->DeleteGlobalRef(env, (jobject) in3->cacheStorage->cptr);
+
+  in3_free(in3);
 }
 
 in3_ret_t Java_in3_IN3_transport(char** urls, int urls_len, char* payload, in3_response_t* res) {
@@ -580,8 +581,12 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
   in3_t* in3 = in3_new();
   in3_register_eth_full();
   in3_log_set_level(LOG_DEBUG);
-  in3->transport = Java_in3_IN3_transport;
-  //  in3->transport = send_curl;
+  in3->transport              = Java_in3_IN3_transport;
+  in3->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
+  in3->cacheStorage->cptr     = (*env)->NewGlobalRef(env, ob);
+  in3->cacheStorage->get_item = storage_get_item;
+  in3->cacheStorage->set_item = storage_set_item;
+  jni                         = env;
 
   return (jlong)(size_t) in3;
 }

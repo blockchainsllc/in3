@@ -258,6 +258,12 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv*, jobject);
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject);
+/*
+ * Class:     in3_IN3
+ * Method:    initcache
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_initcache(JNIEnv*, jobject);
 
 #ifdef __cplusplus
 }

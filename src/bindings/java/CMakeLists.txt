@@ -19,6 +19,7 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/IN3.java 
     in3/JSON.java 
     in3/StorageProvider.java 
+    in3/TempStorageProvider.java 
     in3/Proof.java 
     in3/Loader.java
 
