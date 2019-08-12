@@ -209,7 +209,7 @@ debian_package_deploy:
   tags:
     - short-jobs
   before_script:
-    - echo $PGP_PRIVATE_KEY
+    - echo $(PGP_PRIVATE_KEY)
     - |
       # checking GPG signing support
       if [ -n "$PGP_PRIVATE_KEY" ]; then
