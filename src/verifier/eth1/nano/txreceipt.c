@@ -11,20 +11,13 @@
 
 bytes_t* create_tx_path(uint32_t index) {
   uint8_t data[4];
-  int     i;
   bytes_t b = {.len = 4, .data = data};
 
   if (index == 0)
     b.len = 0;
   else {
     int_to_bytes(index, data);
-    for (i = 3; i >= 0; i--) {
-      if (data[i] == 0) {
-        b.data += i + 1;
-        b.len -= i + 1;
-        break;
-      }
-    }
+    b_optimize_len(&b);
   }
 
   bytes_builder_t* bb = bb_new();
