@@ -202,7 +202,10 @@ mac_os:
     - mac-mini-runner
 
 debian_package_deploy:
+  image: docker.slock.it/build-images/cmake:gcc8
   stage: deploy
+  tags:
+    - short-jobs
   dependencies:
     - build-in3
     - test-in3
@@ -210,8 +213,7 @@ debian_package_deploy:
     - apt-get install gnupg dput dh-make devscripts lintian
     - mv build/debian .
     - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
-  tags:
-    - short-jobs
+
 
 #pages:
 #  tags:
