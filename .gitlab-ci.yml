@@ -1,8 +1,10 @@
+variables:
+  PGP_PRIVATE_KEY: $PGP_KEY
+  PGP_PASSPHRASE: $PGP_PASSPHRASE
 stages:
   - build
   - test
   - deploy
-
 build-in3:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: build
@@ -206,13 +208,25 @@ debian_package_deploy:
   stage: deploy
   tags:
     - short-jobs
+  before_script:
+    - |
+      # checking GPG signing support
+      if [ -n "$PGP_PRIVATE_KEY" ]; then
+        echo "$PGP_PRIVATE_KEY" | gpg --batch --no-tty --allow-secret-key-import --import
+        export GPG_KEYID=$(gpg --with-colon --list-secret-keys | head -n1 | cut -d : -f 5)
+      else
+        echo -e "\033[0;31m****** GPG signing disabled ******\033[0m"
+      fi
+
   dependencies:
     - build-in3
     - test-in3
   script:
-    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential
+    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake
     - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
     - dpkg-buildpackage -b --no-sign
+    - dpkg-sig -g "--no-tty --digest-algo 'sha512' --passphrase '$(PGP_PASSPHRASE)'" \
+      -k $(GPG_KEYID) --sign builder ../*.dsc
 
 
 
