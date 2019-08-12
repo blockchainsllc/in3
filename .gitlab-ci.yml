@@ -210,7 +210,8 @@ debian_package_deploy:
     - apt install gnupg dput dh-make devscripts lintian
     - mv build/debian .
     - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
-
+tags:
+  - short-jobs
 
 #pages:
 #  tags:
