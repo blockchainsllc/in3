@@ -210,7 +210,7 @@ debian_package_deploy:
     - build-in3
     - test-in3
   script:
-    - sudo apt-get -y install gnupg dput dh-make devscripts lintian
+    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential
     - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
     - dpkg-buildpackage -b --no-sign
 
