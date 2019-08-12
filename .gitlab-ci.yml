@@ -206,25 +206,29 @@ debian_package_deploy:
   tags:
     - short-jobs
   before_script:
-    - echo ${PGP_PRIVATE_KEY}
+    - echo $PGP_PRIVATE_KEY
+    - echo "$PGP_PRIVATE_KEY"
     - |
       # checking GPG signing support
-      if [ -n ${PGP_PRIVATE_KEY} ]; then
-        echo ${PGP_PRIVATE_KEY} | gpg --batch --no-tty --allow-secret-key-import --import
+      if [ -n "$PGP_PRIVATE_KEY" ]; then
+        echo $PGP_PRIVATE_KEY | gpg --batch --no-tty --allow-secret-key-import --import
         export GPG_KEYID=$(gpg --with-colon --list-secret-keys | head -n1 | cut -d : -f 5)
       else
         echo -e "\033[0;31m****** GPG signing disabled ******\033[0m"
       fi
-    - gpg --import --allow-secret-key-import ${PGP_KEY_ASC}
+    - gpg --import --allow-secret-key-import "$PGP_KEY_ASC"
     - gpg --list-keys
 
   dependencies:
     - build-in3
     - test-in3
   script:
-    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake
+    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake gnupg
     - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
     - dpkg-buildpackage -b --no-sign
+    - echo $PGP_PRIVATE_KEY
+    - gpg --import --allow-secret-key-import "$PGP_KEY_ASC"
+    - gpg --list-keys
 
 
 
