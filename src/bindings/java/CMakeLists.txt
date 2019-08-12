@@ -11,7 +11,7 @@ IF (NOT DEFINED ANDROID_ABI)
   project(in3j)
 
   include_directories(${JNI_INCLUDE_DIRS})
-  #set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.6" "-target" "1.6")
+  set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.7" "-target" "1.7")
 
   add_jar(in3j 
     in3/IN3.java 

@@ -195,3 +195,60 @@ public class HelloIN3 {
 }
 ```
 
+#### Sending Transactions
+
+In order to send, you need a Signer. The SimpleWallet class is a basic implementation which can be used.
+
+```java 
+package in3;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import in3.*;
+import in3.eth1.*;
+
+public class Example {
+    //
+    public static void main(String[] args) throws IOException{
+        // create incubed
+        IN3 in3 = new IN3();
+
+        // configure
+        in3.setChainId(0x1); // set it to mainnet (which is also dthe default)
+
+        // create a wallet managing the private keys
+        SimpleWallet wallet = new SimpleWallet();
+
+        // add accounts by adding the private keys
+        String keyFile = "myKey.json";
+        String myPassphrase = "<secrect>";
+
+        // read the keyfile and decoded the private key
+        String account = wallet.addKeyStore(
+                Files.readString(Paths.get(keyFile)),
+                myPassphrase);
+
+        // use the wallet as signer
+        in3.setSigner(wallet);
+
+        String receipient = "0x1234567890123456789012345678901234567890";
+        BigInteger value = BigInteger.valueOf(100000);
+
+        // create a Transaction
+        TransactionRequest tx = new TransactionRequest();
+        tx.from = account;
+        tx.to = "0x1234567890123456789012345678901234567890";
+        tx.function = "transfer(address,uint256)";
+        tx.params = new Object[] { receipient, value };
+
+        String txHash = in3.getEth1API().sendTransaction(tx);
+
+        System.out.println("Transaction sent with hash = " + txHash);
+
+    }
+}
+```
