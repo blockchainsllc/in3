@@ -2,11 +2,11 @@
  * evm gas defines.
  * */
 
-#include "evm.h"
+#include "../../../core/util/mem.h"
+#include "../../../core/util/utils.h"
 #include "accounts.h"
 #include "big.h"
-#include "../../../core/util/utils.h"
-#include "../../../core/util/mem.h"
+#include "evm.h"
 
 #ifdef EVM_GAS
 #define subgas(g)                  \
@@ -17,19 +17,14 @@
     else                           \
       evm->gas -= gas;             \
   }
-#define op_exec(m, gc)                                \
-  {                                                   \
-    subgas(gc)                                        \
-    return m;                                         \
+#define op_exec(m, gc)   \
+  {                      \
+    subgas(gc) return m; \
   }
 #else
 #define op_exec(m, gas) return m;
 #define subgas(g)
 #endif
-
-
-
-
 
 #define GAS_CC_NET_SSTORE_NOOP_GAS 200             /**< Once per SSTORE operation if the value doesn't change*/
 #define GAS_CC_NET_SSTORE_INIT_GAS 20000           /**< Once per SSTORE operation from clean zero*/
@@ -50,7 +45,7 @@
 #define G_BALANCE 400        /**< This is the amount of gas to pay for a BALANCE operation.*/
 #define G_SLOAD 200          /**< This is paid for an SLOAD operation.*/
 #define G_SSET 20000         /**< This is paid for an SSTORE operation when the storage value is set to non-zero from zero.*/
-#define G_SRESET 5000        /**< This is the amount for an SSTORE operation when the storage value’s zeroness remains unchanged or is set to zero.*/
+#define G_SRESET 5000        /**< This is the amount for an SSTORE operation when the storage value's zeroness remains unchanged or is set to zero.*/
 #define R_SCLEAR 15000       /**< This is the refund given (added into the refund counter) when the storage value is set to zero from non-zero.*/
 #define R_SELFDESTRUCT 24000 /**< This is the refund given (added into the refund counter) for self-destructing an account.*/
 #define G_SELFDESTRUCT 5000  /**< This is the amount of gas to pay for a SELFDESTRUCT operation.*/
@@ -68,7 +63,7 @@
 #define G_TXDATA_NONZERO 68  /**< This is paid for every non-zero byte of data or code for a transaction*/
 #define G_TRANSACTION 21000  /**< This is paid for every transaction.*/
 #define G_LOG 375            /**< This is a partial payment for a LOG operation.*/
-#define G_LOGDATA 8          /**< This is paid for each byte in a LOG operation’s data.*/
+#define G_LOGDATA 8          /**< This is paid for each byte in a LOG operation's data.*/
 #define G_LOGTOPIC 375       /**< This is paid for each topic of a LOG operation.*/
 #define G_SHA3 30            /**< This is paid for each SHA3 operation.*/
 #define G_SHA3WORD 6         /**< This is paid for each word (rounded up) for input data to a SHA3 operation.*/
@@ -96,15 +91,15 @@
 #define FRONTIER_G_SLOAD 50   /**< This is a partial payment when multiplied by dlog256(exponent)e for the EXP operation.*/
 
 #ifdef EVM_GAS
-void init_gas(evm_t *evm) ;
-void evm_init(evm_t *evm) ;
-void finalize_and_refund_gas(evm_t* evm) ;
-void finalize_subcall_gas(evm_t* evm, int success, evm_t *parent);
+void init_gas(evm_t* evm);
+void evm_init(evm_t* evm);
+void finalize_and_refund_gas(evm_t* evm);
+void finalize_subcall_gas(evm_t* evm, int success, evm_t* parent);
 
-void update_gas(evm_t* evm, int *res, evm_t *parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
-       wlen_t mode, uint8_t* value, wlen_t l_value) ;
-int selfdestruct_gas(evm_t *evm) ;
-void update_account_code(evm_t *evm, account_t* new_account);
+void update_gas(evm_t* evm, int* res, evm_t* parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
+                wlen_t mode, uint8_t* value, wlen_t l_value);
+int  selfdestruct_gas(evm_t* evm);
+void update_account_code(evm_t* evm, account_t* new_account);
 #endif
 
 #ifdef EVM_GAS
@@ -115,37 +110,37 @@ void update_account_code(evm_t *evm, account_t* new_account);
 #define SELFDESTRUCT_GAS(evm, g) selfdestruct_gas(evm)
 #define KEEP_TRACK_GAS(evm) evm->gas
 #define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
-#define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value) \
-do {                                                                                      \
-  evm.parent = parent;                                                                    \
-  uint64_t   max_gas_provided = parent->gas - (parent->gas >> 6);                         \
-  if (!address) {                                                                         \
-    new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller);\
-    gas = max_gas_provided;                                                               \
-  } else                                                                                  \
-    gas = min(gas, max_gas_provided);                                                     \
-  evm.gas            = gas;                                                               \
-  evm.gas_price.data = parent->gas_price.data;                                            \
-  evm.gas_price.len  = parent->gas_price.len;                                             \
-  if (res == 0 && !big_is_zero(value, l_value)) {                                         \
-    if (mode == EVM_CALL_MODE_STATIC)                                                     \
-      res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;                                            \
-    else {                                                                                \
-      uint32_t gas_call_value = 0;                                                        \
-      if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {                 \
-        evm.gas += G_CALLSTIPEND;                                                         \
-        gas_call_value = G_CALLVALUE;                                                     \
-      }                                                                                   \
-      res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);\
-    }                                                                                     \
-  }                                                                                       \
-  if (res == 0) {                                                                         \
-    if (parent->gas < gas)                                                                \
-      res = EVM_ERROR_OUT_OF_GAS;                                                         \
-    else                                                                                  \
-      parent->gas -= gas;                                                                 \
-  }                                                                                       \
-} while(0)
+#define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value)          \
+  do {                                                                                                     \
+    evm.parent                = parent;                                                                    \
+    uint64_t max_gas_provided = parent->gas - (parent->gas >> 6);                                          \
+    if (!address) {                                                                                        \
+      new_account = evm_create_account(&evm, evm.call_data.data, evm.call_data.len, code_address, caller); \
+      gas         = max_gas_provided;                                                                      \
+    } else                                                                                                 \
+      gas = min(gas, max_gas_provided);                                                                    \
+    evm.gas            = gas;                                                                              \
+    evm.gas_price.data = parent->gas_price.data;                                                           \
+    evm.gas_price.len  = parent->gas_price.len;                                                            \
+    if (res == 0 && !big_is_zero(value, l_value)) {                                                        \
+      if (mode == EVM_CALL_MODE_STATIC)                                                                    \
+        res = EVM_ERROR_UNSUPPORTED_CALL_OPCODE;                                                           \
+      else {                                                                                               \
+        uint32_t gas_call_value = 0;                                                                       \
+        if (mode == EVM_CALL_MODE_CALL || mode == EVM_CALL_MODE_CALLCODE) {                                \
+          evm.gas += G_CALLSTIPEND;                                                                        \
+          gas_call_value = G_CALLVALUE;                                                                    \
+        }                                                                                                  \
+        res = transfer_value(&evm, parent->address, evm.address, value, l_value, gas_call_value);          \
+      }                                                                                                    \
+    }                                                                                                      \
+    if (res == 0) {                                                                                        \
+      if (parent->gas < gas)                                                                               \
+        res = EVM_ERROR_OUT_OF_GAS;                                                                        \
+      else                                                                                                 \
+        parent->gas -= gas;                                                                                \
+    }                                                                                                      \
+  } while (0)
 
 #define FINALIZE_AND_REFUND_GAS(evm) finalize_and_refund_gas(evm)
 #define UPDATE_ACCOUNT_CODE(evm, new_account) update_account_code(evm, new_account)

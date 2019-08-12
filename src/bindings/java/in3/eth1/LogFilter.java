@@ -26,7 +26,7 @@ public class LogFilter {
      */
     String address;
     /**
-     * (optional) Array of 32 Bytes Data topics. Topics are order-dependent. It’s
+     * (optional) Array of 32 Bytes Data topics. Topics are order-dependent. It's
      * possible to pass in null to match any topic, or a subarray of multiple topics
      * of which one should be matching.
      */

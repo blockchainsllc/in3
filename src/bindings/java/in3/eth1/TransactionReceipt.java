@@ -62,7 +62,7 @@ public class TransactionReceipt {
     }
 
     /**
-     * 20 Bytes - The address of the receiver. null when it’s a contract creation
+     * 20 Bytes - The address of the receiver. null when it's a contract creation
      * transaction.
      */
     public String getTo() {

@@ -83,7 +83,7 @@ public class API {
     }
 
     /**
-     * Makes a call or transaction, which won’t be added to the blockchain and
+     * Makes a call or transaction, which won't be added to the blockchain and
      * returns the used gas, which can be used for estimating the used gas.
      * 
      * @return the gas required to call the function.
@@ -211,7 +211,7 @@ public class API {
 
     /**
      * Returns information about a uncle of a block number and uncle index position.
-     * Note: An uncle doesn’t contain individual transactions.
+     * Note: An uncle doesn't contain individual transactions.
      */
     public Block getUncleByBlockNumberAndIndex(long block, int pos) {
         return Block.asBlock(in3.sendRPCasObject("eth_getUncleByBlockNumberAndIndex",
@@ -250,11 +250,11 @@ public class API {
      * A note on specifying topic filters: Topics are order-dependent. A transaction
      * with a log with topics [A, B] will be matched by the following topic filters:
      * 
-     * [] “anything” [A] “A in first position (and anything after)” [null, B]
-     * “anything in first position AND B in second position (and anything after)”
-     * [A, B] “A in first position AND B in second position (and anything after)”
-     * [[A, B], [A, B]] “(A OR B) in first position AND (A OR B) in second position
-     * (and anything after)”
+     * [] "anything" [A] "A in first position (and anything after)" [null, B]
+     * "anything in first position AND B in second position (and anything after)"
+     * [A, B] "A in first position AND B in second position (and anything after)"
+     * [[A, B], [A, B]] "(A OR B) in first position AND (A OR B) in second position
+     * (and anything after)"
      * 
      */
     public long newLogFilter(LogFilter filter) {
