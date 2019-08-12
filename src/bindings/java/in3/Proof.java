@@ -1,9 +1,14 @@
 package in3;
 
+/**
+ * The Proof type indicating how much proof is required.
+ */
+
 public enum Proof {
-	none,
 	/** No Verification */
-	standard,
+	none,
 	/** Standard Verification of the important properties */
-	full /** Full Verification including even uncles wich leads to higher payload */
+	standard,
+	/** Full Verification including even uncles wich leads to higher payload */
+	full
 }
