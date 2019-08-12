@@ -7,6 +7,8 @@
 #include "../../core/client/send.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/full/eth_full.h"
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
@@ -571,27 +573,6 @@ in3_ret_t Java_in3_IN3_transport(char** urls, int urls_len, char* payload, in3_r
 }
 
 /*
- * Class:     in3_IN3
- * Method:    init
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
-  UNUSED_VAR(env);
-  UNUSED_VAR(ob);
-  in3_t* in3 = in3_new();
-  in3_register_eth_full();
-  in3_log_set_level(LOG_DEBUG);
-  in3->transport              = Java_in3_IN3_transport;
-  in3->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
-  in3->cacheStorage->cptr     = (*env)->NewGlobalRef(env, ob);
-  in3->cacheStorage->get_item = storage_get_item;
-  in3->cacheStorage->set_item = storage_set_item;
-  jni                         = env;
-
-  return (jlong)(size_t) in3;
-}
-
-/*
  * Class:     in3_eth1_TransactionRequest
  * Method:    abiEncode
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
@@ -662,4 +643,116 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error decoding the data");
 
   return result;
+}
+
+/*
+ * Class:     in3_eth1_SimpleWallet
+ * Method:    getAddressFromKey
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* env, jclass clz, jstring jkey) {
+  UNUSED_VAR(clz);
+  const char* key = (*env)->GetStringUTFChars(env, jkey, 0);
+
+  bytes32_t prv_key;
+  uint8_t   public_key[65], sdata[32];
+  hex2byte_arr((char*) key, -1, prv_key, 32);
+  bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
+  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
+  sha3_to(&pubkey_bytes, sdata);
+  (*env)->ReleaseStringUTFChars(env, jkey, key);
+  char tmp[43];
+  bytes_to_hex(sdata + 12, 20, tmp + 2);
+  tmp[0] = '0';
+  tmp[1] = 'x';
+  return (*env)->NewStringUTF(env, tmp);
+}
+
+/*
+ * Class:     in3_eth1_SimpleWallet
+ * Method:    signData
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclass clz, jstring jkey, jstring jdata) {
+  UNUSED_VAR(clz);
+  const char* key    = (*env)->GetStringUTFChars(env, jkey, 0);
+  const char* data   = (*env)->GetStringUTFChars(env, jdata, 0);
+  int         data_l = strlen(data) / 2 - 1;
+  uint8_t     key_bytes[32], data_bytes[data_l + 1], dst[65];
+
+  hex2byte_arr((char*) key + 2, 32, key_bytes, 32);
+  data_l      = hex2byte_arr((char*) data + 2, -1, data_bytes, data_l + 1);
+  jstring res = NULL;
+
+  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
+    char tmp[133];
+    bytes_to_hex(dst, 65, tmp + 2);
+    tmp[0] = '0';
+    tmp[1] = 'x';
+    res    = (*env)->NewStringUTF(env, tmp);
+  }
+  (*env)->ReleaseStringUTFChars(env, jkey, key);
+  (*env)->ReleaseStringUTFChars(env, jdata, data);
+  return res;
+}
+
+/*
+ * Class:     in3_eth1_SimpleWallet
+ * Method:    decodeKeystore
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env, jclass clz, jstring json, jstring passphrase) {
+  UNUSED_VAR(clz);
+  UNUSED_VAR(env);
+  UNUSED_VAR(json);
+  UNUSED_VAR(passphrase);
+  return NULL;
+}
+
+in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+  UNUSED_VAR(type);
+  jclass    cls    = (*jni)->GetObjectClass(jni, (jobject) pk);
+  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/Signer;");
+  jobject   signer = (*jni)->CallObjectMethod(jni, (jobject) pk, mid);
+  if (!signer) return -1;
+
+  char data[message.len * 2 + 3], address[43];
+  data[0] = address[0] = '0';
+  data[1] = address[1] = 'x';
+  bytes_to_hex(message.data, message.len, data + 2);
+  bytes_to_hex(account.data, account.len, address + 2);
+
+  jstring jdata      = (*jni)->NewStringUTF(jni, data);
+  jstring jaddress   = (*jni)->NewStringUTF(jni, address);
+  cls                = (*jni)->GetObjectClass(jni, signer);
+  mid                = (*jni)->GetMethodID(jni, cls, "sign", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+  jstring jsignature = (*jni)->CallObjectMethod(jni, signer, mid, jdata, jaddress);
+
+  if (!jsignature) return -2;
+  const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
+  hex2byte_arr((char*) signature, -1, dst, 65);
+  (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
+  return 65;
+}
+
+/*
+ * Class:     in3_IN3
+ * Method:    init
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
+  in3_t* in3 = in3_new();
+  in3_register_eth_full();
+  in3_log_set_level(LOG_DEBUG);
+  in3->transport              = Java_in3_IN3_transport;
+  in3->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
+  in3->cacheStorage->cptr     = (*env)->NewGlobalRef(env, ob);
+  in3->cacheStorage->get_item = storage_get_item;
+  in3->cacheStorage->set_item = storage_set_item;
+  in3->signer                 = _malloc(sizeof(in3_signer_t));
+  in3->signer->sign           = jsign;
+  in3->signer->wallet         = in3->cacheStorage->cptr;
+  jni                         = env;
+
+  return (jlong)(size_t) in3;
 }

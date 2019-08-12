@@ -139,11 +139,8 @@ public class HelloIN3 {
         // configure
         in3.setChainId(0x1); // set it to mainnet (which is also dthe default)
 
-        // create a API instance which uses our incubed.
-        API api = new API(in3);
-
         // read the latest Block including all Transactions.
-        Block latestBlock = api.getBlockByNumber(Block.LATEST, true);
+        Block latestBlock = in3.getEth1API().getBlockByNumber(Block.LATEST, true);
 
         // Use the getters to retrieve all containing data
         System.out.println("current BlockNumber : " + latestBlock.getNumber());
@@ -181,11 +178,8 @@ public class HelloIN3 {
        // configure
        in3.setChainId(0x1);  // set it to mainnet (which is also dthe default)
 
-       // create a API instance which uses our incubed.
-       API api = new API(in3);
-
        // call a contract, which uses eth_call to get the result. 
-       Object[] result = (Object[]) api.call(                                   // call a function of a contract
+       Object[] result = (Object[]) in3.getEth1API().call(                                   // call a function of a contract
             "0x2736D225f85740f42D17987100dc8d58e9e16252",                       // address of the contract
             "servers(uint256):(string,address,uint256,uint256,uint256,address)",// function signature
             1);                                                                 // first argument, which is the index of the node we are looking for.

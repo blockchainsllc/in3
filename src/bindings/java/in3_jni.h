@@ -308,6 +308,26 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv*, jc
  */
 JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv*, jclass, jstring, jstring);
 
+/*
+ * Class:     in3_eth1_SimpleWallet
+ * Method:    getAddressFromKey
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv*, jclass, jstring);
+
+/*
+ * Class:     in3_eth1_SimpleWallet
+ * Method:    signData
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv*, jclass, jstring, jstring);
+
+/*
+ * Class:     in3_eth1_SimpleWallet
+ * Method:    decodeKeystore
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv*, jclass, jstring, jstring);
 #ifdef __cplusplus
 }
 #endif

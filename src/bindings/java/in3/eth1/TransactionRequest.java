@@ -30,9 +30,6 @@ public class TransactionRequest {
     /** the gas price to use */
     public long gasPrice;
 
-    /** the private Key to use for signing */
-    public String privateKey;
-
     /** the signature for the function to call */
     public String function;
 

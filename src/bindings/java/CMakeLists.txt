@@ -20,11 +20,16 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/TempStorageProvider.java 
     in3/Proof.java 
     in3/Loader.java
+    in3/Signer.java
 
     in3/eth1/API.java
     in3/eth1/Block.java
     in3/eth1/Transaction.java
     in3/eth1/TransactionRequest.java
+    in3/eth1/TransactionReceipt.java
+    in3/eth1/Log.java
+    in3/eth1/LogFilter.java
+    in3/eth1/SimpleWallet.java
 
     in3/native/libin3_jni.dylib 
     in3/native/libin3_jni.so 

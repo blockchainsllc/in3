@@ -12,8 +12,12 @@ public class Transaction {
 
     private JSON data;
 
-    protected Transaction(JSON data) {
+    private Transaction(JSON data) {
         this.data = data;
+    }
+
+    protected static Transaction asTransaction(Object o) {
+        return o==null ? null : new Transaction((JSON) o);
     }
 
     /**

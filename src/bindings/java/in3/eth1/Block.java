@@ -1,7 +1,6 @@
 package in3.eth1;
 
 import in3.*;
-import in3.eth1.*;
 import java.math.*;
 
 /**
@@ -23,8 +22,24 @@ public class Block {
 
     private JSON data;
 
-    protected Block(JSON data) {
+    private Block(JSON data) {
         this.data = data;
+    }
+
+    protected static Block asBlock(Object o) {
+        if (o == null)
+            return null;
+        return new Block((JSON) o);
+    }
+
+    protected static Block[] asBlocks(Object o) {
+        if (o == null)
+            return null;
+        Object[] a = (Object[]) o;
+        Block[] b = new Block[a.length];
+        for (int i = 0; i < a.length; i++)
+            b[i] = Block.asBlock(a[i]);
+        return b;
     }
 
     /**
@@ -115,7 +130,7 @@ public class Block {
 
         Transaction[] res = new Transaction[tx.length];
         for (int i = 0; i < tx.length; i++)
-            res[i] = new Transaction((JSON) tx[i]);
+            res[i] = Transaction.asTransaction(tx[i]);
         return res;
     }
 

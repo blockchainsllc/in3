@@ -2,9 +2,12 @@ package in3;
 
 import java.net.*;
 import java.io.*;
+import java.math.BigInteger;
+
 import in3.JSON;
 import in3.Proof;
 import in3.StorageProvider;
+import in3.eth1.API;
 
 /**
  * This is the main class creating the incubed client. The client can then be
@@ -15,6 +18,7 @@ public class IN3 {
 
     private long ptr;
     private StorageProvider provider;
+    private Signer signer;
 
     /** number of seconds requests can be cached. */
     public native int getCacheTimeout();
@@ -33,6 +37,19 @@ public class IN3 {
 
     /** sets the client key to sign requests */
     public native void setKey(byte[] val);
+
+    /** sets the client key as hexstring to sign requests */
+    public void setKey(String val) {
+        if (val == null)
+            setKey((byte[]) null);
+        else {
+            byte[] key = new byte[32];
+            for (int i = 0; i < 32; i++)
+                key[i] = (byte) ((Character.digit(val.charAt(i * 2 + 2), 16) << 4)
+                        | Character.digit(val.charAt(i * 2 + 3), 16));
+            setKey(key);
+        }
+    }
 
     /** number of max bytes used to cache the code in memory */
     public native int getMaxCodeCache();
@@ -96,6 +113,27 @@ public class IN3 {
 
     /** sets the max number of attempts before giving up */
     public native void setMaxAttempts(int val);
+
+    /**
+     * returns the signer or wallet.
+     */
+    public Signer getSigner() {
+        return signer;
+    }
+
+    /**
+     * gets the ethereum-api
+     */
+    public in3.eth1.API getEth1API() {
+        return new API(this);
+    }
+
+    /**
+     * sets the signer or wallet.
+     */
+    public void setSigner(Signer signer) {
+        this.signer = signer;
+    }
 
     /**
      * specifies the number of milliseconds before the request times out. increasing

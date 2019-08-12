@@ -1,6 +1,9 @@
 package in3;
 
 import java.util.*;
+
+import in3.eth1.Log;
+
 import java.math.*;
 
 /**
@@ -117,6 +120,18 @@ public class JSON {
                     : Long.parseLong(o.toString(), 10);
         if (o instanceof Integer)
             return ((Integer) o).longValue();
+        return 0;
+    }
+
+    public static int asInt(Object o) {
+        if (o == null)
+            return 0;
+        if (o instanceof String)
+            return (((String) o).length() > 2 && o.toString().charAt(1) == 'x')
+                    ? Integer.parseInt(o.toString().substring(2), 16)
+                    : Integer.parseInt(o.toString(), 10);
+        if (o instanceof Number)
+            return ((Number) o).intValue();
         return 0;
     }
 
