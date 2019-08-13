@@ -210,16 +210,22 @@ debian_package_deploy:
     - build-in3
     - test-in3
   script:
-    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake gnupg
+    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake gnupg gnupg-agent pinentry-gtk2 pinentry-curses
     - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
-    - dpkg-buildpackage -b --no-sign
     - echo $PGP_PRIVATE_KEY
     - export GPG_TTY=$(tty)
     - gpg --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - gpg --list-keys
-    - cd ..
-    - debsign -k B4179604561E56D1 in3_0.1.12~bionic_amd64.changes
-    - gpg --verify in3_0.1.12~bionic_amd64.changes
+    - export GPGKEY=B4179604561E56D1
+    - killall -q gpg-agent
+    - eval $(gpg-agent --daemon)
+    - export DEBEMAIL="devops@slock.it"
+    - export DEBFULLNAME="devops_slock.it"
+    - debuild --no-tgz-check -rfakeroot -I -S -k${GPGKEY}
+#    - cd ..
+#    - ls
+#    - debsign -k B4179604561E56D1 in3_0.1.12~bionic_amd64.changes
+#    - gpg --verify in3_0.1.12~bionic_amd64.changes
 #    - TMP_PATH=$(pwd)
 #    - debsign -k B4179604561E56D1 $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
 #    - gpg --verify $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
