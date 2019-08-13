@@ -11,6 +11,11 @@ like
 java -cp in3.jar in3.IN3 eth_getBlockByNumber latest false
 ```
 
+### Downloading
+
+
+Just download the latest jar-file [here](_downloads/in3.jar).
+
 
 ###  Building
 

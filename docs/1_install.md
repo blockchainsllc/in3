@@ -26,13 +26,6 @@ make install
   Type: `BOOL ` ,    Default-Value: `ON`
 
 
-#### DEBUG
-
-  Turns on Debug output in the code. This would be required if the tests should output additional debug infos.
-
-  Type: `BOOL ` ,    Default-Value: `OFF`
-
-
 #### EVM_GAS
 
   if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes.
@@ -44,7 +37,7 @@ make install
 
   build the examples.
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+  Type: `BOOL ` ,    Default-Value: `ON`
 
 
 #### FAST_MATH
@@ -59,6 +52,13 @@ make install
   build the USN-API which offer better interfaces and additional functions on top of the pure verification
 
   Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### IN3_SERVER
+
+  support proxy server
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
 
 
 #### JAVA
@@ -78,6 +78,13 @@ make install
 #### TRANSPORTS
 
   builds transports, which may require extra libraries.
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### USE_CURL
+
+  if true 
 
   Type: `BOOL ` ,    Default-Value: `ON`
 
