@@ -256,3 +256,18 @@ mac_os:
 #     IMAGE: manylinux-x64
 #     CONAN_OPTS : --build libcurl
 #     INSTALL: "apk add py-pip; pip install conan"
+
+
+deploy-docker:
+  stage: deploy
+  tags:
+    - short-jobs
+  services:
+    - docker:dind
+  image: jonaskello/docker-and-compose:latest
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t $COMMIT_IMAGE_TAG .
+    - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
+    - docker push $RELEASE_IMAGE_TAG
+    - docker push $COMMIT_IMAGE_TAG

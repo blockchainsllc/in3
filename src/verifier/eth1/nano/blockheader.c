@@ -10,7 +10,8 @@
 #include "../../../verifier/eth1/nano/vhist.h"
 #include <string.h>
 
-static in3_ret_t get_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
+/** gets the signer from a blockheader in a aura chain.*/
+static in3_ret_t get_aura_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;
   uint8_t         d[4], bare_hash[32], pub_key[65];
   bytes_builder_t ll = {.bsize = 4, .b = {.len = 0, .data = (uint8_t*) &d}};
@@ -116,7 +117,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
     while (fblk) {
       // check signature of proposer
-      if (get_signer(vc, fblk, signer))
+      if (get_aura_signer(vc, fblk, signer))
         return vc_err(vc, "could not get the signer");
 
       // check if it was signed by the right validator
@@ -266,7 +267,7 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
       return vc_err(vc, "could not find the validator for the block");
 
     // check signature of proposer
-    if (get_signer(vc, b, signer))
+    if (get_aura_signer(vc, b, signer))
       return vc_err(vc, "could not get the signer");
 
     // check if it was signed by the right validator
