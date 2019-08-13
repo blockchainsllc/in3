@@ -210,7 +210,7 @@ debian_package_deploy:
     - build-in3
     - test-in3
   script:
-    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake gnupg gnupg-agent pinentry-gtk2 pinentry-curses
+    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake psmisc gnupg-agent pinentry-gtk2 pinentry-curses
     - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
     - echo $PGP_PRIVATE_KEY
     - export GPG_TTY=$(tty)
