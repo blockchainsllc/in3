@@ -218,9 +218,9 @@ debian_package_deploy:
     - gpg --list-keys
     - debuild -S -sa -us -uc
     - cd ..
-    - echo "hi" > test.txt
+    - echo "hi" > test.changes
     - ls
-    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 test.txt
+    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 test.changes
 #    - export GPGKEY=B4179604561E56D1
 #    - eval $(gpg-agent --daemon)
 #    - export DEBEMAIL="devops@slock.it"
