@@ -211,13 +211,12 @@ debian_package_deploy:
     - test-in3
   script:
     - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake psmisc gnupg-agent pinentry-gtk2 pinentry-curses
-    - chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
+    - sudo chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
     - echo $PGP_PRIVATE_KEY
     - export GPG_TTY=$(tty)
     - gpg --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - gpg --list-keys
     - export GPGKEY=B4179604561E56D1
-    - killall -q gpg-agent
     - eval $(gpg-agent --daemon)
     - export DEBEMAIL="devops@slock.it"
     - export DEBFULLNAME="devops_slock.it"
