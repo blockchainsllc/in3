@@ -16,9 +16,12 @@
 #else
 #include "../../transport/http/in3_http.h"
 #endif
+#ifdef IN3_SERVER
+#include "../http-server/http_server.h"
+#endif
 #include "../../verifier/eth1/basic/signer.h"
-#include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/evm/evm.h"
+#include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "in3_storage.h"
 #include <inttypes.h>
@@ -36,6 +39,7 @@ void show_help(char* name) {
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -np            short for -p none\n\
 -s, -signs     number of signatures to use when verifying.\n\
+-port          if specified it will run as http-server listening to the given port.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
@@ -394,6 +398,7 @@ int main(int argc, char* argv[]) {
   char*           pk_file      = NULL;
   char*           validators   = NULL;
   bytes_t*        data         = NULL;
+  char*           port         = NULL;
 
   // check env
   if (getenv("IN3_PK")) {
@@ -436,6 +441,8 @@ int main(int argc, char* argv[]) {
       pwd = argv[++i];
     else if (strcmp(argv[i], "-value") == 0)
       value = get_wei(argv[++i]);
+    else if (strcmp(argv[i], "-port") == 0)
+      port = argv[++i];
     else if (strcmp(argv[i], "-name") == 0)
       name = argv[++i];
     else if (strcmp(argv[i], "-validators") == 0)
@@ -496,6 +503,14 @@ int main(int argc, char* argv[]) {
 
   // now execute it
   char *result = NULL, *error = NULL;
+
+#ifdef IN3_SERVER
+  // start server
+  if (!method && port) {
+    http_run_server(port, c);
+    return 0;
+  }
+#endif
 
   // handle private key
   if (pk_file) read_pk(pk_file, pwd, c, method);
