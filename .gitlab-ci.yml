@@ -221,7 +221,7 @@ debian_package_deploy:
     - eval $(gpg-agent --daemon)
     - export DEBEMAIL="devops@slock.it"
     - export DEBFULLNAME="devops_slock.it"
-    - debuild --no-tgz-check -rfakeroot -I -S -k${GPGKEY}
+    - debuild --no-tgz-check -rfakeroot -I -S -kB4179604561E56D1
 #    - cd ..
 #    - ls
 #    - debsign -k B4179604561E56D1 in3_0.1.12~bionic_amd64.changes
