@@ -217,9 +217,13 @@ debian_package_deploy:
     - export GPG_TTY=$(tty)
     - gpg --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - gpg --list-keys
-    - TMP_PATH=$(pwd)
-    - debsign -k B4179604561E56D1 $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
-    - gpg --verify $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
+    - cd ..
+    - debsign -k B4179604561E56D1 in3_0.1.12~bionic_amd64.changes
+    - gpg --verify in3_0.1.12~bionic_amd64.changes
+#    - TMP_PATH=$(pwd)
+#    - debsign -k B4179604561E56D1 $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
+#    - gpg --verify $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
+
 
 
 #pages:
