@@ -175,8 +175,8 @@ debian_package_deploy_bionic:
     VERSION: $CI_COMMIT_TAG
   only:
     - /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/
-    except:
-      - branches
+  except:
+    - branches
 
 
 debian_package_deploy_disco:
@@ -187,8 +187,8 @@ debian_package_deploy_disco:
     VERSION: $CI_COMMIT_TAG
   only:
     - /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/
-    except:
-      - branches
+  except:
+    - branches
 
 #pages:
 #  tags:
