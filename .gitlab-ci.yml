@@ -222,7 +222,7 @@ debian_package_deploy:
     - cd ..
     - ls
     - gpg --fingerprint
-    - echo $PGP_PASSPHRASE | gpg --batch --no-tty --yes --passphrase-fd 0 --detach-sign in3_0.1.12~bionic_amd64.changes
+    - echo $PGP_PASSPHRASE | debsign --batch --no-tty --yes --passphrase-fd 0 in3_0.1.12~bionic_amd64.changes
     - dput ppa:devops-slock-it/in3-client in3_0.1.12~bionic_amd64.changes
 
 #    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 test.changes
