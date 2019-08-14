@@ -161,6 +161,7 @@ mac_os:
     - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - debuild -S -sa -us -uc
+    - cd ..
     - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 in3_0.1.14~${DISTRO}_source.changes
     - dput ppa:devops-slock-it/in3-client in3_0.1.14~${DISTRO}_source.changes
 
