@@ -213,15 +213,18 @@ debian_package_deploy:
     - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake psmisc gnupg-agent pinentry-gtk2 pinentry-curses
     - sudo chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
     - echo $PGP_PRIVATE_KEY
-    - export GPG_TTY=$(tty)
-    - gpg --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
+    - mkdir ~/.gnupg && chmod 700 ~/.gnupg
+    - echo -e "use-agent\npinentry-mode loopback" > ~/.gnupg/gpg.conf
+    - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+    - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - gpg --list-keys
-    - debuild -S -sa -us -uc
+#    - debuild -S -sa -us -uc
     - cd ..
     - echo "hi" > test.changes
     - ls
     - gpg --fingerprint
-    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 test.changes
+    - echo $PGP_PASSPHRASE | gpg --batch --no-tty --yes --passphrase-fd 0 --detach-sign test.changes
+#    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 test.changes
 #    - export GPGKEY=B4179604561E56D1
 #    - eval $(gpg-agent --daemon)
 #    - export DEBEMAIL="devops@slock.it"
