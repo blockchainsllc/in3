@@ -1,3 +1,5 @@
+variables:
+  RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
 stages:
   - build
   - test
@@ -136,46 +138,44 @@ mac_os:
   tags:
     - mac-mini-runner
 
-debian_package_deploy:
+.debian_package_deploy_template:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: deploy
   tags:
     - short-jobs
-
   dependencies:
     - build-in3
     - test-in3
   script:
     - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake psmisc gnupg-agent pinentry-gtk2 pinentry-curses
-    - sudo chmod +x scripts/changelog_modifier.sh && ./scripts/changelog_modifier.sh
-    - echo $PGP_PRIVATE_KEY
+    - echo "" >> debian/changelog
+    - echo "in3 (0.1.14~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
+    - echo "" >> debian/changelog
+    - echo "  * Updated file" >> debian/changelog
+    - echo "" >> debian/changelog
+    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
+    - echo "" >> debian/changelog
+    - cat debian/changelog
     - mkdir ~/.gnupg && chmod 700 ~/.gnupg
     - echo -e "use-agent\npinentry-mode loopback" > ~/.gnupg/gpg.conf
     - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
-    - gpg --list-keys
     - debuild -S -sa -us -uc
-    - cd ..
-    - ls
-    - gpg --fingerprint
-    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 in3_0.1.13~bionic_source.changes
-    - dput ppa:devops-slock-it/in3-client in3_0.1.13~bionic_source.changes
-
-#    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 test.changes
-#    - export GPGKEY=B4179604561E56D1
-#    - eval $(gpg-agent --daemon)
-#    - export DEBEMAIL="devops@slock.it"
-#    - export DEBFULLNAME="devops_slock.it"
-#    - debuild --no-tgz-check -rfakeroot -I -S -kB4179604561E56D1
-#    - cd ..
-#    - ls
-#    - debsign -k B4179604561E56D1 in3_0.1.12~bionic_amd64.changes
-#    - gpg --verify in3_0.1.12~bionic_amd64.changes
-#    - TMP_PATH=$(pwd)
-#    - debsign -k B4179604561E56D1 $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
-#    - gpg --verify $TMP_PATH/../in3_0.1.12~bionic_amd64.changes
+    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 in3_0.1.14~${DISTRO}_source.changes
+    - dput ppa:devops-slock-it/in3-client in3_0.1.14~${DISTRO}_source.changes
 
 
+debian_package_deploy_bionic:
+  extends:
+    - .debian_package_deploy_template
+  variables:
+    DISTRO: "bionic"
+
+debian_package_deploy_disco:
+  extends:
+    - .debian_package_deploy_template
+  variables:
+    DISTRO: "disco"
 
 #pages:
 #  tags:
