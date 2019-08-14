@@ -14,7 +14,8 @@
     </div>
     <script>
         var c = new IN3();
-        c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+        c.setConfig({ chainId: 0x5 })
+            .then(() => c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] }))
             .then(r => document.getElementById('result').innerHTML = JSON.stringify(r, null, 2))
             .catch(alert)
     </script>
