@@ -52,6 +52,9 @@ extern const unsigned char* u64tostr(uint64_t value, char* pBuf, int szBuf);
 /** convert a c string to a byte array storing it into a existing buffer */
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size);
 
+/** convert hex to long */
+uint64_t hex2long(char* buf);
+
 /** convert a c string to a byte array creating a new buffer */
 bytes_t* hex2byte_new_bytes(char* buf, int len);
 

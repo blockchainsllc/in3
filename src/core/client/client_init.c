@@ -261,3 +261,90 @@ in3_t* in3_new() {
 #endif
   return c;
 }
+
+in3_ret_t in3_configure(in3_t* c, char* config) {
+  d_track_keynames(1);
+  d_clear_keynames();
+  json_ctx_t* cnf = parse_json(config);
+  d_track_keynames(0);
+  in3_ret_t res = IN3_OK;
+
+  if (!cnf || !cnf->result) return IN3_EINVAL;
+  for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
+    if (iter.token->key == key("autoUpdateList"))
+      c->autoUpdateList = d_int(iter.token) ? true : false;
+    else if (iter.token->key == key("chainId"))
+      c->chainId = d_long(iter.token);
+    else if (iter.token->key == key("finality"))
+      c->finality = (uint_fast16_t) d_int(iter.token);
+    else if (iter.token->key == key("includeCode"))
+      c->includeCode = d_int(iter.token) ? true : false;
+    else if (iter.token->key == key("maxAttempts"))
+      c->max_attempts = d_int(iter.token);
+    else if (iter.token->key == key("maxBlockCache"))
+      c->maxBlockCache = d_int(iter.token);
+    else if (iter.token->key == key("maxCodeCache"))
+      c->maxCodeCache = d_int(iter.token);
+    else if (iter.token->key == key("minDeposit"))
+      c->minDeposit = d_long(iter.token);
+    else if (iter.token->key == key("nodeLimit"))
+      c->nodeLimit = (uint16_t) d_int(iter.token);
+    else if (iter.token->key == key("proof"))
+      c->proof = strcmp(d_string(iter.token), "full") == 0
+                     ? PROOF_FULL
+                     : (strcmp(d_string(iter.token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
+    else if (iter.token->key == key("replaceLatestBlock"))
+      c->replaceLatestBlock = (uint16_t) d_int(iter.token);
+    else if (iter.token->key == key("requestCount"))
+      c->requestCount = (uint8_t) d_int(iter.token);
+    else if (iter.token->key == key("rpc")) {
+      c->proof        = PROOF_NONE;
+      c->chainId      = 0xFFFF;
+      c->requestCount = 1;
+      in3_node_t* n   = find_chain(c, c->chainId)->nodeList;
+      if (n->url) _free(n);
+      n->url = malloc(d_len(iter.token) + 1);
+      if (!n->url) {
+        res = IN3_ENOMEM;
+        goto cleanup;
+      }
+      strcpy(n->url, d_string(iter.token));
+    } else if (iter.token->key == key("servers") || iter.token->key == key("nodes"))
+      for (d_iterator_t ct = d_iter(iter.token); ct.left; d_iter_next(&ct)) {
+        // register chain
+        uint64_t     chain_id = hex2long(d_get_keystr(ct.token->key));
+        in3_chain_t* chain    = find_chain(c, chain_id);
+        if (!chain) {
+          bytes_t* contract_t  = d_get_byteskl(ct.token, key("contract"), 20);
+          bytes_t* registry_id = d_get_byteskl(ct.token, key("regiistryId"), 32);
+          if (!contract_t || !registry_id) {
+            res = IN3_EINVAL;
+            goto cleanup;
+          }
+          if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract_t->data, registry_id->data, 2, NULL)) != IN3_OK) goto cleanup;
+        }
+
+        // chain_props
+        for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
+          if (cp.token->key == key("contract"))
+            memcpy(chain->contract->data, cp.token->data, cp.token->len);
+          else if (cp.token->key == key("registryId"))
+            memcpy(chain->registry_id, cp.token->data, cp.token->len);
+          else if (cp.token->key == key("needsUpdate"))
+            chain->needsUpdate = d_int(cp.token) ? true : false;
+          else if (cp.token->key == key("nodeList")) {
+            if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
+              if ((res = in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
+                                             d_get_longkd(n.token, key("props"), 65535),
+                                             d_get_byteskl(n.token, key("address"), 20)->data)) != IN3_OK) goto cleanup;
+            }
+          }
+        }
+      }
+  }
+
+cleanup:
+  free_json(cnf);
+  return res;
+}

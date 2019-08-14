@@ -31,37 +31,46 @@ else {
         }
     }
 
-    in3w.transport = (url, payload) => new Promise((resolve, reject) => {
-        try {
-            const postData = payload;//JSON.stringify(payload);
-            const m = require(url.startsWith('https') ? 'https' : 'http')
-            const req = m.request(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(postData)
-                },
-                body: payload // body data type must match "Content-Type" header
-            }, (res) => {
-                if (res.statusCode < 200 || res.statusCode >= 400)
-                    reject(new Error("Invalid Status (" + res.statusCode + ') from server'))
-                else {
-                    res.setEncoding('utf8');
-                    let result = ''
-                    res.on('data', _ => result += _)
-                    res.on('end', () => resolve(result))
-                }
+    try {
+        const axios = require('' + 'axios')
+        in3w.transport = (url, payload) => axios.post(url, JSON.parse(payload), { headers: { 'Content-Type': 'application/json' } })
+            .then(res => {
+                if (res.status != 200) throw new Error("Invalid satus")
+                return JSON.stringify(res.data)
             })
-            req.on('error', (e) => reject(new Error(e.message)))
-            req.write(postData);
-            req.end();
+    } catch (xx) {
+        in3w.transport = (url, payload) => new Promise((resolve, reject) => {
+            try {
+                const postData = payload;//JSON.stringify(payload);
+                const m = require(url.startsWith('https') ? 'https' : 'http')
+                const req = m.request(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(postData)
+                    },
+                    body: payload // body data type must match "Content-Type" header
+                }, (res) => {
+                    if (res.statusCode < 200 || res.statusCode >= 400)
+                        reject(new Error("Invalid Status (" + res.statusCode + ') from server'))
+                    else {
+                        res.setEncoding('utf8');
+                        let result = ''
+                        res.on('data', _ => result += _)
+                        res.on('end', () => resolve(result))
+                    }
+                })
+                req.on('error', (e) => reject(new Error(e.message)))
+                req.write(postData);
+                req.end();
 
-        }
-        catch (er) {
-            console.error('...ERROR : ', er)
-            throw er
-        }
-    })
+            }
+            catch (er) {
+                console.error('...ERROR : ', er)
+                throw er
+            }
+        })
+    }
 }
 _in3_ready = false;
 in3w.onRuntimeInitialized = _ => _in3_ready = true
@@ -82,6 +91,12 @@ class IN3 {
 
     constructor() {
         this.ptr = 0;
+    }
+
+    async setConfig(conf) {
+        await this._ensure_ptr();
+        const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(conf)]);
+        if (r) throw new Error("Error setting the confiig : " + r);
     }
 
     async send(rpc) {

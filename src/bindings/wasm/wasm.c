@@ -88,6 +88,12 @@ void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
   in3_free(a);
   in3_set_error(NULL);
 }
+/* frees the references of the client */
+in3_ret_t EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
+  in3_ret_t res = in3_configure(a, conf);
+  free(conf);
+  return res;
+}
 
 char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
   return last_error;
