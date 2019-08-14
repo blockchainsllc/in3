@@ -151,7 +151,7 @@ mac_os:
     - echo "" >> debian/changelog
     - echo "in3 (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
-    - echo "  * Updated file" >> debian/changelog
+    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
     - echo "" >> debian/changelog
     - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
     - echo "" >> debian/changelog
@@ -172,14 +172,23 @@ debian_package_deploy_bionic:
     - .debian_package_deploy_template
   variables:
     DISTRO: "bionic"
-    VERSION: "0.1.15"
+    VERSION: $CI_COMMIT_TAG
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/
+    except:
+      - branches
+
 
 debian_package_deploy_disco:
   extends:
     - .debian_package_deploy_template
   variables:
     DISTRO: "disco"
-    VERSION: "0.1.15"
+    VERSION: $CI_COMMIT_TAG
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/
+    except:
+      - branches
 
 #pages:
 #  tags:
