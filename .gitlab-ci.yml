@@ -219,6 +219,7 @@ debian_package_deploy:
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - gpg --list-keys
     - debuild -S -sa -us -uc
+    - cd ..
     - ls
     - gpg --fingerprint
     - echo $PGP_PASSPHRASE | gpg --batch --no-tty --yes --passphrase-fd 0 --detach-sign in3_0.1.12~bionic_amd64.changes
