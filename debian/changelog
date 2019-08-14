@@ -1,4 +1,4 @@
-in3 (0.1.12~bionic) bionic; urgency=medium
+in3 (0.1.13~bionic) bionic; urgency=medium
 
   * Initial Release. Updated install file. Trying to link libcurl. Overriding build depends. removed install file. modified make file to include destdir. attempting to include tutorial example.
 

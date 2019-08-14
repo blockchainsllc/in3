@@ -158,8 +158,8 @@ debian_package_deploy:
     - cd ..
     - ls
     - gpg --fingerprint
-    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 in3_0.1.12~bionic_amd64.changes
-    - dput ppa:devops-slock-it/in3-client in3_0.1.12~bionic_amd64.changes
+    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 in3_0.1.13~bionic_amd64.changes
+    - dput ppa:devops-slock-it/in3-client in3_0.1.13~bionic_amd64.changes
 
 #    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 test.changes
 #    - export GPGKEY=B4179604561E56D1
