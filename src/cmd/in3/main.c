@@ -19,6 +19,7 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -53,6 +54,8 @@ void show_help(char* name) {
 -debug         if given incubed will output debug information when executing. \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-version       displays the version \n\
+-help          displays this help message \n\
 \n\
 As method, the following can be used:\n\
 \n\
@@ -354,15 +357,42 @@ static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_r
 
 int main(int argc, char* argv[]) {
   // check for usage
-  if (argc < 2 || strcmp(argv[1], "--help") == 0) {
+  if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
     show_help(argv[0]);
-    return 1;
+    return 0;
+  }
+
+  if (argc < 2 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
+    printf("in3 " IN3_VERSION "\nbuild with");
+#ifdef TEST
+    printf(" -DTEST=true");
+#endif
+#ifdef EVM_GAS
+    printf(" -DEVM_GAS=true");
+#endif
+#ifdef CMD
+    printf(" -DCMD=true");
+#endif
+#ifdef IN3_MATH_FAST
+    printf(" -DFAST_MATH=true");
+#endif
+#ifdef IN3_SERVER
+    printf(" -DIN3_SERVER=true");
+#endif
+#ifdef USE_CURL
+    printf(" -DUSE_CURL=true");
+#else
+    printf(" -DUSE_CURL=false");
+#endif
+    printf("\n" IN3_COPYRIGHT "\n");
+    return 0;
   }
 
   // define vars
   char *method = NULL, params[50000];
   params[0]    = '[';
-  int p        = 1, i;
+  int       p  = 1, i;
+  bytes32_t pk;
 
   // use the storagehandler to cache data in .in3
   in3_storage_handler_t storage_handler;
@@ -374,15 +404,11 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c        = in3_new();
-  c->transport    = debug_transport;
-  c->requestCount = 1;
-  c->use_http     = true;
-  c->cacheStorage = &storage_handler;
-
-  // read data from cache
-  in3_cache_init(c);
-  bytes32_t       pk;
+  in3_t* c                     = in3_new();
+  c->transport                 = debug_transport;
+  c->requestCount              = 1;
+  c->use_http                  = true;
+  c->cacheStorage              = &storage_handler;
   bool            out_response = false;
   bool            force_hex    = false;
   char*           sig          = NULL;
@@ -399,6 +425,9 @@ int main(int argc, char* argv[]) {
   char*           validators   = NULL;
   bytes_t*        data         = NULL;
   char*           port         = NULL;
+
+  // read data from cache
+  in3_cache_init(c);
 
   // check env
   if (getenv("IN3_PK")) {
@@ -498,10 +527,8 @@ int main(int argc, char* argv[]) {
       }
     }
   }
-  params[p++] = ']';
-  params[p]   = 0;
-
-  // now execute it
+  params[p++]  = ']';
+  params[p]    = 0;
   char *result = NULL, *error = NULL;
 
 #ifdef IN3_SERVER
@@ -593,7 +620,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode key createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode key createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;
