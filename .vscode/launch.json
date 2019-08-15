@@ -15,7 +15,7 @@
             "name": "(lldb) Attach",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceFolder}/build/src/libin3/liblibin3.dylib",
+            "program": "${workspaceFolder}/build/bin/in3",
             "processId": "${command:pickProcess}",
             "MIMode": "lldb"
         },
@@ -136,9 +136,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/in3",
             "args": [
-                "-c",
-                "goerli",
-                "eth_blockNummber"
+                "-port",
+                "12345",
+                "-debug"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
