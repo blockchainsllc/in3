@@ -2,8 +2,13 @@ cmake_minimum_required(VERSION 3.7.2)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 # project name
 project(in3)
+OPTION(TAG_VERSION "the tagged version, which should be used")
 
-set(PROJECT_VERSION "0.0.0-alpha.0")
+set(PROJECT_VERSION "0.1.0-alpha.0")
+if (TAG_VERSION)
+   set(PROJECT_VERSION "${TAG_VERSION}")
+ENDIF(TAG_VERSION)
+MESSAGE(STATUS "Building version ${PROJECT_VERSION}")
 
 string(REPLACE "." ";" VERSION_LIST ${PROJECT_VERSION})
 list(GET VERSION_LIST 0 PROJECT_VERSION_MAJOR)
