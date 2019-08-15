@@ -24,7 +24,7 @@ build-in3:
       - build/docs/doc_doxygen
 
 wasm:
-  image: trzeci/emscripten:sdk-tag-1.38.32-64bit
+  image: docker.slock.it/build-images/cmake:clang9
   stage: build
   tags:
     - short-jobs
@@ -132,7 +132,11 @@ clang50:
   image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
 
-#linux-x64-static:
+clang9:
+  image: docker.slock.it/build-images/cmake:clang9
+  extends: .conanbuild
+
+  #linux-x64-static:
 #  extends: .xbuild
 #  variables:
 #    IMAGE: linux-x64
