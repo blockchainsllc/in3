@@ -15,7 +15,7 @@ build-in3:
   script:
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true "-DTAG_VERSION=$CI_COMMIT_REF_NAME" .. 
+    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - make
   artifacts:
     paths:
