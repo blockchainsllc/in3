@@ -363,7 +363,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (argc < 2 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
-    printf("in3 " IN3_VERSION "\nbuild with");
+    printf("in3 " IN3_VERSION "\nbuild " __DATE__ " with");
 #ifdef TEST
     printf(" -DTEST=true");
 #endif
@@ -384,7 +384,7 @@ int main(int argc, char* argv[]) {
 #else
     printf(" -DUSE_CURL=false");
 #endif
-    printf("\n" IN3_COPYRIGHT "\n");
+    printf("\n(c) " IN3_COPYRIGHT "\n");
     return 0;
   }
 
