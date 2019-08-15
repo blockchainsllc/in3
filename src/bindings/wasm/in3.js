@@ -1,6 +1,6 @@
-
+// implement the transport and storage handlers
 if (typeof fetch === 'function') {
-    // browser
+    // for browsers
     in3w.in3_cache = {
         get: key => window.localStorage.getItem('in3.' + key),
         set: (key, value) => window.localStorage.setItem('in3.' + key, value)
@@ -16,7 +16,7 @@ if (typeof fetch === 'function') {
     })
 }
 else {
-    // nodejs
+    // for nodejs
     fs = require('' + 'fs')
     try { fs.mkdirSync('.in3') } catch (x) { }
     in3w.in3_cache = {
@@ -32,6 +32,7 @@ else {
     }
 
     try {
+        // if axios is available, we use it
         const axios = require('' + 'axios')
         in3w.transport = (url, payload) => axios.post(url, JSON.parse(payload), { headers: { 'Content-Type': 'application/json' } })
             .then(res => {
@@ -39,6 +40,7 @@ else {
                 return JSON.stringify(res.data)
             })
     } catch (xx) {
+        // if not we use the raw http-implementation of nodejs
         in3w.transport = (url, payload) => new Promise((resolve, reject) => {
             try {
                 const postData = payload;//JSON.stringify(payload);
@@ -72,16 +74,27 @@ else {
         })
     }
 }
+
+
+
+// create a flag ndicating when the wasm was succesfully loaded.
 _in3_ready = false;
 in3w.onRuntimeInitialized = _ => _in3_ready = true
+
+// for all pending Requests we hold the finalize function which will be called by the wasm when done.
+in3w.pendingRequests = {}
 
 function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
     if (er) throw new Error(er);
 }
 
+/**
+ * The incubed client.
+ */
 class IN3 {
 
+    // since loading the wasm is async, we always need to check whether the was was created before using it.
     async _ensure_ptr() {
         while (!this.ptr) {
             this.ptr = _in3_ready ? in3w.ccall('in3_create', 'number', [], []) : 0;
@@ -89,43 +102,58 @@ class IN3 {
         }
     }
 
+    // here we are creating the instance lazy, when the first function is called.
     constructor() {
         this.ptr = 0;
     }
 
+    /**
+     * configures the client.
+     */
     async setConfig(conf) {
         await this._ensure_ptr();
         const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(conf)]);
         if (r) throw new Error("Error setting the confiig : " + r);
     }
 
+    /**
+     * sends a request and returns the response.
+     */
     async send(rpc) {
-        await this._ensure_ptr();
+        // ensure we have created the instance.
+        if (!this.ptr) await this._ensure_ptr();
 
+        // create the context
         const r = in3w.ccall('in3_create_request', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
-        in3w.ccall('in3_send_request', 'void', ['number'], [r]);
-        return new Promise((resolve, reject) => {
-            const check = () => {
-                if (in3w.ccall('request_is_done', 'number', ['number'], [r])) {
-                    const er = in3w.ccall('request_get_error', 'string', ['number'], [r])
-                    const res = er ? '' : in3w.ccall('request_get_result', 'string', ['number'], [r])
-                    in3w.ccall('in3_free_request', 'void', ['number'], [r])
 
-                    if (er) reject(new Error(er))
-                    else {
-                        try {
-                            resolve(JSON.parse(res))
-                        }
-                        catch (ex) {
-                            reject(ex)
-                        }
+        // now send 
+        return new Promise((resolve, reject) => {
+            // we add the pending request with pointer as key.
+            in3w.pendingRequests[r + ''] = () => {
+                // check if it was an error...
+                const er = in3w.ccall('request_get_error', 'string', ['number'], [r])
+                // if not we ask for the result.
+                const res = er ? '' : in3w.ccall('request_get_result', 'string', ['number'], [r])
+
+                // we always need to cleanup
+                in3w.ccall('in3_free_request', 'void', ['number'], [r])
+                delete in3w.pendingRequests[r + '']
+
+                // resolve or reject the promise.
+                if (er) reject(new Error(er))
+                else {
+                    try {
+                        resolve(JSON.parse(res))
+                    }
+                    catch (ex) {
+                        reject(ex)
                     }
                 }
-                else
-                    setTimeout(check, 50);
             }
-            check()
+
+            // send the request.
+            in3w.ccall('in3_send_request', 'void', ['number'], [r]);
         })
     }
 
@@ -135,8 +163,10 @@ class IN3 {
     }
 }
 
+// also support ES6-modules
 IN3.default = IN3
 
+// defined the export
 if (typeof module !== "undefined")
     module.exports = IN3
 

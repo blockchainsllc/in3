@@ -53,6 +53,11 @@ EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload),
   });
 });
 
+EM_JS(void, in3_req_done, (in3_ctx_t* ctx), {
+  var done = Module.pendingRequests[ctx+""];
+  done();
+});
+
 // clang-format on
 
 int in3_fetch(char** urls, int urls_len, char* payload, in3_response_t* result) {
@@ -115,6 +120,7 @@ void EMSCRIPTEN_KEEPALIVE in3_send_request(in3_ctx_t* ctx) {
   in3_set_error(NULL);
   in3_send_ctx(ctx);
   ctx->client = NULL;
+  in3_req_done(ctx);
 }
 
 void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
