@@ -144,7 +144,9 @@ class IN3 {
                 if (er) reject(new Error(er))
                 else {
                     try {
-                        resolve(JSON.parse(res))
+                        const r = JSON.parse(res)
+                        if (r) delete r.in3
+                        resolve(r)
                     }
                     catch (ex) {
                         reject(ex)
