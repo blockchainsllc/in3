@@ -139,7 +139,7 @@ mac_os:
     - mac-mini-runner
 
 .debian_package_deploy_template:
-  image: docker.slock.it/build-images/cmake:gcc8
+  image: docker.slock.it/build-images/cmake:gcc8-with-debian-deps
   stage: deploy
   tags:
     - short-jobs
@@ -147,7 +147,6 @@ mac_os:
     - build-in3
     - test-in3
   script:
-    - sudo apt-get -y install gnupg dput dh-make devscripts lintian build-essential cmake psmisc gnupg-agent pinentry-gtk2 pinentry-curses
     - echo "" >> debian/changelog
     - echo "in3 (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
@@ -162,7 +161,6 @@ mac_os:
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - debuild -S -sa -us -uc
     - cd ..
-    - ls
     - debsign -p'gpg --batch --yes --no-tty --passphrase $PGP_PASSPHRASE' -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
     - dput ppa:devops-slock-it/in3-client in3_${VERSION}~${DISTRO}_source.changes
 
