@@ -136,9 +136,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/in3",
             "args": [
-                "-port",
-                "12345",
-                "-debug"
+                "-debug",
+                "-c",
+                "kovan",
+                "eth_blockNumber"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
