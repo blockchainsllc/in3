@@ -5,6 +5,7 @@ variables:
 stages:
   - build
   - test
+  - bindings
   - deploy
 
 
@@ -116,7 +117,7 @@ wasm:
 
 java:
   image: docker.slock.it/build-images/cmake:gcc8
-  stage: test
+  stage: bindings
   tags:
     - short-jobs
   dependencies:
@@ -156,7 +157,7 @@ test-in3:
 
 
 # #### deploy #####
-deploy-docker:
+docker:
   stage: deploy
   tags:
     - short-jobs
@@ -170,7 +171,7 @@ deploy-docker:
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
 
-deploy-to-slockit-npm:
+wasm-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
   stage: deploy
   tags:
@@ -187,7 +188,7 @@ deploy-to-slockit-npm:
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish
 
-deploy-to-slockit-public_npm:
+wasm-public-npm:
   image: docker.slock.it/build-images/node:11-alpine
   stage: deploy
   tags:
