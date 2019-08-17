@@ -1,10 +1,22 @@
 {
     "name": "in3-wasm",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "WASM-Version of incubed build from C",
     "main": "in3.js",
     "author": "Simon Jentzsch",
-    "license": "IN3",
+    "license": "in3",
     "devDependencies": {},
-    "dependencies": {}
+    "dependencies": {},
+    "bugs": {
+        "url": "https://github.com/slockit/in3/issues"
+    },
+    "homepage": "https://github.com/slockit/in3#readme",
+    "keywords": [
+        "ethereum",
+        "slockit",
+        "iot",
+        "in3",
+        "client",
+        "jsonrpc"
+    ]
 }

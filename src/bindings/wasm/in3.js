@@ -88,6 +88,7 @@ function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
     if (er) throw new Error(er);
 }
+const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
 
 /**
  * The incubed client.
@@ -111,15 +112,31 @@ class IN3 {
      * configures the client.
      */
     async setConfig(conf) {
+        if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
         await this._ensure_ptr();
         const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(conf)]);
         if (r) throw new Error("Error setting the confiig : " + r);
     }
 
     /**
+       * sends one or a multiple requests.
+       * if the request is a array the response will be a array as well.
+       * If the callback is given it will be called with the response, if not a Promise will be returned.
+       * This function supports callback so it can be used as a Provider for the web3.
+       */
+    send(request, callback) {
+        const p = this.sendRequest(request)
+        if (callback)
+            p.then(_ => callback(null, _), err => callback(err, null))
+        else
+            return p
+    }
+
+
+    /**
      * sends a request and returns the response.
      */
-    async send(rpc) {
+    async sendRequest(rpc) {
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
 
@@ -157,6 +174,12 @@ class IN3 {
             // send the request.
             in3w.ccall('in3_send_request', 'void', ['number'], [r]);
         })
+    }
+
+    async sendRPC(method, params) {
+        const res = await this.sendRequest({ method, params })
+        if (res.error) throw new Error(res.error.message || res.error)
+        return res.result
     }
 
     free() {

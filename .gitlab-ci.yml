@@ -7,76 +7,6 @@ stages:
   - test
   - deploy
 
-build-in3:
-  image: docker.slock.it/build-images/cmake:gcc8
-  stage: build
-  tags:
-    - short-jobs
-  script:
-    - mkdir build
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
-    - make
-  artifacts:
-    paths:
-      - build/bin
-      - build/lib
-      - build/docs/doc_doxygen
-
-wasm:
-  image: docker.slock.it/build-images/cmake:clang9
-  stage: build
-  tags:
-    - short-jobs
-  script:
-    - mkdir build
-    - cd build
-    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DEXAMPLES=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
-    - make
-    - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
-
-  artifacts:
-    paths:
-      - build/bin
-      - build/lib
-
-test-in3:
-  image: docker.slock.it/build-images/cmake:gcc8
-  stage: test
-  tags:
-    - short-jobs
-  script:
-    - mkdir testbuild
-    - cd testbuild
-    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
-    - make
-    - CTEST_OUTPUT_ON_FAILURE=1 make test
-  artifacts:
-    paths:
-      - testbuild/test
-      - Testing
-
-.xbuild:
-  services:
-    - docker:dind
-  image: jonaskello/docker-and-compose:latest
-  stage: build
-  tags:
-    - short-jobs
-  artifacts:
-    paths:
-      - build/bin
-      - build/lib
-
-  script:
-    - apk add --no-cache bash
-    - docker run --rm "dockcross/$IMAGE" > ./dockcross
-    - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release .. && make"
-  variables:
-    IMAGE: "linux-x64"
-    INSTALL: "cd ."
-    CONAN_OPTS: ""
 
 .conanbuild:
   stage: build
@@ -94,21 +24,47 @@ test-in3:
       - build/bin
       - build/lib
 
+build-in3:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: build
+  tags:
+    - short-jobs
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
+    - make
+  artifacts:
+    paths:
+      - build/bin
+      - build/lib
+      - build/docs/doc_doxygen
+
+
+wasm:
+  image: docker.slock.it/build-images/cmake:clang9
+  stage: build
+  tags:
+    - short-jobs
+  script:
+    - mkdir build
+    - cd build
+    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DEXAMPLES=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - make
+    - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
+
+  artifacts:
+    paths:
+      - build/module
+      - build/bin
+      - build/lib
+
 
 gcc7-mingw-static:
  image: docker.slock.it/build-images/cmake:gcc7-mingw
  extends: .conanbuild
  variables:
    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true" 
-
-#gcc7-mingw-shared:
-# image: docker.slock.it/build-images/cmake:gcc7-mingw
-# extends: .conanbuild
-# variables:
-#   CONAN_OPTS: "-DLIBCURL_LINKTYPE=shared"
-# artifacts:
-#   paths:
-#     - build/src
 
 gcc8-armv7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
@@ -136,61 +92,6 @@ clang9:
   image: docker.slock.it/build-images/cmake:clang9
   extends: .conanbuild
 
-  #linux-x64-static:
-#  extends: .xbuild
-#  variables:
-#    IMAGE: linux-x64
-#    CONAN_OPTS: "-DLIBCURL_TYPE=static"
-
-#linux-x64-shared:
-#  extends: .xbuild
-#  variables:
-#    IMAGE: linux-x64
-#    CONAN_OPTS: "-DLIBCURL_TYPE=shared"
-
-#zephyr_arm-0_9_5__v1_14_0-rc1:
-#  image: docker.slock.it/build-images/zephyr:arm-0_9_5__v1_14_0-rc1
-#  stage: build
-#  tags:
-#    - short-jobs
-#  artifacts:
-#    paths:
-#      - src/zephyr/build
-#  script:
-#    - source /zephyr/zephyr-env.sh
-#    - cd src/zephyr; mkdir build; cd build
-#    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-#    - make  -j8
-
-#zephyr_arm-0_10_0__v1_14_0:
-#  image: docker.slock.it/build-images/zephyr:arm-0_10_0__v1_14_0
-#  stage: build
-#  tags:
-#    - short-jobs
-#  artifacts:
-#    paths:
-#      - src/zephyr/build
-#  script:
-#    - source /zephyr/zephyr-env.sh
-#    - cd src/zephyr; mkdir build; cd build
-#    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-#    - make -j8
-
-
-#zephyr_arm-0_9_5__0b9cfe7:
-#  image: docker.slock.it/build-images/zephyr:arm-0_9_5__0b9cfe7
-#  stage: build
-#  tags:
-#    - short-jobs
-#  artifacts:
-#    paths:
-#      - src/zephyr/build
-#  script:
-#    - source /zephyr/zephyr-env.sh
-#    - cd src/zephyr; mkdir build; cd build
-#    - cmake -DBOARD=nrf52840_pca10056 -DCMAKE_BUILD_TYPE=Release ..
-#    - make -j8
-
 mac_os:
   stage: build
   script:
@@ -211,61 +112,27 @@ mac_os:
   tags:
     - mac-mini-runner
 
-
-#pages:
-#  tags:
-#    - short-jobs
-#  stage: deploy
-#  when: always
-#  environment:
-#    name: test-results
-#    url: https://in3.git-pages.slock.it/c/in3-core
-#  dependencies:
-#    - linux-x64-shared
-#  script:
-#    - mkdir -p public/
-#    - cp -r build/docs/doc_doxygen/html/* public/
-#  artifacts:
-#    paths:
-#      - public
-#windows-x64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: windows-x64
-
-#linux-armv5:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-armv5
-
-#linux-arm64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-arm64
-
-#linux-armv6:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-armv6
-
-#linux-armv7:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-armv7
-
-#windows-x86:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: windows-x86
-
-#manylinux-x64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: manylinux-x64
-#     CONAN_OPTS : --build libcurl
-#     INSTALL: "apk add py-pip; pip install conan"
+# ##### test ######
 
 
+test-in3:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mkdir testbuild
+    - cd testbuild
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
+    - make
+    - CTEST_OUTPUT_ON_FAILURE=1 make test
+  artifacts:
+    paths:
+      - testbuild/test
+      - Testing
+
+
+# #### deploy #####
 deploy-docker:
   stage: deploy
   tags:
@@ -279,3 +146,37 @@ deploy-docker:
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
+
+deploy-to-slockit-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: deploy
+  tags:
+    - short-jobs
+  only: # deploy only on  semantic versions tags
+    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
+  except:
+    - branches
+  dependencies:
+    - wasm
+  script:
+    - sh /prepare.sh
+    - cd build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish
+
+deploy-to-slockit-public_npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: deploy
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  dependencies:
+    - wasm
+  script:
+    - sh /prepare.sh
+    - cd build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish --registry https://registry.npmjs.org
