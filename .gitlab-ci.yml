@@ -130,6 +130,8 @@ java:
     - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
+    - ls -ltr ../x86_build/
+    - ls -ltr ../x86_build/lib/
     - cp ../x86_build/lib/libin3.so ../src/bindings/java/in3/native/
     - make in3j
   artifacts:
