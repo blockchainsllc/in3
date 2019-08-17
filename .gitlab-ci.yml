@@ -220,14 +220,31 @@ wasm-public-npm:
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
 
+readthedocs:
+  image: docker.slock.it/build-images/doc:readthedocs
+  stage: test
+  tags:
+    - short-jobs
+  dependencies:
+    - gcc8
+  script:
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git 
+    - cd doc
+    - echo "//npm.slock.it/:_authToken=\"$NPM_REGISTRY_TOKEN\"" >> ~/.npmrc
+    - npm install slockit-generator
+    - node_modules/.bin/slockit-doxygen ../x64_build/docs/doc_doxygen/xml "# API Reference C\n\n" >  docs/api-c.md
+    - cd docs && make html && make latexpdf && make text
+  artifacts:
+    paths:
+      - doc/build
 
 release:
-  image: docker.slock.it/build-images/cmake:gcc8
   stage: deploy
   tags:
     - short-jobs
   dependencies:
     - mac_os
+    - readthedocs
     - win_mingw
     - gcc8
     - gcc8-x86
@@ -236,13 +253,15 @@ release:
     - mkdir release
     - cd release
     - mkdir bin
+    - mkdir doc
     - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - cp -r ../mac_build/bin bin/osx
     - cp -r ../win_build/bin bin/win64
     - cp -r ../x64_build/bin bin/linux_x64
     - cp -r ../x86_build/bin bin/linux_x86
-    - cp -r ../include ../src CMakeLists.txt ../compiler.cmake  .
-    - cp -r ../x64_build/docs/doc_doxygen doc
+    - cp -r ../include ../src ../CMakeLists.txt ../compiler.cmake  .
+    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
+    - cp -r ../doc/build doc/readthedocs 
     - cp -r ../wasm_build/module wasm
   artifacts:
     paths:
