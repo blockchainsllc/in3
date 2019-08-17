@@ -262,10 +262,10 @@ release:
     - mv bin/win64/json bin/win64/json.exe
     - cp -r ../x64_build/bin bin/linux_x64
     - cp -r ../x86_build/bin bin/linux_x86
-    - cp -r ../include ../src ../CMakeLists.txt ../compiler.cmake  .
+    - cp -r ../include ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE .
     - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
     - cp -r ../doc/build doc/readthedocs 
-    - cp -r ../wasm_build/module wasm
+    - cp -r ../wasm_build/module js
   artifacts:
     paths:
       - release
