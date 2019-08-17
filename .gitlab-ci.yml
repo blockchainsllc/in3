@@ -99,7 +99,7 @@ mac_os:
 
 wasm:
   image: docker.slock.it/build-images/cmake:clang9
-  stage: build
+  stage: bindings
   tags:
     - short-jobs
   script:
