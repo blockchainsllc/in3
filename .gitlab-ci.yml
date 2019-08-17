@@ -4,8 +4,8 @@ variables:
 
 stages:
   - build
-  - test
   - bindings
+  - test
   - deploy
 
 
@@ -125,8 +125,8 @@ java:
     - gcc7-mingw-static
     - gcc8-x86
   script:
-    - mkdir build
-    - cd build
+    - mkdir java_build
+    - cd java_build
     - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
@@ -134,7 +134,7 @@ java:
     - make in3j
   artifacts:
     paths:
-      - build/lib
+      - java_build/lib
 
 # ##### test ######
 
@@ -154,6 +154,21 @@ test-in3:
     paths:
       - testbuild/test
       - Testing
+
+java_linux:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  script:
+    - java -cp java_build/in3.jar eth_blockNumber
+  tags:
+    - short-jobs
+
+java_macos:
+  stage: test
+  script:
+    - java -cp java_build/in3.jar eth_blockNumber
+  tags:
+    - mac-mini-runner
 
 
 # #### deploy #####
