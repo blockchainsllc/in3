@@ -254,14 +254,19 @@ release:
     - mkdir release
     - cd release
     - mkdir bin
+    - mkdir lib
     - mkdir doc
     - cp -r ../mac_build/bin bin/osx
+    - cp -r ../mac_build/lib lib/osx
     - cp -r ../win_build/bin bin/win64
+    - cp -r ../win_build/lib lib/win64
     - mv bin/win64/in3 bin/win64/in3.exe
     - mv bin/win64/rlp bin/win64/rlp.exe
     - mv bin/win64/json bin/win64/json.exe
     - cp -r ../x64_build/bin bin/linux_x64
+    - cp -r ../x64_build/lib lib/linux_x64
     - cp -r ../x86_build/bin bin/linux_x86
+    - cp -r ../x86_build/lib lib/linux_x86
     - cp -r ../include ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE .
     - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
     - cp -r ../doc/build doc/readthedocs 
