@@ -96,8 +96,6 @@ mac_os:
   tags:
     - mac-mini-runner
 
-
-
 wasm:
   image: docker.slock.it/build-images/cmake:clang9
   stage: build
@@ -115,6 +113,27 @@ wasm:
       - wasm_build/module
       - wasm_build/bin
 
+
+java:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: build
+  tags:
+    - short-jobs
+  dependencies:
+    - mac_os
+    - gcc7-mingw-static
+    - gcc8-x86
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
+    - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
+    - cp ../win_build/lib/in3_jni.dll ../src/bindings/java/in3/native/
+    - cp ../x86_build/lib/libin3.so ../src/bindings/java/in3/native/
+    - make in3j
+  artifacts:
+    paths:
+      - build/lib
 
 # ##### test ######
 
