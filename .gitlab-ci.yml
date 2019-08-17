@@ -43,7 +43,7 @@ build-in3:
       - build/docs/doc_doxygen
 
 
-gcc7-mingw-static:
+win_mingw:
  image: docker.slock.it/build-images/cmake:gcc7-mingw
  extends: .conanbuild
  variables:
@@ -122,7 +122,7 @@ java:
     - short-jobs
   dependencies:
     - mac_os
-    - gcc7-mingw-static
+    - win_mingw
     - gcc8-x86
   script:
     - mkdir java_build
