@@ -13,16 +13,17 @@ stages:
   tags:
     - short-jobs
   script:
-    - mkdir build
-    - cd build
+    - mkdir $BUILD
+    - cd $BUILD
     - cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release ..
     - make
   variables:
     CONAN_OPTS: ""
+    BUILD: "build"
   artifacts:
     paths:
-      - build/bin
-      - build/lib
+      - $BUILD/bin
+      - $BUILD/lib
 
 build-in3:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -41,6 +42,62 @@ build-in3:
       - build/docs
 
 
+gcc7-mingw-static:
+ image: docker.slock.it/build-images/cmake:gcc7-mingw
+ extends: .conanbuild
+ variables:
+   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true" 
+   BUILD: "win_build"
+
+gcc8-armv7:
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
+  extends: .conanbuild
+
+gcc8-armv7hf:
+  image: docker.slock.it/build-images/cmake:gcc8-armv7hf
+  extends: .conanbuild
+
+gcc8-x86:
+  image: docker.slock.it/build-images/cmake:gcc8-x86
+  extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DJAVA=true" 
+    BUILD: "x86_build"
+      
+gcc5:
+  image: docker.slock.it/build-images/cmake:gcc5
+  extends: .conanbuild
+
+clang50:
+  image: docker.slock.it/build-images/cmake:clang50
+  extends: .conanbuild
+
+clang9:
+  image: docker.slock.it/build-images/cmake:clang9
+  extends: .conanbuild
+
+mac_os:
+  stage: mac_build
+  script:
+    - mkdir mac_build
+    - cd mac_build
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared .. 
+    - make 
+    - make ptest
+    - rm -rf *
+    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true .. 
+    - make 
+
+  artifacts:
+    paths:
+      - mac_build/docs
+      - mac_build/lib
+      - mac_build/bin
+  tags:
+    - mac-mini-runner
+
+
+
 wasm:
   image: docker.slock.it/build-images/cmake:clang9
   stage: build
@@ -57,60 +114,7 @@ wasm:
     paths:
       - wasm_build/module
       - wasm_build/bin
-      - wasm_build/lib
 
-
-gcc7-mingw-static:
- image: docker.slock.it/build-images/cmake:gcc7-mingw
- extends: .conanbuild
- variables:
-   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true" 
-
-gcc8-armv7:
-  image: docker.slock.it/build-images/cmake:gcc8-armv7
-  extends: .conanbuild
-
-gcc8-armv7hf:
-  image: docker.slock.it/build-images/cmake:gcc8-armv7hf
-  extends: .conanbuild
-
-gcc8-x86:
-  image: docker.slock.it/build-images/cmake:gcc8-x86
-  extends: .conanbuild
-  variables:
-    CONAN_OPTS: "-DJAVA=true" 
-      
-gcc5:
-  image: docker.slock.it/build-images/cmake:gcc5
-  extends: .conanbuild
-
-clang50:
-  image: docker.slock.it/build-images/cmake:clang50
-  extends: .conanbuild
-
-clang9:
-  image: docker.slock.it/build-images/cmake:clang9
-  extends: .conanbuild
-
-mac_os:
-  stage: build
-  script:
-    - mkdir build
-    - cd build
-    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared .. 
-    - make 
-    - make ptest
-    - rm -rf *
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true .. 
-    - make 
-
-  artifacts:
-    paths:
-      - build/docs
-      - build/lib
-      - build/bin
-  tags:
-    - mac-mini-runner
 
 # ##### test ######
 
