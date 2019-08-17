@@ -77,7 +77,7 @@ clang9:
   extends: .conanbuild
 
 mac_os:
-  stage: mac_build
+  stage: build
   script:
     - mkdir mac_build
     - cd mac_build
