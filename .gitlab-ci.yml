@@ -116,7 +116,7 @@ wasm:
 
 java:
   image: docker.slock.it/build-images/cmake:gcc8
-  stage: build
+  stage: test
   tags:
     - short-jobs
   dependencies:
