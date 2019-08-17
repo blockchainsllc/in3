@@ -219,3 +219,31 @@ wasm-public-npm:
     - cd wasm_build/module
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
+
+
+release:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: deploy
+  tags:
+    - short-jobs
+  dependencies:
+    - mac_os
+    - win_mingw
+    - gcc8
+    - gcc8-x86
+    - wasm
+  script:
+    - mkdir release
+    - cd release
+    - mkdir bin
+    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
+    - cp -r ../mac_build/bin bin/osx
+    - cp -r ../win_build/bin bin/win64
+    - cp -r ../x64_build/bin bin/linux_x64
+    - cp -r ../x86_build/bin bin/linux_x86
+    - cp -r ../include ../src CMakeLists.txt ../compiler.cmake  .
+    - cp -r ../x64_build/docs/doc_doxygen doc
+    - cp -r ../wasm_build/module wasm
+  artifacts:
+    paths:
+      - release
