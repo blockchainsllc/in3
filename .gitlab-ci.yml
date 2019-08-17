@@ -26,21 +26,21 @@ stages:
       - $BUILD/bin
       - $BUILD/lib
 
-build-in3:
+gcc8:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: build
   tags:
     - short-jobs
   script:
-    - mkdir build
-    - cd build
+    - mkdir x64_build
+    - cd x64_build
     - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - make
   artifacts:
     paths:
-      - build/bin
-      - build/lib
-      - build/docs/doc_doxygen
+      - x64_build/bin
+      - x64_build/lib
+      - x64_build/docs/doc_doxygen
 
 
 win_mingw:
@@ -123,14 +123,14 @@ java:
   dependencies:
     - mac_os
     - win_mingw
-    - gcc8-x86
+    - gcc8
   script:
     - mkdir java_build
     - cd java_build
     - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
-    - cp ../x86_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
+    - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
     - make in3j
   artifacts:
     paths:
