@@ -38,7 +38,7 @@ build-in3:
     paths:
       - build/bin
       - build/lib
-      - build/docs/doc_doxygen
+      - build/docs
 
 
 wasm:
@@ -47,17 +47,17 @@ wasm:
   tags:
     - short-jobs
   script:
-    - mkdir build
-    - cd build
+    - mkdir wasm_build
+    - cd wasm_build
     - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DEXAMPLES=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make
     - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
 
   artifacts:
     paths:
-      - build/module
-      - build/bin
-      - build/lib
+      - wasm_build/module
+      - wasm_build/bin
+      - wasm_build/lib
 
 
 gcc7-mingw-static:
@@ -160,7 +160,7 @@ deploy-to-slockit-npm:
     - wasm
   script:
     - sh /prepare.sh
-    - cd build/module
+    - cd wasm_build/module
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish
 
@@ -177,6 +177,6 @@ deploy-to-slockit-public_npm:
     - wasm
   script:
     - sh /prepare.sh
-    - cd build/module
+    - cd wasm_build/module
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
