@@ -255,7 +255,6 @@ release:
     - cd release
     - mkdir bin
     - mkdir doc
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
     - cp -r ../mac_build/bin bin/osx
     - cp -r ../win_build/bin bin/win64
     - cp -r ../x64_build/bin bin/linux_x64
