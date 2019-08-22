@@ -134,7 +134,7 @@
             "name": "cmd",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/in3",
+            "program": "${workspaceFolder}/build/bin/btc",
             "args": [
                 "-debug",
                 "-c",
