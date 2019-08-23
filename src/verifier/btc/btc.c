@@ -52,11 +52,6 @@ int main() {
   printf("tx_cnt     = %i\n", tx_count);
   bytes_t transactions[tx_count];
   btc_get_transactions(block, transactions);
-  for (int i = 0; i < tx_count; i++) {
-    printf(" %i : ", i);
-    print("", transactions[i], "hex");
-  }
-  printf("\n------------------------------------\n");
 
   bytes32_t tx_hashes[tx_count];
 
@@ -70,6 +65,14 @@ int main() {
   bytes32_t root;
   btc_merkle_create_root(tx_hashes, tx_count, root);
   print("root = ", bytes(root, 32), "hex");
+
+  int proof_index = 3;
+
+  bytes_t* proof = btc_merkle_create_proof(tx_hashes, tx_count, proof_index);
+  print("proof= ", *proof, "hex");
+  int verified = btc_merkle_verify_proof(root, *proof, proof_index, tx_hashes[proof_index]);
+
+  printf("VERIFIED : %i\n", verified);
 
   //  print("rest \n", bytes(block.data + 80, block.len - 80), "hex");
 }
