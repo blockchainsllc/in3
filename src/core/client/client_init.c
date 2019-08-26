@@ -69,7 +69,7 @@ static void in3_client_init(in3_t* c) {
   c->proof              = PROOF_STANDARD;
   c->replaceLatestBlock = 0;
   c->requestCount       = 1;
-  c->chainsCount        = 8;
+  c->chainsCount        = 9;
   c->chains             = _malloc(sizeof(in3_chain_t) * c->chainsCount);
   c->filters            = NULL;
 
@@ -125,6 +125,10 @@ static void in3_client_init(in3_t* c) {
   initNode(c->chains + 7, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/goerli/nd-3");
   initNode(c->chains + 7, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/goerli/nd-1");
 #endif
+  // btc
+  initChain(c->chains + 8, 0xFF01, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 1, CHAIN_BTC, NULL);
+  initNode(c->chains + 8, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "http://localhost:8500");
+  c->chains[8].needsUpdate = false;
 }
 
 static in3_chain_t* find_chain(in3_t* c, uint64_t chain_id) {

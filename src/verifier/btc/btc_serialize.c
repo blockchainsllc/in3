@@ -1,7 +1,26 @@
 #include "btc_serialize.h"
+#include "../../core/util/data.h"
+#include "../../core/util/utils.h"
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/tommath/tommath.h"
 #include <string.h>
+
+static void rev_hex(char* hex, uint8_t* dst, int l) {
+  int len = hex ? strlen(hex) : 0, i, j, out_len = (len + 1) >> 1;
+  if (out_len > l)
+    out_len = l;
+  else if (out_len < l)
+    memset(dst + out_len, 0, l - out_len);
+
+  if (len % 1) {
+    dst[out_len - 1] = strtohex(*hex);
+    out_len--;
+    hex++;
+  }
+
+  for (i = 0, j = out_len - 1; j >= 0; j--, i += 2)
+    dst[j] = (strtohex(hex[i]) << 4) | strtohex(hex[i + 1]);
+}
 
 bytes_t btc_block_get(bytes_t block, btc_block_field field) {
   switch (field) {
@@ -29,6 +48,13 @@ void btc_hash(bytes_t data, bytes32_t dst) {
 // copy 32 bytes in revers order
 void rev_copy(uint8_t* dst, uint8_t* src) {
   for (int i = 0; i < 32; i++) dst[31 - i] = src[i];
+}
+void rev_copyl(uint8_t* dst, bytes_t src, int l) {
+  if (src.len < (uint32_t) l) {
+    memset(dst + src.len, 0, l - src.len);
+    l = src.len;
+  }
+  for (int i = 0; i < l; i++) dst[l - 1 - i] = src.data[i];
 }
 
 uint32_t le_to_int(uint8_t* data) {
@@ -97,4 +123,14 @@ bytes_t btc_get_txoutput(uint8_t* data) {
   uint64_t len;
   uint32_t l = decode_var_int(data + 8, &len);
   return bytes(data, 8 + l + len);
+}
+
+in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header) {
+  rev_hex(d_get_string(data, "versionHex"), block_header, 4);
+  rev_hex(d_get_string(data, "previousblockhash"), block_header + 4, 32);
+  rev_hex(d_get_string(data, "merkleroot"), block_header + 36, 32);
+  rev_copyl(block_header + 68, d_to_bytes(d_get(data, key("time"))), 4);
+  rev_hex(d_get_string(data, "bits"), block_header + 72, 4);
+  rev_copyl(block_header + 76, d_to_bytes(d_get(data, key("nonce"))), 4);
+  return IN3_OK;
 }

@@ -2,6 +2,7 @@
 #define _BTC_SERIALIZE_H
 
 #include "../../core/util/bytes.h"
+#include "../../core/util/data.h"
 #include "../../core/util/error.h"
 #include <stdint.h>
 
@@ -17,8 +18,9 @@ typedef enum {
 
 } btc_block_field;
 
-bytes_t btc_block_get(bytes_t block, btc_block_field field);
-void    btc_hash(bytes_t data, bytes32_t dst);
+bytes_t   btc_block_get(bytes_t block, btc_block_field field);
+void      btc_hash(bytes_t data, bytes32_t dst);
+in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header);
 
 // copy 32 bytes in revers order
 void     rev_copy(uint8_t* dst, uint8_t* src);

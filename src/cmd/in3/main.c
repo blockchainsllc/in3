@@ -20,6 +20,7 @@
 #include "../http-server/http_server.h"
 #endif
 #include "../../core/client/version.h"
+#include "../../verifier/btc/btc.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -40,6 +41,7 @@ void show_help(char* name) {
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -np            short for -p none\n\
 -s, -signs     number of signatures to use when verifying.\n\
+-f             finality : number of blocks on top of the current one.\n\
 -port          if specified it will run as http-server listening to the given port.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
@@ -211,6 +213,7 @@ uint64_t getChainId(char* name) {
   if (strcmp(name, "ipfs") == 0) return 0x7d0;
   if (strcmp(name, "local") == 0) return 0xFFFFL;
   if (strcmp(name, "volta") == 0) return 0x12046;
+  if (strcmp(name, "btc") == 0) return 0x99;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
     return bytes_to_long(d, hex2byte_arr(name + 2, -1, d, 32));
@@ -408,6 +411,7 @@ int main(int argc, char* argv[]) {
 
   // we want to verify all
   in3_register_eth_full();
+  in3_register_btc();
   in3_log_set_level(LOG_INFO);
 
   // create the client
@@ -486,6 +490,8 @@ int main(int argc, char* argv[]) {
       validators = argv[++i];
     else if (strcmp(argv[i], "-hex") == 0)
       force_hex = true;
+    else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "-finality") == 0)
+      c->finality = (uint16_t) atoi(argv[++i]);
     else if (strcmp(argv[i], "-response-out") == 0 || strcmp(argv[i], "-ro") == 0)
       out_response = true;
     else if (strcmp(argv[i], "-response-in") == 0 || strcmp(argv[i], "-ri") == 0)
@@ -528,11 +534,11 @@ int main(int argc, char* argv[]) {
       else {
         // otherwise we add it to the params
         if (p > 1) params[p++] = ',';
-        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x')
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strlen(argv[i]) < 16)
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,
-                       (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
+                       (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
                        argv[i]);
@@ -648,7 +654,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode key -f -finality -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;
