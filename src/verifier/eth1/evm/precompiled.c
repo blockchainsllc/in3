@@ -3,8 +3,16 @@
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/ripemd160.h"
 #include "../../../third-party/crypto/secp256k1.h"
+#include "../../../third-party/tommath/tommath.h"
 #include "evm.h"
 #include "gas.h"
+
+#ifndef MAX
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
 
 uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   UNUSED_VAR(evm);
@@ -58,6 +66,79 @@ int pre_identity(evm_t* evm) {
   return 0;
 }
 
+int pre_modexp(evm_t* evm) {
+  if (evm->call_data.len < 96) return -1;
+  uint8_t      res[64];
+  uint_fast8_t hp     = 0;
+  uint32_t     l_base = bytes_to_int(evm->call_data.data + 28, 4);
+  uint32_t     l_exp  = bytes_to_int(evm->call_data.data + 28 + 32, 4);
+  uint32_t     l_mod  = bytes_to_int(evm->call_data.data + 28 + 64, 4);
+  if (evm->call_data.len < 96 + l_base + l_exp + l_mod) return -1;
+  bytes_t b_base = bytes(evm->call_data.data + 96, l_base);
+  bytes_t b_exp  = bytes(evm->call_data.data + 96 + l_base, l_exp);
+  bytes_t b_mod  = bytes(evm->call_data.data + 96 + l_base + l_exp, l_mod);
+
+#ifdef EVM_GAS
+
+  for (uint32_t i = 0; i < MIN(l_exp, 32); i++) {
+    if (b_exp.data[i]) {
+      for (int n = 7; n >= 0; n--) {
+        if (b_exp.data[i] >> n) {
+          hp = ((l_exp - i - 1) << 3) + n;
+          break;
+        }
+      }
+      break;
+    }
+  }
+  uint64_t ael;
+  if (l_exp <= 32 && hp == 0)
+    ael = 0;
+  else if (l_exp <= 32)
+    ael = hp;
+  else
+    ael = 8 * (l_exp - 32) + hp;
+
+  // calc gas
+  //  floor(mult_complexity(max(length_of_MODULUS, length_of_BASE)) * max(ADJUSTED_EXPONENT_LENGTH, 1) / GQUADDIVISOR)
+  uint64_t lm = MAX(l_mod, l_base);
+  if (lm <= 64)
+    lm *= lm;
+  else if (lm <= 1024)
+    lm = lm * lm / 4 + 96 * lm - 3072;
+  else
+    lm = lm * lm / 16 + 480 * lm - 199680;
+
+  subgas(lm * MAX(1, ael) / G_PRE_MODEXP_GQUAD_DIVISOR);
+
+#endif
+  // we use gmp for now
+  mp_int m_base, m_exp, m_mod, m_res;
+  mp_init(&m_base);
+  mp_init(&m_exp);
+  mp_init(&m_mod);
+  mp_init(&m_res);
+
+  mp_import(&m_base, b_base.len, 1, sizeof(uint8_t), 1, 0, b_base.data);
+  mp_import(&m_exp, b_exp.len, 1, sizeof(uint8_t), 1, 0, b_exp.data);
+  mp_import(&m_mod, b_mod.len, 1, sizeof(uint8_t), 1, 0, b_mod.data);
+
+  m_base.sign = m_exp.sign = m_mod.sign = 0;
+  mp_exptmod(&m_base, &m_exp, &m_mod, &m_res);
+  size_t ml;
+  mp_export(res, &ml, 1, sizeof(uint8_t), 1, 0, &m_res);
+
+  mp_clear(&m_base);
+  mp_clear(&m_exp);
+  mp_clear(&m_mod);
+  mp_clear(&m_res);
+
+  evm->return_data.data = _malloc(ml);
+  evm->return_data.len  = ml;
+  memcpy(evm->return_data.data, res, ml);
+  return 0;
+}
+
 int evm_run_precompiled(evm_t* evm, address_t address) {
   switch (address[19]) {
     case 1:
@@ -68,6 +149,8 @@ int evm_run_precompiled(evm_t* evm, address_t address) {
       return pre_ripemd160(evm);
     case 4:
       return pre_identity(evm);
+    case 5:
+      return pre_modexp(evm);
     default:
       return -1;
   }
