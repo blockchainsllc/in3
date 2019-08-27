@@ -11,7 +11,7 @@
 static bool equals_hex(bytes_t data, char* hex) {
   uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                  // calc len of bytes from hex
   if (bl != data.len || sl % 1) return false;                                                         // we do not support odd length of hex
-  for (int i = 0; i < bl; i++) {                                                                      // compare each byte
+  for (uint32_t i = 0; i < bl; i++) {                                                                 // compare each byte
     if (data.data[i] != ((strtohex(hex[i << 1]) << 4) | (strtohex(hex[(i << 1) + 1])))) return false; // cancel on first difference
   }
   return true;
@@ -31,7 +31,7 @@ static in3_ret_t btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes3
   bytes32_t target;
   btc_target(bytes(block_header, 80), target); // check target
   btc_hash(bytes(block_header, 80), dst_hash); // check blockhash
-  return (memcmp(target, dst_hash, 32) < 0) vc_err(vc, "Invalid proof of work. the hash is greater than the target") : IN3_OK;
+  return (memcmp(target, dst_hash, 32) < 0) ? vc_err(vc, "Invalid proof of work. the hash is greater than the target") : IN3_OK;
 }
 
 /**
@@ -110,8 +110,9 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   return IN3_OK;
 }
 
-in3_ret_t in3_verify_transaction(in3_vctx_t* vc, bytes32_t transaction_hash, bool json) {
-}
+//in3_ret_t in3_verify_transaction(in3_vctx_t* vc, bytes32_t transaction_hash, bool json) {
+//TODO
+//}
 
 in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   char*      method = d_get_stringk(vc->request, K_METHOD);
