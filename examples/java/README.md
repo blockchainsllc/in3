@@ -9,7 +9,7 @@
 
 ## Building 
 
-In order to run those examples, you only need a c-compiler (gcc or clang) and curl installed.
+In order to run those examples, you only need a Java SDK installed.
 
 ```
 ./build.sh
