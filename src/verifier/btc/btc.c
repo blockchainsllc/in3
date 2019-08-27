@@ -7,59 +7,60 @@
 #include <stdlib.h>
 #include <string.h>
 
+// check if 2 byte arrays are equal where one is a bytes while the other one is a hex string (without 0x)
 static bool equals_hex(bytes_t data, char* hex) {
-  int sl = hex ? strlen(hex) : 0, bl = sl >> 1;
-  if (bl != (int) data.len || sl % 1) return false;
-  for (int i = 0; i < bl; i++) {
-    if (data.data[i] != ((strtohex(hex[i << 1]) << 4) | (strtohex(hex[(i << 1) + 1])))) return false;
+  uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                  // calc len of bytes from hex
+  if (bl != data.len || sl % 1) return false;                                                         // we do not support odd length of hex
+  for (int i = 0; i < bl; i++) {                                                                      // compare each byte
+    if (data.data[i] != ((strtohex(hex[i << 1]) << 4) | (strtohex(hex[(i << 1) + 1])))) return false; // cancel on first difference
   }
   return true;
 }
 
-in3_ret_t btc_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
+// handle the request before sending it out the the node.
+// not needed yet.
+static in3_ret_t btc_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1 || !response) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
-
-  // d_token_t* req = ctx->requests[0];
-  // check method
-  //  if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0)
   return IN3_OK;
 }
 
+/**
+ * verify proof of work of the blockheader
+ */
 static in3_ret_t btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash) {
   bytes32_t target;
-
-  // check target
-  btc_target_le(bytes(block_header, 80), dst_hash);
-  rev_copy(target, dst_hash);
-
-  // check blockhash
-  btc_hash(bytes(block_header, 80), dst_hash);
-  if (memcmp(target, dst_hash, 32) < 0) return vc_err(vc, "Invalid proof of work. the hash is greater than the target");
-
-  return IN3_OK;
+  btc_target(bytes(block_header, 80), target); // check target
+  btc_hash(bytes(block_header, 80), dst_hash); // check blockhash
+  return (memcmp(target, dst_hash, 32) < 0) vc_err(vc, "Invalid proof of work. the hash is greater than the target") : IN3_OK;
 }
 
+/**
+ * verify the finality block.
+ */
 in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality, bytes_t final_blocks) {
   bytes32_t parent_hash, tmp;
   in3_ret_t ret = IN3_OK;
-  memcpy(parent_hash, block_hash, 32);
-  for (int i = 0, p = 0; i < finality; i++, p += 80) {
-    if (p + 80 > (int) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders");
-    rev_copy(tmp, btc_block_get(bytes(final_blocks.data + p, 80), BTC_B_PARENT_HASH).data);
-    if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block");
-    if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash))) return ret;
+  memcpy(parent_hash, block_hash, 32);                                                          // we start with the current block hash as parent
+  for (int i = 0, p = 0; i < finality; i++, p += 80) {                                          // go through all requested finality blocks
+    if (p + 80 > (int) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders"); //  the bytes need to be long enough
+    rev_copy(tmp, btc_block_get(bytes(final_blocks.data + p, 80), BTC_B_PARENT_HASH).data);     // copy the parent hash of the block inito tmp
+    if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block"); // check parent hash
+    if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash))) return ret;          // check the headers proof of work and set the new parent hash
   }
   return ret;
 }
 
+/**
+ * check a block
+ */
 in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   uint8_t   block_header[80];
   bytes32_t tmp, tmp2;
   in3_ret_t ret = IN3_OK;
   if (json)
-    btc_serialize_block_header(vc->result, block_header);
-  else
-    hex2byte_arr(d_string(vc->result), 160, block_header, 80);
+    btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
+  else                                                         //
+    hex2byte_arr(d_string(vc->result), 160, block_header, 80); // or use the first 80 byte of the block
 
   // verify the proof of work
   if ((ret = btc_verify_header(vc, block_header, tmp))) return ret;
@@ -69,23 +70,20 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
 
   // check merkleroot
   if (json) {
-    d_token_t* tx       = d_get(vc->result, key("tx"));
-    int        tx_count = d_len(tx), i = 0;
-    bytes32_t  tx_hashes[tx_count];
-    for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), i++)
-      hex2byte_arr(d_string(iter.token), 64, tx_hashes[i], 32);
-    btc_merkle_create_root(tx_hashes, tx_count, tmp);
-    rev_copy(tmp2, tmp);
-    if (memcmp(tmp2, btc_block_get(bytes(block_header, 80), BTC_B_MERKLE_ROOT).data, 32)) return vc_err(vc, "Invalid Merkle root");
-
-    btc_target_le(bytes(block_header, 80), tmp); // current target
-    rev_copy(tmp2, tmp);
-    uint64_t difficulty = 0xFFFF000000000000L / bytes_to_long(tmp2 + 4, 8);
-    if (difficulty >> 2 != d_get_long(vc->result, "difficulty") >> 2) return vc_err(vc, "Wrong difficulty");
-
-    // verify json-data
-    if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, "hash"))) return vc_err(vc, "Wrong blockhash in json");
-    if (d_get_int(vc->result, "nTx") != (uint32_t) tx_count) return vc_err(vc, "Wrong nTx");
+    d_token_t* tx       = d_get(vc->result, key("tx"));                                                                             // get transactions node
+    int        tx_count = d_len(tx), i = 0;                                                                                         // and count its length
+    bytes32_t  tx_hashes[tx_count];                                                                                                 // to reserve hashes-array
+    for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), i++)                                                        // iterate through all txs
+      hex2byte_arr(d_string(iter.token), 64, tx_hashes[i], 32);                                                                     // and copy the hash into the array
+    btc_merkle_create_root(tx_hashes, tx_count, tmp);                                                                               // calculate the merkle root
+    rev_copy(tmp2, tmp);                                                                                                            // we need to turn it into little endian be cause ini the header it is store as le.
+    if (memcmp(tmp2, btc_block_get(bytes(block_header, 80), BTC_B_MERKLE_ROOT).data, 32)) return vc_err(vc, "Invalid Merkle root"); // compare the hash
+                                                                                                                                    //
+    btc_target(bytes(block_header, 80), tmp2);                                                                                      // get current target
+    uint64_t difficulty = 0xFFFF000000000000L / bytes_to_long(tmp2 + 4, 8);                                                         // and calc the difficulty
+    if (difficulty >> 2 != d_get_long(vc->result, "difficulty") >> 2) return vc_err(vc, "Wrong difficulty");                        // which must match the one in the json
+    if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, "hash"))) return vc_err(vc, "Wrong blockhash in json");         // check the requested hash
+    if (d_get_int(vc->result, "nTx") != (uint32_t) tx_count) return vc_err(vc, "Wrong nTx");                                        // check the nuumber of transactions
 
   } else {
     char*   block_hex = d_string(vc->result);
@@ -186,7 +184,7 @@ int main() {
   print_hex("hash       = ", hash, 32);
   print("header     = ", btc_block_get(block, BTC_B_HEADER), "hex");
 
-  btc_target_le(block, hash);
+  btc_target(block, hash);
   print("target     = ", bytes(hash, 32), "hash");
 
   int tx_count = btc_get_transaction_count(block);
