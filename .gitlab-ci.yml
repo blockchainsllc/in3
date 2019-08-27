@@ -159,6 +159,29 @@ java_linux:
   tags:
     - short-jobs
 
+examples_linux:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  dependencies:
+    - gcc8
+  script:
+    - mv x64_build build
+    - cd examples/c
+    - ./build.sh
+  tags:
+    - short-jobs
+
+examples_macos:
+  stage: test
+  dependencies:
+    - mac_os
+  script:
+    - mv mac_build build
+    - cd examples/c
+    - ./build.sh
+  tags:
+    - mac-mini-runner
+
 java_macos:
   stage: test
   script:
