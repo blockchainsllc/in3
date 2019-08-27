@@ -168,6 +168,8 @@ examples_linux:
     - mv x64_build build
     - cd examples/c
     - ./build.sh
+    - cd ../java
+    - ./build.sh
   tags:
     - short-jobs
 
@@ -178,6 +180,8 @@ examples_macos:
   script:
     - mv mac_build build
     - cd examples/c
+    - ./build.sh
+    - cd ../java
     - ./build.sh
   tags:
     - mac-mini-runner
@@ -285,7 +289,7 @@ release:
     - cp -r ../x64_build/lib lib/linux_x64
     - cp -r ../x86_build/bin bin/linux_x86
     - cp -r ../x86_build/lib lib/linux_x86
-    - cp -r ../include ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE .
+    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE .
     - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
     - cp -r ../doc/build doc/readthedocs
     - cp -r ../wasm_build/module js

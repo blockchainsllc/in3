@@ -1,9 +1,9 @@
-# Examples for C
+# Examples for Java
 
-- [get_block_rpc](./get_block_rpc.c)
+-  [GetBlockRPC](./GetBlockRPC.java)
    getting a block as raw verfified JSON-RPC-Result
 
--  [get_block_api](./get_block_api.c)
+-  [GetBlockAPI](./GetBlockAPI.java)
    getting a block as verified structured dat 
 
 
@@ -16,9 +16,10 @@ In order to run those examples, you only need a c-compiler (gcc or clang) and cu
 ```
 
 will build all examples in this directory.
-You can build them individually by executing:
+
+In order to run a example use
 
 ```
-gcc -o get_block_api get_block_api.c -L$IN3_LIB -I$IN3_INCLUDE -lin3_bundle -lcurl
+java -cp $IN3/build/lib/in3.jar:. GetBlockAPI
 ```
 

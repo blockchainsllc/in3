@@ -3,7 +3,7 @@ import in3.*;
 import in3.eth1.*;
 import java.math.BigInteger;
 
-public class Example {
+public class GetBlockAPI {
   //
   public static void main(String[] args) throws Exception {
     // create incubed
