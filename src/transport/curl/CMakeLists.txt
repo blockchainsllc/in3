@@ -61,6 +61,7 @@ else ()
             OPTIONS libcurl:shared=${CURL_SHARED}
             BASIC_SETUP CMAKE_TARGETS
             BUILD missing)
+    set(CURL_INCLUDE_DIRS,$<TARGET_PROPERTY:CONAN_PKG::libcurl,INTERFACE_INCLUDE_DIRECTORIES>)
 
 endif ()
 
@@ -74,7 +75,11 @@ add_library(transport_curl STATIC $<TARGET_OBJECTS:transport_curl_o>)
 # add dependency
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
 
-target_include_directories(transport_curl_o PRIVATE ${CURL_INCLUDE_DIRS})
+if (CURL_INCLUDE_DIRS)
+  target_include_directories(transport_curl_o PRIVATE ${CURL_INCLUDE_DIRS})
+else()
+  target_link_libraries(transport_curl_o CONAN_PKG::libcurl)
+endif()
 #target_compile_definitions(transport_curl_o $<TARGET_PROPERTY:CONAN_PKG::libcurl,INTERFACE_COMPILE_DEFINITIONS>)
 
 
