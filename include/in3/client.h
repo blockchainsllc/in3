@@ -381,4 +381,18 @@ in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
  */
 in3_ret_t in3_configure(in3_t* c, char* config);
 
+/**
+ * defines a default transport which is used when creating a new client.
+ */
+void in3_set_default_transport(in3_transport_send transport);
+
+/**
+ * defines a default storage handler which is used when creating a new client.
+ */
+void in3_set_default_storage(in3_storage_handler_t* cacheStorage);
+/**
+ * defines a default signer which is used when creating a new client.
+ */
+void in3_set_default_signer(in3_signer_t* signer);
+
 #endif

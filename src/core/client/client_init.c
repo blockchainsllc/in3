@@ -11,6 +11,31 @@
 #define KOVAN_SPEC parse_json("[{\"block\":0,\"engine\":\"authorityRound\",\"list\":[\"0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED\",\"0x00427feae2419c15b89d1c21af10d1b6650a4d3d\",\"0x4Ed9B08e6354C70fE6F8CB0411b0d3246b424d6c\",\"0x0020ee4Be0e2027d76603cB751eE069519bA81A1\",\"0x0010f94b296a852aaac52ea6c5ac72e03afd032d\",\"0x007733a1FE69CF3f2CF989F81C7b4cAc1693387A\",\"0x00E6d2b931F55a3f1701c7389d592a7778897879\",\"0x00e4a10650e5a6D6001C38ff8E64F97016a1645c\",\"0x00a0a24b9f0e5ec7aa4c7389b8302fd0123194de\"]},{\"block\":10960440,\"engine\":\"authorityRound\",\"list\":[\"0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED\",\"0x0010f94b296a852aaac52ea6c5ac72e03afd032d\",\"0x00a0a24b9f0e5ec7aa4c7389b8302fd0123194de\"]},{\"block\":10960500,\"engine\":\"authorityRound\",\"contract\":\"0xaE71807C1B0a093cB1547b682DC78316D945c9B8\",\"list\":[\"0xfaadface3fbd81ce37b0e19c0b65ff4234148132\",\"0x596e8221a30bfe6e7eff67fee664a01c73ba3c56\",\"0xa4df255ecf08bbf2c28055c65225c9a9847abd94\",\"0x03801efb0efe2a25ede5dd3a003ae880c0292e4d\",\"0xd05f7478c6aa10781258c5cc8b4f385fc8fa989c\"],\"requiresFinality\":true,\"bypassFinality\":10960502}]")
 #define TOBALABA_SPEC parse_json("[{\"block\":0,\"engine\":\"authorityRound\",\"validatorContract\":\"0x1000000000000000000000000000000000000005\",\"list\":[\"0x4ba15b56452521c0826a35a6f2022e1210fc519b\"]}]")
 
+// set the defaults
+static in3_transport_send     default_transport = NULL;
+static in3_storage_handler_t* default_storage   = NULL;
+static in3_signer_t*          default_signer    = NULL;
+
+/**
+ * defines a default transport which is used when creating a new client.
+ */
+void in3_set_default_transport(in3_transport_send transport) {
+  default_transport = transport;
+}
+
+/**
+ * defines a default storage handler which is used when creating a new client.
+ */
+void in3_set_default_storage(in3_storage_handler_t* cacheStorage) {
+  default_storage = cacheStorage;
+}
+/**
+ * defines a default signer which is used when creating a new client.
+ */
+void in3_set_default_signer(in3_signer_t* signer) {
+  default_signer = signer;
+}
+
 static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, json_ctx_t* spec) {
   chain->chainId        = chainId;
   chain->initAddresses  = NULL;
@@ -269,6 +294,10 @@ in3_t* in3_new() {
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
   in3_client_init(c);
+
+  if (default_transport) c->transport = default_transport;
+  if (default_storage) c->cacheStorage = default_storage;
+  if (default_signer) c->signer = default_signer;
 
 #ifndef TEST
   in3_log_set_quiet(1);

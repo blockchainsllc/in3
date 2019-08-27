@@ -68,10 +68,18 @@ add_subdirectory(src/verifier)
 add_subdirectory(src/bindings)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
-add_subdirectory(src/examples)
 add_subdirectory(docs)
 
-IF (EXAMPLES)
-    add_library(in3_bundle STATIC $<TARGET_OBJECTS:core_o> $<TARGET_OBJECTS:crypto_o> $<TARGET_OBJECTS:tommath_o> $<TARGET_OBJECTS:evm_o> $<TARGET_OBJECTS:eth_full_o> $<TARGET_OBJECTS:eth_api_o> $<TARGET_OBJECTS:eth_basic_o> $<TARGET_OBJECTS:eth_nano_o>)
-    target_link_libraries(in3_bundle transport_curl)
-endif (EXAMPLES)
+if (USE_CURL)
+    add_library(in3_bundle STATIC 
+        $<TARGET_OBJECTS:core_o> 
+        $<TARGET_OBJECTS:crypto_o> 
+        $<TARGET_OBJECTS:tommath_o> 
+        $<TARGET_OBJECTS:evm_o> 
+        $<TARGET_OBJECTS:eth_full_o> 
+        $<TARGET_OBJECTS:eth_api_o> 
+        $<TARGET_OBJECTS:eth_basic_o> 
+        $<TARGET_OBJECTS:eth_nano_o>
+        $<TARGET_OBJECTS:transport_curl_o>
+    )
+endif()
