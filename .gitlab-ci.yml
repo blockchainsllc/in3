@@ -8,7 +8,6 @@ stages:
   - test
   - deploy
 
-
 .conanbuild:
   stage: build
   tags:
@@ -34,7 +33,7 @@ gcc8:
   script:
     - mkdir x64_build
     - cd x64_build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
+    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make
   artifacts:
     paths:
@@ -42,13 +41,12 @@ gcc8:
       - x64_build/lib
       - x64_build/docs/doc_doxygen
 
-
 win_mingw:
- image: docker.slock.it/build-images/cmake:gcc7-mingw
- extends: .conanbuild
- variables:
-   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true" 
-   BUILD: "win_build"
+  image: docker.slock.it/build-images/cmake:gcc7-mingw
+  extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true"
+    BUILD: "win_build"
 
 gcc8-armv7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
@@ -62,9 +60,9 @@ gcc8-x86:
   image: docker.slock.it/build-images/cmake:gcc8-x86
   extends: .conanbuild
   variables:
-    CONAN_OPTS: "-DJAVA=true" 
+    CONAN_OPTS: "-DJAVA=true"
     BUILD: "x86_build"
-      
+
 gcc5:
   image: docker.slock.it/build-images/cmake:gcc5
   extends: .conanbuild
@@ -82,12 +80,12 @@ mac_os:
   script:
     - mkdir mac_build
     - cd mac_build
-    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared .. 
-    - make 
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
+    - make
     - make ptest
     - rm -rf *
-    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true .. 
-    - make 
+    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
+    - make
 
   artifacts:
     paths:
@@ -105,7 +103,7 @@ wasm:
   script:
     - mkdir wasm_build
     - cd wasm_build
-    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DEXAMPLES=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make
     - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
 
@@ -113,7 +111,6 @@ wasm:
     paths:
       - wasm_build/module
       - wasm_build/bin
-
 
 java:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -127,7 +124,7 @@ java:
   script:
     - mkdir java_build
     - cd java_build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true .. 
+    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
     - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
@@ -137,7 +134,6 @@ java:
       - java_build/lib
 
 # ##### test ######
-
 
 c_tests:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -169,7 +165,6 @@ java_macos:
     - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
   tags:
     - mac-mini-runner
-
 
 # #### deploy #####
 docker:
@@ -228,7 +223,7 @@ readthedocs:
   dependencies:
     - gcc8
   script:
-    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git 
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cd generator
     - npm i && npm run build
@@ -269,7 +264,7 @@ release:
     - cp -r ../x86_build/lib lib/linux_x86
     - cp -r ../include ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE .
     - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
-    - cp -r ../doc/build doc/readthedocs 
+    - cp -r ../doc/build doc/readthedocs
     - cp -r ../wasm_build/module js
   artifacts:
     paths:
