@@ -72,11 +72,9 @@ add_library(transport_curl STATIC $<TARGET_OBJECTS:transport_curl_o>)
 
 
 # add dependency
-target_link_libraries(transport_curl_o CONAN_PKG::libcurl)
 target_link_libraries(transport_curl CONAN_PKG::libcurl)
 if (MSVC OR MSYS OR MINGW)
     # for detecting Windows compilers
-    #    target_link_libraries(transport_curl ws2_32 wsock32 pthread )
-    target_link_libraries(transport_curl_o ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
+    target_link_libraries(transport_curl_o CONAN_PKG::libcurl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
     target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
 endif ()
