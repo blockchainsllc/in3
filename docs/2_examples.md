@@ -1,7 +1,8 @@
 # Examples
 
+The full list of examples can be found here: https://git.slock.it/in3/c/in3-core/tree/develop/examples/c
 
-### creating a incubed instance
+### Creating an Incubed Instance
 
 creating always follow these steps:
 
@@ -11,28 +12,20 @@ creating always follow these steps:
 #include <in3_curl.h>      // transport implementation
 
 // register verifiers, in this case a full verifier allowing eth_call
+// this needs to be called only once.
 in3_register_eth_full();
+
+// use curl as the default for sending out requests
+// this needs to be called only once.
+in3_register_curl();
 
 // create new client
 in3_t* client = in3_new();
 
-// configure storage by using storage-functions from in3_curl, which store the cache in /home/<USER>/.in3
-in3_storage_handler_t storage_handler;
-storage_handler.get_item = storage_get_item;
-storage_handler.set_item = storage_set_item;
-
-client->cacheStorage = &storage_handler;
-
-// configure transport by using curl
-client->transport    = send_curl;
-
-// init cache by reading the nodelist from the cache >(if exists)
-in3_cache_init(client);
-
 // ready to use ...
 ```
 
-### calling a function
+### Calling a Function
 
 ```c
 
@@ -54,7 +47,7 @@ in3_cache_init(client);
   // convert the result to a integer
   int number_of_servers = d_int(response->result);
 
-  // don't forget the free the response!
+  // don't forget to free the response!
   free_json(response);
 
   // out put result

@@ -1,11 +1,11 @@
 # Building
 
-While we provide binaries (TODO put link to releases), you can also build from source:
+While we provide binaries, you can also build from source:
 
 ### requirements
 
 - cmake
-- curl : curl is used as transport for the comandline-tools
+- curl : curl is used as transport for command-line tools.
 - optional: libsycrypt, which would be used for unlocking keystore files using `scrypt` as kdf method. if it does not exist you can still build, but not decrypt such keys.   
   for osx `brew install libscrypt` and for debian `sudo apt-get install libscrypt-dev`
 
@@ -33,13 +33,6 @@ make install
   Type: `BOOL ` ,    Default-Value: `ON`
 
 
-#### EXAMPLES
-
-  build the examples.
-
-  Type: `BOOL ` ,    Default-Value: `ON`
-
-
 #### FAST_MATH
 
   Math optimizations used in the EVM. This will also increase the filesize.
@@ -61,9 +54,23 @@ make install
   Type: `BOOL ` ,    Default-Value: `OFF`
 
 
+#### IN3_STAGING
+
+  if true, the client will use the staging-network instead of the live ones
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
 #### JAVA
 
   build the java-binding (shared-lib and jar-file)
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
+
+
+#### TAG_VERSION
+
+  the tagged version, which should be used
 
   Type: `BOOL ` ,    Default-Value: `OFF`
 

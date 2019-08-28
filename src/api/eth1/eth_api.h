@@ -2,7 +2,7 @@
 /** @file
  * Ethereum API.
  * 
- * This header-file defines easy to use function, which are preparing the JSON-RPC-Request, which is then executed and verified by the incubed-client.
+ * This header-file defines easy to use function, which are preparing the JSON-RPC-Request, which is then executed and verified by the incubed-client. 
  * */
 
 #ifndef ETH_API_H
@@ -20,7 +20,7 @@ typedef struct {
   uint8_t data[32];
 } uint256_t;
 
-/** a transaction */
+/** A transaction */
 typedef struct eth_tx {
   bytes32_t hash;              /**< the blockhash */
   bytes32_t block_hash;        /**< hash of ther containnig block */
@@ -36,7 +36,7 @@ typedef struct eth_tx {
   uint8_t   signature[65];     /**< signature of the transaction */
 } eth_tx_t;
 
-/** a Ethereum Block */
+/** An Ethereum Block */
 typedef struct eth_block {
   uint64_t   number;            /**< the blockNumber */
   bytes32_t  hash;              /**< the blockhash */
@@ -61,7 +61,7 @@ typedef struct eth_block {
   /* data */
 } eth_block_t;
 
-/** a linked list of Ethereum Logs  */
+/** A linked list of Ethereum Logs  */
 typedef struct eth_log {
   bool            removed;           /**< true when the log was removed, due to a chain reorganization. false if its a valid log */
   size_t          log_index;         /**< log index position in the block */
