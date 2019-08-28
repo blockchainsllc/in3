@@ -274,3 +274,16 @@ release:
   artifacts:
     paths:
       - release
+
+pages:
+  stage: deploy
+  tags:
+    - arm
+  dependencies:
+    - gcc8-armv7
+  script:
+    - mkdir -p public/$COMMIT_BRANCH_NAME
+    - cp -r build/lib public/$COMMIT_BRANCH_NAME/
+  artifacts:
+    paths:
+      - public
