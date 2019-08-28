@@ -80,6 +80,7 @@ if (USE_CURL)
         $<TARGET_OBJECTS:eth_api_o> 
         $<TARGET_OBJECTS:eth_basic_o> 
         $<TARGET_OBJECTS:eth_nano_o>
+        $<TARGET_OBJECTS:usn_api_o> 
         $<TARGET_OBJECTS:transport_curl_o>
     )
 endif()
