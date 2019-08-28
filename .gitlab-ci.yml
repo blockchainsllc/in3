@@ -295,7 +295,8 @@ pages:
     - gcc8-armv7
   script:
     - mkdir -p public/$COMMIT_BRANCH_NAME
-    - cp -r build/lib public/$COMMIT_BRANCH_NAME/
+    - cp index.html public/
+    - cp -r build/lib public/$COMMIT_BRANCH_NAME/lib
   artifacts:
     paths:
       - public
