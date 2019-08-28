@@ -298,6 +298,7 @@ pages:
     - cp index.html public/
     - ls build/lib
     - cp -r build/lib/ public/lib
+    - ls public/lib
   artifacts:
     paths:
       - public
