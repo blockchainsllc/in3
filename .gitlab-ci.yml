@@ -296,7 +296,7 @@ pages:
   script:
     - mkdir -p public/lib
     - cp index.html public/
-    - cp -r build/lib public/lib
+    - cp -r build/lib/in3.jar public/lib
   artifacts:
     paths:
       - public
