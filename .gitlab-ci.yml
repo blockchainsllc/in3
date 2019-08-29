@@ -11,6 +11,8 @@ stages:
 
 .conanbuild:
   stage: build
+  tags:
+    - short-jobs
   script:
     - mkdir $BUILD
     - cd $BUILD
@@ -47,8 +49,7 @@ win_mingw:
  variables:
    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true" 
    BUILD: "win_build"
- tags:
-    - short-jobs
+
 
 gcc8-armv7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
@@ -68,26 +69,18 @@ gcc8-x86:
   variables:
     CONAN_OPTS: "-DJAVA=true" 
     BUILD: "x86_build"
-  tags:
-    - short-jobs
-      
+
 gcc5:
   image: docker.slock.it/build-images/cmake:gcc5
   extends: .conanbuild
-  tags:
-    - short-jobs
 
 clang50:
   image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
-  tags:
-    - short-jobs
 
 clang9:
   image: docker.slock.it/build-images/cmake:clang9
   extends: .conanbuild
-  tags:
-    - short-jobs
 
 mac_os:
   stage: build
