@@ -294,10 +294,10 @@ pages:
   dependencies:
     - gcc8-armv7
   script:
-    - mkdir -p public/$COMMIT_BRANCH_NAME/lib
+    - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz build/lib
-    - cp libFiles_$CI_COMMIT_SHORT_SHA.tar.gz public/$COMMIT_BRANCH_NAME/lib
-    - ls public/$COMMIT_BRANCH_NAME/lib
+    - cp libFiles_$CI_COMMIT_SHORT_SHA.tar.gz public/lib
+    - ls public/lib
     - echo libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
   artifacts:
     paths:
