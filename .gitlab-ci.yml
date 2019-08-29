@@ -48,13 +48,18 @@ win_mingw:
     CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true"
     BUILD: "win_build"
 
+
 gcc8-armv7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
   extends: .conanbuild
+  tags:
+    - arm
 
 gcc8-armv7hf:
   image: docker.slock.it/build-images/cmake:gcc8-armv7hf
   extends: .conanbuild
+  tags:
+    - arm
 
 gcc8-x86:
   image: docker.slock.it/build-images/cmake:gcc8-x86
@@ -296,3 +301,21 @@ release:
   artifacts:
     paths:
       - release
+
+pages:
+  stage: deploy
+  only:
+    refs:
+      - develop
+  tags:
+    - arm
+  dependencies:
+    - gcc8-armv7
+  script:
+    - mkdir -p public/lib
+    - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz build/lib
+    - cp libFiles_$CI_COMMIT_SHORT_SHA.tar.gz public/lib
+    - echo Grab file at BASE_PAGES_URL/lib/libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
+  artifacts:
+    paths:
+      - public
