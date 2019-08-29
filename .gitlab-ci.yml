@@ -177,6 +177,7 @@ examples_linux:
     - short-jobs
 
 examples_arm:
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
   stage: test
   dependencies:
     - arm7
