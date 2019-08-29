@@ -154,6 +154,10 @@ const ecdsa_curve alt_bn128 = {
 
     /* b */ {/*.val =*/{3}}
 
+#if USE_PRECOMPUTED_CP
+    ,
+    {}
+#endif
 };
 
 int pre_ec_add(evm_t* evm) {
