@@ -204,6 +204,7 @@ examples_macos:
     - mac-mini-runner
 
 java_arm:
+  image: armv7/armhf-java8
   dependencies:
     - java
   stage: test
