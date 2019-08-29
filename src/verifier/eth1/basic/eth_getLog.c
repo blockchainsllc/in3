@@ -121,6 +121,9 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   if (!vc->proof) return vc_err(vc, "no proof for logs found");
 
   for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
+    // verify that block number matches key
+    if (d_get_longk(it.token, K_NUMBER) != strtoull(d_get_keystr(it.token->key), NULL, 16))
+      return vc_err(vc, "block number mismatch");
 
     // verify the blockheader of the log entry
     bytes_t block = d_to_bytes(d_get(it.token, K_BLOCK)), tx_root, receipt_root;
