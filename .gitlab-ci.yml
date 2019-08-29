@@ -205,7 +205,6 @@ examples_macos:
 java_arm:
   dependencies:
     - java
-  image: docker.slock.it/build-images/cmake:gcc8-armv7
   stage: test
   script:
     - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
