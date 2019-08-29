@@ -295,7 +295,8 @@ pages:
     - gcc8-armv7
   script:
     - mkdir -p public/$COMMIT_BRANCH_NAME/lib
-    - cp -r $(zip -r libFiles.zip build/lib/*) public/$COMMIT_BRANCH_NAME/lib
+    - tar -zcvf libFiles_$COMMIT_BRANCH_NAME_$CI_COMMIT_SHORT_SHA.tar.gz build/lib
+    - cp libFiles_$COMMIT_BRANCH_NAME_$CI_COMMIT_SHORT_SHA.tar.gz public/$COMMIT_BRANCH_NAME/lib
   artifacts:
     paths:
       - public
