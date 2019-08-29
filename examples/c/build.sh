@@ -18,6 +18,6 @@ fi
 
 # now build the examples build
 for f in *.c; 
-  do gcc -o "${f%%.*}" $f $BUILDARGS -lin3 -lcurl
+  do gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -lin3 -lcurl
 done
 

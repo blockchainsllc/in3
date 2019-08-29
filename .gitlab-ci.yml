@@ -203,6 +203,16 @@ examples_macos:
   tags:
     - mac-mini-runner
 
+java_arm:
+  dependencies:
+    - java
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
+  stage: test
+  script:
+    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  tags:
+    - arm
+
 java_macos:
   stage: test
   script:
