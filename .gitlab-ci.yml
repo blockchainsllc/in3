@@ -294,11 +294,8 @@ pages:
   dependencies:
     - gcc8-armv7
   script:
-    - mkdir -p public/lib
-    - cp index.html public/
-    - ls build/lib
-    - cp -r build/lib/* public/lib
-    - ls public/lib/
+    - mkdir -p public/$COMMIT_BRANCH_NAME/lib
+    - cp -r $(zip -r libFiles.zip build/lib/*) public/$COMMIT_BRANCH_NAME/lib
   artifacts:
     paths:
       - public
