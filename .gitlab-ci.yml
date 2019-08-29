@@ -297,8 +297,7 @@ pages:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz build/lib
     - cp libFiles_$CI_COMMIT_SHORT_SHA.tar.gz public/lib
-    - ls public/lib
-    - echo libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
+    - echo Grab file at BASE_PAGES_URL/lib/libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
   artifacts:
     paths:
       - public
