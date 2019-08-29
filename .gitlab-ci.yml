@@ -130,7 +130,7 @@ java:
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
     - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
-    - cp ../arm7_build/lib/libin3_jni.so ../src/bindings/java/in3/native/libin3_arm.so
+    - cp ../arm7_build/lib/libin3_jni.so ../src/bindings/java/in3/native/libin3_jni_arm.so
     - make in3j
   artifacts:
     paths:
@@ -182,7 +182,7 @@ examples_arm:
   dependencies:
     - arm7
   script:
-    - mv arm_build build
+    - mv arm7_build build
     - cd examples/c
     - ./build.sh
     - cd ../java
