@@ -28,6 +28,6 @@ will build all examples in this directory.
 You can build them individually by executing:
 
 ```
-gcc -o get_block_api get_block_api.c -L$IN3_LIB -I$IN3_INCLUDE -lin3_bundle -lcurl
+gcc -o get_block_api get_block_api.c -lin3 -lcurl
 ```
 

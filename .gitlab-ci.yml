@@ -103,7 +103,7 @@ wasm:
   script:
     - mkdir wasm_build
     - cd wasm_build
-    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make
     - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
 
@@ -124,7 +124,7 @@ java:
   script:
     - mkdir java_build
     - cd java_build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
+    - cmake -DIN3_LIB=false -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
     - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
