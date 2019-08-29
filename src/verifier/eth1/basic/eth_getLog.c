@@ -108,6 +108,20 @@ bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blo
   }
 }
 
+bool filter_from_equals_to(d_token_t* req) {
+  d_token_t* tx_params = d_get(req, K_PARAMS);
+  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return false;
+  d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
+  d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
+  if (frm && to && d_type(frm) == d_type(to)) {
+    if (d_type(frm) == T_STRING && !strcmp(d_string(frm), d_string(to)))
+      return true;
+    else if (d_type(frm) == T_BYTES && b_cmp(d_bytes(frm), d_bytes(to)))
+      return true;
+  }
+  return false;
+}
+
 in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   in3_ret_t res = IN3_OK, i = 0;
   receipt_t receipts[l_logs];
@@ -186,6 +200,8 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   }
 
   if (i != l_logs) return vc_err(vc, "invalid receipts len in proof");
+
+  uint64_t prev_blk = 0;
   for (d_iterator_t it = d_iter(vc->result); it.left; d_iter_next(&it)) {
     receipt_t* r = NULL;
     i            = 0;
@@ -220,6 +236,9 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (d_get_intk(it.token, K_TRANSACTION_INDEX) != r->transaction_index) return vc_err(vc, "wrong transactionIndex");
 
     if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_longk(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
+
+    if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
+    if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
   }
 
   return res;
