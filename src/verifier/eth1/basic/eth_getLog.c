@@ -26,9 +26,8 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
   } else if (d_type(jaddrs) == T_BYTES) {
     return !!bytes_cmp(addrs, d_to_bytes(jaddrs));
   } else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
-    int l = d_len(jaddrs);
-    for (int i = 0; i < l; i++, jaddrs = d_next(jaddrs)) {
-      if (bytes_cmp(addrs, d_to_bytes(jaddrs))) return true;
+    for (d_iterator_t it = d_iter(jaddrs); it.left; d_iter_next(&it)) {
+      if (bytes_cmp(addrs, d_to_bytes(it.token))) return true;
     }
   }
   return false;
