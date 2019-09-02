@@ -20,8 +20,12 @@ in3_ret_t send_http(char** urls, int urls_len, char* payload, in3_response_t* re
   for (int n = 0; n < urls_len; n++) {
     struct hostent*    server;
     struct sockaddr_in serv_addr;
-    int                received, total;
+    int                received, bytes, sent, total;
     char               message[strlen(payload) + 200], response[4096], *url = urls[n], host[256];
+
+    (void) received;
+    (void) bytes;
+    (void) sent;
 
     // parse url
     if (strncmp(url, "http://", 7)) {
