@@ -7,6 +7,12 @@ else (WASM)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif(WASM)
 
+if(MSVC)
+  set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
+else()
+  set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+endif()
+
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
 # Set DEAD_STRIP_LINKER_OPT
