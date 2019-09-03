@@ -395,6 +395,8 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
   d_token_t* post        = d_get(test, key("post"));
   d_token_t* indexes     = NULL;
   uint64_t   total_gas;
+  address_t  _to;
+  memset(_to, 0, 20);
 
   // create vm
   evm_t evm;
@@ -462,12 +464,10 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.caller = caller;
     evm.origin = caller;
 
-    bytes_t   to_address = d_to_bytes(d_get(transaction, K_TO));
-    address_t _to;
-    memset(_to, 0, 20);
-    evm.address = _to;
-    if (to_address.len)
-      memcpy(_to + 32 - to_address.len, to_address.data, to_address.len);
+    bytes_t to_address = d_to_bytes(d_get(transaction, K_TO));
+    evm.address        = _to;
+    if (to_address.len) memcpy(_to, to_address.data, 20);
+    //      memcpy(_to + 32 - to_address.len, to_address.data, to_address.len);
     evm.account = evm.address;
 
     if (d_getl(transaction, K_TO, 20) && d_len(d_getl(transaction, K_TO, 20)))
@@ -551,7 +551,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 
   uint64_t start = clock(), gas_before = evm.gas;
 #ifdef EVM_GAS
-  if (!d_len(d_get(transaction, K_TO)))
+  if (transaction && !d_len(d_get(transaction, K_TO)))
     evm.gas -= G_TXCREATE;
 #endif
 

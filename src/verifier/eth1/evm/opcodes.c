@@ -278,7 +278,7 @@ int op_sha3(evm_t* evm) {
 }
 
 int op_account(evm_t* evm, uint8_t key) {
-  if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0) return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
+  if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0 && key == EVM_ENV_CODE_HASH) return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
   uint8_t *address, *data;
   int      l = evm_stack_pop_ref(evm, &address);
   if (l < 0) return EVM_ERROR_EMPTY_STACK;
