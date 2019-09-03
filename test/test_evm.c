@@ -462,7 +462,12 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.caller = caller;
     evm.origin = caller;
 
-    evm.address = d_get_bytes(transaction, "to")->data;
+    bytes_t   to_address = d_to_bytes(d_get(transaction, K_TO));
+    address_t _to;
+    memset(_to, 0, 20);
+    evm.address = _to;
+    if (to_address.len)
+      memcpy(_to + 32 - to_address.len, to_address.data, to_address.len);
     evm.account = evm.address;
 
     if (d_getl(transaction, K_TO, 20) && d_len(d_getl(transaction, K_TO, 20)))
@@ -480,6 +485,31 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 
     // prepare all accounts
     read_accounts(&evm, d_get(test, key("pre")));
+
+    // we need to create an account since we don't have one
+    if (big_is_zero(evm.address, 20)) {
+
+      //  calculate the generated address
+      uint8_t*         nonce = evm_get_account(&evm, caller, true)->nonce;
+      bytes_builder_t* bb    = bb_new();
+      bytes_t          tmp   = bytes(caller, 20);
+      bytes32_t        hash;
+      rlp_encode_item(bb, &tmp);
+      if (big_is_zero(nonce, 32))
+        tmp.len = 0;
+      else {
+        tmp.len  = 32;
+        tmp.data = nonce;
+        optimize_len(tmp.data, tmp.len);
+      }
+      rlp_encode_item(bb, &tmp);
+      rlp_encode_to_list(bb);
+      sha3_to(&bb->b, hash);
+      bb_free(bb);
+      memcpy(_to, hash + 12, 20);
+
+      evm_get_account(&evm, _to, true)->nonce[31]++;
+    }
 
     // increase the nonce and pay for gas
     account_t* c_adr = evm_get_account(&evm, evm.caller, true);
@@ -520,8 +550,13 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
   prepare_header(d_get(test, key("env")));
 
   uint64_t start = clock(), gas_before = evm.gas;
-  int      fail = evm_run(&evm, evm.account);
-  *ms           = (clock() - start) / 1000;
+#ifdef EVM_GAS
+  if (!d_len(d_get(transaction, K_TO)))
+    evm.gas -= G_TXCREATE;
+#endif
+
+  int fail = evm_run(&evm, evm.account);
+  *ms      = (clock() - start) / 1000;
 
   if (transaction) {
 #ifdef EVM_GAS
