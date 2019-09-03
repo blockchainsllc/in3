@@ -4,6 +4,7 @@
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/ripemd160.h"
 #include "../../../third-party/crypto/secp256k1.h"
+#include "../../../third-party/crypto/sha2.h"
 #include "../../../third-party/tommath/tommath.h"
 #include "evm.h"
 #include "gas.h"
@@ -49,7 +50,10 @@ int pre_sha256(evm_t* evm) {
   subgas(G_PRE_SHA256 + (evm->call_data.len + 31) / 32 * G_PRE_SHA256_WORD);
   evm->return_data.data = _malloc(32);
   evm->return_data.len  = 32;
-  sha3_to(&evm->call_data, evm->return_data.data);
+  SHA256_CTX ctx;
+  sha256_Init(&ctx);
+  sha256_Update(&ctx, evm->call_data.data, evm->call_data.len);
+  sha256_Final(&ctx, evm->return_data.data);
   return 0;
 }
 int pre_ripemd160(evm_t* evm) {
