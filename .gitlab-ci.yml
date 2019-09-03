@@ -164,7 +164,7 @@ evm_tests:
     - cd testbuild
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - IN3_SKIPTESTS=randomStatetest642,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 test/vmrunner  ../test/testdata/evm/GeneralStateTests/*/*.json || echo "\n ignoring failure .."
+    - IN3_SKIPTESTS=stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 test/vmrunner  ../test/testdata/evm/GeneralStateTests/*/*.json || echo "\n ignoring failure .."
     - test/vmrunner  ../test/testdata/evm/vmTests/*/*.json || echo "\n ignoring failure .."
 
 java_linux:
