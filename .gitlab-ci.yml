@@ -164,8 +164,10 @@ evm_tests:
     - cd testbuild
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 test/vmrunner  ../test/testdata/evm/GeneralStateTests/*/*.json || echo "\n ignoring failure .."
-    - test/vmrunner  ../test/testdata/evm/vmTests/*/*.json || echo "\n ignoring failure .."
+    - cd ../test/testdata/evm/GeneralStateTests
+    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../build/test/vmrunner  */*.json || echo "\n ignoring failure .."
+    - cd ../vmTests
+    - ../../../../build/test/vmrunner */*.json || echo "\n ignoring failure .."
 
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
