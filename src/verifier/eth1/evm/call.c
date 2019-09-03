@@ -89,12 +89,9 @@ int evm_prepare_evm(evm_t*      evm,
   evm->return_data.data = NULL;
   evm->return_data.len  = 0;
 
-  evm->caller = caller;
-  evm->origin = origin;
-  if (mode == EVM_CALL_MODE_CALLCODE)
-    evm->account = address;
-  else
-    evm->account = account;
+  evm->caller  = caller;
+  evm->origin  = origin;
+  evm->account = (mode == EVM_CALL_MODE_CALLCODE) ? address : account;
   evm->address = address;
 
 #ifdef EVM_GAS
@@ -150,11 +147,11 @@ int evm_sub_call(evm_t*    parent,
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
 
-    account_t* new_account      = NULL;
-    UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
+  account_t* new_account = NULL;
+  UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call
-  if (res == 0) success = evm_run(&evm);
+  if (res == 0) success = evm_run(&evm, code_address);
 
   // put the success in the stack ( in case of a create we add the new address)
   if (!address && success == 0)
@@ -177,7 +174,7 @@ int evm_sub_call(evm_t*    parent,
       evm.return_data.len   = 0;
     }
   }
-    FINALIZE_SUBCALL_GAS(&evm, success, parent);
+  FINALIZE_SUBCALL_GAS(&evm, success, parent);
   // clean up
   evm_free(&evm);
   // we always return 0 since a failure simply means we write a 0 on the stack.
@@ -187,8 +184,8 @@ int evm_sub_call(evm_t*    parent,
 /**
  * run a evm-call
  */
-int evm_call(void* vc,
-             address_t   address,
+int evm_call(void*     vc,
+             address_t address,
              uint8_t* value, wlen_t l_value,
              uint8_t* data, uint32_t l_data,
              address_t caller,
@@ -218,7 +215,7 @@ int evm_call(void* vc,
 #endif
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
-  if (res == 0) res = evm_run(&evm);
+  if (res == 0) res = evm_run(&evm, address);
   if (res == 0 && evm.return_data.data)
     *result = b_dup(&evm.return_data);
   evm_free(&evm);
