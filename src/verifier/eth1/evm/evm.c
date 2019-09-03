@@ -484,10 +484,10 @@ int evm_run(evm_t* evm, address_t code_address) {
     return evm_run_precompiled(evm, code_address);
   // timeout is simply used in case we don't use gas to make sure we don't run a infite loop.
   uint32_t timeout = 0xFFFFFFFF;
+  int      res     = 0;
 #ifdef DEBUG
   uint32_t last     = 0;
   uint64_t last_gas = 0;
-  int      res      = 0;
 #endif
   // inital state
   evm->state = EVM_STATE_RUNNING;
