@@ -78,8 +78,11 @@ else {
 
 
 // create a flag ndicating when the wasm was succesfully loaded.
-_in3_ready = false;
-in3w.onRuntimeInitialized = _ => _in3_ready = true
+let _in3_listeners = []
+in3w.onRuntimeInitialized = _ => {
+    _in3_listeners.forEach(_ => _(true))
+    _in3_listeners = undefined
+}
 
 // for all pending Requests we hold the finalize function which will be called by the wasm when done.
 in3w.pendingRequests = {}
@@ -97,25 +100,32 @@ class IN3 {
 
     // since loading the wasm is async, we always need to check whether the was was created before using it.
     async _ensure_ptr() {
-        while (!this.ptr) {
-            this.ptr = _in3_ready ? in3w.ccall('in3_create', 'number', [], []) : 0;
-            if (!this.ptr) await new Promise((res => setTimeout(res, 50)))
-        }
+        if (this.ptr) return
+        if (_in3_listeners)
+            await new Promise(r => _in3_listeners.push(r))
+        this.ptr = in3w.ccall('in3_create', 'number', [], []);
     }
 
     // here we are creating the instance lazy, when the first function is called.
-    constructor() {
+    constructor(config) {
+        this.config = config
+        this.needsSetConfig = !!config
         this.ptr = 0;
     }
 
     /**
      * configures the client.
      */
-    async setConfig(conf) {
-        if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
-        await this._ensure_ptr();
-        const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(conf)]);
-        if (r) throw new Error("Error setting the confiig : " + r);
+    setConfig(conf) {
+        if (conf) {
+            if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
+            this.config = { ...this.config, ...conf }
+        }
+        this.needsSetConfig = !this.ptr
+        if (this.ptr) {
+            const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
+            if (r) throw new Error("Error setting the config : " + r);
+        }
     }
 
     /**
@@ -139,6 +149,7 @@ class IN3 {
     async sendRequest(rpc) {
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
+        if (this.needsSetConfig) this.setConfig()
 
         // create the context
         const r = in3w.ccall('in3_create_request', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);

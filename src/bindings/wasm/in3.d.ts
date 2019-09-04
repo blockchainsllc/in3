@@ -318,10 +318,17 @@ export interface RPCResponse {
 
 
 export default class IN3 {
+
+    /**
+     * creates a new client.
+     * @param config a optional config
+     */
+    public constructor(config?: Partial<IN3Config>);
+
     /**
      * sets configuration properties. You can pass a partial object specifieing any of defined properties.
      */
-    public setConfig(config: Partial<IN3Config>): Promise<void>;
+    public setConfig(config: Partial<IN3Config>): void;
 
     /**
        * sends a raw request.
