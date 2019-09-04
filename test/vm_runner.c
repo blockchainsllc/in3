@@ -67,7 +67,9 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   // debug
   //  if (strcmp(tname, "dup1") == 0) props |= EVM_PROP_DEBUG;
 
-  if (tname)
+  if (tname && strstr(name, tname))
+    sprintf(temp, "%s", name);
+  else if (tname)
     sprintf(temp, "%s : %s", name, tname);
   else
     sprintf(temp, "%s #%i", name, counter);
