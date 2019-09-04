@@ -231,7 +231,7 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     case 0x12: __code("SLT");
     case 0x13: __code("SGT");
     case 0x14: __code("EQ");
-    case 0x15: __code("IS_ZERO");
+    case 0x15: __code("ISZERO");
     case 0x16: __code("AND");
     case 0x17: __code("OR");
     case 0x18: __code("XOR");
@@ -246,9 +246,9 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     case 0x32: __code("ORIGIN");
     case 0x33: __code("CALLER");
     case 0x34: __code("CALLVALUE");
-    case 0x35: __code("CALLDATALOAD");
+    case 0x35: __code("CALLDATALOAD ");
     case 0x36: __code("CALLDATA_SIZE");
-    case 0x37: __code("CALLDATACOPY");
+    case 0x37: __code("CALLDATACOPY ");
     case 0x38: __code("CODESIZE");
     case 0x39: __code("CODECOPY");
     case 0x3a: __code("GASPRICE");
