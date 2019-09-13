@@ -48,13 +48,14 @@ win_mingw:
     CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true"
     BUILD: "win_build"
 
-gcc8-armv7:
+arm7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
   extends: .conanbuild
-
-gcc8-armv7hf:
-  image: docker.slock.it/build-images/cmake:gcc8-armv7hf
-  extends: .conanbuild
+  tags:
+    - arm
+  variables:
+    CONAN_OPTS: "-DJAVA=true"
+    BUILD: "arm7_build"
 
 gcc8-x86:
   image: docker.slock.it/build-images/cmake:gcc8-x86
@@ -103,7 +104,7 @@ wasm:
   script:
     - mkdir wasm_build
     - cd wasm_build
-    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make
     - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
 
@@ -121,13 +122,15 @@ java:
     - mac_os
     - win_mingw
     - gcc8
+    - arm7
   script:
     - mkdir java_build
     - cd java_build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
+    - cmake -DIN3_LIB=false -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
     - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
+    - cp ../arm7_build/lib/libin3_jni.so ../src/bindings/java/in3/native/libin3_jni_arm.so
     - make in3j
   artifacts:
     paths:
@@ -151,6 +154,21 @@ c_tests:
       - testbuild/test
       - Testing
 
+evm_tests:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mkdir testbuild
+    - cd testbuild
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
+    - make
+    - cd ../test/testdata/evm/GeneralStateTests
+    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
+    - cd ../vmTests
+    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
@@ -173,6 +191,20 @@ examples_linux:
   tags:
     - short-jobs
 
+examples_arm:
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
+  stage: test
+  dependencies:
+    - arm7
+  script:
+    - mv arm7_build build
+    - cd examples/c
+    - ./build.sh
+    - cd ../java
+    - ./build.sh
+  tags:
+    - arm
+
 examples_macos:
   stage: test
   dependencies:
@@ -185,6 +217,17 @@ examples_macos:
     - ./build.sh
   tags:
     - mac-mini-runner
+
+java_arm:
+  image: armv7/armhf-java8
+  dependencies:
+    - java
+  stage: test
+  script:
+    - echo "SKIPPED"
+  #    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  tags:
+    - arm
 
 java_macos:
   stage: test
@@ -272,6 +315,7 @@ release:
     - gcc8
     - gcc8-x86
     - wasm
+    - arm7
   script:
     - mkdir release
     - cd release
@@ -280,11 +324,14 @@ release:
     - mkdir doc
     - cp -r ../mac_build/bin bin/osx
     - cp -r ../mac_build/lib lib/osx
+    - cp -r ../arm7_build/bin bin/arm7
+    - cp -r ../arm7_build/lib lib/arm7
     - cp -r ../win_build/bin bin/win64
     - cp -r ../win_build/lib lib/win64
     - mv bin/win64/in3 bin/win64/in3.exe
     - mv bin/win64/rlp bin/win64/rlp.exe
     - mv bin/win64/json bin/win64/json.exe
+    - mv lib/win64/libin3.so lib/win64/in3.dll
     - cp -r ../x64_build/bin bin/linux_x64
     - cp -r ../x64_build/lib lib/linux_x64
     - cp -r ../x86_build/bin bin/linux_x86
@@ -296,3 +343,21 @@ release:
   artifacts:
     paths:
       - release
+
+pages:
+  stage: deploy
+  only:
+    refs:
+      - develop
+  tags:
+    - arm
+  dependencies:
+    - arm7
+  script:
+    - mkdir -p public/lib
+    - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
+    - cp libFiles_$CI_COMMIT_SHORT_SHA.tar.gz public/lib
+    - echo Grab file at BASE_PAGES_URL/lib/libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
+  artifacts:
+    paths:
+      - public

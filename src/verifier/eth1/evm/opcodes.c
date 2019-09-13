@@ -1,3 +1,4 @@
+#include "opcodes.h"
 #include "../../../core/client/context.h"
 #include "../../../core/util/data.h"
 #include "../../../core/util/log.h"
@@ -13,10 +14,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-#include "opcodes.h"
 
-
- int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
+int op_math(evm_t* evm, uint8_t op, uint8_t mod) {
   uint8_t *a, *b, res[65], *r = res;
   int      la = evm_stack_pop_ref(evm, &a), lb = evm_stack_pop_ref(evm, &b), l;
   if (la < 0 || lb < 0) return EVM_ERROR_EMPTY_STACK;
@@ -70,7 +69,7 @@
   return evm_stack_push(evm, r, l);
 }
 
- int op_signextend(evm_t* evm) {
+int op_signextend(evm_t* evm) {
   uint8_t* val = NULL;
   int32_t  k   = evm_stack_pop_int(evm), l;
 
@@ -93,7 +92,7 @@
   return evm_stack_push(evm, val, l);
 }
 
- int op_is_zero(evm_t* evm) {
+int op_is_zero(evm_t* evm) {
   uint8_t res = 1, *a;
   int     l   = evm_stack_pop_ref(evm, &a), i;
   if (l < 0) return l;
@@ -107,7 +106,7 @@
   return evm_stack_push(evm, &res, 1);
 }
 
- int op_not(evm_t* evm) {
+int op_not(evm_t* evm) {
   uint8_t res[32], *a;
   int     l = evm_stack_pop_ref(evm, &a), i;
   if (l < 0) return l;
@@ -124,8 +123,7 @@
   return evm_stack_push(evm, a, l);
 }
 
-
- int op_bit(evm_t* evm, uint8_t op) {
+int op_bit(evm_t* evm, uint8_t op) {
   uint8_t result[32], *res = result, *a;
   int     l, l1            = evm_stack_pop_ref(evm, &a), i, j;
   if (l1 < 0) return l1;
@@ -156,7 +154,7 @@
   return evm_stack_push(evm, res, l1);
 }
 
- int op_byte(evm_t* evm) {
+int op_byte(evm_t* evm) {
   uint8_t pos, *b, res = 0xFF;
   int     l = evm_stack_pop_byte(evm, &pos);
   if (l == EVM_ERROR_EMPTY_STACK) return l;
@@ -166,7 +164,7 @@
   return evm_stack_push(evm, &res, 1);
 }
 
- int op_cmp(evm_t* evm, int8_t eq, uint8_t sig) {
+int op_cmp(evm_t* evm, int8_t eq, uint8_t sig) {
   uint8_t *a, *b, res = 0, sig_a = 0, sig_b = 0;
   int      len_a, len_b;
   // try fetch the 2 values from the stack
@@ -243,7 +241,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   return evm_stack_push(evm, b, pos);
 }
 
- int op_sha3(evm_t* evm) {
+int op_sha3(evm_t* evm) {
   int offset = evm_stack_pop_int(evm);
   if (offset < 0) return offset;
   //  if (offset == MEM_LIMIT) return EVM_ERROR_OUT_OF_GAS;
@@ -279,7 +277,8 @@ int op_shift(evm_t* evm, uint8_t left) {
   return evm_stack_push(evm, res, 32);
 }
 
- int op_account(evm_t* evm, uint8_t key) {
+int op_account(evm_t* evm, uint8_t key) {
+  if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0 && key == EVM_ENV_CODE_HASH) return EVM_ERROR_UNSUPPORTED_CALL_OPCODE;
   uint8_t *address, *data;
   int      l = evm_stack_pop_ref(evm, &address);
   if (l < 0) return EVM_ERROR_EMPTY_STACK;
@@ -287,7 +286,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   l = evm->env(evm, key, address, l, &data, 0, 0);
   return l < 0 ? l : evm_stack_push(evm, data, l);
 }
- int op_dataload(evm_t* evm) {
+int op_dataload(evm_t* evm) {
   int pos = evm_stack_pop_int(evm);
   if (pos < 0) return pos;
   if (evm->call_data.len < (uint32_t) pos) return evm_stack_push_int(evm, 0);
@@ -304,7 +303,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   }
 }
 
- int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
+int op_datacopy(evm_t* evm, bytes_t* src, uint_fast8_t check_size) {
   int mem_pos = evm_stack_pop_int(evm), data_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm), res = 0;
   if (mem_pos < 0 || data_len < 0 || data_pos < 0) return EVM_ERROR_EMPTY_STACK;
   subgas(((data_len + 31) / 32) * G_COPY);
@@ -320,7 +319,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   return res;
 }
 
- int op_extcodecopy(evm_t* evm) {
+int op_extcodecopy(evm_t* evm) {
   address_t address;
   uint8_t*  data = NULL;
   int       l = evm_stack_pop(evm, address, 20), mem_pos = evm_stack_pop_int(evm), code_pos = evm_stack_pop_int(evm), data_len = evm_stack_pop_int(evm);
@@ -336,7 +335,7 @@ int op_shift(evm_t* evm, uint8_t left) {
     return evm_mem_write(evm, mem_pos, bytes(data, res), data_len);
 }
 
- int op_header(evm_t* evm, uint8_t index) {
+int op_header(evm_t* evm, uint8_t index) {
   bytes_t b;
   int     l;
   if ((l = evm->env(evm, EVM_ENV_BLOCKHEADER, NULL, 0, &b.data, 0, 0)) < 0) return l;
@@ -348,7 +347,7 @@ int op_shift(evm_t* evm, uint8_t left) {
     return evm_stack_push_int(evm, 0);
 }
 
- int op_mload(evm_t* evm) {
+int op_mload(evm_t* evm) {
   uint8_t *off, *dst;
   int      off_len = evm_stack_pop_ref(evm, &off);
   if (off_len < 0) return off_len;
@@ -359,7 +358,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   return evm_mem_read(evm, bytes(tmp, 32), dst, 32);
 }
 
- int op_mstore(evm_t* evm, uint8_t len) {
+int op_mstore(evm_t* evm, uint8_t len) {
   int offset = evm_stack_pop_int(evm);
   if (offset < 0) return offset;
   uint8_t* data     = NULL;
@@ -376,7 +375,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   return evm_mem_write(evm, offset, bytes(data, data_len), len);
 }
 
- int op_sload(evm_t* evm) {
+int op_sload(evm_t* evm) {
   uint8_t *key, *value;
   int      l;
   if ((l = evm_stack_pop_ref(evm, &key)) < 0) return l;
@@ -385,9 +384,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   return evm_stack_push(evm, value, l);
 }
 
-
-
- int op_jump(evm_t* evm, uint8_t cond) {
+int op_jump(evm_t* evm, uint8_t cond) {
   int pos = evm_stack_pop_int(evm);
   if (pos < 0) return pos;
   if (cond) {
@@ -431,7 +428,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   return 0;
 }
 
- int op_push(evm_t* evm, wlen_t len) {
+int op_push(evm_t* evm, wlen_t len) {
   if (evm->code.len < (uint32_t) evm->pos + len) {
     bytes32_t tmp;
     memset(tmp, 0, 32);
@@ -445,14 +442,14 @@ int op_shift(evm_t* evm, uint8_t left) {
   return 0;
 }
 
- int op_dup(evm_t* evm, uint8_t pos) {
+int op_dup(evm_t* evm, uint8_t pos) {
   uint8_t* data = NULL;
   int      l    = evm_stack_get_ref(evm, pos, &data);
   if (l < 0) return l;
   return evm_stack_push(evm, data, l);
 }
 
- int op_swap(evm_t* evm, uint8_t pos) {
+int op_swap(evm_t* evm, uint8_t pos) {
   uint8_t data[33], *a, *b;
   int     l1 = evm_stack_get_ref(evm, 1, &a);
   if (l1 < 0) return l1;
@@ -476,8 +473,6 @@ int op_shift(evm_t* evm, uint8_t left) {
   return 0;
 }
 
-
-
 int op_return(evm_t* evm, uint8_t revert) {
   int offset, len;
   if ((offset = evm_stack_pop_int(evm)) < 0) return offset;
@@ -492,10 +487,6 @@ int op_return(evm_t* evm, uint8_t revert) {
   evm->state           = revert ? EVM_STATE_REVERTED : EVM_STATE_STOPPED;
   return 0;
 }
-
-
-
-
 
 int op_call(evm_t* evm, uint8_t mode) {
   // 0         1          2      3         4         5          6
@@ -551,187 +542,184 @@ int op_call(evm_t* evm, uint8_t mode) {
 
 #ifdef EVM_GAS
 int op_create(evm_t* evm, uint_fast8_t use_salt) {
-    bytes_t   in_data, tmp;
-    uint8_t*  value   = NULL;
-    int32_t   l_value = 0, in_offset, in_len;
-    bytes32_t hash;
-    // read data from stack
-    TRY_SET(l_value, evm_stack_pop_ref(evm, &value));
-    TRY_SET(in_offset, evm_stack_pop_int(evm));
-    TRY_SET(in_len, evm_stack_pop_int(evm));
+  bytes_t   in_data, tmp;
+  uint8_t*  value   = NULL;
+  int32_t   l_value = 0, in_offset, in_len;
+  bytes32_t hash;
+  // read data from stack
+  TRY_SET(l_value, evm_stack_pop_ref(evm, &value));
+  TRY_SET(in_offset, evm_stack_pop_int(evm));
+  TRY_SET(in_len, evm_stack_pop_int(evm));
 
-    // check gas for extending memory
-    TRY(mem_check(evm, in_offset + in_len, true));
+  // check gas for extending memory
+  TRY(mem_check(evm, in_offset + in_len, true));
 
-    // read the data from memory
-    TRY(evm_mem_read_ref(evm, in_offset, in_len, &in_data));
+  // read the data from memory
+  TRY(evm_mem_read_ref(evm, in_offset, in_len, &in_data));
 
-    if (use_salt == 0) {
-        //  calculate the generated address
-        uint8_t*         nonce = evm_get_account(evm, evm->address, true)->nonce;
-        bytes_builder_t* bb    = bb_new();
-        tmp                    = bytes(evm->address, 20);
-        rlp_encode_item(bb, &tmp);
-        if (big_is_zero(nonce, 32))
-            tmp.len = 0;
-        else {
-            tmp.len  = 32;
-            tmp.data = nonce;
-            optimize_len(tmp.data, tmp.len);
-        }
-        rlp_encode_item(bb, &tmp);
-        rlp_encode_to_list(bb);
-        sha3_to(&bb->b, hash);
-        bb_free(bb);
-    } else {
-        // CREATE2 is only allowed after CONSTANTINOPL
-        if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0) return EVM_ERROR_INVALID_OPCODE;
-        uint8_t buffer[85]; // 1 +20 +32+32
-        tmp.data  = buffer;
-        tmp.len   = 85;
-        buffer[0] = 0xFF;
-        memcpy(buffer + 1, evm->address, 20);
-        TRY(evm_stack_pop(evm, buffer + 21, 32));
-        sha3_to(&in_data, buffer + 21 + 32);
-        sha3_to(&tmp, hash);
+  if (use_salt == 0) {
+    //  calculate the generated address
+    uint8_t*         nonce = evm_get_account(evm, evm->address, true)->nonce;
+    bytes_builder_t* bb    = bb_new();
+    tmp                    = bytes(evm->address, 20);
+    rlp_encode_item(bb, &tmp);
+    if (big_is_zero(nonce, 32))
+      tmp.len = 0;
+    else {
+      tmp.len  = 32;
+      tmp.data = nonce;
+      optimize_len(tmp.data, tmp.len);
     }
+    rlp_encode_item(bb, &tmp);
+    rlp_encode_to_list(bb);
+    sha3_to(&bb->b, hash);
+    bb_free(bb);
+  } else {
+    // CREATE2 is only allowed after CONSTANTINOPL
+    if ((evm->properties & EVM_PROP_CONSTANTINOPL) == 0) return EVM_ERROR_INVALID_OPCODE;
+    uint8_t buffer[85]; // 1 +20 +32+32
+    tmp.data  = buffer;
+    tmp.len   = 85;
+    buffer[0] = 0xFF;
+    memcpy(buffer + 1, evm->address, 20);
+    TRY(evm_stack_pop(evm, buffer + 21, 32));
+    sha3_to(&in_data, buffer + 21 + 32);
+    sha3_to(&tmp, hash);
+  }
 
-    // now execute the call
-    return evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
+  // now execute the call
+  return evm_sub_call(evm, NULL, hash + 12, value, l_value, in_data.data, in_data.len, evm->address, evm->origin, 0, 0, 0, 0);
 }
 int op_selfdestruct(evm_t* evm) {
-    uint8_t adr[20], l, *p;
-    if (evm_stack_pop(evm, adr, 20) < 0) return EVM_ERROR_EMPTY_STACK;
-    account_t* self_account = evm_get_account(evm, evm->address, 1);
-    // TODO check if this account was selfsdesstructed before
-    evm->refund += R_SELFDESTRUCT;
+  uint8_t adr[20], l, *p;
+  if (evm_stack_pop(evm, adr, 20) < 0) return EVM_ERROR_EMPTY_STACK;
+  account_t* self_account = evm_get_account(evm, evm->address, 1);
+  // TODO check if this account was selfsdesstructed before
+  evm->refund += R_SELFDESTRUCT;
 
-    l = 32;
-    p = self_account->balance;
-    optimize_len(p, l);
-    if (l && (l > 1 || *p != 0)) {
-        if (evm_get_account(evm, adr, 0) == NULL) {
-            if ((evm->properties & EVM_PROP_NO_FINALIZE) == 0) subgas(G_NEWACCOUNT);
-            evm_get_account(evm, adr, 1);
-        }
-        if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
+  l = 32;
+  p = self_account->balance;
+  optimize_len(p, l);
+  if (l && (l > 1 || *p != 0)) {
+    if (evm_get_account(evm, adr, 0) == NULL) {
+      if ((evm->properties & EVM_PROP_NO_FINALIZE) == 0) subgas(G_NEWACCOUNT);
+      evm_get_account(evm, adr, 1);
     }
-    memset(self_account->balance, 0, 32);
-    memset(self_account->nonce, 0, 32);
-    self_account->code.len = 0;
-    storage_t* s           = NULL;
-    while (self_account->storage) {
-        s                     = self_account->storage;
-        self_account->storage = s->next;
-        _free(s);
-    }
-    evm->state = EVM_STATE_STOPPED;
-    return 0;
+    if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
+  }
+  memset(self_account->balance, 0, 32);
+  memset(self_account->nonce, 0, 32);
+  self_account->code.len = 0;
+  storage_t* s           = NULL;
+  while (self_account->storage) {
+    s                     = self_account->storage;
+    self_account->storage = s->next;
+    _free(s);
+  }
+  evm->state = EVM_STATE_STOPPED;
+  return 0;
 }
 int op_log(evm_t* evm, uint8_t len) {
-    int memoffset = evm_stack_pop_int(evm);
-    if (memoffset < 0) return memoffset;
-    int memlen = evm_stack_pop_int(evm);
-    if (memlen < 0) return memlen;
-    subgas(len * G_LOGTOPIC + memlen * G_LOGDATA);
+  int memoffset = evm_stack_pop_int(evm);
+  if (memoffset < 0) return memoffset;
+  int memlen = evm_stack_pop_int(evm);
+  if (memlen < 0) return memlen;
+  subgas(len * G_LOGTOPIC + memlen * G_LOGDATA);
 
-    if (memlen) TRY(mem_check(evm, memoffset + memlen, true));
+  if (memlen) TRY(mem_check(evm, memoffset + memlen, true));
 
-    logs_t* log = _malloc(sizeof(logs_t));
+  logs_t* log = _malloc(sizeof(logs_t));
 
-    log->next      = evm->logs;
-    evm->logs      = log;
-    log->data.data = _malloc(memlen);
-    log->data.len  = memlen;
+  log->next      = evm->logs;
+  evm->logs      = log;
+  log->data.data = _malloc(memlen);
+  log->data.len  = memlen;
 
-    evm_mem_readi(evm, memoffset, log->data.data, memlen);
-    log->topics.data = _malloc(len * 32);
-    log->topics.len  = len * 32;
+  evm_mem_readi(evm, memoffset, log->data.data, memlen);
+  log->topics.data = _malloc(len * 32);
+  log->topics.len  = len * 32;
 
-    uint8_t* t = NULL;
-    int      l;
+  uint8_t* t = NULL;
+  int      l;
 
-    for (int i = 0; i < len; i++) {
-        if ((l = evm_stack_pop_ref(evm, &t)) < 0) return l;
-        if (l < 32) memset(log->topics.data + i * 32, 0, 32 - l);
-        memcpy(log->topics.data + i * 32 + 32 - l, t, l);
-    }
-    return 0;
+  for (int i = 0; i < len; i++) {
+    if ((l = evm_stack_pop_ref(evm, &t)) < 0) return l;
+    if (l < 32) memset(log->topics.data + i * 32, 0, 32 - l);
+    memcpy(log->topics.data + i * 32 + 32 - l, t, l);
+  }
+  return 0;
 }
 int op_sstore(evm_t* evm) {
-    uint8_t *key, *value;
-    int      l_key, l_val;
-    if ((l_key = evm_stack_pop_ref(evm, &key)) < 0) return l_key;
-    if ((l_val = evm_stack_pop_ref(evm, &value)) < 0) return l_val;
+  uint8_t *key, *value;
+  int      l_key, l_val;
+  if ((l_key = evm_stack_pop_ref(evm, &key)) < 0) return l_key;
+  if ((l_val = evm_stack_pop_ref(evm, &value)) < 0) return l_val;
 
-    storage_t* s       = evm_get_storage(evm, evm->account, key, l_key, 0);
-    uint8_t    created = s == NULL, el = l_val;
-    uint8_t    l_current = 0;
-    if (created)
-        s = evm_get_storage(evm, evm->account, key, l_key, 1);
-    else {
-        created = true;
-        for (int i = 0; i < 32; i++) {
-            if (s->value[i] != 0) {
-                l_current = 32 - i;
-                created   = false;
-                break;
-            }
-        }
+  storage_t* s       = evm_get_storage(evm, evm->account, key, l_key, 0);
+  uint8_t    created = s == NULL, el = l_val;
+  uint8_t    l_current = 0;
+  if (created)
+    s = evm_get_storage(evm, evm->account, key, l_key, 1);
+  else {
+    created = true;
+    for (int i = 0; i < 32; i++) {
+      if (s->value[i] != 0) {
+        l_current = 32 - i;
+        created   = false;
+        break;
+      }
     }
+  }
 
-    while (el > 0 && value[l_val - el] == 0) el--;
+  while (el > 0 && value[l_val - el] == 0) el--;
 
-    if (evm->properties & EVM_PROP_CONSTANTINOPL) {
-        uint8_t* original   = NULL;
-        uint8_t  changed    = big_cmp(value, l_val, s->value, 32);
-        int      l_original = evm->env(evm, EVM_ENV_STORAGE, key, l_key, &original, 0, 0); // wo we need this call, or simply use s?
-        if (l_original < 0) l_original = 0;
+  if (evm->properties & EVM_PROP_CONSTANTINOPL) {
+    uint8_t* original   = NULL;
+    uint8_t  changed    = big_cmp(value, l_val, s->value, 32);
+    int      l_original = evm->env(evm, EVM_ENV_STORAGE, key, l_key, &original, 0, 0); // wo we need this call, or simply use s?
+    if (l_original < 0) l_original = 0;
 
-        if (!changed) {
-            subgas(GAS_CC_NET_SSTORE_NOOP_GAS);
-        } else if (big_cmp(original, l_original, s->value, 32) == 0) {
-            if (l_original == 0) {
-                subgas(GAS_CC_NET_SSTORE_INIT_GAS);
-            }
-            if (el == 0) {
-                evm->refund += GAS_CC_NET_SSTORE_CLEAR_REFUND;
-            }
+    if (!changed) {
+      subgas(GAS_CC_NET_SSTORE_NOOP_GAS);
+    } else if (big_cmp(original, l_original, s->value, 32) == 0) {
+      if (l_original == 0) {
+        subgas(GAS_CC_NET_SSTORE_INIT_GAS);
+      }
+      if (el == 0) {
+        evm->refund += GAS_CC_NET_SSTORE_CLEAR_REFUND;
+      }
 
-            subgas(GAS_CC_NET_SSTORE_CLEAN_GAS);
-        } else {
-            if (l_original) {
-                if (l_current == 0)
-                    evm->gas -= GAS_CC_NET_SSTORE_CLEAR_REFUND;
-                else
-                    evm->refund += GAS_CC_NET_SSTORE_CLEAR_REFUND;
-            }
-
-            if (big_cmp(original, l_original, value, l_val) == 0) {
-                if (l_original == 0)
-                    evm->refund += GAS_CC_NET_SSTORE_RESET_CLEAR_REFUND;
-                else
-                    evm->refund += GAS_CC_NET_SSTORE_RESET_REFUND;
-            }
-            subgas(GAS_CC_NET_SSTORE_DIRTY_GAS);
-        }
+      subgas(GAS_CC_NET_SSTORE_CLEAN_GAS);
     } else {
-        if (el == 0 && created) {
-            subgas(G_SRESET);
-        } else if (el == 0 && !created) {
-            subgas(G_SRESET);
-            evm->refund += R_SCLEAR;
-        } else if (el && created) {
-            subgas(G_SSET);
-        } else if (el && !created) {
-            subgas(G_SRESET);
-        }
-    }
+      if (l_original) {
+        if (l_current == 0)
+          evm->gas -= GAS_CC_NET_SSTORE_CLEAR_REFUND;
+        else
+          evm->refund += GAS_CC_NET_SSTORE_CLEAR_REFUND;
+      }
 
-    uint256_set(value, l_val, s->value);
-    return 0;
+      if (big_cmp(original, l_original, value, l_val) == 0) {
+        if (l_original == 0)
+          evm->refund += GAS_CC_NET_SSTORE_RESET_CLEAR_REFUND;
+        else
+          evm->refund += GAS_CC_NET_SSTORE_RESET_REFUND;
+      }
+      subgas(GAS_CC_NET_SSTORE_DIRTY_GAS);
+    }
+  } else {
+    if (el == 0 && created) {
+      subgas(G_SRESET);
+    } else if (el == 0 && !created) {
+      subgas(G_SRESET);
+      evm->refund += R_SCLEAR;
+    } else if (el && created) {
+      subgas(G_SSET);
+    } else if (el && !created) {
+      subgas(G_SRESET);
+    }
+  }
+
+  uint256_set(value, l_val, s->value);
+  return 0;
 }
 #endif
-
-
-

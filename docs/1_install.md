@@ -47,6 +47,13 @@ make install
   Type: `BOOL ` ,    Default-Value: `ON`
 
 
+#### IN3_LIB
+
+  if true a shared anmd static library with all in3-modules will be build.
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
 #### IN3_SERVER
 
   support proxy server
@@ -94,6 +101,13 @@ make install
   if true 
 
   Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### USE_SCRYPT
+
+  if scrypt is installed, it will link dynamicly to the shared scrypt lib.
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
 
 
 #### WASM

@@ -231,7 +231,7 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     case 0x12: __code("SLT");
     case 0x13: __code("SGT");
     case 0x14: __code("EQ");
-    case 0x15: __code("IS_ZERO");
+    case 0x15: __code("ISZERO");
     case 0x16: __code("AND");
     case 0x17: __code("OR");
     case 0x18: __code("XOR");
@@ -246,9 +246,9 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     case 0x32: __code("ORIGIN");
     case 0x33: __code("CALLER");
     case 0x34: __code("CALLVALUE");
-    case 0x35: __code("CALLDATALOAD");
+    case 0x35: __code("CALLDATALOAD ");
     case 0x36: __code("CALLDATA_SIZE");
-    case 0x37: __code("CALLDATACOPY");
+    case 0x37: __code("CALLDATACOPY ");
     case 0x38: __code("CODESIZE");
     case 0x39: __code("CODECOPY");
     case 0x3a: __code("GASPRICE");
@@ -475,30 +475,36 @@ int evm_execute(evm_t* evm) {
   }
 }
 
-int evm_run(evm_t* evm) {
+int evm_run(evm_t* evm, address_t code_address) {
 
   INIT_GAS(evm);
 
   // for precompiled we simply execute it there
-  if (evm_is_precompiled(evm, evm->account))
-    return evm_run_precompiled(evm, evm->account);
+  if (evm_is_precompiled(evm, code_address))
+    return evm_run_precompiled(evm, code_address);
   // timeout is simply used in case we don't use gas to make sure we don't run a infite loop.
   uint32_t timeout = 0xFFFFFFFF;
   int      res     = 0;
+#ifdef DEBUG
+  uint32_t last     = 0;
+  uint64_t last_gas = 0;
+#endif
   // inital state
   evm->state = EVM_STATE_RUNNING;
 
   // loop opcodes
   while (res >= 0 && evm->state == EVM_STATE_RUNNING && evm->pos < evm->code.len) {
+    EVM_DEBUG_BLOCK({
+      last     = evm->pos;
+      last_gas = KEEP_TRACK_GAS(evm);
+    });
+
     // execute the opcode
     res = evm_execute(evm);
     // display the result of the opcode (only if the debug flag is set)
 #ifdef EVM_GAS
     // debug gas output
-    EVM_DEBUG_BLOCK({
-                            uint32_t last = evm->pos;
-                            uint64_t last_gas = KEEP_TRACK_GAS(evm);
-                            evm_print_stack(evm, last_gas, last); });
+    EVM_DEBUG_BLOCK({ evm_print_stack(evm, last_gas, last); });
 #endif
     if ((timeout--) == 0) return EVM_ERROR_TIMEOUT;
   }

@@ -67,7 +67,9 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   // debug
   //  if (strcmp(tname, "dup1") == 0) props |= EVM_PROP_DEBUG;
 
-  if (tname)
+  if (tname && strstr(name, tname))
+    sprintf(temp, "%s", name);
+  else if (tname)
     sprintf(temp, "%s : %s", name, tname);
   else
     sprintf(temp, "%s #%i", name, counter);
@@ -140,7 +142,7 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
     d_clear_keynames();
     name = names[++n];
   }
-  in3_log_debug("\n%2i of %2i successfully tested", total - failed, total);
+  in3_log_debug("\n( %i %%)  %2i of %2i successfully tested", total ? ((total - failed) * 100) / total : 0, total - failed, total);
 
   if (failed) {
     in3_log_debug("\n%2i tests failed", failed);
@@ -154,9 +156,20 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
 int main(int argc, char* argv[]) {
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
-  char** names   = malloc(sizeof(char*));
-  names[0]       = NULL;
-  uint32_t props = 0;
+  char** names        = malloc(sizeof(char*));
+  names[0]            = NULL;
+  uint32_t props      = 0;
+  char*    skip_tests = getenv("IN3_SKIPTESTS");
+  if (skip_tests) {
+    char* token = strtok(skip_tests, ",");
+    while (token != NULL) {
+      for (int i = 1; i < argc; i++) {
+        if (strstr(argv[i], token))
+          *argv[i] = 0;
+      }
+      token = strtok(NULL, ",");
+    }
+  }
 
   in3_log_set_level(LOG_DEBUG);
   in3_log_set_prefix("");
@@ -170,7 +183,7 @@ int main(int argc, char* argv[]) {
       in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-c") == 0)
       props |= EVM_PROP_CONSTANTINOPL;
-    else {
+    else if (strlen(argv[i])) {
       //      if (strstr(argv[i], "exp") || strstr(argv[i], "loop-mulmod")) {
       //        printf("\nskipping %s\n", argv[i]);
       //        continue;

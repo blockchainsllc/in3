@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.6.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 # project name
 project(in3)
@@ -30,6 +30,8 @@ IF (EVM_GAS)
     MESSAGE(STATUS "Enable GAS in EVM")
     ADD_DEFINITIONS(-DEVM_GAS)
 ENDIF (EVM_GAS)
+
+OPTION(IN3_LIB "if true a shared anmd static library with all in3-modules will be build." ON)
 
 OPTION(TEST "builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance" OFF)
 IF (TEST)
@@ -70,8 +72,10 @@ add_subdirectory(src/api)
 add_subdirectory(src/cmd)
 add_subdirectory(docs)
 
-if (USE_CURL)
-    add_library(in3_bundle STATIC 
+
+# create the library
+if (IN3_LIB) 
+    set(IN3_LIBS 
         $<TARGET_OBJECTS:core_o> 
         $<TARGET_OBJECTS:crypto_o> 
         $<TARGET_OBJECTS:tommath_o> 
@@ -81,6 +85,36 @@ if (USE_CURL)
         $<TARGET_OBJECTS:eth_basic_o> 
         $<TARGET_OBJECTS:eth_nano_o>
         $<TARGET_OBJECTS:usn_api_o> 
-        $<TARGET_OBJECTS:transport_curl_o>
     )
+    # if we use curl, we include curl transport as well
+    if (USE_CURL)
+        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
+    endif()
+
+    # create the libraries
+    add_library(in3_bundle STATIC ${IN3_LIBS} ) 
+    add_library(in3_lib    SHARED ${IN3_LIBS} )
+    set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
+    set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
+
+    # for curl we need to add the dependency
+    if (USE_CURL)
+       target_link_libraries(in3_lib transport_curl)
+    endif()
+
+    # install
+    INSTALL(TARGETS in3_bundle
+      DESTINATION "lib"
+    )
+    INSTALL(TARGETS in3_lib
+        DESTINATION lib
+        PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE)
+    INSTALL (
+        DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+        DESTINATION include
+        FILES_MATCHING PATTERN "*.h*")
+
 endif()

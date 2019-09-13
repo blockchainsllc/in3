@@ -549,6 +549,8 @@ int main(int argc, char* argv[]) {
     http_run_server(port, c);
     return 0;
   }
+#else
+  (void) (port);
 #endif
 
   // handle private key

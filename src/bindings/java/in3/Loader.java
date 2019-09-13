@@ -14,6 +14,19 @@ public class Loader {
 
     private static boolean loaded = false;
 
+    private static String getLibName() {
+        final String os = System.getProperty("os.name").toLowerCase();
+        final String arch = System.getProperty("os.arch").toLowerCase();
+        final String model = System.getProperty("sun.arch.data.model");
+        if (os.indexOf("linux") >= 0) {
+            if (arch.indexOf("arm") >= 0)
+                return "in3_jni_arm";
+        }
+        if (model != null && model.equals("32"))
+            return "in3_jni_32";
+        return "in3_jni";
+    }
+
     private static byte[] md5(InputStream is) throws IOException {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -38,14 +51,14 @@ public class Loader {
 
         try {
             // try to load it from the path
-            System.loadLibrary("in3_jni");
+            System.loadLibrary(getLibName());
             return;
         } catch (java.lang.UnsatisfiedLinkError x) {
         }
 
         // ok, not found, so we use the one in the package.
 
-        String libFileName = System.mapLibraryName("in3_jni");
+        String libFileName = System.mapLibraryName(getLibName());
         String jarPath = "/in3/native/" + libFileName;
 
         URL src = Loader.class.getResource(jarPath);

@@ -3,10 +3,11 @@
 #include <string.h> /* memcpy, memset */
 #include <unistd.h> /* read, write, close */
 #ifdef _WIN32
-#include <windows.h>
+// clang-format off
 #include <winsock2.h>
+#include <windows.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib") //Winsock Library
+// clang-format on
 #else
 #include <netdb.h>      /* struct hostent, gethostbyname */
 #include <netinet/in.h> /* struct sockaddr_in, struct sockaddr */
@@ -19,8 +20,12 @@ in3_ret_t send_http(char** urls, int urls_len, char* payload, in3_response_t* re
   for (int n = 0; n < urls_len; n++) {
     struct hostent*    server;
     struct sockaddr_in serv_addr;
-    int                bytes, sent, received, total;
+    int                received, bytes, sent, total;
     char               message[strlen(payload) + 200], response[4096], *url = urls[n], host[256];
+
+    (void) received;
+    (void) bytes;
+    (void) sent;
 
     // parse url
     if (strncmp(url, "http://", 7)) {
@@ -49,6 +54,7 @@ in3_ret_t send_http(char** urls, int urls_len, char* payload, in3_response_t* re
 
 /* create the socket */
 #ifdef _WIN32
+    (void) (total); // unused var
     WSADATA wsa;
     SOCKET  s;
 

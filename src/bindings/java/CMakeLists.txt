@@ -33,6 +33,7 @@ IF (NOT DEFINED ANDROID_ABI)
 
     in3/native/libin3_jni.dylib 
     in3/native/libin3_jni.so 
+    in3/native/libin3_jni_arm.so
     in3/native/in3_jni.dll
 
     OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
