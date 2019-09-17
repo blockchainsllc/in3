@@ -369,9 +369,15 @@ pages:
   tags:
     - short-jobs
   dependencies:
-    - build
-    - test
-    - bindings
+    - c_tests
+    - evm_tests
+    - java_arm
+    - examples_arm
+    - examples_linux
+    - examples_macos
+    - java_linux
+    - java_macos
+    - readthedocs
   when: manual
   script:
     - echo "" >> debian/changelog
