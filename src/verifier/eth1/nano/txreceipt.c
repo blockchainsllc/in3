@@ -11,20 +11,13 @@
 
 bytes_t* create_tx_path(uint32_t index) {
   uint8_t data[4];
-  int     i;
   bytes_t b = {.len = 4, .data = data};
 
   if (index == 0)
     b.len = 0;
   else {
     int_to_bytes(index, data);
-    for (i = 3; i >= 0; i--) {
-      if (data[i] == 0) {
-        b.data += i + 1;
-        b.len -= i + 1;
-        break;
-      }
-    }
+    b_optimize_len(&b);
   }
 
   bytes_builder_t* bb = bb_new();
@@ -121,7 +114,7 @@ in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash)
         return vc_err(vc, "wrong block number in log");
       if (!d_eq(block_hash, d_getl(l, K_BLOCK_HASH, 32)))
         return vc_err(vc, "wrong block hash in log");
-      if (d_get_intk(l, K_LOG_INDEX) != (uint32_t) i)
+      if (vc->config->useFullProof && d_get_intk(l, K_LOG_INDEX) != (uint32_t) i)
         return vc_err(vc, "wrong log index");
       if (!b_cmp(d_get_bytesk(l, K_TRANSACTION_HASH), tx_hash))
         return vc_err(vc, "wrong tx Hash");

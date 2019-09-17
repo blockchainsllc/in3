@@ -40,24 +40,29 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 
 // clang-format off
 EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload), {
-  Module.transport(UTF8ToString(url),UTF8ToString(payload))
-     .then(res => Module.ccall('request_set_result','void',['number','string'],[result,res]) )
-     .catch(res => Module.ccall('request_set_error','void',['number','string'],[result,res.message || res]) );
-})
+  Asyncify.handleSleep(function(wakeUp) {
+    Module.transport(UTF8ToString(url),UTF8ToString(payload))
+      .then(res => {
+        Module.ccall('request_set_result','void',['number','string'],[result,res]);
+        wakeUp();
+      })
+      .catch(res => {
+        Module.ccall('request_set_error','void',['number','string'],[result,res.message || res]);
+        wakeUp();
+      })
+  });
+});
+
+EM_JS(void, in3_req_done, (in3_ctx_t* ctx), {
+  var done = Module.pendingRequests[ctx+""];
+  done();
+});
+
 // clang-format on
 
 int in3_fetch(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int i = 0; i < urls_len; i++)
     transport_send(result + i, urls[i], payload);
-  while (true) {
-    emscripten_sleep(50);
-    int done = 0, err = 0;
-    for (int i = 0; i < urls_len; i++) {
-      if (result[i].error.len) err++;
-      if (result[i].error.len || result[i].result.len) done++;
-    }
-    if (done == urls_len) return err ? IN3_ETRANS : IN3_OK;
-  }
   return IN3_OK;
 }
 
@@ -88,6 +93,12 @@ void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
   in3_free(a);
   in3_set_error(NULL);
 }
+/* frees the references of the client */
+in3_ret_t EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
+  in3_ret_t res = in3_configure(a, conf);
+  free(conf);
+  return res;
+}
 
 char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
   return last_error;
@@ -109,6 +120,7 @@ void EMSCRIPTEN_KEEPALIVE in3_send_request(in3_ctx_t* ctx) {
   in3_set_error(NULL);
   in3_send_ctx(ctx);
   ctx->client = NULL;
+  in3_req_done(ctx);
 }
 
 void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {

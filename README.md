@@ -5,10 +5,10 @@ Within the src-folder there are different modules used create the binaries match
 ```mermaid
 graph LR
 
-subgraph lib
-   core((core))
+subgraph corelib
+   core(core)
  end
-subgraph exe/lib
+subgraph exe_lib
      cmd(cmd)
      lib(lib)
  end
@@ -55,5 +55,6 @@ eth_basic --> eth_nano
 eth_full --> eth_basic
 
 style libcurl stroke-width:2px,stroke-dasharray: 5, 5
+
 
 ```

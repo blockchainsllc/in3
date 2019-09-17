@@ -156,3 +156,10 @@ in3_ret_t send_curl(char** urls, int urls_len, char* payload, in3_response_t* re
   return send_curl_nonblocking((const char**) urls, urls_len, payload, result);
 #endif
 }
+
+/**
+ * registers curl as a default transport.
+ */
+void in3_register_curl() {
+  in3_set_default_transport(send_curl);
+}

@@ -13,7 +13,8 @@
 
 in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
 
-  in3_ret_t  res = IN3_OK, i;
+  in3_ret_t  res = IN3_OK;
+  int        i;
   d_token_t *transactions, *t, *t2, *tx_hashs, *txh = NULL;
   bytes_t    tmp, *bhash;
   uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
@@ -66,7 +67,8 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
       bytes_t* tx   = serialize_tx(t);
       bytes_t* h    = (full_proof || !include_full_tx) ? sha3(tx) : NULL;
 
-      if (eth_verify_tx_values(vc, t, tx)) res = IN3_EUNKNOWN;
+      if (eth_verify_tx_values(vc, t, tx))
+        res = IN3_EUNKNOWN;
 
       if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !b_cmp(d_bytes(t2), bhash))
         res = vc_err(vc, "Wrong Blockhash in tx");

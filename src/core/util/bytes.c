@@ -23,8 +23,9 @@ void ba_print(uint8_t* a, size_t l) {
   in3_log_trace(" 0x");
   for (i = 0; i < l; i++) in3_log_trace("%02x", a[i]);
 
-  if (l < 9)
+  if (l < 9) {
     in3_log_trace(" ( %" PRId64 " ) ", bytes_to_long(a, l));
+  }
 }
 
 void b_print(bytes_t* a) {

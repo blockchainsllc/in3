@@ -1,43 +1,144 @@
 variables:
+  COMMIT_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+
 stages:
   - build
+  - bindings
   - test
   - deploy
-build-in3:
+
+.conanbuild:
+  stage: build
+  tags:
+    - short-jobs
+  script:
+    - mkdir $BUILD
+    - cd $BUILD
+    - cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release ..
+    - make
+  variables:
+    CONAN_OPTS: ""
+    BUILD: "build"
+  artifacts:
+    paths:
+      - $BUILD/bin
+      - $BUILD/lib
+
+gcc8:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: build
   tags:
     - short-jobs
   script:
-    - mkdir build
-    - cd build
+    - mkdir x64_build
+    - cd x64_build
     - cmake -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
-    - make && cp src/bindings/java/*.jar lib/
+    - make
   artifacts:
     paths:
-      - build/bin
-      - build/lib
-      - build/docs/doc_doxygen
+      - x64_build/bin
+      - x64_build/lib
+      - x64_build/docs/doc_doxygen
+
+win_mingw:
+  image: docker.slock.it/build-images/cmake:gcc7-mingw
+  extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true"
+    BUILD: "win_build"
+
+arm7:
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
+  extends: .conanbuild
+  tags:
+    - arm
+  variables:
+    CONAN_OPTS: "-DJAVA=true"
+    BUILD: "arm7_build"
+
+gcc8-x86:
+  image: docker.slock.it/build-images/cmake:gcc8-x86
+  extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DJAVA=true"
+    BUILD: "x86_build"
+
+gcc5:
+  image: docker.slock.it/build-images/cmake:gcc5
+  extends: .conanbuild
+
+clang50:
+  image: docker.slock.it/build-images/cmake:clang50
+  extends: .conanbuild
+
+clang9:
+  image: docker.slock.it/build-images/cmake:clang9
+  extends: .conanbuild
+
+mac_os:
+  stage: build
+  script:
+    - mkdir mac_build
+    - cd mac_build
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
+    - make
+    - make ptest
+    - rm -rf *
+    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
+    - make
+
+  artifacts:
+    paths:
+      - mac_build/docs
+      - mac_build/lib
+      - mac_build/bin
+  tags:
+    - mac-mini-runner
 
 wasm:
-  image: trzeci/emscripten:sdk-tag-1.38.32-64bit
-  stage: build
+  image: docker.slock.it/build-images/cmake:clang9
+  stage: bindings
   tags:
     - short-jobs
   script:
-    - mkdir build
-    - cd build
-    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=false -DCMD=false -DEXAMPLES=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - mkdir wasm_build
+    - cd wasm_build
+    - emconfigure cmake -DWASM=true -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make
     - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
 
   artifacts:
     paths:
-      - build/bin
-      - build/lib
+      - wasm_build/module
+      - wasm_build/bin
 
-test-in3:
+java:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: bindings
+  tags:
+    - short-jobs
+  dependencies:
+    - mac_os
+    - win_mingw
+    - gcc8
+    - arm7
+  script:
+    - mkdir java_build
+    - cd java_build
+    - cmake -DIN3_LIB=false -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
+    - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
+    - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
+    - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
+    - cp ../arm7_build/lib/libin3_jni.so ../src/bindings/java/in3/native/libin3_jni_arm.so
+    - make in3j
+  artifacts:
+    paths:
+      - java_build/lib
+
+# ##### test ######
+
+c_tests:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
   tags:
@@ -53,190 +154,211 @@ test-in3:
       - testbuild/test
       - Testing
 
-.xbuild:
-  services:
-    - docker:dind
-  image: jonaskello/docker-and-compose:latest
-  stage: build
-  tags:
-    - short-jobs
-  artifacts:
-    paths:
-      - build/bin
-      - build/lib
-
-  script:
-    - apk add --no-cache bash
-    - docker run --rm "dockcross/$IMAGE" > ./dockcross
-    - chmod +x ./dockcross
-    - ./dockcross bash -c "$INSTALL; sudo apt-get update ; sudo apt-get -y install doxygen default-jdk; mkdir build; cd build; cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release .. && make"
-  variables:
-    IMAGE: "linux-x64"
-    INSTALL: "cd ."
-    CONAN_OPTS: ""
-
-.conanbuild:
-  stage: build
+evm_tests:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
   tags:
     - short-jobs
   script:
-    - mkdir build
-    - cd build
-    - cmake $CONAN_OPTS -DCMAKE_BUILD_TYPE=Release ..
+    - mkdir testbuild
+    - cd testbuild
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-  variables:
-    CONAN_OPTS: ""
-  artifacts:
-    paths:
-      - build/bin
-      - build/lib
+    - cd ../test/testdata/evm/GeneralStateTests
+    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
+    - cd ../vmTests
+    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
+java_linux:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  script:
+    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  tags:
+    - short-jobs
 
-gcc7-mingw-static:
- image: docker.slock.it/build-images/cmake:gcc7-mingw
- extends: .conanbuild
- variables:
-   CONAN_OPTS: "-DLIBCURL_LINKTYPE=static"
+examples_linux:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  dependencies:
+    - gcc8
+  script:
+    - mv x64_build build
+    - cd examples/c
+    - ./build.sh
+    - cd ../java
+    - ./build.sh
+  tags:
+    - short-jobs
 
-gcc8-armv7:
+examples_arm:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
-  extends: .conanbuild
-
-gcc8-armv7hf:
-  image: docker.slock.it/build-images/cmake:gcc8-armv7hf
-  extends: .conanbuild
-
-gcc8-x86:
-  image: docker.slock.it/build-images/cmake:gcc8-x86
-  extends: .conanbuild
-
-gcc5:
-  image: docker.slock.it/build-images/cmake:gcc5
-  extends: .conanbuild
-
-clang50:
-  image: docker.slock.it/build-images/cmake:clang50
-  extends: .conanbuild
-
-mac_os:
-  stage: build
+  stage: test
+  dependencies:
+    - arm7
   script:
-    - mkdir build
-    - cd build
-    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
-    - make
-    - make ptest
-    - rm -rf *
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
-    - make
+    - mv arm7_build build
+    - cd examples/c
+    - ./build.sh
+    - cd ../java
+    - ./build.sh
+  tags:
+    - arm
 
-  artifacts:
-    paths:
-      - build/docs
-      - build/lib
-      - build/bin
+examples_macos:
+  stage: test
+  dependencies:
+    - mac_os
+  script:
+    - mv mac_build build
+    - cd examples/c
+    - ./build.sh
+    - cd ../java
+    - ./build.sh
   tags:
     - mac-mini-runner
 
-.debian_package_deploy_template:
-  image: docker.slock.it/build-images/cmake:gcc8-with-debian-deps
+java_arm:
+  image: armv7/armhf-java8
+  dependencies:
+    - java
+  stage: test
+  script:
+    - echo "SKIPPED"
+  #    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  tags:
+    - arm
+
+java_macos:
+  stage: test
+  script:
+    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  tags:
+    - mac-mini-runner
+
+# #### deploy #####
+docker:
+  stage: deploy
+  tags:
+    - short-jobs
+  services:
+    - docker:dind
+  image: jonaskello/docker-and-compose:latest
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t $COMMIT_IMAGE_TAG .
+    - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
+    - docker push $RELEASE_IMAGE_TAG
+    - docker push $COMMIT_IMAGE_TAG
+
+wasm-slockit-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: deploy
+  tags:
+    - short-jobs
+  only: # deploy only on  semantic versions tags
+    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
+  except:
+    - branches
+  dependencies:
+    - wasm
+  script:
+    - sh /prepare.sh
+    - cd wasm_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish
+
+wasm-public-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: deploy
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
+  dependencies:
+    - wasm
+  script:
+    - sh /prepare.sh
+    - cd wasm_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish --registry https://registry.npmjs.org
+
+readthedocs:
+  image: docker.slock.it/build-images/doc:readthedocs
+  stage: test
+  tags:
+    - short-jobs
+  dependencies:
+    - gcc8
+  script:
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
+    - cd generator
+    - npm i && npm run build
+    - bin/slockit-doxygen ../x64_build/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
+    - bin/slockit-doxygen ../x64_build/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
+    - cd ../doc/docs && make html && make latexpdf && make text
+  artifacts:
+    paths:
+      - doc/build
+
+release:
   stage: deploy
   tags:
     - short-jobs
   dependencies:
-    - build-in3
-    - test-in3
+    - mac_os
+    - readthedocs
+    - win_mingw
+    - gcc8
+    - gcc8-x86
+    - wasm
+    - arm7
   script:
-    - echo "" >> debian/changelog
-    - echo "in3 (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
-    - echo "" >> debian/changelog
-    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
-    - echo "" >> debian/changelog
-    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
-    - echo "" >> debian/changelog
-    - cat debian/changelog
-    - mkdir ~/.gnupg && chmod 700 ~/.gnupg
-    - echo -e "use-agent\npinentry-mode loopback" > ~/.gnupg/gpg.conf
-    - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
-    - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
-    - debuild -S -sa -us -uc
-    - cd ..
-    - debsign -p'gpg --batch --yes --no-tty --passphrase $PGP_PASSPHRASE' -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
-    - dput ppa:devops-slock-it/in3-client in3_${VERSION}~${DISTRO}_source.changes
+    - mkdir release
+    - cd release
+    - mkdir bin
+    - mkdir lib
+    - mkdir doc
+    - cp -r ../mac_build/bin bin/osx
+    - cp -r ../mac_build/lib lib/osx
+    - cp -r ../arm7_build/bin bin/arm7
+    - cp -r ../arm7_build/lib lib/arm7
+    - cp -r ../win_build/bin bin/win64
+    - cp -r ../win_build/lib lib/win64
+    - mv bin/win64/in3 bin/win64/in3.exe
+    - mv bin/win64/rlp bin/win64/rlp.exe
+    - mv bin/win64/json bin/win64/json.exe
+    - mv lib/win64/libin3.so lib/win64/in3.dll
+    - cp -r ../x64_build/bin bin/linux_x64
+    - cp -r ../x64_build/lib lib/linux_x64
+    - cp -r ../x86_build/bin bin/linux_x86
+    - cp -r ../x86_build/lib lib/linux_x86
+    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE .
+    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
+    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../wasm_build/module js
+  artifacts:
+    paths:
+      - release
 
-
-debian_package_deploy_bionic:
-  extends:
-    - .debian_package_deploy_template
-  variables:
-    DISTRO: "bionic"
-    VERSION: $CI_COMMIT_TAG
+pages:
+  stage: deploy
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/
-  except:
-    - branches
-
-
-debian_package_deploy_disco:
-  extends:
-    - .debian_package_deploy_template
-  variables:
-    DISTRO: "disco"
-    VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/
-  except:
-    - branches
-
-#pages:
-#  tags:
-#    - short-jobs
-#  stage: deploy
-#  when: always
-#  environment:
-#    name: test-results
-#    url: https://in3.git-pages.slock.it/c/in3-core
-#  dependencies:
-#    - linux-x64-shared
-#  script:
-#    - mkdir -p public/
-#    - cp -r build/docs/doc_doxygen/html/* public/
-#  artifacts:
-#    paths:
-#      - public
-#windows-x64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: windows-x64
-
-#linux-armv5:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-armv5
-
-#linux-arm64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-arm64
-
-#linux-armv6:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-armv6
-
-#linux-armv7:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: linux-armv7
-
-#windows-x86:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: windows-x86
-
-#manylinux-x64:
-#  extends: .xbuild
-#  variables:
-#     IMAGE: manylinux-x64
-#     CONAN_OPTS : --build libcurl
-#     INSTALL: "apk add py-pip; pip install conan"
+    refs:
+      - develop
+  tags:
+    - arm
+  dependencies:
+    - arm7
+  script:
+    - mkdir -p public/lib
+    - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
+    - cp libFiles_$CI_COMMIT_SHORT_SHA.tar.gz public/lib
+    - echo Grab file at BASE_PAGES_URL/lib/libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
+  artifacts:
+    paths:
+      - public

@@ -1,11 +1,11 @@
 # Building
 
-While we provide binaries (TODO put link to releases), you can also build from source:
+While we provide binaries, you can also build from source:
 
 ### requirements
 
 - cmake
-- curl : curl is used as transport for the comandline-tools
+- curl : curl is used as transport for command-line tools.
 - optional: libsycrypt, which would be used for unlocking keystore files using `scrypt` as kdf method. if it does not exist you can still build, but not decrypt such keys.   
   for osx `brew install libscrypt` and for debian `sudo apt-get install libscrypt-dev`
 
@@ -26,25 +26,11 @@ make install
   Type: `BOOL ` ,    Default-Value: `ON`
 
 
-#### DEBUG
-
-  Turns on Debug output in the code. This would be required if the tests should output additional debug infos.
-
-  Type: `BOOL ` ,    Default-Value: `OFF`
-
-
 #### EVM_GAS
 
   if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes.
 
   Type: `BOOL ` ,    Default-Value: `ON`
-
-
-#### EXAMPLES
-
-  build the examples.
-
-  Type: `BOOL ` ,    Default-Value: `OFF`
 
 
 #### FAST_MATH
@@ -61,9 +47,37 @@ make install
   Type: `BOOL ` ,    Default-Value: `ON`
 
 
+#### IN3_LIB
+
+  if true a shared anmd static library with all in3-modules will be build.
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### IN3_SERVER
+
+  support proxy server
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
+
+
+#### IN3_STAGING
+
+  if true, the client will use the staging-network instead of the live ones
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
 #### JAVA
 
   build the java-binding (shared-lib and jar-file)
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
+
+
+#### TAG_VERSION
+
+  the tagged version, which should be used
 
   Type: `BOOL ` ,    Default-Value: `OFF`
 
@@ -80,6 +94,20 @@ make install
   builds transports, which may require extra libraries.
 
   Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### USE_CURL
+
+  if true 
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### USE_SCRYPT
+
+  if scrypt is installed, it will link dynamicly to the shared scrypt lib.
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
 
 
 #### WASM

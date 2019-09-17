@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
+  if (src_len < 32) memset(dst, 0, 32 - src_len);
+  memcpy(dst + 32 - src_len, src, src_len);
+}
+
 int hash_cmp(uint8_t* a, uint8_t* b) {
   int len = 31;
 
@@ -169,4 +174,9 @@ int min_bytes_len(uint64_t val) {
     if (val == 0) return i;
   }
   return 8;
+}
+
+uint64_t hex2long(char* buf) {
+  uint8_t tmp[8];
+  return bytes_to_long(tmp, hex2byte_arr(buf, -1, tmp, 8));
 }

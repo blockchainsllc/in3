@@ -1,19 +1,25 @@
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.6.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 # project name
 project(in3)
+OPTION(TAG_VERSION "the tagged version, which should be used")
 
-set(PROJECT_VERSION "0.0.0-alpha.0")
+set(PROJECT_VERSION "0.1.0-alpha.0")
+if (TAG_VERSION)
+   set(PROJECT_VERSION "${TAG_VERSION}")
+ENDIF(TAG_VERSION)
+MESSAGE(STATUS "Building version ${PROJECT_VERSION}")
 
 string(REPLACE "." ";" VERSION_LIST ${PROJECT_VERSION})
 list(GET VERSION_LIST 0 PROJECT_VERSION_MAJOR)
 list(GET VERSION_LIST 1 PROJECT_VERSION_MINOR)
 list(GET VERSION_LIST 2 PROJECT_VERSION_PATCH)
 
-ADD_DEFINITIONS(-DIN3_VERSION=${PROJECT_VERSION})
+ADD_DEFINITIONS("-DIN3_VERSION=\"${PROJECT_VERSION}\"")
 ADD_DEFINITIONS(-DIN3_VERSION_MAJOR=${PROJECT_VERSION_MINOR})
 ADD_DEFINITIONS(-DIN3_VERSION_MINOR=${PROJECT_VERSION_MINOR})
 ADD_DEFINITIONS(-DIN3_VERSION_PATCH=${PROJECT_VERSION_PATCH})
+
 
 IF (CMAKE_BUILD_TYPE MATCHES Debug)
     ADD_DEFINITIONS(-DDEBUG)
@@ -24,6 +30,8 @@ IF (EVM_GAS)
     MESSAGE(STATUS "Enable GAS in EVM")
     ADD_DEFINITIONS(-DEVM_GAS)
 ENDIF (EVM_GAS)
+
+OPTION(IN3_LIB "if true a shared anmd static library with all in3-modules will be build." ON)
 
 OPTION(TEST "builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance" OFF)
 IF (TEST)
@@ -62,10 +70,51 @@ add_subdirectory(src/verifier)
 add_subdirectory(src/bindings)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
-add_subdirectory(src/examples)
 add_subdirectory(docs)
 
-IF (EXAMPLES)
-    add_library(in3_bundle STATIC $<TARGET_OBJECTS:core_o> $<TARGET_OBJECTS:crypto_o> $<TARGET_OBJECTS:tommath_o> $<TARGET_OBJECTS:eth_full_o> $<TARGET_OBJECTS:eth_api_o> $<TARGET_OBJECTS:eth_basic_o> $<TARGET_OBJECTS:eth_nano_o>)
-    target_link_libraries(in3_bundle transport_curl)
-endif (EXAMPLES)
+
+# create the library
+if (IN3_LIB) 
+    set(IN3_LIBS 
+        $<TARGET_OBJECTS:core_o> 
+        $<TARGET_OBJECTS:crypto_o> 
+        $<TARGET_OBJECTS:tommath_o> 
+        $<TARGET_OBJECTS:evm_o> 
+        $<TARGET_OBJECTS:eth_full_o> 
+        $<TARGET_OBJECTS:eth_api_o> 
+        $<TARGET_OBJECTS:eth_basic_o> 
+        $<TARGET_OBJECTS:eth_nano_o>
+        $<TARGET_OBJECTS:usn_api_o> 
+    )
+    # if we use curl, we include curl transport as well
+    if (USE_CURL)
+        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
+    endif()
+
+    # create the libraries
+    add_library(in3_bundle STATIC ${IN3_LIBS} ) 
+    add_library(in3_lib    SHARED ${IN3_LIBS} )
+    set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
+    set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
+
+    # for curl we need to add the dependency
+    if (USE_CURL)
+       target_link_libraries(in3_lib transport_curl)
+    endif()
+
+    # install
+    INSTALL(TARGETS in3_bundle
+      DESTINATION "lib"
+    )
+    INSTALL(TARGETS in3_lib
+        DESTINATION lib
+        PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE)
+    INSTALL (
+        DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+        DESTINATION include
+        FILES_MATCHING PATTERN "*.h*")
+
+endif()

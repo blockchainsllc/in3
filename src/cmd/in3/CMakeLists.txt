@@ -8,6 +8,13 @@ else()
     set(LIBS ${LIBS} transport_http)
 ENDIF()
 
+IF (IN3_SERVER)
+    message("using server for comandline")
+    ADD_DEFINITIONS(-DIN3_SERVER)
+    set(LIBS ${LIBS} http_server)
+ENDIF()
+
+
 add_executable(in3 main.c in3_storage.c)
 
 target_link_libraries(in3 ${LIBS} eth_full eth_api -lm)

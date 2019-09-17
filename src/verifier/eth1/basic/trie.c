@@ -380,6 +380,7 @@ void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
 
 #ifdef TEST
 static void hexprint(uint8_t* a, int l) {
+  (void) a; // unused param if compiled without debug
   int i;
   for (i = 0; i < l; i++) in3_log_trace("%02x", a[i]);
 }

@@ -5,6 +5,7 @@
 #include "chains.h"
 #include "rlp.h"
 
+// linked list of chain specs
 typedef struct spec_ {
   uint64_t      chain_id;
   chainspec_t*  spec;
@@ -14,10 +15,12 @@ typedef struct spec_ {
 static spec_t* specs = NULL;
 
 static void* log_error(char* msg) {
+  UNUSED_VAR(msg);
   in3_log_error(msg);
   return NULL;
 }
 
+// supported EIPS
 static const uint32_t EIPS[] = {145, 155, 150, 160, 170, 140, 196, 197, 198, 211, 214, 658, 145, 1014, 1052, 1283, 0}; // all const
 static void           fill_aura(d_token_t* validators, consensus_transition_t* t, char* block) {
   d_token_t* contract = d_get(validators, key("contract"));

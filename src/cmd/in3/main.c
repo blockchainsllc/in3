@@ -16,9 +16,13 @@
 #else
 #include "../../transport/http/in3_http.h"
 #endif
+#ifdef IN3_SERVER
+#include "../http-server/http_server.h"
+#endif
+#include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
+#include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
-#include "../../verifier/eth1/full/evm.h"
 #include "../../verifier/eth1/nano/chainspec.h"
 #include "in3_storage.h"
 #include <inttypes.h>
@@ -36,11 +40,13 @@ void show_help(char* name) {
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -np            short for -p none\n\
 -s, -signs     number of signatures to use when verifying.\n\
+-port          if specified it will run as http-server listening to the given port.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
+-st, -sigtype  the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw \n\
 -pwd           password to unlock the key \n\
 -value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
 -w, -wait      if given, instead returning the transaction, it will wait until the transaction is mined and return the transactionreceipt.\n\
@@ -49,6 +55,8 @@ void show_help(char* name) {
 -debug         if given incubed will output debug information when executing. \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-version       displays the version \n\
+-help          displays this help message \n\
 \n\
 As method, the following can be used:\n\
 \n\
@@ -89,6 +97,12 @@ key <keyfile>\n\
 void die(char* msg) {
   fprintf(stderr, "\033[31mError: %s\033[0m\n", msg);
   exit(EXIT_FAILURE);
+}
+
+static void print_hex(uint8_t* data, int len) {
+  printf("0x");
+  for (int i = 0; i < len; i++) printf("%02x", data[i]);
+  printf("\n");
 }
 // helper to read the password from tty
 void read_pass(char* pw, int pwsize) {
@@ -350,15 +364,42 @@ static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_r
 
 int main(int argc, char* argv[]) {
   // check for usage
-  if (argc < 2 || strcmp(argv[1], "--help") == 0) {
+  if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
     show_help(argv[0]);
-    return 1;
+    return 0;
+  }
+
+  if (argc < 2 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
+    printf("in3 " IN3_VERSION "\nbuild " __DATE__ " with");
+#ifdef TEST
+    printf(" -DTEST=true");
+#endif
+#ifdef EVM_GAS
+    printf(" -DEVM_GAS=true");
+#endif
+#ifdef CMD
+    printf(" -DCMD=true");
+#endif
+#ifdef IN3_MATH_FAST
+    printf(" -DFAST_MATH=true");
+#endif
+#ifdef IN3_SERVER
+    printf(" -DIN3_SERVER=true");
+#endif
+#ifdef USE_CURL
+    printf(" -DUSE_CURL=true");
+#else
+    printf(" -DUSE_CURL=false");
+#endif
+    printf("\n(c) " IN3_COPYRIGHT "\n");
+    return 0;
   }
 
   // define vars
   char *method = NULL, params[50000];
   params[0]    = '[';
-  int p        = 1, i;
+  int       p  = 1, i;
+  bytes32_t pk;
 
   // use the storagehandler to cache data in .in3
   in3_storage_handler_t storage_handler;
@@ -370,15 +411,11 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c        = in3_new();
-  c->transport    = debug_transport;
-  c->requestCount = 1;
-  c->use_http     = true;
-  c->cacheStorage = &storage_handler;
-
-  // read data from cache
-  in3_cache_init(c);
-  bytes32_t       pk;
+  in3_t* c                     = in3_new();
+  c->transport                 = debug_transport;
+  c->requestCount              = 1;
+  c->use_http                  = true;
+  c->cacheStorage              = &storage_handler;
   bool            out_response = false;
   bool            force_hex    = false;
   char*           sig          = NULL;
@@ -394,6 +431,11 @@ int main(int argc, char* argv[]) {
   char*           pk_file      = NULL;
   char*           validators   = NULL;
   bytes_t*        data         = NULL;
+  char*           port         = NULL;
+  char*           sig_type     = "raw";
+
+  // read data from cache
+  in3_cache_init(c);
 
   // check env
   if (getenv("IN3_PK")) {
@@ -436,6 +478,8 @@ int main(int argc, char* argv[]) {
       pwd = argv[++i];
     else if (strcmp(argv[i], "-value") == 0)
       value = get_wei(argv[++i]);
+    else if (strcmp(argv[i], "-port") == 0)
+      port = argv[++i];
     else if (strcmp(argv[i], "-name") == 0)
       name = argv[++i];
     else if (strcmp(argv[i], "-validators") == 0)
@@ -452,6 +496,8 @@ int main(int argc, char* argv[]) {
       json = true;
     else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;
+    else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
+      sig_type = argv[++i];
     else if (strcmp(argv[i], "-debug") == 0)
       in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
@@ -473,6 +519,8 @@ int main(int argc, char* argv[]) {
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
+      else if (strcmp(method, "sign") == 0 && !data)
+        data = b_new(argv[i], strlen(argv[i]));
       else if (to == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0))
         to = argv[i];
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
@@ -491,11 +539,19 @@ int main(int argc, char* argv[]) {
       }
     }
   }
-  params[p++] = ']';
-  params[p]   = 0;
-
-  // now execute it
+  params[p++]  = ']';
+  params[p]    = 0;
   char *result = NULL, *error = NULL;
+
+#ifdef IN3_SERVER
+  // start server
+  if (!method && port) {
+    http_run_server(port, c);
+    return 0;
+  }
+#else
+  (void) (port);
+#endif
 
   // handle private key
   if (pk_file) read_pk(pk_file, pwd, c, method);
@@ -517,9 +573,7 @@ int main(int argc, char* argv[]) {
       json_ctx_t* in_data = parse_json(params);
       if (set_data(req, in_data->result, req->in_data) < 0) die("invalid arguments for given signature");
     }
-    printf(" 0x");
-    for (i = 0; i < (int) req->call_data->b.len; i++) printf("%02x", req->call_data->b.data[i]);
-    printf("\n");
+    print_hex(req->call_data->b.data, req->call_data->b.len);
     return 0;
   } else if (strcmp(method, "abi_decode") == 0) {
     if (!strchr(sig, ':')) {
@@ -538,6 +592,26 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, to, params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
+  } else if (strcmp(method, "sign") == 0) {
+    if (!data) die("no data given");
+    if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
+      data = hex2byte_new_bytes((char*) data->data + 2, data->len - 2);
+    if (strcmp(sig_type, "eth_sign") == 0) {
+      char tmp[data->len + 30];
+      int  l = sprintf(tmp, "\x19"
+                           "Ethereum Signed Message:\n%i",
+                      data->len);
+      memcpy(tmp + l, data->data, data->len);
+      data     = b_new(tmp, l + data->len);
+      sig_type = "raw";
+    }
+
+    if (!c->signer) die("No private key given");
+    uint8_t sig[65];
+    c->signer->sign(c->signer->wallet, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+    sig[64] += 27;
+    print_hex(sig, 65);
+    return 0;
   } else if (strcmp(method, "chainspec") == 0) {
     char* json;
     if (strlen(params) > 2) {
@@ -560,11 +634,9 @@ int main(int argc, char* argv[]) {
     bytes_builder_t* bb = bb_new();
     chainspec_to_bin(spec, bb);
 
-    if (force_hex) {
-      printf("0x");
-      for (i = 0; i < (int) bb->b.len; i++) printf("%02x", bb->b.data[i]);
-      printf("\n");
-    } else {
+    if (force_hex)
+      print_hex(bb->b.data, bb->b.len);
+    else {
       bool is_hex = false;
       printf("#define CHAINSPEC_%s \"", name);
       for (i = 0; i < (int) bb->b.len; i++) {
@@ -578,7 +650,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode key createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;

@@ -13,7 +13,7 @@
         </pre>
     </div>
     <script>
-        var c = new IN3();
+        var c = new IN3({ chainId: 0x5 });
         c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
             .then(r => document.getElementById('result').innerHTML = JSON.stringify(r, null, 2))
             .catch(alert)

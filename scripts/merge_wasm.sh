@@ -19,3 +19,9 @@ echo " return IN3; })();" >> $TARGET_JS
 
 # add a simple demo page.
 cp "$1/demo.html" .
+
+# create package
+mkdir -p ../module
+cp ../../LICENSE "$1/package.json" $1/README.md ../module/
+cp in3.js  ../module/index.js
+cp "$1/in3.d.ts"  ../module/index.d.ts
