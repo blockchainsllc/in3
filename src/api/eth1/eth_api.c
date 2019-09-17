@@ -523,3 +523,21 @@ uint64_t eth_chainId(in3_t* in3) {
   rpc_init;
   rpc_exec("eth_blockNumber", uint64_t, d_long(result));
 }
+
+uint64_t eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(hash, 32));
+  rpc_exec("eth_getBlockTransactionCountByHash", uint64_t, d_long(result));
+}
+
+uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, block_number_t block) {
+  rpc_init;
+  if (block.is_u64) {
+    params_add_number(params, block.u64);
+  } else {
+    sb_add_chars(params, ", \"");
+    sb_add_chars(params, block.str);
+    sb_add_char(params, '\"');
+  }
+  rpc_exec("eth_getBlockTransactionCountByNumber", uint64_t, d_long(result));
+}
