@@ -511,3 +511,8 @@ void free_log(eth_log_t* log) {
   _free(log->topics);
   _free(log);
 }
+
+uint64_t eth_chainId(in3_t* in3) {
+  rpc_init;
+  rpc_exec("eth_blockNumber", uint64_t, d_long(result));
+}

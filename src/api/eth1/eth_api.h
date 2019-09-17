@@ -91,6 +91,7 @@ in3_ret_t    eth_newBlockFilter(in3_t* in3);                                    
 in3_ret_t    eth_newPendingTransactionFilter(in3_t* in3);                                             /**< creates a new pending txn filter with specified options and returns its id on success or 0 on failure */
 bool         eth_uninstallFilter(in3_t* in3, size_t id);                                              /**< uninstalls a filter and returns true on success or false on failure */
 in3_ret_t    eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs); /**< sets the logs (for event filter) or blockhashes (for block filter) that match a filter; returns <0 on error, otherwise no. of block hashes matched (for block filter) or 0 (for log filer) */
+uint64_t     eth_chainId(in3_t* in3);
 
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
