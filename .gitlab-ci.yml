@@ -277,6 +277,7 @@ wasm-public-npm:
     - /^v[0-9]+.[0-9]+.[0-9]+$/
   except:
     - branches
+  when: manual
   dependencies:
     - wasm
   script:
