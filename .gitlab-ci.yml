@@ -369,8 +369,9 @@ pages:
   tags:
     - short-jobs
   dependencies:
-    - build-in3
-    - test-in3
+    - build
+    - test
+    - bindings
   when: manual
   script:
     - echo "" >> debian/changelog
@@ -389,7 +390,6 @@ pages:
     - cd ..
     - debsign -p'gpg --batch --yes --no-tty --passphrase $PGP_PASSPHRASE' -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
     - dput ppa:devops-slock-it/in3-client in3_${VERSION}~${DISTRO}_source.changes
-
 
 debian_package_deploy_bionic:
   extends:
