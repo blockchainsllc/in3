@@ -1,13 +1,20 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef __ZEPHYR__
-#include <zephyr.h>
-#define printX printk
-#define vprintX vprintk
+
+#ifdef __SEGGER_RTT__
+  #include "SEGGER_RTT.h"
+  #define __segger_printf(...) SEGGER_RTT_printf(0, __VA_ARGS__)
+  #define __segger_vprintf(fmt, args) SEGGER_RTT_vprintf(0, fmt, &args)
+  #define printX __segger_printf
+  #define vprintX __segger_vprintf
+#elif __ZEPHYR__
+  #include <zephyr.h>
+  #define printX printk
+  #define vprintX vprintk
 #else
-#define printX printf
-#define vprintX vprintf
+  #define printX printf
+  #define vprintX vprintf
 #endif
 
 void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...) {
