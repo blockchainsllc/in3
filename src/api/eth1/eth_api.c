@@ -350,7 +350,7 @@ static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   return res;
 }
 
-json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
+json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, block_number_t block, bool only_estimate, char* fn_sig, ...) {
   rpc_init;
   int             res = 0;
   call_request_t* req = parseSignature(fn_sig);
@@ -401,6 +401,13 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
     sb_add_chars(params, ", \"data\":");
     sb_add_bytes(params, "", &req->call_data->b, 1, false);
     sb_add_char(params, '}');
+    if (block.is_u64) {
+      params_add_number(params, block.u64);
+    } else {
+      sb_add_chars(params, ", \"");
+      sb_add_chars(params, block.str);
+      sb_add_char(params, '\"');
+    }
   } else {
     set_error(0, req->error ? req->error : "Error parsing the request-data");
     sb_free(
@@ -410,7 +417,7 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
   }
 
   if (res >= 0) {
-    rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
+    rpc_exec(only_estimate ? "eth_estimateGas" : "eth_call", json_ctx_t*, parse_call_result(req, result));
   }
   return NULL;
 }
