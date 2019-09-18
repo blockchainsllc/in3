@@ -466,7 +466,7 @@ debian_package_deploy_disco:
 
 debian_dev_package_deploy_bionic:
   extends:
-    - .debian_package_deploy_template_dev
+    - .debian_package_deploy_template_in3_dev
   variables:
     DISTRO: "bionic"
 #    VERSION: $CI_COMMIT_TAG
@@ -479,7 +479,7 @@ debian_dev_package_deploy_bionic:
 
 debian__dev_package_deploy_disco:
   extends:
-    - .debian_package_deploy_template_dev
+    - .debian_package_deploy_template_in3_dev
   variables:
     DISTRO: "disco"
 #    VERSION: $CI_COMMIT_TAG
