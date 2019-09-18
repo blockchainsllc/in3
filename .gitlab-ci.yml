@@ -394,6 +394,7 @@ pages:
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - debuild -S -sa -us -uc
     - cd ..
+    - echo $PGP_KEY_ASC
     - echo $PGP_PASSPHRASE
     - debsign -p'gpg --batch --yes --no-tty --passphrase $PGP_PASSPHRASE ' -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
     - dput ppa:devops-slock-it/in3-client in3_${VERSION}~${DISTRO}_source.changes
@@ -408,7 +409,7 @@ debian_package_deploy_bionic:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
 #  except:
 #    - branches
-
+# CHANGE VERSION BACK TO COMMIT TAG AFTER TESTING
 
 debian_package_deploy_disco:
   extends:
@@ -420,3 +421,4 @@ debian_package_deploy_disco:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
 #  except:
 #    - branches
+# CHANGE VERSION BACK TO COMMIT TAG AFTER TESTING
