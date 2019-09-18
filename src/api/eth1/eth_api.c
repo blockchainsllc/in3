@@ -17,21 +17,21 @@
 #endif
 
 // create the params as stringbuilder
-#define rpc_init sb_t* params = sb_new("[");
+#define rpc_init sb_t* params = sb_new("[")
 
 // execute the request after the params have been set.
 #define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                                      \
   errno              = 0;                                                                 \
-  in3_ctx_t*  ctx    = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
-  d_token_t*  result = get_result(ctx);                                                   \
-  RETURN_TYPE res;                                                                        \
+  in3_ctx_t*  _ctx_  = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
+  d_token_t*  result = get_result(_ctx_);                                                 \
+  RETURN_TYPE _res_;                                                                      \
   if (result)                                                                             \
-    res = (HANDLE_RESULT);                                                                \
+    _res_ = (HANDLE_RESULT);                                                              \
   else                                                                                    \
-    memset(&res, 0, sizeof(RETURN_TYPE));                                                 \
-  free_ctx(ctx);                                                                          \
+    memset(&_res_, 0, sizeof(RETURN_TYPE));                                               \
+  free_ctx(_ctx_);                                                                        \
   sb_free(params);                                                                        \
-  return res;
+  return _res_;
 
 // last error string
 static char* last_error = NULL;
@@ -258,12 +258,12 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       p += extra.len;
       b->seal_fields = (void*) p;
       p += sizeof(bytes_t) * b->seal_fields_count;
-      for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
-        bytes_t t = d_to_bytes(sf.token);
-        rlp_decode(&t, 0, &t);
-        b->seal_fields[b->seal_fields_count - sf.left] = bytes(p, t.len);
-        memcpy(p, t.data, t.len);
-        p += t.len;
+      for (d_iterator_t sfitr = d_iter(sealed); sfitr.left; d_iter_next(&sfitr)) {
+        bytes_t sf = d_to_bytes(sfitr.token);
+        rlp_decode(&sf, 0, &sf);
+        b->seal_fields[b->seal_fields_count - sfitr.left] = bytes(p, sf.len);
+        memcpy(p, sf.data, sf.len);
+        p += sf.len;
       }
 
       b->tx_data   = include_tx ? (eth_tx_t*) p : NULL;
