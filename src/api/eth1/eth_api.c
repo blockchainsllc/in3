@@ -133,6 +133,26 @@ static void params_add_blocknumber(sb_t* sb, uint64_t bn) {
   }
 }
 
+static void params_add_blk_num_t(sb_t* sb, blk_num_t bn) {
+  if (bn.is_u64) {
+    params_add_number(sb, bn.u64);
+  } else {
+    sb_add_chars(sb, ", \"");
+    switch (bn.def) {
+      case BLK_LATEST:
+        sb_add_chars(sb, "latest");
+        break;
+      case BLK_EARLIEST:
+        sb_add_chars(sb, "earliest");
+        break;
+      case BLK_PENDING:
+        sb_add_chars(sb, "pending");
+        break;
+    }
+    sb_add_char(sb, '\"');
+  }
+}
+
 /** add ther raw bytes as hex*/
 static void params_add_bytes(sb_t* sb, bytes_t data) {
   if (sb->len > 1) sb_add_char(sb, ',');
@@ -350,7 +370,7 @@ static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   return res;
 }
 
-json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, block_number_t block, bool only_estimate, char* fn_sig, ...) {
+json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, bool only_estimate, char* fn_sig, ...) {
   rpc_init;
   int             res = 0;
   call_request_t* req = parseSignature(fn_sig);
@@ -401,13 +421,7 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, block_number_t block, bo
     sb_add_chars(params, ", \"data\":");
     sb_add_bytes(params, "", &req->call_data->b, 1, false);
     sb_add_char(params, '}');
-    if (block.is_u64) {
-      params_add_number(params, block.u64);
-    } else {
-      sb_add_chars(params, ", \"");
-      sb_add_chars(params, block.str);
-      sb_add_char(params, '\"');
-    }
+    params_add_blk_num_t(params, block);
   } else {
     set_error(0, req->error ? req->error : "Error parsing the request-data");
     sb_free(
@@ -530,14 +544,8 @@ uint64_t eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash) {
   rpc_exec("eth_getBlockTransactionCountByHash", uint64_t, d_long(result));
 }
 
-uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, block_number_t block) {
+uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block) {
   rpc_init;
-  if (block.is_u64) {
-    params_add_number(params, block.u64);
-  } else {
-    sb_add_chars(params, ", \"");
-    sb_add_chars(params, block.str);
-    sb_add_char(params, '\"');
-  }
+  params_add_blk_num_t(params, block);
   rpc_exec("eth_getBlockTransactionCountByNumber", uint64_t, d_long(result));
 }
