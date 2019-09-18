@@ -380,7 +380,8 @@ pages:
     - readthedocs
 #  when: manual
   script:
-    - echo "" >> debian/changelog
+#    - echo "" >> debian/changelog
+    - pkill gpg-agent
     - echo "in3 (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
     - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
@@ -396,6 +397,7 @@ pages:
     - cd ..
     - cat $PGP_KEY_ASC
     - echo $PGP_PASSPHRASE
+    - gpg --list-secret
     - debsign -p'gpg --batch --yes --no-tty --passphrase $PGP_PASSPHRASE ' -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
     - dput ppa:devops-slock-it/in3-client in3_${VERSION}~${DISTRO}_source.changes
 
