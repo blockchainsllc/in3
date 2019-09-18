@@ -154,20 +154,20 @@ c_tests:
       - testbuild/test
       - Testing
 
-evm_tests:
-  image: docker.slock.it/build-images/cmake:gcc8
-  stage: test
-  tags:
-    - short-jobs
-  script:
-    - mkdir testbuild
-    - cd testbuild
-    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
-    - make
-    - cd ../test/testdata/evm/GeneralStateTests
-    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
-    - cd ../vmTests
-    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+#evm_tests:
+#  image: docker.slock.it/build-images/cmake:gcc8
+#  stage: test
+#  tags:
+#    - short-jobs
+#  script:
+#    - mkdir testbuild
+#    - cd testbuild
+#    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
+#    - make
+#    - cd ../test/testdata/evm/GeneralStateTests
+#    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
+#    - cd ../vmTests
+#    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -370,7 +370,7 @@ pages:
     - short-jobs
   dependencies:
     - c_tests
-    - evm_tests
+#    - evm_tests
     - java_arm
     - examples_arm
     - examples_linux
@@ -407,7 +407,7 @@ debian_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
 #    VERSION: $CI_COMMIT_TAG
-    VERSION: 0.1.22
+    VERSION: 0.1.23
 
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
@@ -419,7 +419,7 @@ debian_package_deploy_disco:
     - .debian_package_deploy_template_in3
   variables:
     DISTRO: "disco"
-    VERSION: 0.1.22
+    VERSION: 0.1.23
 #    VERSION: $CI_COMMIT_TAG
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
@@ -433,7 +433,7 @@ debian_package_deploy_disco:
     - short-jobs
   dependencies:
     - c_tests
-    - evm_tests
+#    - evm_tests
     - java_arm
     - examples_arm
     - examples_linux
@@ -461,8 +461,8 @@ debian_package_deploy_disco:
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - debuild -S -sa -us -uc
     - cd ..
-    - debsign -p"gpg --batch --yes --no-tty --passphrase ${PGP_PASSPHRASE}" -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
-    - dput ppa:devops-slock-it/in3-client in3_${VERSION}~${DISTRO}_source.changes
+    - debsign -p"gpg --batch --yes --no-tty --passphrase ${PGP_PASSPHRASE}" -S -kB4179604561E56D1 in3-dev_${VERSION}~${DISTRO}_source.changes
+    - dput ppa:devops-slock-it/in3-client in3-dev_${VERSION}~${DISTRO}_source.changes
 
 debian_dev_package_deploy_bionic:
   extends:
@@ -470,7 +470,7 @@ debian_dev_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
 #    VERSION: $CI_COMMIT_TAG
-    VERSION: 0.1.22
+    VERSION: 0.1.23
 
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
@@ -483,7 +483,7 @@ debian__dev_package_deploy_disco:
   variables:
     DISTRO: "disco"
 #    VERSION: $CI_COMMIT_TAG
-    VERSION: 0.1.22
+    VERSION: 0.1.23
 
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
