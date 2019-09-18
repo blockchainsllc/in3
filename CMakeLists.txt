@@ -53,6 +53,12 @@ ELSE ()
     ADD_DEFINITIONS(-DIN3_MATH_LITE)
 ENDIF (FAST_MATH)
 
+OPTION(SEGGER_RTT "Use the segger real time transfer terminal as the logging mechanism" OFF)
+IF (SEGGER_RTT)
+    MESSAGE(STATUS "Enable segger RTT for logging")
+    ADD_DEFINITIONS(-DSEGGER_RTT)
+ENDIF (SEGGER_RTT)
+
 # substiture __FILENAME__ as it is used in DEBUG
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
@@ -74,17 +80,17 @@ add_subdirectory(docs)
 
 
 # create the library
-if (IN3_LIB) 
-    set(IN3_LIBS 
-        $<TARGET_OBJECTS:core_o> 
-        $<TARGET_OBJECTS:crypto_o> 
-        $<TARGET_OBJECTS:tommath_o> 
-        $<TARGET_OBJECTS:evm_o> 
-        $<TARGET_OBJECTS:eth_full_o> 
-        $<TARGET_OBJECTS:eth_api_o> 
-        $<TARGET_OBJECTS:eth_basic_o> 
+if (IN3_LIB)
+    set(IN3_LIBS
+        $<TARGET_OBJECTS:core_o>
+        $<TARGET_OBJECTS:crypto_o>
+        $<TARGET_OBJECTS:tommath_o>
+        $<TARGET_OBJECTS:evm_o>
+        $<TARGET_OBJECTS:eth_full_o>
+        $<TARGET_OBJECTS:eth_api_o>
+        $<TARGET_OBJECTS:eth_basic_o>
         $<TARGET_OBJECTS:eth_nano_o>
-        $<TARGET_OBJECTS:usn_api_o> 
+        $<TARGET_OBJECTS:usn_api_o>
     )
     # if we use curl, we include curl transport as well
     if (USE_CURL)
@@ -92,7 +98,7 @@ if (IN3_LIB)
     endif()
 
     # create the libraries
-    add_library(in3_bundle STATIC ${IN3_LIBS} ) 
+    add_library(in3_bundle STATIC ${IN3_LIBS} )
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")

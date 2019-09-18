@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef __SEGGER_RTT__
+#ifdef SEGGER_RTT
   #include "SEGGER_RTT.h"
   #define __segger_printf(...) SEGGER_RTT_printf(0, __VA_ARGS__)
   #define __segger_vprintf(fmt, args) SEGGER_RTT_vprintf(0, fmt, &args)
