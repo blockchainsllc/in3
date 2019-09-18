@@ -1,10 +1,12 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: in3
-Source: <url://example.com>
+Source: <https://github.com/slockit/in3-c/blob/develop/LICENSE>
 
 Files: debian/*
 Copyright: 2019 Devops <devops@slock.it>
 License: AGPL
+
+Please refer to: https://github.com/slockit/in3-c/blob/develop/LICENSE for an up to date license
 
 All rights reserved to Slock.it GmbH.
 You may use this code for testing only.

@@ -402,11 +402,11 @@ debian_package_deploy_bionic:
     - .debian_package_deploy_template
   variables:
     DISTRO: "bionic"
-    VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
-  except:
-    - branches
+    VERSION: 0.1.20
+#  only:
+#    - /^v[0-9]+.[0-9]+.[0-9]+$/
+#  except:
+#    - branches
 
 
 debian_package_deploy_disco:
@@ -415,7 +415,7 @@ debian_package_deploy_disco:
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
-  except:
-    - branches
+#  only:
+#    - /^v[0-9]+.[0-9]+.[0-9]+$/
+#  except:
+#    - branches
