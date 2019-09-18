@@ -381,7 +381,6 @@ pages:
 #  when: manual
   script:
 #    - echo "" >> debian/changelog
-    - pkill gpg-agent
     - echo "in3 (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
     - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
