@@ -527,6 +527,22 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   }
 }
 
+in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
+  if (in3->filters == NULL)
+    return IN3_EFIND;
+  if (id == 0 || id > in3->filters->count)
+    return IN3_EINVAL;
+
+  in3_filter_t* f = in3->filters->array[id - 1];
+  switch (f->type) {
+    case FILTER_EVENT:
+      *logs = eth_getLogs(in3, f->options);
+      return 0;
+    default:
+      return IN3_ENOTSUP;
+  }
+}
+
 void free_log(eth_log_t* log) {
   _free(log->data.data);
   _free(log->topics);
