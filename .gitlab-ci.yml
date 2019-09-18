@@ -448,7 +448,7 @@ debian_package_deploy_disco:
     - mv debian/rules-dev debian/rules
     - rm -rf debian/*-in3
     - echo "" >> debian/changelog
-    - echo "in3 (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
+    - echo "in3-dev (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
     - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
     - echo "" >> debian/changelog
