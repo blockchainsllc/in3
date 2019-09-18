@@ -397,7 +397,7 @@ pages:
     - cat $PGP_KEY_ASC
     - echo $PGP_PASSPHRASE
     - gpg --list-secret
-    - debsign -p'gpg --batch --yes --no-tty --passphrase $PGP_PASSPHRASE ' -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
+    - debsign -p'gpg --batch --yes --no-tty --passphrase Blockchain123' -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
     - dput ppa:devops-slock-it/in3-client in3_${VERSION}~${DISTRO}_source.changes
 
 debian_package_deploy_bionic:
