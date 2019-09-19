@@ -94,7 +94,7 @@ static void in3_client_init(in3_t* c) {
   c->proof              = PROOF_STANDARD;
   c->replaceLatestBlock = 0;
   c->requestCount       = 1;
-  c->chainsCount        = 8;
+  c->chainsCount        = 5;
   c->chains             = _malloc(sizeof(in3_chain_t) * c->chainsCount);
   c->filters            = NULL;
 
@@ -103,52 +103,37 @@ static void in3_client_init(in3_t* c) {
   initNode(c->chains, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/mainnet/nd-3");
   initNode(c->chains, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/mainnet/nd-5");
 
-  // tobalaba
-  initChain(c->chains + 1, 0x044d, "845E484b505443814B992Bf0319A5e8F5e407879", NULL, 1, 2, CHAIN_ETH, TOBALABA_SPEC);
-  initNode(c->chains + 1, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/tobalaba/nd-3");
-  initNode(c->chains + 1, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/tobalaba/nd-1");
-
-  // evan
-  initChain(c->chains + 2, 0x04b1, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 2, 0, "eaC4B82273e828878fD765D993800891bA2E3475", "http://52.47.61.24:8500");
-  initNode(c->chains + 2, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33A", "https://in3.slock.it/evan/nd-5");
-
 #ifdef IN3_STAGING
   // kovan
-  initChain(c->chains + 3, 0x2a, "a412D519199C3c0ebaea3A9f73f1f89A935F9F14", "e0d15dd269e198e35a1bc1d5ef910ab66cbf81e1617ac1d640428863e10db562", 2, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 3, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/kovan/nd-1");
-  initNode(c->chains + 3, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
+  initChain(c->chains + 1, 0x2a, "abbcd35cbb6a9c0b3d52dc66b86f609d7a24715d", "cc4cac7b71e94afe7b672123bb502500258cbdaf510ed4251633d149820c7832", 2, 2, CHAIN_ETH, NULL);
+  initNode(c->chains + 1, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/kovan/nd-1");
+  initNode(c->chains + 1, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
 #else
   // kovan
-  initChain(c->chains + 3, 0x2a, "27a37a1210df14f7e058393d026e2fb53b7cf8c1", NULL, 1, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 3, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/kovan/nd-3");
-  initNode(c->chains + 3, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/kovan/nd-5");
+  initChain(c->chains + 1, 0x2a, "27a37a1210df14f7e058393d026e2fb53b7cf8c1", NULL, 1, 2, CHAIN_ETH, NULL);
+  initNode(c->chains + 1, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/kovan/nd-3");
+  initNode(c->chains + 1, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/kovan/nd-5");
 #endif
 
   // ipfs
-  initChain(c->chains + 4, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS, NULL);
-  initNode(c->chains + 4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/ipfs/nd-1");
-  initNode(c->chains + 4, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/ipfs/nd-5");
-
-  // volta
-  initChain(c->chains + 5, 0x12046, "8d8Fd38311d57163524478404C75008fBEaACccB", NULL, 1, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 5, 0, "784bfa9eb182C3a02DbeB5285e3dBa92d717E07a", "https://in3.slock.it/volta/nd-1");
-  initNode(c->chains + 5, 1, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/volta/nd-3");
+  initChain(c->chains + 2, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS, NULL);
+  initNode(c->chains + 2, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/ipfs/nd-1");
+  initNode(c->chains + 2, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/ipfs/nd-5");
 
   // local
-  initChain(c->chains + 6, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
-  initNode(c->chains + 6, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
+  initChain(c->chains + 3, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
+  initNode(c->chains + 3, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
 
 #ifdef IN3_STAGING
   // goerli
-  initChain(c->chains + 7, 0x05, "a412D519199C3c0ebaea3A9f73f1f89A935F9F14", "2889c51c601786ec9a803859379816fbabcfc843b36a3bfca27af54257ab70d2", 2, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 7, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/goerli/nd-1");
-  initNode(c->chains + 7, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/goerli/nd-2");
+  initChain(c->chains + 4, 0x05, "a6b81e503109aaf3566ba064290f2b63bdcfa4c0", "db336668194e76834f9bf3237b8b39de6012a84165ab28db361d5acb7311e10e", 2, 2, CHAIN_ETH, NULL);
+  initNode(c->chains + 4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/goerli/nd-1");
+  initNode(c->chains + 4, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/goerli/nd-2");
 #else
   // goerli
-  initChain(c->chains + 7, 0x05, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 7, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/goerli/nd-3");
-  initNode(c->chains + 7, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/goerli/nd-1");
+  initChain(c->chains + 4, 0x05, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
+  initNode(c->chains + 4, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/goerli/nd-3");
+  initNode(c->chains + 4, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/goerli/nd-1");
 #endif
 }
 

@@ -205,12 +205,9 @@ bytes_t* get_std_in() {
 uint64_t getChainId(char* name) {
   if (strcmp(name, "mainnet") == 0) return 0x01L;
   if (strcmp(name, "kovan") == 0) return 0x2aL;
-  if (strcmp(name, "tobalaba") == 0) return 0x44dL;
   if (strcmp(name, "goerli") == 0) return 0x5L;
-  if (strcmp(name, "evan") == 0) return 0x4b1L;
   if (strcmp(name, "ipfs") == 0) return 0x7d0;
   if (strcmp(name, "local") == 0) return 0xFFFFL;
-  if (strcmp(name, "volta") == 0) return 0x12046;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
     return bytes_to_long(d, hex2byte_arr(name + 2, -1, d, 32));
