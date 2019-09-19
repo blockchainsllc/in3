@@ -370,16 +370,14 @@ static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   return res;
 }
 
-json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, bool only_estimate, char* fn_sig, ...) {
+static json_ctx_t* eth_call_fn_intern(in3_t* in3, address_t contract, blk_num_t block, bool only_estimate, char* fn_sig, va_list ap) {
   rpc_init;
   int             res = 0;
   call_request_t* req = parseSignature(fn_sig);
   if (req->in_data->type == A_TUPLE) {
     json_ctx_t* in_data = json_create();
     d_token_t*  args    = json_create_array(in_data);
-    va_list     ap;
-    va_start(ap, fn_sig);
-    var_t* p = req->in_data + 1;
+    var_t*      p       = req->in_data + 1;
     for (int i = 0; i < req->in_data->type_len; i++, p = t_next(p)) {
       switch (p->type) {
         case A_BOOL:
@@ -409,7 +407,6 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, bool on
           res        = -1;
       }
     }
-    va_end(ap);
 
     if ((res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
     free_json(in_data);
@@ -564,4 +561,20 @@ uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block) {
   rpc_init;
   params_add_blk_num_t(params, block);
   rpc_exec("eth_getBlockTransactionCountByNumber", uint64_t, d_long(result));
+}
+
+json_ctx_t* eth_call_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn_sig, ...) {
+  va_list ap;
+  va_start(ap, fn_sig);
+  eth_call_fn_intern(in3, contract, block, false, fn_sig, ap);
+  va_end(ap);
+  return NULL;
+}
+
+json_ctx_t* eth_estimate_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn_sig, ...) {
+  va_list ap;
+  va_start(ap, fn_sig);
+  eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
+  va_end(ap);
+  return NULL;
 }

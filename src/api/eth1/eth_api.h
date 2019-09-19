@@ -15,8 +15,6 @@
 #define BLKNUM_LATEST() ((blk_num_t){.def = BLK_LATEST, .is_u64 = false})
 #define BLKNUM_EARLIEST() ((blk_num_t){.def = BLK_EARLIEST, .is_u64 = false})
 #define BLKNUM_PENDING() ((blk_num_t){.def = BLK_PENDING, .is_u64 = false})
-#define eth_call(in3, contract, block, ...) eth_call_fn(in3, contract, block, 0, __VA_ARGS__)
-#define eth_estimateGas(in3, contract, block, ...) eth_call_fn(in3, contract, block, 1, __VA_ARGS__)
 
 /** 
  * a 32 byte long integer used to store ethereum-numbers. 
@@ -116,7 +114,8 @@ in3_ret_t    eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs);        
 uint64_t     eth_chainId(in3_t* in3);
 uint64_t     eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash);
 uint64_t     eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block);
-json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, bool only_estimate, char* fn_sig, ...); /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...);     /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+json_ctx_t*  eth_estimate_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...); /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
