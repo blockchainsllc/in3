@@ -582,3 +582,41 @@ uint64_t eth_estimate_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* f
   va_end(ap);
   return d_long(response);
 }
+
+static eth_tx_t* parse_tx(d_token_t* result) {
+  if (result) {
+    if (d_type(result) == T_NULL)
+      set_error(EAGAIN, "Transaction does not exist");
+    else {
+      uint32_t  s  = get_tx_size(result);
+      eth_tx_t* tx = malloc(s);
+      if (!tx) {
+        set_error(ENOMEM, "Not enough memory");
+        return NULL;
+      }
+      write_tx(result, tx);
+      return tx;
+    }
+  }
+  return NULL;
+}
+
+eth_tx_t* eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(tx_hash, 32));
+  rpc_exec("eth_getTransactionByHash", eth_tx_t*, parse_tx(result));
+}
+
+eth_tx_t* eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index) {
+  rpc_init;
+  params_add_bytes(params, bytes(block_hash, 32));
+  params_add_number(params, index);
+  rpc_exec("eth_getTransactionByBlockHashAndIndex", eth_tx_t*, parse_tx(result));
+}
+
+eth_tx_t* eth_getTransactionByBlockNumberAndIndex(in3_t* in3, blk_num_t block, size_t index) {
+  rpc_init;
+  params_add_blk_num_t(params, block);
+  params_add_number(params, index);
+  rpc_exec("eth_getTransactionByBlockNumberAndIndex", eth_tx_t*, parse_tx(result));
+}

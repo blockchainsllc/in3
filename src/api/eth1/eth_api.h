@@ -116,6 +116,7 @@ uint64_t     eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash);
 uint64_t     eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block);
 json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...);     /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 uint64_t     eth_estimate_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...); /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+eth_tx_t*    eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash);
 
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
