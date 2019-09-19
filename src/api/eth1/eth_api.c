@@ -370,7 +370,7 @@ static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   return res;
 }
 
-static json_ctx_t* eth_call_fn_intern(in3_t* in3, address_t contract, blk_num_t block, bool only_estimate, char* fn_sig, va_list ap) {
+static void* eth_call_fn_intern(in3_t* in3, address_t contract, blk_num_t block, bool only_estimate, char* fn_sig, va_list ap) {
   rpc_init;
   int             res = 0;
   call_request_t* req = parseSignature(fn_sig);
@@ -428,7 +428,11 @@ static json_ctx_t* eth_call_fn_intern(in3_t* in3, address_t contract, blk_num_t 
   }
 
   if (res >= 0) {
-    rpc_exec(only_estimate ? "eth_estimateGas" : "eth_call", json_ctx_t*, parse_call_result(req, result));
+    if (only_estimate) {
+      rpc_exec("eth_estimateGas", d_token_t*, result);
+    } else {
+      rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
+    }
   }
   return NULL;
 }
@@ -566,15 +570,15 @@ uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block) {
 json_ctx_t* eth_call_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn_sig, ...) {
   va_list ap;
   va_start(ap, fn_sig);
-  eth_call_fn_intern(in3, contract, block, false, fn_sig, ap);
+  json_ctx_t* response = eth_call_fn_intern(in3, contract, block, false, fn_sig, ap);
   va_end(ap);
-  return NULL;
+  return response;
 }
 
-json_ctx_t* eth_estimate_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn_sig, ...) {
+uint64_t eth_estimate_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn_sig, ...) {
   va_list ap;
   va_start(ap, fn_sig);
-  eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
+  d_token_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
   va_end(ap);
-  return NULL;
+  return d_long(response);
 }
