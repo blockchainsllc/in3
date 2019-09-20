@@ -567,7 +567,7 @@ uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block) {
   rpc_exec("eth_getBlockTransactionCountByNumber", uint64_t, d_long(result));
 }
 
-json_ctx_t* eth_call_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn_sig, ...) {
+json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...) {
   va_list ap;
   va_start(ap, fn_sig);
   json_ctx_t* response = eth_call_fn_intern(in3, contract, block, false, fn_sig, ap);
@@ -575,7 +575,7 @@ json_ctx_t* eth_call_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn
   return response;
 }
 
-uint64_t eth_estimate_fn(in3_t* in3, uint8_t* contract, blk_num_t block, char* fn_sig, ...) {
+uint64_t eth_estimate_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...) {
   va_list ap;
   va_start(ap, fn_sig);
   d_token_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
