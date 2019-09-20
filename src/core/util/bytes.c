@@ -61,11 +61,11 @@ void b_free(bytes_t* a) {
 }
 
 bytes_t* b_dup(bytes_t* a) {
+  if (a == NULL) return NULL;
   bytes_t* out = _calloc(1, sizeof(bytes_t));
   out->data    = _calloc(1, a->len);
   out->data    = memcpy(out->data, a->data, a->len);
   out->len     = a->len;
-
   return out;
 }
 bytes_t cloned_bytes(bytes_t data) {
