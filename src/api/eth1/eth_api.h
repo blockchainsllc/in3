@@ -25,6 +25,11 @@ typedef struct {
   uint8_t data[32];
 } uint256_t;
 
+DEFINE_OPTIONAL_TYPE(uint64_t);
+DEFINE_OPTIONAL_TYPE(bytes_t);
+DEFINE_OPTIONAL_TYPE(address_t);
+DEFINE_OPTIONAL_TYPE(uint256_t);
+
 /** A transaction */
 typedef struct eth_tx {
   bytes32_t hash;              /**< the blockhash */
