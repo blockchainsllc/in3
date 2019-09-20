@@ -103,15 +103,15 @@ typedef enum {
   BLK_LATEST,
   BLK_EARLIEST,
   BLK_PENDING
-} blk_num_def_t;
+} eth_blknum_def_t;
 
 typedef struct {
   union {
-    uint64_t      u64;
-    blk_num_def_t def;
+    uint64_t         u64;
+    eth_blknum_def_t def;
   };
   bool is_u64;
-} blk_num_t;
+} eth_blknum_t;
 
 uint256_t    eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block); /**< returns the storage value of a given address.*/
 bytes_t      eth_getCode(in3_t* in3, address_t account, uint64_t block);                     /**< returns the code of the account of given address. (Make sure you free the data-point of the result after use.) */
@@ -130,16 +130,16 @@ in3_ret_t    eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashe
 in3_ret_t    eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs);                              /**< sets the logs (for event filter) or blockhashes (for block filter) that match a filter; returns <0 on error, otherwise no. of block hashes matched (for block filter) or 0 (for log filer) */
 uint64_t     eth_chainId(in3_t* in3);
 uint64_t     eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash);
-uint64_t     eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block);
-json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...);     /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
-uint64_t     eth_estimate_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...); /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+uint64_t     eth_getBlockTransactionCountByNumber(in3_t* in3, eth_blknum_t block);
+json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);     /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+uint64_t     eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...); /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 eth_tx_t*    eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash);
 eth_tx_t*    eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index);
-eth_tx_t*    eth_getTransactionByBlockNumberAndIndex(in3_t* in3, blk_num_t block, size_t index);
-uint64_t     eth_getTransactionCount(in3_t* in3, address_t address, blk_num_t block);
+eth_tx_t*    eth_getTransactionByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index);
+uint64_t     eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t block);
 eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index);
 uint64_t     eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash);
-uint64_t     eth_getUncleCountByBlockNumber(in3_t* in3, blk_num_t block);
+uint64_t     eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block);
 bytes_t*     eth_sendTransaction(in3_t* in3, address_t from, OPTIONAL(address_t) to, OPTIONAL(uint64_t) gas, OPTIONAL(uint64_t) gas_price, OPTIONAL(uint256_t) value, OPTIONAL(bytes_t) data, OPTIONAL(uint64_t) nonce);
 bytes_t*     eth_sendRawTransaction(in3_t* in3, bytes_t data);
 
