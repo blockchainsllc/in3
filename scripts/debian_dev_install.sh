@@ -3,6 +3,7 @@
 
 set -ex # tells script to exit in case of a non-zero return value
 mkdir -p "$DESTDIR/usr/bin" # create directory in case it doesn't exist, should always exist though
-mkdir -p "$DESTDIR/usr/lib/in3" # create directory in case it doesn't exist, should always exist though
-cp build/bin/in3 "$DESTDIR/usr/bin/in3" # move binary file to location where it can be used
-cp -r build/lib/*.a "$DESTDIR/usr/lib/in3/" # moving lib files
+mkdir -p "$DESTDIR/usr/lib/in3-dev" # create directory in case it doesn't exist, should always exist though
+mv build/bin/in3 build/bin/in3-dev
+cp build/bin/in3-dev "$DESTDIR/usr/bin/in3-dev" # move binary file to location where it can be used
+cp -r build/lib/*.a "$DESTDIR/usr/lib/in3-dev/" # moving lib files

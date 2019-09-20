@@ -407,7 +407,7 @@ debian_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
 #    VERSION: $CI_COMMIT_TAG
-    VERSION: 0.1.32
+    VERSION: 0.1.33
 
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
@@ -419,7 +419,7 @@ debian_package_deploy_disco:
     - .debian_package_deploy_template_in3
   variables:
     DISTRO: "disco"
-    VERSION: 0.1.32
+    VERSION: 0.1.33
 #    VERSION: $CI_COMMIT_TAG
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
@@ -470,7 +470,7 @@ debian_dev_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
 #    VERSION: $CI_COMMIT_TAG
-    VERSION: 0.1.32
+    VERSION: 0.1.33
 
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
@@ -483,7 +483,7 @@ debian__dev_package_deploy_disco:
   variables:
     DISTRO: "disco"
 #    VERSION: $CI_COMMIT_TAG
-    VERSION: 0.1.32
+    VERSION: 0.1.33
 
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
