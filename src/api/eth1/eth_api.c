@@ -620,3 +620,59 @@ eth_tx_t* eth_getTransactionByBlockNumberAndIndex(in3_t* in3, blk_num_t block, s
   params_add_number(params, index);
   rpc_exec("eth_getTransactionByBlockNumberAndIndex", eth_tx_t*, parse_tx(result));
 }
+
+uint64_t eth_getTransactionCount(in3_t* in3, address_t address, blk_num_t block) {
+  rpc_init;
+  params_add_bytes(params, bytes(address, 20));
+  params_add_blk_num_t(params, block);
+  rpc_exec("eth_getTransactionCount", uint64_t, d_long(result));
+}
+
+static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
+  if (result) {
+    if (d_type(result) == T_NULL)
+      set_error(EAGAIN, "Error getting the Receipt!");
+    else {
+      eth_tx_receipt_t* txr = _malloc(sizeof(*txr));
+      if (!txr) {
+        set_error(ENOMEM, "Not enough memory");
+        return NULL;
+      }
+      txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);
+      txr->block_number        = d_get_longk(result, K_BLOCK_NUMBER);
+      txr->cumulative_gas_used = d_get_longk(result, K_CUMULATIVE_GAS_USED);
+      txr->gas_used            = d_get_longk(result, K_GAS_USED);
+      txr->contract_address    = b_dup(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
+      txr->logs                = parse_logs(d_get(result, K_LOGS));
+      copy_fixed(txr->transaction_hash, 32, d_to_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));
+      copy_fixed(txr->block_hash, 32, d_to_bytes(d_getl(result, K_BLOCK_HASH, 32)));
+      return txr;
+    }
+  }
+  return NULL;
+}
+
+eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(tx_hash, 32));
+  rpc_exec("eth_getTransactionReceipt", eth_tx_receipt_t*, parse_tx_receipt(result));
+}
+
+eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index) {
+  rpc_init;
+  params_add_bytes(params, bytes(hash, 32));
+  params_add_number(params, index);
+  rpc_exec("eth_getUncleByBlockNumberAndIndex", eth_block_t*, eth_getBlock(result, true));
+}
+
+uint64_t eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(hash, 32));
+  rpc_exec("eth_getUncleCountByBlockHash", uint64_t, d_long(result));
+}
+
+uint64_t eth_getUncleCountByBlockNumber(in3_t* in3, blk_num_t block) {
+  rpc_init;
+  params_add_blk_num_t(params, block);
+  rpc_exec("eth_getUncleCountByBlockNumber", uint64_t, d_long(result));
+}

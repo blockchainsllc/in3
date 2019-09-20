@@ -81,6 +81,18 @@ typedef struct eth_log {
   struct eth_log* next;              /**< pointer to next log in list or NULL */
 } eth_log_t;
 
+/** A transaction receipt */
+typedef struct eth_tx_receipt {
+  bytes32_t  transaction_hash;    /**< the transaction hash */
+  int        transaction_index;   /**< the transaction index */
+  bytes32_t  block_hash;          /**< hash of ther containnig block */
+  uint64_t   block_number;        /**< number of the containing block */
+  uint64_t   cumulative_gas_used; /**< total amount of gas used by block */
+  uint64_t   gas_used;            /**< amount of gas used by this specific transaction */
+  bytes_t*   contract_address;    /**< contract address created (if the transaction was a contract creation) or NULL */
+  eth_log_t* logs;                /**< array of log objects, which this transaction generated */
+} eth_tx_receipt_t;
+
 /** Abstract type for holding a block number */
 typedef enum {
   BLK_LATEST,
@@ -117,6 +129,14 @@ uint64_t     eth_getBlockTransactionCountByNumber(in3_t* in3, blk_num_t block);
 json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...);     /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 uint64_t     eth_estimate_fn(in3_t* in3, address_t contract, blk_num_t block, char* fn_sig, ...); /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 eth_tx_t*    eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash);
+eth_tx_t*    eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index);
+eth_tx_t*    eth_getTransactionByBlockNumberAndIndex(in3_t* in3, blk_num_t block, size_t index);
+uint64_t     eth_getTransactionCount(in3_t* in3, address_t address, blk_num_t block);
+eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index);
+uint64_t     eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash);
+uint64_t     eth_getUncleCountByBlockNumber(in3_t* in3, blk_num_t block);
+
+eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);
 
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
