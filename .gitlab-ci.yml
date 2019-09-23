@@ -373,7 +373,7 @@ release_x86:
     paths:
       - release
 
-release_x86:
+release_arm7:
   stage: deploy
   tags:
     - short-jobs
@@ -395,7 +395,6 @@ release_x86:
   artifacts:
     paths:
       - release
-
 
 release_win:
   stage: deploy
