@@ -24,7 +24,7 @@
  ## Installation and Usage
  |         | package manager           | Link  | Use case |
  | ------------- |:-------------:| -----:| ----:|
- | in3-client(C)      |  Ubuntu Launchpad     |  https://bit.ly/2moHFl3 | It can be nicely integrated on IoT devices or any micro controllers |
+ | in3-client(C)      |  Ubuntu Launchpad     |  https://bit.ly/2m4y17b | It can be nicely integrated on IoT devices or any micro controllers |
  | | Docker Hub | https://hub.docker.com/r/slockit/in3  | Quick and easy way to get in3 client running
  | | Brew      |    TO ADD LATER | Easy to install on MacOS or linux/windows subsystems
  | | Release page | https://github.com/slockit/in3-c/releases | For directly playing with the binaries/deb/images
@@ -37,12 +37,12 @@
  
  #### Installation instructions for ```in3```:
  1. Add the slock.it ppa to your system with
- ```sudo add-apt-repository ppa:devops-slock-it/in3-client```
+ ```sudo add-apt-repository ppa:devops-slock-it/in3```
  2. Update the local sources ```sudo apt-get update```
  3. Install in3 with ```sudo apt-get install in3```
  #### Installation instructions for ```in3-dev```:
  1. Add the slock.it ppa to your system with
- ```sudo add-apt-repository ppa:devops-slock-it/in3-client```
+ ```sudo add-apt-repository ppa:devops-slock-it/in3```
  2. Update the local sources ```sudo apt-get update```
  3. Install in3 with ```sudo apt-get install in3-dev```
  
