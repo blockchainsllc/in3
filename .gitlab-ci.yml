@@ -305,38 +305,117 @@ readthedocs:
     paths:
       - doc/build
 
-release:
+release_mac:
   stage: deploy
   tags:
     - short-jobs
   dependencies:
     - mac_os
-    - readthedocs
-    - win_mingw
     - gcc8
-    - gcc8-x86
+    - readthedocs
     - wasm
-    - arm7
   script:
     - mkdir release
     - cd release
-    - mkdir bin
-    - mkdir lib
     - mkdir doc
-    - cp -r ../mac_build/bin bin/osx
-    - cp -r ../mac_build/lib lib/osx
-    - cp -r ../arm7_build/bin bin/arm7
-    - cp -r ../arm7_build/lib lib/arm7
-    - cp -r ../win_build/bin bin/win64
-    - cp -r ../win_build/lib lib/win64
-    - mv bin/win64/in3 bin/win64/in3.exe
-    - mv bin/win64/rlp bin/win64/rlp.exe
-    - mv bin/win64/json bin/win64/json.exe
-    - mv lib/win64/libin3.so lib/win64/in3.dll
-    - cp -r ../x64_build/bin bin/linux_x64
-    - cp -r ../x64_build/lib lib/linux_x64
-    - cp -r ../x86_build/bin bin/linux_x86
-    - cp -r ../x86_build/lib lib/linux_x86
+    - cp -r ../mac_build/bin .
+    - cp -r ../mac_build/lib .
+    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
+    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../wasm_build/module js
+  artifacts:
+    paths:
+      - release
+
+release_x64:
+  stage: deploy
+  tags:
+    - short-jobs
+  dependencies:
+    - gcc8
+    - readthedocs
+    - wasm
+  script:
+    - mkdir release
+    - cd release
+    - mkdir doc
+    - cp -r ../x64_build/bin .
+    - cp -r ../x64_build/lib .
+    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
+    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../wasm_build/module js
+  artifacts:
+    paths:
+      - release
+
+release_x86:
+  stage: deploy
+  tags:
+    - short-jobs
+  dependencies:
+    - gcc8
+    - gcc8-x86
+    - readthedocs
+    - wasm
+  script:
+    - mkdir release
+    - cd release
+    - mkdir doc
+    - cp -r ../x86_build/bin .
+    - cp -r ../x86_build/lib .
+    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
+    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../wasm_build/module js
+  artifacts:
+    paths:
+      - release
+
+release_x86:
+  stage: deploy
+  tags:
+    - short-jobs
+  dependencies:
+    - gcc8
+    - arm7
+    - readthedocs
+    - wasm
+  script:
+    - mkdir release
+    - cd release
+    - mkdir doc
+    - cp -r ../arm7_build/bin .
+    - cp -r ../arm7_build/lib .
+    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
+    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../wasm_build/module js
+  artifacts:
+    paths:
+      - release
+
+
+release_win:
+  stage: deploy
+  tags:
+    - short-jobs
+  dependencies:
+    - gcc8
+    - win_mingw
+    - readthedocs
+    - wasm
+  script:
+    - mkdir release
+    - cd release
+    - mkdir doc
+    - cp -r ../win_build/bin .
+    - cp -r ../win_build/lib .
+    - mv bin/in3 bin/in3.exe
+    - mv bin/rlp bin/rlp.exe
+    - mv bin/json bin/json.exe
+    - mv lib/libin3.so lib/in3.dll
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
     - cp -r ../doc/build doc/readthedocs
