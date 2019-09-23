@@ -85,7 +85,7 @@ mac_os:
     - make
     - make ptest
     - rm -rf *
-    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
     - make
 
   artifacts:
