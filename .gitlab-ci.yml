@@ -259,6 +259,7 @@ dockerhub-deploy:
     - branches
   tags:
     - short-jobs
+  when: manual
   services:
     - docker:dind
   image: jonaskello/docker-and-compose:latest
@@ -267,7 +268,7 @@ dockerhub-deploy:
   before_script:
     - docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD} ${DOCKERHUB_REGISTRY}
   script:
-    - docker build --build-arg NPM_REGISTRY_TOKEN=${NPM_REGISTRY_TOKEN} --build-arg CI_COMMIT_SHA=${CI_COMMIT_SHA} -t $COMMIT_IMAGE_TAG .
+    - docker build -t $COMMIT_IMAGE_TAG .
     - docker push $IMAGE_TAG
 
 wasm-slockit-npm:
