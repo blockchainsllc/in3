@@ -169,7 +169,7 @@ static void params_add_bool(sb_t* sb, bool val) {
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   bytes_t b             = d_to_bytes(d_get(t, K_INPUT));
   tx->signature[64]     = d_get_intk(t, K_V);
-  tx->block_number      = d_get_longk(t, K_NUMBER);
+  tx->block_number      = d_get_longk(t, K_BLOCK_NUMBER);
   tx->gas               = d_get_longk(t, K_GAS);
   tx->gas_price         = d_get_longk(t, K_GAS_PRICE);
   tx->nonce             = d_get_longk(t, K_NONCE);
