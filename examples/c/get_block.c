@@ -6,7 +6,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-int main(int argc, char* argv[]) {
+static void get_block_rpc(in3_t* in3);
+static void get_block_api(in3_t* in3);
+
+int main() {
 
   // register a chain-verifier for basic Ethereum-Support, which is enough to verify blocks
   // this needs to be called only once
@@ -19,6 +22,39 @@ int main(int argc, char* argv[]) {
   // create new incubed client
   in3_t* in3 = in3_new();
 
+  // get block using raw RPC call
+  get_block_rpc(in3);
+
+  // get block using API
+  get_block_api(in3);
+
+  // cleanup client after usage
+  in3_free(in3);
+}
+
+void get_block_rpc(in3_t* in3) {
+  // prepare 2 pointers for the result.
+  char *result, *error;
+
+  // send raw rpc-request, which is then verified
+  in3_ret_t res = in3_client_rpc(
+      in3,                    //  the configured client
+      "eth_getBlockByNumber", // the rpc-method you want to call.
+      "[\"latest\",true]",    // the arguments as json-string
+      &result,                // the reference to a pointer whill hold the result
+      &error);                // the pointer which may hold a error message
+
+  // check and print the result or error
+  if (res == IN3_OK) {
+    printf("Latest block : \n%s\n", result);
+    free(result);
+  } else {
+    printf("Error verifing the Latest block : \n%s\n", error);
+    free(error);
+  }
+}
+
+void get_block_api(in3_t* in3) {
   // the b lock we want to get
   uint64_t block_number = 8432424;
 
@@ -32,7 +68,4 @@ int main(int argc, char* argv[]) {
     printf("Number of transactions in Block #%llu: %d\n", block->number, block->tx_count);
     free(block);
   }
-
-  // cleanup client after usage
-  in3_free(in3);
 }
