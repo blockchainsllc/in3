@@ -1,3 +1,38 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ *
+ * Copyright (C) 2019 slock.it GmbH, Blockchains LLC
+ * Authors Simon Jentzsch<simon@slock.it>
+ *
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *  
+ *******************************************************************************/
+
 #include "../util/data.h"
 #include "../util/log.h"
 #include "../util/mem.h"
@@ -105,7 +140,7 @@ static void in3_client_init(in3_t* c) {
 
 #ifdef IN3_STAGING
   // kovan
-  initChain(c->chains + 1, 0x2a, "abbcd35cbb6a9c0b3d52dc66b86f609d7a24715d", "cc4cac7b71e94afe7b672123bb502500258cbdaf510ed4251633d149820c7832", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 1, 0x2a, "0604014f2a5fdfafce3f2ec10c77c31d8e15ce6f", "d440f01322c8529892c204d3705ae871c514bafbb2f35907832a07322e0dc868", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 1, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/kovan/nd-1");
   initNode(c->chains + 1, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
 #else
@@ -126,7 +161,7 @@ static void in3_client_init(in3_t* c) {
 
 #ifdef IN3_STAGING
   // goerli
-  initChain(c->chains + 4, 0x05, "a6b81e503109aaf3566ba064290f2b63bdcfa4c0", "db336668194e76834f9bf3237b8b39de6012a84165ab28db361d5acb7311e10e", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 4, 0x05, "d7a42d93eab96fabb9a481ea36fa2f72df8741cb", "19d65866bf52970ec1679c0d70d9ffd75358f78db8235e38063b1b08e74a055f", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/goerli/nd-1");
   initNode(c->chains + 4, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/goerli/nd-2");
 #else

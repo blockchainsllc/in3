@@ -1,3 +1,38 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ *
+ * Copyright (C) 2019 slock.it GmbH, Blockchains LLC
+ * Authors Simon Jentzsch<simon@slock.it>
+ *
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *  
+ *******************************************************************************/
+
 // @PUBLIC_HEADER
 /** @file
  * Ethereum chain specification
@@ -69,7 +104,7 @@ typedef struct chainspec_ {
 chainspec_t*            chainspec_create_from_json(d_token_t* data);
 eip_t                   chainspec_get_eip(chainspec_t* spec, uint64_t block_number);
 consensus_transition_t* chainspec_get_consensus(chainspec_t* spec, uint64_t block_number);
-int                     chainspec_to_bin(chainspec_t* spec, bytes_builder_t* bb);
+in3_ret_t               chainspec_to_bin(chainspec_t* spec, bytes_builder_t* bb);
 chainspec_t*            chainspec_from_bin(void* raw);
 chainspec_t*            chainspec_get(uint64_t chain_id);
 void                    chainspec_put(uint64_t chain_id, chainspec_t* spec);
