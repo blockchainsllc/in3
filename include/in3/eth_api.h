@@ -11,6 +11,11 @@
 #include "client.h"
 #include <stdarg.h>
 
+#define BLKNUM(blk) ((eth_blknum_t){.u64 = blk, .is_u64 = true})
+#define BLKNUM_LATEST() ((eth_blknum_t){.def = BLK_LATEST, .is_u64 = false})
+#define BLKNUM_EARLIEST() ((eth_blknum_t){.def = BLK_EARLIEST, .is_u64 = false})
+#define BLKNUM_PENDING() ((eth_blknum_t){.def = BLK_PENDING, .is_u64 = false})
+
 /** 
  * a 32 byte long integer used to store ethereum-numbers. 
  * 
@@ -19,6 +24,11 @@
 typedef struct {
   uint8_t data[32];
 } uint256_t;
+
+DEFINE_OPTIONAL_TYPE(uint64_t);
+DEFINE_OPTIONAL_TYPE(bytes_t);
+DEFINE_OPTIONAL_TYPE(address_t);
+DEFINE_OPTIONAL_TYPE(uint256_t);
 
 /** A transaction */
 typedef struct eth_tx {
@@ -76,6 +86,34 @@ typedef struct eth_log {
   struct eth_log* next;              /**< pointer to next log in list or NULL */
 } eth_log_t;
 
+/** A transaction receipt */
+typedef struct eth_tx_receipt {
+  bytes32_t  transaction_hash;    /**< the transaction hash */
+  int        transaction_index;   /**< the transaction index */
+  bytes32_t  block_hash;          /**< hash of ther containnig block */
+  uint64_t   block_number;        /**< number of the containing block */
+  uint64_t   cumulative_gas_used; /**< total amount of gas used by block */
+  uint64_t   gas_used;            /**< amount of gas used by this specific transaction */
+  bytes_t*   contract_address;    /**< contract address created (if the transaction was a contract creation) or NULL */
+  bool       status;              /**< 1 if transaction succeeded, 0 otherwise. */
+  eth_log_t* logs;                /**< array of log objects, which this transaction generated */
+} eth_tx_receipt_t;
+
+/** Abstract type for holding a block number */
+typedef enum {
+  BLK_LATEST,
+  BLK_EARLIEST,
+  BLK_PENDING
+} eth_blknum_def_t;
+
+typedef struct {
+  union {
+    uint64_t         u64;
+    eth_blknum_def_t def;
+  };
+  bool is_u64;
+} eth_blknum_t;
+
 uint256_t    eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block); /**< returns the storage value of a given address.*/
 bytes_t      eth_getCode(in3_t* in3, address_t account, uint64_t block);                     /**< returns the code of the account of given address. (Make sure you free the data-point of the result after use.) */
 uint256_t    eth_getBalance(in3_t* in3, address_t account, uint64_t block);                  /**< returns the balance of the account of given address. */
@@ -84,13 +122,29 @@ uint64_t     eth_gasPrice(in3_t* in3);                                          
 eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx);             /**< returns the block for the given number (if number==0, the latest will be returned). If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                /**< returns the block for the given hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_log_t*   eth_getLogs(in3_t* in3, char* fopt);                                            /**< returns a linked list of logs. If result is null, check eth_last_error()! otherwise make sure to free the log, its topics and data after using it! */
-json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...);                 /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
 char*        eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);
 in3_ret_t    eth_newFilter(in3_t* in3, json_ctx_t* options);
 in3_ret_t    eth_newBlockFilter(in3_t* in3);                                                          /**< creates a new block filter with specified options and returns its id (>0) on success or 0 on failure */
 in3_ret_t    eth_newPendingTransactionFilter(in3_t* in3);                                             /**< creates a new pending txn filter with specified options and returns its id on success or 0 on failure */
 bool         eth_uninstallFilter(in3_t* in3, size_t id);                                              /**< uninstalls a filter and returns true on success or false on failure */
 in3_ret_t    eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs); /**< sets the logs (for event filter) or blockhashes (for block filter) that match a filter; returns <0 on error, otherwise no. of block hashes matched (for block filter) or 0 (for log filer) */
+in3_ret_t    eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs);                              /**< sets the logs (for event filter) or blockhashes (for block filter) that match a filter; returns <0 on error, otherwise no. of block hashes matched (for block filter) or 0 (for log filer) */
+uint64_t     eth_chainId(in3_t* in3);
+uint64_t     eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash);
+uint64_t     eth_getBlockTransactionCountByNumber(in3_t* in3, eth_blknum_t block);
+json_ctx_t*  eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);     /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+uint64_t     eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...); /**< returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+eth_tx_t*    eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash);
+eth_tx_t*    eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index);
+eth_tx_t*    eth_getTransactionByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index);
+uint64_t     eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t block);
+eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index);
+uint64_t     eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash);
+uint64_t     eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block);
+bytes_t*     eth_sendTransaction(in3_t* in3, address_t from, OPTIONAL(address_t) to, OPTIONAL(uint64_t) gas, OPTIONAL(uint64_t) gas_price, OPTIONAL(uint256_t) value, OPTIONAL(bytes_t) data, OPTIONAL(uint64_t) nonce);
+bytes_t*     eth_sendRawTransaction(in3_t* in3, bytes_t data);
+
+eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);
 
 char*       eth_last_error();       /**< the current error or null if all is ok */
 long double as_double(uint256_t d); /**< converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no garantee to have the full precision. */
