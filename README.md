@@ -1,7 +1,7 @@
 # INCUBED Client in C
  [![Forks](https://img.shields.io/github/forks/slockit/in3)](https://github.com/slockit/in3-c/network/members)
   [![Stars](https://img.shields.io/github/stars/slockit/in3)](https://github.com/slockit/in3-c/watchers)
-  [![License](https://img.shields.io/github/license/slockit/in3)](https://github.com/slockit/in3-c/blob/master/LICENSE.AGPL)
+  [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://github.com/slockit/in3-c/blob/master/LICENSE.AGPL)
  
  INCUBED (in3) is a minimal verification client for blockchain networks, this version of in3 is written in C. 
  
