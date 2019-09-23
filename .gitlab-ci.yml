@@ -478,7 +478,7 @@ debian__dev_package_deploy_disco:
   variables:
     DISTRO: "disco"
 #    VERSION: $CI_COMMIT_TAG
-    VERSION: v0.0.1
+    VERSION: 0.0.1
 #  only:
 #    - /^v[0-9]+.[0-9]+.[0-9]+$/
 #  except:
