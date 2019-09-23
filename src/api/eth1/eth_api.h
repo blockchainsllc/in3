@@ -95,6 +95,7 @@ typedef struct eth_tx_receipt {
   uint64_t   cumulative_gas_used; /**< total amount of gas used by block */
   uint64_t   gas_used;            /**< amount of gas used by this specific transaction */
   bytes_t*   contract_address;    /**< contract address created (if the transaction was a contract creation) or NULL */
+  bool       status;              /**< 1 if transaction succeeded, 0 otherwise. */
   eth_log_t* logs;                /**< array of log objects, which this transaction generated */
 } eth_tx_receipt_t;
 

@@ -642,6 +642,7 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
       txr->block_number        = d_get_longk(result, K_BLOCK_NUMBER);
       txr->cumulative_gas_used = d_get_longk(result, K_CUMULATIVE_GAS_USED);
       txr->gas_used            = d_get_longk(result, K_GAS_USED);
+      txr->status              = (d_get_intk(result, K_STATUS) == 1);
       txr->contract_address    = b_dup(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
       txr->logs                = parse_logs(d_get(result, K_LOGS));
       copy_fixed(txr->transaction_hash, 32, d_to_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));
