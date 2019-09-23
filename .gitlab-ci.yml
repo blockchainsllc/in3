@@ -475,7 +475,7 @@ pages:
     - mv debian/rules-in3 debian/rules
     - rm -rf debian/*-dev
     - echo "" >> debian/changelog
-    - echo "in3 (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
+    - echo "in3 (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
     - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
     - echo "" >> debian/changelog
@@ -488,8 +488,8 @@ pages:
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - debuild -S -sa -us -uc
     - cd ..
-    - debsign -p"gpg --batch --yes --no-tty --passphrase ${PGP_PASSPHRASE}" -S -kB4179604561E56D1 in3_${VERSION}~${DISTRO}_source.changes
-    - dput ppa:devops-slock-it/in3 in3_${VERSION}~${DISTRO}_source.changes
+    - debsign -p"gpg --batch --yes --no-tty --passphrase ${PGP_PASSPHRASE}" -S -kB4179604561E56D1 in3_${VERSION:1}~${DISTRO}_source.changes
+    - dput ppa:devops-slock-it/in3 in3_${VERSION:1}~${DISTRO}_source.changes
 
 debian_package_deploy_bionic:
   extends:
@@ -535,7 +535,7 @@ debian_package_deploy_disco:
     - mv debian/rules-dev debian/rules
     - rm -rf debian/*-in3
     - echo "" >> debian/changelog
-    - echo "in3-dev (${VERSION}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
+    - echo "in3-dev (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
     - echo "" >> debian/changelog
     - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
     - echo "" >> debian/changelog
@@ -548,8 +548,8 @@ debian_package_deploy_disco:
     - gpg --no-tty --batch --import --allow-secret-key-import "$PGP_KEY_ASC"
     - debuild -S -sa -us -uc
     - cd ..
-    - debsign -p"gpg --batch --yes --no-tty --passphrase ${PGP_PASSPHRASE}" -S -kB4179604561E56D1 in3-dev_${VERSION}~${DISTRO}_source.changes
-    - dput ppa:devops-slock-it/in3 in3-dev_${VERSION}~${DISTRO}_source.changes
+    - debsign -p"gpg --batch --yes --no-tty --passphrase ${PGP_PASSPHRASE}" -S -kB4179604561E56D1 in3-dev_${VERSION:1}~${DISTRO}_source.changes
+    - dput ppa:devops-slock-it/in3 in3-dev_${VERSION:1}~${DISTRO}_source.changes
 
 debian_dev_package_deploy_bionic:
   extends:
