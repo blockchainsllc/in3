@@ -678,7 +678,7 @@ uint64_t eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block) {
   rpc_exec("eth_getUncleCountByBlockNumber", uint64_t, d_long(result));
 }
 
-bytes_t* eth_sendTransaction(in3_t* in3, address_t from, OPTIONAL(address_t) to, OPTIONAL(uint64_t) gas, OPTIONAL(uint64_t) gas_price, OPTIONAL(uint256_t) value, OPTIONAL(bytes_t) data, OPTIONAL(uint64_t) nonce) {
+bytes_t* eth_sendTransaction(in3_t* in3, address_t from, OPTIONAL_T(address_t) to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce) {
   rpc_init;
   params_add_bytes(params, bytes(from, 20));
   if (to.defined) params_add_bytes(params, bytes(to.value, 20));

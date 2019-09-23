@@ -31,17 +31,17 @@ typedef enum {
 
 
 // Optional type similar to C++ std::optional
-// Optional types must be defined prior to usage (e.g. DEFINE_OPTIONAL_TYPE(int))
-// Use OPTIONAL_UNDEFINED(t) & OPTIONAL_VALUE(t, v) for easy initialization (rvalues)
+// Optional types must be defined prior to usage (e.g. DEFINE_OPTIONAL_T(int))
+// Use OPTIONAL_T_UNDEFINED(t) & OPTIONAL_T_VALUE(t, v) for easy initialization (rvalues)
 // Note: Defining optional types for pointers is ill-formed by definition. This is
 // because redundant
-#define OPTIONAL(t) opt_##t
-#define DEFINE_OPTIONAL_TYPE(t) \
+#define OPTIONAL_T(t) opt_##t
+#define DEFINE_OPTIONAL_T(t) \
   typedef struct {              \
     t    value;                 \
     bool defined;               \
-  } OPTIONAL(t)
-#define OPTIONAL_UNDEFINED(t) ((OPTIONAL(t)){.defined = false})
-#define OPTIONAL_VALUE(t, v) ((OPTIONAL(t)){.value = v, .defined = true})
+  } OPTIONAL_T(t)
+#define OPTIONAL_T_UNDEFINED(t) ((OPTIONAL_T(t)){.defined = false})
+#define OPTIONAL_T_VALUE(t, v) ((OPTIONAL_T(t)){.value = v, .defined = true})
 
 #endif //IN3_ERROR_H
