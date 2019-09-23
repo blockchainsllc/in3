@@ -1,7 +1,7 @@
 # INCUBED Client in C
  [![Forks](https://img.shields.io/github/forks/slockit/in3)](https://github.com/slockit/in3-c/network/members)
   [![Stars](https://img.shields.io/github/stars/slockit/in3)](https://github.com/slockit/in3-c/watchers)
-  [![License](https://img.shields.io/github/license/slockit/in3)](NEED TO UPDATE)
+  [![License](https://img.shields.io/github/license/slockit/in3)](https://github.com/slockit/in3-c/blob/master/LICENSE)
  
  INCUBED (in3) is a minimal verification client for blockchain networks, this version of in3 is written in C. 
  
@@ -40,6 +40,7 @@
  ```sudo add-apt-repository ppa:devops-slock-it/in3```
  2. Update the local sources ```sudo apt-get update```
  3. Install in3 with ```sudo apt-get install in3```
+
  #### Installation instructions for ```in3-dev```:
  1. Add the slock.it ppa to your system with
  ```sudo add-apt-repository ppa:devops-slock-it/in3```
@@ -54,7 +55,7 @@
  
  ### Release page
  #### Usage instructions:
- 1. Navigate to the in3-client release page on this github repo TO ADD REPO LINK HERE!
+ 1. Navigate to the in3-client [release page](https://github.com/slockit/in3-c/releases) on this github repo 
  2. Download the binary that matches your target system, read below for architecture specific information:
  
  ###### For WASM:
@@ -99,6 +100,8 @@
  // ready to use ...
  ```
  A more detailed example with information on how to call functions can be found [here](https://in3.readthedocs.io/en/develop/api-c.html#examples).
+
+
  ## Features
  
  |                            | in3  | Remote Client | Light Client | 
