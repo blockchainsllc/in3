@@ -315,18 +315,16 @@ release_mac:
     - readthedocs
     - wasm
   script:
-    - mkdir release
-    - cd release
-    - mkdir doc
+    - mkdir in3
+    - cd in3
     - cp -r ../mac_build/bin .
     - cp -r ../mac_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
-    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
-    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
   artifacts:
     paths:
-      - release
+      - in3
 
 release_x64:
   stage: deploy
@@ -337,18 +335,16 @@ release_x64:
     - readthedocs
     - wasm
   script:
-    - mkdir release
-    - cd release
-    - mkdir doc
+    - mkdir in3
+    - cd in3
     - cp -r ../x64_build/bin .
     - cp -r ../x64_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
-    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
-    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
   artifacts:
     paths:
-      - release
+      - in3
 
 release_x86:
   stage: deploy
@@ -360,18 +356,16 @@ release_x86:
     - readthedocs
     - wasm
   script:
-    - mkdir release
-    - cd release
-    - mkdir doc
+    - mkdir in3
+    - cd in3
     - cp -r ../x86_build/bin .
     - cp -r ../x86_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
-    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
-    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
   artifacts:
     paths:
-      - release
+      - in3
 
 release_arm7:
   stage: deploy
@@ -383,18 +377,17 @@ release_arm7:
     - readthedocs
     - wasm
   script:
-    - mkdir release
-    - cd release
+    - mkdir in3
+    - cd in3
     - mkdir doc
     - cp -r ../arm7_build/bin .
     - cp -r ../arm7_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
-    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
-    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
   artifacts:
     paths:
-      - release
+      - in3
 
 release_win:
   stage: deploy
@@ -406,8 +399,8 @@ release_win:
     - readthedocs
     - wasm
   script:
-    - mkdir release
-    - cd release
+    - mkdir in3
+    - cd in3
     - mkdir doc
     - cp -r ../win_build/bin .
     - cp -r ../win_build/lib .
@@ -416,12 +409,11 @@ release_win:
     - mv bin/json bin/json.exe
     - mv lib/libin3.so lib/in3.dll
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
-    - cp -r ../x64_build/docs/doc_doxygen doc/doxygen
-    - cp -r ../doc/build doc/readthedocs
+    - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
   artifacts:
     paths:
-      - release
+      - in3
 
 pages:
   stage: deploy
