@@ -438,7 +438,7 @@ pages:
     - java_linux
     - java_macos
     - readthedocs
-  when: manual
+#  when: manual
   script:
     - mv debian/changelog-dev debian/changelog
     - mv debian/control-dev debian/control
@@ -479,7 +479,7 @@ debian__dev_package_deploy_disco:
     DISTRO: "disco"
 #    VERSION: $CI_COMMIT_TAG
     VERSION: v0.0.1
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
-  except:
-    - branches
+#  only:
+#    - /^v[0-9]+.[0-9]+.[0-9]+$/
+#  except:
+#    - branches
