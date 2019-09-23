@@ -11,10 +11,10 @@
 #include "../../core/client/client.h"
 #include <stdarg.h>
 
-#define BLKNUM(blk) ((blk_num_t){.u64 = blk, .is_u64 = true})
-#define BLKNUM_LATEST() ((blk_num_t){.def = BLK_LATEST, .is_u64 = false})
-#define BLKNUM_EARLIEST() ((blk_num_t){.def = BLK_EARLIEST, .is_u64 = false})
-#define BLKNUM_PENDING() ((blk_num_t){.def = BLK_PENDING, .is_u64 = false})
+#define BLKNUM(blk) ((eth_blknum_t){.u64 = blk, .is_u64 = true})
+#define BLKNUM_LATEST() ((eth_blknum_t){.def = BLK_LATEST, .is_u64 = false})
+#define BLKNUM_EARLIEST() ((eth_blknum_t){.def = BLK_EARLIEST, .is_u64 = false})
+#define BLKNUM_PENDING() ((eth_blknum_t){.def = BLK_PENDING, .is_u64 = false})
 
 /** 
  * a 32 byte long integer used to store ethereum-numbers. 
