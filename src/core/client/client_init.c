@@ -41,7 +41,7 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char
   chain->initAddresses  = NULL;
   chain->lastBlock      = 0;
   chain->contract       = hex2byte_new_bytes(contract, 40);
-  chain->needsUpdate    = chainId == 0xffff ? 0 : 1;
+  chain->needsUpdate    = chainId == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
   chain->nodeListLength = boot_node_count;
   chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
@@ -64,7 +64,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->index      = node_index;
   node->capacity   = 1;
   node->deposit    = 0;
-  node->props      = chain->chainId == 0xFFFF ? 0x0 : 0xFF;
+  node->props      = chain->chainId == ETH_CHAIN_ID_LOCAL ? 0x0 : 0xFF;
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
 
@@ -83,7 +83,7 @@ static void in3_client_init(in3_t* c) {
   c->use_binary         = 0;
   c->use_http           = 0;
   c->includeCode        = 0;
-  c->chainId            = 0x01; // mainnet
+  c->chainId            = ETH_CHAIN_ID_MAINNET; // mainnet
   c->key                = NULL;
   c->finality           = 0;
   c->max_attempts       = 3;
@@ -99,54 +99,54 @@ static void in3_client_init(in3_t* c) {
   c->filters            = NULL;
 
   // mainnet
-  initChain(c->chains, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252", NULL, 1, 2, CHAIN_ETH, NULL);
+  initChain(c->chains, ETH_CHAIN_ID_MAINNET, "2736D225f85740f42D17987100dc8d58e9e16252", NULL, 1, 2, CHAIN_ETH, NULL);
   initNode(c->chains, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/mainnet/nd-3");
   initNode(c->chains, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/mainnet/nd-5");
 
   // tobalaba
-  initChain(c->chains + 1, 0x044d, "845E484b505443814B992Bf0319A5e8F5e407879", NULL, 1, 2, CHAIN_ETH, TOBALABA_SPEC);
+  initChain(c->chains + 1, ETH_CHAIN_ID_TOBALABA, "845E484b505443814B992Bf0319A5e8F5e407879", NULL, 1, 2, CHAIN_ETH, TOBALABA_SPEC);
   initNode(c->chains + 1, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/tobalaba/nd-3");
   initNode(c->chains + 1, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/tobalaba/nd-1");
 
   // evan
-  initChain(c->chains + 2, 0x04b1, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 2, ETH_CHAIN_ID_EVAN, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 2, 0, "eaC4B82273e828878fD765D993800891bA2E3475", "http://52.47.61.24:8500");
   initNode(c->chains + 2, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33A", "https://in3.slock.it/evan/nd-5");
 
 #ifdef IN3_STAGING
   // kovan
-  initChain(c->chains + 3, 0x2a, "a412D519199C3c0ebaea3A9f73f1f89A935F9F14", "e0d15dd269e198e35a1bc1d5ef910ab66cbf81e1617ac1d640428863e10db562", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 3, ETH_CHAIN_ID_KOVAN, "a412D519199C3c0ebaea3A9f73f1f89A935F9F14", "e0d15dd269e198e35a1bc1d5ef910ab66cbf81e1617ac1d640428863e10db562", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 3, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/kovan/nd-1");
   initNode(c->chains + 3, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
 #else
   // kovan
-  initChain(c->chains + 3, 0x2a, "27a37a1210df14f7e058393d026e2fb53b7cf8c1", NULL, 1, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 3, ETH_CHAIN_ID_KOVAN, "27a37a1210df14f7e058393d026e2fb53b7cf8c1", NULL, 1, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 3, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/kovan/nd-3");
   initNode(c->chains + 3, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/kovan/nd-5");
 #endif
 
   // ipfs
-  initChain(c->chains + 4, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS, NULL);
+  initChain(c->chains + 4, ETH_CHAIN_ID_IPFS, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS, NULL);
   initNode(c->chains + 4, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/ipfs/nd-1");
   initNode(c->chains + 4, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/ipfs/nd-5");
 
   // volta
-  initChain(c->chains + 5, 0x12046, "8d8Fd38311d57163524478404C75008fBEaACccB", NULL, 1, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 5, ETH_CHAIN_ID_VOLTA, "8d8Fd38311d57163524478404C75008fBEaACccB", NULL, 1, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 5, 0, "784bfa9eb182C3a02DbeB5285e3dBa92d717E07a", "https://in3.slock.it/volta/nd-1");
   initNode(c->chains + 5, 1, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/volta/nd-3");
 
   // local
-  initChain(c->chains + 6, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
+  initChain(c->chains + 6, ETH_CHAIN_ID_LOCAL, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
   initNode(c->chains + 6, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
 
 #ifdef IN3_STAGING
   // goerli
-  initChain(c->chains + 7, 0x05, "a412D519199C3c0ebaea3A9f73f1f89A935F9F14", "2889c51c601786ec9a803859379816fbabcfc843b36a3bfca27af54257ab70d2", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 7, ETH_CHAIN_ID_GOERLI, "a412D519199C3c0ebaea3A9f73f1f89A935F9F14", "2889c51c601786ec9a803859379816fbabcfc843b36a3bfca27af54257ab70d2", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 7, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/goerli/nd-1");
   initNode(c->chains + 7, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/goerli/nd-2");
 #else
   // goerli
-  initChain(c->chains + 7, 0x05, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 7, ETH_CHAIN_ID_GOERLI, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 7, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/goerli/nd-3");
   initNode(c->chains + 7, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/goerli/nd-1");
 #endif
@@ -342,7 +342,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
       c->requestCount = (uint8_t) d_int(iter.token);
     else if (iter.token->key == key("rpc")) {
       c->proof        = PROOF_NONE;
-      c->chainId      = 0xFFFF;
+      c->chainId      = ETH_CHAIN_ID_LOCAL;
       c->requestCount = 1;
       in3_node_t* n   = find_chain(c, c->chainId)->nodeList;
       if (n->url) _free(n);
