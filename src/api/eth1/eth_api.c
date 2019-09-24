@@ -653,6 +653,16 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
   return NULL;
 }
 
+void free_tx_receipt(eth_tx_receipt_t* txr) {
+  eth_log_t *curr = txr->logs, *next = NULL;
+  while (curr != NULL) {
+    next = curr->next;
+    free_log(curr);
+    curr = next;
+  }
+  _free(txr);
+}
+
 eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_init;
   params_add_bytes(params, bytes(tx_hash, 32));
