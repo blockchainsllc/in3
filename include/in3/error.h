@@ -29,6 +29,7 @@ typedef enum {
   IN3_ETRANS   = -14, /**< Transport error */
 } in3_ret_t;
 
+
 // Optional type similar to C++ std::optional
 // Optional types must be defined prior to usage (e.g. DEFINE_OPTIONAL_T(int))
 // Use OPTIONAL_T_UNDEFINED(t) & OPTIONAL_T_VALUE(t, v) for easy initialization (rvalues)
@@ -36,9 +37,9 @@ typedef enum {
 // because redundant
 #define OPTIONAL_T(t) opt_##t
 #define DEFINE_OPTIONAL_T(t) \
-  typedef struct {           \
-    t    value;              \
-    bool defined;            \
+  typedef struct {              \
+    t    value;                 \
+    bool defined;               \
   } OPTIONAL_T(t)
 #define OPTIONAL_T_UNDEFINED(t) ((OPTIONAL_T(t)){.defined = false})
 #define OPTIONAL_T_VALUE(t, v) ((OPTIONAL_T(t)){.value = v, .defined = true})
