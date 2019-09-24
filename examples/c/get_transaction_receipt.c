@@ -67,6 +67,6 @@ void get_tx_receipt_api(in3_t* in3) {
     printf("error getting the tx : %s\n", eth_last_error());
   else {
     printf("Transaction #%d of block #%llx, gas used = %" PRIu64 ", status = %s\n", txr->transaction_index, txr->block_number, txr->gas_used, txr->status ? "success" : "failed");
-    free(txr);
+    free_tx_receipt(txr);
   }
 }
