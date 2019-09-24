@@ -30,13 +30,13 @@
 |:-------------:| -----:| ----:| :-----:|
 |  Ubuntu Launchpad     | | [![ubuntu](https://img.shields.io/badge/ubuntu-launchpad-blue)](https://launchpad.net/~devops-slock-it/+archive/ubuntu/in3)  |  It can be nicely integrated on IoT devices or any micro controllers |
 | Docker Hub | | [![DockerHub](https://img.shields.io/badge/DockerHub-in3-blue)](https://hub.docker.com/r/slockit/in3)   |  Quick and easy way to get in3 client running  |
-| Brew      |   | TO ADD LATER | Easy to install on MacOS or linux/windows subsystems
+| Brew      |   | [![Homebrew](https://img.shields.io/badge/Homebrew-tap-blue)]( https://github.com/slockit/homebrew-in3) | Easy to install on MacOS
 | Release page | | [![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For directly playing with the binaries/deb/images
  |  | WASM |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For easy integration with browser applications
  |  | Java |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For integrating with java applications
  |  | C Library |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For easy integration with C programs
 
- 
+
  ### Ubuntu Launchpad 
  There are 2 packages published to Ubuntu Launchpad: ```in3``` and ```in3-dev```. The package ```in3``` only installs the
  binary file and allows you to use in3 via command line. The package ```in3-dev``` would install the binary as well as 
@@ -89,6 +89,10 @@
   
  ### Brew
  #### Usage instructions:
+ 1. Ensure that homebrew is installed on your system
+ 2. Add a brew tap with ```brew tap slockit/in3```
+ 3. Install in3 with ```brew install in3```
+ 4. You should now be able to use ```in3``` in the terminal, can be verified with ```in3 eth_blockNumber```
  
  ## Example 
  
