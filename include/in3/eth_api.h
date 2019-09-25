@@ -141,7 +141,7 @@ uint64_t     eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t
 eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index);
 uint64_t     eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash);
 uint64_t     eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block);
-bytes_t*     eth_sendTransaction(in3_t* in3, address_t from, OPTIONAL_T(address_t) to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce);
+bytes_t*     eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce);
 bytes_t*     eth_sendRawTransaction(in3_t* in3, bytes_t data);
 
 eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);

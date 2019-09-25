@@ -33,6 +33,20 @@
   sb_free(params);                                                                        \
   return _res_;
 
+#define params_add_key_pair(params, key, sb_add_func, quote_val, prefix_comma) \
+  do {                                                                         \
+    if (prefix_comma) sb_add_chars(params, ", ");                              \
+    sb_add_char(params, '\"');                                                 \
+    sb_add_chars(params, key);                                                 \
+    sb_add_chars(params, "\": ");                                              \
+    if (quote_val) sb_add_char(params, '\"');                                  \
+    sb_add_func;                                                               \
+    if (quote_val) sb_add_char(params, '\"');                                  \
+  } while (0)
+
+#define params_add_first_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, false)
+#define params_add_next_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, true)
+
 // last error string
 static char* last_error = NULL;
 char*        eth_last_error() { return last_error; }
@@ -688,15 +702,29 @@ uint64_t eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block) {
   rpc_exec("eth_getUncleCountByBlockNumber", uint64_t, d_long(result));
 }
 
-bytes_t* eth_sendTransaction(in3_t* in3, address_t from, OPTIONAL_T(address_t) to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce) {
+bytes_t* eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce) {
   rpc_init;
-  params_add_bytes(params, bytes(from, 20));
-  if (to.defined) params_add_bytes(params, bytes(to.value, 20));
-  if (gas.defined) params_add_number(params, gas.value);
-  if (gas_price.defined) params_add_number(params, gas_price.value);
-  if (value.defined) params_add_bytes(params, bytes(value.value.data, 32));
-  if (data.defined) params_add_bytes(params, data.value);
-  if (nonce.defined) params_add_number(params, nonce.value);
+  sb_add_char(params, '{');
+  bytes_t tmp = bytes(from, 20);
+  params_add_first_pair(params, "from", sb_add_bytes(params, "", &tmp, 1, false), false);
+  if (to) {
+    tmp = bytes(to, 20);
+    params_add_next_pair(params, "to", sb_add_bytes(params, "", &tmp, 1, false), false);
+  }
+  if (gas.defined) {
+    params_add_next_pair(params, "gas", sb_add_hexuint(params, gas.value), true);
+  }
+  if (gas_price.defined) params_add_next_pair(params, "gasPrice", sb_add_hexuint(params, gas_price.value), true);
+  if (value.defined) {
+    tmp = bytes(value.value.data, 32);
+    params_add_next_pair(params, "value", sb_add_bytes(params, "", &tmp, 1, false), false);
+  }
+  if (data.defined) {
+    tmp = bytes(data.value.data, data.value.len);
+    params_add_next_pair(params, "data", sb_add_bytes(params, "", &tmp, 1, false), false);
+  }
+  if (nonce.defined) params_add_next_pair(params, "nonce", sb_add_hexuint(params, nonce.value), true);
+  sb_add_char(params, '}');
   rpc_exec("eth_sendTransaction", bytes_t*, b_dup(d_bytes(result)));
 }
 
