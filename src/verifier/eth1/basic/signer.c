@@ -104,7 +104,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   // read the values
   bytes_t nonce     = d_get(tx, K_NONCE) ? get(tx, K_NONCE) : get_from_nodes(ctx, "eth_getTransactionCount", sb->data, nonce_data),
           gas_price = d_get(tx, K_GAS_PRICE) ? get(tx, K_GAS_PRICE) : get_from_nodes(ctx, "eth_gasPrice", "[]", gas_price_data),
-          gas_limit = d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x52\x08", 2),
+          gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : bytes((uint8_t*) "\x52\x08", 2),
           to        = getl(tx, K_TO, 20),
           value     = get(tx, K_VALUE),
           data      = get(tx, K_DATA);
