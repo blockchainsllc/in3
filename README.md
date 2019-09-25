@@ -17,18 +17,26 @@
  
  A more detailed explanation of in3 can be found [here](https://in3.readthedocs.io/en/develop/intro.html).
  
+ For information on the in3-node, please go [here](https://github.com/slockit/in3-server).
+ 
+ For information on the in3 typescript client, please go [here](https://github.com/slockit/in3).
+ 
  Topics to include:
  1. image of how in3 works
  
  
  ## Installation and Usage
- |         | package manager           | Link  | Use case |
- | ------------- |:-------------:| -----:| ----:|
- | in3-client(C)      |  Ubuntu Launchpad     |  https://bit.ly/2m4y17b | It can be nicely integrated on IoT devices or any micro controllers |
- | | Docker Hub | https://hub.docker.com/r/slockit/in3  | Quick and easy way to get in3 client running
- | | Brew      |    TO ADD LATER | Easy to install on MacOS or linux/windows subsystems
- | | Release page | https://github.com/slockit/in3-c/releases | For directly playing with the binaries/deb/images
- 
+ | package manager           | Bindings | Link  | Use case |
+|:-------------:| -----:| ----:| :-----:|
+|  Ubuntu Launchpad     | | [![ubuntu](https://img.shields.io/badge/ubuntu-launchpad-blue)](https://launchpad.net/~devops-slock-it/+archive/ubuntu/in3)  |  It can be nicely integrated on IoT devices or any micro controllers |
+| Docker Hub | | [![DockerHub](https://img.shields.io/badge/DockerHub-in3-blue)](https://hub.docker.com/r/slockit/in3)   |  Quick and easy way to get in3 client running  |
+| Brew      |   | [![Homebrew](https://img.shields.io/badge/Homebrew-tap-blue)]( https://github.com/slockit/homebrew-in3) | Easy to install on MacOS
+| Release page | | [![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For directly playing with the binaries/deb/images
+ |  | WASM |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For easy integration with browser applications
+ |  | Java |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For integrating with java applications
+ |  | C Library |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For easy integration with C programs
+
+
  ### Ubuntu Launchpad 
  There are 2 packages published to Ubuntu Launchpad: ```in3``` and ```in3-dev```. The package ```in3``` only installs the
  binary file and allows you to use in3 via command line. The package ```in3-dev``` would install the binary as well as 
@@ -36,12 +44,18 @@
  statically linked files. 
  
  #### Installation instructions for ```in3```:
+ 
+ This package will only install the in3 binary in your system.
+ 
  1. Add the slock.it ppa to your system with
  ```sudo add-apt-repository ppa:devops-slock-it/in3```
  2. Update the local sources ```sudo apt-get update```
  3. Install in3 with ```sudo apt-get install in3```
 
  #### Installation instructions for ```in3-dev```:
+ 
+ This package will install the statically linked library files and the include files in your system. 
+ 
  1. Add the slock.it ppa to your system with
  ```sudo add-apt-repository ppa:devops-slock-it/in3```
  2. Update the local sources ```sudo apt-get update```
@@ -50,56 +64,94 @@
  ### Docker Hub
  #### Usage instructions:
  1. Pull the image from docker using ```docker pull slockit/in3```
- 2. Run the client using: ```docker run -d -p 8545:8545  slockit/in3:latest --chainId=goerli```
+ 2. Run the client using: ```docker run -d -p 8545:8545  slockit/in3:latest --chainId=goerli -port 8545```
  3. More parameters and their descriptions can be found [here](https://in3.readthedocs.io/en/develop/getting_started.html#as-docker-container). 
  
  ### Release page
  #### Usage instructions:
  1. Navigate to the in3-client [release page](https://github.com/slockit/in3-c/releases) on this github repo 
- 2. Download the binary that matches your target system, read below for architecture specific information:
+ 2. Download the binary that matches your target system, or read below for architecture specific information:
  
  ###### For WASM:
- ###### For C library:
+ 1. Download the WASM binding with ```npm install --save in3-wasm```
+ 2. More information on how to use the WASM binding can be found [here](https://www.npmjs.com/package/in3-wasm)
+ 3. Examples on how to use the WASM binding can be found [here](https://github.com/slockit/in3-c/tree/master/examples/js)
  
+ ###### For C library:
+ 1. Download the C library from the release page or by installing the ```in3-dev``` package from ubuntu launchpad
+ 2. Include the C library in your code, as shown in our [examples](https://github.com/slockit/in3-c/tree/master/examples/c)
+ 3. Build your code with ```gcc -std=c99 -o test test.c -lin3 -lcurl```, more information can be found [here](https://github.com/slockit/in3-c/blob/master/examples/c/build.sh)
+ 
+  ###### For Java:
+  1. Download the Java file from the release page
+  2. Use the java binding as show in our [example](https://github.com/slockit/in3-c/blob/master/examples/java/GetBlockRPC.java)
+  3. Build your java project with ```javac -cp $IN3_JAR_LOCATION/in3.jar *.java```
+  
  ### Brew
  #### Usage instructions:
+ 1. Ensure that homebrew is installed on your system
+ 2. Add a brew tap with ```brew tap slockit/in3```
+ 3. Install in3 with ```brew install in3```
+ 4. You should now be able to use ```in3``` in the terminal, can be verified with ```in3 eth_blockNumber```
  
  ## Example 
+ 
+ Please have a look at the examples folder in the repo for more detailed [examples](https://github.com/slockit/in3-c/tree/master/examples/js). 
+ 
  ### CLI
-  in3 can be used on the command line in this manner: ```in3 [options] method [arguments]```
+  in3 can be used on the command line in this manner: 
   
-  For example, to get block number, run: ```in3 eth_blockNumber``` in the console.
+  ```in3 [options] method [arguments]```
+  
+  For example,
+  
+  ```
+  To get block number, run: 
+  in3 eth_blockNumber
+  result: 8610795
+  ``` 
   
   A more detailed list with information on arguments can be found [here](https://in3.readthedocs.io/en/develop/api-cmd.html).
   
  ### C Code
+ Example C code can be found [here](https://github.com/slockit/in3-c/tree/master/examples/c)
  ```c
- #include <client/client.h> // the core client
- #include <eth_full.h>      // the full ethereum verifier containing the EVM
- #include <in3_curl.h>      // transport implementation
+#include <in3/client.h>    // the core client
+#include <in3/eth_basic.h> // use the basic module
+#include <in3/in3_curl.h>  // transport implementation
+#include <inttypes.h>
+#include <stdio.h>
+
+int main(int argc, char* argv[]) {
+  // register a chain-verifier for basic Ethereum-Support, which is enough to verify blocks
+  in3_register_eth_basic();
+
+  in3_register_curl(); // use curl as the default for sending out requests
+
+  in3_t* in3 = in3_new(); // create new incubed client
  
- // register verifiers, in this case a full verifier allowing eth_call
- in3_register_eth_full();
- 
- // create new client
- in3_t* client = in3_new();
- 
- // configure storage by using storage-functions from in3_curl, which store the cache in /home/<USER>/.in3
- in3_storage_handler_t storage_handler;
- storage_handler.get_item = storage_get_item;
- storage_handler.set_item = storage_set_item;
- 
- client->cacheStorage = &storage_handler;
- 
- // configure transport by using curl
- client->transport    = send_curl;
- 
- // init cache by reading the nodelist from the cache >(if exists)
- in3_cache_init(client);
- 
- // ready to use ...
+  char *result, *error;  // prepare 2 pointers for the result.
+
+  in3_ret_t res = in3_client_rpc(   // send raw rpc-request, which is then verified
+      in3,                    //  the configured client
+      "eth_getBlockByNumber", // the rpc-method you want to call.
+      "[\"latest\",true]",    // the arguments as json-string
+      &result,                // the reference to a pointer whill hold the result
+      &error);                // the pointer which may hold a error message
+
+  if (res == IN3_OK) {
+    printf("Latest block : \n%s\n", result);
+    free(result);
+  } else {
+    printf("Error verifing the Latest block : \n%s\n", error);
+    free(error);
+  }
+  in3_free(in3);   // cleanup client after usage
+
+}
  ```
  A more detailed example with information on how to call functions can be found [here](https://in3.readthedocs.io/en/develop/api-c.html#examples).
+ 
 
 
  ## Features
@@ -122,6 +174,8 @@
  
  * [C API reference](https://in3.readthedocs.io/en/develop/api-c.html)
  * [C examples](https://in3.readthedocs.io/en/develop/api-c.html#examples)
+ * [in3-node](https://github.com/slockit/in3-server)
+ * [in3 typescript client](https://github.com/slockit/in3)
  * [Website](https://slock.it/incubed/) 
  * [ReadTheDocs](https://in3.readthedocs.io/en/develop/)
  * [Blog](https://blog.slock.it/)
@@ -129,8 +183,6 @@
  * [Ethereum verification explained by Simon Jentzsch](https://www.youtube.com/watch?v=wlUlypmt6Oo)
  
  ## Contributors welcome!
- [![GitHub issues](https://img.shields.io/github/issues/slockit/in3-c)](https://github.com/slockit/in3/issues)
- [![GitHub contributors](https://img.shields.io/github/contributors/slockit/in3-c)](https://github.com/slockit/in3-c/graph/contributors)
  
  We at Slock.it believe in the power of the open source community. Feel free to open any issues you may come across, fork
   the repository and integrate in your own projects. You can reach us on various social media platforms for any questions
