@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-int main(int argc, char* argv[]) {
+int main() {
 
   // register a chain-verifier for full Ethereum-Support in order to verify eth_call
   // this needs to be called only once.
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
   hex2byte_arr("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
 
   // ask for the number of servers registered
-  json_ctx_t* response = eth_call_fn(c, contract, "totalServers():uint256");
+  json_ctx_t* response = eth_call_fn(c, contract, BLKNUM_LATEST(), "totalServers():uint256");
   if (!response) {
     printf("Could not get the response: %s", eth_last_error());
     return -1;
@@ -41,9 +41,8 @@ int main(int argc, char* argv[]) {
   printf("Found %u servers registered : \n", number_of_servers);
 
   // read all structs ...
-  for (int i = 0; i < number_of_servers; i++) {
-
-    response = eth_call_fn(c, contract, "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
+  for (uint32_t i = 0; i < number_of_servers; i++) {
+    response = eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
     if (!response) {
       printf("Could not get the response: %s", eth_last_error());
       return -1;
