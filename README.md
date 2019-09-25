@@ -15,16 +15,14 @@
  decentralized and secure network of remote nodes, enabling trustworthy and fast access to blockchain for a large number 
  of low-performance IoT and mobile devices.
  
+ ![in3](in3_image.png)
+ 
  A more detailed explanation of in3 can be found [here](https://in3.readthedocs.io/en/develop/intro.html).
- 
- For information on the in3-node, please go [here](https://github.com/slockit/in3-server).
- 
- For information on the in3 typescript client, please go [here](https://github.com/slockit/in3).
- 
- Topics to include:
- 1. image of how in3 works
- 
- 
+  
+  For information on the in3-node, please go [here](https://github.com/slockit/in3-server).
+  
+  For information on the in3 typescript client, please go [here](https://github.com/slockit/in3).
+  
  ## Installation and Usage
  | package manager           | Bindings | Link  | Use case |
 |:-------------:| -----:| ----:| :-----:|
