@@ -317,12 +317,14 @@ uint256_t eth_getBalance(in3_t* in3, address_t account, uint64_t block) {
   params_add_blocknumber(params, block);
   rpc_exec("eth_getBalance", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }
+
 bytes_t eth_getCode(in3_t* in3, address_t account, uint64_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
   params_add_blocknumber(params, block);
   rpc_exec("eth_getCode", bytes_t, cloned_bytes(d_to_bytes(result)));
 }
+
 uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
@@ -518,10 +520,13 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   uint64_t      blkno = eth_blockNumber(in3);
   in3_filter_t* f     = in3->filters->array[id - 1];
   switch (f->type) {
-    case FILTER_EVENT:
-      *logs         = eth_getLogs(in3, f->options);
+    case FILTER_EVENT: {
+      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block);
+      *logs       = eth_getLogs(in3, fopt_);
+      _free(fopt_);
       f->last_block = blkno + 1;
       return 0;
+    }
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
         uint64_t blkcount = blkno - f->last_block;
