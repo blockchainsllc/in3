@@ -168,6 +168,7 @@ static bool find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* r
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
+            vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
           }
 

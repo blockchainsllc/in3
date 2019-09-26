@@ -27,6 +27,7 @@ typedef struct {
   d_token_t*            proof;                 /**< the delivered proof. */
   in3_request_config_t* config;                /**< Request configuration. */
   uint64_t              last_validator_change; /**< Block number of last change of the validator list */
+  uint64_t              currentBlock;          /**< Block number of latest block */
 } in3_vctx_t;
 
 /**
