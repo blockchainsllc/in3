@@ -122,6 +122,24 @@ bool filter_from_equals_to(d_token_t* req) {
   return false;
 }
 
+bool filter_from_to_are_latest(d_token_t* req) {
+  d_token_t* tx_params = d_get(req, K_PARAMS);
+  if (tx_params && d_type(tx_params + 1) == T_OBJECT) {
+    d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
+    d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
+    if (!frm && !to)
+      return true;
+    else if (d_type(frm) == T_STRING && d_type(frm) == d_type(to) && !strcmp(d_string(frm), "latest") && !strcmp(d_string(frm), d_string(to))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool approx(uint64_t n1, uint64_t n2, unsigned error) {
+  return ((n1 > n2) ? ((n1 - n2) <= error) : ((n2 - n1) <= error));
+}
+
 in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   in3_ret_t res = IN3_OK, i = 0;
   receipt_t receipts[l_logs];
@@ -239,6 +257,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
 
     if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
     if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
+    if (filter_from_to_are_latest(vc->request) && !approx(d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock, 1)) return vc_err(vc, "latest check failed");
   }
 
   return res;
