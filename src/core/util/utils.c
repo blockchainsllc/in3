@@ -180,3 +180,58 @@ uint64_t hex2long(char* buf) {
   uint8_t tmp[8];
   return bytes_to_long(tmp, hex2byte_arr(buf, -1, tmp, 8));
 }
+
+char* str_replace(char* orig, char* rep, char* with) {
+  char* result;
+  char* ins;
+  char* tmp;
+  int   len_rep;
+  int   len_with;
+  int   len_front;
+  int   count;
+
+  if (!orig || !rep)
+    return NULL;
+  len_rep = strlen(rep);
+  if (len_rep == 0)
+    return NULL;
+  if (!with)
+    with = "";
+  len_with = strlen(with);
+
+  ins = orig;
+  for (count = 0; (tmp = strstr(ins, rep)); ++count) {
+    ins = tmp + len_rep;
+  }
+
+  tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+
+  if (!result)
+    return NULL;
+
+  while (count--) {
+    ins       = strstr(orig, rep);
+    len_front = ins - orig;
+    tmp       = strncpy(tmp, orig, len_front) + len_front;
+    tmp       = strcpy(tmp, with) + len_with;
+    orig += len_front + len_rep;
+  }
+  strcpy(tmp, orig);
+  return result;
+}
+
+char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep) {
+  if (!orig) return NULL;
+
+  size_t l = strlen(orig);
+  if (pos > l) return NULL;
+
+  char* tmp = _malloc(l + len + 1);
+  if (tmp) {
+    strncpy(tmp, orig, pos);
+    tmp[pos] = '\0';
+    if (rep) strcat(tmp, rep);
+    strcat(tmp, orig + pos + len);
+  }
+  return tmp;
+}
