@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -35,7 +35,7 @@
 #ifndef IN3_VERSION_H
 #define IN3_VERSION_H
 
-#define IN3_COPYRIGHT "2018 - 2019 Slock.it, <info@slock.it>."
+#define IN3_COPYRIGHT "2018 - 2018-2019 slock.it, <info@slock.it>."
 #define IN3_VERSION_BITS(x, y, z) ((x) << 16 | (y) << 8 | (z))
 #define IN3_AT_LEAST_VERSION(x, y, z) (IN3_VERSION_NUM >= IN3_VERSION_BITS(x, y, z))
 
