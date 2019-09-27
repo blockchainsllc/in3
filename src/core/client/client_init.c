@@ -1,8 +1,21 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
- *
- * Copyright (C) 2019 Blockchains, LLC
+ * 
+ * Copyright (C) 2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
  * 
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Affero General Public License as published by the Free Software 
@@ -17,9 +30,6 @@
  * must be preserved. Contributors provide an express grant of patent rights.]
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
- * 
- * If you cannot meet the requirements of AGPL, 
- * you should contact us to inquire about a commercial license.
  *******************************************************************************/
 
 #include "../util/data.h"
@@ -123,9 +133,9 @@ static void in3_client_init(in3_t* c) {
   c->filters            = NULL;
 
   // mainnet
-  initChain(c->chains, 0x01, "2736D225f85740f42D17987100dc8d58e9e16252", NULL, 1, 2, CHAIN_ETH, NULL);
-  initNode(c->chains, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/mainnet/nd-3");
-  initNode(c->chains, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/mainnet/nd-5");
+  initChain(c->chains, 0x01, "40f1929b349107a65e705cdbe13c496840e12d51", "48667ae295b704e285fdbb4ad61e02af6040a1bc73bca8db450864fc44c549f1", 2, 2, CHAIN_ETH, NULL);
+  initNode(c->chains, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
+  initNode(c->chains, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
 
 #ifdef IN3_STAGING
   // kovan
@@ -134,9 +144,9 @@ static void in3_client_init(in3_t* c) {
   initNode(c->chains + 1, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
 #else
   // kovan
-  initChain(c->chains + 1, 0x2a, "27a37a1210df14f7e058393d026e2fb53b7cf8c1", NULL, 1, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 1, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/kovan/nd-3");
-  initNode(c->chains + 1, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/kovan/nd-5");
+  initChain(c->chains + 1, 0x2a, "102561587b165a9cb4cbb41d4f65981e66a86aed", "8fcf242e4ac27a3bc35ba07c1d3ca460ce863ac9bcf8349083c44810278caff9", 2, 2, CHAIN_ETH, NULL);
+  initNode(c->chains + 1, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/kovan/nd-1");
+  initNode(c->chains + 1, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/kovan/nd-2");
 #endif
 
   // ipfs
@@ -155,9 +165,9 @@ static void in3_client_init(in3_t* c) {
   initNode(c->chains + 4, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/goerli/nd-2");
 #else
   // goerli
-  initChain(c->chains + 4, 0x05, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 2, CHAIN_ETH, NULL);
-  initNode(c->chains + 4, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.slock.it/goerli/nd-3");
-  initNode(c->chains + 4, 1, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/goerli/nd-1");
+  initChain(c->chains + 4, 0x05, "c5fb30ebfabc3171c0f6406d3fbacdc78dea102c", "fd9cfed117a4db071756bae3878597b3c16b189a8bdb8ce3f35846e691631f8d", 2, 2, CHAIN_ETH, NULL);
+  initNode(c->chains + 4, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/goerli/nd-1");
+  initNode(c->chains + 4, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/foerli/nd-2");
 #endif
 }
 
