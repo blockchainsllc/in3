@@ -354,7 +354,7 @@ release_mac:
 #    - tar -cvzf in3_${CI_COMMIT_TAG}_mac.tar.gz in3/
     - tar -zcv --exclude=in3/src -f in3_v0.0.1_mac.tar.gz in3
 #    - ghr -u devops-slockIt -r https://github.com/devops-slockIt/release-test $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - ghr -u devops-slockIt -r https://github.com/devops-slockIt/release-test v0.0.1 in3_v0.0.1_mac.tar.gz
+    - ghr -u devops-slockIt -r release-test v0.0.1 in3_v0.0.1_mac.tar.gz
     - cd in3
   artifacts:
     paths:
