@@ -656,4 +656,4 @@ brew_release:
     - sed -e '5s/.*/sha256 '"$sha256_hash"'/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
     - git add in3.rb
     - git commit -m "updated version and hash"
-    - git push https://${GITHUB_USER_NAME}:${GITHUB_TOKEN}@slockit/homebrew-in3.git --all
+    - git push https://${GITHUB_USER_NAME}:${GITHUB_TOKEN}@github.com:slockit/homebrew-in3.git --all
