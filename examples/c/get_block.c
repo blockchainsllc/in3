@@ -55,11 +55,8 @@ void get_block_rpc(in3_t* in3) {
 }
 
 void get_block_api(in3_t* in3) {
-  // the b lock we want to get
-  uint64_t block_number = 8432424;
-
-  // get the latest block without the transaction details
-  eth_block_t* block = eth_getBlockByNumber(in3, block_number, false);
+  // get the block without the transaction details
+  eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(8432424), false);
 
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
   if (!block)

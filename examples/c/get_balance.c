@@ -59,7 +59,7 @@ void get_balance_api(in3_t* in3) {
   hex2byte_arr("0xc94770007dda54cF92009BFF0dE90c06F603a09f", -1, account, 20);
 
   // get balance of account
-  long double balance = as_double(eth_getBalance(in3, account, 0));
+  long double balance = as_double(eth_getBalance(in3, account, BLKNUM_EARLIEST()));
 
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
   balance ? printf("Balance: %Lf\n", balance) : printf("error getting the balance : %s\n", eth_last_error());

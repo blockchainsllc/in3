@@ -137,21 +137,11 @@ static void params_add_number(sb_t* sb, uint64_t num) {
   sb_add_chars(sb, tmp);
 }
 
-/** adding blocknumber, where bn==0 means 'latest' */
-static void params_add_blocknumber(sb_t* sb, uint64_t bn) {
-  if (bn)
-    params_add_number(sb, bn);
-  else {
-    if (sb->len > 1) sb_add_char(sb, ',');
-    sb_add_chars(sb, "\"latest\"");
-  }
-}
-
 static void params_add_blk_num_t(sb_t* sb, eth_blknum_t bn) {
   if (bn.is_u64) {
     params_add_number(sb, bn.u64);
   } else {
-    sb_add_chars(sb, ", \"");
+    if (sb->len > 1) sb_add_chars(sb, ", \"");
     switch (bn.def) {
       case BLK_LATEST:
         sb_add_chars(sb, "latest");
@@ -297,9 +287,9 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
   return NULL;
 }
 
-eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx) {
+eth_block_t* eth_getBlockByNumber(in3_t* in3, eth_blknum_t number, bool include_tx) {
   rpc_init;
-  params_add_blocknumber(params, number);
+  params_add_blk_num_t(params, number);
   params_add_bool(params, include_tx);
   rpc_exec("eth_getBlockByNumber", eth_block_t*, eth_getBlock(result, include_tx));
 }
@@ -311,25 +301,25 @@ eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t number, bool include_tx) {
   rpc_exec("eth_getBlockByHash", eth_block_t*, eth_getBlock(result, include_tx));
 }
 
-uint256_t eth_getBalance(in3_t* in3, address_t account, uint64_t block) {
+uint256_t eth_getBalance(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
-  params_add_blocknumber(params, block);
+  params_add_blk_num_t(params, block);
   rpc_exec("eth_getBalance", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }
 
-bytes_t eth_getCode(in3_t* in3, address_t account, uint64_t block) {
+bytes_t eth_getCode(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
-  params_add_blocknumber(params, block);
+  params_add_blk_num_t(params, block);
   rpc_exec("eth_getCode", bytes_t, cloned_bytes(d_to_bytes(result)));
 }
 
-uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block) {
+uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
   params_add_bytes(params, bytes(key, 32));
-  params_add_blocknumber(params, block);
+  params_add_blk_num_t(params, block);
   rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }
 
@@ -532,7 +522,7 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
         uint64_t blkcount = blkno - f->last_block;
         *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
-          eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
+          eth_block_t* blk = eth_getBlockByNumber(in3, BLKNUM(i), false);
           memcpy((*block_hashes)[j], blk->hash, 32);
           free(blk);
         }
