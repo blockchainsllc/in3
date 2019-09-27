@@ -155,20 +155,20 @@ c_tests:
       - testbuild/test
       - Testing
 
-#evm_tests:
-#  image: docker.slock.it/build-images/cmake:gcc8
-#  stage: test
-#  tags:
-#    - short-jobs
-#  script:
-#    - mkdir testbuild
-#    - cd testbuild
-#    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
-#    - make
-#    - cd ../test/testdata/evm/GeneralStateTests
-#    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
-#    - cd ../vmTests
-#    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+evm_tests:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mkdir testbuild
+    - cd testbuild
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
+    - make
+    - cd ../test/testdata/evm/GeneralStateTests
+    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
+    - cd ../vmTests
+    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -333,11 +333,11 @@ release_mac_and_wasm:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-#  only:
-#    - /^v[0-9]+.[0-9]+.[0-9]+$/
-#  except:
-#    - branches
-#  when: manual
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
   dependencies:
     - mac_os
     - gcc8
@@ -352,12 +352,10 @@ release_mac_and_wasm:
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
     - cd ..
-#    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3/
-#    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-#    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3/
-#    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_wasm.tar.gz
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_v0.0.2_mac.tar.gz in3/
-    - ghr -u devops-slockIt -r release-test  v0.0.2 in3_v0.0.2_mac.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_wasm.tar.gz
     - cd in3
   artifacts:
     paths:
@@ -517,7 +515,7 @@ pages:
     - short-jobs
   dependencies:
     - c_tests
-#    - evm_tests
+    - evm_tests
     - java_arm
     - examples_arm
     - examples_linux
@@ -577,7 +575,7 @@ debian_package_deploy_disco:
     - short-jobs
   dependencies:
     - c_tests
-#    - evm_tests
+    - evm_tests
     - java_arm
     - examples_arm
     - examples_linux
@@ -635,11 +633,11 @@ brew_release:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  #  only:
-  #    - /^v[0-9]+.[0-9]+.[0-9]+$/
-  #  except:
-  #    - branches
-  #  when: manual
+    only:
+      - /^v[0-9]+.[0-9]+.[0-9]+$/
+    except:
+      - branches
+    when: manual
   dependencies:
     - mac_os
     - release_mac_and_wasm
@@ -649,11 +647,9 @@ brew_release:
   script:
     - git clone https://github.com/slockit/homebrew-in3.git
     - cd homebrew-in3
-    #    - sed '4s/.*/url "https://github.com/slockit/in3-c/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz"/' in3.rb
-    #    - export sha256_hash=$(curl -jksSL -o /tmp/mac.tar.gz  https://github.com/slockit/in3-c/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz | sha256sum | awk '{ print $1 }')
-    - sed -e '4s/.*/url "https:\/\/github.com\/slockit\/release-test\/releases\/download\/v0.0.2\/in3_v0.0.2_mac.tar.gz"/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
-    - export sha256_hash=$(curl -jksSL -o /tmp/mac.tar.gz  https://github.com/slockit/in3-c/releases/download/v0.0.2/in3_v0.0.2_mac.tar.gz | sha256sum | awk '{ print $1 }')
-    - sed -e '5s/.*/sha256 '"$sha256_hash"'/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
+    - sed '4s/.*/url "https:\/\/github.com\/slockit\/in3-c\/releases\/download\/${CI_COMMIT_TAG}\/in3_${CI_COMMIT_TAG}_mac.tar.gz"/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
+    - export sha256_hash=$(curl -jksSL -o /tmp/mac.tar.gz  https://github.com/slockit/in3-c/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz | sha256sum | awk '{ print $1 }')
+    - sed -e '5s/.*/sha256 '"\"$sha256_hash"\"'/' in3.rb > in3.rb.tmp && mv in3.rb.tmp in3.rb
     - git add in3.rb
     - git commit -m "updated version and hash"
     - git push https://${GITHUB_USER_NAME}:${GITHUB_TOKEN}@github.com/slockit/homebrew-in3.git --all
