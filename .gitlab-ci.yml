@@ -360,6 +360,31 @@ release_mac_and_wasm:
     paths:
       - in3
 
+brew_release:
+  stage: deploy
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
+  dependencies:
+    - mac_os
+  before_script:
+    - git config --global user.name "${GITHUB_USER_NAME}"
+    - git config --global user.email "${GITHUB_USER_EMAIL}"
+  script:
+    - git clone https://github.com/slockit/homebrew-in3.git
+    - cd homebrew-in3
+    - sed '4s/.*/url "https://github.com/slockit/in3-c/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz"/' in3.rb
+    - export sha256_hash=$(curl -jksSL -o /tmp/mac.tar.gz  https://github.com/devops-slockIt/release-test/releases/download/v0.0.1/in3_v0.0.1_mac.tar.gz | sha256sum | awk '{ print $1 }')
+    - sed '5s/.*/sha256 '"$sha256_hash"'/' in3.rb
+    - git add in3.rb
+    - git commit -m "updated version and hash"
+    - git push https://${GITHUB_USER_NAME}:${GITHUB_TOKEN}@slockit/homebrew-in3.git --all
+
 release_x64:
   stage: deploy
   image: docker.slock.it/build-images/deployment
