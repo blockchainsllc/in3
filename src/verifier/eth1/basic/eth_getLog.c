@@ -151,6 +151,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   if (l_logs == 0) return IN3_OK;
   // we require proof
   if (!vc->proof) return vc_err(vc, "no proof for logs found");
+  if (d_len(d_get(vc->proof, K_LOG_PROOF)) > l_logs) return vc_err(vc, "too many proofs");
 
   for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
     // verify that block number matches key
@@ -254,7 +255,6 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (d_get_intk(it.token, K_TRANSACTION_INDEX) != r->transaction_index) return vc_err(vc, "wrong transactionIndex");
 
     if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_longk(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
-
     if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
     if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
     if (filter_from_to_are_latest(vc->request) && !approx(d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock, 1)) return vc_err(vc, "latest check failed");
