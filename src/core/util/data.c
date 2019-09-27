@@ -342,6 +342,12 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
     if (jp->c[i] >= '0' && jp->c[i] <= '9')
       u64Val = u64Val * 10 + (jp->c[i] - '0');
     else {
+      // if the value is a float (which we don't support yet), we keep on parsing, but ignoring the rest of the numbers
+      if (jp->c[i] == '.') {
+        i++;
+        while (jp->c[i] >= '0' && jp->c[i] <= '9') i++;
+      }
+
       jp->c += i;
 
       if ((u64Val & 0xfffffffff0000000) == 0)

@@ -75,6 +75,13 @@ make install
   Type: `BOOL ` ,    Default-Value: `OFF`
 
 
+#### SEGGER_RTT
+
+  Use the segger real time transfer terminal as the logging mechanism
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
+
+
 #### TAG_VERSION
 
   the tagged version, which should be used
