@@ -374,6 +374,7 @@ brew_release:
 #  when: manual
   dependencies:
     - mac_os
+    - release_mac_and_wasm
   before_script:
     - git config --global user.name "${GITHUB_USER_NAME}"
     - git config --global user.email "${GITHUB_USER_EMAIL}"
