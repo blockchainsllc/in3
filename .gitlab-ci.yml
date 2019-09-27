@@ -327,16 +327,16 @@ readthedocs:
     paths:
       - doc/build
 
-release_mac:
+release_mac_and_wasm:
   stage: deploy
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-#  only:
-#    - /^v[0-9]+.[0-9]+.[0-9]+$/
-#  except:
-#    - branches
-#  when: manual
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
   dependencies:
     - mac_os
     - gcc8
@@ -351,10 +351,10 @@ release_mac:
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
     - cd ..
-#    - tar -cvzf in3_${CI_COMMIT_TAG}_mac.tar.gz in3/
-    - tar -zcv --exclude=in3/src -f in3_v0.0.1_mac.tar.gz in3
-#    - ghr -u devops-slockIt -r https://github.com/devops-slockIt/release-test $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - ghr -u devops-slockIt -r release-test v0.0.1 in3_v0.0.1_mac.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_wasm.tar.gz
     - cd in3
   artifacts:
     paths:
@@ -362,12 +362,18 @@ release_mac:
 
 release_x64:
   stage: deploy
+  image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
   dependencies:
     - gcc8
     - readthedocs
     - wasm
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
   script:
     - mkdir in3
     - cd in3
@@ -376,14 +382,24 @@ release_x64:
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
+    - cd ..
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_x64.tar.gz
+    - cd in3
   artifacts:
     paths:
       - in3
 
 release_x86:
   stage: deploy
+  image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
   dependencies:
     - gcc8
     - gcc8-x86
@@ -397,14 +413,24 @@ release_x86:
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
+    - cd ..
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_x86.tar.gz
+    - cd in3
   artifacts:
     paths:
       - in3
 
 release_arm7:
   stage: deploy
+  image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
   dependencies:
     - gcc8
     - arm7
@@ -419,14 +445,24 @@ release_arm7:
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
+    - cd ..
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_arm7.tar.gz
+    - cd in3
   artifacts:
     paths:
       - in3
 
 release_win:
   stage: deploy
+  image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
   dependencies:
     - gcc8
     - win_mingw
@@ -445,23 +481,14 @@ release_win:
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
+    - cd ..
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3/
+    - ghr -u devops-slockIt -r in3-core $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_windows.tar.gz
+    - cd in3
   artifacts:
     paths:
       - in3
 
-#github_release:
-#  stage: deploy
-#  tags:
-#    - short-jobs
-#  dependencies:
-#    - gcc8
-#    - win_mingw
-#    - wasm
-#    - arm7
-#    - gcc8-x86
-#    - mac_os
-#  script:
-#    -
 pages:
   stage: deploy
   only:
