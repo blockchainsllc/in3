@@ -633,11 +633,11 @@ brew_release:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-    only:
-      - /^v[0-9]+.[0-9]+.[0-9]+$/
-    except:
-      - branches
-    when: manual
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+$/
+  except:
+    - branches
+  when: manual
   dependencies:
     - mac_os
     - release_mac_and_wasm
