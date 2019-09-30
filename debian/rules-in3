@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+# debian/rules
+# -*- makefile -*-
+
+export DESTROOT=$(CURDIR)/debian/in3
+export DH_VERBOSE = 1
+
+%:
+	dh $@
+
+#override_dh_shlibdeps:
+#	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+
+#override_dh_auto_install:
+#	dh_auto_install
+
+#override_dh_usrlocal:
+
+override_dh_auto_configure:
+
+override_dh_auto_build:
+	cd scripts && ./build_release.sh
+	cd ..
+
+override_dh_auto_install:
+	env DESTDIR=debian/in3 ./scripts/debian_install.sh

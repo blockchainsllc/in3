@@ -1,13 +1,46 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "accounts.h"
-#include "gas.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include "big.h"
+#include "gas.h"
 #ifdef EVM_GAS
 /**
  * sets a variable value to 32byte word.
  */
-
 
 account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   if (!adr) return NULL;
@@ -67,22 +100,22 @@ account_t* evm_get_account(evm_t* evm, address_t adr, wlen_t create) {
   return ac;
 }
 
-account_t * evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller){
+account_t* evm_create_account(evm_t* evm, uint8_t* data, uint32_t l_data, address_t code_address, address_t caller) {
 
-    account_t* new_account      = NULL;
-    new_account = evm_get_account(evm, code_address, 1);
-    // this is a create-call
-    evm->code               = bytes(data, l_data);
-    evm->call_data.len      = 0;
-    evm->address            = code_address;
-    new_account->nonce[31] = 1;
+  account_t* new_account = NULL;
+  new_account            = evm_get_account(evm, code_address, 1);
+  // this is a create-call
+  evm->code              = bytes(data, l_data);
+  evm->call_data.len     = 0;
+  evm->address           = code_address;
+  new_account->nonce[31] = 1;
 
-    // increment the nonce of the sender
-    account_t* sender_account = evm_get_account(evm, caller, 1);
-    bytes32_t  new_nonce;
-    uint8_t    one = 1;
-    uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
-    return new_account;
+  // increment the nonce of the sender
+  account_t* sender_account = evm_get_account(evm, caller, 1);
+  bytes32_t  new_nonce;
+  uint8_t    one = 1;
+  uint256_set(new_nonce, big_add(sender_account->nonce, 32, &one, 1, new_nonce, 32), sender_account->nonce);
+  return new_account;
 }
 
 storage_t* evm_get_storage(evm_t* evm, address_t adr, uint8_t* s_key, wlen_t s_key_len, wlen_t create) {
@@ -220,7 +253,6 @@ void copy_state(evm_t* dst, evm_t* src) {
   }
 }
 
-
 /**
  * transfer a value to a account.
  */
@@ -259,4 +291,3 @@ int transfer_value(evm_t* current, address_t from_account, address_t to_account,
   return 0;
 }
 #endif
-
