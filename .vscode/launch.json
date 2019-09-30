@@ -194,9 +194,9 @@
             "program": "${workspaceFolder}/build/src/cmd/in3",
             "args": [
                 "-to",
-                "0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
+                "0x40f1929b349107a65e705cdbe13c496840e12d51",
                 "call",
-                "totalServers():uint256"
+                "registryId():uint256"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
