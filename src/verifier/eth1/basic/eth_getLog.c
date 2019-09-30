@@ -218,8 +218,6 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     }
   }
 
-  if (i != l_logs) return vc_err(vc, "invalid receipts len in proof");
-
   uint64_t prev_blk = 0;
   for (d_iterator_t it = d_iter(vc->result); it.left; d_iter_next(&it)) {
     receipt_t* r = NULL;
@@ -230,13 +228,12 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
         break;
       }
     }
-
     if (!r) return vc_err(vc, "missing proof for log");
     d_token_t* topics = d_get(it.token, K_TOPICS);
-    rlp_decode(&r->data, 0, &r->data);
+    rlp_decode(&r->data, 0, &tmp);
 
     // verify the log-data
-    if (rlp_decode(&r->data, 3, &logddata) != 2) return vc_err(vc, "invalid log-data");
+    if (rlp_decode(&tmp, 3, &logddata) != 2) return vc_err(vc, "invalid log-data");
     if (rlp_decode(&logddata, d_get_intk(it.token, K_TRANSACTION_LOG_INDEX), &logddata) != 2) return vc_err(vc, "invalid log index");
 
     // check address
