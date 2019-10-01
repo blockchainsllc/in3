@@ -127,7 +127,7 @@ bool filter_from_to_are_latest(d_token_t* req) {
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
     return false;
   d_token_t* block_hash = d_get(tx_params + 1, K_BLOCK_HASH);
-  if (!block_hash)
+  if (block_hash)
     return false;
 
   d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
