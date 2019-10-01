@@ -133,7 +133,7 @@ static bool is_latest(d_token_t* block) {
 }
 
 // returns IN3_OK on success and IN3_EINVAL/IN3_EUNKNOWN on failure
-static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr_blk) {
+static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr_blk, bool last) {
   d_token_t* tx_params = d_get(req, K_PARAMS);
   if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
     return IN3_EINVAL;
@@ -156,8 +156,12 @@ static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr
     return IN3_EINVAL;
   } else if (to_latest) {
     // only toBlock is latest
-    // so blk should be greater than (or equal to) fromBlock and lesser (or equal to) than currentBlock + error
-    return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_EUNKNOWN;
+    if (last)
+      // last log in result, so blk should be greater than (or equal to) fromBlock and abs diff of blk and curr_blk shoud NOT be more than error
+      return (blk >= d_long(frm) && abs((signed) (blk - curr_blk)) <= LATEST_APPROX_ERR) ? IN3_OK : IN3_EUNKNOWN;
+    else
+      // intermediate log, so blk should be greater than (or equal to) fromBlock and lesser (or equal to) than currentBlock + error
+      return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_EUNKNOWN;
   } else {
     // No latest
     return IN3_OK;
@@ -278,7 +282,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_longk(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
     if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
     if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
-    if (filter_check_latest(vc->request, d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock) != IN3_OK) return vc_err(vc, "latest check failed");
+    if (filter_check_latest(vc->request, d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock, it.left == 1) != IN3_OK) return vc_err(vc, "latest check failed");
   }
 
   return res;
