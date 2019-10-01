@@ -124,16 +124,20 @@ bool filter_from_equals_to(d_token_t* req) {
 
 bool filter_from_to_are_latest(d_token_t* req) {
   d_token_t* tx_params = d_get(req, K_PARAMS);
-  if (tx_params && d_type(tx_params + 1) == T_OBJECT) {
-    d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
-    d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
-    if (!frm && !to)
-      return true;
-    else if (d_type(frm) == T_STRING && d_type(frm) == d_type(to) && !strcmp(d_string(frm), "latest") && !strcmp(d_string(frm), d_string(to))) {
-      return true;
-    }
-  }
-  return false;
+  if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+    return false;
+  d_token_t* block_hash = d_get(tx_params + 1, K_BLOCK_HASH);
+  if (!block_hash)
+    return false;
+
+  d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
+  d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
+  if (!frm && !to)
+    return true;
+  else if (d_type(frm) == T_STRING && d_type(frm) == d_type(to) && !strcmp(d_string(frm), "latest") && !strcmp(d_string(frm), d_string(to)))
+    return true;
+  else
+    return false;
 }
 
 static bool approx(uint64_t n1, uint64_t n2, unsigned error) {
