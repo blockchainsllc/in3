@@ -24,77 +24,20 @@
   For information on the in3 typescript client, please go [here](https://github.com/slockit/in3).
   
  ## Installation and Usage
- | package manager           | Bindings | Link  | Use case |
-|:-------------:| -----:| ----:| :-----:|
-|  Ubuntu Launchpad     | | [![ubuntu](https://img.shields.io/badge/ubuntu-launchpad-blue)](https://launchpad.net/~devops-slock-it/+archive/ubuntu/in3)  |  It can be nicely integrated on IoT devices or any micro controllers |
-| Docker Hub | | [![DockerHub](https://img.shields.io/badge/DockerHub-in3-blue)](https://hub.docker.com/r/slockit/in3)   |  Quick and easy way to get in3 client running  |
-| Brew      |   | [![Homebrew](https://img.shields.io/badge/Homebrew-tap-blue)]( https://github.com/slockit/homebrew-in3) | Easy to install on MacOS
-| Release page | | [![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For directly playing with the binaries/deb/images
- |  | WASM |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For easy integration with browser applications
- |  | Java |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For integrating with java applications
- |  | C Library |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For easy integration with C programs
+ | package manager / Bindings | Link  | Use case |
+|:-------------|  ----:| :-----|
+|  Ubuntu Launchpad     | [![ubuntu](https://img.shields.io/badge/ubuntu-launchpad-blue)](https://launchpad.net/~devops-slock-it/+archive/ubuntu/in3)  | Installs libs and binaries on IoT devices or Linux-Systems <br><br>*Add the slock.it ppa to your system*<br>`sudo add-apt-repository ppa:devops-slock-it/in3`<br><br>*install the commandline tool in3*<br>`apt-get install in3`<br><br>*install shared and static libs and header files*<br>`apt-get install in3-dev` |
+| Docker Hub |  [![DockerHub](https://img.shields.io/badge/DockerHub-in3-blue)](https://hub.docker.com/r/slockit/in3)   |  Quick and easy way to get in3 client running as docker container<br>`docker run -d -p 8545:8545 slockit/in3:latest --chainId=goerli -port 8545`<br> More parameters and their descriptions can be found [here](https://in3.readthedocs.io/en/develop/getting_started.html#as-docker-container).|
+| Brew      |  [![Homebrew](https://img.shields.io/badge/Homebrew-tap-blue)]( https://github.com/slockit/homebrew-in3) | Easy to install on MacOS<br><br>*Add a brew tap* <br>`brew tap slockit/in3`<br><br>*install all binaries and libraries*<br>`brew install in3`
+| Release page | [![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | Releases including precompiled libraries for major platforms. To build or compile against the incubed, see [readthedocs](https://in3.readthedocs.io/en/develop/api-c.html).
+ | WASM |[![npm](https://img.shields.io/badge/npm-package-blue)](https://www.npmjs.com/package/in3-wasm ) | a WASM-Based npm module running in browsers or nodjs.<br>`npm install --save in3-wasm`<br>See [examples](https://github.com/slockit/in3-c/blob/develop/examples/js/get_block_rpc.js) on how to use it.
+ | Java |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For integrating with java applications. Take the jar-file from the release. <br>`javac -cp $IN3_JAR_LOCATION/in3.jar *.java`<br>For examples and documentation see [readthedocs](https://in3.readthedocs.io/en/develop/api-java.html)
 
 
- ### Ubuntu Launchpad 
- There are 2 packages published to Ubuntu Launchpad: ```in3``` and ```in3-dev```. The package ```in3``` only installs the
- binary file and allows you to use in3 via command line. The package ```in3-dev``` would install the binary as well as 
- the library files, allowing you to use in3 not only via command line, but also inside your C programs by including the
- statically linked files. 
- 
- #### Installation instructions for ```in3```:
- 
- This package will only install the in3 binary in your system.
- 
- 1. Add the slock.it ppa to your system with
- ```sudo add-apt-repository ppa:devops-slock-it/in3```
- 2. Update the local sources ```sudo apt-get update```
- 3. Install in3 with ```sudo apt-get install in3```
-
- #### Installation instructions for ```in3-dev```:
- 
- This package will install the statically linked library files and the include files in your system. 
- 
- 1. Add the slock.it ppa to your system with
- ```sudo add-apt-repository ppa:devops-slock-it/in3```
- 2. Update the local sources ```sudo apt-get update```
- 3. Install in3 with ```sudo apt-get install in3-dev```
- 
- ### Docker Hub
- #### Usage instructions:
- 1. Pull the image from docker using ```docker pull slockit/in3```
- 2. Run the client using: ```docker run -d -p 8545:8545  slockit/in3:latest --chainId=goerli -port 8545```
- 3. More parameters and their descriptions can be found [here](https://in3.readthedocs.io/en/develop/getting_started.html#as-docker-container). 
- 
- ### Release page
- #### Usage instructions:
- 1. Navigate to the in3-client [release page](https://github.com/slockit/in3-c/releases) on this github repo 
- 2. Download the binary that matches your target system, or read below for architecture specific information:
- 
- ###### For WASM:
- 1. Download the WASM binding with ```npm install --save in3-wasm```
- 2. More information on how to use the WASM binding can be found [here](https://www.npmjs.com/package/in3-wasm)
- 3. Examples on how to use the WASM binding can be found [here](https://github.com/slockit/in3-c/tree/master/examples/js)
- 
- ###### For C library:
- 1. Download the C library from the release page or by installing the ```in3-dev``` package from ubuntu launchpad
- 2. Include the C library in your code, as shown in our [examples](https://github.com/slockit/in3-c/tree/master/examples/c)
- 3. Build your code with ```gcc -std=c99 -o test test.c -lin3 -lcurl```, more information can be found [here](https://github.com/slockit/in3-c/blob/master/examples/c/build.sh)
- 
-  ###### For Java:
-  1. Download the Java file from the release page
-  2. Use the java binding as show in our [example](https://github.com/slockit/in3-c/blob/master/examples/java/GetBlockRPC.java)
-  3. Build your java project with ```javac -cp $IN3_JAR_LOCATION/in3.jar *.java```
-  
- ### Brew
- #### Usage instructions:
- 1. Ensure that homebrew is installed on your system
- 2. Add a brew tap with ```brew tap slockit/in3```
- 3. Install in3 with ```brew install in3```
- 4. You should now be able to use ```in3``` in the terminal, can be verified with ```in3 eth_blockNumber```
  
  ## Example 
  
- Please have a look at the examples folder in the repo for more detailed [examples](https://github.com/slockit/in3-c/tree/master/examples/js). 
+ Please have a look at the examples folder in the repo for more detailed [examples](https://github.com/slockit/in3-c/tree/master/examples). 
  
  ### CLI
   in3 can be used on the command line in this manner: 
@@ -103,10 +46,10 @@
   
   For example,
   
-  ```
   To get block number, run: 
-  in3 eth_blockNumber
-  result: 8610795
+  ```
+  > in3 eth_blockNumber
+  8610795
   ``` 
   
   A more detailed list with information on arguments can be found [here](https://in3.readthedocs.io/en/develop/api-cmd.html).
@@ -189,11 +132,13 @@ int main(int argc, char* argv[]) {
  [![Twitter](https://img.shields.io/badge/Twitter-Page-blue)](https://twitter.com/slockitproject?s=17)
  [![Blog](https://img.shields.io/badge/Blog-Medium-blue)](https://blog.slock.it/)
  [![Youtube](https://img.shields.io/badge/Youtube-channel-blue)](https://www.youtube.com/channel/UCPOrzp3CZmdb5HJWxSjv4Ig)
- [![LinkedIn](https://img.shields.io/badge/Linkedin-page-blue)](https://www.linkedin.com/company/10327305
- )
- 
- ## Got any questions?
- Send us an email at <a href="mailto:team-in3@slock.it">team-in3@slock.it</a>
+ [![LinkedIn](https://img.shields.io/badge/Linkedin-page-blue)](https://www.linkedin.com/company/10327305)
+ [![Gitter](https://img.shields.io/badge/Gitter-chat-blue)](https://gitter.im/slockit-in3/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
+
+## Got any questions?
+Contact us on [![Gitter](https://img.shields.io/badge/Gitter-chat-blue)](https://gitter.im/slockit-in3/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) or
+send us an email at <a href="mailto:team-in3@slock.it">team-in3@slock.it</a>
+
 
 
 
