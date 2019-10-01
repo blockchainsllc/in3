@@ -11,6 +11,8 @@
 #include "trie.h"
 #include <string.h>
 
+#define LATEST_APPROX_ERR 1
+
 typedef struct receipt {
   bytes32_t tx_hash;
   bytes_t   data;
@@ -122,26 +124,44 @@ bool filter_from_equals_to(d_token_t* req) {
   return false;
 }
 
-bool filter_from_to_are_latest(d_token_t* req) {
-  d_token_t* tx_params = d_get(req, K_PARAMS);
-  if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
-    return false;
-  d_token_t* block_hash = d_get(tx_params + 1, K_BLOCK_HASH);
-  if (block_hash)
-    return false;
-
-  d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
-  d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
-  if (!frm && !to)
-    return true;
-  else if (d_type(frm) == T_STRING && d_type(frm) == d_type(to) && !strcmp(d_string(frm), "latest") && !strcmp(d_string(frm), d_string(to)))
-    return true;
-  else
-    return false;
-}
-
 static bool approx(uint64_t n1, uint64_t n2, unsigned error) {
   return ((n1 > n2) ? ((n1 - n2) <= error) : ((n2 - n1) <= error));
+}
+
+static bool is_latest(d_token_t* block) {
+  return block && d_type(block) == T_STRING && !strcmp(d_string(block), "latest");
+}
+
+// returns IN3_OK on success and IN3_EINVAL/IN3_EUNKNOWN on failure
+static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr_blk) {
+  d_token_t* tx_params = d_get(req, K_PARAMS);
+  if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+    return IN3_EINVAL;
+  d_token_t* block_hash = d_get(tx_params + 1, K_BLOCK_HASH);
+  if (block_hash) {
+    // There'a a blockHash so toBlock and fromBlock are ignored (or should not exist)
+    return IN3_OK;
+  }
+
+  d_token_t* frm         = d_get(tx_params + 1, K_FROM_BLOCK);
+  d_token_t* to          = d_get(tx_params + 1, K_TO_BLOCK);
+  bool       from_latest = is_latest(frm);
+  bool       to_latest   = is_latest(to);
+  if (from_latest && to_latest) {
+    // Both fromBlock and toBlock are both latest
+    return approx(blk, curr_blk, 1) ? IN3_OK : IN3_EUNKNOWN;
+  } else if (from_latest) {
+    // only fromBlock is latest
+    // unlikely as this doesn't make sense
+    return IN3_EINVAL;
+  } else if (to_latest) {
+    // only toBlock is latest
+    // so blk should be greater than (or equal to) fromBlock and lesser (or equal to) than currentBlock + error
+    return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_EUNKNOWN;
+  } else {
+    // No latest
+    return IN3_OK;
+  }
 }
 
 in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
@@ -258,7 +278,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_longk(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
     if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
     if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
-    if (filter_from_to_are_latest(vc->request) && !approx(d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock, 1)) return vc_err(vc, "latest check failed");
+    if (filter_check_latest(vc->request, d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock) != IN3_OK) return vc_err(vc, "latest check failed");
   }
 
   return res;
