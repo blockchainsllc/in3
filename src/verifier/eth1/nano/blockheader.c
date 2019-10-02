@@ -107,7 +107,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   // get validators from contract
   in3_proof_t proof_     = vc->ctx->client->proof;
   vc->ctx->client->proof = PROOF_NONE;
-  in3_ctx_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorlist", "[]");
+  in3_ctx_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorList", "[]");
   vc->ctx->client->proof = proof_;
   res                    = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {
