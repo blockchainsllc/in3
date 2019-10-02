@@ -27,6 +27,7 @@ typedef enum {
   IN3_ERPCNRES = -12, /**< RPC no response */
   IN3_EUSNURL  = -13, /**< USN URL parse error */
   IN3_ETRANS   = -14, /**< Transport error */
+  IN3_ERANGE   = -15, /**< Not in range */
 } in3_ret_t;
 
 #endif //IN3_ERROR_H
