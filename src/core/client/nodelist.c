@@ -36,6 +36,7 @@
 #include "../util/data.h"
 #include "../util/log.h"
 #include "../util/mem.h"
+#include "../util/utils.h"
 #include "cache.h"
 #include "client.h"
 #include "context.h"
@@ -48,6 +49,7 @@
 
 #endif
 
+#define DAY 24 * 2600
 static void free_nodeList(in3_node_t* nodeList, int count) {
   int i;
   // clean chain..
@@ -60,7 +62,9 @@ static void free_nodeList(in3_node_t* nodeList, int count) {
 
 static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   int       i, len;
-  in3_ret_t res = IN3_OK;
+  in3_ret_t res  = IN3_OK;
+  _time_t   _now = _time(); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
+  uint64_t  now  = (uint64_t) max(0, _now);
 
   // read the nodes
   d_token_t *t, *nodes = d_get(result, K_NODES), *node = NULL;
@@ -74,7 +78,8 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
   chain->lastBlock = d_long(t);
 
   // new nodelist
-  in3_node_t* newList = _calloc((len = d_len(nodes)), sizeof(in3_node_t));
+  in3_node_t*        newList = _calloc((len = d_len(nodes)), sizeof(in3_node_t));
+  in3_node_weight_t* weights = _calloc(len, sizeof(in3_node_weight_t));
 
   // set new values
   for (i = 0; i < len; i++) {
@@ -85,24 +90,44 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
       break;
     }
 
-    n->capacity = d_get_intkd(node, K_CAPACITY, 1);
-    n->index    = d_get_intkd(node, K_INDEX, i);
-    n->deposit  = d_get_longk(node, K_DEPOSIT);
-    n->props    = d_get_longkd(node, K_PROPS, 65535);
-    n->url      = d_get_stringk(node, K_URL);
+    int old_index          = i;
+    weights[i].weight      = 1;
+    n->capacity            = d_get_intkd(node, K_CAPACITY, 1);
+    n->index               = d_get_intkd(node, K_INDEX, i);
+    n->deposit             = d_get_longk(node, K_DEPOSIT);
+    n->props               = d_get_longkd(node, K_PROPS, 65535);
+    n->url                 = d_get_stringk(node, K_URL);
+    n->address             = d_get_byteskl(node, K_ADDRESS, 20);
+    uint64_t register_time = d_get_longk(node, K_REGISTER_TIME);
 
+    if (n->address)
+      n->address = b_dup(n->address); // create a copy since the src will be freed.
+    else {
+      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
+      break;
+    }
+
+    // restore the nodeweights if the address was known in the old nodeList
+    if (chain->nodeListLength <= i || !b_cmp(chain->nodeList[i].address, n->address)) {
+      old_index = -1;
+      for (int j = 0; j < chain->nodeListLength; j++) {
+        if (b_cmp(chain->nodeList[j].address, n->address)) {
+          old_index = j;
+          break;
+        }
+      }
+    }
+    if (old_index >= 0) memcpy(weights + i, chain->weights + old_index, sizeof(in3_node_weight_t));
+
+    // if this is a newly registered node, we wait 24h before we use it, since this is the time where mallicous nodes may be unregistered.
+    if (now && register_time + DAY > now && now > register_time)
+      weights[i].blacklistedUntil = register_time + DAY;
+
+    // clone the url since the src will be freed
     if (n->url)
       n->url = _strdupn(n->url, -1);
     else {
       res = ctx_set_error(ctx, "missing url in nodelist", IN3_EINVALDT);
-      break;
-    }
-
-    n->address = d_get_byteskl(node, K_ADDRESS, 20);
-    if (n->address)
-      n->address = b_dup(n->address);
-    else {
-      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
       break;
     }
   }
@@ -110,15 +135,14 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
   if (res == IN3_OK) {
     // successfull, so we can update the chain.
     free_nodeList(chain->nodeList, chain->nodeListLength);
+    _free(chain->weights);
     chain->nodeList       = newList;
     chain->nodeListLength = len;
-
-    _free(chain->weights);
-    chain->weights = _calloc(len, sizeof(in3_node_weight_t));
-    for (i = 0; i < len; i++)
-      chain->weights[i].weight = 1;
-  } else
+    chain->weights        = weights;
+  } else {
     free_nodeList(newList, len);
+    _free(weights);
+  }
 
   return res;
 }
