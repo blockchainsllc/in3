@@ -278,6 +278,11 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_longk(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
     if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
     if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
+
+    // Check for prev_blk > blockNumber is also required for filter_check_latest() to work properly,
+    // this is because we expect the result to be sorted (ascending by blockNumber) and only check
+    // latest toBlock for last log in result.
+    if (prev_blk > d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "result not sorted");
     if (filter_check_latest(vc->request, d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock, it.left == 1) != IN3_OK) return vc_err(vc, "latest check failed");
   }
 
