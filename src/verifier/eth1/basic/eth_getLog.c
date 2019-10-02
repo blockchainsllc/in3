@@ -195,7 +195,6 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (rlp_decode(&block, BLOCKHEADER_RECEIPT_ROOT, &receipt_root) != 1) return vc_err(vc, "invalid receipt root");
     if (rlp_decode(&block, BLOCKHEADER_TRANSACTIONS_ROOT, &tx_root) != 1) return vc_err(vc, "invalid tx root");
     if (rlp_decode(&block, BLOCKHEADER_NUMBER, &receipts[i].block_number) != 1) return vc_err(vc, "invalid block number");
-    receipts[i].data = bytes(NULL, 0);
 
     // verify all receipts
     for (d_iterator_t receipt = d_iter(d_get(it.token, K_RECEIPTS)); receipt.left; d_iter_next(&receipt)) {
@@ -214,6 +213,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
       i++;
 
       // verify tx data first
+      r->data              = bytes(NULL, 0);
       r->transaction_index = d_get_intk(receipt.token, K_TX_INDEX);
       bytes_t** proof      = d_create_bytes_vec(d_get(receipt.token, K_TX_PROOF));
       bytes_t*  path       = create_tx_path(r->transaction_index);
