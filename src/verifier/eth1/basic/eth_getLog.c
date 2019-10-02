@@ -124,10 +124,6 @@ bool filter_from_equals_to(d_token_t* req) {
   return false;
 }
 
-static bool approx(uint64_t n1, uint64_t n2, unsigned error) {
-  return ((n1 > n2) ? ((n1 - n2) <= error) : ((n2 - n1) <= error));
-}
-
 static bool is_latest(d_token_t* block) {
   return block && d_type(block) == T_STRING && !strcmp(d_string(block), "latest");
 }
@@ -149,19 +145,19 @@ static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr
   bool       to_latest   = is_latest(to);
   if (from_latest && to_latest) {
     // Both fromBlock and toBlock are both latest
-    return approx(blk, curr_blk, 1) ? IN3_OK : IN3_EUNKNOWN;
+    return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
   } else if (from_latest) {
     // only fromBlock is latest
-    // unlikely as this doesn't make sense
-    return IN3_EINVAL;
+    // unlikely as this doesn't make much sense, but valid if "toBlock" is approx(curr_blk)
+    return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
   } else if (to_latest) {
     // only toBlock is latest
     if (last)
       // last log in result, so blk should be greater than (or equal to) fromBlock and abs diff of blk and curr_blk shoud NOT be more than error
-      return (blk >= d_long(frm) && abs((signed) (blk - curr_blk)) <= LATEST_APPROX_ERR) ? IN3_OK : IN3_EUNKNOWN;
+      return (blk >= d_long(frm) && IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR)) ? IN3_OK : IN3_ERANGE;
     else
       // intermediate log, so blk should be greater than (or equal to) fromBlock and lesser (or equal to) than currentBlock + error
-      return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_EUNKNOWN;
+      return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
   } else {
     // No latest
     return IN3_OK;
