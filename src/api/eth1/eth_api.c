@@ -595,7 +595,7 @@ void free_log(eth_log_t* log) {
 
 uint64_t eth_chainId(in3_t* in3) {
   rpc_init;
-  rpc_exec("eth_blockNumber", uint64_t, d_long(result));
+  rpc_exec("eth_chainId", uint64_t, d_long(result));
 }
 
 uint64_t eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash) {
