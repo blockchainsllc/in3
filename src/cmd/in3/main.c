@@ -363,7 +363,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
     json_ctx_t* key_json = parse_json(content);
     if (!key_json) die("invalid json in pk file");
 
-    bytes32_t pk_seed;
+    uint8_t* pk_seed = malloc(32);
     if (decrypt_key(key_json->result, pwd, pk_seed)) die("Invalid key");
 
     if (!method || strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0) {
