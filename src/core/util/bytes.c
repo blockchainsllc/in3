@@ -54,12 +54,14 @@ void ba_print(uint8_t* a, size_t l) {
   size_t i;
   if (!a) return;
 
+  in3_log_disable_prefix();
   in3_log_trace(" 0x");
   for (i = 0; i < l; i++) in3_log_trace("%02x", a[i]);
 
   if (l < 9) {
     in3_log_trace(" ( %" PRId64 " ) ", bytes_to_long(a, l));
   }
+  in3_log_enable_prefix();
 }
 
 void b_print(bytes_t* a) {
@@ -70,9 +72,11 @@ void b_print(bytes_t* a) {
   for (i = 0; i < a->len; i++) printk("%02x", a->data[i]);
   printk("\n");
 #else
+  in3_log_disable_prefix();
   in3_log_trace("Bytes: ");
   for (i = 0; i < a->len; i++) in3_log_trace("%02x", a->data[i]);
   in3_log_trace("\n");
+  in3_log_enable_prefix();
 #endif
 }
 

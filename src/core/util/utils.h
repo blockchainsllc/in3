@@ -55,6 +55,10 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+// Check if n1 & n2 are at max err apart
+// Expects n1 & n2 to be integral types
+#define IS_APPROX(n1, n2, err) ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
+
 typedef uint32_t      pb_size_t;
 typedef uint_least8_t pb_byte_t;
 

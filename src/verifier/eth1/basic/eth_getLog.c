@@ -44,6 +44,8 @@
 #include "trie.h"
 #include <string.h>
 
+#define LATEST_APPROX_ERR 1
+
 typedef struct receipt {
   bytes32_t tx_hash;
   bytes_t   data;
@@ -59,9 +61,8 @@ static bool matches_filter_address(d_token_t* tx_params, bytes_t addrs) {
   } else if (d_type(jaddrs) == T_BYTES) {
     return !!bytes_cmp(addrs, d_to_bytes(jaddrs));
   } else if (d_type(jaddrs) == T_ARRAY) { // must match atleast one in array
-    int l = d_len(jaddrs);
-    for (int i = 0; i < l; i++, jaddrs = d_next(jaddrs)) {
-      if (bytes_cmp(addrs, d_to_bytes(jaddrs))) return true;
+    for (d_iterator_t it = d_iter(jaddrs); it.left; d_iter_next(&it)) {
+      if (bytes_cmp(addrs, d_to_bytes(it.token))) return true;
     }
   }
   return false;
@@ -142,6 +143,60 @@ bool matches_filter(d_token_t* req, bytes_t addrs, uint64_t blockno, bytes_t blo
   }
 }
 
+bool filter_from_equals_to(d_token_t* req) {
+  d_token_t* tx_params = d_get(req, K_PARAMS);
+  if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return false;
+  d_token_t* frm = d_get(tx_params + 1, K_FROM_BLOCK);
+  d_token_t* to  = d_get(tx_params + 1, K_TO_BLOCK);
+  if (frm && to && d_type(frm) == d_type(to)) {
+    if (d_type(frm) == T_STRING && !strcmp(d_string(frm), d_string(to)))
+      return true;
+    else if (d_type(frm) == T_BYTES && b_cmp(d_bytes(frm), d_bytes(to)))
+      return true;
+  }
+  return false;
+}
+
+static bool is_latest(d_token_t* block) {
+  return block && d_type(block) == T_STRING && !strcmp(d_string(block), "latest");
+}
+
+// returns IN3_OK on success and IN3_EINVAL/IN3_EUNKNOWN on failure
+static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr_blk, bool last) {
+  d_token_t* tx_params = d_get(req, K_PARAMS);
+  if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+    return IN3_EINVAL;
+  d_token_t* block_hash = d_get(tx_params + 1, K_BLOCK_HASH);
+  if (block_hash) {
+    // There'a a blockHash so toBlock and fromBlock are ignored (or should not exist)
+    return IN3_OK;
+  }
+
+  d_token_t* frm         = d_get(tx_params + 1, K_FROM_BLOCK);
+  d_token_t* to          = d_get(tx_params + 1, K_TO_BLOCK);
+  bool       from_latest = is_latest(frm);
+  bool       to_latest   = is_latest(to);
+  if (from_latest && to_latest) {
+    // Both fromBlock and toBlock are both latest
+    return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
+  } else if (from_latest) {
+    // only fromBlock is latest
+    // unlikely as this doesn't make much sense, but valid if "toBlock" is approx(curr_blk)
+    return IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
+  } else if (to_latest) {
+    // only toBlock is latest
+    if (last)
+      // last log in result, so blk should be greater than (or equal to) fromBlock and abs diff of blk and curr_blk shoud NOT be more than error
+      return (blk >= d_long(frm) && IS_APPROX(blk, curr_blk, LATEST_APPROX_ERR)) ? IN3_OK : IN3_ERANGE;
+    else
+      // intermediate log, so blk should be greater than (or equal to) fromBlock and lesser (or equal to) than currentBlock + error
+      return (blk >= d_long(frm) && blk <= curr_blk + LATEST_APPROX_ERR) ? IN3_OK : IN3_ERANGE;
+  } else {
+    // No latest
+    return IN3_OK;
+  }
+}
+
 in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   in3_ret_t res = IN3_OK, i = 0;
   receipt_t receipts[l_logs];
@@ -153,8 +208,12 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   if (l_logs == 0) return IN3_OK;
   // we require proof
   if (!vc->proof) return vc_err(vc, "no proof for logs found");
+  if (d_len(d_get(vc->proof, K_LOG_PROOF)) > l_logs) return vc_err(vc, "too many proofs");
 
   for (d_iterator_t it = d_iter(d_get(vc->proof, K_LOG_PROOF)); it.left; d_iter_next(&it)) {
+    // verify that block number matches key
+    if (d_get_longk(it.token, K_NUMBER) != strtoull(d_get_keystr(it.token->key), NULL, 16))
+      return vc_err(vc, "block number mismatch");
 
     // verify the blockheader of the log entry
     bytes_t block = d_to_bytes(d_get(it.token, K_BLOCK)), tx_root, receipt_root;
@@ -165,16 +224,25 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (rlp_decode(&block, BLOCKHEADER_RECEIPT_ROOT, &receipt_root) != 1) return vc_err(vc, "invalid receipt root");
     if (rlp_decode(&block, BLOCKHEADER_TRANSACTIONS_ROOT, &tx_root) != 1) return vc_err(vc, "invalid tx root");
     if (rlp_decode(&block, BLOCKHEADER_NUMBER, &receipts[i].block_number) != 1) return vc_err(vc, "invalid block number");
-    receipts[i].data = bytes(NULL, 0);
 
     // verify all receipts
     for (d_iterator_t receipt = d_iter(d_get(it.token, K_RECEIPTS)); receipt.left; d_iter_next(&receipt)) {
+      // verify that txn hash matches key
+      bytes_t* txhash         = d_get_byteskl(receipt.token, K_TX_HASH, 32);
+      char     txhash_str[64] = {0};
+      char*    rk_str         = d_get_keystr(receipt.token->key);
+      bytes_to_hex(txhash->data, txhash->len, txhash_str);
+      if (rk_str[0] == '0' && rk_str[1] == 'x') rk_str += 2;
+      if (strcmp(rk_str, txhash_str) != 0)
+        return vc_err(vc, "txn hash mismatch");
+
       if (i == l_logs) return vc_err(vc, "too many receipts in the proof");
       receipt_t* r = receipts + i;
       if (i != bl) memcpy(r, receipts + bl, sizeof(receipt_t)); // copy blocknumber and blockhash
       i++;
 
       // verify tx data first
+      r->data              = bytes(NULL, 0);
       r->transaction_index = d_get_intk(receipt.token, K_TX_INDEX);
       bytes_t** proof      = d_create_bytes_vec(d_get(receipt.token, K_TX_PROOF));
       bytes_t*  path       = create_tx_path(r->transaction_index);
@@ -207,7 +275,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     }
   }
 
-  if (i != l_logs) return vc_err(vc, "invalid receipts len in proof");
+  uint64_t prev_blk = 0;
   for (d_iterator_t it = d_iter(vc->result); it.left; d_iter_next(&it)) {
     receipt_t* r = NULL;
     i            = 0;
@@ -217,13 +285,12 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
         break;
       }
     }
-
     if (!r) return vc_err(vc, "missing proof for log");
     d_token_t* topics = d_get(it.token, K_TOPICS);
-    rlp_decode(&r->data, 0, &r->data);
+    rlp_decode(&r->data, 0, &tmp);
 
     // verify the log-data
-    if (rlp_decode(&r->data, 3, &logddata) != 2) return vc_err(vc, "invalid log-data");
+    if (rlp_decode(&tmp, 3, &logddata) != 2) return vc_err(vc, "invalid log-data");
     if (rlp_decode(&logddata, d_get_intk(it.token, K_TRANSACTION_LOG_INDEX), &logddata) != 2) return vc_err(vc, "invalid log index");
 
     // check address
@@ -242,6 +309,14 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     if (d_get_intk(it.token, K_TRANSACTION_INDEX) != r->transaction_index) return vc_err(vc, "wrong transactionIndex");
 
     if (!matches_filter(vc->request, d_to_bytes(d_getl(it.token, K_ADDRESS, 20)), d_get_longk(it.token, K_BLOCK_NUMBER), d_to_bytes(d_getl(it.token, K_BLOCK_HASH, 32)), d_get(it.token, K_TOPICS))) return vc_err(vc, "filter mismatch");
+    if (!prev_blk) prev_blk = d_get_longk(it.token, K_BLOCK_NUMBER);
+    if (filter_from_equals_to(vc->request) && prev_blk != d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "wrong blocknumber");
+
+    // Check for prev_blk > blockNumber is also required for filter_check_latest() to work properly,
+    // this is because we expect the result to be sorted (ascending by blockNumber) and only check
+    // latest toBlock for last log in result.
+    if (prev_blk > d_get_longk(it.token, K_BLOCK_NUMBER)) return vc_err(vc, "result not sorted");
+    if (filter_check_latest(vc->request, d_get_longk(it.token, K_BLOCK_NUMBER), vc->currentBlock, it.left == 1) != IN3_OK) return vc_err(vc, "latest check failed");
   }
 
   return res;
