@@ -115,6 +115,25 @@ bool filter_opt_valid(d_token_t* tx_params) {
   return true;
 }
 
+char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock) {
+  size_t pos, len;
+  char   blockstr[40]; // buffer to hold - "fromBlock": "<21 chars for hex repr (upto UINT64_MAX)>",
+  char*  tok = str_find(fopt, "\"fromBlock\"");
+  if (tok) {
+    sprintf(blockstr, "0x%" PRIx64 "", fromBlock);
+    tok = str_find(str_find(tok + 1, ":") + 1, "\"");
+    pos = tok - fopt + 1;
+    tok = str_find(tok + 1, "\"");
+    len = tok - fopt - pos;
+  } else {
+    sprintf(blockstr, "\"fromBlock\":\"0x%" PRIx64 "\"%c", fromBlock, str_find(fopt, "\"") ? ',' : '\0');
+    tok = str_find(fopt, "{");
+    pos = fopt - tok + 1;
+    len = 0;
+  }
+  return str_replace_pos(fopt, pos, len, blockstr);
+}
+
 static void filter_release(in3_filter_t* f) {
   if (f && f->options)
     _free(f->options);
@@ -209,10 +228,12 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   char*         fopt = f->options;
   switch (f->type) {
     case FILTER_EVENT: {
+      char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block);
       sb_t* params = sb_new("[");
-      sb_add_chars(params, fopt);
+      sb_add_chars(params, fopt_);
       ctx_ = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
       sb_free(params);
+      _free(fopt_);
       if ((res = ctx_get_error(ctx_, 0)) != IN3_OK) {
         ctx_set_error(ctx, ctx_->error, res);
         free_ctx(ctx_);

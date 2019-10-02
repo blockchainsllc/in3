@@ -42,5 +42,6 @@ in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options);
 bool      filter_remove(in3_t* in3, size_t id);
 in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result);
 bool      filter_opt_valid(d_token_t* tx_params);
+char*     filter_opt_set_fromBlock(char* fopt, uint64_t toBlock);
 
 #endif //FILTER_H

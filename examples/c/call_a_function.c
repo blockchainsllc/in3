@@ -2,10 +2,15 @@
 #include <in3/eth_api.h>  // wrapper for easier use
 #include <in3/eth_full.h> // the full ethereum verifier containing the EVM
 #include <in3/in3_curl.h> // transport implementation
+#include <in3/log.h>
 #include <inttypes.h>
 #include <stdio.h>
 
-int main(int argc, char* argv[]) {
+static in3_ret_t call_func_rpc(in3_t* c);
+static in3_ret_t call_func_api(in3_t* c, address_t contract);
+
+int main() {
+  in3_ret_t ret = IN3_OK;
 
   // register a chain-verifier for full Ethereum-Support in order to verify eth_call
   // this needs to be called only once.
@@ -14,6 +19,9 @@ int main(int argc, char* argv[]) {
   // use curl as the default for sending out requests
   // this needs to be called only once.
   in3_register_curl();
+
+  // Remove log prefix for readability
+  in3_log_set_prefix("");
 
   // create new incubed client
   in3_t* c = in3_new();
@@ -24,11 +32,50 @@ int main(int argc, char* argv[]) {
   // copy the hexcoded string into this address
   hex2byte_arr("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
 
+  // call function using RPC
+  ret = call_func_rpc(c);
+  if (ret != IN3_OK) goto END;
+
+  // call function using API
+  ret = call_func_api(c, contract);
+  if (ret != IN3_OK) goto END;
+
+END:
+  // clean up
+  in3_free(c);
+  return 0;
+}
+
+in3_ret_t call_func_rpc(in3_t* c) {
+  // prepare 2 pointers for the result.
+  char *result, *error;
+
+  // send raw rpc-request, which is then verified
+  in3_ret_t res = in3_client_rpc(
+      c,                                                                                                //  the configured client
+      "eth_call",                                                                                       // the rpc-method you want to call.
+      "[{\"to\":\"0x2736d225f85740f42d17987100dc8d58e9e16252\", \"data\":\"0x15625c5e\"}, \"latest\"]", // the signed raw txn, same as the one used in the API example
+      &result,                                                                                          // the reference to a pointer which will hold the result
+      &error);                                                                                          // the pointer which may hold a error message
+
+  // check and print the result or error
+  if (res == IN3_OK) {
+    printf("Result: \n%s\n", result);
+    free(result);
+    return 0;
+  } else {
+    printf("Error sending tx: \n%s\n", error);
+    free(error);
+    return IN3_EUNKNOWN;
+  }
+}
+
+in3_ret_t call_func_api(in3_t* c, address_t contract) {
   // ask for the number of servers registered
-  json_ctx_t* response = eth_call_fn(c, contract, "totalServers():uint256");
+  json_ctx_t* response = eth_call_fn(c, contract, BLKNUM_LATEST(), "totalServers():uint256");
   if (!response) {
     printf("Could not get the response: %s", eth_last_error());
-    return -1;
+    return IN3_EUNKNOWN;
   }
 
   // convert the response to a uint32_t,
@@ -41,12 +88,11 @@ int main(int argc, char* argv[]) {
   printf("Found %u servers registered : \n", number_of_servers);
 
   // read all structs ...
-  for (int i = 0; i < number_of_servers; i++) {
-
-    response = eth_call_fn(c, contract, "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
+  for (uint32_t i = 0; i < number_of_servers; i++) {
+    response = eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
     if (!response) {
       printf("Could not get the response: %s", eth_last_error());
-      return -1;
+      return IN3_EUNKNOWN;
     }
 
     char*    url     = d_get_string_at(response->result, 0); // get the first item of the result (the url)
@@ -59,8 +105,5 @@ int main(int argc, char* argv[]) {
     // free memory
     free_json(response);
   }
-
-  // clean up
-  in3_free(c);
   return 0;
 }

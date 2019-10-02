@@ -75,7 +75,7 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char
   chain->initAddresses  = NULL;
   chain->lastBlock      = 0;
   chain->contract       = hex2byte_new_bytes(contract, 40);
-  chain->needsUpdate    = chainId == 0xffff ? 0 : 1;
+  chain->needsUpdate    = chainId == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
   chain->nodeListLength = boot_node_count;
   chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
@@ -98,7 +98,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->index      = node_index;
   node->capacity   = 1;
   node->deposit    = 0;
-  node->props      = chain->chainId == 0xFFFF ? 0x0 : 0xFF;
+  node->props      = chain->chainId == ETH_CHAIN_ID_LOCAL ? 0x0 : 0xFF;
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
 
@@ -117,7 +117,7 @@ static void in3_client_init(in3_t* c) {
   c->use_binary         = 0;
   c->use_http           = 0;
   c->includeCode        = 0;
-  c->chainId            = 0x01; // mainnet
+  c->chainId            = ETH_CHAIN_ID_MAINNET; // mainnet
   c->key                = NULL;
   c->finality           = 0;
   c->max_attempts       = 3;
@@ -361,7 +361,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
       c->requestCount = (uint8_t) d_int(iter.token);
     else if (iter.token->key == key("rpc")) {
       c->proof        = PROOF_NONE;
-      c->chainId      = 0xFFFF;
+      c->chainId      = ETH_CHAIN_ID_LOCAL;
       c->requestCount = 1;
       in3_node_t* n   = find_chain(c, c->chainId)->nodeList;
       if (n->url) _free(n);

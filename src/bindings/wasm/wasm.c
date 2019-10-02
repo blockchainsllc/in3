@@ -88,6 +88,7 @@ EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload),
 
 EM_JS(void, in3_req_done, (in3_ctx_t* ctx), {
   Module.pendingRequests[ctx+""]();
+
 });
 
 // clang-format on

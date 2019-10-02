@@ -119,6 +119,13 @@ int min_bytes_len(uint64_t val);
  */
 void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
 
+char* str_replace(char* orig, char* rep, char* with);
+
+char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
+
+// lightweight strstr() replacement
+char* str_find(char* haystack, const char* needle);
+
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \
     l--;                     \

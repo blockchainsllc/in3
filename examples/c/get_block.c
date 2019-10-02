@@ -1,11 +1,15 @@
 #include <in3/client.h>    // the core client
+#include <in3/eth_api.h>   // wrapper for easier use
 #include <in3/eth_basic.h> // use the basic module
 #include <in3/in3_curl.h>  // transport implementation
 
 #include <inttypes.h>
 #include <stdio.h>
 
-int main(int argc, char* argv[]) {
+static void get_block_rpc(in3_t* in3);
+static void get_block_api(in3_t* in3);
+
+int main() {
 
   // register a chain-verifier for basic Ethereum-Support, which is enough to verify blocks
   // this needs to be called only once
@@ -18,6 +22,17 @@ int main(int argc, char* argv[]) {
   // create new incubed client
   in3_t* in3 = in3_new();
 
+  // get block using raw RPC call
+  get_block_rpc(in3);
+
+  // get block using API
+  get_block_api(in3);
+
+  // cleanup client after usage
+  in3_free(in3);
+}
+
+void get_block_rpc(in3_t* in3) {
   // prepare 2 pointers for the result.
   char *result, *error;
 
@@ -37,7 +52,17 @@ int main(int argc, char* argv[]) {
     printf("Error verifing the Latest block : \n%s\n", error);
     free(error);
   }
+}
 
-  // cleanup client after usage
-  in3_free(in3);
+void get_block_api(in3_t* in3) {
+  // get the block without the transaction details
+  eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(8432424), false);
+
+  // if the result is null there was an error an we can get the latest error message from eth_lat_error()
+  if (!block)
+    printf("error getting the block : %s\n", eth_last_error());
+  else {
+    printf("Number of transactions in Block #%llu: %d\n", block->number, block->tx_count);
+    free(block);
+  }
 }

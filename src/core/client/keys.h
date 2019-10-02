@@ -141,6 +141,7 @@
 #define K_STORAGE_PROOF     key("storageProof")
 
 #define K_CONTRACT          key("contract")
+#define K_CONTRACT_ADDRESS  key("contractAddress")
 #define K_LOG_PROOF         key("logProof")
 #define K_RECEIPTS          key("receipts")
 #define K_REMOVED           key("removed")

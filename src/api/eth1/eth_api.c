@@ -51,21 +51,35 @@
 #endif
 
 // create the params as stringbuilder
-#define rpc_init sb_t* params = sb_new("[");
+#define rpc_init sb_t* params = sb_new("[")
 
 // execute the request after the params have been set.
 #define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                                      \
   errno              = 0;                                                                 \
-  in3_ctx_t*  ctx    = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
-  d_token_t*  result = get_result(ctx);                                                   \
-  RETURN_TYPE res;                                                                        \
+  in3_ctx_t*  _ctx_  = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
+  d_token_t*  result = get_result(_ctx_);                                                 \
+  RETURN_TYPE _res_;                                                                      \
   if (result)                                                                             \
-    res = (HANDLE_RESULT);                                                                \
+    _res_ = (HANDLE_RESULT);                                                              \
   else                                                                                    \
-    memset(&res, 0, sizeof(RETURN_TYPE));                                                 \
-  free_ctx(ctx);                                                                          \
+    memset(&_res_, 0, sizeof(RETURN_TYPE));                                               \
+  free_ctx(_ctx_);                                                                        \
   sb_free(params);                                                                        \
-  return res;
+  return _res_;
+
+#define params_add_key_pair(params, key, sb_add_func, quote_val, prefix_comma) \
+  do {                                                                         \
+    if (prefix_comma) sb_add_chars(params, ", ");                              \
+    sb_add_char(params, '\"');                                                 \
+    sb_add_chars(params, key);                                                 \
+    sb_add_chars(params, "\": ");                                              \
+    if (quote_val) sb_add_char(params, '\"');                                  \
+    sb_add_func;                                                               \
+    if (quote_val) sb_add_char(params, '\"');                                  \
+  } while (0)
+
+#define params_add_first_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, false)
+#define params_add_next_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, true)
 
 // last error string
 static char* last_error = NULL;
@@ -157,13 +171,23 @@ static void params_add_number(sb_t* sb, uint64_t num) {
   sb_add_chars(sb, tmp);
 }
 
-/** adding blocknumber, where bn==0 means 'latest' */
-static void params_add_blocknumber(sb_t* sb, uint64_t bn) {
-  if (bn)
-    params_add_number(sb, bn);
-  else {
-    if (sb->len > 1) sb_add_char(sb, ',');
-    sb_add_chars(sb, "\"latest\"");
+static void params_add_blk_num_t(sb_t* sb, eth_blknum_t bn) {
+  if (bn.is_u64) {
+    params_add_number(sb, bn.u64);
+  } else {
+    if (sb->len > 1) sb_add_chars(sb, ", \"");
+    switch (bn.def) {
+      case BLK_LATEST:
+        sb_add_chars(sb, "latest");
+        break;
+      case BLK_EARLIEST:
+        sb_add_chars(sb, "earliest");
+        break;
+      case BLK_PENDING:
+        sb_add_chars(sb, "pending");
+        break;
+    }
+    sb_add_char(sb, '\"');
   }
 }
 
@@ -183,7 +207,7 @@ static void params_add_bool(sb_t* sb, bool val) {
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   bytes_t b             = d_to_bytes(d_get(t, K_INPUT));
   tx->signature[64]     = d_get_intk(t, K_V);
-  tx->block_number      = d_get_longk(t, K_NUMBER);
+  tx->block_number      = d_get_longk(t, K_BLOCK_NUMBER);
   tx->gas               = d_get_longk(t, K_GAS);
   tx->gas_price         = d_get_longk(t, K_GAS_PRICE);
   tx->nonce             = d_get_longk(t, K_NONCE);
@@ -272,12 +296,12 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       p += extra.len;
       b->seal_fields = (void*) p;
       p += sizeof(bytes_t) * b->seal_fields_count;
-      for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
-        bytes_t t = d_to_bytes(sf.token);
-        rlp_decode(&t, 0, &t);
-        b->seal_fields[b->seal_fields_count - sf.left] = bytes(p, t.len);
-        memcpy(p, t.data, t.len);
-        p += t.len;
+      for (d_iterator_t sfitr = d_iter(sealed); sfitr.left; d_iter_next(&sfitr)) {
+        bytes_t sf = d_to_bytes(sfitr.token);
+        rlp_decode(&sf, 0, &sf);
+        b->seal_fields[b->seal_fields_count - sfitr.left] = bytes(p, sf.len);
+        memcpy(p, sf.data, sf.len);
+        p += sf.len;
       }
 
       b->tx_data   = include_tx ? (eth_tx_t*) p : NULL;
@@ -297,9 +321,9 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
   return NULL;
 }
 
-eth_block_t* eth_getBlockByNumber(in3_t* in3, uint64_t number, bool include_tx) {
+eth_block_t* eth_getBlockByNumber(in3_t* in3, eth_blknum_t number, bool include_tx) {
   rpc_init;
-  params_add_blocknumber(params, number);
+  params_add_blk_num_t(params, number);
   params_add_bool(params, include_tx);
   rpc_exec("eth_getBlockByNumber", eth_block_t*, eth_getBlock(result, include_tx));
 }
@@ -311,23 +335,25 @@ eth_block_t* eth_getBlockByHash(in3_t* in3, bytes32_t number, bool include_tx) {
   rpc_exec("eth_getBlockByHash", eth_block_t*, eth_getBlock(result, include_tx));
 }
 
-uint256_t eth_getBalance(in3_t* in3, address_t account, uint64_t block) {
+uint256_t eth_getBalance(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
-  params_add_blocknumber(params, block);
+  params_add_blk_num_t(params, block);
   rpc_exec("eth_getBalance", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }
-bytes_t eth_getCode(in3_t* in3, address_t account, uint64_t block) {
+
+bytes_t eth_getCode(in3_t* in3, address_t account, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
-  params_add_blocknumber(params, block);
+  params_add_blk_num_t(params, block);
   rpc_exec("eth_getCode", bytes_t, cloned_bytes(d_to_bytes(result)));
 }
-uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, uint64_t block) {
+
+uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
   params_add_bytes(params, bytes(key, 32));
-  params_add_blocknumber(params, block);
+  params_add_blk_num_t(params, block);
   rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }
 
@@ -384,16 +410,14 @@ static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   return res;
 }
 
-json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
+static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t block, bool only_estimate, char* fn_sig, va_list ap) {
   rpc_init;
   int             res = 0;
   call_request_t* req = parseSignature(fn_sig);
   if (req->in_data->type == A_TUPLE) {
     json_ctx_t* in_data = json_create();
     d_token_t*  args    = json_create_array(in_data);
-    va_list     ap;
-    va_start(ap, fn_sig);
-    var_t* p = req->in_data + 1;
+    var_t*      p       = req->in_data + 1;
     for (int i = 0; i < req->in_data->type_len; i++, p = t_next(p)) {
       switch (p->type) {
         case A_BOOL:
@@ -423,7 +447,6 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
           res        = -1;
       }
     }
-    va_end(ap);
 
     if ((res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
     free_json(in_data);
@@ -435,6 +458,7 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
     sb_add_chars(params, ", \"data\":");
     sb_add_bytes(params, "", &req->call_data->b, 1, false);
     sb_add_char(params, '}');
+    params_add_blk_num_t(params, block);
   } else {
     set_error(0, req->error ? req->error : "Error parsing the request-data");
     sb_free(
@@ -444,7 +468,11 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, char* fn_sig, ...) {
   }
 
   if (res >= 0) {
-    rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
+    if (only_estimate) {
+      rpc_exec("eth_estimateGas", d_token_t*, result);
+    } else {
+      rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
+    }
   }
   return NULL;
 }
@@ -516,16 +544,19 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   uint64_t      blkno = eth_blockNumber(in3);
   in3_filter_t* f     = in3->filters->array[id - 1];
   switch (f->type) {
-    case FILTER_EVENT:
-      *logs         = eth_getLogs(in3, f->options);
+    case FILTER_EVENT: {
+      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block);
+      *logs       = eth_getLogs(in3, fopt_);
+      _free(fopt_);
       f->last_block = blkno + 1;
       return 0;
+    }
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
         uint64_t blkcount = blkno - f->last_block;
         *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
-          eth_block_t* blk = eth_getBlockByNumber(in3, i, false);
+          eth_block_t* blk = eth_getBlockByNumber(in3, BLKNUM(i), false);
           memcpy((*block_hashes)[j], blk->hash, 32);
           free(blk);
         }
@@ -540,8 +571,194 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   }
 }
 
+in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
+  if (in3->filters == NULL)
+    return IN3_EFIND;
+  if (id == 0 || id > in3->filters->count)
+    return IN3_EINVAL;
+
+  in3_filter_t* f = in3->filters->array[id - 1];
+  switch (f->type) {
+    case FILTER_EVENT:
+      *logs = eth_getLogs(in3, f->options);
+      return 0;
+    default:
+      return IN3_ENOTSUP;
+  }
+}
+
 void free_log(eth_log_t* log) {
   _free(log->data.data);
   _free(log->topics);
   _free(log);
+}
+
+uint64_t eth_chainId(in3_t* in3) {
+  rpc_init;
+  rpc_exec("eth_chainId", uint64_t, d_long(result));
+}
+
+uint64_t eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(hash, 32));
+  rpc_exec("eth_getBlockTransactionCountByHash", uint64_t, d_long(result));
+}
+
+uint64_t eth_getBlockTransactionCountByNumber(in3_t* in3, eth_blknum_t block) {
+  rpc_init;
+  params_add_blk_num_t(params, block);
+  rpc_exec("eth_getBlockTransactionCountByNumber", uint64_t, d_long(result));
+}
+
+json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...) {
+  va_list ap;
+  va_start(ap, fn_sig);
+  json_ctx_t* response = eth_call_fn_intern(in3, contract, block, false, fn_sig, ap);
+  va_end(ap);
+  return response;
+}
+
+uint64_t eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...) {
+  va_list ap;
+  va_start(ap, fn_sig);
+  d_token_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
+  va_end(ap);
+  return d_long(response);
+}
+
+static eth_tx_t* parse_tx(d_token_t* result) {
+  if (result) {
+    if (d_type(result) == T_NULL)
+      set_error(EAGAIN, "Transaction does not exist");
+    else {
+      uint32_t  s  = get_tx_size(result);
+      eth_tx_t* tx = malloc(s);
+      if (!tx) {
+        set_error(ENOMEM, "Not enough memory");
+        return NULL;
+      }
+      write_tx(result, tx);
+      return tx;
+    }
+  }
+  return NULL;
+}
+
+eth_tx_t* eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(tx_hash, 32));
+  rpc_exec("eth_getTransactionByHash", eth_tx_t*, parse_tx(result));
+}
+
+eth_tx_t* eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index) {
+  rpc_init;
+  params_add_bytes(params, bytes(block_hash, 32));
+  params_add_number(params, index);
+  rpc_exec("eth_getTransactionByBlockHashAndIndex", eth_tx_t*, parse_tx(result));
+}
+
+eth_tx_t* eth_getTransactionByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index) {
+  rpc_init;
+  params_add_blk_num_t(params, block);
+  params_add_number(params, index);
+  rpc_exec("eth_getTransactionByBlockNumberAndIndex", eth_tx_t*, parse_tx(result));
+}
+
+uint64_t eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t block) {
+  rpc_init;
+  params_add_bytes(params, bytes(address, 20));
+  params_add_blk_num_t(params, block);
+  rpc_exec("eth_getTransactionCount", uint64_t, d_long(result));
+}
+
+static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
+  if (result) {
+    if (d_type(result) == T_NULL)
+      set_error(EAGAIN, "Error getting the Receipt!");
+    else {
+      eth_tx_receipt_t* txr = _malloc(sizeof(*txr));
+      if (!txr) {
+        set_error(ENOMEM, "Not enough memory");
+        return NULL;
+      }
+      txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);
+      txr->block_number        = d_get_longk(result, K_BLOCK_NUMBER);
+      txr->cumulative_gas_used = d_get_longk(result, K_CUMULATIVE_GAS_USED);
+      txr->gas_used            = d_get_longk(result, K_GAS_USED);
+      txr->status              = (d_get_intk(result, K_STATUS) == 1);
+      txr->contract_address    = b_dup(d_get_byteskl(result, K_CONTRACT_ADDRESS, 20));
+      txr->logs                = parse_logs(d_get(result, K_LOGS));
+      copy_fixed(txr->transaction_hash, 32, d_to_bytes(d_getl(result, K_TRANSACTION_HASH, 32)));
+      copy_fixed(txr->block_hash, 32, d_to_bytes(d_getl(result, K_BLOCK_HASH, 32)));
+      return txr;
+    }
+  }
+  return NULL;
+}
+
+void free_tx_receipt(eth_tx_receipt_t* txr) {
+  eth_log_t *curr = txr->logs, *next = NULL;
+  while (curr != NULL) {
+    next = curr->next;
+    free_log(curr);
+    curr = next;
+  }
+  _free(txr);
+}
+
+eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(tx_hash, 32));
+  rpc_exec("eth_getTransactionReceipt", eth_tx_receipt_t*, parse_tx_receipt(result));
+}
+
+eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index) {
+  rpc_init;
+  params_add_bytes(params, bytes(hash, 32));
+  params_add_number(params, index);
+  rpc_exec("eth_getUncleByBlockNumberAndIndex", eth_block_t*, eth_getBlock(result, true));
+}
+
+uint64_t eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash) {
+  rpc_init;
+  params_add_bytes(params, bytes(hash, 32));
+  rpc_exec("eth_getUncleCountByBlockHash", uint64_t, d_long(result));
+}
+
+uint64_t eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block) {
+  rpc_init;
+  params_add_blk_num_t(params, block);
+  rpc_exec("eth_getUncleCountByBlockNumber", uint64_t, d_long(result));
+}
+
+bytes_t* eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce) {
+  rpc_init;
+  sb_add_char(params, '{');
+  bytes_t tmp = bytes(from, 20);
+  params_add_first_pair(params, "from", sb_add_bytes(params, "", &tmp, 1, false), false);
+  if (to) {
+    tmp = bytes(to, 20);
+    params_add_next_pair(params, "to", sb_add_bytes(params, "", &tmp, 1, false), false);
+  }
+  if (gas.defined) {
+    params_add_next_pair(params, "gas", sb_add_hexuint(params, gas.value), true);
+  }
+  if (gas_price.defined) params_add_next_pair(params, "gasPrice", sb_add_hexuint(params, gas_price.value), true);
+  if (value.defined) {
+    tmp = bytes(value.value.data, 32);
+    params_add_next_pair(params, "value", sb_add_bytes(params, "", &tmp, 1, false), false);
+  }
+  if (data.defined) {
+    tmp = bytes(data.value.data, data.value.len);
+    params_add_next_pair(params, "data", sb_add_bytes(params, "", &tmp, 1, false), false);
+  }
+  if (nonce.defined) params_add_next_pair(params, "nonce", sb_add_hexuint(params, nonce.value), true);
+  sb_add_char(params, '}');
+  rpc_exec("eth_sendTransaction", bytes_t*, b_dup(d_bytes(result)));
+}
+
+bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
+  rpc_init;
+  params_add_bytes(params, data);
+  rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup(d_bytes(result)));
 }

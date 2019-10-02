@@ -51,6 +51,14 @@
 #include <stdint.h>
 
 #define IN3_PROTO_VER 0x2
+#define ETH_CHAIN_ID_MAINNET 0x01L
+#define ETH_CHAIN_ID_KOVAN 0x2aL
+#define ETH_CHAIN_ID_TOBALABA 0x44dL
+#define ETH_CHAIN_ID_GOERLI 0x5L
+#define ETH_CHAIN_ID_EVAN 0x4b1L
+#define ETH_CHAIN_ID_IPFS 0x7d0
+#define ETH_CHAIN_ID_VOLTA 0x12046
+#define ETH_CHAIN_ID_LOCAL 0xFFFFL
 
 /** the type of the chain. 
  * 
