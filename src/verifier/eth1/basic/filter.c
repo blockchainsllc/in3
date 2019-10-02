@@ -118,16 +118,16 @@ bool filter_opt_valid(d_token_t* tx_params) {
 char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock) {
   size_t pos, len;
   char   blockstr[40]; // buffer to hold - "fromBlock": "<21 chars for hex repr (upto UINT64_MAX)>",
-  char*  tok = strstr(fopt, "\"fromBlock\"");
+  char*  tok = str_find(fopt, "\"fromBlock\"");
   if (tok) {
     sprintf(blockstr, "0x%" PRIx64 "", fromBlock);
-    tok = strstr(strstr(tok + 1, ":") + 1, "\"");
+    tok = str_find(str_find(tok + 1, ":") + 1, "\"");
     pos = tok - fopt + 1;
-    tok = strstr(tok + 1, "\"");
+    tok = str_find(tok + 1, "\"");
     len = tok - fopt - pos;
   } else {
-    sprintf(blockstr, "\"fromBlock\":\"0x%" PRIx64 "\"%c", fromBlock, strstr(fopt, "\"") ? ',' : '\0');
-    tok = strstr(fopt, "{");
+    sprintf(blockstr, "\"fromBlock\":\"0x%" PRIx64 "\"%c", fromBlock, str_find(fopt, "\"") ? ',' : '\0');
+    tok = str_find(fopt, "{");
     pos = fopt - tok + 1;
     len = 0;
   }

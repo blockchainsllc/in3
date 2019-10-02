@@ -123,6 +123,9 @@ char* str_replace(char* orig, char* rep, char* with);
 
 char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
 
+// lightweight strstr() replacement
+char* str_find(char* haystack, const char* needle);
+
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \
     l--;                     \
