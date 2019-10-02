@@ -1369,7 +1369,8 @@
                     },
                     "lastValidatorChange": 0,
                     "lastNodeList": 8057063,
-                    "execTime": 1470
+                    "execTime": 1470,
+                    "currentBlock": 8057061
                 }
             }
         ]
