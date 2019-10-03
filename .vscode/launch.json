@@ -138,7 +138,7 @@
             "args": [
                 "-debug",
                 "-c",
-                "kovan",
+                "https://rpc.slock.it/mainnet",
                 "eth_blockNumber"
             ],
             "stopAtEntry": true,

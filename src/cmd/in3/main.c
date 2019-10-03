@@ -254,7 +254,7 @@ uint64_t getChainId(char* name) {
 void set_chain_id(in3_t* c, char* id) {
   if (strstr(id, "://")) { // its a url
     c->chainId                   = 0xFFFFL;
-    c->chains[6].nodeList[0].url = id;
+    c->chains[3].nodeList[0].url = id;
   } else
     c->chainId = getChainId(id);
 }

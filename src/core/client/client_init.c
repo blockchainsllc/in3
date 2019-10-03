@@ -133,7 +133,7 @@ static void in3_client_init(in3_t* c) {
   c->filters            = NULL;
 
   // mainnet
-  initChain(c->chains, 0x01, "40f1929b349107a65e705cdbe13c496840e12d51", "48667ae295b704e285fdbb4ad61e02af6040a1bc73bca8db450864fc44c549f1", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains, 0x01, "64abe24afbba64cae47e3dc3ced0fcab95e4edd5", "423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
   initNode(c->chains, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
 
@@ -144,7 +144,7 @@ static void in3_client_init(in3_t* c) {
   initNode(c->chains + 1, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
 #else
   // kovan
-  initChain(c->chains + 1, 0x2a, "102561587b165a9cb4cbb41d4f65981e66a86aed", "8fcf242e4ac27a3bc35ba07c1d3ca460ce863ac9bcf8349083c44810278caff9", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 1, 0x2a, "33f55122c21cc87b539e7003f7ab16229bc3af69", "97a2d1de242ffd28c95eed23a336578c406b5966daf2818f0bd1c310f7292307", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 1, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/kovan/nd-1");
   initNode(c->chains + 1, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/kovan/nd-2");
 #endif
@@ -165,7 +165,7 @@ static void in3_client_init(in3_t* c) {
   initNode(c->chains + 4, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/goerli/nd-2");
 #else
   // goerli
-  initChain(c->chains + 4, 0x05, "c5fb30ebfabc3171c0f6406d3fbacdc78dea102c", "fd9cfed117a4db071756bae3878597b3c16b189a8bdb8ce3f35846e691631f8d", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 4, 0x05, "fea298b288d232a256ae0ad5941e5c890b1db691", "a551fe03f855370f0fca881f5f2f6b8f7731a92e371c4de5f5c610833881059c", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 4, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/goerli/nd-1");
   initNode(c->chains + 4, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/foerli/nd-2");
 #endif
