@@ -255,7 +255,7 @@ docker:
 dockerhub-deploy:
   stage: deploy
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   tags:
@@ -297,7 +297,7 @@ wasm-public-npm:
   tags:
     - short-jobs
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
@@ -334,7 +334,7 @@ release_mac_and_wasm:
   tags:
     - short-jobs
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
@@ -371,7 +371,7 @@ release_x64:
     - readthedocs
     - wasm
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
@@ -397,7 +397,7 @@ release_x86:
   tags:
     - short-jobs
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
@@ -428,7 +428,7 @@ release_arm7:
   tags:
     - short-jobs
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
@@ -460,7 +460,7 @@ release_win:
   tags:
     - short-jobs
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
@@ -553,7 +553,7 @@ debian_package_deploy_bionic:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
 
@@ -564,7 +564,7 @@ debian_package_deploy_disco:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
 
@@ -613,7 +613,7 @@ debian_dev_package_deploy_bionic:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
 
@@ -624,7 +624,7 @@ debian__dev_package_deploy_disco:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
 
@@ -634,7 +634,7 @@ brew_release:
   tags:
     - short-jobs
   only:
-    - /^v[0-9]+.[0-9]+.[0-9]+$/
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
