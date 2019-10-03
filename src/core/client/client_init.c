@@ -167,7 +167,7 @@ static void in3_client_init(in3_t* c) {
   // goerli
   initChain(c->chains + 4, 0x05, "fea298b288d232a256ae0ad5941e5c890b1db691", "a551fe03f855370f0fca881f5f2f6b8f7731a92e371c4de5f5c610833881059c", 2, 2, CHAIN_ETH, NULL);
   initNode(c->chains + 4, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/goerli/nd-1");
-  initNode(c->chains + 4, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/foerli/nd-2");
+  initNode(c->chains + 4, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/goerli/nd-2");
 #endif
 }
 
