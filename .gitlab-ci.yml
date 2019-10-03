@@ -175,6 +175,7 @@ java_linux:
   stage: test
   script:
     - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  allow_failure: true
   tags:
     - short-jobs
 
@@ -221,6 +222,7 @@ examples_macos:
 
 java_arm:
   image: armv7/armhf-java8
+  allow_failure: true
   dependencies:
     - java
   stage: test
@@ -232,6 +234,7 @@ java_arm:
 
 java_macos:
   stage: test
+  allow_failure: true
   script:
     - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
   tags:
