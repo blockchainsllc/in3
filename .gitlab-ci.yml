@@ -273,9 +273,10 @@ dockerhub-deploy:
     - docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD} ${DOCKERHUB_REGISTRY}
   script:
     - docker build -t $COMMIT_IMAGE_TAG .
-    - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
+    - docker tag $COMMIT_IMAGE_TAG $IMAGE_TAG
     - docker push $IMAGE_TAG
-    - docker push $COMMIT_IMAGE_TAG
+    - docker tag $IMAGE_TAG slockit/in3:latest
+    - docker push slockit/in3:latest
 
 wasm-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
