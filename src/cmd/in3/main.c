@@ -123,6 +123,12 @@ abi_decode <signature> data\n\
 pk2address <privatekey>\n\
   extracts the public address from a private key\n\
 \n\
+pk2public <privatekey>\n\
+  extracts the public key from a private key\n\
+\n\
+ecrecover <msg> <signature>\n\
+  extracts the address and public key from a signature\n\
+\n\
 key <keyfile>\n\
   reads the private key from JSON-Keystore file and returns the private key.\n\
 \n",
@@ -395,6 +401,7 @@ static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_r
 }
 
 int main(int argc, char* argv[]) {
+
   // check for usage
   if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
     show_help(argv[0]);
@@ -684,7 +691,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;
@@ -703,6 +710,43 @@ int main(int argc, char* argv[]) {
     printf("0x");
     for (i = 0; i < 20; i++) printf("%02x", sdata[i + 12]);
     printf("\n");
+    return 0;
+  } else if (strcmp(method, "pk2public") == 0) {
+    bytes32_t prv_key;
+    uint8_t   public_key[65];
+    hex2byte_arr(argv[argc - 1], -1, prv_key, 32);
+    ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
+    print_hex(public_key + 1, 64);
+    return 0;
+  } else if (strcmp(method, "ecrecover") == 0) {
+    json_ctx_t* rargs = parse_json(params);
+    if (!rargs || d_len(rargs->result) < 2) die("Invalid arguments for recovery args must be : <message> <signature> ");
+    bytes_t   msg = d_to_bytes(d_get_at(rargs->result, 0));
+    bytes_t   sig = d_to_bytes(d_get_at(rargs->result, 1));
+    bytes32_t hash;
+    uint8_t   pub[65];
+    bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
+    if (strcmp(sig_type, "eth_sign") == 0) {
+      char tmp[msg.len + 30];
+      int  l = sprintf(tmp, "\x19"
+                           "Ethereum Signed Message:\n%i",
+                      msg.len);
+      memcpy(tmp + l, msg.data, msg.len);
+      msg = *b_new(tmp, l + msg.len);
+    }
+    if (strcmp(sig_type, "hash") == 0) {
+      if (msg.len != 32) die("The message hash must be 32 byte");
+      memcpy(hash, msg.data, 32);
+    } else
+      sha3_to(&msg, hash);
+    if (sig.len != 65) die("The signature must be 65 bytes");
+
+    if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig.data, hash, sig.data[64] >= 27 ? sig.data[64] - 27 : sig.data[64]))
+      die("Invalid Signature");
+
+    sha3_to(&pubkey_bytes, hash);
+    print_hex(hash + 12, 20);
+    print_hex(pub + 1, 64);
     return 0;
   }
 
