@@ -73,6 +73,7 @@ void show_help(char* name) {
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -np            short for -p none\n\
+-l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
 -s, -signs     number of signatures to use when verifying.\n\
 -port          if specified it will run as http-server listening to the given port.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
@@ -501,6 +502,8 @@ int main(int argc, char* argv[]) {
       }
     } else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
       block_number = argv[++i];
+    else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
+      c->replaceLatestBlock = atoll(argv[++i]);
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
