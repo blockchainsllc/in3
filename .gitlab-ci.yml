@@ -155,20 +155,20 @@ c_tests:
       - testbuild/test
       - Testing
 
-evm_tests:
-  image: docker.slock.it/build-images/cmake:gcc8
-  stage: test
-  tags:
-    - short-jobs
-  script:
-    - mkdir testbuild
-    - cd testbuild
-    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
-    - make
-    - cd ../test/testdata/evm/GeneralStateTests
-    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
-    - cd ../vmTests
-    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+#evm_tests:
+#  image: docker.slock.it/build-images/cmake:gcc8
+#  stage: test
+#  tags:
+#    - short-jobs
+#  script:
+#    - mkdir testbuild
+#    - cd testbuild
+#    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
+#    - make
+#    - cd ../test/testdata/evm/GeneralStateTests
+#    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
+#    - cd ../vmTests
+#    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -337,11 +337,11 @@ release_mac_and_wasm:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+#  only:
+#    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+#  except:
+#    - branches
+#  when: manual
   dependencies:
     - mac_os
     - gcc8
@@ -356,10 +356,12 @@ release_mac_and_wasm:
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3/
-    - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3/
-    - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_wasm.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_v0.0.1_mac.tar.gz in3/
+    - IPFS_HASH=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type: multipart/form-data' -H 'pinata_api_key: eef6833247443fb43783' -H 'pinata_secret_api_key: aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.1_mac.tar.gz -F 'pinataMetadata={"name":"pinata-test","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
+    - echo $IPFS_HASH
+    - ghr -u slockIt -r in3-c v0.0.1 in3_v0.0.1_mac.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_v0.0.1_wasm.tar.gz in3/
+    - ghr -u slockIt -r in3-c v0.0.1 in3_v0.0.1_wasm.tar.gz
     - cd in3
   artifacts:
     paths:
@@ -519,7 +521,7 @@ pages:
     - short-jobs
   dependencies:
     - c_tests
-    - evm_tests
+#    - evm_tests
     - java_arm
     - examples_arm
     - examples_linux
@@ -579,7 +581,7 @@ debian_package_deploy_disco:
     - short-jobs
   dependencies:
     - c_tests
-    - evm_tests
+#    - evm_tests
     - java_arm
     - examples_arm
     - examples_linux
