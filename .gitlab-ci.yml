@@ -356,16 +356,16 @@ release_mac_and_wasm:
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_v0.0.8_mac.tar.gz in3/
-    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.8_mac.tar.gz -F 'pinataMetadata={"name":"pinata-test","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_v0.0.9_mac.tar.gz in3/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.9_mac.tar.gz -F 'pinataMetadata={"name":"pinata-test","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo $IPFS_HASH
-    - ghr -u devops-slockIt -r release-test v0.0.8 in3_v0.0.8_mac.tar.gz
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_v0.0.8_wasm.tar.gz in3/
-    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.8_wasm.tar.gz -F 'pinataMetadata={"name":"pinata-test","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
+    - ghr -u devops-slockIt -r release-test v0.0.9 in3_v0.0.9_mac.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_v0.0.9_wasm.tar.gz in3/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.9_wasm.tar.gz -F 'pinataMetadata={"name":"pinata-test","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo $IPFS_HASH
-    - ghr -u devops-slockIt -r release-test -b $IPFS_HASH v0.0.8 in3_v0.0.8_wasm.tar.gz
+    - ghr -u devops-slockIt -r release-test -b $IPFS_HASH v0.0.9 in3_v0.0.9_wasm.tar.gz
     - cd in3
   artifacts:
     paths:
