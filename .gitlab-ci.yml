@@ -7,7 +7,7 @@ stages:
   - bindings
   - test
   - deploy
-  - brew_deploy
+  - release
 
 .conanbuild:
   stage: build
@@ -356,16 +356,16 @@ release_mac_and_wasm:
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_v0.0.9_mac.tar.gz in3/
-    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.9_mac.tar.gz -F 'pinataMetadata={"name":"pinata-test","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_v0.0.10_mac.tar.gz in3/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.10_mac.tar.gz -F 'pinataMetadata={"name":"in3_v0.0.10_mac.tar.gz","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo $IPFS_HASH
-    - ghr -u devops-slockIt -r release-test v0.0.9 in3_v0.0.9_mac.tar.gz
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_v0.0.9_wasm.tar.gz in3/
-    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.9_wasm.tar.gz -F 'pinataMetadata={"name":"pinata-test","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
+    - ghr -u devops-slockIt -r release-test v0.0.10 in3_v0.0.10_mac.tar.gz
+    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_v0.0.10_wasm.tar.gz in3/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.10_wasm.tar.gz -F 'pinataMetadata={"name":"in3_v0.0.10_wasm.tar.gz","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo $IPFS_HASH
-    - ghr -u devops-slockIt -r release-test -b $IPFS_HASH v0.0.9 in3_v0.0.9_wasm.tar.gz
+    - ghr -u devops-slockIt -r release-test -b $IPFS_HASH v0.0.10 in3_v0.0.10_wasm.tar.gz
     - cd in3
   artifacts:
     paths:
@@ -639,7 +639,7 @@ debian__dev_package_deploy_disco:
     - branches
 
 brew_release:
-  stage: brew_deploy
+  stage: release
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
@@ -664,3 +664,20 @@ brew_release:
     - git add in3.rb
     - git commit -m "updated version and hash"
     - git push https://${GITHUB_USER_NAME}:${GITHUB_TOKEN}@github.com/slockit/homebrew-in3.git --all
+
+github_body_release:
+  stage: release
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+#  only:
+#    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+#  except:
+#    - branches
+#  when: manual
+  dependencies:
+    - release_mac_and_wasm
+  script:
+    - curl -X GET 'https://api.pinata.cloud/data/pinList?status=pinned&metadata[name]=in3_v0.0.10_mac.tar.gz' \
+           -H 'pinata_api_key:eef6833247443fb43783' \
+           -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e'
