@@ -161,31 +161,43 @@ void read_pass(char* pw, int pwsize) {
   fprintf(stderr, "\033[28m"); //reveal typing
 }
 
+// accepts a value as
+// 0.1eth
+// 2keth
+// 2.3meth
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;
   int    l     = strlen(val);
   double value = 0;
   if (l > 3 && val[l - 1] > '9') {
     char unit[4];
-    strcpy(unit, val + l - 3);
-    double f = 1;
+    strcpy(unit, val + l - 3); // we copy the last 3 characters as unit
+    double f = 1;              // and define a modifying factor for the prefix of the unit
     if (val[l - 4] == 'k')
       f = 1000;
     else if (val[l - 4] == 'M')
       f = 1000000;
     else if (val[l - 4] == 'm')
       f = 0.001;
-    val[l - ((f == 1) ? 3 : 4)] = 0;
-    value                       = atof(val);
+    val[l - ((f == 1) ? 3 : 4)] = 0;         // so we let the value string end where the unit starts
+    value                       = atof(val); // so we can easily parse the value
+
     if (strcmp(unit, "eth") == 0)
       value *= 1000000000000000000l;
-    else if (strcmp(unit, "wei") == 0)
-      value *= 1000000000000000000l;
+    else if (strcmp(unit, "fin") == 0)
+      value *= 1000000000000000l;
+    else if (strcmp(unit, "wei"))
+      die("unsupported unit in value!");
     value *= f;
   } else
     value = atof(val);
 
-  value     = floor(value);
+  value = floor(value); // make sure it is a integer value
+  if (value < 0) die("negative values are not allowed");
+
+  // now convert the double into a hexstring
+  // this is no cleaning up the mempry correctly, but since it is a comandline tool
+  // we don't need to clean up
   char *res = _malloc(200), *p = res + 199;
   res[199]         = 0;
   const char hex[] = "0123456789abcdef";
@@ -227,6 +239,7 @@ bytes_t* get_std_in() {
   if (feof(stdin)) return NULL;
   bytes_t content = readFile(stdin);
 
+  // this check tries to discover a solidity compilation poutput
   char* bin = strstr((char*) content.data, "\nBinary: \n");
   if (bin) {
     bin += 10;
@@ -235,6 +248,7 @@ bytes_t* get_std_in() {
       return hex2byte_new_bytes(bin, end - bin);
   }
 
+  // is it content starting with 0x, we treat it as hex otherwisae as rwa string
   bytes_t* res = (content.len > 1 && *content.data == '0' && content.data[1] == 'x')
                      ? hex2byte_new_bytes((char*) content.data + 2, content.len - 2)
                      : hex2byte_new_bytes((char*) content.data, content.len);
@@ -268,36 +282,34 @@ void set_chain_id(in3_t* c, char* id) {
 
 // prepare a eth_call or eth_sendTransaction
 call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
-  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;
-  if (req && req->in_data->type == A_TUPLE) {
-    json_ctx_t* in_data = parse_json(args);
-    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data");
-    free_json(in_data);
-  }
-  sb_t* params = sb_new("[{");
-  if (to) {
+  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;                          // only if we have a function signature, we will parse it and create a call_request.
+  if (req && req->in_data->type == A_TUPLE) {                                            // if type is a tuple, it means we have areuments we need to parse.
+    json_ctx_t* in_data = parse_json(args);                                              // the args are passed as a "[]"- json-array string.
+    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data"); // we then set the data, which appends the arguments to the functionhash.
+    free_json(in_data);                                                                  // of course we clean up ;-)
+  }                                                                                      //
+  sb_t* params = sb_new("[{");                                                           // now we create the transactionobject as json-argument.
+  if (to) {                                                                              // if this is a deployment we must not include the to-property
     sb_add_chars(params, "\"to\":\"");
     sb_add_chars(params, to);
     sb_add_chars(params, "\" ");
   }
-  if (req || data) {
-    if (to)
-      sb_add_chars(params, ",\"data\":");
-    else
-      sb_add_chars(params, "\"data\":");
-  }
-  if (req) {
-    if (data) {
-      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len);
+  if (req || data) {                                                  // if we have a request context or explicitly data we create the data-property
+    if (params->len > 2) sb_add_char(params, ',');                    // add comma if this is not the first argument
+    sb_add_chars(params, "\"data\":");                                // we will have a data-property
+    if (req && data) {                                                // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
+      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len); // in this case we skip the functionsignature.
       memcpy(full, data->data, data->len);
       memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
       bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
       sb_add_bytes(params, "", &bb, 1, false);
       _free(full);
-    } else
+    } else if (req)
       sb_add_bytes(params, "", &req->call_data->b, 1, false);
-  } else if (data)
-    sb_add_bytes(params, "", data, 1, false);
+    else if (data)
+      sb_add_bytes(params, "", data, 1, false);
+  }
+
   if (block_number) {
     sb_add_chars(params, "},\"");
     sb_add_chars(params, block_number);
