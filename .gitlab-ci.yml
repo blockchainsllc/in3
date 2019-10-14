@@ -363,7 +363,7 @@ release_mac_and_wasm:
     - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_v0.0.15_wasm.tar.gz in3/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:eef6833247443fb43783' -H 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e' -F file=@in3_v0.0.15_wasm.tar.gz -F 'pinataMetadata={"name":"in3_v0.0.15_wasm.tar.gz","keyValues":{"version":"v0.0.1"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
-    - echo "Mac release:" $IPFS_HASH >> mac_build/mac_release_ipfs_hash.txt
+    - echo "Mac release:" $IPFS_HASH >> mac_release_ipfs_hash.txt
     - ghr -u devops-slockIt -r release-test -b $IPFS_HASH v0.0.15 in3_v0.0.15_wasm.tar.gz
     - cd in3
   artifacts:
@@ -680,7 +680,7 @@ github_body_release:
 #    - IPFS_MAC_RESPONSE=$(curl --request GET --url 'https://api.pinata.cloud/data/pinList?status=pinned&metadata[name]=in3_v0.0.15_mac.tar.gz' --header 'pinata_api_key:eef6833247443fb43783' --header 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e')
 #    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
 #    - echo $IPFS_HASH
-    - ls
+    - find . -print | sed -e 's;[^/]*/;|-- ;g;s;-- |; |;g'
     - ls in3/
-    - cat in3/mac_build/mac_release_ipfs_hash.txt >> release_ipfs_hash.txt
+    - cat in3/mac_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - ghr -u devops-slockIt -r release-test -b $(cat release_ipfs_hash.txt) v0.0.15 release_ipfs_hash.txt
