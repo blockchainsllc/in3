@@ -680,6 +680,7 @@ github_body_release:
 #  when: manual
   dependencies:
     - release_mac_and_wasm
+    - release_x64
   script:
 #    - IPFS_MAC_RESPONSE=$(curl --request GET --url 'https://api.pinata.cloud/data/pinList?status=pinned&metadata[name]=in3_v0.0.19_mac.tar.gz' --header 'pinata_api_key:eef6833247443fb43783' --header 'pinata_secret_api_key:aaa991978436844ef1c51a4eab005d01f0ae5ac4d2ebd551ec570b3624e6df0e')
 #    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
@@ -688,4 +689,5 @@ github_body_release:
     - ls in3-mac-wasm
     - ls in3-x64
     - cat in3-mac-wasm/mac_release_ipfs_hash.txt >> release_ipfs_hash.txt
+    - cat in3-x64/x64_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - ghr -u devops-slockIt -r release-test -body="$(cat ./release_ipfs_hash.txt)" v0.0.19 release_ipfs_hash.txt
