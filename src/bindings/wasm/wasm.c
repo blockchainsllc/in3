@@ -60,7 +60,6 @@ bytes_t* storage_get_item(void* cptr, char* key) {
   UNUSED_VAR(cptr);
   char*    val = in3_cache_get(key);
   bytes_t* res = val ? hex2byte_new_bytes(val, strlen(val)) : NULL;
-  if (val) free(val);
   return res;
 }
 
@@ -128,9 +127,7 @@ void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
 }
 /* frees the references of the client */
 in3_ret_t EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
-  in3_ret_t res = in3_configure(a, conf);
-  free(conf);
-  return res;
+  return in3_configure(a, conf);
 }
 
 char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
@@ -138,9 +135,8 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
 }
 
 in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request(in3_t* c, char* payload) {
-  char* src_data = _strdupn(payload, -1);
-  free(payload);
-  in3_ctx_t* ctx = new_ctx(c, src_data);
+  char*      src_data = _strdupn(payload, -1);
+  in3_ctx_t* ctx      = new_ctx(c, src_data);
   if (ctx->error) {
     in3_set_error(ctx->error);
     free_ctx(ctx);
@@ -179,10 +175,8 @@ char* EMSCRIPTEN_KEEPALIVE request_get_error(in3_ctx_t* r) {
 
 void EMSCRIPTEN_KEEPALIVE request_set_result(in3_response_t* r, char* data) {
   sb_add_chars(&r->result, data);
-  free(data);
 }
 
 void EMSCRIPTEN_KEEPALIVE request_set_error(in3_response_t* r, char* data) {
   sb_add_chars(&r->error, data);
-  free(data);
 }

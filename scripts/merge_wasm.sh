@@ -10,7 +10,7 @@ base64 -i in3w.wasm | tr -d '\n' >> $TARGET_JS
 printf "\";\nvar in3w = {}; if (typeof Buffer !=='undefined')  in3w.wasmBinary=Buffer.from(wasmdata,'base64');\n" >> $TARGET_JS
 # for the browser we change the url to embed the data, so fetch will not send a request.
 # so we replace the url in the gluecode and append it to the bundle.
-sed 's/in3w.wasm/data:application\/octet-stream;base64,"+wasmdata+"/g' in3w.js >> $TARGET_JS
+sed "s/['\"]+in3w.wasm['\"]+/'data:application\/octet-stream;base64,'+wasmdata/g" in3w.js >> $TARGET_JS
 # add custom code the defines the public export. This code will have access to all the internal functions of the gluecode!
 # it should also overwrite the module.exports to use the wrapper-class.
 cat "$1/in3.js" >> $TARGET_JS
