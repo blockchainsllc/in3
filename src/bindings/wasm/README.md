@@ -21,8 +21,7 @@ The complete documentation can be found https://in3.readthedocs.io/en/develop/ .
 import In3Client from 'in3-wasm'
 import * as web3 from 'web3'
 
-const IN3Client c = new IN3Client();
-await c.setConfig({
+const IN3Client c = new IN3Client({
     proof         : 'standard',
     signatureCount: 1,
     requestCount  : 2,
@@ -82,11 +81,10 @@ const block = await in3.sendRPC('eth_getBlockByNumber',['latest',false])
             </pre>
         </div>
         <script>
-            var c = new IN3();
-            c.setConfig({ 
+            var c = new IN3({ 
                    chainId: 0x5 
                 })
-                .then(() => c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] }))
+            c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
                 .then(r => document.getElementById('result').innerHTML = JSON.stringify(r, null, 2))
                 .catch(alert)
         </script>
