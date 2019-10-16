@@ -73,6 +73,7 @@ void show_help(char* name) {
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -np            short for -p none\n\
+-l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
 -s, -signs     number of signatures to use when verifying.\n\
 -port          if specified it will run as http-server listening to the given port.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
@@ -122,6 +123,12 @@ abi_decode <signature> data\n\
 pk2address <privatekey>\n\
   extracts the public address from a private key\n\
 \n\
+pk2public <privatekey>\n\
+  extracts the public key from a private key\n\
+\n\
+ecrecover <msg> <signature>\n\
+  extracts the address and public key from a signature\n\
+\n\
 key <keyfile>\n\
   reads the private key from JSON-Keystore file and returns the private key.\n\
 \n",
@@ -154,31 +161,43 @@ void read_pass(char* pw, int pwsize) {
   fprintf(stderr, "\033[28m"); //reveal typing
 }
 
+// accepts a value as
+// 0.1eth
+// 2keth
+// 2.3meth
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;
   int    l     = strlen(val);
   double value = 0;
   if (l > 3 && val[l - 1] > '9') {
     char unit[4];
-    strcpy(unit, val + l - 3);
-    double f = 1;
+    strcpy(unit, val + l - 3); // we copy the last 3 characters as unit
+    double f = 1;              // and define a modifying factor for the prefix of the unit
     if (val[l - 4] == 'k')
       f = 1000;
     else if (val[l - 4] == 'M')
       f = 1000000;
     else if (val[l - 4] == 'm')
       f = 0.001;
-    val[l - ((f == 1) ? 3 : 4)] = 0;
-    value                       = atof(val);
+    val[l - ((f == 1) ? 3 : 4)] = 0;         // so we let the value string end where the unit starts
+    value                       = atof(val); // so we can easily parse the value
+
     if (strcmp(unit, "eth") == 0)
       value *= 1000000000000000000l;
-    else if (strcmp(unit, "wei") == 0)
-      value *= 1000000000000000000l;
+    else if (strcmp(unit, "fin") == 0)
+      value *= 1000000000000000l;
+    else if (strcmp(unit, "wei"))
+      die("unsupported unit in value!");
     value *= f;
   } else
     value = atof(val);
 
-  value     = floor(value);
+  value = floor(value); // make sure it is a integer value
+  if (value < 0) die("negative values are not allowed");
+
+  // now convert the double into a hexstring
+  // this is no cleaning up the mempry correctly, but since it is a comandline tool
+  // we don't need to clean up
   char *res = _malloc(200), *p = res + 199;
   res[199]         = 0;
   const char hex[] = "0123456789abcdef";
@@ -220,6 +239,7 @@ bytes_t* get_std_in() {
   if (feof(stdin)) return NULL;
   bytes_t content = readFile(stdin);
 
+  // this check tries to discover a solidity compilation poutput
   char* bin = strstr((char*) content.data, "\nBinary: \n");
   if (bin) {
     bin += 10;
@@ -228,6 +248,7 @@ bytes_t* get_std_in() {
       return hex2byte_new_bytes(bin, end - bin);
   }
 
+  // is it content starting with 0x, we treat it as hex otherwisae as rwa string
   bytes_t* res = (content.len > 1 && *content.data == '0' && content.data[1] == 'x')
                      ? hex2byte_new_bytes((char*) content.data + 2, content.len - 2)
                      : hex2byte_new_bytes((char*) content.data, content.len);
@@ -261,36 +282,34 @@ void set_chain_id(in3_t* c, char* id) {
 
 // prepare a eth_call or eth_sendTransaction
 call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
-  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;
-  if (req && req->in_data->type == A_TUPLE) {
-    json_ctx_t* in_data = parse_json(args);
-    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data");
-    free_json(in_data);
-  }
-  sb_t* params = sb_new("[{");
-  if (to) {
+  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;                          // only if we have a function signature, we will parse it and create a call_request.
+  if (req && req->in_data->type == A_TUPLE) {                                            // if type is a tuple, it means we have areuments we need to parse.
+    json_ctx_t* in_data = parse_json(args);                                              // the args are passed as a "[]"- json-array string.
+    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data"); // we then set the data, which appends the arguments to the functionhash.
+    free_json(in_data);                                                                  // of course we clean up ;-)
+  }                                                                                      //
+  sb_t* params = sb_new("[{");                                                           // now we create the transactionobject as json-argument.
+  if (to) {                                                                              // if this is a deployment we must not include the to-property
     sb_add_chars(params, "\"to\":\"");
     sb_add_chars(params, to);
     sb_add_chars(params, "\" ");
   }
-  if (req || data) {
-    if (to)
-      sb_add_chars(params, ",\"data\":");
-    else
-      sb_add_chars(params, "\"data\":");
-  }
-  if (req) {
-    if (data) {
-      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len);
+  if (req || data) {                                                  // if we have a request context or explicitly data we create the data-property
+    if (params->len > 2) sb_add_char(params, ',');                    // add comma if this is not the first argument
+    sb_add_chars(params, "\"data\":");                                // we will have a data-property
+    if (req && data) {                                                // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
+      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len); // in this case we skip the functionsignature.
       memcpy(full, data->data, data->len);
       memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
       bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
       sb_add_bytes(params, "", &bb, 1, false);
       _free(full);
-    } else
+    } else if (req)
       sb_add_bytes(params, "", &req->call_data->b, 1, false);
-  } else if (data)
-    sb_add_bytes(params, "", data, 1, false);
+    else if (data)
+      sb_add_bytes(params, "", data, 1, false);
+  }
+
   if (block_number) {
     sb_add_chars(params, "},\"");
     sb_add_chars(params, block_number);
@@ -394,6 +413,7 @@ static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_r
 }
 
 int main(int argc, char* argv[]) {
+
   // check for usage
   if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
     show_help(argv[0]);
@@ -501,6 +521,8 @@ int main(int argc, char* argv[]) {
       }
     } else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
       block_number = argv[++i];
+    else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
+      c->replaceLatestBlock = atoll(argv[++i]);
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -681,7 +703,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;
@@ -700,6 +722,43 @@ int main(int argc, char* argv[]) {
     printf("0x");
     for (i = 0; i < 20; i++) printf("%02x", sdata[i + 12]);
     printf("\n");
+    return 0;
+  } else if (strcmp(method, "pk2public") == 0) {
+    bytes32_t prv_key;
+    uint8_t   public_key[65];
+    hex2byte_arr(argv[argc - 1], -1, prv_key, 32);
+    ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
+    print_hex(public_key + 1, 64);
+    return 0;
+  } else if (strcmp(method, "ecrecover") == 0) {
+    json_ctx_t* rargs = parse_json(params);
+    if (!rargs || d_len(rargs->result) < 2) die("Invalid arguments for recovery args must be : <message> <signature> ");
+    bytes_t   msg = d_to_bytes(d_get_at(rargs->result, 0));
+    bytes_t   sig = d_to_bytes(d_get_at(rargs->result, 1));
+    bytes32_t hash;
+    uint8_t   pub[65];
+    bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
+    if (strcmp(sig_type, "eth_sign") == 0) {
+      char tmp[msg.len + 30];
+      int  l = sprintf(tmp, "\x19"
+                           "Ethereum Signed Message:\n%i",
+                      msg.len);
+      memcpy(tmp + l, msg.data, msg.len);
+      msg = *b_new(tmp, l + msg.len);
+    }
+    if (strcmp(sig_type, "hash") == 0) {
+      if (msg.len != 32) die("The message hash must be 32 byte");
+      memcpy(hash, msg.data, 32);
+    } else
+      sha3_to(&msg, hash);
+    if (sig.len != 65) die("The signature must be 65 bytes");
+
+    if (ecdsa_recover_pub_from_sig(&secp256k1, pub, sig.data, hash, sig.data[64] >= 27 ? sig.data[64] - 27 : sig.data[64]))
+      die("Invalid Signature");
+
+    sha3_to(&pubkey_bytes, hash);
+    print_hex(hash + 12, 20);
+    print_hex(pub + 1, 64);
     return 0;
   }
 
