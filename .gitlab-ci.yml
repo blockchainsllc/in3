@@ -180,6 +180,7 @@ wasm_tests:
   script:
     - mv wasm_build build
     - cd test/bindings/wasm
+    - sh /prepare.sh
     - npm install
     - npm test
 
