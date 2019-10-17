@@ -146,8 +146,8 @@ analyse:
   tags:
     - short-jobs
   script:
-    - mkdir build
-    - cd build
+    - mkdir _build
+    - cd _build
     - scan-build-9 --force-analyze-debug-code cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
     - scan-build-9 -v make
     - cp -r /tmp/scan-build* ../report
