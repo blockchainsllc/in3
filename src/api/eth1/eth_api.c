@@ -448,7 +448,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
       }
     }
 
-    if ((res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
+    if (res >= 0 && (res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
     free_json(in_data);
   }
   if (res >= 0) {

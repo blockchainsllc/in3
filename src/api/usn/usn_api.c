@@ -31,13 +31,13 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
 #include "usn_api.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
+#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -132,7 +132,7 @@ static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t 
       p += bytes_to_hex(vs, vl, p);
     }
   }
-  p += sprintf(p, "\"}]");
+  sprintf(p, "\"}]");
 
   // send the request
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_sendTransaction", op);
@@ -412,7 +412,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
       }
       p += sprintf(p, "]");
     }
-    p += sprintf(p, "],\"fromBlock\":\"0x%" PRIx64 "\",\"toBlock\":\"0x%" PRIx64 "\"}]", conf->last_checked_block + 1, current_block);
+    sprintf(p, "],\"fromBlock\":\"0x%" PRIx64 "\",\"toBlock\":\"0x%" PRIx64 "\"}]", conf->last_checked_block + 1, current_block);
 
     // send the request
     ctx = in3_client_rpc_ctx(conf->c, "eth_getLogs", params);

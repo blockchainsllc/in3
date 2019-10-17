@@ -303,9 +303,8 @@ void write(bytes_t* data, char* l, char** tt) {
         }
       if (tt && tt != CHAINSPEC) t2 = NULL;
       printf("%s", l);
-      if (tt) {
-        d = printf("%-20s : ", tt[i + 1]);
-      }
+      if (tt)
+        printf("%-20s : ", tt[i + 1]);
 
       printf("[ %s", t2 ? t2[0] : "");
 

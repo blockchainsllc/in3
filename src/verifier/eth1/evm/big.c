@@ -473,7 +473,7 @@ int big_div(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* r
 }
 
 int big_mod(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* res) {
-  wlen_t  l, l2;
+  wlen_t  l = 0, l2;
   uint8_t tmp[65];
 
   optimize_len(a, la);
