@@ -383,5 +383,21 @@ export default class IN3 {
      * disposes the Client. This must be called in order to free allocated memory!
      */
     public free();
+
+
+    /**
+     * changes the transport-function.
+     * 
+     * @param fn the function to fetch the response for the given url
+     */
+    public static setTransport(fn: (url: string, payload: string) => Promise<string>): void
+
+    /**
+     * changes the storage handler, which is called to read and write to the cache.
+     */
+    public static setStorage(handler: {
+        get: (key: string) => string,
+        set(key: string, value: string): void
+    }): void
 }
 

@@ -231,6 +231,17 @@ class IN3 {
         if (this.ptr)
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
     }
+
+
+}
+// change the transport
+IN3.setTransport = function (fn) {
+    in3w.transport = fn
+}
+
+// change the transport
+IN3.setStorage = function (fn) {
+    in3w.in3_cache = fn
 }
 
 // also support ES6-modules

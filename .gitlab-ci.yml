@@ -170,6 +170,19 @@ evm_tests:
     - cd ../vmTests
     - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
+wasm_tests:
+  image: docker.slock.it/build-images/node:11-alpine
+  dependencies:
+    - wasm
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mv wasm_build build
+    - cd test/bindings/wasm
+    - npm install
+    - npm test
+
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test

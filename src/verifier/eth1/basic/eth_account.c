@@ -165,8 +165,9 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     if (!d_eq(vc->result, d_get(proofed_account, K_NONCE)))
       return vc_err(vc, "the nonce in the proof is different");
   } else if (strcmp(method, "eth_getCode") == 0) {
-    if (d_type(vc->result) == T_BYTES) {
-      if (sha3_to(d_bytes(vc->result), hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
+    bytes_t data = d_to_bytes(vc->result);
+    if (data.len) {
+      if (sha3_to(&data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
         return vc_err(vc, "the codehash in the proof is different");
     } else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");
