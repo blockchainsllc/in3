@@ -777,6 +777,8 @@ int main(int argc, char* argv[]) {
 
   if (error)
     die(error);
+  else if (!result)
+    die("No result");
   else {
 
     if (out_response && last_response) {
