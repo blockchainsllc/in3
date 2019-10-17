@@ -378,7 +378,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
         in3_chain_t* chain    = find_chain(c, chain_id);
         if (!chain) {
           bytes_t* contract_t  = d_get_byteskl(ct.token, key("contract"), 20);
-          bytes_t* registry_id = d_get_byteskl(ct.token, key("regiistryId"), 32);
+          bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
           if (!contract_t || !registry_id) {
             res = IN3_EINVAL;
             goto cleanup;
@@ -390,9 +390,14 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
           if (cp.token->key == key("contract"))
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
-          else if (cp.token->key == key("registryId"))
-            memcpy(chain->registry_id, cp.token->data, cp.token->len);
-          else if (cp.token->key == key("needsUpdate"))
+          else if (cp.token->key == key("registryId")) {
+            bytes_t data = d_to_bytes(cp.token);
+            if (data.len != 32) {
+              res = IN3_EINVAL;
+              goto cleanup;
+            }
+            memcpy(chain->registry_id, data.data, 32);
+          } else if (cp.token->key == key("needsUpdate"))
             chain->needsUpdate = d_int(cp.token) ? true : false;
           else if (cp.token->key == key("nodeList")) {
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;

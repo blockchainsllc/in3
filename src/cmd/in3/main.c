@@ -614,7 +614,8 @@ int main(int argc, char* argv[]) {
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
-  if (method && *method == '-') die("unknown option");
+  if (!method) die("you need to specify a method to call");
+  if (*method == '-') die("unknown option");
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {

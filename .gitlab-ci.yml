@@ -139,6 +139,22 @@ java:
 
 # ##### test ######
 
+analyse:
+  stage: test
+  image: docker.slock.it/build-images/cmake:clang9
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir build
+    - cd build
+    - scan-build-9 --force-analyze-debug-code cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-9 -v make
+    - cp -r /tmp/scan-build* ../report
+  artifacts:
+    paths:
+      - report
+
 c_tests:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
