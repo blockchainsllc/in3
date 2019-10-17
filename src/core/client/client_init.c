@@ -392,11 +392,11 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
           else if (cp.token->key == key("registryId")) {
             bytes_t data = d_to_bytes(cp.token);
-            if (data.len != 32) {
+            if (data.len != 32 || !data.data) {
               res = IN3_EINVAL;
               goto cleanup;
-            }
-            memcpy(chain->registry_id, data.data, 32);
+            } else
+              memcpy(chain->registry_id, data.data, 32);
           } else if (cp.token->key == key("needsUpdate"))
             chain->needsUpdate = d_int(cp.token) ? true : false;
           else if (cp.token->key == key("nodeList")) {
