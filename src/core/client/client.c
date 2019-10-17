@@ -66,6 +66,7 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
 }
 
 in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
+  if (!error || !result) return IN3_EINVAL;
   in3_ret_t res = IN3_OK;
   // prepare request
   char req[strlen(method) + strlen(params) + 200];

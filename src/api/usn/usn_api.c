@@ -102,7 +102,7 @@ static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t
   p += bytes_to_hex(cdata, l, p);
   p += sprintf(p, "\",\"gas\":\"0x77c810\",\"to\":\"0x");
   p += bytes_to_hex(conf->contract, 20, p);
-  p += sprintf(p, "\"},\"latest\"]");
+  sprintf(p, "\"},\"latest\"]");
 
   // send the request
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", op);
