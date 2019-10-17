@@ -148,9 +148,8 @@ analyse:
   script:
     - mkdir _build
     - cd _build
-    - scan-build-9 --force-analyze-debug-code cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-9 -v make
-    - cp -r /tmp/scan-build* ../report
+    - scan-build-9 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-9 --exclude ../src/third-party -stats --force-analyze-debug-code -o ../report make
   artifacts:
     paths:
       - report
