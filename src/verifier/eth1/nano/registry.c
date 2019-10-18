@@ -148,7 +148,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
   if (node_limit && node_limit < total_servers) {
     if (d_len(server_list) != (int) node_limit) return vc_err(vc, "wrong length of the nodes!");
     const uint32_t seed_len = required_addresses ? d_len(required_addresses) : 0;
-    uint32_t       seed_indexes[seed_len], i = 0;
+    uint32_t       seed_indexes[seed_len ? seed_len : 1], i = 0;
 
     // check if the required addresses are part of the list
     // and create the index-list
@@ -173,8 +173,9 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
 
     // check that we have the correct indexes in the nodelist
     i = 0;
-    for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it), i++) {
-      if (d_get_intk(it.token, K_INDEX) != indexes[i]) return vc_err(vc, "wrong index in partial nodelist");
+    for (d_iterator_t it = d_iter(server_list); it.left && i < node_limit; d_iter_next(&it), i++) {
+      uint32_t index = d_get_intk(it.token, K_INDEX);
+      if (index != indexes[i]) return vc_err(vc, "wrong index in partial nodelist");
     }
   } else if ((int) total_servers != d_len(server_list))
     return vc_err(vc, "wrong number of nodes in the serverlist");

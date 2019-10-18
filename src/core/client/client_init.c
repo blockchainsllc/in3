@@ -38,6 +38,7 @@
 #include "cache.h"
 #include "client.h"
 #include "nodelist.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -384,6 +385,8 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
             goto cleanup;
           }
           if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract_t->data, registry_id->data, 2, NULL)) != IN3_OK) goto cleanup;
+          chain = find_chain(c, chain_id);
+          assert(chain != NULL);
         }
 
         // chain_props

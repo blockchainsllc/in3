@@ -102,7 +102,7 @@ const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {
   if (len == -1) {
     len = strlen(buf);
-    if (*buf == '0' && buf[1] == 'x') {
+    if (len >= 2 && *buf == '0' && buf[1] == 'x') {
       buf += 2;
       len -= 2;
     }

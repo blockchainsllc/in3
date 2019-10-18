@@ -557,8 +557,11 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
         *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           eth_block_t* blk = eth_getBlockByNumber(in3, BLKNUM(i), false);
-          memcpy((*block_hashes)[j], blk->hash, 32);
-          free(blk);
+          if (blk) {
+            memcpy((*block_hashes)[j], blk->hash, 32);
+            free(blk);
+          } else
+            return IN3_EFIND;
         }
         f->last_block = blkno;
         return (int) blkcount;

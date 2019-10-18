@@ -622,14 +622,17 @@ int main(int argc, char* argv[]) {
     req    = prepare_tx(sig, to, params, block_number, 0, NULL, data);
     method = "eth_call";
   } else if (strcmp(method, "abi_encode") == 0) {
+    if (!sig) die("missing signature");
     req = parseSignature(sig);
     if (req && req->in_data->type == A_TUPLE) {
       json_ctx_t* in_data = parse_json(params);
       if (set_data(req, in_data->result, req->in_data) < 0) die("invalid arguments for given signature");
     }
+    if (!req || !req->call_data) die("missing call data");
     print_hex(req->call_data->b.data, req->call_data->b.len);
     return 0;
   } else if (strcmp(method, "abi_decode") == 0) {
+    if (!sig) die("missing signature");
     if (!strchr(sig, ':')) {
       char* tmp = malloc(strlen(sig) + 5);
       strcpy(tmp, "d():");

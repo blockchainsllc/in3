@@ -56,7 +56,7 @@ typedef struct {
   uint64_t  rented_from;
   uint64_t  rented_until;
   address_t controller;
-  uint64_t  props[16];
+  uint8_t   props[16];
 } usn_booking_t;
 
 typedef struct {

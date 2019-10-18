@@ -344,8 +344,11 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
   booking->rented_from   = rented_from;
   booking->rented_until  = rented_until;
   memcpy(booking->controller, controller, 20);
-  memcpy(booking->props, props, 16);
   memcpy(booking->tx_hash, tx_hash, 32);
+  if (props)
+    memcpy(booking->props, props, 16);
+  else
+    memset(booking->props, 0, 16);
   device->num_bookings++;
   return 1;
 }
@@ -371,6 +374,11 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
       // get the number of bookings and manage memory
       if (0 > (res = exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp, 32))) return res;
       if (device->bookings) _free(device->bookings);
+
+#ifdef __clang_analyzer__
+      // let the analyser know that this can not be garbage values
+      memset(tmp, 0, 128);
+#endif
       int size             = bytes_to_int(tmp + 28, 4);
       device->bookings     = size ? _calloc(sizeof(usn_booking_t), size) : NULL;
       device->num_bookings = 0;
@@ -565,6 +573,10 @@ in3_ret_t usn_rent(in3_t* c, address_t contract, address_t token, char* url, uin
   memcpy(params + 4, purl.device_id, 32);
   int_to_bytes(seconds, params + 64);
   if (token) memcpy(params + 80, token, 20);
+#ifdef __clang_analyzer__
+  // let the analyser know that this can not be garbage values
+  memset(price, 0, 32);
+#endif
 
   res = exec_eth_send(&conf, bytes(params, 100), price, tx_hash);
   if (res < 0) return res;

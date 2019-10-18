@@ -142,7 +142,7 @@ java:
 analyse:
   stage: test
   image: docker.slock.it/build-images/cmake:clang9
-  allow_failure: true
+  allow_failure: false
   tags:
     - short-jobs
   script:
