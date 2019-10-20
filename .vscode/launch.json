@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run test",
+            "program": "${workspaceFolder}/build/test/runner",
+            "args": [
+                "../test/testdata/requests/eth_getBlockByNumber.json",
+                "-m",
+                "132",
+                "-t",
+                "1"
+            ],
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Launch wasm test",
@@ -136,13 +150,16 @@
             "args": [
                 "-t",
                 "1",
-                "../test/testdata/requests/in3_nodeList.json"
+                "../test/testdata/requests/in3_getBlockByNumber.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "lldb"
+            "MIMode": "lldb",
+            "logging": {
+                "trace": true
+            }
         },
         {
             "name": "java",

@@ -183,61 +183,23 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
   // now check the content of the nodelist
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it)) {
     uint32_t index = d_get_intk(it.token, K_INDEX);
-    if (vc->chain->version > 1) {
-      bytes_t url = d_to_bytes(d_get(it.token, K_URL));
-      int     l   = 84 + url.len;
-      uint8_t buffer[l];
-      memset(buffer, 0, l);
+    bytes_t  url   = d_to_bytes(d_get(it.token, K_URL));
+    int      l     = 84 + url.len;
+    uint8_t  buffer[l];
+    memset(buffer, 0, l);
 
-      // new storage layout
-      bytes_t val = d_to_bytes(d_get(it.token, K_ADDRESS)), data = bytes(buffer, l);
-      long_to_bytes(d_get_longk(it.token, K_DEPOSIT), buffer + 24); // TODO deposit is read as uint64, which means max 18 ETH!
-      long_to_bytes(d_get_longk(it.token, K_TIMEOUT), buffer + 32);
-      long_to_bytes(d_get_longk(it.token, K_REGISTER_TIME), buffer + 40);
-      long_to_bytes(d_get_longk(it.token, K_PROPS), buffer + 56); // TODO at the moment we only support 64bit instead of 128bit, which might cause issues, if someone registeres a server with 128bit props.
+    // new storage layout
+    bytes_t val = d_to_bytes(d_get(it.token, K_ADDRESS)), data = bytes(buffer, l);
+    long_to_bytes(d_get_longk(it.token, K_DEPOSIT), buffer + 24); // TODO deposit is read as uint64, which means max 18 ETH!
+    long_to_bytes(d_get_longk(it.token, K_TIMEOUT), buffer + 32);
+    long_to_bytes(d_get_longk(it.token, K_REGISTER_TIME), buffer + 40);
+    long_to_bytes(d_get_longk(it.token, K_PROPS), buffer + 56); // TODO at the moment we only support 64bit instead of 128bit, which might cause issues, if someone registeres a server with 128bit props.
 
-      memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
-      memcpy(buffer + 64 + 20, url.data, url.len);
+    memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
+    memcpy(buffer + 64 + 20, url.data, url.len);
 
-      sha3_to(&data, buffer);
-      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), buffer));
-
-    } else {
-      // old storage-layout
-
-      // check the owner
-      if (!d_get(it.token, K_ADDRESS)) return vc_err(vc, "no owner in nodelist");
-      memset(svalue, 0, 32);
-      long_to_bytes(d_get_longkd(it.token, K_TIMEOUT, 0), svalue + 4);
-      memcpy(svalue + 12, d_get_byteskl(it.token, K_ADDRESS, 20)->data, 20);
-      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 1, skey), svalue));
-
-      // check the deposit
-      TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 2, skey), svalue));
-      uint64_t deposit = bytes_to_long(svalue, 32);
-      if (d_get_longk(it.token, K_DEPOSIT) != deposit) return vc_err(vc, "wrong deposit");
-
-      // check props
-      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 3, skey), as_bytes32(svalue, d_to_bytes(d_get(it.token, K_PROPS)))));
-
-      // check url
-      TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 0, skey), svalue));
-      const char* url = d_get_stringk(it.token, K_URL);
-      if (!url) return vc_err(vc, "missing url");
-      if (svalue[31] % 2) {
-        // the url-value is concated from multiple values.
-        uint32_t len  = (bytes_to_int(svalue + 28, 4) - 1) >> 1;
-        uint8_t  inc  = 1;
-        bytes_t  hash = bytes(skey, 32);
-        sha3_to(&hash, skey);
-        if (len != strlen(url)) return vc_err(vc, "wrong url");
-        for (uint32_t n = 0; n <= (len - 1) >> 5; n++, big_add(skey, &inc, 1)) {
-          TRY(get_storage_value(storage_proofs, skey, svalue));
-          if (memcmp(svalue, url + (n << 5), min(32, len - (n << 5)))) return vc_err(vc, "wrong url");
-        }
-      } else if (strlen(url) != svalue[31] >> 1 || memcmp(url, svalue, svalue[31] >> 1))
-        return vc_err(vc, "wrong url");
-    }
+    sha3_to(&data, buffer);
+    TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), buffer));
   }
 
   return IN3_OK;
