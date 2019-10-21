@@ -43,7 +43,6 @@ add_executable(runner runner.c)
 target_link_libraries(runner eth_full)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
-target_code_coverage(vmrunner "" AUTO ALL)
 target_link_libraries(vmrunner eth_full)
 
 if(TRANSPORTS)
@@ -52,7 +51,7 @@ if(TRANSPORTS)
 endif()
 
 add_executable(test_key_hash test_key_hash.c unity/unity.c)
-#target_code_coverage(test_key_hash AUTO ALL)
+target_code_coverage(test_key_hash "" AUTO ALL)
 target_link_libraries(test_key_hash core)
 
 add_test(
@@ -100,6 +99,10 @@ foreach (file ${files})
     )
 endforeach ()
 target_code_coverage(runner "${files}" AUTO ALL)
+
+file(GLOB files "testdata/evm/TrieTests/*.json" "testdata/RLPTests/*.json" "testdata/vmTests/vmEnvironmentalInfo/*.json")
+target_code_coverage(vmrunner "${files}" AUTO ALL)
+
 
 foreach (testdir
         vmTests/vmBitwiseLogicOperation
