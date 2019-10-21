@@ -38,3 +38,8 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.12.4")
   set_property(GLOBAL PROPERTY DEAD_STRIP_LINKER_OPT "")
 endif()
 
+if (CODE_COVERAGE)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+endif()
+

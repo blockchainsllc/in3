@@ -33,17 +33,26 @@
 ###############################################################################
 
 include_directories(. ../src)
+include(code-coverage.cmake)
+
+if (CODE_COVERAGE)
+  add_code_coverage_all_targets()
+endif()
 
 add_executable(runner runner.c)
 target_link_libraries(runner eth_full)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
+target_code_coverage(vmrunner "" AUTO ALL)
 target_link_libraries(vmrunner eth_full)
 
-add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
-target_link_libraries(test_libcurl transport_curl eth_nano)
+if(TRANSPORTS)
+        add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
+        target_link_libraries(test_libcurl transport_curl eth_nano)
+endif()
 
 add_executable(test_key_hash test_key_hash.c unity/unity.c)
+#target_code_coverage(test_key_hash AUTO ALL)
 target_link_libraries(test_key_hash core)
 
 add_test(
@@ -52,7 +61,9 @@ add_test(
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
+
 add_executable(test_verify_eth_getLog test_verify_eth_getLog.c unity/unity.c)
+target_code_coverage(test_verify_eth_getLog "" AUTO ALL)
 target_link_libraries(test_verify_eth_getLog eth_basic)
 add_test(
         NAME "test_verify_eth_getLog"
@@ -61,6 +72,7 @@ add_test(
 )
 
 add_executable(test_bitset test_bitset.c unity/unity.c)
+target_code_coverage(test_bitset "" AUTO ALL)
 target_link_libraries(test_bitset core)
 add_test(
         NAME "in3_test_bitset"
@@ -68,13 +80,15 @@ add_test(
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
-add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
-target_link_libraries(test_vhist eth_nano transport_curl)
-add_test(
-        NAME "in3_test_vhist"
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-)
+if(TRANSPORTS)
+        add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
+        target_link_libraries(test_vhist eth_nano transport_curl)
+        add_test(
+                NAME "in3_test_vhist"
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+        )
+endif()
 
 file(GLOB files "testdata/requests/*.json")
 foreach (file ${files})
@@ -85,6 +99,7 @@ foreach (file ${files})
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
     )
 endforeach ()
+target_code_coverage(runner "${files}" AUTO ALL)
 
 foreach (testdir
         vmTests/vmBitwiseLogicOperation

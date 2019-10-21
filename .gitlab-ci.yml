@@ -139,6 +139,19 @@ java:
 
 # ##### test ######
 
+coverage:
+  stage: test
+  image: silkeh/clang:dev
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build; cd _build
+    - cmake -DIN3API=false -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+    - make -j8 &&  make ccov-all && make ccov-all-report
+  artifacts:
+    paths:
+      - _build/ccov/all-merged
+
 analyse:
   stage: test
   image: docker.slock.it/build-images/cmake:clang9
