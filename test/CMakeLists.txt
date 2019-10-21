@@ -35,8 +35,10 @@
 include_directories(. ../src)
 include(code-coverage.cmake)
 
+
 if (CODE_COVERAGE)
-  add_code_coverage_all_targets()
+  set(coverage_excludes "EXCLUDE" "test/*" "*.h" "src/third-party/*")
+  add_code_coverage_all_targets(${coverage_excludes})
 endif()
 
 add_executable(runner runner.c)
@@ -51,7 +53,7 @@ if(TRANSPORTS)
 endif()
 
 add_executable(test_key_hash test_key_hash.c unity/unity.c)
-target_code_coverage(test_key_hash "" AUTO ALL)
+target_code_coverage(test_key_hash "" AUTO ALL ${coverage_excludes})
 target_link_libraries(test_key_hash core)
 
 add_test(
@@ -62,7 +64,7 @@ add_test(
 
 
 add_executable(test_verify_eth_getLog test_verify_eth_getLog.c unity/unity.c)
-target_code_coverage(test_verify_eth_getLog "" AUTO ALL)
+target_code_coverage(test_verify_eth_getLog "" AUTO ALL ${coverage_excludes})
 target_link_libraries(test_verify_eth_getLog eth_basic)
 add_test(
         NAME "test_verify_eth_getLog"
@@ -71,7 +73,7 @@ add_test(
 )
 
 add_executable(test_bitset test_bitset.c unity/unity.c)
-target_code_coverage(test_bitset "" AUTO ALL)
+target_code_coverage(test_bitset "" AUTO ALL ${coverage_excludes})
 target_link_libraries(test_bitset core)
 add_test(
         NAME "in3_test_bitset"
@@ -98,10 +100,10 @@ foreach (file ${files})
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
     )
 endforeach ()
-target_code_coverage(runner "${files}" AUTO ALL)
+target_code_coverage(runner "${files}" AUTO ALL ${coverage_excludes})
 
-file(GLOB files "testdata/evm/TrieTests/*.json" "testdata/RLPTests/*.json" "testdata/vmTests/vmEnvironmentalInfo/*.json")
-target_code_coverage(vmrunner "${files}" AUTO ALL)
+file(GLOB files "testdata/evm/TrieTests/*.json" "testdata/RLPTests/*.json" "testdata/vmTests/*/*.json" "testdata/GeneralStateTests/stCallCodes/*.json")
+target_code_coverage(vmrunner "${files}" AUTO ALL ${coverage_excludes})
 
 
 foreach (testdir
