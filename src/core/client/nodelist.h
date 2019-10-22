@@ -45,6 +45,19 @@
 #ifndef NODELIST_H
 #define NODELIST_H
 
+#include "../util/bitset.h"
+
+typedef enum {
+  NODE_PROP_NONE = 0,
+  NODE_PROP_PROOF_NODES,
+  NODE_PROP_MULTICHAIN_NODES,
+  NODE_PROP_ARCHIVE_NODES,
+  NODE_PROP_HTTP_NODES,
+  NODE_PROP_BINARY_NODES,
+  NODE_PROP_TOR_NODES,
+  NODE_PROP_DEPOSIT_TIMEOUT,
+} in3_node_prop_t;
+
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain);
 
@@ -63,5 +76,31 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
 in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes);
+
+static inline in3_ret_t in3_node_props_set(uint64_t* node_props, in3_node_prop_t prop) {
+  if (prop <= NODE_PROP_NONE || prop >= NODE_PROP_DEPOSIT_TIMEOUT) return IN3_EINVAL;
+  BIT_SET(*node_props, prop);
+  return IN3_OK;
+}
+
+static inline void in3_node_props_set_deposit_timeout(uint64_t* node_props, uint32_t deposit_timeout) {
+  uint64_t dp_ = deposit_timeout;
+  *node_props |= BITS_LSB(dp_, 32U);
+}
+
+static inline uint32_t in3_node_props_get(const uint64_t node_props) {
+  return BITS_LSB(node_props, 32U);
+}
+
+static inline uint32_t in3_node_props_get_deposit_timeout(const uint64_t node_props) {
+  return BITS_MSB(node_props, 32U);
+}
+
+static inline bool in3_node_props_match(const in3_node_t* node, const in3_t* c) {
+  if (in3_node_props_get(node->props) == in3_node_props_get(c->node_props) && in3_node_props_get_deposit_timeout(node->props) >= in3_node_props_get_deposit_timeout(c->node_props)) {
+    return true;
+  }
+  return false;
+}
 
 #endif
