@@ -122,14 +122,14 @@ typedef struct in3_node {
   bytes_t* address;  /**< address of the server */
   uint64_t deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
   uint32_t capacity; /**< the maximal capacity able to handle */
-  uint64_t props;    /**< a bit set used to identify the cabalilities of the server. */
+  uint64_t props;    /**< a bit set used to identify the capabilities of the server. */
   char*    url;      /**< the url of the node */
 } in3_node_t;
 
 /**
  * Weight or reputation of a node.
  * 
- * Based on the past performance of the node a weight is calulcated given faster nodes a heigher weight 
+ * Based on the past performance of the node a weight is calculated given faster nodes a higher weight
  * and chance when selecting the next node from the nodelist.
  * These weights will also be stored in the cache (if available)
  */
