@@ -331,6 +331,8 @@ typedef struct in3_t_ {
   /** filter handler */
   in3_filter_handler_t* filters;
 
+  uint64_t node_props;
+
 } in3_t;
 
 /** creates a new Incubes configuration and returns the pointer.
