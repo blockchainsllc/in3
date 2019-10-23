@@ -196,6 +196,18 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   return res;
 }
 
+static bool in3_node_props_match(in3_node_props_t np1, in3_node_props_t np2) {
+  uint32_t v1 = 0, v2 = 0;
+  for (in3_node_props_type_t npt = NODE_PROP_NONE + 1; npt < NODE_PROP_DEPOSIT_TIMEOUT; ++npt) {
+    in3_node_props_get(np1, npt, &v1);
+    in3_node_props_get(np2, npt, &v2);
+    if (v1 != v2) return false;
+  }
+  in3_node_props_get(np1, NODE_PROP_DEPOSIT_TIMEOUT, &v1);
+  in3_node_props_get(np2, NODE_PROP_DEPOSIT_TIMEOUT, &v2);
+  return (v1 >= v2);
+}
+
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                          int len, _time_t now, float* total_weight, int* total_found) {
   int                i, p;
@@ -209,6 +221,8 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
     if (nodeDef->deposit < c->minDeposit) continue;
+    if (!in3_node_props_match(nodeDef->props, c->node_props)) continue;
+
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;
     w = _malloc(sizeof(node_weight_t));
