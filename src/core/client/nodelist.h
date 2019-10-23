@@ -47,17 +47,6 @@
 
 #include "../util/bitset.h"
 
-typedef enum {
-  NODE_PROP_NONE = 0,         /* for internal use */
-  NODE_PROP_PROOF_NODES,      /* filter out nodes which are providing no proof */
-  NODE_PROP_MULTICHAIN_NODES, /* filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
-  NODE_PROP_ARCHIVE_NODES,    /* filter out non archive supporting nodes */
-  NODE_PROP_HTTP_NODES,       /* include http nodes  */
-  NODE_PROP_BINARY_NODES,     /* only include nodes that support binary encoding */
-  NODE_PROP_TOR_NODES,        /* filter out non tor nodes */
-  NODE_PROP_DEPOSIT_TIMEOUT,  /* timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client */
-} in3_node_props_type_t;
-
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain);
 
@@ -76,23 +65,5 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
 in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes);
-
-/**
- * setter method for interacting with in3_node_props_t.
- * @param[out] node_props
- * @param type
- * @param val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
- * @return IN3_OK on success
- */
-in3_ret_t in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint32_t value);
-
-/**
- * getter method for interacting with in3_node_props_t.
- * @param node_props
- * @param type
- * @param[out] val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
- * @return IN3_OK on success
- */
-in3_ret_t in3_node_props_get(in3_node_props_t node_props, in3_node_props_type_t type, uint32_t* val);
 
 #endif

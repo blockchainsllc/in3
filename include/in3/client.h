@@ -119,6 +119,17 @@ typedef struct in3_request_config {
  */
 typedef uint64_t in3_node_props_t;
 
+typedef enum {
+  NODE_PROP_NONE = 0,         /* for internal use */
+  NODE_PROP_PROOF_NODES,      /* filter out nodes which are providing no proof */
+  NODE_PROP_MULTICHAIN_NODES, /* filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
+  NODE_PROP_ARCHIVE_NODES,    /* filter out non archive supporting nodes */
+  NODE_PROP_HTTP_NODES,       /* include http nodes  */
+  NODE_PROP_BINARY_NODES,     /* only include nodes that support binary encoding */
+  NODE_PROP_TOR_NODES,        /* filter out non tor nodes */
+  NODE_PROP_DEPOSIT_TIMEOUT,  /* timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client */
+} in3_node_props_type_t;
+
 /** incubed node-configuration. 
  * 
  * These information are read from the Registry contract and stored in this struct representing a server or node.
@@ -145,6 +156,28 @@ typedef struct in3_node_weight {
   uint32_t total_response_time; /**< total of all response times */
   uint64_t blacklistedUntil;    /**< if >0 this node is blacklisted until k. k is a unix timestamp */
 } in3_node_weight_t;
+
+/**
+ * setter method for interacting with in3_node_props_t.
+ * @param[out] node_props
+ * @param type
+ * @param val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
+ * @return IN3_OK on success
+ */
+in3_ret_t in3_node_props_set(in3_node_props_t*     node_props,
+                             in3_node_props_type_t type,
+                             uint32_t              value);
+
+/**
+ * getter method for interacting with in3_node_props_t.
+ * @param node_props
+ * @param type
+ * @param[out] val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
+ * @return IN3_OK on success
+ */
+in3_ret_t in3_node_props_get(in3_node_props_t      node_props,
+                             in3_node_props_type_t type,
+                             uint32_t*             val);
 
 /**
  * Chain definition inside incubed.
@@ -402,7 +435,7 @@ in3_ret_t in3_client_add_node(
     uint64_t         chain_id, /**< [in] the chain id. */
     char*            url,      /**< [in] url of the nodes. */
     in3_node_props_t props,    /**< [in]properties of the node. */
-    address_t        address); /**< [in] public address of the signer. */
+    address_t        address);        /**< [in] public address of the signer. */
 
 /** removes a node from a nodelist */
 in3_ret_t in3_client_remove_node(
