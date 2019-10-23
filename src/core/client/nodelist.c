@@ -195,16 +195,16 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   return res;
 }
 
-static bool in3_node_props_match(in3_node_props_t np1, in3_node_props_t np2) {
-  uint32_t v1 = 0, v2 = 0;
-  for (in3_node_props_type_t npt = NODE_PROP_NONE + 1; npt < NODE_PROP_DEPOSIT_TIMEOUT; ++npt) {
-    in3_node_props_get(np1, npt, &v1);
-    in3_node_props_get(np2, npt, &v2);
-    if (v1 && (v1 != v2)) return false;
+static bool in3_node_props_match(in3_node_props_t np_config, in3_node_props_t np) {
+  uint32_t val_config = 0, val = 0;
+  for (in3_node_props_type_t npt = 0; npt < NODE_PROP_DEPOSIT_TIMEOUT; ++npt) {
+    in3_node_props_get(np_config, npt, &val_config);
+    in3_node_props_get(np, npt, &val);
+    if (val_config && (val_config != val)) return false;
   }
-  in3_node_props_get(np1, NODE_PROP_DEPOSIT_TIMEOUT, &v1);
-  in3_node_props_get(np2, NODE_PROP_DEPOSIT_TIMEOUT, &v2);
-  return (v1 ? (v2 >= v1) : true);
+  in3_node_props_get(np_config, NODE_PROP_DEPOSIT_TIMEOUT, &val_config);
+  in3_node_props_get(np, NODE_PROP_DEPOSIT_TIMEOUT, &val);
+  return (val_config ? (val >= val_config) : true);
 }
 
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
