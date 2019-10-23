@@ -50,8 +50,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define IN3_PROTO_VER_MAJOR 0x2
-#define IN3_PROTO_VER_MINOR 0x0
+#define IN3_PROTO_VER "2.0.0"
 
 #define ETH_CHAIN_ID_MAINNET 0x01L
 #define ETH_CHAIN_ID_KOVAN 0x2aL
