@@ -411,6 +411,19 @@ static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_r
   last_response = b_new(result[0].result.data, result[0].result.len);
   return r;
 }
+static char*     test_name = NULL;
+static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+#ifdef USE_CURL
+  in3_ret_t r = send_curl(urls, urls_len, payload, result);
+#else
+  in3_ret_t r = send_http(urls, urls_len, payload, result);
+#endif
+  payload[strlen(payload) - 1] = 0;
+  printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, payload + 1, result->result.data);
+  exit(0);
+
+  return r;
+}
 
 int main(int argc, char* argv[]) {
 
@@ -527,7 +540,10 @@ int main(int argc, char* argv[]) {
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
       gas_limit = atoll(argv[++i]);
-    else if (strcmp(argv[i], "-pwd") == 0)
+    else if (strcmp(argv[i], "-test") == 0) {
+      test_name    = argv[++i];
+      c->transport = test_transport;
+    } else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
     else if (strcmp(argv[i], "-value") == 0)
       value = get_wei(argv[++i]);
