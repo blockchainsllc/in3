@@ -120,8 +120,7 @@ typedef struct in3_request_config {
 typedef uint64_t in3_node_props_t;
 
 typedef enum {
-  NODE_PROP_NONE = 0,         /* for internal use */
-  NODE_PROP_PROOF_NODES,      /* filter out nodes which are providing no proof */
+  NODE_PROP_PROOF_NODES = 0,  /* filter out nodes which are providing no proof */
   NODE_PROP_MULTICHAIN_NODES, /* filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
   NODE_PROP_ARCHIVE_NODES,    /* filter out non archive supporting nodes */
   NODE_PROP_HTTP_NODES,       /* include http nodes  */
