@@ -48,15 +48,15 @@
 #include "../util/bitset.h"
 
 typedef enum {
-  NODE_PROP_NONE = 0,
-  NODE_PROP_PROOF_NODES,
-  NODE_PROP_MULTICHAIN_NODES,
-  NODE_PROP_ARCHIVE_NODES,
-  NODE_PROP_HTTP_NODES,
-  NODE_PROP_BINARY_NODES,
-  NODE_PROP_TOR_NODES,
-  NODE_PROP_DEPOSIT_TIMEOUT,
-} in3_node_prop_t;
+  NODE_PROP_NONE = 0,         /* for internal use */
+  NODE_PROP_PROOF_NODES,      /* filter out nodes which are providing no proof */
+  NODE_PROP_MULTICHAIN_NODES, /* filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
+  NODE_PROP_ARCHIVE_NODES,    /* filter out non archive supporting nodes */
+  NODE_PROP_HTTP_NODES,       /* include http nodes  */
+  NODE_PROP_BINARY_NODES,     /* only include nodes that support binary encoding */
+  NODE_PROP_TOR_NODES,        /* filter out non tor nodes */
+  NODE_PROP_DEPOSIT_TIMEOUT,  /* timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client */
+} in3_node_props_type_t;
 
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain);
@@ -77,30 +77,22 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
  */
 in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes);
 
-static inline in3_ret_t in3_node_props_set(uint64_t* node_props, in3_node_prop_t prop) {
-  if (prop <= NODE_PROP_NONE || prop >= NODE_PROP_DEPOSIT_TIMEOUT) return IN3_EINVAL;
-  BIT_SET(*node_props, prop);
-  return IN3_OK;
-}
+/**
+ * setter method for interacting with in3_node_props_t.
+ * @param[out] node_props
+ * @param type
+ * @param val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
+ * @return IN3_OK on success
+ */
+in3_ret_t in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint32_t value);
 
-static inline void in3_node_props_set_deposit_timeout(uint64_t* node_props, uint32_t deposit_timeout) {
-  uint64_t dp_ = deposit_timeout;
-  *node_props |= BITS_LSB(dp_, 32U);
-}
-
-static inline uint32_t in3_node_props_get(const uint64_t node_props) {
-  return BITS_LSB(node_props, 32U);
-}
-
-static inline uint32_t in3_node_props_get_deposit_timeout(const uint64_t node_props) {
-  return BITS_MSB(node_props, 32U);
-}
-
-static inline bool in3_node_props_match(const in3_node_t* node, const in3_t* c) {
-  if (in3_node_props_get(node->props) == in3_node_props_get(c->node_props) && in3_node_props_get_deposit_timeout(node->props) >= in3_node_props_get_deposit_timeout(c->node_props)) {
-    return true;
-  }
-  return false;
-}
+/**
+ * getter method for interacting with in3_node_props_t.
+ * @param node_props
+ * @param type
+ * @param[out] val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
+ * @return IN3_OK on success
+ */
+in3_ret_t in3_node_props_get(in3_node_props_t node_props, in3_node_props_type_t type, uint32_t* val);
 
 #endif

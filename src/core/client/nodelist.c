@@ -353,3 +353,43 @@ void in3_nodelist_clear(in3_chain_t* chain) {
   _free(chain->nodeList);
   _free(chain->weights);
 }
+
+in3_ret_t in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint32_t value) {
+  switch (type) {
+    case NODE_PROP_DEPOSIT_TIMEOUT: {
+      uint64_t dp_ = value;
+      *node_props |= BITS_LSB(dp_, 32U);
+      break;
+    }
+    case NODE_PROP_PROOF_NODES:
+    case NODE_PROP_MULTICHAIN_NODES:
+    case NODE_PROP_ARCHIVE_NODES:
+    case NODE_PROP_HTTP_NODES:
+    case NODE_PROP_BINARY_NODES:
+    case NODE_PROP_TOR_NODES:
+      (value != 0) ? BIT_SET(*node_props, type) : BIT_CLEAR(*node_props, type);
+      break;
+    default:
+      return IN3_EINVAL;
+  }
+  return IN3_OK;
+}
+
+in3_ret_t in3_node_props_get(in3_node_props_t node_props, in3_node_props_type_t type, uint32_t* val) {
+  switch (type) {
+    case NODE_PROP_DEPOSIT_TIMEOUT:
+      *val = BITS_MSB(node_props, 32U);
+      break;
+    case NODE_PROP_PROOF_NODES:
+    case NODE_PROP_MULTICHAIN_NODES:
+    case NODE_PROP_ARCHIVE_NODES:
+    case NODE_PROP_HTTP_NODES:
+    case NODE_PROP_BINARY_NODES:
+    case NODE_PROP_TOR_NODES:
+      *val = BIT_CHECK(node_props, type);
+      break;
+    default:
+      return IN3_EINVAL;
+  }
+  return IN3_OK;
+}
