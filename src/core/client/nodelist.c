@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "nodelist.h"
+#include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/log.h"
 #include "../util/mem.h"

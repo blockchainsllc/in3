@@ -45,8 +45,6 @@
 #ifndef NODELIST_H
 #define NODELIST_H
 
-#include "../util/bitset.h"
-
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain);
 
