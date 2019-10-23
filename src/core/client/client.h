@@ -124,12 +124,12 @@ typedef uint64_t in3_node_props_t;
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  uint32_t index;    /**< index within the nodelist, also used in the contract as key */
-  bytes_t* address;  /**< address of the server */
-  uint64_t deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t capacity; /**< the maximal capacity able to handle */
-  uint64_t props;    /**< a bit set used to identify the capabilities of the server. */
-  char*    url;      /**< the url of the node */
+  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
+  bytes_t*         address;  /**< address of the server */
+  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t         capacity; /**< the maximal capacity able to handle */
+  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  char*            url;      /**< the url of the node */
 } in3_node_t;
 
 /**
@@ -337,7 +337,8 @@ typedef struct in3_t_ {
   /** filter handler */
   in3_filter_handler_t* filters;
 
-  uint64_t node_props;
+  /** used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  in3_node_props_t node_props;
 
 } in3_t;
 
@@ -397,11 +398,11 @@ in3_ret_t in3_client_register_chain(
 
 /** adds a node to a chain ore updates a existing node */
 in3_ret_t in3_client_add_node(
-    in3_t*    client,   /**< [in] the pointer to the incubed client config. */
-    uint64_t  chain_id, /**< [in] the chain id. */
-    char*     url,      /**< [in] url of the nodes. */
-    uint64_t  props,    /**< [in]properties of the node. */
-    address_t address); /**< [in] public address of the signer. */
+    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
+    uint64_t         chain_id, /**< [in] the chain id. */
+    char*            url,      /**< [in] url of the nodes. */
+    in3_node_props_t props,    /**< [in]properties of the node. */
+    address_t        address); /**< [in] public address of the signer. */
 
 /** removes a node from a nodelist */
 in3_ret_t in3_client_remove_node(

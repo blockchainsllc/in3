@@ -205,7 +205,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, uint64_t chain_id, in3_chain_type_
   return chain->contract ? IN3_OK : IN3_ENOMEM;
 }
 
-in3_ret_t in3_client_add_node(in3_t* c, uint64_t chain_id, char* url, uint64_t props, address_t address) {
+in3_ret_t in3_client_add_node(in3_t* c, uint64_t chain_id, char* url, in3_node_props_t props, address_t address) {
   in3_chain_t* chain = find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
   in3_node_t* node       = NULL;
