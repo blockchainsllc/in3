@@ -113,6 +113,12 @@ typedef struct in3_request_config {
 
 } in3_request_config_t;
 
+/**
+ * Node capabilities
+ * @note Always access using getters/setters in nodelist.h
+ */
+typedef uint64_t in3_node_props_t;
+
 /** incubed node-configuration. 
  * 
  * These information are read from the Registry contract and stored in this struct representing a server or node.
