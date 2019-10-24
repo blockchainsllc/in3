@@ -43,6 +43,7 @@
 #include "keys.h"
 #include "send.h"
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 #ifdef __TEST__
@@ -194,6 +195,11 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
     in3_cache_store_nodelist(ctx, chain);
   free_ctx(ctx);
   return res;
+}
+in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
+  in3_ctx_t ctx;
+  memset(&ctx, 0, sizeof(ctx));
+  return update_nodelist(c, chain, &ctx);
 }
 
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,

@@ -10,13 +10,18 @@
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../test/testdata/requests/eth_getBlockByNumber.json",
-                "-m",
-                "132",
+                "../test/testdata/requests/eth_getLogs2.json",
                 "-t",
                 "1"
             ],
             "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run cache test",
+            "program": "${workspaceFolder}/build/test/test_cache",
+            "cwd": "${workspaceFolder}"
         },
         {
             "type": "node",
