@@ -375,7 +375,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
     } else if (iter.token->key == key("servers") || iter.token->key == key("nodes"))
       for (d_iterator_t ct = d_iter(iter.token); ct.left; d_iter_next(&ct)) {
         // register chain
-        uint64_t     chain_id = hex2long(d_get_keystr(ct.token->key));
+        uint64_t     chain_id = c_to_long(d_get_keystr(ct.token->key), -1);
         in3_chain_t* chain    = find_chain(c, chain_id);
         if (!chain) {
           bytes_t* contract_t  = d_get_byteskl(ct.token, key("contract"), 20);

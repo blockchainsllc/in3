@@ -43,6 +43,7 @@
 #include "../src/core/client/context.h"
 #include "../src/core/client/nodelist.h"
 #include "../src/core/util/data.h"
+#include "../src/core/util/log.h"
 #include "../src/verifier/eth1/nano/eth_nano.h"
 #include "test_utils.h"
 #include <stdio.h>
@@ -140,6 +141,7 @@ static void test_cache() {
   // create a second client...
   in3_t* c2        = in3_new();
   c2->cacheStorage = c->cacheStorage;
+  c2->transport    = test_transport;
   c2->chainId      = c->chainId;
   in3_configure(c2, "{\"chainId\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
@@ -152,6 +154,12 @@ static void test_cache() {
   in3_cache_init(c2);
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(5, chain2->nodeListLength);
+
+  // test request
+  in3_ctx_t* ctx = in3_client_rpc_ctx(c2, "in3_nodeList", "[]");
+  if (ctx->error) printf("ERROR : %s\n", ctx->error);
+  TEST_ASSERT(ctx && ctx->error == NULL);
+  free_ctx(ctx);
 }
 
 static void test_newchain() {
@@ -225,6 +233,7 @@ static void test_newchain() {
  * Main
  */
 int main() {
+  in3_log_set_level(LOG_ERROR);
   TESTS_BEGIN();
   RUN_TEST(test_cache);
   RUN_TEST(test_newchain);

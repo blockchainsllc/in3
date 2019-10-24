@@ -90,6 +90,24 @@ add_test(
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
+add_executable(test_core test_core.c unity/unity.c)
+target_code_coverage(test_core "" AUTO ALL ${coverage_excludes})
+target_link_libraries(test_core core)
+add_test(
+        NAME "in3_test_core"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_core
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
+add_executable(test_sign test_sign.c unity/unity.c)
+target_code_coverage(test_sign "" AUTO ALL ${coverage_excludes})
+target_link_libraries(test_sign core eth_basic)
+add_test(
+        NAME "in3_test_sign"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_sign
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+)
+
 if(TRANSPORTS)
         add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
         target_link_libraries(test_vhist eth_nano transport_curl)

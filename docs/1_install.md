@@ -65,12 +65,19 @@ make install
 
   if true, the client will use the staging-network instead of the live ones
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+  Type: `BOOL ` ,    Default-Value: `OFF`
 
 
 #### JAVA
 
   build the java-binding (shared-lib and jar-file)
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
+
+
+#### POA
+
+  support POA verification including validatorlist updates
 
   Type: `BOOL ` ,    Default-Value: `OFF`
 
