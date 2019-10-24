@@ -138,9 +138,10 @@ static void test_cache() {
   TEST_ASSERT_TRUE(*cache->keys != NULL);
 
   // create a second client...
-  in3_t* c2           = in3_new();
-  c2->cacheStorage    = c->cacheStorage;
-  c2->chainId         = c->chainId;
+  in3_t* c2        = in3_new();
+  c2->cacheStorage = c->cacheStorage;
+  c2->chainId      = c->chainId;
+  in3_configure(c2, "{\"chainId\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chainsCount; i++) {
     if (c2->chains[i].chainId == 0x1) chain2 = &c2->chains[i];
