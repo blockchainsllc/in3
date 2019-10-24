@@ -67,7 +67,7 @@ void test_bytes() {
   b_print(&b);
 
   bytes_t clone = cloned_bytes(b);
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(data, b, 32);
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(data, clone.data, 32);
 }
 
 void test_str_replace() {
