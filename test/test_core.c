@@ -58,6 +58,18 @@ void test_c_to_long() {
   TEST_ASSERT_EQUAL(10, c_to_long("10", 2));
 }
 
+void test_bytes() {
+  bytes32_t data;
+  memset(data, 0, 32);
+  data[1] = 0x12;
+  ba_print(data, 32);
+  bytes_t b = bytes(data, 32);
+  b_print(&b);
+
+  bytes_t clone = cloned_bytes(b);
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(data, b, 32);
+}
+
 void test_str_replace() {
   char* testdata = "aabbcc abc";
   char* res      = str_replace(testdata, "a", "A");

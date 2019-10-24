@@ -165,15 +165,18 @@ static void test_cache() {
 static void test_newchain() {
 
   in3_register_eth_nano();
+  in3_set_default_transport(test_transport);
+
   cache_t* cache = calloc(1, sizeof(cache_t));
 
   in3_t* c                  = in3_new();
-  c->transport              = test_transport;
   c->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
   c->cacheStorage->cptr     = cache;
   c->cacheStorage->get_item = cache_get_item;
   c->cacheStorage->set_item = cache_set_item;
   c->chainId                = 0x8;
+
+  in3_set_default_storage(c->cacheStorage);
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chainsCount; i++) {

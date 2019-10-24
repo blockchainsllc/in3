@@ -108,6 +108,7 @@ static void test_sign() {
   bytes32_t pk;
   hex2byte_arr("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
   eth_set_pk_signer(c, pk);
+  in3_set_default_signer(c->signer);
 
   add_response("[{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionCount\",\"params\":[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]}]", "\"0x1\"", NULL, NULL);
   add_response("[{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[]}]", "\"0xffff\"", NULL, NULL);
@@ -116,7 +117,7 @@ static void test_sign() {
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
 
-  TEST_ASSERT_TRUE(ctx && ctx->error == NULL);
+  TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
   free_ctx(ctx);
 }
 
