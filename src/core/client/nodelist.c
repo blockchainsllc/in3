@@ -199,12 +199,12 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 static bool in3_node_props_match(in3_node_props_t np_config, in3_node_props_t np) {
   uint32_t val_config = 0, val = 0;
   for (in3_node_props_type_t npt = 0; npt < NODE_PROP_DEPOSIT_TIMEOUT; ++npt) {
-    in3_node_props_get(np_config, npt, &val_config);
-    in3_node_props_get(np, npt, &val);
+    val_config = in3_node_props_get(np_config, npt);
+    val        = in3_node_props_get(np, npt);
     if (val_config && (val_config != val)) return false;
   }
-  in3_node_props_get(np_config, NODE_PROP_DEPOSIT_TIMEOUT, &val_config);
-  in3_node_props_get(np, NODE_PROP_DEPOSIT_TIMEOUT, &val);
+  val_config = in3_node_props_get(np_config, NODE_PROP_DEPOSIT_TIMEOUT);
+  val        = in3_node_props_get(np, NODE_PROP_DEPOSIT_TIMEOUT);
   return (val_config ? (val >= val_config) : true);
 }
 
@@ -368,42 +368,15 @@ void in3_nodelist_clear(in3_chain_t* chain) {
   _free(chain->weights);
 }
 
-in3_ret_t in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint32_t value) {
-  switch (type) {
-    case NODE_PROP_DEPOSIT_TIMEOUT: {
-      uint64_t dp_ = value;
-      *node_props |= BITS_LSB(dp_, 32U);
-      break;
-    }
-    case NODE_PROP_PROOF_NODES:
-    case NODE_PROP_MULTICHAIN_NODES:
-    case NODE_PROP_ARCHIVE_NODES:
-    case NODE_PROP_HTTP_NODES:
-    case NODE_PROP_BINARY_NODES:
-    case NODE_PROP_TOR_NODES:
-      (value != 0) ? BIT_SET(*node_props, type) : BIT_CLEAR(*node_props, type);
-      break;
-    default:
-      return IN3_EINVAL;
+void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint32_t value) {
+  if (type == NODE_PROP_DEPOSIT_TIMEOUT) {
+    uint64_t dp_ = value;
+    *node_props |= BITS_LSB(dp_, 32U);
+  } else {
+    (value != 0) ? BIT_SET(*node_props, type) : BIT_CLEAR(*node_props, type);
   }
-  return IN3_OK;
 }
 
-in3_ret_t in3_node_props_get(in3_node_props_t node_props, in3_node_props_type_t type, uint32_t* val) {
-  switch (type) {
-    case NODE_PROP_DEPOSIT_TIMEOUT:
-      *val = BITS_MSB(node_props, 32U);
-      break;
-    case NODE_PROP_PROOF_NODES:
-    case NODE_PROP_MULTICHAIN_NODES:
-    case NODE_PROP_ARCHIVE_NODES:
-    case NODE_PROP_HTTP_NODES:
-    case NODE_PROP_BINARY_NODES:
-    case NODE_PROP_TOR_NODES:
-      *val = BIT_CHECK(node_props, type);
-      break;
-    default:
-      return IN3_EINVAL;
-  }
-  return IN3_OK;
+uint32_t in3_node_props_get(in3_node_props_t node_props, in3_node_props_type_t type) {
+  return (type == NODE_PROP_DEPOSIT_TIMEOUT) ? BITS_MSB(node_props, 32U) : BIT_CHECK(node_props, type);
 }

@@ -161,22 +161,19 @@ typedef struct in3_node_weight {
  * @param[out] node_props
  * @param type
  * @param val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
- * @return IN3_OK on success
  */
-in3_ret_t in3_node_props_set(in3_node_props_t*     node_props,
-                             in3_node_props_type_t type,
-                             uint32_t              value);
+void in3_node_props_set(in3_node_props_t*     node_props,
+                        in3_node_props_type_t type,
+                        uint32_t              value);
 
 /**
  * getter method for interacting with in3_node_props_t.
  * @param node_props
  * @param type
- * @param[out] val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
- * @return IN3_OK on success
+ * @return val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
  */
-in3_ret_t in3_node_props_get(in3_node_props_t      node_props,
-                             in3_node_props_type_t type,
-                             uint32_t*             val);
+uint32_t in3_node_props_get(in3_node_props_t      node_props,
+                            in3_node_props_type_t type);
 
 /**
  * Chain definition inside incubed.
