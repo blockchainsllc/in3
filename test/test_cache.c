@@ -44,6 +44,7 @@
 #include "../src/core/client/nodelist.h"
 #include "../src/core/util/data.h"
 #include "../src/core/util/log.h"
+#include "../src/core/util/scache.h"
 #include "../src/verifier/eth1/nano/eth_nano.h"
 #include "test_utils.h"
 #include <stdio.h>
@@ -167,7 +168,7 @@ static void test_newchain() {
   in3_register_eth_nano();
   in3_set_default_transport(test_transport);
 
-  cache_t* cache = calloc(1, sizeof(cache_t));
+  cache_t* cache = _calloc(1, sizeof(cache_t));
 
   in3_t* c                  = in3_new();
   c->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
@@ -232,12 +233,29 @@ static void test_newchain() {
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodeListLength);
 }
 
+void test_scache() {
+  char*          key   = "123";
+  char*          value = "45678";
+  bytes_t        k     = bytes((uint8_t*) key, 3);
+  bytes_t        v     = bytes((uint8_t*) value, 3);
+  cache_entry_t* cache = in3_cache_add_entry(NULL, bytes((uint8_t*) key, 3), bytes((uint8_t*) value, 5));
+
+  bytes_t* val = in3_cache_get_entry(cache, &k);
+  TEST_ASSERT_TRUE(val != NULL && val->len == 5);
+  val = in3_cache_get_entry(cache, &v);
+  TEST_ASSERT_NULL(val);
+}
 /*
  * Main
  */
 int main() {
+  TEST_ASSERT_EQUAL(0, mem_stack_size());
+  memstack();
   in3_log_set_level(LOG_ERROR);
+
+  // now run tests
   TESTS_BEGIN();
+  RUN_TEST(test_scache);
   RUN_TEST(test_cache);
   RUN_TEST(test_newchain);
   return TESTS_END();

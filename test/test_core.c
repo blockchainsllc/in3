@@ -92,12 +92,29 @@ void test_str_replace() {
   TEST_ASSERT_NULL(str_find(NULL, "A"));
   TEST_ASSERT_NULL(str_find("ABC", "D"));
 }
+
+void test_json() {
+  char*       data = "abc";
+  json_ctx_t* json = json_create();
+  json->result     = json_create_array(json);
+  json_array_add_value(json->result, json_create_bool(json, true));
+  json_object_add_prop(json->result, key("key"), json_create_null(json));
+  json_array_add_value(json->result, json_create_object(json));
+  json_array_add_value(json->result, json_create_bytes(json, bytes((uint8_t*) data, 3)));
+  json_array_add_value(json->result, json_create_string(json, data));
+  json_array_add_value(json->result, json_create_int(json, 10));
+  char* jdata = d_create_json(json->result);
+  TEST_ASSERT_EQUAL_STRING("[true,null,{},\"0x616263\",\"abc\",\"0xa\"]", jdata);
+  free(jdata);
+}
 /*
  * Main
  */
 int main() {
   TESTS_BEGIN();
   RUN_TEST(test_c_to_long);
+  RUN_TEST(test_bytes);
+  RUN_TEST(test_json);
   RUN_TEST(test_str_replace);
   return TESTS_END();
 }
