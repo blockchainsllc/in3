@@ -418,9 +418,11 @@ static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_re
 #else
   in3_ret_t r = send_http(urls, urls_len, payload, result);
 #endif
-  payload[strlen(payload) - 1] = 0;
-  printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, payload + 1, result->result.data);
-  exit(0);
+  if (r == IN3_OK) {
+    payload[strlen(payload) - 1] = 0;
+    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, payload + 1, result->result.data);
+    exit(0);
+  }
 
   return r;
 }
