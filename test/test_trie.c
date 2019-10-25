@@ -102,7 +102,9 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         ba_print(key_bytes.data, key_bytes.len);
         in3_log_trace(" = ");
         ba_print(value_bytes.data, value_bytes.len);
+#ifdef TRIETEST
         trie_dump(trie, 0);
+#endif
       });
     }
   } else {
@@ -129,7 +131,9 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         ba_print(key_bytes.data, key_bytes.len);
         in3_log_trace(" = ");
         ba_print(value_bytes.data, value_bytes.len);
+#ifdef TRIETEST
         trie_dump(trie, 0);
+#endif
       });
     }
   }
