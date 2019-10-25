@@ -91,8 +91,20 @@ foreach (file ${files})
 endforeach ()
 target_code_coverage(runner "${files}" AUTO ALL ${coverage_excludes})
 
-file(GLOB files "testdata/evm/TrieTests/*.json" "testdata/RLPTests/*.json" "testdata/vmTests/*/*.json" "testdata/GeneralStateTests/stCallCodes/*.json")
+file(GLOB files 
+    "testdata/evm/TrieTests/*.json" 
+    "testdata/evm/RLPTests/*.json" 
+    "testdata/evm/vmTests/vmArithmeticTest/*.json" 
+    "testdata/evm/vmTests/vmBitwiseLocigOperation/*.json" 
+#    "testdata/evm/GeneralStateTests/stRandom2/*.json"
+#    "testdata/evm/GeneralStateTests/stRandom/*.json"
+    "testdata/evm/GeneralStateTests/stMemoryTest/*.json"
+#    "testdata/evm/GeneralStateTests/stCodeCopyTest/*.json"
+#    "testdata/evm/GeneralStateTests/stRefundTest/*.json"
+#    "testdata/evm/GeneralStateTests/stLogTests/*.json"
+)
 target_code_coverage(vmrunner "${files}" AUTO ALL ${coverage_excludes})
+MESSAGE(STATUS "runner ${files}")
 
 
 foreach (testdir

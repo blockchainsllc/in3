@@ -251,6 +251,10 @@ void test_scache() {
 int main() {
   TEST_ASSERT_EQUAL(0, mem_stack_size());
   memstack();
+  in3_log_set_udata_(NULL);
+  in3_log_set_lock_(NULL);
+  in3_log_set_fp_(NULL);
+  in3_log_set_quiet_(false);
   in3_log_set_level(LOG_ERROR);
 
   // now run tests

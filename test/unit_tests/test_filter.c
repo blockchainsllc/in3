@@ -65,10 +65,9 @@ static void test_filter() {
   for (int i = 0; i < c->chainsCount; i++) c->chains[i].needsUpdate = false;
 
   char *result = NULL, *error = NULL;
-
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
 
-  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_newFilter", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", &result, &error));
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_newFilter", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", &result, &error));
   TEST_ASSERT_NULL(error);
   TEST_ASSERT_NOT_NULL(result);
   TEST_ASSERT_EQUAL_STRING("\"0x1\"", result);
@@ -77,7 +76,7 @@ static void test_filter() {
 
   free(result);
 
-  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_newFilter", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", &result, &error));
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_newFilter", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", &result, &error));
   TEST_ASSERT_NULL(error);
   TEST_ASSERT_NOT_NULL(result);
   TEST_ASSERT_EQUAL_STRING("\"0x2\"", result);
@@ -86,7 +85,7 @@ static void test_filter() {
 
   // now we simulate a blocknumber ..55 which is higher then ..52 we registered
   add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf52\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", "[]", NULL, NULL);
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf52\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
@@ -96,7 +95,7 @@ static void test_filter() {
   free(result);
   // now we simulate a blocknumber ..59 which is higher then ..55 we registered
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf56\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", "[]", NULL, NULL);
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf56\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
