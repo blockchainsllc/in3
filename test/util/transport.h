@@ -41,7 +41,7 @@ extern "C" {
 
 #include "../../src/core/client/client.h"
 
-void add_response(char* request, char* result, char* error, char* in3);
+void add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
 
 in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result);
 

@@ -51,7 +51,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static void test_sign() {
+static void test_filter() {
 
   in3_register_eth_basic();
 
@@ -64,20 +64,70 @@ static void test_sign() {
 
   for (int i = 0; i < c->chainsCount; i++) c->chains[i].needsUpdate = false;
 
-  bytes32_t pk;
-  hex2byte_arr("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
-  eth_set_pk_signer(c, pk);
-  in3_set_default_signer(c->signer);
+  char *result = NULL, *error = NULL;
 
-  add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
-  add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
-  add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
-               "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
+  add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
 
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_newFilter", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", &result, &error));
+  TEST_ASSERT_NULL(error);
+  TEST_ASSERT_NOT_NULL(result);
+  TEST_ASSERT_EQUAL_STRING("\"0x1\"", result);
 
-  TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
-  free_ctx(ctx);
+  add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
+
+  free(result);
+
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_newFilter", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", &result, &error));
+  TEST_ASSERT_NULL(error);
+  TEST_ASSERT_NOT_NULL(result);
+  TEST_ASSERT_EQUAL_STRING("\"0x2\"", result);
+
+  free(result);
+
+  // now we simulate a blocknumber ..55 which is higher then ..52 we registered
+  add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf52\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", "[]", NULL, NULL);
+
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_NULL(error);
+  TEST_ASSERT_NOT_NULL(result);
+  TEST_ASSERT_EQUAL_STRING("[]", result);
+
+  free(result);
+  // now we simulate a blocknumber ..59 which is higher then ..55 we registered
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf56\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\" }]", "[]", NULL, NULL);
+
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_NULL(error);
+  TEST_ASSERT_NOT_NULL(result);
+  TEST_ASSERT_EQUAL_STRING("[]", result);
+
+  free(result);
+  // now we simulate a blocknumber ..59 which is higher then ..55 we registered
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  // because we give him the same block, we will send a second request.
+
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_NULL(error);
+  TEST_ASSERT_NOT_NULL(result);
+  TEST_ASSERT_EQUAL_STRING("[]", result);
+
+  free(result);
+
+  //eth_getFilterChanges
+
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_uninstallFilter", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_NULL(error);
+  TEST_ASSERT_NOT_NULL(result);
+  TEST_ASSERT_EQUAL_STRING("true", result);
+
+  free(result);
+
+  TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_uninstallFilter", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_NULL(error);
+  TEST_ASSERT_NOT_NULL(result);
+  TEST_ASSERT_EQUAL_STRING("false", result);
 }
 
 /*
@@ -86,6 +136,6 @@ static void test_sign() {
 int main() {
   in3_log_set_level(LOG_ERROR);
   TESTS_BEGIN();
-  RUN_TEST(test_sign);
+  RUN_TEST(test_filter);
   return TESTS_END();
 }

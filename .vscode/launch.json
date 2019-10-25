@@ -19,8 +19,8 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "run cache test",
-            "program": "${workspaceFolder}/build/test/test_core",
+            "name": "run filter test",
+            "program": "${workspaceFolder}/build/test/test_filter",
             "cwd": "${workspaceFolder}"
         },
         {
