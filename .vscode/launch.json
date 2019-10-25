@@ -10,7 +10,7 @@
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../test/testdata/requests/eth_getLogs2.json",
+                "../test/testdata/requests/eth_getTransactionReceipt.json",
                 "-t",
                 "1"
             ],
@@ -20,7 +20,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "run cache test",
-            "program": "${workspaceFolder}/build/test/test_cache",
+            "program": "${workspaceFolder}/build/test/test_core",
             "cwd": "${workspaceFolder}"
         },
         {
