@@ -167,6 +167,9 @@ async function runSingleTest(test, c) {
             '0x1': {
                 needsUpdate: false
             },
+            '0x5': {
+                needsUpdate: false
+            },
             '0x2a': {
                 needsUpdate: false
             }
