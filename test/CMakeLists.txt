@@ -104,7 +104,6 @@ file(GLOB files
 #    "testdata/evm/GeneralStateTests/stLogTests/*.json"
 )
 target_code_coverage(vmrunner "${files}" AUTO ALL ${coverage_excludes})
-MESSAGE(STATUS "runner ${files}")
 
 
 foreach (testdir
