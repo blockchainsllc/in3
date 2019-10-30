@@ -130,7 +130,7 @@ IF (FAST_MATH)
             #  bn_mp_radix_size.c
             #  bn_mp_radix_smap.c
             #  bn_mp_rand.c
-            bn_mp_read_radix.c
+            #  bn_mp_read_radix.c
             #  bn_mp_read_signed_bin.c
             bn_mp_read_unsigned_bin.c
             bn_mp_reduce.c
@@ -229,7 +229,6 @@ ELSE (FAST_MATH)
             bn_mp_mul_d.c
             bn_mp_mulmod.c
             bn_mp_neg.c
-            bn_mp_read_radix.c
             bn_mp_read_unsigned_bin.c
             bn_mp_reduce.c
             bn_mp_reduce_2k_l.c

@@ -77,7 +77,6 @@
 
 #ifdef IN3_MATH_LITE
 
-#   define BN_MP_READ_RADIX_C
 #   define BN_MP_READ_UNSIGNED_BIN_C
 #   define BN_MP_TO_UNSIGNED_BIN_C
 #   define BN_MP_SQRMOD_C
