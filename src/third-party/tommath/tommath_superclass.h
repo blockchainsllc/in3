@@ -77,10 +77,18 @@
 
 #ifdef IN3_MATH_LITE
 
+#   define BN_MP_READ_RADIX_C
+#   define BN_MP_READ_UNSIGNED_BIN_C
+#   define BN_MP_TO_UNSIGNED_BIN_C
+#   define BN_MP_SQRMOD_C
+#   define BN_MP_ADDMOD_C
+#   define BN_MP_SUBMOD_C
+#   define BN_MP_NEG_C
 #   define BN_MP_EXPTMOD_C
 #   define BN_MP_DIV_C
 #   define BN_MP_IMPORT_C
 #   define BN_MP_EXPORT_C
+#   define BN_REVERSE_C
 #   define BNCORE_C
 
 /* other modifiers */
