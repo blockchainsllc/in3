@@ -34,7 +34,6 @@
 
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/bignum.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/ripemd160.h"
 #include "../../../third-party/crypto/secp256k1.h"
@@ -361,25 +360,17 @@ int pre_ec_add(evm_t* evm) {
   ecc_del_point(p2);
   ecc_del_point(p3);
 
-  in3_log_set_level(LOG_TRACE);
-  b_print(&evm->return_data);
-  in3_log_set_level(LOG_ERROR);
-
   mp_clear_multi(&modulus, NULL);
   return 0;
 }
 
 int pre_ec_mul(evm_t* evm) {
   subgas(40000);
-  curve_point a, b;
-  bignum256   s;
   uint8_t     cdata[96];
   memset(cdata, 0, 96);
   memcpy(cdata, evm->call_data.data, MIN(96, evm->call_data.len));
-  
+
   evm->return_data = bytes(_malloc(64), 64);
-  bn_write_be(&b.x, evm->return_data.data);
-  bn_write_be(&b.y, evm->return_data.data + 32);
   return 0;
 }
 
