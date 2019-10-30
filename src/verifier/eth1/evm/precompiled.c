@@ -203,6 +203,75 @@ done:
   return err;
 }
 
+static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int* modulus) {
+  int    inf = 0, err = MP_OKAY;
+  mp_int t1, m;
+
+  mp_init_multi(&t1, &m, NULL);
+
+  // P is point-at-infinity, so result is Q
+  if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
+  if (inf) {
+    err = ecc_copy_point(Q, R);
+    goto done;
+  }
+
+  // Q is point-at-infinity, so result is P
+  if ((err = ecc_is_point_at_infinity(Q, modulus, &inf)) != MP_OKAY) return err;
+  if (inf) {
+    err = ecc_copy_point(P, R);
+    goto done;
+  }
+
+  if ((mp_cmp(&P->x, &Q->x) == MP_EQ)) {
+    // P = Q, so result is P doubled
+    if (mp_cmp(&P->y, &Q->y) == MP_EQ) {
+      mp_clear_multi(&t1, m, NULL);
+      return ecc_point_double(P, R, modulus);
+    }
+
+    // Q = -P, so result is point-at-infinity
+    if ((err = mp_sub(modulus, &Q->y, &t1)) != MP_OKAY) { goto done; }
+    if (mp_cmp(&P->y, &t1) == MP_EQ) {
+      err = ecc_set_point_xyz(1, 1, 0, R);
+      goto done;
+    }
+
+    // t1 = y2 - y1
+    if ((err = mp_submod(&Q->y, &P->y, modulus, &t1)) != MP_OKAY) { goto done; }
+    // m = x2 - x1
+    if ((err = mp_submod(&Q->x, &P->x, modulus, &m)) != MP_OKAY) { goto done; }
+    // m = 1 / (x2 - x1)
+    if ((err = mp_invmod(&m, modulus, &m)) != MP_OKAY) { goto done; }
+    // m = (y2 - y1) / (x2 - x1)
+    if ((err = mp_mulmod(&m, &t1, modulus, &m)) != MP_OKAY) { goto done; }
+
+    // t1 = m^2
+    if ((err = mp_sqrmod(&m, modulus, &t1)) != MP_OKAY) { goto done; }
+    // t1 = m^2 - x1
+    if ((err = mp_submod(&t1, &P->x, modulus, &t1)) != MP_OKAY) { goto done; }
+    // x = m^2 - x1 - x2
+    if ((err = mp_submod(&t1, &Q->x, modulus, &R->x)) != MP_OKAY) { goto done; }
+
+    // t1 = m * x1
+    if ((err = mp_mulmod(&m, &P->x, modulus, &t1)) != MP_OKAY) { goto done; }
+    // m = -m
+    if ((err = mp_neg(&m, &m)) != MP_OKAY) { goto done; }
+    // m = -m * x
+    if ((err = mp_mulmod(&m, &R->x, modulus, &m)) != MP_OKAY) { goto done; }
+    // m = -m * x + m * x1
+    if ((err = mp_addmod(&t1, &m, modulus, &m)) != MP_OKAY) { goto done; }
+    // y = -m * x + m * x1 - y1
+    if ((err = mp_submod(&m, &P->y, modulus, &R->y)) != MP_OKAY) { goto done; }
+
+    // assert newy == (-m * newx + m * x2 - y2)
+  }
+
+done:
+  mp_clear_multi(&t1, &m, NULL);
+  return err;
+}
+
 uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   UNUSED_VAR(evm);
   int l = 20;
@@ -351,7 +420,7 @@ int pre_ec_add(evm_t* evm) {
   mp_init(&modulus);
   if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
 
-  ecc_point_double(p1, p3, &modulus);
+  ecc_point_add(p1, p2, p3, &modulus);
 
   evm->return_data = bytes(_malloc(64), 64);
   mp_to_unsigned_bin(&p3->x, evm->return_data.data);
