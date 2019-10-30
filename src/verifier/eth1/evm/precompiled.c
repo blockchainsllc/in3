@@ -50,6 +50,160 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
+static const uint8_t modulus_bin[] = {0x30, 0x64, 0x4e, 0x72, 0xe1, 0x31, 0xa0, 0x29, 0xb8, 0x50, 0x45, 0xb6, 0x81, 0x81, 0x58, 0x5d, 0x97, 0x81, 0x6a, 0x91, 0x68, 0x71, 0xca, 0x8d, 0x3c, 0x20, 0x8c, 0x16, 0xd8, 0x7c, 0xfd, 0x47};
+
+typedef struct {
+  mp_int x;
+  mp_int y;
+  mp_int z;
+} ecc_point;
+
+static ecc_point* ecc_new_point(void) {
+  ecc_point* p;
+  p = _calloc(1, sizeof(*p));
+  if (p == NULL) {
+    return NULL;
+  }
+  if (mp_init_multi(&p->x, &p->y, &p->z, NULL) != MP_OKAY) {
+    _free(p);
+    return NULL;
+  }
+  return p;
+}
+
+static void ecc_del_point(ecc_point* p) {
+  if (p != NULL) {
+    mp_clear_multi(&p->x, &p->y, &p->z, NULL);
+    _free(p);
+  }
+}
+
+static void ecc_set_point_xyz(mp_digit x, mp_digit y, mp_digit z, ecc_point* p) {
+  mp_set(&p->x, x);
+  mp_set(&p->y, y);
+  mp_set(&p->z, z);
+}
+
+static int ecc_copy_point(const ecc_point* src, ecc_point* dst) {
+  int err;
+  if ((err = mp_copy(&src->x, &dst->x)) != MP_OKAY) return err;
+  if ((err = mp_copy(&src->y, &dst->y)) != MP_OKAY) return err;
+  if ((err = mp_copy(&src->z, &dst->z)) != MP_OKAY) return err;
+  return MP_OKAY;
+}
+
+static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retval) {
+  int    err;
+  mp_int x3, y2;
+
+  /* trivial case */
+  if (!mp_iszero(&P->z)) {
+    *retval = 0;
+    return MP_OKAY;
+  }
+
+  /* point (0,0,0) is not at infinity */
+  if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
+    *retval = 0;
+    return MP_OKAY;
+  }
+
+  /* initialize */
+  if ((err = mp_init_multi(&x3, &y2, NULL)) != MP_OKAY) goto done;
+
+  /* compute y^2 */
+  if ((err = mp_mulmod(&P->y, &P->y, modulus, &y2)) != MP_OKAY) goto cleanup;
+
+  /* compute x^3 */
+  if ((err = mp_mulmod(&P->x, &P->x, modulus, &x3)) != MP_OKAY) goto cleanup;
+  if ((err = mp_mulmod(&P->x, &x3, modulus, &x3)) != MP_OKAY) goto cleanup;
+
+  /* test y^2 == x^3 */
+  err = MP_OKAY;
+  if ((mp_cmp(&x3, &y2) == MP_EQ) && !mp_iszero(&y2)) {
+    *retval = 1;
+  } else {
+    *retval = 0;
+  }
+
+  cleanup:
+  mp_clear_multi(&x3, &y2, NULL);
+  done:
+  return err;
+}
+
+static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
+  mp_int t1, t2, t3, t4;
+  int    err, inf;
+
+  if ((err = mp_init_multi(&t1, &t2, &t3, &t4, NULL)) != MP_OKAY) {
+    return err;
+  }
+
+  if (P != R) {
+    if ((err = ecc_copy_point(P, R)) != MP_OKAY) { goto done; }
+  }
+
+  if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
+  if (inf) {
+    /* if P is point at infinity >> Result = point at infinity */
+    ecc_set_point_xyz(1, 1, 0, R);
+    err = MP_OKAY;
+    goto done;
+  }
+
+  // t1 = x^2
+  if ((err = mp_sqrmod(&R->x, modulus, &t1)) != MP_OKAY) { goto done; }
+
+  // t1 = 3*x^2
+  mp_set(&t2, 3);
+  if ((err = mp_mulmod(&t1, &t2, modulus, &t1)) != MP_OKAY) { goto done; }
+
+  // t3 = 2*y
+  mp_set(&t2, 2);
+  if ((err = mp_mulmod(&R->y, &t2, modulus, &t3)) != MP_OKAY) { goto done; }
+
+  // t3 = 1/(2*y)
+  if ((err = mp_invmod(&t3, modulus, &t3)) != MP_OKAY) { goto done; }
+
+  // t3 = 1/(2*y) * 3*x^2
+  if ((err = mp_mulmod(&t3, &t1, modulus, &t3)) != MP_OKAY) { goto done; }
+
+  // t4 = t3^2
+  if ((err = mp_sqrmod(&t3, modulus, &t4)) != MP_OKAY) { goto done; }
+
+  // t2 = 2*x
+  if ((err = mp_mulmod(&R->x, &t2, modulus, &t2)) != MP_OKAY) { goto done; }
+
+  // t1 = t3 * x
+  if ((err = mp_mulmod(&t3, &R->x, modulus, &t1)) != MP_OKAY) { goto done; }
+
+  // x = m^2 - 2*x
+  if ((err = mp_submod(&t4, &t2, modulus, &R->x)) != MP_OKAY) { goto done; }
+  // MP_PRINT(R->x);
+
+  // t4 = x
+  if ((err = mp_copy(&R->x, &t4)) != MP_OKAY) { goto done; }
+
+  // t2 = -t3
+  if ((err = mp_neg(&t3, &t2)) != MP_OKAY) { goto done; }
+
+  // t2 = -t3 * t4
+  if ((err = mp_mulmod(&t2, &t4, modulus, &t2)) != MP_OKAY) { goto done; }
+
+  // t2 = t1 + t2
+  if ((err = mp_addmod(&t1, &t2, modulus, &t2)) != MP_OKAY) { goto done; }
+
+  // y = t2 - y
+  if ((err = mp_submod(&t2, &R->y, modulus, &R->y)) != MP_OKAY) { goto done; }
+  // MP_PRINT(R->y);
+
+  err = MP_OKAY;
+  done:
+  mp_clear_multi(&t4, &t3, &t2, &t1, NULL);
+  return err;
+}
+
 uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   UNUSED_VAR(evm);
   int l = 20;
@@ -184,9 +338,34 @@ int pre_ec_add(evm_t* evm) {
   memset(cdata, 0, 128);
   memcpy(cdata, evm->call_data.data, MIN(128, evm->call_data.len));
 
+  int        err = 0;
+  ecc_point *p1, *p2, *p3;
+  mp_int     modulus;
+  p1 = ecc_new_point();
+  p2 = ecc_new_point();
+  p3 = ecc_new_point();
+  if ((err = mp_read_unsigned_bin(&p1->x, cdata, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&p1->y, cdata + 32, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&p2->x, cdata + 64, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&p2->y, cdata + 96, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
 
+  mp_init(&modulus);
+  if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+
+  ecc_point_double(p1, p3, &modulus);
 
   evm->return_data = bytes(_malloc(64), 64);
+  mp_to_unsigned_bin(&p3->x, evm->return_data.data);
+  mp_to_unsigned_bin(&p3->y, evm->return_data.data + 32);
+  ecc_del_point(p1);
+  ecc_del_point(p2);
+  ecc_del_point(p3);
+
+  in3_log_set_level(LOG_TRACE);
+  b_print(&evm->return_data);
+  in3_log_set_level(LOG_ERROR);
+
+  mp_clear_multi(&modulus, NULL);
   return 0;
 }
 
