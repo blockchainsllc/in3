@@ -77,10 +77,11 @@ static void ecc_del_point(ecc_point* p) {
   }
 }
 
-static void ecc_set_point_xyz(mp_digit x, mp_digit y, mp_digit z, ecc_point* p) {
+static int ecc_set_point_xyz(mp_digit x, mp_digit y, mp_digit z, ecc_point* p) {
   mp_set(&p->x, x);
   mp_set(&p->y, y);
   mp_set(&p->z, z);
+  return MP_OKAY;
 }
 
 static int ecc_copy_point(const ecc_point* src, ecc_point* dst) {
@@ -92,7 +93,7 @@ static int ecc_copy_point(const ecc_point* src, ecc_point* dst) {
 }
 
 static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retval) {
-  int    err;
+  int    err = MP_OKAY;
   mp_int x3, y2;
 
   /* trivial case */
@@ -125,9 +126,9 @@ static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retv
     *retval = 0;
   }
 
-  cleanup:
+cleanup:
   mp_clear_multi(&x3, &y2, NULL);
-  done:
+done:
   return err;
 }
 
@@ -146,8 +147,7 @@ static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
   if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
   if (inf) {
     /* if P is point at infinity >> Result = point at infinity */
-    ecc_set_point_xyz(1, 1, 0, R);
-    err = MP_OKAY;
+    err = ecc_set_point_xyz(1, 1, 0, R);
     goto done;
   }
 
@@ -198,7 +198,7 @@ static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
   // MP_PRINT(R->y);
 
   err = MP_OKAY;
-  done:
+done:
   mp_clear_multi(&t4, &t3, &t2, &t1, NULL);
   return err;
 }
