@@ -177,26 +177,6 @@ int pre_modexp(evm_t* evm) {
   memcpy(evm->return_data.data, res, ml);
   return 0;
 }
-const ecdsa_curve alt_bn128 = {
-    /* .prime */ {
-        /*.val =*/{0x16d87cfd, 0x34f08230, 0x16871ca8, 0x25e05aa4, 0x181585d, 0x214116da, 0x131a029b, 0x19139cb8, 0x30}},
-
-    /* G */ {/*.x =*/{/*.val =*/{0x16f81798, 0x27ca056c, 0x1ce28d95, 0x26ff36cb, 0x70b0702, 0x18a573a, 0xbbac55a, 0x199fbe77, 0x79be}},
-             /*.y =*/{/*.val =*/{0x3b10d4b8, 0x311f423f, 0x28554199, 0x5ed1229, 0x1108a8fd, 0x13eff038, 0x3c4655da, 0x369dc9a8, 0x483a}}},
-
-    /* order */ {/*.val =*/{0x10364141, 0x3f497a33, 0x348a03bb, 0x2bb739ab, 0x3ffffeba, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0xffff}},
-
-    /* order_half */ {/*.val =*/{0x281b20a0, 0x3fa4bd19, 0x3a4501dd, 0x15db9cd5, 0x3fffff5d, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x7fff}},
-
-    /* a */ 0,
-
-    /* b */ {/*.val =*/{3}}
-
-#if USE_PRECOMPUTED_CP
-    ,
-    {}
-#endif
-};
 
 int pre_ec_add(evm_t* evm) {
   subgas(500);
@@ -204,17 +184,9 @@ int pre_ec_add(evm_t* evm) {
   memset(cdata, 0, 128);
   memcpy(cdata, evm->call_data.data, MIN(128, evm->call_data.len));
 
-  curve_point a, b;
-  bn_read_be(cdata, &a.x);
-  bn_read_be(cdata + 32, &a.y);
-  bn_read_be(cdata + 64, &b.x);
-  bn_read_be(cdata + 96, &b.y);
 
-  point_add(&alt_bn128, &a, &b);
 
   evm->return_data = bytes(_malloc(64), 64);
-  bn_write_be(&b.x, evm->return_data.data);
-  bn_write_be(&b.y, evm->return_data.data + 32);
   return 0;
 }
 
@@ -225,13 +197,7 @@ int pre_ec_mul(evm_t* evm) {
   uint8_t     cdata[96];
   memset(cdata, 0, 96);
   memcpy(cdata, evm->call_data.data, MIN(96, evm->call_data.len));
-
-  bn_read_be(cdata, &a.x);
-  bn_read_be(cdata + 32, &a.y);
-  bn_read_be(cdata + 64, &s);
-
-  point_multiply(&alt_bn128, &s, &a, &b);
-
+  
   evm->return_data = bytes(_malloc(64), 64);
   bn_write_be(&b.x, evm->return_data.data);
   bn_write_be(&b.y, evm->return_data.data + 32);
