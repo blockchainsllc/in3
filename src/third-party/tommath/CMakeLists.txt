@@ -45,7 +45,7 @@ IF (FAST_MATH)
             bn_mp_abs.c
             bn_mp_add.c
             #  bn_mp_add_d.c
-            #  bn_mp_addmod.c
+            bn_mp_addmod.c
             #  bn_mp_and.c
             bn_mp_balance_mul.c
             bn_mp_clamp.c
@@ -116,7 +116,7 @@ IF (FAST_MATH)
             bn_mp_mulmod.c
             #  bn_mp_n_root.c
             #  bn_mp_n_root_ex.c
-            #  bn_mp_neg.c
+            bn_mp_neg.c
             #  bn_mp_or.c
             #  bn_mp_prime_fermat.c
             #  bn_mp_prime_frobenius_underwood.c
@@ -130,9 +130,9 @@ IF (FAST_MATH)
             #  bn_mp_radix_size.c
             #  bn_mp_radix_smap.c
             #  bn_mp_rand.c
-            #  bn_mp_read_radix.c
+            bn_mp_read_radix.c
             #  bn_mp_read_signed_bin.c
-            #  bn_mp_read_unsigned_bin.c
+            bn_mp_read_unsigned_bin.c
             bn_mp_reduce.c
             bn_mp_reduce_2k.c
             bn_mp_reduce_2k_l.c
@@ -150,29 +150,29 @@ IF (FAST_MATH)
             #  bn_mp_shrink.c
             #  bn_mp_signed_bin_size.c
             bn_mp_sqr.c
-            #  bn_mp_sqrmod.c
+            bn_mp_sqrmod.c
             #  bn_mp_sqrt.c
             #  bn_mp_sqrtmod_prime.c
             bn_mp_sub.c
             #  bn_mp_sub_d.c
-            #  bn_mp_submod.c
+            bn_mp_submod.c
             #  bn_mp_tc_and.c
             #  bn_mp_tc_div_2d.c
             #  bn_mp_tc_or.c
             #  bn_mp_tc_xor.c
             #  bn_mp_to_signed_bin.c
             #  bn_mp_to_signed_bin_n.c
-            #  bn_mp_to_unsigned_bin.c
+            bn_mp_to_unsigned_bin.c
             #  bn_mp_to_unsigned_bin_n.c
-            bn_mp_toom_mul.c
-            bn_mp_toom_sqr.c
+            #  bn_mp_toom_mul.c
+            #  bn_mp_toom_sqr.c
             #  bn_mp_toradix.c
             #  bn_mp_toradix_n.c
             #  bn_mp_unsigned_bin_size.c
             #  bn_mp_xor.c
             bn_mp_zero.c
             #  bn_prime_tab.c
-            #  bn_reverse.c
+            bn_reverse.c
             bn_s_mp_add.c
             bn_s_mp_exptmod.c
             bn_s_mp_mul_digs.c
@@ -194,6 +194,7 @@ ELSE (FAST_MATH)
             bn_mp_2expt.c
             bn_mp_abs.c
             bn_mp_add.c
+            bn_mp_addmod.c
             bn_mp_balance_mul.c
             bn_mp_clamp.c
             bn_mp_clear.c
@@ -227,6 +228,9 @@ ELSE (FAST_MATH)
             bn_mp_mul_2d.c
             bn_mp_mul_d.c
             bn_mp_mulmod.c
+            bn_mp_neg.c
+            bn_mp_read_radix.c
+            bn_mp_read_unsigned_bin.c
             bn_mp_reduce.c
             bn_mp_reduce_2k_l.c
             bn_mp_reduce_2k_setup_l.c
@@ -235,8 +239,12 @@ ELSE (FAST_MATH)
             bn_mp_rshd.c
             bn_mp_set.c
             bn_mp_sqr.c
+            bn_mp_sqrmod.c
             bn_mp_sub.c
+            bn_mp_submod.c
+            bn_mp_to_unsigned_bin.c
             bn_mp_zero.c
+            bn_reverse.c
             bn_s_mp_add.c
             bn_s_mp_exptmod.c
             bn_s_mp_mul_digs.c
