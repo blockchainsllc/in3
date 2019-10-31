@@ -32,8 +32,11 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory(eth1/rpc)
-add_subdirectory(eth1/nano)
-add_subdirectory(eth1/basic)
-add_subdirectory(eth1/full)
-add_subdirectory(eth1/evm)
+
+# static lib
+add_library(eth_rpc_o OBJECT
+        rpc.c
+)
+
+add_library(eth_rpc STATIC $<TARGET_OBJECTS:eth_rpc_o>)
+target_link_libraries(eth_rpc core)
