@@ -182,10 +182,8 @@ done:
 }
 
 static void ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
-  int eq = mp_cmp(&P->x, modulus);
-  assert(eq == MP_LT);
-  eq = mp_cmp(&P->y, modulus);
-  assert(eq == MP_LT);
+  assert(mp_cmp(&P->x, modulus) == MP_LT);
+  assert(mp_cmp(&P->y, modulus) == MP_LT);
   if (!mp_iszero(&P->x) && !mp_iszero(&P->y)) {
     int oncurve;
     ecc_is_point_on_curve(P, modulus, b, &oncurve);
