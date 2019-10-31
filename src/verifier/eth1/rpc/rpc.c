@@ -91,12 +91,12 @@ static verify_res_t f_boolean(char* name, d_token_t* val) {
   return valid();
 }
 
-verify_res_t verify_rpc_structure(d_token_t* request, d_token_t* response) {
+verify_res_t verify_rpc_structure(d_token_t* req, d_token_t* response) {
 
   verify_res_t (*check_fn)(char* name, d_token_t* val) = NULL;
   char* method                                         = NULL;
 
-  check_object("request", request, {
+  check_object("request", req, {
     required_prop("method", f_string, {
       method = d_string(val);
       if (strcmp(method, "eth_blockNumber") == 0)
@@ -146,7 +146,7 @@ verify_res_t verify_rpc_structure(d_token_t* request, d_token_t* response) {
       bool err_or_res = false;
 
       required_prop("id", f_not_empty, {
-        if (!d_eq(val, d_get(request, key("id")))) return prop_error("must match the id in the request", val);
+        if (!d_eq(val, d_get(req, key("id")))) return prop_error("must match the id in the request", val);
       });
       required_prop("jsonrpc", f_string, {
         if (strcmp(d_string(val), "2.0")) return prop_error("must be '2.0'", val);
