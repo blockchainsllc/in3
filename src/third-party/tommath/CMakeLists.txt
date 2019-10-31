@@ -168,7 +168,7 @@ IF (FAST_MATH)
             #  bn_mp_toom_sqr.c
             #  bn_mp_toradix.c
             #  bn_mp_toradix_n.c
-            #  bn_mp_unsigned_bin_size.c
+            bn_mp_unsigned_bin_size.c
             #  bn_mp_xor.c
             bn_mp_zero.c
             #  bn_prime_tab.c
@@ -242,6 +242,7 @@ ELSE (FAST_MATH)
             bn_mp_sub.c
             bn_mp_submod.c
             bn_mp_to_unsigned_bin.c
+            bn_mp_unsigned_bin_size.c
             bn_mp_zero.c
             bn_reverse.c
             bn_s_mp_add.c

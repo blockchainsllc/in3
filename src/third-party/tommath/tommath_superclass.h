@@ -78,6 +78,7 @@
 #ifdef IN3_MATH_LITE
 
 #   define BN_MP_READ_UNSIGNED_BIN_C
+#   define BN_MP_UNSIGNED_BIN_SIZE_C
 #   define BN_MP_TO_UNSIGNED_BIN_C
 #   define BN_MP_SQRMOD_C
 #   define BN_MP_ADDMOD_C

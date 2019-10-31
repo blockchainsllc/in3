@@ -69,13 +69,13 @@ if(TRANSPORTS)
         add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
         target_link_libraries(test_libcurl transport_curl eth_nano)
 
-        add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
-        target_link_libraries(test_vhist eth_nano transport_curl)
-        add_test(
-                NAME "in3_test_vhist"
-                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-        )
+#        add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
+#        target_link_libraries(test_vhist eth_nano transport_curl)
+#        add_test(
+#                NAME "in3_test_vhist"
+#                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
+#                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+#        )
 endif()
 
 
@@ -157,12 +157,12 @@ foreach (testdir
         #GeneralStateTests/stDelegatecallTestHomestead
         #GeneralStateTests/stEIP150Specific
         #GeneralStateTests/stEIP150singleCodeGasPrices
-        #GeneralStateTests/stZeroKnowledge2
+        GeneralStateTests/stZeroKnowledge2
         GeneralStateTests/stLogTests
         #GeneralStateTests/stEIP158Specific
         #GeneralStateTests/stZeroCallsRevert
         #GeneralStateTests/stTransactionTest
-        #GeneralStateTests/stZeroKnowledge
+        GeneralStateTests/stZeroKnowledge
         #GeneralStateTests/stStaticCall
         #GeneralStateTests/stMemExpandingEIP150Calls
         GeneralStateTests/stArgsZeroOneBalance
@@ -186,7 +186,7 @@ foreach (testdir
                 COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
         )
-        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 1)
+        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 3)
     endforeach ()
 endforeach ()
 

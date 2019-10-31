@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -41,6 +42,7 @@
 #include "../../../third-party/tommath/tommath.h"
 #include "evm.h"
 #include "gas.h"
+#include <assert.h>
 
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -48,6 +50,21 @@
 #ifndef MIN
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
+
+#define MP_PRINT(bn)                                 \
+  do {                                               \
+    unsigned char _str_[33] = {0};                   \
+    mp_tohex(bn, (char*) _str_);                     \
+    printf("--- %s : %s ---\n", #bn, (char*) _str_); \
+  } while (0)
+#define MP_PRINT_POINT(pt)          \
+  do {                              \
+    unsigned char _str_[33] = {0};  \
+    mp_tohex(pt->x, (char*) _str_); \
+    printf("%s", (char*) _str_);    \
+    mp_tohex(pt->y, (char*) _str_); \
+    printf("%s\n", (char*) _str_);  \
+  } while (0)
 
 static const uint8_t modulus_bin[] = {0x30, 0x64, 0x4e, 0x72, 0xe1, 0x31, 0xa0, 0x29, 0xb8, 0x50, 0x45, 0xb6, 0x81, 0x81, 0x58, 0x5d, 0x97, 0x81, 0x6a, 0x91, 0x68, 0x71, 0xca, 0x8d, 0x3c, 0x20, 0x8c, 0x16, 0xd8, 0x7c, 0xfd, 0x47};
 
@@ -104,7 +121,7 @@ static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retv
 
   /* point (0,0,0) is not at infinity */
   if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
-    *retval = 0;
+    *retval = 1;
     return MP_OKAY;
   }
 
@@ -132,6 +149,54 @@ done:
   return err;
 }
 
+//# Check that a point is on the curve defined by y**2 == x**3 + b
+//def is_on_curve(pt: Point2D[Field], b: Field) -> bool:
+//    if is_inf(pt):
+//        return True
+//    x, y = pt
+//    return y**2 - x**3 == b
+
+static int ecc_is_point_on_curve(const ecc_point* P, mp_int* modulus, mp_int* b, int* oncurve) {
+  int    err;
+  mp_int t1, t2, t3;
+
+  if ((err = mp_init_multi(&t1, &t2, &t3, NULL)) != MP_OKAY) { return err; }
+  if ((err = ecc_is_point_at_infinity(P, modulus, oncurve)) != MP_OKAY) { goto done; }
+
+  // t1 = x^3
+  if ((err = mp_sqrmod(&P->x, modulus, &t1)) != MP_OKAY) { goto done; }
+  if ((err = mp_mulmod(&t1, &P->x, modulus, &t1)) != MP_OKAY) { goto done; }
+
+  // t2 = y^2
+  if ((err = mp_sqrmod(&P->y, modulus, &t2)) != MP_OKAY) { goto done; }
+
+  // t2 = y^2 - x^3
+  if ((err = mp_submod(&t2, &t1, modulus, &t2)) != MP_OKAY) { goto done; }
+
+  // y^2 - x^3 = b ?
+  *oncurve = (mp_cmp(&t2, b) == MP_EQ);
+
+done:
+  mp_clear_multi(&t3, &t2, &t1, NULL);
+  return err;
+}
+
+static void ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
+  int eq = mp_cmp(&P->x, modulus);
+  assert(eq == MP_LT);
+  eq = mp_cmp(&P->y, modulus);
+  assert(eq == MP_LT);
+  if (!mp_iszero(&P->x) && !mp_iszero(&P->y)) {
+    int oncurve;
+    ecc_is_point_on_curve(P, modulus, b, &oncurve);
+    assert(oncurve);
+  } else {
+//    mp_set(&P->x, 1);
+//    mp_set(&P->y, 1);
+//    mp_set(&P->z, 0);
+  }
+}
+
 static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
   mp_int t1, t2, t3, t4;
   int    err, inf;
@@ -146,9 +211,8 @@ static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
 
   if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
   if (inf) {
-    /* if P is point at infinity >> Result = point at infinity */
-    err = ecc_set_point_xyz(1, 1, 0, R);
-    goto done;
+    //    err = ecc_set_point_xyz(1, 1, 0, R);
+    if ((err = ecc_copy_point(P, R)) != MP_OKAY) { goto done; }
   }
 
   // t1 = x^2
@@ -204,24 +268,24 @@ done:
 }
 
 static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int* modulus) {
-  int    inf = 0, err = MP_OKAY;
-  mp_int t1, m;
+  int inf = 0, err = MP_OKAY;
+  mp_int           t1, m;
 
   mp_init_multi(&t1, &m, NULL);
 
   // P is point-at-infinity, so result is Q
-  if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
-  if (inf) {
-    err = ecc_copy_point(Q, R);
-    goto done;
-  }
+    if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
+    if (inf) {
+      err = ecc_copy_point(Q, R);
+      goto done;
+    }
 
-  // Q is point-at-infinity, so result is P
-  if ((err = ecc_is_point_at_infinity(Q, modulus, &inf)) != MP_OKAY) return err;
-  if (inf) {
-    err = ecc_copy_point(P, R);
-    goto done;
-  }
+    // Q is point-at-infinity, so result is P
+    if ((err = ecc_is_point_at_infinity(Q, modulus, &inf)) != MP_OKAY) return err;
+    if (inf) {
+      err = ecc_copy_point(P, R);
+      goto done;
+    }
 
   if ((mp_cmp(&P->x, &Q->x) == MP_EQ)) {
     // P = Q, so result is P doubled
@@ -405,10 +469,12 @@ int pre_ec_add(evm_t* evm) {
   uint8_t cdata[128];
   memset(cdata, 0, 128);
   memcpy(cdata, evm->call_data.data, MIN(128, evm->call_data.len));
+  in3_log_set_level(LOG_TRACE);
+  ba_print(cdata, 128);
 
   int        err = 0;
   ecc_point *p1, *p2, *p3;
-  mp_int     modulus;
+  mp_int     modulus, b;
   p1 = ecc_new_point();
   p2 = ecc_new_point();
   p3 = ecc_new_point();
@@ -417,25 +483,38 @@ int pre_ec_add(evm_t* evm) {
   if ((err = mp_read_unsigned_bin(&p2->x, cdata + 64, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
   if ((err = mp_read_unsigned_bin(&p2->y, cdata + 96, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
 
-  mp_init(&modulus);
-  if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  mp_init_multi(&modulus, &b);
+  if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { goto done; }
+  mp_set(&b, 3);
 
-  ecc_point_add(p1, p2, p3, &modulus);
+  ecc_point_validate(p1, &modulus, &b);
+  ecc_point_validate(p2, &modulus, &b);
 
-  evm->return_data = bytes(_malloc(64), 64);
-  mp_to_unsigned_bin(&p3->x, evm->return_data.data);
-  mp_to_unsigned_bin(&p3->y, evm->return_data.data + 32);
+  if ((err = ecc_point_add(p1, p2, p3, &modulus)) != MP_OKAY) { goto done; }
+
+  evm->return_data = bytes(_calloc(1, 64), 64);
+  //  mp_to_unsigned_bin(&p3->x, evm->return_data.data);
+  //  mp_to_unsigned_bin(&p3->y, evm->return_data.data + 32);
+  size_t ml = mp_unsigned_bin_size(&p3->x);
+  mp_to_unsigned_bin(&p3->x, evm->return_data.data + 32 - ml);
+  mp_unsigned_bin_size(&p3->y);
+  mp_to_unsigned_bin(&p3->y, evm->return_data.data + 64 - ml);
+
   ecc_del_point(p1);
   ecc_del_point(p2);
   ecc_del_point(p3);
 
-  mp_clear_multi(&modulus, NULL);
-  return 0;
+  b_print(&evm->return_data);
+  in3_log_set_level(LOG_ERROR);
+
+done:
+  mp_clear_multi(&modulus, &b, NULL);
+  return err;
 }
 
 int pre_ec_mul(evm_t* evm) {
   subgas(40000);
-  uint8_t     cdata[96];
+  uint8_t cdata[96];
   memset(cdata, 0, 96);
   memcpy(cdata, evm->call_data.data, MIN(96, evm->call_data.len));
 
