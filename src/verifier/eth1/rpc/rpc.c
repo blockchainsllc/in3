@@ -11,7 +11,7 @@
 static verify_res_t report(char* msg, d_token_t* value, char* prefix) {
   char* m = malloc(strlen(msg) + (prefix ? (strlen(prefix) + 1) : 0) + 1);
   if (prefix)
-    sprintf("%s %s", prefix, msg);
+    sprintf(m, "%s %s", prefix, msg);
   else
     memcpy(m, msg, strlen(msg) + 1);
   verify_res_t r = {.src = value ? d_create_json(value) : NULL, .msg = m, .valid = false};
