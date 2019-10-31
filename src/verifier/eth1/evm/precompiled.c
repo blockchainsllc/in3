@@ -121,7 +121,7 @@ static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retv
 
   /* point (0,0,0) is not at infinity */
   if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
-    *retval = 1;
+    *retval = 0;
     return MP_OKAY;
   }
 
@@ -191,9 +191,9 @@ static void ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
     ecc_is_point_on_curve(P, modulus, b, &oncurve);
     assert(oncurve);
   } else {
-//    mp_set(&P->x, 1);
-//    mp_set(&P->y, 1);
-//    mp_set(&P->z, 0);
+    mp_set(&P->x, 1);
+    mp_set(&P->y, 1);
+    mp_set(&P->z, 0);
   }
 }
 
@@ -268,24 +268,24 @@ done:
 }
 
 static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int* modulus) {
-  int inf = 0, err = MP_OKAY;
+  int /*inf = 0,*/ err = MP_OKAY;
   mp_int           t1, m;
 
   mp_init_multi(&t1, &m, NULL);
 
   // P is point-at-infinity, so result is Q
-    if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
-    if (inf) {
-      err = ecc_copy_point(Q, R);
-      goto done;
-    }
-
-    // Q is point-at-infinity, so result is P
-    if ((err = ecc_is_point_at_infinity(Q, modulus, &inf)) != MP_OKAY) return err;
-    if (inf) {
-      err = ecc_copy_point(P, R);
-      goto done;
-    }
+  //  if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
+  //  if (inf) {
+  //    err = ecc_copy_point(Q, R);
+  //    goto done;
+  //  }
+  //
+  //  // Q is point-at-infinity, so result is P
+  //  if ((err = ecc_is_point_at_infinity(Q, modulus, &inf)) != MP_OKAY) return err;
+  //  if (inf) {
+  //    err = ecc_copy_point(P, R);
+  //    goto done;
+  //  }
 
   if ((mp_cmp(&P->x, &Q->x) == MP_EQ)) {
     // P = Q, so result is P doubled
