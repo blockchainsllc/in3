@@ -96,7 +96,7 @@ IF (FAST_MATH)
             bn_mp_invmod_slow.c
             #  bn_mp_is_square.c
             #  bn_mp_iseven.c
-            #  bn_mp_isodd.c
+            bn_mp_isodd.c
             #  bn_mp_jacobi.c
             bn_mp_karatsuba_mul.c
             bn_mp_karatsuba_sqr.c
@@ -151,7 +151,7 @@ IF (FAST_MATH)
             #  bn_mp_signed_bin_size.c
             bn_mp_sqr.c
             bn_mp_sqrmod.c
-            #  bn_mp_sqrt.c
+            bn_mp_sqrt.c
             #  bn_mp_sqrtmod_prime.c
             bn_mp_sub.c
             #  bn_mp_sub_d.c
@@ -218,6 +218,7 @@ ELSE (FAST_MATH)
             bn_mp_init_size.c
             bn_mp_invmod.c
             bn_mp_invmod_slow.c
+            bn_mp_isodd.c
             bn_mp_lshd.c
             bn_mp_mod.c
             bn_mp_mod_2d.c
@@ -239,6 +240,7 @@ ELSE (FAST_MATH)
             bn_mp_set.c
             bn_mp_sqr.c
             bn_mp_sqrmod.c
+            bn_mp_sqrt.c
             bn_mp_sub.c
             bn_mp_submod.c
             bn_mp_to_unsigned_bin.c

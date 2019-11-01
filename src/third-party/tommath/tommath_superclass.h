@@ -81,9 +81,11 @@
 #   define BN_MP_UNSIGNED_BIN_SIZE_C
 #   define BN_MP_TO_UNSIGNED_BIN_C
 #   define BN_MP_SQRMOD_C
+#   define BN_MP_SQRT_C
 #   define BN_MP_ADDMOD_C
 #   define BN_MP_SUBMOD_C
 #   define BN_MP_NEG_C
+#   define BN_MP_ISODD_C
 #   define BN_MP_EXPTMOD_C
 #   define BN_MP_DIV_C
 #   define BN_MP_IMPORT_C
