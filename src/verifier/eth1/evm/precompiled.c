@@ -481,7 +481,7 @@ int pre_ec_add(evm_t* evm) {
   if ((err = mp_read_unsigned_bin(&p2->x, cdata + 64, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
   if ((err = mp_read_unsigned_bin(&p2->y, cdata + 96, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
 
-  mp_init_multi(&modulus, &b);
+  mp_init_multi(&modulus, &b, NULL);
   if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { goto done; }
   mp_set(&b, 3);
 
