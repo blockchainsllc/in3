@@ -334,6 +334,47 @@ done:
   return err;
 }
 
+static int ecc_point_mul(const mp_int* k, const ecc_point* P, ecc_point* Q, mp_int* modulus) {
+  int    err = MP_OKAY;
+  mp_int t1;
+
+  if (mp_iszero(k)) {
+    return ecc_set_point_xyz(0, 0, 0, Q);
+  }
+
+  mp_init(&t1);
+  mp_set(&t1, 1);
+  if (mp_cmp(k, &t1) == MP_EQ) {
+    err = ecc_copy_point(P, Q);
+    goto done;
+  } else if (mp_isodd(k)) {
+    ecc_point* R = ecc_new_point();
+    err          = ecc_point_double(P, R, modulus);
+    if (err == MP_OKAY) {
+      err = mp_sqrt(k, &t1);
+      if (err == MP_OKAY)
+        err = ecc_point_mul(&t1, R, Q, modulus);
+    }
+    ecc_del_point(R);
+  } else {
+    ecc_point* R = ecc_new_point();
+    err          = ecc_point_double(P, R, modulus);
+    if (err == MP_OKAY) {
+      err = mp_sqrt(k, &t1);
+      if (err == MP_OKAY) {
+        err = ecc_point_mul(&t1, R, Q, modulus);
+        if (err == MP_OKAY)
+          err = ecc_point_add(P, Q, Q, modulus);
+      }
+    }
+    ecc_del_point(R);
+  }
+
+done:
+  mp_clear(&t1);
+  return err;
+}
+
 uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   UNUSED_VAR(evm);
   int l = 20;
@@ -515,9 +556,40 @@ int pre_ec_mul(evm_t* evm) {
   uint8_t cdata[96];
   memset(cdata, 0, 96);
   memcpy(cdata, evm->call_data.data, MIN(96, evm->call_data.len));
+  in3_log_set_level(LOG_TRACE);
+  ba_print(cdata, 96);
 
-  evm->return_data = bytes(_malloc(64), 64);
-  return 0;
+  int        err = 0;
+  ecc_point *p1, *p2;
+  mp_int     modulus, b, k;
+  p1 = ecc_new_point();
+  p2 = ecc_new_point();
+  mp_init_multi(&modulus, &b, &k, NULL);
+  if ((err = mp_read_unsigned_bin(&p1->x, cdata, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&p1->y, cdata + 32, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&k, cdata + 64, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { goto done; }
+  mp_set(&b, 3);
+
+  ecc_point_validate(p1, &modulus, &b);
+
+  if ((err = ecc_point_mul(&k, p1, p2, &modulus)) != MP_OKAY) { goto done; }
+
+  evm->return_data = bytes(_calloc(1, 64), 64);
+  size_t ml        = mp_unsigned_bin_size(&p2->x);
+  mp_to_unsigned_bin(&p2->x, evm->return_data.data + 32 - ml);
+  mp_unsigned_bin_size(&p2->y);
+  mp_to_unsigned_bin(&p2->y, evm->return_data.data + 64 - ml);
+
+  ecc_del_point(p1);
+  ecc_del_point(p2);
+
+  b_print(&evm->return_data);
+  in3_log_set_level(LOG_ERROR);
+
+done:
+  mp_clear_multi(&modulus, &b, &k, NULL);
+  return err;
 }
 
 int evm_run_precompiled(evm_t* evm, address_t address) {
