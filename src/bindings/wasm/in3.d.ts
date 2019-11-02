@@ -406,13 +406,23 @@ export default class IN3 {
      * @param fn the function to call
      * @returns a promise with the result of the function
      */
-    public static onInit(fn: () => any): Promise<any>
+    public static onInit<T>(fn: () => T): Promise<T>
 
 
     /**
      * eth1 API.
      */
-    eth: EthAPI
+    public eth: EthAPI
+
+    /**
+     * collection of util-functions.
+     */
+    public util: Utils
+
+    /**
+     * collection of util-functions.
+     */
+    public static util: Utils
 }
 
 /**
@@ -900,3 +910,28 @@ export declare class SimpleSigner implements Signer {
 export declare function soliditySha3(...args: any[]): string;
 export declare function encodeFunction(signature: string, args: any[]): string;
 export declare function decodeFunction(signature: string, args: Hex | RPCResponse): any;
+
+/**
+ * Collection of different util-functions.
+ */
+export declare interface Utils {
+    /**
+     * generates a checksum Address for the given address.
+     * If the chainId is passed, it will be included accord to EIP 1191
+     * @param address the address (as hex)
+     * @param chainId the chainId (if supported)
+     */
+    toChecksumAddress(address: Address, chainId?: number): Address
+
+    /**
+     * calculates the keccack hash for the given data.
+     * @param data the data as Uint8Array or hex data.
+     */
+    keccak(data: Uint8Array | Data): Uint8Array
+
+    /**
+     * converts any value to a hex string (with prefix 0x).
+     */
+    toHex(data: Hex | Uint8Array | number | bigint): Hex
+
+}
