@@ -32,13 +32,23 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../api/eth1/abi.h"
+#include "../../api/eth1/eth_api.h"
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/send.h"
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include <emscripten.h>
-
+/*
+static char* to_hex_string(uint8_t* data, int l) {
+  char* res = malloc((l << 1) + 3);
+  res[0]    = '0';
+  res[1]    = 'x';
+  bytes_to_hex(data, l, res + 2);
+  return res;
+}
+*/
 // --------------- storage -------------------
 // clang-format off
 EM_JS(char*, in3_cache_get, (char* key), {
@@ -179,4 +189,43 @@ void EMSCRIPTEN_KEEPALIVE request_set_result(in3_response_t* r, char* data) {
 
 void EMSCRIPTEN_KEEPALIVE request_set_error(in3_response_t* r, char* data) {
   sb_add_chars(&r->error, data);
+}
+
+char* EMSCRIPTEN_KEEPALIVE abi_encode(char* fn_sig, char* args) {
+  call_request_t* req = parseSignature(fn_sig);                                  // parse it and create a call_request.
+  if (req && req->in_data->type == A_TUPLE) {                                    // if type is a tuple, it means we have areuments we need to parse.
+    json_ctx_t* in_data = parse_json(args);                                      // the args are passed as a "[]"- json-array string.
+    if (set_data(req, in_data->result, req->in_data) < 0) return "invalid data"; // we then set the data, which appends the arguments to the functionhash.
+    free_json(in_data);                                                          // of course we clean up ;-)
+  }
+  char* result = malloc(req->call_data->b.len * 2 + 3);
+  result[0]    = '0';
+  result[1]    = 'x';
+  bytes_to_hex(req->call_data->b.data, req->call_data->b.len, result + 2);
+  return result;
+}
+
+uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
+  bytes_t  src    = bytes(data, len);
+  uint8_t* result = malloc(32);
+  if (result)
+    sha3_to(&src, result);
+  else
+    in3_set_error("malloc failed");
+
+  return result;
+}
+
+char* EMSCRIPTEN_KEEPALIVE to_checksum_address(char* hex_val, int chain_id) {
+  address_t bytes;
+  if (hex2byte_arr(hex_val, -1, bytes, 20) < 0) {
+    in3_set_error("address to long");
+    return NULL;
+  }
+  char* result = malloc(43);
+  if (result)
+    to_checksum(bytes, chain_id, result);
+  else
+    in3_set_error("malloc failed");
+  return result;
 }

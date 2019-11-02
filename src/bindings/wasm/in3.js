@@ -145,6 +145,7 @@ class IN3 {
         this.config = config
         this.needsSetConfig = !!config
         this.ptr = 0;
+        this.eth = new EthAPI(this)
     }
 
     /**
@@ -242,6 +243,23 @@ IN3.setTransport = function (fn) {
 // change the transport
 IN3.setStorage = function (fn) {
     in3w.in3_cache = fn
+}
+
+IN3.onInit = function (fn) {
+    return new Promise((resolve, reject) => {
+        const check = () => {
+            try {
+                resolve(fn())
+            }
+            catch (x) {
+                reject(x)
+            }
+        }
+        if (_in3_listeners)
+            _in3_listeners.push(check)
+        else
+            check()
+    })
 }
 
 // also support ES6-modules
