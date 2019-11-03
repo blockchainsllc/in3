@@ -40,6 +40,9 @@
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include <emscripten.h>
+
+#define err_string(msg) (":ERROR:" msg)
+
 /*
 static char* to_hex_string(uint8_t* data, int l) {
   char* res = malloc((l << 1) + 3);
@@ -191,20 +194,6 @@ void EMSCRIPTEN_KEEPALIVE request_set_error(in3_response_t* r, char* data) {
   sb_add_chars(&r->error, data);
 }
 
-char* EMSCRIPTEN_KEEPALIVE abi_encode(char* fn_sig, char* args) {
-  call_request_t* req = parseSignature(fn_sig);                                  // parse it and create a call_request.
-  if (req && req->in_data->type == A_TUPLE) {                                    // if type is a tuple, it means we have areuments we need to parse.
-    json_ctx_t* in_data = parse_json(args);                                      // the args are passed as a "[]"- json-array string.
-    if (set_data(req, in_data->result, req->in_data) < 0) return "invalid data"; // we then set the data, which appends the arguments to the functionhash.
-    free_json(in_data);                                                          // of course we clean up ;-)
-  }
-  char* result = malloc(req->call_data->b.len * 2 + 3);
-  result[0]    = '0';
-  result[1]    = 'x';
-  bytes_to_hex(req->call_data->b.data, req->call_data->b.len, result + 2);
-  return result;
-}
-
 uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
   bytes_t  src    = bytes(data, len);
   uint8_t* result = malloc(32);
@@ -218,9 +207,50 @@ uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
 
 char* EMSCRIPTEN_KEEPALIVE to_checksum_address(address_t adr, int chain_id) {
   char* result = malloc(43);
-  if (result)
-    to_checksum(adr, chain_id, result);
-  else
-    in3_set_error("malloc failed");
+  if (!result) return err_string("malloc failed");
+  to_checksum(adr, chain_id, result);
+  return result;
+}
+
+char* EMSCRIPTEN_KEEPALIVE abi_encode(char* sig, char* json_params) {
+  call_request_t* req = parseSignature(sig);
+  if (!req) return err_string("invalid function signature");
+
+  json_ctx_t* params = parse_json(json_params);
+  if (!params) {
+    req_free(req);
+    return err_string("invalid json data");
+  }
+
+  if (set_data(req, params->result, req->in_data) < 0) {
+    req_free(req);
+    free_json(params);
+    return err_string("invalid input data");
+  }
+  free_json(params);
+  char* result = malloc(req->call_data->b.len * 2 + 3);
+  if (!result) {
+    req_free(req);
+    return err_string("malloc failed for the result");
+  }
+  bytes_to_hex(req->call_data->b.data, req->call_data->b.len, result + 2);
+  result[0] = '0';
+  result[1] = 'x';
+  req_free(req);
+  return result;
+}
+
+char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
+  call_request_t* req = parseSignature(sig);
+  if (!req) return err_string("invalid function signature");
+
+  json_ctx_t* res = req_parse_result(req, bytes(data, len));
+  req_free(req);
+  if (!res)
+    return err_string("the input data can not be decoded");
+
+  char* result = d_create_json(res->result);
+  free_json(res);
+
   return result;
 }

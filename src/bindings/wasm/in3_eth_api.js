@@ -240,7 +240,7 @@ class EthAPI {
      * Uninstalls a filter with given id. Should always be called when watch is no longer needed. Additonally Filters timeout when they aren’t requested with eth_getFilterChanges for a period of time.
      */
     uninstallFilter(id) {
-        return this.send('eth_uninstallFilter')
+        return this.send('eth_uninstallFilter', id)
     }
 
     /**
@@ -262,7 +262,7 @@ class EthAPI {
      * Creates new message call transaction or a contract creation for signed transactions.
      */
     sendRawTransaction(data) {
-        return this.send('eth_sendRawTransaction', data)
+        return this.send('eth_sendRawTransaction', toHex(data))
     }
 
     /**

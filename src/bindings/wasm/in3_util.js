@@ -3,6 +3,7 @@ function call_string(name, ...params_values) {
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
     const result = UTF8ToString(res)
+    if (result && result.startsWith(":ERROR:")) throw new Error(result.substr(7))
     _free(res)
     return result
 }
@@ -69,6 +70,18 @@ function toChecksumAddress(val, chainId = 0) {
     if (!val) return val
     return call_string('to_checksum_address', toBuffer(val, 20), chainId);
 }
+
+
+
+function abiEncode(sig, ...params) {
+    function convert(a) {
+        if (Array.isArray(a)) return a.map(convert)
+        return (typeof a === 'bigint' || typeof a === 'object') ? toHex(a) : a
+    }
+
+    return call_string('abi_encode', sig, JSON.stringify(convert(params)))
+}
+
 /**
  * converts any value as hex-string
  */
@@ -234,7 +247,8 @@ const util = {
     padStart,
     padEnd,
     keccak,
-    toChecksumAddress
+    toChecksumAddress,
+    abiEncode
 }
 
 // add as static proporty and as standard property.
