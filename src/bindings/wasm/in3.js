@@ -229,8 +229,10 @@ class IN3 {
     }
 
     free() {
-        if (this.ptr)
+        if (this.ptr) {
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
+            this.ptr = 0
+        }
     }
 
 

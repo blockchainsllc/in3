@@ -1,4 +1,9 @@
 const fixLength = (hex) => hex.length % 2 ? '0' + hex : hex
+/**
+ * internal function calling a wasm-function, which returns a string.
+ * @param {*} name 
+ * @param  {...any} params_values 
+ */
 function call_string(name, ...params_values) {
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
@@ -74,14 +79,59 @@ function toChecksumAddress(val, chainId = 0) {
 
 
 function abiEncode(sig, ...params) {
-    function convert(a) {
-        if (Array.isArray(a)) return a.map(convert)
-        return (typeof a === 'bigint' || typeof a === 'object') ? toHex(a) : a
-    }
-
+    convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
 }
 
+function abiDecode(sig, data) {
+    data = toBuffer(data)
+    let res = JSON.parse(call_string('abi_decode', sig, data, data.byteLength))
+    if (!Array.isArray(res)) res = [res]
+    if (!res.length) return []
+    return convertTypes(splitTypes(sig.substr(sig.indexOf(':') + 1)), res)
+}
+function convertType(val, t) {
+    const isArray = t.indexOf('[')
+    if (isArray >= 0) {
+        t = t.substr(0, isArray)
+        if (t !== 'string' && t != 'bytes')
+            return val ? val.map(_ => convertType(_, t)) : []
+    }
+
+    if (t.startsWith('(')) return convertTypes(splitTypes(t), val)
+    switch (t) {
+        case 'bool': return !!toNumber(val)
+        case 'address': return toHex(val, 20)
+        case 'string': return toUtf8(val)
+        case 'bytes': return toHex(val)
+        case 'uint8':
+        case 'uint16':
+        case 'uint32': return toNumber(val)
+        default:
+            return t.startsWith('bytes') ? toHex(val) : toBigInt(val)
+    }
+}
+function convertTypes(types, res) {
+    if (types.length != res.length) throw new Error('Mismatch in result def')
+    return res.map((val, i) => convertType(val, types[i]))
+}
+
+function splitTypes(types, removeBrackets = true) {
+    if (removeBrackets && types.startsWith('(') && types.endsWith(')')) types = types.substr(1, types.length - 2)
+    let p = 0, l = 0, res = []
+    for (let i = 0; i < types.length; i++)
+        switch (types[i]) {
+            case '(': l++; break;
+            case ')': l--; break;
+            case ',':
+                if (!l) {
+                    res.push(types.substring(p, i))
+                    p = i + 1
+                }
+        }
+    if (types.length > p + 1) res.push(types.substr(p))
+    return res
+}
 /**
  * converts any value as hex-string
  */
@@ -122,6 +172,8 @@ function toNumber(val) {
     switch (typeof val) {
         case 'number':
             return val
+        case 'boolean':
+            return val ? 1 : 0
         case 'bigint':
         case 'string':
             return parseInt(val)
@@ -154,7 +206,7 @@ function toBuffer(val, len = -1) {
         val = val.toHexString();
     if (typeof val == 'string') {
         let b;
-        if (val && val.length && (parseInt(val) || val == '0'))
+        if (val && !val.startsWith('0x') && val.length && (parseInt(val) || val == '0'))
             val = '0x' + BigInt(val).toString(16)
 
         if (val.startsWith('0x')) {
@@ -248,7 +300,8 @@ const util = {
     padEnd,
     keccak,
     toChecksumAddress,
-    abiEncode
+    abiEncode,
+    abiDecode
 }
 
 // add as static proporty and as standard property.

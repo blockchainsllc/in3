@@ -243,14 +243,11 @@ char* EMSCRIPTEN_KEEPALIVE abi_encode(char* sig, char* json_params) {
 char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   call_request_t* req = parseSignature(sig);
   if (!req) return err_string("invalid function signature");
-
   json_ctx_t* res = req_parse_result(req, bytes(data, len));
   req_free(req);
   if (!res)
     return err_string("the input data can not be decoded");
-
   char* result = d_create_json(res->result);
   free_json(res);
-
   return result;
 }

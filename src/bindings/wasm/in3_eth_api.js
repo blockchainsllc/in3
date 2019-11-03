@@ -31,8 +31,22 @@ class EthAPI {
      * Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send _call. 
      */
     callFn(to, method, ...args) {
-        const t = createCallParams(method, args || [])
-        return this.send('eth_call', { to, data: t.txdata }, 'latest').then(t.convert)
+        if (!method) throw new Error('Missing method-signature')
+        const sigPattern = method.match(/(\(.*?\))/g)
+        let block = 'latest'
+        if (sigPattern && sigPattern.length) {
+            const inParams = splitTypes(sigPattern[0])
+            if (args.length > inParams.length) {
+                block = args[inParams.length]
+                args = args.slice(0, inParams.length)
+            }
+        }
+        else throw new Error('Invalid method-signature!')
+        return this.send('eth_call', { to: toHex(to, 20), data: abiEncode(method, ...args) }, block)
+            .then(r => {
+                const res = abiDecode(method, r)
+                return res.length == 1 ? res[0] : res
+            })
     }
 
     /**
@@ -53,7 +67,7 @@ class EthAPI {
      * Returns the balance of the account of given address in wei ().
      */
     getBalance(address, block = 'latest') {
-        return this.send('eth_getBalance', address, toHexBlock(block)).then(toBN)
+        return this.send('eth_getBalance', address, toHexBlock(block)).then(toBigInt)
     }
 
     /**
@@ -452,72 +466,6 @@ async function prepareTransaction(args, api) {
     return tx
 }
 
-function convertToType(solType, v) {
-    // check for arrays
-    const list = solType.lastIndexOf('[')
-    if (list >= 0) {
-        if (!Array.isArray(v)) throw new Error('Invalid result for type ' + solType + '. Value must be an array, but is not!')
-        solType = solType.substr(0, list)
-        return v.map(_ => convertToType(solType, _))
-    }
-
-    // convert integers
-    if (solType.startsWith('uint')) return parseInt(solType.substr(4)) <= 32 ? toNumber(v) : toBN(v)
-    if (solType.startsWith('int')) return parseInt(solType.substr(3)) <= 32 ? toNumber(v) : toBN(v) // TODO handle negative values
-    if (solType === 'bool') return typeof (v) === 'boolean' ? v : (toNumber(v) ? true : false)
-    if (solType === 'string') return v.toString('utf8')
-    if (solType === 'address') return toChecksumAddress(toHex(v))
-    //    if (solType === 'bytes') return toBuffer(v)
-
-    // everything else will be hexcoded string
-    if (Buffer.isBuffer(v)) return '0x' + v.toString('hex')
-    if (v && v.ixor) return '0x' + v.toString(16)
-    return v[1] !== 'x' ? '0x' + v : v
-}
-
-function decodeResult(types, result) {
-    const abiCoder = new AbiCoder()
-
-    try {
-        return abiCoder.decode(types, result).map((v, i) => convertToType(types[i], v))
-    } catch (e) {
-        throw new Error(`Error trying to decode ${types} with the params ${result}: ${e}`)
-    }
-}
-
-function createCallParams(method, values) {
-    if (!method) throw new Error('method needs to be a valid contract method signature')
-    if (method.indexOf('(') < 0) method += '()'
-    const methodRegex = /^\w+\((.*)\)$/gm
-    let convert = null
-
-    if (method.indexOf(':') > 0) {
-        const srcFullMethod = method;
-        const retTypes = method.split(':')[1].substr(1).replace(')', ' ').trim().split(',');
-        convert = result => {
-            if (result) result = decodeResult(retTypes, Buffer.from(result.substr(2), 'hex'))
-            if (Array.isArray(result) && (!srcFullMethod.endsWith(')') || result.length == 1))
-                result = result[0]
-            return result
-        }
-        method = method.substr(0, method.indexOf(':'))
-    }
-
-    const m = methodRegex.exec(method)
-    if (!m) throw new Error('No valid method signature for ' + method)
-    const types = m[1].split(',').filter(_ => _)
-    if (values.length < types.length) throw new Error('invalid number of arguments. Must be at least ' + types.length)
-    values.forEach((v, i) => {
-        if (types[i] === 'bytes') values[i] = util.toBuffer(v)
-    })
-
-    return {
-        txdata: '0x' + (values.length
-            ? encodeFunction(method, values)
-            : methodID(method.substr(0, method.indexOf('(')), []).toString('hex'))
-        , convert
-    }
-}
 
 function createSignatureHash(def) {
     return keccak(def.name + createSignature(def.inputs))
