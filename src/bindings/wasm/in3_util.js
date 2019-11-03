@@ -1,40 +1,19 @@
 const fixLength = (hex) => hex.length % 2 ? '0' + hex : hex
-function ccall_and_free(name, params_types, params_values) {
-    const res = in3w.ccall(name, 'number', params_types, params_values)
-    if (!res) return null
-    const hex = UTF8ToString(res)
-    in3w.ccall('free_ptr', 'void', ['number'], [res]);
-    return hex;
-}
 function call_string(name, ...params_values) {
-    return call_wasm(name, 'string', ...params_values)
+    const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
+    if (!res) return null
+    const result = UTF8ToString(res)
+    _free(res)
+    return result
 }
 function call_buffer(name, len, ...params_values) {
-    return call_wasm(name, len, ...params_values)
+    const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
+    if (!res) return null
+    const result = HEAPU8.slice(res, res + retType)
+    _free(res)
+    return result
 }
 
-function call_wasm(name, retType, ...params_values) {
-    params_types = []
-    params_values = params_values.map(_ => {
-        if (_ && _.byteLength) {
-            const a = new Array(_.byteLength)
-            for (let i = 0; i < _.byteLength; i++) a[i] = _[i]
-            params_types.push('array')
-            return a
-        }
-        params_types.push(typeof _)
-        return _
-    })
-    const res = in3w.ccall(name, 'number', params_types, params_values)
-    if (!res) return null
-    let hex = 0;
-    if (retType === 'string')
-        hex = UTF8ToString(res)
-    else
-        hex = HEAPU8.slice(res, res + retType)
-    _free(res)
-    return hex;
-}
 /**
  *
  * simple promisy-function
@@ -85,11 +64,10 @@ function keccak(val) {
     if (!val) return val
     val = toBuffer(val)
     return call_buffer('keccak', 32, val, val.byteLength)
-    //   return ccall_and_free('keccak', ['string'], [toBuffer(val)]);
 }
 function toChecksumAddress(val, chainId = 0) {
     if (!val) return val
-    return ccall_and_free('to_checksum_address', ['string', 'number'], [toHex(val), chainId]);
+    return call_string('to_checksum_address', toBuffer(val, 20), chainId);
 }
 /**
  * converts any value as hex-string

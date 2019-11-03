@@ -351,7 +351,7 @@ export declare interface RPCResponse {
 }
 
 
-export default class IN3 {
+export class IN3 {
 
     /**
      * creates a new client.
@@ -423,6 +423,7 @@ export default class IN3 {
      * collection of util-functions.
      */
     public static util: Utils
+
 }
 
 /**
@@ -895,9 +896,6 @@ export interface EthAPI {
     decodeEventData(log: Log, d: ABI): any;
     hashMessage(data: Data): Hex;
 }
-export declare function createSignatureHash(def: ABI): Hex;
-export declare function createSignature(fields: ABIField[]): string;
-export declare function decodeEvent(log: Log, d: ABI): any;
 export declare class SimpleSigner implements Signer {
     accounts: {
         [ac: string]: Hash;
@@ -907,14 +905,20 @@ export declare class SimpleSigner implements Signer {
     hasAccount(account: string): Promise<boolean>;
     sign(data: Hex, account: string): Promise<Signature>;
 }
-export declare function soliditySha3(...args: any[]): string;
-export declare function encodeFunction(signature: string, args: any[]): string;
-export declare function decodeFunction(signature: string, args: Hex | RPCResponse): any;
 
 /**
  * Collection of different util-functions.
  */
 export declare interface Utils {
+    createSignatureHash(def: ABI): Hex;
+    createSignature(fields: ABIField[]): string;
+    decodeEvent(log: Log, d: ABI): any;
+    soliditySha3(...args: any[]): string;
+    encodeFunction(signature: string, args: any[]): Hex;
+    decodeFunction(signature: string, args: Hex | RPCResponse): any;
+
+
+
     /**
      * generates a checksum Address for the given address.
      * If the chainId is passed, it will be included accord to EIP 1191
@@ -931,7 +935,16 @@ export declare interface Utils {
 
     /**
      * converts any value to a hex string (with prefix 0x).
+     * optionally the target length can be specified (in bytes)
      */
-    toHex(data: Hex | Uint8Array | number | bigint): Hex
+    toHex(data: Hex | Uint8Array | number | bigint, len?: number): Hex
+
+    /**
+     * converts any value to a Uint8Array.
+     * optionally the target length can be specified (in bytes)
+     */
+    toBuffer(data: Hex | Uint8Array | number | bigint, len?: number): Uint8Array
 
 }
+
+export = IN3

@@ -216,15 +216,10 @@ uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
   return result;
 }
 
-char* EMSCRIPTEN_KEEPALIVE to_checksum_address(char* hex_val, int chain_id) {
-  address_t bytes;
-  if (hex2byte_arr(hex_val, -1, bytes, 20) < 0) {
-    in3_set_error("address to long");
-    return NULL;
-  }
+char* EMSCRIPTEN_KEEPALIVE to_checksum_address(address_t adr, int chain_id) {
   char* result = malloc(43);
   if (result)
-    to_checksum(bytes, chain_id, result);
+    to_checksum(adr, chain_id, result);
   else
     in3_set_error("malloc failed");
   return result;
