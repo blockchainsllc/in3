@@ -131,3 +131,24 @@ make install
   Type: `BOOL ` ,    Default-Value: `OFF`
 
 
+#### WASM_EMBED
+
+  embedds the wasm as base64-encoded into the js-file
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### WASM_EMMALLOC
+
+  use ther smaller EMSCRIPTEN Malloc, which reduces the size about 10k, but may be a bit slower
+
+  Type: `BOOL ` ,    Default-Value: `ON`
+
+
+#### WASM_SYNC
+
+  intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)
+
+  Type: `BOOL ` ,    Default-Value: `OFF`
+
+
