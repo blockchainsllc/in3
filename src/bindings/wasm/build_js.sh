@@ -3,7 +3,7 @@
 TARGET_JS="in3.js"
 
 # wrap code in a function in order to not polute the global namespace.
-printf "const IN3=(function(){\nvar in3w = {};\n" >> $TARGET_JS
+printf "const IN3=(function(){\nvar in3w = {};\n" > $TARGET_JS
 # add emscripten gluecode
 cat in3w.js >> $TARGET_JS
 # add custom code the defines the public export. This code will have access to all the internal functions of the gluecode!
@@ -11,7 +11,7 @@ cat in3w.js >> $TARGET_JS
 cat "$1/in3.js" >> $TARGET_JS
 cat "$1/in3_util.js" >> $TARGET_JS
 cat "$1/in3_eth_api.js" >> $TARGET_JS
-# we return the defualt export
+# we return the default export
 echo " return IN3; })();" >> $TARGET_JS
 
 # add a simple demo page.
