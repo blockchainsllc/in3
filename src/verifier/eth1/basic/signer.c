@@ -74,8 +74,9 @@ static bytes_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, byt
 }
 
 /** signs the given data */
-in3_ret_t eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   UNUSED_VAR(account); // at least for now
+  uint8_t* pk = ((in3_ctx_t*) ctx)->client->signer->wallet;
   switch (type) {
     case SIGN_EC_RAW:
       if (ecdsa_sign_digest(&secp256k1, pk, message.data, dst, dst + 64, NULL) < 0)
@@ -110,7 +111,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   json_ctx_t* new_json = NULL;
 
   if (ctx->client->signer->prepare_tx) {
-    in3_ret_t r = ctx->client->signer->prepare_tx(ctx->client->signer->wallet, ctx, tx, &new_json);
+    in3_ret_t r = ctx->client->signer->prepare_tx(ctx, tx, &new_json);
     if (r != IN3_OK) {
       if (new_json) free_json(new_json);
       ctx_set_error(ctx, "error tryting to prepare the tx", r);
@@ -161,7 +162,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, v, bytes(NULL, 0), bytes(NULL, 0));
 
   // sign the raw message
-  int res = ctx->client->signer->sign(ctx->client->signer->wallet, SIGN_EC_HASH, *raw, bytes(NULL, 0), sig);
+  int res = ctx->client->signer->sign(ctx, SIGN_EC_HASH, *raw, bytes(NULL, 0), sig);
 
   // free temp resources
   if (new_json) free_json(new_json);

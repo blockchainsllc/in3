@@ -34,16 +34,37 @@
 
 include(${PROJECT_SOURCE_DIR}/compiler.cmake)
 
-option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
+
+set(EMC_PROPS "-s EXPORT_NAME=in3w -s WASM=1 -s ENVIRONMENT_MAY_BE_SHELL=0  -s FILESYSTEM=0 -s ASYNCIFY=1 -O3  -s 'ASYNCIFY_IMPORTS=[\"transport_send\",\"sign_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+
+if (WASM_EMBED) 
+   set(EMC_PROPS "${EMC_PROPS} -s SUPPORT_BASE64_EMBEDDING=0 -s SINGLE_FILE=1")
+endif(WASM_EMBED)
+
+if (WASM_EMMALLOC) 
+   set(EMC_PROPS "${EMC_PROPS} -s MALLOC=emmalloc")
+endif(WASM_EMMALLOC)
+
+if (WASM_SYNC) 
+   set(EMC_PROPS "${EMC_PROPS} -s WASM_ASYNC_COMPILATION=0")
+endif(WASM_SYNC)
+
 add_executable(in3w wasm.c)
 target_link_libraries(in3w eth_full eth_api)
+set_target_properties(in3w PROPERTIES LINK_FLAGS "${EMC_PROPS}")
 
-if (JS_ONLY)
-    message(STATUS "Setting compilation target to native JavaScript")
-    set(CMAKE_EXECUTABLE_SUFFIX ".js")
-    set_target_properties(in3w PROPERTIES LINK_FLAGS "-s EXPORTED_FUNCTIONS='[_main,_in3_create,_in3_send, _in3_dispose]'")
-else (JS_ONLY)
-    message(STATUS "Setting compilation target to WASM")
-    set_target_properties(in3w PROPERTIES LINK_FLAGS "-s EXPORT_NAME=in3w -s WASM=1 -s ENVIRONMENT_MAY_BE_SHELL=0 -s SUPPORT_BASE64_EMBEDDING=0 -s FILESYSTEM=0 -s ASYNCIFY=1 -O3 -s MALLOC=emmalloc -s SINGLE_FILE=1 -s WASM_ASYNC_COMPILATION=1 -s 'ASYNCIFY_IMPORTS=[\"transport_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+add_custom_command(TARGET in3w
+    POST_BUILD
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/
+    COMMAND  ${CMAKE_CURRENT_SOURCE_DIR}/merge_wasm.sh ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+#if (JS_ONLY)
+#    message(STATUS "Setting compilation target to native JavaScript")
+#    set(CMAKE_EXECUTABLE_SUFFIX ".js")
+#    set_target_properties(in3w PROPERTIES LINK_FLAGS "-s EXPORTED_FUNCTIONS='[_main,_in3_create,_in3_send, _in3_dispose]'")
+#else (JS_ONLY)
+#    message(STATUS "Setting compilation target to WASM")
+#    set_target_properties(in3w PROPERTIES LINK_FLAGS "-s EXPORT_NAME=in3w -s WASM=1 -s ENVIRONMENT_MAY_BE_SHELL=0 -s SUPPORT_BASE64_EMBEDDING=0 -s FILESYSTEM=0 -s ASYNCIFY=1 -O3 -s MALLOC=emmalloc -s SINGLE_FILE=1 -s WASM_ASYNC_COMPILATION=1 -s 'ASYNCIFY_IMPORTS=[\"transport_send\",\"sign_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
 #    set_target_properties(in3w PROPERTIES LINK_FLAGS "-s EXPORT_NAME=in3w -s WASM=1 -s DEMANGLE_SUPPORT=1 -s STACK_OVERFLOW_CHECK=1 -s -s ASSERTIONS=2 -s ASYNCIFY=1 -O1 -g4 --source-map-base http://localhost/  -s 'ASYNCIFY_IMPORTS=[\"transport_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
-endif (JS_ONLY)
+#endif (JS_ONLY)

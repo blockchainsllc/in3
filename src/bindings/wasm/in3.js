@@ -109,6 +109,18 @@ else {
     }
 }
 
+// signer-delegate
+in3w.sign_js = async (clientPtr, type, message, account) => {
+    const c = clients['' + clientPtr]
+    if (!c) throw new Error('wrong client ptr')
+    if (!c.signer) throw new Error('no signer set to handle signing')
+    if (!(await c.signer.hasAccount(account))) throw new Error('unknown account ' + account)
+    return await c.signer.sign(message, account, type)
+}
+
+
+const clients = {}
+
 
 
 // create a flag ndicating when the wasm was succesfully loaded.
@@ -138,6 +150,7 @@ class IN3 {
         if (_in3_listeners)
             await new Promise(r => _in3_listeners.push(r))
         this.ptr = in3w.ccall('in3_create', 'number', [], []);
+        clients['' + this.ptr] = this
     }
 
     // here we are creating the instance lazy, when the first function is called.
@@ -230,6 +243,7 @@ class IN3 {
 
     free() {
         if (this.ptr) {
+            delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
             this.ptr = 0
         }

@@ -682,8 +682,10 @@ int main(int argc, char* argv[]) {
     }
 
     if (!c->signer) die("No private key given");
-    uint8_t sig[65];
-    c->signer->sign(c->signer->wallet, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+    uint8_t   sig[65];
+    in3_ctx_t ctx;
+    ctx.client = c;
+    c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
     sig[64] += 27;
     print_hex(sig, 65);
     return 0;

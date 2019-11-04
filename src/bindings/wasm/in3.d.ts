@@ -376,6 +376,11 @@ export class IN3 {
      */
     public free();
 
+    /**
+     * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.
+     */
+    public signer: Signer;
+
 
     /**
      * changes the transport-function.
@@ -679,8 +684,11 @@ export declare interface Signer {
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
 
-    /** signing of any data. */
-    sign: (data: Hex, account: Address) => Promise<Signature>
+    /** 
+     * signing of any data. 
+     * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
+     */
+    sign: (data: Hex, account: Address, hashFirst: boolean) => Promise<Hex>
 }
 
 export interface EthAPI {

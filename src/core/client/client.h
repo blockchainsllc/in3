@@ -205,7 +205,7 @@ typedef enum {
  * In case of an error a negativ value must be returned. It should be one of the IN3_SIGN_ERR... values.
  * 
 */
-typedef in3_ret_t (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+typedef in3_ret_t (*in3_sign)(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
 /** 
  * transform transaction function.
@@ -214,7 +214,7 @@ typedef in3_ret_t (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t mes
  * if the new_tx is not set within the function, it will use the old_tx.
  * 
 */
-typedef in3_ret_t (*in3_prepare_tx)(void* wallet, void* ctx, d_token_t* old_tx, json_ctx_t** new_tx);
+typedef in3_ret_t (*in3_prepare_tx)(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx);
 
 typedef struct in3_signer {
   /* function pointer returning a stored value for the given key.*/
