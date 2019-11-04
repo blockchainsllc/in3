@@ -126,8 +126,9 @@ const clients = {}
 // create a flag ndicating when the wasm was succesfully loaded.
 let _in3_listeners = []
 in3w.onRuntimeInitialized = _ => {
-    _in3_listeners.forEach(_ => _(true))
+    const o = _in3_listeners
     _in3_listeners = undefined
+    o.forEach(_ => _(true))
 }
 
 // for all pending Requests we hold the finalize function which will be called by the wasm when done.

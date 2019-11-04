@@ -1,4 +1,3 @@
-
 class EthAPI {
 
     constructor(client) { this.client = client }
@@ -42,11 +41,11 @@ class EthAPI {
             }
         }
         else throw new Error('Invalid method-signature!')
-        return this.send('eth_call', { to: toHex(to, 20), data: abiEncode(method, ...args) }, block)
+        return IN3.onInit(() => this.send('eth_call', { to: toHex(to, 20), data: abiEncode(method, ...args) }, block)
             .then(r => {
                 const res = abiDecode(method, r)
                 return res.length == 1 ? res[0] : res
-            })
+            }))
     }
 
     /**
