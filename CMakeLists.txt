@@ -36,7 +36,7 @@ cmake_minimum_required(VERSION 3.6.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 # project name
 project(in3)
-OPTION(TAG_VERSION "the tagged version, which should be used")
+OPTION(TAG_VERSION "the tagged version, which should be used" 2.0.0)
 
 set(PROJECT_VERSION "0.1.0-alpha.0")
 if (TAG_VERSION)
@@ -59,7 +59,7 @@ IF (CMAKE_BUILD_TYPE MATCHES Debug)
     ADD_DEFINITIONS(-DDEBUG)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
-OPTION(EVM_GAS "if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes." ON)
+OPTION(EVM_GAS "if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes." true)
 IF (EVM_GAS)
     MESSAGE(STATUS "Enable GAS in EVM")
     ADD_DEFINITIONS(-DEVM_GAS)

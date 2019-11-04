@@ -19,136 +19,138 @@ make install
 
 ### CMake options
 
+When configuring cmake, you can set a lot of different incubed specific like `cmake -DEVM_GAS=false ..`.
+
 #### CMD
 
   build the comandline utils
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DCMD=ON`
 
 
 #### EVM_GAS
 
   if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes.
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DEVM_GAS=ON`
 
 
 #### FAST_MATH
 
   Math optimizations used in the EVM. This will also increase the filesize.
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DFAST_MATH=OFF`
 
 
 #### IN3API
 
   build the USN-API which offer better interfaces and additional functions on top of the pure verification
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DIN3API=ON`
 
 
 #### IN3_LIB
 
   if true a shared anmd static library with all in3-modules will be build.
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DIN3_LIB=ON`
 
 
 #### IN3_SERVER
 
-  support proxy server
+  support for proxy server as part of the cmd-tool, which allows to start the cmd-tool with the -p option and listens to the given port for rpc-requests
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DIN3_SERVER=OFF`
 
 
 #### IN3_STAGING
 
   if true, the client will use the staging-network instead of the live ones
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DIN3_STAGING=OFF`
 
 
 #### JAVA
 
   build the java-binding (shared-lib and jar-file)
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DJAVA=OFF`
 
 
 #### POA
 
   support POA verification including validatorlist updates
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DPOA=OFF`
 
 
 #### SEGGER_RTT
 
   Use the segger real time transfer terminal as the logging mechanism
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DSEGGER_RTT=OFF`
 
 
 #### TAG_VERSION
 
   the tagged version, which should be used
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DTAG_VERSION=OFF`
 
 
 #### TEST
 
   builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DTEST=OFF`
 
 
 #### TRANSPORTS
 
   builds transports, which may require extra libraries.
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DTRANSPORTS=ON`
 
 
 #### USE_CURL
 
-  if true 
+  if true the curl transport will be build (with a dependency to libcurl)
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DUSE_CURL=ON`
 
 
 #### USE_SCRYPT
 
   if scrypt is installed, it will link dynamicly to the shared scrypt lib.
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DUSE_SCRYPT=OFF`
 
 
 #### WASM
 
   Includes the WASM-Build. In order to build it you need emscripten as toolchain. Usually you also want to turn off other builds in this case.
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DWASM=OFF`
 
 
 #### WASM_EMBED
 
   embedds the wasm as base64-encoded into the js-file
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DWASM_EMBED=ON`
 
 
 #### WASM_EMMALLOC
 
   use ther smaller EMSCRIPTEN Malloc, which reduces the size about 10k, but may be a bit slower
 
-  Type: `BOOL ` ,    Default-Value: `ON`
+Default-Value: `-DWASM_EMMALLOC=ON`
 
 
 #### WASM_SYNC
 
   intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)
 
-  Type: `BOOL ` ,    Default-Value: `OFF`
+Default-Value: `-DWASM_SYNC=OFF`
 
 
