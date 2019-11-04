@@ -88,7 +88,9 @@ describe('API-Tests', () => {
     })
 
     it('checkSumAddress', async () => {
-        assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
+        IN3.onInit(() => {
+            assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
+        })
     })
 
 
