@@ -92,14 +92,14 @@ char* abi_decode(char* sig, char* hex_data) {
   return result;
 }
 
-#define TEST_ABI(signature, input, expected)                                              \
-  {                                                                                       \
-    char* tmp = abi_encode("test(" signature ")", input);                                 \
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp + 10, "Error encoding the signature"); \
-    free(tmp);                                                                            \
-    tmp = abi_decode("test():(" signature ")", expected);                                 \
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(input, tmp, "Error decoding");                       \
-    free(tmp);                                                                            \
+#define TEST_ABI(signature, input, expected)                                                         \
+  {                                                                                                  \
+    char* tmp = abi_encode("test(" signature ")", input);                                            \
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp + 10, "Error encoding the signature " signature); \
+    free(tmp);                                                                                       \
+    tmp = abi_decode("test():(" signature ")", expected);                                            \
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(input, tmp, "Error decoding " signature);                       \
+    free(tmp);                                                                                       \
   }
 
 static void test_abi_encode() {
