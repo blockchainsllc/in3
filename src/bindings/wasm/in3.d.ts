@@ -376,6 +376,11 @@ export class IN3 {
      */
     public free();
 
+    /**
+     * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.
+     */
+    public signer: Signer;
+
 
     /**
      * changes the transport-function.
@@ -679,8 +684,11 @@ export declare interface Signer {
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
 
-    /** signing of any data. */
-    sign: (data: Hex, account: Address) => Promise<Signature>
+    /** 
+     * signing of any data. 
+     * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
+     */
+    sign: (data: Hex, account: Address, hashFirst: boolean) => Promise<Hex>
 }
 
 export interface EthAPI {
@@ -946,6 +954,14 @@ export declare interface Utils {
      */
     toBuffer(data: Hex | Uint8Array | number | bigint, len?: number): Uint8Array
 
+
+    /**
+     * create a signature (65 bytes) for the given message and kexy
+     * @param pk the private key
+     * @param msg the message
+     * @param hashFirst if true the message will be hashed first (default:true), if not the message is the hash.
+     */
+    ecSign(pk: Uint8Array | Hex, msg: Uint8Array | Hex, hashFirst?: boolean): Uint8Array
 
 
 

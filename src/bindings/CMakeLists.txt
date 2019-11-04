@@ -38,6 +38,10 @@ IF (JAVA)
 ENDIF (JAVA)
 
 OPTION(WASM "Includes the WASM-Build. In order to build it you need emscripten as toolchain. Usually you also want to turn off other builds in this case." OFF)
+option(WASM_EMBED "embedds the wasm as base64-encoded into the js-file" ON)
+option(WASM_EMMALLOC "use ther smaller EMSCRIPTEN Malloc, which reduces the size about 10k, but may be a bit slower" ON)
+option(WASM_SYNC "intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)" OFF)
+
 IF (WASM)
     add_subdirectory(wasm)
 ENDIF (WASM)

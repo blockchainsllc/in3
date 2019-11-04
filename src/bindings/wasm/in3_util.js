@@ -15,7 +15,7 @@ function call_string(name, ...params_values) {
 function call_buffer(name, len, ...params_values) {
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
-    const result = HEAPU8.slice(res, res + retType)
+    const result = HEAPU8.slice(res, res + len)
     _free(res)
     return result
 }
@@ -81,6 +81,11 @@ function toChecksumAddress(val, chainId = 0) {
 function abiEncode(sig, ...params) {
     convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
+}
+function ecSign(pk, data, hashMessage = true) {
+    data = toBuffer(data)
+    pk = toBuffer(pk)
+    return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength)
 }
 
 function abiDecode(sig, data) {
@@ -301,7 +306,8 @@ const util = {
     keccak,
     toChecksumAddress,
     abiEncode,
-    abiDecode
+    abiDecode,
+    ecSign
 }
 
 // add as static proporty and as standard property.

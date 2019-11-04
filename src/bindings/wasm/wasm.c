@@ -38,10 +38,19 @@
 #include "../../core/client/context.h"
 #include "../../core/client/send.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include <emscripten.h>
 
 #define err_string(msg) (":ERROR:" msg)
+
+static char* last_error = NULL;
+
+static void in3_set_error(char* data) {
+  if (last_error) free(last_error);
+  last_error = data ? _strdupn(data, -1) : NULL;
+}
 
 /*
 static char* to_hex_string(uint8_t* data, int l) {
@@ -98,10 +107,40 @@ EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload),
   });
 });
 
+/*
+typedef in3_ret_t (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+typedef in3_ret_t (*in3_prepare_tx)(void* wallet, void* ctx, d_token_t* old_tx, json_ctx_t** new_tx);
+
+*/
+
+EM_JS(int, sign_send, (void* wallet, d_signature_type_t type, char* message, char* account, uint8_t* dst), {
+  Asyncify.handleSleep(function(wakeUp) {
+    Module.sign_js(wallet,type,UTF8ToString(message),UTF8ToString(account))
+       .then(sig => {
+             HEAP8.set(toBuffer(sig),dst);
+             wakeUp(0);
+       }) 
+      .catch(res => {
+        Module.ccall('in3_set_error','void',['string'],[res.message || res]);
+        wakeUp(-1);
+      })
+  });
+});
+
 EM_JS(void, in3_req_done, (in3_ctx_t* ctx), {
   Module.pendingRequests[ctx+""]();
-
 });
+
+in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+  char message_hex[(message.len<<1)+3],account_hex[(account.len<<1)+3];
+  message_hex[0]=account_hex[0]='0';
+  message_hex[1]=account_hex[1]='x';
+  bytes_to_hex(message.data,message.len,message_hex+2);
+  bytes_to_hex(account.data,account.len,account_hex+2);
+  int res= sign_send(((in3_ctx_t*)ctx)->client,type,message_hex,account_hex,dst);
+  if (res<0) return ctx_set_error((in3_ctx_t*) ctx,last_error,res);
+  return res;
+}
 
 // clang-format on
 
@@ -109,13 +148,6 @@ int in3_fetch(char** urls, int urls_len, char* payload, in3_response_t* result) 
   for (int i = 0; i < urls_len; i++)
     transport_send(result + i, urls[i], payload);
   return IN3_OK;
-}
-
-static char* last_error = NULL;
-
-static void in3_set_error(char* data) {
-  if (last_error) free(last_error);
-  last_error = data ? _strdupn(data, -1) : NULL;
 }
 
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
@@ -127,6 +159,10 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
   c->cacheStorage           = malloc(sizeof(in3_storage_handler_t));
   c->cacheStorage->get_item = storage_get_item;
   c->cacheStorage->set_item = storage_set_item;
+  c->signer                 = malloc(sizeof(in3_signer_t));
+  c->signer->wallet         = c;
+  c->signer->prepare_tx     = NULL;
+  c->signer->sign           = in3_sign_msg;
 
   in3_cache_init(c);
 
@@ -250,4 +286,26 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   char* result = d_create_json(res->result);
   free_json(res);
   return result;
+}
+
+/** signs the given data */
+uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len) {
+  uint8_t* dst   = malloc(65);
+  int      error = -1;
+  switch (type) {
+    case SIGN_EC_RAW:
+      error = ecdsa_sign_digest(&secp256k1, pk, data, dst, dst + 64, NULL);
+      break;
+    case SIGN_EC_HASH:
+      error = ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, data, len, dst, dst + 64, NULL);
+      break;
+
+    default:
+      error = -2;
+  }
+  if (error < 0) {
+    free(dst);
+    return NULL;
+  }
+  return dst;
 }
