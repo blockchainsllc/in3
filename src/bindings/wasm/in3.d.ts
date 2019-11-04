@@ -146,14 +146,6 @@ export declare interface IN3Config {
      */
     autoUpdateList?: boolean
     /**
-     * a cache handler offering 2 functions ( setItem(string,string), getItem(string) )
-     */
-    cacheStorage?: any
-    /**
-     * a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }
-     */
-    loggerUrl?: string
-    /**
      * url of one or more rpc-endpoints to use. (list can be comma seperated)
      */
     rpc?: string
@@ -423,7 +415,6 @@ export class IN3 {
      * collection of util-functions.
      */
     public static util: Utils
-
 }
 
 /**
@@ -914,10 +905,20 @@ export declare interface Utils {
     createSignature(fields: ABIField[]): string;
     decodeEvent(log: Log, d: ABI): any;
     soliditySha3(...args: any[]): string;
-    encodeFunction(signature: string, args: any[]): Hex;
-    decodeFunction(signature: string, args: Hex | RPCResponse): any;
 
+    /**
+     * encodes the given arguments as ABI-encoded (including the methodHash)
+     * @param signature the method signature
+     * @param args the arguments
+     */
+    abiEncode(signature: string, ...args: any[]): Hex
 
+    /**
+     * decodes the given data as ABI-encoded (without the methodHash)
+     * @param signature the method signature, which must contain a return description
+     * @param data the data to decode
+     */
+    abiDecode(signature: string, data: Data): any[]
 
     /**
      * generates a checksum Address for the given address.
@@ -945,6 +946,10 @@ export declare interface Utils {
      */
     toBuffer(data: Hex | Uint8Array | number | bigint, len?: number): Uint8Array
 
+
+
+
 }
+
 
 export = IN3
