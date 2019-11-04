@@ -38,6 +38,8 @@
 #include "../../core/client/context.h"
 #include "../../core/client/send.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include <emscripten.h>
 
@@ -250,4 +252,26 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   char* result = d_create_json(res->result);
   free_json(res);
   return result;
+}
+
+/** signs the given data */
+uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len) {
+  uint8_t* dst   = malloc(65);
+  int      error = -1;
+  switch (type) {
+    case SIGN_EC_RAW:
+      error = ecdsa_sign_digest(&secp256k1, pk, data, dst, dst + 64, NULL);
+      break;
+    case SIGN_EC_HASH:
+      error = ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, data, len, dst, dst + 64, NULL);
+      break;
+
+    default:
+      error = -2;
+  }
+  if (error < 0) {
+    free(dst);
+    return NULL;
+  }
+  return dst;
 }
