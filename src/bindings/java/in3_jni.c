@@ -785,6 +785,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
   in3->cacheStorage->set_item = storage_set_item;
   in3->signer                 = _malloc(sizeof(in3_signer_t));
   in3->signer->sign           = jsign;
+  in3->signer->prepare_tx     = NULL;
   in3->signer->wallet         = in3->cacheStorage->cptr;
   jni                         = env;
 

@@ -207,9 +207,21 @@ typedef enum {
 */
 typedef in3_ret_t (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
+/** 
+ * transform transaction function.
+ * 
+ * for multisigs, we need to change the transaction to gro through the ms.
+ * if the new_tx is not set within the function, it will use the old_tx.
+ * 
+*/
+typedef in3_ret_t (*in3_prepare_tx)(void* wallet, void* ctx, d_token_t* old_tx, json_ctx_t** new_tx);
+
 typedef struct in3_signer {
   /* function pointer returning a stored value for the given key.*/
   in3_sign sign;
+
+  /* function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+  in3_prepare_tx prepare_tx;
 
   /* custom object whill will be passed to functions */
   void* wallet;

@@ -95,17 +95,29 @@ in3_ret_t eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t a
 /** sets the signer and a pk to the client*/
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   if (in3->signer) _free(in3->signer);
-  in3->signer         = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign   = eth_sign;
-  in3->signer->wallet = pk;
+  in3->signer             = _malloc(sizeof(in3_signer_t));
+  in3->signer->sign       = eth_sign;
+  in3->signer->prepare_tx = NULL;
+  in3->signer->wallet     = pk;
   return IN3_OK;
 }
 
 bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
-  address_t from;
-  bytes32_t nonce_data, gas_price_data;
-  bytes_t   tmp;
-  uint8_t   sig[65];
+  address_t   from;
+  bytes32_t   nonce_data, gas_price_data;
+  bytes_t     tmp;
+  uint8_t     sig[65];
+  json_ctx_t* new_json = NULL;
+
+  if (ctx->client->signer->prepare_tx) {
+    in3_ret_t r = ctx->client->signer->prepare_tx(ctx->client->signer->wallet, ctx, tx, &new_json);
+    if (r != IN3_OK) {
+      if (new_json) free_json(new_json);
+      ctx_set_error(ctx, "error tryting to prepare the tx", r);
+      return bytes(NULL, 0);
+    }
+    tx = new_json->result;
+  }
 
   // get the from-address
   if ((tmp = d_to_bytes(d_getl(tx, K_FROM, 20))).len == 0) {
@@ -115,6 +127,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
       if (ctx->client->signer->sign != eth_sign) {
+        if (new_json) free_json(new_json);
         ctx_set_error(ctx, "you need to specify the from-address in the tx!", IN3_EINVAL);
         return bytes(NULL, 0);
       }
@@ -151,6 +164,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   int res = ctx->client->signer->sign(ctx->client->signer->wallet, SIGN_EC_HASH, *raw, bytes(NULL, 0), sig);
 
   // free temp resources
+  if (new_json) free_json(new_json);
   b_free(raw);
   sb_free(sb);
   if (res < 0) return bytes(NULL, 0);
