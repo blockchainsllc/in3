@@ -101,19 +101,12 @@ EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload),
         wakeUp();
       })
       .catch(res => {
-        console.log("ERROR ",res.message || res, new Error().stack);
         Module.ccall('request_set_error','void',['number','string'],[result,res.message || res]);
-        console.log("after request_set_error");
         wakeUp();
       })
   });
 });
 
-/*
-typedef in3_ret_t (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
-typedef in3_ret_t (*in3_prepare_tx)(void* wallet, void* ctx, d_token_t* old_tx, json_ctx_t** new_tx);
-
-*/
 
 EM_JS(int, sign_send, (void* wallet, d_signature_type_t type, char* message, char* account, uint8_t* dst), {
   Asyncify.handleSleep(function(wakeUp) {
