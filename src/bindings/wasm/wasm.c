@@ -101,7 +101,9 @@ EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload),
         wakeUp();
       })
       .catch(res => {
+        console.log("ERROR ",res.message || res, new Error().stack);
         Module.ccall('request_set_error','void',['number','string'],[result,res.message || res]);
+        console.log("after request_set_error");
         wakeUp();
       })
   });
