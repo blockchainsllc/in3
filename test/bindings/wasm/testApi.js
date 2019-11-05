@@ -46,6 +46,7 @@ describe('API-Tests', () => {
 
     it('eth_callFn', async () => {
         mockResponse('eth_call', 'serverData')
+        mockResponse('eth_getCode', 'oldRegistry')
         const res = await createClient().eth.callFn('0x2736D225f85740f42D17987100dc8d58e9e16252', 'servers(uint256):(string,address,uint32,uint256,uint256,address)', 1)
         assert.isArray(res)
         assert.equal(res.length, 6)

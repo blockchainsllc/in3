@@ -74,6 +74,7 @@ bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* ad
     sha3_to(d_bytes(t), tmp);
     if (code_hash && memcmp(code_hash->data, tmp, 32) != 0) {
       vc_err(vc, "Wrong codehash");
+      free_ctx(ctx);
       return NULL;
     }
     if (vc->ctx->client->cacheStorage)
@@ -105,7 +106,8 @@ cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
     if (!b) {
       in3_get_code_from_client(vc, key_str, address, &must_free);
       b = vc->ctx->client->cacheStorage->get_item(vc->ctx->client->cacheStorage->cptr, key_str);
-    }
+    } else
+      must_free = 1;
   } else
     b = in3_get_code_from_client(vc, key_str, address, &must_free);
 
