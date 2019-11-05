@@ -98,7 +98,7 @@ mac_os:
     - mac-mini-runner
 
 wasm:
-  image: docker.slock.it/build-images/cmake:clang9
+  image: docker.slock.it/build-images/cmake:clang10
   stage: bindings
   tags:
     - short-jobs
