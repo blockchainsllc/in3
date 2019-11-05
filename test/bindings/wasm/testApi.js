@@ -44,7 +44,6 @@ describe('API-Tests', () => {
         assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
     })
 
-    /**
     it('eth_callFn', async () => {
         console.log('before eth_callFn...')
         mockResponse('eth_call', 'serverData')
@@ -57,7 +56,6 @@ describe('API-Tests', () => {
         assert.equal(res[3], 0xffffn)
         console.log('after eth_callFn...')
     })
-    */
 })
 
 

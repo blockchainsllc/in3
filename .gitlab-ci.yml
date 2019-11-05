@@ -203,11 +203,12 @@ wasm_tests:
     - wasm
   stage: test
   tags:
-    - short-jobs
+    - long-jobs
   script:
     - mv wasm_build build
     - cd test/bindings/wasm
     - sh /prepare.sh
+    - export
     - npm install
     - npm test
 
