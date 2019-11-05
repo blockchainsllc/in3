@@ -134,31 +134,40 @@ static in3_ret_t send_request(in3_ctx_t* ctx, int nodes_count, in3_response_t** 
   }
 
   // prepare response-object
-  in3_response_t* response = _malloc(sizeof(in3_response_t) * nodes_count);
+  in3_request_t* req = _malloc(sizeof(in3_request_t));
+  req->results       = _malloc(sizeof(in3_response_t) * nodes_count);
+  req->payload       = payload->data;
+  req->urls_len      = nodes_count;
+  req->urls          = urls;
   for (n = 0; n < nodes_count; n++) {
-    sb_init(&response[n].error);
-    sb_init(&response[n].result);
+    sb_init(&req->results[n].error);
+    sb_init(&req->results[n].result);
     in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", urls[n], payload->data);
   }
 
-  // send requets
-  res = ctx->client->transport(urls, nodes_count, payload->data, response);
+  _free(payload); // we only clean up the the stringbuffer, but keep the content (payload->data)
 
-  in3_log_trace("... response: \n... \x1B[32m%s\x1B[0m\n", response[0].error.len ? response[0].error.data : response[0].result.data);
+  // send requets
+  res = ctx->client->transport(req);
+
+  in3_log_trace("... response: \n... \x1B[32m%s\x1B[0m\n", req->results[0].error.len ? req->results[0].error.data : req->results[0].result.data);
 
   // free resources
-  sb_free(payload);
   free_urls(urls, nodes_count, ctx->client->use_http);
 
   if (res < 0) {
     for (n = 0; n < nodes_count; n++) {
-      _free(response[n].error.data);
-      _free(response[n].result.data);
+      _free(req->results[n].error.data);
+      _free(req->results[n].result.data);
     }
-    _free(response);
+    _free(req->results);
+    _free(req->payload);
+    _free(req);
     return res;
   }
-  *response_result = response;
+  *response_result = req->results;
+  _free(req->payload);
+  _free(req);
 
   return res;
 }

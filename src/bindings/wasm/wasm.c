@@ -144,9 +144,9 @@ in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, byte
 
 // clang-format on
 
-int in3_fetch(char** urls, int urls_len, char* payload, in3_response_t* result) {
-  for (int i = 0; i < urls_len; i++)
-    transport_send(result + i, urls[i], payload);
+int in3_fetch(in3_request_t* req) {
+  for (int i = 0; i < req->urls_len; i++)
+    transport_send(req->results + i, req->urls[i], req->payload);
   return IN3_OK;
 }
 

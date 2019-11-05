@@ -397,30 +397,30 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 
 static bytes_t*  last_response;
 static bytes_t   in_response = {.data = NULL, .len = 0};
-static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static in3_ret_t debug_transport(in3_request_t* req) {
   if (in_response.len) {
-    for (int i = 0; i < urls_len; i++)
-      sb_add_range(&result[i].result, (char*) in_response.data, 0, in_response.len);
+    for (int i = 0; i < req->urls_len; i++)
+      sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
     return 0;
   }
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(urls, urls_len, payload, result);
+  in3_ret_t r = send_curl(req);
 #else
-  in3_ret_t r = send_http(urls, urls_len, payload, result);
+  in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new(result[0].result.data, result[0].result.len);
+  last_response = b_new(req->results[0].result.data, req->results[0].result.len);
   return r;
 }
 static char*     test_name = NULL;
-static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static in3_ret_t test_transport(in3_request_t* req) {
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(urls, urls_len, payload, result);
+  in3_ret_t r = send_curl(req);
 #else
-  in3_ret_t r = send_http(urls, urls_len, payload, result);
+  in3_ret_t r = send_http(req);
 #endif
   if (r == IN3_OK) {
-    payload[strlen(payload) - 1] = 0;
-    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, payload + 1, result->result.data);
+    req->payload[strlen(req->payload) - 1] = 0;
+    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->results->result.data);
     exit(0);
   }
 
@@ -428,7 +428,6 @@ static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_re
 }
 
 int main(int argc, char* argv[]) {
-
   // check for usage
   if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
     show_help(argv[0]);

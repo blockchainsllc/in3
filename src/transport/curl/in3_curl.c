@@ -183,11 +183,12 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
   return IN3_OK;
 }
 
-in3_ret_t send_curl(char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t send_curl(in3_request_t* req) {
+//  char** urls, int urls_len, char* payload, in3_response_t* result
 #ifdef CURL_BLOCKING
-  return send_curl_blocking((const char**) urls, urls_len, payload, result);
+  return send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results);
 #else
-  return send_curl_nonblocking((const char**) urls, urls_len, payload, result);
+  return send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->results);
 #endif
 }
 
