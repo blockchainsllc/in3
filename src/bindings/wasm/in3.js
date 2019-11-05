@@ -61,7 +61,7 @@ else {
             return null
         },
         set(key, value) {
-            fs.writeFile('.in3/' + key, Buffer.from(value, 'hex'), err => err ? console.error('Error caching ' + err) : '')
+            fs.writeFileSync('.in3/' + key, Buffer.from(value, 'hex'))
         }
     }
 
