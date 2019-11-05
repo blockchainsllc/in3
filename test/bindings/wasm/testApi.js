@@ -45,7 +45,6 @@ describe('API-Tests', () => {
     })
 
     it('eth_callFn', async () => {
-        console.log('before eth_callFn...')
         mockResponse('eth_call', 'serverData')
         const res = await createClient().eth.callFn('0x2736D225f85740f42D17987100dc8d58e9e16252', 'servers(uint256):(string,address,uint32,uint256,uint256,address)', 1)
         assert.isArray(res)
@@ -54,7 +53,6 @@ describe('API-Tests', () => {
         assert.equal(res[1], '0xbc0ea09c1651a3d5d40bacb4356fb59159a99564')
         assert.equal(res[2], 0xffff)
         assert.equal(res[3], 0xffffn)
-        console.log('after eth_callFn...')
     })
 })
 

@@ -232,7 +232,7 @@ class IN3 {
             }
 
             // send the request.
-            in3w.ccall('in3_send_request', 'void', ['number'], [r]);
+            in3w.ccall('in3_send_request', 'void', ['number'], [r], { async: true });
         })
     }
 
