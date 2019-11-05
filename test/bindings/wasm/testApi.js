@@ -40,22 +40,20 @@ const { createClient, mockResponse, IN3, beforeTest } = require('./util/mocker')
 
 describe('API-Tests', () => {
     beforeEach(beforeTest)
-    /*
-        it('checkSumAddress', async () => {
-            assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
-        })
-    
-        it('eth_callFn', async () => {
-            mockResponse('eth_call', 'serverData')
-            const res = await createClient().eth.callFn('0x2736D225f85740f42D17987100dc8d58e9e16252', 'servers(uint256):(string,address,uint32,uint256,uint256,address)', 1)
-            assert.isArray(res)
-            assert.equal(res.length, 6)
-            assert.equal(res[0], 'https://in3.slock.it/mainnet/nd-4')
-            assert.equal(res[1], '0xbc0ea09c1651a3d5d40bacb4356fb59159a99564')
-            assert.equal(res[2], 0xffff)
-            assert.equal(res[3], 0xffffn)
-        })
-        */
+    it('checkSumAddress', async () => {
+        assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
+    })
+
+    it('eth_callFn', async () => {
+        mockResponse('eth_call', 'serverData')
+        const res = await createClient().eth.callFn('0x2736D225f85740f42D17987100dc8d58e9e16252', 'servers(uint256):(string,address,uint32,uint256,uint256,address)', 1)
+        assert.isArray(res)
+        assert.equal(res.length, 6)
+        assert.equal(res[0], 'https://in3.slock.it/mainnet/nd-4')
+        assert.equal(res[1], '0xbc0ea09c1651a3d5d40bacb4356fb59159a99564')
+        assert.equal(res[2], 0xffff)
+        assert.equal(res[3], 0xffffn)
+    })
 })
 
 
