@@ -109,6 +109,7 @@ else {
     }
 }
 
+// we have to store the resultstring in this special map since we cannot call a c-function while unwinded
 let response_counter = 1
 const responses = {}
 function add_response(s) {
