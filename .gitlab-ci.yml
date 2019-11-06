@@ -400,7 +400,7 @@ release_mac_and_wasm:
     - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:$PINATA_API_KEY' -H 'pinata_secret_api_key:$PINATA_SECRET_API_KEY' -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
-    - ghr -u slockIt -r in3-c $CI_COMMIT_TAG ${CI_COMMIT_TAG} in3_${CI_COMMIT_TAG}_mac.tar.gz
+    - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
     - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:$PINATA_API_KEY' -H 'pinata_secret_api_key:$PINATA_SECRET_API_KEY' -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
