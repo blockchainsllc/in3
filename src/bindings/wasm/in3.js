@@ -109,6 +109,18 @@ else {
     }
 }
 
+let response_counter = 1
+const responses = {}
+function add_response(s) {
+    responses['' + response_counter] = s
+    return response_counter++
+}
+function get_response(n) {
+    const r = responses['' + n]
+    delete responses['' + n]
+    return r
+}
+
 // signer-delegate
 in3w.sign_js = async (clientPtr, type, message, account) => {
     const c = clients['' + clientPtr]
@@ -232,7 +244,8 @@ class IN3 {
             }
 
             // send the request.
-            in3w.ccall('in3_send_request', 'void', ['number'], [r], { async: true });
+            const sendPromise = in3w.ccall('in3_send_request', 'void', ['number'], [r], { async: true });
+            // todo take response from promise.
         })
     }
 

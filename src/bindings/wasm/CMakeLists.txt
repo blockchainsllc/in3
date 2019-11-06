@@ -35,8 +35,12 @@
 include(${PROJECT_SOURCE_DIR}/compiler.cmake)
 
 
-set(EMC_PROPS "-O3 -s ASSERTIONS=1 -s TOTAL_MEMORY=524288 -s TOTAL_STACK=262144 -s EXPORT_NAME=in3w -s WASM=1 -s ENVIRONMENT_MAY_BE_SHELL=0  -s FILESYSTEM=0 -s ASYNCIFY=1  -s 'ASYNCIFY_IMPORTS=[\"transport_send\",\"sign_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
-#set(EMC_PROPS "${EMC_PROPS} -s ASSERTIONS=1")
+set(EMC_PROPS "-Oz -s TOTAL_MEMORY=1048576 -s TOTAL_STACK=262144 -s EXPORT_NAME=in3w -s WASM=1 -s ENVIRONMENT_MAY_BE_SHELL=0  -s FILESYSTEM=0 -s ASYNCIFY=1  -s 'ASYNCIFY_IMPORTS=[\"transport_send\",\"sign_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+IF (CMAKE_BUILD_TYPE MATCHES Debug)
+   set(EMC_PROPS "${EMC_PROPS} -g -s ASSERTIONS=1")
+#   set(EMC_PROPS "${EMC_PROPS} --source-map-base 'http://localhost/build/bin/' --emit-symbol-map -g -s ASSERTIONS=1 ")
+ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
+
 
 if (WASM_EMBED) 
    set(EMC_PROPS "${EMC_PROPS} -s SUPPORT_BASE64_EMBEDDING=0 -s SINGLE_FILE=1")
