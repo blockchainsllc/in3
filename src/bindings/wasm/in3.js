@@ -109,6 +109,19 @@ else {
     }
 }
 
+// we have to store the resultstring in this special map since we cannot call a c-function while unwinded
+let response_counter = 1
+const responses = {}
+function add_response(s) {
+    responses['' + response_counter] = s
+    return response_counter++
+}
+function get_response(n) {
+    const r = responses['' + n]
+    delete responses['' + n]
+    return r
+}
+
 // signer-delegate
 in3w.sign_js = async (clientPtr, type, message, account) => {
     const c = clients['' + clientPtr]
@@ -131,8 +144,7 @@ in3w.onRuntimeInitialized = _ => {
     o.forEach(_ => _(true))
 }
 
-// for all pending Requests we hold the finalize function which will be called by the wasm when done.
-in3w.pendingRequests = {}
+
 
 function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
@@ -205,35 +217,27 @@ class IN3 {
         if (!r) throwLastError();
 
         // now send 
-        return new Promise((resolve, reject) => {
-            // we add the pending request with pointer as key.
-            in3w.pendingRequests[r + ''] = () => {
-                // check if it was an error...
-                const er = in3w.ccall('request_get_error', 'string', ['number'], [r])
-                // if not we ask for the result.
-                const res = er ? '' : in3w.ccall('request_get_result', 'string', ['number'], [r])
+        // we add the pending request with pointer as key.
+        function checkResponse(error) {
+            // check if it was an error...
+            const er = error || in3w.ccall('request_get_error', 'string', ['number'], [r])
+            // if not we ask for the result.
+            const res = er ? '' : in3w.ccall('request_get_result', 'string', ['number'], [r])
 
-                // we always need to cleanup
-                in3w.ccall('in3_free_request', 'void', ['number'], [r])
-                delete in3w.pendingRequests[r + '']
+            // we always need to cleanup
+            in3w.ccall('in3_free_request', 'void', ['number'], [r])
 
-                // resolve or reject the promise.
-                if (er) reject(new Error(er))
-                else {
-                    try {
-                        const r = JSON.parse(res)
-                        if (r) delete r.in3
-                        resolve(r)
-                    }
-                    catch (ex) {
-                        reject(ex)
-                    }
-                }
+            // resolve or reject the promise.
+            if (er) throw new Error(er)
+            else {
+                const r = JSON.parse(res)
+                if (r) delete r.in3
+                return r
             }
+        }
 
-            // send the request.
-            in3w.ccall('in3_send_request', 'void', ['number'], [r], { async: true });
-        })
+        // send the request.
+        return in3w.ccall('in3_send_request', 'void', ['number'], [r], { async: true }).then(checkResponse, checkResponse)
     }
 
     async sendRPC(method, params) {

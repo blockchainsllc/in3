@@ -93,17 +93,11 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 }
 
 // clang-format off
-EM_JS(void, transport_send, (in3_response_t* result,  char* url, char* payload), {
-  Asyncify.handleSleep(function(wakeUp) {
+EM_JS(int, transport_send, (in3_response_t* result,  char* url, char* payload), {
+  return Asyncify.handleSleep(function(wakeUp) {
     Module.transport(UTF8ToString(url),UTF8ToString(payload))
-      .then(res => {
-        Module.ccall('request_set_result','void',['number','string'],[result,res]);
-        wakeUp();
-      })
-      .catch(res => {
-        Module.ccall('request_set_error','void',['number','string'],[result,res.message || res]);
-        wakeUp();
-      })
+      .then(res => wakeUp(add_response(res)))
+      .catch(res => wakeUp(add_response('Error: '+ (res.message || res))))
   });
 });
 
@@ -122,8 +116,10 @@ EM_JS(int, sign_send, (void* wallet, d_signature_type_t type, char* message, cha
   });
 });
 
-EM_JS(void, in3_req_done, (in3_ctx_t* ctx), {
-  Module.pendingRequests[ctx+""]();
+
+EM_JS(char*, get_c_response, (int n), {
+  const s = get_response(n);
+  return s ? allocateUTF8(s) : NULL;
 });
 
 in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
@@ -140,9 +136,19 @@ in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, byte
 // clang-format on
 
 int in3_fetch(in3_request_t* req) {
-  for (int i = 0; i < req->urls_len; i++)
-    transport_send(req->results + i, req->urls[i], req->payload);
-  return IN3_OK;
+  int ret = -1;
+  for (int i = 0; i < req->urls_len; i++) {
+    char* resp = get_c_response(transport_send(req->results + i, req->urls[i], req->payload));
+    if (resp && *resp == *req->payload) {
+      ret = IN3_OK;
+      sb_add_chars(&req->results[i].result, resp);
+    } else if (resp)
+      sb_add_chars(&req->results[i].error, resp);
+    else
+      sb_add_chars(&req->results[i].error, "Unknown error fetching the response");
+    if (resp) free(resp);
+  }
+  return ret;
 }
 
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
@@ -192,17 +198,11 @@ in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request(in3_t* c, char* payload) {
 void EMSCRIPTEN_KEEPALIVE in3_send_request(in3_ctx_t* ctx) {
   in3_set_error(NULL);
   in3_send_ctx(ctx);
-  ctx->client = NULL;
-  in3_req_done(ctx);
 }
 
 void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
   if (ctx->request_context && ctx->request_context->c) free(ctx->request_context->c);
   free_ctx(ctx);
-}
-
-bool EMSCRIPTEN_KEEPALIVE request_is_done(in3_ctx_t* r) {
-  return r->client == NULL;
 }
 
 char* EMSCRIPTEN_KEEPALIVE request_get_result(in3_ctx_t* r) {
@@ -215,14 +215,6 @@ char* EMSCRIPTEN_KEEPALIVE request_get_result(in3_ctx_t* r) {
 
 char* EMSCRIPTEN_KEEPALIVE request_get_error(in3_ctx_t* r) {
   return r->error;
-}
-
-void EMSCRIPTEN_KEEPALIVE request_set_result(in3_response_t* r, char* data) {
-  sb_add_chars(&r->result, data);
-}
-
-void EMSCRIPTEN_KEEPALIVE request_set_error(in3_response_t* r, char* data) {
-  sb_add_chars(&r->error, data);
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
