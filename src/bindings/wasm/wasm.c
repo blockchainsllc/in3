@@ -116,9 +116,6 @@ EM_JS(int, sign_send, (void* wallet, d_signature_type_t type, char* message, cha
   });
 });
 
-EM_JS(void, in3_req_done, (in3_ctx_t* ctx), {
-  Module.pendingRequests[ctx+""]();
-});
 
 EM_JS(char*, get_c_response, (int n), {
   const s = get_response(n);
@@ -202,7 +199,6 @@ void EMSCRIPTEN_KEEPALIVE in3_send_request(in3_ctx_t* ctx) {
   in3_set_error(NULL);
   in3_send_ctx(ctx);
   ctx->client = NULL;
-  in3_req_done(ctx);
 }
 
 void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
