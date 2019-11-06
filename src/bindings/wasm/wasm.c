@@ -198,16 +198,11 @@ in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request(in3_t* c, char* payload) {
 void EMSCRIPTEN_KEEPALIVE in3_send_request(in3_ctx_t* ctx) {
   in3_set_error(NULL);
   in3_send_ctx(ctx);
-  ctx->client = NULL;
 }
 
 void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
   if (ctx->request_context && ctx->request_context->c) free(ctx->request_context->c);
   free_ctx(ctx);
-}
-
-bool EMSCRIPTEN_KEEPALIVE request_is_done(in3_ctx_t* r) {
-  return r->client == NULL;
 }
 
 char* EMSCRIPTEN_KEEPALIVE request_get_result(in3_ctx_t* r) {
@@ -220,14 +215,6 @@ char* EMSCRIPTEN_KEEPALIVE request_get_result(in3_ctx_t* r) {
 
 char* EMSCRIPTEN_KEEPALIVE request_get_error(in3_ctx_t* r) {
   return r->error;
-}
-
-void EMSCRIPTEN_KEEPALIVE request_set_result(in3_response_t* r, char* data) {
-  sb_add_chars(&r->result, data);
-}
-
-void EMSCRIPTEN_KEEPALIVE request_set_error(in3_response_t* r, char* data) {
-  sb_add_chars(&r->error, data);
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
