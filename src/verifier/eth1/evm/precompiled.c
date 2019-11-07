@@ -290,36 +290,36 @@ static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int*
       err = ecc_set_point_xyz(1, 1, 0, R);
       goto done;
     }
-
-    // t1 = y2 - y1
-    if ((err = mp_submod(&Q->y, &P->y, modulus, &t1)) != MP_OKAY) { goto done; }
-    // m = x2 - x1
-    if ((err = mp_submod(&Q->x, &P->x, modulus, &m)) != MP_OKAY) { goto done; }
-    // m = 1 / (x2 - x1)
-    if ((err = mp_invmod(&m, modulus, &m)) != MP_OKAY) { goto done; }
-    // m = (y2 - y1) / (x2 - x1)
-    if ((err = mp_mulmod(&m, &t1, modulus, &m)) != MP_OKAY) { goto done; }
-
-    // t1 = m^2
-    if ((err = mp_sqrmod(&m, modulus, &t1)) != MP_OKAY) { goto done; }
-    // t1 = m^2 - x1
-    if ((err = mp_submod(&t1, &P->x, modulus, &t1)) != MP_OKAY) { goto done; }
-    // x = m^2 - x1 - x2
-    if ((err = mp_submod(&t1, &Q->x, modulus, &R->x)) != MP_OKAY) { goto done; }
-
-    // t1 = m * x1
-    if ((err = mp_mulmod(&m, &P->x, modulus, &t1)) != MP_OKAY) { goto done; }
-    // m = -m
-    if ((err = mp_neg(&m, &m)) != MP_OKAY) { goto done; }
-    // m = -m * x
-    if ((err = mp_mulmod(&m, &R->x, modulus, &m)) != MP_OKAY) { goto done; }
-    // m = -m * x + m * x1
-    if ((err = mp_addmod(&t1, &m, modulus, &m)) != MP_OKAY) { goto done; }
-    // y = -m * x + m * x1 - y1
-    if ((err = mp_submod(&m, &P->y, modulus, &R->y)) != MP_OKAY) { goto done; }
-
-    // assert newy == (-m * newx + m * x2 - y2)
   }
+
+  // t1 = y2 - y1
+  if ((err = mp_submod(&Q->y, &P->y, modulus, &t1)) != MP_OKAY) { goto done; }
+  // m = x2 - x1
+  if ((err = mp_submod(&Q->x, &P->x, modulus, &m)) != MP_OKAY) { goto done; }
+  // m = 1 / (x2 - x1)
+  if ((err = mp_invmod(&m, modulus, &m)) != MP_OKAY) { goto done; }
+  // m = (y2 - y1) / (x2 - x1)
+  if ((err = mp_mulmod(&m, &t1, modulus, &m)) != MP_OKAY) { goto done; }
+
+  // t1 = m^2
+  if ((err = mp_sqrmod(&m, modulus, &t1)) != MP_OKAY) { goto done; }
+  // t1 = m^2 - x1
+  if ((err = mp_submod(&t1, &P->x, modulus, &t1)) != MP_OKAY) { goto done; }
+  // x = m^2 - x1 - x2
+  if ((err = mp_submod(&t1, &Q->x, modulus, &R->x)) != MP_OKAY) { goto done; }
+
+  // t1 = m * x1
+  if ((err = mp_mulmod(&m, &P->x, modulus, &t1)) != MP_OKAY) { goto done; }
+  // m = -m
+  if ((err = mp_neg(&m, &m)) != MP_OKAY) { goto done; }
+  // m = -m * x
+  if ((err = mp_mulmod(&m, &R->x, modulus, &m)) != MP_OKAY) { goto done; }
+  // m = -m * x + m * x1
+  if ((err = mp_addmod(&t1, &m, modulus, &m)) != MP_OKAY) { goto done; }
+  // y = -m * x + m * x1 - y1
+  if ((err = mp_submod(&m, &P->y, modulus, &R->y)) != MP_OKAY) { goto done; }
+
+  // assert newy == (-m * newx + m * x2 - y2)
 
 done:
   mp_clear_multi(&t1, &m, NULL);
