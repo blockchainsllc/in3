@@ -258,24 +258,24 @@ done:
 }
 
 static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int* modulus) {
-  int /*inf = 0,*/ err = MP_OKAY;
-  mp_int           t1, m;
+  int    inf = 0, err = MP_OKAY;
+  mp_int t1, m;
 
   mp_init_multi(&t1, &m, NULL);
 
   // P is point-at-infinity, so result is Q
-  //  if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
-  //  if (inf) {
-  //    err = ecc_copy_point(Q, R);
-  //    goto done;
-  //  }
-  //
-  //  // Q is point-at-infinity, so result is P
-  //  if ((err = ecc_is_point_at_infinity(Q, modulus, &inf)) != MP_OKAY) return err;
-  //  if (inf) {
-  //    err = ecc_copy_point(P, R);
-  //    goto done;
-  //  }
+  if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
+  if (inf) {
+    err = ecc_copy_point(Q, R);
+    goto done;
+  }
+
+  // Q is point-at-infinity, so result is P
+  if ((err = ecc_is_point_at_infinity(Q, modulus, &inf)) != MP_OKAY) return err;
+  if (inf) {
+    err = ecc_copy_point(P, R);
+    goto done;
+  }
 
   if ((mp_cmp(&P->x, &Q->x) == MP_EQ)) {
     // P = Q, so result is P doubled
