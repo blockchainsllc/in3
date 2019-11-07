@@ -530,14 +530,12 @@ int pre_ec_add(evm_t* evm) {
 
   if ((err = ecc_point_add(p1, p2, p3, &modulus)) != MP_OKAY) { goto done; }
 
-  evm->return_data = bytes(_calloc(1, 64), 64);
-  //  mp_to_unsigned_bin(&p3->x, evm->return_data.data);
-  //  mp_to_unsigned_bin(&p3->y, evm->return_data.data + 32);
   size_t ml = mp_unsigned_bin_size(&p3->x);
   mp_to_unsigned_bin(&p3->x, evm->return_data.data + 32 - ml);
   mp_unsigned_bin_size(&p3->y);
   mp_to_unsigned_bin(&p3->y, evm->return_data.data + 64 - ml);
 
+done:
   ecc_del_point(p1);
   ecc_del_point(p2);
   ecc_del_point(p3);
@@ -545,7 +543,6 @@ int pre_ec_add(evm_t* evm) {
   b_print(&evm->return_data);
   in3_log_set_level(LOG_ERROR);
 
-done:
   mp_clear_multi(&modulus, &b, NULL);
   return err;
 }
