@@ -180,12 +180,9 @@ static bool ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
   if (!mp_iszero(&P->x) && !mp_iszero(&P->y)) {
     int oncurve;
     ecc_is_point_on_curve(P, modulus, b, &oncurve);
-    assert(oncurve);
-  } else {
-    mp_set(&P->x, 1);
-    mp_set(&P->y, 1);
-    mp_set(&P->z, 0);
     return oncurve != 0;
+  } else if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
+    return true;
   }
   return false;
 }
