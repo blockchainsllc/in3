@@ -420,6 +420,9 @@ export class IN3 {
      * collection of util-functions.
      */
     public static util: Utils
+
+    /** supporting both ES6 and UMD usage */
+    public static default: typeof IN3
 }
 
 /**
@@ -963,9 +966,6 @@ export declare interface Utils {
      */
     ecSign(pk: Uint8Array | Hex, msg: Uint8Array | Hex, hashFirst?: boolean): Uint8Array
 
-
-
 }
-
 
 export = IN3

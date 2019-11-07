@@ -118,12 +118,11 @@ in3w.sign_js = async (clientPtr, type, message, account) => {
     return await c.signer.sign(message, account, type)
 }
 
-
+// keep track of all created client instances
 const clients = {}
+const pendingRequest = []
 
-
-
-// create a flag ndicating when the wasm was succesfully loaded.
+// create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
 in3w.onRuntimeInitialized = _ => {
     const o = _in3_listeners
@@ -131,20 +130,18 @@ in3w.onRuntimeInitialized = _ => {
     o.forEach(_ => _(true))
 }
 
-
-
+// check if the last error was set and throws it.
 function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
     if (er) throw new Error(er);
 }
-const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
 
 /**
  * The incubed client.
  */
 class IN3 {
 
-    // since loading the wasm is async, we always need to check whether the was was created before using it.
+    // since loading the wasm is async, we always need to check whether the wasm was created before using it.
     async _ensure_ptr() {
         if (this.ptr) return
         if (_in3_listeners)
@@ -166,6 +163,7 @@ class IN3 {
      */
     setConfig(conf) {
         if (conf) {
+            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
             if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
             this.config = { ...this.config, ...conf }
         }
@@ -195,6 +193,10 @@ class IN3 {
      * sends a request and returns the response.
      */
     async sendRequest(rpc) {
+        const pr = { rpc }
+        pendingRequest.push(pr)
+        // any pending ? then we need to wait for them to finish first
+        if (pendingRequest.length > 1) await new Promise(resolve => pendingRequest[pendingRequest.length - 2].next = resolve)
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
         if (this.needsSetConfig) this.setConfig()
@@ -206,6 +208,10 @@ class IN3 {
         // now send 
         // we add the pending request with pointer as key.
         function checkResponse(error) {
+            // now it's time for the next request
+            pendingRequest.splice(0, 1)
+            if (pr.next) setTimeout(pr.next, 0)
+
             // check if it was an error...
             const er = error || in3w.ccall('request_get_error', 'string', ['number'], [r])
             // if not we ask for the result.
@@ -215,7 +221,7 @@ class IN3 {
             in3w.ccall('in3_free_request', 'void', ['number'], [r])
 
             // resolve or reject the promise.
-            if (er) throw new Error(er)
+            if (er) throw new Error('Error sending the ' + (Array.isArray(rpc) ? rpc[0].method : rpc.method) + ' request : ' + er)
             else {
                 const r = JSON.parse(res)
                 if (r) delete r.in3
@@ -252,7 +258,7 @@ IN3.setTransport = function (fn) {
 IN3.setStorage = function (fn) {
     in3w.in3_cache = fn
 }
-
+// the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
 IN3.onInit = function (fn) {
     return new Promise((resolve, reject) => {
         const check = () => {

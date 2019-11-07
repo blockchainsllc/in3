@@ -35,7 +35,7 @@
 include(${PROJECT_SOURCE_DIR}/compiler.cmake)
 
 set(REMOVE_FN "\"_requestFullScreen\",\"_requestFullscreen\",\"_requestAnimationFrame\",\"_setCanvasSize\",\"_pauseMainLoop\",\"_getUserMedia\",\"_createContext\"")
-set(EMC_PROPS "-Oz -s MODULARIZE_INSTANCE=0 -s ALLOW_MEMORY_GROWTH=1 -s EXPORT_NAME=in3w -s WASM=1 -s 'DEAD_FUNCTIONS=[${REMOVE_FN}]' -s FILESYSTEM=0 -s ASYNCIFY=1  -s 'ASYNCIFY_IMPORTS=[\"transport_send\",\"sign_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+set(EMC_PROPS "-Oz -s ALLOW_MEMORY_GROWTH=1 -s EXPORT_NAME=in3w -s WASM=1 -s 'DEAD_FUNCTIONS=[${REMOVE_FN}]' -s FILESYSTEM=0 -s ASYNCIFY=1  -s 'ASYNCIFY_IMPORTS=[\"transport_send\",\"sign_send\"]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
 IF (CMAKE_BUILD_TYPE MATCHES Debug)
    set(EMC_PROPS "${EMC_PROPS} -g -s SAFE_HEAP=1 -s ASSERTIONS=1 -s STACK_OVERFLOW_CHECK=1 -s RUNTIME_LOGGING=1")
 #   set(EMC_PROPS "${EMC_PROPS} --source-map-base 'http://localhost/build/bin/' --emit-symbol-map -g -s ASSERTIONS=1 ")
