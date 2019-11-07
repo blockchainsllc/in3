@@ -191,10 +191,10 @@ int evm_sub_call(evm_t*    parent,
   if (!address && success == 0)
     res = evm_stack_push(parent, evm.account, 20);
   else
-    res = evm_stack_push_int(parent, success == 0 ? 1 : 0);
+    res = evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0);
 
   // if we have returndata we write them into memory
-  if (success == 0 && evm.return_data.data) {
+  if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm.return_data.data) {
     // if we have a target to write the result to we do.
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
 
