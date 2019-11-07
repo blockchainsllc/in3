@@ -93,11 +93,11 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 }
 
 // clang-format off
-EM_JS(int, transport_send, (in3_response_t* result,  char* url, char* payload), {
+EM_JS(char*, transport_send, (in3_response_t* result,  char* url, char* payload), {
   return Asyncify.handleSleep(function(wakeUp) {
     Module.transport(UTF8ToString(url),UTF8ToString(payload))
-      .then(res => wakeUp(add_response(res)))
-      .catch(res => wakeUp(add_response('Error: '+ (res.message || res))))
+      .then(res => wakeUp(allocateUTF8(res)))
+      .catch(res => wakeUp(allocateUTF8('Error: '+ (res.message || res))))
   });
 });
 
@@ -117,11 +117,6 @@ EM_JS(int, sign_send, (void* wallet, d_signature_type_t type, char* message, cha
 });
 
 
-EM_JS(char*, get_c_response, (int n), {
-  const s = get_response(n);
-  return s ? allocateUTF8(s) : NULL;
-});
-
 in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   char message_hex[(message.len<<1)+3],account_hex[(account.len<<1)+3];
   message_hex[0]=account_hex[0]='0';
@@ -138,7 +133,7 @@ in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, byte
 int in3_fetch(in3_request_t* req) {
   int ret = -1;
   for (int i = 0; i < req->urls_len; i++) {
-    char* resp = get_c_response(transport_send(req->results + i, req->urls[i], req->payload));
+    char* resp = transport_send(req->results + i, req->urls[i], req->payload);
     if (resp && *resp == *req->payload) {
       ret = IN3_OK;
       sb_add_chars(&req->results[i].result, resp);
