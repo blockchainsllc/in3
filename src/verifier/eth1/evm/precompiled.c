@@ -518,8 +518,15 @@ int pre_ec_add(evm_t* evm) {
   if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { goto done; }
   mp_set(&b, 3);
 
-  ecc_point_validate(p1, &modulus, &b);
-  ecc_point_validate(p2, &modulus, &b);
+  evm->return_data = bytes(_calloc(1, 64), 64);
+
+  if (mp_iszero(&p1->x) && mp_iszero(&p1->y) && mp_iszero(&p2->x) && mp_iszero(&p2->y)) {
+    err = EVM_ERROR_SUCCESS_CONSUME_GAS;
+    goto done;
+  } else if (!ecc_point_validate(p1, &modulus, &b) || !ecc_point_validate(p2, &modulus, &b)) {
+    err = EVM_ERROR_INVALID_ENV;
+    goto done;
+  }
 
   if ((err = ecc_point_add(p1, p2, p3, &modulus)) != MP_OKAY) { goto done; }
 
