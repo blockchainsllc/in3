@@ -119,9 +119,9 @@ static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retv
     return MP_OKAY;
   }
 
-  /* point (0,0,0) is not at infinity */
+  /* point (0,0,0) is point at infinity */
   if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
-    *retval = 0;
+    *retval = 1;
     return MP_OKAY;
   }
 
