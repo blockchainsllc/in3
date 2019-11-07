@@ -42,7 +42,6 @@
 #include "../../../third-party/tommath/tommath.h"
 #include "evm.h"
 #include "gas.h"
-#include <assert.h>
 
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -150,12 +149,6 @@ done:
 }
 
 //# Check that a point is on the curve defined by y**2 == x**3 + b
-//def is_on_curve(pt: Point2D[Field], b: Field) -> bool:
-//    if is_inf(pt):
-//        return True
-//    x, y = pt
-//    return y**2 - x**3 == b
-
 static int ecc_is_point_on_curve(const ecc_point* P, mp_int* modulus, mp_int* b, int* oncurve) {
   int    err;
   mp_int t1, t2, t3;
@@ -181,9 +174,9 @@ done:
   return err;
 }
 
-static void ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
-  assert(mp_cmp(&P->x, modulus) == MP_LT);
-  assert(mp_cmp(&P->y, modulus) == MP_LT);
+static bool ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
+  if (mp_cmp(&P->x, modulus) != MP_LT) return false;
+  if (mp_cmp(&P->y, modulus) != MP_LT) return false;
   if (!mp_iszero(&P->x) && !mp_iszero(&P->y)) {
     int oncurve;
     ecc_is_point_on_curve(P, modulus, b, &oncurve);
@@ -192,7 +185,9 @@ static void ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
     mp_set(&P->x, 1);
     mp_set(&P->y, 1);
     mp_set(&P->z, 0);
+    return oncurve != 0;
   }
+  return false;
 }
 
 static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
