@@ -302,31 +302,22 @@ class EthAPI {
 
     /** sends a Transaction */
     async sendTransaction(args) {
-        if (!args.pk && (!this.signer || !(await this.signer.hasAccount(args.from)))) throw new Error('missing private key!')
+        if (!args.pk && (!this.client.signer || !(await this.client.signer.hasAccount(args.from)))) throw new Error('missing signer!')
 
         // prepare
         const tx = await prepareTransaction(args, this)
-        let etx = null
-
         if (args.pk) {
-            // sign it with the raw keyx
-            etx = new ETx({ ...tx, gasLimit: tx.gas })
-            etx.sign(util.toBuffer(args.pk))
+            if (!this.client.signer) this.client.signer = new SimpleSigner(args.pk)
+            else if (this.client.signer.__proto__ === SimpleSigner.prototype) this.client.signer.addAccount(args.pk)
+            else throw new Error('direct usage of private keys are not possible with a custom signer')
         }
-        else if (this.signer && args.from) {
-            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(this.client, tx) : tx
-            etx = new ETx({ ...t, gasLimit: t.gas })
-            const signature = await this.signer.sign(etx.hash(false), args.from)
-            if (etx._chainId > 0) signature.v = toHex(toNumber(signature.v) + etx._chainId * 2 + 8)
-            Object.assign(etx, signature)
-        }
-        else throw new Error('Invalid transaction-data')
-        const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
+        const txHash = await this.send('eth_sendTransaction', tx)
+
 
         if (args.confirmations === undefined) args.confirmations = 1
 
         // send it
-        return args.confirmations ? confirm(txHash, this, parseInt(tx.g), args.confirmations) : txHash
+        return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations) : txHash
     }
 
     contractAt(abi, address) {
@@ -439,21 +430,21 @@ async function confirm(txHash, api, gasPaid, confirmations, timeout = 10) {
 }
 
 async function prepareTransaction(args, api) {
-    const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(util.toBuffer(args.pk)).toString('hex')))
+    const sender = args.from || (args.pk && private2address(args.pk))
 
-    const tx = {}
+    const tx = {
+        value: util.toMinHex(args.value || 0)
+    }
     if (args.to) tx.to = toHex(args.to)
     if (args.method) {
-        tx.data = createCallParams(args.method, args.args).txdata
+        tx.data = abiEncode(args.method, ...args.args)
         if (args.data) tx.data = args.data + tx.data.substr(10) // this is the case  for deploying contracts
     }
     else if (args.data)
         tx.data = toHex(args.data)
-    if (sender || args.nonce)
-        tx.nonce = util.toMinHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
-    if (api)
-        tx.gasPrice = util.toMinHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
-    tx.value = util.toMinHex(args.value || 0)
+    if (args.nonce) tx.nonce = toMinHex(args.nonce)
+    if (args.gasPrice) tx.gasPrice = toMinHex(args.gasPrice)
+
     if (sender) tx.from = sender
     try {
         tx.gas = util.toMinHex(args.gas || (api && (toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
@@ -461,8 +452,6 @@ async function prepareTransaction(args, api) {
     catch (ex) {
         throw new Error('The Transaction ' + JSON.stringify(args, null, 2) + ' will not be succesfully executed, since estimating g with: ' + ex)
     }
-
-
     return tx
 }
 

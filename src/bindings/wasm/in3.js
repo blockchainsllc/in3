@@ -133,7 +133,7 @@ in3w.onRuntimeInitialized = _ => {
 // check if the last error was set and throws it.
 function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
-    if (er) throw new Error(er);
+    if (er) throw new Error(er + (in3w.sign_js.last_sign_error ? (' : ' + in3w.sign_js.last_sign_error) : ''))
 }
 
 /**

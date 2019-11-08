@@ -162,7 +162,9 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, v, bytes(NULL, 0), bytes(NULL, 0));
 
   // sign the raw message
-  int res = ctx->client->signer->sign(ctx, SIGN_EC_HASH, *raw, bytes(NULL, 0), sig);
+  int res = (nonce.data && gas_price.data && gas_limit.data)
+                ? ctx->client->signer->sign(ctx, SIGN_EC_HASH, *raw, bytes(from, 20), sig)
+                : -1;
 
   // free temp resources
   if (new_json) free_json(new_json);

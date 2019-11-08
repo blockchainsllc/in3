@@ -83,6 +83,29 @@ describe('API-Tests', () => {
 
     })
 
+    it('send_transaction', async () => {
+        mockResponse('eth_gasPrice', 'default')
+        mockResponse('eth_estimateGas', '1M')
+        mockResponse('eth_getTransactionCount', 'default')
+        mockResponse('eth_sendRawTransaction', 'test_hash')
+
+        const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
+        const address = IN3.util.private2address(pk)
+        const c = createClient({ proof: 'none' })
+        c.signer = new IN3.SimpleSigner(pk)
+
+        const hash = await c.eth.sendTransaction({
+            from: address,
+            to: '0x1234567890123456789012345678901234567890',
+            method: 'setData(uint256,string)',
+            args: [123, 'testdata'],
+            confirmations: 0
+        })
+
+        assert.equal(hash, '0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38')
+
+    })
+
 
 
 })

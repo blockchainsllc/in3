@@ -47,7 +47,7 @@
 
 static char* last_error = NULL;
 
-static void in3_set_error(char* data) {
+void EMSCRIPTEN_KEEPALIVE in3_set_error(char* data) {
   if (last_error) free(last_error);
   last_error = data ? _strdupn(data, -1) : NULL;
 }
@@ -96,22 +96,21 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 EM_JS(char*, transport_send, (in3_response_t* result,  char* url, char* payload), {
   return Asyncify.handleSleep(function(wakeUp) {
     Module.transport(UTF8ToString(url),UTF8ToString(payload))
-      .then(res => wakeUp(allocateUTF8(res)))
-      .catch(res => wakeUp(allocateUTF8('Error: '+ (res.message || res))))
+      .then(res => wakeUp(allocateUTF8(res)),res => wakeUp(allocateUTF8('Error: '+ (res.message || res))))
   });
 });
 
 
 EM_JS(uint8_t*, sign_send, (void* wallet, d_signature_type_t type, char* message, char* account), {
+  delete Module.sign_js.last_sign_error;
   return Asyncify.handleSleep(function(wakeUp) {
     Module.sign_js(wallet,type,UTF8ToString(message),UTF8ToString(account))
        .then(sig => {
              const dst = _malloc(65);
              HEAP8.set(toBuffer(sig),dst);
              wakeUp(dst);
-       }) 
-      .catch(res => {
-        Module.ccall('in3_set_error','void',['string'],[res.message || res]);
+       },res => {
+        Module.sign_js.last_sign_error=res.message || res;
         wakeUp(0);
       })
   });
@@ -125,7 +124,7 @@ in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, byte
   bytes_to_hex(message.data,message.len,message_hex+2);
   bytes_to_hex(account.data,account.len,account_hex+2);
   uint8_t* res= sign_send(((in3_ctx_t*)ctx)->client,type,message_hex,account_hex);
-  if (!res) return ctx_set_error((in3_ctx_t*) ctx,last_error,-1);
+  if (!res) return ctx_set_error((in3_ctx_t*) ctx,"Error getting the response from signer",-1);
   memcpy(dst,res,65);
   free(res);
   return 0;
