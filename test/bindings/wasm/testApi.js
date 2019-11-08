@@ -56,6 +56,30 @@ describe('API-Tests', () => {
         assert.equal(res[2], 0xffff)
         assert.equal(res[3], 0xffffn)
     })
+    it('send_transaction', async () => {
+        mockResponse('eth_gasPrice', 'default')
+        mockResponse('eth_estimateGas', '1M')
+        mockResponse('eth_getTransactionCount', 'default')
+        mockResponse('eth_sendRawTransaction', 'test_hash')
+
+        const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
+        const address = IN3.util.private2address(pk)
+        const c = createClient({ proof: 'none' })
+        c.signer = new IN3.SimpleSigner(pk)
+
+        const hash = await c.eth.sendTransaction({
+            from: address,
+            to: '0x1234567890123456789012345678901234567890',
+            method: 'setData(uint256,string)',
+            args: [123, 'testdata'],
+            confirmations: 0
+        })
+
+        assert.equal(hash, '0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38')
+
+    })
+
+
 
     it('sign', async () => {
         const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
@@ -80,29 +104,6 @@ describe('API-Tests', () => {
         assert.equal(sig.r, '0x5782d5df271b9a0890f89868de73b7a206f2eb988346bc3df2c0a475d60b068a')
         assert.equal(sig.s, '0x30760b12fd8cf88cd10a31dea71d9309d5b7b2f7bb49e36f69fcdbdfe480f129')
         assert.equal(sig.v, 28)
-
-    })
-
-    it('send_transaction', async () => {
-        mockResponse('eth_gasPrice', 'default')
-        mockResponse('eth_estimateGas', '1M')
-        mockResponse('eth_getTransactionCount', 'default')
-        mockResponse('eth_sendRawTransaction', 'test_hash')
-
-        const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
-        const address = IN3.util.private2address(pk)
-        const c = createClient({ proof: 'none' })
-        c.signer = new IN3.SimpleSigner(pk)
-
-        const hash = await c.eth.sendTransaction({
-            from: address,
-            to: '0x1234567890123456789012345678901234567890',
-            method: 'setData(uint256,string)',
-            args: [123, 'testdata'],
-            confirmations: 0
-        })
-
-        assert.equal(hash, '0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38')
 
     })
 
