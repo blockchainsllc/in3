@@ -76,16 +76,21 @@ function toChecksumAddress(val, chainId = 0) {
     return call_string('to_checksum_address', toBuffer(val, 20), chainId);
 }
 
+function private2address(pk) {
+    if (!pk) return pk
+    pk = toBuffer(pk)
+    return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength))
+}
 
 
 function abiEncode(sig, ...params) {
     convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
 }
-function ecSign(pk, data, hashMessage = true) {
+function ecSign(pk, data, hashMessage = true, adjustV = true) {
     data = toBuffer(data)
     pk = toBuffer(pk)
-    return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength)
+    return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0)
 }
 
 function abiDecode(sig, data) {
@@ -149,7 +154,7 @@ function toHex(val, bytes) {
             ? val.substr(2)
             : (parseInt(val[0])
                 ? BigInt(val).toString(16)
-                : Object.keys(val).map(_ => padStart(_.charCodeAt(0).toString(16), 2, '0')).join('')
+                : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
             )
     else if (typeof val === 'number' || typeof val === 'bigint')
         hex = val.toString(16)
@@ -202,6 +207,7 @@ function toNumber(val) {
             throw new Error('can not convert a ' + (typeof val) + ' to number');
     }
 }
+
 /**
  * converts any value as Buffer
  *  if len === 0 it will return an empty Buffer if the value is 0 or '0x00', since this is the way rlpencode works wit 0-values.
@@ -257,8 +263,7 @@ function toSimpleHex(val) {
  * returns a address from a private key
  */
 function getAddress(pk) {
-    const key = toBuffer(pk);
-    return ethUtil.toChecksumAddress(ethUtil.privateToAddress(key).toString('hex'));
+    return private2address(pk)
 }
 /** removes all leading 0 in the hexstring */
 function toMinHex(key) {
@@ -277,6 +282,21 @@ function toMinHex(key) {
     }
     return '0x0';
 }
+
+function splitSignature(sig, data, hashFirst = 1) {
+    sig = toHex(sig)
+    const v = parseInt('0x' + sig.substr(130, 2))
+    return {
+        r: sig.substr(0, 66),
+        s: '0x' + sig.substr(66, 64),
+        v: v < 27 ? (v % 2) + 27 : v,
+        recoveryParam: v < 27 ? v : v - 27,
+        message: hashFirst ? data : null,
+        messageHash: toHex(hashFirst ? keccak(data) : data),
+        signature: toHex(sig)
+    }
+}
+
 /** padStart for legacy */
 function padStart(val, minLength, fill = ' ') {
     while (val.length < minLength)
@@ -307,10 +327,44 @@ const util = {
     toChecksumAddress,
     abiEncode,
     abiDecode,
-    ecSign
+    ecSign,
+    splitSignature,
+    private2address
 }
 
 // add as static proporty and as standard property.
 IN3.util = util
 IN3.prototype.util = util
+
+
+
+
+class SimpleSigner {
+    constructor(...pks) {
+        this.accounts = {}
+        if (pks) pks.forEach(_ => this.addAccount(_))
+    }
+
+    addAccount(pk) {
+        const adr = private2address(pk)
+        this.accounts[adr] = toBuffer(pk)
+        return adr
+    }
+
+
+    async hasAccount(account) {
+        return !!this.accounts[toChecksumAddress(account)]
+    }
+
+    async sign(data, account, type, ethV = true) {
+        const pk = toBuffer(this.accounts[toChecksumAddress(account)])
+        if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
+        return ecSign(pk, data, type, ethV)
+
+        //return { messageHash: util.toHex(data), v: util.toHex(sig.v), r: util.toHex(sig.r), s: util.toHex(sig.s), message: util.toHex(data) }
+    }
+
+}
+
+IN3.SimpleSigner = SimpleSigner
 

@@ -285,18 +285,19 @@ class EthAPI {
      */
     async sign(account, data) {
         // prepare data
-        const d = toHex(data)
-        let s = {
-            message: d,
-            messageHash: keccak('0x19' + toHex('Ethereum Signed Message:\n' + (d.length / 2 - 1)).substr(2) + d.substr(2))
-        }
+        const d = toHex(data),
+            message = '0x19' + toHex('Ethereum Signed Message:\n' + (d.length / 2 - 1)).substr(2) + d.substr(2),
+            s = {
+                message,
+                messageHash: keccak(message)
+            }
 
         if (account && account.length == 66) // use direct pk
-            s = { ...s, ...ecsign(hash, util.toBuffer(account)) }
-        else if (this.signer && await this.signer.hasAccount(account)) // use signer
-            s = { ...s, ...(await this.signer.sign(hash, account)) }
-        s.signature = toHex(s.r) + toHex(s.s).substr(2) + toHex(s.v).substr(2)
-        return s
+            s.signature = toHex(ecSign(util.toBuffer(account), s.messageHash, false))
+        else if (this.client.signer && await this.client.signer.hasAccount(account)) // use signer
+            s.signature = toHex(await this.client.signer.sign(s.messageHash, account, false, true))
+        else throw new Error('no signer found to sign for this account')
+        return { ...splitSignature(s.signature, message, false), ...s, messageHash: toHex(s.messageHash) }
     }
 
     /** sends a Transaction */
@@ -507,32 +508,6 @@ function decodeEvent(log, d) {
 
 
 
-class SimpleSigner {
-
-    constructor(...pks) {
-        this.accounts = {}
-        if (pks) pks.forEach(_ => this.addAccount(_))
-    }
-
-    addAccount(pk) {
-        const adr = toChecksumAddress(toHex(privateToAddress(util.toBuffer(pk))))
-        this.accounts[adr] = pk
-        return adr
-    }
-
-
-    async hasAccount(account) {
-        return !!this.accounts[toChecksumAddress(account)]
-    }
-
-    async sign(data, account) {
-        const pk = util.toBuffer(this.accounts[toChecksumAddress(account)])
-        if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
-        const sig = ecsign(data, pk)
-        return { messageHash: toHex(data), v: toHex(sig.v), r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
-    }
-
-}
 function encodeEtheresBN(val) {
     return val && BN.isBN(val) ? toHex(val) : val
 }

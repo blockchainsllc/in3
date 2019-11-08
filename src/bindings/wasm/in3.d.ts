@@ -407,6 +407,12 @@ export class IN3 {
 
 
     /**
+     * frees all Incubed instances.
+     */
+    public static freeAll(): void
+
+
+    /**
      * eth1 API.
      */
     public eth: EthAPI
@@ -691,7 +697,7 @@ export declare interface Signer {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst: boolean) => Promise<Hex>
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
 }
 
 export interface EthAPI {
@@ -900,12 +906,21 @@ export interface EthAPI {
 }
 export declare class SimpleSigner implements Signer {
     accounts: {
-        [ac: string]: Hash;
+        [ac: string]: Uint8Array;
     };
-    constructor(...pks: Hash[]);
+    constructor(...pks: (hash | Uint8Array)[]);
     addAccount(pk: Hash): string;
-    hasAccount(account: string): Promise<boolean>;
-    sign(data: Hex, account: string): Promise<Signature>;
+    /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
+    prepareTransaction?: (client: IN3, tx: Transaction) => Promise<Transaction>
+
+    /** returns true if the account is supported (or unlocked) */
+    hasAccount(account: Address): Promise<boolean>
+
+    /** 
+     * signing of any data. 
+     * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
+     */
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
 }
 
 /**
@@ -963,8 +978,23 @@ export declare interface Utils {
      * @param pk the private key
      * @param msg the message
      * @param hashFirst if true the message will be hashed first (default:true), if not the message is the hash.
+     * @param adjustV if true (default) the v value will be adjusted by adding 27
      */
-    ecSign(pk: Uint8Array | Hex, msg: Uint8Array | Hex, hashFirst?: boolean): Uint8Array
+    ecSign(pk: Uint8Array | Hex, msg: Uint8Array | Hex, hashFirst?: boolean, adjustV?: boolean): Uint8Array
+
+    /**
+     * takes raw signature (65 bytes) and splits it into a signature object.
+     * @param signature the 65 byte-signature
+     * @param message  the message
+     * @param hashFirst if true (default) this will be taken as raw-data and will be hashed first.
+     */
+    splitSignature(signature: Uint8Array | Hex, message: Uint8Array | Hex, hashFirst?: boolean): Signature
+
+    /**
+     * generates the public address from the private key.
+     * @param pk the private key.
+     */
+    private2address(pk: Hex | Uint8Array): Address
 
 }
 

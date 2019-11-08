@@ -102,16 +102,17 @@ EM_JS(char*, transport_send, (in3_response_t* result,  char* url, char* payload)
 });
 
 
-EM_JS(int, sign_send, (void* wallet, d_signature_type_t type, char* message, char* account, uint8_t* dst), {
-  Asyncify.handleSleep(function(wakeUp) {
+EM_JS(uint8_t*, sign_send, (void* wallet, d_signature_type_t type, char* message, char* account), {
+  return Asyncify.handleSleep(function(wakeUp) {
     Module.sign_js(wallet,type,UTF8ToString(message),UTF8ToString(account))
        .then(sig => {
+             const dst = _malloc(65);
              HEAP8.set(toBuffer(sig),dst);
-             wakeUp(0);
+             wakeUp(dst);
        }) 
       .catch(res => {
         Module.ccall('in3_set_error','void',['string'],[res.message || res]);
-        wakeUp(-1);
+        wakeUp(0);
       })
   });
 });
@@ -123,9 +124,11 @@ in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, byte
   message_hex[1]=account_hex[1]='x';
   bytes_to_hex(message.data,message.len,message_hex+2);
   bytes_to_hex(account.data,account.len,account_hex+2);
-  int res= sign_send(((in3_ctx_t*)ctx)->client,type,message_hex,account_hex,dst);
-  if (res<0) return ctx_set_error((in3_ctx_t*) ctx,last_error,res);
-  return res;
+  uint8_t* res= sign_send(((in3_ctx_t*)ctx)->client,type,message_hex,account_hex);
+  if (!res) return ctx_set_error((in3_ctx_t*) ctx,last_error,-1);
+  memcpy(dst,res,65);
+  free(res);
+  return 0;
 }
 
 // clang-format on
@@ -270,8 +273,19 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   return result;
 }
 
+/** private key to address */
+uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
+  uint8_t* dst = malloc(20);
+  uint8_t  public_key[65], sdata[32];
+  bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
+  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
+  sha3_to(&pubkey_bytes, sdata);
+  memcpy(dst, sdata + 12, 20);
+  return dst;
+}
+
 /** signs the given data */
-uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len) {
+uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
   uint8_t* dst   = malloc(65);
   int      error = -1;
   switch (type) {
@@ -289,5 +303,6 @@ uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uin
     free(dst);
     return NULL;
   }
+  if (adjust_v) dst[64] += 27;
   return dst;
 }

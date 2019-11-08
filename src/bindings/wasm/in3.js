@@ -115,7 +115,7 @@ in3w.sign_js = async (clientPtr, type, message, account) => {
     if (!c) throw new Error('wrong client ptr')
     if (!c.signer) throw new Error('no signer set to handle signing')
     if (!(await c.signer.hasAccount(account))) throw new Error('unknown account ' + account)
-    return await c.signer.sign(message, account, type)
+    return await c.signer.sign(message, account, type, false)
 }
 
 // keep track of all created client instances
@@ -258,6 +258,11 @@ IN3.setTransport = function (fn) {
 IN3.setStorage = function (fn) {
     in3w.in3_cache = fn
 }
+
+IN3.freeAll = function () {
+    Object.keys(clients).forEach(_ => clients[_].free())
+}
+
 // the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
 IN3.onInit = function (fn) {
     return new Promise((resolve, reject) => {
