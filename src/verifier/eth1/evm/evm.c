@@ -128,7 +128,7 @@ int evm_stack_pop_ref(evm_t* evm, uint8_t** dst) {
 int evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst) {
   if (evm->stack_size - pos < 0 || pos < 1) return EVM_ERROR_EMPTY_STACK; // stack empty
   uint32_t p = evm->stack.b.len;
-  uint8_t  i, l;
+  uint8_t  i, l = 0;
   for (i = 0; i < pos; i++) {
     l = evm->stack.b.data[p - 1];
     p -= l + 1;
