@@ -56,6 +56,7 @@ describe('API-Tests', () => {
         assert.equal(res[2], 0xffff)
         assert.equal(res[3], 0xffffn)
     })
+    /*
     it('send_transaction', async () => {
         mockResponse('eth_gasPrice', 'default')
         mockResponse('eth_estimateGas', '1M')
@@ -79,7 +80,7 @@ describe('API-Tests', () => {
 
     })
 
-
+*/
 
     it('sign', async () => {
         const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
