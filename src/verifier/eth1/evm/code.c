@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 
-bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* address, uint8_t* must_free) {
+in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* address, uint8_t* must_free, bytes_t** target) {
   bytes_t *  res = NULL, *code_hash = NULL, tmp[32];
   d_token_t* t = NULL;
 
@@ -52,17 +52,20 @@ bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* ad
         res       = d_get_bytesk(t, K_CODE);
         if (res) {
           sha3_to(res, tmp);
-          if (code_hash && memcmp(code_hash->data, tmp, 32) == 0)
-            return res;
-          else {
+          if (code_hash && memcmp(code_hash->data, tmp, 32) == 0) {
+            *target = res;
+            return IN3_OK;
+          } else {
             vc_err(vc, "Wrong codehash");
-            return NULL;
+            return IN3_EINVAL;
           }
         }
         break;
       }
     }
   }
+
+  
 
   char params[100];
   sprintf(params, "[\"0x%s\",\"latest\"]", hex_address + 1);
@@ -75,7 +78,7 @@ bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* ad
     if (code_hash && memcmp(code_hash->data, tmp, 32) != 0) {
       vc_err(vc, "Wrong codehash");
       free_ctx(ctx);
-      return NULL;
+      return IN3_EINVAL;
     }
     if (vc->ctx->client->cacheStorage)
       vc->ctx->client->cacheStorage->set_item(vc->ctx->client->cacheStorage->cptr, hex_address, d_bytes(t));
@@ -85,13 +88,15 @@ bytes_t* in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* ad
     vc_err(vc, ctx->error);
   free_ctx(ctx);
   *must_free = 1;
-  return res;
+  *target    = res;
+  return IN3_OK;
 }
-
-cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
+in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target) {
   for (cache_entry_t* en = vc->ctx->cache; en; en = en->next) {
-    if (en->key.len == 20 && memcmp(address, en->key.data, 20) == 0)
-      return en;
+    if (en->key.len == 20 && memcmp(address, en->key.data, 20) == 0) {
+      *target = en;
+      return IN3_OK;
+    }
   }
   char key_str[43];
   key_str[0] = 'C';
@@ -99,17 +104,21 @@ cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
   bytes_t*       b         = NULL;
   cache_entry_t* entry     = NULL;
   uint8_t        must_free = 0;
+  in3_ret_t      ret;
 
   // not cached yet
   if (vc->ctx->client->cacheStorage) {
     b = vc->ctx->client->cacheStorage->get_item(vc->ctx->client->cacheStorage->cptr, key_str);
     if (!b) {
-      in3_get_code_from_client(vc, key_str, address, &must_free);
+      ret = in3_get_code_from_client(vc, key_str, address, &must_free, &b);
+      if (ret < 0) return ret;
       b = vc->ctx->client->cacheStorage->get_item(vc->ctx->client->cacheStorage->cptr, key_str);
     } else
       must_free = 1;
-  } else
-    b = in3_get_code_from_client(vc, key_str, address, &must_free);
+  } else {
+    ret = in3_get_code_from_client(vc, key_str, address, &must_free, &b);
+    if (ret < 0) return ret;
+  }
 
   if (b) {
     bytes_t key = {.len = 20, .data = _malloc(20)};
@@ -121,7 +130,8 @@ cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address) {
     entry->value     = *b;
     vc->ctx->cache   = entry;
     int_to_bytes(b->len, entry->buffer);
-    return entry;
+    *target = entry;
+    return IN3_OK;
   }
-  return NULL;
+  return IN3_EFIND;
 }
