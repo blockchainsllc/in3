@@ -202,7 +202,7 @@ class IN3 {
         if (this.needsSetConfig) this.setConfig()
 
         // create the context
-        const r = in3w.ccall('in3_create_request', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
+        const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
 
         // now send 
