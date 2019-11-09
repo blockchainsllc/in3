@@ -195,7 +195,15 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   in3_ctx_t ctx;
   memset(&ctx, 0, sizeof(ctx));
-  return update_nodelist(c, chain, &ctx);
+  chain->needsUpdate = false;
+
+  in3_ret_t ret = update_nodelist(c, chain, &ctx);
+  if (ret == IN3_WAITING && ctx.required) {
+    ret = in3_send_ctx(ctx.required);
+    if (ret) return ret;
+    return update_nodelist(c, chain, &ctx);
+  }
+  return ret;
 }
 
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
