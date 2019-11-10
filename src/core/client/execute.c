@@ -167,7 +167,6 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         w->weight                   = NULL;
         in3_log_info("Blacklisting node for invalid response: %s\n", w->node->url);
       } else {
-        //        printf("res:%s",ctx->response_data);
         // check each request
         for (i = 0; i < ctx->len; i++) {
           vc.request = ctx->requests[i];
@@ -248,7 +247,6 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   for (n = 0; n < nodes_count; n++) {
     sb_init(&req->results[n].error);
     sb_init(&req->results[n].result);
-    in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", urls[n], payload->data);
   }
 
   // we set the raw_response
@@ -279,7 +277,6 @@ void free_request(in3_request_t* req, in3_ctx_t* ctx, bool free_response) {
 
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   in3_ret_t ret;
-
   while ((ret = in3_ctx_execute(ctx))) {
     // error we stop here
     if (ret != IN3_WAITING) return ret;
@@ -288,18 +285,21 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
     if (in3_ctx_state(ctx->required) != CTX_SUCCESS && (ret = in3_send_ctx(ctx->required)))
       return ret;
 
-    if (ctx->client->transport) {
-      // if we have not picked nodes yet, we need to execute it again
-      if (!ctx->nodes && (ret = in3_ctx_execute(ctx)) != IN3_WAITING) return ret;
-
-      // handle transports
-      in3_request_t* request = in3_create_request(ctx);
-      if (request == NULL)
-        return IN3_ENOMEM;
-      ctx->client->transport(request);
-      free_request(request, ctx, false);
-    } else
-      return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+    if (!ctx->raw_response) {
+      if (ctx->client->transport) {
+        // if we have not picked nodes yet, we need to execute it again
+        if (!ctx->nodes && (ret = in3_ctx_execute(ctx)) != IN3_WAITING) return ret;
+        // handle transports
+        in3_request_t* request = in3_create_request(ctx);
+        if (request == NULL)
+          return IN3_ENOMEM;
+        in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", request->urls[0], request->payload);
+        ctx->client->transport(request);
+        in3_log_trace("... response: \n... \x1B[%sm%s\x1B[0m\n", request->results[0].error.len ? "31" : "32", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
+        free_request(request, ctx, false);
+      } else
+        return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+    }
   }
   return ret;
 }
@@ -336,8 +336,10 @@ in3_ret_t in3_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
 
 in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
   if (ctx == NULL) return CTX_SUCCESS;
+  in3_ctx_state_t required_state = in3_ctx_state(ctx->required);
+  if (required_state == CTX_ERROR) return CTX_ERROR;
   if (ctx->error) return CTX_ERROR;
-  if (ctx->required) return CTX_WAITING_FOR_REQUIRED_CTX;
+  if (ctx->required && required_state != CTX_SUCCESS) return CTX_WAITING_FOR_REQUIRED_CTX;
   if (!ctx->raw_response || !ctx->response_context) return CTX_WAITING_FOR_RESPONSE;
   return CTX_SUCCESS;
 }

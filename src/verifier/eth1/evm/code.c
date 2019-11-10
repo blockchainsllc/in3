@@ -65,31 +65,52 @@ in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* a
     }
   }
 
-  
-
-  char params[100];
-  sprintf(params, "[\"0x%s\",\"latest\"]", hex_address + 1);
-  in3_proof_t old_proof  = vc->ctx->client->proof;
-  vc->ctx->client->proof = PROOF_NONE; // we don't need proof since we have the codehash!
-  in3_ctx_t* ctx         = in3_client_rpc_ctx(vc->ctx->client, "eth_getCode", params);
-  vc->ctx->client->proof = old_proof;
-  if (!ctx->error && ctx->responses[0] && (t = d_get(ctx->responses[0], K_RESULT))) {
-    sha3_to(d_bytes(t), tmp);
-    if (code_hash && memcmp(code_hash->data, tmp, 32) != 0) {
-      vc_err(vc, "Wrong codehash");
-      free_ctx(ctx);
-      return IN3_EINVAL;
+  // ok, we need a request, do we have a useable?
+  in3_ctx_t* ctx = vc->ctx->required;
+  while (ctx) {
+    if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
+      bytes_t ad = d_to_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
+      if (ad.len == 20 && memcmp(ad.data, address, 20) == 0) break;
     }
-    if (vc->ctx->client->cacheStorage)
-      vc->ctx->client->cacheStorage->set_item(vc->ctx->client->cacheStorage->cptr, hex_address, d_bytes(t));
-    else
-      res = b_dup(d_bytes(t));
-  } else
-    vc_err(vc, ctx->error);
-  free_ctx(ctx);
-  *must_free = 1;
-  *target    = res;
-  return IN3_OK;
+    ctx = ctx->required;
+  }
+
+  // if we have found one, we verify the result and return the bytes.
+  if (ctx)
+    switch (in3_ctx_state(ctx)) {
+      case CTX_SUCCESS: {
+        if (!ctx->error && ctx->responses[0] && (t = d_get(ctx->responses[0], K_RESULT))) {
+          bytes_t b = d_to_bytes(t);
+          sha3_to(&b, tmp);
+          if (code_hash && memcmp(code_hash->data, tmp, 32) != 0) {
+            vc_err(vc, "Wrong codehash");
+            in3_remove_required(vc->ctx, ctx);
+            // TODO maybe we should not give up here, but blacklist the node and try again!
+            return IN3_EINVAL;
+          }
+          *must_free = 1;
+          if (vc->ctx->client->cacheStorage)
+            vc->ctx->client->cacheStorage->set_item(vc->ctx->client->cacheStorage->cptr, hex_address, &b);
+          else
+            *target = b_dup(d_bytes(t));
+          return IN3_OK;
+        } else
+          return vc_err(vc, ctx->error);
+      }
+      case CTX_ERROR:
+        return IN3_ERPC;
+      default:
+        return IN3_WAITING;
+    }
+  else {
+    char* req = _malloc(200);
+    snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\",\"latest\"]}", hex_address + 1);
+    in3_proof_t old_proof  = vc->ctx->client->proof;
+    vc->ctx->client->proof = PROOF_NONE; // we don't need proof since we have the codehash!
+    i                      = in3_add_required(vc->ctx, new_ctx(vc->ctx->client, req));
+    vc->ctx->client->proof = old_proof;
+    return i;
+  }
 }
 in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target) {
   for (cache_entry_t* en = vc->ctx->cache; en; en = en->next) {
