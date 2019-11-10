@@ -52,25 +52,31 @@ static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
  * 
  * In case of an error report this tol parent and return an empty bytes
  */
-static bytes_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes32_t dst) {
-  in3_ctx_t* ctx = in3_client_rpc_ctx(parent->client, method, params);
-  bytes_t    b   = bytes(NULL, 0);
-  int        res = 0;
-  if (ctx->error)
-    res = ctx_set_error(parent, ctx->error, IN3_ERPC);
-  else {
-    d_token_t* result = d_get(ctx->responses[0], K_RESULT);
-    if (!result)
-      res = ctx_set_error(parent, "No result found when fetching data for tx", IN3_ERPCNRES);
-    else {
-      b = d_to_bytes(result);
-      if (b.len)
-        memcpy(dst, b.data, b.len);
-      b.data = dst;
+static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t* dst) {
+  in3_ctx_t* ctx = in3_find_required(parent, method);
+  if (ctx) {
+    switch (in3_ctx_state(ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
+      case CTX_WAITING_FOR_REQUIRED_CTX:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+      case CTX_SUCCESS: {
+        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+        if (r) {
+          // we have a result....
+          *dst = d_to_bytes(r);
+          return IN3_OK;
+        } else
+          return ctx_check_response_error(parent, 0);
+      }
     }
   }
-  free_ctx(ctx);
-  return res < 0 ? bytes(NULL, 0) : b;
+
+  // the request will be allocated since this is a subrequest, which will be freed when the main context is freed.
+  char* req = _malloc(strlen(method) + strlen(params) + 200);
+  sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  return in3_add_required(parent, new_ctx(parent->client, req));
 }
 
 /** signs the given data */
@@ -105,7 +111,6 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
 
 bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   address_t   from;
-  bytes32_t   nonce_data, gas_price_data;
   bytes_t     tmp;
   uint8_t     sig[65];
   json_ctx_t* new_json = NULL;
@@ -144,32 +149,51 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
     memcpy(from, tmp.data, 20);
 
   // build nonce-params
-  tmp      = bytes(from, 20);
-  sb_t* sb = sb_new("[");
-  sb_add_bytes(sb, "", &tmp, 1, false);
-  sb_add_chars(sb, ",\"latest\"]");
+  tmp = bytes(from, 20);
 
   // read the values
-  bytes_t nonce     = d_get(tx, K_NONCE) ? get(tx, K_NONCE) : get_from_nodes(ctx, "eth_getTransactionCount", sb->data, nonce_data),
-          gas_price = d_get(tx, K_GAS_PRICE) ? get(tx, K_GAS_PRICE) : get_from_nodes(ctx, "eth_gasPrice", "[]", gas_price_data),
-          gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x52\x08", 2)),
+  bytes_t gas_limit = d_get(tx, K_GAS) ? get(tx, K_GAS) : (d_get(tx, K_GAS_LIMIT) ? get(tx, K_GAS_LIMIT) : bytes((uint8_t*) "\x52\x08", 2)),
           to        = getl(tx, K_TO, 20),
           value     = get(tx, K_VALUE),
-          data      = get(tx, K_DATA);
-  uint64_t v        = ctx->requests_configs->chainId > 0xFF ? 0 : ctx->requests_configs->chainId;
+          data      = get(tx, K_DATA),
+          nonce     = get(tx, K_NONCE),
+          gas_price = get(tx, K_GAS_PRICE);
+
+  in3_ret_t res = IN3_OK;
+  if (!nonce.data) {
+    sb_t* sb = sb_new("[");
+    sb_add_bytes(sb, "", &tmp, 1, false);
+    sb_add_chars(sb, ",\"latest\"]");
+    in3_ret_t ret = get_from_nodes(ctx, "eth_getTransactionCount", sb->data, &nonce);
+    sb_free(sb);
+    if (ret < 0) res = ret;
+  }
+  if (!gas_price.data) {
+    in3_ret_t ret = get_from_nodes(ctx, "eth_gasPrice", "[]", &gas_price);
+    if (ret == IN3_WAITING)
+      res = (res == IN3_WAITING || res == IN3_OK) ? ret : res;
+    else if (ret != IN3_OK)
+      res = ret;
+  }
+  if (res < 0) {
+    if (new_json) free_json(new_json);
+    ctx_set_error(ctx, "error preparing the tx", res);
+    return bytes(NULL, 0);
+  }
+
+  uint64_t v = ctx->requests_configs->chainId > 0xFF ? 0 : ctx->requests_configs->chainId;
 
   // create raw without signature
   bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, v, bytes(NULL, 0), bytes(NULL, 0));
 
   // sign the raw message
-  int res = (nonce.data && gas_price.data && gas_limit.data)
-                ? ctx->client->signer->sign(ctx, SIGN_EC_HASH, *raw, bytes(from, 20), sig)
-                : -1;
+  res = (nonce.data && gas_price.data && gas_limit.data)
+            ? ctx->client->signer->sign(ctx, SIGN_EC_HASH, *raw, bytes(from, 20), sig)
+            : IN3_EINVAL;
 
   // free temp resources
   if (new_json) free_json(new_json);
   b_free(raw);
-  sb_free(sb);
   if (res < 0) return bytes(NULL, 0);
 
   // create raw transaction with signature

@@ -49,6 +49,14 @@
 #define CONTEXT_H
 
 /**
+ * type of the request context,
+ */
+typedef enum ctx_type {
+  CT_RPC  = 0, /**< a json-rpc request */
+  CT_SIGN = 1  /**< a sign request */
+} ctx_type_t;
+
+/**
  * the weight of a ceertain node as linked list
  */
 typedef struct weight {
@@ -64,6 +72,9 @@ typedef struct weight {
  * This is generated for each request and represents the current state.
  * */
 typedef struct in3_ctx {
+  /** the type of the request */
+  ctx_type_t type;
+
   /*! reference to the client*/
   in3_t* client;
 

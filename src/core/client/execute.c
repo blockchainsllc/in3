@@ -282,13 +282,15 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
     if (ret != IN3_WAITING) return ret;
 
     // handle subcontexts first
-    if (in3_ctx_state(ctx->required) != CTX_SUCCESS && (ret = in3_send_ctx(ctx->required)))
-      return ret;
+    if (ctx->required) {
+      if (in3_ctx_state(ctx->required) != CTX_SUCCESS && (ret = in3_send_ctx(ctx->required)))
+        return ret;
+      // recheck in order to prepare the request.
+      if ((ret = in3_ctx_execute(ctx)) != IN3_WAITING) return ret;
+    }
 
     if (!ctx->raw_response) {
       if (ctx->client->transport) {
-        // if we have not picked nodes yet, we need to execute it again
-        if (!ctx->nodes && (ret = in3_ctx_execute(ctx)) != IN3_WAITING) return ret;
         // handle transports
         in3_request_t* request = in3_create_request(ctx);
         if (request == NULL)
@@ -340,7 +342,8 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
   if (required_state == CTX_ERROR) return CTX_ERROR;
   if (ctx->error) return CTX_ERROR;
   if (ctx->required && required_state != CTX_SUCCESS) return CTX_WAITING_FOR_REQUIRED_CTX;
-  if (!ctx->raw_response || !ctx->response_context) return CTX_WAITING_FOR_RESPONSE;
+  if (!ctx->raw_response) return CTX_WAITING_FOR_RESPONSE;
+  if (ctx->type == CT_RPC && !ctx->response_context) return CTX_WAITING_FOR_RESPONSE;
   return CTX_SUCCESS;
 }
 
@@ -356,53 +359,66 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   if (ctx->required && (ret = in3_ctx_execute(ctx->required)))
     return ret;
 
-  // if we don't have a nodelist, we try to get it.
-  if (!ctx->nodes) {
-    if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes)) == IN3_OK) {
-      for (int i = 0; i < ctx->len; i++) {
-        if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
-          return ctx_set_error(ctx, "error configuring the config for request", ret);
+  switch (ctx->type) {
+    case CT_RPC:
+      // if we don't have a nodelist, we try to get it.
+      if (!ctx->nodes) {
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes)) == IN3_OK) {
+          for (int i = 0; i < ctx->len; i++) {
+            if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
+              return ctx_set_error(ctx, "error configuring the config for request", ret);
+          }
+        } else
+          // since we could not get the nodes, we either report it as error or wait.
+          return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);
       }
-    } else
-      // since we could not get the nodes, we either report it as error or wait.
-      return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);
+
+      // check chain_id
+      in3_chain_t* chain = find_chain(ctx->client, ctx->requests_configs->chainId);
+      if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
+
+      // find the verifier
+      in3_verifier_t* verifier = in3_get_verifier(chain->type);
+      if (verifier == NULL)
+        return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
+
+      // do we need to handle it internaly?
+      if (!ctx->raw_response && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
+        return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "The request could not be handled", ret);
+
+      // if we still don't have an response, we keep on waiting
+      if (!ctx->raw_response) return IN3_WAITING;
+
+      // ok, we have a response, then we try to evaluate the responses
+      // verify responses and return the node with the correct result.
+      ret = find_valid_result(ctx, ctx_nodes_len(ctx->nodes), ctx->raw_response, chain, verifier);
+
+      // we wait or are have successfully verified the response
+      if (ret == IN3_WAITING || ret == IN3_OK) return ret;
+
+      // if not, then we clean up
+      free_response(ctx);
+
+      // we count this is an attempt
+      ctx->attempt++;
+
+      // should we retry?
+      if (ctx->attempt < ctx->client->max_attempts - 1) {
+        in3_log_debug("Retrying send request...\n");
+        // now try again, which should end in waiting for the next request.
+        return in3_ctx_execute(ctx);
+      } else
+        // we give up
+        return ctx->client->max_attempts == 1 ? ret : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
+
+    case CT_SIGN: {
+      if (!ctx->raw_response)
+        return IN3_WAITING;
+      else if (ctx->raw_response->error.len)
+        return IN3_ERPC;
+      else if (!ctx->raw_response->result.len)
+        return IN3_WAITING;
+      return IN3_OK;
+    }
   }
-
-  // check chain_id
-  in3_chain_t* chain = find_chain(ctx->client, ctx->requests_configs->chainId);
-  if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
-
-  // find the verifier
-  in3_verifier_t* verifier = in3_get_verifier(chain->type);
-  if (verifier == NULL)
-    return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
-
-  // do we need to handle it internaly?
-  if (!ctx->raw_response && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
-    return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "The request could not be handled", ret);
-
-  // if we still don't have an response, we keep on waiting
-  if (!ctx->raw_response) return IN3_WAITING;
-
-  // ok, we have a response, then we try to evaluate the responses
-  // verify responses and return the node with the correct result.
-  ret = find_valid_result(ctx, ctx_nodes_len(ctx->nodes), ctx->raw_response, chain, verifier);
-
-  // we wait or are have successfully verified the response
-  if (ret == IN3_WAITING || ret == IN3_OK) return ret;
-
-  // if not, then we clean up
-  free_response(ctx);
-
-  // we count this is an attempt
-  ctx->attempt++;
-
-  // should we retry?
-  if (ctx->attempt < ctx->client->max_attempts - 1) {
-    in3_log_debug("Retrying send request...\n");
-    // now try again, which should end in waiting for the next request.
-    return in3_ctx_execute(ctx);
-  } else
-    // we give up
-    return ctx->client->max_attempts == 1 ? ret : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
 }
