@@ -420,5 +420,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         return IN3_WAITING;
       return IN3_OK;
     }
+    default:
+      return IN3_EINVAL;
   }
 }
