@@ -115,7 +115,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   uint8_t     sig[65];
   json_ctx_t* new_json = NULL;
 
-  if (ctx->client->signer->prepare_tx) {
+  if (ctx->client->signer && ctx->client->signer->prepare_tx) {
     in3_ret_t r = ctx->client->signer->prepare_tx(ctx, tx, &new_json);
     if (r != IN3_OK) {
       if (new_json) free_json(new_json);
@@ -132,7 +132,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // Note: This works because the signer->wallet points to the pk in the current signer implementation
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
-      if (ctx->client->signer->sign != eth_sign) {
+      if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
         if (new_json) free_json(new_json);
         ctx_set_error(ctx, "you need to specify the from-address in the tx!", IN3_EINVAL);
         return bytes(NULL, 0);

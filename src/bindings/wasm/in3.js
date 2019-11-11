@@ -109,18 +109,9 @@ else {
     }
 }
 
-// signer-delegate
-in3w.sign_js = async (clientPtr, type, message, account) => {
-    const c = clients['' + clientPtr]
-    if (!c) throw new Error('wrong client ptr')
-    if (!c.signer) throw new Error('no signer set to handle signing')
-    if (!(await c.signer.hasAccount(account))) throw new Error('unknown account ' + account)
-    return await c.signer.sign(message, account, type, false)
-}
 
 // keep track of all created client instances
 const clients = {}
-const pendingRequest = []
 
 // create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
@@ -193,10 +184,6 @@ class IN3 {
      * sends a request and returns the response.
      */
     async sendRequest(rpc) {
-        const pr = { rpc }
-        pendingRequest.push(pr)
-        // any pending ? then we need to wait for them to finish first
-        if (pendingRequest.length > 1) await new Promise(resolve => pendingRequest[pendingRequest.length - 2].next = resolve)
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
         if (this.needsSetConfig) this.setConfig()
@@ -204,33 +191,52 @@ class IN3 {
         // create the context
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
-
-        // now send 
-        // we add the pending request with pointer as key.
-        function checkResponse(error) {
-            // now it's time for the next request
-            pendingRequest.splice(0, 1)
-            if (pr.next) setTimeout(pr.next, 0)
-
-            // check if it was an error...
-            const er = error || in3w.ccall('request_get_error', 'string', ['number'], [r])
-            // if not we ask for the result.
-            const res = er ? '' : in3w.ccall('request_get_result', 'string', ['number'], [r])
-
+        function finalize() {
             // we always need to cleanup
             in3w.ccall('in3_free_request', 'void', ['number'], [r])
-
-            // resolve or reject the promise.
-            if (er) throw new Error('Error sending the ' + (Array.isArray(rpc) ? rpc[0].method : rpc.method) + ' request : ' + er)
-            else {
-                const r = JSON.parse(res)
-                if (r) delete r.in3
-                return r
-            }
         }
 
-        // send the request.
-        return in3w.ccall('in3_send_request', 'void', ['number'], [r], { async: true }).then(checkResponse, checkResponse)
+        while (true) {
+            const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+            switch (state.status) {
+                case 'error':
+                    finalize()
+                    throw new Error(state.error || 'Unknown error')
+                case 'ok':
+                    finalize()
+                    if (Array.isArray(state.result)) {
+                        const s = state.result[0]
+                        delete s.in3
+                        return s
+                    }
+                    return state.result
+                case 'waiting': {
+                    const req = state.request
+                    function setResponse(msg, i, isError) {
+                        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+                    }
+
+                    switch (req.type) {
+                        case 'sign':
+                            try {
+                                const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                if (!this.signer) throw new Error('no signer set to handle signing')
+                                if (!(await this.signer.hasAccount(account))) throw new Error('unknown account ' + account)
+                                setResponse(toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                            } catch (ex) {
+                                setResponse(ex.message || ex, 0, true)
+                            }
+                            break;
+
+                        case 'rpc':
+                            await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload)).then(
+                                res => setResponse(res, i, false),
+                                err => setResponse(err.message || err, i, true)
+                            )))
+                    }
+                }
+            }
+        }
     }
 
     async sendRPC(method, params) {

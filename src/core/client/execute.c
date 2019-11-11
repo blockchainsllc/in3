@@ -248,10 +248,12 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   // prepare response-object
   in3_request_t* req = _malloc(sizeof(in3_request_t));
-  req->results       = _malloc(sizeof(in3_response_t) * (nodes_count == 0 ? 1 : nodes_count));
   req->payload       = payload->data;
   req->urls_len      = nodes_count;
   req->urls          = urls;
+
+  if (!nodes_count) nodes_count = 1; // at least one result!
+  req->results = _malloc(sizeof(in3_response_t) * nodes_count);
   for (n = 0; n < nodes_count; n++) {
     sb_init(&req->results[n].error);
     sb_init(&req->results[n].result);

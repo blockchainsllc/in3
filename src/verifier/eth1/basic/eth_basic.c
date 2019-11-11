@@ -108,7 +108,6 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     // get the transaction-object
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
-    if (!ctx->client->signer) return ctx_set_error(ctx, "no signer set", IN3_EINVAL);
 
     // sign it.
     bytes_t raw = sign_tx(tx_params + 1, ctx);
