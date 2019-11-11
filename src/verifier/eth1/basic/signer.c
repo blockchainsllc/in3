@@ -186,6 +186,12 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   // create raw without signature
   bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, v, bytes(NULL, 0), bytes(NULL, 0));
 
+  // this tells the static code analyser, that sig will not have gargabe values
+  // since this will only be called if the sign-ctx was successfull.
+#ifdef __clang_analyzer__
+  memset(sig, 0, 65);
+#endif
+
   // sign the raw message
   if (nonce.data && gas_price.data && gas_limit.data) {
     in3_ctx_t* c = in3_find_required(ctx, "sign_ec_hash");
@@ -202,8 +208,10 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
           if (c->raw_response && c->raw_response->result.len == 65) {
             memcpy(sig, c->raw_response->result.data, 65);
             res = IN3_OK;
-          } else
-            res = ctx_set_error(ctx, c->raw_response[0].error.data, IN3_EINVAL);
+          } else if (c->raw_response)
+            res = ctx_set_error(ctx, c->raw_response->error.data, IN3_EINVAL);
+          else
+            res = ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
           in3_remove_required(ctx, c);
           break;
         }
