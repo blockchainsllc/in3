@@ -36,7 +36,7 @@ include(${PROJECT_SOURCE_DIR}/compiler.cmake)
 
 IF (ASMJS)
   set(CMAKE_EXECUTABLE_SUFFIX ".js")
-  set(EMC_PROPS "-Oz -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+  set(EMC_PROPS "-O1 -s FINALIZE_ASM_JS=1 -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
 else(ASMJS)
   set(EMC_PROPS "-Oz -s ALLOW_MEMORY_GROWTH=1 -s EXPORT_NAME=in3w -s WASM=1  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
 endif(ASMJS)
