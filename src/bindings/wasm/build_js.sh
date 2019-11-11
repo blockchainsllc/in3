@@ -25,7 +25,6 @@ cp "$1/in3.d.ts"  ../module/index.d.ts
 if [ -e in3w.wasm ]
  then cp in3w.wasm  ../module/
 fi
-echo "ASM=$2"
 if [ $2 == "true" ]
  then 
    cat "$1/package.json" | sed  's/wasm/asmjs/g' > ../module/package.json

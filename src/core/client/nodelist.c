@@ -246,7 +246,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
     if (chain->chainId == chain_id) {
-      if (chain->needsUpdate || update) {
+      if (chain->needsUpdate || update || in3_find_required(ctx, "in3_nodeList")) {
         chain->needsUpdate = false;
         // now update the nodeList
         res = update_nodelist(c, chain, ctx);

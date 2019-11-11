@@ -58,7 +58,6 @@ endif(WASM_EMMALLOC)
 if (WASM_SYNC) 
    set(EMC_PROPS "${EMC_PROPS} -s WASM_ASYNC_COMPILATION=0")
 endif(WASM_SYNC)
-message(STATUS "WASM props ${EMC_PROPS} ASMJS=${ASMJS}")
 
 add_executable(in3w wasm.c)
 target_link_libraries(in3w eth_full eth_api)
