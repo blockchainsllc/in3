@@ -187,9 +187,42 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, v, bytes(NULL, 0), bytes(NULL, 0));
 
   // sign the raw message
-  res = (nonce.data && gas_price.data && gas_limit.data)
-            ? ctx->client->signer->sign(ctx, SIGN_EC_HASH, *raw, bytes(from, 20), sig)
-            : IN3_EINVAL;
+  if (nonce.data && gas_price.data && gas_limit.data) {
+    in3_ctx_t* c = in3_find_required(ctx, "sign_ec_hash");
+    if (c)
+      switch (in3_ctx_state(c)) {
+        case CTX_ERROR:
+          res = ctx_set_error(ctx, c->error, IN3_EUNKNOWN);
+          break;
+        case CTX_WAITING_FOR_REQUIRED_CTX:
+        case CTX_WAITING_FOR_RESPONSE:
+          res = IN3_WAITING;
+          break;
+        case CTX_SUCCESS: {
+          if (c->raw_response && c->raw_response->result.len == 65) {
+            memcpy(sig, c->raw_response->result.data, 65);
+            res = IN3_OK;
+          } else
+            res = ctx_set_error(ctx, c->raw_response[0].error.data, IN3_EINVAL);
+          in3_remove_required(ctx, c);
+          break;
+        }
+      }
+
+    else {
+      bytes_t from_b = bytes(from, 20);
+      sb_t*   req    = sb_new("{\"method\":\"sign_ec_hash\",\"params\":[");
+      sb_add_bytes(req, NULL, raw, 1, false);
+      sb_add_chars(req, ",");
+      sb_add_bytes(req, NULL, &from_b, 1, false);
+      sb_add_chars(req, "]}");
+      c       = new_ctx(ctx->client, req->data);
+      c->type = CT_SIGN;
+      res     = in3_add_required(ctx, c);
+      _free(req); // we only free the builder, but  not the data
+    }
+  } else
+    res = IN3_EINVAL;
 
   // free temp resources
   if (new_json) free_json(new_json);

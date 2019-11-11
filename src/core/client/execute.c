@@ -46,7 +46,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
-
+//static char* ctx_name(in3_ctx_t* ctx) {
+//  return d_get_stringk(ctx->requests[0], K_METHOD);
+//}
 static void free_response(in3_ctx_t* ctx) {
   if (ctx->error) _free(ctx->error);
   if (ctx->nodes) {
@@ -59,6 +61,10 @@ static void free_response(in3_ctx_t* ctx) {
       }
       _free(ctx->raw_response);
     }
+  } else if (ctx->raw_response) {
+    _free(ctx->raw_response[0].error.data);
+    _free(ctx->raw_response[0].result.data);
+    _free(ctx->raw_response);
   }
 
   if (ctx->responses) _free(ctx->responses);
@@ -77,6 +83,8 @@ static void free_response(in3_ctx_t* ctx) {
 }
 
 static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
+  //  printf(" -- free ctx %s (%i)\n", ctx_name(ctx), is_sub ? 1 : 0);
+
   if (is_sub) _free(ctx->request_context->c);
   free_response(ctx);
   if (ctx->request_context)
@@ -209,7 +217,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   sb_t* payload = sb_new(NULL);
 
   // create url-array
-  char**         urls = _malloc(sizeof(char*) * nodes_count);
+  char**         urls = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_weight_t* w    = ctx->nodes;
   for (n = 0; n < nodes_count; n++) {
     urls[n] = w->node->url;
@@ -240,7 +248,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   // prepare response-object
   in3_request_t* req = _malloc(sizeof(in3_request_t));
-  req->results       = _malloc(sizeof(in3_response_t) * nodes_count);
+  req->results       = _malloc(sizeof(in3_response_t) * (nodes_count == 0 ? 1 : nodes_count));
   req->payload       = payload->data;
   req->urls_len      = nodes_count;
   req->urls          = urls;
@@ -276,31 +284,59 @@ void free_request(in3_request_t* req, in3_ctx_t* ctx, bool free_response) {
 }
 
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
+  int       count = 0;
   in3_ret_t ret;
   while ((ret = in3_ctx_execute(ctx))) {
+    count++;
+    if (count > 10) return ctx_set_error(ctx, "Looks like the response is not valid or not set, since we calling the execute over and over", IN3_ERPC);
     // error we stop here
     if (ret != IN3_WAITING) return ret;
 
     // handle subcontexts first
-    if (ctx->required) {
-      if (in3_ctx_state(ctx->required) != CTX_SUCCESS && (ret = in3_send_ctx(ctx->required)))
+    while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
+      if ((ret = in3_send_ctx(ctx->required)))
         return ret;
       // recheck in order to prepare the request.
       if ((ret = in3_ctx_execute(ctx)) != IN3_WAITING) return ret;
     }
 
     if (!ctx->raw_response) {
-      if (ctx->client->transport) {
-        // handle transports
-        in3_request_t* request = in3_create_request(ctx);
-        if (request == NULL)
-          return IN3_ENOMEM;
-        in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", request->urls[0], request->payload);
-        ctx->client->transport(request);
-        in3_log_trace("... response: \n... \x1B[%sm%s\x1B[0m\n", request->results[0].error.len ? "31" : "32", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
-        free_request(request, ctx, false);
-      } else
-        return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+      switch (ctx->type) {
+        case CT_RPC: {
+          if (ctx->client->transport) {
+            // handle transports
+            in3_request_t* request = in3_create_request(ctx);
+            if (request == NULL)
+              return IN3_ENOMEM;
+            in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", request->urls[0], request->payload);
+            ctx->client->transport(request);
+            in3_log_trace("... response: \n... \x1B[%sm%s\x1B[0m\n", request->results[0].error.len ? "31" : "32", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
+            free_request(request, ctx, false);
+            break;
+          } else
+            return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+        }
+        case CT_SIGN: {
+          if (ctx->client->signer) {
+            d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
+            bytes_t    data   = d_to_bytes(d_get_at(params, 0));
+            bytes_t    from   = d_to_bytes(d_get_at(params, 1));
+            if (!data.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+            if (!from.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+
+            ctx->raw_response = _malloc(sizeof(in3_response_t));
+            sb_init(&ctx->raw_response[0].error);
+            sb_init(&ctx->raw_response[0].result);
+            in3_log_trace("... request to sign ");
+            uint8_t sig[65];
+            ret = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
+            if (ret < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, ret);
+            sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
+            break;
+          } else
+            return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+        }
+      }
     }
   }
   return ret;
@@ -318,16 +354,19 @@ in3_ctx_t* in3_find_required(in3_ctx_t* parent, char* method) {
 }
 
 in3_ret_t in3_add_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
+  //  printf(" ++ add required %s > %s\n", ctx_name(parent), ctx_name(ctx));
   ctx->required    = parent->required;
   parent->required = ctx;
   return in3_ctx_execute(ctx);
 }
 
 in3_ret_t in3_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
+
   in3_ctx_t* p = parent;
   while (p) {
     if (p->required == ctx) {
-      p->required = ctx->required;
+      //      printf(" -- remove required %s > %s\n", ctx_name(parent), ctx_name(ctx));
+      p->required = NULL; //ctx->required;
       free_ctx_intern(ctx, true);
       return IN3_OK;
     }
@@ -354,6 +393,9 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
   if (ctx->error) return IN3_EUNKNOWN;
+
+  // if there is response we are done.
+  if (ctx->response_context) return IN3_OK;
 
   // if we have required-contextes, we need to check them first
   if (ctx->required && (ret = in3_ctx_execute(ctx->required)))
@@ -383,8 +425,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
 
       // do we need to handle it internaly?
-      if (!ctx->raw_response && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
-        return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "The request could not be handled", ret);
+      if (!ctx->raw_response && !ctx->response_context && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
+        return ctx_set_error(ctx, "The request could not be handled", ret);
 
       // if we still don't have an response, we keep on waiting
       if (!ctx->raw_response) return IN3_WAITING;
