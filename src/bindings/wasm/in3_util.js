@@ -1,4 +1,8 @@
 const fixLength = (hex) => hex.length % 2 ? '0' + hex : hex
+
+if (typeof (_free) == 'undefined') _free = function (ptr) {
+    in3w.ccall("ifree", 'void', ['number'], [ptr])
+}
 /**
  * internal function calling a wasm-function, which returns a string.
  * @param {*} name 

@@ -151,6 +151,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   _free(sb);
   return r;
 }
+void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
+  _free(ptr);
+}
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
   if (is_error)
