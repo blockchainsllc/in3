@@ -221,9 +221,9 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   }
 
   if (last_gas > evm->gas) {
-    in3_log_trace("%08" PRIx64 " %03i \x1B[33m%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
+    in3_log_trace("%" PRIu64 " %03i \x1B[33m%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
   } else {
-    in3_log_trace("%08" PRIx64 " %03i \x1B[33m+%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
+    in3_log_trace("%" PRIu64 " %03i \x1B[33m+%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
   }
 #else
   UNUSED_VAR(last_gas);
