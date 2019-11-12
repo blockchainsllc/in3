@@ -152,6 +152,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
     ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) sb->data, sb->len));
+    _free(sb);
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
