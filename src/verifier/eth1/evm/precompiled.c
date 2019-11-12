@@ -55,13 +55,13 @@
     mp_tohex(bn, (char*) _str_);                     \
     printf("--- %s : %s ---\n", #bn, (char*) _str_); \
   } while (0)
-#define MP_PRINT_POINT(pt)          \
-  do {                              \
-    unsigned char _str_[33] = {0};  \
-    mp_tohex(pt->x, (char*) _str_); \
-    printf("%s", (char*) _str_);    \
-    mp_tohex(pt->y, (char*) _str_); \
-    printf("%s\n", (char*) _str_);  \
+#define MP_PRINT_POINT(pt)           \
+  do {                               \
+    unsigned char _str_[33] = {0};   \
+    mp_tohex(&pt->x, (char*) _str_); \
+    printf("%s", (char*) _str_);     \
+    mp_tohex(&pt->y, (char*) _str_); \
+    printf("%s\n", (char*) _str_);   \
   } while (0)
 
 static const uint8_t modulus_bin[] = {0x30, 0x64, 0x4e, 0x72, 0xe1, 0x31, 0xa0, 0x29, 0xb8, 0x50, 0x45, 0xb6, 0x81, 0x81, 0x58, 0x5d, 0x97, 0x81, 0x6a, 0x91, 0x68, 0x71, 0xca, 0x8d, 0x3c, 0x20, 0x8c, 0x16, 0xd8, 0x7c, 0xfd, 0x47};
