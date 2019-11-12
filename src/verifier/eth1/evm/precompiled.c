@@ -178,7 +178,7 @@ static bool ecc_point_validate(ecc_point* P, mp_int* modulus, mp_int* b) {
   if (mp_cmp(&P->x, modulus) != MP_LT) return false;
   if (mp_cmp(&P->y, modulus) != MP_LT) return false;
   if (!mp_iszero(&P->x) && !mp_iszero(&P->y)) {
-    int oncurve;
+    int oncurve = 0;
     ecc_is_point_on_curve(P, modulus, b, &oncurve);
     return oncurve != 0;
   } else if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
