@@ -46,7 +46,7 @@ add_library(core_o OBJECT
         client/cache.c
         client/nodelist.c
         client/verifier.c
-        client/send.c
+        client/execute.c
         client/client_init.c
         util/debug.c
         util/bytes.c

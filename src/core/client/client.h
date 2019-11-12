@@ -440,6 +440,11 @@ void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to fre
 in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
 
 /**
+ * finds the chain-config for the given chain_id.
+ */
+in3_chain_t* find_chain(in3_t* c, uint64_t chain_id);
+
+/**
  * configures the clent based on a json-config.
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config

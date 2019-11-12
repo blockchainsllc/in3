@@ -80,7 +80,6 @@ describe('API-Tests', () => {
     })
 
 
-
     it('sign', async () => {
         const pk = '0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6'
         const msg = '0x9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465'
