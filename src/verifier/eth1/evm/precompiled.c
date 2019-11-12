@@ -32,7 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -500,8 +499,6 @@ int pre_ec_add(evm_t* evm) {
   uint8_t cdata[128];
   memset(cdata, 0, 128);
   memcpy(cdata, evm->call_data.data, MIN(128, evm->call_data.len));
-  in3_log_set_level(LOG_TRACE);
-  ba_print(cdata, 128);
 
   int        err = 0;
   ecc_point *p1, *p2, *p3;
@@ -541,8 +538,6 @@ done:
   ecc_del_point(p3);
 
   b_print(&evm->return_data);
-  in3_log_set_level(LOG_ERROR);
-
   mp_clear_multi(&modulus, &b, NULL);
   return err;
 }
@@ -552,7 +547,6 @@ int pre_ec_mul(evm_t* evm) {
   uint8_t cdata[96];
   memset(cdata, 0, 96);
   memcpy(cdata, evm->call_data.data, MIN(96, evm->call_data.len));
-  in3_log_set_level(LOG_TRACE);
   ba_print(cdata, 96);
 
   int        err = 0;
@@ -581,7 +575,6 @@ int pre_ec_mul(evm_t* evm) {
   ecc_del_point(p2);
 
   b_print(&evm->return_data);
-  in3_log_set_level(LOG_ERROR);
 
 done:
   mp_clear_multi(&modulus, &b, &k, NULL);
