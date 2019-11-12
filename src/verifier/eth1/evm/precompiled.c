@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -232,7 +233,6 @@ static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
 
   // x = m^2 - 2*x
   if ((err = mp_submod(&t4, &t2, modulus, &R->x)) != MP_OKAY) { goto done; }
-  // MP_PRINT(R->x);
 
   // t4 = x
   if ((err = mp_copy(&R->x, &t4)) != MP_OKAY) { goto done; }
@@ -248,7 +248,6 @@ static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
 
   // y = t2 - y
   if ((err = mp_submod(&t2, &R->y, modulus, &R->y)) != MP_OKAY) { goto done; }
-  // MP_PRINT(R->y);
 
   err = MP_OKAY;
 done:
@@ -338,11 +337,11 @@ static int ecc_point_mul(const mp_int* k, const ecc_point* P, ecc_point* Q, mp_i
   if (mp_cmp(k, &t1) == MP_EQ) {
     err = ecc_copy_point(P, Q);
     goto done;
-  } else if (mp_isodd(k)) {
+  } else if (mp_iseven(k)) {
     ecc_point* R = ecc_new_point();
     err          = ecc_point_double(P, R, modulus);
     if (err == MP_OKAY) {
-      err = mp_sqrt(k, &t1);
+      err = mp_div_2(k, &t1);
       if (err == MP_OKAY)
         err = ecc_point_mul(&t1, R, Q, modulus);
     }
@@ -351,7 +350,7 @@ static int ecc_point_mul(const mp_int* k, const ecc_point* P, ecc_point* Q, mp_i
     ecc_point* R = ecc_new_point();
     err          = ecc_point_double(P, R, modulus);
     if (err == MP_OKAY) {
-      err = mp_sqrt(k, &t1);
+      err = mp_div_2(k, &t1);
       if (err == MP_OKAY) {
         err = ecc_point_mul(&t1, R, Q, modulus);
         if (err == MP_OKAY)
@@ -537,7 +536,6 @@ done:
   ecc_del_point(p2);
   ecc_del_point(p3);
 
-  b_print(&evm->return_data);
   mp_clear_multi(&modulus, &b, NULL);
   return err;
 }
@@ -547,36 +545,41 @@ int pre_ec_mul(evm_t* evm) {
   uint8_t cdata[96];
   memset(cdata, 0, 96);
   memcpy(cdata, evm->call_data.data, MIN(96, evm->call_data.len));
-  ba_print(cdata, 96);
 
   int        err = 0;
   ecc_point *p1, *p2;
   mp_int     modulus, b, k;
   p1 = ecc_new_point();
   p2 = ecc_new_point();
-  mp_init_multi(&modulus, &b, &k, NULL);
   if ((err = mp_read_unsigned_bin(&p1->x, cdata, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
   if ((err = mp_read_unsigned_bin(&p1->y, cdata + 32, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+
+  mp_init_multi(&modulus, &b, &k, NULL);
   if ((err = mp_read_unsigned_bin(&k, cdata + 64, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
   if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { goto done; }
   mp_set(&b, 3);
 
-  ecc_point_validate(p1, &modulus, &b);
+  evm->return_data = bytes(_calloc(1, 64), 64);
+
+  if (mp_iszero(&p1->x) && mp_iszero(&p1->y)) {
+    err = EVM_ERROR_SUCCESS_CONSUME_GAS;
+    goto done;
+  } else if (!ecc_point_validate(p1, &modulus, &b)) {
+    err = EVM_ERROR_INVALID_ENV;
+    goto done;
+  }
 
   if ((err = ecc_point_mul(&k, p1, p2, &modulus)) != MP_OKAY) { goto done; }
 
-  evm->return_data = bytes(_calloc(1, 64), 64);
-  size_t ml        = mp_unsigned_bin_size(&p2->x);
+  size_t ml = mp_unsigned_bin_size(&p2->x);
   mp_to_unsigned_bin(&p2->x, evm->return_data.data + 32 - ml);
   mp_unsigned_bin_size(&p2->y);
   mp_to_unsigned_bin(&p2->y, evm->return_data.data + 64 - ml);
 
+done:
   ecc_del_point(p1);
   ecc_del_point(p2);
 
-  b_print(&evm->return_data);
-
-done:
   mp_clear_multi(&modulus, &b, &k, NULL);
   return err;
 }
