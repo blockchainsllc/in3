@@ -5,8 +5,9 @@
   "main": "js/src/index.js",
   "scripts": {
     "build": "tsc -p .",
-    "test": "mocha --timeout 5000 --full-trace  *.js",
-    "test_api": "mocha --timeout 5000 --full-trace  testApi.js"
+    "test": "mocha --timeout 5000 --full-trace testRunner.js testApi.js",
+    "test_api": "mocha --timeout 5000 --full-trace  testApi.js",
+    "test_all": "mocha --timeout 5000 --full-trace  *.js"
   },
   "nyc": {
     "include": [

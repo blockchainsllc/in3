@@ -62,6 +62,7 @@ typedef enum {
   IN3_EUSNURL  = -13, /**< USN URL parse error */
   IN3_ETRANS   = -14, /**< Transport error */
   IN3_ERANGE   = -15, /**< Not in range */
+  IN3_WAITING  = -16, /**< the process can not be finished since we are waiting for responses */
 } in3_ret_t;
 
 // Optional type similar to C++ std::optional

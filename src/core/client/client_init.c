@@ -172,7 +172,7 @@ static void in3_client_init(in3_t* c) {
 #endif
 }
 
-static in3_chain_t* find_chain(in3_t* c, uint64_t chain_id) {
+in3_chain_t* find_chain(in3_t* c, uint64_t chain_id) {
   for (int i = 0; i < c->chainsCount; i++) {
     if (c->chains[i].chainId == chain_id) return &c->chains[i];
   }

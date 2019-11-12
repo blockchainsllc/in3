@@ -285,47 +285,39 @@ class EthAPI {
      */
     async sign(account, data) {
         // prepare data
-        const d = toHex(data)
-        let s = {
-            message: d,
-            messageHash: keccak('0x19' + toHex('Ethereum Signed Message:\n' + (d.length / 2 - 1)).substr(2) + d.substr(2))
-        }
+        const d = toHex(data),
+            message = '0x19' + toHex('Ethereum Signed Message:\n' + (d.length / 2 - 1)).substr(2) + d.substr(2),
+            s = {
+                message,
+                messageHash: keccak(message)
+            }
 
         if (account && account.length == 66) // use direct pk
-            s = { ...s, ...ecsign(hash, util.toBuffer(account)) }
-        else if (this.signer && await this.signer.hasAccount(account)) // use signer
-            s = { ...s, ...(await this.signer.sign(hash, account)) }
-        s.signature = toHex(s.r) + toHex(s.s).substr(2) + toHex(s.v).substr(2)
-        return s
+            s.signature = toHex(ecSign(util.toBuffer(account), s.messageHash, false))
+        else if (this.client.signer && await this.client.signer.hasAccount(account)) // use signer
+            s.signature = toHex(await this.client.signer.sign(s.messageHash, account, false, true))
+        else throw new Error('no signer found to sign for this account')
+        return { ...splitSignature(s.signature, message, false), ...s, messageHash: toHex(s.messageHash) }
     }
 
     /** sends a Transaction */
     async sendTransaction(args) {
-        if (!args.pk && (!this.signer || !(await this.signer.hasAccount(args.from)))) throw new Error('missing private key!')
+        if (!args.pk && (!this.client.signer || !(await this.client.signer.hasAccount(args.from)))) throw new Error('missing signer!')
 
         // prepare
         const tx = await prepareTransaction(args, this)
-        let etx = null
-
         if (args.pk) {
-            // sign it with the raw keyx
-            etx = new ETx({ ...tx, gasLimit: tx.gas })
-            etx.sign(util.toBuffer(args.pk))
+            if (!this.client.signer) this.client.signer = new SimpleSigner(args.pk)
+            else if (this.client.signer.__proto__ === SimpleSigner.prototype) this.client.signer.addAccount(args.pk)
+            else throw new Error('direct usage of private keys are not possible with a custom signer')
         }
-        else if (this.signer && args.from) {
-            const t = this.signer.prepareTransaction ? await this.signer.prepareTransaction(this.client, tx) : tx
-            etx = new ETx({ ...t, gasLimit: t.gas })
-            const signature = await this.signer.sign(etx.hash(false), args.from)
-            if (etx._chainId > 0) signature.v = toHex(toNumber(signature.v) + etx._chainId * 2 + 8)
-            Object.assign(etx, signature)
-        }
-        else throw new Error('Invalid transaction-data')
-        const txHash = await this.sendRawTransaction(toHex(etx.serialize()))
+        const txHash = await this.send('eth_sendTransaction', tx)
+
 
         if (args.confirmations === undefined) args.confirmations = 1
 
         // send it
-        return args.confirmations ? confirm(txHash, this, parseInt(tx.g), args.confirmations) : txHash
+        return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations) : txHash
     }
 
     contractAt(abi, address) {
@@ -438,21 +430,21 @@ async function confirm(txHash, api, gasPaid, confirmations, timeout = 10) {
 }
 
 async function prepareTransaction(args, api) {
-    const sender = args.from || (args.pk && toChecksumAddress(privateToAddress(util.toBuffer(args.pk)).toString('hex')))
+    const sender = args.from || (args.pk && private2address(args.pk))
 
-    const tx = {}
+    const tx = {
+        value: util.toMinHex(args.value || 0)
+    }
     if (args.to) tx.to = toHex(args.to)
     if (args.method) {
-        tx.data = createCallParams(args.method, args.args).txdata
+        tx.data = abiEncode(args.method, ...args.args)
         if (args.data) tx.data = args.data + tx.data.substr(10) // this is the case  for deploying contracts
     }
     else if (args.data)
         tx.data = toHex(args.data)
-    if (sender || args.nonce)
-        tx.nonce = util.toMinHex(args.nonce || (api && await api.getTransactionCount(sender, 'pending')))
-    if (api)
-        tx.gasPrice = util.toMinHex(args.gasPrice || Math.round(1.3 * toNumber(await api.gasPrice())))
-    tx.value = util.toMinHex(args.value || 0)
+    if (args.nonce) tx.nonce = toMinHex(args.nonce)
+    if (args.gasPrice) tx.gasPrice = toMinHex(args.gasPrice)
+
     if (sender) tx.from = sender
     try {
         tx.gas = util.toMinHex(args.gas || (api && (toNumber(await api.estimateGas(tx)) + 1000) || 3000000))
@@ -460,8 +452,6 @@ async function prepareTransaction(args, api) {
     catch (ex) {
         throw new Error('The Transaction ' + JSON.stringify(args, null, 2) + ' will not be succesfully executed, since estimating g with: ' + ex)
     }
-
-
     return tx
 }
 
@@ -507,32 +497,6 @@ function decodeEvent(log, d) {
 
 
 
-class SimpleSigner {
-
-    constructor(...pks) {
-        this.accounts = {}
-        if (pks) pks.forEach(_ => this.addAccount(_))
-    }
-
-    addAccount(pk) {
-        const adr = toChecksumAddress(toHex(privateToAddress(util.toBuffer(pk))))
-        this.accounts[adr] = pk
-        return adr
-    }
-
-
-    async hasAccount(account) {
-        return !!this.accounts[toChecksumAddress(account)]
-    }
-
-    async sign(data, account) {
-        const pk = util.toBuffer(this.accounts[toChecksumAddress(account)])
-        if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
-        const sig = ecsign(data, pk)
-        return { messageHash: toHex(data), v: toHex(sig.v), r: toHex(sig.r), s: toHex(sig.s), message: toHex(data) }
-    }
-
-}
 function encodeEtheresBN(val) {
     return val && BN.isBN(val) ? toHex(val) : val
 }

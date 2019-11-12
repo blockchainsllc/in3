@@ -109,34 +109,11 @@ else {
     }
 }
 
-// we have to store the resultstring in this special map since we cannot call a c-function while unwinded
-let response_counter = 1
-const responses = {}
-function add_response(s) {
-    responses['' + response_counter] = s
-    return response_counter++
-}
-function get_response(n) {
-    const r = responses['' + n]
-    delete responses['' + n]
-    return r
-}
 
-// signer-delegate
-in3w.sign_js = async (clientPtr, type, message, account) => {
-    const c = clients['' + clientPtr]
-    if (!c) throw new Error('wrong client ptr')
-    if (!c.signer) throw new Error('no signer set to handle signing')
-    if (!(await c.signer.hasAccount(account))) throw new Error('unknown account ' + account)
-    return await c.signer.sign(message, account, type)
-}
-
-
+// keep track of all created client instances
 const clients = {}
 
-
-
-// create a flag ndicating when the wasm was succesfully loaded.
+// create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
 in3w.onRuntimeInitialized = _ => {
     const o = _in3_listeners
@@ -144,20 +121,18 @@ in3w.onRuntimeInitialized = _ => {
     o.forEach(_ => _(true))
 }
 
-
-
+// check if the last error was set and throws it.
 function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
-    if (er) throw new Error(er);
+    if (er) throw new Error(er + (in3w.sign_js.last_sign_error ? (' : ' + in3w.sign_js.last_sign_error) : ''))
 }
-const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
 
 /**
  * The incubed client.
  */
 class IN3 {
 
-    // since loading the wasm is async, we always need to check whether the was was created before using it.
+    // since loading the wasm is async, we always need to check whether the wasm was created before using it.
     async _ensure_ptr() {
         if (this.ptr) return
         if (_in3_listeners)
@@ -179,6 +154,7 @@ class IN3 {
      */
     setConfig(conf) {
         if (conf) {
+            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
             if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
             this.config = { ...this.config, ...conf }
         }
@@ -213,31 +189,54 @@ class IN3 {
         if (this.needsSetConfig) this.setConfig()
 
         // create the context
-        const r = in3w.ccall('in3_create_request', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
+        const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
-
-        // now send 
-        // we add the pending request with pointer as key.
-        function checkResponse(error) {
-            // check if it was an error...
-            const er = error || in3w.ccall('request_get_error', 'string', ['number'], [r])
-            // if not we ask for the result.
-            const res = er ? '' : in3w.ccall('request_get_result', 'string', ['number'], [r])
-
+        function finalize() {
             // we always need to cleanup
             in3w.ccall('in3_free_request', 'void', ['number'], [r])
-
-            // resolve or reject the promise.
-            if (er) throw new Error(er)
-            else {
-                const r = JSON.parse(res)
-                if (r) delete r.in3
-                return r
-            }
         }
 
-        // send the request.
-        return in3w.ccall('in3_send_request', 'void', ['number'], [r], { async: true }).then(checkResponse, checkResponse)
+        while (true) {
+            const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+            switch (state.status) {
+                case 'error':
+                    finalize()
+                    throw new Error(state.error || 'Unknown error')
+                case 'ok':
+                    finalize()
+                    if (Array.isArray(state.result)) {
+                        const s = state.result[0]
+                        delete s.in3
+                        return s
+                    }
+                    return state.result
+                case 'waiting': {
+                    const req = state.request
+                    function setResponse(msg, i, isError) {
+                        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+                    }
+
+                    switch (req.type) {
+                        case 'sign':
+                            try {
+                                const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                if (!this.signer) throw new Error('no signer set to handle signing')
+                                if (!(await this.signer.hasAccount(account))) throw new Error('unknown account ' + account)
+                                setResponse(toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                            } catch (ex) {
+                                setResponse(ex.message || ex, 0, true)
+                            }
+                            break;
+
+                        case 'rpc':
+                            await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload)).then(
+                                res => setResponse(res, i, false),
+                                err => setResponse(err.message || err, i, true)
+                            )))
+                    }
+                }
+            }
+        }
     }
 
     async sendRPC(method, params) {
@@ -266,6 +265,11 @@ IN3.setStorage = function (fn) {
     in3w.in3_cache = fn
 }
 
+IN3.freeAll = function () {
+    Object.keys(clients).forEach(_ => clients[_].free())
+}
+
+// the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
 IN3.onInit = function (fn) {
     return new Promise((resolve, reject) => {
         const check = () => {

@@ -36,6 +36,7 @@
 #include "../../api/eth1/eth_api.h"
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
+#include "../../core/client/keys.h"
 #include "../../core/client/send.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
@@ -47,7 +48,7 @@
 
 static char* last_error = NULL;
 
-static void in3_set_error(char* data) {
+void EMSCRIPTEN_KEEPALIVE in3_set_error(char* data) {
   if (last_error) free(last_error);
   last_error = data ? _strdupn(data, -1) : NULL;
 }
@@ -92,63 +93,78 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
   in3_cache_set(key, buffer);
 }
 
-// clang-format off
-EM_JS(int, transport_send, (in3_response_t* result,  char* url, char* payload), {
-  return Asyncify.handleSleep(function(wakeUp) {
-    Module.transport(UTF8ToString(url),UTF8ToString(payload))
-      .then(res => wakeUp(add_response(res)))
-      .catch(res => wakeUp(add_response('Error: '+ (res.message || res))))
-  });
-});
+char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
+  in3_ctx_t *p = ctx, *last_waiting = NULL;
+  //  printf("EXE: %p, state=%i \n", p, in3_ctx_state(ctx));
 
+  sb_t* sb = sb_new("{\"status\":");
+  switch (in3_ctx_execute(ctx)) {
+    case IN3_OK:
+      sb_add_chars(sb, "\"ok\", \"result\":");
+      sb_add_chars(sb, ctx->response_context->c);
+      break;
+    case IN3_WAITING:
+      sb_add_chars(sb, "\"waiting\"");
+      while (p) {
+        //        printf("   - %s response : %p, state= %i\n", d_get_stringk(p->requests[0], K_METHOD), p->raw_response, in3_ctx_state(p));
+        if (!p->raw_response && in3_ctx_state(p) == CTX_WAITING_FOR_RESPONSE)
+          last_waiting = p;
+        p = p->required;
+      }
+      //      printf("   *> last = %s\n", d_get_stringk(last_waiting->requests[0], K_METHOD));
+      if (!last_waiting)
+        sb_add_chars(sb, ",\"error\":\"could not find the last waiting context\"");
+      break;
+    default:
+      sb_add_chars(sb, "\"error\",\"error\":\"");
+      sb_add_chars(sb, ctx->error ? ctx->error : "Unknown error");
+      sb_add_chars(sb, "\"");
+  }
 
-EM_JS(int, sign_send, (void* wallet, d_signature_type_t type, char* message, char* account, uint8_t* dst), {
-  Asyncify.handleSleep(function(wakeUp) {
-    Module.sign_js(wallet,type,UTF8ToString(message),UTF8ToString(account))
-       .then(sig => {
-             HEAP8.set(toBuffer(sig),dst);
-             wakeUp(0);
-       }) 
-      .catch(res => {
-        Module.ccall('in3_set_error','void',['string'],[res.message || res]);
-        wakeUp(-1);
-      })
-  });
-});
+  // create next request
+  if (last_waiting) {
+    in3_request_t* request = in3_create_request(last_waiting);
+    if (request == NULL)
+      sb_add_chars(sb, ",\"error\",\"could not create request, memory?\"");
+    else {
+      sb_add_chars(sb, ",\"request\":{ \"type\": ");
+      sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+      sb_add_chars(sb, ",\"payload\":");
+      sb_add_chars(sb, request->payload);
+      sb_add_chars(sb, ",\"urls\":[");
+      for (int i = 0; i < request->urls_len; i++) {
+        if (i) sb_add_char(sb, ',');
+        sb_add_char(sb, '"');
+        sb_add_chars(sb, request->urls[i]);
+        sb_add_char(sb, '"');
+      }
+      sb_add_chars(sb, "],\"ptr\":");
+      char tmp[160];
+      sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
+      sb_add_chars(sb, tmp);
+    }
+  }
+  sb_add_char(sb, '}');
+  //  printf("       %s\n", sb->data);
 
-
-EM_JS(char*, get_c_response, (int n), {
-  const s = get_response(n);
-  return s ? allocateUTF8(s) : NULL;
-});
-
-in3_ret_t in3_sign_msg(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
-  char message_hex[(message.len<<1)+3],account_hex[(account.len<<1)+3];
-  message_hex[0]=account_hex[0]='0';
-  message_hex[1]=account_hex[1]='x';
-  bytes_to_hex(message.data,message.len,message_hex+2);
-  bytes_to_hex(account.data,account.len,account_hex+2);
-  int res= sign_send(((in3_ctx_t*)ctx)->client,type,message_hex,account_hex,dst);
-  if (res<0) return ctx_set_error((in3_ctx_t*) ctx,last_error,res);
-  return res;
+  char* r = sb->data;
+  _free(sb);
+  return r;
+}
+void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
+  _free(ptr);
 }
 
-// clang-format on
-
-int in3_fetch(in3_request_t* req) {
-  int ret = -1;
-  for (int i = 0; i < req->urls_len; i++) {
-    char* resp = get_c_response(transport_send(req->results + i, req->urls[i], req->payload));
-    if (resp && *resp == *req->payload) {
-      ret = IN3_OK;
-      sb_add_chars(&req->results[i].result, resp);
-    } else if (resp)
-      sb_add_chars(&req->results[i].error, resp);
-    else
-      sb_add_chars(&req->results[i].error, "Unknown error fetching the response");
-    if (resp) free(resp);
-  }
-  return ret;
+void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
+  if (is_error)
+    sb_add_chars(&r->results[i].error, msg);
+  else if (ctx->type == CT_SIGN) {
+    uint8_t sig[65];
+    hex2byte_arr(msg, -1, sig, 65);
+    sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
+  } else
+    sb_add_chars(&r->results[i].result, msg);
+  free_request(r, ctx, false);
 }
 
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
@@ -156,17 +172,11 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
   in3_register_eth_full();
 
   in3_t* c                  = in3_new();
-  c->transport              = in3_fetch;
   c->cacheStorage           = malloc(sizeof(in3_storage_handler_t));
   c->cacheStorage->get_item = storage_get_item;
   c->cacheStorage->set_item = storage_set_item;
-  c->signer                 = malloc(sizeof(in3_signer_t));
-  c->signer->wallet         = c;
-  c->signer->prepare_tx     = NULL;
-  c->signer->sign           = in3_sign_msg;
 
   in3_cache_init(c);
-
   in3_set_error(NULL);
   return c;
 }
@@ -184,7 +194,7 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
   return last_error;
 }
 
-in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request(in3_t* c, char* payload) {
+in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
   char*      src_data = _strdupn(payload, -1);
   in3_ctx_t* ctx      = new_ctx(c, src_data);
   if (ctx->error) {
@@ -195,26 +205,9 @@ in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request(in3_t* c, char* payload) {
   return ctx;
 }
 
-void EMSCRIPTEN_KEEPALIVE in3_send_request(in3_ctx_t* ctx) {
-  in3_set_error(NULL);
-  in3_send_ctx(ctx);
-}
-
 void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
   if (ctx->request_context && ctx->request_context->c) free(ctx->request_context->c);
   free_ctx(ctx);
-}
-
-char* EMSCRIPTEN_KEEPALIVE request_get_result(in3_ctx_t* r) {
-  if (r->error) return NULL;
-  // we have a result and copy it
-  str_range_t s = d_to_json(r->responses[0]);
-  s.data[s.len] = 0;
-  return s.data;
-}
-
-char* EMSCRIPTEN_KEEPALIVE request_get_error(in3_ctx_t* r) {
-  return r->error;
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
@@ -275,8 +268,19 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   return result;
 }
 
+/** private key to address */
+uint8_t* EMSCRIPTEN_KEEPALIVE private_to_address(bytes32_t prv_key) {
+  uint8_t* dst = malloc(20);
+  uint8_t  public_key[65], sdata[32];
+  bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
+  ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
+  sha3_to(&pubkey_bytes, sdata);
+  memcpy(dst, sdata + 12, 20);
+  return dst;
+}
+
 /** signs the given data */
-uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len) {
+uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uint8_t* data, int len, bool adjust_v) {
   uint8_t* dst   = malloc(65);
   int      error = -1;
   switch (type) {
@@ -294,5 +298,6 @@ uint8_t* EMSCRIPTEN_KEEPALIVE ec_sign(bytes32_t pk, d_signature_type_t type, uin
     free(dst);
     return NULL;
   }
+  if (adjust_v) dst[64] += 27;
   return dst;
 }

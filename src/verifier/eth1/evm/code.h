@@ -40,7 +40,6 @@
 #define in3_codecache_h__
 
 #include "../../../core/client/verifier.h"
-
-cache_entry_t* in3_get_code(in3_vctx_t* vc, uint8_t* address);
+in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target);
 
 #endif

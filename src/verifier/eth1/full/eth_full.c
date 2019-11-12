@@ -98,6 +98,8 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
         res = b_cmp(d_bytes(vc->result), result);
         b_free(result);
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
+      case IN3_WAITING:
+        return IN3_WAITING;
 
       default:
         return vc_err(vc, "Unknown return-code");
