@@ -285,7 +285,7 @@ static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int*
     // Q = -P, so result is point-at-infinity
     if ((err = mp_sub(modulus, &Q->y, &t1)) != MP_OKAY) { goto done; }
     if (mp_cmp(&P->y, &t1) == MP_EQ) {
-      err = ecc_set_point_xyz(1, 1, 0, R);
+      err = ecc_set_point_xyz(0, 0, 0, R);
       goto done;
     }
   }
