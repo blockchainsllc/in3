@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers.
  * */
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -148,14 +148,13 @@ void free_request(in3_request_t* req, in3_ctx_t* ctx, bool free_response);
 
 in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len);
 void      free_ctx(in3_ctx_t* ctx);
-in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb);
-in3_ret_t in3_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx);
+in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx);
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i);
 in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber);
 in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id);
 
-in3_ctx_t* in3_find_required(in3_ctx_t* parent, char* method);
-in3_ret_t  in3_add_required(in3_ctx_t* parent, in3_ctx_t* ctx);
+in3_ctx_t* ctx_find_required(in3_ctx_t* parent, char* method);
+in3_ret_t  ctx_add_required(in3_ctx_t* parent, in3_ctx_t* ctx);
 /** 
  * sends a request and returns a context used to access the result or errors. 
  * 
