@@ -34,9 +34,9 @@
 
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/verifier.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
-#include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
 #include "eth_api.h"
@@ -54,6 +54,8 @@
 
 #define RESPONSE_END() \
   do { sb_add_char(&response[0]->result, '}'); } while (0)
+static in3_verify     parent_verify = NULL;
+static in3_pre_handle parent_handle = NULL;
 
 static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
@@ -95,7 +97,7 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     RESPONSE_END();
   }
 
-  return IN3_OK;
+  return parent_handle ? parent_handle(ctx, response) : IN3_OK;
 }
 
 static int verify(in3_vctx_t* v) {
@@ -106,14 +108,21 @@ static int verify(in3_vctx_t* v) {
       strcmp(method, "in3_config") == 0)
     return IN3_OK;
 
-  return in3_verify_eth_full(v);
+  return parent_verify ? parent_verify(v) : IN3_ENOTSUP;
 }
 
 void in3_register_eth_api() {
-  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
-  v->type           = CHAIN_ETH;
-  v->pre_handle     = eth_handle_intern;
-  v->verify         = verify;
-  ;
-  in3_register_verifier(v);
+  in3_verifier_t* v = in3_get_verifier(CHAIN_ETH);
+  if (v) {
+    parent_verify = v->verify;
+    parent_handle = v->pre_handle;
+    v->verify     = verify;
+    v->pre_handle = eth_handle_intern;
+  } else {
+    in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
+    v->type           = CHAIN_ETH;
+    v->pre_handle     = eth_handle_intern;
+    v->verify         = verify;
+    in3_register_verifier(v);
+  }
 }

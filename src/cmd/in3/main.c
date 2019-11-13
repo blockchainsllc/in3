@@ -531,6 +531,7 @@ int main(int argc, char* argv[]) {
   storage_handler.set_item = storage_set_item;
 
   // we want to verify all
+  in3_register_eth_full();
   in3_register_eth_api();
   in3_log_set_level(LOG_INFO);
 
