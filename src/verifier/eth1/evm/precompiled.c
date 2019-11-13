@@ -528,7 +528,7 @@ int pre_ec_add(evm_t* evm) {
 
   size_t ml = mp_unsigned_bin_size(&p3->x);
   mp_to_unsigned_bin(&p3->x, evm->return_data.data + 32 - ml);
-  mp_unsigned_bin_size(&p3->y);
+  ml = mp_unsigned_bin_size(&p3->y);
   mp_to_unsigned_bin(&p3->y, evm->return_data.data + 64 - ml);
 
 done:
@@ -573,7 +573,7 @@ int pre_ec_mul(evm_t* evm) {
 
   size_t ml = mp_unsigned_bin_size(&p2->x);
   mp_to_unsigned_bin(&p2->x, evm->return_data.data + 32 - ml);
-  mp_unsigned_bin_size(&p2->y);
+  ml = mp_unsigned_bin_size(&p2->y);
   mp_to_unsigned_bin(&p2->y, evm->return_data.data + 64 - ml);
 
 done:
