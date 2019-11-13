@@ -60,6 +60,8 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   d_token_t* r      = ctx->requests[0];
   char*      method = d_get_stringk(r, K_METHOD);
   d_token_t* params = d_get(r, K_PARAMS);
+
+  // abi encode
   if (strcmp(method, "in3_abiEncode") == 0) {
     RESPONSE_START();
     call_request_t* req = parseSignature(d_get_string_at(params, 0));
@@ -79,6 +81,20 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     RESPONSE_END();
   }
 
+  // config
+  if (strcmp(method, "in3_config") == 0) {
+    str_range_t r   = d_to_json(d_get_at(params, 0));
+    char        old = r.data[r.len];
+    r.data[r.len]   = 0;
+    in3_ret_t ret   = in3_configure(ctx->client, r.data);
+    r.data[r.len]   = old;
+    if (ret) return ctx_set_error(ctx, "Invalid config", ret);
+
+    RESPONSE_START();
+    sb_add_chars(&response[0]->result, "true");
+    RESPONSE_END();
+  }
+
   return IN3_OK;
 }
 
@@ -86,7 +102,8 @@ static int verify(in3_vctx_t* v) {
   char* method = d_get_stringk(v->request, K_METHOD);
   if (!method) return vc_err(v, "no method in the request!");
 
-  if (strcmp(method, "in3_abiEncode") == 0)
+  if (strcmp(method, "in3_abiEncode") == 0 ||
+      strcmp(method, "in3_config") == 0)
     return IN3_OK;
 
   return in3_verify_eth_full(v);

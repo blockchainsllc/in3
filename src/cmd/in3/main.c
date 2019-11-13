@@ -248,25 +248,29 @@ static void execute(in3_t* c, FILE* f) {
     if (level == 0) {
       // time to execute
       in3_ctx_t* ctx = new_ctx(c, sb->data);
-      in3_ret_t  ret = in3_send_ctx(ctx);
-      uint32_t   id  = d_get_intk(ctx->responses[0], K_ID);
-      if (ctx->error) {
-        for (char* x = ctx->error; *x; x++) {
-          if (*x == '\n') *x = ' ';
+      if (ctx->error)
+        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", 1, ctx->error);
+      else {
+        in3_ret_t ret = in3_send_ctx(ctx);
+        uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
+        if (ctx->error) {
+          for (char* x = ctx->error; *x; x++) {
+            if (*x == '\n') *x = ' ';
+          }
         }
-      }
 
-      if (ret == IN3_OK) {
-        d_token_t* result = d_get(ctx->responses[0], K_RESULT);
-        d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
-        char*      r      = d_create_json(result ? result : error);
-        if (result)
-          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
-        else
-          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
-        _free(r);
-      } else
-        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+        if (ret == IN3_OK) {
+          d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+          d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+          char*      r      = d_create_json(result ? result : error);
+          if (result)
+            printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
+          else
+            printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
+          _free(r);
+        } else
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+      }
       free_ctx(ctx);
       first   = 0;
       sb->len = 0;
