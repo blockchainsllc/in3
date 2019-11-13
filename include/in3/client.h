@@ -237,9 +237,20 @@ typedef struct n3_response {
   sb_t result; /**< a stringbuilder to add the result */
 } in3_response_t;
 
+/** request-object. 
+ * 
+ * represents a RPC-request
+ */
+typedef struct n3_request {
+  char*           payload;  /**< the payload to send */
+  char**          urls;     /**< array of urls */
+  int             urls_len; /**< number of urls */
+  in3_response_t* results;  /** the responses*/
+} in3_request_t;
+
 /** the transport function to be implemented by the transport provider.
  */
-typedef in3_ret_t (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
+typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
 
 typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
@@ -427,6 +438,11 @@ void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to fre
  *
  */
 in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
+
+/**
+ * finds the chain-config for the given chain_id.
+ */
+in3_chain_t* find_chain(in3_t* c, uint64_t chain_id);
 
 /**
  * configures the clent based on a json-config.
