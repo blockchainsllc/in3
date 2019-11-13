@@ -53,21 +53,38 @@ typedef struct keyname {
   d_key_t         key;
   struct keyname* next;
 } keyname_t;
-static uint8_t    __track_keys = 0;
-static keyname_t* __keynames   = NULL;
+
+#ifndef IN3_DONT_HASH_KEYS
+static uint8_t __track_keys = 0;
+#else
+static uint8_t __track_keys = 1;
+#endif
+
+keyname_t* __keynames     = NULL;
+size_t     __keynames_len = 0;
 
 d_key_t keyn(const char* c, const int len) {
-  uint16_t val = 0;
-  int      i   = 0;
+  d_key_t val = 0;
+#ifndef IN3_DONT_HASH_KEYS
+  int i = 0;
   for (; i < len; i++) {
     if (*c == 0) return val;
     val ^= *c | val << 7;
     c += 1;
   }
+#else
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (!strncmp(kn->name, c, len)) break;
+    kn = kn->next;
+    val++;
+  }
+  val = __keynames_len - val;
+#endif
   return val;
 }
 
-static d_key_t add_key(char* c, int len) {
+static d_key_t add_key(const char* c, size_t len) {
   d_key_t k = keyn(c, len);
   if (!__track_keys) return k;
   keyname_t* kn = __keynames;
@@ -83,7 +100,19 @@ static d_key_t add_key(char* c, int len) {
   kn->name   = malloc(len + 1);
   memcpy(kn->name, c, len);
   kn->name[len] = 0;
+  __keynames_len++;
   return k;
+}
+
+d_key_t key(const char* c) {
+  uint16_t val = 0;
+#ifndef IN3_DONT_HASH_KEYS
+  size_t l = strlen(c);
+  for (; l; l--, c++) val ^= *c | val << 7;
+#else
+  val = add_key(c, strlen(c));
+#endif
+  return val;
 }
 
 static size_t d_token_size(const d_token_t* item) {
