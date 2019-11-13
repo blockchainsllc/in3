@@ -693,7 +693,7 @@ int main(int argc, char* argv[]) {
   if (sig && *sig == '-') die("unknown option");
   if (!method) {
     execute(c, stdin);
-    return;
+    return EXIT_SUCCESS;
   }
   if (*method == '-') die("unknown option");
 
