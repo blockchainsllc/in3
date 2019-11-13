@@ -31,7 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
+#ifdef POA
 #include "vhist.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/log.h"
@@ -243,3 +243,4 @@ vhist_t* vh_cache_retrieve(in3_t* c) {
   }
   return vh;
 }
+#endif

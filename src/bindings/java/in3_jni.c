@@ -576,31 +576,31 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_free(in3);
 }
 
-in3_ret_t Java_in3_IN3_transport(char** urls, int urls_len, char* payload, in3_response_t* res) {
-
+in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
+  //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
-  size_t     payload_len = strlen(payload);
+  size_t     payload_len = strlen(req->payload);
   jbyteArray jpayload    = (*jni)->NewByteArray(jni, payload_len);
-  (*jni)->SetByteArrayRegion(jni, jpayload, 0, payload_len, (jbyte*) payload);
+  (*jni)->SetByteArrayRegion(jni, jpayload, 0, payload_len, (jbyte*) req->payload);
 
   // url-array
-  jobject jurls = (*jni)->NewObjectArray(jni, urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
-  for (int i = 0; i < urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, urls[i]));
+  jobject jurls = (*jni)->NewObjectArray(jni, req->urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
+  for (int i = 0; i < req->urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, req->urls[i]));
 
   jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
   jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "([Ljava/lang/String;[B)[[B");
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
 
-  for (int i = 0; i < urls_len; i++) {
+  for (int i = 0; i < req->urls_len; i++) {
     jbyteArray content = (*jni)->GetObjectArrayElement(jni, result, i);
     if (content) {
       const size_t l = (*jni)->GetArrayLength(jni, content);
       uint8_t      bytes[l];
       (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
-      sb_add_range(&res[i].result, (char*) bytes, 0, l);
+      sb_add_range(&req->results[i].result, (char*) bytes, 0, l);
     } else
-      sb_add_chars(&res[i].error, "Could not fetch the data!");
+      sb_add_chars(&req->results[i].error, "Could not fetch the data!");
   }
 
   return success;
@@ -785,6 +785,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
   in3->cacheStorage->set_item = storage_set_item;
   in3->signer                 = _malloc(sizeof(in3_signer_t));
   in3->signer->sign           = jsign;
+  in3->signer->prepare_tx     = NULL;
   in3->signer->wallet         = in3->cacheStorage->cptr;
   jni                         = env;
 

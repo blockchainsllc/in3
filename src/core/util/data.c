@@ -284,10 +284,6 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
-d_token_t* d_prev(d_token_t* item) {
-  return item == NULL ? NULL : item - d_token_size(item);
-}
-
 char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {
@@ -511,7 +507,7 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
 
 void free_json(json_ctx_t* jp) {
   if (!jp || jp->result == NULL) return;
-  if (jp->allocated) {
+  if (!d_is_binary_ctx(jp)) {
     size_t i;
     for (i = 0; i < jp->len; i++) {
       if (jp->result[i].data != NULL && d_type(jp->result + i) < 2)
@@ -588,7 +584,7 @@ char* d_create_json(d_token_t* item) {
       return d_int(item) ? _strdupn("true", 4) : _strdupn("false", 5);
     case T_INTEGER:
       dst = _malloc(16);
-      sprintf(dst, "0x%x", d_int(item));
+      sprintf(dst, "\"0x%x\"", d_int(item));
       return dst;
     case T_NULL:
       return _strdupn("null", 4);
@@ -617,64 +613,6 @@ str_range_t d_to_json(d_token_t* item) {
   s.data = (char*) item->data;
   s.len  = find_end(s.data);
   return s;
-}
-
-// util fast parse
-int json_get_int_value(char* js, char* prop) {
-  json_ctx_t* ctx = parse_json(js);
-  if (ctx) {
-    int res = d_get_int(ctx->result, prop);
-    free_json(ctx);
-    return res;
-  }
-  return -1;
-}
-
-void json_get_str_value(char* js, char* prop, char* dst) {
-  *dst          = 0; // preset returned string as empty string
-  d_token_t*  t = NULL;
-  str_range_t s;
-
-  json_ctx_t* ctx = parse_json(js);
-  if (ctx) {
-    t = d_get(ctx->result, key(prop));
-    switch (d_type(t)) {
-      case T_STRING:
-        strcpy(dst, d_string(t));
-        break;
-      case T_BYTES:
-        dst[0] = '0';
-        dst[1] = 'x';
-        bytes_to_hex(t->data, t->len, dst + 2);
-        dst[t->len * 2 + 2] = 0;
-        break;
-      case T_ARRAY:
-      case T_OBJECT:
-        s = d_to_json(t);
-        memcpy(dst, s.data, s.len);
-        dst[s.len] = 0;
-        break;
-      case T_BOOLEAN:
-        strcpy(dst, d_int(t) ? "true" : "false");
-        break;
-      case T_INTEGER:
-        sprintf(dst, "0x%x", d_int(t));
-        break;
-      case T_NULL:
-        strcpy(dst, "null");
-    }
-    free_json(ctx);
-  }
-}
-
-char* json_get_json_value(char* js, char* prop) {
-  json_ctx_t* ctx = parse_json(js);
-  if (ctx) {
-    char* c = d_create_json(d_get(ctx->result, key(prop)));
-    free_json(ctx);
-    return c;
-  }
-  return NULL;
 }
 
 //    bytes-parser

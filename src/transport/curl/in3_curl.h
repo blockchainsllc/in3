@@ -45,7 +45,7 @@
 /**
  * the transport function using curl.
  */
-in3_ret_t send_curl(char** urls, int urls_len, char* payload, in3_response_t* result);
+in3_ret_t send_curl(in3_request_t* req);
 
 /**
  * registers curl as a default transport.

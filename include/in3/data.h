@@ -122,7 +122,6 @@ d_token_t* d_get(d_token_t* item, const uint16_t key);                          
 d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
-d_token_t* d_prev(d_token_t* item);                                             /**< returns the prev sibling of an array or object */
 
 void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
 json_ctx_t* parse_binary(bytes_t* data);                           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
@@ -142,10 +141,6 @@ d_token_t*  json_create_object(json_ctx_t* jp);
 d_token_t*  json_create_array(json_ctx_t* jp);
 d_token_t*  json_object_add_prop(d_token_t* object, d_key_t key, d_token_t* value);
 d_token_t*  json_array_add_value(d_token_t* object, d_token_t* value);
-
-int   json_get_int_value(char* js, char* prop);            /**< parses the json and return the value as int. */
-void  json_get_str_value(char* js, char* prop, char* dst); /**< parses the json and return the value as string. */
-char* json_get_json_value(char* js, char* prop);           /**< parses the json and return the value as json-string. */
 
 // Helper function to map string to 2byte keys (only for tests or debugging)
 char* d_get_keystr(d_key_t k);     /**< returns the string for a key. This only works track_keynames was activated before! */

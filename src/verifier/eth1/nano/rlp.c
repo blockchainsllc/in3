@@ -99,15 +99,6 @@ int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst) {
 int rlp_decode_len(bytes_t* b) {
   return rlp_decode(b, -1, NULL);
 }
-int rlp_decode_item_len(bytes_t* b, int index) {
-  bytes_t bb;
-  return rlp_decode(b, index, &bb) ? bb.len : 0;
-}
-
-int rlp_decode_item_type(bytes_t* b, int index) {
-  bytes_t bb;
-  return rlp_decode(b, index, &bb);
-}
 
 void rlp_encode_item(bytes_builder_t* bb, bytes_t* val) {
   if (val->len == 1 && val->data[0] < 0x80) {

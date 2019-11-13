@@ -96,21 +96,24 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
 
     trie_t* trie = trie_new();
     for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
-      bytes_t* path = create_tx_path(i);
-      bytes_t* tx   = serialize_tx(t);
-      bytes_t* h    = (full_proof || !include_full_tx) ? sha3(tx) : NULL;
+      bool     is_raw_tx = d_type(t) == T_BYTES;
+      bytes_t* path      = create_tx_path(i);
+      bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
+      bytes_t* h         = (full_proof || !include_full_tx) ? sha3(tx) : NULL;
 
-      if (eth_verify_tx_values(vc, t, tx))
-        res = IN3_EUNKNOWN;
+      if (!is_raw_tx) {
+        if (eth_verify_tx_values(vc, t, tx))
+          res = IN3_EUNKNOWN;
 
-      if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !b_cmp(d_bytes(t2), bhash))
-        res = vc_err(vc, "Wrong Blockhash in tx");
+        if ((t2 = d_getl(t, K_BLOCK_HASH, 32)) && !b_cmp(d_bytes(t2), bhash))
+          res = vc_err(vc, "Wrong Blockhash in tx");
 
-      if ((t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != bnumber)
-        res = vc_err(vc, "Wrong Blocknumber in tx");
+        if ((t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != bnumber)
+          res = vc_err(vc, "Wrong Blocknumber in tx");
 
-      if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != (uint32_t) i)
-        res = vc_err(vc, "Wrong Transaction index in tx");
+        if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != (uint32_t) i)
+          res = vc_err(vc, "Wrong Transaction index in tx");
+      }
 
       if (h && txh) {
         if (!b_cmp(d_bytes(txh), h))
@@ -118,8 +121,8 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
         txh = d_next(txh);
       }
       trie_set_value(trie, path, tx);
+      if (!is_raw_tx) b_free(tx);
       b_free(path);
-      b_free(tx);
       if (h) b_free(h);
     }
 

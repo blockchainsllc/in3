@@ -36,6 +36,7 @@
 #include "log.h"
 #include "mem.h"
 #include "utils.h"
+#include <assert.h>
 
 #define UDIV_UP(a, b) (((a) + (b) -1) / (b))
 #define ALIGN_UP(a, b) (UDIV_UP(a, b) * (b))
@@ -62,6 +63,7 @@ in3_ret_t bs_modify(bitset_t* bs, size_t pos, bs_op_t op) {
       uintbs_t cpy = bs->bits.b;
       bs->bits.p   = NULL;
       if (!bs_growp(bs, pos)) return IN3_ENOMEM;
+      assert(bs->bits.p != NULL);
       for (size_t i = 0; i < BS_MAX; ++i) {
         BIT_CHECK(cpy, i) ? BIT_SET(bs->bits.p[i / 8], i % 8)
                           : BIT_CLEAR(bs->bits.p[i / 8], i % 8);

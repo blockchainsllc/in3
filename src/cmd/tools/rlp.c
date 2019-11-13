@@ -47,6 +47,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+int rlp_decode_item_type(bytes_t* b, int index) {
+  bytes_t bb;
+  return rlp_decode(b, index, &bb);
+}
+
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {
     printf("File not found!");
@@ -211,6 +216,7 @@ void print_special(bytes_t data, char** ctx, int i) {
 void write(bytes_t* data, char* l, char** tt) {
   bytes_t t;
   //  names
+  int  al = alen(tt);
   char prefix[100];
   int  i, j, type, d;
   for (i = 0;; i++) {
@@ -222,14 +228,13 @@ void write(bytes_t* data, char* l, char** tt) {
       return;
     } else if (type == 1) {
       printf("%s", l);
-      if (tt)
-        d = printf("%-20s : ", tt[(i % alen(tt)) + 1]);
+      if (al && tt)
+        printf("%-20s : ", tt[(i % al) + 1]);
       else
-        d = printf("%-3i : ", i);
+        printf("%-3i : ", i);
 
       if (tt == TRIE_LEAF && i == 0)
         d = printf("%s (%s)", (t.data[0] & 32) ? "LEAF" : "EXTENSION", (t.data[0] & 16) ? "odd" : "even");
-
       else if (t.len == 0)
         d = printf("0");
       else if (t.len < 9)
@@ -240,6 +245,7 @@ void write(bytes_t* data, char* l, char** tt) {
         d = printf("<hash>");
       else
         d = printf("<data %i>", t.len);
+
       for (j = d; j < 17; j++) printf(" ");
       if (t.len > 0)
         printf("0x");
@@ -303,9 +309,8 @@ void write(bytes_t* data, char* l, char** tt) {
         }
       if (tt && tt != CHAINSPEC) t2 = NULL;
       printf("%s", l);
-      if (tt) {
-        d = printf("%-20s : ", tt[i + 1]);
-      }
+      if (tt)
+        printf("%-20s : ", tt[i + 1]);
 
       printf("[ %s", t2 ? t2[0] : "");
 

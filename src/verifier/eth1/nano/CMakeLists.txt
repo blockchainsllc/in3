@@ -31,7 +31,10 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-
+OPTION(POA "support POA verification including validatorlist updates" OFF)
+IF (POA)
+  add_definitions(-DPOA)
+ENDIF (POA)
 
 # static lib
 add_library(eth_nano_o OBJECT

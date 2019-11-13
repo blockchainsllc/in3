@@ -53,6 +53,8 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/keys.h"
+#include "../../core/client/send.h"
 #include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
@@ -161,31 +163,43 @@ void read_pass(char* pw, int pwsize) {
   fprintf(stderr, "\033[28m"); //reveal typing
 }
 
+// accepts a value as
+// 0.1eth
+// 2keth
+// 2.3meth
 char* get_wei(char* val) {
   if (*val == '0' && val[1] == 'x') return val;
   int    l     = strlen(val);
   double value = 0;
   if (l > 3 && val[l - 1] > '9') {
     char unit[4];
-    strcpy(unit, val + l - 3);
-    double f = 1;
+    strcpy(unit, val + l - 3); // we copy the last 3 characters as unit
+    double f = 1;              // and define a modifying factor for the prefix of the unit
     if (val[l - 4] == 'k')
       f = 1000;
     else if (val[l - 4] == 'M')
       f = 1000000;
     else if (val[l - 4] == 'm')
       f = 0.001;
-    val[l - ((f == 1) ? 3 : 4)] = 0;
-    value                       = atof(val);
+    val[l - ((f == 1) ? 3 : 4)] = 0;         // so we let the value string end where the unit starts
+    value                       = atof(val); // so we can easily parse the value
+
     if (strcmp(unit, "eth") == 0)
       value *= 1000000000000000000l;
-    else if (strcmp(unit, "wei") == 0)
-      value *= 1000000000000000000l;
+    else if (strcmp(unit, "fin") == 0)
+      value *= 1000000000000000l;
+    else if (strcmp(unit, "wei"))
+      die("unsupported unit in value!");
     value *= f;
   } else
     value = atof(val);
 
-  value     = floor(value);
+  value = floor(value); // make sure it is a integer value
+  if (value < 0) die("negative values are not allowed");
+
+  // now convert the double into a hexstring
+  // this is no cleaning up the mempry correctly, but since it is a comandline tool
+  // we don't need to clean up
   char *res = _malloc(200), *p = res + 199;
   res[199]         = 0;
   const char hex[] = "0123456789abcdef";
@@ -205,7 +219,64 @@ char* get_wei(char* val) {
   }
   return res;
 }
+static void execute(in3_t* c, FILE* f) {
+  if (feof(f)) die("no data");
+  sb_t* sb    = sb_new(NULL);
+  char  first = 0, stop = 0;
+  int   level = 0, d = 0;
+  while (1) {
+    d = fgetc(f);
+    if (d == EOF) {
+      if (first)
+        die("Invalid json-data from stdin");
+      else
+        exit(EXIT_SUCCESS);
+    }
+    if (first == 0) {
+      if (d == '{')
+        stop = '}';
+      else if (d == '[')
+        stop = ']';
+      else
+        continue;
+      first = d;
+    }
 
+    sb_add_char(sb, (char) d);
+    if (d == first) level++;
+    if (d == stop) level--;
+    if (level == 0) {
+      // time to execute
+      in3_ctx_t* ctx = new_ctx(c, sb->data);
+      if (ctx->error)
+        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", 1, ctx->error);
+      else {
+        in3_ret_t ret = in3_send_ctx(ctx);
+        uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
+        if (ctx->error) {
+          for (char* x = ctx->error; *x; x++) {
+            if (*x == '\n') *x = ' ';
+          }
+        }
+
+        if (ret == IN3_OK) {
+          d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+          d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+          char*      r      = d_create_json(result ? result : error);
+          if (result)
+            printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
+          else
+            printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
+          _free(r);
+        } else
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+      }
+      free_ctx(ctx);
+      first   = 0;
+      sb->len = 0;
+    }
+  }
+}
 // read data from a file and return the bytes
 bytes_t readFile(FILE* f) {
   if (!f) die("Could not read the input file");
@@ -227,6 +298,7 @@ bytes_t* get_std_in() {
   if (feof(stdin)) return NULL;
   bytes_t content = readFile(stdin);
 
+  // this check tries to discover a solidity compilation poutput
   char* bin = strstr((char*) content.data, "\nBinary: \n");
   if (bin) {
     bin += 10;
@@ -235,6 +307,7 @@ bytes_t* get_std_in() {
       return hex2byte_new_bytes(bin, end - bin);
   }
 
+  // is it content starting with 0x, we treat it as hex otherwisae as rwa string
   bytes_t* res = (content.len > 1 && *content.data == '0' && content.data[1] == 'x')
                      ? hex2byte_new_bytes((char*) content.data + 2, content.len - 2)
                      : hex2byte_new_bytes((char*) content.data, content.len);
@@ -268,36 +341,34 @@ void set_chain_id(in3_t* c, char* id) {
 
 // prepare a eth_call or eth_sendTransaction
 call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_number, uint64_t gas, char* value, bytes_t* data) {
-  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;
-  if (req && req->in_data->type == A_TUPLE) {
-    json_ctx_t* in_data = parse_json(args);
-    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data");
-    free_json(in_data);
-  }
-  sb_t* params = sb_new("[{");
-  if (to) {
+  call_request_t* req = fn_sig ? parseSignature(fn_sig) : NULL;                          // only if we have a function signature, we will parse it and create a call_request.
+  if (req && req->in_data->type == A_TUPLE) {                                            // if type is a tuple, it means we have areuments we need to parse.
+    json_ctx_t* in_data = parse_json(args);                                              // the args are passed as a "[]"- json-array string.
+    if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data"); // we then set the data, which appends the arguments to the functionhash.
+    free_json(in_data);                                                                  // of course we clean up ;-)
+  }                                                                                      //
+  sb_t* params = sb_new("[{");                                                           // now we create the transactionobject as json-argument.
+  if (to) {                                                                              // if this is a deployment we must not include the to-property
     sb_add_chars(params, "\"to\":\"");
     sb_add_chars(params, to);
     sb_add_chars(params, "\" ");
   }
-  if (req || data) {
-    if (to)
-      sb_add_chars(params, ",\"data\":");
-    else
-      sb_add_chars(params, "\"data\":");
-  }
-  if (req) {
-    if (data) {
-      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len);
+  if (req || data) {                                                  // if we have a request context or explicitly data we create the data-property
+    if (params->len > 2) sb_add_char(params, ',');                    // add comma if this is not the first argument
+    sb_add_chars(params, "\"data\":");                                // we will have a data-property
+    if (req && data) {                                                // if we have a both, we need to concat thewm (this is the case when depkloying a contract with constructorarguments)
+      uint8_t* full = _malloc(req->call_data->b.len - 4 + data->len); // in this case we skip the functionsignature.
       memcpy(full, data->data, data->len);
       memcpy(full + data->len, req->call_data->b.data + 4, req->call_data->b.len - 4);
       bytes_t bb = bytes(full, req->call_data->b.len - 4 + data->len);
       sb_add_bytes(params, "", &bb, 1, false);
       _free(full);
-    } else
+    } else if (req)
       sb_add_bytes(params, "", &req->call_data->b, 1, false);
-  } else if (data)
-    sb_add_bytes(params, "", data, 1, false);
+    else if (data)
+      sb_add_bytes(params, "", data, 1, false);
+  }
+
   if (block_number) {
     sb_add_chars(params, "},\"");
     sb_add_chars(params, block_number);
@@ -385,30 +456,44 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 
 static bytes_t*  last_response;
 static bytes_t   in_response = {.data = NULL, .len = 0};
-static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static in3_ret_t debug_transport(in3_request_t* req) {
   if (in_response.len) {
-    for (int i = 0; i < urls_len; i++)
-      sb_add_range(&result[i].result, (char*) in_response.data, 0, in_response.len);
+    for (int i = 0; i < req->urls_len; i++)
+      sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
     return 0;
   }
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(urls, urls_len, payload, result);
+  in3_ret_t r = send_curl(req);
 #else
-  in3_ret_t r = send_http(urls, urls_len, payload, result);
+  in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new(result[0].result.data, result[0].result.len);
+  last_response = b_new(req->results[0].result.data, req->results[0].result.len);
+  return r;
+}
+static char*     test_name = NULL;
+static in3_ret_t test_transport(in3_request_t* req) {
+#ifdef USE_CURL
+  in3_ret_t r = send_curl(req);
+#else
+  in3_ret_t r = send_http(req);
+#endif
+  if (r == IN3_OK) {
+    req->payload[strlen(req->payload) - 1] = 0;
+    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->results->result.data);
+    exit(0);
+  }
+
   return r;
 }
 
 int main(int argc, char* argv[]) {
-
   // check for usage
-  if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
+  if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
     return 0;
   }
 
-  if (argc < 2 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
+  if (argc >= 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0)) {
     printf("in3 " IN3_VERSION "\nbuild " __DATE__ " with");
 #ifdef TEST
     printf(" -DTEST=true");
@@ -447,6 +532,7 @@ int main(int argc, char* argv[]) {
 
   // we want to verify all
   in3_register_eth_full();
+  in3_register_eth_api();
   in3_log_set_level(LOG_INFO);
 
   // create the client
@@ -515,7 +601,10 @@ int main(int argc, char* argv[]) {
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
       gas_limit = atoll(argv[++i]);
-    else if (strcmp(argv[i], "-pwd") == 0)
+    else if (strcmp(argv[i], "-test") == 0) {
+      test_name    = argv[++i];
+      c->transport = test_transport;
+    } else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
     else if (strcmp(argv[i], "-value") == 0)
       value = get_wei(argv[++i]);
@@ -573,7 +662,7 @@ int main(int argc, char* argv[]) {
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,
-                       (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
+                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
                        argv[i]);
@@ -602,21 +691,28 @@ int main(int argc, char* argv[]) {
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
-  if (method && *method == '-') die("unknown option");
+  if (!method) {
+    execute(c, stdin);
+    return EXIT_SUCCESS;
+  }
+  if (*method == '-') die("unknown option");
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
     req    = prepare_tx(sig, to, params, block_number, 0, NULL, data);
     method = "eth_call";
   } else if (strcmp(method, "abi_encode") == 0) {
+    if (!sig) die("missing signature");
     req = parseSignature(sig);
     if (req && req->in_data->type == A_TUPLE) {
       json_ctx_t* in_data = parse_json(params);
       if (set_data(req, in_data->result, req->in_data) < 0) die("invalid arguments for given signature");
     }
+    if (!req || !req->call_data) die("missing call data");
     print_hex(req->call_data->b.data, req->call_data->b.len);
     return 0;
   } else if (strcmp(method, "abi_decode") == 0) {
+    if (!sig) die("missing signature");
     if (!strchr(sig, ':')) {
       char* tmp = malloc(strlen(sig) + 5);
       strcpy(tmp, "d():");
@@ -648,8 +744,10 @@ int main(int argc, char* argv[]) {
     }
 
     if (!c->signer) die("No private key given");
-    uint8_t sig[65];
-    c->signer->sign(c->signer->wallet, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+    uint8_t   sig[65];
+    in3_ctx_t ctx;
+    ctx.client = c;
+    c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
     sig[64] += 27;
     print_hex(sig, 65);
     return 0;
@@ -764,6 +862,8 @@ int main(int argc, char* argv[]) {
 
   if (error)
     die(error);
+  else if (!result)
+    die("No result");
   else {
 
     if (out_response && last_response) {

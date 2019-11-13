@@ -58,6 +58,8 @@ int ignore_property(char* name, int full_proof) {
   if (strcmp(name, "registryId") == 0) return 1;
   // it is calculated, so need to check
   if (strcmp(name, "proofHash") == 0) return 1;
+  // weight is not part of the proofHash
+  if (strcmp(name, "weight") == 0) return 1;
 
   // size should be verified if proof = full
   if (!full_proof && strcmp(name, "size") == 0) return 1;
@@ -182,13 +184,13 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   }
 }
 
-static int send_mock(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static int send_mock(in3_request_t* req) {
   // printf("payload: %s\n",payload);
   int i;
-  for (i = 0; i < urls_len; i++)
+  for (i = 0; i < req->urls_len; i++)
     // rioght now we always add the same response
     // TODO later support array of responses.
-    sb_add_range(&(result + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
+    sb_add_range(&(req->results + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
 
   if (_tmp_response) {
     free(_tmp_response->data);
@@ -418,6 +420,7 @@ int runRequests(char** names, int test_index, int mem_track) {
 
 int main(int argc, char* argv[]) {
   use_color = 1;
+  in3_log_set_level(LOG_INFO);
   in3_register_eth_full();
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
@@ -426,6 +429,8 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)
       testIndex = atoi(argv[++i]);
+    else if (strcmp(argv[i], "-d") == 0)
+      in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-m") == 0)
       membrk = atoi(argv[++i]);
     else {

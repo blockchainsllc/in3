@@ -7,7 +7,7 @@ stages:
   - bindings
   - test
   - deploy
-  - brew_deploy
+  - release
 
 .conanbuild:
   stage: build
@@ -98,21 +98,36 @@ mac_os:
     - mac-mini-runner
 
 wasm:
-  image: docker.slock.it/build-images/cmake:clang9
+  image: docker.slock.it/build-images/cmake:clang10
   stage: bindings
   tags:
     - short-jobs
   script:
     - mkdir wasm_build
     - cd wasm_build
-    - emconfigure cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
-    - make
-    - cd bin && ../../scripts/merge_wasm.sh ../../src/bindings/wasm
+    - emconfigure cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - make -j8
 
   artifacts:
     paths:
       - wasm_build/module
       - wasm_build/bin
+
+asmjs:
+  image: docker.slock.it/build-images/cmake:clang10
+  stage: bindings
+  tags:
+    - short-jobs
+  script:
+    - mkdir asmjs_build
+    - cd asmjs_build
+    - emconfigure cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - make -j8
+
+  artifacts:
+    paths:
+      - asmjs_build/module
+      - asmjs_build/bin
 
 java:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -139,7 +154,35 @@ java:
 
 # ##### test ######
 
-c_tests:
+coverage:
+  stage: test
+  image: silkeh/clang:dev
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build; cd _build
+    - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+    - make -j8 &&  make ccov-all && make ccov-all-report
+  artifacts:
+    paths:
+      - _build/ccov/all-merged
+
+analyse:
+  stage: test
+  image: docker.slock.it/build-images/cmake:clang9
+  allow_failure: false
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - scan-build-9 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-9 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
+  artifacts:
+    paths:
+      - report
+
+test_c:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
   tags:
@@ -155,7 +198,7 @@ c_tests:
       - testbuild/test
       - Testing
 
-evm_tests:
+test_evm:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
   tags:
@@ -169,6 +212,34 @@ evm_tests:
     - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
     - cd ../vmTests
     - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+
+test_wasm:
+  image: docker.slock.it/build-images/node:10-alpine
+  dependencies:
+    - wasm
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mv wasm_build build
+    - cd test/bindings/wasm
+    - sh /prepare.sh
+    - npm install
+    - npm test
+
+test_asmjs:
+  image: docker.slock.it/build-images/node:10-alpine
+  dependencies:
+    - asmjs
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mv asmjs_build build
+    - cd test/bindings/wasm
+    - sh /prepare.sh
+    - npm install
+    - npm test
 
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -247,7 +318,7 @@ docker:
     - short-jobs
   services:
     - docker:dind
-  image: jonaskello/docker-and-compose:latest
+  image: docker.slock.it/build-images/deployment
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build -t $COMMIT_IMAGE_TAG .
@@ -266,7 +337,7 @@ dockerhub-deploy:
   when: manual
   services:
     - docker:dind
-  image: jonaskello/docker-and-compose:latest
+  image: docker.slock.it/build-images/deployment
   variables:
     IMAGE_TAG: slockit/in3:$CI_COMMIT_TAG
   before_script:
@@ -313,6 +384,41 @@ wasm-public-npm:
     - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
     - npm publish --registry https://registry.npmjs.org
 
+asmjs-slockit-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: deploy
+  tags:
+    - short-jobs
+  only: # deploy only on  semantic versions tags
+    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
+  except:
+    - branches
+  dependencies:
+    - asmjs
+  script:
+    - sh /prepare.sh
+    - cd asmjs_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish
+
+asmjs-public-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: deploy
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  except:
+    - branches
+  when: manual
+  dependencies:
+    - asmjs
+  script:
+    - sh /prepare.sh
+    - cd asmjs_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish --registry https://registry.npmjs.org
+
 readthedocs:
   image: docker.slock.it/build-images/doc:readthedocs
   stage: test
@@ -347,23 +453,30 @@ release_mac_and_wasm:
     - gcc8
     - readthedocs
     - wasm
+    - asmjs
   script:
-    - mkdir in3
-    - cd in3
+    - mkdir in3-mac-wasm
+    - cd in3-mac-wasm
     - cp -r ../mac_build/bin .
     - cp -r ../mac_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js
+    - cp -r ../wasm_build/module js-wasm
+    - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3/
+    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/js-wasm --exclude=in3-mac-wasm/js-asmjs --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
+    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/bin --exclude=in3/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3/
+    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
+    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
+    - echo "Mac release:" $IPFS_HASH >> in3-mac-wasm/mac_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_wasm.tar.gz
-    - cd in3
+    - cd in3-mac-wasm
   artifacts:
     paths:
-      - in3
+      - in3-mac-wasm
 
 release_x64:
   stage: deploy
@@ -374,26 +487,31 @@ release_x64:
     - gcc8
     - readthedocs
     - wasm
+    - asmjs
   only:
     - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
     - branches
   when: manual
   script:
-    - mkdir in3
-    - cd in3
+    - mkdir in3-x64
+    - cd in3-x64
     - cp -r ../x64_build/bin .
     - cp -r ../x64_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js
+    - cp -r ../wasm_build/module js-wasm
+    - cp -r ../asmjs_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3/
+    - tar -zcv --exclude=in3-x64/src --exclude=in3-x64/include --exclude=in3-x64/js-asmjs --exclude=in3-x64/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x64.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
+    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
+    - echo "x64 release:" $IPFS_HASH >> in3-x64/x64_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_x64.tar.gz
-    - cd in3
+    - cd in3-x64
   artifacts:
     paths:
-      - in3
+      - in3-x64
 
 release_x86:
   stage: deploy
@@ -410,21 +528,26 @@ release_x86:
     - gcc8-x86
     - readthedocs
     - wasm
+    - asmjs
   script:
-    - mkdir in3
-    - cd in3
+    - mkdir in3-x86
+    - cd in3-x86
     - cp -r ../x86_build/bin .
     - cp -r ../x86_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js
+    - cp -r ../wasm_build/module js-wasm
+    - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3/
+    - tar -zcv --exclude=in3-x86/src --exclude=in3-x86/include --exclude=in3-x86/js-asmjs --exclude=in3-x86/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x86.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_x86.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
+    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
+    - echo "x86 release:" $IPFS_HASH >> in3-x86/x86_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_x86.tar.gz
-    - cd in3
+    - cd in3-x86
   artifacts:
     paths:
-      - in3
+      - in3-x86
 
 release_arm7:
   stage: deploy
@@ -441,22 +564,27 @@ release_arm7:
     - arm7
     - readthedocs
     - wasm
+    - asmjs
   script:
-    - mkdir in3
-    - cd in3
+    - mkdir in3-arm7
+    - cd in3-arm7
     - mkdir doc
     - cp -r ../arm7_build/bin .
     - cp -r ../arm7_build/lib .
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js
+    - cp -r ../wasm_build/module js-wasm
+    - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3/
+    - tar -zcv --exclude=in3-arm7/src --exclude=in3-arm7/include --exclude=in3-arm7/js-asmjs --exclude=in3-arm7/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_arm7.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_arm7.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
+    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
+    - echo "arm7 release:" $IPFS_HASH >> in3-arm7/arm7_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_arm7.tar.gz
-    - cd in3
+    - cd in3-arm7
   artifacts:
     paths:
-      - in3
+      - in3-arm7
 
 release_win:
   stage: deploy
@@ -473,9 +601,10 @@ release_win:
     - win_mingw
     - readthedocs
     - wasm
+    - asmjs
   script:
-    - mkdir in3
-    - cd in3
+    - mkdir in3-win
+    - cd in3-win
     - mkdir doc
     - cp -r ../win_build/bin .
     - cp -r ../win_build/lib .
@@ -485,14 +614,18 @@ release_win:
     - mv lib/libin3.so lib/in3.dll
     - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js
+    - cp -r ../wasm_build/module js-wasm
+    - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3/src --exclude=in3/include --exclude=in3/js --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3/
+    - tar -zcv --exclude=in3-win/src --exclude=in3-win/include --exclude=in3-win/js-asmjs --exclude=in3-win/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
+    - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_windows.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_windows.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
+    - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
+    - echo "windows release:" $IPFS_HASH >> in3-win/win_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_windows.tar.gz
-    - cd in3
+    - cd in3-win
   artifacts:
     paths:
-      - in3
+      - in3-win
 
 pages:
   stage: deploy
@@ -518,8 +651,8 @@ pages:
   tags:
     - short-jobs
   dependencies:
-    - c_tests
-    - evm_tests
+    - test_c
+    - test_evm
     - java_arm
     - examples_arm
     - examples_linux
@@ -578,8 +711,8 @@ debian_package_deploy_disco:
   tags:
     - short-jobs
   dependencies:
-    - c_tests
-    - evm_tests
+    - test_c
+    - test_evm
     - java_arm
     - examples_arm
     - examples_linux
@@ -633,7 +766,7 @@ debian__dev_package_deploy_disco:
     - branches
 
 brew_release:
-  stage: brew_deploy
+  stage: release
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
@@ -658,3 +791,27 @@ brew_release:
     - git add in3.rb
     - git commit -m "updated version and hash"
     - git push https://${GITHUB_USER_NAME}:${GITHUB_TOKEN}@github.com/slockit/homebrew-in3.git --all
+
+github_body_release:
+  stage: release
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  except:
+    - branches
+  when: manual
+  dependencies:
+    - release_mac_and_wasm
+    - release_x64
+    - release_x86
+    - release_arm7
+    - release_win
+  script:
+    - cat in3-mac-wasm/mac_release_ipfs_hash.txt >> release_ipfs_hash.txt
+    - cat in3-x64/x64_release_ipfs_hash.txt >> release_ipfs_hash.txt
+    - cat in3-x86/x86_release_ipfs_hash.txt >> release_ipfs_hash.txt
+    - cat in3-arm7/arm7_release_ipfs_hash.txt >> release_ipfs_hash.txt
+    - cat in3-win/win_release_ipfs_hash.txt >> release_ipfs_hash.txt
+    - ghr -u slockIt -r in3-c -b "$(cat release_ipfs_hash.txt)" $CI_COMMIT_TAG release_ipfs_hash.txt

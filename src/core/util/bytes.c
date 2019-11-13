@@ -118,17 +118,17 @@ uint8_t b_read_byte(bytes_t* b, size_t* pos) {
   return val;
 }
 uint16_t b_read_short(bytes_t* b, size_t* pos) {
-  uint16_t val = *(uint16_t*) (b->data + *pos);
+  uint16_t val = (uint16_t) bytes_to_int(b->data + *pos, 2);
   *pos += 2;
   return val;
 }
 uint32_t b_read_int(bytes_t* b, size_t* pos) {
-  uint32_t val = *(uint32_t*) (b->data + *pos);
+  uint32_t val = (uint32_t) bytes_to_int(b->data + *pos, 4);
   *pos += 4;
   return val;
 }
 uint64_t b_read_long(bytes_t* b, size_t* pos) {
-  uint64_t val = *(uint64_t*) (b->data + *pos);
+  uint64_t val = bytes_to_long(b->data + *pos, 8);
   *pos += 8;
   return val;
 }
@@ -207,7 +207,7 @@ void bb_write_chars(bytes_builder_t* bb, char* c, int len) {
 }
 void bb_write_dyn_bytes(bytes_builder_t* bb, bytes_t* src) {
   bb_check_size(bb, src->len + 4);
-  *(uint32_t*) (bb->b.data + bb->b.len) = src->len;
+  int_to_bytes(src->len, bb->b.data + bb->b.len);
   memcpy(bb->b.data + bb->b.len + 4, src->data, src->len);
   bb->b.len += src->len + 4;
 }
@@ -223,17 +223,19 @@ void bb_write_raw_bytes(bytes_builder_t* bb, void* ptr, size_t len) {
 }
 void bb_write_int(bytes_builder_t* bb, uint32_t val) {
   bb_check_size(bb, 4);
-  *(uint32_t*) (bb->b.data + bb->b.len) = val;
+  int_to_bytes(val, bb->b.data + bb->b.len);
   bb->b.len += 4;
 }
 void bb_write_long(bytes_builder_t* bb, uint64_t val) {
   bb_check_size(bb, 8);
-  *(uint64_t*) (bb->b.data + bb->b.len) = val;
+  long_to_bytes(val, bb->b.data + bb->b.len);
   bb->b.len += 8;
 }
 void bb_write_short(bytes_builder_t* bb, uint16_t val) {
   bb_check_size(bb, 2);
-  *(uint16_t*) (bb->b.data + bb->b.len) = val;
+  uint8_t* dst = bb->b.data + bb->b.len;
+  *(dst)       = val >> 8 & 0xFF;
+  *(dst + 1)   = val & 0xFF;
   bb->b.len += 2;
 }
 

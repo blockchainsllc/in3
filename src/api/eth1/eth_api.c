@@ -448,7 +448,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
       }
     }
 
-    if ((res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
+    if (res >= 0 && (res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
     free_json(in_data);
   }
   if (res >= 0) {
@@ -557,8 +557,11 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
         *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           eth_block_t* blk = eth_getBlockByNumber(in3, BLKNUM(i), false);
-          memcpy((*block_hashes)[j], blk->hash, 32);
-          free(blk);
+          if (blk) {
+            memcpy((*block_hashes)[j], blk->hash, 32);
+            free(blk);
+          } else
+            return IN3_EFIND;
         }
         f->last_block = blkno;
         return (int) blkcount;
@@ -761,4 +764,21 @@ bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
   rpc_init;
   params_add_bytes(params, data);
   rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup(d_bytes(result)));
+}
+
+in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]) {
+  char tmp[64], msg[41], *hexadr;
+  int  p = chain_id ? sprintf(tmp, "%i0x", (uint32_t) chain_id) : 0;
+  bytes_to_hex(adr, 20, tmp + p);
+  bytes_t hash_data = bytes((uint8_t*) tmp, p + 40);
+  hexadr            = tmp + p;
+  bytes32_t hash;
+  sha3_to(&hash_data, hash);
+  bytes_to_hex(hash, 20, msg);
+  out[0]  = '0';
+  out[1]  = 'x';
+  out[42] = 0;
+  for (int i = 0; i < 40; i++)
+    out[i + 2] = strtohex(msg[i]) >= 8 ? (hexadr[i] > 0x60 ? (hexadr[i] - 0x20) : hexadr[i]) : hexadr[i];
+  return IN3_OK;
 }

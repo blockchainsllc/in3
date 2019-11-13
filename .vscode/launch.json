@@ -5,6 +5,61 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "node",
+            "request": "launch",
+            "name": "test.js",
+            "program": "${workspaceFolder}/test.js"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run test",
+            "program": "${workspaceFolder}/build/test/runner",
+            "args": [
+                "../test/testdata/requests/eth_getTransactionReceipt.json",
+                "-t",
+                "1"
+            ],
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run abi test",
+            "program": "${workspaceFolder}/build/test/test_abi",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch wasm test",
+            "program": "${workspaceFolder}/test/bindings/wasm/testRunner.js",
+            "args": [
+                "../../testdata/requests/eth_getCode.json",
+                "-t",
+                "11"
+            ],
+            "cwd": "${workspaceFolder}/test/bindings/wasm"
+        },
+        {
+            "type": "node",
+            "protocol": "inspector",
+            "showAsyncStacks": true,
+            "request": "launch",
+            "name": "Mocha Tests",
+            "program": "${workspaceFolder}/test/bindings/wasm/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-u",
+                "tdd",
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/test/bindings/wasm/testRunner.js"
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "cwd": "${workspaceFolder}/test/bindings/wasm"
+        },
+        {
             "type": "java",
             "name": "CodeLens (Launch) - IN3",
             "request": "launch",
@@ -106,13 +161,16 @@
             "args": [
                 "-t",
                 "1",
-                "../test/testdata/requests/in3_nodeList.json"
+                "../test/testdata/requests/in3_getBlockByNumber.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "lldb"
+            "MIMode": "lldb",
+            "logging": {
+                "trace": true
+            }
         },
         {
             "name": "java",

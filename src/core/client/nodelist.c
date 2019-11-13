@@ -43,6 +43,7 @@
 #include "keys.h"
 #include "send.h"
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 #ifdef __TEST__
@@ -149,6 +150,34 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
 
 static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   in3_ret_t res = IN3_OK;
+
+  // is there a useable required ctx?
+  in3_ctx_t* ctx = in3_find_required(parent_ctx, "in3_nodeList");
+
+  if (ctx)
+    switch (in3_ctx_state(ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
+      case CTX_WAITING_FOR_REQUIRED_CTX:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+      case CTX_SUCCESS: {
+
+        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+        if (r) {
+          // we have a result....
+          res = in3_client_fill_chain(chain, ctx, r);
+          if (res < 0)
+            return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
+          else if (c->cacheStorage)
+            in3_cache_store_nodelist(ctx, chain);
+          in3_remove_required(parent_ctx, ctx);
+          return IN3_OK;
+        } else
+          return ctx_set_error(parent_ctx, "Error updating node_list", ctx_check_response_error(ctx, 0));
+      }
+    }
+
   in3_log_debug("update the nodelist...\n");
 
   // create random seed
@@ -156,44 +185,25 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
 
   // create request
-  char req[2000];
+  char* req = _malloc(300);
   sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->nodeLimit, seed);
 
   // new client
-  in3_ctx_t* ctx = new_ctx(c, req);
-  if (ctx->error)
-    res = ctx_set_error(parent_ctx, ctx->error, IN3_ERPC);
-  else {
-    res = in3_send_ctx(ctx);
-    if (res >= 0) {
-      d_token_t* r = d_get(ctx->responses[0], K_RESULT);
-      if (r) {
-        // we have a result....
-        res = in3_client_fill_chain(chain, ctx, r);
-        if (res < 0)
-          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
-      } else if (ctx->error)
-        res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
-      else if ((r = d_get(ctx->responses[0], K_ERROR))) {
-        if (d_type(r) == T_OBJECT) {
-          str_range_t s = d_to_json(r);
-          strncpy(req, s.data, s.len);
-          req[s.len] = '\0';
-          res        = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, IN3_ERPC));
-        } else
-          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, d_string(r), IN3_ERPC));
-      } else
-        res = ctx_set_error(parent_ctx, "Error updating node_list without any result", IN3_ERPCNRES);
-    } else if (ctx->error)
-      res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
-    else
-      res = ctx_set_error(parent_ctx, "Error updating node_list without any result", IN3_ERPCNRES);
-  }
+  return in3_add_required(parent_ctx, ctx = new_ctx(c, req));
+}
 
-  if (res >= 0 && c->cacheStorage)
-    in3_cache_store_nodelist(ctx, chain);
-  free_ctx(ctx);
-  return res;
+in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
+  in3_ctx_t ctx;
+  memset(&ctx, 0, sizeof(ctx));
+  chain->needsUpdate = false;
+
+  in3_ret_t ret = update_nodelist(c, chain, &ctx);
+  if (ret == IN3_WAITING && ctx.required) {
+    ret = in3_send_ctx(ctx.required);
+    if (ret) return ret;
+    return update_nodelist(c, chain, &ctx);
+  }
+  return ret;
 }
 
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
@@ -236,7 +246,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
     if (chain->chainId == chain_id) {
-      if (chain->needsUpdate || update) {
+      if (chain->needsUpdate || update || in3_find_required(ctx, "in3_nodeList")) {
         chain->needsUpdate = false;
         // now update the nodeList
         res = update_nodelist(c, chain, ctx);

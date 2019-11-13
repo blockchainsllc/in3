@@ -88,6 +88,7 @@ void trie_free(trie_t* val) {
 }
 
 static void free_node(trie_node_t* n) {
+  if (!n) return;
   if (n->own_memory) {
     // check if the node has a hash assigned. In this case it is stored and we be cleaned up later.
     int      l = 0;
@@ -182,7 +183,7 @@ static int trie_node_value_from_nibbles(trie_node_type_t type, uint8_t* val, byt
 
   int      l = nibble_len(val), i, n, odd = l % 2;
   uint32_t blen = 1 + (l - odd) / 2;
-  if (dst->len < blen) {
+  if (dst->len < blen || !dst->data) {
     if (dst->data) _free(dst->data);
     dst->data = _malloc(blen);
   }
@@ -412,7 +413,7 @@ void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
   memcpy(t->root, root, 32);
 }
 
-#ifdef TEST
+#ifdef TRIETEST
 static void hexprint(uint8_t* a, int l) {
   (void) a; // unused param if compiled without debug
   int i;

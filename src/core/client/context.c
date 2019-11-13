@@ -56,18 +56,17 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
       return c;
     }
 
-    int        i;
-    d_token_t* t = NULL;
-
     if (d_type(c->request_context->result) == T_OBJECT) {
       // it is a single result
       c->requests    = _malloc(sizeof(d_type_t*));
       c->requests[0] = c->request_context->result;
       c->len         = 1;
     } else if (d_type(c->request_context->result) == T_ARRAY) {
-      c->len      = d_len(c->request_context->result);
-      c->requests = _malloc(sizeof(d_type_t*) * c->len);
-      for (i = 0, t = c->request_context->result + 1; i < c->len; i++, t = d_next(t))
+      // we have an array, so we need to store the request-data as array
+      d_token_t* t = c->request_context->result + 1;
+      c->len       = d_len(c->request_context->result);
+      c->requests  = _malloc(sizeof(d_type_t*) * c->len);
+      for (int i = 0; i < c->len; i++, t = d_next(t))
         c->requests[i] = t;
     } else
       ctx_set_error(c, "The Request is not a valid structure!", IN3_EINVAL);
@@ -86,10 +85,8 @@ in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
   d_track_keynames(1);
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
   d_track_keynames(0);
-  if (!ctx->response_context) {
-    // printf("\nresponse: %s\n", response_data);
+  if (!ctx->response_context)
     return ctx_set_error(ctx, "Error parsing the JSON-response!", IN3_EINVALDT);
-  }
 
   if (d_type(ctx->response_context->result) == T_OBJECT) {
     // it is a single result
@@ -106,33 +103,6 @@ in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
     return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
 
   return IN3_OK;
-}
-
-void free_ctx(in3_ctx_t* ctx) {
-  int i;
-  if (ctx->error) _free(ctx->error);
-  free_ctx_nodes(ctx->nodes);
-  if (ctx->response_context) {
-    //if (ctx->response_context->allocated)
-    _free(ctx->response_context->c);
-    free_json(ctx->response_context);
-  }
-  if (ctx->request_context)
-    free_json(ctx->request_context);
-
-  if (ctx->requests) _free(ctx->requests);
-  if (ctx->responses) _free(ctx->responses);
-  if (ctx->requests_configs) {
-    for (i = 0; i < ctx->len; i++) {
-      if (ctx->requests_configs[i].signaturesCount)
-        _free(ctx->requests_configs[i].signatures);
-    }
-    _free(ctx->requests_configs);
-  }
-  if (ctx->cache)
-    in3_cache_free(ctx->cache);
-
-  _free(ctx);
 }
 
 static unsigned long counter = 1;
@@ -175,7 +145,7 @@ in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
       // add in3
       //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"0x%x\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
+      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"%s\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
       if (rc->clientSignature)
         sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
       if (rc->finality)
@@ -206,7 +176,23 @@ in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
   return IN3_OK;
 }
 
+in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
+  d_token_t* r = d_get(c->responses[i], K_ERROR);
+  if (!r)
+    return IN3_OK;
+  else if (d_type(r) == T_OBJECT) {
+    str_range_t s = d_to_json(r);
+    char        req[s.len + 1];
+    strncpy(req, s.data, s.len);
+    req[s.len] = '\0';
+    return ctx_set_error(c, req, IN3_ERPC);
+  } else
+    return ctx_set_error(c, d_string(r), IN3_ERPC);
+}
+
 in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
+  // if this is just waiting, it is not an error!
+  if (errnumber == IN3_WAITING) return errnumber;
   int   l   = strlen(msg);
   char* dst = NULL;
   if (c->error) {

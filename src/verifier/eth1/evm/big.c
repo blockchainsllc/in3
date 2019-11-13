@@ -85,7 +85,7 @@ int big_signed(uint8_t* val, wlen_t len, uint8_t* dst) {
 }
 
 void big_shift_left(uint8_t* a, wlen_t len, int bits) {
-  wlen_t        r     = bits % 8;
+  wlen_t        r;
   uint_fast16_t carry = 0;
   int           i;
   if ((r = bits % 8)) {
@@ -101,7 +101,7 @@ void big_shift_left(uint8_t* a, wlen_t len, int bits) {
 }
 
 void big_shift_right(uint8_t* a, wlen_t len, int bits) {
-  wlen_t        r     = bits % 8;
+  wlen_t        r;
   uint_fast16_t carry = 0;
   int           i;
   if ((r = bits % 8)) {
@@ -473,7 +473,7 @@ int big_div(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* r
 }
 
 int big_mod(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* res) {
-  wlen_t  l, l2;
+  wlen_t  l = 0, l2;
   uint8_t tmp[65];
 
   optimize_len(a, la);

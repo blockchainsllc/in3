@@ -202,6 +202,7 @@ bool filter_remove(in3_t* in3, size_t id) {
   // We don't realloc the array here, instead we simply set this slot to NULL to indicate
   // that it has been removed and reuse it in add_filter()
   in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f) return false;
   f->release(f);
   in3->filters->array[id - 1] = NULL;
   return true;
@@ -228,23 +229,27 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   char*         fopt = f->options;
   switch (f->type) {
     case FILTER_EVENT: {
-      char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block);
-      sb_t* params = sb_new("[");
-      sb_add_chars(params, fopt_);
-      ctx_ = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
-      sb_free(params);
-      _free(fopt_);
-      if ((res = ctx_get_error(ctx_, 0)) != IN3_OK) {
-        ctx_set_error(ctx, ctx_->error, res);
+      if (f->last_block > blkno) {
+        sb_add_chars(result, "[]");
+      } else {
+        sb_t* params = sb_new("[");
+        char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block);
+        sb_add_chars(params, fopt_);
+        ctx_ = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
+        sb_free(params);
+        _free(fopt_);
+        if ((res = ctx_get_error(ctx_, 0)) != IN3_OK) {
+          ctx_set_error(ctx, ctx_->error, res);
+          free_ctx(ctx_);
+          return ctx_set_error(ctx, "internal error, call to eth_getLogs failed", res);
+        }
+        d_token_t* r  = d_get(ctx_->responses[0], K_RESULT);
+        char*      jr = d_create_json(r);
+        sb_add_chars(result, jr);
+        _free(jr);
         free_ctx(ctx_);
-        return ctx_set_error(ctx, "internal error, call to eth_getLogs failed", res);
+        f->last_block = blkno + 1;
       }
-      d_token_t* r  = d_get(ctx_->responses[0], K_RESULT);
-      char*      jr = d_create_json(r);
-      sb_add_chars(result, jr);
-      _free(jr);
-      free_ctx(ctx_);
-      f->last_block = blkno + 1;
       return IN3_OK;
     }
     case FILTER_BLOCK:

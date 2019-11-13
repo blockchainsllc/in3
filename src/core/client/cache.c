@@ -70,7 +70,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     size_t p = 0;
 
     // version check
-    if (b_read_byte(b, &p) != 1) {
+    if (b_read_byte(b, &p) != 2) {
       b_free(b);
       return IN3_EVERS;
     }
@@ -107,7 +107,7 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
 
   // write to bytes_buffer
   bytes_builder_t* bb = bb_new();
-  bb_write_byte(bb, 1);                      // Version flag
+  bb_write_byte(bb, 2);                      // Version flag
   bb_write_fixed_bytes(bb, chain->contract); // 20 bytes fixed
   bb_write_long(bb, chain->lastBlock);
   bb_write_int(bb, chain->nodeListLength);

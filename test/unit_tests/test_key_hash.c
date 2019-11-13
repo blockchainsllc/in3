@@ -36,12 +36,12 @@
 #define TEST
 #endif
 
-#include "../src/core/util/data.h"
-#include "../src/core/util/mem.h"
+#include "../../src/core/util/data.h"
+#include "../../src/core/util/mem.h"
 #include <stdio.h>
 #include <string.h>
 
-#include "test_utils.h"
+#include "../test_utils.h"
 
 static void test_key_hash_collisions();
 

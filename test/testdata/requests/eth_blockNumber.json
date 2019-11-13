@@ -1,0 +1,35 @@
+[
+  {
+    "descr": "blockNumber",
+    "chainId": "0x1",
+    "verification": "proof",
+    "binaryFormat": false,
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "eth_blockNumber",
+      "params": [],
+      "in3": {
+        "version": "2.0.0",
+        "chainId": "0x1",
+        "verification": "proof"
+      }
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x8642eb",
+        "in3": {
+          "lastValidatorChange": 0,
+          "lastNodeList": 8669495,
+          "execTime": 59,
+          "rpcTime": 59,
+          "rpcCount": 1,
+          "currentBlock": 8798955,
+          "version": "2.0.0"
+        }
+      }
+    ]
+  }
+]

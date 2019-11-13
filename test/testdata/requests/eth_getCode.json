@@ -48,7 +48,7 @@
         ]
     },
     {
-        "descr": " get code on mainnet",
+        "descr": " get code on mainnet 1",
         "fuzzer": true,
         "verification": "proof",
         "request": {
@@ -96,7 +96,7 @@
         ]
     },
     {
-        "descr": " get code on mainnet",
+        "descr": " get code on mainnet 2",
         "fuzzer": true,
         "verification": "proof",
         "request": {
