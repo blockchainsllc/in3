@@ -53,6 +53,8 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/keys.h"
+#include "../../core/client/send.h"
 #include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
@@ -217,7 +219,60 @@ char* get_wei(char* val) {
   }
   return res;
 }
+static void execute(in3_t* c, FILE* f) {
+  if (feof(f)) die("no data");
+  sb_t* sb    = sb_new(NULL);
+  char  first = 0, stop = 0;
+  int   level = 0, d = 0;
+  while (1) {
+    d = fgetc(f);
+    if (d == EOF) {
+      if (first)
+        die("Invalid json-data from stdin");
+      else
+        exit(EXIT_SUCCESS);
+    }
+    if (first == 0) {
+      if (d == '{')
+        stop = '}';
+      else if (d == '[')
+        stop = ']';
+      else
+        continue;
+      first = d;
+    }
 
+    sb_add_char(sb, (char) d);
+    if (d == first) level++;
+    if (d == stop) level--;
+    if (level == 0) {
+      // time to execute
+      in3_ctx_t* ctx = new_ctx(c, sb->data);
+      in3_ret_t  ret = in3_send_ctx(ctx);
+      uint32_t   id  = d_get_intk(ctx->responses[0], K_ID);
+      if (ctx->error) {
+        for (char* x = ctx->error; *x; x++) {
+          if (*x == '\n') *x = ' ';
+        }
+      }
+
+      if (ret == IN3_OK) {
+        d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+        d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+        char*      r      = d_create_json(result ? result : error);
+        if (result)
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
+        else
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
+        _free(r);
+      } else
+        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+      free_ctx(ctx);
+      first   = 0;
+      sb->len = 0;
+    }
+  }
+}
 // read data from a file and return the bytes
 bytes_t readFile(FILE* f) {
   if (!f) die("Could not read the input file");
@@ -429,12 +484,12 @@ static in3_ret_t test_transport(in3_request_t* req) {
 
 int main(int argc, char* argv[]) {
   // check for usage
-  if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
+  if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
     return 0;
   }
 
-  if (argc < 2 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
+  if (argc >= 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0)) {
     printf("in3 " IN3_VERSION "\nbuild " __DATE__ " with");
 #ifdef TEST
     printf(" -DTEST=true");
@@ -472,7 +527,7 @@ int main(int argc, char* argv[]) {
   storage_handler.set_item = storage_set_item;
 
   // we want to verify all
-  in3_register_eth_full();
+  in3_register_eth_api();
   in3_log_set_level(LOG_INFO);
 
   // create the client
@@ -602,7 +657,7 @@ int main(int argc, char* argv[]) {
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,
-                       (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
+                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
                        argv[i]);
@@ -631,7 +686,7 @@ int main(int argc, char* argv[]) {
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
-  if (!method) die("you need to specify a method to call");
+  if (!method) execute(c, stdin);
   if (*method == '-') die("unknown option");
 
   // call -> eth_call
