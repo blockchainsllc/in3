@@ -68,5 +68,8 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes);
  * forces the client to update the nodelist
  */
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain);
+// weights
+void free_ctx_nodes(node_weight_t* c);
+int  ctx_nodes_len(node_weight_t* root);
 
 #endif

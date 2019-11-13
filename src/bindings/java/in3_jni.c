@@ -38,7 +38,6 @@
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/send.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"

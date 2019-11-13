@@ -49,6 +49,7 @@
 //static char* ctx_name(in3_ctx_t* ctx) {
 //  return d_get_stringk(ctx->requests[0], K_METHOD);
 //}
+
 static void free_response(in3_ctx_t* ctx) {
   if (ctx->error) _free(ctx->error);
   if (ctx->nodes) {
@@ -144,6 +145,104 @@ static void free_urls(char** urls, int len, uint8_t free_items) {
     for (int i = 0; i < len; i++) _free(urls[i]);
   }
   _free(urls);
+}
+
+static unsigned long counter = 1;
+
+static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
+  int        i;
+  d_token_t *r, *t;
+  char       temp[100];
+  sb_add_char(sb, '[');
+
+  for (i = 0; i < c->len; i++) {
+    if (i > 0) sb_add_char(sb, ',');
+    sb_add_char(sb, '{');
+    r = c->requests[i];
+    if ((t = d_get(r, K_ID)) == NULL)
+      sb_add_key_value(sb, "id", temp, sprintf(temp, "%lu", counter++), false);
+    else if (d_type(t) == T_INTEGER)
+      sb_add_key_value(sb, "id", temp, sprintf(temp, "%i", d_int(t)), false);
+    else
+      sb_add_key_value(sb, "id", d_string(t), d_len(t), true);
+    sb_add_char(sb, ',');
+    sb_add_key_value(sb, "jsonrpc", "2.0", 3, true);
+    sb_add_char(sb, ',');
+    if ((t = d_get(r, K_METHOD)) == NULL)
+      return ctx_set_error(c, "missing method-property in request", IN3_EINVAL);
+    else
+      sb_add_key_value(sb, "method", d_string(t), d_len(t), true);
+    sb_add_char(sb, ',');
+    if ((t = d_get(r, K_PARAMS)) == NULL)
+      sb_add_key_value(sb, "params", "[]", 2, false);
+    else {
+      //TODO this only works with JSON!!!!
+      str_range_t ps = d_to_json(t);
+      sb_add_key_value(sb, "params", ps.data, ps.len, false);
+    }
+
+    in3_request_config_t* rc = c->requests_configs + i;
+    if (rc->verification != VERIFICATION_NEVER) {
+      sb_add_char(sb, ',');
+
+      // add in3
+      //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
+      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"%s\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
+      if (rc->clientSignature)
+        sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
+      if (rc->finality)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
+      if (rc->includeCode)
+        sb_add_chars(sb, ",\"includeCode\":true");
+      if (rc->latestBlock)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
+      if (rc->signaturesCount)
+        sb_add_bytes(sb, ",\"signatures\":", rc->signatures, rc->signaturesCount, true);
+      if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
+        sb_add_chars(sb, ",\"includeCode\":true");
+      if (rc->useFullProof)
+        sb_add_chars(sb, ",\"useFullProof\":true");
+      if (rc->useBinary)
+        sb_add_chars(sb, ",\"useBinary\":true");
+      if (rc->verification == VERIFICATION_PROOF)
+        sb_add_chars(sb, ",\"verification\":\"proof\"");
+      else if (rc->verification == VERIFICATION_PROOF_WITH_SIGNATURE)
+        sb_add_chars(sb, ",\"verification\":\"proofWithSignature\"");
+      if (rc->verifiedHashesCount)
+        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verifiedHashes, rc->verifiedHashesCount, true);
+      sb_add_range(sb, "}}", 0, 2);
+    } else
+      sb_add_char(sb, '}');
+  }
+  sb_add_char(sb, ']');
+  return IN3_OK;
+}
+
+static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
+  int        i;
+  d_token_t* t = NULL;
+
+  d_track_keynames(1);
+  ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
+  d_track_keynames(0);
+  if (!ctx->response_context)
+    return ctx_set_error(ctx, "Error parsing the JSON-response!", IN3_EINVALDT);
+
+  if (d_type(ctx->response_context->result) == T_OBJECT) {
+    // it is a single result
+    ctx->responses    = _malloc(sizeof(d_token_t*));
+    ctx->responses[0] = ctx->response_context->result;
+    if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_EINVALDT);
+  } else if (d_type(ctx->response_context->result) == T_ARRAY) {
+    if (d_len(ctx->response_context->result) != ctx->len)
+      return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
+    ctx->responses = _malloc(sizeof(d_type_t*) * ctx->len);
+    for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
+      ctx->responses[i] = t;
+  } else
+    return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
+
+  return IN3_OK;
 }
 
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
@@ -344,7 +443,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   return ret;
 }
 
-in3_ctx_t* in3_find_required(in3_ctx_t* parent, char* method) {
+in3_ctx_t* ctx_find_required(in3_ctx_t* parent, char* method) {
   in3_ctx_t* p = parent->required;
   while (p) {
     if (!p->requests) continue;
@@ -355,14 +454,14 @@ in3_ctx_t* in3_find_required(in3_ctx_t* parent, char* method) {
   return NULL;
 }
 
-in3_ret_t in3_add_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
+in3_ret_t ctx_add_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
   //  printf(" ++ add required %s > %s\n", ctx_name(parent), ctx_name(ctx));
   ctx->required    = parent->required;
   parent->required = ctx;
   return in3_ctx_execute(ctx);
 }
 
-in3_ret_t in3_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
+in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
 
   in3_ctx_t* p = parent;
   while (p) {
@@ -418,7 +517,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       }
 
       // check chain_id
-      in3_chain_t* chain = find_chain(ctx->client, ctx->requests_configs->chainId);
+      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chainId);
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
       // find the verifier

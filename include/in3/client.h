@@ -442,7 +442,7 @@ in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
 /**
  * finds the chain-config for the given chain_id.
  */
-in3_chain_t* find_chain(in3_t* c, uint64_t chain_id);
+in3_chain_t* in3_find_chain(in3_t* c, uint64_t chain_id);
 
 /**
  * configures the clent based on a json-config.

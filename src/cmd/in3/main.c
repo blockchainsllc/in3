@@ -53,8 +53,8 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/context.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/send.h"
 #include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
