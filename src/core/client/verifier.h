@@ -68,6 +68,10 @@ typedef struct {
  * function to verify the result.
  */
 typedef in3_ret_t (*in3_verify)(in3_vctx_t* c);
+/**
+ * function which is called to fill the response before a request is triggered.
+ * This can be used to handle requests which don't need a node to response.
+ */
 typedef in3_ret_t (*in3_pre_handle)(in3_ctx_t* ctx, in3_response_t** response);
 
 typedef struct verifier {
