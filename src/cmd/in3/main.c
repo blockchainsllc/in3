@@ -691,7 +691,10 @@ int main(int argc, char* argv[]) {
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
-  if (!method) execute(c, stdin);
+  if (!method) {
+    execute(c, stdin);
+    return;
+  }
   if (*method == '-') die("unknown option");
 
   // call -> eth_call
