@@ -192,4 +192,7 @@ in3_ret_t   decrypt_key(d_token_t* key_data, char* password, bytes32_t dst); /**
 void        free_log(eth_log_t* log);                                        /**< Frees a eth_log_t object */
 void        free_tx_receipt(eth_tx_receipt_t* txr);                          /**< Frees a eth_tx_receipt_t object */
 
+// more helper
+in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]); /**< converts the given address to a checksum address. If chainId is passed, it will use the EIP1191 to include it as well. */
+void      in3_register_eth_api();
 #endif

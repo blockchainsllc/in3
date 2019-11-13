@@ -144,7 +144,10 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   // no result -> nothing to verify
   if (!vc->result) return IN3_OK;
-  if (!vc->proof) return vc_err(vc, "no proof");
+  if (!vc->proof) {
+    printf("Missing proof for %s\n", method);
+    return vc_err(vc, "no proof");
+  }
 
   // verify header
   bytes_t* header = d_get_bytesk(vc->proof, K_BLOCK);

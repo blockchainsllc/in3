@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-/** @file 
+/** 
  * storage handler storing cache in the home-dir/.in3
  */
 

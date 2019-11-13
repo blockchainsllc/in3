@@ -43,7 +43,7 @@ extern "C" {
 
 void add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
 
-in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result);
+in3_ret_t test_transport(in3_request_t* req);
 
 #ifdef __cplusplus
 }

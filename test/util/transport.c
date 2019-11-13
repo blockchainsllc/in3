@@ -43,20 +43,21 @@ void add_response(char* request_method, char* request_params, char* result, char
     responses = n;
 }
 
-in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t test_transport(in3_request_t* req) {
+  //  char** urls, int urls_len, char* payload, in3_response_t* result
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
-  json_ctx_t* r = parse_json(payload);
+  json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
-  d_token_t*  req    = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
-  str_range_t params = d_to_json(d_get(req, key("params")));
+  d_token_t*  request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  str_range_t params  = d_to_json(d_get(request, key("params")));
   char        p[params.len + 1];
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
-  TEST_ASSERT_EQUAL_STRING(responses->request_method, d_get_string(req, "method"));
+  TEST_ASSERT_EQUAL_STRING(responses->request_method, d_get_string(request, "method"));
   TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
   free_json(r);
 
-  sb_add_chars(&result->result, responses->response);
+  sb_add_chars(&req->results->result, responses->response);
   response_t* next = responses->next;
   free(responses->response);
   free(responses);

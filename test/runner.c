@@ -184,13 +184,13 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   }
 }
 
-static int send_mock(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static int send_mock(in3_request_t* req) {
   // printf("payload: %s\n",payload);
   int i;
-  for (i = 0; i < urls_len; i++)
+  for (i = 0; i < req->urls_len; i++)
     // rioght now we always add the same response
     // TODO later support array of responses.
-    sb_add_range(&(result + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
+    sb_add_range(&(req->results + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
 
   if (_tmp_response) {
     free(_tmp_response->data);

@@ -5,7 +5,12 @@
     "main": "in3.js",
     "author": "Simon Jentzsch",
     "license": "in3",
-    "devDependencies": {},
+    "scripts": {
+        "doc": "typedoc --includeDeclarations --ignoreCompilerErrors --mode file --excludeExternals --out doc in3.d.ts"
+    },
+    "devDependencies": {
+        "typedoc": "^0.15.0"
+    },
     "dependencies": {},
     "bugs": {
         "url": "https://github.com/slockit/in3/issues"

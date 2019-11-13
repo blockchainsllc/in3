@@ -32,6 +32,7 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+add_subdirectory(eth1/rpc)
 add_subdirectory(eth1/nano)
 add_subdirectory(eth1/basic)
 add_subdirectory(eth1/full)

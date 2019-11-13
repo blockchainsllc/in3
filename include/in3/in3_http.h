@@ -42,6 +42,18 @@
 
 #include "client.h"
 
-in3_ret_t send_http(char** urls, int urls_len, char* payload, in3_response_t* result);
+/**
+ * a very simple transport function, which allows to send http-requests without a dependency to curl.
+ * Here each request will be transformed to http instead of https.
+ * 
+ * You can use it by setting the transport-function-pointer in the in3_t->transport to this function:
+ * 
+ * ```c
+ * #include <in3/in3_http.h>
+ * ...
+ * c->transport = send_http;
+ * ```
+ */
+in3_ret_t send_http(in3_request_t* req);
 
 #endif // in3_http_h__

@@ -108,11 +108,20 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     // get the transaction-object
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
-    if (!ctx->client->signer) return ctx_set_error(ctx, "no signer set", IN3_EINVAL);
 
     // sign it.
     bytes_t raw = sign_tx(tx_params + 1, ctx);
-    if (!raw.len) return ctx_set_error(ctx, "error signing the transaction", IN3_EINVAL);
+    if (!raw.len) {
+      switch (in3_ctx_state(ctx->required)) {
+        case CTX_ERROR:
+          return IN3_EUNKNOWN;
+        case CTX_WAITING_FOR_REQUIRED_CTX:
+        case CTX_WAITING_FOR_RESPONSE:
+          return IN3_WAITING;
+        case CTX_SUCCESS:
+          return ctx_set_error(ctx, "error signing the transaction", IN3_EINVAL);
+      }
+    }
 
     // build the RPC-request
     uint64_t id = d_get_longk(req, K_ID);
@@ -143,6 +152,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
     ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) sb->data, sb->len));
+    _free(sb);
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)

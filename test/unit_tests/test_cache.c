@@ -50,7 +50,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static in3_ret_t test_transport(in3_request_t* req) {
   char* buffer = NULL;
   long  length;
   FILE* f = fopen("../test/testdata/requests/in3_nodeList.json", "r");
@@ -79,7 +79,7 @@ static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_re
   // now parse the json
   json_ctx_t* res  = parse_json(buffer);
   str_range_t json = d_to_json(d_get_at(d_get(d_get_at(res->result, 0), key("response")), 0));
-  sb_add_range(&result->result, json.data, 0, json.len);
+  sb_add_range(&req->results->result, json.data, 0, json.len);
   free_json(res);
   return IN3_OK;
 }

@@ -33,7 +33,7 @@
 ###############################################################################
 
 include_directories(. ../src)
-include(code-coverage.cmake)
+include(cmake/code-coverage.cmake)
 
 # handle codecoverage
 if (CODE_COVERAGE)
