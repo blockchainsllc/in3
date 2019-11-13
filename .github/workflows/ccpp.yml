@@ -23,22 +23,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: cmake
-      run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DCMAKE_BUILD_TYPE=Debug ..
+      run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DTRANSPORTS=falsde -DCMAKE_BUILD_TYPE=Debug ..
     - name: make
       run: cd build; make
     - name: test
       run: cd build; make test
-
-  test_win:
-
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v1
-    - name: cmake
-      run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DCMAKE_BUILD_TYPE=Debug ..
-    - name: make
-      run: cd build; make
-    - name: test
-      run: cd build; make test
-
