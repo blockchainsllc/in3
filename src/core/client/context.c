@@ -78,104 +78,6 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
   return c;
 }
 
-in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
-  int        i;
-  d_token_t* t = NULL;
-
-  d_track_keynames(1);
-  ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
-  d_track_keynames(0);
-  if (!ctx->response_context)
-    return ctx_set_error(ctx, "Error parsing the JSON-response!", IN3_EINVALDT);
-
-  if (d_type(ctx->response_context->result) == T_OBJECT) {
-    // it is a single result
-    ctx->responses    = _malloc(sizeof(d_token_t*));
-    ctx->responses[0] = ctx->response_context->result;
-    if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_EINVALDT);
-  } else if (d_type(ctx->response_context->result) == T_ARRAY) {
-    if (d_len(ctx->response_context->result) != ctx->len)
-      return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
-    ctx->responses = _malloc(sizeof(d_type_t*) * ctx->len);
-    for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
-      ctx->responses[i] = t;
-  } else
-    return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
-
-  return IN3_OK;
-}
-
-static unsigned long counter = 1;
-
-in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
-  int        i;
-  d_token_t *r, *t;
-  char       temp[100];
-  sb_add_char(sb, '[');
-
-  for (i = 0; i < c->len; i++) {
-    if (i > 0) sb_add_char(sb, ',');
-    sb_add_char(sb, '{');
-    r = c->requests[i];
-    if ((t = d_get(r, K_ID)) == NULL)
-      sb_add_key_value(sb, "id", temp, sprintf(temp, "%lu", counter++), false);
-    else if (d_type(t) == T_INTEGER)
-      sb_add_key_value(sb, "id", temp, sprintf(temp, "%i", d_int(t)), false);
-    else
-      sb_add_key_value(sb, "id", d_string(t), d_len(t), true);
-    sb_add_char(sb, ',');
-    sb_add_key_value(sb, "jsonrpc", "2.0", 3, true);
-    sb_add_char(sb, ',');
-    if ((t = d_get(r, K_METHOD)) == NULL)
-      return ctx_set_error(c, "missing method-property in request", IN3_EINVAL);
-    else
-      sb_add_key_value(sb, "method", d_string(t), d_len(t), true);
-    sb_add_char(sb, ',');
-    if ((t = d_get(r, K_PARAMS)) == NULL)
-      sb_add_key_value(sb, "params", "[]", 2, false);
-    else {
-      //TODO this only works with JSON!!!!
-      str_range_t ps = d_to_json(t);
-      sb_add_key_value(sb, "params", ps.data, ps.len, false);
-    }
-
-    in3_request_config_t* rc = c->requests_configs + i;
-    if (rc->verification != VERIFICATION_NEVER) {
-      sb_add_char(sb, ',');
-
-      // add in3
-      //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"%s\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
-      if (rc->clientSignature)
-        sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
-      if (rc->finality)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
-      if (rc->includeCode)
-        sb_add_chars(sb, ",\"includeCode\":true");
-      if (rc->latestBlock)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
-      if (rc->signaturesCount)
-        sb_add_bytes(sb, ",\"signatures\":", rc->signatures, rc->signaturesCount, true);
-      if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
-        sb_add_chars(sb, ",\"includeCode\":true");
-      if (rc->useFullProof)
-        sb_add_chars(sb, ",\"useFullProof\":true");
-      if (rc->useBinary)
-        sb_add_chars(sb, ",\"useBinary\":true");
-      if (rc->verification == VERIFICATION_PROOF)
-        sb_add_chars(sb, ",\"verification\":\"proof\"");
-      else if (rc->verification == VERIFICATION_PROOF_WITH_SIGNATURE)
-        sb_add_chars(sb, ",\"verification\":\"proofWithSignature\"");
-      if (rc->verifiedHashesCount)
-        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verifiedHashes, rc->verifiedHashesCount, true);
-      sb_add_range(sb, "}}", 0, 2);
-    } else
-      sb_add_char(sb, '}');
-  }
-  sb_add_char(sb, ']');
-  return IN3_OK;
-}
-
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
   d_token_t* r = d_get(c->responses[i], K_ERROR);
   if (!r)
@@ -229,13 +131,4 @@ int ctx_nodes_len(node_weight_t* c) {
     c = c->next;
   }
   return all;
-}
-
-void free_ctx_nodes(node_weight_t* c) {
-  node_weight_t* p = NULL;
-  while (c) {
-    p = c;
-    c = c->next;
-    _free(p);
-  }
 }

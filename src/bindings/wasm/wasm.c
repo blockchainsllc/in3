@@ -37,7 +37,6 @@
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/send.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
@@ -202,11 +201,14 @@ in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) 
     free_ctx(ctx);
     return NULL;
   }
+
+  // add the src-string as cache-entry so it will be freed when finalizing.
+  ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) src_data, 1));
+
   return ctx;
 }
 
 void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
-  if (ctx->request_context && ctx->request_context->c) free(ctx->request_context->c);
   free_ctx(ctx);
 }
 

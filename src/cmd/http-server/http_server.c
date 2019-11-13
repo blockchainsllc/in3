@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 #include "http_server.h"
-#include "../../core/client/send.h"
+#include "../../core/client/context.h"
 #include "../../core/util/mem.h"
 #include <arpa/inet.h>
 #include <fcntl.h>

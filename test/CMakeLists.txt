@@ -42,6 +42,7 @@ if (CODE_COVERAGE)
   add_code_coverage_all_targets(${coverage_excludes})
 endif()
 
+
 # first we build the runners
 add_executable(runner runner.c)
 target_link_libraries(runner eth_full)
@@ -49,6 +50,10 @@ target_link_libraries(runner eth_full)
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner eth_full)
 
+if(NOT TARGET tests)
+  add_custom_target(tests)
+  add_dependencies(tests runner vmrunner)
+endif()
 
 file(GLOB files "unit_tests/*.c")
 foreach (file ${files})
@@ -56,11 +61,13 @@ foreach (file ${files})
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
      target_code_coverage("${testname}" "" AUTO ALL ${coverage_excludes})
      target_link_libraries("${testname}" core eth_full eth_api)
-      add_test(
+     add_test(
                 NAME "in3_${testname}"
                 COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${testname}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
         )
+     add_dependencies(tests "${testname}")
+
 endforeach ()
 
 

@@ -53,30 +53,42 @@ static inline bytes_t getl(d_token_t* t, uint16_t key, size_t l) {
  * In case of an error report this tol parent and return an empty bytes
  */
 static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t* dst) {
-  in3_ctx_t* ctx = in3_find_required(parent, method);
+  // check if the method is already existing
+  in3_ctx_t* ctx = ctx_find_required(parent, method);
   if (ctx) {
+    // found one - so we check if it is useable.
     switch (in3_ctx_state(ctx)) {
+      // in case of an error, we report it back to the parent context
       case CTX_ERROR:
         return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
+      // if we are still waiting, we stop here and report it.
       case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
+
+      // if it is useable, we can now handle the result.
       case CTX_SUCCESS: {
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
-          // we have a result....
+          // we have a result, so write it back to the dst
           *dst = d_to_bytes(r);
           return IN3_OK;
         } else
+          // or check the error and report it
           return ctx_check_response_error(parent, 0);
       }
     }
   }
 
-  // the request will be allocated since this is a subrequest, which will be freed when the main context is freed.
+  // no required context found yet, so we create one:
+
+  // since this is a subrequest it will be freed when the parent is freed.
+  // allocate memory for the request-string
   char* req = _malloc(strlen(method) + strlen(params) + 200);
+  // create it
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
-  return in3_add_required(parent, new_ctx(parent->client, req));
+  // and add the request context to the parent.
+  return ctx_add_required(parent, new_ctx(parent->client, req));
 }
 
 /** signs the given data */
@@ -194,7 +206,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
 
   // sign the raw message
   if (nonce.data && gas_price.data && gas_limit.data) {
-    in3_ctx_t* c = in3_find_required(ctx, "sign_ec_hash");
+    in3_ctx_t* c = ctx_find_required(ctx, "sign_ec_hash");
     if (c)
       switch (in3_ctx_state(c)) {
         case CTX_ERROR:
@@ -212,7 +224,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
             res = ctx_set_error(ctx, c->raw_response->error.data, IN3_EINVAL);
           else
             res = ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
-          in3_remove_required(ctx, c);
+          ctx_remove_required(ctx, c);
           break;
         }
       }
@@ -226,7 +238,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       sb_add_chars(req, "]}");
       c       = new_ctx(ctx->client, req->data);
       c->type = CT_SIGN;
-      res     = in3_add_required(ctx, c);
+      res     = ctx_add_required(ctx, c);
       _free(req); // we only free the builder, but  not the data
     }
   } else

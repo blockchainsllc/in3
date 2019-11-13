@@ -194,5 +194,5 @@ void        free_tx_receipt(eth_tx_receipt_t* txr);                          /**
 
 // more helper
 in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]); /**< converts the given address to a checksum address. If chainId is passed, it will use the EIP1191 to include it as well. */
-
+void      in3_register_eth_api();
 #endif

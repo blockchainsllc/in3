@@ -41,7 +41,6 @@
 #include "client.h"
 #include "context.h"
 #include "keys.h"
-#include "send.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -152,7 +151,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   in3_ret_t res = IN3_OK;
 
   // is there a useable required ctx?
-  in3_ctx_t* ctx = in3_find_required(parent_ctx, "in3_nodeList");
+  in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_nodeList");
 
   if (ctx)
     switch (in3_ctx_state(ctx)) {
@@ -171,7 +170,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
             return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
           else if (c->cacheStorage)
             in3_cache_store_nodelist(ctx, chain);
-          in3_remove_required(parent_ctx, ctx);
+          ctx_remove_required(parent_ctx, ctx);
           return IN3_OK;
         } else
           return ctx_set_error(parent_ctx, "Error updating node_list", ctx_check_response_error(ctx, 0));
@@ -189,7 +188,16 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->nodeLimit, seed);
 
   // new client
-  return in3_add_required(parent_ctx, ctx = new_ctx(c, req));
+  return ctx_add_required(parent_ctx, ctx = new_ctx(c, req));
+}
+
+void free_ctx_nodes(node_weight_t* c) {
+  node_weight_t* p = NULL;
+  while (c) {
+    p = c;
+    c = c->next;
+    _free(p);
+  }
 }
 
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
@@ -246,7 +254,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
     if (chain->chainId == chain_id) {
-      if (chain->needsUpdate || update || in3_find_required(ctx, "in3_nodeList")) {
+      if (chain->needsUpdate || update || ctx_find_required(ctx, "in3_nodeList")) {
         chain->needsUpdate = false;
         // now update the nodeList
         res = update_nodelist(c, chain, ctx);

@@ -21,6 +21,20 @@ make install
 
 When configuring cmake, you can set a lot of different incubed specific like `cmake -DEVM_GAS=false ..`.
 
+#### ASMJS
+
+  compiles the code as asm.js.
+
+Default-Value: `-DASMJS=OFF`
+
+
+#### BUILD_DOC
+
+  generates the documenation with doxygen.
+
+Default-Value: `-DBUILD_DOC=OFF`
+
+
 #### CMD
 
   build the comandline utils
