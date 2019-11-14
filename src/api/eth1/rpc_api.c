@@ -57,45 +57,73 @@
 static in3_verify     parent_verify = NULL;
 static in3_pre_handle parent_handle = NULL;
 
+static in3_ret_t in3_abiEncode(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  RESPONSE_START();
+  call_request_t* req = parseSignature(d_get_string_at(params, 0));
+  if (!req) return ctx_set_error(ctx, "invalid function signature", IN3_EINVAL);
+
+  d_token_t* para = d_get_at(params, 1);
+  if (!para) {
+    req_free(req);
+    return ctx_set_error(ctx, "invalid json data", IN3_EINVAL);
+  }
+
+  if (set_data(req, para, req->in_data) < 0) {
+    req_free(req);
+    return ctx_set_error(ctx, "invalid input data", IN3_EINVAL);
+  }
+  sb_add_bytes(&response[0]->result, NULL, &req->call_data->b, 1, false);
+  RESPONSE_END();
+  return IN3_OK;
+}
+static in3_ret_t in3_abiDecode(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  RESPONSE_START();
+  char* sig = d_get_string_at(params, 0);
+  char  full_sig[strlen(sig) + 10];
+  if (strstr(sig, ":"))
+    strcpy(full_sig, sig);
+  else
+    sprintf(full_sig, "test():%s", sig);
+
+  call_request_t* req = parseSignature(full_sig);
+  if (!req) return ctx_set_error(ctx, "invalid function signature", IN3_EINVAL);
+
+  json_ctx_t* res = req_parse_result(req, d_to_bytes(d_get_at(params, 1)));
+  req_free(req);
+  if (!res)
+    return ctx_set_error(ctx, "the input data can not be decoded", IN3_EINVAL);
+  char* result = d_create_json(res->result);
+  sb_add_chars(&response[0]->result, result);
+  free_json(res);
+  _free(result);
+
+  RESPONSE_END();
+  printf(":::%s:::\n", response[0]->result.data);
+  return IN3_OK;
+}
+static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  str_range_t r   = d_to_json(d_get_at(params, 0));
+  char        old = r.data[r.len];
+  r.data[r.len]   = 0;
+  in3_ret_t ret   = in3_configure(ctx->client, r.data);
+  r.data[r.len]   = old;
+  if (ret) return ctx_set_error(ctx, "Invalid config", ret);
+
+  RESPONSE_START();
+  sb_add_chars(&response[0]->result, "true");
+  RESPONSE_END();
+  return IN3_OK;
+}
+
 static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* r      = ctx->requests[0];
   char*      method = d_get_stringk(r, K_METHOD);
   d_token_t* params = d_get(r, K_PARAMS);
 
-  // abi encode
-  if (strcmp(method, "in3_abiEncode") == 0) {
-    RESPONSE_START();
-    call_request_t* req = parseSignature(d_get_string_at(params, 0));
-    if (!req) return ctx_set_error(ctx, "invalid function signature", IN3_EINVAL);
-
-    d_token_t* para = d_get_at(params, 1);
-    if (!para) {
-      req_free(req);
-      return ctx_set_error(ctx, "invalid json data", IN3_EINVAL);
-    }
-
-    if (set_data(req, para, req->in_data) < 0) {
-      req_free(req);
-      return ctx_set_error(ctx, "invalid input data", IN3_EINVAL);
-    }
-    sb_add_bytes(&response[0]->result, NULL, &req->call_data->b, 1, false);
-    RESPONSE_END();
-  }
-
-  // config
-  if (strcmp(method, "in3_config") == 0) {
-    str_range_t r   = d_to_json(d_get_at(params, 0));
-    char        old = r.data[r.len];
-    r.data[r.len]   = 0;
-    in3_ret_t ret   = in3_configure(ctx->client, r.data);
-    r.data[r.len]   = old;
-    if (ret) return ctx_set_error(ctx, "Invalid config", ret);
-
-    RESPONSE_START();
-    sb_add_chars(&response[0]->result, "true");
-    RESPONSE_END();
-  }
+  if (strcmp(method, "in3_abiEncode") == 0) return in3_abiEncode(ctx, params, response);
+  if (strcmp(method, "in3_abiDecode") == 0) return in3_abiDecode(ctx, params, response);
+  if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
 }
@@ -105,6 +133,7 @@ static int verify(in3_vctx_t* v) {
   if (!method) return vc_err(v, "no method in the request!");
 
   if (strcmp(method, "in3_abiEncode") == 0 ||
+      strcmp(method, "in3_abiDecode") == 0 ||
       strcmp(method, "in3_config") == 0)
     return IN3_OK;
 
@@ -126,3 +155,14 @@ void in3_register_eth_api() {
     in3_register_verifier(v);
   }
 }
+
+// needed rpcs
+/*
+in3_send
+in3_call
+in3_pk2address
+in3_pk2public
+in3_ecrecover
+in3_key
+
+*/

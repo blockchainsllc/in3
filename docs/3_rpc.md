@@ -116,3 +116,68 @@ Response:
 
 based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function encodes the values and returns it as hex-string.
 
+Parameters:
+
+1. `signature`: string - the signature of the function. e.g. `getBalance(uint256)`. The format is the same as used by solidity to create the functionhash. optional you can also add the return type, which in this case is ignored.
+2. `params`: array - a array of arguments. the number of arguments must match the arguments in the signature.
+
+
+Returns:
+
+the ABI-encoded data as hex including the 4 byte function-signature. These data can be used for `eth_call` or to send a transaction.
+
+Request:
+
+```js
+{
+    "method":"in3_abiEncode",
+    "params":[
+        "getBalance(address)",
+        ["0x1234567890123456789012345678901234567890"]
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890",
+}
+```
+
+
+### in3_abiDecode
+
+based on the [ABI-encoding](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html) used by solidity, this function decodes the bytes given and returns it as array of values.
+
+Parameters:
+
+1. `signature`: string - the signature of the function. e.g. `uint256`, `(address,string,uint256)` or `getBalance(address):uint256`. If the complete functionhash is given, only the return-part will be used.
+2. `data`: hex - the data to decode (usually the result of a eth_call)
+
+Returns:
+
+a array (if more then one arguments in the result-type) or the the value after decodeing.
+
+Request:
+
+```js
+{
+    "method":"in3_abiDecode",
+    "params":[
+        "(address,uint256)",
+        "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005"
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": ["0x1234567890123456789012345678901234567890","0x05"],
+}
+```
