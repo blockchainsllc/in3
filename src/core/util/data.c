@@ -66,7 +66,7 @@ size_t     __keynames_len = 0;
 d_key_t keyn(const char* c, const size_t len) {
   d_key_t val = 0;
 #ifndef IN3_DONT_HASH_KEYS
-  int i = 0;
+  size_t i = 0;
   for (; i < len; i++) {
     if (*c == 0) return val;
     val ^= *c | val << 7;
