@@ -42,6 +42,11 @@
 
 #include "../../../core/client/client.h"
 
+/**
+ * simply signer with one private key.
+ * 
+ * since the pk pointting to the 32 byte private key is not cloned, please make sure, you manage memory allocation correctly!
+ */
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
 
 #endif

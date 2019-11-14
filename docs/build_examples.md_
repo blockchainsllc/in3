@@ -1,0 +1,16 @@
+
+### Building 
+
+In order to run those examples, you only need a c-compiler (gcc or clang) and curl installed.
+
+```
+./build.sh
+```
+
+will build all examples in this directory.
+You can build them individually by executing:
+
+```
+gcc -o get_block_api get_block_api.c -lin3 -lcurl
+```
+
