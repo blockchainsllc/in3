@@ -63,7 +63,7 @@ static uint8_t __track_keys = 1;
 keyname_t* __keynames     = NULL;
 size_t     __keynames_len = 0;
 
-d_key_t keyn(const char* c, const int len) {
+d_key_t keyn(const char* c, const size_t len) {
   d_key_t val = 0;
 #ifndef IN3_DONT_HASH_KEYS
   int i = 0;
@@ -73,13 +73,16 @@ d_key_t keyn(const char* c, const int len) {
     c += 1;
   }
 #else
+  UNUSED_VAR(len);
   keyname_t* kn = __keynames;
   while (kn) {
-    if (!strncmp(kn->name, c, len)) break;
+    // input is not expected to be nul terminated
+    if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
+      break;
     kn = kn->next;
     val++;
   }
-  val = __keynames_len - val;
+  val++;
 #endif
   return val;
 }
@@ -110,7 +113,14 @@ d_key_t key(const char* c) {
   size_t l = strlen(c);
   for (; l; l--, c++) val ^= *c | val << 7;
 #else
-  val = add_key(c, strlen(c));
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (!strcmp(kn->name, c))
+      return __keynames_len - val;
+    kn = kn->next;
+    val++;
+  }
+  val = 0;
 #endif
   return val;
 }
