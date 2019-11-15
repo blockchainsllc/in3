@@ -79,7 +79,7 @@ static void test_in3_config() {
      \"nodes\":{\
         \"0x7\":{\
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
-           \"registryId\":\"0x123456789012345678901234567890123456789012345678901234567890ffff\",\
+           \"registryId\":\"0x3456789012345678901234567890123456789012345678901234567890ffff\",\
            \"needsUpdate\":false,\
            \"nodeList\":[{\
               \"url\":\"#1\",\
@@ -115,7 +115,7 @@ static void test_in3_config() {
   bytes_to_hex(chain->contract->data, chain->contract->len, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   bytes_to_hex(chain->registry_id, 32, tmp);
-  TEST_ASSERT_EQUAL_STRING("123456789012345678901234567890123456789012345678901234567890ffff", tmp);
+  TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
   TEST_ASSERT_EQUAL(false, chain->needsUpdate);
   TEST_ASSERT_EQUAL(1, chain->nodeListLength);
 
