@@ -246,7 +246,7 @@ bool d_eq(const d_token_t* a, const d_token_t* b) {
   if (a->len != b->len) return false;
   return (a->data && b->data)
              ? b_cmp(d_bytes(a), d_bytes(b))
-             : a->data == NULL && b->data == NULL
+             : a->data == NULL && b->data == NULL;
 }
 
 d_token_t* d_get(d_token_t* item, const uint16_t key) {
