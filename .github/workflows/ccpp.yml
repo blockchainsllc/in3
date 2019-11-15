@@ -42,7 +42,7 @@ jobs:
       - name: test
         run: cd build; make ccov-all && make ccov-all-report
       - name: export
-        run: cd build; cat ccov/binaries.list | xargs llvm-cov export -instr-profile ccov/all-merged.profdata -format=lcov  > coverage.info ; bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
+        run: apt-get update; apt-get install -y curl; cd build; cat ccov/binaries.list | xargs llvm-cov export -instr-profile ccov/all-merged.profdata -format=lcov  > coverage.info ; bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
   #        run: cd build ; cat ccov/binaries.list | xargs llvm-cov export -instr-profile ccov/all-merged.profdata -format=lcov  > lcov.info; wget https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py ; python lcov_cobertura.py --base-dir .. lcov.info
   #      - uses: codecov/codecov-action@v1.0.3
   #        with:
