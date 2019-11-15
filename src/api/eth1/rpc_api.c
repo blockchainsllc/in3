@@ -164,5 +164,7 @@ in3_pk2address
 in3_pk2public
 in3_ecrecover
 in3_key
+in3_checksumAddress
+in3_hash
 
 */
