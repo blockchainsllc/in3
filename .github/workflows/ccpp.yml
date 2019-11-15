@@ -1,43 +1,36 @@
-name: C/C++ CI
+name: Build and Test C
 
 on: [push]
 
 jobs:
-  test_macos:
-
+  macos:
     runs-on: macOS-latest
-    
+
     steps:
-    - uses: actions/checkout@v1
-    - name: cmake
-      run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DCMAKE_BUILD_TYPE=Debug ..
-    - name: make
-      run: cd build; make
-    - name: test
-      run: cd build; make test
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DCMAKE_BUILD_TYPE=Debug ..
+      - name: make
+        run: cd build; make
+      - name: test
+        run: cd build; make test
 
-  test_ubuntu:
-
+  ubuntu:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v1
-    - name: cmake
-      run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=true -DIN3_LIB=false -DCMD=false -DCMAKE_BUILD_TYPE=Debug ..
-    - name: make
-      run: cd build; make
-    - name: test
-      run: cd build; make test
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=true -DIN3_LIB=false -DCMD=false -DCMAKE_BUILD_TYPE=Debug ..
+      - name: make
+        run: cd build; make
+      - name: test
+        run: cd build; make test
 
-  test_win:
-
+  win:
     runs-on: windows-latest
-    
+
     steps:
-    - uses: actions/checkout@v1
-    - name: cmake
-      run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=true -DIN3_LIB=false -DCMD=false -DCMAKE_BUILD_TYPE=Debug ..
-    - name: make 
-      run: cd build; make tests
-    - name: test
-      run: cd build; make test
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=true -DIN3_LIB=false -DCMD=false -DCMAKE_BUILD_TYPE=Debug ..
