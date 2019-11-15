@@ -28,6 +28,9 @@ jobs:
         run: cd build; make test
 
   coverage:
+    container:
+      image: silkeh/clang:dev
+
     runs-on: ubuntu-latest
 
     steps:
