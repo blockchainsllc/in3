@@ -27,6 +27,18 @@ jobs:
       - name: test
         run: cd build; make test
 
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+      - name: build
+        run: cd build; make
+      - name: test
+        run: cd build; make ccov-all && make ccov-all-report
+
   win:
     runs-on: windows-latest
 
