@@ -38,7 +38,7 @@ include(cmake/code-coverage.cmake)
 # handle codecoverage
 if (CODE_COVERAGE)
   # we exclude all headers, tests and thridparty-code
-  set(coverage_excludes "EXCLUDE" "test/*" "*.h" "src/third-party/*")
+  set(coverage_excludes "EXCLUDE" "test/*" "*.h" "src/third-party/*"  "../src/third-party/*")
   add_code_coverage_all_targets(${coverage_excludes})
 endif()
 
