@@ -865,9 +865,15 @@ char* d_get_keystr(d_key_t k) {
   }
   return NULL;
 }
+
 void d_track_keynames(uint8_t v) {
+#ifndef IN3_DONT_HASH_KEYS
   __track_keys = v;
+#else
+  UNUSED_VAR(v);
+#endif
 }
+
 void d_clear_keynames() {
   keyname_t* kn = NULL;
   while (__keynames) {
