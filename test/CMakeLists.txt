@@ -179,6 +179,7 @@ foreach (testdir
     list(FILTER files EXCLUDE REGEX ".*ecpairing(.*).json$")
     list(FILTER files EXCLUDE REGEX ".*pairingTest.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|randomStatetest642|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
+    list(FILTER files EXCLUDE REGEX ".*ecmul_0-3_5616_28000_96.json$")
 
 
     foreach (file ${files})
