@@ -78,7 +78,7 @@ d_key_t keyn(const char* c, const size_t len) {
   while (kn) {
     // input is not expected to be nul terminated
     if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
-      break;
+      return __keynames_len - val;
     kn = kn->next;
     val++;
   }
