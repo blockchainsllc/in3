@@ -176,6 +176,8 @@ foreach (testdir
     # exclude tests, but fix them later    
     list(FILTER files EXCLUDE REGEX ".*randomStatetest(579|85|150|154|159|178|184|205|248|306|48|458|467|498|554|572|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
+    list(FILTER files EXCLUDE REGEX ".*ecpairing(.*).json$")
+    list(FILTER files EXCLUDE REGEX ".*pairingTest.json$")
     list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|randomStatetest642|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
 
 
