@@ -207,7 +207,6 @@ ELSE (FAST_MATH)
             bn_mp_div.c
             bn_mp_div_2.c
             bn_mp_div_2d.c
-            bn_mp_div_d.c
             bn_mp_exch.c
             bn_mp_export.c
             bn_mp_exptmod.c
@@ -231,7 +230,6 @@ ELSE (FAST_MATH)
             bn_mp_mul_d.c
             bn_mp_mulmod.c
             bn_mp_neg.c
-            bn_mp_radix_smap.c
             bn_mp_read_unsigned_bin.c
             bn_mp_reduce.c
             bn_mp_reduce_2k_l.c
@@ -242,11 +240,9 @@ ELSE (FAST_MATH)
             bn_mp_set.c
             bn_mp_sqr.c
             bn_mp_sqrmod.c
-            bn_mp_sqrt.c
             bn_mp_sub.c
             bn_mp_submod.c
             bn_mp_to_unsigned_bin.c
-            bn_mp_toradix.c
             bn_mp_unsigned_bin_size.c
             bn_mp_zero.c
             bn_reverse.c
