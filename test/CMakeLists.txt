@@ -188,7 +188,7 @@ foreach (testdir
                 COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
         )
-        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 7)
+        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 9)
     endforeach ()
 endforeach ()
 
