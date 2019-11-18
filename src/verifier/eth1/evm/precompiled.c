@@ -32,7 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
 #include "../../../third-party/crypto/ecdsa.h"
@@ -50,27 +49,11 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
-#define MP_PRINT(bn)                                 \
-  do {                                               \
-    unsigned char _str_[33] = {0};                   \
-    mp_tohex(bn, (char*) _str_);                     \
-    printf("--- %s : %s ---\n", #bn, (char*) _str_); \
-  } while (0)
-#define MP_PRINT_POINT(pt)           \
-  do {                               \
-    unsigned char _str_[33] = {0};   \
-    mp_tohex(&pt->x, (char*) _str_); \
-    printf("%s", (char*) _str_);     \
-    mp_tohex(&pt->y, (char*) _str_); \
-    printf("%s\n", (char*) _str_);   \
-  } while (0)
-
 static const uint8_t modulus_bin[] = {0x30, 0x64, 0x4e, 0x72, 0xe1, 0x31, 0xa0, 0x29, 0xb8, 0x50, 0x45, 0xb6, 0x81, 0x81, 0x58, 0x5d, 0x97, 0x81, 0x6a, 0x91, 0x68, 0x71, 0xca, 0x8d, 0x3c, 0x20, 0x8c, 0x16, 0xd8, 0x7c, 0xfd, 0x47};
 
 typedef struct {
   mp_int x;
   mp_int y;
-  mp_int z;
 } ecc_point;
 
 static ecc_point* ecc_new_point(void) {
@@ -79,7 +62,7 @@ static ecc_point* ecc_new_point(void) {
   if (p == NULL) {
     return NULL;
   }
-  if (mp_init_multi(&p->x, &p->y, &p->z, NULL) != MP_OKAY) {
+  if (mp_init_multi(&p->x, &p->y, NULL) != MP_OKAY) {
     _free(p);
     return NULL;
   }
@@ -88,15 +71,14 @@ static ecc_point* ecc_new_point(void) {
 
 static void ecc_del_point(ecc_point* p) {
   if (p != NULL) {
-    mp_clear_multi(&p->x, &p->y, &p->z, NULL);
+    mp_clear_multi(&p->x, &p->y, NULL);
     _free(p);
   }
 }
 
-static int ecc_set_point_xyz(mp_digit x, mp_digit y, mp_digit z, ecc_point* p) {
+static int ecc_set_point_xyz(mp_digit x, mp_digit y, ecc_point* p) {
   mp_set(&p->x, x);
   mp_set(&p->y, y);
-  mp_set(&p->z, z);
   return MP_OKAY;
 }
 
@@ -104,19 +86,12 @@ static int ecc_copy_point(const ecc_point* src, ecc_point* dst) {
   int err;
   if ((err = mp_copy(&src->x, &dst->x)) != MP_OKAY) return err;
   if ((err = mp_copy(&src->y, &dst->y)) != MP_OKAY) return err;
-  if ((err = mp_copy(&src->z, &dst->z)) != MP_OKAY) return err;
   return MP_OKAY;
 }
 
 static int ecc_is_point_at_infinity(const ecc_point* P, void* modulus, int* retval) {
   int    err = MP_OKAY;
   mp_int x3, y2;
-
-  /* trivial case */
-  if (!mp_iszero(&P->z)) {
-    *retval = 0;
-    return MP_OKAY;
-  }
 
   /* point (0,0,0) is point at infinity */
   if (mp_iszero(&P->x) && mp_iszero(&P->y)) {
@@ -148,7 +123,7 @@ done:
   return err;
 }
 
-//# Check that a point is on the curve defined by y**2 == x**3 + b
+// Check that a point is on the curve defined by y^2 == x^3 + b
 static int ecc_is_point_on_curve(const ecc_point* P, mp_int* modulus, mp_int* b, int* oncurve) {
   int    err;
   mp_int t1, t2, t3;
@@ -201,7 +176,6 @@ static int ecc_point_double(const ecc_point* P, ecc_point* R, mp_int* modulus) {
 
   if ((err = ecc_is_point_at_infinity(P, modulus, &inf)) != MP_OKAY) return err;
   if (inf) {
-    //    err = ecc_set_point_xyz(1, 1, 0, R);
     if ((err = ecc_copy_point(P, R)) != MP_OKAY) { goto done; }
   }
 
@@ -285,7 +259,7 @@ static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int*
     // Q = -P, so result is point-at-infinity
     if ((err = mp_sub(modulus, &Q->y, &t1)) != MP_OKAY) { goto done; }
     if (mp_cmp(&P->y, &t1) == MP_EQ) {
-      err = ecc_set_point_xyz(0, 0, 0, R);
+      err = ecc_set_point_xyz(0, 0, R);
       goto done;
     }
   }
@@ -317,7 +291,7 @@ static int ecc_point_add(const ecc_point* P, ecc_point* Q, ecc_point* R, mp_int*
   // y = -m * x + m * x1 - y1
   if ((err = mp_submod(&m, &P->y, modulus, &R->y)) != MP_OKAY) { goto done; }
 
-  // assert newy == (-m * newx + m * x2 - y2)
+  // TODO: assert newy == (-m * newx + m * x2 - y2)
 
 done:
   mp_clear_multi(&t1, &m, NULL);
@@ -329,7 +303,7 @@ static int ecc_point_mul(const mp_int* k, const ecc_point* P, ecc_point* Q, mp_i
   mp_int t1;
 
   if (mp_iszero(k)) {
-    return ecc_set_point_xyz(0, 0, 0, Q);
+    return ecc_set_point_xyz(0, 0, Q);
   }
 
   mp_init(&t1);
@@ -505,10 +479,10 @@ int pre_ec_add(evm_t* evm) {
   p1 = ecc_new_point();
   p2 = ecc_new_point();
   p3 = ecc_new_point();
-  if ((err = mp_read_unsigned_bin(&p1->x, cdata, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
-  if ((err = mp_read_unsigned_bin(&p1->y, cdata + 32, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
-  if ((err = mp_read_unsigned_bin(&p2->x, cdata + 64, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
-  if ((err = mp_read_unsigned_bin(&p2->y, cdata + 96, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&p1->x, cdata, 32)) != MP_OKAY) { goto done; }
+  if ((err = mp_read_unsigned_bin(&p1->y, cdata + 32, 32)) != MP_OKAY) { goto done; }
+  if ((err = mp_read_unsigned_bin(&p2->x, cdata + 64, 32)) != MP_OKAY) { goto done; }
+  if ((err = mp_read_unsigned_bin(&p2->y, cdata + 96, 32)) != MP_OKAY) { goto done; }
 
   mp_init_multi(&modulus, &b, NULL);
   if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { goto done; }
@@ -551,11 +525,11 @@ int pre_ec_mul(evm_t* evm) {
   mp_int     modulus, b, k;
   p1 = ecc_new_point();
   p2 = ecc_new_point();
-  if ((err = mp_read_unsigned_bin(&p1->x, cdata, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
-  if ((err = mp_read_unsigned_bin(&p1->y, cdata + 32, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&p1->x, cdata, 32)) != MP_OKAY) { goto done; }
+  if ((err = mp_read_unsigned_bin(&p1->y, cdata + 32, 32)) != MP_OKAY) { goto done; }
 
   mp_init_multi(&modulus, &b, &k, NULL);
-  if ((err = mp_read_unsigned_bin(&k, cdata + 64, 32)) != MP_OKAY) { return EVM_ERROR_INVALID_ENV; }
+  if ((err = mp_read_unsigned_bin(&k, cdata + 64, 32)) != MP_OKAY) { goto done; }
   if ((err = mp_read_unsigned_bin(&modulus, modulus_bin, 32)) != MP_OKAY) { goto done; }
   mp_set(&b, 3);
 
@@ -584,7 +558,7 @@ done:
   return err;
 }
 
-int evm_run_precompiled(evm_t* evm, address_t address) {
+int evm_run_precompiled(evm_t* evm, const address_t address) {
   switch (address[19]) {
     case 1:
       return pre_ecrecover(evm);
