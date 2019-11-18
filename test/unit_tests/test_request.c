@@ -57,6 +57,10 @@ void test_configure_request() {
   c->proof               = PROOF_FULL;
   c->signatureCount      = 2;
   c->chains->needsUpdate = false;
+  c->finality            = 10;
+  c->includeCode         = true;
+  c->replaceLatestBlock  = 6;
+  c->use_binary          = true;
 
   in3_ctx_t* ctx = new_ctx(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
@@ -65,6 +69,9 @@ void test_configure_request() {
   d_token_t*     in3     = d_get(d_get_at(json->result, 0), K_IN3);
   TEST_ASSERT_NOT_NULL(in3);
   TEST_ASSERT_EQUAL(1, d_get_int(in3, "useFullProof"));
+  TEST_ASSERT_EQUAL(1, d_get_int(in3, "useBinary"));
+  TEST_ASSERT_EQUAL(10, d_get_int(in3, "finality"));
+  TEST_ASSERT_EQUAL(6, d_get_int(in3, "latestBlock"));
   d_token_t* signers = d_get(in3, key("signers"));
   TEST_ASSERT_NOT_NULL(signers);
   TEST_ASSERT_EQUAL(2, d_len(signers));
