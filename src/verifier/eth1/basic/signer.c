@@ -193,7 +193,8 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
     return bytes(NULL, 0);
   }
 
-  uint64_t v = ctx->requests_configs->chainId > 0xFF ? 0 : ctx->requests_configs->chainId;
+  uint64_t v = ctx->requests_configs->chainId ? ctx->requests_configs->chainId : ctx->client->chainId;
+  if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
 
   // create raw without signature
   bytes_t* raw = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, v, bytes(NULL, 0), bytes(NULL, 0));

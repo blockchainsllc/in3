@@ -1,3 +1,5 @@
+/// sending a transaction including signing it with a private key
+
 #include <in3/client.h>    // the core client
 #include <in3/eth_api.h>   // wrapper for easier use
 #include <in3/eth_basic.h> // use the basic module
@@ -25,8 +27,11 @@ int main() {
   // create new incubed client
   in3_t* in3 = in3_new();
 
+  // convert the hexstring to bytes
   bytes32_t pk;
   hex2byte_arr(ETH_PRIVATE_KEY, -1, pk, 32);
+
+  // create a simple signer with this key
   eth_set_pk_signer(in3, pk);
 
   // send tx using raw RPC call

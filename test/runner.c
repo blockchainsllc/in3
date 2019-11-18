@@ -35,6 +35,7 @@
 #ifndef TEST
 #define TEST
 #endif
+#include "../src/api/eth1/eth_api.h"
 #include "../src/core/client/client.h"
 #include "../src/core/client/context.h"
 #include "../src/core/util/log.h"
@@ -422,6 +423,7 @@ int main(int argc, char* argv[]) {
   use_color = 1;
   in3_log_set_level(LOG_INFO);
   in3_register_eth_full();
+  in3_register_eth_api();
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
   char** names = malloc(sizeof(char*));

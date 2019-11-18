@@ -32,21 +32,60 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * Ethereum Nano verification.
- * */
-
-#ifndef in3_signer_h__
-#define in3_signer_h__
-
-#include "../../../core/client/client.h"
-
-/**
- * simply signer with one private key.
- * 
- * since the pk pointting to the 32 byte private key is not cloned, please make sure, you manage memory allocation correctly!
- */
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
-
+#ifndef TEST
+#define TEST
 #endif
+#ifndef TEST
+#define DEBUG
+#endif
+
+#include "../../src/core/client/cache.h"
+#include "../../src/core/client/context.h"
+#include "../../src/core/client/keys.h"
+#include "../../src/core/client/nodelist.h"
+#include "../../src/core/util/data.h"
+#include "../../src/core/util/utils.h"
+#include "../../src/verifier/eth1/basic/eth_basic.h"
+#include "../test_utils.h"
+#include <stdio.h>
+#include <unistd.h>
+
+void test_configure_request() {
+  in3_register_eth_basic();
+
+  in3_t* c               = in3_new();
+  c->proof               = PROOF_FULL;
+  c->signatureCount      = 2;
+  c->chains->needsUpdate = false;
+  c->finality            = 10;
+  c->includeCode         = true;
+  c->replaceLatestBlock  = 6;
+  c->use_binary          = true;
+
+  in3_ctx_t* ctx = new_ctx(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+  in3_request_t* request = in3_create_request(ctx);
+  json_ctx_t*    json    = parse_json(request->payload);
+  d_token_t*     in3     = d_get(d_get_at(json->result, 0), K_IN3);
+  TEST_ASSERT_NOT_NULL(in3);
+  TEST_ASSERT_EQUAL(1, d_get_int(in3, "useFullProof"));
+  TEST_ASSERT_EQUAL(1, d_get_int(in3, "useBinary"));
+  TEST_ASSERT_EQUAL(10, d_get_int(in3, "finality"));
+  TEST_ASSERT_EQUAL(6, d_get_int(in3, "latestBlock"));
+  d_token_t* signers = d_get(in3, key("signers"));
+  TEST_ASSERT_NOT_NULL(signers);
+  TEST_ASSERT_EQUAL(2, d_len(signers));
+  free_request(request, ctx, false);
+  free_json(json);
+  free_ctx(ctx);
+  in3_free(c);
+}
+
+/*
+ * Main
+ */
+int main() {
+  TESTS_BEGIN();
+  RUN_TEST(test_configure_request);
+  return TESTS_END();
+}

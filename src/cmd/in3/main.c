@@ -90,6 +90,7 @@ void show_help(char* name) {
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
 -debug         if given incubed will output debug information when executing. \n\
+-q             quit. no additional output. \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
 -version       displays the version \n\
@@ -269,7 +270,7 @@ static void execute(in3_t* c, FILE* f) {
             printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
           _free(r);
         } else
-          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":\"%s\"}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
       free_ctx(ctx);
       first   = 0;
@@ -606,6 +607,8 @@ int main(int argc, char* argv[]) {
       c->transport = test_transport;
     } else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
+    else if (strcmp(argv[i], "-q") == 0)
+      in3_log_set_level(LOG_FATAL);
     else if (strcmp(argv[i], "-value") == 0)
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
@@ -692,6 +695,7 @@ int main(int argc, char* argv[]) {
   // execute the method
   if (sig && *sig == '-') die("unknown option");
   if (!method) {
+    in3_log_info("in3 " IN3_VERSION " - reading json-rpc from stdin. (exit with ctrl C)\n________________________________________________\n");
     execute(c, stdin);
     return EXIT_SUCCESS;
   }

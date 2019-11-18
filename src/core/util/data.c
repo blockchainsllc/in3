@@ -283,9 +283,9 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
 bool d_eq(const d_token_t* a, const d_token_t* b) {
   if (a == NULL || b == NULL) return false;
   if (a->len != b->len) return false;
-  if (a->data && b->data)
-    return b_cmp(d_bytes(a), d_bytes(b));
-  return a->data == NULL && b->data == NULL;
+  return (a->data && b->data)
+             ? b_cmp(d_bytes(a), d_bytes(b))
+             : a->data == NULL && b->data == NULL;
 }
 
 d_token_t* d_get(d_token_t* item, const uint16_t key) {

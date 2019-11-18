@@ -1,6 +1,6 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
- * Sources: https://github.com/slockit/in3-c
+ * Sources: https://github.com/slockit/in3
  * 
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
  * 
@@ -32,21 +32,26 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * Ethereum Nano verification.
- * */
+const { IN3 } = require('./util/mocker')
+const { keccak256 } = require('eth-lib/lib/hash')
 
-#ifndef in3_signer_h__
-#define in3_signer_h__
+function testHash(fn, l = 1000) {
+    const start = Date.now()
+    let init = "0x1234567890123456789012345678901234567890123456789012345678901234"
+    for (let i = 0; i < l; i++) {
+        init = fn(init);
+    }
+    const s = Date.now() - start
+    return s
+}
+let j1 = 0, j2 = 0, w1 = 0, w2 = 0
+const l2 = 100000
+console.log("eth-lib1:", j1 = testHash(keccak256))
+console.log("eth-lib2:", j2 = testHash(keccak256, l2))
+IN3.onInit(() => {
+    console.log("in3-wasm1:", w1 = testHash(IN3.util.keccak))
+    console.log("in3-wasm2:", w2 = testHash(IN3.util.keccak, l2))
 
-#include "../../../core/client/client.h"
-
-/**
- * simply signer with one private key.
- * 
- * since the pk pointting to the 32 byte private key is not cloned, please make sure, you manage memory allocation correctly!
- */
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
-
-#endif
+    console.log("1 : " + (j1 / w1).toFixed(1) + ' times faster ')
+    console.log("2 : " + (j2 / w2).toFixed(1) + ' times faster ')
+})

@@ -1,0 +1,63 @@
+name: Build and Test C
+
+on: [push]
+
+jobs:
+  macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DCMAKE_BUILD_TYPE=Debug ..
+      - name: make
+        run: cd build; make
+      - name: test
+        run: cd build; make test
+
+  ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=true -DIN3_LIB=false -DCMD=false -DCMAKE_BUILD_TYPE=Debug ..
+      - name: make
+        run: cd build; make
+      - name: test
+        run: cd build; make test
+
+  coverage:
+    container:
+      image: silkeh/clang:dev
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+      - name: build
+        run: cd build; make
+      - name: test
+        run: cd build; make ccov-all && make ccov-all-report
+      - name: export
+        run: |
+          apt-get update
+          apt-get install -y curl
+          cd build
+          cat ccov/binaries.list | xargs llvm-cov export -instr-profile ccov/all-merged.profdata -format=lcov "-ignore-filename-regex=.*(third|test).*" > coverage.info
+      - uses: codecov/codecov-action@v1.0.3
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          file: ./build/coverage.info
+          flags: unittests
+          name: codecov-umbrella
+
+  win:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: mkdir build; cd build; cmake -DTEST=true -DJAVA=false -DTRANSPORTS=false -DBUILD_DOC=false -DIN3API=true -DIN3_LIB=false -DCMD=false -DCMAKE_BUILD_TYPE=Debug ..

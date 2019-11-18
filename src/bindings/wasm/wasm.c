@@ -169,6 +169,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
   // register a chain-verifier for full Ethereum-Support
   in3_register_eth_full();
+  in3_register_eth_api();
 
   in3_t* c                  = in3_new();
   c->cacheStorage           = malloc(sizeof(in3_storage_handler_t));

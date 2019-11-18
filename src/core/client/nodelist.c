@@ -270,7 +270,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   return res;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int request_count) {
 
   // get all nodes from the nodelist
   _time_t            now       = _time();
@@ -304,7 +304,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
       return ctx_set_error(ctx, "No nodes found that match the criteria", IN3_EFIND);
   }
 
-  l = total_found < ctx->client->requestCount ? total_found : ctx->client->requestCount;
+  l = total_found < request_count ? total_found : request_count;
   if (total_found == l) {
     *nodes = found;
     return IN3_OK;

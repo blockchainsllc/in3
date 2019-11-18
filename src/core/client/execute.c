@@ -104,10 +104,10 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
 
   conf->chainId  = c->chainId;
   conf->finality = c->finality;
-  if (c->key) {
-    // TODO sign the request
-    // conf->clientSignature =
-  }
+  //  if (c->key) {
+  // TODO sign the request
+  // conf->clientSignature =
+  //  }
   conf->latestBlock = c->replaceLatestBlock;
   conf->useBinary   = c->use_binary;
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
@@ -117,7 +117,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
 
     if (c->signatureCount) {
       node_weight_t* sig_nodes = NULL;
-      in3_ret_t      res       = in3_node_list_pick_nodes(ctx, &sig_nodes);
+      in3_ret_t      res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signatureCount);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       int node_count        = ctx_nodes_len(sig_nodes);
@@ -197,7 +197,7 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
       if (rc->latestBlock)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
       if (rc->signaturesCount)
-        sb_add_bytes(sb, ",\"signatures\":", rc->signatures, rc->signaturesCount, true);
+        sb_add_bytes(sb, ",\"signers\":", rc->signatures, rc->signaturesCount, true);
       if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
       if (rc->useFullProof)
@@ -257,10 +257,12 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   // blacklist nodes for missing response
   for (n = 0; n < nodes_count; n++) {
     if (response[n].error.len || !response[n].result.len) {
-      // blacklist the node
-      w->weight->blacklistedUntil = _time() + 3600000;
-      w->weight                   = NULL;
-      in3_log_info("Blacklisting node for empty response: %s\n", w->node->url);
+      if (w) {
+        // blacklist the node
+        w->weight->blacklistedUntil = _time() + 3600000;
+        w->weight                   = NULL;
+        in3_log_info("Blacklisting node for empty response: %s\n", w->node->url);
+      }
     } else {
       // we need to clean up the previos responses if set
       if (ctx->responses) _free(ctx->responses);
@@ -269,10 +271,12 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
       // parse the result
       res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len);
       if (res < 0) {
-        // blacklist!
-        w->weight->blacklistedUntil = _time() + 3600000;
-        w->weight                   = NULL;
-        in3_log_info("Blacklisting node for invalid response: %s\n", w->node->url);
+        if (w) {
+          // blacklist!
+          w->weight->blacklistedUntil = _time() + 3600000;
+          w->weight                   = NULL;
+          in3_log_info("Blacklisting node for invalid response: %s\n", w->node->url);
+        }
       } else {
         // check each request
         for (i = 0; i < ctx->len; i++) {
@@ -289,16 +293,18 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
           if (verifier && (res = verifier->verify(&vc))) {
             if (res == IN3_WAITING) return res;
-            // blacklist!
-            w->weight->blacklistedUntil = _time() + 3600000;
-            w->weight                   = NULL;
-            in3_log_info("Blacklisting node for verification failure: %s\n", w->node->url);
+            if (w) {
+              // blacklist!
+              w->weight->blacklistedUntil = _time() + 3600000;
+              w->weight                   = NULL;
+              in3_log_info("Blacklisting node for verification failure: %s\n", w->node->url);
+            }
             break;
           }
         }
       }
     }
-    if (w->weight)
+    if (!w || w->weight)
       // this reponse was successfully verified, so let us keep it.
       return IN3_OK;
 
@@ -503,21 +509,10 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     return ret;
 
   switch (ctx->type) {
-    case CT_RPC:
-      // if we don't have a nodelist, we try to get it.
-      if (!ctx->nodes) {
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes)) == IN3_OK) {
-          for (int i = 0; i < ctx->len; i++) {
-            if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
-              return ctx_set_error(ctx, "error configuring the config for request", ret);
-          }
-        } else
-          // since we could not get the nodes, we either report it as error or wait.
-          return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);
-      }
+    case CT_RPC: {
 
       // check chain_id
-      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chainId);
+      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chainId ? ctx->requests_configs->chainId : ctx->client->chainId);
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
       // find the verifier
@@ -529,12 +524,24 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (!ctx->raw_response && !ctx->response_context && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
         return ctx_set_error(ctx, "The request could not be handled", ret);
 
+      // if we don't have a nodelist, we try to get it.
+      if (!ctx->raw_response && !ctx->nodes) {
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->requestCount)) == IN3_OK) {
+          for (int i = 0; i < ctx->len; i++) {
+            if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
+              return ctx_set_error(ctx, "error configuring the config for request", ret);
+          }
+        } else
+          // since we could not get the nodes, we either report it as error or wait.
+          return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);
+      }
+
       // if we still don't have an response, we keep on waiting
       if (!ctx->raw_response) return IN3_WAITING;
 
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
-      ret = find_valid_result(ctx, ctx_nodes_len(ctx->nodes), ctx->raw_response, chain, verifier);
+      ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, chain, verifier);
 
       // we wait or are have successfully verified the response
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;
@@ -553,6 +560,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       } else
         // we give up
         return ctx->client->max_attempts == 1 ? ret : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
+    }
 
     case CT_SIGN: {
       if (!ctx->raw_response)
