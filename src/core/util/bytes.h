@@ -99,14 +99,11 @@ uint8_t b_read_byte(bytes_t* b, size_t* pos);
 uint16_t b_read_short(bytes_t* b, size_t* pos);
 /** reads a integer on the current position and updates the pos afterwards. */
 uint32_t b_read_int(bytes_t* b, size_t* pos);
-/** reads a unsigned integer as bigendian on the current position and updates the pos afterwards. */
-uint32_t b_read_int_be(bytes_t* b, size_t* pos, size_t len);
 /** reads a long on the current position and updates the pos afterwards. */
 uint64_t b_read_long(bytes_t* b, size_t* pos);
 /** creates a new string (needs to be freed) on the current position and updates the pos afterwards. */
 char* b_new_chars(bytes_t* b, size_t* pos);
-/** reads bytesn (which have the length stored as prefix) on the current position and updates the pos afterwards. */
-bytes_t* b_new_dyn_bytes(bytes_t* b, size_t* pos);
+
 /** reads bytes with a fixed length on the current position and updates the pos afterwards. */
 bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len);
 
@@ -132,8 +129,6 @@ void bb_write_long(bytes_builder_t* bb, uint64_t val);
 void bb_write_long_be(bytes_builder_t* bb, uint64_t val, int len);
 /** writes a single byte to the builder. */
 void bb_write_byte(bytes_builder_t* bb, uint8_t val);
-/** writes a short to the builder. */
-void bb_write_short(bytes_builder_t* bb, uint16_t val);
 /** writes the bytes to the builder. */
 void bb_write_raw_bytes(bytes_builder_t* bb, void* ptr, size_t len);
 /** resets the content of the builder. */

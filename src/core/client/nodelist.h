@@ -62,7 +62,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
 /**
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes);
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int request_count);
 
 /**
  * forces the client to update the nodelist

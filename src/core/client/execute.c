@@ -104,10 +104,10 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
 
   conf->chainId  = c->chainId;
   conf->finality = c->finality;
-  if (c->key) {
-    // TODO sign the request
-    // conf->clientSignature =
-  }
+  //  if (c->key) {
+  // TODO sign the request
+  // conf->clientSignature =
+  //  }
   conf->latestBlock = c->replaceLatestBlock;
   conf->useBinary   = c->use_binary;
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
@@ -117,7 +117,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
 
     if (c->signatureCount) {
       node_weight_t* sig_nodes = NULL;
-      in3_ret_t      res       = in3_node_list_pick_nodes(ctx, &sig_nodes);
+      in3_ret_t      res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signatureCount);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       int node_count        = ctx_nodes_len(sig_nodes);
@@ -197,7 +197,7 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
       if (rc->latestBlock)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
       if (rc->signaturesCount)
-        sb_add_bytes(sb, ",\"signatures\":", rc->signatures, rc->signaturesCount, true);
+        sb_add_bytes(sb, ",\"signers\":", rc->signatures, rc->signaturesCount, true);
       if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
       if (rc->useFullProof)
@@ -526,7 +526,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes)) == IN3_OK) {
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->requestCount)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);
