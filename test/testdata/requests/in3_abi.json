@@ -2,6 +2,7 @@
     {
         "descr": "in3_abiEncode",
         "chainId": "0x1",
+        "intern": true,
         "request": {
             "method": "in3_abiEncode",
             "params": [
@@ -22,6 +23,7 @@
     {
         "descr": "in3_abiDecode",
         "chainId": "0x1",
+        "intern": true,
         "request": {
             "method": "in3_abiDecode",
             "params": [

@@ -2,6 +2,7 @@
     {
         "descr": "web3_sha3",
         "chainId": "0x1",
+        "intern": true,
         "request": {
             "method": "web3_sha3",
             "params": [
