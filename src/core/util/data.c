@@ -73,7 +73,6 @@ d_key_t keyn(const char* c, const size_t len) {
     c += 1;
   }
 #else
-  UNUSED_VAR(len);
   keyname_t* kn = __keynames;
   while (kn) {
     // input is not expected to be nul terminated
