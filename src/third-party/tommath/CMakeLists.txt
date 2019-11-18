@@ -63,7 +63,7 @@ IF (FAST_MATH)
             bn_mp_div_2.c
             bn_mp_div_2d.c
             bn_mp_div_3.c
-            bn_mp_div_d.c
+            #  bn_mp_div_d.c
             bn_mp_dr_is_modulus.c
             bn_mp_dr_reduce.c
             bn_mp_dr_setup.c
@@ -128,7 +128,7 @@ IF (FAST_MATH)
             #  bn_mp_prime_random_ex.c
             #  bn_mp_prime_strong_lucas_selfridge.c
             #  bn_mp_radix_size.c
-            bn_mp_radix_smap.c
+            #  bn_mp_radix_smap.c
             #  bn_mp_rand.c
             #  bn_mp_read_radix.c
             #  bn_mp_read_signed_bin.c
@@ -151,7 +151,7 @@ IF (FAST_MATH)
             #  bn_mp_signed_bin_size.c
             bn_mp_sqr.c
             bn_mp_sqrmod.c
-            bn_mp_sqrt.c
+            #  bn_mp_sqrt.c
             #  bn_mp_sqrtmod_prime.c
             bn_mp_sub.c
             #  bn_mp_sub_d.c
@@ -166,7 +166,7 @@ IF (FAST_MATH)
             #  bn_mp_to_unsigned_bin_n.c
             #  bn_mp_toom_mul.c
             #  bn_mp_toom_sqr.c
-            bn_mp_toradix.c
+            #  bn_mp_toradix.c
             #  bn_mp_toradix_n.c
             bn_mp_unsigned_bin_size.c
             #  bn_mp_xor.c
