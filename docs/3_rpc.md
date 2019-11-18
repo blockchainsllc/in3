@@ -181,3 +181,38 @@ Response:
   "result": ["0x1234567890123456789012345678901234567890","0x05"],
 }
 ```
+
+
+### in3_checksumAddress
+
+Will convert an upper or lowercase Ethereum address to a checksum address.  (See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md) )
+
+Parameters:
+
+1. `address`: address - the address to convert.
+2. `useChainId`: boolean - if true, the chainId is integrated as well (See [EIP1191](https://github.com/ethereum/EIPs/issues/1121) )
+
+Returns:
+
+the address-string using the upper/lowercase hex characters.
+
+Request:
+
+```js
+{
+    "method":"in3_checksumAddress",
+    "params":[
+        "0x1fe2e9bf29aa1938859af64c413361227d04059a",
+        false
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
+}
+```
