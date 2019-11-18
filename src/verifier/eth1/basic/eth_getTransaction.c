@@ -173,19 +173,33 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
   return res;
 }
 
-in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, bytes_t* blk_hash, uint64_t blk_num, uint32_t tx_idx) {
+in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, uint32_t tx_idx) {
   in3_ret_t res   = IN3_OK;
   bytes_t*  hash_ = d_get_byteskl(vc->result, K_BLOCK_HASH, 32);
   uint64_t  num_  = d_get_longk(vc->result, K_BLOCK_NUMBER);
   uint32_t  tid_  = d_get_intk(vc->result, K_TRANSACTION_INDEX);
+  bytes_t*  blk_hash;
+  uint64_t  blk_num;
 
-  if (!blk_hash && !blk_num)
+  if (d_type(blk) == T_BYTES) {
+    blk_hash = d_bytes(blk);
+    if (!blk_hash)
+      return vc_err(vc, "No block hash found");
+    else if (!b_cmp(blk_hash, hash_))
+      return vc_err(vc, "The block hash does not match the required");
+  } else if (d_type(blk) == T_INTEGER) {
+    blk_num = d_long(blk);
+    if (!blk_num)
+      return vc_err(vc, "No block number found");
+    else if (blk_num != num_)
+      return vc_err(vc, "The block number does not match the required");
+  } else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
+    // fall-through to continue verification
+  } else {
     return vc_err(vc, "No block hash & number found");
-  else if (blk_hash && !b_cmp(blk_hash, hash_))
-    return vc_err(vc, "The block hash does not match the required");
-  else if (blk_num && blk_num != num_)
-    return vc_err(vc, "The block number does not match the required");
-  else if (tx_idx && tx_idx != tid_)
+  }
+
+  if (tx_idx && tx_idx != tid_)
     return vc_err(vc, "The transaction index does not match the required");
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists

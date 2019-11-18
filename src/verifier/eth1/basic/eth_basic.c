@@ -76,11 +76,9 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (strcmp(method, "eth_getTransactionByHash") == 0)
     // for txReceipt, we need the txhash
     return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
-  else if (!strcmp(method, "eth_getTransactionByBlockHashAndIndex"))
-    return eth_verify_eth_getTransactionByBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0, d_get_int_at(d_get(vc->request, K_PARAMS), 1));
-  else if (!strcmp(method, "eth_getTransactionByBlockNumberAndIndex"))
-    return eth_verify_eth_getTransactionByBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
-  else if (strcmp(method, "eth_getBlockByNumber") == 0)
+  else if (!strcmp(method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(method, "eth_getTransactionByBlockNumberAndIndex")) {
+    return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
+  } else if (strcmp(method, "eth_getBlockByNumber") == 0)
     // for txReceipt, we need the txhash
     return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
   else if (strcmp(method, "eth_getBlockByHash") == 0)

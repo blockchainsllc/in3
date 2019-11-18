@@ -57,7 +57,7 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash);
 /**
  * verifies a transaction by block hash/number and id.
  */
-in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, bytes_t* blk_hash, uint64_t blk_num, uint32_t tx_idx);
+in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, uint32_t tx_idx);
 
 /**
  * verify account-proofs
