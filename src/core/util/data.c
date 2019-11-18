@@ -875,6 +875,7 @@ void d_track_keynames(uint8_t v) {
 }
 
 void d_clear_keynames() {
+#ifndef IN3_DONT_HASH_KEYS
   keyname_t* kn = NULL;
   while (__keynames) {
     kn = __keynames;
@@ -882,6 +883,7 @@ void d_clear_keynames() {
     __keynames = kn->next;
     free(kn);
   }
+#endif
 }
 
 bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {
