@@ -192,8 +192,6 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
         sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
-      if (rc->includeCode)
-        sb_add_chars(sb, ",\"includeCode\":true");
       if (rc->latestBlock)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
       if (rc->signaturesCount)

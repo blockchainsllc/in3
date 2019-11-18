@@ -61,6 +61,7 @@ void test_configure_request() {
   c->includeCode         = true;
   c->replaceLatestBlock  = 6;
   c->use_binary          = true;
+  c->use_http            = true;
 
   in3_ctx_t* ctx = new_ctx(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
