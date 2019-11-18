@@ -71,6 +71,7 @@ static void test_in3_config() {
      \"maxBlockCache\":98,\
      \"maxCodeCache\":97,\
      \"minDeposit\":96,\
+     \"keepIn3\":true,\
      \"nodeLimit\":95,\
      \"proof\":\"full\",\
      \"replaceLatestBlock\":94,\
@@ -107,6 +108,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(94, c->replaceLatestBlock);
   TEST_ASSERT_EQUAL(93, c->requestCount);
   TEST_ASSERT_EQUAL(92, c->signatureCount);
+  TEST_ASSERT_EQUAL(1, c->keep_in3);
 
   in3_chain_t* chain = in3_find_chain(c, 7);
   TEST_ASSERT_NOT_NULL(chain);

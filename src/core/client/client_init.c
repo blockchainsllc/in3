@@ -346,6 +346,8 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
       c->includeCode = d_int(iter.token) ? true : false;
     else if (iter.token->key == key("maxAttempts"))
       c->max_attempts = d_int(iter.token);
+    else if (iter.token->key == key("keepIn3"))
+      c->keep_in3 = d_int(iter.token);
     else if (iter.token->key == key("maxBlockCache"))
       c->maxBlockCache = d_int(iter.token);
     else if (iter.token->key == key("maxCodeCache"))

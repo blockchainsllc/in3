@@ -354,6 +354,9 @@ typedef struct in3_t_ {
   /** if true the client will try to use http instead of https*/
   uint8_t use_http;
 
+  /** if true the in3-section with the proof will also returned*/
+  uint8_t keep_in3;
+
   /** chain spec and nodeList definitions*/
   in3_chain_t* chains;
 

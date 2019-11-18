@@ -44,6 +44,29 @@
 #include "trie.h"
 #include <string.h>
 
+static in3_ret_t eth_verify_uncles(in3_vctx_t* vc, bytes32_t uncle_hash, d_token_t* uncles_headers, d_token_t* uncle_hashes) {
+  if (!uncles_headers || !uncle_hashes || d_len(uncles_headers) != d_len(uncle_hashes) || d_type(uncles_headers) != d_type(uncle_hashes) || d_type(uncle_hashes) != T_ARRAY)
+    return vc_err(vc, "invalid uncles proofs");
+
+  bytes32_t        hash2;
+  bytes_t          hash, header;
+  bytes_builder_t* bb = bb_new();
+  for (d_iterator_t iter_hash = d_iter(uncle_hashes), iter_header = d_iter(uncles_headers); iter_header.left && iter_hash.left; d_iter_next(&iter_hash), d_iter_next(&iter_header)) {
+    hash   = d_to_bytes(iter_hash.token);
+    header = d_to_bytes(iter_header.token);
+    sha3_to(&header, hash2);
+    if (memcmp(hash.data, hash2, 32)) {
+      bb_free(bb);
+      return vc_err(vc, "invalid uncles blockheader");
+    }
+    bb_write_raw_bytes(bb, header.data, header.len);
+  }
+  rlp_encode_to_list(bb);
+  sha3_to(&bb->b, hash2);
+  bb_free(bb);
+  return memcmp(hash2, uncle_hash, 32) ? vc_err(vc, "invalid uncles root") : IN3_OK;
+}
+
 in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
 
   in3_ret_t  res = IN3_OK;
@@ -132,6 +155,11 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
       res = vc_err(vc, "Wrong Transaction root");
 
     trie_free(trie);
+
+    // verify uncles
+    if (res == IN3_OK && full_proof)
+      return eth_verify_uncles(vc, d_get_bytesk(vc->result, K_SHA3_UNCLES)->data, d_get(vc->proof, K_UNCLES), d_get(vc->result, K_UNCLES));
+
   } else
     res = vc_err(vc, "Missing transaction-properties");
 

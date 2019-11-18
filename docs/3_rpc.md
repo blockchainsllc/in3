@@ -32,6 +32,9 @@ The config params support the following properties :
 * **[includeCode](https://github.com/slockit/in3/blob/master/src/types/types.ts#L187)** :`boolean` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
     example: true
 
+* **[keepIn3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L187)** :`boolean` *(optional)*  - if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
+    example: false
+
 * **[key](https://github.com/slockit/in3/blob/master/src/types/types.ts#L169)** :`any` *(optional)*  - the client key to sign requests
     example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
 
