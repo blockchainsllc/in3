@@ -179,9 +179,12 @@ async function runSingleTest(test, c) {
     let s = false, error = null
     try {
         const response = await client.send(test.request)
+        if (test.intern && JSON.stringify(response.result) != JSON.stringify(test.response[0].result))
+            throw new Error('wrong result: actual:' + JSON.stringify(response.result) + 'should:' + JSON.stringify(test.response[0].result))
         s = !!(response && response.result)
     }
     catch (err) {
+        //        console.log(err.stack)
         error = err
     }
     client.free()

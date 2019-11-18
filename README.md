@@ -15,7 +15,7 @@
  decentralized and secure network of remote nodes, enabling trustworthy and fast access to blockchain for a large number 
  of low-performance IoT and mobile devices.
  
- ![in3](in3_image.png)
+ ![in3](docs/in3_image.png)
  
  A more detailed explanation of in3 can be found [here](https://in3.readthedocs.io/en/develop/intro.html).
   

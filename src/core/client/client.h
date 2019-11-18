@@ -34,9 +34,8 @@
 
 // @PUBLIC_HEADER
 /** @file
- * incubed main client file.
+ * this file defines the incubed configuration struct and it registration.
  * 
- * This includes the definition of the client and used enum values.
  * 
  * */
 
@@ -50,16 +49,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/** the protocol version used when sending requests from the this client */
 #define IN3_PROTO_VER "2.0.0"
 
-#define ETH_CHAIN_ID_MAINNET 0x01L
-#define ETH_CHAIN_ID_KOVAN 0x2aL
-#define ETH_CHAIN_ID_TOBALABA 0x44dL
-#define ETH_CHAIN_ID_GOERLI 0x5L
-#define ETH_CHAIN_ID_EVAN 0x4b1L
-#define ETH_CHAIN_ID_IPFS 0x7d0
-#define ETH_CHAIN_ID_VOLTA 0x12046
-#define ETH_CHAIN_ID_LOCAL 0xFFFFL
+#define ETH_CHAIN_ID_MAINNET 0x01L   /**< chainId for mainnet */
+#define ETH_CHAIN_ID_KOVAN 0x2aL     /**< chainId for kovan */
+#define ETH_CHAIN_ID_TOBALABA 0x44dL /**< chainId for tobalaba */
+#define ETH_CHAIN_ID_GOERLI 0x5L     /**< chainId for goerlii */
+#define ETH_CHAIN_ID_EVAN 0x4b1L     /**< chainId for evan */
+#define ETH_CHAIN_ID_IPFS 0x7d0      /**< chainId for ipfs */
+#define ETH_CHAIN_ID_VOLTA 0x12046   /**< chainId for volta */
+#define ETH_CHAIN_ID_LOCAL 0xFFFFL   /**< chainId for local chain */
 
 /** the type of the chain. 
  * 
@@ -167,7 +167,8 @@ typedef struct in3_chain {
  **/
 typedef bytes_t* (*in3_storage_get_item)(
     void* cptr, /**< a custom pointer as set in the storage handler*/
-    char* key /**< the key to search in the cache */);
+    char* key   /**< the key to search in the cache */
+);
 
 /** 
  * storage handler function for writing to the cache.
@@ -175,7 +176,8 @@ typedef bytes_t* (*in3_storage_get_item)(
 typedef void (*in3_storage_set_item)(
     void*    cptr, /**< a custom pointer as set in the storage handler*/
     char*    key,  /**< the key to store the value.*/
-    bytes_t* value /**< the value to store.*/);
+    bytes_t* value /**< the value to store.*/
+);
 
 /** 
  * storage handler to handle cache.
@@ -252,6 +254,9 @@ typedef struct n3_request {
  */
 typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
 
+/**
+ * Filter type used internally when managing filters.
+ */
 typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
   FILTER_BLOCK   = 1, /**< Block filter */
@@ -272,16 +277,19 @@ typedef struct in3_filter_t_ {
   void (*release)(struct in3_filter_t_* f);
 } in3_filter_t;
 
+/**
+ * Handler which is added to client config in order to handle filter.
+ */
 typedef struct in3_filter_handler_t_ {
   in3_filter_t** array; /** array of filters */
   size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
 /** Incubed Configuration. 
-   * 
-   * This struct holds the configuration and also point to internal resources such as filters or chain configs.
-   * 
-  */
+ * 
+ * This struct holds the configuration and also point to internal resources such as filters or chain configs.
+ * 
+ */
 typedef struct in3_t_ {
   /** number of seconds requests can be cached. */
   uint32_t cacheTimeout;
@@ -436,13 +444,21 @@ void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to fre
 /**
  * inits the cache.
  *
+ * this will try to read the nodelist from cache.
  */
-in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
+in3_ret_t in3_cache_init(
+    in3_t* c /**< the incubed client */
+);
 
 /**
  * finds the chain-config for the given chain_id.
+ * 
+ * My return NULL if not found.
  */
-in3_chain_t* find_chain(in3_t* c, uint64_t chain_id);
+in3_chain_t* in3_find_chain(
+    in3_t*   c /**< the incubed client */,
+    uint64_t chain_id /**< chainId */
+);
 
 /**
  * configures the clent based on a json-config.
@@ -450,20 +466,29 @@ in3_chain_t* find_chain(in3_t* c, uint64_t chain_id);
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  * 
  */
-in3_ret_t in3_configure(in3_t* c, char* config);
+in3_ret_t in3_configure(
+    in3_t* c,     /**< the incubed client */
+    char*  config /**< JSON-string with the configuration to set. */
+);
 
 /**
  * defines a default transport which is used when creating a new client.
  */
-void in3_set_default_transport(in3_transport_send transport);
+void in3_set_default_transport(
+    in3_transport_send transport /**< the default transport-function. */
+);
 
 /**
  * defines a default storage handler which is used when creating a new client.
  */
-void in3_set_default_storage(in3_storage_handler_t* cacheStorage);
+void in3_set_default_storage(
+    in3_storage_handler_t* cacheStorage /**< pointer to the handler-struct */
+);
 /**
  * defines a default signer which is used when creating a new client.
  */
-void in3_set_default_signer(in3_signer_t* signer);
+void in3_set_default_signer(
+    in3_signer_t* signer /**< default signer-function. */
+);
 
 #endif

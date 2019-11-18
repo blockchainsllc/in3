@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 // @PUBLIC_HEADER
-/** @file
- * Ethereum Nanon verification.
+/** 
+ * Ethereum data structure verification.
  * */
 
 #ifndef in3_eth_rpc_h__

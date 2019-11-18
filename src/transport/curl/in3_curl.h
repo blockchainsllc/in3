@@ -43,7 +43,15 @@
 #include "../../core/client/client.h"
 
 /**
- * the transport function using curl.
+ * a transport function using curl.
+ * 
+ * You can use it by setting the transport-function-pointer in the in3_t->transport to this function:
+ * 
+ * ```c
+ * #include <in3/in3_curl.h>
+ * ...
+ * c->transport = send_curl;
+ * ```
  */
 in3_ret_t send_curl(in3_request_t* req);
 

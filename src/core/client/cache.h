@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-/** @file
+/**
  * handles caching and storage.
  * 
  * storing nodelists and other caches with the storage handler as specified in the client.

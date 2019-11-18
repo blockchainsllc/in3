@@ -84,7 +84,7 @@ in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* a
           sha3_to(&b, tmp);
           if (code_hash && memcmp(code_hash->data, tmp, 32) != 0) {
             vc_err(vc, "Wrong codehash");
-            in3_remove_required(vc->ctx, ctx);
+            ctx_remove_required(vc->ctx, ctx);
             // TODO maybe we should not give up here, but blacklist the node and try again!
             return IN3_EINVAL;
           }
@@ -107,7 +107,7 @@ in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* a
     snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\",\"latest\"]}", hex_address + 1);
     in3_proof_t old_proof  = vc->ctx->client->proof;
     vc->ctx->client->proof = PROOF_NONE; // we don't need proof since we have the codehash!
-    i                      = in3_add_required(vc->ctx, new_ctx(vc->ctx->client, req));
+    i                      = ctx_add_required(vc->ctx, new_ctx(vc->ctx->client, req));
     vc->ctx->client->proof = old_proof;
     return i;
   }

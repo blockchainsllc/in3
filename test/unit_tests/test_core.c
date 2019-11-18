@@ -68,6 +68,8 @@ void test_bytes() {
 
   bytes_t clone = cloned_bytes(b);
   TEST_ASSERT_EQUAL_UINT8_ARRAY(data, clone.data, 32);
+  // make sure it does not crash
+  b_free(NULL);
 }
 
 void test_str_replace() {
