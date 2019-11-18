@@ -74,6 +74,7 @@ static in3_ret_t in3_abiEncode(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     return ctx_set_error(ctx, "invalid input data", IN3_EINVAL);
   }
   sb_add_bytes(&response[0]->result, NULL, &req->call_data->b, 1, false);
+  req_free(req);
   RESPONSE_END();
   return IN3_OK;
 }
