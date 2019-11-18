@@ -170,6 +170,7 @@ static int verify(in3_vctx_t* v) {
 
 void in3_register_eth_api() {
   in3_verifier_t* v = in3_get_verifier(CHAIN_ETH);
+  if (v && v->pre_handle == eth_handle_intern) return;
   if (v) {
     parent_verify = v->verify;
     parent_handle = v->pre_handle;
