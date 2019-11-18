@@ -114,6 +114,17 @@ static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_resp
   RESPONSE_END();
   return IN3_OK;
 }
+static in3_ret_t in3_sha3(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  if (!params) return ctx_set_error(ctx, "no data", IN3_EINVAL);
+  bytes_t data = d_to_bytes(params + 1);
+  RESPONSE_START();
+  bytes32_t hash;
+  bytes_t   hbytes = bytes(hash, 32);
+  sha3_to(&data, hash);
+  sb_add_bytes(&response[0]->result, NULL, &hbytes, 1, false);
+  RESPONSE_END();
+  return IN3_OK;
+}
 static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
   str_range_t r   = d_to_json(d_get_at(params, 0));
   char        old = r.data[r.len];
@@ -137,6 +148,7 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (strcmp(method, "in3_abiEncode") == 0) return in3_abiEncode(ctx, params, response);
   if (strcmp(method, "in3_abiDecode") == 0) return in3_abiDecode(ctx, params, response);
   if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(ctx, params, response);
+  if (strcmp(method, "web3_sha3") == 0) return in3_sha3(ctx, params, response);
   if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
@@ -149,6 +161,7 @@ static int verify(in3_vctx_t* v) {
   if (strcmp(method, "in3_abiEncode") == 0 ||
       strcmp(method, "in3_abiDecode") == 0 ||
       strcmp(method, "in3_checksumAddress") == 0 ||
+      strcmp(method, "web3_sha3") == 0 ||
       strcmp(method, "in3_config") == 0)
     return IN3_OK;
 
@@ -179,7 +192,6 @@ in3_pk2address
 in3_pk2public
 in3_ecrecover
 in3_key
-in3_checksumAddress
 in3_hash
 
 */
