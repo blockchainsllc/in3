@@ -54,6 +54,7 @@
 
 #define RESPONSE_END() \
   do { sb_add_char(&response[0]->result, '}'); } while (0)
+
 static in3_verify     parent_verify = NULL;
 static in3_pre_handle parent_handle = NULL;
 
@@ -98,7 +99,19 @@ static in3_ret_t in3_abiDecode(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   _free(result);
 
   RESPONSE_END();
-  printf(":::%s:::\n", response[0]->result.data);
+  return IN3_OK;
+}
+static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  bytes_t* adr = d_get_bytes_at(params, 0);
+  if (!adr || adr->len != 20) return ctx_set_error(ctx, "the address must have 20 bytes", IN3_EINVAL);
+  char      result[43];
+  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->client->chainId : 0, result);
+  if (res) return ctx_set_error(ctx, "Could not create the checksum address", res);
+  RESPONSE_START();
+  sb_add_char(&response[0]->result, '"');
+  sb_add_chars(&response[0]->result, result);
+  sb_add_char(&response[0]->result, '"');
+  RESPONSE_END();
   return IN3_OK;
 }
 static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
@@ -123,6 +136,7 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
   if (strcmp(method, "in3_abiEncode") == 0) return in3_abiEncode(ctx, params, response);
   if (strcmp(method, "in3_abiDecode") == 0) return in3_abiDecode(ctx, params, response);
+  if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(ctx, params, response);
   if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
@@ -134,6 +148,7 @@ static int verify(in3_vctx_t* v) {
 
   if (strcmp(method, "in3_abiEncode") == 0 ||
       strcmp(method, "in3_abiDecode") == 0 ||
+      strcmp(method, "in3_checksumAddress") == 0 ||
       strcmp(method, "in3_config") == 0)
     return IN3_OK;
 
