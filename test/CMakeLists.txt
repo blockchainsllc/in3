@@ -75,14 +75,6 @@ endforeach ()
 if(TRANSPORTS)
         add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
         target_link_libraries(test_libcurl transport_curl eth_nano)
-
-#        add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
-#        target_link_libraries(test_vhist eth_nano transport_curl)
-#        add_test(
-#                NAME "in3_test_vhist"
-#                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
-#                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-#        )
 endif()
 
 
