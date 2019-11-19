@@ -48,12 +48,6 @@
 #error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
 #endif
 
-typedef struct keyname {
-  char*           name;
-  d_key_t         key;
-  struct keyname* next;
-} keyname_t;
-
 #ifndef IN3_DONT_HASH_KEYS
 static uint8_t __track_keys = 0;
 #else
@@ -104,24 +98,6 @@ static d_key_t add_key(const char* c, size_t len) {
   kn->name[len] = 0;
   __keynames_len++;
   return k;
-}
-
-d_key_t key(const char* c) {
-  uint16_t val = 0;
-#ifndef IN3_DONT_HASH_KEYS
-  size_t l = strlen(c);
-  for (; l; l--, c++) val ^= *c | val << 7;
-#else
-  keyname_t* kn = __keynames;
-  while (kn) {
-    if (!strcmp(kn->name, c))
-      return __keynames_len - val;
-    kn = kn->next;
-    val++;
-  }
-  val = 0;
-#endif
-  return val;
 }
 
 static size_t d_token_size(const d_token_t* item) {

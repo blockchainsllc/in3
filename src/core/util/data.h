@@ -94,6 +94,16 @@ typedef struct json_parser {
   char*      c;         /** pointer to the src-data*/
 } json_ctx_t;
 
+/** internal type declared here to assist with key() optimization */
+typedef struct keyname {
+  char*           name;
+  d_key_t         key;
+  struct keyname* next;
+} keyname_t;
+
+extern keyname_t* __keynames;
+extern size_t     __keynames_len;
+
 /**
  * 
  * returns the byte-representation of token. 
@@ -147,8 +157,23 @@ char* d_get_keystr(d_key_t k);     /**< returns the string for a key. This only 
 void  d_track_keynames(uint8_t v); /**< activates the keyname-cache, which stores the string for the keys when parsing. */
 void  d_clear_keynames();          /**< delete the cached keynames */
 
-d_key_t key(const char* c);
-
+static inline d_key_t key(const char* c) {
+  uint16_t val = 0;
+#ifndef IN3_DONT_HASH_KEYS
+  size_t l = strlen(c);
+  for (; l; l--, c++) val ^= *c | val << 7;
+#else
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (!strcmp(kn->name, c))
+      return __keynames_len - val;
+    kn = kn->next;
+    val++;
+  }
+  val = 0;
+#endif
+  return val;
+}
 static inline char*    d_get_stringk(d_token_t* r, d_key_t k) { return d_string(d_get(r, k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string(d_token_t* r, char* k) { return d_get_stringk(r, key(k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string_at(d_token_t* r, uint32_t pos) { return d_string(d_get_at(r, pos)); }    /**< reads string at given pos of an array. */
