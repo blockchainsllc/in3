@@ -652,7 +652,6 @@ pages:
     - short-jobs
   dependencies:
     - test_c
-    - test_evm
     - java_arm
     - examples_arm
     - examples_linux
@@ -712,7 +711,6 @@ debian_package_deploy_disco:
     - short-jobs
   dependencies:
     - test_c
-    - test_evm
     - java_arm
     - examples_arm
     - examples_linux
