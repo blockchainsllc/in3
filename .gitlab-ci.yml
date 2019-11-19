@@ -198,20 +198,20 @@ test_c:
       - testbuild/test
       - Testing
 
-test_evm:
-  image: docker.slock.it/build-images/cmake:gcc8
-  stage: test
-  tags:
-    - short-jobs
-  script:
-    - mkdir testbuild
-    - cd testbuild
-    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
-    - make
-    - cd ../test/testdata/evm/GeneralStateTests
-    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
-    - cd ../vmTests
-    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+#test_evm:
+#  image: docker.slock.it/build-images/cmake:gcc8
+#  stage: test
+#  tags:
+#    - short-jobs
+#  script:
+#    - mkdir testbuild
+#    - cd testbuild
+#    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
+#    - make
+#    - cd ../test/testdata/evm/GeneralStateTests
+#    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
+#    - cd ../vmTests
+#    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
 test_wasm:
   image: docker.slock.it/build-images/node:10-alpine
