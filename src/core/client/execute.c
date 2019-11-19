@@ -573,3 +573,17 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       return IN3_EINVAL;
   }
 }
+
+void in3_req_add_response(
+    in3_response_t* res,      /**< [in] the request-pointer passed to the transport-function containing the payload and url */
+    int             index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool            is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    void*           data,     /**<  the data or the the string*/
+    int             data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+) {
+  sb_t* sb = is_error ? &res[index].error : &res[index].result;
+  if (data_len == -1)
+    sb_add_chars(sb, data);
+  else
+    sb_add_range(sb, data, 0, data_len);
+}

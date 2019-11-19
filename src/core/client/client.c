@@ -179,7 +179,7 @@ char* in3_client_exec_req(
           d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
           char*      r      = d_create_json(result ? result : error);
           if (r) {
-            res = _malloc(strlen(r) + 30);
+            res = _malloc(strlen(r) + 50);
             if (res && result)
               sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
             else if (res)
@@ -240,7 +240,7 @@ char* in3_client_exec_req(
   }
 
   if (!res && err_msg) {
-    res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 30);
+    res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 50);
     if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"%s\"}", ctx->error ? ctx->error : err_msg);
   }
 

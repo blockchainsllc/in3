@@ -400,7 +400,6 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
           *item->data = strtohex(start[4]) << 4 | strtohex(start[5]);
         } else {
           item->len  = l | T_STRING << 28;
-          item->data = (uint8_t*) start;
           item->data = _malloc(l + 1);
           memcpy(item->data, start, l);
           item->data[l] = 0;
