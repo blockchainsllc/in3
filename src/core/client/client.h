@@ -411,6 +411,14 @@ in3_ret_t in3_client_rpc(
     char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
+/** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
+ * The resulting string must be free by the the caller of this function! 
+ */
+char* in3_client_exec_req(
+    in3_t* c,  /**< [in] the pointer to the incubed client config. */
+    char*  req /**< [in] the request as rpc. */
+);
+
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
 in3_ret_t in3_client_register_chain(
     in3_t*           client,      /**< [in] the pointer to the incubed client config. */

@@ -145,3 +145,105 @@ in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, ch
   // if we have an error, we always return IN3_EUNKNOWN
   return *error ? IN3_EUNKNOWN : res;
 }
+
+char* in3_client_exec_req(
+    in3_t* c,  /**< [in] the pointer to the incubed client config. */
+    char*  req /**< [in] the request as rpc. */
+) {
+
+  // parse it
+  char*      res     = NULL;
+  char*      err_msg = NULL;
+  in3_ctx_t* ctx     = new_ctx(c, req);
+  if (!ctx) return NULL;
+
+  // make sure result & error are clean
+  // check parse-errors
+  if (ctx->error) {
+    res = _malloc(strlen(ctx->error) + 50);
+    if (!res) return NULL;
+    sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"%s\"}", ctx->error);
+  } else {
+
+    uint32_t id = d_get_intk(ctx->requests[0], K_ID);
+
+    switch (in3_send_ctx(ctx)) {
+      case IN3_OK:
+        if (c->keep_in3) {
+          str_range_t rr  = d_to_json(ctx->responses[0]);
+          rr.data[rr.len] = 0;
+          res             = _malloc(rr.len + 50);
+          if (res) sprintf(res, "%s", rr.data);
+        } else {
+          d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+          d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+          char*      r      = d_create_json(result ? result : error);
+          if (r) {
+            res = _malloc(strlen(r) + 30);
+            if (res && result)
+              sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
+            else if (res)
+              printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, r);
+            _free(r);
+          }
+        }
+        break;
+      case IN3_ECONFIG:
+        err_msg = "Invalid configuration";
+        break;
+      case IN3_EFIND:
+        err_msg = "Could not find the requested resource";
+        break;
+      case IN3_EUNKNOWN:
+        err_msg = "Unknown Error occured";
+        break;
+      case IN3_ENOMEM:
+        err_msg = "Out of Memory";
+        break;
+      case IN3_ENOTSUP:
+        err_msg = "The operation is not supported";
+        break;
+      case IN3_EINVAL:
+        err_msg = "Invalid Value";
+        break;
+      case IN3_EVERS:
+        err_msg = "Version missmatched";
+        break;
+      case IN3_ELIMIT:
+        err_msg = "Limit reached";
+        break;
+      case IN3_EINVALDT:
+        err_msg = "invalid data";
+        break;
+      case IN3_EPASS:
+        err_msg = "wrong password";
+        break;
+      case IN3_ERPC:
+        err_msg = "RPC Error";
+        break;
+      case IN3_ERPCNRES:
+        err_msg = "RPC No response";
+        break;
+      case IN3_EUSNURL:
+        err_msg = "RPC invalid url";
+        break;
+      case IN3_ETRANS:
+        err_msg = "transport error";
+        break;
+      case IN3_ERANGE:
+        err_msg = "out of range";
+        break;
+      case IN3_WAITING:
+        err_msg = "waiting for data";
+        break;
+    }
+  }
+
+  if (!res && err_msg) {
+    res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 30);
+    if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"%s\"}", ctx->error ? ctx->error : err_msg);
+  }
+
+  free_ctx(ctx);
+  return res;
+}
