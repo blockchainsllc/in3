@@ -74,6 +74,7 @@ typedef enum evm_state {
 #define EVM_ERROR_OUT_OF_GAS -10             /**< not enough gas to exewcute the opcode  */
 #define EVM_ERROR_BALANCE_TOO_LOW -11        /**< not enough funds to transfer the requested value.  */
 #define EVM_ERROR_STACK_LIMIT -12            /**< stack limit reached  */
+#define EVM_ERROR_SUCCESS_CONSUME_GAS -13    /**< write success but consume all gas */
 
 #define EVM_PROP_FRONTIER 1
 #define EVM_PROP_EIP150 2
@@ -295,7 +296,7 @@ int     evm_call(void*    vc,
                  bytes_t** result);
 void    evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
 void    evm_free(evm_t* evm);
-int     evm_run_precompiled(evm_t* evm, uint8_t address[20]);
+int     evm_run_precompiled(evm_t* evm, const uint8_t address[20]);
 uint8_t evm_is_precompiled(evm_t* evm, uint8_t address[20]);
 void    uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
 

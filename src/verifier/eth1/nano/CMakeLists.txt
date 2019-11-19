@@ -46,7 +46,6 @@ add_library(eth_nano_o OBJECT
         signature.c
         txreceipt.c
         registry.c
-        vhist.c
         chainspec.c
         )
 

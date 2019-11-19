@@ -75,14 +75,6 @@ endforeach ()
 if(TRANSPORTS)
         add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
         target_link_libraries(test_libcurl transport_curl eth_nano)
-
-        add_executable(test_vhist test_vhist.c unity/unity.c ../src/cmd/in3/in3_storage.c)
-        target_link_libraries(test_vhist eth_nano transport_curl)
-        add_test(
-                NAME "in3_test_vhist"
-                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_bitset
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-        )
 endif()
 
 
@@ -164,12 +156,12 @@ foreach (testdir
         #GeneralStateTests/stDelegatecallTestHomestead
         #GeneralStateTests/stEIP150Specific
         #GeneralStateTests/stEIP150singleCodeGasPrices
-        #GeneralStateTests/stZeroKnowledge2
+        GeneralStateTests/stZeroKnowledge2
         GeneralStateTests/stLogTests
         #GeneralStateTests/stEIP158Specific
         #GeneralStateTests/stZeroCallsRevert
         #GeneralStateTests/stTransactionTest
-        #GeneralStateTests/stZeroKnowledge
+        GeneralStateTests/stZeroKnowledge
         #GeneralStateTests/stStaticCall
         #GeneralStateTests/stMemExpandingEIP150Calls
         GeneralStateTests/stArgsZeroOneBalance
@@ -181,9 +173,12 @@ foreach (testdir
     file(GLOB files "testdata/evm/${testdir}/*.json")
 
     # exclude tests, but fix them later    
-    list(FILTER files EXCLUDE REGEX ".*randomStatetest(579|85|150|154|159|178|184|205|248|306|48|458|467|498|554|572|636|639).json$")
+    list(FILTER files EXCLUDE REGEX ".*randomStatetest(150|154|159|178|184|205|248|306|48|458|467|498|554|636|639).json$")
     list(FILTER files EXCLUDE REGEX ".*201503110226PYTHON_DUP6.json$")
-    list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|randomStatetest642|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
+    list(FILTER files EXCLUDE REGEX ".*ecpairing(.*).json$")
+    list(FILTER files EXCLUDE REGEX ".*pairingTest.json$")
+    list(FILTER files EXCLUDE REGEX ".*ecmul_0-3_5616_28000_96.json$")
+    list(FILTER files EXCLUDE REGEX ".*(InInitcodeToExisContractWithVTransferNEMoney|DynamicCode|OOGE_valueTransfer|additionalGasCosts2|ExtCodeCopyTargetRangeLongerThanCodeTests|ExtCodeCopyTests).json$")
 
 
     foreach (file ${files})
@@ -193,7 +188,7 @@ foreach (testdir
                 COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
         )
-        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 1)
+        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 9)
     endforeach ()
 endforeach ()
 

@@ -48,26 +48,39 @@
 #error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
 #endif
 
-typedef struct keyname {
-  char*           name;
-  d_key_t         key;
-  struct keyname* next;
-} keyname_t;
-static uint8_t    __track_keys = 0;
-static keyname_t* __keynames   = NULL;
+#ifndef IN3_DONT_HASH_KEYS
+static uint8_t __track_keys = 0;
+#else
+static uint8_t __track_keys = 1;
+#endif
 
-d_key_t keyn(const char* c, const int len) {
-  uint16_t val = 0;
-  int      i   = 0;
+keyname_t* __keynames     = NULL;
+size_t     __keynames_len = 0;
+
+d_key_t keyn(const char* c, const size_t len) {
+  d_key_t val = 0;
+#ifndef IN3_DONT_HASH_KEYS
+  size_t i = 0;
   for (; i < len; i++) {
     if (*c == 0) return val;
     val ^= *c | val << 7;
     c += 1;
   }
+#else
+  keyname_t* kn = __keynames;
+  while (kn) {
+    // input is not expected to be nul terminated
+    if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
+      return __keynames_len - val;
+    kn = kn->next;
+    val++;
+  }
+  val++;
+#endif
   return val;
 }
 
-static d_key_t add_key(char* c, int len) {
+static d_key_t add_key(const char* c, size_t len) {
   d_key_t k = keyn(c, len);
   if (!__track_keys) return k;
   keyname_t* kn = __keynames;
@@ -83,6 +96,7 @@ static d_key_t add_key(char* c, int len) {
   kn->name   = malloc(len + 1);
   memcpy(kn->name, c, len);
   kn->name[len] = 0;
+  __keynames_len++;
   return k;
 }
 
@@ -825,10 +839,17 @@ char* d_get_keystr(d_key_t k) {
   }
   return NULL;
 }
+
 void d_track_keynames(uint8_t v) {
+#ifndef IN3_DONT_HASH_KEYS
   __track_keys = v;
+#else
+  UNUSED_VAR(v);
+#endif
 }
+
 void d_clear_keynames() {
+#ifndef IN3_DONT_HASH_KEYS
   keyname_t* kn = NULL;
   while (__keynames) {
     kn = __keynames;
@@ -836,6 +857,7 @@ void d_clear_keynames() {
     __keynames = kn->next;
     free(kn);
   }
+#endif
 }
 
 bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {

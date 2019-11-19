@@ -116,7 +116,7 @@ bytes_t**              d_create_bytes_vec(const d_token_t* arr);                
 static inline d_type_t d_type(const d_token_t* item) { return item == NULL ? T_NULL : (item->len & 0xF0000000) >> 28; } /**< type of the token */
 static inline int      d_len(const d_token_t* item) { return item == NULL ? 0 : item->len & 0xFFFFFFF; }                /**< number of elements in the token (only for object or array, other will return 0) */
 bool                   d_eq(const d_token_t* a, const d_token_t* b);                                                    /**< compares 2 token and if the value is equal */
-d_key_t                keyn(const char* c, const int len);                                                              /**< generates the keyhash for the given stringrange as defined by len */
+d_key_t                keyn(const char* c, const size_t len);                                                           /**< generates the keyhash for the given stringrange as defined by len */
 
 d_token_t* d_get(d_token_t* item, const uint16_t key);                          /**< returns the token with the given propertyname (only if item is a object) */
 d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
@@ -147,11 +147,7 @@ char* d_get_keystr(d_key_t k);     /**< returns the string for a key. This only 
 void  d_track_keynames(uint8_t v); /**< activates the keyname-cache, which stores the string for the keys when parsing. */
 void  d_clear_keynames();          /**< delete the cached keynames */
 
-static d_key_t key(const char* c) {
-  uint16_t val = 0, l = strlen(c);
-  for (; l; l--, c++) val ^= *c | val << 7;
-  return val;
-}
+d_key_t key(const char* c);
 
 static inline char*    d_get_stringk(d_token_t* r, d_key_t k) { return d_string(d_get(r, k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string(d_token_t* r, char* k) { return d_get_stringk(r, key(k)); }              /**< reads token of a property as string. */
