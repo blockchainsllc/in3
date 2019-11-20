@@ -160,12 +160,12 @@ coverage:
   tags:
     - short-jobs
   script:
-    - mkdir _build; cd _build
+    - mkdir cov_build; cd cov_build
     - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
     - make -j8 &&  make ccov-all && make ccov-all-report
   artifacts:
     paths:
-      - _build/ccov/all-merged
+      - cov_build/ccov/all-merged
 
 analyse:
   stage: test
@@ -636,11 +636,18 @@ pages:
     - arm
   dependencies:
     - arm7
+    - readthedocs
+    - coverage
+    - analyse
   script:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
     - cp libFiles_$CI_COMMIT_SHORT_SHA.tar.gz public/lib
     - echo Grab file at BASE_PAGES_URL/lib/libFiles_$CI_COMMIT_SHORT_SHA.tar.gz
+    - cp -r cov_build/ccov/all-merged public/coverage
+    - cp -r report public/code_analysis
+    - cp -r doc/build public/rtd
+    - echo "<html><body><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
   artifacts:
     paths:
       - public
