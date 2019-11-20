@@ -147,7 +147,16 @@ char* d_get_keystr(d_key_t k);     /**< returns the string for a key. This only 
 void  d_track_keynames(uint8_t v); /**< activates the keyname-cache, which stores the string for the keys when parsing. */
 void  d_clear_keynames();          /**< delete the cached keynames */
 
+#ifndef IN3_DONT_HASH_KEYS
+static inline d_key_t key(const char* c) {
+  uint16_t val = 0;
+  size_t   l   = strlen(c);
+  for (; l; l--, c++) val ^= *c | val << 7;
+  return val;
+}
+#else
 d_key_t key(const char* c);
+#endif
 
 static inline char*    d_get_stringk(d_token_t* r, d_key_t k) { return d_string(d_get(r, k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string(d_token_t* r, char* k) { return d_get_stringk(r, key(k)); }              /**< reads token of a property as string. */

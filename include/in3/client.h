@@ -411,6 +411,26 @@ in3_ret_t in3_client_rpc(
     char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
+/** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
+ * The resulting string must be free by the the caller of this function! 
+ */
+char* in3_client_exec_req(
+    in3_t* c,  /**< [in] the pointer to the incubed client config. */
+    char*  req /**< [in] the request as rpc. */
+);
+
+/**
+ * adds a response for a request-object.
+ * This function should be used in the transport-function to set the response.
+ */
+void in3_req_add_response(
+    in3_response_t* res,      /**< [in] the response-pointer */
+    int             index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool            is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    void*           data,     /**<  the data or the the string*/
+    int             data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+);
+
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
 in3_ret_t in3_client_register_chain(
     in3_t*           client,      /**< [in] the pointer to the incubed client config. */
@@ -494,4 +514,23 @@ void in3_set_default_signer(
     in3_signer_t* signer /**< default signer-function. */
 );
 
+/**
+ * create a new signer-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_signer_t* in3_create_signer(
+    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
+    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+    void*          wallet      /**<custom object whill will be passed to functions */
+);
+
+/**
+ * create a new storage handler-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_storage_handler_t* in3_create_storeage_handler(
+    in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
+    in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    void*                cptr      /**< custom pointer which will will be passed to functions */
+);
 #endif
