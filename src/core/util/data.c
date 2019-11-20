@@ -54,8 +54,28 @@ static uint8_t __track_keys = 0;
 static uint8_t __track_keys = 1;
 #endif
 
-keyname_t* __keynames     = NULL;
-size_t     __keynames_len = 0;
+/** internal type declared here to assist with key() optimization */
+typedef struct keyname {
+  char*           name;
+  d_key_t         key;
+  struct keyname* next;
+} keyname_t;
+
+static keyname_t* __keynames = NULL;
+#ifdef IN3_DONT_HASH_KEYS
+static size_t     __keynames_len = 0;
+static keyname_t* __last_keyname = NULL;
+
+d_key_t key(const char* c) {
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (!strcmp(kn->name, c))
+      return kn->key;
+    kn = kn->next;
+  }
+  return __keynames_len;
+}
+#endif
 
 d_key_t keyn(const char* c, const size_t len) {
   d_key_t val = 0;
@@ -71,11 +91,10 @@ d_key_t keyn(const char* c, const size_t len) {
   while (kn) {
     // input is not expected to be nul terminated
     if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
-      return __keynames_len - val;
+      return kn->key;
     kn = kn->next;
-    val++;
   }
-  val++;
+  val        = __keynames_len;
 #endif
   return val;
 }
@@ -89,14 +108,24 @@ static d_key_t add_key(const char* c, size_t len) {
     kn = kn->next;
   }
 
-  kn         = malloc(sizeof(keyname_t));
+  kn = malloc(sizeof(keyname_t));
+#ifdef IN3_DONT_HASH_KEYS
+  __keynames_len++;
+  kn->next = NULL;
+  if (__last_keyname)
+    __last_keyname->next = kn;
+  else
+    __keynames = kn;
+  __last_keyname = kn;
+#else
   kn->next   = __keynames;
   __keynames = kn;
-  kn->key    = k;
-  kn->name   = malloc(len + 1);
+#endif
+
+  kn->key  = k;
+  kn->name = malloc(len + 1);
   memcpy(kn->name, c, len);
   kn->name[len] = 0;
-  __keynames_len++;
   return k;
 }
 
