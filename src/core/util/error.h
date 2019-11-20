@@ -79,4 +79,9 @@ typedef enum {
 #define OPTIONAL_T_UNDEFINED(t) ((OPTIONAL_T(t)){.defined = false})
 #define OPTIONAL_T_VALUE(t, v) ((OPTIONAL_T(t)){.value = v, .defined = true})
 
+/**
+ * converts a error code into a string.
+ */
+char* in3_errmsg(in3_ret_t err /**< the error code */);
+
 #endif //IN3_ERROR_H

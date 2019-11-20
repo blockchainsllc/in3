@@ -499,6 +499,9 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   // if there is an error it does not make sense to execute.
   if (ctx->error) return IN3_EUNKNOWN;
 
+  // is it a valid request?
+  if (!ctx->request_context || !d_get(ctx->requests[0], K_METHOD)) return ctx_set_error(ctx, "No Method defined", IN3_ECONFIG);
+
   // if there is response we are done.
   if (ctx->response_context) return IN3_OK;
 

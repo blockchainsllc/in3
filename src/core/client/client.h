@@ -514,4 +514,23 @@ void in3_set_default_signer(
     in3_signer_t* signer /**< default signer-function. */
 );
 
+/**
+ * create a new signer-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_signer_t* in3_create_signer(
+    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
+    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+    void*          wallet      /**<custom object whill will be passed to functions */
+);
+
+/**
+ * create a new storage handler-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_storage_handler_t* in3_create_storeage_handler(
+    in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
+    in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    void*                cptr      /**< custom pointer which will will be passed to functions */
+);
 #endif

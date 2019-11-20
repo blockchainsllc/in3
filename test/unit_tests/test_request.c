@@ -98,12 +98,19 @@ void test_exec_req() {
   TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"The Request is not a valid structure!\"}", result);
   _free(result);
 
+  result = in3_client_exec_req(c, "{\"params\":[\"0x1234\"]}");
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"No Method defined\"}", result);
+  _free(result);
+
   in3_free(c);
 }
 /*
  * Main
  */
 int main() {
+  _free(in3_create_signer(NULL, NULL, NULL));
+  _free(in3_create_storeage_handler(NULL, NULL, NULL));
+
   TESTS_BEGIN();
   RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);

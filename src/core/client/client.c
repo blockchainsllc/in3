@@ -165,78 +165,29 @@ char* in3_client_exec_req(
     sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"%s\"}", ctx->error);
   } else {
 
-    uint32_t id = d_get_intk(ctx->requests[0], K_ID);
-
-    switch (in3_send_ctx(ctx)) {
-      case IN3_OK:
-        if (c->keep_in3) {
-          str_range_t rr  = d_to_json(ctx->responses[0]);
-          rr.data[rr.len] = 0;
-          res             = _malloc(rr.len + 50);
-          if (res) sprintf(res, "%s", rr.data);
-        } else {
-          d_token_t* result = d_get(ctx->responses[0], K_RESULT);
-          d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
-          char*      r      = d_create_json(result ? result : error);
-          if (r) {
-            res = _malloc(strlen(r) + 50);
-            if (res && result)
-              sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
-            else if (res)
-              printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, r);
-            _free(r);
-          }
+    uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
+    in3_ret_t ret = in3_send_ctx(ctx);
+    if (ret == IN3_OK) {
+      if (c->keep_in3) {
+        str_range_t rr  = d_to_json(ctx->responses[0]);
+        rr.data[rr.len] = 0;
+        res             = _malloc(rr.len + 50);
+        if (res) sprintf(res, "%s", rr.data);
+      } else {
+        d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+        d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+        char*      r      = d_create_json(result ? result : error);
+        if (r) {
+          res = _malloc(strlen(r) + 50);
+          if (res && result)
+            sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
+          else if (res)
+            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, r);
+          _free(r);
         }
-        break;
-      case IN3_ECONFIG:
-        err_msg = "Invalid configuration";
-        break;
-      case IN3_EFIND:
-        err_msg = "Could not find the requested resource";
-        break;
-      case IN3_EUNKNOWN:
-        err_msg = "Unknown Error occured";
-        break;
-      case IN3_ENOMEM:
-        err_msg = "Out of Memory";
-        break;
-      case IN3_ENOTSUP:
-        err_msg = "The operation is not supported";
-        break;
-      case IN3_EINVAL:
-        err_msg = "Invalid Value";
-        break;
-      case IN3_EVERS:
-        err_msg = "Version missmatched";
-        break;
-      case IN3_ELIMIT:
-        err_msg = "Limit reached";
-        break;
-      case IN3_EINVALDT:
-        err_msg = "invalid data";
-        break;
-      case IN3_EPASS:
-        err_msg = "wrong password";
-        break;
-      case IN3_ERPC:
-        err_msg = "RPC Error";
-        break;
-      case IN3_ERPCNRES:
-        err_msg = "RPC No response";
-        break;
-      case IN3_EUSNURL:
-        err_msg = "RPC invalid url";
-        break;
-      case IN3_ETRANS:
-        err_msg = "transport error";
-        break;
-      case IN3_ERANGE:
-        err_msg = "out of range";
-        break;
-      case IN3_WAITING:
-        err_msg = "waiting for data";
-        break;
-    }
+      }
+    } else
+      err_msg = in3_errmsg(ret);
   }
 
   if (!res && err_msg) {
@@ -246,4 +197,32 @@ char* in3_client_exec_req(
 
   free_ctx(ctx);
   return res;
+}
+
+/**
+ * create a new signer-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_signer_t* in3_create_signer(
+    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
+    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+    void*          wallet      /**<custom object whill will be passed to functions */
+) {
+  in3_signer_t* signer = _calloc(1, sizeof(in3_signer_t));
+  signer->wallet       = wallet;
+  signer->sign         = sign;
+  signer->prepare_tx   = prepare_tx;
+  return signer;
+}
+
+in3_storage_handler_t* in3_create_storeage_handler(
+    in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
+    in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    void*                cptr      /**< custom pointer which will will be passed to functions */
+) {
+  in3_storage_handler_t* handler = _calloc(1, sizeof(in3_storage_handler_t));
+  handler->cptr                  = cptr;
+  handler->get_item              = get_item;
+  handler->set_item              = set_item;
+  return handler;
 }
