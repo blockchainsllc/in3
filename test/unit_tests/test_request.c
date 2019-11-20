@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
@@ -52,6 +53,7 @@
 
 void test_configure_request() {
   in3_register_eth_basic();
+  in3_register_eth_api();
 
   in3_t* c               = in3_new();
   c->proof               = PROOF_FULL;
@@ -79,14 +81,31 @@ void test_configure_request() {
   free_request(request, ctx, false);
   free_json(json);
   free_ctx(ctx);
+
   in3_free(c);
 }
 
+void test_exec_req() {
+  in3_register_eth_basic();
+  in3_register_eth_api();
+
+  in3_t* c      = in3_new();
+  char*  result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
+  TEST_ASSERT_EQUAL_STRING("{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
+  _free(result);
+
+  result = in3_client_exec_req(c, "\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"The Request is not a valid structure!\"}", result);
+  _free(result);
+
+  in3_free(c);
+}
 /*
  * Main
  */
 int main() {
   TESTS_BEGIN();
   RUN_TEST(test_configure_request);
+  RUN_TEST(test_exec_req);
   return TESTS_END();
 }

@@ -45,7 +45,8 @@ bytes_t* b_new(char* data, int len) {
 
   b->len  = len;
   b->data = _calloc(1, len);
-  b->data = memcpy(b->data, data, len);
+  if (data)
+    b->data = memcpy(b->data, data, len);
 
   return b;
 }
