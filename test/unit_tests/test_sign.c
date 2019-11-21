@@ -75,7 +75,7 @@ static void test_sign() {
                "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
-
+  TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
   free_ctx(ctx);
 }
