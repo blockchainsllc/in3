@@ -199,7 +199,7 @@ static in3_ret_t filter_check_latest(d_token_t* req, uint64_t blk, uint64_t curr
 
 in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
   in3_ret_t  res = IN3_OK, i = 0;
-  receipt_t* receipts = alloca(l_logs);
+  receipt_t* receipts = alloca(sizeof(receipt_t) * l_logs);
   bytes_t    logddata, tmp, tops;
 
   // invalid result-token

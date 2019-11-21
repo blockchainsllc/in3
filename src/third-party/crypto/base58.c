@@ -211,7 +211,7 @@ int base58_encode_check(const uint8_t *data, int datalen, HasherType hasher_type
 	hasher_Raw(hasher_type, data, datalen, hash);
 	size_t res = strsize;
 	bool success = b58enc(str, &res, buf, datalen + 4);
-	memzero(buf, sizeof(buf));
+	memzero(buf, datalen+32);
 	return success ? res : 0;
 }
 
