@@ -43,6 +43,7 @@
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
+#include "../../src/core/util/debug.h"
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 #include "../test_utils.h"
@@ -70,6 +71,25 @@ void test_bytes() {
   TEST_ASSERT_EQUAL_UINT8_ARRAY(data, clone.data, 32);
   // make sure it does not crash
   b_free(NULL);
+}
+void test_debug() {
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ECONFIG));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EUNKNOWN));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ENOMEM));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ENOTSUP));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EINVAL));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EFIND));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ELIMIT));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EVERS));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EINVALDT));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EPASS));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ERPC));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ERPCNRES));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EUSNURL));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ETRANS));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ERANGE));
+  TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_WAITING));
+  TEST_ASSERT_NULL(in3_errmsg(IN3_OK));
 }
 
 void test_str_replace() {
@@ -113,7 +133,10 @@ void test_json() {
  * Main
  */
 int main() {
+  dbg_log("starting cor tests");
+
   TESTS_BEGIN();
+  RUN_TEST(test_debug);
   RUN_TEST(test_c_to_long);
   RUN_TEST(test_bytes);
   RUN_TEST(test_json);
