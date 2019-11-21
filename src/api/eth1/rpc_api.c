@@ -80,8 +80,7 @@ static in3_ret_t in3_abiEncode(in3_ctx_t* ctx, d_token_t* params, in3_response_t
 }
 static in3_ret_t in3_abiDecode(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
   RESPONSE_START();
-  char* sig = d_get_string_at(params, 0);
-  char  full_sig[strlen(sig) + 10];
+  char *sig = d_get_string_at(params, 0), *full_sig = alloca(strlen(sig) + 10);
   if (strstr(sig, ":"))
     strcpy(full_sig, sig);
   else

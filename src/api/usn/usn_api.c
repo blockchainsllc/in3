@@ -91,13 +91,13 @@ static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
 }
 
 static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result, int max) {
-  int     l = 4 + 32 + data.len;
-  uint8_t cdata[4 + 32 + data.len];
+  int      l     = 4 + 32 + data.len;
+  uint8_t* cdata = alloca(l);
   hex2byte_arr(fn_hash, -1, cdata, 4);
   memcpy(cdata + 4, device_id, 32);
   if (data.len) memcpy(cdata + 36, data.data, data.len);
 
-  char  args[(4 + 32 + data.len) * 2 + 100];
+  char* args = alloca(l * 2 + 100);
   char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
   p += bytes_to_hex(cdata, l, p);
   p += sprintf(p, "\",\"gas\":\"0x77c810\",\"to\":\"0x");
@@ -119,7 +119,7 @@ static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t
 }
 
 static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t value, bytes32_t tx_hash) {
-  char  args[(4 + 32 + data.len) * 2 + 200];
+  char* args = alloca((4 + 32 + data.len) * 2 + 200);
   char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
   p += bytes_to_hex(data.data, data.len, p);
   p += sprintf(p, "\",\"gasLimit\":\"0x0f4240\",\"to\":\"0x");
@@ -402,8 +402,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
   } else {
     // look for events
     // build request
-    char  params[conf->len_devices * 70 + 320];
-    char* p = params + sprintf(params, "[{\"address\":\"0x");
+    char *params = alloca(conf->len_devices * 70 + 320), *p = params + sprintf(params, "[{\"address\":\"0x");
     p += bytes_to_hex(conf->contract, 20, p);
     p += sprintf(p, "\", \"topics\":[[\"0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8\",\"0x63febe59689bc8e2235e549f5f941933c2ba8a6f470fa2db0badaab584c758b9\"],null,");
     if (conf->len_devices == 1) {

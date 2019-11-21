@@ -68,6 +68,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef IN3_VERSION
+#define IN3_VERSION "local"
+#endif
+
 // helpstring
 void show_help(char* name) {
   printf("Usage: %s <options> method <params> ... \n\
@@ -744,8 +748,8 @@ int main(int argc, char* argv[]) {
     if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
       data = hex2byte_new_bytes((char*) data->data + 2, data->len - 2);
     if (strcmp(sig_type, "eth_sign") == 0) {
-      char tmp[data->len + 30];
-      int  l = sprintf(tmp, "\x19"
+      char* tmp = alloca(data->len + 30);
+      int   l   = sprintf(tmp, "\x19"
                            "Ethereum Signed Message:\n%i",
                       data->len);
       memcpy(tmp + l, data->data, data->len);
@@ -835,8 +839,8 @@ int main(int argc, char* argv[]) {
     uint8_t   pub[65];
     bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
     if (strcmp(sig_type, "eth_sign") == 0) {
-      char tmp[msg.len + 30];
-      int  l = sprintf(tmp, "\x19"
+      char* tmp = alloca(msg.len + 30);
+      int   l   = sprintf(tmp, "\x19"
                            "Ethereum Signed Message:\n%i",
                       msg.len);
       memcpy(tmp + l, msg.data, msg.len);
@@ -877,7 +881,7 @@ int main(int argc, char* argv[]) {
   else {
 
     if (out_response && last_response) {
-      char r[last_response->len + 1];
+      char* r = alloca(last_response->len + 1);
       memcpy(r, last_response->data, last_response->len);
       r[last_response->len] = 0;
       printf("%s\n", r);
@@ -894,7 +898,7 @@ int main(int argc, char* argv[]) {
     if (req) {
       int l = strlen(result) / 2 - 1;
       if (l) {
-        uint8_t     tmp[l + 1];
+        uint8_t*    tmp = alloca(l + 1);
         json_ctx_t* res = req_parse_result(req, bytes(tmp, hex2byte_arr(result, -1, tmp, l + 1)));
         if (json)
           printf("%s\n", d_create_json(res->result));

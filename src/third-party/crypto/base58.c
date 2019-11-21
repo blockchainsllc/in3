@@ -28,7 +28,11 @@
 #include "sha2.h"
 #include "ripemd160.h"
 #include "memzero.h"
-
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <malloc.h> // alloca
+#else
+#include <alloca.h> // alloca
+#endif
 const char b58digits_ordered[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const int8_t b58digits_map[] = {
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
@@ -52,7 +56,7 @@ bool b58tobin(void *bin, size_t *binszp, const char *b58)
 	const unsigned char *b58u = (const unsigned char*)b58;
 	unsigned char *binu = bin;
 	size_t outisz = (binsz + 3) / 4;
-	uint32_t outi[outisz];
+	uint32_t* outi=alloca(outisz);
 	uint64_t t;
 	uint32_t c;
 	size_t i, j;
@@ -165,7 +169,7 @@ bool b58enc(char *b58, size_t *b58sz, const void *data, size_t binsz)
 		++zcount;
 
 	size = (binsz - zcount) * 138 / 100 + 1;
-	uint8_t buf[size];
+	uint8_t *buf=alloca(size);
 	memset(buf, 0, size);
 
 	for (i = zcount, high = size - 1; i < (ssize_t)binsz; ++i, high = j)
@@ -201,7 +205,7 @@ int base58_encode_check(const uint8_t *data, int datalen, HasherType hasher_type
 	if (datalen > 128) {
 		return 0;
 	}
-	uint8_t buf[datalen + 32];
+	uint8_t *buf=alloca(datalen + 32);
 	uint8_t *hash = buf + datalen;
 	memcpy(buf, data, datalen);
 	hasher_Raw(hasher_type, data, datalen, hash);
@@ -216,7 +220,7 @@ int base58_decode_check(const char *str, HasherType hasher_type, uint8_t *data, 
 	if (datalen > 128) {
 		return 0;
 	}
-	uint8_t d[datalen + 4];
+	uint8_t *d=alloca(datalen + 4);
 	size_t res = datalen + 4;
 	if (b58tobin(d, &res, str) != true) {
 		return 0;

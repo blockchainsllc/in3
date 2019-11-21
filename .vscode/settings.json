@@ -39,7 +39,7 @@
         "signer.h": "c",
         "serialize.h": "c",
         "unistd.h": "c",
-        "log.h": "c"
+        "log.h": "c",
         "project.h": "c",
         "uart_console.h": "c",
         "uart.h": "c",

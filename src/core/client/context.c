@@ -84,8 +84,8 @@ in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
   if (!r)
     return IN3_OK;
   else if (d_type(r) == T_OBJECT) {
-    str_range_t s = d_to_json(r);
-    char        req[s.len + 1];
+    str_range_t s   = d_to_json(r);
+    char*       req = alloca(s.len + 1);
     strncpy(req, s.data, s.len);
     req[s.len] = '\0';
     return ctx_set_error(c, req, IN3_ERPC);
