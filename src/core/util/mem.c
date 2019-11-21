@@ -93,6 +93,7 @@ void* _malloc_(size_t size, char* file, const char* func, int line) {
   return ptr;
 }
 
+#ifndef TEST
 void* _calloc_(size_t n, size_t size, char* file, const char* func, int line) {
 #ifdef __ZEPHYR__
   void* ptr = k_calloc(n, size);
@@ -105,6 +106,7 @@ void* _calloc_(size_t n, size_t size, char* file, const char* func, int line) {
   }
   return ptr;
 }
+#endif
 
 void* _realloc_(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line) {
 #ifdef __ZEPHYR__
