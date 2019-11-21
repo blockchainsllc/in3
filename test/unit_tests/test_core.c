@@ -73,6 +73,7 @@ void test_bytes() {
   b_free(NULL);
 }
 void test_debug() {
+  msg_dump("test", "abc", 3);
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ECONFIG));
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EUNKNOWN));
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ENOMEM));
@@ -90,6 +91,7 @@ void test_debug() {
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ERANGE));
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_WAITING));
   TEST_ASSERT_NULL(in3_errmsg(IN3_OK));
+  TEST_ASSERT_NULL(in3_errmsg(100));
 }
 
 void test_str_replace() {
