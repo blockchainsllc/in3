@@ -84,7 +84,7 @@ mac_os:
     - cd mac_build
     - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
     - make
-    - make ptest
+    - CTEST_OUTPUT_ON_FAILURE=1 make test
     - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
     - make
