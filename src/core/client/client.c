@@ -37,6 +37,7 @@
 #include "../util/mem.h"
 #include "context.h"
 #include "keys.h"
+#include <alloca.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,8 +45,9 @@
 
 in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   // generate the rpc-request
-  char req[strlen(method) + strlen(params) + 200];
-  snprintX(req, sizeof(req), "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  const int max = strlen(method) + strlen(params) + 200;
+  char*     req = alloca(max);
+  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // create a new context by parsing the request
   in3_ctx_t* ctx = new_ctx(c, req);
