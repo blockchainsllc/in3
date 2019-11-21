@@ -33,5 +33,11 @@
 ###############################################################################
 
 add_subdirectory( crypto )
-add_subdirectory( tommath )
-add_subdirectory( segger_rtt )
+
+if (ETH_FULL)
+  add_subdirectory( tommath )
+endif()
+
+if (USE_SEGGER_RTT)
+  add_subdirectory( segger_rtt )
+endif()

@@ -57,7 +57,8 @@
         "electricitymeter.h": "c",
         "meterreadingtypes.h": "c",
         "in3_comm_esp32.h": "c",
-        "ctype.h": "c"
+        "ctype.h": "c",
+        "eth_full.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

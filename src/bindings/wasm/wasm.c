@@ -32,16 +32,28 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#ifdef ETH_API
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
+#endif
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
-#include "../../verifier/eth1/full/eth_full.h"
 #include <emscripten.h>
+#include <string.h>
+
+#ifdef ETH_FULL
+#include "../../verifier/eth1/full/eth_full.h"
+#endif
+#ifdef ETH_BASIC
+#include "../../verifier/eth1/basic/eth_basic.h"
+#endif
+#ifdef ETH_NANO
+#include "../../verifier/eth1/nano/eth_nano.h"
+#endif
 
 #define err_string(msg) (":ERROR:" msg)
 
@@ -167,10 +179,19 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
 }
 
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
-  // register a chain-verifier for full Ethereum-Support
+// register a chain-verifier for full Ethereum-Support
+#ifdef ETH_FULL
   in3_register_eth_full();
+#endif
+#ifdef ETH_BASIC
+  in3_register_eth_basic();
+#endif
+#ifdef ETH_NANO
+  in3_register_eth_nano();
+#endif
+#ifdef ETH_API
   in3_register_eth_api();
-
+#endif
   in3_t* c                  = in3_new();
   c->cacheStorage           = malloc(sizeof(in3_storage_handler_t));
   c->cacheStorage->get_item = storage_get_item;
@@ -227,11 +248,19 @@ uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
 char* EMSCRIPTEN_KEEPALIVE to_checksum_address(address_t adr, int chain_id) {
   char* result = malloc(43);
   if (!result) return err_string("malloc failed");
+#ifdef ETH_API
   to_checksum(adr, chain_id, result);
+#else
+  UNUSED_VAR(adr);
+  UNUSED_VAR(chain_id);
+  strcpy(result, err_string("ETH_API deactivated!"));
+#endif
+
   return result;
 }
 
 char* EMSCRIPTEN_KEEPALIVE abi_encode(char* sig, char* json_params) {
+#ifdef ETH_API
   call_request_t* req = parseSignature(sig);
   if (!req) return err_string("invalid function signature");
 
@@ -257,9 +286,15 @@ char* EMSCRIPTEN_KEEPALIVE abi_encode(char* sig, char* json_params) {
   result[1] = 'x';
   req_free(req);
   return result;
+#else
+  UNUSED_VAR(sig);
+  UNUSED_VAR(json_params);
+  return _strdupn(err_string("ETH_API deactivated!"), -1);
+#endif
 }
 
 char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
+#ifdef ETH_API
   call_request_t* req = parseSignature(sig);
   if (!req) return err_string("invalid function signature");
   json_ctx_t* res = req_parse_result(req, bytes(data, len));
@@ -269,6 +304,12 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   char* result = d_create_json(res->result);
   free_json(res);
   return result;
+#else
+  UNUSED_VAR(sig);
+  UNUSED_VAR(data);
+  UNUSED_VAR(len);
+  return _strdupn(err_string("ETH_API deactivated!"), -1);
+#endif
 }
 
 /** private key to address */

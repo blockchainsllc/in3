@@ -59,4 +59,4 @@ add_library(core_o OBJECT
         util/bitset.c
         )
 add_library(core STATIC $<TARGET_OBJECTS:core_o>)
-target_link_libraries(core tommath crypto)
+target_link_libraries(core crypto)
