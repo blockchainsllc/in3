@@ -37,6 +37,12 @@
 #include <string.h>
 #include <time.h>
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <malloc.h> // alloca
+#else
+#include <alloca.h> // alloca
+#endif
+
 #ifndef __MEM_H__
 #define __MEM_H__
 
