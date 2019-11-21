@@ -54,6 +54,9 @@ static uint8_t __track_keys = 0;
 static uint8_t __track_keys = 1;
 #endif
 
+// number of tokens to allocate memory for when parsing
+#define JSON_INIT_TOKENS 10
+
 /** internal type declared here to assist with key() optimization */
 typedef struct keyname {
   char*           name;
@@ -561,18 +564,23 @@ void free_json(json_ctx_t* jp) {
 }
 
 json_ctx_t* parse_json(char* js) {
-  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));
-  parser->len        = 0;
-  parser->depth      = 0;
-  parser->result     = _malloc(sizeof(d_token_t) * 10);
-  parser->c          = js;
-  parser->allocated  = 10;
-  int res            = parse_object(parser, -1, 0);
-  if (res < 0) {
-    free_json(parser);
-    return NULL;
-  }
-  parser->c = js;
+  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));                  // new parser
+  if (!parser) return NULL;                                          // not enoug memory?
+  parser->len       = 0;                                             // initial length
+  parser->depth     = 0;                                             //  initial depth
+  parser->c         = js;                                            // the pointer to the string to parse
+  parser->allocated = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
+  parser->result    = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
+  if (!parser->result) {                                             // not enough memory?
+    _free(parser);                                                   // also free the parse since it does not make sense to parse  now.
+    return NULL;                                                     // NULL means no memory
+  }                                                                  //
+  int res = parse_object(parser, -1, 0);                             // now parse starting without parent (-1)
+  if (res < 0) {                                                     // error parsing?
+    free_json(parser);                                               // clean up
+    return NULL;                                                     // and return null
+  }                                                                  //
+  parser->c = js;                                                    // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 
