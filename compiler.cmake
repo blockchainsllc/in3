@@ -16,7 +16,7 @@ if(MSVC)
   set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
 elseif(WASM)
   set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-else
+else()
   set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Werror=vla")
 endif()
 

@@ -118,11 +118,6 @@ uint8_t b_read_byte(bytes_t* b, size_t* pos) {
   *pos += 1;
   return val;
 }
-uint16_t b_read_short(bytes_t* b, size_t* pos) {
-  uint16_t val = (uint16_t) bytes_to_int(b->data + *pos, 2);
-  *pos += 2;
-  return val;
-}
 uint32_t b_read_int(bytes_t* b, size_t* pos) {
   uint32_t val = (uint32_t) bytes_to_int(b->data + *pos, 4);
   *pos += 4;
