@@ -67,8 +67,16 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   // make sure we want to verify
   if (vc->config->verification == VERIFICATION_NEVER) return IN3_OK;
 
-  // do we have a result? if not it is a vaslid error-response
-  if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
+  // do we have a result? if not it is a valid error-response
+  if (!vc->result) {
+    return IN3_OK;
+  } else if (d_type(vc->result) == T_NULL) {
+    // check if there's a proof for non-existence
+    if (!strcmp(method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(method, "eth_getTransactionByBlockNumberAndIndex")) {
+      return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
+    }
+    return IN3_OK;
+  }
 
   // do we support this request?
   if (!method) return vc_err(vc, "No Method in request defined!");
