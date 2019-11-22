@@ -88,18 +88,22 @@ bytes_t*          eth_sendRawTransaction(in3_t* in3, bytes_t data);
 */
 
 static in3_t* in3 = NULL;
-static void init_in3(in3_ret_t* custom_transport) {
+static void init_in3( in3_transport_send custom_transport, uint64_t chain) {
   int err;
   in3_register_eth_full();
   in3 = in3_new();
   in3->transport    = custom_transport; // use curl to handle the requests
   in3->requestCount = 1;              // number of requests to sendp
   in3->includeCode  = 1;
-  in3->chainId      = 0x5;
+  in3->chainId      = chain;
   in3->max_attempts = 1;
   in3->requestCount = 1; // number of requests to sendp
   in3_log_set_level(LOG_TRACE);
   in3_log_set_quiet(0);
+}
+static void free_in3(){
+  _free(in3);
+  in3=NULL;
 }
 
 static in3_ret_t transport_mock(in3_request_t* req) {
@@ -119,25 +123,26 @@ static in3_ret_t transport_mock(in3_request_t* req) {
   return 0;
 }
 static in3_ret_t curl_transport(in3_request_t* req) {
-  in3_ret_t r = send_curl(req);
-  return r;
+  //in3_ret_t r = send_curl(req);
+  return send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results);
+  //return r;
 }
 
-static void test_get_balance(in3_t* in3) {
-  init_in3(curl_transport);
+static void test_get_balance() {
+  init_in3(curl_transport, 0x1);
   // the address of account whose balance we want to get
   address_t account;
   hex2byte_arr("0x1929C15F4E818ABf2549510622A50C440C474223", -1, account, 20);
   // get balance of account
-  long double balance = as_double(eth_getBalance(in3, account, BLKNUM_EARLIEST()));
+  long double balance = as_double(eth_getBalance(in3, account, BLKNUM(1692767)));
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
-  balance ? printf("Balance: %Lf\n", balance) : printf("error getting the balance : %s\n", eth_last_error());
+  //balance ? printf("Balance: %Lf\n", balance) : printf("error getting the balance : %s\n", eth_last_error());
 
   TEST_ASSERT_TRUE(balance > 0.0);
 }
 
-static void test_get_logs(in3_t* in3) {
-  init_in3(curl_transport);
+static void test_get_logs() {
+  init_in3(curl_transport, 0x1);
   // Create filter options
   char b[30];
   sprintf(b, "{\"fromBlock\":\"0x%" PRIx64 "\"}", eth_blockNumber(in3) - 2);
@@ -182,9 +187,9 @@ static void test_get_logs(in3_t* in3) {
   TEST_ASSERT_TRUE(ret == IN3_OK);
 }
 
-static void test_get_tx(in3_t* in3) {
+static void test_get_tx(void) {
   // the hash of transaction that we want to get
-  init_in3(curl_transport);
+  init_in3(curl_transport, 0x1);
   bytes32_t tx_hash;
   hex2byte_arr("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
 
@@ -202,10 +207,10 @@ static void test_get_tx(in3_t* in3) {
   TEST_ASSERT_TRUE( tx!= NULL);
 }
 
-static void test_get_tx_receipt(in3_t* in3) {
+static void test_get_tx_receipt(void) {
   // the hash of transaction whose receipt we want to get
 
-  init_in3(curl_transport);
+  init_in3(curl_transport, 0x1);
   bytes32_t tx_hash;
   hex2byte_arr("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
 
@@ -222,8 +227,8 @@ static void test_get_tx_receipt(in3_t* in3) {
   TEST_ASSERT_TRUE(txr);
 }
 
-static void test_send_tx() {
-  init_in3(curl_transport);
+static void test_send_tx(void) {
+  init_in3(curl_transport, 0x1);
   // prepare parameters
   address_t to, from;
   hex2byte_arr("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
@@ -244,11 +249,13 @@ static void test_send_tx() {
   }
   b_free(data);
   TEST_ASSERT_TRUE(tx_hash);
+  free_in3();
 }
 
 
-static void test_eth_getblock() {
-  init_in3(curl_transport);
+static void test_eth_getblock(void) {
+  init_in3(curl_transport, 0x1);
+  //eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
   eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(1692767), false);
 
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
@@ -258,14 +265,15 @@ static void test_eth_getblock() {
     printf("Number of transactions in Block #%llu: %d\n", block->number, block->tx_count);
     free(block);
   }
-  TEST_ASSERT_TRUE(block->number == 1692767);
+  TEST_ASSERT_TRUE(block->number == 1692767llu);
+  free_in3();
 }
 
 
 
 
 static void test_eth_call_fn(void) {
-  init_in3(transport_mock); 
+  init_in3(transport_mock, 0x5); 
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
   hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
@@ -282,6 +290,7 @@ static void test_eth_call_fn(void) {
   //    clean up resources
   free_json(response);
   TEST_ASSERT_TRUE(access == 1);
+  free_in3();
 }
 
 /*
@@ -298,11 +307,11 @@ int main() {
 
   // now run tests
   TESTS_BEGIN();
-  //RUN_TEST(test_eth_call_fn);
-  //RUN_TEST(test_eth_getblock);
+  RUN_TEST(test_eth_call_fn);
+  RUN_TEST(test_eth_getblock);
+  RUN_TEST(test_get_tx_receipt);
   RUN_TEST(test_get_balance);
   RUN_TEST(test_get_logs);
   RUN_TEST(test_get_tx);
-  RUN_TEST(test_get_tx_receipt);
   return TESTS_END();
 }
