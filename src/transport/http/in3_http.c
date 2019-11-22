@@ -48,6 +48,7 @@
 #include <sys/socket.h> /* socket, connect */
 #endif
 #include "../../core/client/client.h"
+#include "../../core/util/mem.h"
 #include "in3_http.h"
 
 in3_ret_t send_http(in3_request_t* req) {
@@ -55,7 +56,7 @@ in3_ret_t send_http(in3_request_t* req) {
     struct hostent*    server;
     struct sockaddr_in serv_addr;
     int                received, bytes, sent, total;
-    char               message[strlen(req->payload) + 200], response[4096], *url = req->urls[n], host[256];
+    char *             message = alloca(strlen(req->payload) + 200), response[4096], *url = req->urls[n], host[256];
 
     (void) received;
     (void) bytes;

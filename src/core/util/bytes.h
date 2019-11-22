@@ -95,8 +95,6 @@ bytes_t* b_dup(bytes_t* a);
 
 /** reads a byte on the current position and updates the pos afterwards. */
 uint8_t b_read_byte(bytes_t* b, size_t* pos);
-/** reads a short on the current position and updates the pos afterwards. */
-uint16_t b_read_short(bytes_t* b, size_t* pos);
 /** reads a integer on the current position and updates the pos afterwards. */
 uint32_t b_read_int(bytes_t* b, size_t* pos);
 /** reads a long on the current position and updates the pos afterwards. */

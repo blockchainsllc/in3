@@ -69,8 +69,9 @@ in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, ch
   if (!error) return IN3_EINVAL;
   in3_ret_t res = IN3_OK;
   // prepare request
-  char req[strlen(method) + strlen(params) + 200];
-  snprintX(req, sizeof(req), "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  int   l   = strlen(method) + strlen(params) + 200;
+  char* req = alloca(l);
+  snprintX(req, l, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // parse it
   in3_ctx_t*  ctx = new_ctx(c, req);

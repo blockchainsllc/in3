@@ -73,7 +73,7 @@ void test_bytes() {
   b_free(NULL);
 }
 void test_debug() {
-  msg_dump("test", "abc", 3);
+  msg_dump("test", (void*) "abc", 3);
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ECONFIG));
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_EUNKNOWN));
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ENOMEM));

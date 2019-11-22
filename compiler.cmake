@@ -14,8 +14,10 @@ endif(WASM)
 
 if(MSVC)
   set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-else()
+elseif(WASM)
   set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+else()
+  set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Werror=vla")
 endif()
 
 set_property(GLOBAL PROPERTY C_STANDARD 99)

@@ -33,7 +33,16 @@
 ###############################################################################
 
 add_subdirectory(eth1/rpc)
-add_subdirectory(eth1/nano)
-add_subdirectory(eth1/basic)
-add_subdirectory(eth1/full)
-add_subdirectory(eth1/evm)
+
+if (ETH_NANO OR ETH_BASIC OR ETH_FULL)
+  add_subdirectory(eth1/nano)
+endif()
+
+if (ETH_BASIC OR ETH_FULL)
+  add_subdirectory(eth1/basic)
+endif()
+
+if (ETH_FULL)
+  add_subdirectory(eth1/full)
+  add_subdirectory(eth1/evm)
+endif()

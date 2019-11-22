@@ -118,11 +118,6 @@ uint8_t b_read_byte(bytes_t* b, size_t* pos) {
   *pos += 1;
   return val;
 }
-uint16_t b_read_short(bytes_t* b, size_t* pos) {
-  uint16_t val = (uint16_t) bytes_to_int(b->data + *pos, 2);
-  *pos += 2;
-  return val;
-}
 uint32_t b_read_int(bytes_t* b, size_t* pos) {
   uint32_t val = (uint32_t) bytes_to_int(b->data + *pos, 4);
   *pos += 4;
@@ -190,12 +185,7 @@ void bb_write_chars(bytes_builder_t* bb, char* c, int len) {
   bb->b.data[bb->b.len + len] = 0;
   bb->b.len += len + 1;
 }
-void bb_write_dyn_bytes(bytes_builder_t* bb, bytes_t* src) {
-  bb_check_size(bb, src->len + 4);
-  int_to_bytes(src->len, bb->b.data + bb->b.len);
-  memcpy(bb->b.data + bb->b.len + 4, src->data, src->len);
-  bb->b.len += src->len + 4;
-}
+
 void bb_write_fixed_bytes(bytes_builder_t* bb, bytes_t* src) {
   bb_check_size(bb, src->len);
   memcpy(bb->b.data + bb->b.len, src->data, src->len);

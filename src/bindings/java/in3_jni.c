@@ -473,9 +473,9 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
     case T_STRING:
       return (*env)->NewStringUTF(env, d_string(t));
     case T_BYTES: {
-      char tmp[t->len * 2 + 3];
-      tmp[0] = '0';
-      tmp[1] = 'x';
+      char* tmp = alloca(t->len * 2 + 3);
+      tmp[0]    = '0';
+      tmp[1]    = 'x';
       bytes_to_hex(t->data, t->len, tmp + 2);
       return (*env)->NewStringUTF(env, tmp);
     }
@@ -594,10 +594,11 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
   for (int i = 0; i < req->urls_len; i++) {
     jbyteArray content = (*jni)->GetObjectArrayElement(jni, result, i);
     if (content) {
-      const size_t l = (*jni)->GetArrayLength(jni, content);
-      uint8_t      bytes[l];
+      const size_t l     = (*jni)->GetArrayLength(jni, content);
+      uint8_t*     bytes = _malloc(l);
       (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
       sb_add_range(&req->results[i].result, (char*) bytes, 0, l);
+      _free(bytes);
     } else
       sb_add_chars(&req->results[i].error, "Could not fetch the data!");
   }
@@ -663,8 +664,8 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
 
   const char* jdata = (*env)->GetStringUTFChars(env, data, 0);
   int         l     = strlen(jdata);
-  uint8_t     bdata[l >> 1];
-  l = hex2byte_arr((char*) jdata + 2, l - 2, bdata, l);
+  uint8_t*    bdata = alloca(l >> 1);
+  l                 = hex2byte_arr((char*) jdata + 2, l - 2, bdata, l);
   (*env)->ReleaseStringUTFChars(env, data, jdata);
 
   json_ctx_t* res    = req_parse_result(rq, bytes(bdata, l));
@@ -711,7 +712,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclas
   const char* key    = (*env)->GetStringUTFChars(env, jkey, 0);
   const char* data   = (*env)->GetStringUTFChars(env, jdata, 0);
   int         data_l = strlen(data) / 2 - 1;
-  uint8_t     key_bytes[32], data_bytes[data_l + 1], dst[65];
+  uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
 
   hex2byte_arr((char*) key + 2, 32, key_bytes, 32);
   data_l      = hex2byte_arr((char*) data + 2, -1, data_bytes, data_l + 1);
@@ -749,7 +750,7 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
   jobject   signer = (*jni)->CallObjectMethod(jni, (jobject) pk, mid);
   if (!signer) return -1;
 
-  char data[message.len * 2 + 3], address[43];
+  char *data = alloca(message.len * 2 + 3), address[43];
   data[0] = address[0] = '0';
   data[1] = address[1] = 'x';
   bytes_to_hex(message.data, message.len, data + 2);

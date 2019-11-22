@@ -49,4 +49,4 @@ add_library(evm_o OBJECT
 
 # add dependency
 add_library(evm STATIC $<TARGET_OBJECTS:evm_o>)
-target_link_libraries(evm eth_basic)
+target_link_libraries(evm eth_basic tommath)

@@ -42,6 +42,27 @@ Default-Value: `-DBUILD_DOC=OFF`
 Default-Value: `-DCMD=ON`
 
 
+#### ETH_BASIC
+
+  build basic eth verification.(all rpc-calls except eth_call)
+
+Default-Value: `-DETH_BASIC=ON`
+
+
+#### ETH_FULL
+
+  build full eth verification.(including eth_call)
+
+Default-Value: `-DETH_FULL=ON`
+
+
+#### ETH_NANO
+
+  build minimal eth verification.(eth_getTransactionReceipt)
+
+Default-Value: `-DETH_NANO=ON`
+
+
 #### EVM_GAS
 
   if true the gas costs are verified when validating a eth_call. This is a optimization since most calls are only interessted in the result. EVM_GAS would be required if the contract uses gas-dependend op-codes.
