@@ -28,7 +28,7 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
   }
 
   // free json
-  free_json(key_data);
+  json_free(key_data);
 
   // create a signer with this key
   eth_set_pk_signer(c, pk);

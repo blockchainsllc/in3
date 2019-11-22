@@ -144,7 +144,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
     _free(raw.data);
-    free_json(ctx->request_context);
+    json_free(ctx->request_context);
 
     // set the new RPC-Request.
     ctx->request_context = parse_json(sb->data);

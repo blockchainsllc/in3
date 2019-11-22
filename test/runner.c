@@ -405,7 +405,7 @@ int runRequests(char** names, int test_index, int mem_track) {
     }
 
     free(content);
-    free_json(parsed);
+    json_free(parsed);
     name = names[++n];
   }
   printf("\n%2i of %2i successfully tested", total - failed, total);

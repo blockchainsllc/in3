@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 
-in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
+in3_ctx_t* ctx_new(in3_t* client, char* req_data) {
 
   in3_ctx_t* c = _calloc(1, sizeof(in3_ctx_t));
   if (!c) return NULL;

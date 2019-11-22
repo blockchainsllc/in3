@@ -84,7 +84,7 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
   uint32_t number_of_servers = d_int(response->result);
 
   // clean up resources
-  free_json(response);
+  json_free(response);
 
   // output
   printf("Found %u servers registered : \n", number_of_servers);
@@ -105,7 +105,7 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
     printf(", deposit = %" PRIu64 "\n", deposit);
 
     // free memory
-    free_json(response);
+    json_free(response);
   }
   return 0;
 }

@@ -112,7 +112,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   vc->ctx->client->proof = proof_;
   res                    = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx_);
+    ctx_free(ctx_);
     return vc_err(vc, ctx_->error);
   }
 
@@ -242,7 +242,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
   vh_free(vh);
   *vhp = vh_init_nodelist(d_get(ctx_->responses[0], K_RESULT));
-  free_ctx(ctx_);
+  ctx_free(ctx_);
   return res;
 }
 

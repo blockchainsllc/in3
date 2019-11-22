@@ -63,7 +63,7 @@
     _res_ = (HANDLE_RESULT);                                                              \
   else                                                                                    \
     memset(&_res_, 0, sizeof(RETURN_TYPE));                                               \
-  free_ctx(_ctx_);                                                                        \
+  ctx_free(_ctx_);                                                                        \
   sb_free(params);                                                                        \
   return _res_;
 
@@ -449,7 +449,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     }
 
     if (res >= 0 && (res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
-    free_json(in_data);
+    json_free(in_data);
   }
   if (res >= 0) {
     bytes_t to = bytes(contract, 20);
@@ -483,7 +483,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
   d_token_t* result = get_result(ctx);
   if (result) {
     if (d_type(result) == T_NULL) {
-      free_ctx(ctx);
+      ctx_free(ctx);
       if (count) {
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
@@ -498,11 +498,11 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
     } else {
       //
       char* c = d_create_json(result);
-      free_ctx(ctx);
+      ctx_free(ctx);
       return c;
     }
   }
-  free_ctx(ctx);
+  ctx_free(ctx);
   set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
   return NULL;
 }
@@ -590,7 +590,7 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
   }
 }
 
-void free_log(eth_log_t* log) {
+void log_free(eth_log_t* log) {
   _free(log->data.data);
   _free(log->topics);
   _free(log);
@@ -699,11 +699,11 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
   return NULL;
 }
 
-void free_tx_receipt(eth_tx_receipt_t* txr) {
+void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
   eth_log_t *curr = txr->logs, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
-    free_log(curr);
+    log_free(curr);
     curr = next;
   }
   _free(txr);

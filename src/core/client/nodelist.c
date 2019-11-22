@@ -188,7 +188,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->nodeLimit, seed);
 
   // new client
-  return ctx_add_required(parent_ctx, ctx = new_ctx(c, req));
+  return ctx_add_required(parent_ctx, ctx = ctx_new(c, req));
 }
 
 void free_ctx_nodes(node_weight_t* c) {

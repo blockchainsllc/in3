@@ -49,7 +49,7 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // create a new context by parsing the request
-  in3_ctx_t* ctx = new_ctx(c, req);
+  in3_ctx_t* ctx = ctx_new(c, req);
 
   // this happens if the request is not parseable (JSON-error in params)
   if (ctx->error) return ctx;
@@ -74,7 +74,7 @@ in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, ch
   snprintX(req, l, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // parse it
-  in3_ctx_t*  ctx = new_ctx(c, req);
+  in3_ctx_t*  ctx = ctx_new(c, req);
   str_range_t s;
 
   // make sure result & error are clean
@@ -142,7 +142,7 @@ in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, ch
       }
     }
   }
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   // if we have an error, we always return IN3_EUNKNOWN
   return *error ? IN3_EUNKNOWN : res;
@@ -156,7 +156,7 @@ char* in3_client_exec_req(
   // parse it
   char*      res     = NULL;
   char*      err_msg = NULL;
-  in3_ctx_t* ctx     = new_ctx(c, req);
+  in3_ctx_t* ctx     = ctx_new(c, req);
   if (!ctx) return NULL;
 
   // make sure result & error are clean
@@ -197,7 +197,7 @@ char* in3_client_exec_req(
     if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"%s\"}", ctx->error ? ctx->error : err_msg);
   }
 
-  free_ctx(ctx);
+  ctx_free(ctx);
   return res;
 }
 

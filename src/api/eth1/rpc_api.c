@@ -95,7 +95,7 @@ static in3_ret_t in3_abiDecode(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     return ctx_set_error(ctx, "the input data can not be decoded", IN3_EINVAL);
   char* result = d_create_json(res->result);
   sb_add_chars(&response[0]->result, result);
-  free_json(res);
+  json_free(res);
   _free(result);
 
   RESPONSE_END();

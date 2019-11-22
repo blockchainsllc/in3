@@ -290,7 +290,7 @@ void in3_free(in3_t* a) {
   for (i = 0; i < a->chainsCount; i++) {
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
-    free_json(a->chains[i].spec);
+    json_free(a->chains[i].spec);
   }
   if (a->signer) _free(a->signer);
   _free(a->chains);
@@ -419,6 +419,6 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
   }
 
 cleanup:
-  free_json(cnf);
+  json_free(cnf);
   return res;
 }

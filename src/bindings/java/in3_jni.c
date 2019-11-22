@@ -414,7 +414,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv* env, jobject ob, jstring jre
   int         res;
   jstring     js = NULL;
 
-  in3_ctx_t* ctx = new_ctx(get_in3(env, ob), (char*) str);
+  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
     res = in3_send_ctx(ctx);
@@ -446,7 +446,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv* env, jobject ob, jstring jre
   //need to release this string when done with it in order to
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   if (result) {
     js = (*env)->NewStringUTF(env, result);
@@ -518,7 +518,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstri
   int         res;
   jobject     js = NULL;
 
-  in3_ctx_t* ctx = new_ctx(get_in3(env, ob), (char*) str);
+  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
     res = in3_send_ctx(ctx);
@@ -551,7 +551,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstri
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
 
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   if (result)
     return js;
@@ -633,7 +633,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
 
   if (set_data(rq, json_ctx->result, rq->in_data) < 0) {
     req_free(rq);
-    free_json(json_ctx);
+    json_free(json_ctx);
     (*env)->ReleaseStringUTFChars(env, json, json_data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "invalid data for the given signature");
     return NULL;
@@ -641,7 +641,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
 
   jstring res = (jstring) toObject(env, (d_token_t*) &rq->call_data->b);
   req_free(rq);
-  free_json(json_ctx);
+  json_free(json_ctx);
   (*env)->ReleaseStringUTFChars(env, json, json_data);
   return res;
 }
@@ -672,7 +672,7 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
   jobject     result = res ? toObject(env, res->result) : NULL;
   req_free(rq);
   if (res)
-    free_json(res);
+    json_free(res);
   else
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error decoding the data");
 

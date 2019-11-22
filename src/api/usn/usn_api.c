@@ -50,7 +50,7 @@
 
 #define reject_if(c, m)            \
   if (c) {                         \
-    if (parsed) free_json(parsed); \
+    if (parsed) json_free(parsed); \
     result.error_msg = m;          \
     result.action    = NULL;       \
     return result;                 \
@@ -110,11 +110,11 @@ static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
   l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, max);
-  free_ctx(ctx);
+  ctx_free(ctx);
   return l == max ? l : IN3_EINVALDT;
 }
 
@@ -140,12 +140,12 @@ static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t 
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
 
   int l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), tx_hash, 32);
-  free_ctx(ctx);
+  ctx_free(ctx);
   return l;
 }
 
@@ -257,7 +257,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   strcpy(result->action, d_get_stringk(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
 
 clean:
-  if (ctx) free_ctx(ctx);
+  if (ctx) ctx_free(ctx);
 }
 
 usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
@@ -285,7 +285,7 @@ usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
     result.accepted = true;
   } else
     result.error_msg = "Unknown message type";
-  free_json(parsed);
+  json_free(parsed);
 
   return result;
 }
@@ -358,11 +358,11 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
   in3_ret_t  res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
   uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
-  free_ctx(ctx);
+  ctx_free(ctx);
   if (conf->last_checked_block == current_block) return IN3_OK;
 
   if (!conf->last_checked_block) {
@@ -426,7 +426,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
 
     // do we have a valid result?
     if ((res = ctx_get_error(ctx, 0))) {
-      free_ctx(ctx);
+      ctx_free(ctx);
       return res;
     }
 
@@ -444,7 +444,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
                       d_get_bytesk(iter.token, K_TRANSACTION_HASH)->data);
     }
 
-    free_ctx(ctx);
+    ctx_free(ctx);
   }
 
   // update the last_block

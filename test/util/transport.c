@@ -55,7 +55,7 @@ in3_ret_t test_transport(in3_request_t* req) {
   p[params.len] = 0;
   TEST_ASSERT_EQUAL_STRING(responses->request_method, d_get_string(request, "method"));
   TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
-  free_json(r);
+  json_free(r);
 
   sb_add_chars(&req->results->result, responses->response);
   response_t* next = responses->next;
