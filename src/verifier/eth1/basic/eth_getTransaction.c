@@ -219,7 +219,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
       if (!proof) {
         res = vc_err(vc, "No merkle proof");
       } else {
-        int verified = trie_verify_proof(&root, path, proof, &raw_transaction);
+        int verified = trie_verify_proof(&root, path, proof, d_type(vc->result) == T_NULL ? NULL : &raw_transaction);
         if (d_type(vc->result) == T_NULL && verified && raw_transaction.data != NULL)
           res = vc_err(vc, "Could not prove non-existence of transaction");
         else if (!verified && raw_transaction.data == NULL)
