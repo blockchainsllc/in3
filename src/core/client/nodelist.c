@@ -198,11 +198,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 
 static bool in3_node_props_match(in3_node_props_t np_config, in3_node_props_t np) {
   uint32_t val_config = 0, val = 0;
-  for (in3_node_props_type_t npt = 0; npt < NODE_PROP_DEPOSIT_TIMEOUT; ++npt) {
-    val_config = in3_node_props_get(np_config, npt);
-    val        = in3_node_props_get(np, npt);
-    if (val_config && (val_config != val)) return false;
-  }
+  if (BITS_LSB(np_config, 32U) != BITS_LSB(np, 32U)) return false;
   val_config = in3_node_props_get(np_config, NODE_PROP_DEPOSIT_TIMEOUT);
   val        = in3_node_props_get(np, NODE_PROP_DEPOSIT_TIMEOUT);
   return (val_config ? (val >= val_config) : true);
