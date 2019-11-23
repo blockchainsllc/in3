@@ -14,7 +14,7 @@ These are the reasons why:
 As of today almost all toolchain used in the embedded world are build for C. Even though Rust may be able to still use some, there are a lot of issues.
 Quote from [rust-embedded.org](https://docs.rust-embedded.org/book/interoperability/#interoperability-with-rtoss):
 
-> Integrating Rust with an RTOS such as FreeRTOS or ChibiOS is still a work in progress; especially calling RTOS functions from Rust can be tricky.
+*Integrating Rust with an RTOS such as FreeRTOS or ChibiOS is still a work in progress; especially calling RTOS functions from Rust can be tricky.*
 
 This may change in the future, but C is so dominant, that chances of Rust taking over the embedded development completly is low.
 
@@ -37,51 +37,67 @@ Even though we may not be able to use a lot of great features Rust offers by goi
 Incubed consists of different modules. While the core module is always required, additional functions will be prepared by different modules.
 
 ```
+
 digraph "GG" {
-node [
-  fontsize = "12"
-  fontname="Helvetica"
-];
-                   "node104" [ label="evm" shape="ellipse"];
-            subgraph cluster_verifier {
-                label="Verifiers"  color=lightblue  style=filled
-                    "node89" [ label="eth_basic" shape="ellipse"];
-                    "node96" [ label="eth_full" shape="ellipse"];
-                    "node79" [ label="eth_nano" shape="ellipse"];
-                    "btc" [ label="btc" shape="ellipse"];
+    graph [ rankdir = "RL" ]
+    node [
+      fontsize = "12"
+      fontname="Helvetica"
+      shape="ellipse"
+    ];
 
-            }
-
-            subgraph cluster_transport {
-                label="Transports"  color=lightblue  style=filled
-                "node59" [ label="transport_http" shape="ellipse"];
-                "node51" [ label="transport_curl" shape="ellipse"];
-                
-            }
-            subgraph cluster_api {
-                label="APIs"  color=lightblue  style=filled
-                "node123" [ label="eth_api" shape="ellipse"];
-                "node133" [ label="usn_api" shape="ellipse"];
-                
-            }
-    "node36" [ label="core" shape="ellipse"];
-    "node21" [ label="crypto" shape="ellipse"];
-    "node36" -> "node21" // core -> crypto
-    "node123" -> "node79" // eth_api -> eth_nano
-    "node79" -> "node36" // eth_nano -> core
-    btc -> "node36" // eth_nano -> core
-    "node89" -> "node79" // eth_basic -> eth_nano
-    "node96" -> "node104" // eth_full -> evm
-    "node104" -> "node89" // evm -> eth_basic
-    "node28" [ label="tommath" shape="ellipse"];
-    "node104" -> "node28" // evm -> tommath
-    "node59" -> "node36" // transport_http -> core
-    "node51" -> "node36" // transport_http -> core
-    "node133" -> "node36" // usn_api -> core
+    subgraph cluster_transport {
+        label="Transports"  color=lightblue  style=filled
+        transport_http;
+        transport_curl;
+        
+    }
     
-
+    
+    evm;
+    tommath;
+    
+    subgraph cluster_verifier {
+        label="Verifiers"  color=lightblue  style=filled
+        eth_basic;
+        eth_full;
+        eth_nano;
+        btc;
+    }
+    subgraph cluster_bindings {
+        label="Bindings"  color=lightblue  style=filled
+        wasm;
+        java;
+        python;
+        
+    }
+    subgraph cluster_api {
+        label="APIs"  color=lightblue  style=filled
+        eth_api;
+        usn_api;
+        
+    }
+        
+    core;
+    segger_rtt;
+    crypto;
+    core -> segger_rtt;
+    core -> crypto // core -> crypto
+    eth_api -> eth_nano // eth_api -> eth_nano
+    eth_nano -> core // eth_nano -> core
+    btc -> core // eth_nano -> core
+    eth_basic -> eth_nano // eth_basic -> eth_nano
+    eth_full -> evm // eth_full -> evm
+    evm -> eth_basic // evm -> eth_basic
+    evm -> tommath // evm -> tommath
+    transport_http -> core // transport_http -> core
+    transport_curl -> core // transport_http -> core
+    usn_api -> core // usn_api -> core
+    
+    java -> core // usn_api -> core
+    python -> core // usn_api -> core
+    wasm -> core // usn_api -> core
 }
-
 
 ```
 
@@ -89,9 +105,10 @@ node [
 
 Incubed is a minimal verification client, which means that each response needs to be verifiable. Depending on the expected requests and responses, you need to carefully choose which verifier you may need to register. For Ethereum, we have developed three modules:
 
-1. [nano](#module-eth-nano): a minimal module only able to verify transaction receipts (`eth_getTransactionReceipt`).
-2. [basic](#module-eth-basic): module able to verify almost all other standard RPC functions (except `eth_call`).
-3. [full](#module-eth-full): module able to verify standard RPC functions. It also implements a full EVM to handle `eth_call`.
+1. [eth_nano](#module-eth-nano): a minimal module only able to verify transaction receipts (`eth_getTransactionReceipt`).
+2. [eth_basic](#module-eth-basic): module able to verify almost all other standard RPC functions (except `eth_call`).
+3. [eth_full](#module-eth-full): module able to verify standard RPC functions. It also implements a full EVM to handle `eth_call`.
+3. [btc](#module-btc): module able to verify bitcoin or bitcoin based chains.
 
 Depending on the module, you need to register the verifier before using it. This is done by calling the `in3_register...` function like [in3_register_eth_full()](#in3-register-eth-full).
 
@@ -101,7 +118,8 @@ To verify responses, you need to be able to send requests. The way to handle the
 
 At the moment we offer these modules; other implementations are supported by different hardware modules.
 
-1. [curl](#module-transport-curl): module with a dependency on curl, which executes these requests and supports HTTPS. This module runs a standard OS with curl installed.
+1. [transport_curl](#module-transport-curl): module with a dependency on curl, which executes these requests and supports HTTPS. This module runs a standard OS with curl installed.
+2. [transport_http](#module-transport-http): module with no dependency, but a very basic http-implementation (no https-support)
 
 #### API
 
