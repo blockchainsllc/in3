@@ -176,8 +176,6 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
 in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, uint32_t tx_idx) {
   in3_ret_t res   = IN3_OK;
   bytes_t*  hash_ = d_get_byteskl(vc->result, K_BLOCK_HASH, 32);
-  uint64_t  num_  = d_get_longk(vc->result, K_BLOCK_NUMBER);
-  uint32_t  tid_  = d_get_intk(vc->result, K_TRANSACTION_INDEX);
   bytes_t*  blk_hash;
   uint64_t  blk_num;
 
@@ -191,7 +189,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
     blk_num = d_long(blk);
     if (!blk_num)
       return vc_err(vc, "No block number found");
-    else if (num_ && blk_num != num_)
+    else if (d_get(vc->result, K_BLOCK_NUMBER) && blk_num != d_get_longk(vc->result, K_BLOCK_NUMBER))
       return vc_err(vc, "The block number does not match the required");
   } else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
     // fall-through to continue verification
@@ -199,7 +197,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
     return vc_err(vc, "No block hash & number found");
   }
 
-  if (tx_idx && tid_ && tx_idx != tid_)
+  if (d_get(vc->result, K_TRANSACTION_INDEX) && tx_idx != d_get_intk(vc->result, K_TRANSACTION_INDEX))
     return vc_err(vc, "The transaction index does not match the required");
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
@@ -238,7 +236,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
 
       if (res == IN3_OK && !d_eq(d_get(vc->result, K_TRANSACTION_INDEX), d_get(vc->proof, K_TX_INDEX)))
         res = vc_err(vc, "wrong transaction index");
-      if (res == IN3_OK && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || num_ != bytes_to_long(root.data, root.len)))
+      if (res == IN3_OK && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || d_get_longk(vc->result, K_BLOCK_NUMBER) != bytes_to_long(root.data, root.len)))
         res = vc_err(vc, "wrong block number");
 
       bytes_t* tx_data = serialize_tx(vc->result);
