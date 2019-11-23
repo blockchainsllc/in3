@@ -9,24 +9,24 @@ When we started Incubed we began with a feasibility test and wrote the client in
 
 These are the reasons why:
 
-1. Support for embedded devices.
+#### Support for embedded devices.
 
-   As of today almost all toolchain used in the embedded world are build for C. Even though Rust may be able to still use some, there are a lot of issues.
-   Quote from [rust-embedded.org](https://docs.rust-embedded.org/book/interoperability/#interoperability-with-rtoss):
+As of today almost all toolchain used in the embedded world are build for C. Even though Rust may be able to still use some, there are a lot of issues.
+Quote from [rust-embedded.org](https://docs.rust-embedded.org/book/interoperability/#interoperability-with-rtoss):
 
-   > Integrating Rust with an RTOS such as FreeRTOS or ChibiOS is still a work in progress; especially calling RTOS functions from Rust can be tricky.
+> Integrating Rust with an RTOS such as FreeRTOS or ChibiOS is still a work in progress; especially calling RTOS functions from Rust can be tricky.
 
-   This may change in the future, but C is so dominant, that chances of Rust taking over the embedded development completly is low.
+This may change in the future, but C is so dominant, that chances of Rust taking over the embedded development completly is low.
 
-2. Portability 
+#### Portability 
 
-   C is the most portable programming language. Rust actually has a pretty admirable selection of supported targets for a new language (thanks mostly to LLVM), but it pales in comparison to C, which runs on almost everything. A new CPU architecture or operating system can barely be considered to exist until it has a C compiler. And once it does, it unlocks access to a vast repository of software written in C. Many other programming languages, such as Ruby and Python, are implemented in C and you get those for free too.
+C is the most portable programming language. Rust actually has a pretty admirable selection of supported targets for a new language (thanks mostly to LLVM), but it pales in comparison to C, which runs on almost everything. A new CPU architecture or operating system can barely be considered to exist until it has a C compiler. And once it does, it unlocks access to a vast repository of software written in C. Many other programming languages, such as Ruby and Python, are implemented in C and you get those for free too.
 
-   Most programing language have very good support for calling c-function in a shared library (like ctypes in python or cgo in golang) or even support integration of C code directly like [android studio](https://developer.android.com/studio/projects/add-native-code) does.
+Most programing language have very good support for calling c-function in a shared library (like ctypes in python or cgo in golang) or even support integration of C code directly like [android studio](https://developer.android.com/studio/projects/add-native-code) does.
 
-3. Integration in existing projects
+#### Integration in existing projects
 
-   Since especially embedded systems are usually written in C/C++, offering a pure C-Implementation makes it easy for these projects to use Incubed, since they do not have to change their toolchain.
+Since especially embedded systems are usually written in C/C++, offering a pure C-Implementation makes it easy for these projects to use Incubed, since they do not have to change their toolchain.
 
 
 Even though we may not be able to use a lot of great features Rust offers by going with C, it allows to reach the goal to easily integrate with a lot of projects. For the future we might port the incubed to Rust if we see a demand or chance for the same support as C has today.
@@ -60,6 +60,3 @@ While Incubed operates on JSON-RPC level, as a developer, you might want to use 
 
 1. [**eth**](#module-eth-api): This module offers all standard RPC functions as described in the [Ethereum JSON-RPC Specification](https://github.com/ethereum/wiki/wiki/JSON-RPC). In addition, it allows you to sign and encode/decode calls and transactions.
 2. [**usn**](#module-usn-api): This module offers basic USN functions like renting, event handling, and message verification.
-
-
-##
