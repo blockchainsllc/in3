@@ -176,21 +176,33 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
 in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, uint32_t tx_idx) {
   in3_ret_t res   = IN3_OK;
   bytes_t*  hash_ = d_get_byteskl(vc->result, K_BLOCK_HASH, 32);
-  bytes_t*  blk_hash;
-  uint64_t  blk_num;
 
+  // this means result: null, which is ok, since we can not verify a transaction that does not exists
+  if (!vc->proof) return vc_err(vc, "Proof is missing!");
+
+  bytes_t* blockHeader = d_get_bytesk(vc->proof, K_BLOCK);
+  if (!blockHeader) return vc_err(vc, "No Block-Proof!");
+
+  // verify that the block matches the block as described in the transaction
   if (d_type(blk) == T_BYTES) {
-    blk_hash = d_bytes(blk);
-    if (!blk_hash)
+    bytes32_t bhash;
+    bytes_t*  blk_hash = d_bytes(blk);
+
+    if (!blk_hash || blk_hash->len != 32)
       return vc_err(vc, "No block hash found");
     else if (hash_ && !b_cmp(blk_hash, hash_))
       return vc_err(vc, "The block hash does not match the required");
+    else if (sha3_to(blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
+      return vc_err(vc, "The block header does not match the required");
   } else if (d_type(blk) == T_INTEGER) {
-    blk_num = d_long(blk);
+    uint64_t blk_num = d_long(blk);
+    bytes_t  number_in_header;
     if (!blk_num)
       return vc_err(vc, "No block number found");
     else if (d_get(vc->result, K_BLOCK_NUMBER) && blk_num != d_get_longk(vc->result, K_BLOCK_NUMBER))
       return vc_err(vc, "The block number does not match the required");
+    else if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &number_in_header) != 1 || bytes_to_long(number_in_header.data, number_in_header.len) != blk_num)
+      return vc_err(vc, "The block number in the header does not match the required");
   } else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
     // fall-through to continue verification
   } else {
@@ -199,13 +211,6 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
 
   if (d_get(vc->result, K_TRANSACTION_INDEX) && tx_idx != d_get_intk(vc->result, K_TRANSACTION_INDEX))
     return vc_err(vc, "The transaction index does not match the required");
-
-  // this means result: null, which is ok, since we can not verify a transaction that does not exists
-  if (!vc->proof) return vc_err(vc, "Proof is missing!");
-
-  bytes_t* blockHeader = d_get_bytesk(vc->proof, K_BLOCK);
-  if (!blockHeader)
-    return vc_err(vc, "No Block-Proof!");
 
   res = eth_verify_blockheader(vc, blockHeader, d_get_byteskl(vc->result, K_BLOCK_HASH, 32));
   if (res == IN3_OK) {
