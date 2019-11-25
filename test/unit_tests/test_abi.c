@@ -89,6 +89,18 @@ char* abi_decode(char* sig, char* hex_data) {
     return err_string("the input data can not be decoded");
   char* result = d_create_json(res->result);
   free_json(res);
+  // Enclose output in square brackets if not already the case
+  if (result[0] != '[') {
+    size_t l_ = strlen(result);
+    char*  r_ = malloc(l_ + 3);
+    r_[0]     = '[';
+    for (size_t i = 0; i < l_; ++i)
+      r_[i + 1] = result[i];
+    r_[l_ + 1] = ']';
+    r_[l_ + 2] = '\0';
+    free(result);
+    result = r_;
+  }
   return result;
 }
 
