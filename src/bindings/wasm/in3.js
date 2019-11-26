@@ -215,6 +215,9 @@ class IN3 {
                     function setResponse(msg, i, isError) {
                         in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
                     }
+                    function freeRequest() {
+                        in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
+                    }
 
                     switch (req.type) {
                         case 'sign':
@@ -226,13 +229,14 @@ class IN3 {
                             } catch (ex) {
                                 setResponse(ex.message || ex, 0, true)
                             }
+                            freeRequest()
                             break;
 
                         case 'rpc':
                             await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload)).then(
                                 res => setResponse(res, i, false),
                                 err => setResponse(err.message || err, i, true)
-                            )))
+                            ))).then(freeRequest, err => { freeRequest(); throw err })
                     }
                 }
             }

@@ -325,6 +325,16 @@ in3_t* in3_new() {
   return c;
 }
 
+static uint64_t chain_id(d_token_t* t) {
+  if (d_type(t) == T_STRING) {
+    char* c = d_string(t);
+    if (!strcmp(c, "mainnet")) return 1;
+    if (!strcmp(c, "kovan")) return 0x2a;
+    return 1;
+  }
+  return d_long(t);
+}
+
 in3_ret_t in3_configure(in3_t* c, char* config) {
   d_track_keynames(1);
   d_clear_keynames();
@@ -337,7 +347,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
     if (iter.token->key == key("autoUpdateList"))
       c->autoUpdateList = d_int(iter.token) ? true : false;
     else if (iter.token->key == key("chainId"))
-      c->chainId = d_long(iter.token);
+      c->chainId = chain_id(iter.token);
     else if (iter.token->key == key("signatureCount"))
       c->signatureCount = (uint8_t) d_int(iter.token);
     else if (iter.token->key == key("finality"))
