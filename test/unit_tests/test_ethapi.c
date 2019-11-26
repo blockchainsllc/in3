@@ -252,10 +252,23 @@ static void test_send_tx(void) {
   free_in3();
 }
 
-
-static void test_eth_getblock(void) {
+static void test_eth_chain_id(void) {
   init_in3(curl_transport, 0x1);
-  //eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
+  uint64_t chain_id = eth_chainId(in3);
+  TEST_ASSERT_TRUE(chain_id > 0);
+  free_in3();
+}
+
+static void test_eth_gas_price(void) {
+  init_in3(curl_transport, 0x1);
+  uint64_t price = eth_gasPrice(in3);
+  TEST_ASSERT_TRUE(price > 1);
+  free_in3();
+}
+
+static void test_eth_getblock_number(void) {
+  init_in3(curl_transport, 0x1);
+
   eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(1692767), false);
 
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
@@ -269,8 +282,44 @@ static void test_eth_getblock(void) {
   free_in3();
 }
 
+static void test_eth_getblock_txcount_number(void) {
+  init_in3(curl_transport, 0x1);
+  
+  uint64_t tx_count  = eth_getBlockTransactionCountByNumber(in3, BLKNUM(1692767));
 
+  TEST_ASSERT_TRUE(tx_count > 0);
+  free_in3();
+}
 
+static void test_eth_getblock_txcount_hash(void) {
+  init_in3(curl_transport, 0x1);
+  bytes32_t blk_hash;
+  hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
+
+  uint64_t tx_count = eth_getBlockTransactionCountByHash(in3, blk_hash);
+
+  TEST_ASSERT_TRUE(tx_count > 0);
+  free_in3();
+}
+
+static void test_eth_getblock_hash(void) {
+  init_in3(curl_transport, 0x1);
+  bytes32_t blk_hash;
+  hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
+
+  //eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
+  eth_block_t* block = eth_getBlockByHash(in3, blk_hash, false);
+
+  // if the result is null there was an error an we can get the latest error message from eth_lat_error()
+  if (!block)
+    printf("error getting the block : %s\n", eth_last_error());
+  else {
+    printf("Number of transactions in Block #%llu: %d\n", block->number, block->tx_count);
+    free(block);
+  }
+  TEST_ASSERT_TRUE(block->number == 1692767llu);
+  free_in3();
+}
 
 static void test_eth_call_fn(void) {
   init_in3(transport_mock, 0x5); 
@@ -308,7 +357,10 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   RUN_TEST(test_eth_call_fn);
-  RUN_TEST(test_eth_getblock);
+  RUN_TEST(test_eth_getblock_number);
+  RUN_TEST(test_eth_getblock_hash);
+  RUN_TEST(test_eth_getblock_txcount_hash);
+  RUN_TEST(test_eth_getblock_txcount_number);
   RUN_TEST(test_get_tx_receipt);
   RUN_TEST(test_get_balance);
   RUN_TEST(test_get_logs);
