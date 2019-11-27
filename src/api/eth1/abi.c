@@ -33,10 +33,12 @@
  *******************************************************************************/
 
 #include "abi.h"
+#include "../../core/util/bitset.h"
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include <limits.h>
 #include <string.h>
 
 static int add_error(call_request_t* req, char* error) {
@@ -270,6 +272,31 @@ static int write_left(call_request_t* req, int p, bytes_t data) {
   return l;
 }
 
+static bitset_t* twos_complement(const char* str, uint32_t len) {
+  bitset_t* bs = bs_new(256);
+
+  // convert to bin
+  for (int32_t i = len - 1; i >= 0; --i) {
+    for (uint8_t j = 0; j < CHAR_BIT; ++j) {
+      if (((str[i] - '0') >> j) & 1) {
+        bs_set(bs, (i * CHAR_BIT) + j);
+      }
+    }
+  }
+
+  // 2's complement
+  unsigned k = 0;
+  for (; k < 256; k++)
+    if (bs_isset(bs, k))
+      break;
+
+  k++;
+  for (; k < 256; k++)
+    bs_toggle(bs, k);
+
+  return bs;
+}
+
 static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_pos, int tail_pos) {
   bytes_builder_t* buffer    = req->call_data;
   int              array_len = tuple->array_len;
@@ -306,8 +333,15 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
           head_pos = encode(req, dd, t, head_pos, max((int) buffer->b.len, tail_start));
         break;
       }
+      case A_INT: {
+        char*     tmp = d_string(d);
+        bitset_t* bs  = twos_complement(tmp + 1, d_len(d) - 1);
+        bytes_t   b   = {.data = bs->bits.p, .len = 32};
+        head_pos += write_right(req, head_pos, (*tmp == '-') ? b : d_to_bytes(d));
+        bs_free(bs);
+        break;
+      }
       case A_ADDRESS:
-      case A_INT:
       case A_UINT:
       case A_BOOL:
         head_pos += write_right(req, head_pos, d_to_bytes(d));
