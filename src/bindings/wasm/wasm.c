@@ -165,6 +165,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
 void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
   _free(ptr);
 }
+void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
+  free_request(r, ctx, false);
+}
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
   if (is_error)
@@ -175,7 +178,6 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
     sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
   } else
     sb_add_chars(&r->results[i].result, msg);
-  free_request(r, ctx, false);
 }
 
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {

@@ -50,7 +50,7 @@
 #include <stdint.h>
 
 /** the protocol version used when sending requests from the this client */
-#define IN3_PROTO_VER "2.0.0"
+#define IN3_PROTO_VER "2.1.0"
 
 #define ETH_CHAIN_ID_MAINNET 0x01L   /**< chainId for mainnet */
 #define ETH_CHAIN_ID_KOVAN 0x2aL     /**< chainId for kovan */

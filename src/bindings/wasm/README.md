@@ -22,19 +22,22 @@ import In3Client from 'in3-wasm'
 import * as web3 from 'web3'
 
 const IN3Client c = new IN3Client({
-    proof         : 'standard',
-    signatureCount: 1,
-    requestCount  : 2,
-    chainId       : 'mainnet'
-})
+    proof              : 'standard',
+    signatureCount     : 1,
+    requestCount       : 2,
+    chainId            : 'mainnet',
+    replaceLatestBlock : 10
+ })
 
 // use the In3Client as Http-Provider
 const web3 = new Web3(c)
 
-// use the web3
-const block = await web.eth.getBlockByNumber('latest')
-...
+(async () => {
 
+    // use the web3
+    const block = await web.eth.getBlockByNumber('latest')
+
+})().catch(console.error);
 
 ```
 
@@ -52,14 +55,19 @@ import In3Client from 'in3-wasm'
 
 // use the In3Client
 const in3 = new In3Client({
-    proof         : 'standard',
-    signatureCount: 1,
-    requestCount  : 2,
-    chainId       : 'mainnet'
+    proof              : 'standard',
+    signatureCount     : 1,
+    requestCount       : 2,
+    chainId            : 'mainnet',
+    replaceLatestBlock : 10
 })
 
-const block = await in3.sendRPC('eth_getBlockByNumber',['latest',false])
-...
+(async () => {
+
+    // use the incubed directly
+    const block = await in3.eth.getBlockByNumber('latest')
+
+})().catch(console.error);
 
 ```
 
@@ -83,7 +91,7 @@ const block = await in3.sendRPC('eth_getBlockByNumber',['latest',false])
         <script>
             var c = new IN3({ 
                    chainId: 0x5 
-                })
+            })
             c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
                 .then(r => document.getElementById('result').innerHTML = JSON.stringify(r, null, 2))
                 .catch(alert)
