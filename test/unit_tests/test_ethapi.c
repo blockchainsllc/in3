@@ -39,7 +39,7 @@
 #define DEBUG
 #endif
 
-#define CURL_ENABLE 1
+//#define CURL_ENABLE 
 
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/cache.h"
