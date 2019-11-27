@@ -155,49 +155,49 @@ static in3_ret_t mock_transport(in3_request_t* req) {
   for (int i = 0; i < req->urls_len; i++) {
     if (strstr(req->payload, "nodeList") != NULL) {
       in3_log_debug("Returning Node List ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/in3_nodeList.json");
+      return setup_transport(req, "../test/testdata/goerli/in3_nodeList.json");
     } else if (strstr(req->payload, "eth_call") != NULL) {
       in3_log_debug("Returning Call Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_call.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_call.json");
     } else if (strstr(req->payload, "eth_getCode") != NULL) {
       in3_log_debug("Returning getCode Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getCode.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getCode.json");
     } else if (strstr(req->payload, "eth_getBlockByHash") != NULL) {
       in3_log_debug("Returning block by hash  Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockByHash.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getBlockByHash.json");
     } else if (strstr(req->payload, "eth_getBlockByNumber") != NULL) {
       in3_log_debug("Returning block by number Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockByNumber.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getBlockByNumber.json");
     } else if (strstr(req->payload, "eth_blockNumber") != NULL) {
       in3_log_debug("Returning block by number Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_blockNumber.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_blockNumber.json");
     } else if (strstr(req->payload, "eth_getBalance") != NULL) {
       in3_log_debug("Returning eth_getBalance Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBalance.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getBalance.json");
     } else if (strstr(req->payload, "eth_getTransactionByHash") != NULL) {
       in3_log_debug("Returning eth_getTransactionByHash Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getTransactionByHash.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getTransactionByHash.json");
     } else if (strstr(req->payload, "eth_getBlockTransactionCountByHash") != NULL) {
       in3_log_debug("Returning eth_getBlockTransactionCountByHash Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockTransactionCountByHash.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getBlockTransactionCountByHash.json");
     } else if (strstr(req->payload, "eth_getBlockTransactionCountByNumber") != NULL) {
       in3_log_debug("Returning eth_getBlockTransactionCountByNumber Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockTransactionCountByNumber.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getBlockTransactionCountByNumber.json");
     } else if (strstr(req->payload, "eth_getLogs") != NULL) {
       in3_log_debug("Returning eth_getLogs Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getLogs.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getLogs.json");
     } else if (strstr(req->payload, "eth_chainId") != NULL) {
       in3_log_debug("Returning eth_chainId Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_chainId.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_chainId.json");
     } else if (strstr(req->payload, "eth_getTransactionReceipt") != NULL) {
       in3_log_debug("Returning eth_getTransactionReceipt Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getTransactionReceipt.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getTransactionReceipt.json");
     } else if (strstr(req->payload, "eth_getTransactionCount") != NULL) {
       in3_log_debug("Returning eth_getTransactionCount Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_getTransactionCount.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_getTransactionCount.json");
     } else if (strstr(req->payload, "eth_sendRawTransaction") != NULL) {
       in3_log_debug("Returning eth_sendRawTransaction Response ...\n");
-      return setup_transport(req, "../test/testdata/requests/goerli/eth_sendRawTransaction.json");
+      return setup_transport(req, "../test/testdata/goerli/eth_sendRawTransaction.json");
     }
 
   }
