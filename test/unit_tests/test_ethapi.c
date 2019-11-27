@@ -39,17 +39,17 @@
 #define DEBUG
 #endif
 
+#include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
+#include "../../src/core/client/keys.h"
 #include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
-#include "../../src/core/client/keys.h"
 #include "../../src/core/util/scache.h"
-#include "../../src/verifier/eth1/nano/eth_nano.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
-#include "../../src/api/eth1/eth_api.h"
-#include "../../src/transport/curl/in3_curl.h"
+#include "../../src/verifier/eth1/nano/eth_nano.h"
+//#include "../../src/transport/curl/in3_curl.h"
 #include "../test_utils.h"
 #include "./mock.h"
 #include <stdio.h>
@@ -86,14 +86,55 @@ bytes_t*          eth_sendTransaction(in3_t* in3, address_t from, address_t to, 
                                       OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce);               
 bytes_t*          eth_sendRawTransaction(in3_t* in3, bytes_t data); 
 */
+static char *response_buffer;
+static char* read_json_response_buffer(char* path) {
+  if(response_buffer != NULL){
+      _free(response_buffer);
+      response_buffer = NULL;
+  }
+  long  length;
+  FILE* f = fopen(path, "r");
+  if (f) {
+    fseek(f, 0, SEEK_END);
+    length = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    response_buffer = _malloc(length + 1);
+    if (response_buffer) {
+      fread(response_buffer, 1, length, f);
+      response_buffer[length] = 0;
+    }
+    fclose(f);
+  } else {
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+      printf("Current working dir: %s\n", cwd);
+    } else {
+      perror("getcwd() error");
+    }
+    printf("Error coudl not find the testdata %s\n", path);
+  }
+}
+
+static in3_ret_t setup_transport(in3_request_t* req, char * path) {
+  // now parse the json
+  read_json_response_buffer(path);
+  json_ctx_t* res  = parse_json(response_buffer);
+  str_range_t json = d_to_json(d_get_at(res->result, 0));
+  //in3_log_debug("response %s ",json.data);
+  sb_add_range(&req->results->result, json.data, 0, json.len);
+  free_json(res);
+  return IN3_OK;
+}
 
 static in3_t* in3 = NULL;
-static void init_in3( in3_transport_send custom_transport, uint64_t chain) {
+static void   init_in3(in3_transport_send custom_transport, uint64_t chain) {
+  //if (file != NULL)
+  //read_json_response_buffer(file);
   int err;
   in3_register_eth_full();
-  in3 = in3_new();
+  in3               = in3_new();
   in3->transport    = custom_transport; // use curl to handle the requests
-  in3->requestCount = 1;              // number of requests to sendp
+  in3->requestCount = 1;                // number of requests to sendp
   in3->includeCode  = 1;
   in3->chainId      = chain;
   in3->max_attempts = 1;
@@ -101,64 +142,65 @@ static void init_in3( in3_transport_send custom_transport, uint64_t chain) {
   in3_log_set_level(LOG_TRACE);
   in3_log_set_quiet(0);
 }
-static void free_in3(){
+static void free_in3() {
   _free(in3);
-  in3=NULL;
+  in3 = NULL;
 }
 
 static in3_ret_t mock_transport(in3_request_t* req) {
   in3_log_debug("Req : \n");
   for (int i = 0; i < req->urls_len; i++) {
     if (strstr(req->payload, "nodeList") != NULL) {
+
       in3_log_debug("Returning Node List ...\n");
-      sb_add_range(&req->results[i].result, node_res, 0, node_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/in3_nodeList.json");
     } else if (strstr(req->payload, "eth_call") != NULL) {
       in3_log_debug("Returning Call Response ...\n");
-      sb_add_range(&req->results[i].result, ethcall_res, 0, ethcall_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_call.json");
     } else if (strstr(req->payload, "eth_getCode") != NULL) {
       in3_log_debug("Returning getCode Response ...\n");
-      sb_add_range(&req->results[i].result, code_res, 0, code_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getCode.json");
     } else if (strstr(req->payload, "eth_getBlockByHash") != NULL) {
       in3_log_debug("Returning block by hash  Response ...\n");
-      sb_add_range(&req->results[i].result, blk_hash_res, 0, blk_hash_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockByHash.json");
     } else if (strstr(req->payload, "eth_getBlockByNumber") != NULL) {
       in3_log_debug("Returning block by number Response ...\n");
-      sb_add_range(&req->results[i].result, blk_num_res, 0, blk_num_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockByNumber.json");
     } else if (strstr(req->payload, "eth_getBalance") != NULL) {
       in3_log_debug("Returning eth_getBalance Response ...\n");
-      sb_add_range(&req->results[i].result, balance_res, 0, balance_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBalance.json");
     } else if (strstr(req->payload, "eth_getTransactionByHash") != NULL) {
       in3_log_debug("Returning eth_getTransactionByHash Response ...\n");
-      sb_add_range(&req->results[i].result, tx_hash_res, 0, tx_hash_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getTransactionByHash.json");
     } else if (strstr(req->payload, "eth_getBlockTransactionCountByHash") != NULL) {
       in3_log_debug("Returning eth_getBlockTransactionCountByHash Response ...\n");
-      sb_add_range(&req->results[i].result, count_tx_hash_res, 0, count_tx_hash_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockTransactionCountByHash.json");
     } else if (strstr(req->payload, "eth_getBlockTransactionCountByNumber") != NULL) {
       in3_log_debug("Returning eth_getBlockTransactionCountByNumber Response ...\n");
-      sb_add_range(&req->results[i].result, count_tx_number_res, 0, count_tx_number_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getBlockTransactionCountByNumber.json");
     } else if (strstr(req->payload, "eth_getLogs") != NULL) {
       in3_log_debug("Returning eth_getLogs Response ...\n");
-      sb_add_range(&req->results[i].result, logs_res, 0, logs_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getFilterLogs.json");
     } else if (strstr(req->payload, "eth_chainId") != NULL) {
       in3_log_debug("Returning eth_getLogs Response ...\n");
-      sb_add_range(&req->results[i].result, chainid_res, 0, chainid_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_chainId.json");
     } else if (strstr(req->payload, "eth_getTransactionReceipt") != NULL) {
       in3_log_debug("Returning eth_getLogs Response ...\n");
-      sb_add_range(&req->results[i].result, tx_receipt_res, 0, tx_receipt_len);
+      return setup_transport(req, "../test/testdata/requests/goerli/eth_getTransactionReceipt.json");
     }
 
-
-//
-//
+    //
+    //
   }
   return 0;
 }
+/*
 static in3_ret_t curl_transport(in3_request_t* req) {
   //in3_ret_t r = send_curl(req);
   return send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results);
   //return r;
 }
-
+*/
 static void test_get_balance() {
   init_in3(mock_transport, 0x5);
   // the address of account whose balance we want to get
@@ -173,6 +215,7 @@ static void test_get_balance() {
 }
 
 static void test_get_logs() {
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getFilterLogs.json");
   init_in3(mock_transport, 0x5);
   // Create filter options
   char b[30];
@@ -220,7 +263,8 @@ static void test_get_logs() {
 
 static void test_get_tx(void) {
   // the hash of transaction that we want to get
-  init_in3(mock_transport, 0x5);
+  init_in3(mock_transport, 0x5 );
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getTransactionByHash.json" );
   bytes32_t tx_hash;
   hex2byte_arr("0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164", -1, tx_hash, 32);
 
@@ -235,13 +279,14 @@ static void test_get_tx(void) {
     free(tx);
   }
 
-  TEST_ASSERT_TRUE( tx!= NULL);
+  TEST_ASSERT_TRUE(tx != NULL);
 }
 
 static void test_get_tx_receipt(void) {
   // the hash of transaction whose receipt we want to get
 
   init_in3(mock_transport, 0x5);
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getTransactionByHash.json" );
   bytes32_t tx_hash;
   hex2byte_arr("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
 
@@ -259,7 +304,8 @@ static void test_get_tx_receipt(void) {
 }
 
 static void test_send_tx(void) {
-  init_in3(curl_transport, 0x5);
+  init_in3(mock_transport, 0x5);
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_sendTransaction.json");
   // prepare parameters
   address_t to, from;
   hex2byte_arr("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
@@ -284,14 +330,16 @@ static void test_send_tx(void) {
 }
 
 static void test_eth_chain_id(void) {
-  init_in3(curl_transport, 0x5);
+  init_in3(mock_transport, 0x5);
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getTransactionByHash");
   uint64_t chain_id = eth_chainId(in3);
   TEST_ASSERT_TRUE(chain_id > 0);
   free_in3();
 }
 
 static void test_eth_gas_price(void) {
-  init_in3(curl_transport, 0x1);
+  init_in3(mock_transport, 0x1);
+  //init_in3(mock_transport, 0x1, "../test/testdata/requests/goerli/eth_getTransactionByHash");
   uint64_t price = eth_gasPrice(in3);
   TEST_ASSERT_TRUE(price > 1);
   free_in3();
@@ -299,6 +347,7 @@ static void test_eth_gas_price(void) {
 
 static void test_eth_getblock_number(void) {
   init_in3(mock_transport, 0x5);
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getTransactionByHash");
 
   eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(1692767), false);
 
@@ -314,16 +363,18 @@ static void test_eth_getblock_number(void) {
 }
 
 static void test_eth_getblock_txcount_number(void) {
-  init_in3(curl_transport, 0x5);
-  
-  uint64_t tx_count  = eth_getBlockTransactionCountByNumber(in3, BLKNUM(1692767));
+  init_in3(mock_transport, 0x5);
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getTransactionByHash");
+
+  uint64_t tx_count = eth_getBlockTransactionCountByNumber(in3, BLKNUM(1692767));
 
   TEST_ASSERT_TRUE(tx_count > 0);
   free_in3();
 }
 
 static void test_eth_getblock_txcount_hash(void) {
-  init_in3(curl_transport, 0x5);
+  init_in3(mock_transport, 0x5 );
+  //init_in3(mock_transport, 0x5,"../test/testdata/requests/goerli/eth_getTransactionByHash" );
   bytes32_t blk_hash;
   hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
 
@@ -334,7 +385,8 @@ static void test_eth_getblock_txcount_hash(void) {
 }
 
 static void test_eth_getblock_hash(void) {
-  init_in3(curl_transport, 0x5);
+  init_in3(mock_transport, 0x5);
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getTransactionByHash");
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
@@ -354,7 +406,8 @@ static void test_eth_getblock_hash(void) {
 }
 
 static void test_eth_call_fn(void) {
-  init_in3(mock_transport, 0x5); 
+  init_in3(mock_transport, 0x5);
+  //init_in3(mock_transport, 0x5, "../test/testdata/requests/goerli/eth_getTransactionByHash");
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
   hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
@@ -388,17 +441,17 @@ int main() {
 
   // now run tests
   TESTS_BEGIN();
-  //RUN_TEST(test_eth_call_fn);
+  RUN_TEST(test_eth_call_fn);
   RUN_TEST(test_eth_getblock_number);
   RUN_TEST(test_eth_getblock_hash);
-  //RUN_TEST(test_eth_getblock_txcount_hash);
-  //RUN_TEST(test_eth_getblock_txcount_number);
-  //RUN_TEST(test_get_tx_receipt);
-  RUN_TEST(test_send_tx);
- // RUN_TEST(test_get_balance);
+  RUN_TEST(test_eth_getblock_txcount_hash);
+  RUN_TEST(test_eth_getblock_txcount_number);
+  RUN_TEST(test_get_tx_receipt);
+  //RUN_TEST(test_send_tx);
+   RUN_TEST(test_get_balance);
   //RUN_TEST(test_eth_chain_id);
 
-  //RUN_TEST(test_get_logs);
+  // RUN_TEST(test_get_logs);
   //RUN_TEST(test_get_tx);
   return TESTS_END();
 }
