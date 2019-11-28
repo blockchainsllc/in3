@@ -157,6 +157,7 @@ char* in3_client_exec_req(
   char*      res     = NULL;
   char*      err_msg = NULL;
   in3_ctx_t* ctx     = new_ctx(c, req);
+  in3_ret_t  ret;
   if (!ctx) return NULL;
 
   // make sure result & error are clean
@@ -164,11 +165,11 @@ char* in3_client_exec_req(
   if (ctx->error) {
     res = _malloc(strlen(ctx->error) + 50);
     if (!res) return NULL;
-    sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"%s\"}", ctx->error);
+    sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"%s\"}}", ctx->error);
   } else {
 
-    uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
-    in3_ret_t ret = in3_send_ctx(ctx);
+    uint32_t id = d_get_intk(ctx->requests[0], K_ID);
+    ret         = in3_send_ctx(ctx);
     if (ret == IN3_OK) {
       if (c->keep_in3) {
         str_range_t rr  = d_to_json(ctx->responses[0]);
@@ -184,7 +185,7 @@ char* in3_client_exec_req(
           if (res && result)
             sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
           else if (res)
-            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, r);
+            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, error);
           _free(r);
         }
       }
@@ -194,7 +195,7 @@ char* in3_client_exec_req(
 
   if (!res && err_msg) {
     res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 50);
-    if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"%s\"}", ctx->error ? ctx->error : err_msg);
+    if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", ret, ctx->error ? ctx->error : err_msg);
   }
 
   free_ctx(ctx);

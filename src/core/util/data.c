@@ -622,6 +622,11 @@ char* d_create_json(d_token_t* item) {
         for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
           char* p = d_create_json(it.token);
           if (sb->len > 1) sb_add_char(sb, ',');
+          if (d_type(item) == T_OBJECT) {
+            char tmp[8];
+            sprintf(tmp, "\"%04x\":", (uint32_t) it.token->key);
+            sb_add_chars(sb, tmp);
+          }
           sb_add_chars(sb, p);
           _free(p);
         }

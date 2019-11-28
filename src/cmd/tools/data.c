@@ -38,6 +38,7 @@
 
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,10 +69,156 @@ char* read_from_stdin(FILE* file) {
   return (char*) buffer;
 }
 
+#define C_RED "0;31"
+#define C_GREEN "0;32"
+#define C_ORANGE "0;33"
+#define C_BLUE "0;34"
+#define C_PURPLE "0;35"
+#define C_CYAN "0;36"
+#define C_LGRAY "0;37"
+#define C_DGRAY "1;30"
+#define C_LRED "1;31"
+#define C_LGREEN "1;32"
+#define C_YELLOW "1;33"
+#define C_LBLUE "1;34"
+#define C_LPURPLE "1;35"
+#define C_LCYAN "1;36"
+
+static void print_hex(uint8_t* d, uint32_t l, char* color) {
+  if (color) printf("\033[%sm", color);
+  for (uint32_t i = 0; i < l; i++)
+    printf("%02x", d[i]);
+  printf(" ");
+  if (color) printf("\033[0m");
+}
+
+static int read_token(uint8_t* d, size_t* p, int level, int* index, int keyval) {
+  printf("%03i: \033[0;31m", *index);
+  d_type_t type = d[*p] >> 5;
+  uint32_t len  = d[*p] & 0x1F, i; // the other 5 bits  (0-31) the length
+                                   // first 3 bits define the type
+  switch (type) {
+    case T_ARRAY:
+      printf("<ARRAY> ");
+      break;
+    case T_OBJECT:
+      printf("<OBJECT>");
+      break;
+    case T_STRING:
+      printf("<STRING>");
+      break;
+    case T_BYTES:
+      printf("<BYTES> ");
+      break;
+    case T_INTEGER:
+      printf("<INT>   ");
+      break;
+    case T_BOOLEAN:
+      if (len)
+        printf("<REF>   ");
+      else
+        printf("<BOOL>  ");
+      break;
+    case T_NULL:
+      if (len)
+        printf("<INIT>  ");
+      else
+        printf("<NULL>  ");
+      break;
+  }
+  printf(" ");
+
+  for (int i = 0; i < level; i++) printf("\033[1;30m.\033[0m ");
+  if (keyval >= 0) {
+    uint8_t tmp[2];
+    tmp[0] = (keyval >> 8) & 0xFF;
+    tmp[1] = keyval & 0xFF;
+    print_hex(tmp, 2, C_PURPLE);
+  }
+
+  uint16_t key;
+  print_hex(d + (*p), 1, C_GREEN);
+
+  // calculate len
+  (*p)++;
+  int l = len > 27 ? len - 27 : 0;
+  if (len == 28)
+    len = d[*p]; // 28 = 1 byte len
+  else if (len == 29)
+    len = d[*p] << 8 | d[*p + 1]; // 29 = 2 bytes length
+  else if (len == 30)
+    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2]; // 30 = 3 bytes length
+  else if (len == 31)
+    len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3]; // 31 = 4 bytes length
+
+  print_hex(d + (*p) + 1, l, C_ORANGE);
+  *p += l;
+
+  // special token giving the number of tokens, so we can allocate the exact number
+  if (type == T_NULL && len > 0) {
+    printf("  len = %i\n", len);
+    read_token(d, p, level, index, -1);
+    return 0;
+  }
+  *index = *index + 1;
+
+  // special handling for references
+  if (type == T_BOOLEAN && len > 1) {
+    printf("   idx = %i\n", len - 2);
+    return 0;
+  }
+
+  switch (type) {
+    case T_ARRAY:
+      printf("  len = %i\n", len);
+      for (i = 0; i < len; i++) {
+        if (read_token(d, p, level + 1, index, -1)) return 1;
+      }
+      break;
+    case T_OBJECT:
+      printf("  len = %i\n", len);
+      for (i = 0; i < len; i++) {
+        key = d[(*p)] << 8 | d[*p + 1];
+        *p += 2;
+        if (read_token(d, p, level + 1, index, key)) return 1;
+      }
+      break;
+    case T_STRING:
+      print_hex(d + (*p), len + 1, C_LGRAY);
+      printf("  len = %i val=\"%s\"\n", len, d + ((*p)++));
+      *p += len;
+      break;
+    case T_BYTES:
+      print_hex(d + (*p), len, C_LGRAY);
+      printf("  len = %i\n", len);
+      *p += len;
+      break;
+    case T_INTEGER:
+      printf("  val = %i\n", len);
+      break;
+    case T_BOOLEAN:
+      printf("  val = %i\n", len);
+      break;
+    case T_NULL:
+      printf("  \n");
+      break;
+    default:
+      break;
+  }
+  return 0;
+}
+
+static void print_debug(bytes_t* data) {
+  size_t p     = 0;
+  int    index = 0;
+  read_token(data->data, &p, 0, &index, -1);
+}
+
 int main(int argc, char* argv[]) {
   char* default_format = "hex";
   char* input          = NULL;
   char* format         = default_format;
+  bool  debug          = false;
 
   int i;
 
@@ -81,11 +228,24 @@ int main(int argc, char* argv[]) {
       input = read_from_stdin(fopen(argv[++i], "r"));
     else if (strcmp(argv[i], "-o") == 0)
       format = argv[++i];
+    else if (strcmp(argv[i], "-d") == 0)
+      debug = true;
     else
       input = argv[i];
   }
 
   if (input == NULL) input = read_from_stdin(stdin);
+
+  if (!strcmp(format, "json") || (*input == '0' && input[1] == 'x')) {
+    if (input[0] == '0' && input[1] == 'x') input += 2;
+    if (debug) {
+      print_debug(hex2byte_new_bytes(input, strlen(input)));
+      return 0;
+    }
+    json_ctx_t* ctx = parse_binary(hex2byte_new_bytes(input, strlen(input)));
+    printf("%s\n", d_create_json(ctx->result));
+    return 0;
+  }
 
   json_ctx_t* ctx = parse_json(input);
   if (!ctx)
