@@ -95,11 +95,11 @@ void test_exec_req() {
   _free(result);
 
   result = in3_client_exec_req(c, "\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"The Request is not a valid structure!\"}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"The Request is not a valid structure!\"}}", result);
   _free(result);
 
   result = in3_client_exec_req(c, "{\"params\":[\"0x1234\"]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":\"No Method defined\"}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"No Method defined\"}}", result);
   _free(result);
 
   in3_free(c);
