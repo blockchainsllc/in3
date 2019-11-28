@@ -243,6 +243,10 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     json_ctx_t* ctx = parse_binary(hex2byte_new_bytes(input, strlen(input)));
+    if (!ctx) {
+      printf("Invalid binary data!\n");
+      return 1;
+    }
     printf("%s\n", d_create_json(ctx->result));
     return 0;
   }
