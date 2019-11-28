@@ -719,9 +719,9 @@ eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_exec("eth_getTransactionReceipt", eth_tx_receipt_t*, parse_tx_receipt(result));
 }
 
-eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index) {
+eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index) {
   rpc_init;
-  params_add_bytes(params, bytes(hash, 32));
+  params_add_blk_num_t(params, block);
   params_add_number(params, index);
   rpc_exec("eth_getUncleByBlockNumberAndIndex", eth_block_t*, eth_getBlock(result, true));
 }
