@@ -272,28 +272,31 @@ static int write_left(call_request_t* req, int p, bytes_t data) {
   return l;
 }
 
-static bitset_t* twos_complement(const char* str, uint32_t len) {
-  bitset_t* bs = bs_new(256);
+static bitset_t* twos_complement(const char* str) {
+  bitset_t*          bs = bs_new(256);
+  unsigned long long n  = strtoull(str, NULL, 10);
 
   // convert to bin
-  for (int32_t i = len - 1; i >= 0; --i) {
-    for (uint8_t j = 0; j < CHAR_BIT; ++j) {
-      if (((str[i] - '0') >> j) & 1) {
-        bs_set(bs, (i * CHAR_BIT) + j);
-      }
-    }
-  }
+  for (unsigned int j = 0; j < sizeof(n) * CHAR_BIT; ++j)
+    if ((n >> j) & 1)
+      bs_set(bs, j);
 
   // 2's complement
   unsigned k = 0;
   for (; k < 256; k++)
     if (bs_isset(bs, k))
       break;
-
   k++;
   for (; k < 256; k++)
     bs_toggle(bs, k);
 
+  // Convert to big-endian
+  uint8_t tmp;
+  for (int i = 0; i < 16; ++i) {
+    tmp                = bs->bits.p[i];
+    bs->bits.p[i]      = bs->bits.p[31 - i];
+    bs->bits.p[31 - i] = tmp;
+  }
   return bs;
 }
 
@@ -335,7 +338,7 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
       }
       case A_INT: {
         char*     tmp = d_string(d);
-        bitset_t* bs  = twos_complement(tmp + 1, d_len(d) - 1);
+        bitset_t* bs  = twos_complement(tmp + 1);
         bytes_t   b   = {.data = bs->bits.p, .len = 32};
         head_pos += write_right(req, head_pos, (*tmp == '-') ? b : d_to_bytes(d));
         bs_free(bs);
