@@ -38,7 +38,7 @@
 #ifndef TEST
 #define DEBUG
 #endif
-
+/*enabled curl transport when needed to verify mocks*/
 //#define CURL_ENABLE 
 
 #include "../../src/api/eth1/eth_api.h"
@@ -198,6 +198,18 @@ static in3_ret_t mock_transport(in3_request_t* req) {
     } else if (strstr(req->payload, "eth_sendRawTransaction") != NULL) {
       in3_log_debug("Returning eth_sendRawTransaction Response ...\n");
       return setup_transport(req, "../test/testdata/goerli/eth_sendRawTransaction.json");
+    } else if (strstr(req->payload, "eth_getStorageAt") != NULL) {
+      in3_log_debug("Returning eth_getStorageAt Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_getStorageAt.json");
+    } else if (strstr(req->payload, "eth_gasPrice") != NULL) {
+      in3_log_debug("Returning eth_gasPrice Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_gasPrice.json");
+    } else if (strstr(req->payload, "eth_getTransactionByBlockHashAndIndex") != NULL) {
+      in3_log_debug("Returning eth_getTransactionByBlockHashAndIndex Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_getTransactionByBlockHashAndIndex.json");
+    } else if (strstr(req->payload, "eth_getTransactionByBlockNumberAndIndex") != NULL) {
+      in3_log_debug("Returning eth_getTransactionByBlockNumberAndIndex Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_getTransactionByBlockNumberAndIndex.json");
     }
 
   }
@@ -223,11 +235,30 @@ static void test_get_balance() {
   TEST_ASSERT_TRUE(balance > 0.0);
 }
 
+static void test_get_tx_count() {
+  init_in3(mock_transport, 0x5);
+  // the address of account whose balance we want to get
+  address_t account;
+  hex2byte_arr("0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2", -1, account, 20);
+  // get balance of account
+  uint64_t count = eth_getTransactionCount(in3, account, BLKNUM(1555415));
+  // if the result is null there was an error an we can get the latest error message from eth_lat_error()
+  printf("Balance: %Lf\n", count);
+
+  TEST_ASSERT_TRUE(count > 0.0);
+}
+
+static void test_block_number(){
+    uint64_t blknum = eth_blockNumber(in3);
+    TEST_ASSERT_TRUE(blknum > 0);
+    free_in3();
+}
+
 static void test_get_logs() {
   init_in3(mock_transport, 0x5);
   // Create filter options
   char b[30];
-  sprintf(b, "{\"fromBlock\":\"0x%" PRIx64 "\"}", eth_blockNumber(in3) - 2);
+  sprintf(b, "{\"fromBlock\":\"0x%" PRIx64 "\"}", eth_blockNumber(in3)- 2);
   json_ctx_t* jopt = parse_json(b);
 
   // Create new filter with options
@@ -268,13 +299,46 @@ static void test_get_logs() {
 
   TEST_ASSERT_TRUE(ret == IN3_OK);
 }
+static void test_get_tx_blkhash_index(void) {
+  // the hash of transaction that we want to get
+  init_in3(mock_transport, 0x5 );
+  bytes32_t blk_hash;
+  hex2byte_arr("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash, 32);
 
-static void test_get_tx(void) {
+  // get the tx by hash
+  eth_tx_t* tx = eth_getTransactionByBlockHashAndIndex(in3, blk_hash, 0);
+
+  // if the result is null there was an error an we can get the latest error message from eth_last_error()
+  if (!tx)
+    printf("error getting the tx : %s\n", eth_last_error());
+  else {
+    printf("Transaction #%d of block #%llx", tx->transaction_index, tx->block_number);
+    free(tx);
+  }
+  TEST_ASSERT_TRUE(tx != NULL);
+}
+static void test_get_tx_blknum_index(void) {
+  // the hash of transaction that we want to get
+  init_in3(mock_transport, 0x5 );
+
+  // get the tx by hash
+  eth_tx_t* tx = eth_getTransactionByBlockNumberAndIndex(in3, BLKNUM(1723267), 0);
+
+  // if the result is null there was an error an we can get the latest error message from eth_last_error()
+  if (!tx)
+    printf("error getting the tx : %s\n", eth_last_error());
+  else {
+    printf("Transaction #%d of block #%llx", tx->transaction_index, tx->block_number);
+    free(tx);
+  }
+  TEST_ASSERT_TRUE(tx != NULL);
+}
+
+static void test_get_tx_hash(void) {
   // the hash of transaction that we want to get
   init_in3(mock_transport, 0x5 );
   bytes32_t tx_hash;
   hex2byte_arr("0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164", -1, tx_hash, 32);
-
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
 
@@ -346,7 +410,7 @@ static void test_eth_chain_id(void) {
 }
 
 static void test_eth_gas_price(void) {
-  init_in3(mock_transport, 0x1);
+  init_in3(mock_transport, 0x5);
   uint64_t price = eth_gasPrice(in3);
   TEST_ASSERT_TRUE(price > 1);
   free_in3();
@@ -367,6 +431,20 @@ uint64_t blk_number = 0;
     free(block);
   }
   TEST_ASSERT_EQUAL_INT64(blk_number, 1692767);
+  free_in3();
+}
+
+static void test_eth_get_storage_at(void) {
+  init_in3(mock_transport, 0x5);
+  address_t contract;
+  //setup lock access contract address to be excuted with eth_call
+  hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
+  bytes32_t key;
+  memset(key,0,20);
+  uint256_t storage = eth_getStorageAt(in3, contract, key, BLKNUM_LATEST());
+
+  // if the result is null there was an error an we can get the latest error message from eth_lat_error()
+  TEST_ASSERT_TRUE(storage.data);
   free_in3();
 }
 
@@ -432,6 +510,19 @@ static void test_eth_call_fn(void) {
   free_in3();
 }
 
+static void test_estimate_fn(void) {
+  init_in3(mock_transport, 0x5);
+  address_t contract;
+  //setup lock access contract address to be excuted with eth_call
+  hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
+  //ask for the access to the lock
+  uint64_t estimate = eth_estimate_fn(in3, contract, BLKNUM_LATEST(), "hasAccess():bool");
+  //convert the response to a uint32_t,
+  in3_log_debug("Access granted? : %lld \n", estimate);
+  TEST_ASSERT_TRUE(estimate > 0);
+  free_in3();
+}
+
 /*
  * Main
  */
@@ -446,19 +537,36 @@ int main() {
 
   // now run tests
   TESTS_BEGIN();
-  RUN_TEST(test_eth_call_fn);
-  RUN_TEST(test_eth_getblock_number);
-  RUN_TEST(test_eth_getblock_hash);
-  // verification for tx count(number, hash) is not yet suported TODO: [0x1]:The Method cannot be verified with eth_nano! 
-  // RUN_TEST(test_eth_getblock_txcount_hash);
-  // RUN_TEST(test_eth_getblock_txcount_number);
+  RUN_TEST(test_eth_get_storage_at);
+  //**RUN_TEST(test_eth_get_code);
+   RUN_TEST(test_get_balance);
+   RUN_TEST(test_block_number);
+   RUN_TEST(test_eth_gas_price);
+   RUN_TEST(test_eth_getblock_number);
+   RUN_TEST(test_eth_getblock_hash);
+   RUN_TEST(test_get_logs);
+   //missing explicit filters
+  // **RUN_TEST(test_new_filter);
+  // **RUN_TEST(test_new_block_filter);
+  // **RUN_TEST(test_new_pending_tx_filter);
+  // **RUN_TEST(test_new_uninstall_filter);
+  // **RUN_TEST(test_get_filter_changes);
+  /* verification for chain_id not supported */
+   // RUN_TEST(test_eth_chain_id);
+  /* verification for tx count(number, hash) is not yet suported TODO: [0x1]:The Method cannot be verified with eth_nano! */
+  // // RUN_TEST(test_eth_getblock_txcount_hash);
+  // // RUN_TEST(test_eth_getblock_txcount_number);
+   RUN_TEST(test_eth_call_fn);
+  // *RUN_TEST(test_estimate_fn);
+  RUN_TEST(test_get_tx_hash);
+  RUN_TEST(test_get_tx_blkhash_index);
+  RUN_TEST(test_get_tx_blknum_index);
+  // * RUN_TEST(test_get_tx_count);
+  //missing  uncles 
+  //**RUN_TEST(test_get_uncle_blknum_index);
+  //**RUN_TEST(test_get_uncle_count_blkhash);
+  //**RUN_TEST(test_get_uncle_count_blknum);
   RUN_TEST(test_get_tx_receipt);
   RUN_TEST(test_send_tx);
-  RUN_TEST(test_get_balance);
-  // verification for chain_id not supported 
-  //RUN_TEST(test_eth_chain_id);
-
-  RUN_TEST(test_get_logs);
-  RUN_TEST(test_get_tx);
   return TESTS_END();
 }
