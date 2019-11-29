@@ -13,7 +13,7 @@ npm install --save in3-wasm
 
 The complete documentation can be found https://in3.readthedocs.io/en/develop/ .
 
-In case you want to run incubed within a react native app, you might face issues because wasm is not supported there yet. In this case you can use `in3-asmjs`, which has the same API, but runs on pure javascript.
+In case you want to run incubed within a react native app, you might face issues because wasm is not supported there yet. In this case you can use [in3-asmjs](https://www.npmjs.com/package/in3-asmjs), which has the same API, but runs on pure javascript (a bit slower and bigger, but full support everywhere).
 
 
 ### Using web3
