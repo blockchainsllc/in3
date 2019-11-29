@@ -154,40 +154,50 @@ char* in3_client_exec_req(
 ) {
 
   // parse it
-  char*      res     = NULL;
-  char*      err_msg = NULL;
-  in3_ctx_t* ctx     = new_ctx(c, req);
+  char *     res = NULL, *err_msg = NULL;
+  in3_ctx_t* ctx = new_ctx(c, req);
   in3_ret_t  ret;
+
+  //  not enough memory
   if (!ctx) return NULL;
 
   // make sure result & error are clean
   // check parse-errors
   if (ctx->error) {
     res = _malloc(strlen(ctx->error) + 80);
-    if (!res) return NULL;
+    if (!res) {
+      // out of memory
+      free_ctx(ctx);
+      return NULL;
+    }
     sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"%s\"}}", ctx->error);
   } else {
-
     uint32_t id = d_get_intk(ctx->requests[0], K_ID);
     ret         = in3_send_ctx(ctx);
+
     if (ret == IN3_OK) {
+      // succesful (at least we have a useable response)
       if (c->keep_in3) {
+        // TODO handle binary here as well.
         str_range_t rr  = d_to_json(ctx->responses[0]);
-        rr.data[rr.len] = 0;
-        res             = _malloc(rr.len + 50);
+        rr.data[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
+        res             = _malloc(rr.len + 1);
         if (res) sprintf(res, "%s", rr.data);
       } else {
         d_token_t* result = d_get(ctx->responses[0], K_RESULT);
         d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
         char*      r      = d_create_json(result ? result : error);
-        if (r) {
-          res = _malloc(strlen(r) + 50);
-          if (res && result)
+        if (!r) r = _strdupn("no result!", -1);
+        res = r ? _malloc(strlen(r) + 80) : NULL;
+        if (res) {
+          if (result)
             sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
-          else if (res)
+          else if (d_type(error) == T_OBJECT)
             printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, error);
-          _free(r);
+          else
+            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":-32700,\"message\":%s}}", id, error);
         }
+        if (r) _free(r);
       }
     } else
       err_msg = in3_errmsg(ret);
