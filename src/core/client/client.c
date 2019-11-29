@@ -163,7 +163,7 @@ char* in3_client_exec_req(
   // make sure result & error are clean
   // check parse-errors
   if (ctx->error) {
-    res = _malloc(strlen(ctx->error) + 50);
+    res = _malloc(strlen(ctx->error) + 80);
     if (!res) return NULL;
     sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"%s\"}}", ctx->error);
   } else {
@@ -194,7 +194,7 @@ char* in3_client_exec_req(
   }
 
   if (!res && err_msg) {
-    res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 50);
+    res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 80);
     if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", ret, ctx->error ? ctx->error : err_msg);
   }
 
