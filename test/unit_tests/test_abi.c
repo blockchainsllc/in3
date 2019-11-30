@@ -129,6 +129,10 @@ static void test_abi_encode() {
            "00000000000000000000000000000000000000000000000000000000000000ff")
   TEST_ABI("uint", "[\"0x10000000000000000000000000000000000000000000000000000000000000ff\"]",
            "10000000000000000000000000000000000000000000000000000000000000ff")
+  TEST_ABI("uint8", "[\"0x1f\"]", "000000000000000000000000000000000000000000000000000000000000001f")
+  TEST_ABI("int8", "[\"-1\"]", "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+  TEST_ABI("int32", "[\"-97\"]", "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9f")
+  TEST_ABI("int8", "[\"-2\"]", "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe")
 }
 /*
  * Main
