@@ -1,9 +1,9 @@
 # Incubed client as WASM
 
 This client uses the in3-core sources compiled to wasm. The wasm is included into the js-file wich makes it easier to include the data.
-This module has **no** dependencies! All it needs it included inta a wasm of about 380kB.
+This module has **no** dependencies! All it needs is included inta a wasm of about 300kB.
 
-Installing incube is as easy as installing any other module:
+Installing incubed is as easy as installing any other module:
 
 ```
 npm install --save in3-wasm
@@ -12,6 +12,9 @@ npm install --save in3-wasm
 ### Documentation
 
 The complete documentation can be found https://in3.readthedocs.io/en/develop/ .
+
+In case you want to run incubed within a react native app, you might face issues because wasm is not supported there yet. In this case you can use [in3-asmjs](https://www.npmjs.com/package/in3-asmjs), which has the same API, but runs on pure javascript (a bit slower and bigger, but full support everywhere).
+
 
 ### Using web3
 

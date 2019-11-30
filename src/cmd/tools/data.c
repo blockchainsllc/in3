@@ -39,10 +39,12 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
+#include "used_keys.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+void add_keyname(const char* name, d_key_t value, size_t len);
 
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {
@@ -83,6 +85,18 @@ char* read_from_stdin(FILE* file) {
 #define C_LBLUE "1;34"
 #define C_LPURPLE "1;35"
 #define C_LCYAN "1;36"
+
+static inline d_key_t keyhash(const char* c) {
+  uint16_t val = 0;
+  size_t   l   = strlen(c);
+  for (; l; l--, c++) val ^= *c | val << 7;
+  return val;
+}
+
+static void init_keys() {
+  for (int i = 0; USED_KEYS[i]; i++)
+    add_keyname(USED_KEYS[i], keyhash(USED_KEYS[i]), strlen(USED_KEYS[i]));
+}
 
 static void print_hex(uint8_t* d, uint32_t l, char* color) {
   if (color) printf("\033[%sm", color);
@@ -130,10 +144,15 @@ static int read_token(uint8_t* d, size_t* p, int level, int* index, int keyval) 
 
   for (int i = 0; i < level; i++) printf("\033[1;30m.\033[0m ");
   if (keyval >= 0) {
-    uint8_t tmp[2];
-    tmp[0] = (keyval >> 8) & 0xFF;
-    tmp[1] = keyval & 0xFF;
-    print_hex(tmp, 2, C_PURPLE);
+    char* keyname = d_get_keystr((d_key_t) keyval);
+    if (keyname)
+      printf("\033[0;35m%s\033[0m ", keyname);
+    else {
+      uint8_t tmp[2];
+      tmp[0] = (keyval >> 8) & 0xFF;
+      tmp[1] = keyval & 0xFF;
+      print_hex(tmp, 2, C_PURPLE);
+    }
   }
 
   uint16_t key;
@@ -221,7 +240,7 @@ int main(int argc, char* argv[]) {
   bool  debug          = false;
 
   int i;
-
+  init_keys();
   // fill from args
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-f") == 0)
@@ -270,6 +289,10 @@ int main(int argc, char* argv[]) {
         printf(is_hex ? "\\x%02x" : "%c", c);
       }
       printf("\n len = %u\n", bb->b.len);
+    } else if (strcmp(format, "bin") == 0) {
+      for (uint32_t i = 0; i < bb->b.len; i++)
+        putchar(bb->b.data[i]);
+
     } else {
       printf("unsuported output format %s!\n", format);
       return 1;
