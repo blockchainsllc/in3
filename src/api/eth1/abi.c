@@ -393,8 +393,20 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
       for (int i = 0; i < len; i++, p = t_next(p))
         json_array_add_value(res, get_data(ctx, p, data, offset));
       break;
+    case A_INT: {
+      bitset_t bs  = {.len = 256, .bits.p = data.data + dst};
+      bool     neg = bs_isset(&bs, 0U);
+      twos_complement(&bs);
+
+      unsigned long long n;
+      memcpy(&n, bs.bits.p, sizeof(n));
+
+      char buf[32];
+      sprintf(buf, "%s%llu", neg ? "-" : "", n + 1);
+      res = json_create_string(ctx, buf);
+      break;
+    }
     case A_UINT:
-    case A_INT:
       tmp = bytes(data.data + dst, 32);
       b_optimize_len(&tmp);
       res = json_create_bytes(ctx, tmp);
