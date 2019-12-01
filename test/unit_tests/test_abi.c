@@ -50,7 +50,6 @@
 #define TEST_ABI(signature, input, expected)                                                         \
   {                                                                                                  \
     char* tmp = abi_encode("test(" signature ")", input);                                            \
-    printf("%s\n", input);                                                                           \
     TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp + 10, "Error encoding the signature " signature); \
     free(tmp);                                                                                       \
     tmp = abi_decode("test():(" signature ")", expected);                                            \
@@ -58,7 +57,7 @@
     free(tmp);                                                                                       \
   }
 #define TEST_ABI_DESC(description, signature, input, expected) TEST_ABI(signature, input, expected)
-#define TEST_ASSERT_ABI_ENCODE(description, signature, input, output) TEST_ASSERT_EQUAL_STRING(abi_encode("test(" signature ")", input), output)
+#define TEST_ASSERT_ABI_ENCODE(description, signature, input, output) TEST_ASSERT_EQUAL_STRING(abi_encode("test(" signature ")", input) + (!strncmp(output, "Error:", 6) ? 0 : 10), output)
 #define TEST_ASSERT_ABI_DECODE(description, signature, input, output) TEST_ASSERT_EQUAL_STRING(abi_decode("test():(" signature ")", input), output)
 
 static char* abi_encode(char* sig, char* json_params) {
