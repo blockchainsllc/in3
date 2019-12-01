@@ -114,7 +114,9 @@ char* abi_decode(char* sig, char* hex_data) {
     free(tmp);                                                                                       \
   }
 
-static void test_abi_encode() {
+#define TEST_ABI_DESC(description, signature, input, expected) TEST_ABI(signature, input, expected)
+
+static void test_abi_encode_decode() {
   TEST_ABI("address,string", "[\"0x1234567890123456789012345678901234567890\",\"xyz\"]",
            "00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000378797a0000000000000000000000000000000000000000000000000000000000")
   TEST_ABI("address,string,uint8,string", "[\"0x1234567890123456789012345678901234567890\",\"xyz\",\"0xff\",\"abc\"]",
@@ -140,7 +142,7 @@ static void test_abi_encode() {
 int main() {
   // now run tests
   TESTS_BEGIN();
-  RUN_TEST(test_abi_encode);
+  RUN_TEST(test_abi_encode_decode);
   return TESTS_END();
 }
 /*
