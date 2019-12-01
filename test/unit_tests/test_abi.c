@@ -47,8 +47,21 @@
 #include <unistd.h>
 
 #define err_string(msg) ("Error:" msg)
+#define TEST_ABI(signature, input, expected)                                                         \
+  {                                                                                                  \
+    char* tmp = abi_encode("test(" signature ")", input);                                            \
+    printf("%s\n", input);                                                                           \
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp + 10, "Error encoding the signature " signature); \
+    free(tmp);                                                                                       \
+    tmp = abi_decode("test():(" signature ")", expected);                                            \
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(input, tmp, "Error decoding " signature);                       \
+    free(tmp);                                                                                       \
+  }
+#define TEST_ABI_DESC(description, signature, input, expected) TEST_ABI(signature, input, expected)
+#define TEST_ASSERT_ABI_ENCODE(description, signature, input, output) TEST_ASSERT_EQUAL_STRING(abi_encode("test(" signature ")", input), output)
+#define TEST_ASSERT_ABI_DECODE(description, signature, input, output) TEST_ASSERT_EQUAL_STRING(abi_decode("test():(" signature ")", input), output)
 
-char* abi_encode(char* sig, char* json_params) {
+static char* abi_encode(char* sig, char* json_params) {
   call_request_t* req = parseSignature(sig);
   if (!req) return err_string("invalid function signature");
 
@@ -76,7 +89,7 @@ char* abi_encode(char* sig, char* json_params) {
   return result;
 }
 
-char* abi_decode(char* sig, char* hex_data) {
+static char* abi_decode(char* sig, char* hex_data) {
   call_request_t* req = parseSignature(sig);
   if (!req) return err_string("invalid function signature");
   int     l = strlen(hex_data);
@@ -103,19 +116,6 @@ char* abi_decode(char* sig, char* hex_data) {
   }
   return result;
 }
-
-#define TEST_ABI(signature, input, expected)                                                         \
-  {                                                                                                  \
-    char* tmp = abi_encode("test(" signature ")", input);                                            \
-    printf("%s\n", input);                                                                           \
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp + 10, "Error encoding the signature " signature); \
-    free(tmp);                                                                                       \
-    tmp = abi_decode("test():(" signature ")", expected);                                            \
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(input, tmp, "Error decoding " signature);                       \
-    free(tmp);                                                                                       \
-  }
-
-#define TEST_ABI_DESC(description, signature, input, expected) TEST_ABI(signature, input, expected)
 
 static void test_abi_encode_decode() {
   TEST_ABI("address,string", "[\"0x1234567890123456789012345678901234567890\",\"xyz\"]",
@@ -145,16 +145,15 @@ static void test_abi_encode_decode() {
   TEST_ABI("string,uint256[2]", "[\"foo\",[\"0x05\",\"0x06\"]]", "0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000")
 }
 
-#define TEST_ASSERT_ABI_ENC_FAILS(signature, input, err_string) TEST_ASSERT_EQUAL_STRING(abi_encode("test(" signature ")", input), err_string)
-
 static void test_abi_encode_should_fail() {
-  TEST_ASSERT_ABI_ENC_FAILS("bytes33", "", err_string("invalid json data"));
-  //  TEST_ASSERT_ABI_ENC_FAILS("uint0", "[1]", err_string("invalid input data"));
-  //  TEST_ASSERT_ABI_ENC_FAILS("uint257", "[1]", err_string("invalid input data"));
-  //  TEST_ASSERT_ABI_ENC_FAILS("int0", "[1]", err_string("invalid input data"));
-  //  TEST_ASSERT_ABI_ENC_FAILS("int257", "[1]", err_string("invalid input data"));
-  TEST_ASSERT_ABI_ENC_FAILS("uint[2]", "[[1,2,3]]", err_string("invalid input data"));
-  //  TEST_ASSERT_ABI_ENC_FAILS("uint8", "[\"0x111\"]", err_string("invalid input data"));
+  TEST_ASSERT_ABI_ENCODE("empty data", "bytes33", "", err_string("invalid json data"));
+  //  TEST_ASSERT_ABI_ENCODE("invalid uint suffix", "uint0", "[1]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENCODE("invalid uint suffix", "uint257", "[1]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENCODE"invalid int suffix", ("int0", "[1]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENCODE("invalid int suffix", "int257", "[1]", err_string("invalid input data"));
+  TEST_ASSERT_ABI_ENCODE("array size mismatch", "uint[2]", "[[1,2,3]]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENCODE("data size exceeds data type", "uint8", "[\"0x111\"]", err_string("invalid input data"));
+}
 }
 
 /*
