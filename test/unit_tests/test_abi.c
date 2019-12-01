@@ -107,6 +107,7 @@ char* abi_decode(char* sig, char* hex_data) {
 #define TEST_ABI(signature, input, expected)                                                         \
   {                                                                                                  \
     char* tmp = abi_encode("test(" signature ")", input);                                            \
+    printf("%s\n", input);                                                                           \
     TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp + 10, "Error encoding the signature " signature); \
     free(tmp);                                                                                       \
     tmp = abi_decode("test():(" signature ")", expected);                                            \
@@ -143,6 +144,19 @@ static void test_abi_encode_decode() {
   TEST_ABI_DESC("uint32 response", "uint32", "[\"0x2a\"]", "000000000000000000000000000000000000000000000000000000000000002a")
   TEST_ABI("string,uint256[2]", "[\"foo\",[\"0x05\",\"0x06\"]]", "0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000")
 }
+
+#define TEST_ASSERT_ABI_ENC_FAILS(signature, input, err_string) TEST_ASSERT_EQUAL_STRING(abi_encode("test(" signature ")", input), err_string)
+
+static void test_abi_encode_should_fail() {
+  TEST_ASSERT_ABI_ENC_FAILS("bytes33", "", err_string("invalid json data"));
+  //  TEST_ASSERT_ABI_ENC_FAILS("uint0", "[1]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENC_FAILS("uint257", "[1]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENC_FAILS("int0", "[1]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENC_FAILS("int257", "[1]", err_string("invalid input data"));
+  TEST_ASSERT_ABI_ENC_FAILS("uint[2]", "[[1,2,3]]", err_string("invalid input data"));
+  //  TEST_ASSERT_ABI_ENC_FAILS("uint8", "[\"0x111\"]", err_string("invalid input data"));
+}
+
 /*
  * Main
  */
@@ -150,6 +164,7 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   RUN_TEST(test_abi_encode_decode);
+  RUN_TEST(test_abi_encode_should_fail);
   return TESTS_END();
 }
 /*
