@@ -150,6 +150,37 @@ char* parse_tuple(bytes_builder_t* bb, char* c) {
   return add_token(bb, start, c - start, tuple) < 0 ? NULL : c;
 }
 
+char* escape_tuples(char* sig, size_t l, char** startb, char** ends) {
+  char*     sig_  = _strdupn(sig, l);
+  uintptr_t lfunc = *startb - sig;
+  uintptr_t larg  = *ends ? (*ends - *startb) : (l - lfunc);
+  bool      first_brack, last_brack;
+  first_brack = last_brack = false;
+
+  char* s = sig_ + lfunc;
+  for (uintptr_t i = 0; i < larg / 2; ++i) {
+    if (!first_brack && s[i] == '(') {
+      first_brack = true;
+    } else if (first_brack && s[i] == '(') {
+      for (uintptr_t j = i; j < larg; ++j)
+        s[j] = s[j + 1];
+      larg--;
+    }
+
+    if (!last_brack && s[larg - i - 1] == ')') {
+      last_brack = true;
+    } else if (last_brack && s[larg - i - 1] == ')') {
+      for (uintptr_t j = larg - i - 1; j < larg; ++j)
+        s[j] = s[j + 1];
+      larg--;
+    }
+  }
+
+  *ends   = memchr(sig_, ':', l);
+  *startb = memchr(sig_, '(', l);
+  return sig_;
+}
+
 call_request_t* parseSignature(char* sig) {
   call_request_t* req = _malloc(sizeof(call_request_t));
   req->error          = NULL;
@@ -160,7 +191,8 @@ call_request_t* parseSignature(char* sig) {
     return req;
   }
 
-  bytes_t          signature = bytes((uint8_t*) sig, ends ? (ends - sig) : l);
+  char*            s         = escape_tuples(sig, l, &startb, &ends);
+  bytes_t          signature = bytes((uint8_t*) s, ends ? (ends - sig) : l);
   bytes32_t        hash;
   bytes_builder_t* tokens = bb_new();
   if (!parse_tuple(tokens, startb + 1)) {
@@ -182,7 +214,7 @@ call_request_t* parseSignature(char* sig) {
   // create input data
   sha3_to(&signature, hash);
   bb_write_raw_bytes(req->call_data, hash, 4); // write functionhash
-
+  _free(s);
   return req;
 }
 
