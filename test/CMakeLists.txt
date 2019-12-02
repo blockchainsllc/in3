@@ -60,7 +60,7 @@ foreach (file ${files})
      get_filename_component(testname "${file}" NAME_WE)
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
      target_code_coverage("${testname}" "" AUTO ALL ${coverage_excludes})
-     target_link_libraries("${testname}" core eth_full eth_api transport_curl)
+     target_link_libraries("${testname}" core eth_full eth_api )
      add_test(
                 NAME "in3_${testname}"
                 COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${testname}
