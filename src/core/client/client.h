@@ -123,11 +123,13 @@ typedef uint64_t in3_node_props_t;
 typedef enum {
   NODE_PROP_PROOF_NODES = 0,  /* filter out nodes which are providing no proof */
   NODE_PROP_MULTICHAIN_NODES, /* filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
-  NODE_PROP_ARCHIVE_NODES,    /* filter out non archive supporting nodes */
-  NODE_PROP_HTTP_NODES,       /* include http nodes  */
-  NODE_PROP_BINARY_NODES,     /* only include nodes that support binary encoding */
-  NODE_PROP_TOR_NODES,        /* filter out non tor nodes */
-  NODE_PROP_DEPOSIT_TIMEOUT,  /* timeout after which the owner is allowed to receive its stored deposit. This information is also important for the client */
+  NODE_PROP_ARCHIVE_NODES,    /* filter out non-archive supporting nodes */
+  NODE_PROP_HTTP_NODES,       /* filter out non-http nodes  */
+  NODE_PROP_BINARY_NODES,     /* filter out nodes that don't support binary encoding */
+  NODE_PROP_ONION_NODES,      /* filter out non-onion nodes */
+  NODE_PROP_SIGNER_NODES,     /* filter out non-signer nodes */
+  NODE_PROP_PROOFER_NODES,    /* filter out non-proofer nodes */
+  NODE_PROP_MIN_BLOCK_HEIGHT, /* filter out nodes that will sign blocks with lower min block height than specified */
 } in3_node_props_type_t;
 
 /** incubed node-configuration. 
