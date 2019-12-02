@@ -214,12 +214,11 @@ in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   return ret;
 }
 
-static bool in3_node_props_match(in3_node_props_t np_config, in3_node_props_t np) {
-  uint32_t val_config = 0, val = 0;
-  if (BITS_LSB(np_config, 32U) != BITS_LSB(np, 32U)) return false;
-  val_config = in3_node_props_get(np_config, NODE_PROP_DEPOSIT_TIMEOUT);
-  val        = in3_node_props_get(np, NODE_PROP_DEPOSIT_TIMEOUT);
-  return (val_config ? (val >= val_config) : true);
+IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t* np_config, const in3_node_props_t* np) {
+  if (((*np_config << 32U) & (*np << 32U)) != (*np_config << 32U)) return false;
+  uint32_t min_blk_ht_conf = in3_node_props_get(np_config, NODE_PROP_MIN_BLOCK_HEIGHT);
+  uint32_t min_blk_ht      = in3_node_props_get(np, NODE_PROP_MIN_BLOCK_HEIGHT);
+  return (min_blk_ht >= min_blk_ht_conf);
 }
 
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
