@@ -176,9 +176,7 @@ in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
     in3->filters = _calloc(1, sizeof *(in3->filters));
   in3_filter_handler_t* fh = in3->filters;
   for (size_t i = 0; i < fh->count; i++) {
-    in3_log_debug("for hf\n");
     if (fh->array[i] == NULL) {
-    in3_log_debug("FH\n");
       fh->array[i] = f;
       return i + 1;
     }

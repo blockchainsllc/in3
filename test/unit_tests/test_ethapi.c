@@ -134,7 +134,7 @@ static void test_get_tx_count() {
 
 static void test_new_block_filter() {
   init_in3(mock_transport, 0x5);
-  //get filter id for this
+  //get filter id for new block
   size_t fid = eth_newBlockFilter(in3);
   TEST_ASSERT_TRUE(fid > 0);
   free_in3();
