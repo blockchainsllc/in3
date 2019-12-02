@@ -102,16 +102,8 @@ d_key_t keyn(const char* c, const size_t len) {
   return val;
 }
 
-static d_key_t add_key(const char* c, size_t len) {
-  d_key_t k = keyn(c, len);
-  if (!__track_keys) return k;
-  keyname_t* kn = __keynames;
-  while (kn) {
-    if (kn->key == k) return k;
-    kn = kn->next;
-  }
-
-  kn = malloc(sizeof(keyname_t));
+void add_keyname(const char* name, d_key_t value, size_t len) {
+  keyname_t* kn = malloc(sizeof(keyname_t));
 #ifdef IN3_DONT_HASH_KEYS
   __keynames_len++;
   kn->next = NULL;
@@ -125,10 +117,21 @@ static d_key_t add_key(const char* c, size_t len) {
   __keynames = kn;
 #endif
 
-  kn->key  = k;
+  kn->key  = value;
   kn->name = malloc(len + 1);
-  memcpy(kn->name, c, len);
+  memcpy(kn->name, name, len);
   kn->name[len] = 0;
+}
+
+static d_key_t add_key(const char* c, size_t len) {
+  d_key_t k = keyn(c, len);
+  if (!__track_keys) return k;
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (kn->key == k) return k;
+    kn = kn->next;
+  }
+  add_keyname(c, k, len);
   return k;
 }
 
@@ -622,6 +625,18 @@ char* d_create_json(d_token_t* item) {
         for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
           char* p = d_create_json(it.token);
           if (sb->len > 1) sb_add_char(sb, ',');
+          if (d_type(item) == T_OBJECT) {
+            char* kn = d_get_keystr(it.token->key);
+            if (kn) {
+              sb_add_char(sb, '"');
+              sb_add_chars(sb, kn);
+              sb_add_chars(sb, "\":");
+            } else {
+              char tmp[8];
+              sprintf(tmp, "\"%04x\":", (uint32_t) it.token->key);
+              sb_add_chars(sb, tmp);
+            }
+          }
           sb_add_chars(sb, p);
           _free(p);
         }

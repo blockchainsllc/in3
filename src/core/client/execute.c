@@ -51,7 +51,6 @@
 //}
 
 static void free_response(in3_ctx_t* ctx) {
-  if (ctx->error) _free(ctx->error);
   if (ctx->nodes) {
     int nodes_count = ctx_nodes_len(ctx->nodes);
     free_ctx_nodes(ctx->nodes);
@@ -74,11 +73,14 @@ static void free_response(in3_ctx_t* ctx) {
   ctx->responses        = NULL;
   ctx->raw_response     = NULL;
   ctx->nodes            = NULL;
-  ctx->error            = NULL;
   if (ctx->requests_configs) {
     for (int i = 0; i < ctx->len; i++) {
-      if (ctx->requests_configs[i].signaturesCount)
-        _free(ctx->requests_configs[i].signatures);
+      if (ctx->requests_configs[i].signaturesCount) {
+        if (ctx->requests_configs[i].signatures) {
+          _free(ctx->requests_configs[i].signatures);
+          ctx->requests_configs[i].signatures = NULL;
+        }
+      }
     }
   }
 }
@@ -87,6 +89,7 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   //  printf(" -- free ctx %s (%i)\n", ctx_name(ctx), is_sub ? 1 : 0);
 
   if (is_sub) _free(ctx->request_context->c);
+  if (ctx->error) _free(ctx->error);
   free_response(ctx);
   if (ctx->request_context)
     free_json(ctx->request_context);
@@ -557,11 +560,14 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // should we retry?
       if (ctx->attempt < ctx->client->max_attempts - 1) {
         in3_log_debug("Retrying send request...\n");
+        // reset the error and try again
+        if (ctx->error) _free(ctx->error);
+        ctx->error = NULL;
         // now try again, which should end in waiting for the next request.
         return in3_ctx_execute(ctx);
       } else
         // we give up
-        return ctx->client->max_attempts == 1 ? ret : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
+        return ctx->error ? (ret ? ret : IN3_ERPC) : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
     }
 
     case CT_SIGN: {
