@@ -38,7 +38,6 @@
 #include "../../core/util/data.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
-#include <limits.h>
 #include <string.h>
 
 static int add_error(call_request_t* req, char* error) {
