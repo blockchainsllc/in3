@@ -349,6 +349,9 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
         break;
       }
       case A_INT: {
+        if (d_type(d) != T_STRING)
+          return add_error(req, "big negative numbers are not supported (yet)!");
+
         char*              tmp = d_string(d);
         unsigned long long n   = strtoull(tmp + 1, NULL, 10);
         bitset_t*          bs  = bs_from_ull(n, 256);
