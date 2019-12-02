@@ -150,32 +150,22 @@ char* parse_tuple(bytes_builder_t* bb, char* c) {
   return add_token(bb, start, c - start, tuple) < 0 ? NULL : c;
 }
 
+static void remove_parens(char* s, size_t l) {
+  for (size_t i = l; i != 0; --i)
+    if (s[i - 1] == '(' || s[i - 1] == ')')
+      for (size_t j = i - 1; j <= l; ++j)
+        s[j] = s[j + 1];
+}
+
 char* escape_tuples(char* sig, size_t l, char** startb, char** ends) {
-  char*     sig_  = _strdupn(sig, l);
-  uintptr_t lfunc = *startb - sig;
-  uintptr_t larg  = *ends ? (*ends - *startb) : (l - lfunc);
-  bool      first_brack, last_brack;
-  first_brack = last_brack = false;
-
-  char* s = sig_ + lfunc;
-  for (uintptr_t i = 0; i < larg / 2; ++i) {
-    if (!first_brack && s[i] == '(') {
-      first_brack = true;
-    } else if (first_brack && s[i] == '(') {
-      for (uintptr_t j = i; j < larg; ++j)
-        s[j] = s[j + 1];
-      larg--;
-    }
-
-    if (!last_brack && s[larg - i - 1] == ')') {
-      last_brack = true;
-    } else if (last_brack && s[larg - i - 1] == ')') {
-      for (uintptr_t j = larg - i - 1; j < larg; ++j)
-        s[j] = s[j + 1];
-      larg--;
-    }
+  char* sig_ = _strdupn(sig, l);
+  *startb    = memchr(sig_, '(', l);
+  *ends      = memchr(sig_, ':', l);
+  remove_parens(sig_ + (*startb - sig_) + 1, (*ends ? (*ends - *startb) : (l - (*startb - sig_))) - 2);
+  if (*ends) {
+    *startb = memchr(*ends, '(', l);
+    remove_parens(sig_ + (*startb - sig_) + 1, strlen(sig_ + (*startb - sig_) + 2));
   }
-
   *ends   = memchr(sig_, ':', l);
   *startb = memchr(sig_, '(', l);
   return sig_;
@@ -192,7 +182,7 @@ call_request_t* parseSignature(char* sig) {
   }
 
   char*            s         = escape_tuples(sig, l, &startb, &ends);
-  bytes_t          signature = bytes((uint8_t*) s, ends ? (ends - sig) : l);
+  bytes_t          signature = bytes((uint8_t*) s, ends ? (ends - s) : strlen(s));
   bytes32_t        hash;
   bytes_builder_t* tokens = bb_new();
   if (!parse_tuple(tokens, startb + 1)) {
