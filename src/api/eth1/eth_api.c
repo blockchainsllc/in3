@@ -149,7 +149,7 @@ static uint256_t uint256_from_bytes(bytes_t bytes) {
 /** returns the result from a previously executed ctx*/
 static d_token_t* get_result(in3_ctx_t* ctx) {
   if(!ctx->responses) {
-    set_error(ETIMEDOUT, "memory error EXC_BAD_ACCESS address=0x0"); 
+    set_error(ETIMEDOUT, "we didint get response. possible error EXC_BAD_ACCESS address=0x0"); 
     return NULL;
   }
   d_token_t* res = d_get(ctx->responses[0], K_RESULT);

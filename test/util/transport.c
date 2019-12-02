@@ -168,7 +168,19 @@ in3_ret_t mock_transport(in3_request_t* req) {
     } else if (strstr(req->payload, "eth_getTransactionByBlockNumberAndIndex") != NULL) {
       in3_log_debug("Returning eth_getTransactionByBlockNumberAndIndex Response ...\n");
       return setup_transport(req, "../test/testdata/goerli/eth_getTransactionByBlockNumberAndIndex.json");
-    }
+    } else if (strstr(req->payload, "eth_getUncleByBlockNumberAndIndex") != NULL) {
+      in3_log_debug("Returning eth_getUncleByBlockNumberAndIndex Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_getUncleByBlockNumberAndIndex.json");
+    } else if (strstr(req->payload, "eth_getUncleCountByBlockNumber") != NULL) {
+      in3_log_debug("Returning eth_getUncleCountByBlockNumber Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_getUncleCountByBlockNumber.json");
+    } else if (strstr(req->payload, "eth_getUncleCountByBlockHash") != NULL) {
+      in3_log_debug("Returning eth_getUncleCountByBlockHash Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_getUncleCountByBlockHash.json");
+    } else if (strstr(req->payload, "eth_estimateGas") != NULL) {
+      in3_log_debug("Returning eth_estimateGas Response ...\n");
+      return setup_transport(req, "../test/testdata/goerli/eth_estimateGas.json");
+    } 
 
   }
   return 0;

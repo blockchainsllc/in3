@@ -153,7 +153,7 @@ static in3_filter_t* filter_new(in3_filter_type_t ft) {
 in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
   if (type == FILTER_PENDING)
     return IN3_ENOTSUP;
-  else if (options == NULL)
+  else if (options == NULL && type != FILTER_BLOCK)
     return IN3_EINVAL;
 
   in3_ret_t  res = IN3_OK;
@@ -176,14 +176,19 @@ in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
     in3->filters = _calloc(1, sizeof *(in3->filters));
   in3_filter_handler_t* fh = in3->filters;
   for (size_t i = 0; i < fh->count; i++) {
+    in3_log_debug("for hf\n");
     if (fh->array[i] == NULL) {
+    in3_log_debug("FH\n");
       fh->array[i] = f;
       return i + 1;
     }
   }
+  in3_filter_t** arr_;
+  if (fh->array)
+     arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1), sizeof(in3_filter_t*) * (fh->count));
+  else 
+     arr_ = _malloc(sizeof(in3_filter_t*) * (fh->count + 1) );
 
-  in3_filter_t** arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1),
-                                 sizeof(in3_filter_t*) * (fh->count));
   if (arr_ == NULL) {
     return IN3_ENOMEM;
   }

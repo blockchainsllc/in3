@@ -41,7 +41,7 @@ extern "C" {
 
 #include "../../src/core/client/client.h"
 /*enabled curl transport when needed to verify mocks*/
-// #define CURL_ENABLE 
+#define CURL_ENABLE 
 #ifdef CURL_ENABLE
 #include "../../src/transport/curl/in3_curl.h"
 #endif
