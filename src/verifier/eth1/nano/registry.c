@@ -139,6 +139,25 @@ static uint8_t* get_storage_array_key(uint32_t pos, uint32_t array_index, uint32
   return dst;
 }
 
+_NOINLINE_ static void create_node_hash(d_token_t* t, bytes32_t dst) {
+  bytes_t  url    = d_to_bytes(d_get(t, K_URL));
+  int      l      = 84 + url.len;
+  uint8_t* buffer = alloca(l);
+  memset(buffer, 0, l);
+
+  // new storage layout
+  bytes_t val = d_to_bytes(d_get(t, K_ADDRESS)), data = bytes(buffer, l);
+  long_to_bytes(d_get_longk(t, K_DEPOSIT), buffer + 24); // TODO deposit is read as uint64, which means max 18 ETH!
+  long_to_bytes(d_get_longk(t, K_TIMEOUT), buffer + 32);
+  long_to_bytes(d_get_longk(t, K_REGISTER_TIME), buffer + 40);
+  long_to_bytes(d_get_longk(t, K_PROPS), buffer + 56); // TODO at the moment we only support 64bit instead of 128bit, which might cause issues, if someone registeres a server with 128bit props.
+
+  memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
+  memcpy(buffer + 64 + 20, url.data, url.len);
+
+  sha3_to(&data, dst);
+}
+
 static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses, d_token_t* server_list, d_token_t* storage_proofs) {
   bytes32_t skey, svalue;
   uint32_t  total_servers = d_get_intk(vc->result, K_TOTAL_SERVERS);
@@ -147,8 +166,8 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
 
   if (node_limit && node_limit < total_servers) {
     if (d_len(server_list) != (int) node_limit) return vc_err(vc, "wrong length of the nodes!");
-    const uint32_t seed_len = required_addresses ? d_len(required_addresses) : 0;
-    uint32_t       seed_indexes[seed_len ? seed_len : 1], i = 0;
+    const uint32_t seed_len     = required_addresses ? d_len(required_addresses) : 0;
+    uint32_t *     seed_indexes = alloca(seed_len ? seed_len : 1), i = 0;
 
     // check if the required addresses are part of the list
     // and create the index-list
@@ -168,7 +187,7 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
     }
 
     // create indexes
-    uint32_t indexes[node_limit];
+    uint32_t* indexes = alloca(node_limit);
     create_random_indexes(total_servers, node_limit, seed, seed_indexes, seed_len, indexes);
 
     // check that we have the correct indexes in the nodelist
@@ -183,23 +202,8 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
   // now check the content of the nodelist
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it)) {
     uint32_t index = d_get_intk(it.token, K_INDEX);
-    bytes_t  url   = d_to_bytes(d_get(it.token, K_URL));
-    int      l     = 84 + url.len;
-    uint8_t  buffer[l];
-    memset(buffer, 0, l);
-
-    // new storage layout
-    bytes_t val = d_to_bytes(d_get(it.token, K_ADDRESS)), data = bytes(buffer, l);
-    long_to_bytes(d_get_longk(it.token, K_DEPOSIT), buffer + 24); // TODO deposit is read as uint64, which means max 18 ETH!
-    long_to_bytes(d_get_longk(it.token, K_TIMEOUT), buffer + 32);
-    long_to_bytes(d_get_longk(it.token, K_REGISTER_TIME), buffer + 40);
-    long_to_bytes(d_get_longk(it.token, K_PROPS), buffer + 56); // TODO at the moment we only support 64bit instead of 128bit, which might cause issues, if someone registeres a server with 128bit props.
-
-    memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
-    memcpy(buffer + 64 + 20, url.data, url.len);
-
-    sha3_to(&data, buffer);
-    TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), buffer));
+    create_node_hash(it.token, svalue);
+    TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), svalue));
   }
 
   return IN3_OK;

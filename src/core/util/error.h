@@ -62,6 +62,7 @@ typedef enum {
   IN3_EUSNURL  = -13, /**< USN URL parse error */
   IN3_ETRANS   = -14, /**< Transport error */
   IN3_ERANGE   = -15, /**< Not in range */
+  IN3_WAITING  = -16, /**< the process can not be finished since we are waiting for responses */
 } in3_ret_t;
 
 // Optional type similar to C++ std::optional
@@ -77,5 +78,10 @@ typedef enum {
   } OPTIONAL_T(t)
 #define OPTIONAL_T_UNDEFINED(t) ((OPTIONAL_T(t)){.defined = false})
 #define OPTIONAL_T_VALUE(t, v) ((OPTIONAL_T(t)){.value = v, .defined = true})
+
+/**
+ * converts a error code into a string.
+ */
+char* in3_errmsg(in3_ret_t err /**< the error code */);
 
 #endif //IN3_ERROR_H

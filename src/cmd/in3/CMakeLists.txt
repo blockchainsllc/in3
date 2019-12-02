@@ -32,7 +32,7 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-OPTION(USE_CURL "if true " ON)
+OPTION(USE_CURL "if true the curl transport will be build (with a dependency to libcurl)" ON)
 IF (USE_CURL)
     message("using curl for comandline")
     ADD_DEFINITIONS(-DUSE_CURL)

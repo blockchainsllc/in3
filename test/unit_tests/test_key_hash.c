@@ -36,14 +36,22 @@
 #define TEST
 #endif
 
-#include "../src/core/util/data.h"
-#include "../src/core/util/mem.h"
+#include "../../src/core/util/data.h"
+#include "../../src/core/util/mem.h"
 #include <stdio.h>
 #include <string.h>
 
-#include "test_utils.h"
+#include "../test_utils.h"
 
 static void test_key_hash_collisions();
+
+// Internal implementation that mirrors key() from data.c with IN3_DONT_HASH_KEYS not defined
+d_key_t key_(const char* c) {
+  uint16_t val = 0;
+  size_t l = strlen(c);
+  for (; l; l--, c++) val ^= *c | val << 7;
+  return val;
+}
 
 /*
  * Main
@@ -124,7 +132,7 @@ void test_key_hash_collisions() {
     }
     char* kstr = substr(tok, "key(\"", "\")");
     if (kstr) {
-      hashes[i] = key(kstr);
+      hashes[i] = key_(kstr);
 #ifdef DEBUG
       printf("\"%s\" => [%u]\n", kstr, hashes[i]);
 #endif

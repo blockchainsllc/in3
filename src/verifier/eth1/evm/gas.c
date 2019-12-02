@@ -71,10 +71,10 @@ void finalize_and_refund_gas(evm_t* evm) {
 
 void finalize_subcall_gas(evm_t* evm, int success, evm_t* parent) {
   // if it was successfull we copy the new state to the parent
-  if (success == 0 && evm->state != EVM_STATE_REVERTED)
+  if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm->state != EVM_STATE_REVERTED)
     copy_state(parent, evm);
   // if we have gas left and it was successfull we returen it to the parent process.
-  if (success == 0) parent->gas += evm->gas;
+  if (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) parent->gas += evm->gas;
 }
 
 int selfdestruct_gas(evm_t* evm) {

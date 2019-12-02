@@ -34,6 +34,7 @@
 
 #include "../../core/client/client.h"
 #include "../../core/util/data.h"
+#include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/aes/aes.h"
 #include "../../third-party/crypto/pbkdf2.h"
@@ -49,10 +50,10 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   char*      kdf        = d_get_string(crypto, "kdf");
   d_token_t* kdf_params = d_get(crypto, key("kdfparams"));
   if (!crypto || !kdf || !kdf_params) return IN3_EINVALDT;
-  int     klen     = d_get_int(kdf_params, "dklen");
-  char*   salt_hex = d_get_string(kdf_params, "salt");
-  uint8_t salt_data[strlen(salt_hex) >> 1], aeskey[klen], cipher_data[64];
-  bytes_t salt = bytes(salt_data, hex2byte_arr(salt_hex, -1, salt_data, 0xFF));
+  int      klen      = d_get_int(kdf_params, "dklen");
+  char*    salt_hex  = d_get_string(kdf_params, "salt");
+  uint8_t *salt_data = alloca(strlen(salt_hex) >> 1), *aeskey = alloca(klen), cipher_data[64];
+  bytes_t  salt = bytes(salt_data, hex2byte_arr(salt_hex, -1, salt_data, 0xFF));
 
   if (strcmp(kdf, "scrypt") == 0) {
 #ifdef SCRYPT
@@ -70,9 +71,9 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   } else
     return IN3_ENOTSUP;
 
-  bytes_t cipher = bytes(cipher_data, hex2byte_arr(d_get_string(crypto, "ciphertext"), -1, cipher_data, 64));
-  uint8_t msg[cipher.len + 16], mac[32];
-  bytes_t msgb = bytes(msg, cipher.len + 16);
+  bytes_t  cipher = bytes(cipher_data, hex2byte_arr(d_get_string(crypto, "ciphertext"), -1, cipher_data, 64));
+  uint8_t *msg    = alloca(cipher.len + 16), mac[32];
+  bytes_t  msgb   = bytes(msg, cipher.len + 16);
   memcpy(msg, aeskey + 16, 16);
   memcpy(msg + 16, cipher.data, cipher.len);
   sha3_to(&msgb, mac);
@@ -83,9 +84,9 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   // aes-128-ctr
   aes_init();
   aes_encrypt_ctx cx[1];
-  char*           iv_hex = d_get_string(d_get(crypto, key("cipherparams")), "iv");
-  int             iv_len = strlen(iv_hex) / 2;
-  uint8_t         iv_data[iv_len];
+  char*           iv_hex  = d_get_string(d_get(crypto, key("cipherparams")), "iv");
+  int             iv_len  = strlen(iv_hex) / 2;
+  uint8_t*        iv_data = alloca(iv_len);
   hex2byte_arr(iv_hex, -1, iv_data, iv_len);
 
   aes_encrypt_key128(aeskey, cx);

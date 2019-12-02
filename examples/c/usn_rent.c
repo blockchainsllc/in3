@@ -1,3 +1,5 @@
+/// how to send a rent transaction to a usn contract usinig the usn-api.
+
 #include <in3/client.h>   // the core client
 #include <in3/eth_api.h>  // wrapper for easier use
 #include <in3/eth_full.h> // the full ethereum verifier containing the EVM

@@ -39,8 +39,8 @@
 #define DEBUG
 #endif
 
-#include "../src/core/util/bitset.h"
-#include "test_utils.h"
+#include "../../src/core/util/bitset.h"
+#include "../test_utils.h"
 
 static void bs_print(bitset_t* bs) {
   fprintf(stderr, "> [%s]: ", bs->len > BS_MAX ? "heap" : "stack");

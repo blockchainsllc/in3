@@ -1,0 +1,47 @@
+[
+  {
+    "descr": "eth_bogus",
+    "chainId": "0x1",
+    "verification": "proof",
+    "success": false,
+    "binaryFormat": false,
+    "request": {
+      "method": "eth_bogus",
+      "params": []
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x8642eb",
+        "in3": {
+          "lastNodeList": 8669495,
+          "currentBlock": 8798955,
+          "version": "2.0.0"
+        }
+      }
+    ]
+  },
+  {
+    "descr": "no result",
+    "chainId": "0x1",
+    "verification": "proof",
+    "success": false,
+    "binaryFormat": false,
+    "request": {
+      "method": "eth_blockNumber",
+      "params": []
+    },
+    "response": [
+      {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "in3": {
+          "lastNodeList": 8669495,
+          "currentBlock": 8798955,
+          "version": "2.0.0"
+        }
+      }
+    ]
+  }
+]

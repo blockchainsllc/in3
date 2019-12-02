@@ -276,7 +276,7 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
   d_token_t*       d         = data;
 
   if (is_dynamic(tuple) && tail_pos > head_pos) {
-    write_uint256(req, head_pos, tail_pos - head_pos);
+    write_uint256(req, head_pos, tail_pos - 4 /*head_pos*/);
     if (encode(req, data, tuple, tail_pos, -1) < 0) return -1;
     return head_pos + 32;
   }
@@ -370,6 +370,12 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
       res = json_create_bytes(ctx, tmp);
       *offset += 32;
       break;
+    case A_BOOL:
+      tmp = bytes(data.data + dst, 32);
+      b_optimize_len(&tmp);
+      res = json_create_bool(ctx, tmp.len > 1 || (tmp.len == 1 && *tmp.data));
+      *offset += 32;
+      break;
     case A_ADDRESS:
       res = json_create_bytes(ctx, bytes(data.data + dst + 12, 20));
       *offset += 32;
@@ -384,13 +390,13 @@ d_token_t* get_data(json_ctx_t* ctx, var_t* t, bytes_t data, int* offset) {
       }
 
       if (t->type == A_STRING) {
-        char tmp[len + 1];
+        char* tmp = alloca(len + 1);
         strncpy(tmp, (char*) (data.data + dst), len);
         tmp[len] = '\0';
         res      = json_create_string(ctx, tmp);
       } else
         res = json_create_bytes(ctx, bytes(data.data + dst, len));
-      *offset += t->type_len ? word_size(len) : 32;
+      *offset += t->type_len ? (word_size(len) << 5) : 32;
 
       break;
 

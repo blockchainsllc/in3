@@ -111,6 +111,7 @@
 #define K_SEAL_FIELDS       key("sealFields")
 #define K_MIX_HASH          key("mixHash")
 #define K_TRANSACTIONS      key("transactions")
+#define K_UNCLES            key("uncles")
 
 #define K_PUBLIC_KEY        key("publicKey")
 #define K_CHAIN_ID          key("chainId")

@@ -172,3 +172,83 @@ in3_ret_t eth_verify_eth_getTransaction(in3_vctx_t* vc, bytes_t* tx_hash) {
   }
   return res;
 }
+
+in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, uint32_t tx_idx) {
+  in3_ret_t res   = IN3_OK;
+  bytes_t*  hash_ = d_get_byteskl(vc->result, K_BLOCK_HASH, 32);
+
+  // this means result: null, which is ok, since we can not verify a transaction that does not exists
+  if (!vc->proof) return vc_err(vc, "Proof is missing!");
+
+  bytes_t* blockHeader = d_get_bytesk(vc->proof, K_BLOCK);
+  if (!blockHeader) return vc_err(vc, "No Block-Proof!");
+
+  // verify that the block matches the block as described in the transaction
+  if (d_type(blk) == T_BYTES) {
+    bytes32_t bhash;
+    bytes_t*  blk_hash = d_bytes(blk);
+
+    if (!blk_hash || blk_hash->len != 32)
+      return vc_err(vc, "No block hash found");
+    else if (hash_ && !b_cmp(blk_hash, hash_))
+      return vc_err(vc, "The block hash does not match the required");
+    else if (sha3_to(blockHeader, bhash) || memcmp(bhash, blk_hash->data, 32))
+      return vc_err(vc, "The block header does not match the required");
+  } else if (d_type(blk) == T_INTEGER) {
+    uint64_t blk_num = d_long(blk);
+    bytes_t  number_in_header;
+    if (!blk_num)
+      return vc_err(vc, "No block number found");
+    else if (d_get(vc->result, K_BLOCK_NUMBER) && blk_num != d_get_longk(vc->result, K_BLOCK_NUMBER))
+      return vc_err(vc, "The block number does not match the required");
+    else if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &number_in_header) != 1 || bytes_to_long(number_in_header.data, number_in_header.len) != blk_num)
+      return vc_err(vc, "The block number in the header does not match the required");
+  } else if (d_type(blk) == T_STRING && !strcmp(d_string(blk), "latest")) {
+    // fall-through to continue verification
+  } else {
+    return vc_err(vc, "No block hash & number found");
+  }
+
+  if (d_get(vc->result, K_TRANSACTION_INDEX) && tx_idx != d_get_intk(vc->result, K_TRANSACTION_INDEX))
+    return vc_err(vc, "The transaction index does not match the required");
+
+  res = eth_verify_blockheader(vc, blockHeader, d_get_byteskl(vc->result, K_BLOCK_HASH, 32));
+  if (res == IN3_OK) {
+    bytes_t*  path = create_tx_path(d_get_intk(vc->proof, K_TX_INDEX));
+    bytes_t   root, raw_transaction = {.len = 0, .data = NULL};
+    bytes_t** proof = d_create_bytes_vec(d_get(vc->proof, K_MERKLE_PROOF));
+
+    if (rlp_decode_in_list(blockHeader, BLOCKHEADER_TRANSACTIONS_ROOT, &root) != 1)
+      res = vc_err(vc, "no tx root");
+    else {
+      if (!proof) {
+        res = vc_err(vc, "No merkle proof");
+      } else {
+        int verified = trie_verify_proof(&root, path, proof, d_type(vc->result) == T_NULL ? NULL : &raw_transaction);
+        if (d_type(vc->result) == T_NULL && !verified)
+          res = vc_err(vc, "Could not prove non-existence of transaction");
+        else if (!verified && raw_transaction.data == NULL)
+          res = vc_err(vc, "Could not verify the tx proof");
+      }
+    }
+
+    if (proof) _free(proof);
+    b_free(path);
+
+    if (d_type(vc->result) != T_NULL) {
+      if (res == IN3_OK)
+        res = eth_verify_tx_values(vc, vc->result, &raw_transaction);
+
+      if (res == IN3_OK && !d_eq(d_get(vc->result, K_TRANSACTION_INDEX), d_get(vc->proof, K_TX_INDEX)))
+        res = vc_err(vc, "wrong transaction index");
+      if (res == IN3_OK && (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || d_get_longk(vc->result, K_BLOCK_NUMBER) != bytes_to_long(root.data, root.len)))
+        res = vc_err(vc, "wrong block number");
+
+      bytes_t* tx_data = serialize_tx(vc->result);
+      if (res == IN3_OK && !b_cmp(tx_data, &raw_transaction))
+        res = vc_err(vc, "Could not verify the transaction data");
+      b_free(tx_data);
+    }
+  }
+  return res;
+}

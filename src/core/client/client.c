@@ -37,7 +37,6 @@
 #include "../util/mem.h"
 #include "context.h"
 #include "keys.h"
-#include "send.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,8 +44,9 @@
 
 in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   // generate the rpc-request
-  char req[strlen(method) + strlen(params) + 200];
-  snprintX(req, sizeof(req), "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  const int max = strlen(method) + strlen(params) + 200;
+  char*     req = alloca(max);
+  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // create a new context by parsing the request
   in3_ctx_t* ctx = new_ctx(c, req);
@@ -66,11 +66,12 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
 }
 
 in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
-  if (!error || !result) return IN3_EINVAL;
+  if (!error) return IN3_EINVAL;
   in3_ret_t res = IN3_OK;
   // prepare request
-  char req[strlen(method) + strlen(params) + 200];
-  snprintX(req, sizeof(req), "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  int   l   = strlen(method) + strlen(params) + 200;
+  char* req = alloca(l);
+  snprintX(req, l, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
 
   // parse it
   in3_ctx_t*  ctx = new_ctx(c, req);
@@ -145,4 +146,96 @@ in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, ch
 
   // if we have an error, we always return IN3_EUNKNOWN
   return *error ? IN3_EUNKNOWN : res;
+}
+
+char* in3_client_exec_req(
+    in3_t* c,  /**< [in] the pointer to the incubed client config. */
+    char*  req /**< [in] the request as rpc. */
+) {
+
+  // parse it
+  char *     res = NULL, *err_msg = NULL;
+  in3_ctx_t* ctx = new_ctx(c, req);
+  in3_ret_t  ret;
+
+  //  not enough memory
+  if (!ctx) return NULL;
+
+  // make sure result & error are clean
+  // check parse-errors
+  if (ctx->error) {
+    res = _malloc(strlen(ctx->error) + 80);
+    if (!res) {
+      // out of memory
+      free_ctx(ctx);
+      return NULL;
+    }
+    sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"%s\"}}", ctx->error);
+  } else {
+    uint32_t id = d_get_intk(ctx->requests[0], K_ID);
+    ret         = in3_send_ctx(ctx);
+
+    if (ret == IN3_OK) {
+      // succesful (at least we have a useable response)
+      if (c->keep_in3) {
+        // TODO handle binary here as well.
+        str_range_t rr  = d_to_json(ctx->responses[0]);
+        rr.data[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
+        res             = _malloc(rr.len + 1);
+        if (res) sprintf(res, "%s", rr.data);
+      } else {
+        d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+        d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+        char*      r      = d_create_json(result ? result : error);
+        if (!r) r = _strdupn("no result!", -1);
+        res = r ? _malloc(strlen(r) + 80) : NULL;
+        if (res) {
+          if (result)
+            sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
+          else if (d_type(error) == T_OBJECT)
+            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, error);
+          else
+            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":-32700,\"message\":%s}}", id, error);
+        }
+        if (r) _free(r);
+      }
+    } else
+      err_msg = in3_errmsg(ret);
+  }
+
+  if (!res && err_msg) {
+    res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 80);
+    if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", ret, ctx->error ? ctx->error : err_msg);
+  }
+
+  free_ctx(ctx);
+  return res;
+}
+
+/**
+ * create a new signer-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_signer_t* in3_create_signer(
+    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
+    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+    void*          wallet      /**<custom object whill will be passed to functions */
+) {
+  in3_signer_t* signer = _calloc(1, sizeof(in3_signer_t));
+  signer->wallet       = wallet;
+  signer->sign         = sign;
+  signer->prepare_tx   = prepare_tx;
+  return signer;
+}
+
+in3_storage_handler_t* in3_create_storeage_handler(
+    in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
+    in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    void*                cptr      /**< custom pointer which will will be passed to functions */
+) {
+  in3_storage_handler_t* handler = _calloc(1, sizeof(in3_storage_handler_t));
+  handler->cptr                  = cptr;
+  handler->get_item              = get_item;
+  handler->set_item              = set_item;
+  return handler;
 }

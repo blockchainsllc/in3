@@ -55,7 +55,8 @@ static d_token_t* get_account(in3_vctx_t* vc, d_token_t* accounts, uint8_t* addr
 }
 
 int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len) {
-  bytes_t* res = NULL;
+  bytes_t*  res = NULL;
+  in3_ret_t ret = IN3_OK;
 
   d_token_t *t, *t2;
   int        i;
@@ -108,7 +109,9 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
 
     case EVM_ENV_CODE_SIZE: {
       if (in_len != 20) return EVM_ERROR_INVALID_ENV;
-      cache_entry_t* entry = in3_get_code(vc, in_data);
+      cache_entry_t* entry = NULL;
+      ret                  = in3_get_code(vc, in_data, &entry);
+      if (ret < 0) return ret;
       if (!entry) return EVM_ERROR_INVALID_ENV;
       *out_data = entry->buffer;
       return 4;
@@ -124,7 +127,9 @@ int in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, u
     }
     case EVM_ENV_CODE_COPY: {
       if (in_len != 20) return EVM_ERROR_INVALID_ENV;
-      cache_entry_t* entry = in3_get_code(vc, in_data);
+      cache_entry_t* entry = NULL;
+      ret                  = in3_get_code(vc, in_data, &entry);
+      if (ret < 0) return ret;
       if (!entry) return EVM_ERROR_INVALID_ENV;
       *out_data = entry->value.data + offset;
       if (len && (uint32_t) len + offset > entry->value.len) return EVM_ERROR_INVALID_ENV;

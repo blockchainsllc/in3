@@ -5,18 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "node",
+            "request": "launch",
+            "name": "test.js",
+            "program": "${workspaceFolder}/test.js"
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../test/testdata/requests/eth_getBlockByNumber.json",
-                "-m",
-                "132",
+                "../test/testdata/requests/eth_getLogs.json",
                 "-t",
                 "1"
             ],
             "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run abi test",
+            "program": "${workspaceFolder}/build/test/test_filter",
+            "cwd": "${workspaceFolder}"
         },
         {
             "type": "node",

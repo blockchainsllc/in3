@@ -47,6 +47,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+int rlp_decode_item_type(bytes_t* b, int index) {
+  bytes_t bb;
+  return rlp_decode(b, index, &bb);
+}
+
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {
     printf("File not found!");

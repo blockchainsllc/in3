@@ -1,34 +1,34 @@
 /*******************************************************************************
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
- * 
+ *
  * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
- * 
- * 
+ *
+ *
  * COMMERCIAL LICENSE USAGE
- * 
- * Licensees holding a valid commercial license may use this file in accordance 
- * with the commercial license agreement provided with the Software or, alternatively, 
- * in accordance with the terms contained in a written agreement between you and 
- * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
  * information please contact slock.it at in3@slock.it.
- * 	
+ *
  * Alternatively, this file may be used under the AGPL license as follows:
- *    
+ *
  * AGPL LICENSE USAGE
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free Software 
+ * terms of the GNU Affero General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later version.
- *  
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- * [Permissions of this strong copyleft license are conditioned on making available 
- * complete source code of licensed works and modifications, which include larger 
- * works using a licensed work, under the same license. Copyright and license notices 
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
  * must be preserved. Contributors provide an express grant of patent rights.]
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
@@ -37,7 +37,7 @@
 #include "big.h"
 #include "evm.h"
 #include "gas.h"
-#include "mem.h"
+#include "evm_mem.h"
 #include <string.h>
 #ifdef EVM_GAS
 #include "accounts.h"
@@ -191,10 +191,10 @@ int evm_sub_call(evm_t*    parent,
   if (!address && success == 0)
     res = evm_stack_push(parent, evm.account, 20);
   else
-    res = evm_stack_push_int(parent, success == 0 ? 1 : 0);
+    res = evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0);
 
   // if we have returndata we write them into memory
-  if (success == 0 && evm.return_data.data) {
+  if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm.return_data.data) {
     // if we have a target to write the result to we do.
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
 

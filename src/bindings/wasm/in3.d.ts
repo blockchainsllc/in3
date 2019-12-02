@@ -146,14 +146,6 @@ export declare interface IN3Config {
      */
     autoUpdateList?: boolean
     /**
-     * a cache handler offering 2 functions ( setItem(string,string), getItem(string) )
-     */
-    cacheStorage?: any
-    /**
-     * a url of RES-Endpoint, the client will log all errors to. The client will post to this endpoint JSON like { id?, level, message, meta? }
-     */
-    loggerUrl?: string
-    /**
      * url of one or more rpc-endpoints to use. (list can be comma seperated)
      */
     rpc?: string
@@ -305,7 +297,7 @@ export declare interface IN3NodeWeight {
 /**
  * a JSONRPC-Request with N3-Extension
  */
-export interface RPCRequest {
+export declare interface RPCRequest {
     /**
      * the version
      */
@@ -329,7 +321,7 @@ export interface RPCRequest {
 /**
  * a JSONRPC-Responset with N3-Extension
  */
-export interface RPCResponse {
+export declare interface RPCResponse {
     /**
      * the version
      */
@@ -351,7 +343,7 @@ export interface RPCResponse {
 }
 
 
-export default class IN3 {
+export class IN3 {
 
     /**
      * creates a new client.
@@ -384,6 +376,11 @@ export default class IN3 {
      */
     public free();
 
+    /**
+     * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.
+     */
+    public signer: Signer;
+
 
     /**
      * changes the transport-function.
@@ -399,5 +396,606 @@ export default class IN3 {
         get: (key: string) => string,
         set(key: string, value: string): void
     }): void
+
+    /**
+     * registers a function to be called as soon as the wasm is ready.
+     * If it is already initialized it will call it right away.
+     * @param fn the function to call
+     * @returns a promise with the result of the function
+     */
+    public static onInit<T>(fn: () => T): Promise<T>
+
+
+    /**
+     * frees all Incubed instances.
+     */
+    public static freeAll(): void
+
+
+    /**
+     * eth1 API.
+     */
+    public eth: EthAPI
+
+    /**
+     * collection of util-functions.
+     */
+    public util: Utils
+
+    /**
+     * collection of util-functions.
+     */
+    public static util: Utils
+
+    /** supporting both ES6 and UMD usage */
+    public static default: typeof IN3
 }
 
+/**
+ * BlockNumber or predefined Block
+ */
+export type BlockType = number | 'latest' | 'earliest' | 'pending'
+/**
+ * a Hexcoded String (starting with 0x)
+ */
+export type Hex = string
+/**
+ * a BigInteger encoded as hex.
+ */
+export type Quantity = number | Hex
+/**
+ * a 32 byte Hash encoded as Hex (starting with 0x)
+ */
+export type Hash = Hex
+/**
+ * a 20 byte Address encoded as Hex (starting with 0x)
+ */
+export type Address = Hex
+/**
+ * data encoded as Hex (starting with 0x)
+ */
+export type Data = Hex
+
+/**
+ * Signature
+ */
+export type Signature = {
+    message: Data
+    messageHash: Hash
+    v: Hex
+    r: Hash
+    s: Hash
+    signature?: Data
+}
+
+export type ABIField = {
+    indexed?: boolean
+    name: string
+    type: string
+}
+export type ABI = {
+    anonymous?: boolean
+    constant?: boolean
+    payable?: boolean
+    stateMutability?: 'nonpayable' | 'payable' | 'view' | 'pure'
+
+    inputs?: ABIField[],
+    outputs?: ABIField[]
+    name?: string
+    type: 'event' | 'function' | 'constructor' | 'fallback'
+}
+export type Transaction = {
+    /** 20 Bytes - The address the transaction is send from. */
+    from: Address
+    /** (optional when creating new contract) 20 Bytes - The address the transaction is directed to.*/
+    to: Address
+    /** Integer of the gas provided for the transaction execution. eth_call consumes zero gas, but this parameter may be needed by some executions. */
+    gas: Quantity
+    /** Integer of the gas price used for each paid gas.  */
+    gasPrice: Quantity
+    /** Integer of the value sent with this transaction. */
+    value: Quantity
+    /** 4 byte hash of the method signature followed by encoded parameters. For details see Ethereum Contract ABI.*/
+    data: string
+    /** nonce */
+    nonce: Quantity
+    /** optional chain id */
+    chainId?: any
+}
+export type TransactionReceipt = {
+    /** 32 Bytes - hash of the block where this transaction was in. */
+    blockHash: Hash
+    /** block number where this transaction was in.*/
+    blockNumber: BlockType
+    /** 20 Bytes - The contract address created, if the transaction was a contract creation, otherwise null.*/
+    contractAddress: Address
+    /** The total amount of gas used when this transaction was executed in the block. */
+    cumulativeGasUsed: Quantity
+    /** 20 Bytes - The address of the sender. */
+    from: Address
+    /** 20 Bytes - The address of the receiver. null when it’s a contract creation transaction.*/
+    to: Address
+    /** The amount of gas used by this specific transaction alone. */
+    gasUsed: Quantity
+    /** Array of log objects, which this transaction generated. */
+    logs: Log[]
+    /** 256 Bytes - A bloom filter of logs/events generated by contracts during transaction execution. Used to efficiently rule out transactions without expected logs.*/
+    logsBloom: Data
+    /** 32 Bytes - Merkle root of the state trie after the transaction has been executed (optional after Byzantium hard fork EIP609)*/
+    root: Hash
+    /** 0x0 indicates transaction failure , 0x1 indicates transaction success. Set for blocks mined after Byzantium hard fork EIP609, null before. */
+    status: Quantity
+    /** 32 Bytes - hash of the transaction. */
+    transactionHash: Hash
+    /** Integer of the transactions index position in the block. */
+    transactionIndex: Quantity
+}
+export type TransactionDetail = {
+    /**  32 Bytes - hash of the transaction. */
+    hash: Hash
+    /** the number of transactions made by the sender prior to this one.*/
+    nonce: Quantity
+    /** 32 Bytes - hash of the block where this transaction was in. null when its pending.*/
+    blockHash: Hash
+    /** block number where this transaction was in. null when its pending.*/
+    blockNumber: BlockType
+    /** integer of the transactions index position in the block. null when its pending.*/
+    transactionIndex: Quantity
+    /** 20 Bytes - address of the sender.*/
+    from: Address
+    /** 20 Bytes - address of the receiver. null when its a contract creation transaction. */
+    to: Address
+    /**  value transferred in Wei.*/
+    value: Quantity
+    /** gas price provided by the sender in Wei.*/
+    gasPrice: Quantity
+    /** gas provided by the sender. */
+    gas: Quantity
+    /** the data send along with the transaction. */
+    input: Data
+    /** the standardised V field of the signature.*/
+    v: Quantity
+    /** the standardised V field of the signature (0 or 1).*/
+    standardV: Quantity
+    /** the R field of the signature.*/
+    r: Quantity
+    /** raw transaction data */
+    raw: Data
+    /** public key of the signer. */
+    publicKey: Hash
+    /** the chain id of the transaction, if any. */
+    chainId: Quantity
+    /** creates contract address */
+    creates: Address
+    /** (optional) conditional submission, Block number in block or timestamp in time or null. (parity-feature)    */
+    condition: any
+    /** optional: the private key to use for signing */
+    pk?: any
+}
+
+export type Block = {
+    /**  The block number. null when its pending block */
+    number: Quantity
+    /** hash of the block. null when its pending block */
+    hash: Hash
+    /** hash of the parent block */
+    parentHash: Hash
+    /** 8 bytes hash of the generated proof-of-work. null when its pending block. Missing in case of PoA. */
+    nonce: Data
+    /** SHA3 of the uncles data in the block */
+    sha3Uncles: Data
+    /** 256 Bytes - the bloom filter for the logs of the block. null when its pending block */
+    logsBloom: Data
+    /** 32 Bytes - the root of the transaction trie of the block */
+    transactionsRoot: Data
+    /** 32 Bytes - the root of the final state trie of the block */
+    stateRoot: Data
+    /** 32 Bytes - the root of the receipts trie of the block */
+    receiptsRoot: Data
+    /** 20 Bytes - the address of the author of the block (the beneficiary to whom the mining rewards were given)*/
+    author: Address
+    /** 20 Bytes - alias of ‘author’*/
+    miner: Address
+    /** integer of the difficulty for this block */
+    difficulty: Quantity
+    /** integer of the total difficulty of the chain until this block */
+    totalDifficulty: Quantity
+    /** the ‘extra data’ field of this block */
+    extraData: Data
+    /** integer the size of this block in bytes */
+    size: Quantity
+    /** the maximum gas allowed in this block */
+    gasLimit: Quantity
+    /** the total used gas by all transactions in this block */
+    gasUsed: Quantity
+    /** the unix timestamp for when the block was collated */
+    timestamp: Quantity
+    /** Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter */
+    transactions: (Hash | Transaction)[]
+    /** Array of uncle hashes */
+    uncles: Hash[]
+    /** PoA-Fields */
+    sealFields: Data[]
+}
+export type Log = {
+    /** true when the log was removed, due to a chain reorganization. false if its a valid log. */
+    removed: boolean
+    /** integer of the log index position in the block. null when its pending log. */
+    logIndex: Quantity
+    /** integer of the transactions index position log was created from. null when its pending log. */
+    transactionIndex: Quantity
+    /** Hash, 32 Bytes - hash of the transactions this log was created from. null when its pending log. */
+    transactionHash: Hash
+    /** Hash, 32 Bytes - hash of the block where this log was in. null when its pending. null when its pending log. */
+    blockHash: Hash,
+    /** the block number where this log was in. null when its pending. null when its pending log. */
+    blockNumber: Quantity
+    /** 20 Bytes - address from which this log originated. */
+    address: Address,
+    /**  contains the non-indexed arguments of the log. */
+    data: Data
+    /** - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.) */
+    topics: Data[]
+}
+
+export type LogFilter = {
+    /**  Quantity or Tag - (optional) (default: latest) Integer block number, or 'latest' for the last mined block or 'pending', 'earliest' for not yet mined transactions. */
+    fromBlock: BlockType
+    /** Quantity or Tag - (optional) (default: latest) Integer block number, or 'latest' for the last mined block or 'pending', 'earliest' for not yet mined transactions.*/
+    toBlock: BlockType
+    /** (optional) 20 Bytes - Contract address or a list of addresses from which logs should originate.*/
+    address: Address
+    /** (optional) Array of 32 Bytes Data topics. Topics are order-dependent. It’s possible to pass in null to match any topic, or a subarray of multiple topics of which one should be matching. */
+    topics: (string | string[])[]
+    /** å(optional) The maximum number of entries to retrieve (latest first). */
+    limit: Quantity
+}
+
+export type TxRequest = {
+    /** contract */
+    to?: Address
+
+    /** address of the account to use */
+    from?: Address
+
+    /** the data to send */
+    data?: Data
+
+    /** the gas needed */
+    gas?: number
+
+    /** the gasPrice used */
+    gasPrice?: number
+
+    /** the nonce */
+    nonce?: number
+
+    /** the value in wei */
+    value?: Quantity
+
+    /** the ABI of the method to be used */
+    method?: string
+
+    /** the argument to pass to the method */
+    args?: any[]
+
+    /**raw private key in order to sign */
+    pk?: Hash
+
+    /**  number of block to wait before confirming*/
+    confirmations?: number
+}
+
+export declare interface Signer {
+    /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
+    prepareTransaction?: (client: IN3, tx: Transaction) => Promise<Transaction>
+
+    /** returns true if the account is supported (or unlocked) */
+    hasAccount(account: Address): Promise<boolean>
+
+    /** 
+     * signing of any data. 
+     * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
+     */
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
+}
+
+export interface EthAPI {
+    client: IN3;
+    signer?: Signer;
+    constructor(client: IN3);
+    /**
+     * Returns the number of most recent block. (as number)
+     */
+    blockNumber(): Promise<number>;
+    /**
+     * Returns the current price per gas in wei. (as number)
+     */
+    gasPrice(): Promise<number>;
+    /**
+     * Executes a new message call immediately without creating a transaction on the block chain.
+     */
+    call(tx: Transaction, block?: BlockType): Promise<string>;
+    /**
+     * Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send as eth_call.
+     */
+    callFn(to: Address, method: string, ...args: any[]): Promise<any>;
+    /**
+     * Returns the EIP155 chain ID used for transaction signing at the current best block. Null is returned if not available.
+     */
+    chainId(): Promise<string>;
+    /**
+     * Makes a call or transaction, which won’t be added to the blockchain and returns the used gas, which can be used for estimating the used gas.
+     */
+    estimateGas(tx: Transaction): Promise<number>;
+    /**
+     * Returns the balance of the account of given address in wei (as hex).
+     */
+    getBalance(address: Address, block?: BlockType): Promise<bigint>;
+    /**
+     * Returns code at a given address.
+     */
+    getCode(address: Address, block?: BlockType): Promise<string>;
+    /**
+     * Returns the value from a storage position at a given address.
+     */
+    getStorageAt(address: Address, pos: Quantity, block?: BlockType): Promise<string>;
+    /**
+     * Returns information about a block by hash.
+     */
+    getBlockByHash(hash: Hash, includeTransactions?: boolean): Promise<Block>;
+    /**
+     * Returns information about a block by block number.
+     */
+    getBlockByNumber(block?: BlockType, includeTransactions?: boolean): Promise<Block>;
+    /**
+     * Returns the number of transactions in a block from a block matching the given block hash.
+     */
+    getBlockTransactionCountByHash(block: Hash): Promise<number>;
+    /**
+     * Returns the number of transactions in a block from a block matching the given block number.
+     */
+    getBlockTransactionCountByNumber(block: Hash): Promise<number>;
+    /**
+     * Polling method for a filter, which returns an array of logs which occurred since last poll.
+     */
+    getFilterChanges(id: Quantity): Promise<Log[]>;
+    /**
+     * Returns an array of all logs matching filter with given id.
+     */
+    getFilterLogs(id: Quantity): Promise<Log[]>;
+    /**
+     * Returns an array of all logs matching a given filter object.
+     */
+    getLogs(filter: LogFilter): Promise<Log[]>;
+    /**
+     * Returns information about a transaction by block hash and transaction index position.
+     */
+    getTransactionByBlockHashAndIndex(hash: Hash, pos: Quantity): Promise<TransactionDetail>;
+    /**
+     * Returns information about a transaction by block number and transaction index position.
+     */
+    getTransactionByBlockNumberAndIndex(block: BlockType, pos: Quantity): Promise<TransactionDetail>;
+    /**
+     * Returns the information about a transaction requested by transaction hash.
+     */
+    getTransactionByHash(hash: Hash): Promise<TransactionDetail>;
+    /**
+     * Returns the number of transactions sent from an address. (as number)
+     */
+    getTransactionCount(address: Address, block?: BlockType): Promise<number>;
+    /**
+     * Returns the receipt of a transaction by transaction hash.
+     * Note That the receipt is available even for pending transactions.
+     */
+    getTransactionReceipt(hash: Hash): Promise<TransactionReceipt>;
+    /**
+     * Returns information about a uncle of a block by hash and uncle index position.
+     * Note: An uncle doesn’t contain individual transactions.
+     */
+    getUncleByBlockHashAndIndex(hash: Hash, pos: Quantity): Promise<Block>;
+    /**
+     * Returns information about a uncle of a block number and uncle index position.
+     * Note: An uncle doesn’t contain individual transactions.
+     */
+    getUncleByBlockNumberAndIndex(block: BlockType, pos: Quantity): Promise<Block>;
+    /**
+     * Returns the number of uncles in a block from a block matching the given block hash.
+     */
+    getUncleCountByBlockHash(hash: Hash): Promise<number>;
+    /**
+     * Returns the number of uncles in a block from a block matching the given block hash.
+     */
+    getUncleCountByBlockNumber(block: BlockType): Promise<number>;
+    /**
+     * Creates a filter in the node, to notify when a new block arrives. To check if the state has changed, call eth_getFilterChanges.
+     */
+    newBlockFilter(): Promise<string>;
+    /**
+     * Creates a filter object, based on filter options, to notify when the state changes (logs). To check if the state has changed, call eth_getFilterChanges.
+     *
+     * A note on specifying topic filters:
+     * Topics are order-dependent. A transaction with a log with topics [A, B] will be matched by the following topic filters:
+     *
+     * [] “anything”
+     * [A] “A in first position (and anything after)”
+     * [null, B] “anything in first position AND B in second position (and anything after)”
+     * [A, B] “A in first position AND B in second position (and anything after)”
+     * [[A, B], [A, B]] “(A OR B) in first position AND (A OR B) in second position (and anything after)”
+     */
+    newFilter(filter: LogFilter): Promise<string>;
+    /**
+     * Creates a filter in the node, to notify when new pending transactions arrive.
+     *
+     * To check if the state has changed, call eth_getFilterChanges.
+     */
+    newPendingTransactionFilter(): Promise<string>;
+    /**
+     * Uninstalls a filter with given id. Should always be called when watch is no longer needed. Additonally Filters timeout when they aren’t requested with eth_getFilterChanges for a period of time.
+     */
+    uninstallFilter(id: Quantity): Promise<Quantity>;
+    /**
+     * Returns the current ethereum protocol version.
+     */
+    protocolVersion(): Promise<string>;
+    /**
+      * Returns the current ethereum protocol version.
+      */
+    syncing(): Promise<boolean | {
+        startingBlock: Hex;
+        currentBlock: Hex;
+        highestBlock: Hex;
+        blockGap: Hex[][];
+        warpChunksAmount: Hex;
+        warpChunksProcessed: Hex;
+    }>;
+    /**
+     * Creates new message call transaction or a contract creation for signed transactions.
+     */
+    sendRawTransaction(data: Data): Promise<string>;
+    /**
+     * signs any kind of message using the `\x19Ethereum Signed Message:\n`-prefix
+     * @param account the address to sign the message with (if this is a 32-bytes hex-string it will be used as private key)
+     * @param data the data to sign (Buffer, hexstring or utf8-string)
+     */
+    sign(account: Address, data: Data): Promise<Signature>;
+    /** sends a Transaction */
+    sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
+    contractAt(abi: ABI[], address: Address): {
+        [methodName: string]: any;
+        _address: Address;
+        _eventHashes: any;
+        events: {
+            [event: string]: {
+                getLogs: (options: {
+                    limit?: number;
+                    fromBlock?: BlockType;
+                    toBlock?: BlockType;
+                    topics?: any[];
+                    filter?: {
+                        [key: string]: any;
+                    };
+                }) => Promise<{
+                    [key: string]: any;
+                    event: string;
+                    log: Log;
+                }[]>;
+            };
+            all: {
+                getLogs: (options: {
+                    limit?: number;
+                    fromBlock?: BlockType;
+                    toBlock?: BlockType;
+                    topics?: any[];
+                    filter?: {
+                        [key: string]: any;
+                    };
+                }) => Promise<{
+                    [key: string]: any;
+                    event: string;
+                    log: Log;
+                }[]>;
+            };
+            decode: any;
+        };
+        _abi: ABI[];
+        _in3: IN3;
+    };
+    decodeEventData(log: Log, d: ABI): any;
+    hashMessage(data: Data): Hex;
+}
+export declare class SimpleSigner implements Signer {
+    accounts: {
+        [ac: string]: Uint8Array;
+    };
+    constructor(...pks: (hash | Uint8Array)[]);
+    addAccount(pk: Hash): string;
+    /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
+    prepareTransaction?: (client: IN3, tx: Transaction) => Promise<Transaction>
+
+    /** returns true if the account is supported (or unlocked) */
+    hasAccount(account: Address): Promise<boolean>
+
+    /** 
+     * signing of any data. 
+     * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
+     */
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
+}
+
+/**
+ * Collection of different util-functions.
+ */
+export declare interface Utils {
+    createSignatureHash(def: ABI): Hex;
+    createSignature(fields: ABIField[]): string;
+    decodeEvent(log: Log, d: ABI): any;
+    soliditySha3(...args: any[]): string;
+
+    /**
+     * encodes the given arguments as ABI-encoded (including the methodHash)
+     * @param signature the method signature
+     * @param args the arguments
+     */
+    abiEncode(signature: string, ...args: any[]): Hex
+
+    /**
+     * decodes the given data as ABI-encoded (without the methodHash)
+     * @param signature the method signature, which must contain a return description
+     * @param data the data to decode
+     */
+    abiDecode(signature: string, data: Data): any[]
+
+    /**
+     * generates a checksum Address for the given address.
+     * If the chainId is passed, it will be included accord to EIP 1191
+     * @param address the address (as hex)
+     * @param chainId the chainId (if supported)
+     */
+    toChecksumAddress(address: Address, chainId?: number): Address
+
+    /**
+     * calculates the keccack hash for the given data.
+     * @param data the data as Uint8Array or hex data.
+     */
+    keccak(data: Uint8Array | Data): Uint8Array
+
+    /**
+     * converts any value to a hex string (with prefix 0x).
+     * optionally the target length can be specified (in bytes)
+     */
+    toHex(data: Hex | Uint8Array | number | bigint, len?: number): Hex
+
+    /**
+     * converts any value to a Uint8Array.
+     * optionally the target length can be specified (in bytes)
+     */
+    toBuffer(data: Hex | Uint8Array | number | bigint, len?: number): Uint8Array
+
+
+    /**
+     * create a signature (65 bytes) for the given message and kexy
+     * @param pk the private key
+     * @param msg the message
+     * @param hashFirst if true the message will be hashed first (default:true), if not the message is the hash.
+     * @param adjustV if true (default) the v value will be adjusted by adding 27
+     */
+    ecSign(pk: Uint8Array | Hex, msg: Uint8Array | Hex, hashFirst?: boolean, adjustV?: boolean): Uint8Array
+
+    /**
+     * takes raw signature (65 bytes) and splits it into a signature object.
+     * @param signature the 65 byte-signature
+     * @param message  the message
+     * @param hashFirst if true (default) this will be taken as raw-data and will be hashed first.
+     */
+    splitSignature(signature: Uint8Array | Hex, message: Uint8Array | Hex, hashFirst?: boolean): Signature
+
+    /**
+     * generates the public address from the private key.
+     * @param pk the private key.
+     */
+    private2address(pk: Hex | Uint8Array): Address
+
+}
+
+export = IN3

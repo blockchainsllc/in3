@@ -1,0 +1,40 @@
+[
+    {
+        "descr": "in3_checksumAddress",
+        "chainId": "0x1",
+        "intern": true,
+        "request": {
+            "method": "in3_checksumAddress",
+            "params": [
+                "0x1Fe2E9bf29aa1938859Af64C413361227d04059a",
+                false
+            ]
+        },
+        "response": [
+            {
+                "id": 1,
+                "result": "0x1Fe2E9bf29aa1938859Af64C413361227d04059a",
+                "jsonrpc": "2.0"
+            }
+        ]
+    },
+    {
+        "descr": "in3_checksumAddress_1",
+        "chainId": "0x1",
+        "intern": true,
+        "request": {
+            "method": "in3_checksumAddress",
+            "params": [
+                "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
+                false
+            ]
+        },
+        "response": [
+            {
+                "id": 1,
+                "result": "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+                "jsonrpc": "2.0"
+            }
+        ]
+    }
+]

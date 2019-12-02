@@ -38,7 +38,6 @@
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
-#include "../../core/client/send.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
@@ -474,9 +473,9 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
     case T_STRING:
       return (*env)->NewStringUTF(env, d_string(t));
     case T_BYTES: {
-      char tmp[t->len * 2 + 3];
-      tmp[0] = '0';
-      tmp[1] = 'x';
+      char* tmp = alloca(t->len * 2 + 3);
+      tmp[0]    = '0';
+      tmp[1]    = 'x';
       bytes_to_hex(t->data, t->len, tmp + 2);
       return (*env)->NewStringUTF(env, tmp);
     }
@@ -576,31 +575,32 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_free(in3);
 }
 
-in3_ret_t Java_in3_IN3_transport(char** urls, int urls_len, char* payload, in3_response_t* res) {
-
+in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
+  //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
-  size_t     payload_len = strlen(payload);
+  size_t     payload_len = strlen(req->payload);
   jbyteArray jpayload    = (*jni)->NewByteArray(jni, payload_len);
-  (*jni)->SetByteArrayRegion(jni, jpayload, 0, payload_len, (jbyte*) payload);
+  (*jni)->SetByteArrayRegion(jni, jpayload, 0, payload_len, (jbyte*) req->payload);
 
   // url-array
-  jobject jurls = (*jni)->NewObjectArray(jni, urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
-  for (int i = 0; i < urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, urls[i]));
+  jobject jurls = (*jni)->NewObjectArray(jni, req->urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
+  for (int i = 0; i < req->urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, req->urls[i]));
 
   jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
   jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "([Ljava/lang/String;[B)[[B");
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
 
-  for (int i = 0; i < urls_len; i++) {
+  for (int i = 0; i < req->urls_len; i++) {
     jbyteArray content = (*jni)->GetObjectArrayElement(jni, result, i);
     if (content) {
-      const size_t l = (*jni)->GetArrayLength(jni, content);
-      uint8_t      bytes[l];
+      const size_t l     = (*jni)->GetArrayLength(jni, content);
+      uint8_t*     bytes = _malloc(l);
       (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
-      sb_add_range(&res[i].result, (char*) bytes, 0, l);
+      sb_add_range(&req->results[i].result, (char*) bytes, 0, l);
+      _free(bytes);
     } else
-      sb_add_chars(&res[i].error, "Could not fetch the data!");
+      sb_add_chars(&req->results[i].error, "Could not fetch the data!");
   }
 
   return success;
@@ -664,8 +664,8 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
 
   const char* jdata = (*env)->GetStringUTFChars(env, data, 0);
   int         l     = strlen(jdata);
-  uint8_t     bdata[l >> 1];
-  l = hex2byte_arr((char*) jdata + 2, l - 2, bdata, l);
+  uint8_t*    bdata = alloca(l >> 1);
+  l                 = hex2byte_arr((char*) jdata + 2, l - 2, bdata, l);
   (*env)->ReleaseStringUTFChars(env, data, jdata);
 
   json_ctx_t* res    = req_parse_result(rq, bytes(bdata, l));
@@ -712,7 +712,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclas
   const char* key    = (*env)->GetStringUTFChars(env, jkey, 0);
   const char* data   = (*env)->GetStringUTFChars(env, jdata, 0);
   int         data_l = strlen(data) / 2 - 1;
-  uint8_t     key_bytes[32], data_bytes[data_l + 1], dst[65];
+  uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
 
   hex2byte_arr((char*) key + 2, 32, key_bytes, 32);
   data_l      = hex2byte_arr((char*) data + 2, -1, data_bytes, data_l + 1);
@@ -750,7 +750,7 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
   jobject   signer = (*jni)->CallObjectMethod(jni, (jobject) pk, mid);
   if (!signer) return -1;
 
-  char data[message.len * 2 + 3], address[43];
+  char *data = alloca(message.len * 2 + 3), address[43];
   data[0] = address[0] = '0';
   data[1] = address[1] = 'x';
   bytes_to_hex(message.data, message.len, data + 2);
@@ -785,6 +785,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
   in3->cacheStorage->set_item = storage_set_item;
   in3->signer                 = _malloc(sizeof(in3_signer_t));
   in3->signer->sign           = jsign;
+  in3->signer->prepare_tx     = NULL;
   in3->signer->wallet         = in3->cacheStorage->cptr;
   jni                         = env;
 

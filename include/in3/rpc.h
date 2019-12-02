@@ -32,20 +32,30 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-/** @file 
- * handles caching and storage.
- * 
- * handles the request.
+// @PUBLIC_HEADER
+/** 
+ * Ethereum data structure verification.
  * */
 
-#include "context.h"
-
-#ifndef SEND_H
-#define SEND_H
+#ifndef in3_eth_rpc_h__
+#define in3_eth_rpc_h__
+#include <stdbool.h>
+#include <stdint.h>
 
 /**
- * executes a request context by  picking nodes and sending it.
+ * a verification result.
  */
-in3_ret_t in3_send_ctx(in3_ctx_t* ctx);
+typedef struct v_result {
+  char* src;   /**< points to the source of the json-element. */
+  char* msg;   /**< the message  */
+  bool  valid; /**< true if the data were valid. */
+} verify_res_t;
 
-#endif
+#include "data.h"
+
+/**
+ * verifies a request and responses for a valid data structure.
+ */
+verify_res_t verify_rpc_structure(d_token_t* request, d_token_t* response);
+
+#endif // in3_eth_rpc_h__

@@ -24,6 +24,8 @@ BEGIN {
     print ""
     print "### CMake options"; 
     print "" ;
+    print "When configuring cmake, you can set a lot of different incubed specific like `cmake -DEVM_GAS=false ..`." ;
+    print "" ;
     RS = "" ; 
     FS = "\n"  
 }
@@ -36,7 +38,7 @@ BEGIN {
       print ""
       print " "d[2]
       print ""
-      print "  Type: `" a[2], "` ,    Default-Value: `" a[3]"`"
+      print "Default-Value: `-D" a[1] "=" a[3]"`"
       print ""
       print ""
 

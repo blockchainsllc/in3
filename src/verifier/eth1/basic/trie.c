@@ -413,7 +413,7 @@ void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
   memcpy(t->root, root, 32);
 }
 
-#ifdef TEST
+#ifdef TRIETEST
 static void hexprint(uint8_t* a, int l) {
   (void) a; // unused param if compiled without debug
   int i;

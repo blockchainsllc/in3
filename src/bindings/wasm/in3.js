@@ -61,7 +61,7 @@ else {
             return null
         },
         set(key, value) {
-            fs.writeFile('.in3/' + key, Buffer.from(value, 'hex'), err => err ? console.error('Error caching ' + err) : '')
+            fs.writeFileSync('.in3/' + key, Buffer.from(value, 'hex'))
         }
     }
 
@@ -110,34 +110,35 @@ else {
 }
 
 
+// keep track of all created client instances
+const clients = {}
 
-// create a flag ndicating when the wasm was succesfully loaded.
+// create a flag indicating when the wasm was succesfully loaded.
 let _in3_listeners = []
 in3w.onRuntimeInitialized = _ => {
-    _in3_listeners.forEach(_ => _(true))
+    const o = _in3_listeners
     _in3_listeners = undefined
+    o.forEach(_ => _(true))
 }
 
-// for all pending Requests we hold the finalize function which will be called by the wasm when done.
-in3w.pendingRequests = {}
-
+// check if the last error was set and throws it.
 function throwLastError() {
     const er = in3w.ccall('in3_last_error', 'string', [], []);
-    if (er) throw new Error(er);
+    if (er) throw new Error(er + (in3w.sign_js.last_sign_error ? (' : ' + in3w.sign_js.last_sign_error) : ''))
 }
-const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
 
 /**
  * The incubed client.
  */
 class IN3 {
 
-    // since loading the wasm is async, we always need to check whether the was was created before using it.
+    // since loading the wasm is async, we always need to check whether the wasm was created before using it.
     async _ensure_ptr() {
         if (this.ptr) return
         if (_in3_listeners)
             await new Promise(r => _in3_listeners.push(r))
         this.ptr = in3w.ccall('in3_create', 'number', [], []);
+        clients['' + this.ptr] = this
     }
 
     // here we are creating the instance lazy, when the first function is called.
@@ -145,6 +146,7 @@ class IN3 {
         this.config = config
         this.needsSetConfig = !!config
         this.ptr = 0;
+        this.eth = new EthAPI(this)
     }
 
     /**
@@ -152,6 +154,7 @@ class IN3 {
      */
     setConfig(conf) {
         if (conf) {
+            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
             if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
             this.config = { ...this.config, ...conf }
         }
@@ -186,39 +189,58 @@ class IN3 {
         if (this.needsSetConfig) this.setConfig()
 
         // create the context
-        const r = in3w.ccall('in3_create_request', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
+        const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
+        function finalize() {
+            // we always need to cleanup
+            in3w.ccall('in3_free_request', 'void', ['number'], [r])
+        }
 
-        // now send 
-        return new Promise((resolve, reject) => {
-            // we add the pending request with pointer as key.
-            in3w.pendingRequests[r + ''] = () => {
-                // check if it was an error...
-                const er = in3w.ccall('request_get_error', 'string', ['number'], [r])
-                // if not we ask for the result.
-                const res = er ? '' : in3w.ccall('request_get_result', 'string', ['number'], [r])
-
-                // we always need to cleanup
-                in3w.ccall('in3_free_request', 'void', ['number'], [r])
-                delete in3w.pendingRequests[r + '']
-
-                // resolve or reject the promise.
-                if (er) reject(new Error(er))
-                else {
-                    try {
-                        const r = JSON.parse(res)
-                        if (r) delete r.in3
-                        resolve(r)
+        while (true) {
+            const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+            switch (state.status) {
+                case 'error':
+                    finalize()
+                    throw new Error(state.error || 'Unknown error')
+                case 'ok':
+                    finalize()
+                    if (Array.isArray(state.result)) {
+                        const s = state.result[0]
+                        delete s.in3
+                        return s
                     }
-                    catch (ex) {
-                        reject(ex)
+                    return state.result
+                case 'waiting': {
+                    const req = state.request
+                    function setResponse(msg, i, isError) {
+                        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+                    }
+                    function freeRequest() {
+                        in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
+                    }
+
+                    switch (req.type) {
+                        case 'sign':
+                            try {
+                                const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                if (!this.signer) throw new Error('no signer set to handle signing')
+                                if (!(await this.signer.hasAccount(account))) throw new Error('unknown account ' + account)
+                                setResponse(toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                            } catch (ex) {
+                                setResponse(ex.message || ex, 0, true)
+                            }
+                            freeRequest()
+                            break;
+
+                        case 'rpc':
+                            await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload)).then(
+                                res => setResponse(res, i, false),
+                                err => setResponse(err.message || err, i, true)
+                            ))).then(freeRequest, err => { freeRequest(); throw err })
                     }
                 }
             }
-
-            // send the request.
-            in3w.ccall('in3_send_request', 'void', ['number'], [r]);
-        })
+        }
     }
 
     async sendRPC(method, params) {
@@ -228,8 +250,11 @@ class IN3 {
     }
 
     free() {
-        if (this.ptr)
+        if (this.ptr) {
+            delete clients['' + this.ptr]
             in3w.ccall('in3_dispose', 'void', ['number'], [this.ptr])
+            this.ptr = 0
+        }
     }
 
 
@@ -242,6 +267,28 @@ IN3.setTransport = function (fn) {
 // change the transport
 IN3.setStorage = function (fn) {
     in3w.in3_cache = fn
+}
+
+IN3.freeAll = function () {
+    Object.keys(clients).forEach(_ => clients[_].free())
+}
+
+// the given function fn will be executed as soon as the wasm is loaded. and returns the result as promise.
+IN3.onInit = function (fn) {
+    return new Promise((resolve, reject) => {
+        const check = () => {
+            try {
+                resolve(fn())
+            }
+            catch (x) {
+                reject(x)
+            }
+        }
+        if (_in3_listeners)
+            _in3_listeners.push(check)
+        else
+            check()
+    })
 }
 
 // also support ES6-modules

@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "error.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -70,4 +71,30 @@ void msg_dump(const char* s, unsigned char* data, unsigned len) {
   printX("%s: ", s);
   for (i = 0U; i < len; i++) printX("%02x ", data[i]);
   printX("(%u bytes)\n", len);
+}
+
+/**
+ * converts a error code into a string.
+ */
+char* in3_errmsg(in3_ret_t err /**< the error code */) {
+  switch (err) {
+    case IN3_OK: return NULL;
+    case IN3_ECONFIG: return "Invalid configuration";
+    case IN3_EFIND: return "Could not find the requested resource";
+    case IN3_EUNKNOWN: return "Unknown Error occured";
+    case IN3_ENOMEM: return "Out of Memory";
+    case IN3_ENOTSUP: return "The operation is not supported";
+    case IN3_EINVAL: return "Invalid Value";
+    case IN3_EVERS: return "Version missmatched";
+    case IN3_ELIMIT: return "Limit reached";
+    case IN3_EINVALDT: return "invalid data";
+    case IN3_EPASS: return "wrong password";
+    case IN3_ERPC: return "RPC Error";
+    case IN3_ERPCNRES: return "RPC No response";
+    case IN3_EUSNURL: return "RPC invalid url";
+    case IN3_ETRANS: return "transport error";
+    case IN3_ERANGE: return "out of range";
+    case IN3_WAITING: return "waiting for data";
+  }
+  return NULL;
 }

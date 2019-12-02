@@ -765,3 +765,20 @@ bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
   params_add_bytes(params, data);
   rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup(d_bytes(result)));
 }
+
+in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]) {
+  char tmp[64], msg[41], *hexadr;
+  int  p = chain_id ? sprintf(tmp, "%i0x", (uint32_t) chain_id) : 0;
+  bytes_to_hex(adr, 20, tmp + p);
+  bytes_t hash_data = bytes((uint8_t*) tmp, p + 40);
+  hexadr            = tmp + p;
+  bytes32_t hash;
+  sha3_to(&hash_data, hash);
+  bytes_to_hex(hash, 20, msg);
+  out[0]  = '0';
+  out[1]  = 'x';
+  out[42] = 0;
+  for (int i = 0; i < 40; i++)
+    out[i + 2] = strtohex(msg[i]) >= 8 ? (hexadr[i] > 0x60 ? (hexadr[i] - 0x20) : hexadr[i]) : hexadr[i];
+  return IN3_OK;
+}
