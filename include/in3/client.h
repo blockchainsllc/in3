@@ -160,6 +160,11 @@ typedef struct in3_node_weight {
 } in3_node_weight_t;
 
 /**
+ * Initializer for in3_node_props_t
+ */
+#define in3_node_props_init(np) *(np) = 0
+
+/**
  * setter method for interacting with in3_node_props_t.
  * @param[out] node_props
  * @param type
