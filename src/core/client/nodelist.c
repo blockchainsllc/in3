@@ -234,7 +234,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
     if (nodeDef->deposit < c->minDeposit) continue;
-    if (!in3_node_props_match(c->node_props, nodeDef->props)) continue;
+    if (!in3_node_props_match(&c->node_props, &nodeDef->props)) continue;
 
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;
@@ -381,15 +381,15 @@ void in3_nodelist_clear(in3_chain_t* chain) {
   _free(chain->weights);
 }
 
-void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint32_t value) {
-  if (type == NODE_PROP_DEPOSIT_TIMEOUT) {
-    uint64_t dp_ = value;
+void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint8_t value) {
+  if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {
+    uint64_t dp_ = value & 0xFFU;
     *node_props |= BITS_LSB(dp_, 32U);
   } else {
     (value != 0) ? BIT_SET(*node_props, type) : BIT_CLEAR(*node_props, type);
   }
 }
 
-uint32_t in3_node_props_get(in3_node_props_t node_props, in3_node_props_type_t type) {
-  return (type == NODE_PROP_DEPOSIT_TIMEOUT) ? BITS_MSB(node_props, 32U) : BIT_CHECK(node_props, type);
+uint8_t in3_node_props_get(const in3_node_props_t* node_props, in3_node_props_type_t type) {
+  return (type == NODE_PROP_MIN_BLOCK_HEIGHT) ? (BITS_MSB(*node_props, 32U) & 0xFFU) : BIT_CHECK(*node_props, type);
 }

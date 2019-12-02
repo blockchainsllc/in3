@@ -167,7 +167,7 @@ typedef struct in3_node_weight {
  */
 void in3_node_props_set(in3_node_props_t*     node_props,
                         in3_node_props_type_t type,
-                        uint32_t              value);
+                        uint8_t               value);
 
 /**
  * getter method for interacting with in3_node_props_t.
@@ -175,8 +175,8 @@ void in3_node_props_set(in3_node_props_t*     node_props,
  * @param type
  * @return val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
  */
-uint32_t in3_node_props_get(in3_node_props_t      node_props,
-                            in3_node_props_type_t type);
+uint8_t in3_node_props_get(const in3_node_props_t* node_props,
+                           in3_node_props_type_t   type);
 
 /**
  * Chain definition inside incubed.
