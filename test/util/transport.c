@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <unistd.h> 
 #define MOCK_PATH "../test/testdata/mock/%s.json"
-static char *response_buffer;
 typedef struct response_s {
   char*              request_method;
   char*              request_params;
@@ -20,11 +19,8 @@ typedef struct response_s {
 
 response_t* responses = NULL;
 
-static void read_json_response_buffer(char* path) {
-  if(response_buffer != NULL){
-      _free(response_buffer);
-      response_buffer = NULL;
-  }
+char * read_json_response_buffer(char* path) {
+  char *response_buffer;
   long  length;
   FILE* f = fopen(path, "r");
   if (f) {
@@ -37,6 +33,7 @@ static void read_json_response_buffer(char* path) {
       response_buffer[length] = 0;
     }
     fclose(f);
+    return response_buffer;
   } else {
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
@@ -45,6 +42,7 @@ static void read_json_response_buffer(char* path) {
       perror("getcwd() error");
     }
     printf("Error coudl not find the testdata %s\n", path);
+    return NULL;
   }
 }
 
@@ -75,8 +73,8 @@ void add_response(char* request_method, char* request_params, char* result, char
 void add_response_test(char* test) {
   char path[70];
   sprintf(path, MOCK_PATH, test);
-  read_json_response_buffer(path);
-  json_ctx_t* mock  = parse_json(response_buffer);
+  char *buffer= read_json_response_buffer(path);
+  json_ctx_t* mock  = parse_json(buffer);
   str_range_t res = d_to_json(d_get_at(d_get(mock->result,key("response")),0));
   d_token_t* req = d_get_at(d_get(mock->result,key("request")),0);
   char* method =  d_create_json(d_get(req, key("method")));
@@ -132,11 +130,12 @@ in3_ret_t test_transport(in3_request_t* req) {
 
 static in3_ret_t setup_transport(in3_request_t* req, char * path) {
   // now parse the json
-  read_json_response_buffer(path);
+  char *response_buffer = read_json_response_buffer(path);
   json_ctx_t* res  = parse_json(response_buffer);
   str_range_t json = d_to_json(d_get_at(d_get(res->result,key("response")),0));
   sb_add_range(&req->results->result, json.data, 0, json.len);
   free_json(res);
+  _free(response_buffer);
   return IN3_OK;
 }
 in3_ret_t mock_transport(in3_request_t* req) {
