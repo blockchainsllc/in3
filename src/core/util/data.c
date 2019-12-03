@@ -401,7 +401,7 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
 
       if (neg) {
         char   tmp[8];
-        size_t l   = sprintf(tmp, "%" PRIi64, i64Val * -1);
+        size_t l   = sprintf(tmp, "-%" PRIi64, i64Val);
         item->len  = l | T_STRING << 28;
         item->data = _malloc(l + 1);
         memcpy(item->data, tmp, l);
