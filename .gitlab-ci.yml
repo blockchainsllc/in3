@@ -311,7 +311,7 @@ dockerhub-deploy:
     - docker:dind
   image: docker.slock.it/build-images/deployment
   variables:
-    IMAGE_TAG: slockit/in3:$CI_COMMIT_TAG
+    IMAGE_TAG: slockit/in3:$IMAGE_VERSION
   before_script:
     - docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD} ${DOCKERHUB_REGISTRY}
   script:
