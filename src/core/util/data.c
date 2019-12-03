@@ -247,10 +247,12 @@ char* d_string(const d_token_t* item) {
   if (item == NULL) return NULL;
   return (char*) item->data;
 }
-uint32_t d_int(const d_token_t* item) {
+
+int32_t d_int(const d_token_t* item) {
   return d_intd(item, 0);
 }
-uint32_t d_intd(const d_token_t* item, const uint32_t def_val) {
+
+int32_t d_intd(const d_token_t* item, const uint32_t def_val) {
   if (item == NULL) return def_val;
   switch (d_type(item)) {
     case T_INTEGER:
@@ -379,13 +381,18 @@ int parse_key(json_ctx_t* jp) {
 }
 
 int parse_number(json_ctx_t* jp, d_token_t* item) {
-  int      i      = 0;
-  uint64_t u64Val = 0;
+  int     i      = 0;
+  int64_t i64Val = 0;
+  bool    neg    = false;
 
-  jp->c--;
+  if (jp->c[-1] == '-')
+    neg = true;
+  if (jp->c[-1] != '+' && jp->c[-1] != '-')
+    jp->c--;
+
   for (; i < 20; i++) {
     if (jp->c[i] >= '0' && jp->c[i] <= '9')
-      u64Val = u64Val * 10 + (jp->c[i] - '0');
+      i64Val = i64Val * 10 + (jp->c[i] - '0');
     else {
       // if the value is a float (which we don't support yet), we keep on parsing, but ignoring the rest of the numbers
       if (jp->c[i] == '.') {
@@ -395,13 +402,20 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
 
       jp->c += i;
 
-      if ((u64Val & 0xfffffffff0000000) == 0)
-        item->len |= (int) u64Val;
+      if (neg) {
+        char   tmp[22]; // max => -18446744073709551000
+        size_t l   = sprintf(tmp, "-%" PRIi64, i64Val);
+        item->len  = l | T_STRING << 28;
+        item->data = _malloc(l + 1);
+        memcpy(item->data, tmp, l);
+        item->data[l] = 0;
+      } else if ((i64Val & 0xfffffffff0000000) == 0)
+        item->len |= (int) i64Val;
       // 32-bit number / no 64-bit number
       else {
         uint8_t tmp[8];
         // as it is a 64-bit number we have to change the type from T_INTEGER to T_BYTES and treat it accordingly
-        long_to_bytes(u64Val, tmp);
+        long_to_bytes(i64Val, tmp);
         uint8_t *p = tmp, len = 8;
         optimize_len(p, len);
         item->data = _malloc(len);
@@ -547,6 +561,8 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
     case '7':
     case '8':
     case '9':
+    case '+':
+    case '-':
       return parse_number(jp, parsed_next_item(jp, T_INTEGER, key, parent));
     default:
       return -2;

@@ -37,6 +37,7 @@
 #include "mem.h"
 #include "utils.h"
 #include <assert.h>
+#include <limits.h>
 
 #define UDIV_UP(a, b) (((a) + (b) -1) / (b))
 #define ALIGN_UP(a, b) (UDIV_UP(a, b) * (b))
@@ -161,4 +162,14 @@ bitset_t* bs_clone(bitset_t* bs) {
   }
   nbs->len = bs->len;
   return nbs;
+}
+
+bitset_t* bs_from_ull(unsigned long long u, size_t l) {
+  bitset_t* bs = bs_new(l);
+  if (bs) {
+    for (unsigned int j = 0; j < sizeof(u) * CHAR_BIT; ++j)
+      if (BIT_CHECK(u, j))
+        bs_set(bs, j);
+  }
+  return bs;
 }
