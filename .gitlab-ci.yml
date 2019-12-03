@@ -1,6 +1,7 @@
 variables:
   COMMIT_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  IMAGE_VERSION: $(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
 
 stages:
   - build
@@ -322,7 +323,7 @@ dockerhub-deploy:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
            -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
            -H  "Content-Type:application/json" \
-           -d "{\"path\":\"c/dockerHub\",\"manifest\":{\"version\":\"$CI_COMMIT_TAG\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"00\"}}"
+           -d "{\"path\":\"c/dockerHub\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"00\"}}"
 
 wasm-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
@@ -409,7 +410,7 @@ release_mac_and_wasm:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
       -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
-      -d "{\"path\":\"c/mac/bin\",\"manifest\":{\"version\":\"$CI_COMMIT_TAG\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ'')\",\"ipfs\":\"$IPFS_HASH\"}}"
+      -d "{\"path\":\"c/mac/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ'')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:$PINATA_API_KEY' -H 'pinata_secret_api_key:$PINATA_SECRET_API_KEY' -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_${CI_COMMIT_TAG}_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
@@ -418,7 +419,7 @@ release_mac_and_wasm:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
       -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
-      -d "{\"path\":\"c/wasm/bin\",\"manifest\":{\"version\":\"$CI_COMMIT_TAG\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
+      -d "{\"path\":\"c/wasm/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-mac-wasm
   artifacts:
     paths:
@@ -455,7 +456,7 @@ release_x64:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
       -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
-      -d "{\"path\":\"c/linux/x64bin\",\"manifest\":{\"version\":\"$CI_COMMIT_TAG\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
+      -d "{\"path\":\"c/linux/x64bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-x64
   artifacts:
     paths:
@@ -493,7 +494,7 @@ release_x86:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
       -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
-      -d "{\"path\":\"c/linux/x86bin\",\"manifest\":{\"version\":\"$CI_COMMIT_TAG\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
+      -d "{\"path\":\"c/linux/x86bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-x86
   artifacts:
     paths:
@@ -532,7 +533,7 @@ release_arm7:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
       -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
-      -d "{\"path\":\"c/arm/bin\",\"manifest\":{\"version\":\"$CI_COMMIT_TAG\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
+      -d "{\"path\":\"c/arm/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-arm7
   artifacts:
     paths:
@@ -575,7 +576,7 @@ release_win:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
       -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
-      -d "{\"path\":\"c/win/exe\",\"manifest\":{\"version\":\"$CI_COMMIT_TAG\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
+      -d "{\"path\":\"c/win/exe\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-win
   artifacts:
     paths:
