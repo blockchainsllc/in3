@@ -32,7 +32,6 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-IF (USE_SEGGER_RTT)
 add_library(segger_rtt_o OBJECT
             SEGGER_RTT.c
             SEGGER_RTT.h
@@ -40,4 +39,3 @@ add_library(segger_rtt_o OBJECT
             SEGGER_RTT_printf.c
         )
 add_library(segger_rtt STATIC $<TARGET_OBJECTS:segger_rtt_o>)
-ENDIF(USE_SEGGER_RTT)

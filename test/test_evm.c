@@ -557,6 +557,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     l = big_add(txval, l, evm.call_value.data, evm.call_value.len, tmp, 32);
     if (big_cmp(tmp, l, c_adr->balance, 32) > 0) {
       print_error("not enough value to pay for the gas");
+      evm_free(&evm);
       return 1;
     }
     l = big_sub(c_adr->balance, 32, tmp, l, txval);

@@ -34,9 +34,8 @@
 
 // @PUBLIC_HEADER
 /** @file
- * incubed main client file.
+ * this file defines the incubed configuration struct and it registration.
  * 
- * This includes the definition of the client and used enum values.
  * 
  * */
 
@@ -50,16 +49,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/** the protocol version used when sending requests from the this client */
 #define IN3_PROTO_VER "2.0.0"
 
-#define ETH_CHAIN_ID_MAINNET 0x01L
-#define ETH_CHAIN_ID_KOVAN 0x2aL
-#define ETH_CHAIN_ID_TOBALABA 0x44dL
-#define ETH_CHAIN_ID_GOERLI 0x5L
-#define ETH_CHAIN_ID_EVAN 0x4b1L
-#define ETH_CHAIN_ID_IPFS 0x7d0
-#define ETH_CHAIN_ID_VOLTA 0x12046
-#define ETH_CHAIN_ID_LOCAL 0xFFFFL
+#define ETH_CHAIN_ID_MAINNET 0x01L   /**< chainId for mainnet */
+#define ETH_CHAIN_ID_KOVAN 0x2aL     /**< chainId for kovan */
+#define ETH_CHAIN_ID_TOBALABA 0x44dL /**< chainId for tobalaba */
+#define ETH_CHAIN_ID_GOERLI 0x5L     /**< chainId for goerlii */
+#define ETH_CHAIN_ID_EVAN 0x4b1L     /**< chainId for evan */
+#define ETH_CHAIN_ID_IPFS 0x7d0      /**< chainId for ipfs */
+#define ETH_CHAIN_ID_VOLTA 0x12046   /**< chainId for volta */
+#define ETH_CHAIN_ID_LOCAL 0xFFFFL   /**< chainId for local chain */
 
 /** the type of the chain. 
  * 
@@ -167,7 +167,8 @@ typedef struct in3_chain {
  **/
 typedef bytes_t* (*in3_storage_get_item)(
     void* cptr, /**< a custom pointer as set in the storage handler*/
-    char* key /**< the key to search in the cache */);
+    char* key   /**< the key to search in the cache */
+);
 
 /** 
  * storage handler function for writing to the cache.
@@ -175,7 +176,8 @@ typedef bytes_t* (*in3_storage_get_item)(
 typedef void (*in3_storage_set_item)(
     void*    cptr, /**< a custom pointer as set in the storage handler*/
     char*    key,  /**< the key to store the value.*/
-    bytes_t* value /**< the value to store.*/);
+    bytes_t* value /**< the value to store.*/
+);
 
 /** 
  * storage handler to handle cache.
@@ -205,11 +207,23 @@ typedef enum {
  * In case of an error a negativ value must be returned. It should be one of the IN3_SIGN_ERR... values.
  * 
 */
-typedef in3_ret_t (*in3_sign)(void* wallet, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+typedef in3_ret_t (*in3_sign)(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+
+/** 
+ * transform transaction function.
+ * 
+ * for multisigs, we need to change the transaction to gro through the ms.
+ * if the new_tx is not set within the function, it will use the old_tx.
+ * 
+*/
+typedef in3_ret_t (*in3_prepare_tx)(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx);
 
 typedef struct in3_signer {
   /* function pointer returning a stored value for the given key.*/
   in3_sign sign;
+
+  /* function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+  in3_prepare_tx prepare_tx;
 
   /* custom object whill will be passed to functions */
   void* wallet;
@@ -225,10 +239,24 @@ typedef struct n3_response {
   sb_t result; /**< a stringbuilder to add the result */
 } in3_response_t;
 
+/** request-object. 
+ * 
+ * represents a RPC-request
+ */
+typedef struct n3_request {
+  char*           payload;  /**< the payload to send */
+  char**          urls;     /**< array of urls */
+  int             urls_len; /**< number of urls */
+  in3_response_t* results;  /** the responses*/
+} in3_request_t;
+
 /** the transport function to be implemented by the transport provider.
  */
-typedef in3_ret_t (*in3_transport_send)(char** urls, int urls_len, char* payload, in3_response_t* results);
+typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
 
+/**
+ * Filter type used internally when managing filters.
+ */
 typedef enum {
   FILTER_EVENT   = 0, /**< Event filter */
   FILTER_BLOCK   = 1, /**< Block filter */
@@ -249,16 +277,19 @@ typedef struct in3_filter_t_ {
   void (*release)(struct in3_filter_t_* f);
 } in3_filter_t;
 
+/**
+ * Handler which is added to client config in order to handle filter.
+ */
 typedef struct in3_filter_handler_t_ {
   in3_filter_t** array; /** array of filters */
   size_t         count; /** counter for filters */
 } in3_filter_handler_t;
 
 /** Incubed Configuration. 
-   * 
-   * This struct holds the configuration and also point to internal resources such as filters or chain configs.
-   * 
-  */
+ * 
+ * This struct holds the configuration and also point to internal resources such as filters or chain configs.
+ * 
+ */
 typedef struct in3_t_ {
   /** number of seconds requests can be cached. */
   uint32_t cacheTimeout;
@@ -323,6 +354,9 @@ typedef struct in3_t_ {
   /** if true the client will try to use http instead of https*/
   uint8_t use_http;
 
+  /** if true the in3-section with the proof will also returned*/
+  uint8_t keep_in3;
+
   /** chain spec and nodeList definitions*/
   in3_chain_t* chains;
 
@@ -377,6 +411,26 @@ in3_ret_t in3_client_rpc(
     char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
+/** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
+ * The resulting string must be free by the the caller of this function! 
+ */
+char* in3_client_exec_req(
+    in3_t* c,  /**< [in] the pointer to the incubed client config. */
+    char*  req /**< [in] the request as rpc. */
+);
+
+/**
+ * adds a response for a request-object.
+ * This function should be used in the transport-function to set the response.
+ */
+void in3_req_add_response(
+    in3_response_t* res,      /**< [in] the response-pointer */
+    int             index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool            is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    void*           data,     /**<  the data or the the string*/
+    int             data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+);
+
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
 in3_ret_t in3_client_register_chain(
     in3_t*           client,      /**< [in] the pointer to the incubed client config. */
@@ -413,8 +467,21 @@ void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to fre
 /**
  * inits the cache.
  *
+ * this will try to read the nodelist from cache.
  */
-in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
+in3_ret_t in3_cache_init(
+    in3_t* c /**< the incubed client */
+);
+
+/**
+ * finds the chain-config for the given chain_id.
+ * 
+ * My return NULL if not found.
+ */
+in3_chain_t* in3_find_chain(
+    in3_t*   c /**< the incubed client */,
+    uint64_t chain_id /**< chainId */
+);
 
 /**
  * configures the clent based on a json-config.
@@ -422,20 +489,48 @@ in3_ret_t in3_cache_init(in3_t* c /**< the incubed client */);
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  * 
  */
-in3_ret_t in3_configure(in3_t* c, char* config);
+in3_ret_t in3_configure(
+    in3_t* c,     /**< the incubed client */
+    char*  config /**< JSON-string with the configuration to set. */
+);
 
 /**
  * defines a default transport which is used when creating a new client.
  */
-void in3_set_default_transport(in3_transport_send transport);
+void in3_set_default_transport(
+    in3_transport_send transport /**< the default transport-function. */
+);
 
 /**
  * defines a default storage handler which is used when creating a new client.
  */
-void in3_set_default_storage(in3_storage_handler_t* cacheStorage);
+void in3_set_default_storage(
+    in3_storage_handler_t* cacheStorage /**< pointer to the handler-struct */
+);
 /**
  * defines a default signer which is used when creating a new client.
  */
-void in3_set_default_signer(in3_signer_t* signer);
+void in3_set_default_signer(
+    in3_signer_t* signer /**< default signer-function. */
+);
 
+/**
+ * create a new signer-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_signer_t* in3_create_signer(
+    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
+    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+    void*          wallet      /**<custom object whill will be passed to functions */
+);
+
+/**
+ * create a new storage handler-object to be set on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_storage_handler_t* in3_create_storeage_handler(
+    in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
+    in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    void*                cptr      /**< custom pointer which will will be passed to functions */
+);
 #endif

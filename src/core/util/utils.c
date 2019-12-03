@@ -45,19 +45,6 @@ void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
   memcpy(dst + 32 - src_len, src, src_len);
 }
 
-int hash_cmp(uint8_t* a, uint8_t* b) {
-  int len = 31;
-
-  while (a[len] == b[len] && len--)
-    ;
-
-  return ++len;
-}
-
-int size_of_bytes(int str_len) {
-  int out_len = (str_len & 1) ? (str_len + 1) / 2 : str_len / 2;
-  return out_len;
-}
 void long_to_bytes(uint64_t val, uint8_t* dst) {
   *dst       = val >> 56 & 0xFF;
   *(dst + 1) = val >> 48 & 0xFF;
@@ -84,6 +71,7 @@ uint8_t strtohex(char c) {
     return c - 'A' + 10;
   return 255;
 }
+#ifdef __ZEPHYR__
 
 const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
   // buffer has to be at least 21 bytes (max u64 val = 18446744073709551615 has 20 digits + '\0')
@@ -98,6 +86,7 @@ const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
 
   return &buffer[pos];
 }
+#endif
 
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {
   if (len == -1) {
@@ -181,6 +170,8 @@ uint64_t bytes_to_long(uint8_t* data, int len) {
   return res;
 }
 uint64_t c_to_long(char* a, int l) {
+  if (!a) return -1;
+  if (l == -1) l = strlen(a);
   if (a[0] == '0' && a[1] == 'x') {
     long val = 0;
     for (int i = l - 1; i > 1; i--)
@@ -208,11 +199,6 @@ int min_bytes_len(uint64_t val) {
     if (val == 0) return i;
   }
   return 8;
-}
-
-uint64_t hex2long(char* buf) {
-  uint8_t tmp[8];
-  return bytes_to_long(tmp, hex2byte_arr(buf, -1, tmp, 8));
 }
 
 char* str_replace(char* orig, char* rep, char* with) {

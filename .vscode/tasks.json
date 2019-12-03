@@ -2,26 +2,43 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
+    "command": "sh",
+    "type": "shell",
+    "args": [
+        "-c"
+    ],
+    "echoCommand": true,
+    "options": {
+        "cwd": "${workspaceRoot}/build"
+    },
     "tasks": [
         {
-            "label": "buildAll",
             "type": "shell",
-            "command": "cd build; make",
-            "problemMatcher": [
-                "$gcc"
+            "label": "cmake",
+            "command": "cmake",
+            "args": [
+                "-G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug .."
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "make",
+            "command": "make",
+            "args": [
+                "-j",
+                "8"
             ],
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": [
+                    "relative",
+                    "/"
+                ]
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
-        },
-        {
-            "label": "buildZephyr",
-            "type": "shell",
-            "command": "cd src/zephyr/build; ninja",
-            "problemMatcher": [
-                "$gcc"
-            ]
         }
     ]
 }

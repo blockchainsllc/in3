@@ -39,16 +39,18 @@
 #define DEBUG
 #endif
 
-#include "../src/core/client/cache.h"
-#include "../src/core/client/context.h"
-#include "../src/core/client/nodelist.h"
-#include "../src/core/util/data.h"
-#include "../src/verifier/eth1/nano/eth_nano.h"
-#include "test_utils.h"
+#include "../../src/core/client/cache.h"
+#include "../../src/core/client/context.h"
+#include "../../src/core/client/nodelist.h"
+#include "../../src/core/util/data.h"
+#include "../../src/core/util/log.h"
+#include "../../src/core/util/scache.h"
+#include "../../src/verifier/eth1/nano/eth_nano.h"
+#include "../test_utils.h"
 #include <stdio.h>
 #include <unistd.h>
 
-static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static in3_ret_t test_transport(in3_request_t* req) {
   char* buffer = NULL;
   long  length;
   FILE* f = fopen("../test/testdata/requests/in3_nodeList.json", "r");
@@ -77,7 +79,7 @@ static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_re
   // now parse the json
   json_ctx_t* res  = parse_json(buffer);
   str_range_t json = d_to_json(d_get_at(d_get(d_get_at(res->result, 0), key("response")), 0));
-  sb_add_range(&result->result, json.data, 0, json.len);
+  sb_add_range(&req->results->result, json.data, 0, json.len);
   free_json(res);
   return IN3_OK;
 }
@@ -140,6 +142,7 @@ static void test_cache() {
   // create a second client...
   in3_t* c2        = in3_new();
   c2->cacheStorage = c->cacheStorage;
+  c2->transport    = test_transport;
   c2->chainId      = c->chainId;
   in3_configure(c2, "{\"chainId\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
@@ -152,20 +155,29 @@ static void test_cache() {
   in3_cache_init(c2);
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(5, chain2->nodeListLength);
+
+  // test request
+  in3_ctx_t* ctx = in3_client_rpc_ctx(c2, "in3_nodeList", "[]");
+  if (ctx->error) printf("ERROR : %s\n", ctx->error);
+  TEST_ASSERT(ctx && ctx->error == NULL);
+  free_ctx(ctx);
 }
 
 static void test_newchain() {
 
   in3_register_eth_nano();
-  cache_t* cache = calloc(1, sizeof(cache_t));
+  in3_set_default_transport(test_transport);
+
+  cache_t* cache = _calloc(1, sizeof(cache_t));
 
   in3_t* c                  = in3_new();
-  c->transport              = test_transport;
   c->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
   c->cacheStorage->cptr     = cache;
   c->cacheStorage->get_item = cache_get_item;
   c->cacheStorage->set_item = cache_set_item;
   c->chainId                = 0x8;
+
+  in3_set_default_storage(c->cacheStorage);
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chainsCount; i++) {
@@ -221,11 +233,33 @@ static void test_newchain() {
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodeListLength);
 }
 
+void test_scache() {
+  char*          key   = "123";
+  char*          value = "45678";
+  bytes_t        k     = bytes((uint8_t*) key, 3);
+  bytes_t        v     = bytes((uint8_t*) value, 3);
+  cache_entry_t* cache = in3_cache_add_entry(NULL, bytes((uint8_t*) key, 3), bytes((uint8_t*) value, 5));
+
+  bytes_t* val = in3_cache_get_entry(cache, &k);
+  TEST_ASSERT_TRUE(val != NULL && val->len == 5);
+  val = in3_cache_get_entry(cache, &v);
+  TEST_ASSERT_NULL(val);
+}
 /*
  * Main
  */
 int main() {
+  TEST_ASSERT_EQUAL(0, mem_stack_size());
+  memstack();
+  in3_log_set_udata_(NULL);
+  in3_log_set_lock_(NULL);
+  in3_log_set_fp_(NULL);
+  in3_log_set_quiet_(false);
+  in3_log_set_level(LOG_ERROR);
+
+  // now run tests
   TESTS_BEGIN();
+  RUN_TEST(test_scache);
   RUN_TEST(test_cache);
   RUN_TEST(test_newchain);
   return TESTS_END();

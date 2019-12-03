@@ -53,6 +53,8 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
 #include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
@@ -65,6 +67,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef IN3_VERSION
+#define IN3_VERSION "local"
+#endif
 
 // helpstring
 void show_help(char* name) {
@@ -88,6 +94,7 @@ void show_help(char* name) {
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
 -debug         if given incubed will output debug information when executing. \n\
+-q             quit. no additional output. \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
 -version       displays the version \n\
@@ -217,7 +224,70 @@ char* get_wei(char* val) {
   }
   return res;
 }
+static void execute(in3_t* c, FILE* f) {
+  if (feof(f)) die("no data");
+  sb_t* sb    = sb_new(NULL);
+  char  first = 0, stop = 0;
+  int   level = 0, d = 0;
+  while (1) {
+    d = fgetc(f);
+    if (d == EOF) {
+      if (first)
+        die("Invalid json-data from stdin");
+      else
+        exit(EXIT_SUCCESS);
+    }
+    if (first == 0) {
+      if (d == '{')
+        stop = '}';
+      else if (d == '[')
+        stop = ']';
+      else
+        continue;
+      first = d;
+    }
 
+    sb_add_char(sb, (char) d);
+    if (d == first) level++;
+    if (d == stop) level--;
+    if (level == 0) {
+      // time to execute
+      in3_ctx_t* ctx = new_ctx(c, sb->data);
+      if (ctx->error)
+        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", 1, ctx->error);
+      else {
+        in3_ret_t ret = in3_send_ctx(ctx);
+        uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
+        if (ctx->error) {
+          for (char* x = ctx->error; *x; x++) {
+            if (*x == '\n') *x = ' ';
+          }
+        }
+
+        if (ret == IN3_OK) {
+          if (c->keep_in3) {
+            str_range_t rr  = d_to_json(ctx->responses[0]);
+            rr.data[rr.len] = 0;
+            printf("%s\n", rr.data);
+          } else {
+            d_token_t* result = d_get(ctx->responses[0], K_RESULT);
+            d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
+            char*      r      = d_create_json(result ? result : error);
+            if (result)
+              printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}\n", id, r);
+            else
+              printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", id, r);
+            _free(r);
+          }
+        } else
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":\"%s\"}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+      }
+      free_ctx(ctx);
+      first   = 0;
+      sb->len = 0;
+    }
+  }
+}
 // read data from a file and return the bytes
 bytes_t readFile(FILE* f) {
   if (!f) die("Could not read the input file");
@@ -397,30 +467,30 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 
 static bytes_t*  last_response;
 static bytes_t   in_response = {.data = NULL, .len = 0};
-static in3_ret_t debug_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static in3_ret_t debug_transport(in3_request_t* req) {
   if (in_response.len) {
-    for (int i = 0; i < urls_len; i++)
-      sb_add_range(&result[i].result, (char*) in_response.data, 0, in_response.len);
+    for (int i = 0; i < req->urls_len; i++)
+      sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
     return 0;
   }
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(urls, urls_len, payload, result);
+  in3_ret_t r = send_curl(req);
 #else
-  in3_ret_t r = send_http(urls, urls_len, payload, result);
+  in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new(result[0].result.data, result[0].result.len);
+  last_response = b_new(req->results[0].result.data, req->results[0].result.len);
   return r;
 }
 static char*     test_name = NULL;
-static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static in3_ret_t test_transport(in3_request_t* req) {
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(urls, urls_len, payload, result);
+  in3_ret_t r = send_curl(req);
 #else
-  in3_ret_t r = send_http(urls, urls_len, payload, result);
+  in3_ret_t r = send_http(req);
 #endif
   if (r == IN3_OK) {
-    payload[strlen(payload) - 1] = 0;
-    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, payload + 1, result->result.data);
+    req->payload[strlen(req->payload) - 1] = 0;
+    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->results->result.data);
     exit(0);
   }
 
@@ -428,14 +498,13 @@ static in3_ret_t test_transport(char** urls, int urls_len, char* payload, in3_re
 }
 
 int main(int argc, char* argv[]) {
-
   // check for usage
-  if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
+  if (argc >= 2 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0)) {
     show_help(argv[0]);
     return 0;
   }
 
-  if (argc < 2 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
+  if (argc >= 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0)) {
     printf("in3 " IN3_VERSION "\nbuild " __DATE__ " with");
 #ifdef TEST
     printf(" -DTEST=true");
@@ -474,6 +543,7 @@ int main(int argc, char* argv[]) {
 
   // we want to verify all
   in3_register_eth_full();
+  in3_register_eth_api();
   in3_log_set_level(LOG_INFO);
 
   // create the client
@@ -547,6 +617,8 @@ int main(int argc, char* argv[]) {
       c->transport = test_transport;
     } else if (strcmp(argv[i], "-pwd") == 0)
       pwd = argv[++i];
+    else if (strcmp(argv[i], "-q") == 0)
+      in3_log_set_level(LOG_FATAL);
     else if (strcmp(argv[i], "-value") == 0)
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
@@ -603,7 +675,7 @@ int main(int argc, char* argv[]) {
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,
-                       (argv[i][0] == '{' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
+                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
                        argv[i]);
@@ -632,7 +704,11 @@ int main(int argc, char* argv[]) {
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
-  if (!method) die("you need to specify a method to call");
+  if (!method) {
+    in3_log_info("in3 " IN3_VERSION " - reading json-rpc from stdin. (exit with ctrl C)\n________________________________________________\n");
+    execute(c, stdin);
+    return EXIT_SUCCESS;
+  }
   if (*method == '-') die("unknown option");
 
   // call -> eth_call
@@ -672,8 +748,8 @@ int main(int argc, char* argv[]) {
     if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
       data = hex2byte_new_bytes((char*) data->data + 2, data->len - 2);
     if (strcmp(sig_type, "eth_sign") == 0) {
-      char tmp[data->len + 30];
-      int  l = sprintf(tmp, "\x19"
+      char* tmp = alloca(data->len + 30);
+      int   l   = sprintf(tmp, "\x19"
                            "Ethereum Signed Message:\n%i",
                       data->len);
       memcpy(tmp + l, data->data, data->len);
@@ -682,8 +758,10 @@ int main(int argc, char* argv[]) {
     }
 
     if (!c->signer) die("No private key given");
-    uint8_t sig[65];
-    c->signer->sign(c->signer->wallet, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+    uint8_t   sig[65];
+    in3_ctx_t ctx;
+    ctx.client = c;
+    c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
     sig[64] += 27;
     print_hex(sig, 65);
     return 0;
@@ -761,8 +839,8 @@ int main(int argc, char* argv[]) {
     uint8_t   pub[65];
     bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
     if (strcmp(sig_type, "eth_sign") == 0) {
-      char tmp[msg.len + 30];
-      int  l = sprintf(tmp, "\x19"
+      char* tmp = alloca(msg.len + 30);
+      int   l   = sprintf(tmp, "\x19"
                            "Ethereum Signed Message:\n%i",
                       msg.len);
       memcpy(tmp + l, msg.data, msg.len);
@@ -803,7 +881,7 @@ int main(int argc, char* argv[]) {
   else {
 
     if (out_response && last_response) {
-      char r[last_response->len + 1];
+      char* r = alloca(last_response->len + 1);
       memcpy(r, last_response->data, last_response->len);
       r[last_response->len] = 0;
       printf("%s\n", r);
@@ -820,7 +898,7 @@ int main(int argc, char* argv[]) {
     if (req) {
       int l = strlen(result) / 2 - 1;
       if (l) {
-        uint8_t     tmp[l + 1];
+        uint8_t*    tmp = alloca(l + 1);
         json_ctx_t* res = req_parse_result(req, bytes(tmp, hex2byte_arr(result, -1, tmp, l + 1)));
         if (json)
           printf("%s\n", d_create_json(res->result));

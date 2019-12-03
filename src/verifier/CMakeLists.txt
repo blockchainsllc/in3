@@ -32,7 +32,17 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory(eth1/nano)
-add_subdirectory(eth1/basic)
-add_subdirectory(eth1/full)
-add_subdirectory(eth1/evm)
+add_subdirectory(eth1/rpc)
+
+if (ETH_NANO OR ETH_BASIC OR ETH_FULL)
+  add_subdirectory(eth1/nano)
+endif()
+
+if (ETH_BASIC OR ETH_FULL)
+  add_subdirectory(eth1/basic)
+endif()
+
+if (ETH_FULL)
+  add_subdirectory(eth1/full)
+  add_subdirectory(eth1/evm)
+endif()

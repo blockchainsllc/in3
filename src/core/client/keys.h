@@ -37,6 +37,7 @@
 #define K_METHOD            key("method")
 #define K_PARAMS            key("params")
 #define K_ERROR             key("error")
+#define K_MESSAGE           key("message")
 
 #define K_RESULT            key("result")
 #define K_IN3               key("in3")
@@ -111,6 +112,7 @@
 #define K_SEAL_FIELDS       key("sealFields")
 #define K_MIX_HASH          key("mixHash")
 #define K_TRANSACTIONS      key("transactions")
+#define K_UNCLES            key("uncles")
 
 #define K_PUBLIC_KEY        key("publicKey")
 #define K_CHAIN_ID          key("chainId")

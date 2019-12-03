@@ -116,13 +116,12 @@ bytes_t**              d_create_bytes_vec(const d_token_t* arr);                
 static inline d_type_t d_type(const d_token_t* item) { return item == NULL ? T_NULL : (item->len & 0xF0000000) >> 28; } /**< type of the token */
 static inline int      d_len(const d_token_t* item) { return item == NULL ? 0 : item->len & 0xFFFFFFF; }                /**< number of elements in the token (only for object or array, other will return 0) */
 bool                   d_eq(const d_token_t* a, const d_token_t* b);                                                    /**< compares 2 token and if the value is equal */
-d_key_t                keyn(const char* c, const int len);                                                              /**< generates the keyhash for the given stringrange as defined by len */
+d_key_t                keyn(const char* c, const size_t len);                                                           /**< generates the keyhash for the given stringrange as defined by len */
 
 d_token_t* d_get(d_token_t* item, const uint16_t key);                          /**< returns the token with the given propertyname (only if item is a object) */
 d_token_t* d_get_or(d_token_t* item, const uint16_t key1, const uint16_t key2); /**< returns the token with the given propertyname or if not found, tries the other. (only if item is a object) */
 d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     /**< returns the token of an array with the given index */
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
-d_token_t* d_prev(d_token_t* item);                                             /**< returns the prev sibling of an array or object */
 
 void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
 json_ctx_t* parse_binary(bytes_t* data);                           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
@@ -143,20 +142,21 @@ d_token_t*  json_create_array(json_ctx_t* jp);
 d_token_t*  json_object_add_prop(d_token_t* object, d_key_t key, d_token_t* value);
 d_token_t*  json_array_add_value(d_token_t* object, d_token_t* value);
 
-int   json_get_int_value(char* js, char* prop);            /**< parses the json and return the value as int. */
-void  json_get_str_value(char* js, char* prop, char* dst); /**< parses the json and return the value as string. */
-char* json_get_json_value(char* js, char* prop);           /**< parses the json and return the value as json-string. */
-
 // Helper function to map string to 2byte keys (only for tests or debugging)
 char* d_get_keystr(d_key_t k);     /**< returns the string for a key. This only works track_keynames was activated before! */
 void  d_track_keynames(uint8_t v); /**< activates the keyname-cache, which stores the string for the keys when parsing. */
 void  d_clear_keynames();          /**< delete the cached keynames */
 
-static d_key_t key(const char* c) {
-  uint16_t val = 0, l = strlen(c);
+#ifndef IN3_DONT_HASH_KEYS
+static inline d_key_t key(const char* c) {
+  uint16_t val = 0;
+  size_t   l   = strlen(c);
   for (; l; l--, c++) val ^= *c | val << 7;
   return val;
 }
+#else
+d_key_t key(const char* c);
+#endif
 
 static inline char*    d_get_stringk(d_token_t* r, d_key_t k) { return d_string(d_get(r, k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string(d_token_t* r, char* k) { return d_get_stringk(r, key(k)); }              /**< reads token of a property as string. */

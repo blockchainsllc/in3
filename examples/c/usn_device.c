@@ -1,3 +1,5 @@
+/// a example how to watch usn events and act upon it.
+
 #include <in3/client.h>   // the core client
 #include <in3/eth_api.h>  // wrapper for easier use
 #include <in3/eth_full.h> // the full ethereum verifier containing the EVM

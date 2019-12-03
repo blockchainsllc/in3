@@ -1,0 +1,20 @@
+[
+    {
+        "descr": "web3_sha3",
+        "chainId": "0x1",
+        "intern": true,
+        "request": {
+            "method": "web3_sha3",
+            "params": [
+                "0xe20182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff80018080"
+            ]
+        },
+        "response": [
+            {
+                "id": 1,
+                "result": "0x076b10c292bad44430f4124035acce2084c5f78e1505dc1659cd84974b95244e",
+                "jsonrpc": "2.0"
+            }
+        ]
+    }
+]

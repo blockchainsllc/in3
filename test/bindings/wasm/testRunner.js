@@ -61,6 +61,8 @@ const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', '
 async function runFuzzTests(filter, test, allResults, c, ob, prefix = '') {
     if (!ob) return c
     for (const k of Object.keys(ob).filter(_ => _ && ignoreFuxxProps.indexOf(_) < 0 && (prefix.indexOf('proof.transactions') < 0 || ignoreTxProps.indexOf(_) < 0))) {
+        if (k === 'txIndex' && test.response[0].result === null)
+            continue
         const val = ob[k]
         if (typeof val === 'string') {
             if (val.startsWith('0x')) {
@@ -167,6 +169,9 @@ async function runSingleTest(test, c) {
             '0x1': {
                 needsUpdate: false
             },
+            '0x5': {
+                needsUpdate: false
+            },
             '0x2a': {
                 needsUpdate: false
             }
@@ -176,9 +181,12 @@ async function runSingleTest(test, c) {
     let s = false, error = null
     try {
         const response = await client.send(test.request)
-        s = !!(response && response.result)
+        if (test.intern && JSON.stringify(response.result) != JSON.stringify(test.response[0].result))
+            throw new Error('wrong result: actual:' + JSON.stringify(response.result) + 'should:' + JSON.stringify(test.response[0].result))
+        s = !!(response && response.result !== undefined)
     }
     catch (err) {
+        //        console.log(err.stack)
         error = err
     }
     client.free()

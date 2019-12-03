@@ -102,29 +102,6 @@ int rlp_decode_in_list(bytes_t* b, int index, bytes_t* dst);
 int rlp_decode_len(bytes_t* b);
 
 /**
- * returns the number of bytes of the element specified by index.
- * 
- * \param b the ptr to the incoming bytes to decode.
- * \param index index of the elemnt to decode
- * 
- * \return the number of bytes or 0 if not found.
- */
-int rlp_decode_item_len(bytes_t* b, int index);
-
-/**
- * returns the type of the element specified by index.
- * 
- * \param b the ptr to the incoming bytes to decode.
- * \param index index of the elemnt to decode
- * 
- * \return
- * - 0 : means item out of range
- * - 1 : item found
- * - 2 : list found ( you can then decode the same bytes again) 
- */
-int rlp_decode_item_type(bytes_t* b, int index);
-
-/**
  * encode a item as single string and add it to the bytes_builder.
  * 
  * \param bb a builder a dst

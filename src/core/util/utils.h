@@ -78,9 +78,6 @@ static inline uint32_t bytes_to_int(uint8_t* data, int len) {
 /** converts a character into a uint64_t*/
 uint64_t c_to_long(char* a, int l);
 
-/** the number of bytes used for a conerting a hex into bytes. */
-int size_of_bytes(int str_len);
-
 /**  converts a hexchar to byte (4bit) */
 uint8_t strtohex(char c);
 
@@ -89,9 +86,6 @@ extern const unsigned char* u64tostr(uint64_t value, char* pBuf, int szBuf);
 
 /** convert a c string to a byte array storing it into a existing buffer */
 int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size);
-
-/** convert hex to long */
-uint64_t hex2long(char* buf);
 
 /** convert a c string to a byte array creating a new buffer */
 bytes_t* hex2byte_new_bytes(char* buf, int len);
@@ -109,8 +103,6 @@ int sha3_to(bytes_t* data, void* dst);
 void long_to_bytes(uint64_t val, uint8_t* dst);
 /** converts a int to 4 bytes */
 void int_to_bytes(uint32_t val, uint8_t* dst);
-/** compares 32 bytes and returns 0 if equal*/
-int hash_cmp(uint8_t* a, uint8_t* b);
 
 /** duplicate the string */
 char* _strdupn(char* src, int len);

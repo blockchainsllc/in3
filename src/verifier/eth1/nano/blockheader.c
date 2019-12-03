@@ -44,6 +44,7 @@
 #include "../../../verifier/eth1/nano/vhist.h"
 #include <string.h>
 
+#ifdef POA
 /** gets the signer from a blockheader in a aura chain.*/
 static in3_ret_t get_aura_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;
@@ -329,7 +330,7 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
 
   return passed * 100 / val_len >= needed_finality ? IN3_OK : vc_err(vc, "not enough blocks to reach finality");
 }
-
+#endif
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
@@ -358,6 +359,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
 
   // if we expect no signatures ...
   if (res == IN3_OK && vc->config->signaturesCount == 0) {
+#ifdef POA
     vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
     if (vc->chain && vc->chain->spec && eth_get_engine(vc, header, vc->chain->spec->result, &vh) == ENGINE_AURA) {
@@ -376,6 +378,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       res = IN3_OK; // we didn't request signatures so blockheader should be ok.
     }
     vh_free(vh);
+#endif
   } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
     // no signatures found,even though we expected some.
     res = vc_err(vc, "missing signatures");

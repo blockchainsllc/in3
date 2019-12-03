@@ -128,7 +128,7 @@ int evm_stack_pop_ref(evm_t* evm, uint8_t** dst) {
 int evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst) {
   if (evm->stack_size - pos < 0 || pos < 1) return EVM_ERROR_EMPTY_STACK; // stack empty
   uint32_t p = evm->stack.b.len;
-  uint8_t  i, l;
+  uint8_t  i, l = 0;
   for (i = 0; i < pos; i++) {
     l = evm->stack.b.data[p - 1];
     p -= l + 1;
@@ -221,9 +221,9 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   }
 
   if (last_gas > evm->gas) {
-    in3_log_trace("%08" PRIx64 " %03i \x1B[33m%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
+    in3_log_trace("%" PRIu64 " %03i \x1B[33m%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, last_gas - evm->gas, op);
   } else {
-    in3_log_trace("%08" PRIx64 " %03i \x1B[33m+%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
+    in3_log_trace("%" PRIu64 " %03i \x1B[33m+%5" PRIu64 "\x1B[0m %02x : ", evm->gas, pos, evm->gas - last_gas, op);
   }
 #else
   UNUSED_VAR(last_gas);
