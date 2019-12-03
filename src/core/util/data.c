@@ -400,7 +400,7 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
       jp->c += i;
 
       if (neg) {
-        char   tmp[8];
+        char   tmp[22]; // max => -18446744073709551000
         size_t l   = sprintf(tmp, "-%" PRIi64, i64Val);
         item->len  = l | T_STRING << 28;
         item->data = _malloc(l + 1);
