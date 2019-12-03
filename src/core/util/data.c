@@ -548,17 +548,6 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
     case '8':
     case '9':
       return parse_number(jp, parsed_next_item(jp, T_INTEGER, key, parent));
-    case '-': // at the moment we do not support negative values, so we create a string
-    {
-      jp->c++;
-      d_token_t* item = parsed_next_item(jp, T_INTEGER, key, parent);                    // create an empty token
-      int        rn   = parse_number(jp, item);                                          // if the number is bigger than 32bit, it will be stored as data
-      if (!rn && !item->data) {                                                          // we convert the value to a signed string
-        item->data = malloc(10);                                                         // since a 32bit number will never have more than 9 chars, this is enough.
-        item->len  = (T_STRING << 28) | sprintf((char*) item->data, "-%d", d_int(item)); // create the string
-      }
-      return rn;
-    }
     default:
       return -2;
   }
