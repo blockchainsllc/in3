@@ -37,6 +37,7 @@
 #define K_METHOD            key("method")
 #define K_PARAMS            key("params")
 #define K_ERROR             key("error")
+#define K_MESSAGE           key("message")
 
 #define K_RESULT            key("result")
 #define K_IN3               key("in3")
