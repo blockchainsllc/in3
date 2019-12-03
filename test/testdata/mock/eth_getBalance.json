@@ -1,5 +1,20 @@
 {
-	"request": [],
+	"request": [
+		{
+			"id": 1,
+			"jsonrpc": "2.0",
+			"method": "eth_getBalance",
+			"params": [
+				"0xf99dbd3cfc292b11f74deea9fa730825ee0b56f2",
+				"0x17bbd7"
+			],
+			"in3": {
+				"version": "2.1.0",
+				"chainId": "0x5",
+				"verification": "proof"
+			}
+		}
+	],
 	"response": [
 		{
 			"id": 1,

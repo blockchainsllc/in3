@@ -1,5 +1,21 @@
 {
-	"request": [],
+	"request": [
+		{
+			"id": 1,
+			"jsonrpc": "2.0",
+			"method": "in3_nodeList",
+			"params": [
+				0,
+				"0x02c99d25026be9917ab32fd40a09463b66e1d0a27348707218ce877f1f21af92",
+				[]
+			],
+			"in3": {
+				"version": "2.1.0",
+				"chainId": "0x5",
+				"verification": "proof"
+			}
+		}
+	],
 	"response": [
 		{
 			"id": 1,

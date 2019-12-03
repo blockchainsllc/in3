@@ -1,5 +1,19 @@
 {
-	"request": [],
+	"request": [
+		{
+			"id": 1,
+			"jsonrpc": "2.0",
+			"method": "eth_getBlockTransactionCountByHash",
+			"params": [
+				"0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d"
+			],
+			"in3": {
+				"version": "2.1.0",
+				"chainId": "0x5",
+				"verification": "proof"
+			}
+		}
+	],
 	"response": [
 		{
 			"jsonrpc": "2.0",

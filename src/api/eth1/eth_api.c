@@ -148,14 +148,12 @@ static uint256_t uint256_from_bytes(bytes_t bytes) {
 
 /** returns the result from a previously executed ctx*/
 static d_token_t* get_result(in3_ctx_t* ctx) {
-  if(!ctx->responses) {
-    set_error(ETIMEDOUT, "we didint get response. possible error EXC_BAD_ACCESS address=0x0"); 
+  if (ctx->error){                                    // error means something went wrong during verification or a timeout occured.
+    set_error(ETIMEDOUT, ctx->error);                 // so we copy the error as last_error
     return NULL;
   }
   d_token_t* res = d_get(ctx->responses[0], K_RESULT);
   if (res) return res;                                // everthing is good, we have a result
-  if (ctx->error)                                     // error means something went wrong during verification or a timeout occured.
-    set_error(ETIMEDOUT, ctx->error);                 // so we copy the error as last_error
   else {                                              // but since we did not get a result and even without a error
     d_token_t* r = d_get(ctx->responses[0], K_ERROR); // we find the error in the response from the server
     if (d_type(r) == T_OBJECT) {                      // the response was correct but contains a error-object, which we convert into a string

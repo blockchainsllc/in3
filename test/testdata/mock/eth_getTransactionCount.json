@@ -1,5 +1,20 @@
 {
-	"request": [],
+	"request": [
+		{
+			"id": 1,
+			"jsonrpc": "2.0",
+			"method": "eth_getTransactionCount",
+			"params": [
+				"0x0de496ae79194d5f5b18eb66987b504a0feb32f2",
+				"latest"
+			],
+			"in3": {
+				"version": "2.1.0",
+				"chainId": "0x5",
+				"verification": "proof"
+			}
+		}
+	],
 	"response": [
 		{
 			"id": 1,

@@ -31,7 +31,6 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
 #ifndef TEST
 #define TEST
 #endif
@@ -110,7 +109,8 @@ static void free_in3() {
 }
 
 static void test_get_balance() {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getBalance");
   // the address of account whose balance we want to get
   address_t account;
   hex2byte_arr("0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2", -1, account, 20);
@@ -121,7 +121,9 @@ static void test_get_balance() {
 }
 
 static void test_get_tx_count() {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getTransactionCount");
+
   // the address of account whose balance we want to get
   address_t account;
   hex2byte_arr("0x0de496ae79194d5f5b18eb66987b504a0feb32f2", -1, account, 20);
@@ -141,14 +143,15 @@ static void test_new_block_filter() {
 }
 
 static void test_block_number() {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_blockNumber");
   uint64_t blknum = eth_blockNumber(in3);
   TEST_ASSERT_TRUE(blknum > 0);
   free_in3();
 }
 
 static void test_new_pending_tx_filter() {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
   in3_ret_t ret = eth_newPendingTransactionFilter(in3);
   //we expect this to fail we dont support pending
   TEST_ASSERT_TRUE(ret == IN3_ENOTSUP);
@@ -156,7 +159,11 @@ static void test_new_pending_tx_filter() {
 }
 
 static void test_get_filter_changes() {
-  init_in3(mock_transport, 0x5);
+
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_blockNumber");
+  add_response_test("eth_blockNumber");
+  add_response_test("eth_getLogs");
   bytes32_t blk_hash1;
   hex2byte_arr("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash1, 32);
   bytes32_t blk_hash2;
@@ -182,7 +189,10 @@ static void test_get_filter_changes() {
 }
 
 static void test_get_logs() {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_blockNumber");
+  add_response_test("eth_blockNumber");
+  add_response_test("eth_getLogs");
   // Create filter options
   char b[30];
   sprintf(b, "{\"fromBlock\":\"0x%" PRIx64 "\"}", eth_blockNumber(in3) - 2);
@@ -228,7 +238,8 @@ static void test_get_logs() {
 }
 static void test_get_tx_blkhash_index(void) {
   // the hash of transaction that we want to get
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getTransactionByBlockHashAndIndex");
   bytes32_t blk_hash;
   hex2byte_arr("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash, 32);
 
@@ -247,8 +258,8 @@ static void test_get_tx_blkhash_index(void) {
 
 static void test_get_tx_blknum_index(void) {
   // the hash of transaction that we want to get
-  init_in3(mock_transport, 0x5);
-
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getTransactionByBlockNumberAndIndex");
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByBlockNumberAndIndex(in3, BLKNUM(1723267), 0);
 
@@ -264,7 +275,8 @@ static void test_get_tx_blknum_index(void) {
 
 static void test_get_tx_hash(void) {
   // the hash of transaction that we want to get
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getTransactionByHash");
   bytes32_t tx_hash;
   hex2byte_arr("0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164", -1, tx_hash, 32);
   // get the tx by hash
@@ -283,7 +295,8 @@ static void test_get_tx_hash(void) {
 static void test_get_tx_receipt(void) {
   // the hash of transaction whose receipt we want to get
 
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getTransactionReceipt");
   bytes32_t tx_hash;
   hex2byte_arr("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
 
@@ -303,7 +316,9 @@ static void test_get_tx_receipt(void) {
 }
 
 static void test_send_tx(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getTransactionCount");
+  add_response_test("eth_sendRawTransaction");
   // prepare parameters
   address_t to, from;
   hex2byte_arr("0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2", -1, from, 20);
@@ -331,7 +346,8 @@ static void test_send_tx(void) {
 }
 
 static void test_eth_chain_id(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_chainId");
   uint64_t chain_id = eth_chainId(in3);
   // we expect this to fail as we dont have verification for this
   char* error = eth_last_error();
@@ -341,14 +357,16 @@ static void test_eth_chain_id(void) {
 }
 
 static void test_eth_gas_price(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_gasPrice");
   uint64_t price = eth_gasPrice(in3);
   TEST_ASSERT_TRUE(price > 1);
   free_in3();
 }
 
 static void test_eth_getblock_number(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getBlockByNumber");
   eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(1692767), false);
 
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
@@ -366,7 +384,8 @@ static void test_eth_getblock_number(void) {
 }
 
 static void test_eth_get_storage_at(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getStorageAt");
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
   hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
@@ -380,7 +399,8 @@ static void test_eth_get_storage_at(void) {
 }
 
 static void test_eth_getblock_txcount_number(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getBlockTransactionCountByNumber");
 
   uint64_t tx_count = eth_getBlockTransactionCountByNumber(in3, BLKNUM(1692767));
   // we expect this to fail as we dont have verification for this
@@ -391,7 +411,8 @@ static void test_eth_getblock_txcount_number(void) {
 }
 
 static void test_eth_getblock_txcount_hash(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getBlockTransactionCountByHash");
   bytes32_t blk_hash;
   hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
 
@@ -403,7 +424,8 @@ static void test_eth_getblock_txcount_hash(void) {
 }
 
 static void test_eth_getblock_hash(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getBlockByHash");
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
@@ -424,7 +446,9 @@ static void test_eth_getblock_hash(void) {
 }
 
 static void test_eth_call_fn(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_call");
+  add_response_test("eth_getCode");
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
   hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
@@ -445,7 +469,8 @@ static void test_eth_call_fn(void) {
 }
 
 static void test_eth_get_code(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
+  add_response_test("eth_getCode");
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
   hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
@@ -457,8 +482,9 @@ static void test_eth_get_code(void) {
 }
 
 static void test_estimate_fn(void) {
-  init_in3(mock_transport, 0x5);
+  init_in3(test_transport, 0x5);
   address_t contract;
+  add_response_test("eth_estimateGas");
   //setup lock access contract address to be excuted with eth_call
   hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
   //ask for the access to the lock
@@ -470,7 +496,8 @@ static void test_estimate_fn(void) {
 }
 
 static void test_get_uncle_count_blknum(void) {
-  init_in3(mock_transport, 0x1);
+  init_in3(test_transport, 0x1);
+  add_response_test("eth_getUncleCountByBlockNumber");
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
@@ -483,7 +510,8 @@ static void test_get_uncle_count_blknum(void) {
   free_in3();
 }
 static void test_get_uncle_count_blkhash(void) {
-  init_in3(mock_transport, 0x1);
+  init_in3(test_transport, 0x1);
+   add_response_test("eth_getUncleCountByBlockHash");
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex2byte_arr("0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845", -1, blk_hash, 32);
@@ -497,7 +525,8 @@ static void test_get_uncle_count_blkhash(void) {
 }
 
 static void test_get_uncle_blknum_index(void) {
-  init_in3(mock_transport, 0x1);
+  init_in3(test_transport, 0x1);
+  add_response_test("eth_getUncleByBlockNumberAndIndex");
   //get block number
   eth_block_t* block = eth_getUncleByBlockNumberAndIndex(in3, BLKNUM(56160), 0);
   //we expect this to fail we dont have verification for this
@@ -542,13 +571,12 @@ int main() {
   RUN_TEST(test_get_uncle_blknum_index);
   RUN_TEST(test_get_uncle_count_blkhash);
   RUN_TEST(test_get_uncle_count_blknum);
-  RUN_TEST(test_new_block_filter);
   RUN_TEST(test_new_pending_tx_filter);
   RUN_TEST(test_eth_chain_id);
   RUN_TEST(test_eth_getblock_txcount_hash);
   RUN_TEST(test_eth_getblock_txcount_number);
-
   RUN_TEST(test_get_filter_changes);
+  RUN_TEST(test_new_block_filter);
 
   return TESTS_END();
 }

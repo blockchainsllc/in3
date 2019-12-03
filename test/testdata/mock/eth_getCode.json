@@ -1,5 +1,20 @@
 {
-	"request": [],
+	"request": [
+		{
+			"id": 1,
+			"jsonrpc": "2.0",
+			"method": "eth_getCode",
+			"params": [
+				"0x36643f8d17fe745a69a2fd22188921fade60a98b",
+				"latest"
+			],
+			"in3": {
+				"version": "2.1.0",
+				"chainId": "0x5",
+				"verification": "proof"
+			}
+		}
+	],
 	"response": [
 		{
 			"id": 1,

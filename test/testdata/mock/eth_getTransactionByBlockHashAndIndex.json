@@ -1,5 +1,20 @@
 {
-    "request": [],
+    "request": [
+        {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "eth_getTransactionByBlockHashAndIndex",
+            "params": [
+                "0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4",
+                "0x0"
+            ],
+            "in3": {
+                "version": "2.1.0",
+                "chainId": "0x5",
+                "verification": "proof"
+            }
+        }
+    ],
     "response": [
         {
             "jsonrpc": "2.0",

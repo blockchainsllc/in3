@@ -1,5 +1,19 @@
 {
-    "request": [],
+    "request": [
+        {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "eth_getUncleCountByBlockNumber",
+            "params": [
+                "0xdb60"
+            ],
+            "in3": {
+                "version": "2.1.0",
+                "chainId": "0x1",
+                "verification": "proof"
+            }
+        }
+    ],
     "response": [
         {
             "jsonrpc": "2.0",
