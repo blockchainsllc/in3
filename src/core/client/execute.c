@@ -330,6 +330,12 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     w       = w->next;
 
     if (ctx->client->use_http) {
+      if (!in3_node_props_get(&ctx->nodes[n].node->props, NODE_PROP_HTTP_NODES)) {
+        sb_free(payload);
+        free_urls(urls, nodes_count, ctx->client->use_http);
+        ctx_set_error(ctx, "could not generate the payload", IN3_ECONFIG);
+        return NULL;
+      }
       char* url = NULL;
       int   l   = strlen(urls[n]);
       if (strncmp(urls[n], "https://", 8) == 0) {
