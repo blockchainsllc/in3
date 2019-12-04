@@ -111,7 +111,6 @@ typedef struct in3_request_config {
   bytes_t*           clientSignature;     /**< the signature of the client with the client key */
   bytes_t*           signatures;          /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signaturesCount;     /**< number or addresses */
-
 } in3_request_config_t;
 
 /** incubed node-configuration. 
@@ -366,6 +365,8 @@ typedef struct in3_t_ {
   /** filter handler */
   in3_filter_handler_t* filters;
 
+  /** address of whiteList contract */
+  address_t whiteListContract;
 } in3_t;
 
 /** creates a new Incubes configuration and returns the pointer.

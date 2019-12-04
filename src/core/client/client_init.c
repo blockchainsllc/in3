@@ -374,6 +374,8 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
       c->replaceLatestBlock = (uint16_t) d_int(iter.token);
     else if (iter.token->key == key("requestCount"))
       c->requestCount = (uint8_t) d_int(iter.token);
+    else if (iter.token->key == key("whiteListContract"))
+      memcpy(c->whiteListContract, d_bytesl(iter.token, 20)->data, 20);
     else if (iter.token->key == key("rpc")) {
       c->proof        = PROOF_NONE;
       c->chainId      = ETH_CHAIN_ID_LOCAL;
