@@ -342,9 +342,7 @@ export declare interface RPCResponse {
     result?: any
 }
 
-
-export class IN3 {
-
+export default class IN3 {           //++dev
     /**
      * creates a new client.
      * @param config a optional config
@@ -369,7 +367,7 @@ export class IN3 {
      * 
      * if the response contains an error, this will be thrown. if not the result will be returned.
      */
-    public sendRPC(method: string, params: any[]): Promise<any>;
+    public sendRPC(method: string, params?: any[]): Promise<any>;
 
     /**
      * disposes the Client. This must be called in order to free allocated memory!
@@ -697,7 +695,7 @@ export declare interface Signer {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Signature>
 }
 
 export interface EthAPI {
@@ -861,7 +859,8 @@ export interface EthAPI {
     sign(account: Address, data: Data): Promise<Signature>;
     /** sends a Transaction */
     sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
-    contractAt(abi: ABI[], address: Address): {
+
+    contractAt(abi: ABI[], address?: Address): {
         [methodName: string]: any;
         _address: Address;
         _eventHashes: any;
@@ -908,7 +907,7 @@ export declare class SimpleSigner implements Signer {
     accounts: {
         [ac: string]: Uint8Array;
     };
-    constructor(...pks: (hash | Uint8Array)[]);
+    constructor(...pks: (Hash | Uint8Array)[]);
     addAccount(pk: Hash): string;
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3, tx: Transaction) => Promise<Transaction>
@@ -920,7 +919,7 @@ export declare class SimpleSigner implements Signer {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Signature>
 }
 
 /**
@@ -966,12 +965,25 @@ export declare interface Utils {
      */
     toHex(data: Hex | Uint8Array | number | bigint, len?: number): Hex
 
+    /** removes all leading 0 in the hexstring */
+    toMinHex(key: string | Buffer | number): string;
+
     /**
      * converts any value to a Uint8Array.
      * optionally the target length can be specified (in bytes)
      */
-    toBuffer(data: Hex | Uint8Array | number | bigint, len?: number): Uint8Array
+    toBuffer(data: Hex | Uint8Array | number | bigint, len?: number): Uint8Array           
 
+    /**
+     * converts any value to a hex string (with prefix 0x).
+     * optionally the target length can be specified (in bytes)
+     */
+    toNumber(data: string | Buffer | number | bigint): number                               
+
+    /**
+     * convert to String
+     */
+    toUtf8(val: any): string;                                                               
 
     /**
      * create a signature (65 bytes) for the given message and kexy
@@ -998,4 +1010,4 @@ export declare interface Utils {
 
 }
 
-export = IN3
+// export = IN3                                 //--dev
