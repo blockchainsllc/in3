@@ -550,33 +550,33 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   //PASSING..
-  RUN_TEST(test_eth_get_storage_at);
-  RUN_TEST(test_get_balance);
-  RUN_TEST(test_block_number);
-  RUN_TEST(test_eth_gas_price);
-  RUN_TEST(test_eth_getblock_number);
-  RUN_TEST(test_eth_getblock_hash);
-  RUN_TEST(test_get_logs);
+  // RUN_TEST(test_eth_get_storage_at);
+  // RUN_TEST(test_get_balance);
+  // RUN_TEST(test_block_number);
+  // RUN_TEST(test_eth_gas_price);
+  // RUN_TEST(test_eth_getblock_number);
+  // RUN_TEST(test_eth_getblock_hash);
+  // RUN_TEST(test_get_logs);
   RUN_TEST(test_eth_call_fn);
-  RUN_TEST(test_get_tx_hash);
-  RUN_TEST(test_get_tx_blkhash_index);
-  RUN_TEST(test_get_tx_blknum_index);
-  RUN_TEST(test_get_tx_count);
-  RUN_TEST(test_get_tx_receipt);
-  RUN_TEST(test_send_tx);
-  RUN_TEST(test_eth_call_fn);
-  RUN_TEST(test_eth_get_code);
-  RUN_TEST(test_estimate_fn);
-  // /* verification for chain_id not supported */
-  RUN_TEST(test_get_uncle_blknum_index);
-  RUN_TEST(test_get_uncle_count_blkhash);
-  RUN_TEST(test_get_uncle_count_blknum);
-  RUN_TEST(test_new_pending_tx_filter);
-  RUN_TEST(test_eth_chain_id);
-  RUN_TEST(test_eth_getblock_txcount_hash);
-  RUN_TEST(test_eth_getblock_txcount_number);
-  RUN_TEST(test_get_filter_changes);
-  RUN_TEST(test_new_block_filter);
+  // RUN_TEST(test_get_tx_hash);
+  // RUN_TEST(test_get_tx_blkhash_index);
+  // RUN_TEST(test_get_tx_blknum_index);
+  // RUN_TEST(test_get_tx_count);
+  // RUN_TEST(test_get_tx_receipt);
+  // RUN_TEST(test_send_tx);
+  // RUN_TEST(test_eth_call_fn);
+  // RUN_TEST(test_eth_get_code);
+  // RUN_TEST(test_estimate_fn);
+  // // /* verification for chain_id not supported */
+  // RUN_TEST(test_get_uncle_blknum_index);
+  // RUN_TEST(test_get_uncle_count_blkhash);
+  // RUN_TEST(test_get_uncle_count_blknum);
+  // RUN_TEST(test_new_pending_tx_filter);
+  // RUN_TEST(test_eth_chain_id);
+  // RUN_TEST(test_eth_getblock_txcount_hash);
+  // RUN_TEST(test_eth_getblock_txcount_number);
+  // RUN_TEST(test_get_filter_changes);
+  // RUN_TEST(test_new_block_filter);
 
   return TESTS_END();
 }
