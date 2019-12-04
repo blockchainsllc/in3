@@ -105,7 +105,9 @@ static void test_get_tx_count() {
 }
 
 static void test_new_block_filter() {
-  init_in3(NULL, 0x5);
+  init_in3(test_transport, 0x5);
+  // we can add any mock json as we need trasnport but we are not calling any rpc endpoint
+  add_response_test("eth_blockNumber");
   //get filter id for new block
   size_t fid = eth_newBlockFilter(in3);
   TEST_ASSERT_TRUE(fid > 0);
@@ -546,7 +548,7 @@ int main() {
   RUN_TEST(test_eth_getblock_txcount_hash);
   RUN_TEST(test_eth_getblock_txcount_number);
   RUN_TEST(test_get_filter_changes);
-  RUN_TEST(test_new_block_filter);
+   RUN_TEST(test_new_block_filter);
 
   return TESTS_END();
 }
