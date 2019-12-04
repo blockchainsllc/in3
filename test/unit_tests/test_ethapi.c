@@ -523,7 +523,6 @@ int main() {
   TESTS_BEGIN();
   //PASSING..
   RUN_TEST(test_get_balance);
-  RUN_TEST(test_eth_get_storage_at);
   RUN_TEST(test_block_number);
   RUN_TEST(test_eth_gas_price);
   RUN_TEST(test_eth_getblock_number);
@@ -548,7 +547,8 @@ int main() {
   RUN_TEST(test_eth_getblock_txcount_hash);
   RUN_TEST(test_eth_getblock_txcount_number);
   RUN_TEST(test_get_filter_changes);
-   RUN_TEST(test_new_block_filter);
+  RUN_TEST(test_new_block_filter);
+  RUN_TEST(test_eth_get_storage_at);
 
   return TESTS_END();
 }
