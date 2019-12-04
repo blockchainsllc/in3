@@ -144,6 +144,16 @@ int sha3_to(bytes_t* data, void* dst) {
   return 0;
 }
 
+void clean_json_str(char* s) {
+    const char* d = s;
+    do {
+        while (*d == ' ' || *d == '\x09' || *d == '\t' | *d == '\n') {
+            ++d;
+        }
+      *s++ = *d++;
+    } while (*s);
+}
+
 bytes_t* sha3(bytes_t* data) {
   bytes_t*        out = NULL;
   struct SHA3_CTX ctx;

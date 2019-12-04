@@ -4,11 +4,12 @@
 #include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
+#include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../../src/verifier/eth1/basic/signer.h"
 #include "../test_utils.h"
 #include <stdio.h>
-#include <unistd.h> 
+#include <unistd.h>
 #define MOCK_PATH "../test/testdata/mock/%s.json"
 typedef struct response_s {
   char*              request_method;
@@ -19,8 +20,8 @@ typedef struct response_s {
 
 response_t* responses = NULL;
 
-char * read_json_response_buffer(char* path) {
-  char *response_buffer;
+char* read_json_response_buffer(char* path) {
+  char* response_buffer;
   long  length;
   FILE* f = fopen(path, "r");
   if (f) {
@@ -73,12 +74,13 @@ void add_response(char* request_method, char* request_params, char* result, char
 void add_response_test(char* test) {
   char path[70];
   sprintf(path, MOCK_PATH, test);
-  char *buffer= read_json_response_buffer(path);
-  json_ctx_t* mock  = parse_json(buffer);
-  str_range_t res = d_to_json(d_get_at(d_get(mock->result,key("response")),0));
-  d_token_t* req = d_get_at(d_get(mock->result,key("request")),0);
-  char* method =  d_create_json(d_get(req, key("method")));
-  char* params =  d_create_json(d_get(req, key("params")));
+  char*       buffer = read_json_response_buffer(path);
+  json_ctx_t* mock   = parse_json(buffer);
+  str_range_t res    = d_to_json(d_get_at(d_get(mock->result, key("response")), 0));
+  d_token_t*  req    = d_get_at(d_get(mock->result, key("request")), 0);
+  char*       params =  d_create_json(d_get(req, key("params")));
+  clean_json_str(params);
+  char* method = d_get_string(req, "method");
   response_t* r = responses;
   while (r) {
     if (r->next)
@@ -90,7 +92,7 @@ void add_response_test(char* test) {
   n->request_method = method;
   n->request_params = params;
   n->response       = malloc(res.len);
-  sprintf(n->response,"%s",res.data);
+  sprintf(n->response, "%s", res.data);
 
   if (r)
     r->next = n;
@@ -109,14 +111,18 @@ in3_ret_t test_transport(in3_request_t* req) {
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
-  d_token_t*  request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  d_token_t* request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
   str_range_t params  = d_to_json(d_get(request, key("params")));
   char        p[params.len + 1];
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
-  //TODO: missing to fix this check for proper use 
-  //TEST_ASSERT_EQUAL_STRING(responses->request_method, d_get_string(request, "method"));
-  //TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
+  clean_json_str(p);
+  //char *trimmed = my_strtrim(p);
+  TEST_ASSERT_EQUAL_STRING(responses->request_method, d_get_string(request, "method"));
+  //Missing to fix this check with diferent json formating
+  TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
+
+
   free_json(r);
 
   sb_add_chars(&req->results->result, responses->response);
@@ -127,12 +133,11 @@ in3_ret_t test_transport(in3_request_t* req) {
   return IN3_OK;
 }
 
-
-static in3_ret_t setup_transport(in3_request_t* req, char * path) {
+static in3_ret_t setup_transport(in3_request_t* req, char* path) {
   // now parse the json
-  char *response_buffer = read_json_response_buffer(path);
-  json_ctx_t* res  = parse_json(response_buffer);
-  str_range_t json = d_to_json(d_get_at(d_get(res->result,key("response")),0));
+  char*       response_buffer = read_json_response_buffer(path);
+  json_ctx_t* res             = parse_json(response_buffer);
+  str_range_t json            = d_to_json(d_get_at(d_get(res->result, key("response")), 0));
   sb_add_range(&req->results->result, json.data, 0, json.len);
   free_json(res);
   _free(response_buffer);
@@ -235,8 +240,7 @@ in3_ret_t mock_transport(in3_request_t* req) {
       in3_log_debug("Returning eth_estimateGas Response ...\n");
       sprintf(path, MOCK_PATH, "eth_estimateGas");
       return setup_transport(req, path);
-    } 
-
+    }
   }
   return 0;
 }

@@ -42,6 +42,7 @@
 #include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/verifier/eth1/basic/signer.h"
 #include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -54,45 +55,14 @@
 #include "./mock.h"
 #include <stdio.h>
 #include <unistd.h>
-/*
-uint256_t         eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block);      
-bytes_t           eth_getCode(in3_t* in3, address_t account, eth_blknum_t block);                          
-uint256_t         eth_getBalance(in3_t* in3, address_t account, eth_blknum_t block);                       
-uint64_t          eth_blockNumber(in3_t* in3);                                                             
-uint64_t          eth_gasPrice(in3_t* in3);                                                                
-eth_block_t*      eth_getBlockByNumber(in3_t* in3, eth_blknum_t number, bool include_tx);                  
-eth_block_t*      eth_getBlockByHash(in3_t* in3, bytes32_t hash, bool include_tx);                         
-eth_log_t*        eth_getLogs(in3_t* in3, char* fopt);                                                     
-in3_ret_t         eth_newFilter(in3_t* in3, json_ctx_t* options);                                          
-in3_ret_t         eth_newBlockFilter(in3_t* in3);                                                          
-in3_ret_t         eth_newPendingTransactionFilter(in3_t* in3);                                             
-bool              eth_uninstallFilter(in3_t* in3, size_t id);                                              
-in3_ret_t         eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, eth_log_t** logs); 
-in3_ret_t         eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs);                              
-uint64_t          eth_chainId(in3_t* in3);                                                                 
-uint64_t          eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash);                          
-uint64_t          eth_getBlockTransactionCountByNumber(in3_t* in3, eth_blknum_t block);                    
-json_ctx_t*       eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);      
-uint64_t          eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);  
-eth_tx_t*         eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash);                                 
-eth_tx_t*         eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index);   
-eth_tx_t*         eth_getTransactionByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index);   
-uint64_t          eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t block);              
-eth_block_t*      eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index);             
-uint64_t          eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash);                                
-uint64_t          eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block);                          
-bytes_t*          eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_T(uint64_t) gas,  
-                                      OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value,         
-                                      OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce);               
-bytes_t*          eth_sendRawTransaction(in3_t* in3, bytes_t data); 
-*/
 
 static in3_t* in3 = NULL;
 static void   init_in3(in3_transport_send custom_transport, uint64_t chain) {
   int err;
   in3_register_eth_full();
   in3                 = in3_new();
-  in3->transport      = custom_transport; // use curl to handle the requests
+  if (custom_transport)
+    in3->transport      = custom_transport; // use curl to handle the requests
   in3->requestCount   = 1;                // number of requests to sendp
   in3->includeCode    = 1;
   in3->chainId        = chain;
@@ -135,7 +105,7 @@ static void test_get_tx_count() {
 }
 
 static void test_new_block_filter() {
-  init_in3(mock_transport, 0x5);
+  init_in3(NULL, 0x5);
   //get filter id for new block
   size_t fid = eth_newBlockFilter(in3);
   TEST_ASSERT_TRUE(fid > 0);
@@ -351,8 +321,8 @@ static void test_eth_chain_id(void) {
   uint64_t chain_id = eth_chainId(in3);
   // we expect this to fail as we dont have verification for this
   char* error = eth_last_error();
-  in3_log_debug("error found: %s", error);
-  TEST_ASSERT_TRUE(!chain_id);
+  in3_log_debug("error found: %s %d", error, chain_id);
+  TEST_ASSERT_TRUE(chain_id == 5);
   free_in3();
 }
 
@@ -550,33 +520,33 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   //PASSING..
-  // RUN_TEST(test_eth_get_storage_at);
-  // RUN_TEST(test_get_balance);
-  // RUN_TEST(test_block_number);
-  // RUN_TEST(test_eth_gas_price);
-  // RUN_TEST(test_eth_getblock_number);
-  // RUN_TEST(test_eth_getblock_hash);
-  // RUN_TEST(test_get_logs);
+  RUN_TEST(test_get_balance);
+  RUN_TEST(test_eth_get_storage_at);
+  RUN_TEST(test_block_number);
+  RUN_TEST(test_eth_gas_price);
+  RUN_TEST(test_eth_getblock_number);
+  RUN_TEST(test_eth_getblock_hash);
+  RUN_TEST(test_get_logs);
   RUN_TEST(test_eth_call_fn);
-  // RUN_TEST(test_get_tx_hash);
-  // RUN_TEST(test_get_tx_blkhash_index);
-  // RUN_TEST(test_get_tx_blknum_index);
-  // RUN_TEST(test_get_tx_count);
-  // RUN_TEST(test_get_tx_receipt);
-  // RUN_TEST(test_send_tx);
-  // RUN_TEST(test_eth_call_fn);
-  // RUN_TEST(test_eth_get_code);
-  // RUN_TEST(test_estimate_fn);
-  // // /* verification for chain_id not supported */
-  // RUN_TEST(test_get_uncle_blknum_index);
-  // RUN_TEST(test_get_uncle_count_blkhash);
-  // RUN_TEST(test_get_uncle_count_blknum);
-  // RUN_TEST(test_new_pending_tx_filter);
-  // RUN_TEST(test_eth_chain_id);
-  // RUN_TEST(test_eth_getblock_txcount_hash);
-  // RUN_TEST(test_eth_getblock_txcount_number);
-  // RUN_TEST(test_get_filter_changes);
-  // RUN_TEST(test_new_block_filter);
+  RUN_TEST(test_get_tx_hash);
+  RUN_TEST(test_get_tx_blkhash_index);
+  RUN_TEST(test_get_tx_blknum_index);
+  RUN_TEST(test_get_tx_count);
+  RUN_TEST(test_get_tx_receipt);
+  RUN_TEST(test_send_tx);
+  RUN_TEST(test_eth_call_fn);
+  RUN_TEST(test_eth_get_code);
+  RUN_TEST(test_estimate_fn);
+  // /* verification for chain_id not supported */
+  RUN_TEST(test_get_uncle_blknum_index);
+  RUN_TEST(test_get_uncle_count_blkhash);
+  RUN_TEST(test_get_uncle_count_blknum);
+  RUN_TEST(test_new_pending_tx_filter);
+  RUN_TEST(test_eth_chain_id);
+  RUN_TEST(test_eth_getblock_txcount_hash);
+  RUN_TEST(test_eth_getblock_txcount_number);
+  RUN_TEST(test_get_filter_changes);
+  RUN_TEST(test_new_block_filter);
 
   return TESTS_END();
 }

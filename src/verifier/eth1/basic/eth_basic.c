@@ -97,6 +97,8 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return eth_verify_account_proof(vc);
   else if (strcmp(method, "eth_gasPrice") == 0)
     return IN3_OK;
+  else if (strcmp(method, "eth_chainId") == 0)
+    return IN3_OK;
   else if (!strcmp(method, "eth_newFilter") || !strcmp(method, "eth_newBlockFilter") || !strcmp(method, "eth_newPendingFilter") || !strcmp(method, "eth_uninstallFilter") || !strcmp(method, "eth_getFilterChanges"))
     return IN3_OK;
   else if (strcmp(method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
