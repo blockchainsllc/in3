@@ -354,7 +354,7 @@ bytes_t eth_getCode(in3_t* in3, address_t account, eth_blknum_t block) {
 uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
-  params_add_bytes(params, bytes(key, 32));
+  params_add_bytes(params, bytes(key, 20));
   params_add_blk_num_t(params, block);
   rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }
