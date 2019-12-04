@@ -152,7 +152,7 @@ static void free_urls(char** urls, int len, uint8_t free_items) {
 
 static unsigned long counter = 1;
 
-static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
+static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
   int        i;
   d_token_t *r, *t;
   char       temp[100];
@@ -190,7 +190,9 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
 
       // add in3
       //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"%s\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
+      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"%s\"", IN3_PROTO_VER));
+      if (multichain)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
       if (rc->clientSignature)
         sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
       if (rc->finality)
@@ -323,13 +325,16 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   sb_t* payload = sb_new(NULL);
 
   // create url-array
-  char**         urls = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
-  node_weight_t* w    = ctx->nodes;
+  char**         urls       = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
+  node_weight_t* w          = ctx->nodes;
+  bool           multichain = false;
   for (n = 0; n < nodes_count; n++) {
     urls[n] = w->node->url;
 
+    if (in3_node_props_get(&w->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
+
     if (ctx->client->use_http) {
-      if (!in3_node_props_get(&w->node->props, NODE_PROP_HTTP_NODES)) {
+      if (!in3_node_props_get(&w->node->props, NODE_PROP_HTTP)) {
         sb_free(payload);
         free_urls(urls, nodes_count, ctx->client->use_http);
         ctx_set_error(ctx, "cannot use HTTP with node that doesn't support it", IN3_ECONFIG);
@@ -351,7 +356,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     w = w->next;
   }
 
-  res = ctx_create_payload(ctx, payload);
+  res = ctx_create_payload(ctx, payload, multichain);
   if (res < 0) {
     sb_free(payload);
     free_urls(urls, nodes_count, ctx->client->use_http);
