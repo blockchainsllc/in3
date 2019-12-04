@@ -70,7 +70,7 @@ void add_response(char* request_method, char* request_params, char* result, char
   else
     responses = n;
 }
-
+/* add response - request mock from json*/
 void add_response_test(char* test) {
   char path[70];
   sprintf(path, MOCK_PATH, test);
@@ -100,14 +100,8 @@ void add_response_test(char* test) {
     responses = n;
 }
 
-#ifdef CURL_ENABLE
-in3_ret_t curl_transport(in3_request_t* req) {
-  return send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results);
-}
-#endif
 
 in3_ret_t test_transport(in3_request_t* req) {
-  //  char** urls, int urls_len, char* payload, in3_response_t* result
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
@@ -117,12 +111,9 @@ in3_ret_t test_transport(in3_request_t* req) {
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
   clean_json_str(p);
-  //char *trimmed = my_strtrim(p);
+
   TEST_ASSERT_EQUAL_STRING(responses->request_method, d_get_string(request, "method"));
-  //Missing to fix this check with diferent json formating
   TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
-
-
   free_json(r);
 
   sb_add_chars(&req->results->result, responses->response);
@@ -142,105 +133,4 @@ static in3_ret_t setup_transport(in3_request_t* req, char* path) {
   free_json(res);
   _free(response_buffer);
   return IN3_OK;
-}
-in3_ret_t mock_transport(in3_request_t* req) {
-  char path[70];
-  sprintf(path, MOCK_PATH, "in3_nodeList");
-  in3_log_debug("Req : %s \n", path);
-  for (int i = 0; i < req->urls_len; i++) {
-    if (strstr(req->payload, "nodeList") != NULL) {
-      in3_log_debug("Returning Node List ...\n");
-      sprintf(path, MOCK_PATH, "in3_nodeList");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_call") != NULL) {
-      in3_log_debug("Returning Call Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_call");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getCode") != NULL) {
-      in3_log_debug("Returning getCode Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getCode");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getBlockByHash") != NULL) {
-      in3_log_debug("Returning block by hash  Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getBlockByHash");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getBlockByNumber") != NULL) {
-      in3_log_debug("Returning block by number Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getBlockByNumber");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_blockNumber") != NULL) {
-      in3_log_debug("Returning block by number Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_blockNumber");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getBalance") != NULL) {
-      in3_log_debug("Returning eth_getBalance Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getBalance");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getTransactionByHash") != NULL) {
-      in3_log_debug("Returning eth_getTransactionByHash Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getTransactionByHash");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getBlockTransactionCountByHash") != NULL) {
-      in3_log_debug("Returning eth_getBlockTransactionCountByHash Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getBlockTransactionCountByHash");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getBlockTransactionCountByNumber") != NULL) {
-      in3_log_debug("Returning eth_getBlockTransactionCountByNumber Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getBlockTransactionCountByNumber");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getLogs") != NULL) {
-      in3_log_debug("Returning eth_getLogs Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getLogs");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_chainId") != NULL) {
-      in3_log_debug("Returning eth_chainId Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_chainId");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getTransactionReceipt") != NULL) {
-      in3_log_debug("Returning eth_getTransactionReceipt Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getTransactionReceipt");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getTransactionCount") != NULL) {
-      in3_log_debug("Returning eth_getTransactionCount Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getTransactionCount");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_sendRawTransaction") != NULL) {
-      in3_log_debug("Returning eth_sendRawTransaction Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_sendRawTransaction");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getStorageAt") != NULL) {
-      in3_log_debug("Returning eth_getStorageAt Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getStorageAt");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_gasPrice") != NULL) {
-      in3_log_debug("Returning eth_gasPrice Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_gasPrice");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getTransactionByBlockHashAndIndex") != NULL) {
-      in3_log_debug("Returning eth_getTransactionByBlockHashAndIndex Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getTransactionByBlockHashAndIndex");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getTransactionByBlockNumberAndIndex") != NULL) {
-      in3_log_debug("Returning eth_getTransactionByBlockNumberAndIndex Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getTransactionByBlockNumberAndIndex");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getUncleByBlockNumberAndIndex") != NULL) {
-      in3_log_debug("Returning eth_getUncleByBlockNumberAndIndex Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getUncleByBlockNumberAndIndex");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getUncleCountByBlockNumber") != NULL) {
-      in3_log_debug("Returning eth_getUncleCountByBlockNumber Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getUncleCountByBlockNumber");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_getUncleCountByBlockHash") != NULL) {
-      in3_log_debug("Returning eth_getUncleCountByBlockHash Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_getUncleCountByBlockHash");
-      return setup_transport(req, path);
-    } else if (strstr(req->payload, "eth_estimateGas") != NULL) {
-      in3_log_debug("Returning eth_estimateGas Response ...\n");
-      sprintf(path, MOCK_PATH, "eth_estimateGas");
-      return setup_transport(req, path);
-    }
-  }
-  return 0;
 }
