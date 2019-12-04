@@ -108,8 +108,8 @@ int                    d_bytes_to(d_token_t* item, uint8_t* dst, const int max);
 bytes_t*               d_bytes(const d_token_t* item);                                                                  /**< returns the value as bytes (Carefully, make sure that the token is a bytes-type!)*/
 bytes_t*               d_bytesl(d_token_t* item, size_t l);                                                             /**< returns the value as bytes with length l (may reallocates) */
 char*                  d_string(const d_token_t* item);                                                                 /**< converts the value as string. Make sure the type is string! */
-uint32_t               d_int(const d_token_t* item);                                                                    /**< returns the value as integer. only if type is integer */
-uint32_t               d_intd(const d_token_t* item, const uint32_t def_val);                                           /**< returns the value as integer or if NULL the default. only if type is integer */
+int32_t                d_int(const d_token_t* item);                                                                    /**< returns the value as integer. only if type is integer */
+int32_t                d_intd(const d_token_t* item, const uint32_t def_val);                                           /**< returns the value as integer or if NULL the default. only if type is integer */
 uint64_t               d_long(const d_token_t* item);                                                                   /**< returns the value as long. only if type is integer or bytes, but short enough */
 uint64_t               d_longd(const d_token_t* item, const uint64_t def_val);                                          /**< returns the value as long or if NULL the default. only if type is integer or bytes, but short enough */
 bytes_t**              d_create_bytes_vec(const d_token_t* arr);                                                        /** creates a array of bytes from JOSN-array */
@@ -161,10 +161,10 @@ d_key_t key(const char* c);
 static inline char*    d_get_stringk(d_token_t* r, d_key_t k) { return d_string(d_get(r, k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string(d_token_t* r, char* k) { return d_get_stringk(r, key(k)); }              /**< reads token of a property as string. */
 static inline char*    d_get_string_at(d_token_t* r, uint32_t pos) { return d_string(d_get_at(r, pos)); }    /**< reads string at given pos of an array. */
-static inline uint32_t d_get_intk(d_token_t* r, d_key_t k) { return d_int(d_get(r, k)); }                    /**< reads token of a property as int. */
-static inline uint32_t d_get_intkd(d_token_t* r, d_key_t k, uint32_t d) { return d_intd(d_get(r, k), d); }   /**< reads token of a property as int. */
-static inline uint32_t d_get_int(d_token_t* r, char* k) { return d_get_intk(r, key(k)); }                    /**< reads token of a property as int. */
-static inline uint32_t d_get_int_at(d_token_t* r, uint32_t pos) { return d_int(d_get_at(r, pos)); }          /**< reads a int at given pos of an array. */
+static inline int32_t  d_get_intk(d_token_t* r, d_key_t k) { return d_int(d_get(r, k)); }                    /**< reads token of a property as int. */
+static inline int32_t  d_get_intkd(d_token_t* r, d_key_t k, uint32_t d) { return d_intd(d_get(r, k), d); }   /**< reads token of a property as int. */
+static inline int32_t  d_get_int(d_token_t* r, char* k) { return d_get_intk(r, key(k)); }                    /**< reads token of a property as int. */
+static inline int32_t  d_get_int_at(d_token_t* r, uint32_t pos) { return d_int(d_get_at(r, pos)); }          /**< reads a int at given pos of an array. */
 static inline uint64_t d_get_longk(d_token_t* r, d_key_t k) { return d_long(d_get(r, k)); }                  /**< reads token of a property as long. */
 static inline uint64_t d_get_longkd(d_token_t* r, d_key_t k, uint64_t d) { return d_longd(d_get(r, k), d); } /**< reads token of a property as long. */
 static inline uint64_t d_get_long(d_token_t* r, char* k) { return d_get_longk(r, key(k)); }                  /**< reads token of a property as long. */

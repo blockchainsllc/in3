@@ -88,5 +88,6 @@ bool      bs_isset(bitset_t* bs, size_t pos);
 in3_ret_t bs_modify(bitset_t* bs, size_t pos, bs_op_t op); // will reallocate if pos is greater than BS_MAX and initial length
 bool      bs_isempty(bitset_t* bs);
 bitset_t* bs_clone(bitset_t* bs);
+bitset_t* bs_from_ull(unsigned long long u, size_t l);
 
 #endif //IN3_BITSET_H

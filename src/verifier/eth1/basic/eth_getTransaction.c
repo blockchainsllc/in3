@@ -66,11 +66,11 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
     return vc_err(vc, "invalid raw-value");
 
   // check standardV
-  if ((t = d_get(tx, K_STANDARD_V)) && raw && (uint32_t)((chain_id ? (v - chain_id * 2 - 8) : v) - 27) != d_int(t))
+  if ((t = d_get(tx, K_STANDARD_V)) && raw && ((chain_id ? (v - chain_id * 2 - 8) : v) - 27) != (unsigned) d_int(t))
     return vc_err(vc, "standardV is invalid");
 
   // check chain id
-  if ((t = d_get(tx, K_CHAIN_ID)) && d_int(t) != chain_id)
+  if ((t = d_get(tx, K_CHAIN_ID)) && (unsigned) d_int(t) != chain_id)
     return vc_err(vc, "wrong chainID");
 
   // All transaction signatures whose s-value is greater than secp256k1n/2 are considered invalid.
