@@ -209,7 +209,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
     return vc_err(vc, "No block hash & number found");
   }
 
-  if (d_get(vc->result, K_TRANSACTION_INDEX) && tx_idx != d_get_intk(vc->result, K_TRANSACTION_INDEX))
+  if (d_get(vc->result, K_TRANSACTION_INDEX) && tx_idx != (uint32_t)d_get_intk(vc->result, K_TRANSACTION_INDEX))
     return vc_err(vc, "The transaction index does not match the required");
 
   res = eth_verify_blockheader(vc, blockHeader, d_get_byteskl(vc->result, K_BLOCK_HASH, 32));
