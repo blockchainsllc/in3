@@ -101,11 +101,17 @@ in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, ch
       } else if ((r = d_get(ctx->responses[0], K_ERROR))) {
         // the response was correct but contains a error-object, which we convert into a string
         if (d_type(r) == T_OBJECT) {
-          s = d_to_json(r);
-          if (error != NULL) {
-            *error = _malloc(s.len + 1);
-            strncpy(*error, s.data, s.len);
-            (*error)[s.len] = '\0';
+          char* msg = d_get_stringk(r, K_MESSAGE);
+          if (msg) {
+            if (error != NULL)
+              *error = _strdupn(msg, -1);
+          } else {
+            s = d_to_json(r);
+            if (error != NULL) {
+              *error = _malloc(s.len + 1);
+              strncpy(*error, s.data, s.len);
+              (*error)[s.len] = '\0';
+            }
           }
         } else {
           if (error != NULL) {
