@@ -215,7 +215,7 @@ in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
 }
 
 IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t* np_config, const in3_node_props_t* np) {
-  if (((*np_config << 32U) & (*np << 32U)) != (*np_config << 32U)) return false;
+  if (((*np_config & *np) & 0xFFFFFFFF) != (*np_config & 0XFFFFFFFF)) return false;
   uint32_t min_blk_ht_conf = in3_node_props_get(np_config, NODE_PROP_MIN_BLOCK_HEIGHT);
   uint32_t min_blk_ht      = in3_node_props_get(np, NODE_PROP_MIN_BLOCK_HEIGHT);
   return (min_blk_ht >= min_blk_ht_conf);
