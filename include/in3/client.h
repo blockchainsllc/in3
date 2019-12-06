@@ -169,20 +169,20 @@ typedef struct in3_node_weight {
  * setter method for interacting with in3_node_props_t.
  * @param[out] node_props
  * @param type
- * @param val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
+ * @param
  */
 void in3_node_props_set(in3_node_props_t*     node_props,
                         in3_node_props_type_t type,
                         uint8_t               value);
 
 /**
- * getter method for interacting with in3_node_props_t.
+ * getter macro for interacting with in3_node_props_t.
  * @param node_props
  * @param type
- * @return val represents a uint32_t timeout for NODE_PROP_DEPOSIT_TIMEOUT and boolean otherwise
+ * @return val
  */
-uint8_t in3_node_props_get(const in3_node_props_t* node_props,
-                           in3_node_props_type_t   type);
+#define in3_node_props_get(np, t) ((t == NODE_PROP_MIN_BLOCK_HEIGHT) ? ((np >> 32U) & 0xFFU) : !!(np & t))
+#define in3_node_props_matches(np, t) !!(np & t))
 
 /**
  * Chain definition inside incubed.
@@ -409,7 +409,7 @@ typedef struct in3_t_ {
   /** filter handler */
   in3_filter_handler_t* filters;
 
-  /** used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  /** used to identify the capabilities of the node. */
   in3_node_props_t node_props;
 
 } in3_t;

@@ -389,7 +389,3 @@ void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type
     (value != 0) ? BIT_SET(*node_props, type) : BIT_CLEAR(*node_props, type);
   }
 }
-
-uint8_t in3_node_props_get(const in3_node_props_t* node_props, in3_node_props_type_t type) {
-  return (type == NODE_PROP_MIN_BLOCK_HEIGHT) ? (BITS_MSB(*node_props, 32U) & 0xFFU) : BIT_CHECK(*node_props, type);
-}

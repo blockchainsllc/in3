@@ -331,10 +331,10 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   for (n = 0; n < nodes_count; n++) {
     urls[n] = w->node->url;
 
-    if (in3_node_props_get(&w->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
+    if (in3_node_props_get(w->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
 
     if (ctx->client->use_http) {
-      if (!in3_node_props_get(&w->node->props, NODE_PROP_HTTP)) {
+      if (!in3_node_props_get(w->node->props, NODE_PROP_HTTP)) {
         sb_free(payload);
         free_urls(urls, nodes_count, ctx->client->use_http);
         ctx_set_error(ctx, "cannot use HTTP with node that doesn't support it", IN3_ECONFIG);
