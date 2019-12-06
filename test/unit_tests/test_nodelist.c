@@ -40,14 +40,14 @@
 #include "../../src/core/client/nodelist.h"
 #include "../test_utils.h"
 
-IN3_IMPORT_TEST bool in3_node_props_match(in3_node_props_t* np_config, in3_node_props_t* np);
+IN3_IMPORT_TEST bool in3_node_props_match(in3_node_props_t np_config, in3_node_props_t np);
 
 static void test_capabilities(void) {
   in3_node_props_t npclient, npserver;
 
   in3_node_props_init(&npclient);
   in3_node_props_init(&npserver);
-  TEST_ASSERT(in3_node_props_match(&npclient, &npserver));
+  TEST_ASSERT(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 6);
@@ -59,7 +59,7 @@ static void test_capabilities(void) {
   in3_node_props_set(&npserver, NODE_PROP_BINARY, true);
   in3_node_props_set(&npserver, NODE_PROP_ONION, true);
   in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 10);
-  TEST_ASSERT(in3_node_props_match(&npclient, &npserver));
+  TEST_ASSERT(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_PROOF, true);
@@ -74,8 +74,8 @@ static void test_capabilities(void) {
   in3_node_props_set(&npserver, NODE_PROP_BINARY, true);
   in3_node_props_set(&npserver, NODE_PROP_ONION, true);
   in3_node_props_set(&npserver, NODE_PROP_SIGNER, true);
-  in3_node_props_set(&npserver, NODE_PROP_PROOFER, true);
-  TEST_ASSERT(in3_node_props_match(&npclient, &npserver));
+  in3_node_props_set(&npserver, NODE_PROP_DATA, true);
+  TEST_ASSERT(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_init(&npserver);
@@ -85,19 +85,19 @@ static void test_capabilities(void) {
   in3_node_props_set(&npserver, NODE_PROP_HTTP, true);
   in3_node_props_set(&npserver, NODE_PROP_BINARY, true);
   in3_node_props_set(&npserver, NODE_PROP_ONION, true);
-  TEST_ASSERT(in3_node_props_match(&npclient, &npserver));
+  TEST_ASSERT(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_PROOF, true);
   in3_node_props_init(&npserver);
   in3_node_props_set(&npserver, NODE_PROP_HTTP, true);
-  TEST_ASSERT_FALSE(in3_node_props_match(&npclient, &npserver));
+  TEST_ASSERT_FALSE(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 6);
   in3_node_props_init(&npserver);
   in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 5);
-  TEST_ASSERT_FALSE(in3_node_props_match(&npclient, &npserver));
+  TEST_ASSERT_FALSE(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_PROOF, true);
