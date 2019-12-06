@@ -33,7 +33,6 @@
  *******************************************************************************/
 
 #include "nodelist.h"
-#include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/log.h"
 #include "../util/mem.h"
@@ -214,8 +213,8 @@ in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   return ret;
 }
 
-IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t* np_config, const in3_node_props_t* np) {
-  if (((*np_config & *np) & 0xFFFFFFFF) != (*np_config & 0XFFFFFFFF)) return false;
+IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t np_config, const in3_node_props_t np) {
+  if (((np_config & np) & 0xFFFFFFFF) != (np_config & 0XFFFFFFFF)) return false;
   uint32_t min_blk_ht_conf = in3_node_props_get(np_config, NODE_PROP_MIN_BLOCK_HEIGHT);
   uint32_t min_blk_ht      = in3_node_props_get(np, NODE_PROP_MIN_BLOCK_HEIGHT);
   return (min_blk_ht >= min_blk_ht_conf);
@@ -234,7 +233,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
     if (nodeDef->deposit < c->minDeposit) continue;
-    if (!in3_node_props_match(&c->node_props, &nodeDef->props)) continue;
+    if (!in3_node_props_match(c->node_props, nodeDef->props)) continue;
 
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;
