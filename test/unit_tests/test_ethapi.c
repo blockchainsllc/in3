@@ -56,8 +56,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static in3_t* in3 = NULL;
-static void   init_in3(in3_transport_send custom_transport, uint64_t chain) {
+in3_t *  init_in3(in3_transport_send custom_transport, uint64_t chain) {
+  in3_t* in3 = NULL;
   int err;
   in3_register_eth_full();
   in3                 = in3_new();
@@ -72,14 +72,12 @@ static void   init_in3(in3_transport_send custom_transport, uint64_t chain) {
   for (int i = 0; i < in3->chainsCount; i++) in3->chains[i].needsUpdate = false;
   in3_log_set_level(LOG_TRACE);
   in3_log_set_quiet(0);
-}
-static void free_in3() {
-  _free(in3);
-  in3 = NULL;
+  return in3;
 }
 
+
 static void test_get_balance() {
-  init_in3(test_transport, 0x5);
+  in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getBalance");
   // the address of account whose balance we want to get
   address_t account;
@@ -88,10 +86,11 @@ static void test_get_balance() {
   long double balance = as_double(eth_getBalance(in3, account, BLKNUM(1555415)));
   printf("Balance: %Lf\n", balance);
   TEST_ASSERT_TRUE(balance > 0.0);
+  _free(in3);
 }
 
 static void test_get_tx_count() {
-  init_in3(test_transport, 0x5);
+  in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getTransactionCount");
 
   // the address of account whose balance we want to get
@@ -102,37 +101,38 @@ static void test_get_tx_count() {
   in3_log_debug("tx count %llu\n", count);
 
   TEST_ASSERT_TRUE(count > 0.0);
+  _free(in3);
 }
 
 static void test_new_block_filter() {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   // we can add any mock json as we need trasnport but we are not calling any rpc endpoint
   add_response_test("eth_blockNumber");
   //get filter id for new block
   size_t fid = eth_newBlockFilter(in3);
   TEST_ASSERT_TRUE(fid > 0);
-  free_in3();
+  _free(in3);
 }
 
 static void test_block_number() {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_blockNumber");
   uint64_t blknum = eth_blockNumber(in3);
   TEST_ASSERT_TRUE(blknum > 0);
-  free_in3();
+  _free(in3);
 }
 
 static void test_new_pending_tx_filter() {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   in3_ret_t ret = eth_newPendingTransactionFilter(in3);
   //we expect this to fail we dont support pending
   TEST_ASSERT_TRUE(ret == IN3_ENOTSUP);
-  free_in3();
+  _free(in3);
 }
 
 static void test_get_filter_changes() {
 
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_blockNumber");
   add_response_test("eth_blockNumber");
   add_response_test("eth_getLogs");
@@ -157,11 +157,11 @@ static void test_get_filter_changes() {
   size_t ret = eth_getFilterChanges(in3, 0, hashes, logs_array);
   in3_log_debug("ret %d\n", ret);
   TEST_ASSERT_TRUE(ret > 0);
-  free_in3();
+  _free(in3);
 }
 
 static void test_get_logs() {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_blockNumber");
   add_response_test("eth_blockNumber");
   add_response_test("eth_getLogs");
@@ -207,10 +207,11 @@ static void test_get_logs() {
   free_json(jopt);
 
   TEST_ASSERT_TRUE(ret == IN3_OK);
+  _free(in3);
 }
 static void test_get_tx_blkhash_index(void) {
   // the hash of transaction that we want to get
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getTransactionByBlockHashAndIndex");
   bytes32_t blk_hash;
   hex2byte_arr("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash, 32);
@@ -222,15 +223,16 @@ static void test_get_tx_blkhash_index(void) {
   if (!tx)
     printf("error getting the tx : %s\n", eth_last_error());
   else {
-    printf("Transaction #%d of block #%llx", tx->transaction_index, tx->block_number);
+    printf("Transaction #%d of block #%lx", tx->transaction_index, tx->block_number);
     free(tx);
   }
   TEST_ASSERT_TRUE(tx != NULL);
+  _free(in3);
 }
 
 static void test_get_tx_blknum_index(void) {
   // the hash of transaction that we want to get
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getTransactionByBlockNumberAndIndex");
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByBlockNumberAndIndex(in3, BLKNUM(1723267), 0);
@@ -239,15 +241,16 @@ static void test_get_tx_blknum_index(void) {
   if (!tx)
     printf("error getting the tx : %s\n", eth_last_error());
   else {
-    printf("Transaction #%d of block #%llx", tx->transaction_index, tx->block_number);
+    printf("Transaction #%d of block #%lx", tx->transaction_index, tx->block_number);
     free(tx);
   }
   TEST_ASSERT_TRUE(tx != NULL);
+  _free(in3);
 }
 
 static void test_get_tx_hash(void) {
   // the hash of transaction that we want to get
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getTransactionByHash");
   bytes32_t tx_hash;
   hex2byte_arr("0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164", -1, tx_hash, 32);
@@ -258,16 +261,17 @@ static void test_get_tx_hash(void) {
   if (!tx)
     printf("error getting the tx : %s\n", eth_last_error());
   else {
-    printf("Transaction #%d of block #%llx", tx->transaction_index, tx->block_number);
-    free(tx);
+    printf("Transaction #%d of block #%lx", tx->transaction_index, tx->block_number);
+    //free(tx);
   }
   TEST_ASSERT_TRUE(tx != NULL);
+  _free(in3);
 }
 
 static void test_get_tx_receipt(void) {
   // the hash of transaction whose receipt we want to get
 
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getTransactionReceipt");
   bytes32_t tx_hash;
   hex2byte_arr("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
@@ -279,16 +283,17 @@ static void test_get_tx_receipt(void) {
   if (!txr)
     printf("error getting the tx : %s\n", eth_last_error());
   else {
-    printf("Transaction #%d of block #%llx, gas used = %" PRIu64 ", status = %s\n", txr->transaction_index, txr->block_number, txr->gas_used, txr->status ? "success" : "failed");
-    free_tx_receipt(txr);
+    printf("Transaction #%d of block #%lx, gas used = %" PRIu64 ", status = %s\n", txr->transaction_index, txr->block_number, txr->gas_used, txr->status ? "success" : "failed");
+    //free_tx_receipt(txr);
   }
   TEST_ASSERT_TRUE(txr);
   TEST_ASSERT_TRUE(txr->status);
   TEST_ASSERT_TRUE(txr->gas_used > 0);
+  _free(in3);
 }
 
 static void test_send_tx(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getTransactionCount");
   add_response_test("eth_sendRawTransaction");
   // prepare parameters
@@ -310,34 +315,34 @@ static void test_send_tx(void) {
   else {
     printf("Transaction hash: ");
     b_print(tx_hash);
-    b_free(tx_hash);
+    //b_free(tx_hash);
   }
-  b_free(data);
+  //b_free(data);
   TEST_ASSERT_TRUE(tx_hash);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_chain_id(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_chainId");
   uint64_t chain_id = eth_chainId(in3);
   // we expect this to fail as we dont have verification for this
   char* error = eth_last_error();
   in3_log_debug("error found: %s %d", error, chain_id);
   TEST_ASSERT_TRUE(chain_id == 5);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_gas_price(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_gasPrice");
   uint64_t price = eth_gasPrice(in3);
   TEST_ASSERT_TRUE(price > 1);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_getblock_number(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getBlockByNumber");
   eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(1692767), false);
 
@@ -348,15 +353,15 @@ static void test_eth_getblock_number(void) {
     printf("error getting the block : %s\n", eth_last_error());
   else {
     blk_number = (u_int64_t) block->number;
-    printf("Number of transactions in Block #%llu: %d\n", blk_number, block->tx_count);
+    printf("Number of transactions in Block #%lu: %d\n", blk_number, block->tx_count);
     free(block);
   }
   TEST_ASSERT_EQUAL_INT64(blk_number, 1692767);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_get_storage_at(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getStorageAt");
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
@@ -367,11 +372,11 @@ static void test_eth_get_storage_at(void) {
 
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
   TEST_ASSERT_TRUE(storage.data);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_getblock_txcount_number(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getBlockTransactionCountByNumber");
 
   uint64_t tx_count = eth_getBlockTransactionCountByNumber(in3, BLKNUM(1692767));
@@ -379,11 +384,11 @@ static void test_eth_getblock_txcount_number(void) {
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!tx_count);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_getblock_txcount_hash(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getBlockTransactionCountByHash");
   bytes32_t blk_hash;
   hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
@@ -392,11 +397,11 @@ static void test_eth_getblock_txcount_hash(void) {
   char*    error    = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!tx_count);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_getblock_hash(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getBlockByHash");
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
@@ -410,15 +415,15 @@ static void test_eth_getblock_hash(void) {
     printf("error getting the block : %s\n", eth_last_error());
   else {
     blk_number = (u_int64_t) block->number;
-    printf("Number of transactions in Block #%llu: %d\n", blk_number, block->tx_count);
+    printf("Number of transactions in Block #%lu: %d\n", blk_number, block->tx_count);
     free(block);
   }
   TEST_ASSERT_EQUAL_INT64(blk_number, 1550244);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_call_fn(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_call");
   add_response_test("eth_getCode");
   address_t contract;
@@ -437,11 +442,11 @@ static void test_eth_call_fn(void) {
   //    clean up resources
   free_json(response);
   TEST_ASSERT_TRUE(access == 1);
-  free_in3();
+  _free(in3);
 }
 
 static void test_eth_get_code(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   add_response_test("eth_getCode");
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
@@ -450,11 +455,11 @@ static void test_eth_get_code(void) {
   bytes_t code = eth_getCode(in3, contract, BLKNUM_LATEST());
   //    clean up resources
   TEST_ASSERT_TRUE(code.len > 0);
-  free_in3();
+  _free(in3);
 }
 
 static void test_estimate_fn(void) {
-  init_in3(test_transport, 0x5);
+   in3_t * in3 = init_in3(test_transport, 0x5);
   address_t contract;
   add_response_test("eth_estimateGas");
   //setup lock access contract address to be excuted with eth_call
@@ -464,11 +469,11 @@ static void test_estimate_fn(void) {
   //convert the response to a uint32_t,
   in3_log_debug("Gas estimate : %lld \n", estimate);
   TEST_ASSERT_TRUE(estimate > 0);
-  free_in3();
+  _free(in3);
 }
 
 static void test_get_uncle_count_blknum(void) {
-  init_in3(test_transport, 0x1);
+   in3_t * in3 = init_in3(test_transport, 0x1);
   add_response_test("eth_getUncleCountByBlockNumber");
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
@@ -479,11 +484,11 @@ static void test_get_uncle_count_blknum(void) {
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!count);
-  free_in3();
+  _free(in3);
 }
 static void test_get_uncle_count_blkhash(void) {
-  init_in3(test_transport, 0x1);
-   add_response_test("eth_getUncleCountByBlockHash");
+   in3_t * in3 = init_in3(test_transport, 0x1);
+  add_response_test("eth_getUncleCountByBlockHash");
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
   hex2byte_arr("0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845", -1, blk_hash, 32);
@@ -493,11 +498,11 @@ static void test_get_uncle_count_blkhash(void) {
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!count);
-  free_in3();
+  _free(in3);
 }
 
 static void test_get_uncle_blknum_index(void) {
-  init_in3(test_transport, 0x1);
+   in3_t * in3 = init_in3(test_transport, 0x1);
   add_response_test("eth_getUncleByBlockNumberAndIndex");
   //get block number
   eth_block_t* block = eth_getUncleByBlockNumberAndIndex(in3, BLKNUM(56160), 0);
@@ -505,7 +510,7 @@ static void test_get_uncle_blknum_index(void) {
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
   TEST_ASSERT_TRUE(!block);
-  free_in3();
+  _free(in3);
 }
 /*
  * Main
@@ -525,19 +530,18 @@ int main() {
   RUN_TEST(test_get_balance);
   RUN_TEST(test_block_number);
   RUN_TEST(test_eth_gas_price);
-  RUN_TEST(test_eth_getblock_number);
-  RUN_TEST(test_eth_getblock_hash);
-  RUN_TEST(test_get_logs);
-  RUN_TEST(test_eth_call_fn);
-  RUN_TEST(test_get_tx_hash);
-  RUN_TEST(test_get_tx_blkhash_index);
+   RUN_TEST(test_eth_getblock_number);
+   RUN_TEST(test_eth_getblock_hash);
+   RUN_TEST(test_get_logs);
+  // RUN_TEST(test_eth_call_fn);
+   RUN_TEST(test_get_tx_blkhash_index);
   RUN_TEST(test_get_tx_blknum_index);
   RUN_TEST(test_get_tx_count);
   RUN_TEST(test_get_tx_receipt);
-  RUN_TEST(test_send_tx);
-  RUN_TEST(test_eth_call_fn);
-  RUN_TEST(test_eth_get_code);
-  RUN_TEST(test_estimate_fn);
+  // RUN_TEST(test_send_tx);
+  // RUN_TEST(test_eth_call_fn);
+   RUN_TEST(test_eth_get_code);
+  //RUN_TEST(test_estimate_fn);
   // /* verification for chain_id not supported */
   RUN_TEST(test_get_uncle_blknum_index);
   RUN_TEST(test_get_uncle_count_blkhash);
@@ -549,6 +553,7 @@ int main() {
   RUN_TEST(test_get_filter_changes);
   RUN_TEST(test_new_block_filter);
   RUN_TEST(test_eth_get_storage_at);
+  // RUN_TEST(test_get_tx_hash);
 
   return TESTS_END();
 }

@@ -18,7 +18,7 @@ typedef struct response_s {
   struct response_s* next;
 } response_t;
 
-response_t* responses = NULL;
+static response_t* responses = NULL;
 
 char* read_json_response_buffer(char* path) {
   char* response_buffer;
@@ -46,6 +46,8 @@ char* read_json_response_buffer(char* path) {
     return NULL;
   }
 }
+
+
 
 void add_response(char* request_method, char* request_params, char* result, char* error, char* in3) {
   response_t* r = responses;
@@ -88,10 +90,10 @@ void add_response_test(char* test) {
     else
       break;
   }
-  response_t* n     = calloc(1, sizeof(response_t));
+  response_t* n     = _calloc(1, sizeof(response_t));
   n->request_method = method;
   n->request_params = params;
-  n->response       = malloc(res.len);
+  n->response       = _malloc(40 + res.len);
   sprintf(n->response, "%s", res.data);
 
   if (r)
@@ -106,20 +108,21 @@ in3_ret_t test_transport(in3_request_t* req) {
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
   d_token_t* request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  char * method = d_get_string(request, "method");
   str_range_t params  = d_to_json(d_get(request, key("params")));
   char        p[params.len + 1];
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
   clean_json_str(p);
 
-  TEST_ASSERT_EQUAL_STRING(responses->request_method, d_get_string(request, "method"));
+  TEST_ASSERT_EQUAL_STRING(responses->request_method, method);
   TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
   free_json(r);
 
   sb_add_chars(&req->results->result, responses->response);
   response_t* next = responses->next;
-  free(responses->response);
-  free(responses);
+  _free(responses->response);
+  //_free(responses);
   responses = next;
   return IN3_OK;
 }

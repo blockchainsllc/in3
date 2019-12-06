@@ -150,8 +150,8 @@ void clean_json_str(char* s) {
         while (*d == ' ' || *d == '\x09' || *d == '\t' | *d == '\n') {
             ++d;
         }
-      *s++ = *d++;
-    } while (*s);
+      
+    } while (*s++ = *d++);
 }
 
 bytes_t* sha3(bytes_t* data) {
