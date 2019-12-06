@@ -148,20 +148,18 @@ static uint256_t uint256_from_bytes(bytes_t bytes) {
 
 /** returns the result from a previously executed ctx*/
 static d_token_t* get_result(in3_ctx_t* ctx) {
-  if (ctx->error){                                    // error means something went wrong during verification or a timeout occured.
-    set_error(ETIMEDOUT, ctx->error);                 // so we copy the error as last_error
+  if (ctx->error) {                   // error means something went wrong during verification or a timeout occured.
+    set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;
   }
-  d_token_t* res = d_get(ctx->responses[0], K_RESULT);
-  if (res) return res;                                // everthing is good, we have a result
-  else {                                              // but since we did not get a result and even without a error
-    d_token_t* r = d_get(ctx->responses[0], K_ERROR); // we find the error in the response from the server
-    if (d_type(r) == T_OBJECT) {                      // the response was correct but contains a error-object, which we convert into a string
-      str_range_t s = d_to_json(r);                   // this will not work, if we used binary-format, since we don't know the propnames in this case!!!
-      set_errorn(ETIMEDOUT, s.data, s.len);           // set error as json
-    } else                                            // or we have a string
-      set_errorn(ETIMEDOUT, d_string(r), d_len(r));   // and can simply copy it
-  }
+  d_token_t* t = d_get(ctx->responses[0], K_RESULT);
+  if (t) return t; // everthing is good, we have a result
+
+  // if no result, we expect an error
+  t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
+  set_error(ETIMEDOUT, !t
+                           ? "No result or error in response"
+                           : (d_type(t) == T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
   return NULL;
 }
 
@@ -354,7 +352,7 @@ bytes_t eth_getCode(in3_t* in3, address_t account, eth_blknum_t block) {
 uint256_t eth_getStorageAt(in3_t* in3, address_t account, bytes32_t key, eth_blknum_t block) {
   rpc_init;
   params_add_bytes(params, bytes(account, 20));
-  params_add_bytes(params, bytes(key, 20));
+  params_add_bytes(params, bytes(key, 32));
   params_add_blk_num_t(params, block);
   rpc_exec("eth_getStorageAt", uint256_t, uint256_from_bytes(d_to_bytes(result)));
 }

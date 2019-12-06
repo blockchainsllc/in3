@@ -97,8 +97,6 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return eth_verify_account_proof(vc);
   else if (strcmp(method, "eth_gasPrice") == 0)
     return IN3_OK;
-  else if (strcmp(method, "eth_chainId") == 0)
-    return IN3_OK;
   else if (!strcmp(method, "eth_newFilter") || !strcmp(method, "eth_newBlockFilter") || !strcmp(method, "eth_newPendingFilter") || !strcmp(method, "eth_uninstallFilter") || !strcmp(method, "eth_getFilterChanges"))
     return IN3_OK;
   else if (strcmp(method, "eth_getLogs") == 0) // for txReceipt, we need the txhash
@@ -186,6 +184,12 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
     return IN3_OK;
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_chainId") == 0) {
+    RESPONSE_START();
+    sb_add_char(&response[0]->result, '"');
+    sb_add_hexuint(&response[0]->result, ctx->client->chainId);
+    sb_add_char(&response[0]->result, '"');
+    RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
     in3_ret_t res = filter_add(ctx->client, FILTER_BLOCK, NULL);
     if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
