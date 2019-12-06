@@ -116,7 +116,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
     if (c->proof == PROOF_FULL)
       conf->useFullProof = true;
-    conf->verification = c->signatureCount ? VERIFICATION_PROOF_WITH_SIGNATURE : VERIFICATION_PROOF;
+    conf->verification = VERIFICATION_PROOF;
 
     if (c->signatureCount) {
       node_weight_t* sig_nodes = NULL;
@@ -185,12 +185,10 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
     }
 
     in3_request_config_t* rc = c->requests_configs + i;
-    if (rc->verification != VERIFICATION_NEVER) {
-      sb_add_char(sb, ',');
-
+    if (rc->verification == VERIFICATION_PROOF) {
       // add in3
       //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
-      sb_add_range(sb, temp, 0, sprintf(temp, "\"in3\":{\"version\": \"%s\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
+      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"proof\",\"version\": \"%s\",\"chainId\":\"0x%x\"", IN3_PROTO_VER, (unsigned int) rc->chainId));
       if (rc->clientSignature)
         sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
       if (rc->finality)
@@ -205,10 +203,6 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb) {
         sb_add_chars(sb, ",\"useFullProof\":true");
       if (rc->useBinary)
         sb_add_chars(sb, ",\"useBinary\":true");
-      if (rc->verification == VERIFICATION_PROOF)
-        sb_add_chars(sb, ",\"verification\":\"proof\"");
-      else if (rc->verification == VERIFICATION_PROOF_WITH_SIGNATURE)
-        sb_add_chars(sb, ",\"verification\":\"proofWithSignature\"");
       if (rc->verifiedHashesCount)
         sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verifiedHashes, rc->verifiedHashesCount, true);
       sb_add_range(sb, "}}", 0, 2);
