@@ -5,6 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 cmd",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "-s",
+                "1",
+                "eth_getBlockByNumber",
+                "latest",
+                "false"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 json",
+            "program": "${workspaceFolder}/build/bin/json",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "-f",
+                "data.hex"
+            ]
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "test.js",
@@ -26,8 +51,8 @@
             "type": "lldb",
             "request": "launch",
             "name": "run abi test",
-            "program": "${workspaceFolder}/build/test/test_filter",
-            "cwd": "${workspaceFolder}"
+            "program": "${workspaceFolder}/build/test/test_ethapi",
+            "cwd": "${workspaceFolder}/build"
         },
         {
             "type": "node",
@@ -80,9 +105,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/in3",
             "args": [
-                "-debug",
-                "eth_getTransactionByHash",
-                "0xf5a47818d4f7465ff6edcb4b9af6b7913e514970738c9561457dc862ffc875e2"
+                "-s",
+                "1",
+                "eth_getBlockByNumber",
+                "latest",
+                "false"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",

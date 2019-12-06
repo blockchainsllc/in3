@@ -50,7 +50,7 @@
 #include <stdint.h>
 
 /** the protocol version used when sending requests from the this client */
-#define IN3_PROTO_VER "2.0.0"
+#define IN3_PROTO_VER "2.1.0"
 
 #define ETH_CHAIN_ID_MAINNET 0x01L   /**< chainId for mainnet */
 #define ETH_CHAIN_ID_KOVAN 0x2aL     /**< chainId for kovan */
@@ -89,9 +89,8 @@ typedef enum {
  * 
  * This will be part of the in3-request and will be generated based on the prooftype.*/
 typedef enum {
-  VERIFICATION_NEVER                = 0, /**< No Verifacation */
-  VERIFICATION_PROOF                = 1, /**< Includes the proof of the data */
-  VERIFICATION_PROOF_WITH_SIGNATURE = 2  /**< Proof + Signatures */
+  VERIFICATION_NEVER = 0, /**< No Verifacation */
+  VERIFICATION_PROOF = 1, /**< Includes the proof of the data */
 } in3_verification_t;
 
 /** the configuration as part of each incubed request. 
