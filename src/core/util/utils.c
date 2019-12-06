@@ -151,7 +151,7 @@ void clean_json_str(char* s) {
             ++d;
         }
       
-    } while (*s++ = *d++);
+    } while ((*s++ = *d++));
 }
 
 bytes_t* sha3(bytes_t* data) {
