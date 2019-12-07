@@ -146,18 +146,19 @@ typedef struct in3_node_weight {
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  uint64_t           chainId;        /**< chainId, which could be a free or based on the public ethereum networkId*/
-  in3_chain_type_t   type;           /**< chaintype */
-  uint64_t           lastBlock;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  bool               needsUpdate;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
-  int                nodeListLength; /**< number of nodes in the nodeList */
-  in3_node_t*        nodeList;       /**< array of nodes */
-  in3_node_weight_t* weights;        /**< stats and weights recorded for each node */
-  bytes_t**          initAddresses;  /**< array of addresses of nodes that should always part of the nodeList */
-  bytes_t*           contract;       /**< the address of the registry contract */
-  bytes32_t          registry_id;    /**< the identifier of the registry */
-  uint8_t            version;        /**< version of the chain */
-  json_ctx_t*        spec;           /**< optional chain specification, defining the transaitions and forks*/
+  uint64_t           chainId;           /**< chainId, which could be a free or based on the public ethereum networkId*/
+  in3_chain_type_t   type;              /**< chaintype */
+  uint64_t           lastBlock;         /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  bool               needsUpdate;       /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+  int                nodeListLength;    /**< number of nodes in the nodeList */
+  in3_node_t*        nodeList;          /**< array of nodes */
+  in3_node_weight_t* weights;           /**< stats and weights recorded for each node */
+  bytes_t**          initAddresses;     /**< array of addresses of nodes that should always part of the nodeList */
+  bytes_t*           contract;          /**< the address of the registry contract */
+  bytes32_t          registry_id;       /**< the identifier of the registry */
+  uint8_t            version;           /**< version of the chain */
+  json_ctx_t*        spec;              /**< optional chain specification, defining the transaitions and forks*/
+  bytes_t*           whiteListContract; /**< address of whiteList contract */
 } in3_chain_t;
 
 /** 
@@ -365,8 +366,6 @@ typedef struct in3_t_ {
   /** filter handler */
   in3_filter_handler_t* filters;
 
-  /** address of whiteList contract */
-  address_t whiteListContract;
 } in3_t;
 
 /** creates a new Incubes configuration and returns the pointer.
@@ -440,6 +439,7 @@ in3_ret_t in3_client_register_chain(
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
     uint8_t          version,     /**< [in] the chain version. */
+    address_t        wl_contract, /**< [in] contract of whiteList. */
     json_ctx_t*      spec         /**< [in] chainspec or NULL. */
 );
 
