@@ -77,10 +77,10 @@ static void test_in3_config() {
      \"replaceLatestBlock\":94,\
      \"requestCount\":93,\
      \"signatureCount\":92,\
-     \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
      \"nodes\":{\
         \"0x7\":{\
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
+           \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
            \"registryId\":\"0x3456789012345678901234567890123456789012345678901234567890ffff\",\
            \"needsUpdate\":false,\
            \"nodeList\":[{\
@@ -110,21 +110,19 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(93, c->requestCount);
   TEST_ASSERT_EQUAL(92, c->signatureCount);
   TEST_ASSERT_EQUAL(1, c->keep_in3);
-  char tmp[64];
-  bytes_to_hex(c->whiteListContract, 20, tmp);
-  TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
 
   in3_chain_t* chain = in3_find_chain(c, 7);
   TEST_ASSERT_NOT_NULL(chain);
 
+  char tmp[64];
   bytes_to_hex(chain->contract->data, chain->contract->len, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   bytes_to_hex(chain->registry_id, 32, tmp);
   TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
   TEST_ASSERT_EQUAL(false, chain->needsUpdate);
   TEST_ASSERT_EQUAL(1, chain->nodeListLength);
-
-
+  bytes_to_hex(chain->whiteListContract->data, 20, tmp);
+  TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
   bytes_to_hex(chain->nodeList->address->data, chain->nodeList->address->len, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   TEST_ASSERT_EQUAL_STRING("#1", chain->nodeList->url);

@@ -189,7 +189,7 @@ static void test_newchain() {
   hex2byte_arr("0x64abe24afbba64cae47e3dc3ced0fcab95e4edd5", -1, contract, 20);
   bytes32_t registry_id;
   hex2byte_arr("0x423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3", -1, registry_id, 32);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL, NULL);
   in3_client_add_node(c, 0x8, "http://test.com", 0xFF, contract);
 
   for (int i = 0; i < c->chainsCount; i++) {
@@ -215,7 +215,7 @@ static void test_newchain() {
   in3_t* c2        = in3_new();
   c2->cacheStorage = c->cacheStorage;
   c2->chainId      = c->chainId;
-  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
+  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL, NULL);
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chainsCount; i++) {
     if (c2->chains[i].chainId == c2->chainId) chain2 = &c2->chains[i];
