@@ -234,7 +234,13 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
     if (nodeDef->deposit < c->minDeposit) continue;
+
+#ifdef FILTER_NODES
+    // fixme: this compile time check will be redundant once the registry contract is deployed with correct node prop values
     if (!in3_node_props_match(props, nodeDef->props)) continue;
+#else
+    UNUSED_VAR(props);
+#endif
 
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;

@@ -117,6 +117,12 @@ IF (SEGGER_RTT)
     ADD_DEFINITIONS(-DSEGGER_RTT)
 ENDIF (SEGGER_RTT)
 
+OPTION(FILTER_NODES "if true the nodelist is filtered against config node properties" false)
+IF (FILTER_NODES)
+    MESSAGE(STATUS "Enable nodelist filter based on properties")
+    ADD_DEFINITIONS(-DFILTER_NODES)
+ENDIF (FILTER_NODES)
+
 # substiture __FILENAME__ as it is used in DEBUG
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
