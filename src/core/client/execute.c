@@ -119,8 +119,9 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
     conf->verification = c->signatureCount ? VERIFICATION_PROOF_WITH_SIGNATURE : VERIFICATION_PROOF;
 
     if (c->signatureCount) {
-      node_weight_t* sig_nodes = NULL;
-      in3_ret_t      res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signatureCount);
+      node_weight_t*   sig_nodes = NULL;
+      in3_node_props_t props     = c->node_props | NODE_PROP_SIGNER;
+      in3_ret_t        res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signatureCount, props);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       int node_count        = ctx_nodes_len(sig_nodes);
@@ -334,12 +335,6 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     if (in3_node_props_get(w->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
 
     if (ctx->client->use_http) {
-      if (!in3_node_props_get(w->node->props, NODE_PROP_HTTP)) {
-        sb_free(payload);
-        free_urls(urls, nodes_count, ctx->client->use_http);
-        ctx_set_error(ctx, "cannot use HTTP with node that doesn't support it", IN3_ECONFIG);
-        return NULL;
-      }
       char* url = NULL;
       int   l   = strlen(urls[n]);
       if (strncmp(urls[n], "https://", 8) == 0) {
@@ -542,7 +537,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->requestCount)) == IN3_OK) {
+        in3_node_props_t props = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->requestCount, props)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);
