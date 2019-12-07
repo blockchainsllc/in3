@@ -63,6 +63,8 @@ typedef uint32_t uintbs_t;
 #define BITMASK_FLIP(_x_, _y_) ((_x_) ^= (_y_))
 #define BITMASK_CHECK_ALL(_x_, _y_) (((_x_) & (_y_)) == (_y_))
 #define BITMASK_CHECK_ANY(_x_, _y_) ((_x_) & (_y_))
+#define BITS_MSB(x, b) ((x) >> (b))
+#define BITS_LSB(x, b) ((x) << (b))
 
 #define bs_set(_bs_, _pos_) bs_modify(_bs_, _pos_, BS_SET)
 #define bs_clear(_bs_, _pos_) bs_modify(_bs_, _pos_, BS_CLEAR)

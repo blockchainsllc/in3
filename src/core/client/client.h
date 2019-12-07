@@ -113,23 +113,42 @@ typedef struct in3_request_config {
 
 } in3_request_config_t;
 
+/**
+ * Node capabilities
+ * @note Always access using getters/setters in nodelist.h
+ */
+typedef uint64_t in3_node_props_t;
+
+typedef enum {
+  NODE_PROP_PROOF            = 0x1,   /* filter out nodes which are providing no proof */
+  NODE_PROP_MULTICHAIN       = 0x2,   /* filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
+  NODE_PROP_ARCHIVE          = 0x4,   /* filter out non-archive supporting nodes */
+  NODE_PROP_HTTP             = 0x8,   /* filter out non-http nodes  */
+  NODE_PROP_BINARY           = 0x10,  /* filter out nodes that don't support binary encoding */
+  NODE_PROP_ONION            = 0x20,  /* filter out non-onion nodes */
+  NODE_PROP_SIGNER           = 0x40,  /* filter out non-signer nodes */
+  NODE_PROP_DATA             = 0x80,  /* filter out non-data provider nodes */
+  NODE_PROP_STATS            = 0x100, /* filter out nodes that do not provide stats */
+  NODE_PROP_MIN_BLOCK_HEIGHT = 0x400, /* filter out nodes that will sign blocks with lower min block height than specified */
+} in3_node_props_type_t;
+
 /** incubed node-configuration. 
  * 
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  uint32_t index;    /**< index within the nodelist, also used in the contract as key */
-  bytes_t* address;  /**< address of the server */
-  uint64_t deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t capacity; /**< the maximal capacity able to handle */
-  uint64_t props;    /**< a bit set used to identify the cabalilities of the server. */
-  char*    url;      /**< the url of the node */
+  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
+  bytes_t*         address;  /**< address of the server */
+  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t         capacity; /**< the maximal capacity able to handle */
+  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  char*            url;      /**< the url of the node */
 } in3_node_t;
 
 /**
  * Weight or reputation of a node.
  * 
- * Based on the past performance of the node a weight is calulcated given faster nodes a heigher weight 
+ * Based on the past performance of the node a weight is calculated given faster nodes a higher weight
  * and chance when selecting the next node from the nodelist.
  * These weights will also be stored in the cache (if available)
  */
@@ -139,6 +158,30 @@ typedef struct in3_node_weight {
   uint32_t total_response_time; /**< total of all response times */
   uint64_t blacklistedUntil;    /**< if >0 this node is blacklisted until k. k is a unix timestamp */
 } in3_node_weight_t;
+
+/**
+ * Initializer for in3_node_props_t
+ */
+#define in3_node_props_init(np) *(np) = 0
+
+/**
+ * setter method for interacting with in3_node_props_t.
+ * @param[out] node_props
+ * @param type
+ * @param
+ */
+void in3_node_props_set(in3_node_props_t*     node_props,
+                        in3_node_props_type_t type,
+                        uint8_t               value);
+
+/**
+ * getter macro for interacting with in3_node_props_t.
+ * @param node_props
+ * @param type
+ * @return val
+ */
+#define in3_node_props_get(np, t) ((t == NODE_PROP_MIN_BLOCK_HEIGHT) ? ((np >> 32U) & 0xFFU) : !!(np & t))
+#define in3_node_props_matches(np, t) !!(np & t))
 
 /**
  * Chain definition inside incubed.
@@ -365,6 +408,9 @@ typedef struct in3_t_ {
   /** filter handler */
   in3_filter_handler_t* filters;
 
+  /** used to identify the capabilities of the node. */
+  in3_node_props_t node_props;
+
 } in3_t;
 
 /** creates a new Incubes configuration and returns the pointer.
@@ -443,11 +489,11 @@ in3_ret_t in3_client_register_chain(
 
 /** adds a node to a chain ore updates a existing node */
 in3_ret_t in3_client_add_node(
-    in3_t*    client,   /**< [in] the pointer to the incubed client config. */
-    uint64_t  chain_id, /**< [in] the chain id. */
-    char*     url,      /**< [in] url of the nodes. */
-    uint64_t  props,    /**< [in]properties of the node. */
-    address_t address); /**< [in] public address of the signer. */
+    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
+    uint64_t         chain_id, /**< [in] the chain id. */
+    char*            url,      /**< [in] url of the nodes. */
+    in3_node_props_t props,    /**< [in]properties of the node. */
+    address_t        address);        /**< [in] public address of the signer. */
 
 /** removes a node from a nodelist */
 in3_ret_t in3_client_remove_node(

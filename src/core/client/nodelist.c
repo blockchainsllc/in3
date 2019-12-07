@@ -38,7 +38,6 @@
 #include "../util/mem.h"
 #include "../util/utils.h"
 #include "cache.h"
-#include "client.h"
 #include "context.h"
 #include "keys.h"
 #include <stdio.h>
@@ -214,8 +213,20 @@ in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   return ret;
 }
 
+#if defined(TEST) || defined(FILTER_NODES)
+
+IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t np_config, const in3_node_props_t np) {
+  if (((np_config & np) & 0xFFFFFFFF) != (np_config & 0XFFFFFFFF)) return false;
+  uint32_t min_blk_ht_conf = in3_node_props_get(np_config, NODE_PROP_MIN_BLOCK_HEIGHT);
+  uint32_t min_blk_ht      = in3_node_props_get(np, NODE_PROP_MIN_BLOCK_HEIGHT);
+  return (min_blk_ht >= min_blk_ht_conf);
+}
+
+#endif
+
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
-                                         int len, _time_t now, float* total_weight, int* total_found) {
+                                         int len, _time_t now, float* total_weight, int* total_found,
+                                         in3_node_props_t props) {
   int                i, p;
   float              s         = 0;
   in3_node_t*        nodeDef   = NULL;
@@ -227,6 +238,14 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
     if (nodeDef->deposit < c->minDeposit) continue;
+
+#ifdef FILTER_NODES
+    // fixme: this compile time check will be redundant once the registry contract is deployed with correct node prop values
+    if (!in3_node_props_match(props, nodeDef->props)) continue;
+#else
+    UNUSED_VAR(props);
+#endif
+
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;
     w = _malloc(sizeof(node_weight_t));
@@ -270,7 +289,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   return res;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int request_count) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int request_count, in3_node_props_t props) {
 
   // get all nodes from the nodelist
   _time_t            now       = _time();
@@ -284,7 +303,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
     return ctx_set_error(ctx, "could not find the chain", res);
 
   // filter out nodes
-  node_weight_t* found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
+  node_weight_t* found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -297,7 +316,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
     if (blacklisted > all_nodes_len / 2) {
       for (i = 0; i < all_nodes_len; i++)
         weights[i].blacklistedUntil = 0;
-      found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
+      found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
     }
 
     if (total_found == 0)
@@ -370,4 +389,13 @@ void in3_nodelist_clear(in3_chain_t* chain) {
   }
   _free(chain->nodeList);
   _free(chain->weights);
+}
+
+void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint8_t value) {
+  if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {
+    uint64_t dp_ = value & 0xFFU;
+    *node_props  = (*node_props & 0xFFFFFFFF) | (dp_ << 32U);
+  } else {
+    (value != 0) ? ((*node_props) |= type) : ((*node_props) &= ~type);
+  }
 }
