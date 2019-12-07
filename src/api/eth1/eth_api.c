@@ -148,18 +148,18 @@ static uint256_t uint256_from_bytes(bytes_t bytes) {
 
 /** returns the result from a previously executed ctx*/
 static d_token_t* get_result(in3_ctx_t* ctx) {
-  d_token_t* res = d_get(ctx->responses[0], K_RESULT);
-  if (res) return res;                                // everthing is good, we have a result
-  if (ctx->error)                                     // error means something went wrong during verification or a timeout occured.
-    set_error(ETIMEDOUT, ctx->error);                 // so we copy the error as last_error
-  else {                                              // but since we did not get a result and even without a error
-    d_token_t* r = d_get(ctx->responses[0], K_ERROR); // we find the error in the response from the server
-    if (d_type(r) == T_OBJECT) {                      // the response was correct but contains a error-object, which we convert into a string
-      str_range_t s = d_to_json(r);                   // this will not work, if we used binary-format, since we don't know the propnames in this case!!!
-      set_errorn(ETIMEDOUT, s.data, s.len);           // set error as json
-    } else                                            // or we have a string
-      set_errorn(ETIMEDOUT, d_string(r), d_len(r));   // and can simply copy it
+  if (ctx->error) {                   // error means something went wrong during verification or a timeout occured.
+    set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
+    return NULL;
   }
+  d_token_t* t = d_get(ctx->responses[0], K_RESULT);
+  if (t) return t; // everthing is good, we have a result
+
+  // if no result, we expect an error
+  t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
+  set_error(ETIMEDOUT, !t
+                           ? "No result or error in response"
+                           : (d_type(t) == T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
   return NULL;
 }
 
@@ -715,9 +715,9 @@ eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_exec("eth_getTransactionReceipt", eth_tx_receipt_t*, parse_tx_receipt(result));
 }
 
-eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index) {
+eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index) {
   rpc_init;
-  params_add_bytes(params, bytes(hash, 32));
+  params_add_blk_num_t(params, block);
   params_add_number(params, index);
   rpc_exec("eth_getUncleByBlockNumberAndIndex", eth_block_t*, eth_getBlock(result, true));
 }

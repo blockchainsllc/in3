@@ -89,9 +89,8 @@ typedef enum {
  * 
  * This will be part of the in3-request and will be generated based on the prooftype.*/
 typedef enum {
-  VERIFICATION_NEVER                = 0, /**< No Verifacation */
-  VERIFICATION_PROOF                = 1, /**< Includes the proof of the data */
-  VERIFICATION_PROOF_WITH_SIGNATURE = 2  /**< Proof + Signatures */
+  VERIFICATION_NEVER = 0, /**< No Verifacation */
+  VERIFICATION_PROOF = 1, /**< Includes the proof of the data */
 } in3_verification_t;
 
 /** the configuration as part of each incubed request. 
