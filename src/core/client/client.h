@@ -128,7 +128,7 @@ typedef enum {
   NODE_PROP_BINARY           = 0x10,  /* filter out nodes that don't support binary encoding */
   NODE_PROP_ONION            = 0x20,  /* filter out non-onion nodes */
   NODE_PROP_SIGNER           = 0x40,  /* filter out non-signer nodes */
-  NODE_PROP_DATA             = 0x80,  /* filter out non-proofer nodes */
+  NODE_PROP_DATA             = 0x80,  /* filter out non-data provider nodes */
   NODE_PROP_STATS            = 0x100, /* filter out nodes that do not provide stats */
   NODE_PROP_MIN_BLOCK_HEIGHT = 0x400, /* filter out nodes that will sign blocks with lower min block height than specified */
 } in3_node_props_type_t;
