@@ -122,14 +122,6 @@ char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
 // lightweight strstr() replacement
 char* str_find(char* haystack, const char* needle);
 
-static inline bool memiszero(uint8_t* ptr, size_t l) {
-  while (l > 0 && *ptr == 0) {
-    l--;
-    ptr++;
-  }
-  return !l;
-}
-
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \
     l--;                     \
