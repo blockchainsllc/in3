@@ -75,6 +75,7 @@ static void test_capabilities(void) {
   in3_node_props_set(&npserver, NODE_PROP_ONION, true);
   in3_node_props_set(&npserver, NODE_PROP_SIGNER, true);
   in3_node_props_set(&npserver, NODE_PROP_DATA, true);
+  in3_node_props_set(&npserver, NODE_PROP_STATS, true);
   TEST_ASSERT(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
@@ -107,6 +108,14 @@ static void test_capabilities(void) {
   in3_node_props_init(&npserver);
   npserver = 1U | (1U << 3U) | (1U << 4U) | (5UL << 32U);
   TEST_ASSERT_EQUAL_MEMORY(&npclient, &npserver, sizeof(in3_node_props_t));
+
+  in3_node_props_init(&npclient);
+  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 5);
+  TEST_ASSERT_EQUAL(in3_node_props_get(npclient, NODE_PROP_MIN_BLOCK_HEIGHT), 5);
+  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 0);
+  TEST_ASSERT_EQUAL(in3_node_props_get(npclient, NODE_PROP_MIN_BLOCK_HEIGHT), 0);
+  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 255);
+  TEST_ASSERT_EQUAL(in3_node_props_get(npclient, NODE_PROP_MIN_BLOCK_HEIGHT), 255);
 }
 
 /*
