@@ -287,21 +287,19 @@ int evm_sub_call(evm_t*   parent,
                  wlen_t   mode,
                  uint32_t out_offset, uint32_t out_len);
 
-int     evm_ensure_memory(evm_t* evm, uint32_t max_pos);
-int     in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
-int     evm_call(void*    vc,
-                 uint8_t  address[20],
-                 uint8_t* value, wlen_t l_value,
-                 uint8_t* data, uint32_t l_data,
-                 uint8_t   caller[20],
-                 uint64_t  gas,
-                 uint64_t  chain_id,
-                 bytes_t** result);
-void    evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
-void    evm_free(evm_t* evm);
-int     evm_run_precompiled(evm_t* evm, const uint8_t address[20]);
-uint8_t evm_is_precompiled(evm_t* evm, uint8_t address[20]);
-void    uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
+int  evm_ensure_memory(evm_t* evm, uint32_t max_pos);
+int  in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
+int  evm_call(void*    vc,
+              uint8_t  address[20],
+              uint8_t* value, wlen_t l_value,
+              uint8_t* data, uint32_t l_data,
+              uint8_t   caller[20],
+              uint64_t  gas,
+              uint64_t  chain_id,
+              bytes_t** result);
+void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
+void evm_free(evm_t* evm);
+void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
 
 int evm_execute(evm_t* evm);
 

@@ -42,6 +42,7 @@
 #include "../nano/serialize.h"
 #include "gas.h"
 #include "opcodes.h"
+#include "precompiled.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>

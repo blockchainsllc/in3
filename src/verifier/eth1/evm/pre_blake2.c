@@ -1,6 +1,10 @@
 #include "../../../core/util/utils.h"
+#include "evm.h"
+#include "gas.h"
+#include "precompiled.h"
 #include <stdint.h>
 #include <string.h>
+
 static const uint64_t IV[8] = {
     0x6a09e667f3bcc908ULL, 0xbb67ae8584caa73bULL,
     0x3c6ef372fe94f82bULL, 0xa54ff53a5f1d36f1ULL,
@@ -86,4 +90,13 @@ void precompiled_blake2(uint8_t* in, uint8_t* out) {
 
   for (int i = 0; i < 8; i++)
     le_from_long(h[i] ^ v[i] ^ v[i + 8], out + 8 * i);
+}
+
+int pre_blake2(evm_t* evm) {
+  if (evm->call_data.len != 213) return -1;
+  subgas(bytes_to_int(evm->call_data.data, 4));
+  evm->return_data.data = _malloc(128);
+  evm->return_data.len  = 128;
+  precompiled_blake2(evm->call_data.data, evm->return_data.data);
+  return 0;
 }

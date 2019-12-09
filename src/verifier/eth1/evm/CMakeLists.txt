@@ -42,7 +42,8 @@ add_library(evm_o OBJECT
         evm_mem.c
         accounts.c
         gas.c
-        blake2.c
+        pre_ec.c
+        pre_blake2.c
         precompiled.c)
 
 # add gas-calculation
