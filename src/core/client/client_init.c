@@ -72,18 +72,18 @@ void in3_set_default_signer(in3_signer_t* signer) {
 }
 
 static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract, json_ctx_t* spec) {
-  chain->chainId        = chainId;
-  chain->initAddresses  = NULL;
-  chain->lastBlock      = 0;
-  chain->contract       = hex2byte_new_bytes(contract, 40);
-  chain->needsUpdate    = chainId == ETH_CHAIN_ID_LOCAL ? 0 : 1;
-  chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
-  chain->nodeListLength = boot_node_count;
-  chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
-  chain->type           = type;
-  chain->spec           = spec;
-  chain->version        = version;
-  if (wl_contract) chain->whiteListContract = hex2byte_new_bytes(wl_contract, 40);
+  chain->chainId           = chainId;
+  chain->initAddresses     = NULL;
+  chain->lastBlock         = 0;
+  chain->contract          = hex2byte_new_bytes(contract, 40);
+  chain->needsUpdate       = chainId == ETH_CHAIN_ID_LOCAL ? 0 : 1;
+  chain->nodeList          = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodeListLength    = boot_node_count;
+  chain->weights           = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->type              = type;
+  chain->spec              = spec;
+  chain->version           = version;
+  chain->whiteListContract = (wl_contract) ? hex2byte_new_bytes(wl_contract, 40) : NULL;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex2byte_arr(registry_id, -1, chain->registry_id, 32);
@@ -198,13 +198,13 @@ in3_ret_t in3_client_register_chain(in3_t* c, uint64_t chain_id, in3_chain_type_
   else if (chain->whiteListContract)
     b_free(chain->whiteListContract);
 
-  chain->chainId  = chain_id;
-  chain->contract = b_new((char*) contract, 20);
-  if (wl_contract) chain->whiteListContract = b_new((char*) wl_contract, 20);
-  chain->needsUpdate = 0;
-  chain->type        = type;
-  chain->spec        = spec;
-  chain->version     = version;
+  chain->chainId           = chain_id;
+  chain->contract          = b_new((char*) contract, 20);
+  chain->whiteListContract = (wl_contract) ? b_new((char*) wl_contract, 20) : NULL;
+  chain->needsUpdate       = 0;
+  chain->type              = type;
+  chain->spec              = spec;
+  chain->version           = version;
   memcpy(chain->registry_id, registry_id, 32);
   return chain->contract ? IN3_OK : IN3_ENOMEM;
 }
