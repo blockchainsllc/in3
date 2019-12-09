@@ -41,13 +41,14 @@
 #include "../../../third-party/tommath/tommath.h"
 #include "evm.h"
 #include "gas.h"
-
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif
 #ifndef MIN
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
+
+void precompiled_blake2(uint8_t* in, uint8_t* out);
 
 static const uint8_t modulus_bin[] = {0x30, 0x64, 0x4e, 0x72, 0xe1, 0x31, 0xa0, 0x29, 0xb8, 0x50, 0x45, 0xb6, 0x81, 0x81, 0x58, 0x5d, 0x97, 0x81, 0x6a, 0x91, 0x68, 0x71, 0xca, 0x8d, 0x3c, 0x20, 0x8c, 0x16, 0xd8, 0x7c, 0xfd, 0x47};
 
@@ -343,7 +344,7 @@ uint8_t evm_is_precompiled(evm_t* evm, address_t address) {
   UNUSED_VAR(evm);
   int l = 20;
   optimize_len(address, l);
-  return (l == 1 && *address && *address < 9);
+  return (l == 1 && *address && *address < 10);
 }
 
 int pre_ecrecover(evm_t* evm) {
@@ -369,6 +370,14 @@ int pre_ecrecover(evm_t* evm) {
   return 0;
 }
 
+int pre_blake2b(evm_t* evm) {
+  subgas(G_PRE_SHA256 + (evm->call_data.len + 31) / 32 * G_PRE_SHA256_WORD);
+  if (evm->call_data.len != 213) return -1;
+  evm->return_data.data = _malloc(128);
+  evm->return_data.len  = 128;
+  precompiled_blake2(evm->call_data.data, evm->return_data.data);
+  return 0;
+}
 int pre_sha256(evm_t* evm) {
   subgas(G_PRE_SHA256 + (evm->call_data.len + 31) / 32 * G_PRE_SHA256_WORD);
   evm->return_data.data = _malloc(32);
@@ -574,6 +583,8 @@ int evm_run_precompiled(evm_t* evm, const address_t address) {
       return pre_ec_add(evm);
     case 7:
       return pre_ec_mul(evm);
+    case 9:
+      return pre_blake2b(evm);
     default:
       return -1;
   }
