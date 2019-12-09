@@ -371,8 +371,8 @@ int pre_ecrecover(evm_t* evm) {
 }
 
 int pre_blake2b(evm_t* evm) {
-  subgas(G_PRE_SHA256 + (evm->call_data.len + 31) / 32 * G_PRE_SHA256_WORD);
   if (evm->call_data.len != 213) return -1;
+  subgas(bytes_to_int(evm->call_data.data, 4));
   evm->return_data.data = _malloc(128);
   evm->return_data.len  = 128;
   precompiled_blake2(evm->call_data.data, evm->return_data.data);

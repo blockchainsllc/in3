@@ -61,7 +61,7 @@ void precompiled_blake2(uint8_t* in, uint8_t* out) {
   uint8_t  f = in[212];
   for (int i = 0; i < 8; i++) h[i] = le_to_long(in + 4 + 8 * i);
   for (int i = 0; i < 16; i++) m[i] = le_to_long(in + 68 + 8 * i);
-  uint32_t rounds = bytes_to_int(in, 4);
+  int rounds = (int) bytes_to_int(in, 4);
 
   memcpy(v, h, sizeof(h));
   v[8]  = IV[0];
