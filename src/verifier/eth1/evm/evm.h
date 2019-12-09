@@ -80,6 +80,7 @@ typedef enum evm_state {
 #define EVM_PROP_EIP150 2
 #define EVM_PROP_EIP158 4
 #define EVM_PROP_CONSTANTINOPL 16
+#define EVM_PROP_ISTANBUL 32
 #define EVM_PROP_NO_FINALIZE 32768
 #define EVM_PROP_STATIC 256
 
@@ -242,6 +243,7 @@ typedef struct evm {
   // define the enviroment-function.
   evm_get_env env;
   void*       env_ptr;
+  uint64_t    chain_id; /**< the chain_id as returned by the opcode */
 
   // tx values
   uint8_t* address;    /**< the address of the current storage*/
@@ -293,6 +295,7 @@ int     evm_call(void*    vc,
                  uint8_t* data, uint32_t l_data,
                  uint8_t   caller[20],
                  uint64_t  gas,
+                 uint64_t  chain_id,
                  bytes_t** result);
 void    evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
 void    evm_free(evm_t* evm);

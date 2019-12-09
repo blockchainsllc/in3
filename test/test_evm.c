@@ -454,8 +454,9 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 
   evm.properties = props | (exec ? EVM_PROP_FRONTIER : 0); //EVM_PROP_CONSTANTINOPL;
 
-  evm.env     = runner_get_env;
-  evm.env_ptr = test;
+  evm.env      = runner_get_env;
+  evm.env_ptr  = test;
+  evm.chain_id = 1;
 
   evm.return_data.data = NULL;
   evm.return_data.len  = 0;
