@@ -42,8 +42,14 @@
 #include <inttypes.h>
 #include <string.h>
 
-#define NODE_LIST_KEY ("nodelist_%" PRIx64)
+#define NODE_LIST_KEY ("nodelist_%" PRIx64 "_0x%s")
 #define CACHE_VERSION 3
+
+static void write_cache_key(char* key, uint64_t chain_id, bytes_t* contract) {
+  char contract_[41];
+  bytes_to_hex(contract->data, contract->len, contract_);
+  sprintf(key, NODE_LIST_KEY, chain_id, contract_);
+}
 
 in3_ret_t in3_cache_init(in3_t* c) {
   int i;
@@ -62,7 +68,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 
   // define the key to use
   char key[200];
-  sprintf(key, NODE_LIST_KEY, chain->chainId);
+  write_cache_key(key, chain->chainId, chain->contract);
 
   // get from cache
   bytes_t* b = c->cacheStorage->get_item(c->cacheStorage->cptr, key);
@@ -123,11 +129,12 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
     bb_write_long(bb, n->props);
     bb_write_fixed_bytes(bb, n->address);
     bb_write_chars(bb, n->url, strlen(n->url));
+    bb_write_byte(bb, n->whiteListed);
   }
 
   // create key
   char key[200];
-  sprintf(key, NODE_LIST_KEY, chain->chainId);
+  write_cache_key(key, chain->chainId, chain->whiteListContract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   ctx->client->cacheStorage->set_item(ctx->client->cacheStorage->cptr, key, &bb->b);
