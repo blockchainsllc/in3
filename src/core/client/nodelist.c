@@ -191,6 +191,86 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   return ctx_add_required(parent_ctx, ctx = new_ctx(c, req));
 }
 
+static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+  in3_ret_t res = IN3_OK;
+
+  // read the nodes
+  d_token_t *nodes = d_get(result, K_NODES), *t = NULL;
+  if (!nodes || d_type(nodes) != T_ARRAY)
+    return ctx_set_error(ctx, "No Nodes in the result", IN3_EINVALDT);
+  int len = d_len(nodes);
+
+  if (!(t = d_get(result, K_LAST_BLOCK_NUMBER)))
+    return ctx_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
+
+  chain->lastBlockWl = d_long(t);
+
+  for (int j = 0; j < chain->nodeListLength; ++j) {
+    chain->nodeList[j].whiteListed = false;
+  }
+
+  b_free(chain->whiteList);
+  bytes_builder_t* bb = bb_newl(len * 20);
+  bytes_t*         addr_;
+  for (int i = 0; i < len; ++i) {
+    addr_ = d_bytesl(d_get_at(nodes, i), 20);
+    bb_write_raw_bytes(bb, addr_, 20);
+
+    for (int j = 0; j < chain->nodeListLength; ++j)
+      if (b_cmp(addr_, chain->nodeList[j].address))
+        chain->nodeList[j].whiteListed = true;
+  }
+  chain->whiteList->data = bb->b.data;
+  chain->whiteList->len  = bb->b.len;
+  bb_free(bb);
+  return res;
+}
+
+static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+  in3_ret_t res = IN3_OK;
+
+  // is there a useable required ctx?
+  in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_whiteList");
+
+  if (ctx)
+    switch (in3_ctx_state(ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
+      case CTX_WAITING_FOR_REQUIRED_CTX:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+      case CTX_SUCCESS: {
+
+        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+        if (r) {
+          // we have a result....
+          res = in3_client_fill_chain_whitelist(chain, ctx, r);
+          if (res < 0)
+            return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, res));
+          else if (c->cacheStorage)
+            in3_cache_store_whitelist(ctx, chain);
+          ctx_remove_required(parent_ctx, ctx);
+          return IN3_OK;
+        } else
+          return ctx_set_error(parent_ctx, "Error updating white_list", ctx_check_response_error(ctx, 0));
+      }
+    }
+
+  in3_log_debug("update the whitelist...\n");
+
+  // create request
+  char* req = _malloc(300);
+  sprintf(req, "{\"method\":\"in3_whiteList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x");
+
+  char tmp[40] = {0};
+  bytes_to_hex(chain->whiteListContract->data, 20, tmp);
+  strcat(req, tmp);
+  strcat(req, "\"]}");
+
+  // new client
+  return ctx_add_required(parent_ctx, ctx = new_ctx(c, req));
+}
+
 void free_ctx_nodes(node_weight_t* c) {
   node_weight_t* p = NULL;
   while (c) {
@@ -260,6 +340,12 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
         res = update_nodelist(c, chain, ctx);
         if (res < 0) break;
       }
+      if ((chain->needsUpdate & UPDATE_WHITELIST) || ctx_find_required(ctx, "in3_whiteList")) {
+        chain->needsUpdate &= ~UPDATE_NODELIST;
+        res = update_whitelist(c, chain, ctx);
+        if (res < 0) break;
+      }
+
       *nodeListLength = chain->nodeListLength;
       *nodeList       = chain->nodeList;
       *weights        = chain->weights;
