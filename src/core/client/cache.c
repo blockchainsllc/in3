@@ -43,6 +43,7 @@
 #include <string.h>
 
 #define NODE_LIST_KEY ("nodelist_%" PRIx64)
+#define CACHE_VERSION 3
 
 in3_ret_t in3_cache_init(in3_t* c) {
   int i;
@@ -70,7 +71,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     size_t p = 0;
 
     // version check
-    if (b_read_byte(b, &p) != 2) {
+    if (b_read_byte(b, &p) != CACHE_VERSION) {
       b_free(b);
       return IN3_EVERS;
     }
@@ -79,23 +80,23 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     in3_nodelist_clear(chain);
 
     // fill data
-    chain->contract       = b_new_fixed_bytes(b, &p, 20);
     chain->lastBlock      = b_read_long(b, &p);
     chain->nodeListLength = count = b_read_int(b, &p);
     chain->nodeList               = _calloc(count, sizeof(in3_node_t));
     chain->weights                = _calloc(count, sizeof(in3_node_weight_t));
-    chain->needsUpdate            = false;
+    chain->needsUpdate            = UPDATE_NONE;
     memcpy(chain->weights, b->data + p, count * sizeof(in3_node_weight_t));
     p += count * sizeof(in3_node_weight_t);
 
     for (i = 0; i < count; i++) {
-      in3_node_t* n = chain->nodeList + i;
-      n->capacity   = b_read_int(b, &p);
-      n->index      = b_read_int(b, &p);
-      n->deposit    = b_read_long(b, &p);
-      n->props      = b_read_long(b, &p);
-      n->address    = b_new_fixed_bytes(b, &p, 20);
-      n->url        = b_new_chars(b, &p);
+      in3_node_t* n  = chain->nodeList + i;
+      n->capacity    = b_read_int(b, &p);
+      n->index       = b_read_int(b, &p);
+      n->deposit     = b_read_long(b, &p);
+      n->props       = b_read_long(b, &p);
+      n->address     = b_new_fixed_bytes(b, &p, 20);
+      n->url         = b_new_chars(b, &p);
+      n->whiteListed = b_read_byte(b, &p) != 0;
     }
     b_free(b);
   }
@@ -107,8 +108,9 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
 
   // write to bytes_buffer
   bytes_builder_t* bb = bb_new();
-  bb_write_byte(bb, 2);                      // Version flag
+  bb_write_byte(bb, CACHE_VERSION);          // Version flag
   bb_write_fixed_bytes(bb, chain->contract); // 20 bytes fixed
+
   bb_write_long(bb, chain->lastBlock);
   bb_write_int(bb, chain->nodeListLength);
   bb_write_raw_bytes(bb, chain->weights, chain->nodeListLength * sizeof(in3_node_weight_t));
