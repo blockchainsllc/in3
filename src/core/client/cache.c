@@ -47,7 +47,7 @@
 
 static void write_cache_key(char* key, uint64_t chain_id, bytes_t* contract) {
   char contract_[41];
-  bytes_to_hex(contract->data, contract->len, contract_);
+  if (contract) bytes_to_hex(contract->data, contract->len, contract_);
   sprintf(key, NODE_LIST_KEY, chain_id, contract_);
 }
 
