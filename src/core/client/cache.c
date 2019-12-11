@@ -58,6 +58,9 @@ in3_ret_t in3_cache_init(in3_t* c) {
     if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) {
       in3_log_debug("Failed to update cached nodelist\n");
     }
+    if (in3_cache_update_whitelist(c, c->chains + i) != IN3_OK) {
+      in3_log_debug("Failed to update cached whitelist\n");
+    }
   }
   return IN3_OK;
 }
@@ -131,6 +134,72 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
     bb_write_chars(bb, n->url, strlen(n->url));
     bb_write_byte(bb, n->whiteListed);
   }
+
+  // create key
+  char key[200];
+  write_cache_key(key, chain->chainId, chain->contract);
+
+  // store it and ignore return value since failing when writing cache should not stop us.
+  ctx->client->cacheStorage->set_item(ctx->client->cacheStorage->cptr, key, &bb->b);
+
+  // clear buffer
+  bb_free(bb);
+  return IN3_OK;
+}
+
+in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
+  // it is ok not to have a storage
+  if (!c->cacheStorage) return IN3_OK;
+
+  // define the key to use
+  char key[200];
+  write_cache_key(key, chain->chainId, chain->whiteListContract);
+
+  // get from cache
+  bytes_t* b = c->cacheStorage->get_item(c->cacheStorage->cptr, key);
+  if (b) {
+    size_t p = 0;
+
+    // version check
+    if (b_read_byte(b, &p) != CACHE_VERSION) {
+      b_free(b);
+      return IN3_EVERS;
+    }
+
+    // clean up old
+    b_free(chain->whiteList);
+
+    // fill data
+    chain->lastBlockWl       = b_read_long(b, &p);
+    chain->whiteListContract = b_new_fixed_bytes(b, &p, 20);
+    if (!memiszero(chain->whiteListContract->data, 20)) {
+      b_free(chain->whiteListContract);
+      chain->whiteListContract = NULL;
+    }
+    p += 20;
+
+    uint32_t l = b_read_int(b, &p) * 20;
+    b_readl(b, p, chain->whiteList->data, l);
+    chain->whiteList->len = l;
+    b_free(b);
+  }
+  return IN3_OK;
+}
+
+in3_ret_t in3_cache_store_whitelist(in3_ctx_t* ctx, in3_chain_t* chain) {
+  // write to bytes_buffer
+  bytes_builder_t* bb = bb_new();
+  bb_write_byte(bb, CACHE_VERSION); // Version flag
+
+  if (chain->whiteListContract) {
+    bb_write_fixed_bytes(bb, chain->whiteListContract);
+  } else {
+    uint8_t tmp[20] = {0};
+    bb_write_raw_bytes(bb, tmp, 20); // 20 bytes fixed
+  }
+
+  bb_write_int(bb, chain->whiteList->len / 20);
+  bb_write_fixed_bytes(bb, chain->whiteList);
 
   // create key
   char key[200];
