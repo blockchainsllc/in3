@@ -145,4 +145,12 @@ char* str_find(char* haystack, const char* needle);
     if (res < 0) goto clean; \
   }
 
+static inline bool memiszero(uint8_t* ptr, size_t l) {
+  while (l > 0 && *ptr == 0) {
+    l--;
+    ptr++;
+  }
+  return !l;
+}
+
 #endif
