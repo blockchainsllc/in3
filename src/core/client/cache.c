@@ -89,6 +89,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     in3_nodelist_clear(chain);
 
     // fill data
+    chain->contract       = b_new_fixed_bytes(b, &p, 20);
     chain->lastBlock      = b_read_long(b, &p);
     chain->nodeListLength = count = b_read_int(b, &p);
     chain->nodeList               = _calloc(count, sizeof(in3_node_t));
