@@ -118,12 +118,13 @@ typedef struct in3_request_config {
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  uint32_t index;    /**< index within the nodelist, also used in the contract as key */
-  bytes_t* address;  /**< address of the server */
-  uint64_t deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t capacity; /**< the maximal capacity able to handle */
-  uint64_t props;    /**< a bit set used to identify the cabalilities of the server. */
-  char*    url;      /**< the url of the node */
+  uint32_t index;       /**< index within the nodelist, also used in the contract as key */
+  bytes_t* address;     /**< address of the server */
+  uint64_t deposit;     /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t capacity;    /**< the maximal capacity able to handle */
+  uint64_t props;       /**< a bit set used to identify the cabalilities of the server. */
+  char*    url;         /**< the url of the node */
+  bool     whiteListed; /**< boolean indicating if node exists in whiteList */
 } in3_node_t;
 
 /**
@@ -140,6 +141,10 @@ typedef struct in3_node_weight {
   uint64_t blacklistedUntil;    /**< if >0 this node is blacklisted until k. k is a unix timestamp */
 } in3_node_weight_t;
 
+#define UPDATE_NONE 0x0u
+#define UPDATE_NODELIST 0x1u
+#define UPDATE_WHITELIST 0x2u
+
 /**
  * Chain definition inside incubed.
  * 
@@ -149,7 +154,7 @@ typedef struct in3_chain {
   uint64_t           chainId;           /**< chainId, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t   type;              /**< chaintype */
   uint64_t           lastBlock;         /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  bool               needsUpdate;       /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+  uint8_t            needsUpdate;       /**< if corresponding bit is set will trigger a `in3_nodeList`/`in3_whiteList` request before the next request is send. */
   int                nodeListLength;    /**< number of nodes in the nodeList */
   in3_node_t*        nodeList;          /**< array of nodes */
   in3_node_weight_t* weights;           /**< stats and weights recorded for each node */
@@ -159,6 +164,8 @@ typedef struct in3_chain {
   uint8_t            version;           /**< version of the chain */
   json_ctx_t*        spec;              /**< optional chain specification, defining the transaitions and forks*/
   bytes_t*           whiteListContract; /**< address of whiteList contract */
+  bytes_t*           whiteList;         /**< serialized list of node addresses that constitute the whiteList */
+  uint64_t           lastBlockWl;       /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
 } in3_chain_t;
 
 /** 
