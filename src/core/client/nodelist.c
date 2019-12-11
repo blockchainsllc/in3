@@ -203,7 +203,7 @@ void free_ctx_nodes(node_weight_t* c) {
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   in3_ctx_t ctx;
   memset(&ctx, 0, sizeof(ctx));
-  chain->needsUpdate = false;
+  chain->needsUpdate = UPDATE_NONE;
 
   in3_ret_t ret = update_nodelist(c, chain, &ctx);
   if (ret == IN3_WAITING && ctx.required) {
@@ -254,8 +254,8 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
     if (chain->chainId == chain_id) {
-      if (chain->needsUpdate || update || ctx_find_required(ctx, "in3_nodeList")) {
-        chain->needsUpdate = false;
+      if ((chain->needsUpdate & UPDATE_NODELIST) || update || ctx_find_required(ctx, "in3_nodeList")) {
+        chain->needsUpdate &= ~UPDATE_NODELIST;
         // now update the nodeList
         res = update_nodelist(c, chain, ctx);
         if (res < 0) break;

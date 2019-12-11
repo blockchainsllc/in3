@@ -58,7 +58,7 @@ void test_configure_request() {
   in3_t* c               = in3_new();
   c->proof               = PROOF_FULL;
   c->signatureCount      = 2;
-  c->chains->needsUpdate = false;
+  c->chains->needsUpdate = UPDATE_NONE;
   c->finality            = 10;
   c->includeCode         = true;
   c->replaceLatestBlock  = 6;
