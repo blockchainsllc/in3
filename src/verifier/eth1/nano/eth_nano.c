@@ -73,6 +73,8 @@ in3_ret_t in3_verify_eth_nano(in3_vctx_t* vc) {
     return eth_verify_eth_getTransactionReceipt(vc, d_get_bytes_at(params, 0));
   else if (strcmp(method, "in3_nodeList") == 0)
     return eth_verify_in3_nodelist(vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
+  else if (strcmp(method, "in3_whiteList") == 0)
+    return eth_verify_in3_whitelist(vc);
   else
     return vc_err(vc, "The Method cannot be verified with eth_nano!");
 }

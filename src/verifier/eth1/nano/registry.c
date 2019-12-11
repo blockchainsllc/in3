@@ -280,3 +280,74 @@ in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* 
   // now verify the nodelist
   return verify_nodelist_data(vc, node_limit, seed, required_addresses, server_list, storage_proof);
 }
+
+in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
+  uint8_t         hash[32], val[36];
+  bytes_t         root, **proof, *account_raw, path = {.data = hash, .len = 32};
+  d_token_t *     server_list = d_get(vc->result, K_NODES), *storage_proof, *t;
+  bytes_builder_t bb          = {.bsize = 36, .b = {.data = val, .len = 0}};
+
+  if (d_type(vc->result) != T_OBJECT || !vc->proof || !server_list) return vc_err(vc, "Invalid nodeList response!");
+
+  // verify the header
+  bytes_t* blockHeader = d_get_bytesk(vc->proof, K_BLOCK);
+  if (!blockHeader) return vc_err(vc, "No Block-Proof!");
+  TRY(eth_verify_blockheader(vc, blockHeader, NULL));
+
+  // check contract
+  bytes_t* registry_contract = d_get_byteskl(vc->result, K_CONTRACT, 20);
+  if (!registry_contract || !b_cmp(registry_contract, vc->chain->contract)) return vc_err(vc, "No or wrong Contract!");
+
+  // check last block
+  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER)) return vc_err(vc, "The signature is based on older block!");
+
+  // check accounts
+  d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
+  if (!accounts || d_len(accounts) != 1) return vc_err(vc, "Invalid accounts!");
+  d_token_t* account = accounts + 1;
+
+  // verify the account proof
+  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_STATE_ROOT, &root) != 1) return vc_err(vc, "no state root in the header");
+  if (!b_cmp(d_get_byteskl(account, K_ADDRESS, 20), registry_contract)) return vc_err(vc, "wrong address in the account proof");
+
+  proof = d_create_bytes_vec(d_get(account, K_ACCOUNT_PROOF));
+  if (!proof) return vc_err(vc, "no merkle proof for the account");
+  account_raw = serialize_account(account);
+  sha3_to(registry_contract, hash);
+  if (!trie_verify_proof(&root, &path, proof, account_raw)) {
+    _free(proof);
+    b_free(account_raw);
+    return vc_err(vc, "invalid account proof");
+  }
+  _free(proof);
+  b_free(account_raw);
+
+  // now verify storage proofs
+  if (!(storage_proof = d_get(account, K_STORAGE_PROOF))) return vc_err(vc, "no stortage-proof found!");
+  if ((t = d_getl(account, K_STORAGE_HASH, 32)))
+    root = *d_bytes(t);
+  else
+    return vc_err(vc, "no storage-hash found!");
+
+  for (d_iterator_t it = d_iter(storage_proof); it.left; d_iter_next(&it)) {
+    // prepare the key
+    d_bytes_to(d_get(it.token, K_KEY), hash, 32);
+    sha3_to(&path, hash);
+
+    proof = d_create_bytes_vec(d_get(it.token, K_PROOF));
+    if (!proof) return vc_err(vc, "no merkle proof for the storage");
+
+    // rlp encode the value.
+    if ((bb.b.len = d_bytes_to(d_get(it.token, K_VALUE), val, -1)))
+      rlp_encode_to_item(&bb);
+
+    // verify merkle proof
+    if (!trie_verify_proof(&root, &path, proof, bb.b.len ? &bb.b : NULL)) {
+      _free(proof);
+      return vc_err(vc, "invalid storage proof");
+    }
+    _free(proof);
+  }
+
+  return IN3_OK;
+}
