@@ -180,7 +180,12 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
     p += 20;
 
     uint32_t l       = b_read_int(b, &p) * 20;
-    chain->whiteList = b_new_fixed_bytes(b, &p, l);
+    chain->whiteList = bb_newl(l);
+    if (!chain->whiteList)
+      return IN3_ENOMEM;
+
+    bb_write_raw_bytes(chain->whiteList, b->data + p, l);
+    p += l;
     b_free(b);
   }
   return IN3_OK;
@@ -198,8 +203,10 @@ in3_ret_t in3_cache_store_whitelist(in3_ctx_t* ctx, in3_chain_t* chain) {
     bb_write_raw_bytes(bb, tmp, 20); // 20 bytes fixed
   }
 
-  bb_write_int(bb, chain->whiteList->len / 20);
-  bb_write_fixed_bytes(bb, chain->whiteList);
+  if (chain->whiteList) {
+    bb_write_int(bb, chain->whiteList->b.len / 20);
+    bb_write_fixed_bytes(bb, &chain->whiteList->b);
+  }
 
   // create key
   char key[200];

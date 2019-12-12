@@ -205,9 +205,8 @@ static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* 
 
   chain->lastBlockWl = d_long(t);
 
-  for (int j = 0; j < chain->nodeListLength; ++j) {
+  for (int j = 0; j < chain->nodeListLength; ++j)
     chain->nodeList[j].whiteListed = false;
-  }
 
   in3_whitelist_clear(chain);
   bytes_builder_t* bb = bb_newl(len * 20);
@@ -220,9 +219,7 @@ static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* 
       if (b_cmp(addr_, chain->nodeList[j].address))
         chain->nodeList[j].whiteListed = true;
   }
-  chain->whiteList->data = bb->b.data;
-  chain->whiteList->len  = bb->b.len;
-  bb_free(bb);
+  chain->whiteList = bb;
   return res;
 }
 
@@ -459,5 +456,5 @@ void in3_nodelist_clear(in3_chain_t* chain) {
 }
 
 void in3_whitelist_clear(in3_chain_t* chain) {
-  b_free(chain->whiteList);
+  bb_free(chain->whiteList);
 }

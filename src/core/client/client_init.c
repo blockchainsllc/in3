@@ -84,7 +84,7 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char
   chain->spec              = spec;
   chain->version           = version;
   chain->whiteListContract = (wl_contract) ? hex2byte_new_bytes(wl_contract, 40) : NULL;
-  chain->whiteList         = b_new(NULL, 0);
+  chain->whiteList         = NULL;
   chain->lastBlockWl       = 0;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
@@ -303,31 +303,30 @@ in3_ret_t in3_client_add_whitelist_node(in3_t* c, uint64_t chain_id, bytes_t* ad
   if (!chain)
     return IN3_EFIND;
 
-  bytes_builder_t* bb = bb_newl((chain->whiteList ? chain->whiteList->len : 0) + 20);
-  if (!bb)
+  if (!chain->whiteList && (chain->whiteList = bb_newl(40)) == NULL)
     return IN3_ENOMEM;
 
-  if (chain->whiteList)
-    bb_write_fixed_bytes(bb, chain->whiteList);
-  bb_write_fixed_bytes(bb, addr);
-  in3_whitelist_clear(chain);
-  chain->whiteList = b_dup(&bb->b);
-  bb_free(bb);
+  bb_write_fixed_bytes(chain->whiteList, addr);
   return IN3_OK;
 }
 
 in3_ret_t in3_client_remove_whitelist_node(in3_t* c, uint64_t chain_id, address_t address) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return IN3_EFIND;
+  if (!chain || !chain->whiteList)
+    return IN3_EFIND;
+
   int node_index = -1;
-  for (size_t i = 0; i < chain->whiteList->len; i += 20) {
-    if (memcmp(chain->whiteList->data + i, address, 20) == 0) {
+  for (size_t i = 0; i < chain->whiteList->b.len; i += 20) {
+    if (memcmp(chain->whiteList->b.data + i, address, 20) == 0) {
       node_index = i;
       break;
     }
   }
-  if (node_index == -1) return IN3_EFIND;
-  memmove(chain->whiteList->data + node_index, chain->whiteList->data + node_index + 20, chain->whiteList->len - node_index - 20);
+  if (node_index == -1)
+    return IN3_EFIND;
+
+  memmove(chain->whiteList->b.data + node_index, chain->whiteList->b.data + node_index + 20, chain->whiteList->b.len - node_index - 20);
+  chain->whiteList->b.len -= 20;
   return IN3_OK;
 }
 
@@ -346,7 +345,7 @@ void in3_free(in3_t* a) {
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
     b_free(a->chains[i].whiteListContract);
-    b_free(a->chains[i].whiteList);
+    in3_whitelist_clear(a->chains + i);
     free_json(a->chains[i].spec);
   }
   if (a->signer) _free(a->signer);

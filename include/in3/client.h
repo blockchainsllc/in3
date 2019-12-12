@@ -164,7 +164,7 @@ typedef struct in3_chain {
   uint8_t            version;           /**< version of the chain */
   json_ctx_t*        spec;              /**< optional chain specification, defining the transaitions and forks*/
   bytes_t*           whiteListContract; /**< address of whiteList contract */
-  bytes_t*           whiteList;         /**< serialized list of node addresses that constitute the whiteList */
+  bytes_builder_t*   whiteList;         /**< serialized list of node addresses that constitute the whiteList */
   uint64_t           lastBlockWl;       /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
 } in3_chain_t;
 
