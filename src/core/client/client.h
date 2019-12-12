@@ -163,7 +163,7 @@ typedef struct in3_chain {
   bytes32_t          registry_id;       /**< the identifier of the registry */
   uint8_t            version;           /**< version of the chain */
   json_ctx_t*        spec;              /**< optional chain specification, defining the transaitions and forks*/
-  bytes_t*           whiteListContract; /**< address of whiteList contract */
+  bytes_t*           whiteListContract; /**< address of whiteList contract. If specified, whiteList is always auto-updated and manual whiteList is overridden */
   bytes_builder_t*   whiteList;         /**< serialized list of node addresses that constitute the whiteList */
   uint64_t           lastBlockWl;       /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
 } in3_chain_t;
@@ -340,7 +340,7 @@ typedef struct in3_t_ {
   /** servers to filter for the given chain. The chain-id based on EIP-155.*/
   uint64_t chainId;
 
-  /** if true the nodelist will be automaticly updated if the lastBlock is newer */
+  /** if true the nodelist will be automatically updated (and manual nodeList will be overridden) if the lastBlock is newer */
   uint8_t autoUpdateList;
 
   /** a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
