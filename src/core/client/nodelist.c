@@ -350,7 +350,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
         if (res < 0) break;
       }
       if (chain->whiteListContract && ((chain->needsUpdate & UPDATE_WHITELIST) || ctx_find_required(ctx, "in3_whiteList"))) {
-        chain->needsUpdate &= ~UPDATE_NODELIST;
+        chain->needsUpdate &= ~UPDATE_WHITELIST;
         res = update_whitelist(c, chain, ctx);
         if (res < 0) break;
       }
