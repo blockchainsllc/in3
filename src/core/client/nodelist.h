@@ -48,6 +48,9 @@
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain);
 
+/** removes all nodes from the whitelist */
+void in3_whitelist_clear(in3_chain_t* chain);
+
 /** check if the nodelist is up to date.
  * 
  * if not it will fetch a new version first (if the needs_update-flag is set).

@@ -209,7 +209,7 @@ static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* 
     chain->nodeList[j].whiteListed = false;
   }
 
-  b_free(chain->whiteList);
+  in3_whitelist_clear(chain);
   bytes_builder_t* bb = bb_newl(len * 20);
   bytes_t*         addr_;
   for (int i = 0; i < len; ++i) {
@@ -456,4 +456,8 @@ void in3_nodelist_clear(in3_chain_t* chain) {
   }
   _free(chain->nodeList);
   _free(chain->weights);
+}
+
+void in3_whitelist_clear(in3_chain_t* chain) {
+  b_free(chain->whiteList);
 }

@@ -168,7 +168,7 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
     }
 
     // clean up old
-    b_free(chain->whiteList);
+    in3_whitelist_clear(chain);
 
     // fill data
     chain->lastBlockWl       = b_read_long(b, &p);
