@@ -354,6 +354,10 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
         res = update_whitelist(c, chain, ctx);
         if (res < 0) break;
       }
+      if (!c->autoUpdateList && !chain->whiteListContract) {
+        // manual-nodeList and manual-whiteList
+        in3_client_run_chain_whitelisting(chain);
+      }
 
       *nodeListLength = chain->nodeListLength;
       *nodeList       = chain->nodeList;
