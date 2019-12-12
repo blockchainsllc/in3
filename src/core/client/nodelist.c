@@ -301,7 +301,7 @@ in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   return ret;
 }
 
-node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
+node_weight_t* in3_node_list_fill_weight(in3_t* c, uint64_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                          int len, _time_t now, float* total_weight, int* total_found) {
   int                i, p;
   float              s         = 0;
@@ -310,9 +310,11 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   node_weight_t*     prev      = NULL;
   node_weight_t*     w         = NULL;
   node_weight_t*     first     = NULL;
+  in3_chain_t*       chain     = in3_find_chain(c, chain_id);
 
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
+    if (chain->whiteList && !nodeDef->whiteListed) continue;
     if (nodeDef->deposit < c->minDeposit) continue;
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;
@@ -377,7 +379,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
     return ctx_set_error(ctx, "could not find the chain", res);
 
   // filter out nodes
-  node_weight_t* found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
+  node_weight_t* found = in3_node_list_fill_weight(ctx->client, ctx->client->chainId, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -390,7 +392,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
     if (blacklisted > all_nodes_len / 2) {
       for (i = 0; i < all_nodes_len; i++)
         weights[i].blacklistedUntil = 0;
-      found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
+      found = in3_node_list_fill_weight(ctx->client, ctx->client->chainId, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
     }
 
     if (total_found == 0)
