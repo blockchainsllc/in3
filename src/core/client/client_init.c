@@ -316,6 +316,21 @@ in3_ret_t in3_client_add_whitelist_node(in3_t* c, uint64_t chain_id, bytes_t* ad
   return IN3_OK;
 }
 
+in3_ret_t in3_client_remove_whitelist_node(in3_t* c, uint64_t chain_id, address_t address) {
+  in3_chain_t* chain = in3_find_chain(c, chain_id);
+  if (!chain) return IN3_EFIND;
+  int node_index = -1;
+  for (size_t i = 0; i < chain->whiteList->len; i += 20) {
+    if (memcmp(chain->whiteList->data + i, address, 20) == 0) {
+      node_index = i;
+      break;
+    }
+  }
+  if (node_index == -1) return IN3_EFIND;
+  memmove(chain->whiteList->data + node_index, chain->whiteList->data + node_index + 20, chain->whiteList->len - node_index - 20);
+  return IN3_OK;
+}
+
 in3_ret_t in3_client_clear_whitelist_nodes(in3_t* c, uint64_t chain_id) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
