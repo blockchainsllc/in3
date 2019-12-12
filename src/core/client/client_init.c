@@ -439,6 +439,11 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
                                              d_get_longkd(n.token, key("props"), 65535),
                                              d_get_byteskl(n.token, key("address"), 20)->data)) != IN3_OK) goto cleanup;
             }
+          } else if (cp.token->key == key("whiteList")) {
+            if (in3_client_clear_whitelist_nodes(c, chain_id) < 0) goto cleanup;
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n))
+              if ((res = in3_client_add_whitelist_node(c, chain_id, d_bytesl(cp.token, 20)) != IN3_OK))
+                goto cleanup;
           }
         }
       }
