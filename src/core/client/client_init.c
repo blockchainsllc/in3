@@ -284,6 +284,7 @@ in3_ret_t in3_client_remove_node(in3_t* c, uint64_t chain_id, address_t address)
   }
   return IN3_OK;
 }
+
 in3_ret_t in3_client_clear_nodes(in3_t* c, uint64_t chain_id) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
@@ -291,6 +292,36 @@ in3_ret_t in3_client_clear_nodes(in3_t* c, uint64_t chain_id) {
   chain->nodeList       = NULL;
   chain->weights        = NULL;
   chain->nodeListLength = 0;
+  return IN3_OK;
+}
+
+in3_ret_t in3_client_add_whitelist_node(in3_t* c, uint64_t chain_id, bytes_t* addr) {
+  if (!addr || addr->len != 20)
+    return IN3_EINVAL;
+
+  in3_chain_t* chain = in3_find_chain(c, chain_id);
+  if (!chain)
+    return IN3_EFIND;
+
+  bytes_builder_t* bb = bb_newl((chain->whiteList ? chain->whiteList->len : 0) + 20);
+  if (!bb)
+    return IN3_ENOMEM;
+
+  if (chain->whiteList)
+    bb_write_fixed_bytes(bb, chain->whiteList);
+  bb_write_fixed_bytes(bb, addr);
+  in3_whitelist_clear(chain);
+  chain->whiteList = b_dup(&bb->b);
+  bb_free(bb);
+  return IN3_OK;
+}
+
+in3_ret_t in3_client_clear_whitelist_nodes(in3_t* c, uint64_t chain_id) {
+  in3_chain_t* chain = in3_find_chain(c, chain_id);
+  if (!chain) return IN3_EFIND;
+  in3_whitelist_clear(chain);
+  chain->whiteList = NULL;
+  bb_replace()
   return IN3_OK;
 }
 
