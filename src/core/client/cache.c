@@ -179,9 +179,8 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
     }
     p += 20;
 
-    uint32_t l = b_read_int(b, &p) * 20;
-    b_readl(b, p, chain->whiteList->data, l);
-    chain->whiteList->len = l;
+    uint32_t l       = b_read_int(b, &p) * 20;
+    chain->whiteList = b_new_fixed_bytes(b, &p, l);
     b_free(b);
   }
   return IN3_OK;
