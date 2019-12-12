@@ -147,50 +147,6 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
   return res;
 }
 
-static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
-  in3_ret_t res = IN3_OK;
-
-  // is there a useable required ctx?
-  in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_nodeList");
-
-  if (ctx)
-    switch (in3_ctx_state(ctx)) {
-      case CTX_ERROR:
-        return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
-      case CTX_WAITING_FOR_REQUIRED_CTX:
-      case CTX_WAITING_FOR_RESPONSE:
-        return IN3_WAITING;
-      case CTX_SUCCESS: {
-
-        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
-        if (r) {
-          // we have a result....
-          res = in3_client_fill_chain(chain, ctx, r);
-          if (res < 0)
-            return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
-          else if (c->cacheStorage)
-            in3_cache_store_nodelist(ctx, chain);
-          ctx_remove_required(parent_ctx, ctx);
-          return IN3_OK;
-        } else
-          return ctx_set_error(parent_ctx, "Error updating node_list", ctx_check_response_error(ctx, 0));
-      }
-    }
-
-  in3_log_debug("update the nodelist...\n");
-
-  // create random seed
-  char seed[67];
-  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
-
-  // create request
-  char* req = _malloc(300);
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->nodeLimit, seed);
-
-  // new client
-  return ctx_add_required(parent_ctx, ctx = new_ctx(c, req));
-}
-
 static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t res = IN3_OK;
 
@@ -221,6 +177,59 @@ static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* 
   }
   chain->whiteList = bb;
   return res;
+}
+
+static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+  in3_ret_t res = IN3_OK;
+
+  // is there a useable required ctx?
+  in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_nodeList");
+
+  if (ctx)
+    switch (in3_ctx_state(ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
+      case CTX_WAITING_FOR_REQUIRED_CTX:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+      case CTX_SUCCESS: {
+
+        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+        if (r) {
+          // we have a result....
+          res = in3_client_fill_chain(chain, ctx, r);
+          if (res < 0)
+            return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
+          else if (c->cacheStorage)
+            in3_cache_store_nodelist(ctx, chain);
+          ctx_remove_required(parent_ctx, ctx);
+
+          // If there's a manual whiteList, use it now
+          if (!chain->whiteListContract) {
+            res = in3_client_fill_chain_whitelist(chain, ctx, r);
+            if (res < 0)
+              return ctx_set_error(parent_ctx, "Error updating manual white_list", ctx_set_error(parent_ctx, ctx->error, res));
+            else if (c->cacheStorage)
+              in3_cache_store_whitelist(ctx, chain);
+          }
+          return IN3_OK;
+        } else
+          return ctx_set_error(parent_ctx, "Error updating node_list", ctx_check_response_error(ctx, 0));
+      }
+    }
+
+  in3_log_debug("update the nodelist...\n");
+
+  // create random seed
+  char seed[67];
+  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
+
+  // create request
+  char* req = _malloc(300);
+  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->nodeLimit, seed);
+
+  // new client
+  return ctx_add_required(parent_ctx, ctx = new_ctx(c, req));
 }
 
 static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
