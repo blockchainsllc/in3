@@ -321,7 +321,6 @@ in3_ret_t in3_client_clear_whitelist_nodes(in3_t* c, uint64_t chain_id) {
   if (!chain) return IN3_EFIND;
   in3_whitelist_clear(chain);
   chain->whiteList = NULL;
-  bb_replace()
   return IN3_OK;
 }
 
