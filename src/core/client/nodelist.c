@@ -147,6 +147,20 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
   return res;
 }
 
+static void in3_client_run_chain_whitelisting(in3_chain_t* chain) {
+  if (!chain->whiteList)
+    return;
+
+  for (int j = 0; j < chain->nodeListLength; ++j)
+    chain->nodeList[j].whiteListed = false;
+
+  for (size_t i = 0; i < chain->whiteList->b.len / 20; i += 20) {
+    for (int j = 0; j < chain->nodeListLength; ++j)
+      if (!memcmp(chain->whiteList->b.data + i, chain->nodeList[j].address, 20))
+        chain->nodeList[j].whiteListed = true;
+  }
+}
+
 static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t res = IN3_OK;
 
@@ -161,21 +175,13 @@ static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* 
 
   chain->lastBlockWl = d_long(t);
 
-  for (int j = 0; j < chain->nodeListLength; ++j)
-    chain->nodeList[j].whiteListed = false;
-
   in3_whitelist_clear(chain);
-  bytes_builder_t* bb = bb_newl(len * 20);
-  bytes_t*         addr_;
+  bytes_t* addr_;
   for (int i = 0; i < len; ++i) {
     addr_ = d_bytesl(d_get_at(nodes, i), 20);
-    bb_write_raw_bytes(bb, addr_, 20);
-
-    for (int j = 0; j < chain->nodeListLength; ++j)
-      if (b_cmp(addr_, chain->nodeList[j].address))
-        chain->nodeList[j].whiteListed = true;
+    in3_client_add_whitelist_node(ctx->client, chain->chainId, addr_->data);
   }
-  chain->whiteList = bb;
+  in3_client_run_chain_whitelisting(chain);
   return res;
 }
 
@@ -205,13 +211,8 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
           ctx_remove_required(parent_ctx, ctx);
 
           // If there's a manual whiteList, use it now
-          if (!chain->whiteListContract) {
-            res = in3_client_fill_chain_whitelist(chain, ctx, r);
-            if (res < 0)
-              return ctx_set_error(parent_ctx, "Error updating manual white_list", ctx_set_error(parent_ctx, ctx->error, res));
-            else if (c->cacheStorage)
-              in3_cache_store_whitelist(ctx, chain);
-          }
+          if (!chain->whiteListContract)
+            in3_client_run_chain_whitelisting(chain);
           return IN3_OK;
         } else
           return ctx_set_error(parent_ctx, "Error updating node_list", ctx_check_response_error(ctx, 0));
