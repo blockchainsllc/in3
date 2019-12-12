@@ -469,6 +469,23 @@ in3_ret_t in3_client_clear_nodes(
     in3_t*   client,    /**< [in] the pointer to the incubed client config. */
     uint64_t chain_id); /**< [in] the chain id. */
 
+/** adds a node to a chain's whitelist */
+in3_ret_t in3_client_add_whitelist_node(
+    in3_t*    client,   /**< [in] the pointer to the incubed client config. */
+    uint64_t  chain_id, /**< [in] the chain id. */
+    address_t address); /**< [in] public address of the signer. */
+
+/** removes a node from a chain's whitelist */
+in3_ret_t in3_client_remove_whitelist_node(
+    in3_t*    client,   /**< [in] the pointer to the incubed client config. */
+    uint64_t  chain_id, /**< [in] the chain id. */
+    address_t address); /**< [in] public address of the signer. */
+
+/** removes all nodes from a chain's whitelist */
+in3_ret_t in3_client_clear_whitelist_nodes(
+    in3_t*   client,    /**< [in] the pointer to the incubed client config. */
+    uint64_t chain_id); /**< [in] the chain id. */
+
 /** frees the references of the client */
 void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
