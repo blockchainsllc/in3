@@ -295,6 +295,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
+            if (d_get_longk(vc.proof, K_LAST_NODE_LIST) > chain->lastBlock)
+              chain->needsUpdate |= UPDATE_NODELIST;
+            if (d_get_longk(vc.proof, K_LAST_WHITE_LIST) > chain->lastBlockWl)
+              chain->needsUpdate |= UPDATE_WHITELIST;
           }
 
           if (verifier && (res = verifier->verify(&vc))) {
