@@ -295,8 +295,8 @@ in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
   TRY(eth_verify_blockheader(vc, blockHeader, NULL));
 
   // check contract
-  bytes_t* registry_contract = d_get_byteskl(vc->result, K_CONTRACT, 20);
-  if (!registry_contract || !b_cmp(registry_contract, vc->chain->contract)) return vc_err(vc, "No or wrong Contract!");
+  bytes_t* wl_contract = d_get_byteskl(vc->result, K_CONTRACT, 20);
+  if (!wl_contract || !b_cmp(wl_contract, vc->chain->whiteListContract)) return vc_err(vc, "No or wrong Contract!");
 
   // check last block
   if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER)) return vc_err(vc, "The signature is based on older block!");
@@ -308,12 +308,12 @@ in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
 
   // verify the account proof
   if (rlp_decode_in_list(blockHeader, BLOCKHEADER_STATE_ROOT, &root) != 1) return vc_err(vc, "no state root in the header");
-  if (!b_cmp(d_get_byteskl(account, K_ADDRESS, 20), registry_contract)) return vc_err(vc, "wrong address in the account proof");
+  if (!b_cmp(d_get_byteskl(account, K_ADDRESS, 20), wl_contract)) return vc_err(vc, "wrong address in the account proof");
 
   proof = d_create_bytes_vec(d_get(account, K_ACCOUNT_PROOF));
   if (!proof) return vc_err(vc, "no merkle proof for the account");
   account_raw = serialize_account(account);
-  sha3_to(registry_contract, hash);
+  sha3_to(wl_contract, hash);
   if (!trie_verify_proof(&root, &path, proof, account_raw)) {
     _free(proof);
     b_free(account_raw);
