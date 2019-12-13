@@ -281,6 +281,26 @@ in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* 
   return verify_nodelist_data(vc, node_limit, seed, required_addresses, server_list, storage_proof);
 }
 
+static in3_ret_t verify_whitelist_data(in3_vctx_t* vc, d_token_t* server_list, d_token_t* storage_proofs) {
+  bytes32_t skey;
+  uint32_t  total_servers = d_get_intk(vc->result, K_TOTAL_SERVERS);
+
+  if ((int) total_servers != d_len(server_list))
+    return vc_err(vc, "wrong number of nodes in the serverlist");
+
+  // now check the content of the whitelist
+  uint8_t  hash[32];
+  bytes_t* b = b_new(NULL, 20 * total_servers);
+  int      i = 0;
+  for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it), i += 20)
+    memcpy(b->data + i, d_bytesl(it.token, 20)->data, 20);
+
+  sha3_to(b, hash);
+  b_free(b);
+  TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, 1, 0, 0, skey), hash));
+  return IN3_OK;
+}
+
 in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
   uint8_t         hash[32], val[36];
   bytes_t         root, **proof, *account_raw, path = {.data = hash, .len = 32};
@@ -349,5 +369,5 @@ in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
     _free(proof);
   }
 
-  return IN3_OK;
+  return verify_whitelist_data(vc, server_list, storage_proof);
 }

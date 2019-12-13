@@ -2,7 +2,7 @@
   {
     "descr": "in3_whitelist",
     "chainId": "0x5",
-    "fuzzer": false,
+    "fuzzer": true,
     "verification": "proof",
     "id": 2,
     "request": {
