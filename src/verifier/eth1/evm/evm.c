@@ -42,6 +42,7 @@
 #include "../nano/serialize.h"
 #include "gas.h"
 #include "opcodes.h"
+#include "precompiled.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -297,6 +298,7 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
     case 0x43: __code("NUMBER");
     case 0x44: __code("DIFFICULTY");
     case 0x45: __code("GASLIMIT");
+    case 0x46: __code("CHAINID");
     case 0x50: __code("POP");
     case 0x51: __code("MLOAD");
     case 0x52: __code("MSTORE");
@@ -454,6 +456,8 @@ int evm_execute(evm_t* evm) {
       op_exec(op_header(evm, BLOCKHEADER_DIFFICULTY), G_BASE);
     case 0x45: // GASLIMIT
       op_exec(op_header(evm, BLOCKHEADER_GAS_LIMIT), G_BASE);
+    case 0x46: // CHAINID
+      op_exec((evm->properties & EVM_PROP_ISTANBUL) ? evm_stack_push_long(evm, evm->chain_id) : EVM_ERROR_INVALID_OPCODE, G_BASE);
 
     case 0x50: // POP
       op_exec(evm_stack_pop(evm, NULL, 0), G_BASE);

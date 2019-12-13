@@ -58,7 +58,20 @@
         "meterreadingtypes.h": "c",
         "in3_comm_esp32.h": "c",
         "ctype.h": "c",
-        "eth_full.h": "c"
+        "eth_full.h": "c",
+        "nodelist.h": "c",
+        "array": "c",
+        "iterator": "c",
+        "string": "c",
+        "string_view": "c",
+        "vector": "c",
+        "__locale": "c",
+        "functional": "c",
+        "blake2b.h": "c",
+        "endian.h": "c",
+        "blake2s.h": "c",
+        "algorithm": "c",
+        "random": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
