@@ -53,6 +53,7 @@
 #define K_INDEX             key("index")
 #define K_DEPOSIT           key("deposit")
 #define K_PROPS             key("props")
+#define K_WEIGHT            key("weight")
 #define K_URL               key("url")
 #define K_ADDRESS           key("address")
 #define K_CODE              key("code")

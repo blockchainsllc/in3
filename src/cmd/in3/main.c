@@ -79,6 +79,7 @@ void show_help(char* name) {
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -np            short for -p none\n\
+-eth           converts the result (as wei) to ether.\n\
 -l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
 -s, -signs     number of signatures to use when verifying.\n\
 -port          if specified it will run as http-server listening to the given port.\n\
@@ -570,6 +571,7 @@ int main(int argc, char* argv[]) {
   bytes_t*        data         = NULL;
   char*           port         = NULL;
   char*           sig_type     = "raw";
+  bool            to_eth       = false;
 
   // read data from cache
   in3_cache_init(c);
@@ -609,6 +611,8 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replaceLatestBlock = atoll(argv[++i]);
+    else if (strcmp(argv[i], "-eth") == 0)
+      to_eth = true;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -908,7 +912,10 @@ int main(int argc, char* argv[]) {
       }
       // if not we simply print the result
     } else {
-      if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
+      if (to_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
+        double val = c_to_long(result, strlen(result));
+        printf("%.3f\n", val / 1000000000000000000L);
+      } else if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
         printf("%" PRIu64 "\n", c_to_long(result, strlen(result)));
       else
         printf("%s\n", result);
