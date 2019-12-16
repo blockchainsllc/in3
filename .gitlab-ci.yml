@@ -161,35 +161,51 @@ java:
 
 # ##### test ######
 
-#coverage:
-#  stage: test
-#  image: silkeh/clang:dev
-#  tags:
-#    - short-jobs
-#  script:
-#    - mkdir cov_build; cd cov_build
-#    - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
-#    - make -j8 &&  make ccov-all && make ccov-all-report
-#  artifacts:
-#    paths:
-#      - cov_build/ccov/all-merged
-#
-#analyse:
-#  stage: test
-#  image: docker.slock.it/build-images/cmake:clang9
-#  allow_failure: false
-#  tags:
-#    - short-jobs
-#  script:
-#    - mkdir _build
-#    - cd _build
-#    - scan-build-9 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-#    - scan-build-9 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
-#  artifacts:
-#    paths:
-#      - report
-#
-#test_c:
+coverage:
+  stage: test
+  image: silkeh/clang:dev
+  tags:
+    - short-jobs
+  script:
+    - mkdir cov_build; cd cov_build
+    - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
+    - make -j8 &&  make ccov-all && make ccov-all-report
+  artifacts:
+    paths:
+      - cov_build/ccov/all-merged
+
+analyse:
+  stage: test
+  image: docker.slock.it/build-images/cmake:clang9
+  allow_failure: false
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - scan-build-9 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-9 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
+  artifacts:
+    paths:
+      - report
+
+test_c:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mkdir testbuild
+    - cd testbuild
+    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
+    - make
+    - CTEST_OUTPUT_ON_FAILURE=1 make test
+  artifacts:
+    paths:
+      - testbuild/test
+      - Testing
+
+#test_evm:
 #  image: docker.slock.it/build-images/cmake:gcc8
 #  stage: test
 #  tags:
@@ -199,105 +215,89 @@ java:
 #    - cd testbuild
 #    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
 #    - make
-#    - CTEST_OUTPUT_ON_FAILURE=1 make test
-#  artifacts:
-#    paths:
-#      - testbuild/test
-#      - Testing
-#
-##test_evm:
-##  image: docker.slock.it/build-images/cmake:gcc8
-##  stage: test
-##  tags:
-##    - short-jobs
-##  script:
-##    - mkdir testbuild
-##    - cd testbuild
-##    - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
-##    - make
-##    - cd ../test/testdata/evm/GeneralStateTests
-##    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
-##    - cd ../vmTests
-##    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
-#
-#test_wasm:
-#  image: docker.slock.it/build-images/node:10-alpine
-#  dependencies:
-#    - wasm
-#  stage: test
-#  tags:
-#    - short-jobs
-#  script:
-#    - mv wasm_build build
-#    - cd test/bindings/wasm
-#    - sh /prepare.sh
-#    - npm install
-#    - npm test
-#
-#test_asmjs:
-#  image: docker.slock.it/build-images/node:10-alpine
-#  dependencies:
-#    - asmjs
-#  stage: test
-#  tags:
-#    - short-jobs
-#  script:
-#    - mv asmjs_build build
-#    - cd test/bindings/wasm
-#    - sh /prepare.sh
-#    - npm install
-#    - npm test
-#
-#java_linux:
-#  image: docker.slock.it/build-images/cmake:gcc8
-#  stage: test
-#  script:
-#    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
-#  allow_failure: true
-#  tags:
-#    - short-jobs
-#
-#examples_linux:
-#  image: docker.slock.it/build-images/cmake:gcc8
-#  stage: test
-#  dependencies:
-#    - gcc8
-#  script:
-#    - mv x64_build build
-#    - cd examples/c
-#    - ./build.sh
-#    - cd ../java
-#    - ./build.sh
-#  tags:
-#    - short-jobs
-#
-#examples_arm:
-#  image: docker.slock.it/build-images/cmake:gcc8-armv7
-#  stage: test
-#  dependencies:
-#    - arm7
-#  script:
-#    - mv arm7_build build
-#    - cd examples/c
-#    - ./build.sh
-#    - cd ../java
-#    - ./build.sh
-#  tags:
-#    - arm
-#
-#examples_macos:
-#  stage: test
-#  dependencies:
-#    - mac_os
-#  script:
-#    - mv mac_build build
-#    - cd examples/c
-#    - ./build.sh
-#    - cd ../java
-#    - ./build.sh
-#  tags:
-#    - mac-mini-runner
-#
+#    - cd ../test/testdata/evm/GeneralStateTests
+#    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
+#    - cd ../vmTests
+#    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+
+test_wasm:
+  image: docker.slock.it/build-images/node:10-alpine
+  dependencies:
+    - wasm
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mv wasm_build build
+    - cd test/bindings/wasm
+    - sh /prepare.sh
+    - npm install
+    - npm test
+
+test_asmjs:
+  image: docker.slock.it/build-images/node:10-alpine
+  dependencies:
+    - asmjs
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - mv asmjs_build build
+    - cd test/bindings/wasm
+    - sh /prepare.sh
+    - npm install
+    - npm test
+
+java_linux:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  script:
+    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  allow_failure: true
+  tags:
+    - short-jobs
+
+examples_linux:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: test
+  dependencies:
+    - gcc8
+  script:
+    - mv x64_build build
+    - cd examples/c
+    - ./build.sh
+    - cd ../java
+    - ./build.sh
+  tags:
+    - short-jobs
+
+examples_arm:
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
+  stage: test
+  dependencies:
+    - arm7
+  script:
+    - mv arm7_build build
+    - cd examples/c
+    - ./build.sh
+    - cd ../java
+    - ./build.sh
+  tags:
+    - arm
+
+examples_macos:
+  stage: test
+  dependencies:
+    - mac_os
+  script:
+    - mv mac_build build
+    - cd examples/c
+    - ./build.sh
+    - cd ../java
+    - ./build.sh
+  tags:
+    - mac-mini-runner
+
 java_arm:
   image: armv7/armhf-java8
   allow_failure: true
@@ -310,13 +310,13 @@ java_arm:
   tags:
     - arm
 
-#java_macos:
-#  stage: test
-#  allow_failure: true
-#  script:
-#    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
-#  tags:
-#    - mac-mini-runner
+java_macos:
+  stage: test
+  allow_failure: true
+  script:
+    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  tags:
+    - mac-mini-runner
 
 ##### deploy #####
 docker:
