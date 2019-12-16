@@ -677,17 +677,17 @@ release_maven:
   dependencies:
     - java
   script:
-    - ls
-    - touch /root/.m2/settings.xml
-    - echo $MAVEN_SETTINGS > /root/.m2/settings.xml
-    - mv src/bindings/java/settings.xml /root/.m2/.
-    - mvn deploy:deploy-file -DgroupId=it.slock \
+    - touch settings.xml
+    - echo $MAVEN_SETTINGS > settings.xml
+    - cat settings.xml
+    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.slock \
         -DartifactId=in3 \
-        -Dversion=$CI_COMMIT_TAG  \
+        -Dversion=2.18  \
         -Dpackaging=jar \
-        -Dfile=java_build/lib/in3.jar  \
+        -Dfile=build/lib/in3.jar  \
         -DrepositoryId=github \
         -Durl=https://maven.pkg.github.com/slockit/in3-c
+
 
 pages:
   stage: deploy
