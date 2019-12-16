@@ -667,7 +667,7 @@ release_win:
 
 release_maven:
   stage: deploy
-  image: docker.slock.it/build-images/deployment
+  image: docker.slock.it/build-images/maven-deployment-image:latest
   tags:
     - short-jobs
 #  only:
