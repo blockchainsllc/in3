@@ -363,18 +363,34 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
     if (chain->chainId == chain_id) {
-      if (c->autoUpdateList && ((chain->needsUpdate & UPDATE_NODELIST) || update || ctx_find_required(ctx, "in3_nodeList"))) {
-        chain->needsUpdate &= ~UPDATE_NODELIST;
-        // now update the nodeList
-        res = update_nodelist(c, chain, ctx);
-        if (res < 0) break;
-      }
-      if (chain->whiteListContract && ((chain->needsUpdate & UPDATE_WHITELIST) || ctx_find_required(ctx, "in3_whiteList"))) {
-        chain->needsUpdate &= ~UPDATE_WHITELIST;
-        res = update_whitelist(c, chain, ctx);
-        if (res < 0) break;
-      }
-      if (!c->autoUpdateList && !chain->whiteListContract) {
+      if (c->autoUpdateList && chain->whiteListContract) {
+        // auto-nodeList and auto-whiteList
+        if ((chain->needsUpdate & UPDATE_NODELIST) || update || ctx_find_required(ctx, "in3_nodeList")) {
+          chain->needsUpdate &= ~UPDATE_NODELIST;
+          res = update_nodelist(c, chain, ctx);
+          if (res < 0) break;
+        }
+        if ((chain->needsUpdate & UPDATE_WHITELIST) || ctx_find_required(ctx, "in3_whiteList")) {
+          chain->needsUpdate &= ~UPDATE_WHITELIST;
+          res = update_whitelist(c, chain, ctx);
+          if (res < 0) break;
+        }
+      } else if (!c->autoUpdateList && chain->whiteListContract) {
+        // manual-nodeList and auto-whiteList
+        if ((chain->needsUpdate & UPDATE_WHITELIST) || ctx_find_required(ctx, "in3_whiteList")) {
+          chain->needsUpdate &= ~UPDATE_WHITELIST;
+          res = update_whitelist(c, chain, ctx);
+          if (res < 0) break;
+        }
+      } else if (c->autoUpdateList && !chain->whiteListContract) {
+        // auto-nodeList and manual-whiteList
+        if ((chain->needsUpdate & UPDATE_NODELIST) || update || ctx_find_required(ctx, "in3_nodeList")) {
+          chain->needsUpdate &= ~UPDATE_NODELIST;
+          // update_nodelist internally also calls in3_client_run_chain_whitelisting() for manual whiteList
+          res = update_nodelist(c, chain, ctx);
+          if (res < 0) break;
+        }
+      } else if (!c->autoUpdateList && !chain->whiteListContract) {
         // manual-nodeList and manual-whiteList
         in3_client_run_chain_whitelisting(chain);
       }
