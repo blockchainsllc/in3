@@ -4,7 +4,7 @@ variables:
 
 
 before_script:
-  - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
+  - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -P '\d+.*' -o)
 
 stages:
   - build
