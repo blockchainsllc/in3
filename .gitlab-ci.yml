@@ -298,18 +298,18 @@ java:
 #  tags:
 #    - mac-mini-runner
 #
-#java_arm:
-#  image: armv7/armhf-java8
-#  allow_failure: true
-#  dependencies:
-#    - java
-#  stage: test
-#  script:
-#    - echo "SKIPPED"
-#  #    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
-#  tags:
-#    - arm
-#
+java_arm:
+  image: armv7/armhf-java8
+  allow_failure: true
+  dependencies:
+    - java
+  stage: test
+  script:
+    - echo "SKIPPED"
+  #    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+  tags:
+    - arm
+
 #java_macos:
 #  stage: test
 #  allow_failure: true
