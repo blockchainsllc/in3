@@ -347,7 +347,7 @@ dockerhub-deploy:
   before_script:
     - docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD} ${DOCKERHUB_REGISTRY}
   script:
-    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -P '\d+.*' -o)
+    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - export IMAGE_TAG="slockit/in3:$IMAGE_VERSION"
     - docker build -t $COMMIT_IMAGE_TAG .
     - docker tag $COMMIT_IMAGE_TAG $IMAGE_TAG
@@ -465,7 +465,7 @@ release_mac_and_wasm:
     - wasm
     - asmjs
   script:
-    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -P '\d+.*' -o)
+    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-mac-wasm
     - cd in3-mac-wasm
     - cp -r ../mac_build/bin .
@@ -513,7 +513,7 @@ release_x64:
     - branches
   when: manual
   script:
-    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -P '\d+.*' -o)
+    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x64
     - cd in3-x64
     - cp -r ../x64_build/bin .
@@ -554,7 +554,7 @@ release_x86:
     - wasm
     - asmjs
   script:
-    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -P '\d+.*' -o)
+    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x86
     - cd in3-x86
     - cp -r ../x86_build/bin .
@@ -595,7 +595,7 @@ release_arm7:
     - wasm
     - asmjs
   script:
-    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -P '\d+.*' -o)
+    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-arm7
     - cd in3-arm7
     - mkdir doc
@@ -637,7 +637,7 @@ release_win:
     - wasm
     - asmjs
   script:
-    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -P '\d+.*' -o)
+    - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-win
     - cd in3-win
     - mkdir doc
