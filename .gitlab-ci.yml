@@ -482,7 +482,7 @@ release_mac_and_wasm:
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
       -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
-      -d "{\"path\":\"c/mac/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ'')\",\"ipfs\":\"$IPFS_HASH\"}}"
+      -d "{\"path\":\"c/mac/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
@@ -859,3 +859,5 @@ github_body_release:
     - cat in3-arm7/arm7_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - cat in3-win/win_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c -b "$(cat release_ipfs_hash.txt)" $CI_COMMIT_TAG release_ipfs_hash.txt
+
+
