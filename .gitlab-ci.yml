@@ -355,7 +355,7 @@ dockerhub-deploy:
     - docker tag $IMAGE_TAG slockit/in3:latest
     - docker push slockit/in3:latest
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
-           -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
+           -H  "accept:*/*" -H  "X-Api-Key:ponies-are-awesome" \
            -H  "Content-Type:application/json" \
            -d "{\"path\":\"c/dockerHub\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"00\"}}"
 
@@ -480,7 +480,7 @@ release_mac_and_wasm:
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
-      -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
+      -H  "accept:*/*" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
       -d "{\"path\":\"c/mac/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
@@ -489,7 +489,7 @@ release_mac_and_wasm:
     - echo "Mac release:" $IPFS_HASH >> in3-mac-wasm/mac_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_wasm.tar.gz
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
-      -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
+      -H  "accept:*/*" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
       -d "{\"path\":\"c/wasm/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-mac-wasm
@@ -529,7 +529,7 @@ release_x64:
     - echo "x64 release:" $IPFS_HASH >> in3-x64/x64_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_x64.tar.gz
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
-      -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
+      -H  "accept:*/*" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
       -d "{\"path\":\"c/linux/x64bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-x64
@@ -570,7 +570,7 @@ release_x86:
     - echo "x86 release:" $IPFS_HASH >> in3-x86/x86_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_x86.tar.gz
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
-      -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
+      -H  "accept:*/*" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
       -d "{\"path\":\"c/linux/x86bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-x86
@@ -612,7 +612,7 @@ release_arm7:
     - echo "arm7 release:" $IPFS_HASH >> in3-arm7/arm7_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_arm7.tar.gz
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
-      -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
+      -H  "accept:*/*" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
       -d "{\"path\":\"c/arm/bin\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-arm7
@@ -658,7 +658,7 @@ release_win:
     - echo "windows release:" $IPFS_HASH >> in3-win/win_release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_windows.tar.gz
     - curl -X POST "https://releases.slock.it/api/Project/in3" \
-      -H  "accept:"*/*"" -H  "X-Api-Key:ponies-are-awesome" \
+      -H  "accept:*/*" -H  "X-Api-Key:ponies-are-awesome" \
       -H  "Content-Type:application/json" \
       -d "{\"path\":\"c/win/exe\",\"manifest\":{\"version\":\"$IMAGE_VERSION\",\"date\":\"$(date +'%Y-%m-%dT%H:%M:%SZ')\",\"ipfs\":\"$IPFS_HASH\"}}"
     - cd in3-win
