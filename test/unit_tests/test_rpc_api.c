@@ -128,6 +128,30 @@ static void test_in3_config() {
 
   in3_free(c);
 }
+
+static void test_in3_client_rpc() {
+  char * result = NULL, *error = NULL;
+  in3_t* c          = in3_new();
+  c->transport      = test_transport;
+  c->chainId        = 0x1;
+  c->autoUpdateList = false;
+  c->proof          = PROOF_NONE;
+  c->signatureCount = 0;
+  for (int i = 0; i < c->chainsCount; i++)
+    c->chains[i].needsUpdate = false;
+
+  // Error response string
+  add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
+  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  free(result);
+  free(error);
+
+  // Error response obj with message
+  add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", NULL);
+  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  free(result);
+  free(error);
+}
 /*
  * Main
  */
@@ -138,5 +162,6 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   RUN_TEST(test_in3_config);
+  RUN_TEST(test_in3_client_rpc);
   return TESTS_END();
 }
