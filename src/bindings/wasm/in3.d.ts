@@ -342,7 +342,11 @@ export declare interface RPCResponse {
     result?: any
 }
 
-export default class IN3 {           //++dev
+export default class IN3 {
+    /**
+     * IN3 config
+     */
+    public config: IN3Config;
     /**
      * creates a new client.
      * @param config a optional config
@@ -695,7 +699,7 @@ export declare interface Signer {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Signature>
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Signature>          //++dev Check if data can be type of Uint8array
 }
 
 export interface EthAPI {
@@ -919,7 +923,7 @@ export declare class SimpleSigner implements Signer {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Signature>
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Signature>                //++dev check type for data 
 }
 
 /**
@@ -966,7 +970,7 @@ export declare interface Utils {
     toHex(data: Hex | Uint8Array | number | bigint, len?: number): Hex
 
     /** removes all leading 0 in the hexstring */
-    toMinHex(key: string | Buffer | number): string;
+    toMinHex(key: string | Uint8Array | number): string;
 
     /**
      * converts any value to a Uint8Array.
@@ -978,7 +982,7 @@ export declare interface Utils {
      * converts any value to a hex string (with prefix 0x).
      * optionally the target length can be specified (in bytes)
      */
-    toNumber(data: string | Buffer | number | bigint): number                               
+    toNumber(data: string | Uint8Array | number | bigint): number                               
 
     /**
      * convert to String

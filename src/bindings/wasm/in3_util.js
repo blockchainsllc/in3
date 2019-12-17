@@ -328,12 +328,12 @@ function padEnd(val, minLength, fill = ' ') {
 }
 
 /** Creates Signature hash */
-export function createSignatureHash(def) {
+function createSignatureHash(def) {
     return keccak(def.name + createSignature(def.inputs))
 }
 
 /** Create Signature */
-export function createSignature(fields) {
+function createSignature(fields) {
     return '(' + fields.map(f => {
         let baseType = f.type
         const t = baseType.indexOf('[')
@@ -364,8 +364,7 @@ const util = {
     splitSignature,
     private2address,
     createSignatureHash,
-    createSignature,
-
+    createSignature
 }
 
 // add as static proporty and as standard property.
@@ -401,3 +400,4 @@ class SimpleSigner {
 }
 
 IN3.SimpleSigner = SimpleSigner
+
