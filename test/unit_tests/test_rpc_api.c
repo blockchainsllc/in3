@@ -151,6 +151,28 @@ static void test_in3_client_rpc() {
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
   free(result);
   free(error);
+
+  // Error response obj without message
+  add_response("eth_blockNumber", "[]", NULL, "{\"Failure\":\"Undefined\"}", NULL);
+  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  free(result);
+  free(error);
+
+  // Invalid JSON request
+  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[\"]", &result, &error));
+  free(result);
+  free(error);
+
+  // Invalid calls to in3_client_rpc()
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[]", &result, NULL));
+  free(result);
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_client_rpc(c, "eth_blockNumber", "[]", NULL, NULL));
+
+  // Invalid calls to in3_client_rpc_ctx()
+  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_blockNumber", "[\"]");
+  TEST_ASSERT_NOT_NULL(ctx->error);
+  free_ctx(ctx);
+
 }
 /*
  * Main
