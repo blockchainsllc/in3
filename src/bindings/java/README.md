@@ -14,8 +14,18 @@ java -cp in3.jar in3.IN3 eth_getBlockByNumber latest false
 ### Downloading
 
 
-Just download the latest jar-file [here](_downloads/in3.jar).
+The jar file can be downloaded from the latest release. [here](https://github.com/slockit/in3-c/releases).
 
+Alternatively, If you wish to download Incubed using the maven package manager, add this to your pom.xml
+```
+<dependency>
+  <groupId>it.slock</groupId>
+  <artifactId>in3</artifactId>
+  <version>2.21</version>
+</dependency> 
+```
+
+After which, install in3 with ```mvn install ```.
 
 ###  Building
 
@@ -32,7 +42,7 @@ You will find the `in3.jar` in the build/lib - folder.
 
 ### Android
 
-In order to use incubed in android simply follow these steps:
+In order to use Incubed in android simply follow these steps:
 
 Step 1: Create a top-level CMakeLists.txt in android project inside app folder and link this to gradle. Follow the steps using this [guide](https://developer.android.com/studio/projects/gradle-external-native-builds) on howto link.
 
@@ -62,13 +72,13 @@ endforeach()
 
 ```
 
-Step 2: clone [in3-core](https://git.slock.it/in3/c/in3-core.git) into the `app`-folder or use this script to clone and update incubed:
+Step 2: clone [in3-core](https://github.com/slockit/in3-c.git) into the `app`-folder or use this script to clone and update in3:
 
 ```sh
 #!/usr/bin/env sh
 
 #github-url for in3-core
-IN3_SRC=git@github.com:SlockItEarlyAccess/in3-core.git
+IN3_SRC=https://github.com/slockit/in3-c.git
 
 cd app
 
@@ -94,12 +104,12 @@ Step 3: Use methods available in app/src/main/java/in3/IN3.java from android act
 
 Here is example how to use it:
 
-https://github.com/SlockItEarlyAccess/in3-android-example
+https://github.com/slockit/in3-example-android
 
 
 ## Examples
 
-### Using Incubed directly
+### Using in3 directly
 
 ```java
 import in3.IN3;
@@ -125,7 +135,7 @@ public class HelloIN3 {
 
 ### Using the API
 
-Incubed also offers a API for getting Information directly in a structured way.
+in3 also offers a API for getting Information directly in a structured way.
 
 #### Reading Blocks
 
