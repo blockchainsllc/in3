@@ -2,7 +2,7 @@
 
 
 
-The Incubed Java client uses JNI in order to call native functions. But all the native-libraries are bundled inside the jar-file.
+The in3 Java client uses JNI in order to call native functions. But all the native-libraries are bundled inside the jar-file.
 This jar file ha **no** dependencies and can even be used standalone: 
 
 like
@@ -14,9 +14,18 @@ java -cp in3.jar in3.IN3 eth_getBlockByNumber latest false
 ### Downloading
 
 
-Just download the latest jar-file [here](_downloads/in3.jar).
+The jar file can be downloaded from [here](_downloads/in3.jar).
 
+Alternatively, If you wish to download in3 using the maven package manager, add this to your pom.xml
+```
+<dependency>
+  <groupId>it.slock</groupId>
+  <artifactId>in3</artifactId>
+  <version>2.21</version>
+</dependency> 
+```
 
+After which, install in3 with ```mvn install ```.
 ###  Building
 
 For building the shared library you need to enable java by using the `-DJAVA=true` flag:
@@ -32,7 +41,7 @@ You will find the `in3.jar` in the build/lib - folder.
 
 ### Android
 
-In order to use incubed in android simply follow these steps:
+In order to use in3 in android simply follow these steps:
 
 Step 1: Create a top-level CMakeLists.txt in android project inside app folder and link this to gradle. Follow the steps using this [guide](https://developer.android.com/studio/projects/gradle-external-native-builds) on howto link.
 
@@ -62,7 +71,7 @@ endforeach()
 
 ```
 
-Step 2: clone [in3-core](https://git.slock.it/in3/c/in3-core.git) into the `app`-folder or use this script to clone and update incubed:
+Step 2: clone [in3-core](https://git.slock.it/in3/c/in3-core.git) into the `app`-folder or use this script to clone and update in3:
 
 ```sh
 #!/usr/bin/env sh
@@ -99,7 +108,7 @@ https://github.com/SlockItEarlyAccess/in3-android-example
 
 ## Examples
 
-### Using Incubed directly
+### Using in3 directly
 
 ```java
 import in3.IN3;
@@ -125,7 +134,7 @@ public class HelloIN3 {
 
 ### Using the API
 
-Incubed also offers a API for getting Information directly in a structured way.
+in3 also offers a API for getting Information directly in a structured way.
 
 #### Reading Blocks
 
