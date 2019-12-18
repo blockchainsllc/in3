@@ -360,16 +360,16 @@ wasm-slockit-npm:
   stage: deploy
   tags:
     - short-jobs
-  only: # deploy only on  semantic versions tags
-    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
-  except:
-    - branches
+#  only: # deploy only on  semantic versions tags
+#    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
+#  except:
+#    - branches
   dependencies:
     - wasm
   script:
     - sh /prepare.sh
     - cd wasm_build/module
-    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm --no-git-tag-version --allow-same-version -f version v0.0.3
     - npm publish
 
 wasm-public-npm:
