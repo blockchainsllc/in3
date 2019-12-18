@@ -173,6 +173,26 @@ static void test_in3_client_rpc() {
   TEST_ASSERT_NOT_NULL(ctx->error);
   free_ctx(ctx);
 
+  // No transport check
+  c->transport = NULL;
+  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  c->transport = test_transport;
+
+  // test in3_client_exec_req() with keep_in3 set to true
+  // TODO: also test with use_binary set to true
+  c->keep_in3 = true;
+  add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", NULL);
+  char* response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
+  TEST_ASSERT_NOT_NULL(response);
+  free(response);
+
+  //  // Invalid JSON result
+  //  add_response("eth_blockNumber", "[]", "\"\"0x84cf52\"", NULL, NULL);
+  //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
+  //
+  //  // No result and no error
+  //  add_response("eth_blockNumber", "[]", NULL, NULL, NULL);
+  //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
 }
 /*
  * Main
