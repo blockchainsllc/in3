@@ -194,6 +194,39 @@ static void test_in3_client_rpc() {
   //  add_response("eth_blockNumber", "[]", NULL, NULL, NULL);
   //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
 }
+
+IN3_IMPORT_TEST void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, json_ctx_t* spec);
+
+static void test_in3_client_chain() {
+  // Leading zeros in registry id
+  in3_chain_t chain;
+  initChain(&chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", 2, 2, CHAIN_ETH, NULL);
+  uint8_t reg_id[32];
+  hex2byte_arr("0023d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", -1, reg_id, 32);
+  TEST_ASSERT_EQUAL_MEMORY(chain.registry_id, reg_id, 32);
+
+  // Reregister chains with same chain id
+  in3_t*    c = in3_new();
+  address_t contract1, contract2;
+  hex2byte_arr("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract1, 20);
+  hex2byte_arr("0x5f51e413581dd76759e9eed51e63d14c8d1379c8", -1, contract2, 20);
+  bytes32_t registry_id;
+  hex2byte_arr("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract1, registry_id, 2, NULL);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract2, registry_id, 2, NULL);
+  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->contract->data, contract2, 20);
+
+  // Add node with same address
+  in3_client_add_node(c, 0x8, "http://test1.com", 0xFF, contract1);
+  in3_client_add_node(c, 0x8, "http://test2.com", 0xFF, contract1);
+  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, 0x8)->nodeList[0].url, "http://test2.com");
+  TEST_ASSERT_EQUAL_UINT64(in3_find_chain(c, 0x8)->nodeList[0].props, 0xFF);
+
+  // remove last node
+  TEST_ASSERT_EQUAL(IN3_OK, in3_client_remove_node(c, 0x8, contract1));
+
+  in3_free(c);
+}
 /*
  * Main
  */
@@ -205,5 +238,6 @@ int main() {
   TESTS_BEGIN();
   RUN_TEST(test_in3_config);
   RUN_TEST(test_in3_client_rpc);
+  RUN_TEST(test_in3_client_chain);
   return TESTS_END();
 }

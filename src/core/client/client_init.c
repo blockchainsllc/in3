@@ -71,7 +71,7 @@ void in3_set_default_signer(in3_signer_t* signer) {
   default_signer = signer;
 }
 
-static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, json_ctx_t* spec) {
+IN3_EXPORT_TEST void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, json_ctx_t* spec) {
   chain->chainId        = chainId;
   chain->initAddresses  = NULL;
   chain->lastBlock      = 0;
