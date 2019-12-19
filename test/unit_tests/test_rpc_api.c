@@ -227,6 +227,30 @@ static void test_in3_client_chain() {
 
   in3_free(c);
 }
+
+static void test_in3_client_configure() {
+  in3_t* c = in3_new();
+
+  // proof
+  in3_configure(c, "{\"proof\":\"standard\"}");
+  TEST_ASSERT_EQUAL(PROOF_STANDARD, c->proof);
+
+  // rpc
+  in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
+  TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
+  TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chainId);
+  TEST_ASSERT_EQUAL(1, c->requestCount);
+  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodeList->url);
+
+  // missing registryId and contract
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
+
+  // bad registryId
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}"));
+
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -239,5 +263,6 @@ int main() {
   RUN_TEST(test_in3_config);
   RUN_TEST(test_in3_client_rpc);
   RUN_TEST(test_in3_client_chain);
+  RUN_TEST(test_in3_client_configure);
   return TESTS_END();
 }
