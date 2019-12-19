@@ -257,6 +257,7 @@ static void test_in3_client_configure() {
 int main() {
   in3_register_eth_full();
   in3_register_eth_api();
+  in3_log_set_quiet(true);
 
   // now run tests
   TESTS_BEGIN();
