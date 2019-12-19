@@ -378,8 +378,8 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
       c->proof        = PROOF_NONE;
       c->chainId      = ETH_CHAIN_ID_LOCAL;
       c->requestCount = 1;
-      in3_node_t* n   = in3_find_chain(c, c->chainId)->nodeList;
-      if (n->url) _free(n);
+      in3_node_t* n   = &in3_find_chain(c, c->chainId)->nodeList[0];
+      if (n->url) _free(n->url);
       n->url = malloc(d_len(iter.token) + 1);
       if (!n->url) {
         res = IN3_ENOMEM;
