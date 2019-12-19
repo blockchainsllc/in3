@@ -127,6 +127,8 @@ static void test_filter() {
   TEST_ASSERT_NULL(error);
   TEST_ASSERT_NOT_NULL(result);
   TEST_ASSERT_EQUAL_STRING("false", result);
+
+  in3_free(c);
 }
 
 /*
