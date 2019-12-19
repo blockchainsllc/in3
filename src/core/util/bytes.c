@@ -82,8 +82,7 @@ void b_print(bytes_t* a) {
 }
 
 int b_cmp(bytes_t* a, bytes_t* b) {
-  if ((a && b) == 0) return 1;
-
+  if ((a && b) == 0 || (a->len == 0 && b->len == 0)) return 1;
   return a->data && b->data && a->len == b->len && memcmp(a->data, b->data, a->len) == 0;
 }
 
