@@ -341,7 +341,7 @@ static void test_eth_get_storage_at(void) {
   hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
   bytes32_t key;
   memset(key, 0, 32);
-  uint256_t storage = eth_getStorageAt(in3, contract, key, BLKNUM_LATEST());
+  uint256_t storage = eth_getStorageAt(in3, contract, key, BLKNUM_EARLIEST());
 
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
   TEST_ASSERT_TRUE(storage.data);
