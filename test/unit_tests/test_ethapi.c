@@ -486,6 +486,53 @@ static void test_utilities(void) {
   TEST_ASSERT_TRUE(d > 0.0);
   uint64_t u64 = as_long(u256);
 }
+
+static void test_eth_call_multiple(void) {
+  address_t contract;
+  in3_t*    c       = in3_new();
+  c->transport      = test_transport;
+  c->chainId        = 0x1;
+  c->autoUpdateList = false;
+  c->proof          = PROOF_NONE;
+  c->signatureCount = 0;
+  for (int i = 0; i < c->chainsCount; i++)
+    c->chains[i].needsUpdate = false;
+
+  add_response("eth_call",
+               "[{\"to\":\"0x2736d225f85740f42d17987100dc8d58e9e16252\",\"data\":\"0x15625c5e\"},\"latest\"]",
+               "\"0x0000000000000000000000000000000000000000000000000000000000000005\"",
+               NULL,
+               NULL);
+  hex2byte_arr("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
+  json_ctx_t* response = eth_call_fn(c, contract, BLKNUM_LATEST(), "totalServers():uint256");
+  if (!response) {
+    printf("Could not get the response: %s", eth_last_error());
+    return;
+  }
+  free_json(response);
+
+  add_response("eth_call",
+               "[{\"to\":\"0x2736d225f85740f42d17987100dc8d58e9e16252\",\"data\":\"0x5cf0f3570000000000000000000000000000000000000000000000000000000000000000\"},\"latest\"]",
+               "\"0x00000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000784bfa9eb182c3a02dbeb5285e3dba92d717e07a000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002168747470733a2f2f696e332e736c6f636b2e69742f6d61696e6e65742f6e642d3100000000000000000000000000000000000000000000000000000000000000\"",
+               NULL,
+               NULL);
+  response = eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(0));
+  if (!response) {
+    printf("Could not get the response: %s", eth_last_error());
+    return;
+  }
+
+  char*    url     = d_get_string_at(response->result, 0); // get the first item of the result (the url)
+  bytes_t* owner   = d_get_bytes_at(response->result, 1);  // get the second item of the result (the owner)
+  uint64_t deposit = d_get_long_at(response->result, 2);   // get the third item of the result (the deposit)
+
+  printf("Server 1 : %s owner = %02x%02x...", url, owner->data[0], owner->data[1]);
+  printf(", deposit = %" PRIu64 "\n", deposit);
+  free_json(response);
+
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -525,5 +572,6 @@ int main() {
   RUN_TEST(test_get_tx_hash);
 
   RUN_TEST(test_utilities);
+  RUN_TEST(test_eth_call_multiple);
   return TESTS_END();
 }
