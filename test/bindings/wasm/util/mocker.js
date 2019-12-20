@@ -16,6 +16,11 @@ function test_transport(url, data) {
 
 function beforeTest(done) {
     responses = {}
+    const cache = {}
+    IN3.setStorage({
+        get: key => cache[key],
+        set: (key, value) => cache[key] = value
+    })
     IN3.onInit(done).catch(console.error)
 }
 
