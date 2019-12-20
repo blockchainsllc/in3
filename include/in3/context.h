@@ -121,6 +121,9 @@ typedef struct in3_ctx {
   /** pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
   struct in3_ctx* required;
 
+  /** state of the verification */
+  in3_ret_t verification_state;
+
 } in3_ctx_t;
 
 /**
