@@ -475,6 +475,17 @@ static void test_get_uncle_blknum_index(void) {
   TEST_ASSERT_TRUE(!block);
   _free(in3);
 }
+
+static void test_utilities(void) {
+  uint256_t u256 = {0};
+  //  hex2byte_arr("0xac1b824795e1eb1f", -1, u256.data, 32);
+  bytes32_t var;
+  hex2byte_arr("0xac1b824795e1eb1f", -1, var, 32);
+  uint256_set(var, 32, u256.data);
+  long double d = as_double(u256);
+  TEST_ASSERT_TRUE(d > 0.0);
+  uint64_t u64 = as_long(u256);
+}
 /*
  * Main
  */
@@ -513,5 +524,6 @@ int main() {
   RUN_TEST(test_new_block_filter);
   RUN_TEST(test_get_tx_hash);
 
+  RUN_TEST(test_utilities);
   return TESTS_END();
 }
