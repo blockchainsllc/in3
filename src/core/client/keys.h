@@ -38,12 +38,16 @@
 #define K_PARAMS            key("params")
 #define K_ERROR             key("error")
 #define K_MESSAGE           key("message")
+#define K_EXEC_TIME         key("execTime")
+#define K_RPC_TIME          key("rpcTime")
+#define K_RPC_COUNT         key("rpcCount")
+#define K_CURRENT_BLOCK     key("currentBlock")
+#define K_VERSION           key("version")
 
 #define K_RESULT            key("result")
 #define K_IN3               key("in3")
 #define K_PROOF             key("proof")
 #define K_REQUEST_COUNT     key("requestCount")
-#define K_CURRENT_BLOCK     key("currentBlock")
 
 #define K_NODES             key("nodes")
 #define K_LAST_BLOCK_NUMBER key("lastBlockNumber")
