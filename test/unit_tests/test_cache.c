@@ -186,9 +186,9 @@ static void test_newchain() {
 
   TEST_ASSERT_TRUE(chain == NULL);
   address_t contract;
-  hex2byte_arr("0x64abe24afbba64cae47e3dc3ced0fcab95e4edd5", -1, contract, 20);
+  hex2byte_arr("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract, 20);
   bytes32_t registry_id;
-  hex2byte_arr("0x423dd84f33a44f60e5d58090dcdcc1c047f57be895415822f211b8cd1fd692e3", -1, registry_id, 32);
+  hex2byte_arr("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
   in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
   in3_client_add_node(c, 0x8, "http://test.com", 0xFF, contract);
 

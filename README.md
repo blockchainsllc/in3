@@ -31,7 +31,7 @@
 | Brew      |  [![Homebrew](https://img.shields.io/badge/Homebrew-tap-blue)]( https://github.com/slockit/homebrew-in3) | Easy to install on MacOS<br><br>*Add a brew tap* <br>`brew tap slockit/in3`<br><br>*install all binaries and libraries*<br>`brew install in3`
 | Release page | [![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | Releases including precompiled libraries for major platforms. To build or compile against the incubed, see [readthedocs](https://in3.readthedocs.io/en/develop/api-c.html).
  | WASM |[![npm](https://img.shields.io/badge/npm-package-blue)](https://www.npmjs.com/package/in3-wasm ) | a WASM-Based npm module running in browsers or nodjs.<br>`npm install --save in3-wasm`<br>See [examples](https://github.com/slockit/in3-c/blob/develop/examples/js/get_block_rpc.js) on how to use it.
- | Java |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For integrating with java applications. Take the jar-file from the release. <br>`javac -cp $IN3_JAR_LOCATION/in3.jar *.java`<br>For examples and documentation see [readthedocs](https://in3.readthedocs.io/en/develop/api-java.html)
+ | Java |[![Github](https://img.shields.io/badge/Github-release-blue)](https://github.com/slockit/in3-c/releases) | For integrating with java applications. Take the jar-file from the release. <br>`javac -cp $IN3_JAR_LOCATION/in3.jar *.java`<br> For infromation on how to use maven, examples and documentation see [readthedocs](https://in3.readthedocs.io/en/develop/api-java.html)
 
 
  

@@ -46,9 +46,10 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
   in3_ctx_t* c = _calloc(1, sizeof(in3_ctx_t));
   if (!c) return NULL;
-  c->attempt = 0;
-  c->cache   = NULL;
-  c->client  = client;
+  c->attempt            = 0;
+  c->cache              = NULL;
+  c->client             = client;
+  c->verification_state = IN3_WAITING;
 
   if (req_data != NULL) {
     c->request_context = parse_json(req_data);

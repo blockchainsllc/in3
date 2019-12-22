@@ -289,7 +289,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             vc.proof                 = d_get(vc.proof, K_PROOF);
           }
 
-          if (verifier && (res = verifier->verify(&vc))) {
+          if (verifier && (res = (ctx->verification_state = verifier->verify(&vc)))) {
             if (res == IN3_WAITING) return res;
             if (w) {
               // blacklist!
@@ -298,7 +298,8 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
               in3_log_info("Blacklisting node for verification failure: %s\n", w->node->url);
             }
             break;
-          }
+          } else
+            ctx->verification_state = IN3_OK;
         }
       }
     }
@@ -501,13 +502,13 @@ void free_ctx(in3_ctx_t* ctx) {
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
-  if (ctx->error) return IN3_EUNKNOWN;
+  if (ctx->error) return (ctx->verification_state && ctx->verification_state != IN3_WAITING) ? ctx->verification_state : IN3_EUNKNOWN;
 
   // is it a valid request?
   if (!ctx->request_context || !d_get(ctx->requests[0], K_METHOD)) return ctx_set_error(ctx, "No Method defined", IN3_ECONFIG);
 
   // if there is response we are done.
-  if (ctx->response_context) return IN3_OK;
+  if (ctx->response_context && ctx->verification_state == IN3_OK) return IN3_OK;
 
   // if we have required-contextes, we need to check them first
   if (ctx->required && (ret = in3_ctx_execute(ctx->required)))
