@@ -42,7 +42,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define VALIDATOR_LIST_KEY ("validatorlist_%" PRIx64)
+#define VALIDATOR_LIST_KEY "validatorlist_%d"
 
 static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
   if (v) {

@@ -64,7 +64,7 @@
 /**
  * type for a chain_id.
  */
-typedef uint64_t chain_id_t;
+typedef uint32_t chain_id_t;
 
 /** the type of the chain. 
  * 

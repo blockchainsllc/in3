@@ -42,7 +42,7 @@
 #include <inttypes.h>
 #include <string.h>
 
-#define NODE_LIST_KEY ("nodelist_%" PRIx64)
+#define NODE_LIST_KEY "nodelist_%d"
 #define CACHE_VERSION 2
 #define MAX_KEYLEN 200
 
