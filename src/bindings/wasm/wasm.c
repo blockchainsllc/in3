@@ -195,9 +195,9 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
   in3_register_eth_api();
 #endif
   in3_t* c                  = in3_new();
-  c->cacheStorage           = malloc(sizeof(in3_storage_handler_t));
-  c->cacheStorage->get_item = storage_get_item;
-  c->cacheStorage->set_item = storage_set_item;
+  c->cache           = malloc(sizeof(in3_storage_handler_t));
+  c->cache->get_item = storage_get_item;
+  c->cache->set_item = storage_set_item;
 
   in3_cache_init(c);
   in3_set_error(NULL);

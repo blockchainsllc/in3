@@ -72,7 +72,9 @@
         "blake2s.h": "c",
         "algorithm": "c",
         "random": "c",
-        "eth_api.h": "c"
+        "eth_api.h": "c",
+        "atomic": "c",
+        "cstdint": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

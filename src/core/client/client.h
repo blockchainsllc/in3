@@ -104,18 +104,18 @@ typedef enum {
  * 
  */
 typedef struct in3_request_config {
-  chain_id_t         chain_id;            /**< the chain to be used. this is holding the integer-value of the hexstring. */
-  uint8_t            includeCode;         /**< if true the code needed will always be devlivered.  */
-  uint8_t            useFullProof;        /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
-  uint8_t            useBinary;           /**< this flaqg is set, the client should use binary-format */
-  bytes_t*           verifiedHashes;      /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
-  uint16_t           verifiedHashesCount; /**< number of verified blockhashes*/
-  uint16_t           latestBlock;         /**< the last blocknumber the nodelistz changed */
-  uint16_t           finality;            /**< number of signatures( in percent) needed in order to reach finality. */
-  in3_verification_t verification;        /**< Verification-type */
-  bytes_t*           clientSignature;     /**< the signature of the client with the client key */
-  bytes_t*           signatures;          /**< the addresses of servers requested to sign the blockhash */
-  uint8_t            signaturesCount;     /**< number or addresses */
+  chain_id_t         chain_id;               /**< the chain to be used. this is holding the integer-value of the hexstring. */
+  uint8_t            include_code;           /**< if true the code needed will always be devlivered.  */
+  uint8_t            use_full_proof;         /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
+  uint8_t            use_binary;             /**< this flaqg is set, the client should use binary-format */
+  bytes_t*           verified_hashes;        /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
+  uint16_t           verified_hashes_length; /**< number of verified blockhashes*/
+  uint16_t           latest_block;           /**< the last blocknumber the nodelistz changed */
+  uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
+  in3_verification_t verification;           /**< Verification-type */
+  bytes_t*           client_signature;       /**< the signature of the client with the client key */
+  bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
+  uint8_t            signers_length;         /**< number or addresses */
 
 } in3_request_config_t;
 
@@ -206,17 +206,17 @@ static inline bool in3_node_props_matches(in3_node_props_t np, in3_node_props_ty
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  chain_id_t         chain_id;       /**< chain_id, which could be a free or based on the public ethereum networkId*/
-  in3_chain_type_t   type;           /**< chaintype */
-  uint64_t           last_block;     /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  bool               needs_update;   /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
-  int                nodeListLength; /**< number of nodes in the nodeList */
-  in3_node_t*        nodeList;       /**< array of nodes */
-  in3_node_weight_t* weights;        /**< stats and weights recorded for each node */
-  bytes_t**          initAddresses;  /**< array of addresses of nodes that should always part of the nodeList */
-  bytes_t*           contract;       /**< the address of the registry contract */
-  bytes32_t          registry_id;    /**< the identifier of the registry */
-  uint8_t            version;        /**< version of the chain */
+  chain_id_t         chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
+  in3_chain_type_t   type;            /**< chaintype */
+  uint64_t           last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  bool               needs_update;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+  int                nodelist_length; /**< number of nodes in the nodeList */
+  in3_node_t*        nodelist;        /**< array of nodes */
+  in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
+  bytes_t**          init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
+  bytes_t*           contract;        /**< the address of the registry contract */
+  bytes32_t          registry_id;     /**< the identifier of the registry */
+  uint8_t            version;         /**< version of the chain */
 } in3_chain_t;
 
 /** 
@@ -350,34 +350,34 @@ typedef struct in3_filter_handler_t_ {
  */
 typedef struct in3_t_ {
   /** number of seconds requests can be cached. */
-  uint32_t cacheTimeout;
+  uint32_t cache_timeout;
 
   /** the limit of nodes to store in the client. */
-  uint16_t nodeLimit;
+  uint16_t node_limit;
 
   /** the client key to sign requests */
   bytes_t* key;
 
   /** number of max bytes used to cache the code in memory */
-  uint32_t maxCodeCache;
+  uint32_t max_code_cache;
 
   /** number of number of blocks cached  in memory */
-  uint32_t maxBlockCache;
+  uint32_t max_block_cache;
 
   /** the type of proof used */
   in3_proof_t proof;
 
   /** the number of request send when getting a first answer */
-  uint8_t requestCount;
+  uint8_t request_count;
 
   /** the number of signatures used to proof the blockhash. */
-  uint8_t signatureCount;
+  uint8_t signature_count;
 
   /** min stake of the server. Only nodes owning at least this amount will be chosen. */
-  uint64_t minDeposit;
+  uint64_t min_deposit;
 
   /** if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
-  uint16_t replaceLatestBlock;
+  uint16_t replace_latest_block;
 
   /** the number of signatures in percent required for the request*/
   uint16_t finality;
@@ -392,10 +392,10 @@ typedef struct in3_t_ {
   chain_id_t chain_id;
 
   /** if true the nodelist will be automaticly updated if the last_block is newer */
-  uint8_t autoUpdateList;
+  uint8_t auto_update_list;
 
   /** a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
-  in3_storage_handler_t* cacheStorage;
+  in3_storage_handler_t* cache;
 
   /** signer-struct managing a wallet */
   in3_signer_t* signer;
@@ -404,7 +404,7 @@ typedef struct in3_t_ {
   in3_transport_send transport;
 
   /** includes the code when sending eth_call-requests */
-  uint8_t includeCode;
+  uint8_t include_code;
 
   /** if true the client will use binary format*/
   uint8_t use_binary;
@@ -419,7 +419,7 @@ typedef struct in3_t_ {
   in3_chain_t* chains;
 
   /** number of configured chains */
-  uint16_t chainsCount;
+  uint16_t chains_length;
 
   /** filter handler */
   in3_filter_handler_t* filters;
@@ -452,7 +452,7 @@ typedef struct in3_t_ {
  * client->transport    = send_curl;
  *
  * // configure storage
- * client->cacheStorage = &storage_handler;
+ * client->cache = &storage_handler;
  * 
  * // init cache
  * in3_cache_init(client);

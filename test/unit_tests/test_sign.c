@@ -58,11 +58,11 @@ static void test_sign() {
   in3_t* c          = in3_new();
   c->transport      = test_transport;
   c->chain_id       = 0x1;
-  c->autoUpdateList = false;
+  c->auto_update_list = false;
   c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
+  c->signature_count = 0;
 
-  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
 
   bytes32_t pk;
   hex2byte_arr("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);

@@ -199,7 +199,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
 }
 
 void vh_cache_save(vhist_t* vh, in3_t* c) {
-  if (!c->cacheStorage) return;
+  if (!c->cache) return;
   char             k[35];
   bytes_builder_t* cbb  = bb_new();
   uint8_t          vers = 1;
@@ -211,7 +211,7 @@ void vh_cache_save(vhist_t* vh, in3_t* c) {
   b.len  = sizeof(vh->last_change_block);
   rlp_encode_item(cbb, &b);
   sprintf(k, VALIDATOR_LIST_KEY, c->chain_id);
-  c->cacheStorage->set_item(c->cacheStorage->cptr, k, &cbb->b);
+  c->cache->set_item(c->cache->cptr, k, &cbb->b);
   bb_free(cbb);
 }
 
@@ -219,9 +219,9 @@ vhist_t* vh_cache_retrieve(in3_t* c) {
   char     k[35];
   bytes_t *v_ = NULL, b_;
   vhist_t* vh = NULL;
-  if (c->cacheStorage) {
+  if (c->cache) {
     sprintf(k, VALIDATOR_LIST_KEY, c->chain_id);
-    v_ = c->cacheStorage->get_item(c->cacheStorage->cptr, k);
+    v_ = c->cache->get_item(c->cache->cptr, k);
     if (v_) {
       rlp_decode(v_, 0, &b_);
       uint8_t vers;

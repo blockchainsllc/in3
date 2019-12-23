@@ -69,16 +69,16 @@ void in3_set_default_signer(in3_signer_t* signer) {
 }
 
 static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type) {
-  chain->chain_id       = chain_id;
-  chain->initAddresses  = NULL;
-  chain->last_block     = 0;
-  chain->contract       = hex2byte_new_bytes(contract, 40);
-  chain->needs_update   = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
-  chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
-  chain->nodeListLength = boot_node_count;
-  chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
-  chain->type           = type;
-  chain->version        = version;
+  chain->chain_id        = chain_id;
+  chain->init_addresses  = NULL;
+  chain->last_block      = 0;
+  chain->contract        = hex2byte_new_bytes(contract, 40);
+  chain->needs_update    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
+  chain->nodelist        = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodelist_length = boot_node_count;
+  chain->weights         = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->type            = type;
+  chain->version         = version;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex2byte_arr(registry_id, -1, chain->registry_id, 32);
@@ -90,7 +90,7 @@ static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, c
 }
 
 static void initNode(in3_chain_t* chain, int node_index, char* address, char* url) {
-  in3_node_t* node = chain->nodeList + node_index;
+  in3_node_t* node = chain->nodelist + node_index;
   node->address    = hex2byte_new_bytes(address, 40);
   node->index      = node_index;
   node->capacity   = 1;
@@ -107,27 +107,27 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
 }
 
 static void in3_client_init(in3_t* c) {
-  c->autoUpdateList     = 1;
-  c->cacheStorage       = NULL;
-  c->signer             = NULL;
-  c->cacheTimeout       = 0;
-  c->use_binary         = 0;
-  c->use_http           = 0;
-  c->includeCode        = 0;
-  c->chain_id           = ETH_CHAIN_ID_MAINNET; // mainnet
-  c->key                = NULL;
-  c->finality           = 0;
-  c->max_attempts       = 3;
-  c->maxBlockCache      = 0;
-  c->maxCodeCache       = 0;
-  c->minDeposit         = 0;
-  c->nodeLimit          = 0;
-  c->proof              = PROOF_STANDARD;
-  c->replaceLatestBlock = 0;
-  c->requestCount       = 1;
-  c->chainsCount        = 5;
-  c->chains             = _malloc(sizeof(in3_chain_t) * c->chainsCount);
-  c->filters            = NULL;
+  c->auto_update_list     = 1;
+  c->cache                = NULL;
+  c->signer               = NULL;
+  c->cache_timeout        = 0;
+  c->use_binary           = 0;
+  c->use_http             = 0;
+  c->include_code         = 0;
+  c->chain_id             = ETH_CHAIN_ID_MAINNET; // mainnet
+  c->key                  = NULL;
+  c->finality             = 0;
+  c->max_attempts         = 3;
+  c->max_block_cache      = 0;
+  c->max_code_cache       = 0;
+  c->min_deposit          = 0;
+  c->node_limit           = 0;
+  c->proof                = PROOF_STANDARD;
+  c->replace_latest_block = 0;
+  c->request_count        = 1;
+  c->chains_length        = 5;
+  c->chains               = _malloc(sizeof(in3_chain_t) * c->chains_length);
+  c->filters              = NULL;
 
   // mainnet
   initChain(c->chains, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 2, CHAIN_ETH);
@@ -169,7 +169,7 @@ static void in3_client_init(in3_t* c) {
 }
 
 in3_chain_t* in3_find_chain(in3_t* c, chain_id_t chain_id) {
-  for (int i = 0; i < c->chainsCount; i++) {
+  for (int i = 0; i < c->chains_length; i++) {
     if (c->chains[i].chain_id == chain_id) return &c->chains[i];
   }
   return NULL;
@@ -178,15 +178,15 @@ in3_chain_t* in3_find_chain(in3_t* c, chain_id_t chain_id) {
 in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) {
-    c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chainsCount + 1), sizeof(in3_chain_t) * c->chainsCount);
+    c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
-    chain                 = c->chains + c->chainsCount;
-    chain->nodeList       = NULL;
-    chain->nodeListLength = 0;
-    chain->weights        = NULL;
-    chain->initAddresses  = NULL;
-    chain->last_block     = 0;
-    c->chainsCount++;
+    chain                  = c->chains + c->chains_length;
+    chain->nodelist        = NULL;
+    chain->nodelist_length = 0;
+    chain->weights         = NULL;
+    chain->init_addresses  = NULL;
+    chain->last_block      = 0;
+    c->chains_length++;
 
   } else if (chain->contract)
     b_free(chain->contract);
@@ -204,28 +204,28 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
   in3_node_t* node       = NULL;
-  int         node_index = chain->nodeListLength;
-  for (int i = 0; i < chain->nodeListLength; i++) {
-    if (memcmp(chain->nodeList[i].address->data, address, 20) == 0) {
-      node       = chain->nodeList + i;
+  int         node_index = chain->nodelist_length;
+  for (int i = 0; i < chain->nodelist_length; i++) {
+    if (memcmp(chain->nodelist[i].address->data, address, 20) == 0) {
+      node       = chain->nodelist + i;
       node_index = i;
       break;
     }
   }
   if (!node) {
-    chain->nodeList = chain->nodeList
-                          ? _realloc(chain->nodeList, sizeof(in3_node_t) * (chain->nodeListLength + 1), sizeof(in3_node_t) * chain->nodeListLength)
-                          : _calloc(chain->nodeListLength + 1, sizeof(in3_node_t));
+    chain->nodelist = chain->nodelist
+                          ? _realloc(chain->nodelist, sizeof(in3_node_t) * (chain->nodelist_length + 1), sizeof(in3_node_t) * chain->nodelist_length)
+                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_t));
     chain->weights = chain->weights
-                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodeListLength + 1), sizeof(in3_node_weight_t) * chain->nodeListLength)
-                         : _calloc(chain->nodeListLength + 1, sizeof(in3_node_weight_t));
-    if (!chain->nodeList || !chain->weights) return IN3_ENOMEM;
-    node           = chain->nodeList + chain->nodeListLength;
+                         ? _realloc(chain->weights, sizeof(in3_node_weight_t) * (chain->nodelist_length + 1), sizeof(in3_node_weight_t) * chain->nodelist_length)
+                         : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
+    if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
+    node           = chain->nodelist + chain->nodelist_length;
     node->address  = b_new((char*) address, 20);
-    node->index    = chain->nodeListLength;
+    node->index    = chain->nodelist_length;
     node->capacity = 1;
     node->deposit  = 0;
-    chain->nodeListLength++;
+    chain->nodelist_length++;
   } else
     _free(node->url);
 
@@ -244,27 +244,27 @@ in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t addres
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
   int node_index = -1;
-  for (int i = 0; i < chain->nodeListLength; i++) {
-    if (memcmp(chain->nodeList[i].address->data, address, 20) == 0) {
+  for (int i = 0; i < chain->nodelist_length; i++) {
+    if (memcmp(chain->nodelist[i].address->data, address, 20) == 0) {
       node_index = i;
       break;
     }
   }
   if (node_index == -1) return IN3_EFIND;
-  if (chain->nodeList[node_index].url)
-    _free(chain->nodeList[node_index].url);
-  if (chain->nodeList[node_index].address)
-    b_free(chain->nodeList[node_index].address);
+  if (chain->nodelist[node_index].url)
+    _free(chain->nodelist[node_index].url);
+  if (chain->nodelist[node_index].address)
+    b_free(chain->nodelist[node_index].address);
 
-  if (node_index < chain->nodeListLength - 1) {
-    memmove(chain->nodeList + node_index, chain->nodeList + node_index + 1, sizeof(in3_node_t) * (chain->nodeListLength - 1 - node_index));
-    memmove(chain->weights + node_index, chain->weights + node_index + 1, sizeof(in3_node_weight_t) * (chain->nodeListLength - 1 - node_index));
+  if (node_index < chain->nodelist_length - 1) {
+    memmove(chain->nodelist + node_index, chain->nodelist + node_index + 1, sizeof(in3_node_t) * (chain->nodelist_length - 1 - node_index));
+    memmove(chain->weights + node_index, chain->weights + node_index + 1, sizeof(in3_node_weight_t) * (chain->nodelist_length - 1 - node_index));
   }
-  chain->nodeListLength--;
-  if (!chain->nodeListLength) {
-    _free(chain->nodeList);
+  chain->nodelist_length--;
+  if (!chain->nodelist_length) {
+    _free(chain->nodelist);
     _free(chain->weights);
-    chain->nodeList = NULL;
+    chain->nodelist = NULL;
     chain->weights  = NULL;
   }
   return IN3_OK;
@@ -273,16 +273,16 @@ in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
   in3_nodelist_clear(chain);
-  chain->nodeList       = NULL;
-  chain->weights        = NULL;
-  chain->nodeListLength = 0;
+  chain->nodelist        = NULL;
+  chain->weights         = NULL;
+  chain->nodelist_length = 0;
   return IN3_OK;
 }
 
 /* frees the data */
 void in3_free(in3_t* a) {
   int i;
-  for (i = 0; i < a->chainsCount; i++) {
+  for (i = 0; i < a->chains_length; i++) {
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
   }
@@ -310,7 +310,7 @@ in3_t* in3_new() {
   in3_client_init(c);
 
   if (default_transport) c->transport = default_transport;
-  if (default_storage) c->cacheStorage = default_storage;
+  if (default_storage) c->cache = default_storage;
   if (default_signer) c->signer = default_signer;
 
 #ifndef TEST
@@ -339,40 +339,40 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
   if (!cnf || !cnf->result) return IN3_EINVAL;
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
     if (iter.token->key == key("autoUpdateList"))
-      c->autoUpdateList = d_int(iter.token) ? true : false;
+      c->auto_update_list = d_int(iter.token) ? true : false;
     else if (iter.token->key == key("chainId"))
       c->chain_id = chain_id(iter.token);
     else if (iter.token->key == key("signatureCount"))
-      c->signatureCount = (uint8_t) d_int(iter.token);
+      c->signature_count = (uint8_t) d_int(iter.token);
     else if (iter.token->key == key("finality"))
       c->finality = (uint_fast16_t) d_int(iter.token);
     else if (iter.token->key == key("includeCode"))
-      c->includeCode = d_int(iter.token) ? true : false;
+      c->include_code = d_int(iter.token) ? true : false;
     else if (iter.token->key == key("maxAttempts"))
       c->max_attempts = d_int(iter.token);
     else if (iter.token->key == key("keepIn3"))
       c->keep_in3 = d_int(iter.token);
     else if (iter.token->key == key("maxBlockCache"))
-      c->maxBlockCache = d_int(iter.token);
+      c->max_block_cache = d_int(iter.token);
     else if (iter.token->key == key("maxCodeCache"))
-      c->maxCodeCache = d_int(iter.token);
+      c->max_code_cache = d_int(iter.token);
     else if (iter.token->key == key("minDeposit"))
-      c->minDeposit = d_long(iter.token);
+      c->min_deposit = d_long(iter.token);
     else if (iter.token->key == key("nodeLimit"))
-      c->nodeLimit = (uint16_t) d_int(iter.token);
+      c->node_limit = (uint16_t) d_int(iter.token);
     else if (iter.token->key == key("proof"))
       c->proof = strcmp(d_string(iter.token), "full") == 0
                      ? PROOF_FULL
                      : (strcmp(d_string(iter.token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
     else if (iter.token->key == key("replaceLatestBlock"))
-      c->replaceLatestBlock = (uint16_t) d_int(iter.token);
+      c->replace_latest_block = (uint16_t) d_int(iter.token);
     else if (iter.token->key == key("requestCount"))
-      c->requestCount = (uint8_t) d_int(iter.token);
+      c->request_count = (uint8_t) d_int(iter.token);
     else if (iter.token->key == key("rpc")) {
-      c->proof        = PROOF_NONE;
-      c->chain_id     = ETH_CHAIN_ID_LOCAL;
-      c->requestCount = 1;
-      in3_node_t* n   = in3_find_chain(c, c->chain_id)->nodeList;
+      c->proof         = PROOF_NONE;
+      c->chain_id      = ETH_CHAIN_ID_LOCAL;
+      c->request_count = 1;
+      in3_node_t* n    = in3_find_chain(c, c->chain_id)->nodelist;
       if (n->url) _free(n);
       n->url = malloc(d_len(iter.token) + 1);
       if (!n->url) {

@@ -209,7 +209,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   char       params[10000];
 
   // configure in3
-  c->requestCount = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
+  c->request_count = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
   method          = d_get_string(request, "method");
 
   str_range_t s = d_to_json(d_get(request, key("params")));
@@ -288,11 +288,11 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   in3_t* c = in3_new();
   int    j;
   c->max_attempts        = 1;
-  c->includeCode         = 1;
+  c->include_code        = 1;
   c->transport           = send_mock;
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
-  for (j = 0; j < c->chainsCount; j++) {
+  for (j = 0; j < c->chains_length; j++) {
     c->chains[j].needs_update = false;
     if (registry_id) {
       c->chains[j].version = 2;
@@ -305,12 +305,12 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   d_token_t* signatures = d_get(test, key("signatures"));
   c->chain_id           = d_get_longkd(test, key("chainId"), 1);
   if (signatures) {
-    c->signatureCount = d_len(signatures);
-    for (j = 0; j < c->chainsCount; j++) {
+    c->signature_count = d_len(signatures);
+    for (j = 0; j < c->chains_length; j++) {
       if (c->chains[j].chain_id == c->chain_id) {
-        for (i = 0; i < c->chains[j].nodeListLength; i++) {
-          if (i < c->signatureCount)
-            memcpy(c->chains[j].nodeList[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
+        for (i = 0; i < c->chains[j].nodelist_length; i++) {
+          if (i < c->signature_count)
+            memcpy(c->chains[j].nodelist[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
           else
             c->chains[j].weights[i].blacklistedUntil = 0xFFFFFFFFFFFFFF;
         }

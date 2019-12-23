@@ -75,10 +75,10 @@ static void response_free(in3_ctx_t* ctx) {
   ctx->nodes            = NULL;
   if (ctx->requests_configs) {
     for (int i = 0; i < ctx->len; i++) {
-      if (ctx->requests_configs[i].signaturesCount) {
-        if (ctx->requests_configs[i].signatures) {
-          _free(ctx->requests_configs[i].signatures);
-          ctx->requests_configs[i].signatures = NULL;
+      if (ctx->requests_configs[i].signers_length) {
+        if (ctx->requests_configs[i].signers) {
+          _free(ctx->requests_configs[i].signers);
+          ctx->requests_configs[i].signers = NULL;
         }
       }
     }
@@ -111,26 +111,26 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   // TODO sign the request
   // conf->clientSignature =
   //  }
-  conf->latestBlock = c->replaceLatestBlock;
-  conf->useBinary   = c->use_binary;
+  conf->latest_block = c->replace_latest_block;
+  conf->use_binary   = c->use_binary;
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
     if (c->proof == PROOF_FULL)
-      conf->useFullProof = true;
+      conf->use_full_proof = true;
     conf->verification = VERIFICATION_PROOF;
 
-    if (c->signatureCount) {
+    if (c->signature_count) {
       node_weight_t*   sig_nodes = NULL;
       in3_node_props_t props     = c->node_props | NODE_PROP_SIGNER;
-      in3_ret_t        res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signatureCount, props);
+      in3_ret_t        res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signature_count, props);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       int node_count        = ctx_nodes_len(sig_nodes);
-      conf->signaturesCount = node_count;
-      conf->signatures      = _malloc(sizeof(bytes_t) * node_count);
+      conf->signers_length = node_count;
+      conf->signers         = _malloc(sizeof(bytes_t) * node_count);
       node_weight_t* w      = sig_nodes;
       for (i = 0; i < node_count; i++) {
-        conf->signatures[i].len  = w->node->address->len;
-        conf->signatures[i].data = w->node->address->data;
+        conf->signers[i].len  = w->node->address->len;
+        conf->signers[i].data = w->node->address->data;
       }
       free_ctx_nodes(sig_nodes);
     }
@@ -192,22 +192,22 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"proof\",\"version\": \"%s\"", IN3_PROTO_VER));
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
-      if (rc->clientSignature)
-        sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
+      if (rc->client_signature)
+        sb_add_bytes(sb, ",\"clientSignature\":", rc->client_signature, 1, false);
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
-      if (rc->latestBlock)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
-      if (rc->signaturesCount)
-        sb_add_bytes(sb, ",\"signers\":", rc->signatures, rc->signaturesCount, true);
-      if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
+      if (rc->latest_block)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latest_block));
+      if (rc->signers_length)
+        sb_add_bytes(sb, ",\"signers\":", rc->signers, rc->signers_length, true);
+      if (rc->include_code && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
-      if (rc->useFullProof)
+      if (rc->use_full_proof)
         sb_add_chars(sb, ",\"useFullProof\":true");
-      if (rc->useBinary)
+      if (rc->use_binary)
         sb_add_chars(sb, ",\"useBinary\":true");
-      if (rc->verifiedHashesCount)
-        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verifiedHashes, rc->verifiedHashesCount, true);
+      if (rc->verified_hashes_length)
+        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verified_hashes, rc->verified_hashes_length, true);
       sb_add_range(sb, "}}", 0, 2);
     } else
       sb_add_char(sb, '}');
@@ -533,7 +533,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_props_t props = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->requestCount, props)) == IN3_OK) {
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, props)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);

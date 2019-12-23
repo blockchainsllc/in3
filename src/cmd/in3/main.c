@@ -346,7 +346,7 @@ uint64_t getchain_id(char* name) {
 void set_chain_id(in3_t* c, char* id) {
   if (strstr(id, "://")) { // its a url
     c->chain_id                  = 0xFFFFL;
-    c->chains[3].nodeList[0].url = id;
+    c->chains[3].nodelist[0].url = id;
   } else
     c->chain_id = getchain_id(id);
 }
@@ -551,9 +551,9 @@ int main(int argc, char* argv[]) {
   // create the client
   in3_t* c                     = in3_new();
   c->transport                 = debug_transport;
-  c->requestCount              = 1;
+  c->request_count              = 1;
   c->use_http                  = true;
-  c->cacheStorage              = &storage_handler;
+  c->cache              = &storage_handler;
   bool            out_response = false;
   bool            force_hex    = false;
   char*           sig          = NULL;
@@ -610,7 +610,7 @@ int main(int argc, char* argv[]) {
     } else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
-      c->replaceLatestBlock = atoll(argv[++i]);
+      c->replace_latest_block = atoll(argv[++i]);
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-to") == 0)
@@ -649,7 +649,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-debug") == 0)
       in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
-      c->signatureCount = atoi(argv[++i]);
+      c->signature_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
       if (strcmp(argv[i + 1], "none") == 0)
         c->proof = PROOF_NONE;

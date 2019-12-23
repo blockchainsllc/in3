@@ -105,7 +105,7 @@ typedef enum {
  */
 typedef struct in3_request_config {
   chain_id_t         chain_id;            /**< the chain to be used. this is holding the integer-value of the hexstring. */
-  uint8_t            includeCode;         /**< if true the code needed will always be devlivered.  */
+  uint8_t            include_code;         /**< if true the code needed will always be devlivered.  */
   uint8_t            useFullProof;        /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
   uint8_t            useBinary;           /**< this flaqg is set, the client should use binary-format */
   bytes_t*           verifiedHashes;      /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
@@ -195,17 +195,17 @@ void in3_node_props_set(in3_node_props_t*     node_props,
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  chain_id_t         chain_id;       /**< chain_id, which could be a free or based on the public ethereum networkId*/
-  in3_chain_type_t   type;           /**< chaintype */
-  uint64_t           last_block;     /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  bool               needs_update;   /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
-  int                nodeListLength; /**< number of nodes in the nodeList */
-  in3_node_t*        nodeList;       /**< array of nodes */
-  in3_node_weight_t* weights;        /**< stats and weights recorded for each node */
-  bytes_t**          initAddresses;  /**< array of addresses of nodes that should always part of the nodeList */
-  bytes_t*           contract;       /**< the address of the registry contract */
-  bytes32_t          registry_id;    /**< the identifier of the registry */
-  uint8_t            version;        /**< version of the chain */
+  chain_id_t         chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
+  in3_chain_type_t   type;            /**< chaintype */
+  uint64_t           last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  bool               needs_update;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+  int                nodelist_length; /**< number of nodes in the nodeList */
+  in3_node_t*        nodelist;        /**< array of nodes */
+  in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
+  bytes_t**          initAddresses;   /**< array of addresses of nodes that should always part of the nodeList */
+  bytes_t*           contract;        /**< the address of the registry contract */
+  bytes32_t          registry_id;     /**< the identifier of the registry */
+  uint8_t            version;         /**< version of the chain */
 } in3_chain_t;
 
 /** 
@@ -393,7 +393,7 @@ typedef struct in3_t_ {
   in3_transport_send transport;
 
   /** includes the code when sending eth_call-requests */
-  uint8_t includeCode;
+  uint8_t include_code;
 
   /** if true the client will use binary format*/
   uint8_t use_binary;
@@ -408,7 +408,7 @@ typedef struct in3_t_ {
   in3_chain_t* chains;
 
   /** number of configured chains */
-  uint16_t chainsCount;
+  uint16_t chains_length;
 
   /** filter handler */
   in3_filter_handler_t* filters;

@@ -358,7 +358,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     res = vc_err(vc, "wrong blockhash");
 
   // if we expect no signatures ...
-  if (res == IN3_OK && vc->config->signaturesCount == 0) {
+  if (res == IN3_OK && vc->config->signers_length == 0) {
 #ifdef POA
     vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
@@ -379,7 +379,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     }
     vh_free(vh);
 #endif
-  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
+  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signers_length))
     // no signatures found,even though we expected some.
     res = vc_err(vc, "missing signatures");
   else if (res == IN3_OK) {
@@ -408,7 +408,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    if (confirmed != (1 << vc->config->signaturesCount) - 1) // we must collect all signatures!
+    if (confirmed != (1 << vc->config->signers_length) - 1) // we must collect all signatures!
       res = vc_err(vc, "missing signatures");
   }
 

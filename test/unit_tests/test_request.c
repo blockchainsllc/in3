@@ -57,11 +57,11 @@ void test_configure_request() {
 
   in3_t* c                = in3_new();
   c->proof                = PROOF_FULL;
-  c->signatureCount       = 2;
+  c->signature_count       = 2;
   c->chains->needs_update = false;
   c->finality             = 10;
-  c->includeCode          = true;
-  c->replaceLatestBlock   = 6;
+  c->include_code         = true;
+  c->replace_latest_block   = 6;
   c->use_binary           = true;
   c->use_http             = true;
 

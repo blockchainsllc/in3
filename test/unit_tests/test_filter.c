@@ -58,11 +58,11 @@ static void test_filter() {
   in3_t* c          = in3_new();
   c->transport      = test_transport;
   c->chain_id       = 0x1;
-  c->autoUpdateList = false;
+  c->auto_update_list = false;
   c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
+  c->signature_count = 0;
 
-  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
 
   char *result = NULL, *error = NULL;
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);

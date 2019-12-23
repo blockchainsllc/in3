@@ -89,8 +89,8 @@ in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* a
             return IN3_EINVAL;
           }
           *must_free = 1;
-          if (vc->ctx->client->cacheStorage)
-            vc->ctx->client->cacheStorage->set_item(vc->ctx->client->cacheStorage->cptr, hex_address, &b);
+          if (vc->ctx->client->cache)
+            vc->ctx->client->cache->set_item(vc->ctx->client->cache->cptr, hex_address, &b);
           else
             *target = b_dup(d_bytes(t));
           return IN3_OK;
@@ -128,12 +128,12 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target)
   in3_ret_t      ret;
 
   // not cached yet
-  if (vc->ctx->client->cacheStorage) {
-    b = vc->ctx->client->cacheStorage->get_item(vc->ctx->client->cacheStorage->cptr, key_str);
+  if (vc->ctx->client->cache) {
+    b = vc->ctx->client->cache->get_item(vc->ctx->client->cache->cptr, key_str);
     if (!b) {
       ret = in3_get_code_from_client(vc, key_str, address, &must_free, &b);
       if (ret < 0) return ret;
-      b = vc->ctx->client->cacheStorage->get_item(vc->ctx->client->cacheStorage->cptr, key_str);
+      b = vc->ctx->client->cache->get_item(vc->ctx->client->cache->cptr, key_str);
     } else
       must_free = 1;
   } else {
