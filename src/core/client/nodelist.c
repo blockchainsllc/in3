@@ -74,7 +74,7 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
     return ctx_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
 
   // update last blockNumber
-  chain->lastBlock = d_long(t);
+  chain->last_block = d_long(t);
 
   // new nodelist
   in3_node_t*        newList = _calloc((len = d_len(nodes)), sizeof(in3_node_t));

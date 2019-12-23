@@ -82,7 +82,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 
   // fill data
   chain->contract       = b_new_fixed_bytes(b, &p, 20);
-  chain->lastBlock      = b_read_long(b, &p);
+  chain->last_block     = b_read_long(b, &p);
   chain->nodeListLength = (count = b_read_int(b, &p));
   chain->nodeList       = _calloc(count, sizeof(in3_node_t));
   chain->weights        = _calloc(count, sizeof(in3_node_weight_t));
@@ -113,7 +113,7 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   bytes_builder_t* bb = bb_new();
   bb_write_byte(bb, CACHE_VERSION);          // Version flag
   bb_write_fixed_bytes(bb, chain->contract); // 20 bytes fixed
-  bb_write_long(bb, chain->lastBlock);
+  bb_write_long(bb, chain->last_block);
   bb_write_int(bb, chain->nodeListLength);
   bb_write_raw_bytes(bb, chain->weights, chain->nodeListLength * sizeof(in3_node_weight_t));
 

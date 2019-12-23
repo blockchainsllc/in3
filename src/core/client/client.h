@@ -181,13 +181,24 @@ void in3_node_props_set(in3_node_props_t*     node_props,
                         uint8_t               value);
 
 /**
- * getter macro for interacting with in3_node_props_t.
- * @param node_props
- * @param type
- * @return val
+ * returns the value of the specified propertytype.
+ * @param np the properties as defined in the nodeList 
+ * @param t the value to extract
+ * @return value as a number
  */
-#define in3_node_props_get(np, t) ((t == NODE_PROP_MIN_BLOCK_HEIGHT) ? ((np >> 32U) & 0xFFU) : !!(np & t))
-#define in3_node_props_matches(np, t) !!(np & t))
+static inline uint32_t in3_node_props_get(in3_node_props_t np, in3_node_props_type_t t) {
+  return ((t == NODE_PROP_MIN_BLOCK_HEIGHT) ? ((np >> 32U) & 0xFFU) : !!(np & t));
+}
+
+/**
+ * checkes if the given type is set in the properties
+ * @param np the properties as defined in the nodeList 
+ * @param t the value to extract
+ * @return true if set
+ */
+static inline bool in3_node_props_matches(in3_node_props_t np, in3_node_props_type_t t) {
+  return !!(np & t);
+}
 
 /**
  * Chain definition inside incubed.
@@ -197,7 +208,7 @@ void in3_node_props_set(in3_node_props_t*     node_props,
 typedef struct in3_chain {
   chain_id_t         chain_id;       /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t   type;           /**< chaintype */
-  uint64_t           lastBlock;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  uint64_t           last_block;     /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
   bool               needsUpdate;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
   int                nodeListLength; /**< number of nodes in the nodeList */
   in3_node_t*        nodeList;       /**< array of nodes */
@@ -380,7 +391,7 @@ typedef struct in3_t_ {
   /** servers to filter for the given chain. The chain-id based on EIP-155.*/
   chain_id_t chain_id;
 
-  /** if true the nodelist will be automaticly updated if the lastBlock is newer */
+  /** if true the nodelist will be automaticly updated if the last_block is newer */
   uint8_t autoUpdateList;
 
   /** a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */

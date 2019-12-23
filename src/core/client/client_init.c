@@ -71,7 +71,7 @@ void in3_set_default_signer(in3_signer_t* signer) {
 static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type) {
   chain->chain_id       = chain_id;
   chain->initAddresses  = NULL;
-  chain->lastBlock      = 0;
+  chain->last_block     = 0;
   chain->contract       = hex2byte_new_bytes(contract, 40);
   chain->needsUpdate    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
@@ -185,7 +185,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     chain->nodeListLength = 0;
     chain->weights        = NULL;
     chain->initAddresses  = NULL;
-    chain->lastBlock      = 0;
+    chain->last_block     = 0;
     c->chainsCount++;
 
   } else if (chain->contract)
@@ -383,7 +383,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
     } else if (iter.token->key == key("servers") || iter.token->key == key("nodes"))
       for (d_iterator_t ct = d_iter(iter.token); ct.left; d_iter_next(&ct)) {
         // register chain
-        chain_id_t     chain_id = c_to_long(d_get_keystr(ct.token->key), -1);
+        chain_id_t   chain_id = c_to_long(d_get_keystr(ct.token->key), -1);
         in3_chain_t* chain    = in3_find_chain(c, chain_id);
         if (!chain) {
           bytes_t* contract_t  = d_get_byteskl(ct.token, key("contract"), 20);
