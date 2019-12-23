@@ -117,11 +117,11 @@ static void test_cache() {
   c->cacheStorage->cptr     = cache;
   c->cacheStorage->get_item = cache_get_item;
   c->cacheStorage->set_item = cache_set_item;
-  c->chainId                = 0x1;
+  c->chain_id               = 0x1;
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chainsCount; i++) {
-    if (c->chains[i].chainId == 0x1) chain = &c->chains[i];
+    if (c->chains[i].chain_id == 0x1) chain = &c->chains[i];
   }
 
   TEST_ASSERT_TRUE(chain != NULL);
@@ -143,11 +143,11 @@ static void test_cache() {
   in3_t* c2        = in3_new();
   c2->cacheStorage = c->cacheStorage;
   c2->transport    = test_transport;
-  c2->chainId      = c->chainId;
-  in3_configure(c2, "{\"chainId\":\"0x1\"}");
+  c2->chain_id     = c->chain_id;
+  in3_configure(c2, "{\"chain_id\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chainsCount; i++) {
-    if (c2->chains[i].chainId == 0x1) chain2 = &c2->chains[i];
+    if (c2->chains[i].chain_id == 0x1) chain2 = &c2->chains[i];
   }
 
   // the nodeList should have 2 nodes still
@@ -175,13 +175,13 @@ static void test_newchain() {
   c->cacheStorage->cptr     = cache;
   c->cacheStorage->get_item = cache_get_item;
   c->cacheStorage->set_item = cache_set_item;
-  c->chainId                = 0x8;
+  c->chain_id               = 0x8;
 
   in3_set_default_storage(c->cacheStorage);
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chainsCount; i++) {
-    if (c->chains[i].chainId == 0x8) chain = &c->chains[i];
+    if (c->chains[i].chain_id == 0x8) chain = &c->chains[i];
   }
 
   TEST_ASSERT_TRUE(chain == NULL);
@@ -193,7 +193,7 @@ static void test_newchain() {
   in3_client_add_node(c, 0x8, "http://test.com", 0xFF, contract);
 
   for (int i = 0; i < c->chainsCount; i++) {
-    if (c->chains[i].chainId == 0x8) chain = &c->chains[i];
+    if (c->chains[i].chain_id == 0x8) chain = &c->chains[i];
   }
 
   TEST_ASSERT_TRUE(chain != NULL);
@@ -214,11 +214,11 @@ static void test_newchain() {
   // create a second client...
   in3_t* c2        = in3_new();
   c2->cacheStorage = c->cacheStorage;
-  c2->chainId      = c->chainId;
+  c2->chain_id     = c->chain_id;
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2);
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chainsCount; i++) {
-    if (c2->chains[i].chainId == c2->chainId) chain2 = &c2->chains[i];
+    if (c2->chains[i].chain_id == c2->chain_id) chain2 = &c2->chains[i];
   }
 
   // the nodeList should have 2 nodes still
@@ -227,9 +227,9 @@ static void test_newchain() {
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(5, chain2->nodeListLength);
 
-  in3_client_remove_node(c2, c2->chainId, chain2->nodeList->address->data);
+  in3_client_remove_node(c2, c2->chain_id, chain2->nodeList->address->data);
   TEST_ASSERT_EQUAL_INT32(4, chain2->nodeListLength);
-  in3_client_clear_nodes(c2, c2->chainId);
+  in3_client_clear_nodes(c2, c2->chain_id);
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodeListLength);
 }
 

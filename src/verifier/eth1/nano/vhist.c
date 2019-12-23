@@ -210,7 +210,7 @@ void vh_cache_save(vhist_t* vh, in3_t* c) {
   b.data = (uint8_t*) &vh->last_change_block;
   b.len  = sizeof(vh->last_change_block);
   rlp_encode_item(cbb, &b);
-  sprintf(k, VALIDATOR_LIST_KEY, c->chainId);
+  sprintf(k, VALIDATOR_LIST_KEY, c->chain_id);
   c->cacheStorage->set_item(c->cacheStorage->cptr, k, &cbb->b);
   bb_free(cbb);
 }
@@ -220,7 +220,7 @@ vhist_t* vh_cache_retrieve(in3_t* c) {
   bytes_t *v_ = NULL, b_;
   vhist_t* vh = NULL;
   if (c->cacheStorage) {
-    sprintf(k, VALIDATOR_LIST_KEY, c->chainId);
+    sprintf(k, VALIDATOR_LIST_KEY, c->chain_id);
     v_ = c->cacheStorage->get_item(c->cacheStorage->cptr, k);
     if (v_) {
       rlp_decode(v_, 0, &b_);

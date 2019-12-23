@@ -105,7 +105,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   int    i;
   in3_t* c = ctx->client;
 
-  conf->chainId  = c->chainId;
+  conf->chain_id = c->chain_id;
   conf->finality = c->finality;
   //  if (c->key) {
   // TODO sign the request
@@ -188,10 +188,10 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
     in3_request_config_t* rc = c->requests_configs + i;
     if (rc->verification == VERIFICATION_PROOF) {
       // add in3
-      //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
+      //TODO This only works for chain_ids < uint_32t, but ZEPHYR has some issues with PRIu64
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"proof\",\"version\": \"%s\"", IN3_PROTO_VER));
       if (multichain)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chain_id\":\"0x%x\"", (unsigned int) rc->chain_id));
       if (rc->clientSignature)
         sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
       if (rc->finality)
@@ -518,7 +518,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     case CT_RPC: {
 
       // check chain_id
-      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chainId ? ctx->requests_configs->chainId : ctx->client->chainId);
+      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id);
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
       // find the verifier

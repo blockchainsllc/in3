@@ -52,14 +52,14 @@
 /** the protocol version used when sending requests from the this client */
 #define IN3_PROTO_VER "2.1.0"
 
-#define ETH_CHAIN_ID_MAINNET 0x01L   /**< chainId for mainnet */
-#define ETH_CHAIN_ID_KOVAN 0x2aL     /**< chainId for kovan */
-#define ETH_CHAIN_ID_TOBALABA 0x44dL /**< chainId for tobalaba */
-#define ETH_CHAIN_ID_GOERLI 0x5L     /**< chainId for goerlii */
-#define ETH_CHAIN_ID_EVAN 0x4b1L     /**< chainId for evan */
-#define ETH_CHAIN_ID_IPFS 0x7d0      /**< chainId for ipfs */
-#define ETH_CHAIN_ID_VOLTA 0x12046   /**< chainId for volta */
-#define ETH_CHAIN_ID_LOCAL 0xFFFFL   /**< chainId for local chain */
+#define ETH_CHAIN_ID_MAINNET 0x01L   /**< chain_id for mainnet */
+#define ETH_CHAIN_ID_KOVAN 0x2aL     /**< chain_id for kovan */
+#define ETH_CHAIN_ID_TOBALABA 0x44dL /**< chain_id for tobalaba */
+#define ETH_CHAIN_ID_GOERLI 0x5L     /**< chain_id for goerlii */
+#define ETH_CHAIN_ID_EVAN 0x4b1L     /**< chain_id for evan */
+#define ETH_CHAIN_ID_IPFS 0x7d0      /**< chain_id for ipfs */
+#define ETH_CHAIN_ID_VOLTA 0x12046   /**< chain_id for volta */
+#define ETH_CHAIN_ID_LOCAL 0xFFFFL   /**< chain_id for local chain */
 
 /** the type of the chain. 
  * 
@@ -98,7 +98,7 @@ typedef enum {
  * 
  */
 typedef struct in3_request_config {
-  uint64_t           chainId;             /**< the chain to be used. this is holding the integer-value of the hexstring. */
+  uint64_t           chain_id;            /**< the chain to be used. this is holding the integer-value of the hexstring. */
   uint8_t            includeCode;         /**< if true the code needed will always be devlivered.  */
   uint8_t            useFullProof;        /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
   uint8_t            useBinary;           /**< this flaqg is set, the client should use binary-format */
@@ -189,7 +189,7 @@ void in3_node_props_set(in3_node_props_t*     node_props,
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  uint64_t           chainId;        /**< chainId, which could be a free or based on the public ethereum networkId*/
+  uint64_t           chain_id;       /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t   type;           /**< chaintype */
   uint64_t           lastBlock;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
   bool               needsUpdate;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
@@ -372,7 +372,7 @@ typedef struct in3_t_ {
   uint32_t timeout;
 
   /** servers to filter for the given chain. The chain-id based on EIP-155.*/
-  uint64_t chainId;
+  uint64_t chain_id;
 
   /** if true the nodelist will be automaticly updated if the lastBlock is newer */
   uint8_t autoUpdateList;
@@ -523,7 +523,7 @@ in3_ret_t in3_cache_init(
  */
 in3_chain_t* in3_find_chain(
     in3_t*   c /**< the incubed client */,
-    uint64_t chain_id /**< chainId */
+    uint64_t chain_id /**< chain_id */
 );
 
 /**

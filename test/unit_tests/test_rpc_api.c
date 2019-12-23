@@ -57,7 +57,7 @@ static void test_in3_config() {
 
   in3_t* c          = in3_new();
   c->transport      = test_transport;
-  c->chainId        = 0x1;
+  c->chain_id       = 0x1;
   c->autoUpdateList = false;
   c->proof          = PROOF_NONE;
   c->signatureCount = 0;
@@ -95,7 +95,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(1, d_get_intk(ctx->responses[0], K_RESULT));
   ctx_free(ctx);
 
-  TEST_ASSERT_EQUAL(7, c->chainId);
+  TEST_ASSERT_EQUAL(7, c->chain_id);
   TEST_ASSERT_EQUAL(true, c->autoUpdateList);
   TEST_ASSERT_EQUAL(50, c->finality);
   TEST_ASSERT_EQUAL(true, c->includeCode);

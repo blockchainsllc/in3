@@ -327,8 +327,8 @@ bytes_t* get_std_in() {
   return res;
 }
 
-// convert the name to a chainid
-uint64_t getChainId(char* name) {
+// convert the name to a chain_id
+uint64_t getchain_id(char* name) {
   if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
   if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
   if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
@@ -342,13 +342,13 @@ uint64_t getChainId(char* name) {
   return 0;
 }
 
-// set the chainid in the client
+// set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
   if (strstr(id, "://")) { // its a url
-    c->chainId                   = 0xFFFFL;
+    c->chain_id                  = 0xFFFFL;
     c->chains[3].nodeList[0].url = id;
   } else
-    c->chainId = getChainId(id);
+    c->chain_id = getchain_id(id);
 }
 
 // prepare a eth_call or eth_sendTransaction
@@ -593,7 +593,7 @@ int main(int argc, char* argv[]) {
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
-    } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chainid
+    } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) { // data
       char* d = argv[++i];
@@ -705,7 +705,7 @@ int main(int argc, char* argv[]) {
   if (pk_file) read_pk(pk_file, pwd, c, method);
 
   // no proof for rpc-chain
-  if (c->chainId == 0xFFFF) c->proof = PROOF_NONE;
+  if (c->chain_id == 0xFFFF) c->proof = PROOF_NONE;
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");

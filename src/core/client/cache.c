@@ -61,7 +61,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-  sprintf(key, NODE_LIST_KEY, chain->chainId);
+  sprintf(key, NODE_LIST_KEY, chain->chain_id);
 
   // get from cache
   bytes_t* b = c->cacheStorage->get_item(c->cacheStorage->cptr, key);
@@ -129,7 +129,7 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
 
   // create key
   char key[MAX_KEYLEN];
-  sprintf(key, NODE_LIST_KEY, chain->chainId);
+  sprintf(key, NODE_LIST_KEY, chain->chain_id);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   ctx->client->cacheStorage->set_item(ctx->client->cacheStorage->cptr, key, &bb->b);

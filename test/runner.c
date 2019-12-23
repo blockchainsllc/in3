@@ -303,11 +303,11 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   c->proof = proof;
 
   d_token_t* signatures = d_get(test, key("signatures"));
-  c->chainId            = d_get_longkd(test, key("chainId"), 1);
+  c->chain_id           = d_get_longkd(test, key("chainId"), 1);
   if (signatures) {
     c->signatureCount = d_len(signatures);
     for (j = 0; j < c->chainsCount; j++) {
-      if (c->chains[j].chainId == c->chainId) {
+      if (c->chains[j].chain_id == c->chain_id) {
         for (i = 0; i < c->chains[j].nodeListLength; i++) {
           if (i < c->signatureCount)
             memcpy(c->chains[j].nodeList[i].address->data, d_get_bytes_at(signatures, i)->data, 20);

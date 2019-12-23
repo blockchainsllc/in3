@@ -319,7 +319,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setTimeout(JNIEnv* env, jobject ob, jint val
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->chainId;
+  return get_in3(env, ob)->chain_id;
 }
 
 /*
@@ -328,7 +328,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong val) {
-  get_in3(env, ob)->chainId = val;
+  get_in3(env, ob)->chain_id = val;
 }
 
 /*

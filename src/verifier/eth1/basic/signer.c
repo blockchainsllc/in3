@@ -193,7 +193,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
     return bytes(NULL, 0);
   }
 
-  uint64_t v = ctx->requests_configs->chainId ? ctx->requests_configs->chainId : ctx->client->chainId;
+  uint64_t v = ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id;
   if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
 
   // create raw without signature

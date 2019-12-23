@@ -64,7 +64,7 @@ in3_t* init_in3(in3_transport_send custom_transport, uint64_t chain) {
     in3->transport = custom_transport; // use curl to handle the requests
   in3->requestCount   = 1;             // number of requests to sendp
   in3->includeCode    = 1;
-  in3->chainId        = chain;
+  in3->chain_id       = chain;
   in3->max_attempts   = 1;
   in3->requestCount   = 1; // number of requests to sendp
   in3->autoUpdateList = false;

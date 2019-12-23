@@ -57,7 +57,7 @@ static void test_sign() {
 
   in3_t* c          = in3_new();
   c->transport      = test_transport;
-  c->chainId        = 0x1;
+  c->chain_id       = 0x1;
   c->autoUpdateList = false;
   c->proof          = PROOF_NONE;
   c->signatureCount = 0;

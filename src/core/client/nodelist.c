@@ -272,7 +272,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   in3_t*       c     = ctx->client;
   for (i = 0; i < c->chainsCount; i++) {
     chain = c->chains + i;
-    if (chain->chainId == chain_id) {
+    if (chain->chain_id == chain_id) {
       if (chain->needsUpdate || update || ctx_find_required(ctx, "in3_nodeList")) {
         chain->needsUpdate = false;
         // now update the nodeList
@@ -298,7 +298,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
   float              total_weight;
   int                all_nodes_len, total_found, i, l;
 
-  in3_ret_t res = in3_node_list_get(ctx, ctx->client->chainId, false, &all_nodes, &all_nodes_len, &weights);
+  in3_ret_t res = in3_node_list_get(ctx, ctx->client->chain_id, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
     return ctx_set_error(ctx, "could not find the chain", res);
 
