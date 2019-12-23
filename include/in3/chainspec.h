@@ -39,6 +39,7 @@
 
 #ifndef in3_eth_chainspec_h__
 #define in3_eth_chainspec_h__
+#include "client.h"
 #include "data.h"
 #include "error.h"
 #include <stdint.h>
