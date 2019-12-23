@@ -62,7 +62,7 @@ static void test_filter() {
   c->proof          = PROOF_NONE;
   c->signatureCount = 0;
 
-  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needsUpdate = false;
+  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needs_update = false;
 
   char *result = NULL, *error = NULL;
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);

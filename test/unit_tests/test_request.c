@@ -55,15 +55,15 @@ void test_configure_request() {
   in3_register_eth_basic();
   in3_register_eth_api();
 
-  in3_t* c               = in3_new();
-  c->proof               = PROOF_FULL;
-  c->signatureCount      = 2;
-  c->chains->needsUpdate = false;
-  c->finality            = 10;
-  c->includeCode         = true;
-  c->replaceLatestBlock  = 6;
-  c->use_binary          = true;
-  c->use_http            = true;
+  in3_t* c                = in3_new();
+  c->proof                = PROOF_FULL;
+  c->signatureCount       = 2;
+  c->chains->needs_update = false;
+  c->finality             = 10;
+  c->includeCode          = true;
+  c->replaceLatestBlock   = 6;
+  c->use_binary           = true;
+  c->use_http             = true;
 
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));

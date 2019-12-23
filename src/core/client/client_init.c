@@ -73,7 +73,7 @@ static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, c
   chain->initAddresses  = NULL;
   chain->last_block     = 0;
   chain->contract       = hex2byte_new_bytes(contract, 40);
-  chain->needsUpdate    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
+  chain->needs_update   = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodeList       = _malloc(sizeof(in3_node_t) * boot_node_count);
   chain->nodeListLength = boot_node_count;
   chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
@@ -191,11 +191,11 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   } else if (chain->contract)
     b_free(chain->contract);
 
-  chain->chain_id    = chain_id;
-  chain->contract    = b_new((char*) contract, 20);
-  chain->needsUpdate = 0;
-  chain->type        = type;
-  chain->version     = version;
+  chain->chain_id     = chain_id;
+  chain->contract     = b_new((char*) contract, 20);
+  chain->needs_update = false;
+  chain->type         = type;
+  chain->version      = version;
   memcpy(chain->registry_id, registry_id, 32);
   return chain->contract ? IN3_OK : IN3_ENOMEM;
 }
@@ -409,7 +409,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
             } else
               memcpy(chain->registry_id, data.data, 32);
           } else if (cp.token->key == key("needsUpdate"))
-            chain->needsUpdate = d_int(cp.token) ? true : false;
+            chain->needs_update = d_int(cp.token) ? true : false;
           else if (cp.token->key == key("nodeList")) {
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {

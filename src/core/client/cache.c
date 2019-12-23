@@ -86,7 +86,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   chain->nodeListLength = (count = b_read_int(b, &p));
   chain->nodeList       = _calloc(count, sizeof(in3_node_t));
   chain->weights        = _calloc(count, sizeof(in3_node_weight_t));
-  chain->needsUpdate    = false;
+  chain->needs_update   = false;
   memcpy(chain->weights, b->data + p, count * sizeof(in3_node_weight_t));
   p += count * sizeof(in3_node_weight_t);
 

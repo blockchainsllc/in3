@@ -62,7 +62,7 @@ static void test_sign() {
   c->proof          = PROOF_NONE;
   c->signatureCount = 0;
 
-  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needsUpdate = false;
+  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needs_update = false;
 
   bytes32_t pk;
   hex2byte_arr("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);

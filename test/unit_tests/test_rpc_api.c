@@ -118,7 +118,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   bytes_to_hex(chain->registry_id, 32, tmp);
   TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
-  TEST_ASSERT_EQUAL(false, chain->needsUpdate);
+  TEST_ASSERT_EQUAL(false, chain->needs_update);
   TEST_ASSERT_EQUAL(1, chain->nodeListLength);
 
   bytes_to_hex(chain->nodeList->address->data, chain->nodeList->address->len, tmp);

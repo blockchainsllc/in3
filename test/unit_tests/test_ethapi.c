@@ -68,7 +68,7 @@ in3_t* init_in3(in3_transport_send custom_transport, uint64_t chain) {
   in3->max_attempts   = 1;
   in3->requestCount   = 1; // number of requests to sendp
   in3->autoUpdateList = false;
-  for (int i = 0; i < in3->chainsCount; i++) in3->chains[i].needsUpdate = false;
+  for (int i = 0; i < in3->chainsCount; i++) in3->chains[i].needs_update = false;
   return in3;
 }
 
@@ -303,7 +303,7 @@ static void test_send_tx(void) {
 }
 
 static void test_eth_chain_id(void) {
-  in3_t*   in3      = init_in3(mock_transport, 0x5);
+  in3_t*     in3      = init_in3(mock_transport, 0x5);
   chain_id_t chain_id = eth_chainId(in3);
   TEST_ASSERT_TRUE(chain_id == 5);
   _free(in3);
