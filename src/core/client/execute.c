@@ -191,7 +191,7 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
       //TODO This only works for chain_ids < uint_32t, but ZEPHYR has some issues with PRIu64
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"proof\",\"version\": \"%s\"", IN3_PROTO_VER));
       if (multichain)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chain_id\":\"0x%x\"", (unsigned int) rc->chain_id));
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
       if (rc->clientSignature)
         sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
       if (rc->finality)
