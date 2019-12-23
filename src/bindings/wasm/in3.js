@@ -193,7 +193,7 @@ class IN3 {
         if (!r) throwLastError();
         function finalize() {
             // we always need to cleanup
-            in3w.ccall('in3_free_request', 'void', ['number'], [r])
+            in3w.ccall('in3_request_free', 'void', ['number'], [r])
         }
 
         while (true) {

@@ -166,7 +166,7 @@ void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
   _free(ptr);
 }
 void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
-  free_request(r, ctx, false);
+  request_free(r, ctx, false);
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
@@ -219,10 +219,10 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
 
 in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
   char*      src_data = _strdupn(payload, -1);
-  in3_ctx_t* ctx      = new_ctx(c, src_data);
+  in3_ctx_t* ctx      = ctx_new(c, src_data);
   if (ctx->error) {
     in3_set_error(ctx->error);
-    free_ctx(ctx);
+    ctx_free(ctx);
     return NULL;
   }
 
@@ -232,8 +232,8 @@ in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) 
   return ctx;
 }
 
-void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
-  free_ctx(ctx);
+void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_ctx_t* ctx) {
+  ctx_free(ctx);
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
@@ -274,10 +274,10 @@ char* EMSCRIPTEN_KEEPALIVE abi_encode(char* sig, char* json_params) {
 
   if (set_data(req, params->result, req->in_data) < 0) {
     req_free(req);
-    free_json(params);
+    json_free(params);
     return err_string("invalid input data");
   }
-  free_json(params);
+  json_free(params);
   char* result = malloc(req->call_data->b.len * 2 + 3);
   if (!result) {
     req_free(req);
@@ -304,7 +304,7 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   if (!res)
     return err_string("the input data can not be decoded");
   char* result = d_create_json(res->result);
-  free_json(res);
+  json_free(res);
   return result;
 #else
   UNUSED_VAR(sig);

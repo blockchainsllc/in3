@@ -88,7 +88,7 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
   // create it
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
   // and add the request context to the parent.
-  return ctx_add_required(parent, new_ctx(parent->client, req));
+  return ctx_add_required(parent, ctx_new(parent->client, req));
 }
 
 /** signs the given data */
@@ -130,7 +130,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   if (ctx->client->signer && ctx->client->signer->prepare_tx) {
     in3_ret_t r = ctx->client->signer->prepare_tx(ctx, tx, &new_json);
     if (r != IN3_OK) {
-      if (new_json) free_json(new_json);
+      if (new_json) json_free(new_json);
       ctx_set_error(ctx, "error tryting to prepare the tx", r);
       return bytes(NULL, 0);
     }
@@ -145,7 +145,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
       if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
-        if (new_json) free_json(new_json);
+        if (new_json) json_free(new_json);
         ctx_set_error(ctx, "you need to specify the from-address in the tx!", IN3_EINVAL);
         return bytes(NULL, 0);
       }
@@ -188,7 +188,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       res = ret;
   }
   if (res < 0) {
-    if (new_json) free_json(new_json);
+    if (new_json) json_free(new_json);
     ctx_set_error(ctx, "error preparing the tx", res);
     return bytes(NULL, 0);
   }
@@ -237,7 +237,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       sb_add_chars(req, ",");
       sb_add_bytes(req, NULL, &from_b, 1, false);
       sb_add_chars(req, "]}");
-      c       = new_ctx(ctx->client, req->data);
+      c       = ctx_new(ctx->client, req->data);
       c->type = CT_SIGN;
       res     = ctx_add_required(ctx, c);
       _free(req); // we only free the builder, but  not the data
@@ -246,7 +246,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
     res = IN3_EINVAL;
 
   // free temp resources
-  if (new_json) free_json(new_json);
+  if (new_json) json_free(new_json);
   b_free(raw);
   if (res < 0) return bytes(NULL, 0);
 

@@ -253,7 +253,7 @@ static void execute(in3_t* c, FILE* f) {
     if (d == stop) level--;
     if (level == 0) {
       // time to execute
-      in3_ctx_t* ctx = new_ctx(c, sb->data);
+      in3_ctx_t* ctx = ctx_new(c, sb->data);
       if (ctx->error)
         printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", 1, ctx->error);
       else {
@@ -283,7 +283,7 @@ static void execute(in3_t* c, FILE* f) {
         } else
           printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":\"%s\"}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
-      free_ctx(ctx);
+      ctx_free(ctx);
       first   = 0;
       sb->len = 0;
     }
@@ -358,7 +358,7 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
   if (req && req->in_data->type == A_TUPLE) {                                            // if type is a tuple, it means we have areuments we need to parse.
     json_ctx_t* in_data = parse_json(args);                                              // the args are passed as a "[]"- json-array string.
     if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data"); // we then set the data, which appends the arguments to the functionhash.
-    free_json(in_data);                                                                  // of course we clean up ;-)
+    json_free(in_data);                                                                  // of course we clean up ;-)
   }                                                                                      //
   sb_t* params = sb_new("[{");                                                           // now we create the transactionobject as json-argument.
   if (to) {                                                                              // if this is a deployment we must not include the to-property

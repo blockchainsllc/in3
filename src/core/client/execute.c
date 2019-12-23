@@ -50,7 +50,7 @@
 //  return d_get_stringk(ctx->requests[0], K_METHOD);
 //}
 
-static void free_response(in3_ctx_t* ctx) {
+static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
     int nodes_count = ctx_nodes_len(ctx->nodes);
     free_ctx_nodes(ctx->nodes);
@@ -68,7 +68,7 @@ static void free_response(in3_ctx_t* ctx) {
   }
 
   if (ctx->responses) _free(ctx->responses);
-  if (ctx->response_context) free_json(ctx->response_context);
+  if (ctx->response_context) json_free(ctx->response_context);
   ctx->response_context = NULL;
   ctx->responses        = NULL;
   ctx->raw_response     = NULL;
@@ -90,9 +90,9 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
 
   if (is_sub) _free(ctx->request_context->c);
   if (ctx->error) _free(ctx->error);
-  free_response(ctx);
+  response_free(ctx);
   if (ctx->request_context)
-    free_json(ctx->request_context);
+    json_free(ctx->request_context);
 
   if (ctx->requests) _free(ctx->requests);
   if (ctx->requests_configs) _free(ctx->requests_configs);
@@ -264,7 +264,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     } else {
       // we need to clean up the previos responses if set
       if (ctx->responses) _free(ctx->responses);
-      if (ctx->response_context) free_json(ctx->response_context);
+      if (ctx->response_context) json_free(ctx->response_context);
 
       // parse the result
       res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len);
@@ -374,11 +374,11 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   return req;
 }
 
-void free_request(in3_request_t* req, in3_ctx_t* ctx, bool free_response) {
+void request_free(in3_request_t* req, in3_ctx_t* ctx, bool response_free) {
   // free resources
   free_urls(req->urls, req->urls_len, ctx->client->use_http);
 
-  if (free_response) {
+  if (response_free) {
     for (int n = 0; n < req->urls_len; n++) {
       _free(req->results[n].error.data);
       //      if (!ctx->response_context || ctx->response_context->c != req->results[n].result.data)
@@ -421,7 +421,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", request->urls[0], request->payload);
             ctx->client->transport(request);
             in3_log_trace("... response: \n... \x1B[%sm%s\x1B[0m\n", request->results[0].error.len ? "31" : "32", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
-            free_request(request, ctx, false);
+            request_free(request, ctx, false);
             break;
           } else
             return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
@@ -496,7 +496,7 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
   return CTX_SUCCESS;
 }
 
-void free_ctx(in3_ctx_t* ctx) {
+void ctx_free(in3_ctx_t* ctx) {
   free_ctx_intern(ctx, false);
 }
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
@@ -554,7 +554,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;
 
       // if not, then we clean up
-      free_response(ctx);
+      response_free(ctx);
 
       // we count this is an attempt
       ctx->attempt++;

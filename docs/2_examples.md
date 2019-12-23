@@ -94,7 +94,7 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
   uint32_t number_of_servers = d_int(response->result);
 
   // clean up resources
-  free_json(response);
+  json_free(response);
 
   // output
   printf("Found %u servers registered : \n", number_of_servers);
@@ -115,7 +115,7 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
     printf(", deposit = %" PRIu64 "\n", deposit);
 
     // free memory
-    free_json(response);
+    json_free(response);
   }
   return 0;
 }
@@ -392,7 +392,7 @@ void get_logs_api(in3_t* in3) {
     free(l);
   }
   eth_uninstallFilter(in3, fid);
-  free_json(jopt);
+  json_free(jopt);
 }
 
 ```
@@ -560,7 +560,7 @@ void get_tx_receipt_api(in3_t* in3) {
     printf("error getting the tx : %s\n", eth_last_error());
   else {
     printf("Transaction #%d of block #%llx, gas used = %" PRIu64 ", status = %s\n", txr->transaction_index, txr->block_number, txr->gas_used, txr->status ? "success" : "failed");
-    free_tx_receipt(txr);
+    eth_tx_receipt_free(txr);
   }
 }
 
@@ -787,7 +787,7 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
   }
 
   // free json
-  free_json(key_data);
+  json_free(key_data);
 
   // create a signer with this key
   eth_set_pk_signer(c, pk);

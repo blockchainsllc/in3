@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -146,7 +146,7 @@ typedef enum state {
  * 
  *  *Important*: the req_data will not be cloned but used during the execution. The caller of the this function is also responsible for freeing this string afterwards.
  */
-in3_ctx_t* new_ctx(
+in3_ctx_t* ctx_new(
     in3_t* client,  /**< [in] the client-config. */
     char*  req_data /**< [in] the rpc-request as json string. */
 );
@@ -210,7 +210,7 @@ in3_ret_t in3_send_ctx(
             ctx->client->transport(request);
 
             // clean up
-            free_request(request, ctx, false);
+            request_free(request, ctx, false);
             break;
         }
 
@@ -272,17 +272,17 @@ in3_request_t* in3_create_request(
 /**
  * frees a previuosly allocated request.
  */
-void free_request(
+void request_free(
     in3_request_t* req,          /**< [in] the request. */
     in3_ctx_t*     ctx,          /**< [in] the request context. */
-    bool           free_response /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */
+    bool           response_free /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */
 );
 /**
  * frees all resources allocated during the request.
  * 
  * But this will not free the request string passed when creating the context!
  */
-void free_ctx(
+void ctx_free(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 /**
@@ -331,7 +331,7 @@ in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t*
   // create it
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
   // and add the request context to the parent.
-  return ctx_add_required(parent, new_ctx(parent->client, req));
+  return ctx_add_required(parent, ctx_new(parent->client, req));
 }
  * ```
  */
@@ -388,7 +388,7 @@ in3_ret_t ctx_get_error(
 /** 
  * sends a request and returns a context used to access the result or errors. 
  * 
- * This context *MUST* be freed with free_ctx(ctx) after usage to release the resources.
+ * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
 in3_ctx_t* in3_client_rpc_ctx(
     in3_t* c,      /**< [in] the clientt config. */

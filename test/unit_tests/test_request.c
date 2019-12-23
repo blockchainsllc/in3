@@ -65,7 +65,7 @@ void test_configure_request() {
   c->use_binary          = true;
   c->use_http            = true;
 
-  in3_ctx_t* ctx = new_ctx(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
   json_ctx_t*    json    = parse_json(request->payload);
@@ -78,9 +78,9 @@ void test_configure_request() {
   d_token_t* signers = d_get(in3, key("signers"));
   TEST_ASSERT_NOT_NULL(signers);
   TEST_ASSERT_EQUAL(2, d_len(signers));
-  free_request(request, ctx, false);
-  free_json(json);
-  free_ctx(ctx);
+  request_free(request, ctx, false);
+  json_free(json);
+  ctx_free(ctx);
 
   in3_free(c);
 }

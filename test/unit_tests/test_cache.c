@@ -80,7 +80,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
   json_ctx_t* res  = parse_json(buffer);
   str_range_t json = d_to_json(d_get_at(d_get(d_get_at(res->result, 0), key("response")), 0));
   sb_add_range(&req->results->result, json.data, 0, json.len);
-  free_json(res);
+  json_free(res);
   return IN3_OK;
 }
 #define MAX_ENTRIES 10
@@ -160,7 +160,7 @@ static void test_cache() {
   in3_ctx_t* ctx = in3_client_rpc_ctx(c2, "in3_nodeList", "[]");
   if (ctx->error) printf("ERROR : %s\n", ctx->error);
   TEST_ASSERT(ctx && ctx->error == NULL);
-  free_ctx(ctx);
+  ctx_free(ctx);
 }
 
 static void test_newchain() {

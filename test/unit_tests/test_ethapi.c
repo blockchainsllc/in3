@@ -190,7 +190,7 @@ static void test_get_logs() {
     free(l);
   }
   eth_uninstallFilter(in3, fid);
-  free_json(jopt);
+  json_free(jopt);
 
   TEST_ASSERT_TRUE(ret == IN3_OK);
   _free(in3);
@@ -408,7 +408,7 @@ static void test_eth_call_fn(void) {
   in3_log_debug("Access granted? : %d \n", access);
 
   //    clean up resources
-  free_json(response);
+  json_free(response);
   TEST_ASSERT_TRUE(access == 1);
   _free(in3);
 }

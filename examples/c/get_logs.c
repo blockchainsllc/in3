@@ -100,5 +100,5 @@ void get_logs_api(in3_t* in3) {
     free(l);
   }
   eth_uninstallFilter(in3, fid);
-  free_json(jopt);
+  json_free(jopt);
 }

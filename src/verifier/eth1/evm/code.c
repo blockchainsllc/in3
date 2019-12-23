@@ -107,7 +107,7 @@ in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* a
     snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\",\"latest\"]}", hex_address + 1);
     in3_proof_t old_proof  = vc->ctx->client->proof;
     vc->ctx->client->proof = PROOF_NONE; // we don't need proof since we have the codehash!
-    i                      = ctx_add_required(vc->ctx, new_ctx(vc->ctx->client, req));
+    i                      = ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
     vc->ctx->client->proof = old_proof;
     return i;
   }

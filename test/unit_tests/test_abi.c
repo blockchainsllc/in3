@@ -72,10 +72,10 @@ static char* abi_encode(char* sig, char* json_params) {
 
   if (set_data(req, params->result, req->in_data) < 0) {
     req_free(req);
-    free_json(params);
+    json_free(params);
     return err_string("invalid input data");
   }
-  free_json(params);
+  json_free(params);
   char* result = malloc(req->call_data->b.len * 2 + 3);
   if (!result) {
     req_free(req);
@@ -100,7 +100,7 @@ static char* abi_decode(char* sig, char* hex_data) {
   if (!res)
     return err_string("the input data can not be decoded");
   char* result = d_create_json(res->result);
-  free_json(res);
+  json_free(res);
   // Enclose output in square brackets if not already the case
   if (result[0] != '[') {
     size_t l_ = strlen(result);

@@ -569,7 +569,7 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   }
 }
 
-void free_json(json_ctx_t* jp) {
+void json_free(json_ctx_t* jp) {
   if (!jp || jp->result == NULL) return;
   if (!d_is_binary_ctx(jp)) {
     size_t i;
@@ -596,7 +596,7 @@ json_ctx_t* parse_json(char* js) {
   }                                                                  //
   int res = parse_object(parser, -1, 0);                             // now parse starting without parent (-1)
   if (res < 0) {                                                     // error parsing?
-    free_json(parser);                                               // clean up
+    json_free(parser);                                               // clean up
     return NULL;                                                     // and return null
   }                                                                  //
   parser->c = js;                                                    // since this pointer changed during parsing, we set it back to the original string

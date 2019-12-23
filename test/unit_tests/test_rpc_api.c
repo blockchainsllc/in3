@@ -93,7 +93,7 @@ static void test_in3_config() {
 
   TEST_ASSERT_NULL(ctx->error);
   TEST_ASSERT_EQUAL(1, d_get_intk(ctx->responses[0], K_RESULT));
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   TEST_ASSERT_EQUAL(7, c->chainId);
   TEST_ASSERT_EQUAL(true, c->autoUpdateList);
