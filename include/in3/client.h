@@ -200,7 +200,6 @@ typedef struct in3_chain {
   bytes_t*           contract;       /**< the address of the registry contract */
   bytes32_t          registry_id;    /**< the identifier of the registry */
   uint8_t            version;        /**< version of the chain */
-  json_ctx_t*        spec;           /**< optional chain specification, defining the transaitions and forks*/
 } in3_chain_t;
 
 /** 
@@ -483,8 +482,7 @@ in3_ret_t in3_client_register_chain(
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
-    uint8_t          version,     /**< [in] the chain version. */
-    json_ctx_t*      spec         /**< [in] chainspec or NULL. */
+    uint8_t          version      /**< [in] the chain version. */
 );
 
 /** adds a node to a chain ore updates a existing node */

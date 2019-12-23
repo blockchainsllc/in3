@@ -43,9 +43,6 @@
 #include <string.h>
 #include <time.h>
 
-#define KOVAN_SPEC parse_json("[{\"block\":0,\"engine\":\"authorityRound\",\"list\":[\"0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED\",\"0x00427feae2419c15b89d1c21af10d1b6650a4d3d\",\"0x4Ed9B08e6354C70fE6F8CB0411b0d3246b424d6c\",\"0x0020ee4Be0e2027d76603cB751eE069519bA81A1\",\"0x0010f94b296a852aaac52ea6c5ac72e03afd032d\",\"0x007733a1FE69CF3f2CF989F81C7b4cAc1693387A\",\"0x00E6d2b931F55a3f1701c7389d592a7778897879\",\"0x00e4a10650e5a6D6001C38ff8E64F97016a1645c\",\"0x00a0a24b9f0e5ec7aa4c7389b8302fd0123194de\"]},{\"block\":10960440,\"engine\":\"authorityRound\",\"list\":[\"0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED\",\"0x0010f94b296a852aaac52ea6c5ac72e03afd032d\",\"0x00a0a24b9f0e5ec7aa4c7389b8302fd0123194de\"]},{\"block\":10960500,\"engine\":\"authorityRound\",\"contract\":\"0xaE71807C1B0a093cB1547b682DC78316D945c9B8\",\"list\":[\"0xfaadface3fbd81ce37b0e19c0b65ff4234148132\",\"0x596e8221a30bfe6e7eff67fee664a01c73ba3c56\",\"0xa4df255ecf08bbf2c28055c65225c9a9847abd94\",\"0x03801efb0efe2a25ede5dd3a003ae880c0292e4d\",\"0xd05f7478c6aa10781258c5cc8b4f385fc8fa989c\"],\"requiresFinality\":true,\"bypassFinality\":10960502}]")
-#define TOBALABA_SPEC parse_json("[{\"block\":0,\"engine\":\"authorityRound\",\"validatorContract\":\"0x1000000000000000000000000000000000000005\",\"list\":[\"0x4ba15b56452521c0826a35a6f2022e1210fc519b\"]}]")
-
 // set the defaults
 static in3_transport_send     default_transport = NULL;
 static in3_storage_handler_t* default_storage   = NULL;
@@ -71,7 +68,7 @@ void in3_set_default_signer(in3_signer_t* signer) {
   default_signer = signer;
 }
 
-static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, json_ctx_t* spec) {
+static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type) {
   chain->chainId        = chainId;
   chain->initAddresses  = NULL;
   chain->lastBlock      = 0;
@@ -81,7 +78,6 @@ static void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char
   chain->nodeListLength = boot_node_count;
   chain->weights        = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
   chain->type           = type;
-  chain->spec           = spec;
   chain->version        = version;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
@@ -134,39 +130,39 @@ static void in3_client_init(in3_t* c) {
   c->filters            = NULL;
 
   // mainnet
-  initChain(c->chains, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 2, CHAIN_ETH);
   initNode(c->chains, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
   initNode(c->chains, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
 
 #ifdef IN3_STAGING
   // kovan
-  initChain(c->chains + 1, 0x2a, "0604014f2a5fdfafce3f2ec10c77c31d8e15ce6f", "d440f01322c8529892c204d3705ae871c514bafbb2f35907832a07322e0dc868", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 1, 0x2a, "0604014f2a5fdfafce3f2ec10c77c31d8e15ce6f", "d440f01322c8529892c204d3705ae871c514bafbb2f35907832a07322e0dc868", 2, 2, CHAIN_ETH);
   initNode(c->chains + 1, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/kovan/nd-1");
   initNode(c->chains + 1, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
 #else
   // kovan
-  initChain(c->chains + 1, 0x2a, "4c396dcf50ac396e5fdea18163251699b5fcca25", "92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 1, 0x2a, "4c396dcf50ac396e5fdea18163251699b5fcca25", "92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf", 2, 2, CHAIN_ETH);
   initNode(c->chains + 1, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/kovan/nd-1");
   initNode(c->chains + 1, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/kovan/nd-2");
 #endif
 
   // ipfs
-  initChain(c->chains + 2, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS, NULL);
+  initChain(c->chains + 2, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS);
   initNode(c->chains + 2, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/ipfs/nd-1");
   initNode(c->chains + 2, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/ipfs/nd-5");
 
   // local
-  initChain(c->chains + 3, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
+  initChain(c->chains + 3, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH);
   initNode(c->chains + 3, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
 
 #ifdef IN3_STAGING
   // goerli
-  initChain(c->chains + 4, 0x05, "814fb2203f9848192307092337340dcf791a3fed", "0f687341e0823fa5288dc9edd8a00950b35cc7e481ad7eaccaf61e4e04a61e08", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 4, 0x05, "814fb2203f9848192307092337340dcf791a3fed", "0f687341e0823fa5288dc9edd8a00950b35cc7e481ad7eaccaf61e4e04a61e08", 2, 2, CHAIN_ETH);
   initNode(c->chains + 4, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3.stage.slock.it/goerli/nd-1");
   initNode(c->chains + 4, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3.stage.slock.it/goerli/nd-2");
 #else
   // goerli
-  initChain(c->chains + 4, 0x05, "5f51e413581dd76759e9eed51e63d14c8d1379c8", "67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea", 2, 2, CHAIN_ETH, NULL);
+  initChain(c->chains + 4, 0x05, "5f51e413581dd76759e9eed51e63d14c8d1379c8", "67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea", 2, 2, CHAIN_ETH);
   initNode(c->chains + 4, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/goerli/nd-1");
   initNode(c->chains + 4, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/goerli/nd-2");
 #endif
@@ -179,7 +175,7 @@ in3_chain_t* in3_find_chain(in3_t* c, uint64_t chain_id) {
   return NULL;
 }
 
-in3_ret_t in3_client_register_chain(in3_t* c, uint64_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version, json_ctx_t* spec) {
+in3_ret_t in3_client_register_chain(in3_t* c, uint64_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) {
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chainsCount + 1), sizeof(in3_chain_t) * c->chainsCount);
@@ -199,7 +195,6 @@ in3_ret_t in3_client_register_chain(in3_t* c, uint64_t chain_id, in3_chain_type_
   chain->contract    = b_new((char*) contract, 20);
   chain->needsUpdate = 0;
   chain->type        = type;
-  chain->spec        = spec;
   chain->version     = version;
   memcpy(chain->registry_id, registry_id, 32);
   return chain->contract ? IN3_OK : IN3_ENOMEM;
@@ -290,7 +285,6 @@ void in3_free(in3_t* a) {
   for (i = 0; i < a->chainsCount; i++) {
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
-    json_free(a->chains[i].spec);
   }
   if (a->signer) _free(a->signer);
   _free(a->chains);
@@ -398,7 +392,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
             res = IN3_EINVAL;
             goto cleanup;
           }
-          if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract_t->data, registry_id->data, 2, NULL)) != IN3_OK) goto cleanup;
+          if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract_t->data, registry_id->data, 2)) != IN3_OK) goto cleanup;
           chain = in3_find_chain(c, chain_id);
           assert(chain != NULL);
         }
