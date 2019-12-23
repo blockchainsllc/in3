@@ -418,7 +418,7 @@ int main(int argc, char* argv[]) {
     }
   } else if (*input == ':') {
     bytes                     = hex2byte_new_bytes(input + 1, strlen(input + 1));
-    uint64_t         chain_id = bytes_to_long(bytes->data, bytes->len);
+    chain_id_t         chain_id = bytes_to_long(bytes->data, bytes->len);
     chainspec_t*     spec     = chainspec_get(chain_id);
     bytes_builder_t* bb       = bb_new();
     chainspec_to_bin(spec, bb);

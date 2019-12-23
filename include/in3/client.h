@@ -98,7 +98,7 @@ typedef enum {
  * 
  */
 typedef struct in3_request_config {
-  uint64_t           chain_id;            /**< the chain to be used. this is holding the integer-value of the hexstring. */
+  chain_id_t           chain_id;            /**< the chain to be used. this is holding the integer-value of the hexstring. */
   uint8_t            includeCode;         /**< if true the code needed will always be devlivered.  */
   uint8_t            useFullProof;        /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
   uint8_t            useBinary;           /**< this flaqg is set, the client should use binary-format */
@@ -189,7 +189,7 @@ void in3_node_props_set(in3_node_props_t*     node_props,
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  uint64_t           chain_id;       /**< chain_id, which could be a free or based on the public ethereum networkId*/
+  chain_id_t           chain_id;       /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t   type;           /**< chaintype */
   uint64_t           lastBlock;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
   bool               needsUpdate;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
@@ -372,7 +372,7 @@ typedef struct in3_t_ {
   uint32_t timeout;
 
   /** servers to filter for the given chain. The chain-id based on EIP-155.*/
-  uint64_t chain_id;
+  chain_id_t chain_id;
 
   /** if true the nodelist will be automaticly updated if the lastBlock is newer */
   uint8_t autoUpdateList;
@@ -478,7 +478,7 @@ void in3_req_add_response(
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
 in3_ret_t in3_client_register_chain(
     in3_t*           client,      /**< [in] the pointer to the incubed client config. */
-    uint64_t         chain_id,    /**< [in] the chain id. */
+    chain_id_t         chain_id,    /**< [in] the chain id. */
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
@@ -488,7 +488,7 @@ in3_ret_t in3_client_register_chain(
 /** adds a node to a chain ore updates a existing node */
 in3_ret_t in3_client_add_node(
     in3_t*           client,   /**< [in] the pointer to the incubed client config. */
-    uint64_t         chain_id, /**< [in] the chain id. */
+    chain_id_t         chain_id, /**< [in] the chain id. */
     char*            url,      /**< [in] url of the nodes. */
     in3_node_props_t props,    /**< [in]properties of the node. */
     address_t        address);        /**< [in] public address of the signer. */
@@ -496,13 +496,13 @@ in3_ret_t in3_client_add_node(
 /** removes a node from a nodelist */
 in3_ret_t in3_client_remove_node(
     in3_t*    client,   /**< [in] the pointer to the incubed client config. */
-    uint64_t  chain_id, /**< [in] the chain id. */
+    chain_id_t  chain_id, /**< [in] the chain id. */
     address_t address); /**< [in] public address of the signer. */
 
 /** removes all nodes from the nodelist */
 in3_ret_t in3_client_clear_nodes(
     in3_t*   client,    /**< [in] the pointer to the incubed client config. */
-    uint64_t chain_id); /**< [in] the chain id. */
+    chain_id_t chain_id); /**< [in] the chain id. */
 
 /** frees the references of the client */
 void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
@@ -523,7 +523,7 @@ in3_ret_t in3_cache_init(
  */
 in3_chain_t* in3_find_chain(
     in3_t*   c /**< the incubed client */,
-    uint64_t chain_id /**< chain_id */
+    chain_id_t chain_id /**< chain_id */
 );
 
 /**

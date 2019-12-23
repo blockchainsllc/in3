@@ -41,7 +41,7 @@
 
 // linked list of chain specs
 typedef struct spec_ {
-  uint64_t      chain_id;
+  chain_id_t      chain_id;
   chainspec_t*  spec;
   struct spec_* next;
 } spec_t;
@@ -282,7 +282,7 @@ chainspec_t* chainspec_from_bin(void* raw) {
   return spec;
 }
 
-chainspec_t* chainspec_get(uint64_t chain_id) {
+chainspec_t* chainspec_get(chain_id_t chain_id) {
   spec_t* s = specs;
   while (s) {
     if (s->chain_id == chain_id) return s->spec;
@@ -308,7 +308,7 @@ chainspec_t* chainspec_get(uint64_t chain_id) {
   }
   return spec;
 }
-void chainspec_put(uint64_t chain_id, chainspec_t* spec) {
+void chainspec_put(chain_id_t chain_id, chainspec_t* spec) {
   spec_t* s = specs;
   while (s) {
     if (s->chain_id == chain_id) {

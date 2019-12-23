@@ -304,7 +304,7 @@ static void test_send_tx(void) {
 
 static void test_eth_chain_id(void) {
   in3_t*   in3      = init_in3(mock_transport, 0x5);
-  uint64_t chain_id = eth_chainId(in3);
+  chain_id_t chain_id = eth_chainId(in3);
   TEST_ASSERT_TRUE(chain_id == 5);
   _free(in3);
 }

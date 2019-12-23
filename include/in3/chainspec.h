@@ -105,7 +105,7 @@ eip_t                   chainspec_get_eip(chainspec_t* spec, uint64_t block_numb
 consensus_transition_t* chainspec_get_consensus(chainspec_t* spec, uint64_t block_number);
 in3_ret_t               chainspec_to_bin(chainspec_t* spec, bytes_builder_t* bb);
 chainspec_t*            chainspec_from_bin(void* raw);
-chainspec_t*            chainspec_get(uint64_t chain_id);
-void                    chainspec_put(uint64_t chain_id, chainspec_t* spec);
+chainspec_t*            chainspec_get(chain_id_t chain_id);
+void                    chainspec_put(chain_id_t chain_id, chainspec_t* spec);
 
 #endif // in3_eth_chainspec_h__

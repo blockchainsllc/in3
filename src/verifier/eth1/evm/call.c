@@ -226,7 +226,7 @@ int evm_call(void*     vc,
              uint8_t* data, uint32_t l_data,
              address_t caller,
              uint64_t  gas,
-             uint64_t  chain_id,
+             chain_id_t  chain_id,
              bytes_t** result) {
 
   evm_t evm;

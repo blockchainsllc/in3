@@ -766,7 +766,7 @@ bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
   rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup(d_bytes(result)));
 }
 
-in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]) {
+in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {
   char tmp[64], msg[41], *hexadr;
   int  p = chain_id ? sprintf(tmp, "%i0x", (uint32_t) chain_id) : 0;
   bytes_to_hex(adr, 20, tmp + p);

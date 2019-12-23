@@ -101,7 +101,7 @@ typedef struct {
   address_t           contract;
   usn_device_t*       devices;
   int                 len_devices;
-  uint64_t            chain_id;
+  chain_id_t            chain_id;
   uint64_t            now;
   uint64_t            last_checked_block;
   usn_booking_handler booking_handler;
