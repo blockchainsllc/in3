@@ -525,6 +525,9 @@ static void test_eth_call_multiple(void) {
   b_free(owner_);
 
   free_json(response);
+  in3_free(c);
+}
+
 static void test_get_result_no_error(void) {
   in3_t* c = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
   c->proof = PROOF_NONE;
@@ -534,6 +537,12 @@ static void test_get_result_no_error(void) {
   in3_free(c);
 }
 
+static void test_get_nonexistent_block(void) {
+  in3_t* c = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
+  c->proof = PROOF_NONE;
+  add_response("eth_getBlockByNumber", "[\"0xffffffffffffffff\",false]", "null", NULL, NULL);
+  eth_block_t* blk = eth_getBlockByNumber(c, BLKNUM(UINT64_MAX), false);
+  TEST_ASSERT_NULL(blk);
   in3_free(c);
 }
 
@@ -578,5 +587,6 @@ int main() {
   RUN_TEST(test_utilities);
   RUN_TEST(test_eth_call_multiple);
   RUN_TEST(test_get_result_no_error);
+  RUN_TEST(test_get_nonexistent_block);
   return TESTS_END();
 }
