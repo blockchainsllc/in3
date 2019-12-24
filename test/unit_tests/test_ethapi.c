@@ -542,6 +542,15 @@ static void test_get_nonexistent_block(void) {
   in3_free(c);
 }
 
+static void test_wait_for_receipt(void) {
+  in3_t* c = init_in3(mock_transport, ETH_CHAIN_ID_GOERLI);
+  bytes32_t blk_hash;
+  hex2byte_arr("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, blk_hash, 32);
+  char* r = eth_wait_for_receipt(c, blk_hash);
+  TEST_ASSERT_NOT_NULL(r);
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -583,5 +592,6 @@ int main() {
   RUN_TEST(test_eth_call_multiple);
   RUN_TEST(test_get_result_no_error);
   RUN_TEST(test_get_nonexistent_block);
+  RUN_TEST(test_wait_for_receipt);
   return TESTS_END();
 }
