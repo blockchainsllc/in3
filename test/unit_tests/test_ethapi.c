@@ -525,6 +525,14 @@ static void test_eth_call_multiple(void) {
   b_free(owner_);
 
   free_json(response);
+static void test_get_result_no_error(void) {
+  in3_t* c = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
+  c->proof = PROOF_NONE;
+  add_response("eth_blockNumber", "[]", NULL, "{}", NULL);
+  uint64_t blknum = eth_blockNumber(c);
+  TEST_ASSERT_EQUAL(0, blknum);
+  in3_free(c);
+}
 
   in3_free(c);
 }
@@ -533,7 +541,7 @@ static void test_eth_call_multiple(void) {
  * Main
  */
 int main() {
-  in3_log_set_quiet_(true);
+  in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
 
   // now run tests
@@ -569,5 +577,6 @@ int main() {
 
   RUN_TEST(test_utilities);
   RUN_TEST(test_eth_call_multiple);
+  RUN_TEST(test_get_result_no_error);
   return TESTS_END();
 }
