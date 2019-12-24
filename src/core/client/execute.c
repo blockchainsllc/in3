@@ -124,13 +124,14 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
       in3_ret_t        res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signature_count, props);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-      int node_count        = ctx_nodes_len(sig_nodes);
+      int node_count       = ctx_nodes_len(sig_nodes);
       conf->signers_length = node_count;
-      conf->signers         = _malloc(sizeof(bytes_t) * node_count);
-      node_weight_t* w      = sig_nodes;
+      conf->signers        = _malloc(sizeof(bytes_t) * node_count);
+      node_weight_t* w     = sig_nodes;
       for (i = 0; i < node_count; i++) {
         conf->signers[i].len  = w->node->address->len;
         conf->signers[i].data = w->node->address->data;
+        w                     = w->next;
       }
       free_ctx_nodes(sig_nodes);
     }
