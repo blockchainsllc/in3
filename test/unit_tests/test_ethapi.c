@@ -133,7 +133,7 @@ static void test_get_filter_changes() {
   hashes[0]          = &blk_hash1;
   hashes[1]          = &blk_hash2;
   char b[30];
-  sprintf(b, "{\"fromBlock\":\"0x%" PRIx64 "\"}", eth_blockNumber(in3) - 2);
+  sprintf(b, "{\"fromBlock\":\"0x1ca181\"}");
   json_ctx_t* jopt = parse_json(b);
   // Create new filter with options
   size_t fid = eth_newFilter(in3, jopt);
@@ -153,7 +153,7 @@ static void test_get_logs() {
   in3_t* in3 = init_in3(mock_transport, 0x5);
   // Create filter options
   char b[30];
-  sprintf(b, "{\"fromBlock\":\"0x%" PRIx64 "\"}", eth_blockNumber(in3) - 2);
+  sprintf(b, "{\"fromBlock\":\"0x1ca181\"}");
   json_ctx_t* jopt = parse_json(b);
 
   // Create new filter with options
@@ -161,11 +161,8 @@ static void test_get_logs() {
 
   // Get logs
   eth_log_t *logs = NULL, *l = NULL;
-  in3_ret_t  ret = eth_getFilterLogs(in3, fid, &logs);
-  if (ret != IN3_OK) {
-    printf("eth_getFilterLogs() failed [%d]\n", ret);
-    return;
-  }
+  TEST_ASSERT_EQUAL(IN3_OK, eth_getFilterLogs(in3, fid, &logs));
+
   while (logs) {
     l = logs;
     printf("--------------------------------------------------------------------------------\n");
@@ -190,7 +187,6 @@ static void test_get_logs() {
   eth_uninstallFilter(in3, fid);
   free_json(jopt);
 
-  TEST_ASSERT_TRUE(ret == IN3_OK);
   _free(in3);
 }
 
@@ -583,7 +579,6 @@ int main() {
   RUN_TEST(test_get_filter_changes);
   RUN_TEST(test_new_block_filter);
   RUN_TEST(test_get_tx_hash);
-
   RUN_TEST(test_utilities);
   RUN_TEST(test_eth_call_multiple);
   RUN_TEST(test_get_result_no_error);
