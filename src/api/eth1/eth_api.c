@@ -155,7 +155,7 @@ static d_token_t* get_result(in3_ctx_t* ctx) {
     set_error(IN3_ERPC, "No response");
     return NULL;
   }
-  
+
   d_token_t* t = d_get(ctx->responses[0], K_RESULT);
   if (t) return t; // everthing is good, we have a result
 
@@ -465,8 +465,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     params_add_blk_num_t(params, block);
   } else {
     set_error(0, req->error ? req->error : "Error parsing the request-data");
-    sb_free(
-        params);
+    sb_free(params);
     req_free(req);
     return NULL;
   }
@@ -588,7 +587,7 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
   switch (f->type) {
     case FILTER_EVENT:
       *logs = eth_getLogs(in3, f->options);
-      return 0;
+      return (*logs) ? IN3_OK : IN3_EUNKNOWN;
     default:
       return IN3_ENOTSUP;
   }
