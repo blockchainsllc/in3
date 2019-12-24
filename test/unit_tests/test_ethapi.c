@@ -160,14 +160,14 @@ static void test_get_logs() {
   size_t fid = eth_newFilter(in3, jopt);
 
   // Get logs
-  eth_log_t* logs = NULL;
-  in3_ret_t  ret  = eth_getFilterLogs(in3, fid, &logs);
+  eth_log_t *logs = NULL, *l = NULL;
+  in3_ret_t  ret = eth_getFilterLogs(in3, fid, &logs);
   if (ret != IN3_OK) {
     printf("eth_getFilterLogs() failed [%d]\n", ret);
     return;
   }
   while (logs) {
-    eth_log_t* l = logs;
+    l = logs;
     printf("--------------------------------------------------------------------------------\n");
     printf("\tlogId: %lu\n", l->log_index);
     printf("\tTxId: %lu\n", l->transaction_index);
@@ -185,9 +185,7 @@ static void test_get_logs() {
     }
     printf("\n");
     logs = logs->next;
-    free(l->data.data);
-    free(l->topics);
-    free(l);
+    free_log(l);
   }
   eth_uninstallFilter(in3, fid);
   free_json(jopt);
@@ -195,6 +193,7 @@ static void test_get_logs() {
   TEST_ASSERT_TRUE(ret == IN3_OK);
   _free(in3);
 }
+
 static void test_get_tx_blkhash_index(void) {
   // the hash of transaction that we want to get
   in3_t*    in3 = init_in3(mock_transport, 0x5);
@@ -295,9 +294,9 @@ static void test_send_tx(void) {
   else {
     printf("Transaction hash: ");
     b_print(tx_hash);
-    //b_free(tx_hash);
+    b_free(tx_hash);
   }
-  //b_free(data);
+  b_free(data);
   TEST_ASSERT_TRUE(tx_hash);
   _free(in3);
 }
