@@ -450,6 +450,7 @@ static void test_get_uncle_count_blknum(void) {
   TEST_ASSERT_TRUE(!count);
   _free(in3);
 }
+
 static void test_get_uncle_count_blkhash(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x1);
   bytes32_t blk_hash;
@@ -488,14 +489,8 @@ static void test_utilities(void) {
 
 static void test_eth_call_multiple(void) {
   address_t contract;
-  in3_t*    c       = in3_new();
-  c->transport      = test_transport;
-  c->chainId        = 0x1;
-  c->autoUpdateList = false;
-  c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
-  for (int i = 0; i < c->chainsCount; i++)
-    c->chains[i].needsUpdate = false;
+  in3_t*    c = init_in3(test_transport, 0x5);
+  c->proof    = PROOF_NONE;
 
   add_response("eth_call",
                "[{\"to\":\"0x2736d225f85740f42d17987100dc8d58e9e16252\",\"data\":\"0x15625c5e\"},\"latest\"]",
@@ -516,17 +511,19 @@ static void test_eth_call_multiple(void) {
                NULL,
                NULL);
   response = eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(0));
-  if (!response) {
-    printf("Could not get the response: %s", eth_last_error());
-    return;
-  }
+  TEST_ASSERT_NOT_NULL(response);
 
   char*    url     = d_get_string_at(response->result, 0); // get the first item of the result (the url)
   bytes_t* owner   = d_get_bytes_at(response->result, 1);  // get the second item of the result (the owner)
   uint64_t deposit = d_get_long_at(response->result, 2);   // get the third item of the result (the deposit)
 
-  printf("Server 1 : %s owner = %02x%02x...", url, owner->data[0], owner->data[1]);
-  printf(", deposit = %" PRIu64 "\n", deposit);
+  TEST_ASSERT_EQUAL_STRING("https://in3.slock.it/mainnet/nd-1", url);
+  TEST_ASSERT_EQUAL_UINT64(65535, deposit);
+
+  bytes_t* owner_ = hex2byte_new_bytes("784bfa9eb182c3a02dbeb5285e3dba92d717e07a", 40);
+  TEST_ASSERT(b_cmp(owner_, owner));
+  b_free(owner_);
+
   free_json(response);
 
   in3_free(c);
