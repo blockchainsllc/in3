@@ -22,7 +22,7 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3    = in3_new();
+  in3_t* in3    = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   in3->chain_id = ETH_CHAIN_ID_KOVAN;
 
   // get logs using raw RPC call

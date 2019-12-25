@@ -55,12 +55,12 @@
 
 static void test_in3_config() {
 
-  in3_t* c          = in3_new();
-  c->transport      = test_transport;
-  c->chain_id       = 0x1;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  ;
+  c->transport        = test_transport;
   c->auto_update_list = false;
-  c->proof          = PROOF_NONE;
-  c->signature_count = 0;
+  c->proof            = PROOF_NONE;
+  c->signature_count  = 0;
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
      \"chainId\":7,\

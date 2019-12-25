@@ -55,12 +55,13 @@ static void test_sign() {
 
   in3_register_eth_basic();
 
-  in3_t* c          = in3_new();
-  c->transport      = test_transport;
-  c->chain_id       = 0x1;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  ;
+  c->transport        = test_transport;
+  c->chain_id         = 0x1;
   c->auto_update_list = false;
-  c->proof          = PROOF_NONE;
-  c->signature_count = 0;
+  c->proof            = PROOF_NONE;
+  c->signature_count  = 0;
 
   for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
 

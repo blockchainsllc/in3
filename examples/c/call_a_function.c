@@ -26,7 +26,7 @@ int main() {
   in3_log_set_prefix("");
 
   // create new incubed client
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // define a address (20byte)
   address_t contract;

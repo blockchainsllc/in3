@@ -180,7 +180,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
     sb_add_chars(&r->results[i].result, msg);
 }
 
-in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
+in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
 // register a chain-verifier for full Ethereum-Support
 #ifdef ETH_FULL
   in3_register_eth_full();
@@ -194,7 +194,7 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
 #ifdef ETH_API
   in3_register_eth_api();
 #endif
-  in3_t* c                  = in3_new();
+  in3_t* c           = in3_for_chain(chain);
   c->cache           = malloc(sizeof(in3_storage_handler_t));
   c->cache->get_item = storage_get_item;
   c->cache->set_item = storage_set_item;

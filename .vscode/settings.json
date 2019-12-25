@@ -74,7 +74,10 @@
         "random": "c",
         "eth_api.h": "c",
         "atomic": "c",
-        "cstdint": "c"
+        "cstdint": "c",
+        "error.h": "c",
+        "queue": "c",
+        "stack": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -21,7 +21,7 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // get tx using raw RPC call
   get_tx_rpc(in3);

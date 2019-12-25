@@ -137,7 +137,12 @@ class IN3 {
         if (this.ptr) return
         if (_in3_listeners)
             await new Promise(r => _in3_listeners.push(r))
-        this.ptr = in3w.ccall('in3_create', 'number', [], []);
+        let chainId = this.config && this.config.chainId
+        if (chainId === 'kovan') chainId = '0x2a'
+        if (chainId === 'goerli') chainId = '0x5'
+        if (chainId === 'mainnet') chainId = '0x1'
+        if (chainId && chainId.startsWith('0x'))
+            this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
     }
 

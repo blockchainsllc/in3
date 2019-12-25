@@ -111,13 +111,12 @@ static void test_cache() {
   in3_register_eth_nano();
   cache_t* cache = calloc(1, sizeof(cache_t));
 
-  in3_t* c                  = in3_new();
-  c->transport              = test_transport;
+  in3_t* c           = in3_for_chain(0x1);
+  c->transport       = test_transport;
   c->cache           = _malloc(sizeof(in3_storage_handler_t));
   c->cache->cptr     = cache;
   c->cache->get_item = cache_get_item;
   c->cache->set_item = cache_set_item;
-  c->chain_id               = 0x1;
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chains_length; i++) {
@@ -140,10 +139,10 @@ static void test_cache() {
   TEST_ASSERT_TRUE(*cache->keys != NULL);
 
   // create a second client...
-  in3_t* c2        = in3_new();
-  c2->cache = c->cache;
-  c2->transport    = test_transport;
-  c2->chain_id     = c->chain_id;
+  in3_t* c2     = in3_for_chain(0);
+  c2->cache     = c->cache;
+  c2->transport = test_transport;
+  c2->chain_id  = c->chain_id;
   in3_configure(c2, "{\"chain_id\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chains_length; i++) {
@@ -170,12 +169,11 @@ static void test_newchain() {
 
   cache_t* cache = _calloc(1, sizeof(cache_t));
 
-  in3_t* c                  = in3_new();
+  in3_t* c           = in3_for_chain(0x8);
   c->cache           = _malloc(sizeof(in3_storage_handler_t));
   c->cache->cptr     = cache;
   c->cache->get_item = cache_get_item;
   c->cache->set_item = cache_set_item;
-  c->chain_id               = 0x8;
 
   in3_set_default_storage(c->cache);
 
@@ -212,9 +210,8 @@ static void test_newchain() {
   TEST_ASSERT_TRUE(*cache->keys != NULL);
 
   // create a second client...
-  in3_t* c2        = in3_new();
+  in3_t* c2 = in3_for_chain(c->chain_id);
   c2->cache = c->cache;
-  c2->chain_id     = c->chain_id;
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2);
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chains_length; i++) {

@@ -459,10 +459,47 @@ typedef struct in3_t_ {
  * 
  * // ready to use ...
  * ```
+ * ** This Method is depricated. you should use `in3_for_chain` instead.**
  * 
  * @returns the incubed instance.
  */
-in3_t* in3_new();
+DEPRECATED in3_t* in3_new();
+
+/** creates a new Incubes configuration for a specified chain and returns the pointer.
+ * 
+ * you need to free this instance with `in3_free` after use!
+ * 
+ * Before using the client you still need to set the tramsport and optional the storage handlers:
+ * 
+ *  * example of initialization:
+ * ```c
+ * // register verifiers
+ * in3_register_eth_full();
+ * 
+ * // create new client
+ * in3_t* client = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+ * 
+ * // configure storage...
+ * in3_storage_handler_t storage_handler;
+ * storage_handler.get_item = storage_get_item;
+ * storage_handler.set_item = storage_set_item;
+ *
+ * // configure transport
+ * client->transport    = send_curl;
+ *
+ * // configure storage
+ * client->cache = &storage_handler;
+ * 
+ * // init cache
+ * in3_cache_init(client);
+ * 
+ * // ready to use ...
+ * ```
+ * ** This Method is depricated. you should use `in3_for_chain` instead.**
+ * 
+ * @returns the incubed instance.
+ */
+in3_t* in3_for_chain(chain_id_t chain_id);
 
 /** sends a request and stores the result in the provided buffer */
 in3_ret_t in3_client_rpc(

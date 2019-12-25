@@ -550,7 +550,7 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                     = in3_new();
+  in3_t* c                     = in3_for_chain(0);
   c->transport                 = debug_transport;
   c->request_count             = 1;
   c->use_http                  = true;

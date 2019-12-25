@@ -55,7 +55,7 @@ void test_configure_request() {
   in3_register_eth_basic();
   in3_register_eth_api();
 
-  in3_t* c                = in3_new();
+  in3_t* c                = in3_for_chain(0);
   c->proof                = PROOF_FULL;
   c->signature_count      = 2;
   c->chains->needs_update = false;
@@ -89,8 +89,9 @@ void test_exec_req() {
   in3_register_eth_basic();
   in3_register_eth_api();
 
-  in3_t* c      = in3_new();
-  char*  result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  ;
+  char* result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
   TEST_ASSERT_EQUAL_STRING("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
   _free(result);
 

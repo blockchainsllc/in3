@@ -210,7 +210,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
 
   // configure in3
   c->request_count = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
-  method          = d_get_string(request, "method");
+  method           = d_get_string(request, "method");
 
   str_range_t s = d_to_json(d_get(request, key("params")));
   if (!method) {
@@ -285,7 +285,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     sprintf(temp, "Request #%i", counter);
   printf("\n%2i : %-60s ", counter, temp);
 
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
   int    j;
   c->max_attempts        = 1;
   c->include_code        = 1;

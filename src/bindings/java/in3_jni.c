@@ -775,7 +775,7 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(0);
   in3_register_eth_full();
   in3_log_set_level(LOG_DEBUG);
   in3->transport          = Java_in3_IN3_transport;

@@ -45,10 +45,7 @@ int main(int argc, char* argv[]) {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* c = in3_new();
-
-  // switch to goerli
-  c->chain_id = 0x5;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
 
   // address of the usn-contract, which we copy from hex
   address_t contract;
