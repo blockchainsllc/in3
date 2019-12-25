@@ -39,6 +39,8 @@
 #ifndef IN3_ERROR_H
 #define IN3_ERROR_H
 
+#define DEPRECATED __attribute__((deprecated))
+
 /** ERROR types  used as return values.
  * 
  * All values (except IN3_OK) indicate an error. 

@@ -52,6 +52,7 @@
 /** the protocol version used when sending requests from the this client */
 #define IN3_PROTO_VER "2.1.0"
 
+#define ETH_CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
 #define ETH_CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
 #define ETH_CHAIN_ID_KOVAN 0x2a     /**< chain_id for kovan */
 #define ETH_CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
@@ -466,6 +467,8 @@ typedef struct in3_t_ {
 DEPRECATED in3_t* in3_new();
 
 /** creates a new Incubes configuration for a specified chain and returns the pointer.
+ * when creating the client only the one chain will be configured. (saves memory). 
+ * but if you pass `ETH_CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
  * 
  * you need to free this instance with `in3_free` after use!
  * 
@@ -499,7 +502,9 @@ DEPRECATED in3_t* in3_new();
  * 
  * @returns the incubed instance.
  */
-in3_t* in3_for_chain(chain_id_t chain_id);
+in3_t* in3_for_chain(
+    chain_id_t chain_id /**< the chain_id (see ETH_CHAIN_ID_... constants). */
+);
 
 /** sends a request and stores the result in the provided buffer */
 in3_ret_t in3_client_rpc(
