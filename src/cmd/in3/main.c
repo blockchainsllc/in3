@@ -94,6 +94,7 @@ void show_help(char* name) {
 -w, -wait      if given, instead returning the transaction, it will wait until the transaction is mined and return the transactionreceipt.\n\
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
+-kin3          if kin3 is specified, the response including in3-section is returned\n\
 -debug         if given incubed will output debug information when executing. \n\
 -q             quit. no additional output. \n\
 -ri            read response from stdin \n\
@@ -551,9 +552,9 @@ int main(int argc, char* argv[]) {
   // create the client
   in3_t* c                     = in3_new();
   c->transport                 = debug_transport;
-  c->request_count              = 1;
+  c->request_count             = 1;
   c->use_http                  = true;
-  c->cache              = &storage_handler;
+  c->cache                     = &storage_handler;
   bool            out_response = false;
   bool            force_hex    = false;
   char*           sig          = NULL;
@@ -613,6 +614,8 @@ int main(int argc, char* argv[]) {
       c->replace_latest_block = atoll(argv[++i]);
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
+    else if (strcmp(argv[i], "-kin3") == 0)
+      c->keep_in3 = true;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)

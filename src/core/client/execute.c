@@ -498,7 +498,7 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
 }
 
 void ctx_free(in3_ctx_t* ctx) {
-  free_ctx_intern(ctx, false);
+  if (ctx) free_ctx_intern(ctx, false);
 }
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;

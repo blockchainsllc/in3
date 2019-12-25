@@ -57,11 +57,11 @@ void test_configure_request() {
 
   in3_t* c                = in3_new();
   c->proof                = PROOF_FULL;
-  c->signature_count       = 2;
+  c->signature_count      = 2;
   c->chains->needs_update = false;
   c->finality             = 10;
   c->include_code         = true;
-  c->replace_latest_block   = 6;
+  c->replace_latest_block = 6;
   c->use_binary           = true;
   c->use_http             = true;
 
@@ -91,7 +91,7 @@ void test_exec_req() {
 
   in3_t* c      = in3_new();
   char*  result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
-  TEST_ASSERT_EQUAL_STRING("{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
   _free(result);
 
   result = in3_client_exec_req(c, "\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");

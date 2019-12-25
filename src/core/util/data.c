@@ -691,8 +691,13 @@ char* d_create_json(d_token_t* item) {
 
 str_range_t d_to_json(d_token_t* item) {
   str_range_t s;
-  s.data = (char*) item->data;
-  s.len  = find_end(s.data);
+  if (item) {
+    s.data = (char*) item->data;
+    s.len  = find_end(s.data);
+  } else {
+    s.data = NULL;
+    s.len  = 0;
+  }
   return s;
 }
 
