@@ -169,7 +169,8 @@ static void test_newchain() {
 
   cache_t* cache = _calloc(1, sizeof(cache_t));
 
-  in3_t* c           = in3_for_chain(0x8);
+  in3_t* c           = in3_for_chain(0);
+  c->chain_id        = 0x8;
   c->cache           = _malloc(sizeof(in3_storage_handler_t));
   c->cache->cptr     = cache;
   c->cache->get_item = cache_get_item;
@@ -210,8 +211,9 @@ static void test_newchain() {
   TEST_ASSERT_TRUE(*cache->keys != NULL);
 
   // create a second client...
-  in3_t* c2 = in3_for_chain(c->chain_id);
-  c2->cache = c->cache;
+  in3_t* c2    = in3_for_chain(0);
+  c2->chain_id = c->chain_id;
+  c2->cache    = c->cache;
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2);
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chains_length; i++) {

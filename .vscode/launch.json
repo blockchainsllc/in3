@@ -51,7 +51,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "run abi test",
-            "program": "${workspaceFolder}/build/test/test_ethapi",
+            "program": "${workspaceFolder}/build/test/test_cache",
             "cwd": "${workspaceFolder}/build"
         },
         {
