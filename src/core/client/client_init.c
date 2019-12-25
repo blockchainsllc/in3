@@ -191,7 +191,10 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
     initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH);
     initNode(chain++, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
   }
-  if (chain_id && chain == c->chains) return IN3_ECONFIG;
+  if (chain_id && chain == c->chains) {
+    c->chains_length = 0;
+    return IN3_ECONFIG;
+  }
   return IN3_OK;
 }
 
@@ -340,7 +343,10 @@ in3_t* in3_for_chain(chain_id_t chain_id) {
 
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
-  in3_client_init(c, chain_id);
+  if (in3_client_init(c, chain_id) != IN3_OK) {
+    in3_free(c);
+    return NULL;
+  }
 
   if (default_transport) c->transport = default_transport;
   if (default_storage) c->cache = default_storage;

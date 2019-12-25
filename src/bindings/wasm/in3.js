@@ -141,8 +141,7 @@ class IN3 {
         if (chainId === 'kovan') chainId = '0x2a'
         if (chainId === 'goerli') chainId = '0x5'
         if (chainId === 'mainnet') chainId = '0x1'
-        if (chainId && chainId.startsWith('0x'))
-            this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
+        this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
     }
 
