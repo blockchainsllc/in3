@@ -42,7 +42,9 @@
 #define dbg_log_raw(msg, ...) __dbg_log(1, __FILE__, __func__, __LINE__, msg, ##__VA_ARGS__)
 void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...);
 #else
+/** logs a debug-message including file and linenumber*/
 #define dbg_log(msg, ...)
+/** logs a debug-message without the  filename */
 #define dbg_log_raw(msg, ...)
 #endif
 
@@ -53,4 +55,5 @@ void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...);
   { printk("LEAVE %s::%s\n", __FILE__, __func__); }
 #endif //DBG_FNCTRACE
 
-extern void msg_dump(const char* s, unsigned char* data, unsigned len);
+/** dumps the given data as hex coded bytes to stdout */
+extern void msg_dump(const char* s, const unsigned char* data, unsigned len);

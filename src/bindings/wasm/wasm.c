@@ -225,9 +225,8 @@ in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) 
     ctx_free(ctx);
     return NULL;
   }
-
   // add the src-string as cache-entry so it will be freed when finalizing.
-  ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) src_data, 1));
+  ctx->cache = in3_cache_add_ptr(ctx->cache, src_data);
 
   return ctx;
 }

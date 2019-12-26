@@ -39,11 +39,13 @@
 #ifndef IN3_ERROR_H
 #define IN3_ERROR_H
 
+/** depreacted-attribute */
 #define DEPRECATED __attribute__((deprecated))
 
 /** ERROR types  used as return values.
  * 
- * All values (except IN3_OK) indicate an error. 
+ * All values (except IN3_OK) indicate an error.
+ * IN3_WAITING may be treated like an error, since we have stop executing until the response has arrived, but it is a valid return value. 
  * 
 */
 typedef enum {
@@ -67,22 +69,37 @@ typedef enum {
   IN3_WAITING  = -16, /**< the process can not be finished since we are waiting for responses */
 } in3_ret_t;
 
-// Optional type similar to C++ std::optional
-// Optional types must be defined prior to usage (e.g. DEFINE_OPTIONAL_T(int))
-// Use OPTIONAL_T_UNDEFINED(t) & OPTIONAL_T_VALUE(t, v) for easy initialization (rvalues)
-// Note: Defining optional types for pointers is ill-formed by definition. This is
-// because redundant
+/** Optional type similar to C++ std::optional
+ * Optional types must be defined prior to usage (e.g. DEFINE_OPTIONAL_T(int))
+ * Use OPTIONAL_T_UNDEFINED(t) & OPTIONAL_T_VALUE(t, v) for easy initialization (rvalues)
+ * Note: Defining optional types for pointers is ill-formed by definition. This is
+ * because redundant
+ */
 #define OPTIONAL_T(t) opt_##t
+
+/** 
+ * Optional types must be defined prior to usage (e.g. DEFINE_OPTIONAL_T(int))
+ * Use OPTIONAL_T_UNDEFINED(t) & OPTIONAL_T_VALUE(t, v) for easy initialization (rvalues)
+ */
 #define DEFINE_OPTIONAL_T(t) \
   typedef struct {           \
     t    value;              \
     bool defined;            \
   } OPTIONAL_T(t)
+
+/** 
+ * marks a used value as undefined.
+ */
 #define OPTIONAL_T_UNDEFINED(t) ((OPTIONAL_T(t)){.defined = false})
+
+/** 
+ * sets the value of an optional type.
+ */
 #define OPTIONAL_T_VALUE(t, v) ((OPTIONAL_T(t)){.value = v, .defined = true})
 
 /**
  * converts a error code into a string.
+ * These strings are constants and do not need to be freed.
  */
 char* in3_errmsg(in3_ret_t err /**< the error code */);
 
