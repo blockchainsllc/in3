@@ -432,6 +432,8 @@ typedef struct in3_t_ {
 
 /** creates a new Incubes configuration and returns the pointer.
  * 
+ * This Method is depricated. you should use `in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)` instead.
+ * 
  * you need to free this instance with `in3_free` after use!
  * 
  * Before using the client you still need to set the tramsport and optional the storage handlers:
@@ -460,7 +462,6 @@ typedef struct in3_t_ {
  * 
  * // ready to use ...
  * ```
- * This Method is depricated. you should use `in3_for_chain` instead.
  * 
  * @returns the incubed instance.
  */
