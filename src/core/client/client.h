@@ -460,7 +460,7 @@ typedef struct in3_t_ {
  * 
  * // ready to use ...
  * ```
- * ** This Method is depricated. you should use `in3_for_chain` instead.**
+ * This Method is depricated. you should use `in3_for_chain` instead.
  * 
  * @returns the incubed instance.
  */
