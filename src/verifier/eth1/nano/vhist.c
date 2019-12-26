@@ -185,7 +185,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   bb_write_int(vh->diffs, d_len(vs));
   if (d_type(vs) == T_ARRAY) {
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-      b   = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+      b   = (d_type(vitr.token) == T_STRING) ? hex_to_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
       ret = bb_find(vh->vldtrs, b->data, 20);
       if (ret == IN3_EFIND) {
         bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);

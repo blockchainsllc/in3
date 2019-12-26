@@ -248,12 +248,14 @@ in3_ret_t in3_send_ctx(
 in3_ret_t in3_ctx_execute(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
+
 /**
  * returns the current state of the context.
  */
 in3_ctx_state_t in3_ctx_state(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
+
 /**
  * creates a request-object, which then need to be filled with the responses.
  * 
@@ -269,6 +271,7 @@ in3_ctx_state_t in3_ctx_state(
 in3_request_t* in3_create_request(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
+
 /**
  * frees a previuosly allocated request.
  */
@@ -277,6 +280,7 @@ void request_free(
     in3_ctx_t*     ctx,          /**< [in] the request context. */
     bool           response_free /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */
 );
+
 /**
  * frees all resources allocated during the request.
  * 

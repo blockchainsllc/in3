@@ -447,20 +447,20 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
           } else if (l < 10 && !(l > 3 && start[2] == '0' && start[3] == '0')) { // we can accept up to 3,4 bytes as integer
             item->len = T_INTEGER << 28;
             for (i = 2; i < l; i++)
-              item->len |= strtohex(start[i]) << ((l - i - 1) << 2);
+              item->len |= hexchar_to_int(start[i]) << ((l - i - 1) << 2);
           } else {
             // we need to allocate bytes for it. and so set the type to bytes
             item->len  = ((l & 1) ? l - 1 : l - 2) >> 1;
             item->data = _malloc(item->len);
-            if (l & 1) item->data[0] = strtohex(start[2]);
+            if (l & 1) item->data[0] = hexchar_to_int(start[2]);
             l = (l & 1) + 2;
             for (i = l - 2, n = l; i < item->len; i++, n += 2)
-              item->data[i] = strtohex(start[n]) << 4 | strtohex(start[n + 1]);
+              item->data[i] = hexchar_to_int(start[n]) << 4 | hexchar_to_int(start[n + 1]);
           }
         } else if (l == 6 && *start == '\\' && start[1] == 'u') {
           item->len   = 1;
           item->data  = _malloc(1);
-          *item->data = strtohex(start[4]) << 4 | strtohex(start[5]);
+          *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
         } else {
           item->len  = l | T_STRING << 28;
           item->data = _malloc(l + 1);

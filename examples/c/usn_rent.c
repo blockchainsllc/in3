@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 
   // address of the usn-contract, which we copy from hex
   address_t contract;
-  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
+  hex_to_bytes("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
 
   // read the key from args - I know this is not safe, but this is just a example.
   if (argc < 3) {

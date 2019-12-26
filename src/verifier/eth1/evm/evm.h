@@ -299,7 +299,6 @@ int  evm_call(void*    vc,
               bytes_t** result);
 void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
 void evm_free(evm_t* evm);
-void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
 
 int evm_execute(evm_t* evm);
 

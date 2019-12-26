@@ -53,7 +53,7 @@
 static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
     int nodes_count = ctx_nodes_len(ctx->nodes);
-    free_ctx_nodes(ctx->nodes);
+    in3_ctx_free_nodes(ctx->nodes);
     if (ctx->raw_response) {
       for (int i = 0; i < nodes_count; i++) {
         _free(ctx->raw_response[i].error.data);
@@ -133,7 +133,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
         conf->signers[i].data = w->node->address->data;
         w                     = w->next;
       }
-      free_ctx_nodes(sig_nodes);
+      in3_ctx_free_nodes(sig_nodes);
     }
   }
 

@@ -51,12 +51,12 @@
 #include <unistd.h>
 
 void test_c_to_long() {
-  TEST_ASSERT_EQUAL(0, c_to_long("0x", 2));
-  TEST_ASSERT_EQUAL(2, c_to_long("0x2", 3));
-  TEST_ASSERT_EQUAL(2, c_to_long("0x02", 4));
-  TEST_ASSERT_EQUAL(65535, c_to_long("0xFFff", 6));
-  TEST_ASSERT_EQUAL(0, c_to_long("xx", 2));
-  TEST_ASSERT_EQUAL(10, c_to_long("10", 2));
+  TEST_ASSERT_EQUAL(0, char_to_long("0x", 2));
+  TEST_ASSERT_EQUAL(2, char_to_long("0x2", 3));
+  TEST_ASSERT_EQUAL(2, char_to_long("0x02", 4));
+  TEST_ASSERT_EQUAL(65535, char_to_long("0xFFff", 6));
+  TEST_ASSERT_EQUAL(0, char_to_long("xx", 2));
+  TEST_ASSERT_EQUAL(10, char_to_long("10", 2));
 }
 
 void test_bytes() {

@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
   usn.len_devices        = 0;                                                       // and length of this list
   usn.now                = 0;                                                       // the current timestamp
   unsigned int wait_time = 5;                                                       // the time to wait between the internval
-  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, usn.contract, 20); // address of the usn-contract, which we copy from hex
+  hex_to_bytes("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, usn.contract, 20); // address of the usn-contract, which we copy from hex
 
   // register a usn-device
   usn_register_device(&usn, "office@slockit");

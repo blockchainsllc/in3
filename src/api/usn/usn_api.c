@@ -66,7 +66,7 @@
 
 static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;
-  hex2byte_arr("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
+  hex_to_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
   for (d_iterator_t iter = d_iter(d_get(receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
     bytes_t* t = d_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
     if (t && t->len == 32 && memcmp(event_hash, t->data, 32) == 0) return iter.token;
@@ -93,7 +93,7 @@ static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
 static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result, int max) {
   int      l     = 4 + 32 + data.len;
   uint8_t* cdata = alloca(l);
-  hex2byte_arr(fn_hash, -1, cdata, 4);
+  hex_to_bytes(fn_hash, -1, cdata, 4);
   memcpy(cdata + 4, device_id, 32);
   if (data.len) memcpy(cdata + 36, data.data, data.len);
 
@@ -568,7 +568,7 @@ in3_ret_t usn_rent(in3_t* c, address_t contract, address_t token, char* url, uin
 
   // now send the tx
   memset(params, 0, 100);
-  hex2byte_arr("400a6315", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  hex_to_bytes("400a6315", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
   int_to_bytes(seconds, params + 64);
   if (token) memcpy(params + 80, token, 20);
@@ -589,7 +589,7 @@ in3_ret_t usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash)
   uint8_t   params[36] = {0};
 
   // now send the tx
-  hex2byte_arr("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  hex_to_bytes("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
 
   in3_ret_t res = exec_eth_send(&conf, bytes(params, 100), NULL, tx_hash);

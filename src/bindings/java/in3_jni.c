@@ -665,7 +665,7 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
   const char* jdata = (*env)->GetStringUTFChars(env, data, 0);
   int         l     = strlen(jdata);
   uint8_t*    bdata = alloca(l >> 1);
-  l                 = hex2byte_arr((char*) jdata + 2, l - 2, bdata, l);
+  l                 = hex_to_bytes((char*) jdata + 2, l - 2, bdata, l);
   (*env)->ReleaseStringUTFChars(env, data, jdata);
 
   json_ctx_t* res    = req_parse_result(rq, bytes(bdata, l));
@@ -690,7 +690,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
 
   bytes32_t prv_key;
   uint8_t   public_key[65], sdata[32];
-  hex2byte_arr((char*) key, -1, prv_key, 32);
+  hex_to_bytes((char*) key, -1, prv_key, 32);
   bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
   sha3_to(&pubkey_bytes, sdata);
@@ -714,8 +714,8 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclas
   int         data_l = strlen(data) / 2 - 1;
   uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
 
-  hex2byte_arr((char*) key + 2, 32, key_bytes, 32);
-  data_l      = hex2byte_arr((char*) data + 2, -1, data_bytes, data_l + 1);
+  hex_to_bytes((char*) key + 2, 32, key_bytes, 32);
+  data_l      = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
   jstring res = NULL;
 
   if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
@@ -764,7 +764,7 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
 
   if (!jsignature) return -2;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  hex2byte_arr((char*) signature, -1, dst, 65);
+  hex_to_bytes((char*) signature, -1, dst, 65);
   (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
   return 65;
 }

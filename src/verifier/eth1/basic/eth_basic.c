@@ -143,7 +143,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
 #ifdef __ZEPHYR__
       char bufTmp[21];
-      snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64tostr(id, bufTmp, sizeof(bufTmp)));
+      snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64_to_str(id, bufTmp, sizeof(bufTmp)));
 #else
       snprintf(tmp, sizeof(tmp), ", \"id\":%" PRId64 "", id);
       // sprintf(tmp, ", \"id\":%" PRId64 "", id);

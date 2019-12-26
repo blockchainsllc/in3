@@ -59,7 +59,7 @@ void get_tx_receipt_rpc(in3_t* in3) {
 void get_tx_receipt_api(in3_t* in3) {
   // the hash of transaction whose receipt we want to get
   bytes32_t tx_hash;
-  hex2byte_arr("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
+  hex_to_bytes("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
 
   // get the tx receipt by hash
   eth_tx_receipt_t* txr = eth_getTransactionReceipt(in3, tx_hash);

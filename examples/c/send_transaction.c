@@ -29,7 +29,7 @@ int main() {
 
   // convert the hexstring to bytes
   bytes32_t pk;
-  hex2byte_arr(ETH_PRIVATE_KEY, -1, pk, 32);
+  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
 
   // create a simple signer with this key
   eth_set_pk_signer(in3, pk);
@@ -72,10 +72,10 @@ void send_tx_rpc(in3_t* in3) {
 void send_tx_api(in3_t* in3) {
   // prepare parameters
   address_t to, from;
-  hex2byte_arr("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
-  hex2byte_arr("0xd46e8dd67c5d32be8058bb8eb970870f07244567", -1, to, 20);
+  hex_to_bytes("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
+  hex_to_bytes("0xd46e8dd67c5d32be8058bb8eb970870f07244567", -1, to, 20);
 
-  bytes_t* data = hex2byte_new_bytes("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", 82);
+  bytes_t* data = hex_to_new_bytes("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", 82);
 
   // send the tx
   bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_UNDEFINED(uint64_t));

@@ -58,7 +58,7 @@ void get_balance_rpc(in3_t* in3) {
 void get_balance_api(in3_t* in3) {
   // the address of account whose balance we want to get
   address_t account;
-  hex2byte_arr("0xc94770007dda54cF92009BFF0dE90c06F603a09f", -1, account, 20);
+  hex_to_bytes("0xc94770007dda54cF92009BFF0dE90c06F603a09f", -1, account, 20);
 
   // get balance of account
   long double balance = as_double(eth_getBalance(in3, account, BLKNUM_EARLIEST()));

@@ -44,11 +44,8 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef __TEST__
-
-#endif
-
 #define DAY 24 * 2600
+
 static void free_nodeList(in3_node_t* nodelist, int count) {
   int i;
   // clean chain..
@@ -59,7 +56,7 @@ static void free_nodeList(in3_node_t* nodelist, int count) {
   _free(nodelist);
 }
 
-static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   int       i, len;
   in3_ret_t res  = IN3_OK;
   _time_t   _now = _time(); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
@@ -164,7 +161,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result....
-          res = in3_client_fill_chain(chain, ctx, r);
+          res = fill_chain(chain, ctx, r);
           if (res < 0)
             return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
           else if (c->cache)
@@ -190,7 +187,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   return ctx_add_required(parent_ctx, ctx = ctx_new(c, req));
 }
 
-void free_ctx_nodes(node_weight_t* c) {
+void in3_ctx_free_nodes(node_weight_t* c) {
   node_weight_t* p = NULL;
   while (c) {
     p = c;
@@ -372,7 +369,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
   }
 
   *nodes = first;
-  free_ctx_nodes(found);
+  in3_ctx_free_nodes(found);
 
   // select them based on random
   return res;

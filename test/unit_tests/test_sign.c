@@ -66,7 +66,7 @@ static void test_sign() {
   for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
 
   bytes32_t pk;
-  hex2byte_arr("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
+  hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
   eth_set_pk_signer(c, pk);
   in3_set_default_signer(c->signer);
 

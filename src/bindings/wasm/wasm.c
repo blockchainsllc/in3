@@ -93,7 +93,7 @@ EM_JS(void, in3_cache_set, (char* key, char* val), {
 bytes_t* storage_get_item(void* cptr, char* key) {
   UNUSED_VAR(cptr);
   char*    val = in3_cache_get(key);
-  bytes_t* res = val ? hex2byte_new_bytes(val, strlen(val)) : NULL;
+  bytes_t* res = val ? hex_to_new_bytes(val, strlen(val)) : NULL;
   return res;
 }
 
@@ -174,7 +174,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
     sb_add_chars(&r->results[i].error, msg);
   else if (ctx->type == CT_SIGN) {
     uint8_t sig[65];
-    hex2byte_arr(msg, -1, sig, 65);
+    hex_to_bytes(msg, -1, sig, 65);
     sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
   } else
     sb_add_chars(&r->results[i].result, msg);

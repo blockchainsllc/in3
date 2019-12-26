@@ -32,7 +32,7 @@ int main() {
   address_t contract;
 
   // copy the hexcoded string into this address
-  hex2byte_arr("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
+  hex_to_bytes("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
 
   // call function using RPC
   ret = call_func_rpc(c);

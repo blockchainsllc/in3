@@ -72,7 +72,7 @@ static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, c
   chain->chain_id        = chain_id;
   chain->init_addresses  = NULL;
   chain->last_block      = 0;
-  chain->contract        = hex2byte_new_bytes(contract, 40);
+  chain->contract        = hex_to_new_bytes(contract, 40);
   chain->needs_update    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodelist        = _malloc(sizeof(in3_node_t) * boot_node_count);
   chain->nodelist_length = boot_node_count;
@@ -81,7 +81,7 @@ static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, c
   chain->version         = version;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
-    int l = hex2byte_arr(registry_id, -1, chain->registry_id, 32);
+    int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
     if (l < 32) {
       memmove(chain->registry_id + 32 - l, chain->registry_id, l);
       memset(chain->registry_id, 0, 32 - l);
@@ -91,7 +91,7 @@ static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, c
 
 static void initNode(in3_chain_t* chain, int node_index, char* address, char* url) {
   in3_node_t* node = chain->nodelist + node_index;
-  node->address    = hex2byte_new_bytes(address, 40);
+  node->address    = hex_to_new_bytes(address, 40);
   node->index      = node_index;
   node->capacity   = 1;
   node->deposit    = 0;
@@ -427,7 +427,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
     } else if (iter.token->key == key("servers") || iter.token->key == key("nodes"))
       for (d_iterator_t ct = d_iter(iter.token); ct.left; d_iter_next(&ct)) {
         // register chain
-        chain_id_t   chain_id = c_to_long(d_get_keystr(ct.token->key), -1);
+        chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
         in3_chain_t* chain    = in3_find_chain(c, chain_id);
         if (!chain) {
           bytes_t* contract_t  = d_get_byteskl(ct.token, key("contract"), 20);

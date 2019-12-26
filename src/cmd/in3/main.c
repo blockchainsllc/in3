@@ -317,13 +317,13 @@ bytes_t* get_std_in() {
     bin += 10;
     char* end = strstr(bin, "\n");
     if (end)
-      return hex2byte_new_bytes(bin, end - bin);
+      return hex_to_new_bytes(bin, end - bin);
   }
 
   // is it content starting with 0x, we treat it as hex otherwisae as rwa string
   bytes_t* res = (content.len > 1 && *content.data == '0' && content.data[1] == 'x')
-                     ? hex2byte_new_bytes((char*) content.data + 2, content.len - 2)
-                     : hex2byte_new_bytes((char*) content.data, content.len);
+                     ? hex_to_new_bytes((char*) content.data + 2, content.len - 2)
+                     : hex_to_new_bytes((char*) content.data, content.len);
   _free(content.data);
   return res;
 }
@@ -337,7 +337,7 @@ uint64_t getchain_id(char* name) {
   if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
-    return bytes_to_long(d, hex2byte_arr(name + 2, -1, d, 32));
+    return bytes_to_long(d, hex_to_bytes(name + 2, -1, d, 32));
   }
   die("Unknown or unsupported chain");
   return 0;
@@ -579,7 +579,7 @@ int main(int argc, char* argv[]) {
 
   // check env
   if (getenv("IN3_PK")) {
-    hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
+    hex_to_bytes(getenv("IN3_PK"), -1, pk, 32);
     eth_set_pk_signer(c, pk);
   }
 
@@ -590,7 +590,7 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) { // private key?
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
-        hex2byte_arr(argv[++i], -1, pk, 32);
+        hex_to_bytes(argv[++i], -1, pk, 32);
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
@@ -601,11 +601,11 @@ int main(int argc, char* argv[]) {
       if (strcmp(d, "-") == 0)
         data = get_std_in();
       else if (*d == '0' && d[1] == 'x')
-        data = hex2byte_new_bytes(d + 2, strlen(d) - 2);
+        data = hex_to_new_bytes(d + 2, strlen(d) - 2);
       else {
         FILE*   f       = fopen(d, "r");
         bytes_t content = readFile(f);
-        data            = hex2byte_new_bytes((char*) content.data + 2, content.len - 2);
+        data            = hex_to_new_bytes((char*) content.data + 2, content.len - 2);
         fclose(f);
       }
     } else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
@@ -754,7 +754,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
     if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
-      data = hex2byte_new_bytes((char*) data->data + 2, data->len - 2);
+      data = hex_to_new_bytes((char*) data->data + 2, data->len - 2);
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(data->len + 30);
       int   l   = sprintf(tmp, "\x19"
@@ -787,7 +787,7 @@ int main(int argc, char* argv[]) {
       // first PoA without validators-list
       for (uint32_t i = 0; i < spec->consensus_transitions_len; i++) {
         if (spec->consensus_transitions[i].validators.len == 0) {
-          spec->consensus_transitions[i].validators = *hex2byte_new_bytes(validators + 2, strlen(validators) - 2);
+          spec->consensus_transitions[i].validators = *hex_to_new_bytes(validators + 2, strlen(validators) - 2);
           break;
         }
       }
@@ -823,7 +823,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "pk2address") == 0) {
     bytes32_t prv_key;
     uint8_t   public_key[65], sdata[32];
-    hex2byte_arr(argv[argc - 1], -1, prv_key, 32);
+    hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     sha3_to(&pubkey_bytes, sdata);
@@ -834,7 +834,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "pk2public") == 0) {
     bytes32_t prv_key;
     uint8_t   public_key[65];
-    hex2byte_arr(argv[argc - 1], -1, prv_key, 32);
+    hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     print_hex(public_key + 1, 64);
     return 0;
@@ -877,7 +877,7 @@ int main(int argc, char* argv[]) {
   // if we need to wait
   if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
     bytes32_t txHash;
-    hex2byte_arr(result + 3, 64, txHash, 32);
+    hex_to_bytes(result + 3, 64, txHash, 32);
     result = eth_wait_for_receipt(c, txHash);
     if (!result) die("Error waiting for the confirmation of the transaction");
   }
@@ -907,7 +907,7 @@ int main(int argc, char* argv[]) {
       int l = strlen(result) / 2 - 1;
       if (l) {
         uint8_t*    tmp = alloca(l + 1);
-        json_ctx_t* res = req_parse_result(req, bytes(tmp, hex2byte_arr(result, -1, tmp, l + 1)));
+        json_ctx_t* res = req_parse_result(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)));
         if (json)
           printf("%s\n", d_create_json(res->result));
         else
@@ -916,10 +916,10 @@ int main(int argc, char* argv[]) {
       // if not we simply print the result
     } else {
       if (to_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
-        double val = c_to_long(result, strlen(result));
+        double val = char_to_long(result, strlen(result));
         printf("%.3f\n", val / 1000000000000000000L);
       } else if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
-        printf("%" PRIu64 "\n", c_to_long(result, strlen(result)));
+        printf("%" PRIu64 "\n", char_to_long(result, strlen(result)));
       else
         printf("%s\n", result);
     }

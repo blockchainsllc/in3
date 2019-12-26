@@ -85,10 +85,10 @@ uint8_t strtohex(char c);
 extern const unsigned char* u64tostr(uint64_t value, char* pBuf, int szBuf);
 
 /** convert a c string to a byte array storing it into a existing buffer */
-int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size);
+int hex_to_bytes(char* buf, int len, uint8_t* out, int outbuf_size);
 
 /** convert a c string to a byte array creating a new buffer */
-bytes_t* hex2byte_new_bytes(char* buf, int len);
+bytes_t* hex_to_new_bytes(char* buf, int len);
 
 /** convefrts a bytes into hex */
 int bytes_to_hex(uint8_t* buffer, int len, char* out);

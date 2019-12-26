@@ -779,6 +779,6 @@ in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {
   out[1]  = 'x';
   out[42] = 0;
   for (int i = 0; i < 40; i++)
-    out[i + 2] = strtohex(msg[i]) >= 8 ? (hexadr[i] > 0x60 ? (hexadr[i] - 0x20) : hexadr[i]) : hexadr[i];
+    out[i + 2] = hexchar_to_int(msg[i]) >= 8 ? (hexadr[i] > 0x60 ? (hexadr[i] - 0x20) : hexadr[i]) : hexadr[i];
   return IN3_OK;
 }

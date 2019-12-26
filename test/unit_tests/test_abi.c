@@ -93,7 +93,7 @@ static char* abi_decode(char* sig, char* hex_data) {
   if (!req) return err_string("invalid function signature");
   int     l = strlen(hex_data);
   uint8_t data[l >> 1];
-  l = hex2byte_arr(hex_data, -1, data, l >> 1);
+  l = hex_to_bytes(hex_data, -1, data, l >> 1);
 
   json_ctx_t* res = req_parse_result(req, bytes(data, l));
   req_free(req);

@@ -39,9 +39,14 @@
 static in3_verifier_t* verifiers = NULL;
 
 void in3_register_verifier(in3_verifier_t* verifier) {
-  if (in3_get_verifier(verifier->type) != NULL) return;
-  verifier->next = verifiers;
-  verifiers      = verifier;
+  in3_verifier_t* existing = in3_get_verifier(verifier->type);
+  if (existing) {
+    existing->pre_handle = verifier->pre_handle;
+    existing->verify     = verifier->verify;
+  } else {
+    verifier->next = verifiers;
+    verifiers      = verifier;
+  }
 }
 
 in3_verifier_t* in3_get_verifier(in3_chain_type_t type) {
