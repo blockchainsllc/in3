@@ -126,30 +126,55 @@ int min_bytes_len(uint64_t val);
  */
 void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst);
 
-char* str_replace(const char* orig, char* rep, char* with);
+/**
+ * replaces a string and returns a copy.
+ * @retval 
+ */
+char* str_replace(const char* orig, const char* rep, const char* with);
 
-char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
+/**
+ * replaces a string at the given position.
+ */
+char* str_replace_pos(const char* orig, size_t pos, size_t len, const char* rep);
 
-// lightweight strstr() replacement
-char* str_find(char* haystack, const char* needle);
+/**
+  * lightweight strstr() replacements
+  */
+char* str_find(const char* haystack, const char* needle);
 
+/** changes to pointer (a) and it length (l) to remove leading 0 bytes.*/
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \
     l--;                     \
     a++;                     \
   }
 
+/**
+ * executes the expression and expects the return value to be a int indicating the error. 
+ * if the return value is negative it will stop and return this value otherwise continue. 
+ */
 #define TRY(exp)           \
   {                        \
     int _r = (exp);        \
     if (_r < 0) return _r; \
   }
+
+/**
+ * executes the expression and expects the return value to be a int indicating the error. 
+ * the return value will be set to a existing variable (var).
+ * if the return value is negative it will stop and return this value otherwise continue. 
+ */
 #define TRY_SET(var, exp)    \
   {                          \
     var = (exp);             \
     if (var < 0) return var; \
   }
 
+/**
+ * executes the expression and expects the return value to be a int indicating the error. 
+ * if the return value is negative it will stop and jump (goto) to a marked position "clean".
+ * it also expects a previously declared variable "in3_ret_t res".
+ */
 #define TRY_GOTO(exp)        \
   {                          \
     res = (exp);             \
