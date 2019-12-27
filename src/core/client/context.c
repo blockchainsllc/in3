@@ -117,7 +117,7 @@ in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
 in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   if (ctx->error)
     return IN3_ERPC;
-  else if (id > ctx->len)
+  else if (id >= ctx->len)
     return IN3_EINVAL;
   else if (!ctx->responses || !ctx->responses[id])
     return IN3_ERPCNRES;
