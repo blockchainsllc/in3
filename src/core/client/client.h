@@ -465,7 +465,7 @@ typedef struct in3_t_ {
  * 
  * @returns the incubed instance.
  */
-DEPRECATED in3_t* in3_new();
+in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)")));
 
 /** creates a new Incubes configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 

@@ -49,9 +49,11 @@
 in3_ret_t in3_cache_init(in3_t* c) {
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
   for (int i = 0; i < c->chains_length; i++) {
-    if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK)
+    if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) {
       in3_log_debug("Failed to update cached nodelist\n");
+    }
   }
+
   return IN3_OK;
 }
 
