@@ -251,6 +251,49 @@ static void test_in3_client_configure() {
   in3_free(c);
 }
 
+static void test_in3_client_context() {
+  in3_t*     c   = in3_new();
+  in3_ctx_t* ctx = new_ctx(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
+                              "\"method\":\"eth_getBlockByHash\","
+                              "\"params\":[\"0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331\", false],"
+                              "\"in3\":{\"version\": \"" IN3_PROTO_VER "\",\"chainId\":\"0x1\"}}]");
+  TEST_ASSERT_EQUAL(IN3_EINVAL, ctx_get_error(ctx, 1));
+  TEST_ASSERT_EQUAL(IN3_ERPCNRES, ctx_get_error(ctx, 0));
+
+  // null maybe a valid result
+  json_ctx_t* json  = parse_json("{\"result\":null}");
+  ctx->responses    = malloc(sizeof(d_token_t*));
+  ctx->responses[0] = json->result;
+  TEST_ASSERT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
+  free_json(json);
+
+  // Test with error
+  json              = parse_json("{\"error\":\"Unknown\"}");
+  ctx->responses[0] = json->result;
+  TEST_ASSERT_EQUAL(IN3_EINVALDT, ctx_get_error(ctx, 0));
+  // Test ctx_check_response_error() which internally also calls ctx_set_error()
+  TEST_ASSERT_EQUAL(IN3_ERPC, ctx_check_response_error(ctx, 0));
+  TEST_ASSERT_EQUAL_STRING("Unknown", ctx->error);
+  free_json(json);
+
+  // Test with error obj
+  json              = parse_json("{\"error\":{\"msg\":\"Unknown\",\"id\":\"0xf1\"}}");
+  ctx->responses[0] = json->result;
+  TEST_ASSERT_EQUAL(IN3_ERPC, ctx_check_response_error(ctx, 0));
+  TEST_ASSERT_EQUAL_STRING("{\"msg\":\"Unknown\",\"id\":\"0xf1\"}\nUnknown", ctx->error);
+  free_json(json);
+  free(ctx->responses);
+  ctx->responses = NULL;
+
+  // Test getter/setter
+  TEST_ASSERT_EQUAL(IN3_ERPC, ctx_set_error(ctx, "RPC failure", IN3_ERPC));
+  TEST_ASSERT_EQUAL(IN3_ERPC, ctx_get_error(ctx, 0));
+  TEST_ASSERT_EQUAL_STRING("RPC failure\n{\"msg\":\"Unknown\",\"id\":\"0xf1\"}\nUnknown", ctx->error);
+
+  free_ctx(ctx);
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -265,5 +308,6 @@ int main() {
   RUN_TEST(test_in3_client_rpc);
   RUN_TEST(test_in3_client_chain);
   RUN_TEST(test_in3_client_configure);
+  RUN_TEST(test_in3_client_context);
   return TESTS_END();
 }
