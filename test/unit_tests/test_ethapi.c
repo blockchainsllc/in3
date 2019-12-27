@@ -180,6 +180,18 @@ static void test_get_filter_changes() {
   hex2byte_arr("0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9", -1, blk_hash, 32);
   TEST_ASSERT_EQUAL_MEMORY(hashes, blk_hash, 32);
 
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  ret               = eth_getFilterChanges(in3, bfid, &hashes, NULL);
+  TEST_ASSERT_EQUAL(0, ret);
+
+  // Test with non-existent filter id
+  TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterChanges(in3, 1234, NULL, NULL));
+
+  // Test with no filters registered
+  TEST_ASSERT_TRUE(eth_uninstallFilter(in3, fid));
+  TEST_ASSERT_TRUE(eth_uninstallFilter(in3, bfid));
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterChanges(in3, fid, NULL, NULL));
+
   in3_free(in3);
 }
 
@@ -204,6 +216,12 @@ static void test_get_logs() {
   }
   eth_uninstallFilter(in3, fid);
   free_json(jopt);
+
+  // Test with non-existent filter id
+  TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterLogs(in3, 1234, NULL));
+
+  // Test with no filters registered
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, fid, NULL));
 
   in3_free(in3);
 }
@@ -561,7 +579,6 @@ int main() {
   RUN_TEST(test_eth_call_fn);
   RUN_TEST(test_eth_get_code);
   RUN_TEST(test_estimate_fn);
-  // /* verification for chain_id not supported */
   RUN_TEST(test_get_uncle_blknum_index);
   RUN_TEST(test_get_uncle_count_blkhash);
   RUN_TEST(test_get_uncle_count_blknum);
