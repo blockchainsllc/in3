@@ -184,7 +184,7 @@ static void test_get_filter_changes() {
   TEST_ASSERT_EQUAL_MEMORY(hashes, blk_hash, 32);
 
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
-  ret               = eth_getFilterChanges(in3, bfid, &hashes, NULL);
+  ret = eth_getFilterChanges(in3, bfid, &hashes, NULL);
   TEST_ASSERT_EQUAL(0, ret);
 
   // Test with non-existent filter id
@@ -399,7 +399,7 @@ static void test_eth_call_fn(void) {
   uint8_t access = d_int(response->result);
   in3_log_debug("Access granted? : %d \n", access);
 
-  //    clean up resources
+  // clean up resources
   free_json(response);
   TEST_ASSERT_TRUE(access == 1);
   in3_free(in3);
@@ -427,6 +427,21 @@ static void test_estimate_fn(void) {
   //convert the response to a uint32_t,
   in3_log_debug("Gas estimate : %lld \n", estimate);
   TEST_ASSERT_TRUE(estimate > 0);
+  in3_free(in3);
+
+  // Test ABI arg parsing
+  in3 = init_in3(test_transport, 0x5);
+  add_response("eth_estimateGas",
+               "[{\"to\":\"0x36643f8d17fe745a69a2fd22188921fade60a98b\",\"data\":\"0x8a843727000000000000000000000000000000000000000000000000000000000000000000000000000000000000000036643f8d17fe745a69a2fd22188921fade60a98b00000000000000000000000000000000000000000000000000000000000000c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe6000000000000000000000000000000000000000000000000000000000000ffff0000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000b536f6d6520737472696e67000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001436643f8d17fe745a69a2fd22188921fade60a98b000000000000000000000000\"},\"latest\"]",
+               "\"0x123123\"",
+               NULL,
+               NULL);
+  uint64_t gas = eth_estimate_fn(in3,
+                                 contract,
+                                 BLKNUM_LATEST(),
+                                 "mockMethod(bool,address,string,int8,uint16,bytes):bool",
+                                 false, contract, "Some string", "-26", UINT16_MAX, (bytes_t){.data = contract, .len = 20});
+  TEST_ASSERT_EQUAL_UINT64(0x123123, gas);
   in3_free(in3);
 }
 
