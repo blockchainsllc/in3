@@ -125,6 +125,9 @@ static void test_get_filter_changes() {
   in3_t* in3 = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
   in3->proof = PROOF_NONE;
 
+  // Test with no filters registered
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterChanges(in3, 1, NULL, NULL));
+
   // Create new filter with options
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
   json_ctx_t* jopt = parse_json("{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}");
@@ -187,7 +190,7 @@ static void test_get_filter_changes() {
   // Test with non-existent filter id
   TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterChanges(in3, 1234, NULL, NULL));
 
-  // Test with no filters registered
+  // Test with all filters uninstalled
   TEST_ASSERT_TRUE(eth_uninstallFilter(in3, fid));
   TEST_ASSERT_TRUE(eth_uninstallFilter(in3, bfid));
   TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterChanges(in3, fid, NULL, NULL));
@@ -197,6 +200,10 @@ static void test_get_filter_changes() {
 
 static void test_get_logs() {
   in3_t* in3 = init_in3(mock_transport, 0x5);
+
+  // Test with no filters registered
+  TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, 1, NULL));
+
   // Create filter options
   char b[30];
   sprintf(b, "{\"fromBlock\":\"0x1ca181\"}");
@@ -220,7 +227,7 @@ static void test_get_logs() {
   // Test with non-existent filter id
   TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterLogs(in3, 1234, NULL));
 
-  // Test with no filters registered
+  // Test with all filters uninstalled
   TEST_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, fid, NULL));
 
   in3_free(in3);
