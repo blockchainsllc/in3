@@ -77,7 +77,10 @@
         "cstdint": "c",
         "error.h": "c",
         "queue": "c",
-        "stack": "c"
+        "stack": "c",
+        "deque": "cpp",
+        "memory": "cpp",
+        "streambuf": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

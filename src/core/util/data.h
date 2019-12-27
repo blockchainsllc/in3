@@ -74,8 +74,8 @@ typedef enum {
  * use d_type,  d_len or the cast-function to get the value.
  */
 typedef struct item {
-  uint8_t* data; /**< the byte or string-data  */
   uint32_t len;  /**< the length of the content (or number of properties) depending +  type. */
+  uint8_t* data; /**< the byte or string-data  */
   d_key_t  key;  /**< the key of the property. */
 } d_token_t;
 
