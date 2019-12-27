@@ -578,12 +578,20 @@ static void test_get_nonexistent_block(void) {
 }
 
 static void test_wait_for_receipt(void) {
-  in3_t* c = init_in3(mock_transport, ETH_CHAIN_ID_GOERLI);
+  in3_t*    c = init_in3(mock_transport, ETH_CHAIN_ID_GOERLI);
   bytes32_t blk_hash;
   hex2byte_arr("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, blk_hash, 32);
   char* r = eth_wait_for_receipt(c, blk_hash);
   TEST_ASSERT_NOT_NULL(r);
   in3_free(c);
+
+  c = init_in3(test_transport, ETH_CHAIN_ID_GOERLI);
+  add_response("eth_getTransactionReceipt", "[\"0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d\"]", NULL, "Unknown error", NULL);
+  r = eth_wait_for_receipt(c, blk_hash);
+  TEST_ASSERT_NULL(r);
+  in3_free(c);
+}
+
 static void test_send_raw_tx(void) {
   in3_t* in3 = init_in3(mock_transport, 0x5);
   bytes_t* data = hex2byte_new_bytes("f8da098609184e72a0008296c094f99dbd3cfc292b11f74deea9fa730825ee0b56f2849184e72ab87000ff86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affff2ea0936324cf235541114275bb72b5acfb5a5c1f6f6e7f426c94806ff4093539bfaaa010a7482378b19ee0930a77c14b18c5664b3aa6c3ebc7420954d81263625d6d6a", 440);
