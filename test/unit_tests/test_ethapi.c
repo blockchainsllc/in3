@@ -123,30 +123,65 @@ static void test_new_pending_tx_filter() {
 }
 
 static void test_get_filter_changes() {
+  in3_t* in3 = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
+  in3->proof = PROOF_NONE;
 
-  in3_t*    in3 = init_in3(mock_transport, 0x5);
-  bytes32_t blk_hash1;
-  hex2byte_arr("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash1, 32);
-  bytes32_t blk_hash2;
-  hex2byte_arr("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash2, 32);
-  bytes32_t** hashes = _malloc(sizeof(bytes32_t*) * 2);
-  hashes[0]          = &blk_hash1;
-  hashes[1]          = &blk_hash2;
-  char b[30];
-  sprintf(b, "{\"fromBlock\":\"0x1ca181\"}");
-  json_ctx_t* jopt = parse_json(b);
   // Create new filter with options
-  size_t fid = eth_newFilter(in3, jopt);
-  // Get logs
-  eth_log_t** logs_array = _malloc(sizeof(eth_log_t*) * 1);
-  eth_log_t*  logs       = NULL;
-  in3_ret_t   ret_logs   = eth_getFilterLogs(in3, fid, &logs);
-  logs_array[0]          = logs;
+  add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
+  json_ctx_t* jopt = parse_json("{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}");
+  size_t      fid  = eth_newFilter(in3, jopt);
+  TEST_ASSERT_GREATER_THAN(0, fid);
+  add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf52\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
+  // Get changes
+  eth_log_t* logs = NULL;
+  in3_ret_t  ret  = eth_getFilterChanges(in3, fid, NULL, &logs);
+  TEST_ASSERT_EQUAL(IN3_OK, ret);
+  free_json(jopt);
 
-  size_t ret = eth_getFilterChanges(in3, 0, hashes, logs_array);
-  in3_log_debug("ret %d\n", ret);
-  TEST_ASSERT_TRUE(ret > 0);
-  _free(in3);
+  // Create block filter
+  add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
+  size_t bfid = eth_newBlockFilter(in3);
+  TEST_ASSERT_GREATER_THAN(0, bfid);
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  add_response("eth_getBlockByNumber",
+               "[\"0x84cf59\",false]",
+               "{"
+               "        \"author\": \"0x0000000000000000000000000000000000000000\","
+               "        \"difficulty\": \"0x2\","
+               "        \"extraData\": \"0x44505020417574686f7269747900000000000000000000000000000000000000d2d0c956dddf306aae94dd3c53c5e022418eb17a040a6e89674568686baff4576a1aa2b6d9434beb5bc971070ca5d54ca2c83ec50e47915235d05d5e1de22b4100\","
+               "        \"gasLimit\": \"0x7a1200\","
+               "        \"gasUsed\": \"0x94ae8\","
+               "        \"hash\": \"0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9\","
+               "        \"logsBloom\": \"0x00040000001080400000000000000000000000200000400000800000000000000040000000001008000000000002000000000000020000008008840000000000400000000000008000000000000000000002000000000000000000000042040008500000000000000000000004000000000000004000000010000000000000000000000000001000000040000009000000000041000000000000000000804000000000004000000000400000800004000000000040800000003000000008400000000004000000000000002000040000000000008000002000000000000000000000000000000000000400100000000000000008080000000000004000000000\","
+               "        \"miner\": \"0x0000000000000000000000000000000000000000\","
+               "        \"number\": \"0x19d45f\","
+               "        \"parentHash\": \"0x47ef26f15caaab0a365071f5f9886374883581068e66227ced15b1724d09f090\","
+               "        \"receiptsRoot\": \"0x8cbd134c7b5819b81a9f12ba34edc04d0908d11b886915cd4b9d7ac956c2f37d\","
+               "        \"sealFields\": ["
+               "          \"0xa00000000000000000000000000000000000000000000000000000000000000000\","
+               "          \"0x880000000000000000\""
+               "        ],"
+               "        \"sha3Uncles\": \"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347\","
+               "        \"size\": \"0x72b\","
+               "        \"stateRoot\": \"0x9d7f22d1b37a19f35f600c162bb2382488e26446dd5f60043161dec9ea169af2\","
+               "        \"timestamp\": \"0x5dd79bd0\","
+               "        \"totalDifficulty\": \"0x27c8e0\","
+               "        \"transactions\": [],"
+               "        \"transactionsRoot\": \"0xb7dd5015e1ef1ddd97dca5fc8447c8f497dbacb5d62bdd9e62b3925ce7885631\","
+               "        \"uncles\": [ ]"
+               "}",
+               NULL,
+               NULL);
+  // Get changes
+  bytes32_t* hashes = NULL;
+  ret               = eth_getFilterChanges(in3, bfid, &hashes, NULL);
+  TEST_ASSERT_EQUAL(1, ret);
+  bytes32_t blk_hash;
+  hex2byte_arr("0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9", -1, blk_hash, 32);
+  TEST_ASSERT_EQUAL_MEMORY(hashes, blk_hash, 32);
+
+  in3_free(in3);
 }
 
 static void test_get_logs() {
