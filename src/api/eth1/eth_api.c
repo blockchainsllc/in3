@@ -544,8 +544,11 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   if (id == 0 || id > in3->filters->count)
     return IN3_EINVAL;
 
-  uint64_t      blkno = eth_blockNumber(in3);
-  in3_filter_t* f     = in3->filters->array[id - 1];
+  in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
+  uint64_t blkno = eth_blockNumber(in3);
   switch (f->type) {
     case FILTER_EVENT: {
       char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block);
@@ -584,6 +587,9 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
     return IN3_EINVAL;
 
   in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
   switch (f->type) {
     case FILTER_EVENT:
       *logs = eth_getLogs(in3, f->options);
