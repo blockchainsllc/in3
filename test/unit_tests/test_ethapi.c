@@ -269,16 +269,15 @@ static void test_get_tx_hash(void) {
   hex2byte_arr("0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164", -1, tx_hash, 32);
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
+  TEST_ASSERT_NOT_NULL(tx);
 
-  // if the result is null there was an error an we can get the latest error message from eth_last_error()
-  if (!tx)
-    printf("error getting the tx : %s\n", eth_last_error());
-  else {
-    printf("Transaction #%d of block #%" PRIx64, tx->transaction_index, tx->block_number);
-    //free(tx);
-  }
-  TEST_ASSERT_TRUE(tx != NULL);
-  _free(in3);
+  // get non-existent txn
+  in3->transport = test_transport;
+  add_response("eth_getTransactionByHash", "[\"0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164\"]", "null", NULL, NULL);
+  tx = eth_getTransactionByHash(in3, tx_hash);
+  TEST_ASSERT_NULL(tx);
+
+  in3_free(in3);
 }
 
 static void test_get_tx_receipt(void) {
