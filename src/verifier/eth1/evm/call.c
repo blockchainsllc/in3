@@ -1,9 +1,43 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ *
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ *
+ *
+ * COMMERCIAL LICENSE USAGE
+ *
+ * Licensees holding a valid commercial license may use this file in accordance
+ * with the commercial license agreement provided with the Software or, alternatively,
+ * in accordance with the terms contained in a written agreement between you and
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further
+ * information please contact slock.it at in3@slock.it.
+ *
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *
+ * AGPL LICENSE USAGE
+ *
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger
+ * works using a licensed work, under the same license. Copyright and license notices
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "../../../core/client/verifier.h"
 #include "../../../core/util/mem.h"
 #include "big.h"
 #include "evm.h"
+#include "evm_mem.h"
 #include "gas.h"
-#include "mem.h"
 #include <string.h>
 #ifdef EVM_GAS
 #include "accounts.h"
@@ -74,8 +108,9 @@ int evm_prepare_evm(evm_t*      evm,
 
   evm->properties = EVM_PROP_CONSTANTINOPL;
 
-  evm->env     = env;
-  evm->env_ptr = env_ptr;
+  evm->env      = env;
+  evm->env_ptr  = env_ptr;
+  evm->chain_id = 1;
 
   evm->gas_price.data = NULL;
   evm->gas_price.len  = 0;
@@ -89,12 +124,9 @@ int evm_prepare_evm(evm_t*      evm,
   evm->return_data.data = NULL;
   evm->return_data.len  = 0;
 
-  evm->caller = caller;
-  evm->origin = origin;
-  if (mode == EVM_CALL_MODE_CALLCODE)
-    evm->account = address;
-  else
-    evm->account = account;
+  evm->caller  = caller;
+  evm->origin  = origin;
+  evm->account = (mode == EVM_CALL_MODE_CALLCODE) ? address : account;
   evm->address = address;
 
 #ifdef EVM_GAS
@@ -142,6 +174,7 @@ int evm_sub_call(evm_t*    parent,
   int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
 
   evm.properties      = parent->properties;
+  evm.chain_id        = parent->chain_id;
   evm.call_data.data  = data;
   evm.call_data.len   = l_data;
   evm.call_value.data = value;
@@ -150,20 +183,20 @@ int evm_sub_call(evm_t*    parent,
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
 
-    account_t* new_account      = NULL;
-    UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
+  account_t* new_account = NULL;
+  UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call
-  if (res == 0) success = evm_run(&evm);
+  if (res == 0) success = evm_run(&evm, code_address);
 
   // put the success in the stack ( in case of a create we add the new address)
   if (!address && success == 0)
     res = evm_stack_push(parent, evm.account, 20);
   else
-    res = evm_stack_push_int(parent, success == 0 ? 1 : 0);
+    res = evm_stack_push_int(parent, (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) ? 1 : 0);
 
   // if we have returndata we write them into memory
-  if (success == 0 && evm.return_data.data) {
+  if ((success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) && evm.return_data.data) {
     // if we have a target to write the result to we do.
     if (out_len) res = evm_mem_write(parent, out_offset, evm.return_data, out_len);
 
@@ -177,7 +210,7 @@ int evm_sub_call(evm_t*    parent,
       evm.return_data.len   = 0;
     }
   }
-    FINALIZE_SUBCALL_GAS(&evm, success, parent);
+  FINALIZE_SUBCALL_GAS(&evm, success, parent);
   // clean up
   evm_free(&evm);
   // we always return 0 since a failure simply means we write a 0 on the stack.
@@ -187,16 +220,18 @@ int evm_sub_call(evm_t*    parent,
 /**
  * run a evm-call
  */
-int evm_call(void* vc,
-             address_t   address,
+int evm_call(void*     vc,
+             address_t address,
              uint8_t* value, wlen_t l_value,
              uint8_t* data, uint32_t l_data,
              address_t caller,
              uint64_t  gas,
+             uint64_t  chain_id,
              bytes_t** result) {
 
   evm_t evm;
-  int   res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc, 0);
+  int   res    = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc, 0);
+  evm.chain_id = chain_id;
 
   // check if the caller is empty
   uint8_t* ccaller = caller;
@@ -218,7 +253,7 @@ int evm_call(void* vc,
 #endif
   evm.call_data.data = data;
   evm.call_data.len  = l_data;
-  if (res == 0) res = evm_run(&evm);
+  if (res == 0) res = evm_run(&evm, address);
   if (res == 0 && evm.return_data.data)
     *result = b_dup(&evm.return_data);
   evm_free(&evm);

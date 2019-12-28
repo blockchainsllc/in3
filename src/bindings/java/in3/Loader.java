@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 package in3;
 
 import java.io.File;
@@ -13,6 +47,19 @@ import java.util.Arrays;
 public class Loader {
 
     private static boolean loaded = false;
+
+    private static String getLibName() {
+        final String os = System.getProperty("os.name").toLowerCase();
+        final String arch = System.getProperty("os.arch").toLowerCase();
+        final String model = System.getProperty("sun.arch.data.model");
+        if (os.indexOf("linux") >= 0) {
+            if (arch.indexOf("arm") >= 0)
+                return "in3_jni_arm";
+        }
+        if (model != null && model.equals("32"))
+            return "in3_jni_32";
+        return "in3_jni";
+    }
 
     private static byte[] md5(InputStream is) throws IOException {
         try {
@@ -38,14 +85,14 @@ public class Loader {
 
         try {
             // try to load it from the path
-            System.loadLibrary("in3_jni");
+            System.loadLibrary(getLibName());
             return;
         } catch (java.lang.UnsatisfiedLinkError x) {
         }
 
         // ok, not found, so we use the one in the package.
 
-        String libFileName = System.mapLibraryName("in3_jni");
+        String libFileName = System.mapLibraryName(getLibName());
         String jarPath = "/in3/native/" + libFileName;
 
         URL src = Loader.class.getResource(jarPath);

@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/data.h"
@@ -53,33 +87,48 @@ static in3_ret_t verify_proof(in3_vctx_t* vc, bytes_t* header, d_token_t* accoun
   else
     return vc_err(vc, "no storage-hash found!");
 
+  //                                "storageHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+  bool is_empty = memcmp(root.data, EMPTY_ROOT_HASH, 32) == 0;
+
   for (i = 0, p = storage_proof + 1; i < d_len(storage_proof); i++, p = d_next(p)) {
-    d_bytes_to(d_get(p, K_KEY), hash, 32);
-    sha3_to(&path, hash);
+    d_token_t* pt = d_get(p, K_PROOF);
+    bb.b.len      = d_bytes_to(d_get(p, K_VALUE), val, 32);
+    if (is_empty) {
+      uint8_t* vp = val;
+      optimize_len(vp, bb.b.len);
+      if (bb.b.len > 1 || (bb.b.len == 1 && *vp))
+        return vc_err(vc, "empty storagehash, so we exepct 0 values");
+      if (d_type(pt) != T_ARRAY || d_len(pt) != 1 || d_type(pt + 1) != T_INTEGER || d_int(pt + 1) != 0x80)
+        return vc_err(vc, "invalid proof");
+    } else {
 
-    proof = d_create_bytes_vec(d_get(p, K_PROOF));
-    if (!proof) return vc_err(vc, "no merkle proof for the storage");
+      d_bytes_to(d_get(p, K_KEY), hash, 32);
+      sha3_to(&path, hash);
 
-    // rlp encode the value.
-    if ((bb.b.len = d_bytes_to(d_get(p, K_VALUE), val, 32))) {
-      // remove leading zeros!
-      uint8_t*     pp = bb.b.data;
-      uint_fast8_t l  = 32;
-      optimize_len(pp, l);
-      if (l == 0 || (l == 1 && *pp == 0))
-        bb.b.len = 0;
-      else {
-        if (pp != bb.b.data) memmove(bb.b.data, pp, l);
-        bb.b.len = l;
-        rlp_encode_to_item(&bb);
+      proof = d_create_bytes_vec(pt);
+      if (!proof) return vc_err(vc, "no merkle proof for the storage");
+
+      // rlp encode the value.
+      if (bb.b.len) {
+        // remove leading zeros!
+        uint8_t*     pp = bb.b.data;
+        uint_fast8_t l  = 32;
+        optimize_len(pp, l);
+        if (l == 0 || (l == 1 && *pp == 0))
+          bb.b.len = 0;
+        else {
+          if (pp != bb.b.data) memmove(bb.b.data, pp, l);
+          bb.b.len = l;
+          rlp_encode_to_item(&bb);
+        }
       }
-    }
 
-    if (!trie_verify_proof(&root, &path, proof, bb.b.len ? &bb.b : NULL)) {
+      if (!trie_verify_proof(&root, &path, proof, bb.b.len ? &bb.b : NULL)) {
+        _free(proof);
+        return vc_err(vc, "invalid storage proof");
+      }
       _free(proof);
-      return vc_err(vc, "invalid storage proof");
     }
-    _free(proof);
   }
 
   return IN3_OK;
@@ -95,7 +144,10 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
 
   // no result -> nothing to verify
   if (!vc->result) return IN3_OK;
-  if (!vc->proof) return vc_err(vc, "no proof");
+  if (!vc->proof) {
+    printf("Missing proof for %s\n", method);
+    return vc_err(vc, "no proof");
+  }
 
   // verify header
   bytes_t* header = d_get_bytesk(vc->proof, K_BLOCK);
@@ -131,8 +183,9 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc) {
     if (!d_eq(vc->result, d_get(proofed_account, K_NONCE)))
       return vc_err(vc, "the nonce in the proof is different");
   } else if (strcmp(method, "eth_getCode") == 0) {
-    if (d_type(vc->result) == T_BYTES) {
-      if (sha3_to(d_bytes(vc->result), hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
+    bytes_t data = d_to_bytes(vc->result);
+    if (data.len) {
+      if (sha3_to(&data, hash) != 0 || memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, hash, 32))
         return vc_err(vc, "the codehash in the proof is different");
     } else if (memcmp(d_get_byteskl(proofed_account, K_CODE_HASH, 32)->data, EMPTY_HASH, 32)) // must be empty
       return vc_err(vc, "the code must be empty");

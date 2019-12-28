@@ -36,6 +36,7 @@ static struct {
   in3_log_level_t level;
   int             quiet;
   const char*     prefix;
+  int             enable_prefix;
 } L;
 
 static const char* level_names[] = {
@@ -86,6 +87,14 @@ void in3_log_set_prefix_(const char* prefix) {
   L.prefix = prefix;
 }
 
+void in3_log_enable_prefix_() {
+  L.enable_prefix = 1;
+}
+
+void in3_log_disable_prefix_() {
+  L.enable_prefix = 0;
+}
+
 void in3_log_(in3_log_level_t level, const char* file, const char* function, int line, const char* fmt, ...) {
   if (level < L.level) {
     return;
@@ -102,16 +111,19 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
     char    buf[16];
     _localtime(buf);
 
-    if (L.prefix == NULL) {
+    if (L.enable_prefix) {
+
+      if (L.prefix == NULL) {
 #ifdef LOG_USE_COLOR
-      fprintf(
-          stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
-          buf, level_colors[level], level_names[level], file, function, line);
+        fprintf(
+            stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
+            buf, level_colors[level], level_names[level], file, function, line);
 #else
-      fprintf(stderr, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+        fprintf(stderr, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
 #endif
-    } else {
-      fprintf(stderr, "%s", L.prefix);
+      } else {
+        fprintf(stderr, "%s", L.prefix);
+      }
     }
 
     va_start(args, fmt);
@@ -125,10 +137,12 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
     va_list args;
     char    buf[32];
     _localtime(buf);
-    if (L.prefix == NULL)
-      fprintf(L.fp, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
-    else
-      fprintf(L.fp, "%s", L.prefix);
+    if (L.enable_prefix) {
+      if (L.prefix == NULL)
+        fprintf(L.fp, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+      else
+        fprintf(L.fp, "%s", L.prefix);
+    }
     va_start(args, fmt);
     vfprintf(L.fp, fmt, args);
     va_end(args);

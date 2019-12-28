@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/mem.h"
@@ -105,6 +139,23 @@ static uint8_t* get_storage_array_key(uint32_t pos, uint32_t array_index, uint32
   return dst;
 }
 
+_NOINLINE_ static void create_node_hash(d_token_t* t, bytes32_t dst) {
+  bytes_t  url    = d_to_bytes(d_get(t, K_URL)), val;
+  int      l      = 92 + url.len;
+  uint8_t* buffer = alloca(l);
+  memset(buffer, 0, l);
+
+  bytes_t data = bytes(buffer, l);
+  if ((val = d_to_bytes(d_get(t, K_DEPOSIT))).data && val.len < 33) memcpy(buffer + 32 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_REGISTER_TIME))).data && val.len < 9) memcpy(buffer + 32 + 8 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_PROPS))).data && val.len < 25) memcpy(buffer + 40 + 24 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_WEIGHT))).data && val.len < 9) memcpy(buffer + 64 + 8 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_ADDRESS))).data && val.len < 21) memcpy(buffer + 72 + 20 - val.len, val.data, val.len);
+  if (url.data && url.len) memcpy(buffer + 92, url.data, url.len);
+
+  sha3_to(&data, dst);
+}
+
 static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses, d_token_t* server_list, d_token_t* storage_proofs) {
   bytes32_t skey, svalue;
   uint32_t  total_servers = d_get_intk(vc->result, K_TOTAL_SERVERS);
@@ -113,8 +164,8 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
 
   if (node_limit && node_limit < total_servers) {
     if (d_len(server_list) != (int) node_limit) return vc_err(vc, "wrong length of the nodes!");
-    const uint32_t seed_len = required_addresses ? d_len(required_addresses) : 0;
-    uint32_t       seed_indexes[seed_len], i = 0;
+    const uint32_t seed_len     = required_addresses ? d_len(required_addresses) : 0;
+    uint32_t *     seed_indexes = alloca(seed_len ? seed_len : 1), i = 0;
 
     // check if the required addresses are part of the list
     // and create the index-list
@@ -134,13 +185,14 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
     }
 
     // create indexes
-    uint32_t indexes[node_limit];
+    uint32_t* indexes = alloca(node_limit);
     create_random_indexes(total_servers, node_limit, seed, seed_indexes, seed_len, indexes);
 
     // check that we have the correct indexes in the nodelist
     i = 0;
-    for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it), i++) {
-      if (d_get_intk(it.token, K_INDEX) != indexes[i]) return vc_err(vc, "wrong index in partial nodelist");
+    for (d_iterator_t it = d_iter(server_list); it.left && i < node_limit; d_iter_next(&it), i++) {
+      uint32_t index = d_get_intk(it.token, K_INDEX);
+      if (index != indexes[i]) return vc_err(vc, "wrong index in partial nodelist");
     }
   } else if ((int) total_servers != d_len(server_list))
     return vc_err(vc, "wrong number of nodes in the serverlist");
@@ -148,61 +200,8 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
   // now check the content of the nodelist
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it)) {
     uint32_t index = d_get_intk(it.token, K_INDEX);
-    if (vc->chain->version > 1) {
-      bytes_t url = d_to_bytes(d_get(it.token, K_URL));
-      int     l   = 84 + url.len;
-      uint8_t buffer[l];
-      memset(buffer, 0, l);
-
-      // new storage layout
-      bytes_t val = d_to_bytes(d_get(it.token, K_ADDRESS)), data = bytes(buffer, l);
-      long_to_bytes(d_get_longk(it.token, K_DEPOSIT), buffer + 24); // TODO deposit is read as uint64, which means max 18 ETH!
-      long_to_bytes(d_get_longk(it.token, K_TIMEOUT), buffer + 32);
-      long_to_bytes(d_get_longk(it.token, K_REGISTER_TIME), buffer + 40);
-      long_to_bytes(d_get_longk(it.token, K_PROPS), buffer + 56); // TODO at the moment we only support 64bit instead of 128bit, which might cause issues, if someone registeres a server with 128bit props.
-
-      memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
-      memcpy(buffer + 64 + 20, url.data, url.len);
-
-      sha3_to(&data, buffer);
-      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), buffer));
-
-    } else {
-      // old storage-layout
-
-      // check the owner
-      if (!d_get(it.token, K_ADDRESS)) return vc_err(vc, "no owner in nodelist");
-      memset(svalue, 0, 32);
-      long_to_bytes(d_get_longkd(it.token, K_TIMEOUT, 0), svalue + 4);
-      memcpy(svalue + 12, d_get_byteskl(it.token, K_ADDRESS, 20)->data, 20);
-      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 1, skey), svalue));
-
-      // check the deposit
-      TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 2, skey), svalue));
-      uint64_t deposit = bytes_to_long(svalue, 32);
-      if (d_get_longk(it.token, K_DEPOSIT) != deposit) return vc_err(vc, "wrong deposit");
-
-      // check props
-      TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 3, skey), as_bytes32(svalue, d_to_bytes(d_get(it.token, K_PROPS)))));
-
-      // check url
-      TRY(get_storage_value(storage_proofs, get_storage_array_key(0, index, SERVER_STRUCT_SIZE, 0, skey), svalue));
-      const char* url = d_get_stringk(it.token, K_URL);
-      if (!url) return vc_err(vc, "missing url");
-      if (svalue[31] % 2) {
-        // the url-value is concated from multiple values.
-        uint32_t len  = (bytes_to_int(svalue + 28, 4) - 1) >> 1;
-        uint8_t  inc  = 1;
-        bytes_t  hash = bytes(skey, 32);
-        sha3_to(&hash, skey);
-        if (len != strlen(url)) return vc_err(vc, "wrong url");
-        for (uint32_t n = 0; n <= (len - 1) >> 5; n++, big_add(skey, &inc, 1)) {
-          TRY(get_storage_value(storage_proofs, skey, svalue));
-          if (memcmp(svalue, url + (n << 5), min(32, len - (n << 5)))) return vc_err(vc, "wrong url");
-        }
-      } else if (strlen(url) != svalue[31] >> 1 || memcmp(url, svalue, svalue[31] >> 1))
-        return vc_err(vc, "wrong url");
-    }
+    create_node_hash(it.token, svalue);
+    TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, index, 5, 4, skey), svalue));
   }
 
   return IN3_OK;

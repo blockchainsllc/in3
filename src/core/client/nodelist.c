@@ -1,32 +1,66 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "nodelist.h"
 #include "../util/data.h"
 #include "../util/log.h"
 #include "../util/mem.h"
+#include "../util/utils.h"
 #include "cache.h"
-#include "client.h"
 #include "context.h"
 #include "keys.h"
-#include "send.h"
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
-#ifdef __TEST__
+#define DAY 24 * 2600
 
-#endif
-
-static void free_nodeList(in3_node_t* nodeList, int count) {
+static void free_nodeList(in3_node_t* nodelist, int count) {
   int i;
   // clean chain..
   for (i = 0; i < count; i++) {
-    if (nodeList[i].url) _free(nodeList[i].url);
-    if (nodeList[i].address) b_free(nodeList[i].address);
+    if (nodelist[i].url) _free(nodelist[i].url);
+    if (nodelist[i].address) b_free(nodelist[i].address);
   }
-  _free(nodeList);
+  _free(nodelist);
 }
 
-static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   int       i, len;
-  in3_ret_t res = IN3_OK;
+  in3_ret_t res  = IN3_OK;
+  _time_t   _now = _time(); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
+  uint64_t  now  = (uint64_t) max(0, _now);
 
   // read the nodes
   d_token_t *t, *nodes = d_get(result, K_NODES), *node = NULL;
@@ -37,10 +71,11 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
     return ctx_set_error(ctx, "LastBlockNumer is missing", IN3_EINVALDT);
 
   // update last blockNumber
-  chain->lastBlock = d_long(t);
+  chain->last_block = d_long(t);
 
   // new nodelist
-  in3_node_t* newList = _calloc((len = d_len(nodes)), sizeof(in3_node_t));
+  in3_node_t*        newList = _calloc((len = d_len(nodes)), sizeof(in3_node_t));
+  in3_node_weight_t* weights = _calloc(len, sizeof(in3_node_weight_t));
 
   // set new values
   for (i = 0; i < len; i++) {
@@ -51,46 +86,93 @@ static in3_ret_t in3_client_fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_tok
       break;
     }
 
-    n->capacity = d_get_intkd(node, K_CAPACITY, 1);
-    n->index    = d_get_intkd(node, K_INDEX, i);
-    n->deposit  = d_get_longk(node, K_DEPOSIT);
-    n->props    = d_get_longkd(node, K_PROPS, 65535);
-    n->url      = d_get_stringk(node, K_URL);
+    int old_index          = i;
+    weights[i].weight      = 1;
+    n->capacity            = d_get_intkd(node, K_CAPACITY, 1);
+    n->index               = d_get_intkd(node, K_INDEX, i);
+    n->deposit             = d_get_longk(node, K_DEPOSIT);
+    n->props               = d_get_longkd(node, K_PROPS, 65535);
+    n->url                 = d_get_stringk(node, K_URL);
+    n->address             = d_get_byteskl(node, K_ADDRESS, 20);
+    uint64_t register_time = d_get_longk(node, K_REGISTER_TIME);
 
+    if (n->address)
+      n->address = b_dup(n->address); // create a copy since the src will be freed.
+    else {
+      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
+      break;
+    }
+
+    // restore the nodeweights if the address was known in the old nodeList
+    if (chain->nodelist_length <= i || !b_cmp(chain->nodelist[i].address, n->address)) {
+      old_index = -1;
+      for (int j = 0; j < chain->nodelist_length; j++) {
+        if (b_cmp(chain->nodelist[j].address, n->address)) {
+          old_index = j;
+          break;
+        }
+      }
+    }
+    if (old_index >= 0) memcpy(weights + i, chain->weights + old_index, sizeof(in3_node_weight_t));
+
+    // if this is a newly registered node, we wait 24h before we use it, since this is the time where mallicous nodes may be unregistered.
+    if (now && register_time + DAY > now && now > register_time)
+      weights[i].blacklistedUntil = register_time + DAY;
+
+    // clone the url since the src will be freed
     if (n->url)
       n->url = _strdupn(n->url, -1);
     else {
       res = ctx_set_error(ctx, "missing url in nodelist", IN3_EINVALDT);
       break;
     }
-
-    n->address = d_get_byteskl(node, K_ADDRESS, 20);
-    if (n->address)
-      n->address = b_dup(n->address);
-    else {
-      res = ctx_set_error(ctx, "missing address in nodelist", IN3_EINVALDT);
-      break;
-    }
   }
 
   if (res == IN3_OK) {
     // successfull, so we can update the chain.
-    free_nodeList(chain->nodeList, chain->nodeListLength);
-    chain->nodeList       = newList;
-    chain->nodeListLength = len;
-
+    free_nodeList(chain->nodelist, chain->nodelist_length);
     _free(chain->weights);
-    chain->weights = _calloc(len, sizeof(in3_node_weight_t));
-    for (i = 0; i < len; i++)
-      chain->weights[i].weight = 1;
-  } else
+    chain->nodelist        = newList;
+    chain->nodelist_length = len;
+    chain->weights         = weights;
+  } else {
     free_nodeList(newList, len);
+    _free(weights);
+  }
 
   return res;
 }
 
 static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   in3_ret_t res = IN3_OK;
+
+  // is there a useable required ctx?
+  in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_nodeList");
+
+  if (ctx)
+    switch (in3_ctx_state(ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
+      case CTX_WAITING_FOR_REQUIRED_CTX:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+      case CTX_SUCCESS: {
+
+        d_token_t* r = d_get(ctx->responses[0], K_RESULT);
+        if (r) {
+          // we have a result....
+          res = fill_chain(chain, ctx, r);
+          if (res < 0)
+            return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
+          else if (c->cache)
+            in3_cache_store_nodelist(ctx, chain);
+          ctx_remove_required(parent_ctx, ctx);
+          return IN3_OK;
+        } else
+          return ctx_set_error(parent_ctx, "Error updating node_list", ctx_check_response_error(ctx, 0));
+      }
+    }
+
   in3_log_debug("update the nodelist...\n");
 
   // create random seed
@@ -98,48 +180,50 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
 
   // create request
-  char req[2000];
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->nodeLimit, seed);
+  char* req = _malloc(300);
+  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->node_limit, seed);
 
   // new client
-  in3_ctx_t* ctx = new_ctx(c, req);
-  if (ctx->error)
-    res = ctx_set_error(parent_ctx, ctx->error, IN3_ERPC);
-  else {
-    res = in3_send_ctx(ctx);
-    if (res >= 0) {
-      d_token_t* r = d_get(ctx->responses[0], K_RESULT);
-      if (r) {
-        // we have a result....
-        res = in3_client_fill_chain(chain, ctx, r);
-        if (res < 0)
-          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
-      } else if (ctx->error)
-        res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
-      else if ((r = d_get(ctx->responses[0], K_ERROR))) {
-        if (d_type(r) == T_OBJECT) {
-          str_range_t s = d_to_json(r);
-          strncpy(req, s.data, s.len);
-          req[s.len] = '\0';
-          res        = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, req, IN3_ERPC));
-        } else
-          res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, d_string(r), IN3_ERPC));
-      } else
-        res = ctx_set_error(parent_ctx, "Error updating node_list without any result", IN3_ERPCNRES);
-    } else if (ctx->error)
-      res = ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
-    else
-      res = ctx_set_error(parent_ctx, "Error updating node_list without any result", IN3_ERPCNRES);
-  }
-
-  if (res >= 0 && c->cacheStorage)
-    in3_cache_store_nodelist(ctx, chain);
-  free_ctx(ctx);
-  return res;
+  return ctx_add_required(parent_ctx, ctx = ctx_new(c, req));
 }
 
+void in3_ctx_free_nodes(node_weight_t* c) {
+  node_weight_t* p = NULL;
+  while (c) {
+    p = c;
+    c = c->next;
+    _free(p);
+  }
+}
+
+in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
+  in3_ctx_t ctx;
+  memset(&ctx, 0, sizeof(ctx));
+  chain->needs_update = false;
+
+  in3_ret_t ret = update_nodelist(c, chain, &ctx);
+  if (ret == IN3_WAITING && ctx.required) {
+    ret = in3_send_ctx(ctx.required);
+    if (ret) return ret;
+    return update_nodelist(c, chain, &ctx);
+  }
+  return ret;
+}
+
+#if defined(TEST) || defined(FILTER_NODES)
+
+IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t np_config, const in3_node_props_t np) {
+  if (((np_config & np) & 0xFFFFFFFF) != (np_config & 0XFFFFFFFF)) return false;
+  uint32_t min_blk_ht_conf = in3_node_props_get(np_config, NODE_PROP_MIN_BLOCK_HEIGHT);
+  uint32_t min_blk_ht      = in3_node_props_get(np, NODE_PROP_MIN_BLOCK_HEIGHT);
+  return (min_blk_ht >= min_blk_ht_conf);
+}
+
+#endif
+
 node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_node_weight_t* weights,
-                                         int len, _time_t now, float* total_weight, int* total_found) {
+                                         int len, _time_t now, float* total_weight, int* total_found,
+                                         in3_node_props_t props) {
   int                i, p;
   float              s         = 0;
   in3_node_t*        nodeDef   = NULL;
@@ -150,7 +234,15 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
 
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
-    if (nodeDef->deposit < c->minDeposit) continue;
+    if (nodeDef->deposit < c->min_deposit) continue;
+
+#ifdef FILTER_NODES
+    // fixme: this compile time check will be redundant once the registry contract is deployed with correct node prop values
+    if (!in3_node_props_match(props, nodeDef->props)) continue;
+#else
+    UNUSED_VAR(props);
+#endif
+
     weightDef = weights + i;
     if (weightDef->blacklistedUntil > (uint64_t) now) continue;
     w = _malloc(sizeof(node_weight_t));
@@ -170,23 +262,23 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, in3_node_t* all_nodes, in3_no
   return first;
 }
 
-in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights) {
+in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights) {
   int          i;
   in3_ret_t    res   = IN3_EFIND;
   in3_chain_t* chain = NULL;
   in3_t*       c     = ctx->client;
-  for (i = 0; i < c->chainsCount; i++) {
+  for (i = 0; i < c->chains_length; i++) {
     chain = c->chains + i;
-    if (chain->chainId == chain_id) {
-      if (chain->needsUpdate || update) {
-        chain->needsUpdate = false;
+    if (chain->chain_id == chain_id) {
+      if (chain->needs_update || update || ctx_find_required(ctx, "in3_nodeList")) {
+        chain->needs_update = false;
         // now update the nodeList
         res = update_nodelist(c, chain, ctx);
         if (res < 0) break;
       }
-      *nodeListLength = chain->nodeListLength;
-      *nodeList       = chain->nodeList;
-      *weights        = chain->weights;
+      *nodelist_length = chain->nodelist_length;
+      *nodelist        = chain->nodelist;
+      *weights         = chain->weights;
       return 0;
     }
   }
@@ -194,7 +286,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_
   return res;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int request_count, in3_node_props_t props) {
 
   // get all nodes from the nodelist
   _time_t            now       = _time();
@@ -203,12 +295,12 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
   float              total_weight;
   int                all_nodes_len, total_found, i, l;
 
-  in3_ret_t res = in3_node_list_get(ctx, ctx->client->chainId, false, &all_nodes, &all_nodes_len, &weights);
+  in3_ret_t res = in3_node_list_get(ctx, ctx->client->chain_id, false, &all_nodes, &all_nodes_len, &weights);
   if (res < 0)
     return ctx_set_error(ctx, "could not find the chain", res);
 
   // filter out nodes
-  node_weight_t* found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
+  node_weight_t* found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -221,14 +313,14 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
     if (blacklisted > all_nodes_len / 2) {
       for (i = 0; i < all_nodes_len; i++)
         weights[i].blacklistedUntil = 0;
-      found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found);
+      found = in3_node_list_fill_weight(ctx->client, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
     }
 
     if (total_found == 0)
       return ctx_set_error(ctx, "No nodes found that match the criteria", IN3_EFIND);
   }
 
-  l = total_found < ctx->client->requestCount ? total_found : ctx->client->requestCount;
+  l = total_found < request_count ? total_found : request_count;
   if (total_found == l) {
     *nodes = found;
     return IN3_OK;
@@ -277,7 +369,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
   }
 
   *nodes = first;
-  free_ctx_nodes(found);
+  in3_ctx_free_nodes(found);
 
   // select them based on random
   return res;
@@ -286,12 +378,21 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes) {
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain) {
   int i;
-  for (i = 0; i < chain->nodeListLength; i++) {
-    if (chain->nodeList[i].url)
-      _free(chain->nodeList[i].url);
-    if (chain->nodeList[i].address)
-      b_free(chain->nodeList[i].address);
+  for (i = 0; i < chain->nodelist_length; i++) {
+    if (chain->nodelist[i].url)
+      _free(chain->nodelist[i].url);
+    if (chain->nodelist[i].address)
+      b_free(chain->nodelist[i].address);
   }
-  _free(chain->nodeList);
+  _free(chain->nodelist);
   _free(chain->weights);
+}
+
+void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint8_t value) {
+  if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {
+    uint64_t dp_ = value & 0xFFU;
+    *node_props  = (*node_props & 0xFFFFFFFF) | (dp_ << 32U);
+  } else {
+    (value != 0) ? ((*node_props) |= type) : ((*node_props) &= ~type);
+  }
 }

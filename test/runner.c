@@ -1,6 +1,41 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #ifndef TEST
 #define TEST
 #endif
+#include "../src/api/eth1/eth_api.h"
 #include "../src/core/client/client.h"
 #include "../src/core/client/context.h"
 #include "../src/core/util/log.h"
@@ -24,6 +59,8 @@ int ignore_property(char* name, int full_proof) {
   if (strcmp(name, "registryId") == 0) return 1;
   // it is calculated, so need to check
   if (strcmp(name, "proofHash") == 0) return 1;
+  // weight is not part of the proofHash
+  if (strcmp(name, "weight") == 0) return 1;
 
   // size should be verified if proof = full
   if (!full_proof && strcmp(name, "size") == 0) return 1;
@@ -148,13 +185,13 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   }
 }
 
-static int send_mock(char** urls, int urls_len, char* payload, in3_response_t* result) {
+static int send_mock(in3_request_t* req) {
   // printf("payload: %s\n",payload);
   int i;
-  for (i = 0; i < urls_len; i++)
+  for (i = 0; i < req->urls_len; i++)
     // rioght now we always add the same response
     // TODO later support array of responses.
-    sb_add_range(&(result + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
+    sb_add_range(&(req->results + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
 
   if (_tmp_response) {
     free(_tmp_response->data);
@@ -172,8 +209,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   char       params[10000];
 
   // configure in3
-  c->requestCount = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
-  method          = d_get_string(request, "method");
+  c->request_count = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
+  method           = d_get_string(request, "method");
 
   str_range_t s = d_to_json(d_get(request, key("params")));
   if (!method) {
@@ -248,15 +285,15 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     sprintf(temp, "Request #%i", counter);
   printf("\n%2i : %-60s ", counter, temp);
 
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
   int    j;
   c->max_attempts        = 1;
-  c->includeCode         = 1;
+  c->include_code        = 1;
   c->transport           = send_mock;
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
-  for (j = 0; j < c->chainsCount; j++) {
-    c->chains[j].needsUpdate = false;
+  for (j = 0; j < c->chains_length; j++) {
+    c->chains[j].needs_update = false;
     if (registry_id) {
       c->chains[j].version = 2;
       memcpy(c->chains[j].registry_id, d_bytesl(registry_id, 32)->data, 32);
@@ -266,14 +303,14 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   c->proof = proof;
 
   d_token_t* signatures = d_get(test, key("signatures"));
-  c->chainId            = d_get_longkd(test, key("chainId"), 1);
+  c->chain_id           = d_get_longkd(test, key("chainId"), 1);
   if (signatures) {
-    c->signatureCount = d_len(signatures);
-    for (j = 0; j < c->chainsCount; j++) {
-      if (c->chains[j].chainId == c->chainId) {
-        for (i = 0; i < c->chains[j].nodeListLength; i++) {
-          if (i < c->signatureCount)
-            memcpy(c->chains[j].nodeList[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
+    c->signature_count = d_len(signatures);
+    for (j = 0; j < c->chains_length; j++) {
+      if (c->chains[j].chain_id == c->chain_id) {
+        for (i = 0; i < c->chains[j].nodelist_length; i++) {
+          if (i < c->signature_count)
+            memcpy(c->chains[j].nodelist[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
           else
             c->chains[j].weights[i].blacklistedUntil = 0xFFFFFFFFFFFFFF;
         }
@@ -368,7 +405,7 @@ int runRequests(char** names, int test_index, int mem_track) {
     }
 
     free(content);
-    free_json(parsed);
+    json_free(parsed);
     name = names[++n];
   }
   printf("\n%2i of %2i successfully tested", total - failed, total);
@@ -384,7 +421,9 @@ int runRequests(char** names, int test_index, int mem_track) {
 
 int main(int argc, char* argv[]) {
   use_color = 1;
+  in3_log_set_level(LOG_INFO);
   in3_register_eth_full();
+  in3_register_eth_api();
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
   char** names = malloc(sizeof(char*));
@@ -392,6 +431,8 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-t") == 0)
       testIndex = atoi(argv[++i]);
+    else if (strcmp(argv[i], "-d") == 0)
+      in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-m") == 0)
       membrk = atoi(argv[++i]);
     else {

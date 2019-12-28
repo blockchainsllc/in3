@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "stringbuilder.h"
 #include "../util/bytes.h"
 #include "../util/utils.h"
@@ -9,7 +43,7 @@
 
 static const size_t MIN_SIZE = 32;
 
-sb_t* sb_new(char* chars) {
+sb_t* sb_new(const char* chars) {
   sb_t* sb     = _malloc(sizeof(sb_t));
   sb->data     = _malloc(MIN_SIZE);
   sb->allocted = MIN_SIZE;
@@ -38,7 +72,7 @@ static void check_size(sb_t* sb, size_t len) {
 #endif
 }
 
-sb_t* sb_add_chars(sb_t* sb, char* chars) {
+sb_t* sb_add_chars(sb_t* sb, const char* chars) {
   int l = strlen(chars);
   if (l == 0 || chars == NULL) return sb;
   check_size(sb, l);
@@ -62,7 +96,7 @@ sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len) {
   sb->data[sb->len] = 0;
   return sb;
 }
-sb_t* sb_add_key_value(sb_t* sb, char* key, char* value, int lv, bool as_string) {
+sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int lv, bool as_string) {
   if (lv == 0) return sb;
   int p = sb->len, lk = strlen(key);
   check_size(sb, (as_string ? 2 : 0) + lk + 3 + lv);
@@ -80,7 +114,7 @@ sb_t* sb_add_key_value(sb_t* sb, char* key, char* value, int lv, bool as_string)
   return sb;
 }
 
-sb_t* sb_add_bytes(sb_t* sb, char* prefix, bytes_t* bytes, int len, bool as_array) {
+sb_t* sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array) {
   int p = sb->len, lk = prefix == NULL ? 0 : strlen(prefix), s = 0, i;
   for (i = 0; i < len; i++) s += bytes[i].len * 2 + 4 + (i > 0 ? 1 : 0);
   check_size(sb, s + lk + (as_array ? 2 : 0));

@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "big.h"
 #include "../../../core/util/utils.h"
 #include "../../../third-party/tommath/tommath.h"
@@ -51,7 +85,7 @@ int big_signed(uint8_t* val, wlen_t len, uint8_t* dst) {
 }
 
 void big_shift_left(uint8_t* a, wlen_t len, int bits) {
-  wlen_t        r     = bits % 8;
+  wlen_t        r;
   uint_fast16_t carry = 0;
   int           i;
   if ((r = bits % 8)) {
@@ -67,7 +101,7 @@ void big_shift_left(uint8_t* a, wlen_t len, int bits) {
 }
 
 void big_shift_right(uint8_t* a, wlen_t len, int bits) {
-  wlen_t        r     = bits % 8;
+  wlen_t        r;
   uint_fast16_t carry = 0;
   int           i;
   if ((r = bits % 8)) {
@@ -439,7 +473,7 @@ int big_div(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* r
 }
 
 int big_mod(uint8_t* a, wlen_t la, uint8_t* b, wlen_t lb, wlen_t sig, uint8_t* res) {
-  wlen_t  l, l2;
+  wlen_t  l = 0, l2;
   uint8_t tmp[65];
 
   optimize_len(a, la);

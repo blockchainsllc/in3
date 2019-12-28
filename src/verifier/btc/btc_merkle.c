@@ -24,9 +24,9 @@ static void create_proofs(uint8_t* hashes, int hashes_len, SHA256_CTX* ctx, byte
 }
 
 in3_ret_t btc_merkle_create_root(bytes32_t* hashes, int hashes_len, bytes32_t dst) {
-  uint8_t    tmp[hashes_len << 5]; // we create an byte array with hashes_len*32 to store all hashes
-  SHA256_CTX ctx;                  // we want to reuse the struct later
-  if (hashes_len == 0) {           // emptyList = NULL hash
+  uint8_t*   tmp = alloca(hashes_len << 5); // we create an byte array with hashes_len*32 to store all hashes
+  SHA256_CTX ctx;                           // we want to reuse the struct later
+  if (hashes_len == 0) {                    // emptyList = NULL hash
     memset(dst, 0, 32);
     return IN3_OK;
   }
@@ -37,8 +37,8 @@ in3_ret_t btc_merkle_create_root(bytes32_t* hashes, int hashes_len, bytes32_t ds
 }
 
 bytes_t* btc_merkle_create_proof(bytes32_t* hashes, int hashes_len, int index) {
-  uint8_t    tmp[hashes_len << 5]; // we create an byte array with hashes_len*32 to store all hashes
-  SHA256_CTX ctx;                  // we want to reuse the struct later
+  uint8_t*   tmp = alloca(hashes_len << 5); // we create an byte array with hashes_len*32 to store all hashes
+  SHA256_CTX ctx;                           // we want to reuse the struct later
   if (hashes_len == 0 || index >= hashes_len) return NULL;
   bytes_builder_t* bb = bb_new();
   for (int i = 0; i < hashes_len; i++) rev_copy(tmp + (i << 5), hashes[i]); // copy the hashes in reverse order into the buffer

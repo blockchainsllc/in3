@@ -3,7 +3,7 @@
         "descr": "correct TransactionReceipt as binary",
         "success": true,
         "binaryFormat": true,
-        "chainId": "0x44d",
+        "chainId": "0x2a",
         "request": {
             "id": 1,
             "jsonrpc": "2.0",
@@ -72,7 +72,7 @@
         "descr": "correct TransactionReceipt",
         "success": true,
         "fuzzer": true,
-        "chainId": "0x44d",
+        "chainId": "0x2a",
         "request": {
             "id": 1,
             "jsonrpc": "2.0",
@@ -148,7 +148,7 @@
                 "0x5dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
             ],
             "in3": {
-                "chainId": "0x44d",
+                "chainId": "0x2a",
                 "verification": "proof"
             }
         },
@@ -220,7 +220,7 @@
                 "0x1dc2a9ec73abfe0640f27975126bbaf14624967e2b0b7c2b3a0fb6111f0d3c5e"
             ],
             "in3": {
-                "chainId": "0x44d",
+                "chainId": "0x2a",
                 "verification": "proof"
             }
         },

@@ -1,5 +1,39 @@
 
 
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #ifndef TEST
 #define TEST
 #endif
@@ -178,12 +212,12 @@ int check_post_state(evm_t* evm, d_token_t* post) {
   for (i = 0, t = post + 1; i < d_len(post); i++, t = d_next(t)) {
     char*   adr_str = d_get_keystr(t->key);
     uint8_t address[20];
-    hex2byte_arr(adr_str + 2, strlen(adr_str) - 2, address, 20);
+    hex_to_bytes(adr_str + 2, strlen(adr_str) - 2, address, 20);
     storages = d_get(t, key("storage"));
     for (j = 0, s = storages + 1; j < d_len(storages); j++, t = d_next(s)) {
       char*      s_str = d_get_keystr(s->key);
       uint8_t    s_key[32];
-      int        l_key    = hex2byte_arr(s_str + 2, strlen(s_str) - 2, s_key, 32);
+      int        l_key    = hex_to_bytes(s_str + 2, strlen(s_str) - 2, s_key, 32);
       bytes_t    val_must = d_to_bytes(s);
       storage_t* st       = evm_get_storage(evm, address, s_key, l_key, 0);
       if (!st) {
@@ -312,7 +346,7 @@ int generate_state_root(evm_t* evm, uint8_t* dst) {
   int        i;
   for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
     uint8_t adr[20];
-    hex2byte_arr(d_get_keystr(t->key) + 2, 40, adr, 20);
+    hex_to_bytes(d_get_keystr(t->key) + 2, 40, adr, 20);
     evm_get_account(evm, adr, 1);
   }
   EVM_DEBUG_BLOCK({
@@ -362,26 +396,25 @@ static void uint256_setb(uint8_t* dst, uint8_t* data, int len) {
 
 #ifdef EVM_GAS
 static void read_accounts(evm_t* evm, d_token_t* accounts) {
-    int        i, j;
-    d_token_t *t, *storage, *s;
-    for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-        char*   adr_str = d_get_keystr(t->key);
-        uint8_t address[20];
-        hex2byte_arr(adr_str + 2, strlen(adr_str) - 2, address, 20);
-        evm_get_account(evm, address, true);
-        storage = d_get(t, key("storage"));
-        if (storage) {
-            for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
-                char*   k = d_get_keystr(s->key);
-                uint8_t kk[32];
-                hex2byte_arr(k + 2, strlen(k) - 2, kk, 32);
-                evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true);
-            }
-        }
+  int        i, j;
+  d_token_t *t, *storage, *s;
+  for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
+    char*   adr_str = d_get_keystr(t->key);
+    uint8_t address[20];
+    hex_to_bytes(adr_str + 2, strlen(adr_str) - 2, address, 20);
+    evm_get_account(evm, address, true);
+    storage = d_get(t, key("storage"));
+    if (storage) {
+      for (j = 0, s = storage + 1; j < d_len(storage); j++, s = d_next(s)) {
+        char*   k = d_get_keystr(s->key);
+        uint8_t kk[32];
+        hex_to_bytes(k + 2, strlen(k) - 2, kk, 32);
+        evm_get_storage(evm, address, kk, (strlen(k) - 1) / 2, true);
+      }
     }
+  }
 }
 #endif
-
 
 static d_token_t* get_test_val(d_token_t* root, char* name, d_token_t* indexes) {
   d_token_t* array = d_get(root, key(name));
@@ -396,6 +429,8 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
   d_token_t* post        = d_get(test, key("post"));
   d_token_t* indexes     = NULL;
   uint64_t   total_gas;
+  address_t  _to;
+  memset(_to, 0, 20);
 
   // create vm
   evm_t evm;
@@ -419,8 +454,9 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
 
   evm.properties = props | (exec ? EVM_PROP_FRONTIER : 0); //EVM_PROP_CONSTANTINOPL;
 
-  evm.env     = runner_get_env;
-  evm.env_ptr = test;
+  evm.env      = runner_get_env;
+  evm.env_ptr  = test;
+  evm.chain_id = 1;
 
   evm.return_data.data = NULL;
   evm.return_data.len  = 0;
@@ -463,7 +499,10 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     evm.caller = caller;
     evm.origin = caller;
 
-    evm.address = d_get_bytes(transaction, "to")->data;
+    bytes_t to_address = d_to_bytes(d_get(transaction, K_TO));
+    evm.address        = _to;
+    if (to_address.len) memcpy(_to, to_address.data, 20);
+    //      memcpy(_to + 32 - to_address.len, to_address.data, to_address.len);
     evm.account = evm.address;
 
     if (d_getl(transaction, K_TO, 20) && d_len(d_getl(transaction, K_TO, 20)))
@@ -482,6 +521,31 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     // prepare all accounts
     read_accounts(&evm, d_get(test, key("pre")));
 
+    // we need to create an account since we don't have one
+    if (big_is_zero(evm.address, 20)) {
+
+      //  calculate the generated address
+      uint8_t*         nonce = evm_get_account(&evm, caller, true)->nonce;
+      bytes_builder_t* bb    = bb_new();
+      bytes_t          tmp   = bytes(caller, 20);
+      bytes32_t        hash;
+      rlp_encode_item(bb, &tmp);
+      if (big_is_zero(nonce, 32))
+        tmp.len = 0;
+      else {
+        tmp.len  = 32;
+        tmp.data = nonce;
+        optimize_len(tmp.data, tmp.len);
+      }
+      rlp_encode_item(bb, &tmp);
+      rlp_encode_to_list(bb);
+      sha3_to(&bb->b, hash);
+      bb_free(bb);
+      memcpy(_to, hash + 12, 20);
+
+      evm_get_account(&evm, _to, true)->nonce[31]++;
+    }
+
     // increase the nonce and pay for gas
     account_t* c_adr = evm_get_account(&evm, evm.caller, true);
     uint256_setn(c_adr->nonce, bytes_to_long(c_adr->nonce, 32) + 1);
@@ -494,6 +558,7 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
     l = big_add(txval, l, evm.call_value.data, evm.call_value.len, tmp, 32);
     if (big_cmp(tmp, l, c_adr->balance, 32) > 0) {
       print_error("not enough value to pay for the gas");
+      evm_free(&evm);
       return 1;
     }
     l = big_sub(c_adr->balance, 32, tmp, l, txval);
@@ -521,8 +586,13 @@ int run_evm(d_token_t* test, uint32_t props, uint64_t* ms, char* fork_name, int 
   prepare_header(d_get(test, key("env")));
 
   uint64_t start = clock(), gas_before = evm.gas;
-  int      fail = evm_run(&evm);
-  *ms           = (clock() - start) / 1000;
+#ifdef EVM_GAS
+  if (transaction && !d_len(d_get(transaction, K_TO)))
+    evm.gas -= G_TXCREATE;
+#endif
+
+  int fail = evm_run(&evm, evm.account);
+  *ms      = (clock() - start) / 1000;
 
   if (transaction) {
 #ifdef EVM_GAS

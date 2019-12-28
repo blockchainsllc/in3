@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "../../third-party/crypto/sha3.h"
 #include "bytes.h"
 #include "debug.h"
@@ -11,19 +45,6 @@ void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
   memcpy(dst + 32 - src_len, src, src_len);
 }
 
-int hash_cmp(uint8_t* a, uint8_t* b) {
-  int len = 31;
-
-  while (a[len] == b[len] && len--)
-    ;
-
-  return ++len;
-}
-
-int size_of_bytes(int str_len) {
-  int out_len = (str_len & 1) ? (str_len + 1) / 2 : str_len / 2;
-  return out_len;
-}
 void long_to_bytes(uint64_t val, uint8_t* dst) {
   *dst       = val >> 56 & 0xFF;
   *(dst + 1) = val >> 48 & 0xFF;
@@ -41,7 +62,7 @@ void int_to_bytes(uint32_t val, uint8_t* dst) {
   *(dst + 3) = val & 0xFF;
 }
 
-uint8_t strtohex(char c) {
+uint8_t hexchar_to_int(char c) {
   if (c >= '0' && c <= '9')
     return c - '0';
   if (c >= 'a' && c <= 'f')
@@ -50,6 +71,7 @@ uint8_t strtohex(char c) {
     return c - 'A' + 10;
   return 255;
 }
+#ifdef __ZEPHYR__
 
 const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
   // buffer has to be at least 21 bytes (max u64 val = 18446744073709551615 has 20 digits + '\0')
@@ -64,11 +86,12 @@ const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
 
   return &buffer[pos];
 }
+#endif
 
-int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {
+int hex_to_bytes(char* buf, int len, uint8_t* out, int outbuf_size) {
   if (len == -1) {
     len = strlen(buf);
-    if (*buf == '0' && buf[1] == 'x') {
+    if (len >= 2 && *buf == '0' && buf[1] == 'x') {
       buf += 2;
       len -= 2;
     }
@@ -81,20 +104,20 @@ int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {
     return -1; /* Output buffer is smaller than need */
 
   while (i >= 0) {
-    out[j] = strtohex(buf[i--]);
+    out[j] = hexchar_to_int(buf[i--]);
     if (i >= 0) {
-      out[j--] |= strtohex(buf[i--]) << 4;
+      out[j--] |= hexchar_to_int(buf[i--]) << 4;
     }
   }
 
   return out_len;
 }
-bytes_t* hex2byte_new_bytes(char* buf, int len) {
+bytes_t* hex_to_new_bytes(char* buf, int len) {
   int bytes_len = (len & 1) ? (len + 1) / 2 : len / 2;
 
   uint8_t* b     = _malloc(bytes_len);
   bytes_t* bytes = _malloc(sizeof(bytes_t));
-  hex2byte_arr(buf, len, b, bytes_len);
+  hex_to_bytes(buf, len, b, bytes_len);
   bytes->data = b;
   bytes->len  = bytes_len;
   return bytes;
@@ -137,7 +160,7 @@ bytes_t* sha3(bytes_t* data) {
   return out;
 }
 
-uint64_t bytes_to_long(uint8_t* data, int len) {
+uint64_t bytes_to_long(const uint8_t* data, int len) {
   uint64_t res = 0;
   int      i;
   for (i = 0; i < len; i++) {
@@ -146,11 +169,13 @@ uint64_t bytes_to_long(uint8_t* data, int len) {
   }
   return res;
 }
-uint64_t c_to_long(char* a, int l) {
+uint64_t char_to_long(const char* a, int l) {
+  if (!a) return -1;
+  if (l == -1) l = strlen(a);
   if (a[0] == '0' && a[1] == 'x') {
     long val = 0;
     for (int i = l - 1; i > 1; i--)
-      val |= ((uint64_t) strtohex(a[i])) << (4 * (l - 1 - i));
+      val |= ((uint64_t) hexchar_to_int(a[i])) << (4 * (l - 1 - i));
     return val;
   } else if (l < 12) {
     char temp[12];
@@ -176,7 +201,70 @@ int min_bytes_len(uint64_t val) {
   return 8;
 }
 
-uint64_t hex2long(char* buf) {
-  uint8_t tmp[8];
-  return bytes_to_long(tmp, hex2byte_arr(buf, -1, tmp, 8));
+char* str_replace(char* orig, char* rep, char* with) {
+  char* result;
+  char* ins;
+  char* tmp;
+  int   len_rep;
+  int   len_with;
+  int   len_front;
+  int   count;
+
+  if (!orig || !rep)
+    return NULL;
+  len_rep = strlen(rep);
+  if (len_rep == 0)
+    return NULL;
+  if (!with)
+    with = "";
+  len_with = strlen(with);
+
+  ins = orig;
+  for (count = 0; (tmp = strstr(ins, rep)); ++count) {
+    ins = tmp + len_rep;
+  }
+
+  tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+
+  if (!result)
+    return NULL;
+
+  while (count--) {
+    ins       = strstr(orig, rep);
+    len_front = ins - orig;
+    tmp       = strncpy(tmp, orig, len_front) + len_front;
+    tmp       = strcpy(tmp, with) + len_with;
+    orig += len_front + len_rep;
+  }
+  strcpy(tmp, orig);
+  return result;
+}
+
+char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep) {
+  if (!orig) return NULL;
+
+  size_t l = strlen(orig);
+  if (pos > l) return NULL;
+
+  char* tmp = _malloc(l + len + 1);
+  if (tmp) {
+    strncpy(tmp, orig, pos);
+    tmp[pos] = '\0';
+    if (rep) strcat(tmp, rep);
+    strcat(tmp, orig + pos + len);
+  }
+  return tmp;
+}
+
+char* str_find(char* haystack, const char* needle) {
+  if (haystack == NULL || needle == NULL)
+    return NULL;
+
+  for (; *haystack; haystack++) {
+    const char *h, *n;
+    for (h = haystack, n = needle; *h && *n && (*h == *n); ++h, ++n) {}
+    if (*n == '\0')
+      return haystack;
+  }
+  return NULL;
 }

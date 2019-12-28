@@ -9,10 +9,10 @@
 
 // check if 2 byte arrays are equal where one is a bytes while the other one is a hex string (without 0x)
 static bool equals_hex(bytes_t data, char* hex) {
-  uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                  // calc len of bytes from hex
-  if (bl != data.len || sl % 1) return false;                                                         // we do not support odd length of hex
-  for (uint32_t i = 0; i < bl; i++) {                                                                 // compare each byte
-    if (data.data[i] != ((strtohex(hex[i << 1]) << 4) | (strtohex(hex[(i << 1) + 1])))) return false; // cancel on first difference
+  uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                              // calc len of bytes from hex
+  if (bl != data.len || sl % 1) return false;                                                                     // we do not support odd length of hex
+  for (uint32_t i = 0; i < bl; i++) {                                                                             // compare each byte
+    if (data.data[i] != ((hexchar_to_int(hex[i << 1]) << 4) | (hexchar_to_int(hex[(i << 1) + 1])))) return false; // cancel on first difference
   }
   return true;
 }
@@ -60,7 +60,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   if (json)
     btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
   else                                                         //
-    hex2byte_arr(d_string(vc->result), 160, block_header, 80); // or use the first 80 byte of the block
+    hex_to_bytes(d_string(vc->result), 160, block_header, 80); // or use the first 80 byte of the block
 
   // verify the proof of work
   if ((ret = btc_verify_header(vc, block_header, tmp))) return ret;
@@ -72,9 +72,9 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   if (json) {
     d_token_t* tx       = d_get(vc->result, key("tx"));                                                                             // get transactions node
     int        tx_count = d_len(tx), i = 0;                                                                                         // and count its length
-    bytes32_t  tx_hashes[tx_count];                                                                                                 // to reserve hashes-array
+    bytes32_t* tx_hashes = alloca(tx_count);                                                                                        // to reserve hashes-array
     for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), i++)                                                        // iterate through all txs
-      hex2byte_arr(d_string(iter.token), 64, tx_hashes[i], 32);                                                                     // and copy the hash into the array
+      hex_to_bytes(d_string(iter.token), 64, tx_hashes[i], 32);                                                                     // and copy the hash into the array
     btc_merkle_create_root(tx_hashes, tx_count, tmp);                                                                               // calculate the merkle root
     rev_copy(tmp2, tmp);                                                                                                            // we need to turn it into little endian be cause ini the header it is store as le.
     if (memcmp(tmp2, btc_block_get(bytes(block_header, 80), BTC_B_MERKLE_ROOT).data, 32)) return vc_err(vc, "Invalid Merkle root"); // compare the hash
@@ -83,16 +83,16 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
     uint64_t difficulty = 0xFFFF000000000000L / bytes_to_long(tmp2 + 4, 8);                                                         // and calc the difficulty
     if (difficulty >> 2 != d_get_long(vc->result, "difficulty") >> 2) return vc_err(vc, "Wrong difficulty");                        // which must match the one in the json
     if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, "hash"))) return vc_err(vc, "Wrong blockhash in json");         // check the requested hash
-    if (d_get_int(vc->result, "nTx") != (uint32_t) tx_count) return vc_err(vc, "Wrong nTx");                                        // check the nuumber of transactions
+    if (d_get_int(vc->result, "nTx") != (int32_t) tx_count) return vc_err(vc, "Wrong nTx");                                         // check the nuumber of transactions
 
   } else {
-    char*   block_hex = d_string(vc->result);
-    uint8_t block_data[strlen(block_hex) / 2];
-    bytes_t block = bytes(block_data, strlen(block_hex) / 2);
-    hex2byte_arr(block_hex, -1, block.data, block.len);
-    int       tx_count = btc_get_transaction_count(block);
-    bytes_t   transactions[tx_count];
-    bytes32_t tx_hashes[tx_count];
+    char*    block_hex  = d_string(vc->result);
+    uint8_t* block_data = alloca(strlen(block_hex) / 2);
+    bytes_t  block      = bytes(block_data, strlen(block_hex) / 2);
+    hex_to_bytes(block_hex, -1, block.data, block.len);
+    int        tx_count     = btc_get_transaction_count(block);
+    bytes_t*   transactions = alloca(tx_count);
+    bytes32_t* tx_hashes    = alloca(tx_count);
     btc_get_transactions(block, transactions);
 
     // now calculate the transactionhashes
@@ -131,7 +131,7 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   if (strcmp(method, "getblock") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
-    hex2byte_arr(d_string(block_hash), 64, hash, 32);
+    hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1);
   }
   return vc_err(vc, "Unsupported method");
@@ -171,7 +171,7 @@ int main() {
 
   uint8_t block_data[strlen(block_hex) / 2];
   bytes_t block = bytes(block_data, strlen(block_hex) / 2);
-  hex2byte_arr(block_hex, -1, block.data, block.len);
+  hex_to_bytes(block_hex, -1, block.data, block.len);
 
   print("version    = ", btc_block_get(block, BTC_B_VERSION), "hex");
   print("parent_hash= ", btc_block_get(block, BTC_B_PARENT_HASH), "hash");

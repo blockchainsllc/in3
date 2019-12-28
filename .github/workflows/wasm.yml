@@ -1,0 +1,32 @@
+name: WASM
+
+on: [push]
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup Emscripten
+        uses: lovasoa/setup-emscripten@v1
+      - name: configure
+        run: mkdir build; cd build; emconfigure cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+      - name: make
+        run: cd build; make
+      - name: test
+        run: cd test/bindings/wasm; npm i; npm test
+
+  asmjs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup Emscripten
+        uses: lovasoa/setup-emscripten@v1
+      - name: configure
+        run: mkdir build; cd build; emconfigure cmake -DWASM=true -DASMJS=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+      - name: make
+        run: cd build; make
+      - name: test
+        run: cd test/bindings/wasm; npm i; npm test

@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/mem.h"
@@ -10,6 +44,7 @@
 #include "../../../verifier/eth1/nano/vhist.h"
 #include <string.h>
 
+#ifdef POA
 /** gets the signer from a blockheader in a aura chain.*/
 static in3_ret_t get_aura_signer(in3_vctx_t* vc, bytes_t* header, uint8_t* dst) {
   bytes_t         sig, bare;
@@ -73,11 +108,11 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   // get validators from contract
   in3_proof_t proof_     = vc->ctx->client->proof;
   vc->ctx->client->proof = PROOF_NONE;
-  in3_ctx_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorlist", "[]");
+  in3_ctx_t* ctx_        = in3_client_rpc_ctx(vc->ctx->client, "in3_validatorList", "[]");
   vc->ctx->client->proof = proof_;
   res                    = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx_);
+    ctx_free(ctx_);
     return vc_err(vc, ctx_->error);
   }
 
@@ -172,7 +207,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
     rlp_decode(&log_data, 1, &tmp);
     rlp_decode_in_list(&tmp, 0, &tmp);
-    bytes_t* t = hex2byte_new_bytes("55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 64);
+    bytes_t* t = hex_to_new_bytes("55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 64);
     if (!bytes_cmp(tmp, *t))
       return vc_err(vc, "Wrong topic in log");
     b_free(t);
@@ -189,7 +224,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     bb_write_raw_bytes(vbb, abi, 32);
 
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-      b = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+      b = (d_type(vitr.token) == T_STRING) ? hex_to_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
       memset(abi, 0, 32 - b->len);
       memcpy(abi + 32 - b->len, b->data, b->len);
       bb_write_raw_bytes(vbb, abi, 32);
@@ -207,7 +242,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
   vh_free(vh);
   *vhp = vh_init_nodelist(d_get(ctx_->responses[0], K_RESULT));
-  free_ctx(ctx_);
+  ctx_free(ctx_);
   return res;
 }
 
@@ -295,7 +330,7 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
 
   return passed * 100 / val_len >= needed_finality ? IN3_OK : vc_err(vc, "not enough blocks to reach finality");
 }
-
+#endif
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
@@ -323,7 +358,8 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     res = vc_err(vc, "wrong blockhash");
 
   // if we expect no signatures ...
-  if (res == IN3_OK && vc->config->signaturesCount == 0) {
+  if (res == IN3_OK && vc->config->signers_length == 0) {
+#ifdef POA
     vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
     if (vc->chain && vc->chain->spec && eth_get_engine(vc, header, vc->chain->spec->result, &vh) == ENGINE_AURA) {
@@ -342,7 +378,8 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       res = IN3_OK; // we didn't request signatures so blockheader should be ok.
     }
     vh_free(vh);
-  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
+#endif
+  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signers_length))
     // no signatures found,even though we expected some.
     res = vc_err(vc, "missing signatures");
   else if (res == IN3_OK) {
@@ -371,7 +408,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    if (confirmed != (1 << vc->config->signaturesCount) - 1) // we must collect all signatures!
+    if (confirmed != (1 << vc->config->signers_length) - 1) // we must collect all signatures!
       res = vc_err(vc, "missing signatures");
   }
 

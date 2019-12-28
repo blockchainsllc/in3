@@ -1,0 +1,335 @@
+[
+    {
+        "descr": "correct transaction",
+        "success": true,
+        "fuzzer": true,
+        "request": {
+            "method": "eth_getTransactionByBlockNumberAndIndex",
+            "params": [
+                "0x88c26d",
+                "0x0"
+            ]
+        },
+        "response": [
+            {
+                "result": {
+                    "blockHash": "0x2655d2034ff79aa52251218f3e9b4b368bacc1e53b571933ebfcf42913cc2f31",
+                    "blockNumber": "0x88c26d",
+                    "chainId": "0x1",
+                    "condition": null,
+                    "creates": null,
+                    "from": "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c",
+                    "gas": "0x186a0",
+                    "gasPrice": "0x165a0bc00",
+                    "hash": "0xc85dee6a30542548d32e5b64c8b0c953c3cc2856da186d03599cb988eaeaf58d",
+                    "input": "0x",
+                    "nonce": "0x5c063f",
+                    "publicKey": "0xa2409d906e986393077c83f24aac562b98b2740b3230b35564dce50a37192575e6a4d5d3e6bd7a343c14a92266dd049fa146e47a56e2e4ce96de69011c211ccf",
+                    "r": "0x466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152",
+                    "raw": "0xf871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "s": "0x353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "standardV": "0x0",
+                    "to": "0x8fd00f170fdf3772c5ebdcd90bf257316c69ba45",
+                    "transactionIndex": "0x0",
+                    "v": "0x25",
+                    "value": "0x2d37b9ea033c9cc2e"
+                },
+                "in3": {
+                    "proof": {
+                        "type": "transactionProof",
+                        "block": "0xf9021aa02363ed48bb67da6e9c97864e70de2ac3a6143068e285577a250af399bbf4950aa01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347945a0b54d5dc17e0aadc383d2db43b0a0d3e029c4ca06b09089d4042098ca54252d2abe9f5531251c0d8de27346291d5cdaf9121280ba0ab7c570fc942cc547ebdb0b05d7e42bee563b4c3e5341ecfd39b92fe3a3d7913a0790dd5a813fe909fab396096fa1bbd542bc0da778c3aeba33c80ea425e5defccb90100a26228b104ec15ac0290e4c002723af43224589212a012cc0d5109881b0074872cca40434832203004c0b42210c22591ea90490a8e8d91c301ba408d223a52224912dc9130268287c6049579444016d02a5457260e4419e4e852e606a86440e0804002242a6c40b001a08e12124c083a0209302438444434c9708731909124482800002c5da07a91044a9041a2300e9e107321ed40132217150564bb7490610107c1e1020ee41a88d68f02f581ec5010905c384702ede63027cb2cc8a842515eb793d262994a666815564033c338ee0d08ced156b02e4156231a4ada428c202235d230731393385e4ec4029008462c81012e4120021a12c564618a39209c6819870895b2cedcb6df8388c26d8398688883985bcc845dd3eea0995050594520737061726b706f6f6c2d6574682d636e2d687a33a0b6f21a9520636480e18d5ad91565e8f17058c38f9bbe9be5c1f4e9dd6f8ffb49887e8cc9080505c5a9",
+                        "merkleProof": [
+                            "0xf90131a0a0238558b8ee26eafbe6dafda0eb581891725374d5201458522e5b35f606832aa021f79f58c060b61c548a2159a4cd986c9bb6b15ad329307e596032e3317479afa0f497f8ab634b68c97e95b4fe60201a778b0bc045e9db917a2eaae4ff0ceebbfea07093863a3b8b20919ddc82ef3f2f32d1045948b736ccdd24f82f6bb9dadd9fa4a0f992b71eeb4c131124964a8b95ca70787ea134a416ceab829f7cf9e083dad02ca0d3ce0872c7aa429d60f2aa08ab697ea57c48e8d25c874fc66cd93a067a22e051a056eefb96d8b869078857f71c10203456d88cc4c71501bf3ed660571ec096eda2a0b05e2d76a03071f3a0cf8c06c56982b163726cd463038549321530a71b8cd060a0a0beef6f6448df1ffff940a8b1031edb72cd1c119ce1b36011c6f35a4478ed528080808080808080",
+                            "0xf851a0ef87751b75eef075b807c1e4cbd3d681e5f233e30a9b452672b59e327767da1ea0dd923913ffb1494078eb6803dca27921848e680e06310184a8113211e570a745808080808080808080808080808080",
+                            "0xf87620b873f871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b"
+                        ],
+                        "txIndex": 0,
+                        "signatures": []
+                    },
+                    "version": "2.0.0",
+                    "currentBlock": 8962671,
+                    "lastValidatorChange": 0,
+                    "lastNodeList": 8669495,
+                    "execTime": 914,
+                    "rpcTime": 795,
+                    "rpcCount": 1
+                }
+            }
+        ]
+    },
+    {
+        "descr": "mismatched txn id",
+        "success": false,
+        "fuzzer": true,
+        "request": {
+            "method": "eth_getTransactionByBlockNumberAndIndex",
+            "params": [
+                "0x88c26d",
+                "0x1"
+            ]
+        },
+        "response": [
+            {
+                "result": {
+                    "blockHash": "0x2655d2034ff79aa52251218f3e9b4b368bacc1e53b571933ebfcf42913cc2f31",
+                    "blockNumber": "0x88c26d",
+                    "chainId": "0x1",
+                    "condition": null,
+                    "creates": null,
+                    "from": "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c",
+                    "gas": "0x186a0",
+                    "gasPrice": "0x165a0bc00",
+                    "hash": "0xc85dee6a30542548d32e5b64c8b0c953c3cc2856da186d03599cb988eaeaf58d",
+                    "input": "0x",
+                    "nonce": "0x5c063f",
+                    "publicKey": "0xa2409d906e986393077c83f24aac562b98b2740b3230b35564dce50a37192575e6a4d5d3e6bd7a343c14a92266dd049fa146e47a56e2e4ce96de69011c211ccf",
+                    "r": "0x466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152",
+                    "raw": "0xf871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "s": "0x353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "standardV": "0x0",
+                    "to": "0x8fd00f170fdf3772c5ebdcd90bf257316c69ba45",
+                    "transactionIndex": "0x0",
+                    "v": "0x25",
+                    "value": "0x2d37b9ea033c9cc2e"
+                },
+                "in3": {
+                    "proof": {
+                        "type": "transactionProof",
+                        "block": "0xf9021aa02363ed48bb67da6e9c97864e70de2ac3a6143068e285577a250af399bbf4950aa01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347945a0b54d5dc17e0aadc383d2db43b0a0d3e029c4ca06b09089d4042098ca54252d2abe9f5531251c0d8de27346291d5cdaf9121280ba0ab7c570fc942cc547ebdb0b05d7e42bee563b4c3e5341ecfd39b92fe3a3d7913a0790dd5a813fe909fab396096fa1bbd542bc0da778c3aeba33c80ea425e5defccb90100a26228b104ec15ac0290e4c002723af43224589212a012cc0d5109881b0074872cca40434832203004c0b42210c22591ea90490a8e8d91c301ba408d223a52224912dc9130268287c6049579444016d02a5457260e4419e4e852e606a86440e0804002242a6c40b001a08e12124c083a0209302438444434c9708731909124482800002c5da07a91044a9041a2300e9e107321ed40132217150564bb7490610107c1e1020ee41a88d68f02f581ec5010905c384702ede63027cb2cc8a842515eb793d262994a666815564033c338ee0d08ced156b02e4156231a4ada428c202235d230731393385e4ec4029008462c81012e4120021a12c564618a39209c6819870895b2cedcb6df8388c26d8398688883985bcc845dd3eea0995050594520737061726b706f6f6c2d6574682d636e2d687a33a0b6f21a9520636480e18d5ad91565e8f17058c38f9bbe9be5c1f4e9dd6f8ffb49887e8cc9080505c5a9",
+                        "merkleProof": [
+                            "0xf90131a0a0238558b8ee26eafbe6dafda0eb581891725374d5201458522e5b35f606832aa021f79f58c060b61c548a2159a4cd986c9bb6b15ad329307e596032e3317479afa0f497f8ab634b68c97e95b4fe60201a778b0bc045e9db917a2eaae4ff0ceebbfea07093863a3b8b20919ddc82ef3f2f32d1045948b736ccdd24f82f6bb9dadd9fa4a0f992b71eeb4c131124964a8b95ca70787ea134a416ceab829f7cf9e083dad02ca0d3ce0872c7aa429d60f2aa08ab697ea57c48e8d25c874fc66cd93a067a22e051a056eefb96d8b869078857f71c10203456d88cc4c71501bf3ed660571ec096eda2a0b05e2d76a03071f3a0cf8c06c56982b163726cd463038549321530a71b8cd060a0a0beef6f6448df1ffff940a8b1031edb72cd1c119ce1b36011c6f35a4478ed528080808080808080",
+                            "0xf851a0ef87751b75eef075b807c1e4cbd3d681e5f233e30a9b452672b59e327767da1ea0dd923913ffb1494078eb6803dca27921848e680e06310184a8113211e570a745808080808080808080808080808080",
+                            "0xf87620b873f871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b"
+                        ],
+                        "txIndex": 0,
+                        "signatures": []
+                    },
+                    "version": "2.0.0",
+                    "currentBlock": 8962671,
+                    "lastValidatorChange": 0,
+                    "lastNodeList": 8669495,
+                    "execTime": 914,
+                    "rpcTime": 795,
+                    "rpcCount": 1
+                }
+            }
+        ]
+    },
+    {
+        "descr": "Malformed response (incomplete merkle proof)",
+        "success": false,
+        "fuzzer": true,
+        "request": {
+            "method": "eth_getTransactionByBlockNumberAndIndex",
+            "params": [
+                "0x88c26d",
+                "0x0"
+            ]
+        },
+        "response": [
+            {
+                "result": {
+                    "blockHash": "0x2655d2034ff79aa52251218f3e9b4b368bacc1e53b571933ebfcf42913cc2f31",
+                    "blockNumber": "0x88c26d",
+                    "chainId": "0x1",
+                    "condition": null,
+                    "creates": null,
+                    "from": "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c",
+                    "gas": "0x186a0",
+                    "gasPrice": "0x165a0bc00",
+                    "hash": "0xc85dee6a30542548d32e5b64c8b0c953c3cc2856da186d03599cb988eaeaf58d",
+                    "input": "0x",
+                    "nonce": "0x5c063f",
+                    "publicKey": "0xa2409d906e986393077c83f24aac562b98b2740b3230b35564dce50a37192575e6a4d5d3e6bd7a343c14a92266dd049fa146e47a56e2e4ce96de69011c211ccf",
+                    "r": "0x466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152",
+                    "raw": "0xf871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "s": "0x353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "standardV": "0x0",
+                    "to": "0x8fd00f170fdf3772c5ebdcd90bf257316c69ba45",
+                    "transactionIndex": "0x0",
+                    "v": "0x25",
+                    "value": "0x2d37b9ea033c9cc2e"
+                },
+                "in3": {
+                    "proof": {
+                        "type": "transactionProof",
+                        "block": "0xf9021aa02363ed48bb67da6e9c97864e70de2ac3a6143068e285577a250af399bbf4950aa01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347945a0b54d5dc17e0aadc383d2db43b0a0d3e029c4ca06b09089d4042098ca54252d2abe9f5531251c0d8de27346291d5cdaf9121280ba0ab7c570fc942cc547ebdb0b05d7e42bee563b4c3e5341ecfd39b92fe3a3d7913a0790dd5a813fe909fab396096fa1bbd542bc0da778c3aeba33c80ea425e5defccb90100a26228b104ec15ac0290e4c002723af43224589212a012cc0d5109881b0074872cca40434832203004c0b42210c22591ea90490a8e8d91c301ba408d223a52224912dc9130268287c6049579444016d02a5457260e4419e4e852e606a86440e0804002242a6c40b001a08e12124c083a0209302438444434c9708731909124482800002c5da07a91044a9041a2300e9e107321ed40132217150564bb7490610107c1e1020ee41a88d68f02f581ec5010905c384702ede63027cb2cc8a842515eb793d262994a666815564033c338ee0d08ced156b02e4156231a4ada428c202235d230731393385e4ec4029008462c81012e4120021a12c564618a39209c6819870895b2cedcb6df8388c26d8398688883985bcc845dd3eea0995050594520737061726b706f6f6c2d6574682d636e2d687a33a0b6f21a9520636480e18d5ad91565e8f17058c38f9bbe9be5c1f4e9dd6f8ffb49887e8cc9080505c5a9",
+                        "merkleProof": [
+                            "0xf90131a0a0238558b8ee26eafbe6dafda0eb581891725374d5201458522e5b35f606832aa021f79f58c060b61c548a2159a4cd986c9bb6b15ad329307e596032e3317479afa0f497f8ab634b68c97e95b4fe60201a778b0bc045e9db917a2eaae4ff0ceebbfea07093863a3b8b20919ddc82ef3f2f32d1045948b736ccdd24f82f6bb9dadd9fa4a0f992b71eeb4c131124964a8b95ca70787ea134a416ceab829f7cf9e083dad02ca0d3ce0872c7aa429d60f2aa08ab697ea57c48e8d25c874fc66cd93a067a22e051a056eefb96d8b869078857f71c10203456d88cc4c71501bf3ed660571ec096eda2a0b05e2d76a03071f3a0cf8c06c56982b163726cd463038549321530a71b8cd060a0a0beef6f6448df1ffff940a8b1031edb72cd1c119ce1b36011c6f35a4478ed528080808080808080",
+                            "0xf87620b873f871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b"
+                        ],
+                        "txIndex": 10,
+                        "signatures": []
+                    },
+                    "version": "2.0.0",
+                    "currentBlock": 8962671,
+                    "lastValidatorChange": 0,
+                    "lastNodeList": 8669495,
+                    "execTime": 914,
+                    "rpcTime": 795,
+                    "rpcCount": 1
+                }
+            }
+        ]
+    },{
+        "descr": "Malformed response (missing txn index)",
+        "success": false,
+        "fuzzer": true,
+        "request": {
+            "method": "eth_getTransactionByBlockNumberAndIndex",
+            "params": [
+                "0x88c26d",
+                "0x0"
+            ]
+        },
+        "response": [
+            {
+                "result": {
+                    "blockHash": "0x2655d2034ff79aa52251218f3e9b4b368bacc1e53b571933ebfcf42913cc2f31",
+                    "blockNumber": "0x88c26d",
+                    "chainId": "0x1",
+                    "condition": null,
+                    "creates": null,
+                    "from": "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c",
+                    "gas": "0x186a0",
+                    "gasPrice": "0x165a0bc00",
+                    "hash": "0xc85dee6a30542548d32e5b64c8b0c953c3cc2856da186d03599cb988eaeaf58d",
+                    "input": "0x",
+                    "nonce": "0x5c063f",
+                    "publicKey": "0xa2409d906e986393077c83f24aac562b98b2740b3230b35564dce50a37192575e6a4d5d3e6bd7a343c14a92266dd049fa146e47a56e2e4ce96de69011c211ccf",
+                    "r": "0x466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152",
+                    "raw": "0xf871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "s": "0x353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b",
+                    "standardV": "0x0",
+                    "to": "0x8fd00f170fdf3772c5ebdcd90bf257316c69ba45",
+                    "transactionIndex": "0x0",
+                    "v": "0x25",
+                    "value": "0x2d37b9ea033c9cc2e"
+                },
+                "in3": {
+                    "proof": {
+                        "type": "transactionProof",
+                        "block": "0xf9021aa02363ed48bb67da6e9c97864e70de2ac3a6143068e285577a250af399bbf4950aa01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347945a0b54d5dc17e0aadc383d2db43b0a0d3e029c4ca06b09089d4042098ca54252d2abe9f5531251c0d8de27346291d5cdaf9121280ba0ab7c570fc942cc547ebdb0b05d7e42bee563b4c3e5341ecfd39b92fe3a3d7913a0790dd5a813fe909fab396096fa1bbd542bc0da778c3aeba33c80ea425e5defccb90100a26228b104ec15ac0290e4c002723af43224589212a012cc0d5109881b0074872cca40434832203004c0b42210c22591ea90490a8e8d91c301ba408d223a52224912dc9130268287c6049579444016d02a5457260e4419e4e852e606a86440e0804002242a6c40b001a08e12124c083a0209302438444434c9708731909124482800002c5da07a91044a9041a2300e9e107321ed40132217150564bb7490610107c1e1020ee41a88d68f02f581ec5010905c384702ede63027cb2cc8a842515eb793d262994a666815564033c338ee0d08ced156b02e4156231a4ada428c202235d230731393385e4ec4029008462c81012e4120021a12c564618a39209c6819870895b2cedcb6df8388c26d8398688883985bcc845dd3eea0995050594520737061726b706f6f6c2d6574682d636e2d687a33a0b6f21a9520636480e18d5ad91565e8f17058c38f9bbe9be5c1f4e9dd6f8ffb49887e8cc9080505c5a9",
+                        "merkleProof": [
+                            "0xf90131a0a0238558b8ee26eafbe6dafda0eb581891725374d5201458522e5b35f606832aa021f79f58c060b61c548a2159a4cd986c9bb6b15ad329307e596032e3317479afa0f497f8ab634b68c97e95b4fe60201a778b0bc045e9db917a2eaae4ff0ceebbfea07093863a3b8b20919ddc82ef3f2f32d1045948b736ccdd24f82f6bb9dadd9fa4a0f992b71eeb4c131124964a8b95ca70787ea134a416ceab829f7cf9e083dad02ca0d3ce0872c7aa429d60f2aa08ab697ea57c48e8d25c874fc66cd93a067a22e051a056eefb96d8b869078857f71c10203456d88cc4c71501bf3ed660571ec096eda2a0b05e2d76a03071f3a0cf8c06c56982b163726cd463038549321530a71b8cd060a0a0beef6f6448df1ffff940a8b1031edb72cd1c119ce1b36011c6f35a4478ed528080808080808080",
+                            "0xf87620b873f871835c063f850165a0bc00830186a0948fd00f170fdf3772c5ebdcd90bf257316c69ba458902d37b9ea033c9cc2e8025a0466c12fbae32c5b2addae254837189c5b05f91d1b9546d85a5014eb5ca753152a0353a45c10b8b8bf06bcaca6070d21aa04bedd79a1f22d5ad4018de4b3fc0109b"
+                        ],
+                        "signatures": []
+                    },
+                    "version": "2.0.0",
+                    "currentBlock": 8962671,
+                    "lastValidatorChange": 0,
+                    "lastNodeList": 8669495,
+                    "execTime": 914,
+                    "rpcTime": 795,
+                    "rpcCount": 1
+                }
+            }
+        ]
+    },
+    {
+        "descr": "Non-existent transaction",
+        "success": true,
+        "fuzzer": true,
+        "request": {
+            "method": "eth_getTransactionByBlockNumberAndIndex",
+            "params": [
+                "0x88c26d",
+                "0xffe"
+            ]
+        },
+        "response": [
+            {
+                "result": null,
+                "in3": {
+                    "proof": {
+                        "type": "transactionProof",
+                        "block": "0xf9021aa02363ed48bb67da6e9c97864e70de2ac3a6143068e285577a250af399bbf4950aa01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347945a0b54d5dc17e0aadc383d2db43b0a0d3e029c4ca06b09089d4042098ca54252d2abe9f5531251c0d8de27346291d5cdaf9121280ba0ab7c570fc942cc547ebdb0b05d7e42bee563b4c3e5341ecfd39b92fe3a3d7913a0790dd5a813fe909fab396096fa1bbd542bc0da778c3aeba33c80ea425e5defccb90100a26228b104ec15ac0290e4c002723af43224589212a012cc0d5109881b0074872cca40434832203004c0b42210c22591ea90490a8e8d91c301ba408d223a52224912dc9130268287c6049579444016d02a5457260e4419e4e852e606a86440e0804002242a6c40b001a08e12124c083a0209302438444434c9708731909124482800002c5da07a91044a9041a2300e9e107321ed40132217150564bb7490610107c1e1020ee41a88d68f02f581ec5010905c384702ede63027cb2cc8a842515eb793d262994a666815564033c338ee0d08ced156b02e4156231a4ada428c202235d230731393385e4ec4029008462c81012e4120021a12c564618a39209c6819870895b2cedcb6df8388c26d8398688883985bcc845dd3eea0995050594520737061726b706f6f6c2d6574682d636e2d687a33a0b6f21a9520636480e18d5ad91565e8f17058c38f9bbe9be5c1f4e9dd6f8ffb49887e8cc9080505c5a9",
+                        "merkleProof": [
+                            "0xf90131a0a0238558b8ee26eafbe6dafda0eb581891725374d5201458522e5b35f606832aa021f79f58c060b61c548a2159a4cd986c9bb6b15ad329307e596032e3317479afa0f497f8ab634b68c97e95b4fe60201a778b0bc045e9db917a2eaae4ff0ceebbfea07093863a3b8b20919ddc82ef3f2f32d1045948b736ccdd24f82f6bb9dadd9fa4a0f992b71eeb4c131124964a8b95ca70787ea134a416ceab829f7cf9e083dad02ca0d3ce0872c7aa429d60f2aa08ab697ea57c48e8d25c874fc66cd93a067a22e051a056eefb96d8b869078857f71c10203456d88cc4c71501bf3ed660571ec096eda2a0b05e2d76a03071f3a0cf8c06c56982b163726cd463038549321530a71b8cd060a0a0beef6f6448df1ffff940a8b1031edb72cd1c119ce1b36011c6f35a4478ed528080808080808080",
+                            "0xf851a0ef87751b75eef075b807c1e4cbd3d681e5f233e30a9b452672b59e327767da1ea0dd923913ffb1494078eb6803dca27921848e680e06310184a8113211e570a745808080808080808080808080808080"
+                        ],
+                        "txIndex": 4094,
+                        "signatures": []
+                    },
+                    "version": "2.0.0",
+                    "currentBlock": 8981065,
+                    "lastValidatorChange": 0,
+                    "lastNodeList": 8669495,
+                    "execTime": 825,
+                    "rpcTime": 649,
+                    "rpcCount": 1
+                }
+            }
+        ]
+    },
+    {
+        "descr": "Malformed response (no merkle proof)",
+        "success": false,
+        "fuzzer": true,
+        "request": {
+            "method": "eth_getTransactionByBlockNumberAndIndex",
+            "params": [
+                "0x88c26d",
+                "0xffe"
+            ]
+        },
+        "response": [
+            {
+                "result": null,
+                "in3": {
+                    "proof": {
+                        "type": "transactionProof",
+                        "block": "0xf9021aa02363ed48bb67da6e9c97864e70de2ac3a6143068e285577a250af399bbf4950aa01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347945a0b54d5dc17e0aadc383d2db43b0a0d3e029c4ca06b09089d4042098ca54252d2abe9f5531251c0d8de27346291d5cdaf9121280ba0ab7c570fc942cc547ebdb0b05d7e42bee563b4c3e5341ecfd39b92fe3a3d7913a0790dd5a813fe909fab396096fa1bbd542bc0da778c3aeba33c80ea425e5defccb90100a26228b104ec15ac0290e4c002723af43224589212a012cc0d5109881b0074872cca40434832203004c0b42210c22591ea90490a8e8d91c301ba408d223a52224912dc9130268287c6049579444016d02a5457260e4419e4e852e606a86440e0804002242a6c40b001a08e12124c083a0209302438444434c9708731909124482800002c5da07a91044a9041a2300e9e107321ed40132217150564bb7490610107c1e1020ee41a88d68f02f581ec5010905c384702ede63027cb2cc8a842515eb793d262994a666815564033c338ee0d08ced156b02e4156231a4ada428c202235d230731393385e4ec4029008462c81012e4120021a12c564618a39209c6819870895b2cedcb6df8388c26d8398688883985bcc845dd3eea0995050594520737061726b706f6f6c2d6574682d636e2d687a33a0b6f21a9520636480e18d5ad91565e8f17058c38f9bbe9be5c1f4e9dd6f8ffb49887e8cc9080505c5a9",
+                        "txIndex": 4094,
+                        "signatures": []
+                    },
+                    "version": "2.0.0",
+                    "currentBlock": 8981065,
+                    "lastValidatorChange": 0,
+                    "lastNodeList": 8669495,
+                    "execTime": 825,
+                    "rpcTime": 649,
+                    "rpcCount": 1
+                }
+            }
+        ]
+    },
+    {
+        "descr": "Latest block handling (non-existent txn)",
+        "success": true,
+        "request": {
+            "method": "eth_getTransactionByBlockNumberAndIndex",
+            "params": [
+                "latest",
+                "0xeee"
+            ]
+        },
+        "response": [
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": null,
+                "in3": {
+                    "proof": {
+                        "type": "transactionProof",
+                        "block": "0xf90215a0363db283f7877270d8746c8f454da99e753e8fb73dd53ddeedc263b44e005297a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794ea674fdde714fd979de3edf0f56aa9716b898ec8a04f9b5e0ca2f5439c064f4714cebc8f4daaa179657ab5aeec883569372f7df310a04bae395cba6a505ffe6190d2b5658061d8bc894a4bba25110ccfa850d074ada3a039ef3464e0a2fabccd5cb4a2c93eadf4fb1923d1cabd640052315c85be6ff6acb90100dc71b2060430e09a001284b086800c01a9807488544ad0219700c0120420080a084e1284115b58522418e010be401320820c08120f0449500092f689607bcc7180b5660a80868506d8e5d6aec085584016146a459554257840714006c2506c38580303c30f209062051dca2082c8982145a08e008c226432a106913010081538d4b02225406724021c804528019204d09c808ec1d1060289c1141a8ca2398c64c060a824609064b02c91148593448ff894820d9602cd8985402ea270a2ccb49d52dc04e30d0109c43644807243b0ac841842774e4a48a80c882a02e280cc2011a83af4100802020238b0642811306650d60f2070444761781c19350f12b670b58708a89c83d6b1a783890b57839869e3839855c9845dd809b494505059452d65746865726d696e652d6575312d31a0c0043e08e45157bafb6ea373fd3cf06b118a741dd362eb426bf1ab075c8101b78840cf3bf00477e85b",
+                        "merkleProof": [
+                            "0xf90131a07e2dbcd7ea30ac6c3ab22a7e96186814d7d1c666617616f8bc8bf66b1d0f791aa08623bdcb0d647b946fe9aa28dfd97f93cb72434fdd3f94adcff2efcec3f8d892a0f794f332cb447162a8deffcccb48ab9e9cf315e74a2ec2f6b161e79671c92c63a0d3c845766b6642e822597a6f529248b98feb14d6b39111fb498cf75acdb52f8ba0c779ba6b4fa333fd006dc8447c65ed4fe57fdd0df33bc84e3d81246210b25558a0237fa52ebb3b19f01317c09b7e42f2570003b0f7383fa33e34f4fbb41daba224a087eba8f020d1e7e49911a58fb943c03ec67aca4bf3d6a9cd80b24150521d90d9a004e9c5a9240d8fac0ac081e8fee382c3827eb2b44e6c7c9de11dab8e14d544e3a0e502991a8511fada57ea9d9c59c8cf91d7f698591744dbf6dd412ed0c1d9ae798080808080808080",
+                            "0xf851a0d24e586cc87f081f54601f324104e4cc48d48882dfb1fd9064ca2ccc2f681138a0a48d87bc9feccbd76d2e5cd7e0ae19716334b6dd6512bfada1da753c7e07e96c808080808080808080808080808080"
+                        ],
+                        "txIndex": 3822,
+                        "signatures": []
+                    },
+                    "version": "2.0.0",
+                    "currentBlock": 8981335,
+                    "lastValidatorChange": 0,
+                    "lastNodeList": 8669495,
+                    "execTime": 1427,
+                    "rpcTime": 1212,
+                    "rpcCount": 1
+                }
+            }
+        ]
+    }
+]

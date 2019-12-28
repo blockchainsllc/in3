@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 /** @file 
  * simple commandline-util parsing json and creating bin
  * */
@@ -12,6 +46,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+int rlp_decode_item_type(bytes_t* b, int index) {
+  bytes_t bb;
+  return rlp_decode(b, index, &bb);
+}
 
 char* read_from_stdin(FILE* file) {
   if (file == NULL) {
@@ -177,6 +216,7 @@ void print_special(bytes_t data, char** ctx, int i) {
 void write(bytes_t* data, char* l, char** tt) {
   bytes_t t;
   //  names
+  int  al = alen(tt);
   char prefix[100];
   int  i, j, type, d;
   for (i = 0;; i++) {
@@ -188,14 +228,13 @@ void write(bytes_t* data, char* l, char** tt) {
       return;
     } else if (type == 1) {
       printf("%s", l);
-      if (tt)
-        d = printf("%-20s : ", tt[(i % alen(tt)) + 1]);
+      if (al && tt)
+        printf("%-20s : ", tt[(i % al) + 1]);
       else
-        d = printf("%-3i : ", i);
+        printf("%-3i : ", i);
 
       if (tt == TRIE_LEAF && i == 0)
         d = printf("%s (%s)", (t.data[0] & 32) ? "LEAF" : "EXTENSION", (t.data[0] & 16) ? "odd" : "even");
-
       else if (t.len == 0)
         d = printf("0");
       else if (t.len < 9)
@@ -206,6 +245,7 @@ void write(bytes_t* data, char* l, char** tt) {
         d = printf("<hash>");
       else
         d = printf("<data %i>", t.len);
+
       for (j = d; j < 17; j++) printf(" ");
       if (t.len > 0)
         printf("0x");
@@ -269,9 +309,8 @@ void write(bytes_t* data, char* l, char** tt) {
         }
       if (tt && tt != CHAINSPEC) t2 = NULL;
       printf("%s", l);
-      if (tt) {
-        d = printf("%-20s : ", tt[i + 1]);
-      }
+      if (tt)
+        printf("%-20s : ", tt[i + 1]);
 
       printf("[ %s", t2 ? t2[0] : "");
 
@@ -297,7 +336,7 @@ void write(bytes_t* data, char* l, char** tt) {
 void add_rlp(bytes_builder_t* bb, char* val) {
   int l = strlen(val);
   if (l > 1 && val[0] == '0' && val[1] == 'x') {
-    bytes_t* b = hex2byte_new_bytes(val + 2, l - 2);
+    bytes_t* b = hex_to_new_bytes(val + 2, l - 2);
     rlp_encode_item(bb, b);
     b_free(b);
   } else {
@@ -372,20 +411,20 @@ int main(int argc, char* argv[]) {
 
     for (int n = 0; input[n]; n++) {
       if (input[n] == '\\' && input[n + 1] == 'x') {
-        bytes->data[bytes->len++] = strtohex(input[n + 2]) << 4 | strtohex(input[n + 3]);
+        bytes->data[bytes->len++] = hexchar_to_int(input[n + 2]) << 4 | hexchar_to_int(input[n + 3]);
         n += 3;
       } else
         bytes->data[bytes->len++] = input[n];
     }
   } else if (*input == ':') {
-    bytes                     = hex2byte_new_bytes(input + 1, strlen(input + 1));
-    uint64_t         chain_id = bytes_to_long(bytes->data, bytes->len);
+    bytes                     = hex_to_new_bytes(input + 1, strlen(input + 1));
+    chain_id_t       chain_id = bytes_to_long(bytes->data, bytes->len);
     chainspec_t*     spec     = chainspec_get(chain_id);
     bytes_builder_t* bb       = bb_new();
     chainspec_to_bin(spec, bb);
     bytes = &bb->b;
   } else
-    bytes = hex2byte_new_bytes(input, strlen(input));
+    bytes = hex_to_new_bytes(input, strlen(input));
 
   write(bytes, "", NULL);
 

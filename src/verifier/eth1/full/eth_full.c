@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "eth_full.h"
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
@@ -38,7 +72,9 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
     uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
 
-    switch (evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, &result)) {
+    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result);
+
+    switch (ret) {
       case EVM_ERROR_BUFFER_TOO_SMALL:
         return vc_err(vc, "Memory or Buffer too small!");
       case EVM_ERROR_EMPTY_STACK:
@@ -64,9 +100,10 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
         res = b_cmp(d_bytes(vc->result), result);
         b_free(result);
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
-
+      case IN3_WAITING:
+        return IN3_WAITING;
       default:
-        return vc_err(vc, "Unknown return-code");
+        return ctx_set_error(vc->ctx, "General Error during execution", (in3_ret_t) ret);
     }
   } else
     return in3_verify_eth_basic(vc);

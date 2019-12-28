@@ -1,9 +1,9 @@
 # Incubed client as WASM
 
 This client uses the in3-core sources compiled to wasm. The wasm is included into the js-file wich makes it easier to include the data.
-This module has **no** dependencies! All it needs it included inta a wasm of about 380kB.
+This module has **no** dependencies! All it needs is included inta a wasm of about 300kB.
 
-Installing incube is as easy as installing any other module:
+Installing incubed is as easy as installing any other module:
 
 ```
 npm install --save in3-wasm
@@ -13,6 +13,9 @@ npm install --save in3-wasm
 
 The complete documentation can be found https://in3.readthedocs.io/en/develop/ .
 
+In case you want to run incubed within a react native app, you might face issues because wasm is not supported there yet. In this case you can use [in3-asmjs](https://www.npmjs.com/package/in3-asmjs), which has the same API, but runs on pure javascript (a bit slower and bigger, but full support everywhere).
+
+
 ### Using web3
 
 ```js
@@ -21,21 +24,23 @@ The complete documentation can be found https://in3.readthedocs.io/en/develop/ .
 import In3Client from 'in3-wasm'
 import * as web3 from 'web3'
 
-const IN3Client c = new IN3Client();
-await c.setConfig({
-    proof         : 'standard',
-    signatureCount: 1,
-    requestCount  : 2,
-    chainId       : 'mainnet'
-})
+const IN3Client c = new IN3Client({
+    proof              : 'standard',
+    signatureCount     : 1,
+    requestCount       : 2,
+    chainId            : 'mainnet',
+    replaceLatestBlock : 10
+ })
 
 // use the In3Client as Http-Provider
 const web3 = new Web3(c)
 
-// use the web3
-const block = await web.eth.getBlockByNumber('latest')
-...
+(async () => {
 
+    // use the web3
+    const block = await web.eth.getBlockByNumber('latest')
+
+})().catch(console.error);
 
 ```
 
@@ -53,14 +58,19 @@ import In3Client from 'in3-wasm'
 
 // use the In3Client
 const in3 = new In3Client({
-    proof         : 'standard',
-    signatureCount: 1,
-    requestCount  : 2,
-    chainId       : 'mainnet'
+    proof              : 'standard',
+    signatureCount     : 1,
+    requestCount       : 2,
+    chainId            : 'mainnet',
+    replaceLatestBlock : 10
 })
 
-const block = await in3.sendRPC('eth_getBlockByNumber',['latest',false])
-...
+(async () => {
+
+    // use the incubed directly
+    const block = await in3.eth.getBlockByNumber('latest')
+
+})().catch(console.error);
 
 ```
 
@@ -82,11 +92,10 @@ const block = await in3.sendRPC('eth_getBlockByNumber',['latest',false])
             </pre>
         </div>
         <script>
-            var c = new IN3();
-            c.setConfig({ 
+            var c = new IN3({ 
                    chainId: 0x5 
-                })
-                .then(() => c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] }))
+            })
+            c.send({ method: 'eth_getBlockByNumber', params: ['latest', false] })
                 .then(r => document.getElementById('result').innerHTML = JSON.stringify(r, null, 2))
                 .catch(alert)
         </script>

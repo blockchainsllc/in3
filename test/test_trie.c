@@ -1,4 +1,37 @@
 
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
 
 #ifndef TEST
 #define TEST
@@ -69,7 +102,9 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         ba_print(key_bytes.data, key_bytes.len);
         in3_log_trace(" = ");
         ba_print(value_bytes.data, value_bytes.len);
+#ifdef TRIETEST
         trie_dump(trie, 0);
+#endif
       });
     }
   } else {
@@ -79,7 +114,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
       bytes_t key_bytes, value_bytes = get_bytes(t, tmp, is_hex);
       if (k[0] == '0' && k[1] == 'x') {
         key_bytes.data = tmp;
-        key_bytes.len  = hex2byte_arr(k + 2, strlen(k) - 2, tmp, 64);
+        key_bytes.len  = hex_to_bytes(k + 2, strlen(k) - 2, tmp, 64);
       } else {
         key_bytes.data = (uint8_t*) k;
         key_bytes.len  = strlen(k);
@@ -96,7 +131,9 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         ba_print(key_bytes.data, key_bytes.len);
         in3_log_trace(" = ");
         ba_print(value_bytes.data, value_bytes.len);
+#ifdef TRIETEST
         trie_dump(trie, 0);
+#endif
       });
     }
   }

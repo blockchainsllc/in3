@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "data.h"
 #include "bytes.h"
 #include "mem.h"
@@ -14,26 +48,82 @@
 #error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
 #endif
 
+#ifndef IN3_DONT_HASH_KEYS
+static uint8_t __track_keys = 0;
+#else
+static uint8_t __track_keys = 1;
+#endif
+
+// number of tokens to allocate memory for when parsing
+#define JSON_INIT_TOKENS 10
+
+/** internal type declared here to assist with key() optimization */
 typedef struct keyname {
   char*           name;
   d_key_t         key;
   struct keyname* next;
 } keyname_t;
-static uint8_t    __track_keys = 0;
-static keyname_t* __keynames   = NULL;
 
-d_key_t keyn(const char* c, const int len) {
-  uint16_t val = 0;
-  int      i   = 0;
+static keyname_t* __keynames = NULL;
+#ifdef IN3_DONT_HASH_KEYS
+static size_t     __keynames_len = 0;
+static keyname_t* __last_keyname = NULL;
+
+d_key_t key(const char* c) {
+  keyname_t* kn = __keynames;
+  while (kn) {
+    if (!strcmp(kn->name, c))
+      return kn->key;
+    kn = kn->next;
+  }
+  return __keynames_len;
+}
+#endif
+
+d_key_t keyn(const char* c, const size_t len) {
+  d_key_t val = 0;
+#ifndef IN3_DONT_HASH_KEYS
+  size_t i = 0;
   for (; i < len; i++) {
     if (*c == 0) return val;
     val ^= *c | val << 7;
     c += 1;
   }
+#else
+  keyname_t* kn = __keynames;
+  while (kn) {
+    // input is not expected to be nul terminated
+    if (strlen(kn->name) == len && !strncmp(kn->name, c, len))
+      return kn->key;
+    kn = kn->next;
+  }
+  val        = __keynames_len;
+#endif
   return val;
 }
 
-static d_key_t add_key(char* c, int len) {
+void add_keyname(const char* name, d_key_t value, size_t len) {
+  keyname_t* kn = malloc(sizeof(keyname_t));
+#ifdef IN3_DONT_HASH_KEYS
+  __keynames_len++;
+  kn->next = NULL;
+  if (__last_keyname)
+    __last_keyname->next = kn;
+  else
+    __keynames = kn;
+  __last_keyname = kn;
+#else
+  kn->next   = __keynames;
+  __keynames = kn;
+#endif
+
+  kn->key  = value;
+  kn->name = malloc(len + 1);
+  memcpy(kn->name, name, len);
+  kn->name[len] = 0;
+}
+
+static d_key_t add_key(const char* c, size_t len) {
   d_key_t k = keyn(c, len);
   if (!__track_keys) return k;
   keyname_t* kn = __keynames;
@@ -41,14 +131,7 @@ static d_key_t add_key(char* c, int len) {
     if (kn->key == k) return k;
     kn = kn->next;
   }
-
-  kn         = malloc(sizeof(keyname_t));
-  kn->next   = __keynames;
-  __keynames = kn;
-  kn->key    = k;
-  kn->name   = malloc(len + 1);
-  memcpy(kn->name, c, len);
-  kn->name[len] = 0;
+  add_keyname(c, k, len);
   return k;
 }
 
@@ -164,10 +247,12 @@ char* d_string(const d_token_t* item) {
   if (item == NULL) return NULL;
   return (char*) item->data;
 }
-uint32_t d_int(const d_token_t* item) {
+
+int32_t d_int(const d_token_t* item) {
   return d_intd(item, 0);
 }
-uint32_t d_intd(const d_token_t* item, const uint32_t def_val) {
+
+int32_t d_intd(const d_token_t* item, const uint32_t def_val) {
   if (item == NULL) return def_val;
   switch (d_type(item)) {
     case T_INTEGER:
@@ -210,9 +295,9 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
 bool d_eq(const d_token_t* a, const d_token_t* b) {
   if (a == NULL || b == NULL) return false;
   if (a->len != b->len) return false;
-  if (a->data && b->data)
-    return b_cmp(d_bytes(a), d_bytes(b));
-  return a->data == NULL && b->data == NULL;
+  return (a->data && b->data)
+             ? b_cmp(d_bytes(a), d_bytes(b))
+             : a->data == NULL && b->data == NULL;
 }
 
 d_token_t* d_get(d_token_t* item, const uint16_t key) {
@@ -248,10 +333,6 @@ d_token_t* d_get_at(d_token_t* item, const uint32_t index) {
 
 d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
-}
-
-d_token_t* d_prev(d_token_t* item) {
-  return item == NULL ? NULL : item - d_token_size(item);
 }
 
 char next_char(json_ctx_t* jp) {
@@ -300,23 +381,41 @@ int parse_key(json_ctx_t* jp) {
 }
 
 int parse_number(json_ctx_t* jp, d_token_t* item) {
-  int      i      = 0;
-  uint64_t u64Val = 0;
+  int     i      = 0;
+  int64_t i64Val = 0;
+  bool    neg    = false;
 
-  jp->c--;
+  if (jp->c[-1] == '-')
+    neg = true;
+  if (jp->c[-1] != '+' && jp->c[-1] != '-')
+    jp->c--;
+
   for (; i < 20; i++) {
     if (jp->c[i] >= '0' && jp->c[i] <= '9')
-      u64Val = u64Val * 10 + (jp->c[i] - '0');
+      i64Val = i64Val * 10 + (jp->c[i] - '0');
     else {
+      // if the value is a float (which we don't support yet), we keep on parsing, but ignoring the rest of the numbers
+      if (jp->c[i] == '.') {
+        i++;
+        while (jp->c[i] >= '0' && jp->c[i] <= '9') i++;
+      }
+
       jp->c += i;
 
-      if ((u64Val & 0xfffffffff0000000) == 0)
-        item->len |= (int) u64Val;
+      if (neg) {
+        char   tmp[22]; // max => -18446744073709551000
+        size_t l   = sprintf(tmp, "-%" PRIi64, i64Val);
+        item->len  = l | T_STRING << 28;
+        item->data = _malloc(l + 1);
+        memcpy(item->data, tmp, l);
+        item->data[l] = 0;
+      } else if ((i64Val & 0xfffffffff0000000) == 0)
+        item->len |= (int) i64Val;
       // 32-bit number / no 64-bit number
       else {
         uint8_t tmp[8];
         // as it is a 64-bit number we have to change the type from T_INTEGER to T_BYTES and treat it accordingly
-        long_to_bytes(u64Val, tmp);
+        long_to_bytes(i64Val, tmp);
         uint8_t *p = tmp, len = 8;
         optimize_len(p, len);
         item->data = _malloc(len);
@@ -355,23 +454,22 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
           } else if (l < 10 && !(l > 3 && start[2] == '0' && start[3] == '0')) { // we can accept up to 3,4 bytes as integer
             item->len = T_INTEGER << 28;
             for (i = 2; i < l; i++)
-              item->len |= strtohex(start[i]) << ((l - i - 1) << 2);
+              item->len |= hexchar_to_int(start[i]) << ((l - i - 1) << 2);
           } else {
             // we need to allocate bytes for it. and so set the type to bytes
             item->len  = ((l & 1) ? l - 1 : l - 2) >> 1;
             item->data = _malloc(item->len);
-            if (l & 1) item->data[0] = strtohex(start[2]);
+            if (l & 1) item->data[0] = hexchar_to_int(start[2]);
             l = (l & 1) + 2;
             for (i = l - 2, n = l; i < item->len; i++, n += 2)
-              item->data[i] = strtohex(start[n]) << 4 | strtohex(start[n + 1]);
+              item->data[i] = hexchar_to_int(start[n]) << 4 | hexchar_to_int(start[n + 1]);
           }
         } else if (l == 6 && *start == '\\' && start[1] == 'u') {
           item->len   = 1;
           item->data  = _malloc(1);
-          *item->data = strtohex(start[4]) << 4 | strtohex(start[5]);
+          *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
         } else {
           item->len  = l | T_STRING << 28;
-          item->data = (uint8_t*) start;
           item->data = _malloc(l + 1);
           memcpy(item->data, start, l);
           item->data[l] = 0;
@@ -470,15 +568,17 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
     case '7':
     case '8':
     case '9':
+    case '+':
+    case '-':
       return parse_number(jp, parsed_next_item(jp, T_INTEGER, key, parent));
     default:
       return -2;
   }
 }
 
-void free_json(json_ctx_t* jp) {
+void json_free(json_ctx_t* jp) {
   if (!jp || jp->result == NULL) return;
-  if (jp->allocated) {
+  if (!d_is_binary_ctx(jp)) {
     size_t i;
     for (i = 0; i < jp->len; i++) {
       if (jp->result[i].data != NULL && d_type(jp->result + i) < 2)
@@ -490,18 +590,23 @@ void free_json(json_ctx_t* jp) {
 }
 
 json_ctx_t* parse_json(char* js) {
-  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));
-  parser->len        = 0;
-  parser->depth      = 0;
-  parser->result     = _malloc(sizeof(d_token_t) * 10);
-  parser->c          = js;
-  parser->allocated  = 10;
-  int res            = parse_object(parser, -1, 0);
-  if (res < 0) {
-    free_json(parser);
-    return NULL;
-  }
-  parser->c = js;
+  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));                  // new parser
+  if (!parser) return NULL;                                          // not enoug memory?
+  parser->len       = 0;                                             // initial length
+  parser->depth     = 0;                                             //  initial depth
+  parser->c         = js;                                            // the pointer to the string to parse
+  parser->allocated = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
+  parser->result    = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
+  if (!parser->result) {                                             // not enough memory?
+    _free(parser);                                                   // also free the parse since it does not make sense to parse  now.
+    return NULL;                                                     // NULL means no memory
+  }                                                                  //
+  int res = parse_object(parser, -1, 0);                             // now parse starting without parent (-1)
+  if (res < 0) {                                                     // error parsing?
+    json_free(parser);                                               // clean up
+    return NULL;                                                     // and return null
+  }                                                                  //
+  parser->c = js;                                                    // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 
@@ -543,6 +648,18 @@ char* d_create_json(d_token_t* item) {
         for (d_iterator_t it = d_iter(item); it.left; d_iter_next(&it)) {
           char* p = d_create_json(it.token);
           if (sb->len > 1) sb_add_char(sb, ',');
+          if (d_type(item) == T_OBJECT) {
+            char* kn = d_get_keystr(it.token->key);
+            if (kn) {
+              sb_add_char(sb, '"');
+              sb_add_chars(sb, kn);
+              sb_add_chars(sb, "\":");
+            } else {
+              char tmp[8];
+              sprintf(tmp, "\"%04x\":", (uint32_t) it.token->key);
+              sb_add_chars(sb, tmp);
+            }
+          }
           sb_add_chars(sb, p);
           _free(p);
         }
@@ -555,7 +672,7 @@ char* d_create_json(d_token_t* item) {
       return d_int(item) ? _strdupn("true", 4) : _strdupn("false", 5);
     case T_INTEGER:
       dst = _malloc(16);
-      sprintf(dst, "0x%x", d_int(item));
+      sprintf(dst, "\"0x%x\"", d_int(item));
       return dst;
     case T_NULL:
       return _strdupn("null", 4);
@@ -581,67 +698,14 @@ char* d_create_json(d_token_t* item) {
 
 str_range_t d_to_json(d_token_t* item) {
   str_range_t s;
-  s.data = (char*) item->data;
-  s.len  = find_end(s.data);
+  if (item) {
+    s.data = (char*) item->data;
+    s.len  = find_end(s.data);
+  } else {
+    s.data = NULL;
+    s.len  = 0;
+  }
   return s;
-}
-
-// util fast parse
-int json_get_int_value(char* js, char* prop) {
-  json_ctx_t* ctx = parse_json(js);
-  if (ctx) {
-    int res = d_get_int(ctx->result, prop);
-    free_json(ctx);
-    return res;
-  }
-  return -1;
-}
-
-void json_get_str_value(char* js, char* prop, char* dst) {
-  *dst          = 0; // preset returned string as empty string
-  d_token_t*  t = NULL;
-  str_range_t s;
-
-  json_ctx_t* ctx = parse_json(js);
-  if (ctx) {
-    t = d_get(ctx->result, key(prop));
-    switch (d_type(t)) {
-      case T_STRING:
-        strcpy(dst, d_string(t));
-        break;
-      case T_BYTES:
-        dst[0] = '0';
-        dst[1] = 'x';
-        bytes_to_hex(t->data, t->len, dst + 2);
-        dst[t->len * 2 + 2] = 0;
-        break;
-      case T_ARRAY:
-      case T_OBJECT:
-        s = d_to_json(t);
-        memcpy(dst, s.data, s.len);
-        dst[s.len] = 0;
-        break;
-      case T_BOOLEAN:
-        strcpy(dst, d_int(t) ? "true" : "false");
-        break;
-      case T_INTEGER:
-        sprintf(dst, "0x%x", d_int(t));
-        break;
-      case T_NULL:
-        strcpy(dst, "null");
-    }
-    free_json(ctx);
-  }
-}
-
-char* json_get_json_value(char* js, char* prop) {
-  json_ctx_t* ctx = parse_json(js);
-  if (ctx) {
-    char* c = d_create_json(d_get(ctx->result, key(prop)));
-    free_json(ctx);
-    return c;
-  }
-  return NULL;
 }
 
 //    bytes-parser
@@ -855,10 +919,17 @@ char* d_get_keystr(d_key_t k) {
   }
   return NULL;
 }
+
 void d_track_keynames(uint8_t v) {
+#ifndef IN3_DONT_HASH_KEYS
   __track_keys = v;
+#else
+  UNUSED_VAR(v);
+#endif
 }
+
 void d_clear_keynames() {
+#ifndef IN3_DONT_HASH_KEYS
   keyname_t* kn = NULL;
   while (__keynames) {
     kn = __keynames;
@@ -866,6 +937,7 @@ void d_clear_keynames() {
     __keynames = kn->next;
     free(kn);
   }
+#endif
 }
 
 bytes_t* d_get_byteskl(d_token_t* r, d_key_t k, uint32_t minl) {

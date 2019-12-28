@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "in3_curl.h"
 #include "../../core/client/client.h"
 #include "../../core/util/log.h"
@@ -149,10 +183,18 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
   return IN3_OK;
 }
 
-in3_ret_t send_curl(char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t send_curl(in3_request_t* req) {
+//  char** urls, int urls_len, char* payload, in3_response_t* result
 #ifdef CURL_BLOCKING
-  return send_curl_blocking((const char**) urls, urls_len, payload, result);
+  return send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results);
 #else
-  return send_curl_nonblocking((const char**) urls, urls_len, payload, result);
+  return send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->results);
 #endif
+}
+
+/**
+ * registers curl as a default transport.
+ */
+void in3_register_curl() {
+  in3_set_default_transport(send_curl);
 }

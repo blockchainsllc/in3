@@ -1,8 +1,48 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 // clang-format off
 #define K_ID                key("id")
 #define K_METHOD            key("method")
 #define K_PARAMS            key("params")
 #define K_ERROR             key("error")
+#define K_MESSAGE           key("message")
+#define K_EXEC_TIME         key("execTime")
+#define K_RPC_TIME          key("rpcTime")
+#define K_RPC_COUNT         key("rpcCount")
+#define K_CURRENT_BLOCK     key("currentBlock")
+#define K_VERSION           key("version")
 
 #define K_RESULT            key("result")
 #define K_IN3               key("in3")
@@ -17,6 +57,7 @@
 #define K_INDEX             key("index")
 #define K_DEPOSIT           key("deposit")
 #define K_PROPS             key("props")
+#define K_WEIGHT            key("weight")
 #define K_URL               key("url")
 #define K_ADDRESS           key("address")
 #define K_CODE              key("code")
@@ -76,6 +117,7 @@
 #define K_SEAL_FIELDS       key("sealFields")
 #define K_MIX_HASH          key("mixHash")
 #define K_TRANSACTIONS      key("transactions")
+#define K_UNCLES            key("uncles")
 
 #define K_PUBLIC_KEY        key("publicKey")
 #define K_CHAIN_ID          key("chainId")
@@ -107,6 +149,7 @@
 #define K_STORAGE_PROOF     key("storageProof")
 
 #define K_CONTRACT          key("contract")
+#define K_CONTRACT_ADDRESS  key("contractAddress")
 #define K_LOG_PROOF         key("logProof")
 #define K_RECEIPTS          key("receipts")
 #define K_REMOVED           key("removed")

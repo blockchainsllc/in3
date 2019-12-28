@@ -5,6 +5,86 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 cmd",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "call",
+                "-to",
+                "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f",
+                "nodes(uint256):(string,uint,uint64,uint192,uint64,address,bytes32)",
+                "0"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 json",
+            "program": "${workspaceFolder}/build/bin/json",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "-f",
+                "data.hex"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "test.js",
+            "program": "${workspaceFolder}/test.js"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run test",
+            "program": "${workspaceFolder}/build/test/runner",
+            "args": [
+                "../test/testdata/requests/eth_logs_invalid.json",
+                "-t",
+                "1"
+            ],
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run abi test",
+            "program": "${workspaceFolder}/build/test/test_cache",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch wasm test",
+            "program": "${workspaceFolder}/test/bindings/wasm/testRunner.js",
+            "args": [
+                "../../testdata/requests/eth_getCode.json",
+                "-t",
+                "11"
+            ],
+            "cwd": "${workspaceFolder}/test/bindings/wasm"
+        },
+        {
+            "type": "node",
+            "protocol": "inspector",
+            "showAsyncStacks": true,
+            "request": "launch",
+            "name": "Mocha Tests",
+            "program": "${workspaceFolder}/test/bindings/wasm/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-u",
+                "tdd",
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/test/bindings/wasm/testRunner.js"
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "cwd": "${workspaceFolder}/test/bindings/wasm"
+        },
+        {
             "type": "java",
             "name": "CodeLens (Launch) - IN3",
             "request": "launch",
@@ -25,9 +105,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/in3",
             "args": [
-                "-debug",
-                "eth_getTransactionByHash",
-                "0xf5a47818d4f7465ff6edcb4b9af6b7913e514970738c9561457dc862ffc875e2"
+                "-s",
+                "1",
+                "eth_getBlockByNumber",
+                "latest",
+                "false"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
@@ -106,13 +188,16 @@
             "args": [
                 "-t",
                 "1",
-                "../test/testdata/requests/in3_nodeList.json"
+                "../test/testdata/requests/in3_getBlockByNumber.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "lldb"
+            "MIMode": "lldb",
+            "logging": {
+                "trace": true
+            }
         },
         {
             "name": "java",
@@ -138,7 +223,7 @@
             "args": [
                 "-debug",
                 "-c",
-                "kovan",
+                "https://rpc.slock.it/mainnet",
                 "eth_blockNumber"
             ],
             "stopAtEntry": true,
@@ -213,9 +298,9 @@
             "program": "${workspaceFolder}/build/src/cmd/in3",
             "args": [
                 "-to",
-                "0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
+                "0x40f1929b349107a65e705cdbe13c496840e12d51",
                 "call",
-                "totalServers():uint256"
+                "registryId():uint256"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
@@ -256,7 +341,41 @@
                 "-t",
                 "1",
                 "-d",
-                "../test/testdata/evm/GeneralStateTests/stRandom2/randomStatetest572.json"
+                "../test/testdata/evm/GeneralStateTests/stRandom2/randomStatetest642.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "vmrunner_",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/vmrunner",
+            "args": [
+                "-t",
+                "1",
+                "-d",
+                "../test/testdata/evm/GeneralStateTests/stBadOpcode/badOpcodes.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "ct",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/crypto_test",
+            "args": [
+                "-t",
+                "1",
+                "-d",
+                "../test/testdata/evm/GeneralStateTests/stArgsZeroOneBalance/callcodeNonConst.json"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

@@ -1,9 +1,43 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
 #include "usn_api.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/nano/eth_nano.h"
+#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +50,7 @@
 
 #define reject_if(c, m)            \
   if (c) {                         \
-    if (parsed) free_json(parsed); \
+    if (parsed) json_free(parsed); \
     result.error_msg = m;          \
     result.action    = NULL;       \
     return result;                 \
@@ -32,7 +66,7 @@
 
 static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;
-  hex2byte_arr("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
+  hex_to_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
   for (d_iterator_t iter = d_iter(d_get(receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
     bytes_t* t = d_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
     if (t && t->len == 32 && memcmp(event_hash, t->data, 32) == 0) return iter.token;
@@ -57,18 +91,18 @@ static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
 }
 
 static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result, int max) {
-  int     l = 4 + 32 + data.len;
-  uint8_t cdata[4 + 32 + data.len];
-  hex2byte_arr(fn_hash, -1, cdata, 4);
+  int      l     = 4 + 32 + data.len;
+  uint8_t* cdata = alloca(l);
+  hex_to_bytes(fn_hash, -1, cdata, 4);
   memcpy(cdata + 4, device_id, 32);
   if (data.len) memcpy(cdata + 36, data.data, data.len);
 
-  char  args[(4 + 32 + data.len) * 2 + 100];
+  char* args = alloca(l * 2 + 100);
   char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
   p += bytes_to_hex(cdata, l, p);
   p += sprintf(p, "\",\"gas\":\"0x77c810\",\"to\":\"0x");
   p += bytes_to_hex(conf->contract, 20, p);
-  p += sprintf(p, "\"},\"latest\"]");
+  sprintf(p, "\"},\"latest\"]");
 
   // send the request
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_call", op);
@@ -76,16 +110,16 @@ static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
   l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, max);
-  free_ctx(ctx);
+  ctx_free(ctx);
   return l == max ? l : IN3_EINVALDT;
 }
 
 static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t value, bytes32_t tx_hash) {
-  char  args[(4 + 32 + data.len) * 2 + 200];
+  char* args = alloca((4 + 32 + data.len) * 2 + 200);
   char *op = args, *p = (char*) args + sprintf((char*) args, "[{\"data\":\"0x");
   p += bytes_to_hex(data.data, data.len, p);
   p += sprintf(p, "\",\"gasLimit\":\"0x0f4240\",\"to\":\"0x");
@@ -98,7 +132,7 @@ static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t 
       p += bytes_to_hex(vs, vl, p);
     }
   }
-  p += sprintf(p, "\"}]");
+  sprintf(p, "\"}]");
 
   // send the request
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_sendTransaction", op);
@@ -106,12 +140,12 @@ static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t 
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
 
   int l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), tx_hash, 32);
-  free_ctx(ctx);
+  ctx_free(ctx);
   return l;
 }
 
@@ -223,7 +257,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   strcpy(result->action, d_get_stringk(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
 
 clean:
-  if (ctx) free_ctx(ctx);
+  if (ctx) ctx_free(ctx);
 }
 
 usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
@@ -251,7 +285,7 @@ usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
     result.accepted = true;
   } else
     result.error_msg = "Unknown message type";
-  free_json(parsed);
+  json_free(parsed);
 
   return result;
 }
@@ -310,8 +344,11 @@ static int usn_add_booking(usn_device_t* device, address_t controller, uint64_t 
   booking->rented_from   = rented_from;
   booking->rented_until  = rented_until;
   memcpy(booking->controller, controller, 20);
-  memcpy(booking->props, props, 16);
   memcpy(booking->tx_hash, tx_hash, 32);
+  if (props)
+    memcpy(booking->props, props, 16);
+  else
+    memset(booking->props, 0, 16);
   device->num_bookings++;
   return 1;
 }
@@ -321,11 +358,11 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
   in3_ret_t  res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
   uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
-  free_ctx(ctx);
+  ctx_free(ctx);
   if (conf->last_checked_block == current_block) return IN3_OK;
 
   if (!conf->last_checked_block) {
@@ -337,6 +374,11 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
       // get the number of bookings and manage memory
       if (0 > (res = exec_eth_call(conf, "0x3fce7fcf", device->id, bytes(NULL, 0), tmp, 32))) return res;
       if (device->bookings) _free(device->bookings);
+
+#ifdef __clang_analyzer__
+      // let the analyser know that this can not be garbage values
+      memset(tmp, 0, 128);
+#endif
       int size             = bytes_to_int(tmp + 28, 4);
       device->bookings     = size ? _calloc(sizeof(usn_booking_t), size) : NULL;
       device->num_bookings = 0;
@@ -360,8 +402,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
   } else {
     // look for events
     // build request
-    char  params[conf->len_devices * 70 + 320];
-    char* p = params + sprintf(params, "[{\"address\":\"0x");
+    char *params = alloca(conf->len_devices * 70 + 320), *p = params + sprintf(params, "[{\"address\":\"0x");
     p += bytes_to_hex(conf->contract, 20, p);
     p += sprintf(p, "\", \"topics\":[[\"0x9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8\",\"0x63febe59689bc8e2235e549f5f941933c2ba8a6f470fa2db0badaab584c758b9\"],null,");
     if (conf->len_devices == 1) {
@@ -378,14 +419,14 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
       }
       p += sprintf(p, "]");
     }
-    p += sprintf(p, "],\"fromBlock\":\"0x%" PRIx64 "\",\"toBlock\":\"0x%" PRIx64 "\"}]", conf->last_checked_block + 1, current_block);
+    sprintf(p, "],\"fromBlock\":\"0x%" PRIx64 "\",\"toBlock\":\"0x%" PRIx64 "\"}]", conf->last_checked_block + 1, current_block);
 
     // send the request
     ctx = in3_client_rpc_ctx(conf->c, "eth_getLogs", params);
 
     // do we have a valid result?
     if ((res = ctx_get_error(ctx, 0))) {
-      free_ctx(ctx);
+      ctx_free(ctx);
       return res;
     }
 
@@ -403,7 +444,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
                       d_get_bytesk(iter.token, K_TRANSACTION_HASH)->data);
     }
 
-    free_ctx(ctx);
+    ctx_free(ctx);
   }
 
   // update the last_block
@@ -527,10 +568,14 @@ in3_ret_t usn_rent(in3_t* c, address_t contract, address_t token, char* url, uin
 
   // now send the tx
   memset(params, 0, 100);
-  hex2byte_arr("400a6315", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  hex_to_bytes("400a6315", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
   int_to_bytes(seconds, params + 64);
   if (token) memcpy(params + 80, token, 20);
+#ifdef __clang_analyzer__
+  // let the analyser know that this can not be garbage values
+  memset(price, 0, 32);
+#endif
 
   res = exec_eth_send(&conf, bytes(params, 100), price, tx_hash);
   if (res < 0) return res;
@@ -544,7 +589,7 @@ in3_ret_t usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash)
   uint8_t   params[36] = {0};
 
   // now send the tx
-  hex2byte_arr("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  hex_to_bytes("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
 
   in3_ret_t res = exec_eth_send(&conf, bytes(params, 100), NULL, tx_hash);

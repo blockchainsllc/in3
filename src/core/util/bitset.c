@@ -1,7 +1,43 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "bitset.h"
 #include "log.h"
 #include "mem.h"
 #include "utils.h"
+#include <assert.h>
+#include <limits.h>
 
 #define UDIV_UP(a, b) (((a) + (b) -1) / (b))
 #define ALIGN_UP(a, b) (UDIV_UP(a, b) * (b))
@@ -28,6 +64,7 @@ in3_ret_t bs_modify(bitset_t* bs, size_t pos, bs_op_t op) {
       uintbs_t cpy = bs->bits.b;
       bs->bits.p   = NULL;
       if (!bs_growp(bs, pos)) return IN3_ENOMEM;
+      assert(bs->bits.p != NULL);
       for (size_t i = 0; i < BS_MAX; ++i) {
         BIT_CHECK(cpy, i) ? BIT_SET(bs->bits.p[i / 8], i % 8)
                           : BIT_CLEAR(bs->bits.p[i / 8], i % 8);
@@ -125,4 +162,14 @@ bitset_t* bs_clone(bitset_t* bs) {
   }
   nbs->len = bs->len;
   return nbs;
+}
+
+bitset_t* bs_from_ull(unsigned long long u, size_t l) {
+  bitset_t* bs = bs_new(l);
+  if (bs) {
+    for (unsigned int j = 0; j < sizeof(u) * CHAR_BIT; ++j)
+      if (BIT_CHECK(u, j))
+        bs_set(bs, j);
+  }
+  return bs;
 }

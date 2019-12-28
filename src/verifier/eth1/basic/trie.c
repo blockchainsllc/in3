@@ -1,3 +1,37 @@
+/*******************************************************************************
+ * This file is part of the Incubed project.
+ * Sources: https://github.com/slockit/in3-c
+ * 
+ * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * 
+ * 
+ * COMMERCIAL LICENSE USAGE
+ * 
+ * Licensees holding a valid commercial license may use this file in accordance 
+ * with the commercial license agreement provided with the Software or, alternatively, 
+ * in accordance with the terms contained in a written agreement between you and 
+ * slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+ * information please contact slock.it at in3@slock.it.
+ * 	
+ * Alternatively, this file may be used under the AGPL license as follows:
+ *    
+ * AGPL LICENSE USAGE
+ * 
+ * This program is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free Software 
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ * [Permissions of this strong copyleft license are conditioned on making available 
+ * complete source code of licensed works and modifications, which include larger 
+ * works using a licensed work, under the same license. Copyright and license notices 
+ * must be preserved. Contributors provide an express grant of patent rights.]
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ *******************************************************************************/
+
 #include "trie.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
@@ -54,6 +88,7 @@ void trie_free(trie_t* val) {
 }
 
 static void free_node(trie_node_t* n) {
+  if (!n) return;
   if (n->own_memory) {
     // check if the node has a hash assigned. In this case it is stored and we be cleaned up later.
     int      l = 0;
@@ -148,7 +183,7 @@ static int trie_node_value_from_nibbles(trie_node_type_t type, uint8_t* val, byt
 
   int      l = nibble_len(val), i, n, odd = l % 2;
   uint32_t blen = 1 + (l - odd) / 2;
-  if (dst->len < blen) {
+  if (dst->len < blen || !dst->data) {
     if (dst->data) _free(dst->data);
     dst->data = _malloc(blen);
   }
@@ -378,8 +413,9 @@ void trie_set_value(trie_t* t, bytes_t* key, bytes_t* value) {
   memcpy(t->root, root, 32);
 }
 
-#ifdef TEST
+#ifdef TRIETEST
 static void hexprint(uint8_t* a, int l) {
+  (void) a; // unused param if compiled without debug
   int i;
   for (i = 0; i < l; i++) in3_log_trace("%02x", a[i]);
 }

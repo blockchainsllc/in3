@@ -7,4 +7,4 @@ add_library(btc_o OBJECT
 )
 
 add_library(btc STATIC $<TARGET_OBJECTS:btc_o>)
-target_link_libraries(btc core)
+target_link_libraries(btc core crypto tommath)

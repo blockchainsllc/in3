@@ -5,12 +5,12 @@
 BEGIN { 
     print "# Building"
     print ""
-    print "While we provide binaries (TODO put link to releases), you can also build from source:"
+    print "While we provide binaries, you can also build from source:"
     print ""
     print "### requirements"
     print ""
     print "- cmake"
-    print "- curl : curl is used as transport for the comandline-tools"
+    print "- curl : curl is used as transport for command-line tools."
     print "- optional: libsycrypt, which would be used for unlocking keystore files using `scrypt` as kdf method. if it does not exist you can still build, but not decrypt such keys.   "
     print "  for osx `brew install libscrypt` and for debian `sudo apt-get install libscrypt-dev`"
     print ""
@@ -24,6 +24,8 @@ BEGIN {
     print ""
     print "### CMake options"; 
     print "" ;
+    print "When configuring cmake, you can set a lot of different incubed specific like `cmake -DEVM_GAS=false ..`." ;
+    print "" ;
     RS = "" ; 
     FS = "\n"  
 }
@@ -36,7 +38,7 @@ BEGIN {
       print ""
       print " "d[2]
       print ""
-      print "  Type: `" a[2], "` ,    Default-Value: `" a[3]"`"
+      print "Default-Value: `-D" a[1] "=" a[3]"`"
       print ""
       print ""
 

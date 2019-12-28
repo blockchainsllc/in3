@@ -13,13 +13,13 @@ static void rev_hex(char* hex, uint8_t* dst, int l) {
     memset(dst + out_len, 0, l - out_len);
 
   if (len % 1) {
-    dst[out_len - 1] = strtohex(*hex);
+    dst[out_len - 1] = hexchar_to_int(*hex);
     out_len--;
     hex++;
   }
 
   for (i = 0, j = out_len - 1; j >= 0; j--, i += 2)
-    dst[j] = (strtohex(hex[i]) << 4) | strtohex(hex[i + 1]);
+    dst[j] = (hexchar_to_int(hex[i]) << 4) | hexchar_to_int(hex[i + 1]);
 }
 
 bytes_t btc_block_get(bytes_t block, btc_block_field field) {

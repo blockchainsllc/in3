@@ -1,3 +1,7 @@
+coverage_report
+test/bindings/wasm/node_modules/
+**/node_modules/
+**/package-lock.json
 Testing*
 .in3
 build*/

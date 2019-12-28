@@ -1,3 +1,37 @@
+###############################################################################
+# This file is part of the Incubed project.
+# Sources: https://github.com/slockit/in3-c
+# 
+# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# 
+# 
+# COMMERCIAL LICENSE USAGE
+# 
+# Licensees holding a valid commercial license may use this file in accordance 
+# with the commercial license agreement provided with the Software or, alternatively, 
+# in accordance with the terms contained in a written agreement between you and 
+# slock.it GmbH/Blockchains LLC. For licensing terms and conditions or further 
+# information please contact slock.it at in3@slock.it.
+# 	
+# Alternatively, this file may be used under the AGPL license as follows:
+#    
+# AGPL LICENSE USAGE
+# 
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Affero General Public License as published by the Free Software 
+# Foundation, either version 3 of the License, or (at your option) any later version.
+#  
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+# PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+# [Permissions of this strong copyleft license are conditioned on making available 
+# complete source code of licensed works and modifications, which include larger 
+# works using a licensed work, under the same license. Copyright and license notices 
+# must be preserved. Contributors provide an express grant of patent rights.]
+# You should have received a copy of the GNU Affero General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+###############################################################################
+
 IF (FAST_MATH)
     add_library(tommath_o OBJECT
             #  bn_error.c
@@ -11,7 +45,7 @@ IF (FAST_MATH)
             bn_mp_abs.c
             bn_mp_add.c
             #  bn_mp_add_d.c
-            #  bn_mp_addmod.c
+            bn_mp_addmod.c
             #  bn_mp_and.c
             bn_mp_balance_mul.c
             bn_mp_clamp.c
@@ -61,7 +95,7 @@ IF (FAST_MATH)
             bn_mp_invmod.c
             bn_mp_invmod_slow.c
             #  bn_mp_is_square.c
-            #  bn_mp_iseven.c
+            bn_mp_iseven.c
             #  bn_mp_isodd.c
             #  bn_mp_jacobi.c
             bn_mp_karatsuba_mul.c
@@ -82,7 +116,7 @@ IF (FAST_MATH)
             bn_mp_mulmod.c
             #  bn_mp_n_root.c
             #  bn_mp_n_root_ex.c
-            #  bn_mp_neg.c
+            bn_mp_neg.c
             #  bn_mp_or.c
             #  bn_mp_prime_fermat.c
             #  bn_mp_prime_frobenius_underwood.c
@@ -98,7 +132,7 @@ IF (FAST_MATH)
             #  bn_mp_rand.c
             #  bn_mp_read_radix.c
             #  bn_mp_read_signed_bin.c
-            #  bn_mp_read_unsigned_bin.c
+            bn_mp_read_unsigned_bin.c
             bn_mp_reduce.c
             bn_mp_reduce_2k.c
             bn_mp_reduce_2k_l.c
@@ -116,29 +150,29 @@ IF (FAST_MATH)
             #  bn_mp_shrink.c
             #  bn_mp_signed_bin_size.c
             bn_mp_sqr.c
-            #  bn_mp_sqrmod.c
+            bn_mp_sqrmod.c
             #  bn_mp_sqrt.c
             #  bn_mp_sqrtmod_prime.c
             bn_mp_sub.c
             #  bn_mp_sub_d.c
-            #  bn_mp_submod.c
+            bn_mp_submod.c
             #  bn_mp_tc_and.c
             #  bn_mp_tc_div_2d.c
             #  bn_mp_tc_or.c
             #  bn_mp_tc_xor.c
             #  bn_mp_to_signed_bin.c
             #  bn_mp_to_signed_bin_n.c
-            #  bn_mp_to_unsigned_bin.c
+            bn_mp_to_unsigned_bin.c
             #  bn_mp_to_unsigned_bin_n.c
-            bn_mp_toom_mul.c
-            bn_mp_toom_sqr.c
+            #  bn_mp_toom_mul.c
+            #  bn_mp_toom_sqr.c
             #  bn_mp_toradix.c
             #  bn_mp_toradix_n.c
-            #  bn_mp_unsigned_bin_size.c
+            bn_mp_unsigned_bin_size.c
             #  bn_mp_xor.c
             bn_mp_zero.c
             #  bn_prime_tab.c
-            #  bn_reverse.c
+            bn_reverse.c
             bn_s_mp_add.c
             bn_s_mp_exptmod.c
             bn_s_mp_mul_digs.c
@@ -160,6 +194,7 @@ ELSE (FAST_MATH)
             bn_mp_2expt.c
             bn_mp_abs.c
             bn_mp_add.c
+            bn_mp_addmod.c
             bn_mp_balance_mul.c
             bn_mp_clamp.c
             bn_mp_clear.c
@@ -183,6 +218,7 @@ ELSE (FAST_MATH)
             bn_mp_init_size.c
             bn_mp_invmod.c
             bn_mp_invmod_slow.c
+            bn_mp_iseven.c
             bn_mp_lshd.c
             bn_mp_mod.c
             bn_mp_mod_2d.c
@@ -193,6 +229,8 @@ ELSE (FAST_MATH)
             bn_mp_mul_2d.c
             bn_mp_mul_d.c
             bn_mp_mulmod.c
+            bn_mp_neg.c
+            bn_mp_read_unsigned_bin.c
             bn_mp_reduce.c
             bn_mp_reduce_2k_l.c
             bn_mp_reduce_2k_setup_l.c
@@ -201,8 +239,13 @@ ELSE (FAST_MATH)
             bn_mp_rshd.c
             bn_mp_set.c
             bn_mp_sqr.c
+            bn_mp_sqrmod.c
             bn_mp_sub.c
+            bn_mp_submod.c
+            bn_mp_to_unsigned_bin.c
+            bn_mp_unsigned_bin_size.c
             bn_mp_zero.c
+            bn_reverse.c
             bn_s_mp_add.c
             bn_s_mp_exptmod.c
             bn_s_mp_mul_digs.c
