@@ -80,7 +80,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
   json_ctx_t* res  = parse_json(buffer);
   str_range_t json = d_to_json(d_get_at(d_get(d_get_at(res->result, 0), key("response")), 0));
   sb_add_range(&req->results->result, json.data, 0, json.len);
-  free_json(res);
+  json_free(res);
   return IN3_OK;
 }
 #define MAX_ENTRIES 10
@@ -111,56 +111,55 @@ static void test_cache() {
   in3_register_eth_nano();
   cache_t* cache = calloc(1, sizeof(cache_t));
 
-  in3_t* c                  = in3_new();
-  c->transport              = test_transport;
-  c->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
-  c->cacheStorage->cptr     = cache;
-  c->cacheStorage->get_item = cache_get_item;
-  c->cacheStorage->set_item = cache_set_item;
-  c->chainId                = 0x1;
+  in3_t* c           = in3_for_chain(0x1);
+  c->transport       = test_transport;
+  c->cache           = _malloc(sizeof(in3_storage_handler_t));
+  c->cache->cptr     = cache;
+  c->cache->get_item = cache_get_item;
+  c->cache->set_item = cache_set_item;
 
   in3_chain_t* chain = NULL;
-  for (int i = 0; i < c->chainsCount; i++) {
-    if (c->chains[i].chainId == 0x1) chain = &c->chains[i];
+  for (int i = 0; i < c->chains_length; i++) {
+    if (c->chains[i].chain_id == 0x1) chain = &c->chains[i];
   }
 
   TEST_ASSERT_TRUE(chain != NULL);
-  TEST_ASSERT_EQUAL_INT32(2, chain->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(2, chain->nodelist_length);
 
   // cache is empty so no changes
   in3_cache_init(c);
-  TEST_ASSERT_EQUAL_INT32(2, chain->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(2, chain->nodelist_length);
 
   // now we update the node (from testfiles)
   TEST_ASSERT_EQUAL(0, update_nodes(c, chain));
 
   // the nodeList should have 5 nodes now
-  TEST_ASSERT_EQUAL_INT32(5, chain->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(5, chain->nodelist_length);
   // ..and the cache one entry
   TEST_ASSERT_TRUE(*cache->keys != NULL);
 
   // create a second client...
-  in3_t* c2        = in3_new();
-  c2->cacheStorage = c->cacheStorage;
-  c2->transport    = test_transport;
-  c2->chainId      = c->chainId;
-  in3_configure(c2, "{\"chainId\":\"0x1\"}");
+  in3_t* c2     = in3_for_chain(0);
+  c2->cache     = c->cache;
+  c2->transport = test_transport;
+  c2->chain_id  = c->chain_id;
+  in3_configure(c2, "{\"chain_id\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
-  for (int i = 0; i < c2->chainsCount; i++) {
-    if (c2->chains[i].chainId == 0x1) chain2 = &c2->chains[i];
+  for (int i = 0; i < c2->chains_length; i++) {
+    if (c2->chains[i].chain_id == 0x1) chain2 = &c2->chains[i];
   }
 
   // the nodeList should have 2 nodes still
-  TEST_ASSERT_EQUAL_INT32(2, chain2->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(2, chain2->nodelist_length);
   in3_cache_init(c2);
   // the nodeList should have 5 nodes now
-  TEST_ASSERT_EQUAL_INT32(5, chain2->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(5, chain2->nodelist_length);
 
   // test request
   in3_ctx_t* ctx = in3_client_rpc_ctx(c2, "in3_nodeList", "[]");
   if (ctx->error) printf("ERROR : %s\n", ctx->error);
   TEST_ASSERT(ctx && ctx->error == NULL);
-  free_ctx(ctx);
+  ctx_free(ctx);
 }
 
 static void test_newchain() {
@@ -170,67 +169,67 @@ static void test_newchain() {
 
   cache_t* cache = _calloc(1, sizeof(cache_t));
 
-  in3_t* c                  = in3_new();
-  c->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
-  c->cacheStorage->cptr     = cache;
-  c->cacheStorage->get_item = cache_get_item;
-  c->cacheStorage->set_item = cache_set_item;
-  c->chainId                = 0x8;
+  in3_t* c           = in3_for_chain(0);
+  c->chain_id        = 0x8;
+  c->cache           = _malloc(sizeof(in3_storage_handler_t));
+  c->cache->cptr     = cache;
+  c->cache->get_item = cache_get_item;
+  c->cache->set_item = cache_set_item;
 
-  in3_set_default_storage(c->cacheStorage);
+  in3_set_default_storage(c->cache);
 
   in3_chain_t* chain = NULL;
-  for (int i = 0; i < c->chainsCount; i++) {
-    if (c->chains[i].chainId == 0x8) chain = &c->chains[i];
+  for (int i = 0; i < c->chains_length; i++) {
+    if (c->chains[i].chain_id == 0x8) chain = &c->chains[i];
   }
 
   TEST_ASSERT_TRUE(chain == NULL);
   address_t contract;
-  hex2byte_arr("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract, 20);
+  hex_to_bytes("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract, 20);
   bytes32_t registry_id;
-  hex2byte_arr("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
+  hex_to_bytes("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2);
   in3_client_add_node(c, 0x8, "http://test.com", 0xFF, contract);
 
-  for (int i = 0; i < c->chainsCount; i++) {
-    if (c->chains[i].chainId == 0x8) chain = &c->chains[i];
+  for (int i = 0; i < c->chains_length; i++) {
+    if (c->chains[i].chain_id == 0x8) chain = &c->chains[i];
   }
 
   TEST_ASSERT_TRUE(chain != NULL);
-  TEST_ASSERT_EQUAL(1, chain->nodeListLength);
+  TEST_ASSERT_EQUAL(1, chain->nodelist_length);
 
   // cache is empty so no changes
   in3_cache_init(c);
-  TEST_ASSERT_EQUAL_INT32(1, chain->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(1, chain->nodelist_length);
 
   // now we update the node (from testfiles)
   TEST_ASSERT_EQUAL(0, update_nodes(c, chain));
 
   // the nodeList should have 5 nodes now
-  TEST_ASSERT_EQUAL_INT32(5, chain->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(5, chain->nodelist_length);
   // ..and the cache one entry
   TEST_ASSERT_TRUE(*cache->keys != NULL);
 
   // create a second client...
-  in3_t* c2        = in3_new();
-  c2->cacheStorage = c->cacheStorage;
-  c2->chainId      = c->chainId;
-  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
+  in3_t* c2    = in3_for_chain(0);
+  c2->chain_id = c->chain_id;
+  c2->cache    = c->cache;
+  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2);
   in3_chain_t* chain2 = NULL;
-  for (int i = 0; i < c2->chainsCount; i++) {
-    if (c2->chains[i].chainId == c2->chainId) chain2 = &c2->chains[i];
+  for (int i = 0; i < c2->chains_length; i++) {
+    if (c2->chains[i].chain_id == c2->chain_id) chain2 = &c2->chains[i];
   }
 
   // the nodeList should have 2 nodes still
-  TEST_ASSERT_EQUAL_INT32(0, chain2->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
   in3_cache_init(c2);
   // the nodeList should have 5 nodes now
-  TEST_ASSERT_EQUAL_INT32(5, chain2->nodeListLength);
+  TEST_ASSERT_EQUAL_INT32(5, chain2->nodelist_length);
 
-  in3_client_remove_node(c2, c2->chainId, chain2->nodeList->address->data);
-  TEST_ASSERT_EQUAL_INT32(4, chain2->nodeListLength);
-  in3_client_clear_nodes(c2, c2->chainId);
-  TEST_ASSERT_EQUAL_INT32(0, chain2->nodeListLength);
+  in3_client_remove_node(c2, c2->chain_id, chain2->nodelist->address->data);
+  TEST_ASSERT_EQUAL_INT32(4, chain2->nodelist_length);
+  in3_client_clear_nodes(c2, c2->chain_id);
+  TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
 }
 
 void test_scache() {

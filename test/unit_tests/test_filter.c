@@ -55,14 +55,14 @@ static void test_filter() {
 
   in3_register_eth_basic();
 
-  in3_t* c          = in3_new();
-  c->transport      = test_transport;
-  c->chainId        = 0x1;
-  c->autoUpdateList = false;
-  c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  ;
+  c->transport        = test_transport;
+  c->auto_update_list = false;
+  c->proof            = PROOF_NONE;
+  c->signature_count  = 0;
 
-  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needsUpdate = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
 
   char *result = NULL, *error = NULL;
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);

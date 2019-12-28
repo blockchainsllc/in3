@@ -167,13 +167,19 @@ async function runSingleTest(test, c) {
         signatureCount: test.signatures ? test.signatures.length : 0,
         nodes: {
             '0x1': {
-                needsUpdate: false
+                needsUpdate: false,
+                contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f',
+                registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
             },
             '0x5': {
-                needsUpdate: false
+                needsUpdate: false,
+                contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f',
+                registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
             },
             '0x2a': {
-                needsUpdate: false
+                needsUpdate: false,
+                contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f',
+                registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
             }
         }
     })

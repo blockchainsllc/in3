@@ -11,11 +11,11 @@
             "program": "${workspaceFolder}/build/bin/in3",
             "cwd": "${workspaceFolder}",
             "args": [
-                "-s",
-                "1",
-                "eth_getBlockByNumber",
-                "latest",
-                "false"
+                "call",
+                "-to",
+                "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f",
+                "nodes(uint256):(string,uint,uint64,uint192,uint64,address,bytes32)",
+                "0"
             ]
         },
         {
@@ -41,7 +41,7 @@
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../test/testdata/requests/eth_getLogs.json",
+                "../test/testdata/requests/eth_logs_invalid.json",
                 "-t",
                 "1"
             ],
@@ -51,7 +51,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "run abi test",
-            "program": "${workspaceFolder}/build/test/test_ethapi",
+            "program": "${workspaceFolder}/build/test/test_cache",
             "cwd": "${workspaceFolder}/build"
         },
         {

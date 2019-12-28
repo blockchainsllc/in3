@@ -22,7 +22,7 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // get block using raw RPC call
   get_block_rpc(in3);

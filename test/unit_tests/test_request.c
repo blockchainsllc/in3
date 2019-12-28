@@ -55,17 +55,17 @@ void test_configure_request() {
   in3_register_eth_basic();
   in3_register_eth_api();
 
-  in3_t* c               = in3_new();
-  c->proof               = PROOF_FULL;
-  c->signatureCount      = 2;
-  c->chains->needsUpdate = false;
-  c->finality            = 10;
-  c->includeCode         = true;
-  c->replaceLatestBlock  = 6;
-  c->use_binary          = true;
-  c->use_http            = true;
+  in3_t* c                = in3_for_chain(0);
+  c->proof                = PROOF_FULL;
+  c->signature_count      = 2;
+  c->chains->needs_update = false;
+  c->finality             = 10;
+  c->include_code         = true;
+  c->replace_latest_block = 6;
+  c->use_binary           = true;
+  c->use_http             = true;
 
-  in3_ctx_t* ctx = new_ctx(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
   json_ctx_t*    json    = parse_json(request->payload);
@@ -78,9 +78,9 @@ void test_configure_request() {
   d_token_t* signers = d_get(in3, key("signers"));
   TEST_ASSERT_NOT_NULL(signers);
   TEST_ASSERT_EQUAL(2, d_len(signers));
-  free_request(request, ctx, false);
-  free_json(json);
-  free_ctx(ctx);
+  request_free(request, ctx, false);
+  json_free(json);
+  ctx_free(ctx);
 
   in3_free(c);
 }
@@ -89,9 +89,10 @@ void test_exec_req() {
   in3_register_eth_basic();
   in3_register_eth_api();
 
-  in3_t* c      = in3_new();
-  char*  result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
-  TEST_ASSERT_EQUAL_STRING("{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  ;
+  char* result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
+  TEST_ASSERT_EQUAL_STRING("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
   _free(result);
 
   result = in3_client_exec_req(c, "\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");

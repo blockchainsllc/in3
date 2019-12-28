@@ -55,20 +55,20 @@
 #include <stdio.h>
 #include <unistd.h>
 
-in3_t* init_in3(in3_transport_send custom_transport, uint64_t chain) {
+in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   int    err;
   in3_register_eth_full();
-  in3 = in3_new();
+  in3 = in3_for_chain(0);
   if (custom_transport)
     in3->transport = custom_transport; // use curl to handle the requests
-  in3->requestCount   = 1;             // number of requests to sendp
-  in3->includeCode    = 1;
-  in3->chainId        = chain;
-  in3->max_attempts   = 1;
-  in3->requestCount   = 1; // number of requests to sendp
-  in3->autoUpdateList = false;
-  for (int i = 0; i < in3->chainsCount; i++) in3->chains[i].needsUpdate = false;
+  in3->request_count    = 1;           // number of requests to sendp
+  in3->include_code     = 1;
+  in3->max_attempts     = 1;
+  in3->request_count    = 1; // number of requests to sendp
+  in3->chain_id         = chain;
+  in3->auto_update_list = false;
+  for (int i = 0; i < in3->chains_length; i++) in3->chains[i].needs_update = false;
   return in3;
 }
 
@@ -76,7 +76,7 @@ static void test_get_balance() {
   in3_t* in3 = init_in3(mock_transport, 0x5);
   // the address of account whose balance we want to get
   address_t account;
-  hex2byte_arr("0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2", -1, account, 20);
+  hex_to_bytes("0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2", -1, account, 20);
   // get balance of account
   long double balance = as_double(eth_getBalance(in3, account, BLKNUM(1555415)));
   TEST_ASSERT_TRUE(balance > 0.0);
@@ -88,7 +88,7 @@ static void test_get_tx_count() {
 
   // the address of account whose balance we want to get
   address_t account;
-  hex2byte_arr("0x0de496ae79194d5f5b18eb66987b504a0feb32f2", -1, account, 20);
+  hex_to_bytes("0x0de496ae79194d5f5b18eb66987b504a0feb32f2", -1, account, 20);
   // get balance of account
   uint64_t count = eth_getTransactionCount(in3, account, BLKNUM_LATEST());
   in3_log_debug("tx count %llu\n", count);
@@ -139,7 +139,7 @@ static void test_get_filter_changes() {
   eth_log_t* logs = NULL;
   in3_ret_t  ret  = eth_getFilterChanges(in3, fid, NULL, &logs);
   TEST_ASSERT_EQUAL(IN3_OK, ret);
-  free_json(jopt);
+  json_free(jopt);
 
   // Create block filter
   add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
@@ -180,7 +180,7 @@ static void test_get_filter_changes() {
   ret               = eth_getFilterChanges(in3, bfid, &hashes, NULL);
   TEST_ASSERT_EQUAL(1, ret);
   bytes32_t blk_hash;
-  hex2byte_arr("0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9", -1, blk_hash, 32);
+  hex_to_bytes("0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9", -1, blk_hash, 32);
   TEST_ASSERT_EQUAL_MEMORY(hashes, blk_hash, 32);
 
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
@@ -219,10 +219,10 @@ static void test_get_logs() {
   while (logs) {
     l    = logs;
     logs = logs->next;
-    free_log(l);
+    log_free(l);
   }
   eth_uninstallFilter(in3, fid);
-  free_json(jopt);
+  json_free(jopt);
 
   // Test with non-existent filter id
   TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterLogs(in3, 1234, NULL));
@@ -237,7 +237,7 @@ static void test_get_tx_blkhash_index(void) {
   // the hash of transaction that we want to get
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   bytes32_t blk_hash;
-  hex2byte_arr("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash, 32);
+  hex_to_bytes("0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4", -1, blk_hash, 32);
 
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByBlockHashAndIndex(in3, blk_hash, 0);
@@ -260,7 +260,7 @@ static void test_get_tx_hash(void) {
   // the hash of transaction that we want to get
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   bytes32_t tx_hash;
-  hex2byte_arr("0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164", -1, tx_hash, 32);
+  hex_to_bytes("0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164", -1, tx_hash, 32);
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NOT_NULL(tx);
@@ -279,14 +279,14 @@ static void test_get_tx_receipt(void) {
 
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   bytes32_t tx_hash;
-  hex2byte_arr("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
+  hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
 
   // get the tx receipt by hash
   eth_tx_receipt_t* txr = eth_getTransactionReceipt(in3, tx_hash);
   TEST_ASSERT_TRUE(txr);
   TEST_ASSERT_TRUE(txr->status);
   TEST_ASSERT_TRUE(txr->gas_used > 0);
-  free_tx_receipt(txr);
+  eth_tx_receipt_free(txr);
   in3_free(in3);
 }
 
@@ -294,13 +294,13 @@ static void test_send_tx(void) {
   in3_t* in3 = init_in3(mock_transport, 0x5);
   // prepare parameters
   address_t to, from;
-  hex2byte_arr("0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2", -1, from, 20);
-  hex2byte_arr("0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2", -1, to, 20);
+  hex_to_bytes("0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2", -1, from, 20);
+  hex_to_bytes("0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2", -1, to, 20);
   bytes32_t pk;
-  hex2byte_arr("0xDD6A4ADA615D13217F35711FAAB1CD119C2A5A6437D08B8DC4EACCF7DF0A2AC4", -1, pk, 32);
+  hex_to_bytes("0xDD6A4ADA615D13217F35711FAAB1CD119C2A5A6437D08B8DC4EACCF7DF0A2AC4", -1, pk, 32);
   eth_set_pk_signer(in3, pk);
   in3_set_default_signer(in3->signer);
-  bytes_t* data = hex2byte_new_bytes("0xf86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affc", 223);
+  bytes_t* data = hex_to_new_bytes("0xf86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affc", 223);
 
   // send the tx
   bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_UNDEFINED(uint64_t));
@@ -311,8 +311,8 @@ static void test_send_tx(void) {
 }
 
 static void test_eth_chain_id(void) {
-  in3_t*   in3      = init_in3(mock_transport, 0x5);
-  uint64_t chain_id = eth_chainId(in3);
+  in3_t*     in3      = init_in3(mock_transport, 0x5);
+  chain_id_t chain_id = eth_chainId(in3);
   TEST_ASSERT_TRUE(chain_id == 5);
   in3_free(in3);
 }
@@ -338,7 +338,7 @@ static void test_eth_get_storage_at(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
-  hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
+  hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
   bytes32_t key;
   memset(key, 0, 32);
   uint256_t storage = eth_getStorageAt(in3, contract, key, BLKNUM_EARLIEST());
@@ -362,7 +362,7 @@ static void test_eth_getblock_txcount_number(void) {
 static void test_eth_getblock_txcount_hash(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   bytes32_t blk_hash;
-  hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
+  hex_to_bytes("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
 
   uint64_t tx_count = eth_getBlockTransactionCountByHash(in3, blk_hash);
   char*    error    = eth_last_error();
@@ -375,7 +375,7 @@ static void test_eth_getblock_hash(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
-  hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
+  hex_to_bytes("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
 
   //eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM_EARLIEST(), false);
   eth_block_t* block = eth_getBlockByHash(in3, blk_hash, false);
@@ -388,7 +388,7 @@ static void test_eth_call_fn(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
-  hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
+  hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
   //ask for the access to the lock
   json_ctx_t* response = eth_call_fn(in3, contract, BLKNUM_LATEST(), "hasAccess():bool");
   if (!response) {
@@ -399,8 +399,8 @@ static void test_eth_call_fn(void) {
   uint8_t access = d_int(response->result);
   in3_log_debug("Access granted? : %d \n", access);
 
-  // clean up resources
-  free_json(response);
+  //    clean up resources
+  json_free(response);
   TEST_ASSERT_TRUE(access == 1);
   in3_free(in3);
 }
@@ -409,7 +409,7 @@ static void test_eth_get_code(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
-  hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
+  hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
   //ask for the access to the lock
   bytes_t code = eth_getCode(in3, contract, BLKNUM_LATEST());
   //    clean up resources
@@ -421,7 +421,7 @@ static void test_estimate_fn(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x5);
   address_t contract;
   //setup lock access contract address to be excuted with eth_call
-  hex2byte_arr("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
+  hex_to_bytes("0x36643F8D17FE745a69A2Fd22188921Fade60a98B", -1, contract, 20);
   //ask for the access to the lock
   uint64_t estimate = eth_estimate_fn(in3, contract, BLKNUM_LATEST(), "hasAccess():bool");
   //convert the response to a uint32_t,
@@ -449,7 +449,7 @@ static void test_get_uncle_count_blknum(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x1);
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
-  hex2byte_arr("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
+  hex_to_bytes("0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d", -1, blk_hash, 32);
   //ask for the access to the lock
   uint64_t count = eth_getUncleCountByBlockNumber(in3, BLKNUM(56160));
   //we expect this to fail we dont have verification for this
@@ -463,7 +463,7 @@ static void test_get_uncle_count_blkhash(void) {
   in3_t*    in3 = init_in3(mock_transport, 0x1);
   bytes32_t blk_hash;
   // 0x9cd22d209f24344147494d05d13f335b6e63af930abdc60f3db63627589e1438
-  hex2byte_arr("0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845", -1, blk_hash, 32);
+  hex_to_bytes("0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845", -1, blk_hash, 32);
   //ask for the access to the lock
   uint64_t count = eth_getUncleCountByBlockHash(in3, blk_hash);
   //we expect this to fail we dont have verification for this
@@ -486,9 +486,9 @@ static void test_get_uncle_blknum_index(void) {
 
 static void test_utilities(void) {
   uint256_t u256 = {0};
-  //  hex2byte_arr("0xac1b824795e1eb1f", -1, u256.data, 32);
+  //  hex_to_bytes("0xac1b824795e1eb1f", -1, u256.data, 32);
   bytes32_t var;
-  hex2byte_arr("0xac1b824795e1eb1f", -1, var, 32);
+  hex_to_bytes("0xac1b824795e1eb1f", -1, var, 32);
   uint256_set(var, 32, u256.data);
   long double d = as_double(u256);
   TEST_ASSERT_TRUE(d > 0.0);
@@ -505,10 +505,10 @@ static void test_eth_call_multiple(void) {
                "\"0x0000000000000000000000000000000000000000000000000000000000000005\"",
                NULL,
                NULL);
-  hex2byte_arr("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
+  hex_to_bytes("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
   json_ctx_t* response = eth_call_fn(c, contract, BLKNUM_LATEST(), "totalServers():uint256");
   TEST_ASSERT_NOT_NULL(response);
-  free_json(response);
+  json_free(response);
 
   add_response("eth_call",
                "[{\"to\":\"0x2736d225f85740f42d17987100dc8d58e9e16252\",\"data\":\"0x5cf0f3570000000000000000000000000000000000000000000000000000000000000000\"},\"latest\"]",
@@ -525,11 +525,11 @@ static void test_eth_call_multiple(void) {
   TEST_ASSERT_EQUAL_STRING("https://in3.slock.it/mainnet/nd-1", url);
   TEST_ASSERT_EQUAL_UINT64(65535, deposit);
 
-  bytes_t* owner_ = hex2byte_new_bytes("784bfa9eb182c3a02dbeb5285e3dba92d717e07a", 40);
+  bytes_t* owner_ = hex_to_new_bytes("784bfa9eb182c3a02dbeb5285e3dba92d717e07a", 40);
   TEST_ASSERT(b_cmp(owner_, owner));
   b_free(owner_);
 
-  free_json(response);
+  json_free(response);
   in3_free(c);
 }
 
@@ -554,7 +554,7 @@ static void test_get_nonexistent_block(void) {
 static void test_wait_for_receipt(void) {
   in3_t*    c = init_in3(mock_transport, ETH_CHAIN_ID_GOERLI);
   bytes32_t blk_hash;
-  hex2byte_arr("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, blk_hash, 32);
+  hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, blk_hash, 32);
   char* r = eth_wait_for_receipt(c, blk_hash);
   TEST_ASSERT_NOT_NULL(r);
   in3_free(c);
@@ -568,7 +568,7 @@ static void test_wait_for_receipt(void) {
 
 static void test_send_raw_tx(void) {
   in3_t*   in3     = init_in3(mock_transport, 0x5);
-  bytes_t* data    = hex2byte_new_bytes("f8da098609184e72a0008296c094f99dbd3cfc292b11f74deea9fa730825ee0b56f2849184e72ab87000ff86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affff2ea0936324cf235541114275bb72b5acfb5a5c1f6f6e7f426c94806ff4093539bfaaa010a7482378b19ee0930a77c14b18c5664b3aa6c3ebc7420954d81263625d6d6a", 440);
+  bytes_t* data    = hex_to_new_bytes("f8da098609184e72a0008296c094f99dbd3cfc292b11f74deea9fa730825ee0b56f2849184e72ab87000ff86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affff2ea0936324cf235541114275bb72b5acfb5a5c1f6f6e7f426c94806ff4093539bfaaa010a7482378b19ee0930a77c14b18c5664b3aa6c3ebc7420954d81263625d6d6a", 440);
   bytes_t* tx_hash = eth_sendRawTransaction(in3, *data);
   TEST_ASSERT_NOT_NULL(tx_hash);
   b_free(tx_hash);

@@ -336,7 +336,7 @@ void write(bytes_t* data, char* l, char** tt) {
 void add_rlp(bytes_builder_t* bb, char* val) {
   int l = strlen(val);
   if (l > 1 && val[0] == '0' && val[1] == 'x') {
-    bytes_t* b = hex2byte_new_bytes(val + 2, l - 2);
+    bytes_t* b = hex_to_new_bytes(val + 2, l - 2);
     rlp_encode_item(bb, b);
     b_free(b);
   } else {
@@ -411,20 +411,20 @@ int main(int argc, char* argv[]) {
 
     for (int n = 0; input[n]; n++) {
       if (input[n] == '\\' && input[n + 1] == 'x') {
-        bytes->data[bytes->len++] = strtohex(input[n + 2]) << 4 | strtohex(input[n + 3]);
+        bytes->data[bytes->len++] = hexchar_to_int(input[n + 2]) << 4 | hexchar_to_int(input[n + 3]);
         n += 3;
       } else
         bytes->data[bytes->len++] = input[n];
     }
   } else if (*input == ':') {
-    bytes                     = hex2byte_new_bytes(input + 1, strlen(input + 1));
-    uint64_t         chain_id = bytes_to_long(bytes->data, bytes->len);
+    bytes                     = hex_to_new_bytes(input + 1, strlen(input + 1));
+    chain_id_t       chain_id = bytes_to_long(bytes->data, bytes->len);
     chainspec_t*     spec     = chainspec_get(chain_id);
     bytes_builder_t* bb       = bb_new();
     chainspec_to_bin(spec, bb);
     bytes = &bb->b;
   } else
-    bytes = hex2byte_new_bytes(input, strlen(input));
+    bytes = hex_to_new_bytes(input, strlen(input));
 
   write(bytes, "", NULL);
 

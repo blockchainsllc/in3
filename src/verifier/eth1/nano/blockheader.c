@@ -112,7 +112,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   vc->ctx->client->proof = proof_;
   res                    = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx_);
+    ctx_free(ctx_);
     return vc_err(vc, ctx_->error);
   }
 
@@ -207,7 +207,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
     rlp_decode(&log_data, 1, &tmp);
     rlp_decode_in_list(&tmp, 0, &tmp);
-    bytes_t* t = hex2byte_new_bytes("55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 64);
+    bytes_t* t = hex_to_new_bytes("55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 64);
     if (!bytes_cmp(tmp, *t))
       return vc_err(vc, "Wrong topic in log");
     b_free(t);
@@ -224,7 +224,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     bb_write_raw_bytes(vbb, abi, 32);
 
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-      b = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+      b = (d_type(vitr.token) == T_STRING) ? hex_to_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
       memset(abi, 0, 32 - b->len);
       memcpy(abi + 32 - b->len, b->data, b->len);
       bb_write_raw_bytes(vbb, abi, 32);
@@ -242,7 +242,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
   vh_free(vh);
   *vhp = vh_init_nodelist(d_get(ctx_->responses[0], K_RESULT));
-  free_ctx(ctx_);
+  ctx_free(ctx_);
   return res;
 }
 
@@ -358,7 +358,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     res = vc_err(vc, "wrong blockhash");
 
   // if we expect no signatures ...
-  if (res == IN3_OK && vc->config->signaturesCount == 0) {
+  if (res == IN3_OK && vc->config->signers_length == 0) {
 #ifdef POA
     vhist_t* vh = NULL;
     // ... and the chain is a authority chain....
@@ -379,7 +379,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     }
     vh_free(vh);
 #endif
-  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
+  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signers_length))
     // no signatures found,even though we expected some.
     res = vc_err(vc, "missing signatures");
   else if (res == IN3_OK) {
@@ -408,7 +408,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    if (confirmed != (1 << vc->config->signaturesCount) - 1) // we must collect all signatures!
+    if (confirmed != (1 << vc->config->signers_length) - 1) // we must collect all signatures!
       res = vc_err(vc, "missing signatures");
   }
 

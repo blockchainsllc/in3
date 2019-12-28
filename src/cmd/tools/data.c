@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
   if (!strcmp(format, "auto")) {
     if (input.data[0] == '0' && input.data[1] == 'x') {
       input.data = malloc(strlen(argv[i]) / 2);
-      input.len  = hex2byte_arr(argv[i], -1, input.data, strlen(argv[i]) / 2);
+      input.len  = hex_to_bytes(argv[i], -1, input.data, strlen(argv[i]) / 2);
       format     = "json";
     } else
       format = "hex";

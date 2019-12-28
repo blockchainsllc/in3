@@ -118,7 +118,7 @@ in3_ret_t test_transport(in3_request_t* req) {
 
   TEST_ASSERT_EQUAL_STRING(responses->request_method, method);
   TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
-  free_json(r);
+  json_free(r);
 
   sb_add_chars(&req->results->result, responses->response);
   response_t* next = responses->next;
@@ -143,7 +143,7 @@ in3_ret_t mock_transport(in3_request_t* req) {
 
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_method, method);
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_params, p);
-  free_json(r);
+  json_free(r);
 
   sb_add_chars(&req->results->result, response_buffer->response);
   return IN3_OK;

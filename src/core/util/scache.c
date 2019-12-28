@@ -36,9 +36,8 @@
 #include "mem.h"
 
 bytes_t* in3_cache_get_entry(cache_entry_t* cache, bytes_t* key) {
-  while (cache) {
+  for (; cache; cache = cache->next) {
     if (cache->key.data && b_cmp(key, &cache->key)) return &cache->value;
-    cache = cache->next;
   }
   return NULL;
 }

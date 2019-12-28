@@ -55,12 +55,12 @@
 
 static void test_in3_config() {
 
-  in3_t* c          = in3_new();
-  c->transport      = test_transport;
-  c->chainId        = 0x1;
-  c->autoUpdateList = false;
-  c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  ;
+  c->transport        = test_transport;
+  c->auto_update_list = false;
+  c->proof            = PROOF_NONE;
+  c->signature_count  = 0;
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
      \"chainId\":7,\
@@ -93,21 +93,21 @@ static void test_in3_config() {
 
   TEST_ASSERT_NULL(ctx->error);
   TEST_ASSERT_EQUAL(1, d_get_intk(ctx->responses[0], K_RESULT));
-  free_ctx(ctx);
+  ctx_free(ctx);
 
-  TEST_ASSERT_EQUAL(7, c->chainId);
-  TEST_ASSERT_EQUAL(true, c->autoUpdateList);
+  TEST_ASSERT_EQUAL(7, c->chain_id);
+  TEST_ASSERT_EQUAL(true, c->auto_update_list);
   TEST_ASSERT_EQUAL(50, c->finality);
-  TEST_ASSERT_EQUAL(true, c->includeCode);
+  TEST_ASSERT_EQUAL(true, c->include_code);
   TEST_ASSERT_EQUAL(99, c->max_attempts);
-  TEST_ASSERT_EQUAL(98, c->maxBlockCache);
-  TEST_ASSERT_EQUAL(97, c->maxCodeCache);
-  TEST_ASSERT_EQUAL(96, c->minDeposit);
+  TEST_ASSERT_EQUAL(98, c->max_block_cache);
+  TEST_ASSERT_EQUAL(97, c->max_code_cache);
+  TEST_ASSERT_EQUAL(96, c->min_deposit);
   TEST_ASSERT_EQUAL(PROOF_FULL, c->proof);
-  TEST_ASSERT_EQUAL(95, c->nodeLimit);
-  TEST_ASSERT_EQUAL(94, c->replaceLatestBlock);
-  TEST_ASSERT_EQUAL(93, c->requestCount);
-  TEST_ASSERT_EQUAL(92, c->signatureCount);
+  TEST_ASSERT_EQUAL(95, c->node_limit);
+  TEST_ASSERT_EQUAL(94, c->replace_latest_block);
+  TEST_ASSERT_EQUAL(93, c->request_count);
+  TEST_ASSERT_EQUAL(92, c->signature_count);
   TEST_ASSERT_EQUAL(1, c->keep_in3);
 
   in3_chain_t* chain = in3_find_chain(c, 7);
@@ -118,13 +118,13 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   bytes_to_hex(chain->registry_id, 32, tmp);
   TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
-  TEST_ASSERT_EQUAL(false, chain->needsUpdate);
-  TEST_ASSERT_EQUAL(1, chain->nodeListLength);
+  TEST_ASSERT_EQUAL(false, chain->needs_update);
+  TEST_ASSERT_EQUAL(1, chain->nodelist_length);
 
-  bytes_to_hex(chain->nodeList->address->data, chain->nodeList->address->len, tmp);
+  bytes_to_hex(chain->nodelist->address->data, chain->nodelist->address->len, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
-  TEST_ASSERT_EQUAL_STRING("#1", chain->nodeList->url);
-  TEST_ASSERT_EQUAL(0xffff, chain->nodeList->props);
+  TEST_ASSERT_EQUAL_STRING("#1", chain->nodelist->url);
+  TEST_ASSERT_EQUAL(0xffff, chain->nodelist->props);
 
   in3_free(c);
 }

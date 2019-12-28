@@ -72,7 +72,7 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
     uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
 
-    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chainId, &result);
+    int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result);
 
     switch (ret) {
       case EVM_ERROR_BUFFER_TOO_SMALL:

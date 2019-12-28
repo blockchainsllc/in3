@@ -157,11 +157,11 @@ static void remove_parens(char* s, size_t l) {
 }
 
 char* escape_tuples(char* sig, size_t l, char** startb, char** ends) {
-  if(*sig){
+  if (*sig) {
     char* sig_ = _strdupn(sig, l);
     *startb    = memchr(sig_, '(', l);
     *ends      = memchr(sig_, ':', l);
-    remove_parens(sig_ + (*startb - sig_) + 1, (*ends ? (*ends - *startb) : (l - (*startb - sig_))) - 2);
+    remove_parens(sig_ + (*startb - sig_) + 1, (*ends ? (unsigned) (*ends - *startb) : (l - (*startb - sig_))) - 2);
     if (*ends) {
       *startb = memchr(*ends, '(', l);
       if (*startb) remove_parens(sig_ + (*startb - sig_) + 1, strlen(sig_ + (*startb - sig_) + 2));
@@ -184,7 +184,7 @@ call_request_t* parseSignature(char* sig) {
   }
 
   char*            s         = escape_tuples(sig, l, &startb, &ends);
-  bytes_t          signature = bytes((uint8_t*) s, ends ? (ends - s) : strlen(s));
+  bytes_t          signature = bytes((uint8_t*) s, ends ? (unsigned) (ends - s) : strlen(s));
   bytes32_t        hash;
   bytes_builder_t* tokens = bb_new();
   if (!parse_tuple(tokens, startb + 1)) {
