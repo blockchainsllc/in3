@@ -175,7 +175,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->proof                = PROOF_STANDARD;
   c->replace_latest_block = 0;
   c->request_count        = 1;
-  c->chains_length        = chain_id ? 1 : 5;
+  c->chains_length        = chain_id ? 1 : 6;
   c->chains               = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters              = NULL;
 

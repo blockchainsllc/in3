@@ -422,13 +422,6 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
         item->len  = T_BYTES << 28 | len;
         memcpy(item->data, p, len);
       }
-
-      // if this is a float, we convert it to a integer.
-      if (jp->c[0] == '.') {
-        jp->c++;
-        while (jp->c[0] >= '0' && jp->c[0] <= '9') jp->c++;
-      }
-
       return 0;
     }
   }
