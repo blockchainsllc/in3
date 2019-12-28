@@ -131,14 +131,13 @@ static void test_in3_config() {
 
 static void test_in3_client_rpc() {
   char * result = NULL, *error = NULL;
-  in3_t* c          = in3_new();
-  c->transport      = test_transport;
-  c->chainId        = 0x1;
-  c->autoUpdateList = false;
-  c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
-  for (int i = 0; i < c->chainsCount; i++)
-    c->chains[i].needsUpdate = false;
+  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport        = test_transport;
+  c->auto_update_list = false;
+  c->proof            = PROOF_NONE;
+  c->signature_count  = 0;
+  for (int i = 0; i < c->chains_length; i++)
+    c->chains[i].needs_update = false;
 
   // Error response string
   add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
@@ -171,7 +170,7 @@ static void test_in3_client_rpc() {
   // Invalid calls to in3_client_rpc_ctx()
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_blockNumber", "[\"]");
   TEST_ASSERT_NOT_NULL(ctx->error);
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   // No transport check
   c->transport = NULL;
@@ -202,25 +201,25 @@ static void test_in3_client_chain() {
   in3_chain_t chain;
   initChain(&chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", 2, 2, CHAIN_ETH, NULL);
   uint8_t reg_id[32];
-  hex2byte_arr("0023d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", -1, reg_id, 32);
+  hex_to_bytes("0023d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", -1, reg_id, 32);
   TEST_ASSERT_EQUAL_MEMORY(chain.registry_id, reg_id, 32);
 
   // Reregister chains with same chain id
-  in3_t*    c = in3_new();
+  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
   address_t contract1, contract2;
-  hex2byte_arr("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract1, 20);
-  hex2byte_arr("0x5f51e413581dd76759e9eed51e63d14c8d1379c8", -1, contract2, 20);
+  hex_to_bytes("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract1, 20);
+  hex_to_bytes("0x5f51e413581dd76759e9eed51e63d14c8d1379c8", -1, contract2, 20);
   bytes32_t registry_id;
-  hex2byte_arr("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract1, registry_id, 2, NULL);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract2, registry_id, 2, NULL);
+  hex_to_bytes("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract1, registry_id, 2);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract2, registry_id, 2);
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->contract->data, contract2, 20);
 
   // Add node with same address
   in3_client_add_node(c, 0x8, "http://test1.com", 0xFF, contract1);
   in3_client_add_node(c, 0x8, "http://test2.com", 0xFF, contract1);
-  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, 0x8)->nodeList[0].url, "http://test2.com");
-  TEST_ASSERT_EQUAL_UINT64(in3_find_chain(c, 0x8)->nodeList[0].props, 0xFF);
+  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, 0x8)->nodelist[0].url, "http://test2.com");
+  TEST_ASSERT_EQUAL_UINT64(in3_find_chain(c, 0x8)->nodelist[0].props, 0xFF);
 
   // remove last node
   TEST_ASSERT_EQUAL(IN3_OK, in3_client_remove_node(c, 0x8, contract1));
@@ -229,7 +228,7 @@ static void test_in3_client_chain() {
 }
 
 static void test_in3_client_configure() {
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
 
   // proof
   in3_configure(c, "{\"proof\":\"standard\"}");
@@ -238,9 +237,9 @@ static void test_in3_client_configure() {
   // rpc
   in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
   TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
-  TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chainId);
-  TEST_ASSERT_EQUAL(1, c->requestCount);
-  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodeList->url);
+  TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chain_id);
+  TEST_ASSERT_EQUAL(1, c->request_count);
+  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist->url);
 
   // missing registryId and contract
   TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
@@ -252,8 +251,8 @@ static void test_in3_client_configure() {
 }
 
 static void test_in3_client_context() {
-  in3_t*     c   = in3_new();
-  in3_ctx_t* ctx = new_ctx(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
+  in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
+  in3_ctx_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
                               "\"method\":\"eth_getBlockByHash\","
                               "\"params\":[\"0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331\", false],"
                               "\"in3\":{\"version\": \"" IN3_PROTO_VER "\",\"chainId\":\"0x1\"}}]");
@@ -265,7 +264,7 @@ static void test_in3_client_context() {
   ctx->responses    = malloc(sizeof(d_token_t*));
   ctx->responses[0] = json->result;
   TEST_ASSERT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
-  free_json(json);
+  json_free(json);
 
   // Test with error
   json              = parse_json("{\"error\":\"Unknown\"}");
@@ -274,14 +273,14 @@ static void test_in3_client_context() {
   // Test ctx_check_response_error() which internally also calls ctx_set_error()
   TEST_ASSERT_EQUAL(IN3_ERPC, ctx_check_response_error(ctx, 0));
   TEST_ASSERT_EQUAL_STRING("Unknown", ctx->error);
-  free_json(json);
+  json_free(json);
 
   // Test with error obj
   json              = parse_json("{\"error\":{\"msg\":\"Unknown\",\"id\":\"0xf1\"}}");
   ctx->responses[0] = json->result;
   TEST_ASSERT_EQUAL(IN3_ERPC, ctx_check_response_error(ctx, 0));
   TEST_ASSERT_EQUAL_STRING("{\"msg\":\"Unknown\",\"id\":\"0xf1\"}\nUnknown", ctx->error);
-  free_json(json);
+  json_free(json);
   free(ctx->responses);
   ctx->responses = NULL;
 
@@ -290,7 +289,7 @@ static void test_in3_client_context() {
   TEST_ASSERT_EQUAL(IN3_ERPC, ctx_get_error(ctx, 0));
   TEST_ASSERT_EQUAL_STRING("RPC failure\n{\"msg\":\"Unknown\",\"id\":\"0xf1\"}\nUnknown", ctx->error);
 
-  free_ctx(ctx);
+  ctx_free(ctx);
   in3_free(c);
 }
 
