@@ -313,9 +313,13 @@ java_macos:
   stage: test
   allow_failure: true
   script:
+    - ulimit -c unlimited
     - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
   tags:
     - mac-mini-runner
+  artifacts:
+    paths:
+      - .
 
 ##### deploy #####
 docker:
@@ -848,5 +852,3 @@ github_body_release:
     - cat in3-arm7/arm7_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - cat in3-win/win_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c -b "$(cat release_ipfs_hash.txt)" $CI_COMMIT_TAG release_ipfs_hash.txt
-
-
