@@ -54,7 +54,7 @@ if (process.argv.find(_ => _.indexOf('mocha') >= 0)) {
     })
 }
 
-const ignoreFuxxProps = ['id', 'error', 'code', 'weight', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
+const ignoreFuxxProps = ['id', 'error', 'code', 'weight', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
 
 
