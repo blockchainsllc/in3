@@ -194,8 +194,10 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
       in3_chain_t* chain = in3_find_chain(c->client, c->requests_configs->chain_id ? c->requests_configs->chain_id : c->client->chain_id);
-      if (chain->whitelist_contract)
-        sb_add_bytes(sb, ",\"whiteListContract\":", chain->whitelist_contract, 1, false);
+      if (chain->whitelist) {
+        bytes_t adr = bytes(chain->whitelist->contract, 20);
+        sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
+      }
       if (rc->client_signature)
         sb_add_bytes(sb, ",\"clientSignature\":", rc->client_signature, 1, false);
       if (rc->finality)
@@ -262,7 +264,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
       if (w) {
         // blacklist the node
         w->weight->blacklisted_until = _time() + 3600000;
-        w->weight                   = NULL;
+        w->weight                    = NULL;
         in3_log_info("Blacklisting node for empty response: %s\n", w->node->url);
       }
     } else {
@@ -276,7 +278,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         if (w) {
           // blacklist!
           w->weight->blacklisted_until = _time() + 3600000;
-          w->weight                   = NULL;
+          w->weight                    = NULL;
           in3_log_info("Blacklisting node for invalid response: %s\n", w->node->url);
         }
       } else {
@@ -291,10 +293,13 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
-            if (d_get_longk(vc.proof, K_LAST_NODE_LIST) > chain->last_block)
-              chain->needs_update |= UPDATE_NODELIST;
-            if (d_get_longk(vc.proof, K_LAST_WHITE_LIST) > chain->whitelist_last_block)
-              chain->needs_update |= UPDATE_WHITELIST;
+            if (ctx->client->auto_update_list) {
+              if (d_get_longk(vc.proof, K_LAST_NODE_LIST) > chain->last_block)
+                chain->needs_update = true;
+
+              if (chain->whitelist && d_get_longk(vc.proof, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
+                chain->whitelist->needs_update = true;
+            }
           }
 
           if (verifier && (res = (ctx->verification_state = verifier->verify(&vc)))) {
@@ -302,7 +307,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             if (w) {
               // blacklist!
               w->weight->blacklisted_until = _time() + 3600000;
-              w->weight                   = NULL;
+              w->weight                    = NULL;
               in3_log_info("Blacklisting node for verification failure: %s\n", w->node->url);
             }
             break;

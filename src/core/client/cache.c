@@ -47,10 +47,10 @@
 #define CACHE_VERSION 3
 #define MAX_KEYLEN 200
 
-static void write_cache_key(char* key, chain_id_t chain_id, bytes_t* contract) {
-  if (contract) {
+static void write_cache_key(char* key, chain_id_t chain_id, const address_t contract) {
+  if (contract && contract) {
     char contract_[41];
-    if (contract) bytes_to_hex(contract->data, contract->len, contract_);
+    if (contract) bytes_to_hex(contract, 20, contract_);
     sprintf(key, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_);
   } else
     sprintf(key, NODE_LIST_KEY, chain_id);
@@ -65,6 +65,7 @@ in3_ret_t in3_cache_init(in3_t* c) {
     if (in3_cache_update_whitelist(c, c->chains + i) != IN3_OK) {
       in3_log_debug("Failed to update cached whitelist\n");
     }
+    in3_client_run_chain_whitelisting(c->chains + i);
   }
 
   return IN3_OK;
@@ -76,47 +77,46 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-  write_cache_key(key, chain->chain_id, chain->contract);
+  write_cache_key(key, chain->chain_id, chain->contract->data);
 
   // get from cache
   bytes_t* b = c->cache->get_item(c->cache->cptr, key);
-  if (b) {
-    int    i, count;
-    size_t p = 0;
+  if (!b) return IN3_OK;
 
-    // version check
-    if (b_read_byte(b, &p) != CACHE_VERSION) {
-      b_free(b);
-      return IN3_EVERS;
-    }
+  // so we have a result... let's decode it.
+  int    i, count;
+  size_t p = 0;
 
-    // clean up old
-    in3_nodelist_clear(chain);
-
-    // fill data
-    chain->contract        = b_new_fixed_bytes(b, &p, 20);
-    chain->last_block      = b_read_long(b, &p);
-    chain->nodelist_length = count = b_read_int(b, &p);
-    chain->nodelist                = _calloc(count, sizeof(in3_node_t));
-    chain->weights                 = _calloc(count, sizeof(in3_node_weight_t));
-    chain->needs_update            = UPDATE_NONE;
-    memcpy(chain->weights, b->data + p, count * sizeof(in3_node_weight_t));
-    p += count * sizeof(in3_node_weight_t);
-
-    for (i = 0; i < count; i++) {
-      in3_node_t* n  = chain->nodelist + i;
-      n->capacity    = b_read_int(b, &p);
-      n->index       = b_read_int(b, &p);
-      n->deposit     = b_read_long(b, &p);
-      n->props       = b_read_long(b, &p);
-      n->address     = b_new_fixed_bytes(b, &p, 20);
-      n->url         = b_new_chars(b, &p);
-      n->whitelisted = b_read_byte(b, &p) != 0;
-    }
+  // version check
+  if (b_read_byte(b, &p) != CACHE_VERSION) {
     b_free(b);
     return IN3_EVERS;
   }
 
+  // clean up old
+  in3_nodelist_clear(chain);
+
+  // fill data
+  chain->contract        = b_new_fixed_bytes(b, &p, 20);
+  chain->last_block      = b_read_long(b, &p);
+  chain->nodelist_length = (count = b_read_int(b, &p));
+  chain->nodelist        = _calloc(count, sizeof(in3_node_t));
+  chain->weights         = _calloc(count, sizeof(in3_node_weight_t));
+  chain->needs_update    = false;
+  memcpy(chain->weights, b->data + p, count * sizeof(in3_node_weight_t));
+  p += count * sizeof(in3_node_weight_t);
+
+  for (i = 0; i < count; i++) {
+    in3_node_t* n  = chain->nodelist + i;
+    n->capacity    = b_read_int(b, &p);
+    n->index       = b_read_int(b, &p);
+    n->deposit     = b_read_long(b, &p);
+    n->props       = b_read_long(b, &p);
+    n->address     = b_new_fixed_bytes(b, &p, 20);
+    n->url         = b_new_chars(b, &p);
+    n->whitelisted = false;
+  }
+  b_free(b);
   return IN3_OK;
 }
 
@@ -142,12 +142,11 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
     bb_write_long(bb, n->props);
     bb_write_fixed_bytes(bb, n->address);
     bb_write_chars(bb, n->url, strlen(n->url));
-    bb_write_byte(bb, n->whitelisted);
   }
 
   // create key
   char key[200];
-  write_cache_key(key, chain->chain_id, chain->contract);
+  write_cache_key(key, chain->chain_id, chain->contract->data);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   ctx->client->cache->set_item(ctx->client->cache->cptr, key, &bb->b);
@@ -159,11 +158,13 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
 
 in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
   // it is ok not to have a storage
-  if (!c->cache) return IN3_OK;
+  if (!c->cache || !chain->whitelist) return IN3_OK;
+
+  in3_whitelist_t* wl = chain->whitelist;
 
   // define the key to use
-  char key[200];
-  write_cache_key(key, chain->chain_id, chain->whitelist_contract);
+  char key[MAX_KEYLEN];
+  write_cache_key(key, chain->chain_id, wl->contract);
 
   // get from cache
   bytes_t* b = c->cache->get_item(c->cache->cptr, key);
@@ -177,24 +178,15 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
     }
 
     // clean up old
-    in3_whitelist_clear(chain);
+    if (wl->addresses.data) _free(wl->addresses.data);
 
     // fill data
-    chain->whitelist_last_block = b_read_long(b, &p);
-    chain->whitelist_contract   = b_new_fixed_bytes(b, &p, 20);
-    if (!memiszero(chain->whitelist_contract->data, 20)) {
-      b_free(chain->whitelist_contract);
-      chain->whitelist_contract = NULL;
-    }
-    p += 20;
-
-    uint32_t l       = b_read_int(b, &p) * 20;
-    chain->whitelist = bb_newl(l);
-    if (!chain->whitelist)
+    wl->last_block = b_read_long(b, &p);
+    uint32_t l     = b_read_int(b, &p) * 20;
+    wl->addresses  = bytes(_malloc(l), l);
+    if (!wl->addresses.data)
       return IN3_ENOMEM;
-
-    bb_write_raw_bytes(chain->whitelist, b->data + p, l);
-    p += l;
+    memcpy(wl->addresses.data, b->data + p, l);
     b_free(b);
   }
   return IN3_OK;
@@ -202,24 +194,18 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
 
 in3_ret_t in3_cache_store_whitelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   // write to bytes_buffer
-  bytes_builder_t* bb = bb_new();
+  if (!ctx->client->cache || !chain->whitelist) return IN3_OK;
+
+  const in3_whitelist_t* wl = chain->whitelist;
+  bytes_builder_t*       bb = bb_new();
   bb_write_byte(bb, CACHE_VERSION); // Version flag
-
-  if (chain->whitelist_contract) {
-    bb_write_fixed_bytes(bb, chain->whitelist_contract);
-  } else {
-    uint8_t tmp[20] = {0};
-    bb_write_raw_bytes(bb, tmp, 20); // 20 bytes fixed
-  }
-
-  if (chain->whitelist) {
-    bb_write_int(bb, chain->whitelist->b.len / 20);
-    bb_write_fixed_bytes(bb, &chain->whitelist->b);
-  }
+  bb_write_long(bb, wl->last_block);
+  bb_write_int(bb, wl->addresses.len / 20);
+  bb_write_fixed_bytes(bb, &wl->addresses);
 
   // create key
   char key[MAX_KEYLEN];
-  write_cache_key(key, chain->chain_id, chain->whitelist_contract);
+  write_cache_key(key, chain->chain_id, wl->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   ctx->client->cache->set_item(ctx->client->cache->cptr, key, &bb->b);

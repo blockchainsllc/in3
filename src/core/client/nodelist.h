@@ -48,8 +48,8 @@
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain);
 
-/** removes all nodes from the whitelist */
-void in3_whitelist_clear(in3_chain_t* chain);
+/** updates all whitelisted flags in the nodelist */
+void in3_client_run_chain_whitelisting(in3_chain_t* chain);
 
 /** check if the nodelist is up to date.
  * 
@@ -60,7 +60,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 /**
  * filters and fills the weights on a returned linked list.
  */
-node_weight_t* in3_node_list_fill_weight(in3_t* c, uint64_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, float* total_weight, int* total_found, in3_node_props_t props);
+node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, float* total_weight, int* total_found, in3_node_props_t props);
 
 /**
  * picks (based on the config) a random number of nodes and returns them as weightslist.

@@ -150,7 +150,7 @@ typedef struct in3_node {
   uint32_t         capacity;    /**< the maximal capacity able to handle */
   in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;         /**< the url of the node */
-  bool             whiteListed; /**< boolean indicating if node exists in whiteList */
+  bool             whitelisted; /**< boolean indicating if node exists in whiteList */
 } in3_node_t;
 
 /**
@@ -164,12 +164,12 @@ typedef struct in3_node_weight {
   float    weight;              /**< current weight*/
   uint32_t response_count;      /**< counter for responses */
   uint32_t total_response_time; /**< total of all response times */
-  uint64_t blacklistedUntil;    /**< if >0 this node is blacklisted until k. k is a unix timestamp */
+  uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
 } in3_node_weight_t;
 
-#define UPDATE_NONE 0x0u
-#define UPDATE_NODELIST 0x1u
-#define UPDATE_WHITELIST 0x2u
+#define UPDATE_NONE 0x0u      /**< indicates, that neither the whitelist nor the nodelist needs an update*/
+#define UPDATE_NODELIST 0x1u  /**< sets the flag form updating the nodelist*/
+#define UPDATE_WHITELIST 0x2u /**< sets the flag form updating the whitelist*/
 
 /**
  * Initializer for in3_node_props_t
@@ -212,20 +212,20 @@ static inline bool in3_node_props_matches(in3_node_props_t np, in3_node_props_ty
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  chain_id_t         chain_id;          /**< chain_id, which could be a free or based on the public ethereum networkId*/
-  in3_chain_type_t   type;              /**< chaintype */
-  uint64_t           last_block;        /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  bool               needs_update;      /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
-  int                nodelist_length;   /**< number of nodes in the nodeList */
-  in3_node_t*        nodelist;          /**< array of nodes */
-  in3_node_weight_t* weights;           /**< stats and weights recorded for each node */
-  bytes_t**          init_addresses;    /**< array of addresses of nodes that should always part of the nodeList */
-  bytes_t*           contract;          /**< the address of the registry contract */
-  bytes32_t          registry_id;       /**< the identifier of the registry */
-  uint8_t            version;           /**< version of the chain */
-  bytes_t*           whiteListContract; /**< address of whiteList contract. If specified, whiteList is always auto-updated and manual whiteList is overridden */
-  bytes_builder_t*   whiteList;         /**< serialized list of node addresses that constitute the whiteList */
-  uint64_t           lastBlockWl;       /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
+  chain_id_t         chain_id;             /**< chain_id, which could be a free or based on the public ethereum networkId*/
+  in3_chain_type_t   type;                 /**< chaintype */
+  uint64_t           last_block;           /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  bool               needs_update;         /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+  int                nodelist_length;      /**< number of nodes in the nodeList */
+  in3_node_t*        nodelist;             /**< array of nodes */
+  in3_node_weight_t* weights;              /**< stats and weights recorded for each node */
+  bytes_t**          init_addresses;       /**< array of addresses of nodes that should always part of the nodeList */
+  bytes_t*           contract;             /**< the address of the registry contract */
+  bytes32_t          registry_id;          /**< the identifier of the registry */
+  uint8_t            version;              /**< version of the chain */
+  bytes_t*           whitelist_contract;   /**< address of whiteList contract. If specified, whiteList is always auto-updated and manual whiteList is overridden */
+  bytes_builder_t*   whitelist;            /**< serialized list of node addresses that constitute the whiteList */
+  uint64_t           whitelist_last_block; /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
 } in3_chain_t;
 
 /** 
@@ -440,6 +440,8 @@ typedef struct in3_t_ {
 
 /** creates a new Incubes configuration and returns the pointer.
  * 
+ * This Method is depricated. you should use `in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)` instead.
+ * 
  * you need to free this instance with `in3_free` after use!
  * 
  * Before using the client you still need to set the tramsport and optional the storage handlers:
@@ -468,11 +470,10 @@ typedef struct in3_t_ {
  * 
  * // ready to use ...
  * ```
- * ** This Method is depricated. you should use `in3_for_chain` instead.**
  * 
  * @returns the incubed instance.
  */
-DEPRECATED in3_t* in3_new();
+in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)")));
 
 /** creates a new Incubes configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 
@@ -575,13 +576,13 @@ in3_ret_t in3_client_clear_nodes(
 /** adds a node to a chain's whitelist */
 in3_ret_t in3_client_add_whitelist_node(
     in3_t*    client,   /**< [in] the pointer to the incubed client config. */
-    uint64_t  chain_id, /**< [in] the chain id. */
-    address_t address); /**< [in] public address of the signer. */
+    chain_id_t chaen_id    /**< [in] the chanter to the incubed client config. */
+        addresst cdaress); /**< [in] public address of    fswgleralso retf will also ret
+ddress); /**< [in] public address of the signer. */
+ rmtoes a 3node from a chain's whitelist */
+in3_re3_t*    client_ emove_whitelist_nodeter to theesncubei client config[in] publcp andress of the signer_t address); /**< [in] publcc andress of the signer_t address); /**< [in] public address of the signer. */
 
-/** removes a node from a chain's whitelist */
-in3_ret_t in3_client_remove_whitelist_node(
-    in3_t*    client,   /**< [in] the pointer to the incubed client config. */
-    uint64_t  chain_id, /**< [in] the chain id. */
+     uint64_t  chain_id, /**< [in] the chain id. */
     address_t address); /**< [in] public address of the signer. */
 
 /** removes all nodes from a chain's whitelist */

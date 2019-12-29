@@ -185,7 +185,7 @@ void bb_write_chars(bytes_builder_t* bb, char* c, int len) {
   bb->b.len += len + 1;
 }
 
-void bb_write_fixed_bytes(bytes_builder_t* bb, bytes_t* src) {
+void bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src) {
   bb_check_size(bb, src->len);
   memcpy(bb->b.data + bb->b.len, src->data, src->len);
   bb->b.len += src->len;

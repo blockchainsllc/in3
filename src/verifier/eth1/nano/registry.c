@@ -314,7 +314,7 @@ in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
 
   // check contract
   bytes_t* wl_contract = d_get_byteskl(vc->result, K_CONTRACT, 20);
-  if (!wl_contract || !b_cmp(wl_contract, vc->chain->whitelist_contract)) return vc_err(vc, "No or wrong Contract!");
+  if (!wl_contract || (vc->chain->whitelist && memcmp(wl_contract->data, vc->chain->whitelist->contract, 20))) return vc_err(vc, "No or wrong Contract!");
 
   // check last block
   if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER)) return vc_err(vc, "The signature is based on older block!");

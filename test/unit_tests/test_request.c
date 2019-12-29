@@ -58,7 +58,7 @@ void test_configure_request() {
   in3_t* c                = in3_for_chain(0);
   c->proof                = PROOF_FULL;
   c->signature_count      = 2;
-  c->chains->needs_update = UPDATE_NONE;
+  c->chains->needs_update = false;
   c->finality             = 10;
   c->include_code         = true;
   c->replace_latest_block = 6;
