@@ -88,10 +88,10 @@ typedef struct str_range {
 /** parser for json or binary-data. it needs to freed after usage.*/
 typedef struct json_parser {
   d_token_t* result;    /**< the list of all tokens. the first token is the main-token as returned by the parser.*/
+  char*      c;         /** pointer to the src-data*/
   size_t     allocated; /** amount of tokens allocated result */
   size_t     len;       /** number of tokens in result */
   size_t     depth;     /** max depth of tokens in result */
-  char*      c;         /** pointer to the src-data*/
 } json_ctx_t;
 
 /**
@@ -187,8 +187,8 @@ d_token_t*             d_getl(d_token_t* item, uint16_t k, uint32_t minl);
  * ```
  */
 typedef struct d_iterator {
-  int        left;  /**< number of result left */
   d_token_t* token; /**< current token */
+  int        left;  /**< number of result left */
 } d_iterator_t;
 
 static inline d_iterator_t d_iter(d_token_t* parent) { return (d_iterator_t){.left = d_len(parent), .token = parent + 1}; } /**< creates a iterator for a object or array */

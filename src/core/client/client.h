@@ -144,12 +144,13 @@ typedef enum {
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
-  bytes_t*         address;  /**< address of the server */
-  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t         capacity; /**< the maximal capacity able to handle */
-  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
-  char*            url;      /**< the url of the node */
+  bytes_t*         address;     /**< address of the server */
+  uint64_t         deposit;     /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t         index;       /**< index within the nodelist, also used in the contract as key */
+  uint32_t         capacity;    /**< the maximal capacity able to handle */
+  in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  char*            url;         /**< the url of the node */
+  bool             whitelisted; /**< boolean indicating if node exists in whiteList */
 } in3_node_t;
 
 /**
@@ -160,10 +161,10 @@ typedef struct in3_node {
  * These weights will also be stored in the cache (if available)
  */
 typedef struct in3_node_weight {
-  float    weight;              /**< current weight*/
   uint32_t response_count;      /**< counter for responses */
   uint32_t total_response_time; /**< total of all response times */
-  uint64_t blacklistedUntil;    /**< if >0 this node is blacklisted until k. k is a unix timestamp */
+  uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
+  float    weight;              /**< current weight*/
 } in3_node_weight_t;
 
 /**
@@ -202,6 +203,16 @@ static inline bool in3_node_props_matches(in3_node_props_t np, in3_node_props_ty
 }
 
 /**
+ * defines a whitelist structure used for the nodelist.
+ */
+typedef struct in3_whitelist {
+  address_t contract;     /**< address of whiteList contract. If specified, whiteList is always auto-updated and manual whiteList is overridden */
+  bytes_t   addresses;    /**< serialized list of node addresses that constitute the whiteList */
+  uint64_t  last_block;   /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
+  bool      needs_update; /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+} in3_whitelist_t;
+
+/**
  * Chain definition inside incubed.
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
@@ -218,6 +229,7 @@ typedef struct in3_chain {
   bytes_t*           contract;        /**< the address of the registry contract */
   bytes32_t          registry_id;     /**< the identifier of the registry */
   uint8_t            version;         /**< version of the chain */
+  in3_whitelist_t*   whitelist;       /**< if set the whitelist of the addresses. */
 } in3_chain_t;
 
 /** 
@@ -542,7 +554,8 @@ in3_ret_t in3_client_register_chain(
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
-    uint8_t          version      /**< [in] the chain version. */
+    uint8_t          version,     /**< [in] the chain version. */
+    address_t        wl_contract  /**< [in] contract of whiteList. */
 );
 
 /** adds a node to a chain ore updates a existing node */

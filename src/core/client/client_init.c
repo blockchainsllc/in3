@@ -68,7 +68,13 @@ void in3_set_default_signer(in3_signer_t* signer) {
   default_signer = signer;
 }
 
-static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type) {
+static void whitelist_free(in3_whitelist_t* wl) {
+  if (!wl) return;
+  if (wl->addresses.data) _free(wl->addresses.data);
+  _free(wl);
+}
+
+static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
   chain->chain_id        = chain_id;
   chain->init_addresses  = NULL;
   chain->last_block      = 0;
@@ -79,6 +85,15 @@ static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, c
   chain->weights         = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
   chain->type            = type;
   chain->version         = version;
+  chain->whitelist       = NULL;
+  if (wl_contract) {
+    chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
+    chain->whitelist->addresses.data = NULL;
+    chain->whitelist->addresses.len  = 0;
+    chain->whitelist->needs_update   = true;
+    chain->whitelist->last_block     = 0;
+    hex_to_bytes(wl_contract, -1, chain->whitelist->contract, 20);
+  }
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
@@ -98,9 +113,10 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->props      = chain->chain_id == ETH_CHAIN_ID_LOCAL ? 0x0 : 0xFF;
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
+  node->whitelisted = false;
 
   in3_node_weight_t* weight   = chain->weights + node_index;
-  weight->blacklistedUntil    = 0;
+  weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
   weight->weight              = 1;
@@ -108,13 +124,13 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
 
 static void init_ipfs(in3_chain_t* chain) {
   // ipfs
-  initChain(chain, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS);
+  initChain(chain, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS, NULL);
   initNode(chain, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/ipfs/nd-1");
   initNode(chain, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/ipfs/nd-5");
 }
 
 static void init_mainnet(in3_chain_t* chain) {
-  initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 2, CHAIN_ETH);
+  initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 2, CHAIN_ETH, NULL);
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
 }
@@ -122,12 +138,12 @@ static void init_mainnet(in3_chain_t* chain) {
 static void init_kovan(in3_chain_t* chain) {
 #ifdef IN3_STAGING
   // kovan
-  initChain(chain, 0x2a, "0604014f2a5fdfafce3f2ec10c77c31d8e15ce6f", "d440f01322c8529892c204d3705ae871c514bafbb2f35907832a07322e0dc868", 2, 2, CHAIN_ETH);
+  initChain(chain, 0x2a, "0604014f2a5fdfafce3f2ec10c77c31d8e15ce6f", "d440f01322c8529892c204d3705ae871c514bafbb2f35907832a07322e0dc868", 2, 2, CHAIN_ETH, NULL);
   initNode(chain, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.stage.slock.it/kovan/nd-1");
   initNode(chain, 1, "17cdf9ec6dcae05c5686265638647e54b14b41a2", "https://in3.stage.slock.it/kovan/nd-2");
 #else
   // kovan
-  initChain(chain, 0x2a, "4c396dcf50ac396e5fdea18163251699b5fcca25", "92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf", 2, 2, CHAIN_ETH);
+  initChain(chain, 0x2a, "4c396dcf50ac396e5fdea18163251699b5fcca25", "92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf", 2, 2, CHAIN_ETH, NULL);
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/kovan/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/kovan/nd-2");
 #endif
@@ -137,12 +153,12 @@ static void init_goerli(in3_chain_t* chain) {
 
 #ifdef IN3_STAGING
   // goerli
-  initChain(chain, 0x05, "814fb2203f9848192307092337340dcf791a3fed", "0f687341e0823fa5288dc9edd8a00950b35cc7e481ad7eaccaf61e4e04a61e08", 2, 2, CHAIN_ETH);
+  initChain(chain, 0x05, "814fb2203f9848192307092337340dcf791a3fed", "0f687341e0823fa5288dc9edd8a00950b35cc7e481ad7eaccaf61e4e04a61e08", 2, 2, CHAIN_ETH, NULL);
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3.stage.slock.it/goerli/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3.stage.slock.it/goerli/nd-2");
 #else
   // goerli
-  initChain(chain, 0x05, "5f51e413581dd76759e9eed51e63d14c8d1379c8", "67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea", 2, 2, CHAIN_ETH);
+  initChain(chain, 0x05, "5f51e413581dd76759e9eed51e63d14c8d1379c8", "67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea", 2, 2, CHAIN_ETH, NULL);
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/goerli/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/goerli/nd-2");
 #endif
@@ -188,7 +204,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
     init_ipfs(chain++);
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_LOCAL) {
-    initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH);
+    initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
     initNode(chain++, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
   }
   if (chain_id && chain == c->chains) {
@@ -210,7 +226,7 @@ in3_chain_t* in3_find_chain(in3_t* c, chain_id_t chain_id) {
   return NULL;
 }
 
-in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version) {
+in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_type_t type, address_t contract, bytes32_t registry_id, uint8_t version, address_t wl_contract) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) {
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
@@ -220,18 +236,33 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     chain->nodelist_length = 0;
     chain->weights         = NULL;
     chain->init_addresses  = NULL;
+    chain->whitelist       = NULL;
     chain->last_block      = 0;
     c->chains_length++;
 
-  } else if (chain->contract)
-    b_free(chain->contract);
+  } else {
+    if (chain->contract)
+      b_free(chain->contract);
+    if (chain->whitelist)
+      whitelist_free(chain->whitelist);
+  }
 
   chain->chain_id     = chain_id;
   chain->contract     = b_new((char*) contract, 20);
   chain->needs_update = false;
   chain->type         = type;
   chain->version      = version;
+  chain->whitelist    = NULL;
   memcpy(chain->registry_id, registry_id, 32);
+  if (wl_contract) {
+    chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
+    chain->whitelist->addresses.data = NULL;
+    chain->whitelist->addresses.len  = 0;
+    chain->whitelist->needs_update   = true;
+    chain->whitelist->last_block     = 0;
+    memcpy(chain->whitelist->contract, wl_contract, 20);
+  }
+
   return chain->contract ? IN3_OK : IN3_ENOMEM;
 }
 
@@ -261,6 +292,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     node->capacity = 1;
     node->deposit  = 0;
     chain->nodelist_length++;
+    node->whitelisted = false;
   } else
     _free(node->url);
 
@@ -269,7 +301,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   memcpy(node->url, url, strlen(url) + 1);
 
   in3_node_weight_t* weight   = chain->weights + node_index;
-  weight->blacklistedUntil    = 0;
+  weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
   weight->weight              = 1;
@@ -320,6 +352,7 @@ void in3_free(in3_t* a) {
   for (i = 0; i < a->chains_length; i++) {
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
+    whitelist_free(a->chains[i].whitelist);
   }
   if (a->signer) _free(a->signer);
   _free(a->chains);
@@ -430,13 +463,14 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
         in3_chain_t* chain    = in3_find_chain(c, chain_id);
         if (!chain) {
-          bytes_t* contract_t  = d_get_byteskl(ct.token, key("contract"), 20);
+          bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
           bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-          if (!contract_t || !registry_id) {
+          bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+          if (!contract || !registry_id) {
             res = IN3_EINVAL;
             goto cleanup;
           }
-          if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract_t->data, registry_id->data, 2)) != IN3_OK) goto cleanup;
+          if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) != IN3_OK) goto cleanup;
           chain = in3_find_chain(c, chain_id);
           assert(chain != NULL);
         }
@@ -445,7 +479,32 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
           if (cp.token->key == key("contract"))
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
-          else if (cp.token->key == key("registryId")) {
+          else if (cp.token->key == key("whiteListContract")) {
+            if (d_type(cp.token) != T_BYTES || d_len(cp.token) != 20) {
+              res = IN3_EINVAL;
+              goto cleanup;
+            }
+
+            if (!chain->whitelist) {
+              chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
+              chain->whitelist->needs_update = true;
+              memcpy(chain->whitelist->contract, cp.token->data, 20);
+            } else if (memcmp(chain->whitelist->contract, cp.token->data, 20)) {
+              memcpy(chain->whitelist->contract, cp.token->data, 20);
+              chain->whitelist->needs_update = true;
+            }
+          } else if (cp.token->key == key("whiteList")) {
+            if (d_type(cp.token) != T_ARRAY) {
+              res = IN3_EINVAL;
+              goto cleanup;
+            }
+            int len = d_len(cp.token), i = 0;
+            whitelist_free(chain->whitelist);
+            chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
+            chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20)
+              d_bytes_to(n.token, chain->whitelist->addresses.data + i, 20);
+          } else if (cp.token->key == key("registryId")) {
             bytes_t data = d_to_bytes(cp.token);
             if (data.len != 32 || !data.data) {
               res = IN3_EINVAL;
@@ -463,6 +522,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
             }
           }
         }
+        in3_client_run_chain_whitelisting(chain);
       }
   }
 

@@ -80,8 +80,9 @@ static void test_in3_config() {
      \"nodes\":{\
         \"0x7\":{\
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
+           \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
            \"registryId\":\"0x3456789012345678901234567890123456789012345678901234567890ffff\",\
-           \"needsUpdate\":false,\
+           \"needsUpdate\":0,\
            \"nodeList\":[{\
               \"url\":\"#1\",\
               \"props\":\"0xffff\",\
@@ -121,6 +122,8 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(false, chain->needs_update);
   TEST_ASSERT_EQUAL(1, chain->nodelist_length);
 
+  bytes_to_hex(chain->whitelist->contract, 20, tmp);
+  TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
   bytes_to_hex(chain->nodelist->address->data, chain->nodelist->address->len, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   TEST_ASSERT_EQUAL_STRING("#1", chain->nodelist->url);

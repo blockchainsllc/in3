@@ -43,8 +43,18 @@
 #include <string.h>
 
 #define NODE_LIST_KEY "nodelist_%d"
-#define CACHE_VERSION 2
+#define WHITTE_LIST_KEY "_0x%s"
+#define CACHE_VERSION 4
 #define MAX_KEYLEN 200
+
+static void write_cache_key(char* key, chain_id_t chain_id, const address_t contract) {
+  if (contract && contract) {
+    char contract_[41];
+    if (contract) bytes_to_hex(contract, 20, contract_);
+    sprintf(key, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_);
+  } else
+    sprintf(key, NODE_LIST_KEY, chain_id);
+}
 
 in3_ret_t in3_cache_init(in3_t* c) {
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
@@ -52,6 +62,10 @@ in3_ret_t in3_cache_init(in3_t* c) {
     if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) {
       in3_log_debug("Failed to update cached nodelist\n");
     }
+    if (in3_cache_update_whitelist(c, c->chains + i) != IN3_OK) {
+      in3_log_debug("Failed to update cached whitelist\n");
+    }
+    in3_client_run_chain_whitelisting(c->chains + i);
   }
 
   return IN3_OK;
@@ -63,7 +77,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 
   // define the key to use
   char key[MAX_KEYLEN];
-  sprintf(key, NODE_LIST_KEY, chain->chain_id);
+  write_cache_key(key, chain->chain_id, chain->contract->data);
 
   // get from cache
   bytes_t* b = c->cache->get_item(c->cache->cptr, key);
@@ -93,13 +107,14 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   p += count * sizeof(in3_node_weight_t);
 
   for (i = 0; i < count; i++) {
-    in3_node_t* n = chain->nodelist + i;
-    n->capacity   = b_read_int(b, &p);
-    n->index      = b_read_int(b, &p);
-    n->deposit    = b_read_long(b, &p);
-    n->props      = b_read_long(b, &p);
-    n->address    = b_new_fixed_bytes(b, &p, 20);
-    n->url        = b_new_chars(b, &p);
+    in3_node_t* n  = chain->nodelist + i;
+    n->capacity    = b_read_int(b, &p);
+    n->index       = b_read_int(b, &p);
+    n->deposit     = b_read_long(b, &p);
+    n->props       = b_read_long(b, &p);
+    n->address     = b_new_fixed_bytes(b, &p, 20);
+    n->url         = b_new_chars(b, &p);
+    n->whitelisted = false;
   }
   b_free(b);
   return IN3_OK;
@@ -130,8 +145,67 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   }
 
   // create key
+  char key[200];
+  write_cache_key(key, chain->chain_id, chain->contract->data);
+
+  // store it and ignore return value since failing when writing cache should not stop us.
+  ctx->client->cache->set_item(ctx->client->cache->cptr, key, &bb->b);
+
+  // clear buffer
+  bb_free(bb);
+  return IN3_OK;
+}
+
+in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
+  // it is ok not to have a storage
+  if (!c->cache || !chain->whitelist) return IN3_OK;
+
+  in3_whitelist_t* wl = chain->whitelist;
+
+  // define the key to use
   char key[MAX_KEYLEN];
-  sprintf(key, NODE_LIST_KEY, chain->chain_id);
+  write_cache_key(key, chain->chain_id, wl->contract);
+
+  // get from cache
+  bytes_t* b = c->cache->get_item(c->cache->cptr, key);
+  if (b) {
+    size_t p = 0;
+
+    // version check
+    if (b_read_byte(b, &p) != CACHE_VERSION) {
+      b_free(b);
+      return IN3_EVERS;
+    }
+
+    // clean up old
+    if (wl->addresses.data) _free(wl->addresses.data);
+
+    // fill data
+    wl->last_block = b_read_long(b, &p);
+    uint32_t l     = b_read_int(b, &p) * 20;
+    wl->addresses  = bytes(_malloc(l), l);
+    if (!wl->addresses.data)
+      return IN3_ENOMEM;
+    memcpy(wl->addresses.data, b->data + p, l);
+    b_free(b);
+  }
+  return IN3_OK;
+}
+
+in3_ret_t in3_cache_store_whitelist(in3_ctx_t* ctx, in3_chain_t* chain) {
+  // write to bytes_buffer
+  if (!ctx->client->cache || !chain->whitelist) return IN3_OK;
+
+  const in3_whitelist_t* wl = chain->whitelist;
+  bytes_builder_t*       bb = bb_new();
+  bb_write_byte(bb, CACHE_VERSION); // Version flag
+  bb_write_long(bb, wl->last_block);
+  bb_write_int(bb, wl->addresses.len / 20);
+  bb_write_fixed_bytes(bb, &wl->addresses);
+
+  // create key
+  char key[MAX_KEYLEN];
+  write_cache_key(key, chain->chain_id, wl->contract);
 
   // store it and ignore return value since failing when writing cache should not stop us.
   ctx->client->cache->set_item(ctx->client->cache->cptr, key, &bb->b);
