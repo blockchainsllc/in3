@@ -69,8 +69,8 @@ typedef struct bytes {
 
 /** a byte-buffer to attach byte-functions. */
 typedef struct {
-  bytes_t  b;     /**< the bytes struct */
   uint32_t bsize; /**< size of the currently allocated bytes */
+  bytes_t  b;     /**< the bytes struct */
 } bytes_builder_t;
 
 bytes_t* b_new(char* data, int len);                          /**< allocates a new byte array with 0 filled */
@@ -90,8 +90,8 @@ bytes_builder_t* bb_newl(size_t l);                                             
 void             bb_free(bytes_builder_t* bb);                                                             /**< frees a bytebuilder and its content. */
 int              bb_check_size(bytes_builder_t* bb, size_t len);                                           /**< internal helper to increase the buffer if needed */
 void             bb_write_chars(bytes_builder_t* bb, char* c, int len);                                    /**< writes a string to the builder. */
-void             bb_write_dyn_bytes(bytes_builder_t* bb, bytes_t* src);                                    /**< writes bytes to the builder with a prefixed length. */
-void             bb_write_fixed_bytes(bytes_builder_t* bb, bytes_t* src);                                  /**< writes fixed bytes to the builder. */
+void             bb_write_dyn_bytes(bytes_builder_t* bb, const bytes_t* src);                              /**< writes bytes to the builder with a prefixed length. */
+void             bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src);                            /**< writes fixed bytes to the builder. */
 void             bb_write_int(bytes_builder_t* bb, uint32_t val);                                          /**< writes a ineteger to the builder. */
 void             bb_write_long(bytes_builder_t* bb, uint64_t val);                                         /**< writes s long to the builder. */
 void             bb_write_long_be(bytes_builder_t* bb, uint64_t val, int len);                             /**< writes any integer value with the given length of bytes */
