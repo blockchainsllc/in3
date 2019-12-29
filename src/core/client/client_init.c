@@ -503,9 +503,10 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
           if (cp.token->key == key("contract"))
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
-          else if (iter.token->key == key("whiteListContract"))
-            memcpy(chain->whitelist_contract->data, cp.token->data, cp.token->len);
-          else if (cp.token->key == key("registryId")) {
+          else if (iter.token->key == key("whiteListContract")) {
+            if (chain->whitelist_contract) b_free(chain->whitelist_contract);
+            chain->whitelist_contract = b_new((char*) cp.token->data, cp.token->len);
+          } else if (cp.token->key == key("registryId")) {
             bytes_t data = d_to_bytes(cp.token);
             if (data.len != 32 || !data.data) {
               res = IN3_EINVAL;
