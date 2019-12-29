@@ -284,12 +284,12 @@ static in3_ret_t verify_whitelist_data(in3_vctx_t* vc, d_token_t* server_list, d
   uint32_t  total_servers = d_get_intk(vc->result, K_TOTAL_SERVERS);
 
   if ((int) total_servers != d_len(server_list))
-    return vc_err(vc, "wrong number of nodes in the serverlist");
+    return vc_err(vc, "wrong number of nodes in the whitelist");
 
   // now check the content of the whitelist
-  uint8_t  hash[32];
-  bytes_t* b = b_new(NULL, 20 * total_servers);
-  int      i = 0;
+  bytes32_t hash;
+  bytes_t*  b = b_new(NULL, 20 * total_servers);
+  int       i = 0;
   for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it), i += 20)
     memcpy(b->data + i, d_bytesl(it.token, 20)->data, 20);
 
@@ -305,23 +305,26 @@ in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
   d_token_t *     server_list = d_get(vc->result, K_NODES), *storage_proof, *t;
   bytes_builder_t bb          = {.bsize = 36, .b = {.data = val, .len = 0}};
 
-  if (d_type(vc->result) != T_OBJECT || !vc->proof || !server_list) return vc_err(vc, "Invalid nodeList response!");
+  if (d_type(vc->result) != T_OBJECT || !vc->proof || !server_list) return vc_err(vc, "Invalid whitelist response!");
 
   // verify the header
   bytes_t* blockHeader = d_get_bytesk(vc->proof, K_BLOCK);
-  if (!blockHeader) return vc_err(vc, "No Block-Proof!");
+  if (!blockHeader) return vc_err(vc, "No Block-Proof in whitelist!");
   TRY(eth_verify_blockheader(vc, blockHeader, NULL));
 
   // check contract
   bytes_t* wl_contract = d_get_byteskl(vc->result, K_CONTRACT, 20);
-  if (!wl_contract || (vc->chain->whitelist && memcmp(wl_contract->data, vc->chain->whitelist->contract, 20))) return vc_err(vc, "No or wrong Contract!");
+  if (!wl_contract || (vc->chain->whitelist && memcmp(wl_contract->data, vc->chain->whitelist->contract, 20)))
+    return vc_err(vc, "No or wrong Contract!");
 
   // check last block
-  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER)) return vc_err(vc, "The signature is based on older block!");
+  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER))
+    return vc_err(vc, "The signature is based on older block!");
 
   // check accounts
   d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
-  if (!accounts || d_len(accounts) != 1) return vc_err(vc, "Invalid accounts!");
+  if (!accounts || d_len(accounts) != 1)
+    return vc_err(vc, "Invalid accounts!");
   d_token_t* account = accounts + 1;
 
   // verify the account proof
@@ -330,6 +333,7 @@ in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
 
   proof = d_create_bytes_vec(d_get(account, K_ACCOUNT_PROOF));
   if (!proof) return vc_err(vc, "no merkle proof for the account");
+
   account_raw = serialize_account(account);
   sha3_to(wl_contract, hash);
   if (!trie_verify_proof(&root, &path, proof, account_raw)) {
