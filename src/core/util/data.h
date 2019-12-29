@@ -128,7 +128,7 @@ json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses t
 json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
 json_ctx_t* parse_json(char* js);                                  /**< parses json-data, which needs to be freed after usage! */
 void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
-str_range_t d_to_json(d_token_t* item);                            /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+str_range_t d_to_json(const d_token_t* item);                      /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
 char*       d_create_json(d_token_t* item);                        /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
 json_ctx_t* json_create();

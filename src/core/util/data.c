@@ -365,8 +365,8 @@ d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int pare
 }
 
 int parse_key(json_ctx_t* jp) {
-  char* start = jp->c;
-  int   r;
+  const char* start = jp->c;
+  int         r;
   while (true) {
     switch (*(jp->c++)) {
       case 0: return -2;
@@ -429,9 +429,9 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
 }
 
 int parse_string(json_ctx_t* jp, d_token_t* item) {
-  char*  start = jp->c;
-  size_t l, i;
-  int    n;
+  const char* start = jp->c;
+  size_t      l, i;
+  int         n;
 
   while (true) {
     switch (*(jp->c++)) {
@@ -594,7 +594,7 @@ json_ctx_t* parse_json(char* js) {
     _free(parser);                                                   // also free the parse since it does not make sense to parse  now.
     return NULL;                                                     // NULL means no memory
   }                                                                  //
-  int res = parse_object(parser, -1, 0);                             // now parse starting without parent (-1)
+  const int res = parse_object(parser, -1, 0);                       // now parse starting without parent (-1)
   if (res < 0) {                                                     // error parsing?
     json_free(parser);                                               // clean up
     return NULL;                                                     // and return null
@@ -603,9 +603,9 @@ json_ctx_t* parse_json(char* js) {
   return parser;
 }
 
-static int find_end(char* str) {
-  int   l = 0;
-  char* c = str;
+static int find_end(const char* str) {
+  int         l = 0;
+  const char* c = str;
   while (*c != 0) {
     switch (*(c++)) {
       case '{':
@@ -689,7 +689,7 @@ char* d_create_json(d_token_t* item) {
   return NULL;
 }
 
-str_range_t d_to_json(d_token_t* item) {
+str_range_t d_to_json(const d_token_t* item) {
   str_range_t s;
   if (item) {
     s.data = (char*) item->data;
