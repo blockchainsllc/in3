@@ -362,8 +362,10 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
   in3_ret_t    res   = IN3_EFIND;
   in3_t*       c     = ctx->client;
   in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain) return ctx_set_error(ctx, "invalid chain_id", IN3_EFIND);
-
+  if (!chain) {
+    ctx_set_error(ctx, "invalid chain_id", IN3_EFIND);
+    return IN3_EFIND;
+  }
   // do we need to update the nodelist?
   if (chain->needs_update || update || ctx_find_required(ctx, "in3_nodeList")) {
     chain->needs_update = false;
