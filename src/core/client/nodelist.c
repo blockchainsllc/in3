@@ -382,7 +382,9 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
   }
 
   // do we need to update the whiitelist?
-  if (chain->whitelist && (chain->whitelist->needs_update || update || ctx_find_required(ctx, "in3_whiteList"))) {
+  if (chain->whitelist                                                                         // only if we have a whitelist
+      && (chain->whitelist->needs_update || update || ctx_find_required(ctx, "in3_whiteList")) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result
+      && !memiszero(chain->whitelist->contract, 20)) {                                         // and we need to have a contract set, zero-contract = manual whitelist, which will not be updated.
     chain->whitelist->needs_update = false;
     // now update the whiteList
     res = update_whitelist(c, chain, ctx);

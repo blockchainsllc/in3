@@ -493,6 +493,17 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
               memcpy(chain->whitelist->contract, cp.token->data, 20);
               chain->whitelist->needs_update = true;
             }
+          } else if (cp.token->key == key("whiteList")) {
+            if (d_type(cp.token) != T_ARRAY) {
+              res = IN3_EINVAL;
+              goto cleanup;
+            }
+            int len = d_len(cp.token), i = 0;
+            whitelist_free(chain->whitelist);
+            chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
+            chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20)
+              d_bytes_to(n.token, chain->whitelist->addresses.data + i, 20);
           } else if (cp.token->key == key("registryId")) {
             bytes_t data = d_to_bytes(cp.token);
             if (data.len != 32 || !data.data) {
@@ -511,6 +522,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
             }
           }
         }
+        in3_client_run_chain_whitelisting(chain);
       }
   }
 
