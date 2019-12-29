@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 
-bytes_t* b_new(char* data, int len) {
+bytes_t* b_new(const char* data, int len) {
   bytes_t* b = _calloc(1, sizeof(bytes_t));
 
   b->len  = len;
@@ -51,7 +51,7 @@ bytes_t* b_new(char* data, int len) {
   return b;
 }
 
-void ba_print(uint8_t* a, size_t l) {
+void ba_print(const uint8_t* a, size_t l) {
   size_t i;
   if (!a) return;
 
@@ -65,7 +65,7 @@ void ba_print(uint8_t* a, size_t l) {
   in3_log_enable_prefix();
 }
 
-void b_print(bytes_t* a) {
+void b_print(const bytes_t* a) {
   size_t i;
   if (!a) return;
 #ifdef __ZEPHYR__
@@ -81,7 +81,7 @@ void b_print(bytes_t* a) {
 #endif
 }
 
-int b_cmp(bytes_t* a, bytes_t* b) {
+int b_cmp(const bytes_t* a, const bytes_t* b) {
   if ((a && b) == 0 || (a->len == 0 && b->len == 0)) return 1;
   return a->data && b->data && a->len == b->len && memcmp(a->data, b->data, a->len) == 0;
 }
@@ -98,7 +98,7 @@ void b_free(bytes_t* a) {
   _free(a);
 }
 
-bytes_t* b_dup(bytes_t* a) {
+bytes_t* b_dup(const bytes_t* a) {
   if (a == NULL) return NULL;
   bytes_t* out = _calloc(1, sizeof(bytes_t));
   out->data    = _calloc(1, a->len);

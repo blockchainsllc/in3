@@ -104,7 +104,7 @@ bytes_t* hex_to_new_bytes(const char* buf, int len);
 int bytes_to_hex(const uint8_t* buffer, int len, char* out);
 
 /** hashes the bytes and creates a new bytes_t */
-bytes_t* sha3(bytes_t* data);
+bytes_t* sha3(const bytes_t* data);
 
 /** writes 32 bytes to the pointer. */
 int sha3_to(bytes_t* data, void* dst);
@@ -116,7 +116,7 @@ void long_to_bytes(uint64_t val, uint8_t* dst);
 void int_to_bytes(uint32_t val, uint8_t* dst);
 
 /** duplicate the string */
-char* _strdupn(char* src, int len);
+char* _strdupn(const char* src, int len);
 
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);

@@ -719,9 +719,9 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
   return n;
 }
 
-static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
-  uint16_t key;
-  d_type_t type = d[*p] >> 5; // first 3 bits define the type
+static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p) {
+  uint16_t       key;
+  const d_type_t type = d[*p] >> 5; // first 3 bits define the type
 
   // calculate len
   uint32_t len = d[(*p)++] & 0x1F, i; // the other 5 bits  (0-31) the length
@@ -773,12 +773,12 @@ static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
       }
       break;
     case T_STRING:
-      t->data = d + ((*p)++);
+      t->data = (uint8_t*) d + ((*p)++);
       if (t->data[len] != 0) return 1;
       *p += len;
       break;
     case T_BYTES:
-      t->data = d + (*p);
+      t->data = (uint8_t*) d + (*p);
       *p += len;
       break;
     default:
@@ -787,12 +787,12 @@ static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
   return 0;
 }
 
-json_ctx_t* parse_binary_str(char* data, int len) {
-  bytes_t b = {.data = (uint8_t*) data, .len = len};
+json_ctx_t* parse_binary_str(const char* data, int len) {
+  const bytes_t b = {.data = (uint8_t*) data, .len = len};
   return parse_binary(&b);
 }
 
-json_ctx_t* parse_binary(bytes_t* data) {
+json_ctx_t* parse_binary(const bytes_t* data) {
   size_t      p = 0, error = 0;
   json_ctx_t* jp = _calloc(1, sizeof(json_ctx_t));
   jp->c          = (char*) data->data;

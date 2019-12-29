@@ -73,13 +73,13 @@ typedef struct {
   bytes_t  b;     /**< the bytes struct */
 } bytes_builder_t;
 
-bytes_t* b_new(char* data, int len);                          /**< allocates a new byte array with 0 filled */
-void     b_print(bytes_t* a);                                 /**< prints a the bytes as hex to stdout */
-void     ba_print(uint8_t* a, size_t l);                      /**< prints a the bytes as hex to stdout */
-int      b_cmp(bytes_t* a, bytes_t* b);                       /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
-int      bytes_cmp(bytes_t a, bytes_t b);                     /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+bytes_t* b_new(const char* data, int len);                    /**< allocates a new byte array with 0 filled */
+void     b_print(const bytes_t* a);                           /**< prints a the bytes as hex to stdout */
+void     ba_print(const uint8_t* a, size_t l);                /**< prints a the bytes as hex to stdout */
+int      b_cmp(const bytes_t* a, const bytes_t* b);           /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+int      bytes_cmp(const bytes_t a, const bytes_t b);         /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
 void     b_free(bytes_t* a);                                  /**< frees the data */
-bytes_t* b_dup(bytes_t* a);                                   /**< clones a byte array*/
+bytes_t* b_dup(const bytes_t* a);                             /**< clones a byte array*/
 uint8_t  b_read_byte(bytes_t* b, size_t* pos);                /**< reads a byte on the current position and updates the pos afterwards. */
 uint32_t b_read_int(bytes_t* b, size_t* pos);                 /**< reads a integer on the current position and updates the pos afterwards. */
 uint64_t b_read_long(bytes_t* b, size_t* pos);                /**< reads a long on the current position and updates the pos afterwards. */
