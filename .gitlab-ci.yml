@@ -313,8 +313,7 @@ java_macos:
   stage: test
   allow_failure: true
   script:
-    - ulimit -c unlimited
-    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber || cat hs_err_*
+    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
   tags:
     - mac-mini-runner
 
