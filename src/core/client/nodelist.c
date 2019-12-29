@@ -349,6 +349,11 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
 
     weightDef = weights + i;
     printf("weightDef : %p\n", weightDef);
+    printf("weightDef->blacklisted_until : %i\n", (int) weightDef->blacklisted_until);
+    printf("weightDef->response_count : %i\n", (int) weightDef->response_count);
+    printf("weightDef->total_response_time : %i\n", (int) weightDef->total_response_time);
+    printf("weightDef->weight : %i\n", (int) weightDef->weight);
+    printf("nodeDef->capacity : %i\n", (int) nodeDef->capacity);
     if (weightDef->blacklisted_until > (uint64_t) now) continue;
     w = _malloc(sizeof(node_weight_t));
     if (!w) {
@@ -359,12 +364,16 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
     w->weight = weightDef;
     w->next   = NULL;
     w->s      = s;
-    w->w      = weightDef->weight * nodeDef->capacity * (500 / (weightDef->response_count ? (weightDef->total_response_time / weightDef->response_count) : 500));
+    printf("w : %p\n", w);
+    w->w = weightDef->weight * nodeDef->capacity * (500 / (weightDef->response_count ? (weightDef->total_response_time / weightDef->response_count) : 500));
+    printf("w->w : %.6f\n", w->w);
+
     s += w->w;
     p++;
     if (prev) prev->next = w;
     prev = w;
   }
+  printf("done total_weight=%.6f total_found=%i\n", s, p);
   *total_weight = s;
   *total_found  = p;
   return first;
