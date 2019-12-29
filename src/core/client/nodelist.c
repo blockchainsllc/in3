@@ -318,6 +318,7 @@ in3_node_props_match(const in3_node_props_t np_config, const in3_node_props_t np
 node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                          int len, _time_t now, float* total_weight, int* total_found,
                                          in3_node_props_t props) {
+
   int                i, p;
   float              s         = 0;
   in3_node_t*        nodeDef   = NULL;
@@ -327,7 +328,12 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
   node_weight_t*     first     = NULL;
   *total_found                 = 0;
   in3_chain_t* chain           = in3_find_chain(c, chain_id);
+  printf("## chain_id = %d, chain=%p\n", chain_id, chain);
   if (!chain) return NULL;
+  printf("len = %d\n", len);
+  printf("allnodes = %p\n", all_nodes);
+  printf("weights = %p\n", weights);
+  printf("chain->whitelist = %p\n", chain->whitelist);
 
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
@@ -342,8 +348,12 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
 #endif
 
     weightDef = weights + i;
+    printf("weightDef : %p\n", weightDef);
     if (weightDef->blacklisted_until > (uint64_t) now) continue;
     w = _malloc(sizeof(node_weight_t));
+    if (!w) {
+      printf("malloc failed when creating a node_weight\n");
+    }
     if (!first) first = w;
     w->node   = nodeDef;
     w->weight = weightDef;
