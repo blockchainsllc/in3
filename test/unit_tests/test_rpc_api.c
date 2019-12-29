@@ -122,7 +122,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(UPDATE_NONE, chain->needs_update);
   TEST_ASSERT_EQUAL(1, chain->nodelist_length);
 
-  bytes_to_hex(chain->whiteListContract->data, 20, tmp);
+  bytes_to_hex(chain->whitelist_contract->data, 20, tmp);
   TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
   bytes_to_hex(chain->nodelist->address->data, chain->nodelist->address->len, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);

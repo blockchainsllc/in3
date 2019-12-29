@@ -69,19 +69,19 @@ void in3_set_default_signer(in3_signer_t* signer) {
 }
 
 static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
-  chain->chain_id          = chain_id;
-  chain->init_addresses    = NULL;
-  chain->last_block        = 0;
-  chain->contract          = hex_to_new_bytes(contract, 40);
-  chain->needs_update      = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
-  chain->nodelist          = _malloc(sizeof(in3_node_t) * boot_node_count);
-  chain->nodelist_length   = boot_node_count;
-  chain->weights           = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
-  chain->type              = type;
-  chain->version           = version;
-  chain->whiteListContract = (wl_contract) ? hex_to_new_bytes(wl_contract, 40) : NULL;
-  chain->whiteList         = NULL;
-  chain->lastBlockWl       = 0;
+  chain->chain_id             = chain_id;
+  chain->init_addresses       = NULL;
+  chain->last_block           = 0;
+  chain->contract             = hex_to_new_bytes(contract, 40);
+  chain->needs_update         = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
+  chain->nodelist             = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodelist_length      = boot_node_count;
+  chain->weights              = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->type                 = type;
+  chain->version              = version;
+  chain->whitelist_contract   = (wl_contract) ? hex_to_new_bytes(wl_contract, 40) : NULL;
+  chain->whitelist            = NULL;
+  chain->whitelist_last_block = 0;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
@@ -101,10 +101,10 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->props      = chain->chain_id == ETH_CHAIN_ID_LOCAL ? 0x0 : 0xFF;
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
-  node->whiteListed = false;
+  node->whitelisted = false;
 
   in3_node_weight_t* weight   = chain->weights + node_index;
-  weight->blacklistedUntil    = 0;
+  weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
   weight->weight              = 1;
@@ -219,30 +219,30 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   if (!chain) {
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
-    chain                    = c->chains + c->chains_length;
-    chain->nodelist          = NULL;
-    chain->nodelist_length   = 0;
-    chain->weights           = NULL;
-    chain->init_addresses    = NULL;
-    chain->whiteList         = NULL;
-    chain->whiteListContract = NULL;
-    chain->lastBlockWl       = 0;
-    chain->last_block        = 0;
+    chain                       = c->chains + c->chains_length;
+    chain->nodelist             = NULL;
+    chain->nodelist_length      = 0;
+    chain->weights              = NULL;
+    chain->init_addresses       = NULL;
+    chain->whitelist            = NULL;
+    chain->whitelist_contract   = NULL;
+    chain->whitelist_last_block = 0;
+    chain->last_block           = 0;
     c->chains_length++;
 
   } else {
     if (chain->contract)
       b_free(chain->contract);
-    if (chain->whiteListContract)
-      b_free(chain->whiteListContract);
+    if (chain->whitelist_contract)
+      b_free(chain->whitelist_contract);
   }
 
-  chain->chain_id          = chain_id;
-  chain->contract          = b_new((char*) contract, 20);
-  chain->whiteListContract = wl_contract ? b_new((char*) wl_contract, 20) : NULL;
-  chain->needs_update      = false;
-  chain->type              = type;
-  chain->version           = version;
+  chain->chain_id           = chain_id;
+  chain->contract           = b_new((char*) contract, 20);
+  chain->whitelist_contract = wl_contract ? b_new((char*) wl_contract, 20) : NULL;
+  chain->needs_update       = false;
+  chain->type               = type;
+  chain->version            = version;
   memcpy(chain->registry_id, registry_id, 32);
   return chain->contract ? IN3_OK : IN3_ENOMEM;
 }
@@ -273,7 +273,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     node->capacity = 1;
     node->deposit  = 0;
     chain->nodelist_length++;
-    node->whiteListed = false;
+    node->whitelisted = false;
   } else
     _free(node->url);
 
@@ -282,7 +282,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   memcpy(node->url, url, strlen(url) + 1);
 
   in3_node_weight_t* weight   = chain->weights + node_index;
-  weight->blacklistedUntil    = 0;
+  weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
   weight->weight              = 1;
@@ -335,21 +335,21 @@ in3_ret_t in3_client_add_whitelist_node(in3_t* c, uint64_t chain_id, address_t a
   if (!chain)
     return IN3_EFIND;
 
-  if (!chain->whiteList && (chain->whiteList = bb_newl(40)) == NULL)
+  if (!chain->whitelist && (chain->whitelist = bb_newl(40)) == NULL)
     return IN3_ENOMEM;
 
-  bb_write_raw_bytes(chain->whiteList, addr, 20);
+  bb_write_raw_bytes(chain->whitelist, addr, 20);
   return IN3_OK;
 }
 
 in3_ret_t in3_client_remove_whitelist_node(in3_t* c, uint64_t chain_id, address_t address) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
-  if (!chain || !chain->whiteList)
+  if (!chain || !chain->whitelist)
     return IN3_EFIND;
 
   int node_index = -1;
-  for (size_t i = 0; i < chain->whiteList->b.len; i += 20) {
-    if (memcmp(chain->whiteList->b.data + i, address, 20) == 0) {
+  for (size_t i = 0; i < chain->whitelist->b.len; i += 20) {
+    if (memcmp(chain->whitelist->b.data + i, address, 20) == 0) {
       node_index = i;
       break;
     }
@@ -357,8 +357,8 @@ in3_ret_t in3_client_remove_whitelist_node(in3_t* c, uint64_t chain_id, address_
   if (node_index == -1)
     return IN3_EFIND;
 
-  memmove(chain->whiteList->b.data + node_index, chain->whiteList->b.data + node_index + 20, chain->whiteList->b.len - node_index - 20);
-  chain->whiteList->b.len -= 20;
+  memmove(chain->whitelist->b.data + node_index, chain->whitelist->b.data + node_index + 20, chain->whitelist->b.len - node_index - 20);
+  chain->whitelist->b.len -= 20;
   return IN3_OK;
 }
 
@@ -366,7 +366,7 @@ in3_ret_t in3_client_clear_whitelist_nodes(in3_t* c, uint64_t chain_id) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
   in3_whitelist_clear(chain);
-  chain->whiteList = NULL;
+  chain->whitelist = NULL;
   return IN3_OK;
 }
 
@@ -376,7 +376,7 @@ void in3_free(in3_t* a) {
   for (i = 0; i < a->chains_length; i++) {
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
-    b_free(a->chains[i].whiteListContract);
+    b_free(a->chains[i].whitelist_contract);
     in3_whitelist_clear(a->chains + i);
   }
   if (a->signer) _free(a->signer);
@@ -436,9 +436,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
   d_clear_keynames();
   json_ctx_t* cnf = parse_json(config);
   d_track_keynames(0);
-  in3_ret_t    res   = IN3_OK;
-  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
-
+  in3_ret_t res = IN3_OK;
   if (!cnf || !cnf->result) return IN3_EINVAL;
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
     if (iter.token->key == key("autoUpdateList"))
@@ -506,7 +504,7 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
           if (cp.token->key == key("contract"))
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
           else if (iter.token->key == key("whiteListContract"))
-            memcpy(chain->whiteListContract->data, cp.token->data, cp.token->len);
+            memcpy(chain->whitelist_contract->data, cp.token->data, cp.token->len);
           else if (cp.token->key == key("registryId")) {
             bytes_t data = d_to_bytes(cp.token);
             if (data.len != 32 || !data.data) {

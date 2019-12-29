@@ -313,7 +313,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
           if (i < c->signature_count)
             memcpy(c->chains[j].nodelist[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
           else
-            c->chains[j].weights[i].blacklistedUntil = 0xFFFFFFFFFFFFFF;
+            c->chains[j].weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
         }
       }
     }
