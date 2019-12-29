@@ -326,6 +326,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
   node_weight_t*     w         = NULL;
   node_weight_t*     first     = NULL;
   in3_chain_t*       chain     = in3_find_chain(c, chain_id);
+  if (!chain) return NULL;
 
   for (i = 0, p = 0; i < len; i++) {
     nodeDef = all_nodes + i;
@@ -404,6 +405,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
 
   // filter out nodes
   node_weight_t* found = in3_node_list_fill_weight(ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
+  if (!found) return ctx_set_error(ctx, "invalid chain config", IN3_EFIND);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
