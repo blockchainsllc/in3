@@ -325,7 +325,8 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
   node_weight_t*     prev      = NULL;
   node_weight_t*     w         = NULL;
   node_weight_t*     first     = NULL;
-  in3_chain_t*       chain     = in3_find_chain(c, chain_id);
+  *total_found                 = 0;
+  in3_chain_t* chain           = in3_find_chain(c, chain_id);
   if (!chain) return NULL;
 
   for (i = 0, p = 0; i < len; i++) {
