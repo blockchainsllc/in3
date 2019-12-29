@@ -50,7 +50,7 @@
 
 #define reject_if(c, m)            \
   if (c) {                         \
-    if (parsed) free_json(parsed); \
+    if (parsed) json_free(parsed); \
     result.error_msg = m;          \
     result.action    = NULL;       \
     return result;                 \
@@ -66,7 +66,7 @@
 
 static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;
-  hex2byte_arr("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
+  hex_to_bytes("9123e6a7c5d144bd06140643c88de8e01adcbb24350190c02218a4435c7041f8", 64, event_hash, 32);
   for (d_iterator_t iter = d_iter(d_get(receipt, K_LOGS)); iter.left; d_iter_next(&iter)) {
     bytes_t* t = d_bytesl(d_get_at(d_get(iter.token, K_TOPICS), 0), 32);
     if (t && t->len == 32 && memcmp(event_hash, t->data, 32) == 0) return iter.token;
@@ -93,7 +93,7 @@ static usn_device_t* find_device_by_id(usn_device_conf_t* conf, bytes32_t id) {
 static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t device_id, bytes_t data, uint8_t* result, int max) {
   int      l     = 4 + 32 + data.len;
   uint8_t* cdata = alloca(l);
-  hex2byte_arr(fn_hash, -1, cdata, 4);
+  hex_to_bytes(fn_hash, -1, cdata, 4);
   memcpy(cdata + 4, device_id, 32);
   if (data.len) memcpy(cdata + 36, data.data, data.len);
 
@@ -110,11 +110,11 @@ static in3_ret_t exec_eth_call(usn_device_conf_t* conf, char* fn_hash, bytes32_t
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
   l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), result, max);
-  free_ctx(ctx);
+  ctx_free(ctx);
   return l == max ? l : IN3_EINVALDT;
 }
 
@@ -140,12 +140,12 @@ static in3_ret_t exec_eth_send(usn_device_conf_t* conf, bytes_t data, bytes32_t 
   // do we have a valid result?
   in3_ret_t res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
 
   int l = d_bytes_to(d_get(ctx->responses[0], K_RESULT), tx_hash, 32);
-  free_ctx(ctx);
+  ctx_free(ctx);
   return l;
 }
 
@@ -257,7 +257,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   strcpy(result->action, d_get_stringk(msg, K_ACTION)); // this is not nice to overwrite the original payload, but this way we don't need to free it.
 
 clean:
-  if (ctx) free_ctx(ctx);
+  if (ctx) ctx_free(ctx);
 }
 
 usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
@@ -285,7 +285,7 @@ usn_msg_result_t usn_verify_message(usn_device_conf_t* conf, char* message) {
     result.accepted = true;
   } else
     result.error_msg = "Unknown message type";
-  free_json(parsed);
+  json_free(parsed);
 
   return result;
 }
@@ -358,11 +358,11 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
   in3_ctx_t* ctx = in3_client_rpc_ctx(conf->c, "eth_blockNumber", "[]");
   in3_ret_t  res = ctx_get_error(ctx, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
   uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
-  free_ctx(ctx);
+  ctx_free(ctx);
   if (conf->last_checked_block == current_block) return IN3_OK;
 
   if (!conf->last_checked_block) {
@@ -426,7 +426,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
 
     // do we have a valid result?
     if ((res = ctx_get_error(ctx, 0))) {
-      free_ctx(ctx);
+      ctx_free(ctx);
       return res;
     }
 
@@ -444,7 +444,7 @@ in3_ret_t usn_update_bookings(usn_device_conf_t* conf) {
                       d_get_bytesk(iter.token, K_TRANSACTION_HASH)->data);
     }
 
-    free_ctx(ctx);
+    ctx_free(ctx);
   }
 
   // update the last_block
@@ -568,7 +568,7 @@ in3_ret_t usn_rent(in3_t* c, address_t contract, address_t token, char* url, uin
 
   // now send the tx
   memset(params, 0, 100);
-  hex2byte_arr("400a6315", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  hex_to_bytes("400a6315", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
   int_to_bytes(seconds, params + 64);
   if (token) memcpy(params + 80, token, 20);
@@ -589,7 +589,7 @@ in3_ret_t usn_return(in3_t* c, address_t contract, char* url, bytes32_t tx_hash)
   uint8_t   params[36] = {0};
 
   // now send the tx
-  hex2byte_arr("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
+  hex_to_bytes("896e4b2c", -1, params, 4); //  function rent(bytes32 id, uint32 secondsToRent, address token) external payable;
   memcpy(params + 4, purl.device_id, 32);
 
   in3_ret_t res = exec_eth_send(&conf, bytes(params, 100), NULL, tx_hash);

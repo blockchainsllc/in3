@@ -31,21 +31,21 @@ int main(int argc, char* argv[]) {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // switch to goerli
-  c->chainId = 0x5;
+  c->chain_id = 0x5;
 
   // setting up a usn-device-config
   usn_device_conf_t usn;
   usn.booking_handler    = handle_booking;                                          // this is the handler, which is called for each rent/return or start/stop
   usn.c                  = c;                                                       // the incubed client
-  usn.chain_id           = c->chainId;                                              // the chain_id
+  usn.chain_id           = c->chain_id;                                             // the chain_id
   usn.devices            = NULL;                                                    // this will contain the list of devices supported
   usn.len_devices        = 0;                                                       // and length of this list
   usn.now                = 0;                                                       // the current timestamp
   unsigned int wait_time = 5;                                                       // the time to wait between the internval
-  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, usn.contract, 20); // address of the usn-contract, which we copy from hex
+  hex_to_bytes("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, usn.contract, 20); // address of the usn-contract, which we copy from hex
 
   // register a usn-device
   usn_register_device(&usn, "office@slockit");

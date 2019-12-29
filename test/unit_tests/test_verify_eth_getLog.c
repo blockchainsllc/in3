@@ -78,8 +78,8 @@ static void test_verify_eth_getLog_filter_default() {
   TEST_ASSERT_TRUE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
   free(blkhash.data);
   free(addrs.data);
-  free_json(jtopics);
-  free_json(jreq);
+  json_free(jtopics);
+  json_free(jreq);
 }
 
 static void test_verify_eth_getLog_filter_address() {
@@ -88,13 +88,13 @@ static void test_verify_eth_getLog_filter_address() {
   bytes_t     addrs   = hexstrtobin("0x8912358d977e123b51ecad1ffa0cc4a7e32ff774");
   bytes_t     blkhash = hexstrtobin("0x6936d98945a4dec4c4c98052f429435f7f8ae45ea02f9503a67ae296014bef27");
   TEST_ASSERT_FALSE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
-  free_json(jreq);
+  json_free(jreq);
   jreq = parse_json("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\": \"0x8912358d977e123b51ecad1ffa0cc4a7e32ff774\"}],\"in3\":{\"chainId\":\"0x1\",\"verification\":\"proof\"}}");
   TEST_ASSERT_TRUE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
   free(blkhash.data);
   free(addrs.data);
-  free_json(jtopics);
-  free_json(jreq);
+  json_free(jtopics);
+  json_free(jreq);
 }
 
 static void test_verify_eth_getLog_filter_range() {
@@ -110,8 +110,8 @@ static void test_verify_eth_getLog_filter_range() {
   TEST_ASSERT_TRUE(matches_filter(&jreq->result[0], addrs, 0x793490, blkhash, &jtopics->result[0]));
   free(blkhash.data);
   free(addrs.data);
-  free_json(jtopics);
-  free_json(jreq);
+  json_free(jtopics);
+  json_free(jreq);
 }
 
 static void test_verify_eth_getLog_filter_blockhash() {
@@ -120,13 +120,13 @@ static void test_verify_eth_getLog_filter_blockhash() {
   bytes_t     addrs   = hexstrtobin("0x8912358d977e123b51ecad1ffa0cc4a7e32ff774");
   bytes_t     blkhash = hexstrtobin("0x6936d98945a4dec4c4c98052f429435f7f8ae45ea02f9503a67ae296014bef27");
   TEST_ASSERT_FALSE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
-  free_json(jreq);
+  json_free(jreq);
   jreq = parse_json("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"blockHash\": \"0x6936d98945a4dec4c4c98052f429435f7f8ae45ea02f9503a67ae296014bef27\"}],\"in3\":{\"chainId\":\"0x1\",\"verification\":\"proof\"}}");
   TEST_ASSERT_TRUE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
   free(blkhash.data);
   free(addrs.data);
-  free_json(jtopics);
-  free_json(jreq);
+  json_free(jtopics);
+  json_free(jreq);
 }
 
 static void test_verify_eth_getLog_filter_topics() {
@@ -135,19 +135,19 @@ static void test_verify_eth_getLog_filter_topics() {
   bytes_t     addrs   = hexstrtobin("0x8912358d977e123b51ecad1ffa0cc4a7e32ff774");
   bytes_t     blkhash = hexstrtobin("0x6936d98945a4dec4c4c98052f429435f7f8ae45ea02f9503a67ae296014bef27");
   TEST_ASSERT_TRUE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
-  free_json(jreq);
+  json_free(jreq);
   jreq = parse_json("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"topics\": [null, \"0x0000000000000000000000004e339b727b62103a4429b56bffd5609e92574f2d\"]}],\"in3\":{\"chainId\":\"0x1\",\"verification\":\"proof\"}}");
   TEST_ASSERT_TRUE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
-  free_json(jreq);
+  json_free(jreq);
   jreq = parse_json("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"topics\": [null, [\"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef\", \"0x00000000000000000000000099fe5d6383289cdd56e54fc0baf7f67c957a8888\"]]}],\"in3\":{\"chainId\":\"0x1\",\"verification\":\"proof\"}}");
   TEST_ASSERT_FALSE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
-  free_json(jreq);
+  json_free(jreq);
   jreq = parse_json("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"topics\": [[\"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef\", \"0x00000000000000000000000099fe5d6383289cdd56e54fc0baf7f67c957a8888\"], null, \"0x00000000000000000000000099fe5d6383289cdd56e54fc0baf7f67c957a8888\"]}],\"in3\":{\"chainId\":\"0x1\",\"verification\":\"proof\"}}");
   TEST_ASSERT_TRUE(matches_filter(&jreq->result[0], addrs, 0x793426, blkhash, &jtopics->result[0]));
   free(blkhash.data);
   free(addrs.data);
-  free_json(jtopics);
-  free_json(jreq);
+  json_free(jtopics);
+  json_free(jreq);
 }
 
 int main() {

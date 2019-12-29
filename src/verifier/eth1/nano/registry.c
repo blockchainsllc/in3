@@ -140,20 +140,18 @@ static uint8_t* get_storage_array_key(uint32_t pos, uint32_t array_index, uint32
 }
 
 _NOINLINE_ static void create_node_hash(d_token_t* t, bytes32_t dst) {
-  bytes_t  url    = d_to_bytes(d_get(t, K_URL));
-  int      l      = 84 + url.len;
+  bytes_t  url    = d_to_bytes(d_get(t, K_URL)), val;
+  int      l      = 92 + url.len;
   uint8_t* buffer = alloca(l);
   memset(buffer, 0, l);
 
-  // new storage layout
-  bytes_t val = d_to_bytes(d_get(t, K_ADDRESS)), data = bytes(buffer, l);
-  long_to_bytes(d_get_longk(t, K_DEPOSIT), buffer + 24); // TODO deposit is read as uint64, which means max 18 ETH!
-  long_to_bytes(d_get_longk(t, K_TIMEOUT), buffer + 32);
-  long_to_bytes(d_get_longk(t, K_REGISTER_TIME), buffer + 40);
-  long_to_bytes(d_get_longk(t, K_PROPS), buffer + 56); // TODO at the moment we only support 64bit instead of 128bit, which might cause issues, if someone registeres a server with 128bit props.
-
-  memcpy(buffer + 64 + 20 - val.len, val.data, val.len);
-  memcpy(buffer + 64 + 20, url.data, url.len);
+  bytes_t data = bytes(buffer, l);
+  if ((val = d_to_bytes(d_get(t, K_DEPOSIT))).data && val.len < 33) memcpy(buffer + 32 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_REGISTER_TIME))).data && val.len < 9) memcpy(buffer + 32 + 8 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_PROPS))).data && val.len < 25) memcpy(buffer + 40 + 24 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_WEIGHT))).data && val.len < 9) memcpy(buffer + 64 + 8 - val.len, val.data, val.len);
+  if ((val = d_to_bytes(d_get(t, K_ADDRESS))).data && val.len < 21) memcpy(buffer + 72 + 20 - val.len, val.data, val.len);
+  if (url.data && url.len) memcpy(buffer + 92, url.data, url.len);
 
   sha3_to(&data, dst);
 }

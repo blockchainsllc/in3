@@ -172,7 +172,7 @@ int runRequests(char** names, int test_index, int mem_track, uint32_t props) {
     }
 
     free(content);
-    free_json(parsed);
+    json_free(parsed);
     d_clear_keynames();
     name = names[++n];
   }

@@ -167,20 +167,20 @@ in3_ret_t         eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs);   
 uint64_t          eth_chainId(in3_t* in3);                                                                 /**< Returns the currently configured chain id */
 uint64_t          eth_getBlockTransactionCountByHash(in3_t* in3, bytes32_t hash);                          /**< Returns the number of transactions in a block from a block matching the given block hash. */
 uint64_t          eth_getBlockTransactionCountByNumber(in3_t* in3, eth_blknum_t block);                    /**< Returns the number of transactions in a block from a block matching the given block number. */
-json_ctx_t*       eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);      /**< Returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
-uint64_t          eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);  /**< Returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with free_json()! */
+json_ctx_t*       eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);      /**< Returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with json_free()! */
+uint64_t          eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...);  /**< Returns the result of a function_call. If result is null, check eth_last_error()! otherwise make sure to free the result after using it with json_free()! */
 eth_tx_t*         eth_getTransactionByHash(in3_t* in3, bytes32_t tx_hash);                                 /**< Returns the information about a transaction requested by transaction hash. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_tx_t*         eth_getTransactionByBlockHashAndIndex(in3_t* in3, bytes32_t block_hash, size_t index);   /**< Returns the information about a transaction by block hash and transaction index position. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 eth_tx_t*         eth_getTransactionByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index);   /**< Returns the information about a transaction by block number and transaction index position. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 uint64_t          eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t block);              /**< Returns the number of transactions sent from an address. */
-eth_block_t*      eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index);             /**< Returns information about a uncle of a block by number and uncle index position. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
+eth_block_t*      eth_getUncleByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index);         /**< Returns information about a uncle of a block by number and uncle index position. If result is null, check eth_last_error()! otherwise make sure to free the result after using it! */
 uint64_t          eth_getUncleCountByBlockHash(in3_t* in3, bytes32_t hash);                                /**< Returns the number of uncles in a block from a block matching the given block hash. */
 uint64_t          eth_getUncleCountByBlockNumber(in3_t* in3, eth_blknum_t block);                          /**< Returns the number of uncles in a block from a block matching the given block number. */
 bytes_t*          eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_T(uint64_t) gas,  /* */
                                       OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value,         /* */
                                       OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce);               /**< Creates new message call transaction or a contract creation. Returns (32 Bytes) - the transaction hash, or the zero hash if the transaction is not yet available. Free result after use with b_free(). */
 bytes_t*          eth_sendRawTransaction(in3_t* in3, bytes_t data);                                        /**< Creates new message call transaction or a contract creation for signed transactions. Returns (32 Bytes) - the transaction hash, or the zero hash if the transaction is not yet available. Free after use with b_free(). */
-eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);                                /**< Returns the receipt of a transaction by transaction hash. Free result after use with free_tx_receipt() */
+eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);                                /**< Returns the receipt of a transaction by transaction hash. Free result after use with eth_tx_receipt_free() */
 char*             eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);                                     /**< Waits for receipt of a transaction requested by transaction hash. */
 char*             eth_last_error();                                                                        /**< The current error or null if all is ok */
 
@@ -189,10 +189,10 @@ long double as_double(uint256_t d);                                          /**
 uint64_t    as_long(uint256_t d);                                            /**< Converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
 uint256_t   to_uint256(uint64_t value);                                      /**< Converts a uint64_t into its uint256_t representation. */
 in3_ret_t   decrypt_key(d_token_t* key_data, char* password, bytes32_t dst); /**< Decrypts the private key from a json keystore file using PBKDF2 or SCRYPT (if enabled) */
-void        free_log(eth_log_t* log);                                        /**< Frees a eth_log_t object */
-void        free_tx_receipt(eth_tx_receipt_t* txr);                          /**< Frees a eth_tx_receipt_t object */
+void        log_free(eth_log_t* log);                                        /**< Frees a eth_log_t object */
+void        eth_tx_receipt_free(eth_tx_receipt_t* txr);                      /**< Frees a eth_tx_receipt_t object */
 
 // more helper
-in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]); /**< converts the given address to a checksum address. If chainId is passed, it will use the EIP1191 to include it as well. */
+in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]); /**< converts the given address to a checksum address. If chain_id is passed, it will use the EIP1191 to include it as well. */
 void      in3_register_eth_api();
 #endif

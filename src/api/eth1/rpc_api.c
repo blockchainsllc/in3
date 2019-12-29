@@ -95,7 +95,7 @@ static in3_ret_t in3_abiDecode(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     return ctx_set_error(ctx, "the input data can not be decoded", IN3_EINVAL);
   char* result = d_create_json(res->result);
   sb_add_chars(&response[0]->result, result);
-  free_json(res);
+  json_free(res);
   _free(result);
 
   RESPONSE_END();
@@ -105,7 +105,7 @@ static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_resp
   bytes_t* adr = d_get_bytes_at(params, 0);
   if (!adr || adr->len != 20) return ctx_set_error(ctx, "the address must have 20 bytes", IN3_EINVAL);
   char      result[43];
-  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->client->chainId : 0, result);
+  in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->client->chain_id : 0, result);
   if (res) return ctx_set_error(ctx, "Could not create the checksum address", res);
   RESPONSE_START();
   sb_add_char(&response[0]->result, '"');

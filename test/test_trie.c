@@ -114,7 +114,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
       bytes_t key_bytes, value_bytes = get_bytes(t, tmp, is_hex);
       if (k[0] == '0' && k[1] == 'x') {
         key_bytes.data = tmp;
-        key_bytes.len  = hex2byte_arr(k + 2, strlen(k) - 2, tmp, 64);
+        key_bytes.len  = hex_to_bytes(k + 2, strlen(k) - 2, tmp, 64);
       } else {
         key_bytes.data = (uint8_t*) k;
         key_bytes.len  = strlen(k);

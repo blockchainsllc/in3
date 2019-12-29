@@ -50,10 +50,10 @@
 //  return d_get_stringk(ctx->requests[0], K_METHOD);
 //}
 
-static void free_response(in3_ctx_t* ctx) {
+static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
     int nodes_count = ctx_nodes_len(ctx->nodes);
-    free_ctx_nodes(ctx->nodes);
+    in3_ctx_free_nodes(ctx->nodes);
     if (ctx->raw_response) {
       for (int i = 0; i < nodes_count; i++) {
         _free(ctx->raw_response[i].error.data);
@@ -68,17 +68,17 @@ static void free_response(in3_ctx_t* ctx) {
   }
 
   if (ctx->responses) _free(ctx->responses);
-  if (ctx->response_context) free_json(ctx->response_context);
+  if (ctx->response_context) json_free(ctx->response_context);
   ctx->response_context = NULL;
   ctx->responses        = NULL;
   ctx->raw_response     = NULL;
   ctx->nodes            = NULL;
   if (ctx->requests_configs) {
     for (int i = 0; i < ctx->len; i++) {
-      if (ctx->requests_configs[i].signaturesCount) {
-        if (ctx->requests_configs[i].signatures) {
-          _free(ctx->requests_configs[i].signatures);
-          ctx->requests_configs[i].signatures = NULL;
+      if (ctx->requests_configs[i].signers_length) {
+        if (ctx->requests_configs[i].signers) {
+          _free(ctx->requests_configs[i].signers);
+          ctx->requests_configs[i].signers = NULL;
         }
       }
     }
@@ -90,9 +90,9 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
 
   if (is_sub) _free(ctx->request_context->c);
   if (ctx->error) _free(ctx->error);
-  free_response(ctx);
+  response_free(ctx);
   if (ctx->request_context)
-    free_json(ctx->request_context);
+    json_free(ctx->request_context);
 
   if (ctx->requests) _free(ctx->requests);
   if (ctx->requests_configs) _free(ctx->requests_configs);
@@ -105,34 +105,35 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   int    i;
   in3_t* c = ctx->client;
 
-  conf->chainId  = c->chainId;
+  conf->chain_id = c->chain_id;
   conf->finality = c->finality;
   //  if (c->key) {
   // TODO sign the request
   // conf->clientSignature =
   //  }
-  conf->latestBlock = c->replaceLatestBlock;
-  conf->useBinary   = c->use_binary;
+  conf->latest_block = c->replace_latest_block;
+  conf->use_binary   = c->use_binary;
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
     if (c->proof == PROOF_FULL)
-      conf->useFullProof = true;
+      conf->use_full_proof = true;
     conf->verification = VERIFICATION_PROOF;
 
-    if (c->signatureCount) {
+    if (c->signature_count) {
       node_weight_t*   sig_nodes = NULL;
       in3_node_props_t props     = c->node_props | NODE_PROP_SIGNER;
-      in3_ret_t        res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signatureCount, props);
+      in3_ret_t        res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signature_count, props);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-      int node_count        = ctx_nodes_len(sig_nodes);
-      conf->signaturesCount = node_count;
-      conf->signatures      = _malloc(sizeof(bytes_t) * node_count);
-      node_weight_t* w      = sig_nodes;
+      int node_count       = ctx_nodes_len(sig_nodes);
+      conf->signers_length = node_count;
+      conf->signers        = _malloc(sizeof(bytes_t) * node_count);
+      node_weight_t* w     = sig_nodes;
       for (i = 0; i < node_count; i++) {
-        conf->signatures[i].len  = w->node->address->len;
-        conf->signatures[i].data = w->node->address->data;
+        conf->signers[i].len  = w->node->address->len;
+        conf->signers[i].data = w->node->address->data;
+        w                     = w->next;
       }
-      free_ctx_nodes(sig_nodes);
+      in3_ctx_free_nodes(sig_nodes);
     }
   }
 
@@ -188,29 +189,29 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
     in3_request_config_t* rc = c->requests_configs + i;
     if (rc->verification == VERIFICATION_PROOF) {
       // add in3
-      //TODO This only works for chainIds < uint_32t, but ZEPHYR has some issues with PRIu64
+      //TODO This only works for chain_ids < uint_32t, but ZEPHYR has some issues with PRIu64
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"proof\",\"version\": \"%s\"", IN3_PROTO_VER));
       if (multichain)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chainId));
-      in3_chain_t* chain = in3_find_chain(c->client, c->requests_configs->chainId ? c->requests_configs->chainId : c->client->chainId);
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
+      in3_chain_t* chain = in3_find_chain(c->client, c->requests_configs->chain_id ? c->requests_configs->chain_id : c->client->chain_id);
       if (chain->whiteListContract)
         sb_add_bytes(sb, ",\"whiteListContract\":", chain->whiteListContract, 1, false);
-      if (rc->clientSignature)
-        sb_add_bytes(sb, ",\"clientSignature\":", rc->clientSignature, 1, false);
+      if (rc->client_signature)
+        sb_add_bytes(sb, ",\"clientSignature\":", rc->client_signature, 1, false);
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
-      if (rc->latestBlock)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latestBlock));
-      if (rc->signaturesCount)
-        sb_add_bytes(sb, ",\"signers\":", rc->signatures, rc->signaturesCount, true);
-      if (rc->includeCode && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
+      if (rc->latest_block)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latest_block));
+      if (rc->signers_length)
+        sb_add_bytes(sb, ",\"signers\":", rc->signers, rc->signers_length, true);
+      if (rc->include_code && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
-      if (rc->useFullProof)
+      if (rc->use_full_proof)
         sb_add_chars(sb, ",\"useFullProof\":true");
-      if (rc->useBinary)
+      if (rc->use_binary)
         sb_add_chars(sb, ",\"useBinary\":true");
-      if (rc->verifiedHashesCount)
-        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verifiedHashes, rc->verifiedHashesCount, true);
+      if (rc->verified_hashes_length)
+        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verified_hashes, rc->verified_hashes_length, true);
       sb_add_range(sb, "}}", 0, 2);
     } else
       sb_add_char(sb, '}');
@@ -267,7 +268,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     } else {
       // we need to clean up the previos responses if set
       if (ctx->responses) _free(ctx->responses);
-      if (ctx->response_context) free_json(ctx->response_context);
+      if (ctx->response_context) json_free(ctx->response_context);
 
       // parse the result
       res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len);
@@ -290,13 +291,13 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
-            if (d_get_longk(vc.proof, K_LAST_NODE_LIST) > chain->lastBlock)
-              chain->needsUpdate |= UPDATE_NODELIST;
+            if (d_get_longk(vc.proof, K_LAST_NODE_LIST) > chain->last_block)
+              chain->needs_update |= UPDATE_NODELIST;
             if (d_get_longk(vc.proof, K_LAST_WHITE_LIST) > chain->lastBlockWl)
-              chain->needsUpdate |= UPDATE_WHITELIST;
+              chain->needs_update |= UPDATE_WHITELIST;
           }
 
-          if (verifier && (res = verifier->verify(&vc))) {
+          if (verifier && (res = (ctx->verification_state = verifier->verify(&vc)))) {
             if (res == IN3_WAITING) return res;
             if (w) {
               // blacklist!
@@ -305,7 +306,8 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
               in3_log_info("Blacklisting node for verification failure: %s\n", w->node->url);
             }
             break;
-          }
+          } else
+            ctx->verification_state = IN3_OK;
         }
       }
     }
@@ -380,11 +382,11 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   return req;
 }
 
-void free_request(in3_request_t* req, in3_ctx_t* ctx, bool free_response) {
+void request_free(in3_request_t* req, in3_ctx_t* ctx, bool response_free) {
   // free resources
   free_urls(req->urls, req->urls_len, ctx->client->use_http);
 
-  if (free_response) {
+  if (response_free) {
     for (int n = 0; n < req->urls_len; n++) {
       _free(req->results[n].error.data);
       //      if (!ctx->response_context || ctx->response_context->c != req->results[n].result.data)
@@ -427,7 +429,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", request->urls[0], request->payload);
             ctx->client->transport(request);
             in3_log_trace("... response: \n... \x1B[%sm%s\x1B[0m\n", request->results[0].error.len ? "31" : "32", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
-            free_request(request, ctx, false);
+            request_free(request, ctx, false);
             break;
           } else
             return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
@@ -502,19 +504,19 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
   return CTX_SUCCESS;
 }
 
-void free_ctx(in3_ctx_t* ctx) {
-  free_ctx_intern(ctx, false);
+void ctx_free(in3_ctx_t* ctx) {
+  if (ctx) free_ctx_intern(ctx, false);
 }
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
-  if (ctx->error) return IN3_EUNKNOWN;
+  if (ctx->error) return (ctx->verification_state && ctx->verification_state != IN3_WAITING) ? ctx->verification_state : IN3_EUNKNOWN;
 
   // is it a valid request?
   if (!ctx->request_context || !d_get(ctx->requests[0], K_METHOD)) return ctx_set_error(ctx, "No Method defined", IN3_ECONFIG);
 
   // if there is response we are done.
-  if (ctx->response_context) return IN3_OK;
+  if (ctx->response_context && ctx->verification_state == IN3_OK) return IN3_OK;
 
   // if we have required-contextes, we need to check them first
   if (ctx->required && (ret = in3_ctx_execute(ctx->required)))
@@ -524,7 +526,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     case CT_RPC: {
 
       // check chain_id
-      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chainId ? ctx->requests_configs->chainId : ctx->client->chainId);
+      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id);
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
       // find the verifier
@@ -539,7 +541,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_props_t props = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->requestCount, props)) == IN3_OK) {
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, props)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);
@@ -560,7 +562,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;
 
       // if not, then we clean up
-      free_response(ctx);
+      response_free(ctx);
 
       // we count this is an attempt
       ctx->attempt++;

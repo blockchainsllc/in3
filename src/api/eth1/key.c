@@ -53,7 +53,7 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   int      klen      = d_get_int(kdf_params, "dklen");
   char*    salt_hex  = d_get_string(kdf_params, "salt");
   uint8_t *salt_data = alloca(strlen(salt_hex) >> 1), *aeskey = alloca(klen), cipher_data[64];
-  bytes_t  salt = bytes(salt_data, hex2byte_arr(salt_hex, -1, salt_data, 0xFF));
+  bytes_t  salt = bytes(salt_data, hex_to_bytes(salt_hex, -1, salt_data, 0xFF));
 
   if (strcmp(kdf, "scrypt") == 0) {
 #ifdef SCRYPT
@@ -71,14 +71,14 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   } else
     return IN3_ENOTSUP;
 
-  bytes_t  cipher = bytes(cipher_data, hex2byte_arr(d_get_string(crypto, "ciphertext"), -1, cipher_data, 64));
+  bytes_t  cipher = bytes(cipher_data, hex_to_bytes(d_get_string(crypto, "ciphertext"), -1, cipher_data, 64));
   uint8_t *msg    = alloca(cipher.len + 16), mac[32];
   bytes_t  msgb   = bytes(msg, cipher.len + 16);
   memcpy(msg, aeskey + 16, 16);
   memcpy(msg + 16, cipher.data, cipher.len);
   sha3_to(&msgb, mac);
   bytes32_t mac_verify;
-  hex2byte_arr(d_get_string(crypto, "mac"), -1, mac_verify, 32);
+  hex_to_bytes(d_get_string(crypto, "mac"), -1, mac_verify, 32);
   if (memcmp(mac, mac_verify, 32)) return IN3_EPASS;
 
   // aes-128-ctr
@@ -87,7 +87,7 @@ in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {
   char*           iv_hex  = d_get_string(d_get(crypto, key("cipherparams")), "iv");
   int             iv_len  = strlen(iv_hex) / 2;
   uint8_t*        iv_data = alloca(iv_len);
-  hex2byte_arr(iv_hex, -1, iv_data, iv_len);
+  hex_to_bytes(iv_hex, -1, iv_data, iv_len);
 
   aes_encrypt_key128(aeskey, cx);
   return aes_ctr_decrypt(cipher.data, dst, cipher.len, iv_data, aes_ctr_cbuf_inc, cx) ? IN3_EPASS : IN3_OK;

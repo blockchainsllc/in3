@@ -46,11 +46,11 @@
 #include <string.h>
 void add_keyname(const char* name, d_key_t value, size_t len);
 
-char* read_from_stdin(FILE* file) {
+bytes_t read_from_stdin(FILE* file) {
   if (file == NULL) {
     printf("File not found!");
     _Exit(1);
-    return NULL;
+    return bytes(NULL, 0);
   }
 
   size_t   allocated = 1024;
@@ -68,7 +68,7 @@ char* read_from_stdin(FILE* file) {
 
   buffer[len] = 0;
   if (file != stdin) fclose(file);
-  return (char*) buffer;
+  return bytes(buffer, len);
 }
 
 #define C_RED "0;31"
@@ -234,10 +234,9 @@ static void print_debug(bytes_t* data) {
 }
 
 int main(int argc, char* argv[]) {
-  char* default_format = "hex";
-  char* input          = NULL;
-  char* format         = default_format;
-  bool  debug          = false;
+  bytes_t input  = bytes(NULL, 0);
+  char*   format = "auto";
+  bool    debug  = false;
 
   int i;
   init_keys();
@@ -249,26 +248,38 @@ int main(int argc, char* argv[]) {
       format = argv[++i];
     else if (strcmp(argv[i], "-d") == 0)
       debug = true;
-    else
-      input = argv[i];
+    else {
+      input.data = (uint8_t*) argv[i];
+      input.len  = strlen(argv[i]);
+    }
   }
 
-  if (input == NULL) input = read_from_stdin(stdin);
+  if (input.data == NULL) input = read_from_stdin(stdin);
 
-  if (!strcmp(format, "json") || (*input == '0' && input[1] == 'x')) {
-    if (input[0] == '0' && input[1] == 'x') input += 2;
+  if (!input.len) return 0;
+
+  if (!strcmp(format, "auto")) {
+    if (input.data[0] == '0' && input.data[1] == 'x') {
+      input.data = malloc(strlen(argv[i]) / 2);
+      input.len  = hex_to_bytes(argv[i], -1, input.data, strlen(argv[i]) / 2);
+      format     = "json";
+    } else
+      format = "hex";
+  }
+
+  if (!strcmp(format, "json")) {
     if (debug) {
-      print_debug(hex2byte_new_bytes(input, strlen(input)));
+      print_debug(&input);
       return 0;
     }
-    json_ctx_t* ctx = parse_binary(hex2byte_new_bytes(input, strlen(input)));
+    json_ctx_t* ctx = parse_binary(&input);
     printf("%s\n", d_create_json(ctx->result));
     return 0;
   }
 
-  json_ctx_t* ctx = parse_json(input);
+  json_ctx_t* ctx = parse_json((char*) input.data);
   if (!ctx)
-    printf("Invalid Json : %s\n", input);
+    printf("Invalid Json : %s\n", (char*) input.data);
   else {
     bytes_builder_t* bb = bb_new();
     d_serialize_binary(bb, ctx->result);

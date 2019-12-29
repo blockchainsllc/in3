@@ -16,6 +16,11 @@ function test_transport(url, data) {
 
 function beforeTest(done) {
     responses = {}
+    const cache = {}
+    IN3.setStorage({
+        get: key => cache[key],
+        set: (key, value) => cache[key] = value
+    })
     IN3.onInit(done).catch(console.error)
 }
 
@@ -35,13 +40,19 @@ function createClient(config = {}) {
         signatureCount: 0,
         nodes: {
             '0x1': {
-                needsUpdate: false
+                needsUpdate: false,
+                contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f',
+                registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
             },
             '0x5': {
-                needsUpdate: false
+                needsUpdate: false,
+                contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f',
+                registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
             },
             '0x2a': {
-                needsUpdate: false
+                needsUpdate: false,
+                contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f',
+                registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
             }
         },
         ...config

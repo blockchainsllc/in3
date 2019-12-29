@@ -79,6 +79,7 @@ void show_help(char* name) {
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -np            short for -p none\n\
+-eth           converts the result (as wei) to ether.\n\
 -l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
 -s, -signs     number of signatures to use when verifying.\n\
 -port          if specified it will run as http-server listening to the given port.\n\
@@ -93,6 +94,7 @@ void show_help(char* name) {
 -w, -wait      if given, instead returning the transaction, it will wait until the transaction is mined and return the transactionreceipt.\n\
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
+-kin3          if kin3 is specified, the response including in3-section is returned\n\
 -debug         if given incubed will output debug information when executing. \n\
 -q             quit. no additional output. \n\
 -ri            read response from stdin \n\
@@ -252,7 +254,7 @@ static void execute(in3_t* c, FILE* f) {
     if (d == stop) level--;
     if (level == 0) {
       // time to execute
-      in3_ctx_t* ctx = new_ctx(c, sb->data);
+      in3_ctx_t* ctx = ctx_new(c, sb->data);
       if (ctx->error)
         printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", 1, ctx->error);
       else {
@@ -282,7 +284,7 @@ static void execute(in3_t* c, FILE* f) {
         } else
           printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":\"%s\"}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
-      free_ctx(ctx);
+      ctx_free(ctx);
       first   = 0;
       sb->len = 0;
     }
@@ -315,19 +317,19 @@ bytes_t* get_std_in() {
     bin += 10;
     char* end = strstr(bin, "\n");
     if (end)
-      return hex2byte_new_bytes(bin, end - bin);
+      return hex_to_new_bytes(bin, end - bin);
   }
 
   // is it content starting with 0x, we treat it as hex otherwisae as rwa string
   bytes_t* res = (content.len > 1 && *content.data == '0' && content.data[1] == 'x')
-                     ? hex2byte_new_bytes((char*) content.data + 2, content.len - 2)
-                     : hex2byte_new_bytes((char*) content.data, content.len);
+                     ? hex_to_new_bytes((char*) content.data + 2, content.len - 2)
+                     : hex_to_new_bytes((char*) content.data, content.len);
   _free(content.data);
   return res;
 }
 
-// convert the name to a chainid
-uint64_t getChainId(char* name) {
+// convert the name to a chain_id
+uint64_t getchain_id(char* name) {
   if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
   if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
   if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
@@ -335,19 +337,19 @@ uint64_t getChainId(char* name) {
   if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
-    return bytes_to_long(d, hex2byte_arr(name + 2, -1, d, 32));
+    return bytes_to_long(d, hex_to_bytes(name + 2, -1, d, 32));
   }
   die("Unknown or unsupported chain");
   return 0;
 }
 
-// set the chainid in the client
+// set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
   if (strstr(id, "://")) { // its a url
-    c->chainId                   = 0xFFFFL;
-    c->chains[3].nodeList[0].url = id;
+    c->chain_id                  = 0xFFFFL;
+    c->chains[3].nodelist[0].url = id;
   } else
-    c->chainId = getChainId(id);
+    c->chain_id = getchain_id(id);
 }
 
 // prepare a eth_call or eth_sendTransaction
@@ -357,7 +359,7 @@ call_request_t* prepare_tx(char* fn_sig, char* to, char* args, char* block_numbe
   if (req && req->in_data->type == A_TUPLE) {                                            // if type is a tuple, it means we have areuments we need to parse.
     json_ctx_t* in_data = parse_json(args);                                              // the args are passed as a "[]"- json-array string.
     if (set_data(req, in_data->result, req->in_data) < 0) die("Could not set the data"); // we then set the data, which appends the arguments to the functionhash.
-    free_json(in_data);                                                                  // of course we clean up ;-)
+    json_free(in_data);                                                                  // of course we clean up ;-)
   }                                                                                      //
   sb_t* params = sb_new("[{");                                                           // now we create the transactionobject as json-argument.
   if (to) {                                                                              // if this is a deployment we must not include the to-property
@@ -548,11 +550,11 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                     = in3_new();
+  in3_t* c                     = in3_for_chain(0);
   c->transport                 = debug_transport;
-  c->requestCount              = 1;
+  c->request_count             = 1;
   c->use_http                  = true;
-  c->cacheStorage              = &storage_handler;
+  c->cache                     = &storage_handler;
   bool            out_response = false;
   bool            force_hex    = false;
   char*           sig          = NULL;
@@ -570,13 +572,14 @@ int main(int argc, char* argv[]) {
   bytes_t*        data         = NULL;
   char*           port         = NULL;
   char*           sig_type     = "raw";
+  bool            to_eth       = false;
 
   // read data from cache
   in3_cache_init(c);
 
   // check env
   if (getenv("IN3_PK")) {
-    hex2byte_arr(getenv("IN3_PK"), -1, pk, 32);
+    hex_to_bytes(getenv("IN3_PK"), -1, pk, 32);
     eth_set_pk_signer(c, pk);
   }
 
@@ -587,28 +590,32 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-pk") == 0) { // private key?
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
-        hex2byte_arr(argv[++i], -1, pk, 32);
+        hex_to_bytes(argv[++i], -1, pk, 32);
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
-    } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chainid
+    } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) { // data
       char* d = argv[++i];
       if (strcmp(d, "-") == 0)
         data = get_std_in();
       else if (*d == '0' && d[1] == 'x')
-        data = hex2byte_new_bytes(d + 2, strlen(d) - 2);
+        data = hex_to_new_bytes(d + 2, strlen(d) - 2);
       else {
         FILE*   f       = fopen(d, "r");
         bytes_t content = readFile(f);
-        data            = hex2byte_new_bytes((char*) content.data + 2, content.len - 2);
+        data            = hex_to_new_bytes((char*) content.data + 2, content.len - 2);
         fclose(f);
       }
     } else if (strcmp(argv[i], "-block") == 0 || strcmp(argv[i], "-b") == 0)
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
-      c->replaceLatestBlock = atoll(argv[++i]);
+      c->replace_latest_block = atoll(argv[++i]);
+    else if (strcmp(argv[i], "-eth") == 0)
+      to_eth = true;
+    else if (strcmp(argv[i], "-kin3") == 0)
+      c->keep_in3 = true;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -645,7 +652,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-debug") == 0)
       in3_log_set_level(LOG_TRACE);
     else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
-      c->signatureCount = atoi(argv[++i]);
+      c->signature_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
       if (strcmp(argv[i + 1], "none") == 0)
         c->proof = PROOF_NONE;
@@ -701,7 +708,7 @@ int main(int argc, char* argv[]) {
   if (pk_file) read_pk(pk_file, pwd, c, method);
 
   // no proof for rpc-chain
-  if (c->chainId == 0xFFFF) c->proof = PROOF_NONE;
+  if (c->chain_id == 0xFFFF) c->proof = PROOF_NONE;
 
   // execute the method
   if (sig && *sig == '-') die("unknown option");
@@ -747,7 +754,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
     if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
-      data = hex2byte_new_bytes((char*) data->data + 2, data->len - 2);
+      data = hex_to_new_bytes((char*) data->data + 2, data->len - 2);
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(data->len + 30);
       int   l   = sprintf(tmp, "\x19"
@@ -780,7 +787,7 @@ int main(int argc, char* argv[]) {
       // first PoA without validators-list
       for (uint32_t i = 0; i < spec->consensus_transitions_len; i++) {
         if (spec->consensus_transitions[i].validators.len == 0) {
-          spec->consensus_transitions[i].validators = *hex2byte_new_bytes(validators + 2, strlen(validators) - 2);
+          spec->consensus_transitions[i].validators = *hex_to_new_bytes(validators + 2, strlen(validators) - 2);
           break;
         }
       }
@@ -816,7 +823,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "pk2address") == 0) {
     bytes32_t prv_key;
     uint8_t   public_key[65], sdata[32];
-    hex2byte_arr(argv[argc - 1], -1, prv_key, 32);
+    hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     sha3_to(&pubkey_bytes, sdata);
@@ -827,7 +834,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "pk2public") == 0) {
     bytes32_t prv_key;
     uint8_t   public_key[65];
-    hex2byte_arr(argv[argc - 1], -1, prv_key, 32);
+    hex_to_bytes(argv[argc - 1], -1, prv_key, 32);
     ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
     print_hex(public_key + 1, 64);
     return 0;
@@ -870,7 +877,7 @@ int main(int argc, char* argv[]) {
   // if we need to wait
   if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
     bytes32_t txHash;
-    hex2byte_arr(result + 3, 64, txHash, 32);
+    hex_to_bytes(result + 3, 64, txHash, 32);
     result = eth_wait_for_receipt(c, txHash);
     if (!result) die("Error waiting for the confirmation of the transaction");
   }
@@ -900,7 +907,7 @@ int main(int argc, char* argv[]) {
       int l = strlen(result) / 2 - 1;
       if (l) {
         uint8_t*    tmp = alloca(l + 1);
-        json_ctx_t* res = req_parse_result(req, bytes(tmp, hex2byte_arr(result, -1, tmp, l + 1)));
+        json_ctx_t* res = req_parse_result(req, bytes(tmp, hex_to_bytes(result, -1, tmp, l + 1)));
         if (json)
           printf("%s\n", d_create_json(res->result));
         else
@@ -908,8 +915,11 @@ int main(int argc, char* argv[]) {
       }
       // if not we simply print the result
     } else {
-      if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
-        printf("%" PRIu64 "\n", c_to_long(result, strlen(result)));
+      if (to_eth && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18) {
+        double val = char_to_long(result, strlen(result));
+        printf("%.3f\n", val / 1000000000000000000L);
+      } else if (!force_hex && result[0] == '0' && result[1] == 'x' && strlen(result) <= 18)
+        printf("%" PRIu64 "\n", char_to_long(result, strlen(result)));
       else
         printf("%s\n", result);
     }

@@ -42,13 +42,12 @@
 #include <stdio.h>
 #include <string.h>
 
-in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
+in3_ctx_t* ctx_new(in3_t* client, char* req_data) {
 
   in3_ctx_t* c = _calloc(1, sizeof(in3_ctx_t));
   if (!c) return NULL;
-  c->attempt = 0;
-  c->cache   = NULL;
-  c->client  = client;
+  c->client             = client;
+  c->verification_state = IN3_WAITING;
 
   if (req_data != NULL) {
     c->request_context = parse_json(req_data);
@@ -59,14 +58,14 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
 
     if (d_type(c->request_context->result) == T_OBJECT) {
       // it is a single result
-      c->requests    = _malloc(sizeof(d_type_t*));
+      c->requests    = _malloc(sizeof(d_token_t*));
       c->requests[0] = c->request_context->result;
       c->len         = 1;
     } else if (d_type(c->request_context->result) == T_ARRAY) {
       // we have an array, so we need to store the request-data as array
       d_token_t* t = c->request_context->result + 1;
       c->len       = d_len(c->request_context->result);
-      c->requests  = _malloc(sizeof(d_type_t*) * c->len);
+      c->requests  = _malloc(sizeof(d_token_t*) * c->len);
       for (int i = 0; i < c->len; i++, t = d_next(t))
         c->requests[i] = t;
     } else
@@ -76,6 +75,7 @@ in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
   if (c->len)
     c->requests_configs = _calloc(c->len, sizeof(in3_request_config_t));
 
+  
   return c;
 }
 

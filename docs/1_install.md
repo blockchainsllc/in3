@@ -77,6 +77,13 @@ Default-Value: `-DEVM_GAS=ON`
 Default-Value: `-DFAST_MATH=OFF`
 
 
+#### FILTER_NODES
+
+  if true the nodelist is filtered against config node properties
+
+Default-Value: `-DFILTER_NODES=OFF`
+
+
 #### IN3API
 
   build the USN-API which offer better interfaces and additional functions on top of the pure verification

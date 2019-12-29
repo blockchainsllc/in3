@@ -55,17 +55,18 @@ static void test_sign() {
 
   in3_register_eth_basic();
 
-  in3_t* c          = in3_new();
-  c->transport      = test_transport;
-  c->chainId        = 0x1;
-  c->autoUpdateList = false;
-  c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  ;
+  c->transport        = test_transport;
+  c->chain_id         = 0x1;
+  c->auto_update_list = false;
+  c->proof            = PROOF_NONE;
+  c->signature_count  = 0;
 
-  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needsUpdate = UPDATE_NONE;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = UPDATE_NONE;
 
   bytes32_t pk;
-  hex2byte_arr("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
+  hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
   eth_set_pk_signer(c, pk);
   in3_set_default_signer(c->signer);
 
@@ -77,7 +78,7 @@ static void test_sign() {
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
   TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
-  free_ctx(ctx);
+  ctx_free(ctx);
 }
 
 /*

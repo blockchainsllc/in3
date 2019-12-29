@@ -28,7 +28,7 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
   }
 
   // free json
-  free_json(key_data);
+  json_free(key_data);
 
   // create a signer with this key
   eth_set_pk_signer(c, pk);
@@ -45,14 +45,11 @@ int main(int argc, char* argv[]) {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* c = in3_new();
-
-  // switch to goerli
-  c->chainId = 0x5;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
 
   // address of the usn-contract, which we copy from hex
   address_t contract;
-  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
+  hex_to_bytes("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
 
   // read the key from args - I know this is not safe, but this is just a example.
   if (argc < 3) {

@@ -32,6 +32,9 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#ifndef __MEM_H__
+#define __MEM_H__
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -48,9 +51,6 @@
 #else
 #define _NOINLINE_ __attribute__((noinline))
 #endif
-
-#ifndef __MEM_H__
-#define __MEM_H__
 
 #ifndef UNUSED_VAR
 #define UNUSED_VAR(x) (void) (x)

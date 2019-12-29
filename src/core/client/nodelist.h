@@ -55,7 +55,7 @@ void in3_whitelist_clear(in3_chain_t* chain);
  * 
  * if not it will fetch a new version first (if the needs_update-flag is set).
  */
-in3_ret_t in3_node_list_get(in3_ctx_t* ctx, uint64_t chain_id, bool update, in3_node_t** nodeList, int* nodeListLength, in3_node_weight_t** weights);
+in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights);
 
 /**
  * filters and fills the weights on a returned linked list.
@@ -72,7 +72,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
  */
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain);
 // weights
-void free_ctx_nodes(node_weight_t* c);
+void in3_ctx_free_nodes(node_weight_t* c);
 int  ctx_nodes_len(node_weight_t* root);
 
 #endif
