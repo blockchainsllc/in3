@@ -349,6 +349,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
 
     weightDef = weights + i;
     printf("weightDef : %p\n", weightDef);
+    printf("now : %" PRIi64 "  \n", (uint64_t) now);
     printf("weightDef->blacklisted_until : %i\n", (int) weightDef->blacklisted_until);
     printf("weightDef->response_count : %i\n", (int) weightDef->response_count);
     printf("weightDef->total_response_time : %i\n", (int) weightDef->total_response_time);

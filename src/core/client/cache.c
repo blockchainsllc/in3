@@ -44,7 +44,7 @@
 
 #define NODE_LIST_KEY "nodelist_%d"
 #define WHITTE_LIST_KEY "_0x%s"
-#define CACHE_VERSION 3
+#define CACHE_VERSION 4
 #define MAX_KEYLEN 200
 
 static void write_cache_key(char* key, chain_id_t chain_id, const address_t contract) {
