@@ -69,8 +69,8 @@ typedef struct bytes {
 
 /** a byte-buffer to attach byte-functions. */
 typedef struct {
-  uint32_t bsize; /**< size of the currently allocated bytes */
   bytes_t  b;     /**< the bytes struct */
+  uint32_t bsize; /**< size of the currently allocated bytes */
 } bytes_builder_t;
 
 bytes_t* b_new(char* data, int len);                          /**< allocates a new byte array with 0 filled */
