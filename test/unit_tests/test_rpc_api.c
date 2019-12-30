@@ -188,6 +188,12 @@ static void test_in3_client_rpc() {
   TEST_ASSERT_NOT_NULL(response);
   TEST_ASSERT_NOT_NULL(str_find(response, "\"in3\":{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}"));
   free(response);
+
+  // test in3_client_exec_req() with keep_in3 set to false
+  c->keep_in3 = false;
+  add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
+  response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
+  TEST_ASSERT_NOT_NULL(response);
   free(response);
 
   //  // Invalid JSON result
