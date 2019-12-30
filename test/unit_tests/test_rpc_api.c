@@ -80,8 +80,9 @@ static void test_in3_config() {
      \"nodes\":{\
         \"0x7\":{\
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
+           \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
            \"registryId\":\"0x3456789012345678901234567890123456789012345678901234567890ffff\",\
-           \"needsUpdate\":false,\
+           \"needsUpdate\":0,\
            \"nodeList\":[{\
               \"url\":\"#1\",\
               \"props\":\"0xffff\",\
@@ -121,6 +122,8 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(false, chain->needs_update);
   TEST_ASSERT_EQUAL(1, chain->nodelist_length);
 
+  bytes_to_hex(chain->whitelist->contract, 20, tmp);
+  TEST_ASSERT_EQUAL_STRING("dd80249a0631cf0f1593c7a9c9f9b8545e6c88ab", tmp);
   bytes_to_hex(chain->nodelist->address->data, chain->nodelist->address->len, tmp);
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   TEST_ASSERT_EQUAL_STRING("#1", chain->nodelist->url);
@@ -211,8 +214,8 @@ static void test_in3_client_chain() {
   hex_to_bytes("0x5f51e413581dd76759e9eed51e63d14c8d1379c8", -1, contract2, 20);
   bytes32_t registry_id;
   hex_to_bytes("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract1, registry_id, 2);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract2, registry_id, 2);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract1, registry_id, 2, NULL);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract2, registry_id, 2, NULL);
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->contract->data, contract2, 20);
 
   // Add node with same address

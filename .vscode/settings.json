@@ -80,7 +80,8 @@
         "stack": "c",
         "deque": "cpp",
         "memory": "cpp",
-        "streambuf": "cpp"
+        "streambuf": "cpp",
+        "__node_handle": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
