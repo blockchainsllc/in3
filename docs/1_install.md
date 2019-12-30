@@ -161,6 +161,13 @@ Default-Value: `-DTRANSPORTS=ON`
 Default-Value: `-DUSE_CURL=ON`
 
 
+#### USE_PRECOMPUTED_EC
+
+  if true the secp256k1 curve uses precompiled tables to boost performance. turning this off makes ecrecover slower, but saves about 37kb.
+
+Default-Value: `-DUSE_PRECOMPUTED_EC=ON`
+
+
 #### USE_SCRYPT
 
   if scrypt is installed, it will link dynamicly to the shared scrypt lib.
