@@ -41,10 +41,7 @@ const { createClient, mockResponse, IN3, beforeTest } = require('./util/mocker')
 describe('API-Tests', () => {
     beforeEach(beforeTest)
     afterEach(IN3.freeAll)
-    it('checkSumAddress', async () => {
-        assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
-    })
-
+    
     it('eth_callFn', async () => {
         mockResponse('eth_call', 'serverData')
         mockResponse('eth_getCode', 'oldRegistry')
@@ -56,6 +53,7 @@ describe('API-Tests', () => {
         assert.equal(res[2], 0xffff)
         assert.equal(res[3], 0xffffn)
     })
+
     it('send_transaction', async () => {
         mockResponse('eth_gasPrice', 'default')
         mockResponse('eth_estimateGas', '1M')
