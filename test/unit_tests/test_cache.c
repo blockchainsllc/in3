@@ -50,6 +50,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define CONTRACT_ADDRS "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+#define REGISTRY_ID "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb"
+#define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
+
 static in3_ret_t test_transport(in3_request_t* req) {
   char* buffer = NULL;
   long  length;
@@ -184,10 +188,10 @@ static void test_newchain() {
 
   TEST_ASSERT_TRUE(chain == NULL);
   address_t contract;
-  hex_to_bytes("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract, 20);
+  hex_to_bytes(CONTRACT_ADDRS, -1, contract, 20);
   bytes32_t registry_id;
-  hex_to_bytes("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2,NULL);
+  hex_to_bytes(REGISTRY_ID, -1, registry_id, 32);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
   in3_client_add_node(c, 0x8, "http://test.com", 0xFF, contract);
 
   for (int i = 0; i < c->chains_length; i++) {
