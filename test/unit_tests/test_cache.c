@@ -247,6 +247,46 @@ static void test_scache() {
   val = in3_cache_get_entry(cache, &v);
   TEST_ASSERT_NULL(val);
 }
+
+static void test_whitelist_cache() {
+  address_t contract;
+  hex_to_bytes(CONTRACT_ADDRS, -1, contract, 20);
+  bytes32_t registry_id;
+  hex_to_bytes(REGISTRY_ID, -1, registry_id, 32);
+
+  in3_t* c    = in3_for_chain(0);
+  c->chain_id = 0x8;
+  setup_test_cache(c);
+  in3_set_default_storage(c->cache);
+  TEST_ASSERT_EQUAL(IN3_OK,
+                    in3_configure(c, "{"
+                                     "  \"nodes\": {"
+                                     "    \"0x8\": {"
+                                     "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                     "      \"registryId\":\"" REGISTRY_ID "\","
+                                     "      \"whiteList\": [\"0x1234567890123456789012345678901234567890\", \"0x1234567890123456789000000000000000000000\"],"
+                                     "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
+                                     "    }"
+                                     "  }"
+                                     "}"));
+  address_t wlc;
+  hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, wlc, 20);
+  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->whitelist->contract, wlc, 20);
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  TEST_ASSERT_EQUAL(IN3_OK, in3_cache_store_whitelist(ctx, in3_find_chain(c, 0x8)));
+
+  in3_t* c2    = in3_for_chain(0);
+  c2->chain_id = c->chain_id;
+  c2->cache    = c->cache;
+  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, wlc);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_cache_update_whitelist(c2, in3_find_chain(c2, 0x8)));
+  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c2, 0x8)->whitelist->contract, wlc, 20);
+  TEST_ASSERT_TRUE(b_cmp(&in3_find_chain(c, 0x8)->whitelist->addresses, &in3_find_chain(c2, 0x8)->whitelist->addresses));
+  in3_free(c2);
+  ctx_free(ctx);
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -264,5 +304,6 @@ int main() {
   RUN_TEST(test_scache);
   RUN_TEST(test_cache);
   RUN_TEST(test_newchain);
+  RUN_TEST(test_whitelist_cache);
   return TESTS_END();
 }
