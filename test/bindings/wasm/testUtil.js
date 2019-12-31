@@ -67,4 +67,35 @@ describe('Util-Tests', () => {
         assert.equal(IN3.util.toHex(res), "0xdab3b69bd378ba16296c2e116cf7395e352699802234ec4e870b4f4b824248ae")
     })
 
+    it('getAddress', async () => {
+        assert.equal(IN3.util.private2address("0x3f64dd6972bda1e7611dc38a294d7e3404d51c4aff4b09534675ecd43f66d659"), 
+            "0xeebCfd8F610e497748989B7cbAF0633E644512E6")
+    })
+
+    it('toMinHex', async () => {
+        const expectedHex = "0x203423"
+        assert.equal(IN3.util.toMinHex("0x00000203423"),expectedHex)
+        assert.equal(IN3.util.toMinHex("0x0000203423"),expectedHex)
+
+        //assert.equal(IN3.util.toSimpleHex("0x00000203423"),expectedHex)
+        assert.equal(IN3.util.toSimpleHex("0x0000203423"),expectedHex)
+    })
+
+    it('toUtf8', async () => {
+        const testStr = "this is test"
+        let res = IN3.util.toHex(testStr)
+        assert.equal(IN3.util.toUtf8(res), testStr)
+    })
+ 
+    it('padding', async () => {
+        const testStr = "this is test"
+
+        let res = IN3.util.padStart(testStr,20)
+        assert.equal(res, "        "+testStr)
+
+        let res2 = IN3.util.padEnd(testStr,20)
+        assert.equal(res2, testStr+"        ")
+    })
+
+
 })
