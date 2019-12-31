@@ -106,17 +106,21 @@ static void cache_set_item(void* cptr, char* key, bytes_t* value) {
   memcpy(cache->values[i].data, value->data, value->len);
 }
 
-static void test_cache() {
-
-  in3_register_eth_nano();
-  cache_t* cache = calloc(1, sizeof(cache_t));
-
-  in3_t* c           = in3_for_chain(0x1);
-  c->transport       = test_transport;
+void static setup_test_cache(in3_t* c) {
+  cache_t* cache     = calloc(1, sizeof(cache_t));
   c->cache           = _malloc(sizeof(in3_storage_handler_t));
   c->cache->cptr     = cache;
   c->cache->get_item = cache_get_item;
   c->cache->set_item = cache_set_item;
+}
+
+static void test_cache() {
+
+  in3_register_eth_nano();
+
+  in3_t* c     = in3_for_chain(0x1);
+  c->transport = test_transport;
+  setup_test_cache(c);
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chains_length; i++) {
@@ -136,7 +140,7 @@ static void test_cache() {
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(5, chain->nodelist_length);
   // ..and the cache one entry
-  TEST_ASSERT_TRUE(*cache->keys != NULL);
+  TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
 
   // create a second client...
   in3_t* c2     = in3_for_chain(0);
@@ -167,14 +171,9 @@ static void test_newchain() {
   in3_register_eth_nano();
   in3_set_default_transport(test_transport);
 
-  cache_t* cache = _calloc(1, sizeof(cache_t));
-
-  in3_t* c           = in3_for_chain(0);
-  c->chain_id        = 0x8;
-  c->cache           = _malloc(sizeof(in3_storage_handler_t));
-  c->cache->cptr     = cache;
-  c->cache->get_item = cache_get_item;
-  c->cache->set_item = cache_set_item;
+  in3_t* c    = in3_for_chain(0);
+  c->chain_id = 0x8;
+  setup_test_cache(c);
 
   in3_set_default_storage(c->cache);
 
@@ -208,13 +207,13 @@ static void test_newchain() {
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(5, chain->nodelist_length);
   // ..and the cache one entry
-  TEST_ASSERT_TRUE(*cache->keys != NULL);
+  TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
 
   // create a second client...
   in3_t* c2    = in3_for_chain(0);
   c2->chain_id = c->chain_id;
   c2->cache    = c->cache;
-  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2,NULL);
+  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chains_length; i++) {
     if (c2->chains[i].chain_id == c2->chain_id) chain2 = &c2->chains[i];
@@ -232,7 +231,7 @@ static void test_newchain() {
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
 }
 
-void test_scache() {
+static void test_scache() {
   char*          key   = "123";
   char*          value = "45678";
   bytes_t        k     = bytes((uint8_t*) key, 3);
