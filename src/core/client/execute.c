@@ -86,8 +86,6 @@ static void response_free(in3_ctx_t* ctx) {
 }
 
 static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
-  //  printf(" -- free ctx %s (%i)\n", ctx_name(ctx), is_sub ? 1 : 0);
-
   // only for intern requests, we actually free the original request-string
   if (is_sub) _free(ctx->request_context->c);
   if (ctx->error) _free(ctx->error);
@@ -136,7 +134,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   if (request) {
     d_token_t* in3 = d_get(request, K_IN3);
     if (in3 == NULL) return IN3_OK;
-    //TODO read config from request
+    //TODO read config from request. This way we can test requests with preselected signers.
   }
 
   return IN3_OK;
@@ -149,19 +147,17 @@ static void free_urls(char** urls, int len, bool free_items) {
   _free(urls);
 }
 
-static unsigned long rpc_id_counter = 1;
-
 static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
-  int        i;
-  d_token_t *r, *t;
-  char       temp[100];
+  static unsigned long rpc_id_counter = 1;
+  char                 temp[100];
   sb_add_char(sb, '[');
 
-  for (i = 0; i < c->len; i++) {
+  for (int i = 0; i < c->len; i++) {
+    d_token_t *request_token = c->requests[i], *t;
+
     if (i > 0) sb_add_char(sb, ',');
     sb_add_char(sb, '{');
-    r = c->requests[i];
-    if ((t = d_get(r, K_ID)) == NULL)
+    if ((t = d_get(request_token, K_ID)) == NULL)
       sb_add_key_value(sb, "id", temp, sprintf(temp, "%lu", rpc_id_counter++), false);
     else if (d_type(t) == T_INTEGER)
       sb_add_key_value(sb, "id", temp, sprintf(temp, "%i", d_int(t)), false);
@@ -170,29 +166,28 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
     sb_add_char(sb, ',');
     sb_add_key_value(sb, "jsonrpc", "2.0", 3, true);
     sb_add_char(sb, ',');
-    if ((t = d_get(r, K_METHOD)) == NULL)
+    if ((t = d_get(request_token, K_METHOD)) == NULL)
       return ctx_set_error(c, "missing method-property in request", IN3_EINVAL);
     else
       sb_add_key_value(sb, "method", d_string(t), d_len(t), true);
     sb_add_char(sb, ',');
-    if ((t = d_get(r, K_PARAMS)) == NULL)
+    if ((t = d_get(request_token, K_PARAMS)) == NULL)
       sb_add_key_value(sb, "params", "[]", 2, false);
     else {
       //TODO this only works with JSON!!!!
-      str_range_t ps = d_to_json(t);
+      const str_range_t ps = d_to_json(t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
     }
 
     in3_request_config_t* rc = c->requests_configs + i;
     if (rc->verification == VERIFICATION_PROOF) {
       // add in3
-      //TODO This only works for chain_ids < uint_32t, but ZEPHYR has some issues with PRIu64
       sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"proof\",\"version\": \"%s\"", IN3_PROTO_VER));
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
-      in3_chain_t* chain = in3_find_chain(c->client, c->requests_configs->chain_id ? c->requests_configs->chain_id : c->client->chain_id);
+      const in3_chain_t* chain = in3_find_chain(c->client, c->requests_configs->chain_id ? c->requests_configs->chain_id : c->client->chain_id);
       if (chain->whitelist) {
-        bytes_t adr = bytes(chain->whitelist->contract, 20);
+        const bytes_t adr = bytes(chain->whitelist->contract, 20);
         sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
       }
       if (rc->client_signature)
@@ -203,7 +198,7 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latest_block));
       if (rc->signers_length)
         sb_add_bytes(sb, ",\"signers\":", rc->signers, rc->signers_length, true);
-      if (rc->include_code && strcmp(d_get_stringk(r, K_METHOD), "eth_call") == 0)
+      if (rc->include_code && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
       if (rc->use_full_proof)
         sb_add_chars(sb, ",\"useFullProof\":true");
@@ -220,8 +215,6 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
 }
 
 static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
-  int        i;
-  d_token_t* t = NULL;
 
   d_track_keynames(1);
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
@@ -235,6 +228,8 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
     ctx->responses[0] = ctx->response_context->result;
     if (ctx->len != 1) return ctx_set_error(ctx, "The response must be a single object!", IN3_EINVALDT);
   } else if (d_type(ctx->response_context->result) == T_ARRAY) {
+    int        i;
+    d_token_t* t = NULL;
     if (d_len(ctx->response_context->result) != ctx->len)
       return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
     ctx->responses = _malloc(sizeof(d_type_t*) * ctx->len);
@@ -246,9 +241,29 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
   return IN3_OK;
 }
 
+static void blacklist_node(node_weight_t* node_weight) {
+  if (node_weight) {
+    // blacklist the node
+    node_weight->weight->blacklisted_until = _time() + 3600000;
+    node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
+    in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
+  }
+}
+
+static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3) {
+  if (!ctx->client->auto_update_list) return;
+
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block)
+    chain->needs_update = true;
+
+  if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
+    chain->whitelist->needs_update = true;
+}
+
+static inline bool is_blacklisted(const node_weight_t* node_weight) { return node_weight && node_weight->weight == NULL; }
+
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
-  node_weight_t* w = ctx->nodes;
-  int            n, i, res;
+  node_weight_t* node = ctx->nodes;
 
   // find the verifier
   in3_vctx_t vc;
@@ -256,138 +271,135 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   vc.chain = chain;
 
   // blacklist nodes for missing response
-  for (n = 0; n < nodes_count; n++) {
-    if (response[n].error.len || !response[n].result.len) {
-      if (w) {
-        // blacklist the node
-        w->weight->blacklisted_until = _time() + 3600000;
-        w->weight                    = NULL;
-        in3_log_info("Blacklisting node for empty response: %s\n", w->node->url);
-      }
-    } else {
+  for (int n = 0; n < nodes_count; n++) {
+    // since nodes_count was detected before, this should not happen!
+
+    if (response[n].error.len || !response[n].result.len)
+      blacklist_node(node);
+    else {
       // we need to clean up the previos responses if set
       if (ctx->responses) _free(ctx->responses);
       if (ctx->response_context) json_free(ctx->response_context);
 
       // parse the result
-      res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len);
-      if (res < 0) {
-        if (w) {
-          // blacklist!
-          w->weight->blacklisted_until = _time() + 3600000;
-          w->weight                    = NULL;
-          in3_log_info("Blacklisting node for invalid response: %s\n", w->node->url);
-        }
-      } else {
+      in3_ret_t res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len);
+      if (res < 0)
+        blacklist_node(node);
+      else {
         // check each request
-        for (i = 0; i < ctx->len; i++) {
+        for (int i = 0; i < ctx->len; i++) {
           vc.request = ctx->requests[i];
           vc.result  = d_get(ctx->responses[i], K_RESULT);
           vc.id      = d_get_longk(ctx->responses[i], K_ID);
           vc.config  = ctx->requests_configs + i;
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
+
+            // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
+            check_autoupdate(ctx, chain, vc.proof);
+
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
-            if (ctx->client->auto_update_list) {
-              if (d_get_longk(vc.proof, K_LAST_NODE_LIST) > chain->last_block)
-                chain->needs_update = true;
-
-              if (chain->whitelist && d_get_longk(vc.proof, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
-                chain->whitelist->needs_update = true;
-            }
           }
 
-          if (verifier && (res = (ctx->verification_state = verifier->verify(&vc)))) {
-            if (res == IN3_WAITING) return res;
-            if (w) {
-              // blacklist!
-              w->weight->blacklisted_until = _time() + 3600000;
-              w->weight                    = NULL;
-              in3_log_info("Blacklisting node for verification failure: %s\n", w->node->url);
+          if (verifier) {
+            res = ctx->verification_state = verifier->verify(&vc);
+            if (res == IN3_WAITING)
+              return res;
+            else if (res < 0) {
+              blacklist_node(node);
+              break;
             }
-            break;
           } else
             ctx->verification_state = IN3_OK;
         }
       }
     }
-    if (!w || w->weight)
-      // this reponse was successfully verified, so let us keep it.
-      return IN3_OK;
 
-    w = w->next;
+    // !node_weight is valid, because it means this is a internaly handled response
+    if (!node || !is_blacklisted(node))
+      return IN3_OK; // this reponse was successfully verified, so let us keep it.
+
+    node = node->next;
   }
+  // no valid response found
   return IN3_EINVAL;
+}
+
+static char* convert_to_http_url(char* src_url) {
+  const int l = strlen(src_url);
+  if (strncmp(src_url, "https://", 8) == 0) {
+    char* url = _malloc(l);
+    strcpy(url, src_url + 1);
+    url[0] = 'h';
+    url[2] = 't';
+    url[3] = 'p';
+    return url;
+  } else
+    return _strdupn(src_url, l);
 }
 
 in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
-  int       nodes_count = ctx_nodes_len(ctx->nodes), n;
+  int       nodes_count = ctx_nodes_len(ctx->nodes);
   in3_ret_t res;
 
   // create url-array
   char**         urls       = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
-  node_weight_t* w          = ctx->nodes;
+  node_weight_t* node       = ctx->nodes;
   bool           multichain = false;
-  for (n = 0; n < nodes_count; n++) {
-    urls[n] = w->node->url;
 
-    if (in3_node_props_get(w->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
+  for (int n = 0; n < nodes_count; n++) {
+    urls[n] = node->node->url;
 
-    if (ctx->client->use_http) {
-      char* url = NULL;
-      int   l   = strlen(urls[n]);
-      if (strncmp(urls[n], "https://", 8) == 0) {
-        url = _malloc(l);
-        strcpy(url, urls[n] + 1);
-        url[0] = 'h';
-        url[2] = 't';
-        url[3] = 'p';
-      } else
-        url = _strdupn(urls[n], l);
-      urls[n] = url;
-    }
+    // if the multichain-prop is set we need to specify the chain_id in the request
+    if (in3_node_props_get(node->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
 
-    w = w->next;
+    // cif we use_http, we need to malloc a new string, so we also need to free it later!
+    if (ctx->client->use_http) urls[n] = convert_to_http_url(urls[n]);
+
+    node = node->next;
   }
 
   // prepare the payload
   sb_t* payload = sb_new(NULL);
   res           = ctx_create_payload(ctx, payload, multichain);
   if (res < 0) {
+    // we clean up
     sb_free(payload);
     free_urls(urls, nodes_count, ctx->client->use_http);
+    // since we cannot return an error, we set the error in the context and return NULL, indicating the error.
     ctx_set_error(ctx, "could not generate the payload", res);
     return NULL;
   }
 
   // prepare response-object
-  in3_request_t* req = _malloc(sizeof(in3_request_t));
-  req->payload       = payload->data;
-  req->urls_len      = nodes_count;
-  req->urls          = urls;
+  in3_request_t* request = _malloc(sizeof(in3_request_t));
+  request->payload       = payload->data;
+  request->urls_len      = nodes_count;
+  request->urls          = urls;
 
-  if (!nodes_count) nodes_count = 1; // at least one result!
-  req->results = _malloc(sizeof(in3_response_t) * nodes_count);
-  for (n = 0; n < nodes_count; n++) {
-    sb_init(&req->results[n].error);
-    sb_init(&req->results[n].result);
+  if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
+  request->results = _malloc(sizeof(in3_response_t) * nodes_count);
+  for (int n = 0; n < nodes_count; n++) {
+    sb_init(&request->results[n].error);
+    sb_init(&request->results[n].result);
   }
 
   // we set the raw_response
-  ctx->raw_response = req->results;
+  ctx->raw_response = request->results;
 
-  _free(payload); // we only clean up the the stringbuffer, but keep the content (payload->data)
-  return req;
+  // we only clean up the the stringbuffer, but keep the content (payload->data)
+  _free(payload);
+  return request;
 }
 
-void request_free(in3_request_t* req, in3_ctx_t* ctx, bool response_free) {
+void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) {
   // free resources
   free_urls(req->urls, req->urls_len, ctx->client->use_http);
 
-  if (response_free) {
+  if (free_response) {
     for (int n = 0; n < req->urls_len; n++) {
       _free(req->results[n].error.data);
       _free(req->results[n].result.data);
@@ -397,25 +409,25 @@ void request_free(in3_request_t* req, in3_ctx_t* ctx, bool response_free) {
 
   _free(req->payload);
   _free(req);
-
-  return;
 }
 
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   int       retry_count = 0;
   in3_ret_t res;
 
-  while ((res = in3_ctx_execute(ctx))) {
-    retry_count++;
-    if (retry_count > 10) return ctx_set_error(ctx, "Looks like the response is not valid or not set, since we are calling the execute over and over", IN3_ERPC);
+  while ((res = in3_ctx_execute(ctx)) != IN3_OK) {
 
     // error we stop here
     if (res != IN3_WAITING) return res;
 
+    // we are waiting for an response.
+    retry_count++;
+    if (retry_count > 10) return ctx_set_error(ctx, "Looks like the response is not valid or not set, since we are calling the execute over and over", IN3_ERPC);
+
     // handle subcontexts first
     while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
-      if ((res = in3_send_ctx(ctx->required)))
-        return res;
+      if ((res = in3_send_ctx(ctx->required)) != IN3_OK)
+        return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
 
       // recheck in order to prepare the request.
       if ((res = in3_ctx_execute(ctx)) != IN3_WAITING) return res;
@@ -439,9 +451,9 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
         }
         case CT_SIGN: {
           if (ctx->client->signer) {
-            d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
-            bytes_t    data   = d_to_bytes(d_get_at(params, 0));
-            bytes_t    from   = d_to_bytes(d_get_at(params, 1));
+            d_token_t*    params = d_get(ctx->requests[0], K_PARAMS);
+            const bytes_t data   = d_to_bytes(d_get_at(params, 0));
+            const bytes_t from   = d_to_bytes(d_get_at(params, 1));
             if (!data.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
             if (!from.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
@@ -463,13 +475,13 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   return res;
 }
 
-in3_ctx_t* ctx_find_required(in3_ctx_t* parent, char* method) {
-  in3_ctx_t* p = parent->required;
-  while (p) {
-    if (!p->requests) continue;
-    char* m = d_get_stringk(p->requests[0], K_METHOD);
-    if (m && strcmp(m, method) == 0) return p;
-    p = p->required;
+in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {
+  in3_ctx_t* sub_ctx = parent->required;
+  while (sub_ctx) {
+    if (!sub_ctx->requests) continue;
+    const char* required_method = d_get_stringk(sub_ctx->requests[0], K_METHOD);
+    if (required_method && strcmp(required_method, search_method) == 0) return sub_ctx;
+    sub_ctx = sub_ctx->required;
   }
   return NULL;
 }

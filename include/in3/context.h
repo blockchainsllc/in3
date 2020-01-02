@@ -48,6 +48,12 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
+#ifdef ERR_MSG
+#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
+#else
+#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)
+#endif
+
 /**
  * type of the request context,
  */
@@ -276,9 +282,9 @@ in3_request_t* in3_create_request(
  * frees a previuosly allocated request.
  */
 void request_free(
-    in3_request_t* req,          /**< [in] the request. */
-    in3_ctx_t*     ctx,          /**< [in] the request context. */
-    bool           response_free /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */
+    in3_request_t*   req,          /**< [in] the request. */
+    const in3_ctx_t* ctx,          /**< [in] the request context. */
+    bool             response_free /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */
 );
 
 /**
@@ -349,8 +355,8 @@ in3_ret_t ctx_add_required(
  * This method is used internaly to find a previously added context.
  */
 in3_ctx_t* ctx_find_required(
-    in3_ctx_t* parent, /**< [in] the current request context. */
-    char*      method  /**< [in] the method of the rpc-request. */
+    const in3_ctx_t* parent, /**< [in] the current request context. */
+    const char*      method  /**< [in] the method of the rpc-request. */
 );
 /**
  * removes a required context after usage.
@@ -377,11 +383,12 @@ in3_ret_t ctx_check_response_error(
  *   return ctx_set_error(ctx, "wrong number of arguments", IN3_EINVAL)
  * ```
  */
-in3_ret_t ctx_set_error(
+in3_ret_t ctx_set_error_intern(
     in3_ctx_t* c,        /**< [in] the current request context. */
     char*      msg,      /**< [in] the error message. (This string will be copied) */
     in3_ret_t  errnumber /**< [in] the error code to return */
 );
+
 /**
  * determins the errorcode for the given request.
  */
