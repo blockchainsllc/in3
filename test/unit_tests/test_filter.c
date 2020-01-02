@@ -51,12 +51,18 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define TEST_ASSERT_FILTER_OPT_FROMBLK(opt_str, blk, out_str) \
+  do {                                                        \
+    char* opt = filter_opt_set_fromBlock(opt_str, blk);       \
+    TEST_ASSERT_EQUAL_STRING(out_str, opt);                   \
+    _free(opt);                                               \
+  } while (0)
+
 static void test_filter() {
 
   in3_register_eth_basic();
 
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  ;
+  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   c->transport        = test_transport;
   c->auto_update_list = false;
   c->proof            = PROOF_NONE;
@@ -166,6 +172,14 @@ static void test_filter_opt_validation() {
   TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[[\"0x0123456789012345678901234567890101234567890123456789012345678901\",\"0x1234567890123456789012345678901012345678901234567890123456789012\"],null,\"0x1234567890123456789012345678901012345678901234567890123456789012\"]}"));
   TEST_ASSERT_FALSE(is_filter_opt_json_valid("{\"topics\":[[\"0x0123456789012345678901234567890101234567890123456789012345678901\",[\"0x0123456789012345678901234567890101234567890123456789012345678901\",\"0x1234567890123456789012345678901012345678901234567890123456789012\"]]]}"));
 }
+
+static void test_filter_from_block_manip() {
+  TEST_ASSERT_FILTER_OPT_FROMBLK("{\"fromBlock\":\"0x84cf56\"}", 0x84cf57, "{\"fromBlock\":\"0x84cf57\"}");
+  TEST_ASSERT_FILTER_OPT_FROMBLK("{\"fromBlock\":\"latest\"}", 0x84cf57, "{\"fromBlock\":\"0x84cf57\"}");
+  // Todo: support integer fromBlock manipulation
+  //  TEST_ASSERT_FILTER_OPT_FROMBLK("{\"fromBlock\":1234567}", 0x84cf57, "{\"fromBlock\":\"0x84cf57\"}");
+  TEST_ASSERT_FILTER_OPT_FROMBLK("{}", 0x84cf57, "{\"fromBlock\":\"0x84cf57\"}");
+}
 /*
  * Main
  */
@@ -174,5 +188,6 @@ int main() {
   TESTS_BEGIN();
   RUN_TEST(test_filter);
   RUN_TEST(test_filter_opt_validation);
+  RUN_TEST(test_filter_from_block_manip);
   return TESTS_END();
 }
