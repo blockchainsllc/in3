@@ -75,7 +75,7 @@ static in3_ctx_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
   return NULL;
 }
 
-static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, uint8_t* address, uint8_t* must_free, bytes_t** target) {
+static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, address_t address, bool* must_free, bytes_t** target) {
   bytes_t* code_hash = NULL;
 
   in3_ret_t res = find_code_in_accounts(vc, address, target, &code_hash);
@@ -135,7 +135,7 @@ static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, uint8
   }
 }
 
-in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target) {
+in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target) {
   // search in thew cache of the current context
   for (cache_entry_t* en = vc->ctx->cache; en; en = en->next) {
     if (en->key.len == 20 && memcmp(address, en->key.data, 20) == 0) {
@@ -150,7 +150,7 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target)
   bytes_to_hex(address, 20, key_str + 1);
 
   bytes_t*  code      = NULL;
-  uint8_t   must_free = 0;
+  bool      must_free = false;
   in3_ret_t res;
 
   // not cached yet

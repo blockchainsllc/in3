@@ -51,8 +51,8 @@
 typedef struct cache_entry {
   bytes_t             key;       /**<  an optional key of the entry*/
   bytes_t             value;     /**< the value */
-  uint8_t             must_free; /**< if true, the cache-entry will be freed when the request context is cleaned up. */
   uint8_t             buffer[4]; /**< the buffer is used to store extra data, which will be cleaned when freed. */
+  bool                must_free; /**< if true, the cache-entry will be freed when the request context is cleaned up. */
   struct cache_entry* next;      /**< pointer to the next entry.*/
 } cache_entry_t;
 
