@@ -45,7 +45,7 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
-#include "../../src/verifier/eth1/basic/signer.h"
+#include "../../src/verifier/eth1/basic/filter.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include <stdio.h>
@@ -131,12 +131,48 @@ static void test_filter() {
   in3_free(c);
 }
 
+static inline bool is_filter_opt_json_valid(char* opt_json_str) {
+  bool        is_valid  = false;
+  json_ctx_t* tx_params = parse_json(opt_json_str);
+  if (tx_params)
+    is_valid = filter_opt_valid(tx_params->result);
+  json_free(tx_params);
+  return is_valid;
+}
+
+static void test_filter_opt_validation() {
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"fromBlock\":\"0x84cf56\"}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"fromBlock\":\"latest\"}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"fromBlock\":1234567}"));
+  TEST_ASSERT_FALSE(is_filter_opt_json_valid("{\"fromBlock\":[]]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"toBlock\":\"0x84cf56\"}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"toBlock\":\"latest\"}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"toBlock\":1234567}"));
+  TEST_ASSERT_FALSE(is_filter_opt_json_valid("{\"toBlock\":[]]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"blockHash\":\"0x01234567890123456789012345678901\"}"));
+  TEST_ASSERT_FALSE(is_filter_opt_json_valid("{\"toBlock\":1234567,\"blockHash\":\"0x0123456789012345678901234567890101234567890123456789012345678901\"}"));
+  TEST_ASSERT_FALSE(is_filter_opt_json_valid("{\"fromBlock\":1234567,\"blockHash\":\"0x0123456789012345678901234567890101234567890123456789012345678901\"}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"address\":\"0x0123456789012345678901234567890123456789\"}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"address\":[\"0x0123456789012345678901234567890123456789\",\"0x1234567890123456789012345678901234567890\"]}"));
+  TEST_ASSERT_FALSE(is_filter_opt_json_valid("{\"address\":[[\"0x0123456789012345678901234567890123456789\"],\"0x1234567890123456789012345678901234567890\"]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[\"0x0123456789012345678901234567890101234567890123456789012345678901\"]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[\"0x0123456789012345678901234567890101234567890123456789012345678901\",\"0x1234567890123456789012345678901012345678901234567890123456789012\"]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[\"0x0123456789012345678901234567890101234567890123456789012345678901\",null]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[null,\"0x0123456789012345678901234567890101234567890123456789012345678901\"]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[\"0x0123456789012345678901234567890101234567890123456789012345678901\",null,\"0x1234567890123456789012345678901012345678901234567890123456789012\"]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[[\"0x0123456789012345678901234567890101234567890123456789012345678901\",\"0x1234567890123456789012345678901012345678901234567890123456789012\"],null]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[null,[\"0x0123456789012345678901234567890101234567890123456789012345678901\",\"0x1234567890123456789012345678901012345678901234567890123456789012\"]]}"));
+  TEST_ASSERT_TRUE(is_filter_opt_json_valid("{\"topics\":[[\"0x0123456789012345678901234567890101234567890123456789012345678901\",\"0x1234567890123456789012345678901012345678901234567890123456789012\"],null,\"0x1234567890123456789012345678901012345678901234567890123456789012\"]}"));
+  TEST_ASSERT_FALSE(is_filter_opt_json_valid("{\"topics\":[[\"0x0123456789012345678901234567890101234567890123456789012345678901\",[\"0x0123456789012345678901234567890101234567890123456789012345678901\",\"0x1234567890123456789012345678901012345678901234567890123456789012\"]]]}"));
+}
 /*
  * Main
  */
 int main() {
-  in3_log_set_level(LOG_ERROR);
+  in3_log_set_quiet(true);
   TESTS_BEGIN();
   RUN_TEST(test_filter);
+  RUN_TEST(test_filter_opt_validation);
   return TESTS_END();
 }
