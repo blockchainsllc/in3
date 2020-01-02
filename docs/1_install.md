@@ -42,6 +42,13 @@ Default-Value: `-DBUILD_DOC=OFF`
 Default-Value: `-DCMD=ON`
 
 
+#### ERR_MSG
+
+  if set human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)
+
+Default-Value: `-DERR_MSG=ON`
+
+
 #### ETH_BASIC
 
   build basic eth verification.(all rpc-calls except eth_call)

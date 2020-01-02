@@ -95,10 +95,16 @@ static void set_errorn(int std_error, char* msg, int len) {
 }
 
 // sets the error and a message
-static void set_error(int std_error, char* msg) {
+static void set_error_intern(int std_error, char* msg) {
   in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
   set_errorn(std_error, msg, strlen(msg));
 }
+
+#ifdef ERR_MSG
+#define set_error(e, msg) set_error_intern(e, msg)
+#else
+#define set_error(e, msg) set_error_intern(e, "E")
+#endif
 
 /** copies bytes to a fixed length destination (leftpadding 0 if needed).*/
 static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {

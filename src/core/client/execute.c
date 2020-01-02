@@ -52,7 +52,7 @@
 
 static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
-    int nodes_count = ctx_nodes_len(ctx->nodes);
+    const int nodes_count = ctx_nodes_len(ctx->nodes);
     in3_ctx_free_nodes(ctx->nodes);
     if (ctx->raw_response) {
       for (int i = 0; i < nodes_count; i++) {
@@ -88,6 +88,7 @@ static void response_free(in3_ctx_t* ctx) {
 static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   //  printf(" -- free ctx %s (%i)\n", ctx_name(ctx), is_sub ? 1 : 0);
 
+  // only for intern requests, we actually free the original request-string
   if (is_sub) _free(ctx->request_context->c);
   if (ctx->error) _free(ctx->error);
   response_free(ctx);
@@ -101,58 +102,54 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
 
   _free(ctx);
 }
-static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* req) {
-  int    i;
-  in3_t* c = ctx->client;
 
-  conf->chain_id = c->chain_id;
-  conf->finality = c->finality;
-  //  if (c->key) {
-  // TODO sign the request
-  // conf->clientSignature =
-  //  }
+static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request) {
+  const in3_t* c = ctx->client;
+
+  conf->chain_id     = c->chain_id;
+  conf->finality     = c->finality;
   conf->latest_block = c->replace_latest_block;
   conf->use_binary   = c->use_binary;
+
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
-    if (c->proof == PROOF_FULL)
-      conf->use_full_proof = true;
-    conf->verification = VERIFICATION_PROOF;
+    conf->use_full_proof = c->proof == PROOF_FULL;
+    conf->verification   = VERIFICATION_PROOF;
 
     if (c->signature_count) {
-      node_weight_t*   sig_nodes = NULL;
-      in3_node_props_t props     = c->node_props | NODE_PROP_SIGNER;
-      in3_ret_t        res       = in3_node_list_pick_nodes(ctx, &sig_nodes, c->signature_count, props);
+      node_weight_t*  signer_nodes = NULL;
+      const in3_ret_t res          = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, c->node_props | NODE_PROP_SIGNER);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-      int node_count       = ctx_nodes_len(sig_nodes);
-      conf->signers_length = node_count;
-      conf->signers        = _malloc(sizeof(bytes_t) * node_count);
-      node_weight_t* w     = sig_nodes;
-      for (i = 0; i < node_count; i++) {
+      const int node_count   = ctx_nodes_len(signer_nodes);
+      conf->signers_length   = node_count;
+      conf->signers          = _malloc(sizeof(bytes_t) * node_count);
+      const node_weight_t* w = signer_nodes;
+      for (int i = 0; i < node_count; i++) {
         conf->signers[i].len  = w->node->address->len;
         conf->signers[i].data = w->node->address->data;
         w                     = w->next;
       }
-      in3_ctx_free_nodes(sig_nodes);
+      in3_ctx_free_nodes(signer_nodes);
     }
   }
 
-  if (req) {
-    d_token_t* in3 = d_get(req, K_IN3);
+  if (request) {
+    d_token_t* in3 = d_get(request, K_IN3);
     if (in3 == NULL) return IN3_OK;
     //TODO read config from request
   }
+
   return IN3_OK;
 }
 
-static void free_urls(char** urls, int len, uint8_t free_items) {
+static void free_urls(char** urls, int len, bool free_items) {
   if (free_items) {
     for (int i = 0; i < len; i++) _free(urls[i]);
   }
   _free(urls);
 }
 
-static unsigned long counter = 1;
+static unsigned long rpc_id_counter = 1;
 
 static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
   int        i;
@@ -165,7 +162,7 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
     sb_add_char(sb, '{');
     r = c->requests[i];
     if ((t = d_get(r, K_ID)) == NULL)
-      sb_add_key_value(sb, "id", temp, sprintf(temp, "%lu", counter++), false);
+      sb_add_key_value(sb, "id", temp, sprintf(temp, "%lu", rpc_id_counter++), false);
     else if (d_type(t) == T_INTEGER)
       sb_add_key_value(sb, "id", temp, sprintf(temp, "%i", d_int(t)), false);
     else
@@ -330,9 +327,6 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   int       nodes_count = ctx_nodes_len(ctx->nodes), n;
   in3_ret_t res;
 
-  // prepare the payload
-  sb_t* payload = sb_new(NULL);
-
   // create url-array
   char**         urls       = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
   node_weight_t* w          = ctx->nodes;
@@ -359,7 +353,9 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     w = w->next;
   }
 
-  res = ctx_create_payload(ctx, payload, multichain);
+  // prepare the payload
+  sb_t* payload = sb_new(NULL);
+  res           = ctx_create_payload(ctx, payload, multichain);
   if (res < 0) {
     sb_free(payload);
     free_urls(urls, nodes_count, ctx->client->use_http);
@@ -394,7 +390,6 @@ void request_free(in3_request_t* req, in3_ctx_t* ctx, bool response_free) {
   if (response_free) {
     for (int n = 0; n < req->urls_len; n++) {
       _free(req->results[n].error.data);
-      //      if (!ctx->response_context || ctx->response_context->c != req->results[n].result.data)
       _free(req->results[n].result.data);
     }
     _free(req->results);
@@ -407,20 +402,23 @@ void request_free(in3_request_t* req, in3_ctx_t* ctx, bool response_free) {
 }
 
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
-  int       count = 0;
-  in3_ret_t ret;
-  while ((ret = in3_ctx_execute(ctx))) {
-    count++;
-    if (count > 10) return ctx_set_error(ctx, "Looks like the response is not valid or not set, since we calling the execute over and over", IN3_ERPC);
+  int       retry_count = 0;
+  in3_ret_t res;
+
+  while ((res = in3_ctx_execute(ctx))) {
+    retry_count++;
+    if (retry_count > 10) return ctx_set_error(ctx, "Looks like the response is not valid or not set, since we are calling the execute over and over", IN3_ERPC);
+
     // error we stop here
-    if (ret != IN3_WAITING) return ret;
+    if (res != IN3_WAITING) return res;
 
     // handle subcontexts first
     while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
-      if ((ret = in3_send_ctx(ctx->required)))
-        return ret;
+      if ((res = in3_send_ctx(ctx->required)))
+        return res;
+
       // recheck in order to prepare the request.
-      if ((ret = in3_ctx_execute(ctx)) != IN3_WAITING) return ret;
+      if ((res = in3_ctx_execute(ctx)) != IN3_WAITING) return res;
     }
 
     if (!ctx->raw_response) {
@@ -452,8 +450,8 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             sb_init(&ctx->raw_response[0].result);
             in3_log_trace("... request to sign ");
             uint8_t sig[65];
-            ret = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
-            if (ret < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, ret);
+            res = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
+            if (res < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, res);
             sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
             break;
           } else
@@ -462,7 +460,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
       }
     }
   }
-  return ret;
+  return res;
 }
 
 in3_ctx_t* ctx_find_required(in3_ctx_t* parent, char* method) {

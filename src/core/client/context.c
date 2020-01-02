@@ -75,7 +75,6 @@ in3_ctx_t* ctx_new(in3_t* client, char* req_data) {
   if (c->len)
     c->requests_configs = _calloc(c->len, sizeof(in3_request_config_t));
 
-  
   return c;
 }
 
@@ -93,23 +92,29 @@ in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
     return ctx_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
+in3_ret_t ctx_set_error_intern(in3_ctx_t* c, char* message, in3_ret_t errnumber) {
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING) return errnumber;
-  int   l   = strlen(msg);
-  char* dst = NULL;
-  if (c->error) {
-    dst = _malloc(l + 2 + strlen(c->error));
-    strcpy(dst, msg);
-    dst[l] = '\n';
-    strcpy(dst + l + 1, c->error);
-    _free(c->error);
-  } else {
-    dst = _malloc(l + 1);
-    strcpy(dst, msg);
+  if (message) {
+    const int l   = strlen(message);
+    char*     dst = NULL;
+    if (c->error) {
+      dst = _malloc(l + 2 + strlen(c->error));
+      strcpy(dst, message);
+      dst[l] = '\n';
+      strcpy(dst + l + 1, c->error);
+      _free(c->error);
+    } else {
+      dst = _malloc(l + 1);
+      strcpy(dst, message);
+    }
+    c->error = dst;
+    in3_log_error("%s\n", message);
+  } else if (!c->error) {
+    c->error    = _malloc(2);
+    c->error[0] = 'E';
+    c->error[1] = 0;
   }
-  c->error = dst;
-  in3_log_error("%s\n", msg);
   return errnumber;
 }
 
