@@ -47,6 +47,7 @@ static bool filter_addrs_valid(d_token_t* addr) {
     return false;
 
   int len = d_len(addr);
+  addr += 1;
   for (int i = 0; i < len; i++, addr = d_next(addr))
     if (d_type(addr) != T_BYTES || d_len(addr) != 20)
       return false;
