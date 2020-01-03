@@ -144,11 +144,12 @@ key <keyfile>\n\
          name);
 }
 
-void die(char* msg) {
+static void die(char* msg) {
   fprintf(stderr, "\033[31mError: %s\033[0m\n", msg);
   exit(EXIT_FAILURE);
 }
 
+static bool debug_mode = false;
 static void print_hex(uint8_t* data, int len) {
   printf("0x");
   for (int i = 0; i < len; i++) printf("%02x", data[i]);
@@ -471,6 +472,10 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 static bytes_t*  last_response;
 static bytes_t   in_response = {.data = NULL, .len = 0};
 static in3_ret_t debug_transport(in3_request_t* req) {
+#ifndef DEBUG
+  if (debug_mode)
+    printf("send request to %s: \n\033[0;33m%s\033[0m\n", req->urls_len ? req->urls[0] : "none", req->payload);
+#endif
   if (in_response.len) {
     for (int i = 0; i < req->urls_len; i++)
       sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
@@ -482,6 +487,14 @@ static in3_ret_t debug_transport(in3_request_t* req) {
   in3_ret_t r = send_http(req);
 #endif
   last_response = b_new(req->results[0].result.data, req->results[0].result.len);
+#ifndef DEBUG
+  if (debug_mode) {
+    if (req->results[0].result.len)
+      printf("success response \n\033[0;32m%s\033[0m\n", req->results[0].result.data);
+    else
+      printf("error response \n\033[0;31m%s\033[0m\n", req->results[0].error.data);
+  }
+#endif
   return r;
 }
 static char*     test_name = NULL;
@@ -649,9 +662,10 @@ int main(int argc, char* argv[]) {
       c->proof = PROOF_NONE;
     else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
       sig_type = argv[++i];
-    else if (strcmp(argv[i], "-debug") == 0)
+    else if (strcmp(argv[i], "-debug") == 0) {
       in3_log_set_level(LOG_TRACE);
-    else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
+      debug_mode = true;
+    } else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signature_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
       if (strcmp(argv[i + 1], "none") == 0)
