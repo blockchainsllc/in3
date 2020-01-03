@@ -290,7 +290,6 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         for (int i = 0; i < ctx->len; i++) {
           vc.request = ctx->requests[i];
           vc.result  = d_get(ctx->responses[i], K_RESULT);
-          vc.id      = d_get_longk(ctx->responses[i], K_ID);
           vc.config  = ctx->requests_configs + i;
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
