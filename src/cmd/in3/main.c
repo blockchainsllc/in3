@@ -474,7 +474,7 @@ static bytes_t   in_response = {.data = NULL, .len = 0};
 static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
-    printf("send request to %s: \n\033[0;33m%s\033[0m\n", req->urls_len ? req->urls[0] : "none", req->payload);
+    fprintf(stderr, "send request to %s: \n\033[0;33m%s\033[0m\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
   if (in_response.len) {
     for (int i = 0; i < req->urls_len; i++)
@@ -490,9 +490,9 @@ static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode) {
     if (req->results[0].result.len)
-      printf("success response \n\033[0;32m%s\033[0m\n", req->results[0].result.data);
+      fprintf(stderr, "success response \n\033[0;32m%s\033[0m\n", req->results[0].result.data);
     else
-      printf("error response \n\033[0;31m%s\033[0m\n", req->results[0].error.data);
+      fprintf(stderr, "error response \n\033[0;31m%s\033[0m\n", req->results[0].error.data);
   }
 #endif
   return r;
