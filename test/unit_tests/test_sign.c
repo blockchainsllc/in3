@@ -45,6 +45,7 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
+#include "../../src/verifier/eth1/basic/signer-priv.h"
 #include "../../src/verifier/eth1/basic/signer.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
@@ -81,6 +82,19 @@ static void test_sign() {
   ctx_free(ctx);
 }
 
+static void test_signer() {
+  in3_register_eth_basic();
+  in3_t*    c       = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  uint8_t   sig[65] = {0};
+  in3_ctx_t ctx;
+  ctx.client        = c;
+  char*    data_str = "0123456789abcdef0123456789abcdef0123456789abcdef";
+  bytes_t* data     = hex_to_new_bytes(data_str, strlen(data_str));
+  TEST_ASSERT_EQUAL(65, eth_sign(&ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
+  TEST_ASSERT_FALSE(memiszero(sig, 65));
+  sig[64] += 27;
+  in3_free(c);
+}
 /*
  * Main
  */
@@ -88,5 +102,6 @@ int main() {
   in3_log_set_level(LOG_ERROR);
   TESTS_BEGIN();
   RUN_TEST(test_sign);
+  RUN_TEST(test_signer);
   return TESTS_END();
 }
