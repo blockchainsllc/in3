@@ -93,8 +93,41 @@ static void test_signer() {
   b_free(data);
   in3_free(c);
 }
+
+static in3_ret_t prep_tx(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx) {
+  *new_tx = parse_json("{\"from\": \"0xb60e8dd61c5d32be8058bb8eb970870f07233155\","
+                       "\"to\": \"0xd46e8dd67c5d32be8058bb8eb970870f07244567\","
+                       "\"gas\": \"0x76c0\","
+                       "\"nonce\": \"0x15\","
+                       "\"gasPrice\": \"0x9184e72a000\","
+                       "\"value\": \"0x9184e72a\","
+                       "\"data\": \"0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675\"}");
+  return d_get_int(old_tx, "success") != 0 ? IN3_OK : IN3_EUNKNOWN;
+}
+
+static void test_signer_prepare_tx() {
+  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  bytes32_t pk;
+  hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
+  eth_set_pk_signer(c, pk);
+
+  in3_ctx_t* ctx        = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  c->signer->prepare_tx = prep_tx;
+  json_ctx_t* jtx       = parse_json("{\"success\":false}");
+  sign_tx(jtx->result, ctx);
+  TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
+  json_free(jtx);
+  ctx_free(ctx);
+
+  ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  jtx = parse_json("{\"success\":true}");
+  sign_tx(jtx->result, ctx);
+  TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
+
+  json_free(jtx);
   in3_free(c);
 }
+
 /*
  * Main
  */
@@ -104,5 +137,6 @@ int main() {
   TESTS_BEGIN();
   RUN_TEST(test_sign);
   RUN_TEST(test_signer);
+  RUN_TEST(test_signer_prepare_tx);
   return TESTS_END();
 }
