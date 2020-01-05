@@ -83,16 +83,21 @@ static void test_sign() {
 }
 
 static void test_signer() {
-  in3_register_eth_basic();
-  in3_t*    c       = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  uint8_t   sig[65] = {0};
-  in3_ctx_t ctx;
-  ctx.client        = c;
-  char*    data_str = "0123456789abcdef0123456789abcdef0123456789abcdef";
-  bytes_t* data     = hex_to_new_bytes(data_str, strlen(data_str));
-  TEST_ASSERT_EQUAL(65, eth_sign(&ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
+  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  bytes32_t pk;
+  hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
+  eth_set_pk_signer(c, pk);
+  uint8_t    sig[65]  = {0};
+  in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
+  TEST_ASSERT_EQUAL(65, eth_sign(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
   TEST_ASSERT_FALSE(memiszero(sig, 65));
   sig[64] += 27;
+
+  b_free(data);
+  in3_free(c);
+}
   in3_free(c);
 }
 /*
