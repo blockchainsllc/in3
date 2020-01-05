@@ -205,6 +205,9 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   memset(sig, 0, 65);
 #endif
 
+  bytes_t* nonce_cpy     = b_dup(&nonce);
+  bytes_t* gas_price_cpy = b_dup(&gas_price);
+
   // sign the raw message
   if (nonce.data && gas_price.data && gas_limit.data) {
     in3_ctx_t* c = ctx_find_required(ctx, "sign_ec_hash");
@@ -229,7 +232,6 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
           break;
         }
       }
-
     else {
       bytes_t from_b = bytes(from, 20);
       sb_t*   req    = sb_new("{\"method\":\"sign_ec_hash\",\"params\":[");
@@ -248,12 +250,18 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   // free temp resources
   if (new_json) json_free(new_json);
   b_free(raw);
-  if (res < 0) return bytes(NULL, 0);
+  if (res < 0) {
+    b_free(nonce_cpy);
+    b_free(gas_price_cpy);
+    return bytes(NULL, 0);
+  }
 
   // create raw transaction with signature
-  raw            = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, 27 + sig[64] + (v ? (v * 2 + 8) : 0), bytes(sig, 32), bytes(sig + 32, 32));
+  raw            = serialize_tx_raw(*nonce_cpy, *gas_price_cpy, gas_limit, to, value, data, 27 + sig[64] + (v ? (v * 2 + 8) : 0), bytes(sig, 32), bytes(sig + 32, 32));
   bytes_t raw_tx = bytes(raw->data, raw->len);
   _free(raw); // we only free the struct, not the data!
+  b_free(nonce_cpy);
+  b_free(gas_price_cpy);
 
   return raw_tx;
 }
