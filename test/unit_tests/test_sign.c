@@ -77,6 +77,13 @@ static void test_sign() {
   ctx_free(ctx);
 }
 
+static void test_sign_sans_signer_and_from() {
+  in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  TEST_ASSERT_NOT_NULL(ctx->error);
+  ctx_free(ctx);
+}
+
 static void test_signer() {
   in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   bytes32_t pk;
@@ -136,6 +143,7 @@ int main() {
   in3_register_eth_basic();
   TESTS_BEGIN();
   RUN_TEST(test_sign);
+  RUN_TEST(test_sign_sans_signer_and_from);
   RUN_TEST(test_signer);
   RUN_TEST(test_signer_prepare_tx);
   return TESTS_END();
