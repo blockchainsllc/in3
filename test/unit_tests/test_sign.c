@@ -53,11 +53,7 @@
 #include <unistd.h>
 
 static void test_sign() {
-
-  in3_register_eth_basic();
-
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  ;
+  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   c->transport        = test_transport;
   c->chain_id         = 0x1;
   c->auto_update_list = false;
@@ -69,7 +65,6 @@ static void test_sign() {
   bytes32_t pk;
   hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
   eth_set_pk_signer(c, pk);
-  in3_set_default_signer(c->signer);
 
   add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
   add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
@@ -104,7 +99,8 @@ static void test_signer() {
  * Main
  */
 int main() {
-  in3_log_set_level(LOG_ERROR);
+  in3_log_set_quiet(true);
+  in3_register_eth_basic();
   TESTS_BEGIN();
   RUN_TEST(test_sign);
   RUN_TEST(test_signer);
