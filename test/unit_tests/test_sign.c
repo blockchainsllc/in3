@@ -95,8 +95,6 @@ static void test_signer() {
   bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
   TEST_ASSERT_EQUAL(65, eth_sign(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
   TEST_ASSERT_FALSE(memiszero(sig, 65));
-  sig[64] += 27;
-
   b_free(data);
   in3_free(c);
 }
@@ -121,15 +119,21 @@ static void test_signer_prepare_tx() {
   in3_ctx_t* ctx        = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   c->signer->prepare_tx = prep_tx;
   json_ctx_t* jtx       = parse_json("{\"success\":false}");
-  sign_tx(jtx->result, ctx);
+  bytes_t     raw_tx    = sign_tx(jtx->result, ctx);
+  TEST_ASSERT_FALSE(raw_tx.data && raw_tx.len);
   TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
   json_free(jtx);
   ctx_free(ctx);
 
-  ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  jtx = parse_json("{\"success\":true}");
-  sign_tx(jtx->result, ctx);
+  ctx    = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  jtx    = parse_json("{\"success\":true}");
+  raw_tx = sign_tx(jtx->result, ctx);
+  TEST_ASSERT_TRUE(ctx->type == CT_RPC && ctx->verification_state == IN3_WAITING && ctx->required);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_send_ctx(ctx->required));
+  raw_tx = sign_tx(jtx->result, ctx);
+  TEST_ASSERT_NOT_NULL(raw_tx.data);
   TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
+  _free(raw_tx.data);
 
   json_free(jtx);
   in3_free(c);
