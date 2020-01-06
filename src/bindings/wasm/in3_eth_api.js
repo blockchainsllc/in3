@@ -455,11 +455,6 @@ async function prepareTransaction(args, api) {
     return tx
 }
 
-
-function createSignatureHash(def) {
-    return keccak(def.name + createSignature(def.inputs))
-}
-
 function createSignature(fields) {
     return '(' + fields.map(f => {
         let baseType = f.type
@@ -494,30 +489,6 @@ function decodeEvent(log, d) {
     return r
 }
 
-
-
-
-function encodeEtheresBN(val) {
-    return val && BN.isBN(val) ? toHex(val) : val
-}
-
-function soliditySha3(...args) {
-
-    const abiCoder = new AbiCoder()
-    return toHex(keccak(abiCoder.encode(args.map(_ => {
-        switch (typeof (_)) {
-            case 'number':
-                return _ < 0 ? 'int256' : 'uint256'
-            case 'string':
-                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
-            case 'boolean':
-                return 'bool'
-            default:
-                return BN.isBN(_) ? 'uint256' : 'bytes'
-        }
-    }), args.map(encodeEtheresBN))))
-}
-
 function toHexBlock(b) {
     return typeof b === 'string' ? b : util.toMinHex(b)
 }
@@ -535,7 +506,11 @@ function fixBytesValues(input, type) {
     else return input
 }
 
-function encodeFunction(signatureg, args) {
+function encodeEtheresBN(val) {
+    return val && BN.isBN(val) ? toHex(val) : val
+}
+
+function encodeFunction(signature, args) {
     const inputParams = signature.split(':')[0]
 
     const abiCoder = new AbiCoder()
@@ -570,5 +545,4 @@ function decodeFunction(signature, args) {
         throw new Error(`Error trying to decode ${signature} with the params ${args}: ${e}`)
     }
 }
-
 

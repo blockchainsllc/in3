@@ -327,20 +327,25 @@ function padEnd(val, minLength, fill = ' ') {
     return val;
 }
 
-/** Creates Signature hash */
-function createSignatureHash(def) {
-    return keccak(def.name + createSignature(def.inputs))
+function soliditySha3(...args) {
+
+    const abiCoder = new AbiCoder()
+    return toHex(keccak(abiCoder.encode(args.map(_ => {
+        switch (typeof (_)) {
+            case 'number':
+                return _ < 0 ? 'int256' : 'uint256'
+            case 'string':
+                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
+            case 'boolean':
+                return 'bool'
+            default:
+                return BN.isBN(_) ? 'uint256' : 'bytes'
+        }
+    }), args.map(encodeEtheresBN))))
 }
 
-/** Create Signature */
-function createSignature(fields) {
-    return '(' + fields.map(f => {
-        let baseType = f.type
-        const t = baseType.indexOf('[')
-        if (t > 0) baseType = baseType.substr(0, t)
-        if (baseType === 'uint' || baseType === 'int') baseType += '256'
-        return baseType + (t < 0 ? '' : f.type.substr(t))
-    }).join(',') + ')'
+function createSignatureHash(def) {
+    return keccak(def.name + createSignature(def.inputs))
 }
 
 const util = {
@@ -363,8 +368,8 @@ const util = {
     ecSign,
     splitSignature,
     private2address,
-    createSignatureHash,
-    createSignature
+    soliditySha3,
+    createSignatureHash
 }
 
 // add as static proporty and as standard property.

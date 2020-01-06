@@ -931,7 +931,7 @@ export declare class SimpleSigner implements Signer {
  */
 export declare interface Utils {
     createSignatureHash(def: ABI): Hex;
-    createSignature(fields: ABIField[]): string;
+
     decodeEvent(log: Log, d: ABI): any;
     soliditySha3(...args: any[]): string;
 
