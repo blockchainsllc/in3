@@ -369,7 +369,7 @@ wasm-slockit-npm:
   script:
     - sh /prepare.sh
     - cd wasm_build/module
-    - npm --no-git-tag-version --allow-same-version -f version v0.0.3
+    - npm --no-git-tag-version --allow-same-version -f version v0.0.4
     - npm publish
 
 wasm-public-npm:
