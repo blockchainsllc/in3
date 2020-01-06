@@ -63,8 +63,8 @@ typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byt
 
 /** a byte array */
 typedef struct bytes {
-  uint32_t len;  /**< the length of the array ion bytes */
   uint8_t* data; /**< the byte-data  */
+  uint32_t len;  /**< the length of the array ion bytes */
 } bytes_t;
 
 /** a byte-buffer to attach byte-functions. */

@@ -74,7 +74,7 @@ static void whitelist_free(in3_whitelist_t* wl) {
   _free(wl);
 }
 
-static void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
   chain->chain_id        = chain_id;
   chain->init_addresses  = NULL;
   chain->last_block      = 0;
@@ -449,8 +449,8 @@ in3_ret_t in3_configure(in3_t* c, char* config) {
       c->proof         = PROOF_NONE;
       c->chain_id      = ETH_CHAIN_ID_LOCAL;
       c->request_count = 1;
-      in3_node_t* n    = in3_find_chain(c, c->chain_id)->nodelist;
-      if (n->url) _free(n);
+      in3_node_t* n    = &in3_find_chain(c, c->chain_id)->nodelist[0];
+      if (n->url) _free(n->url);
       n->url = malloc(d_len(iter.token) + 1);
       if (!n->url) {
         res = IN3_ENOMEM;

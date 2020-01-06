@@ -47,6 +47,7 @@ static bool filter_addrs_valid(d_token_t* addr) {
     return false;
 
   int len = d_len(addr);
+  addr += 1;
   for (int i = 0; i < len; i++, addr = d_next(addr))
     if (d_type(addr) != T_BYTES || d_len(addr) != 20)
       return false;
@@ -183,9 +184,9 @@ in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
   }
   in3_filter_t** arr_;
   if (fh->array)
-     arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1), sizeof(in3_filter_t*) * (fh->count));
-  else 
-     arr_ = _malloc(sizeof(in3_filter_t*) * (fh->count + 1) );
+    arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1), sizeof(in3_filter_t*) * (fh->count));
+  else
+    arr_ = _malloc(sizeof(in3_filter_t*) * (fh->count + 1));
 
   if (arr_ == NULL) {
     return IN3_ENOMEM;
@@ -228,8 +229,11 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   uint64_t blkno = d_get_longk(ctx_->responses[0], K_RESULT);
   ctx_free(ctx_);
 
-  in3_filter_t* f    = in3->filters->array[id - 1];
-  char*         fopt = f->options;
+  in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return ctx_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
+
+  char* fopt = f->options;
   switch (f->type) {
     case FILTER_EVENT: {
       if (f->last_block > blkno) {
