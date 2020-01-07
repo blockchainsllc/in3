@@ -33,8 +33,10 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "in3_storage.h"
 #include "../../core/client/client.h"
 #include "../../core/util/mem.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +44,7 @@
 #if defined(_WIN32)
 #include <direct.h>
 #else
+#include <ftw.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #endif
@@ -112,4 +115,19 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
     fclose(file);
   }
   _free(path);
+}
+
+static int rmfile(const char* pathname, const struct stat* sbuf, int type, struct FTW* ftwb) {
+  UNUSED_VAR(sbuf);
+  UNUSED_VAR(type);
+  UNUSED_VAR(ftwb);
+  if (remove(pathname) < 0)
+    return -1;
+  return 0;
+}
+
+void storage_clear(void* cptr) {
+  UNUSED_VAR(cptr);
+  // Todo: test on windows
+  nftw(get_storage_dir(), rmfile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
 }
