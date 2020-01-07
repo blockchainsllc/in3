@@ -41,8 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// fixme: this is required until we find a good alternative to nfw() on gcc5
-// and arm7
+// fixme: this is required until we find a good alternative to nfw() on gcc5 and arm7
 #ifndef _U_SHORT
 #define _U_SHORT
 typedef unsigned short u_short;
@@ -50,9 +49,9 @@ typedef unsigned short u_short;
 
 #if defined(_WIN32)
 #include <direct.h>
+#include <dirent.h>
 #else
 #include <fts.h>
-#include <ftw.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #endif
@@ -125,9 +124,34 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
   _free(path);
 }
 
+#if defined(_WIN32)
+static void rm_recurs(const char* path) {
+  struct dirent* entry = NULL;
+  DIR*           dir   = NULL;
+  dir                  = opendir(path);
+  while ((entry = readdir(dir))) {
+    DIR*  sub_dir       = NULL;
+    FILE* file          = NULL;
+    char  abs_path[270] = {0};
+    if (*(entry->d_name) != '.') {
+      sprintf(abs_path, "%s/%s", path, entry->d_name);
+      if ((sub_dir = opendir(abs_path))) {
+        closedir(sub_dir);
+        rm_recurs(abs_path);
+      } else {
+        if ((file = fopen(abs_path, "r"))) {
+          fclose(file);
+          remove(abs_path);
+        }
+      }
+    }
+  }
+  remove(path);
+}
+#else
 static int rm_recurs(const char* dir) {
-  int     ret  = 0;
-  FTS*    ftsp = NULL;
+  int ret = 0;
+  FTS* ftsp = NULL;
   FTSENT* curr;
 
   char* files[] = {(char*) dir, NULL};
@@ -140,19 +164,8 @@ static int rm_recurs(const char* dir) {
 
   while ((curr = fts_read(ftsp))) {
     switch (curr->fts_info) {
-      case FTS_NS:
-      case FTS_DNR:
-      case FTS_ERR:
-        fprintf(stderr, "%s: fts_read error: %s\n",
-                curr->fts_accpath, strerror(curr->fts_errno));
+      default:
         break;
-
-      case FTS_DC:
-      case FTS_DOT:
-      case FTS_NSOK:
-      case FTS_D:
-        break;
-
       case FTS_DP:
       case FTS_F:
       case FTS_SL:
@@ -170,6 +183,7 @@ finish:
 
   return ret;
 }
+#endif
 
 void storage_clear(void* cptr) {
   UNUSED_VAR(cptr);
