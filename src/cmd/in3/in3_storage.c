@@ -41,6 +41,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// fixme: this is required until we find a good alternative to nfw() on gcc5
+// and arm7
+#ifndef _U_SHORT
+#define _U_SHORT
+typedef unsigned short u_short;
+#endif /* _U_SHORT */
+
 #if defined(_WIN32)
 #include <direct.h>
 #else
