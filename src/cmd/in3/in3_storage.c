@@ -41,17 +41,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-// fixme: this is required until we find a good alternative to nfw() on gcc5 and arm7
-#ifndef _U_SHORT
-#define _U_SHORT
-typedef unsigned short u_short;
-#endif /* _U_SHORT */
-
 #if defined(_WIN32)
 #include <direct.h>
 #include <dirent.h>
 #else
-#include <fts.h>
+#include <ftw.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #endif
@@ -149,39 +143,15 @@ static void rm_recurs(const char* path) {
   remove(path);
 }
 #else
-static int rm_recurs(const char* dir) {
-  int ret = 0;
-  FTS* ftsp = NULL;
-  FTSENT* curr;
+static int unlink_cb(const char* fpath, const struct stat* sb, int typeflag, struct FTW *ftwbuf) {
+  UNUSED_VAR(sb);
+  UNUSED_VAR(typeflag);
+  UNUSED_VAR(ftwbuf);
+  return remove(fpath);
+}
 
-  char* files[] = {(char*) dir, NULL};
-
-  ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
-  if (!ftsp) {
-    ret = -1;
-    goto finish;
-  }
-
-  while ((curr = fts_read(ftsp))) {
-    switch (curr->fts_info) {
-      default:
-        break;
-      case FTS_DP:
-      case FTS_F:
-      case FTS_SL:
-      case FTS_SLNONE:
-      case FTS_DEFAULT:
-        if (remove(curr->fts_accpath) < 0)
-          ret = -1;
-        break;
-    }
-  }
-
-finish:
-  if (ftsp)
-    fts_close(ftsp);
-
-  return ret;
+static void rm_recurs(const char* dir) {
+  nftw(dir, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 #endif
 
@@ -191,5 +161,5 @@ void storage_clear(void* cptr) {
   // recreate storage dir
   free(_HOME_DIR);
   _HOME_DIR = NULL;
-  UNUSED_VAR(get_storage_dir());
+  get_storage_dir();
 }
