@@ -44,6 +44,7 @@
 #if defined(_WIN32)
 #include <direct.h>
 #else
+#include <fts.h>
 #include <ftw.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -117,17 +118,53 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
   _free(path);
 }
 
-static int rmfile(const char* pathname, const struct stat* sbuf, int type, struct FTW* ftwb) {
-  UNUSED_VAR(sbuf);
-  UNUSED_VAR(type);
-  UNUSED_VAR(ftwb);
-  if (remove(pathname) < 0)
-    return -1;
-  return 0;
+static int rm_recurs(const char* dir) {
+  int     ret  = 0;
+  FTS*    ftsp = NULL;
+  FTSENT* curr;
+
+  char* files[] = {(char*) dir, NULL};
+
+  ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
+  if (!ftsp) {
+    ret = -1;
+    goto finish;
+  }
+
+  while ((curr = fts_read(ftsp))) {
+    switch (curr->fts_info) {
+      case FTS_NS:
+      case FTS_DNR:
+      case FTS_ERR:
+        fprintf(stderr, "%s: fts_read error: %s\n",
+                curr->fts_accpath, strerror(curr->fts_errno));
+        break;
+
+      case FTS_DC:
+      case FTS_DOT:
+      case FTS_NSOK:
+      case FTS_D:
+        break;
+
+      case FTS_DP:
+      case FTS_F:
+      case FTS_SL:
+      case FTS_SLNONE:
+      case FTS_DEFAULT:
+        if (remove(curr->fts_accpath) < 0)
+          ret = -1;
+        break;
+    }
+  }
+
+finish:
+  if (ftsp)
+    fts_close(ftsp);
+
+  return ret;
 }
 
 void storage_clear(void* cptr) {
   UNUSED_VAR(cptr);
-  // Todo: test on windows
-  nftw(get_storage_dir(), rmfile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
+  rm_recurs(get_storage_dir());
 }
