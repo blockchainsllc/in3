@@ -157,7 +157,11 @@ static d_token_t* get_result(in3_ctx_t* ctx) {
   if (ctx->error) {                   // error means something went wrong during verification or a timeout occured.
     set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;
+  } else if (!ctx->responses) {
+    set_error(IN3_ERPC, "No response");
+    return NULL;
   }
+
   d_token_t* t = d_get(ctx->responses[0], K_RESULT);
   if (t) return t; // everthing is good, we have a result
 
@@ -467,8 +471,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     params_add_blk_num_t(params, block);
   } else {
     set_error(0, req->error ? req->error : "Error parsing the request-data");
-    sb_free(
-        params);
+    sb_free(params);
     req_free(req);
     return NULL;
   }
@@ -547,8 +550,11 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   if (id == 0 || id > in3->filters->count)
     return IN3_EINVAL;
 
-  uint64_t      blkno = eth_blockNumber(in3);
-  in3_filter_t* f     = in3->filters->array[id - 1];
+  in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
+  uint64_t blkno = eth_blockNumber(in3);
   switch (f->type) {
     case FILTER_EVENT: {
       char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block);
@@ -587,10 +593,13 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
     return IN3_EINVAL;
 
   in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
   switch (f->type) {
     case FILTER_EVENT:
       *logs = eth_getLogs(in3, f->options);
-      return 0;
+      return (*logs) ? IN3_OK : IN3_EUNKNOWN;
     default:
       return IN3_ENOTSUP;
   }

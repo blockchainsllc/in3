@@ -56,15 +56,18 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   // this happens if the request is not parseable (JSON-error in params)
   if (ctx->error) {
     if (heap) _free(req); // free request string if we created it in heap
+    ctx->verification_state = IN3_EINVAL;
     return ctx;
   }
 
   // execute it
-  if (in3_send_ctx(ctx) == IN3_OK) {
+  in3_ret_t ret = in3_send_ctx(ctx);
+  if (ret == IN3_OK) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
     ctx->error = NULL;
-  }
+  } else
+    ctx->verification_state = ret;
 
   if (heap) _free(req); // free request string if we created it in heap
   return ctx;           // return context and hope the calle will clean it.

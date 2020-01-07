@@ -131,6 +131,14 @@ void test_json() {
   TEST_ASSERT_EQUAL_STRING("[true,null,{},\"0x616263\",\"abc\",\"0xa\"]", jdata);
   free(jdata);
 }
+
+static void test_utils() {
+  TEST_ASSERT_EQUAL(1, IS_APPROX(5, 4, 1));
+  TEST_ASSERT_EQUAL(0, bytes_to_int(NULL, 0));
+  uint8_t mem[20] = {0};
+  TEST_ASSERT_TRUE(memiszero(mem, 20));
+}
+
 /*
  * Main
  */
@@ -143,5 +151,6 @@ int main() {
   RUN_TEST(test_bytes);
   RUN_TEST(test_json);
   RUN_TEST(test_str_replace);
+  RUN_TEST(test_utils);
   return TESTS_END();
 }

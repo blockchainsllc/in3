@@ -246,7 +246,7 @@ char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep) {
   size_t l = strlen(orig);
   if (pos > l) return NULL;
 
-  char* tmp = _malloc(l + len + 1);
+  char* tmp = _malloc(l - len + strlen(rep) + 1);
   if (tmp) {
     strncpy(tmp, orig, pos);
     tmp[pos] = '\0';

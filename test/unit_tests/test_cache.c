@@ -50,6 +50,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define CONTRACT_ADDRS "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+#define REGISTRY_ID "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb"
+#define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
+
 static in3_ret_t test_transport(in3_request_t* req) {
   char* buffer = NULL;
   long  length;
@@ -106,17 +110,21 @@ static void cache_set_item(void* cptr, char* key, bytes_t* value) {
   memcpy(cache->values[i].data, value->data, value->len);
 }
 
-static void test_cache() {
-
-  in3_register_eth_nano();
-  cache_t* cache = calloc(1, sizeof(cache_t));
-
-  in3_t* c           = in3_for_chain(0x1);
-  c->transport       = test_transport;
+void static setup_test_cache(in3_t* c) {
+  cache_t* cache     = calloc(1, sizeof(cache_t));
   c->cache           = _malloc(sizeof(in3_storage_handler_t));
   c->cache->cptr     = cache;
   c->cache->get_item = cache_get_item;
   c->cache->set_item = cache_set_item;
+}
+
+static void test_cache() {
+
+  in3_register_eth_nano();
+
+  in3_t* c     = in3_for_chain(0x1);
+  c->transport = test_transport;
+  setup_test_cache(c);
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chains_length; i++) {
@@ -136,7 +144,7 @@ static void test_cache() {
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(5, chain->nodelist_length);
   // ..and the cache one entry
-  TEST_ASSERT_TRUE(*cache->keys != NULL);
+  TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
 
   // create a second client...
   in3_t* c2     = in3_for_chain(0);
@@ -167,14 +175,9 @@ static void test_newchain() {
   in3_register_eth_nano();
   in3_set_default_transport(test_transport);
 
-  cache_t* cache = _calloc(1, sizeof(cache_t));
-
-  in3_t* c           = in3_for_chain(0);
-  c->chain_id        = 0x8;
-  c->cache           = _malloc(sizeof(in3_storage_handler_t));
-  c->cache->cptr     = cache;
-  c->cache->get_item = cache_get_item;
-  c->cache->set_item = cache_set_item;
+  in3_t* c    = in3_for_chain(0);
+  c->chain_id = 0x8;
+  setup_test_cache(c);
 
   in3_set_default_storage(c->cache);
 
@@ -185,10 +188,10 @@ static void test_newchain() {
 
   TEST_ASSERT_TRUE(chain == NULL);
   address_t contract;
-  hex_to_bytes("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract, 20);
+  hex_to_bytes(CONTRACT_ADDRS, -1, contract, 20);
   bytes32_t registry_id;
-  hex_to_bytes("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", -1, registry_id, 32);
-  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2,NULL);
+  hex_to_bytes(REGISTRY_ID, -1, registry_id, 32);
+  in3_client_register_chain(c, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
   in3_client_add_node(c, 0x8, "http://test.com", 0xFF, contract);
 
   for (int i = 0; i < c->chains_length; i++) {
@@ -208,13 +211,13 @@ static void test_newchain() {
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(5, chain->nodelist_length);
   // ..and the cache one entry
-  TEST_ASSERT_TRUE(*cache->keys != NULL);
+  TEST_ASSERT_TRUE(*((cache_t*) c->cache->cptr)->keys != NULL);
 
   // create a second client...
   in3_t* c2    = in3_for_chain(0);
   c2->chain_id = c->chain_id;
   c2->cache    = c->cache;
-  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2,NULL);
+  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, NULL);
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chains_length; i++) {
     if (c2->chains[i].chain_id == c2->chain_id) chain2 = &c2->chains[i];
@@ -232,7 +235,7 @@ static void test_newchain() {
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
 }
 
-void test_scache() {
+static void test_scache() {
   char*          key   = "123";
   char*          value = "45678";
   bytes_t        k     = bytes((uint8_t*) key, 3);
@@ -244,6 +247,46 @@ void test_scache() {
   val = in3_cache_get_entry(cache, &v);
   TEST_ASSERT_NULL(val);
 }
+
+static void test_whitelist_cache() {
+  address_t contract;
+  hex_to_bytes(CONTRACT_ADDRS, -1, contract, 20);
+  bytes32_t registry_id;
+  hex_to_bytes(REGISTRY_ID, -1, registry_id, 32);
+
+  in3_t* c    = in3_for_chain(0);
+  c->chain_id = 0x8;
+  setup_test_cache(c);
+  in3_set_default_storage(c->cache);
+  TEST_ASSERT_EQUAL(IN3_OK,
+                    in3_configure(c, "{"
+                                     "  \"nodes\": {"
+                                     "    \"0x8\": {"
+                                     "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                     "      \"registryId\":\"" REGISTRY_ID "\","
+                                     "      \"whiteList\": [\"0x1234567890123456789012345678901234567890\", \"0x1234567890123456789000000000000000000000\"],"
+                                     "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
+                                     "    }"
+                                     "  }"
+                                     "}"));
+  address_t wlc;
+  hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, wlc, 20);
+  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->whitelist->contract, wlc, 20);
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  TEST_ASSERT_EQUAL(IN3_OK, in3_cache_store_whitelist(ctx, in3_find_chain(c, 0x8)));
+
+  in3_t* c2    = in3_for_chain(0);
+  c2->chain_id = c->chain_id;
+  c2->cache    = c->cache;
+  in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, wlc);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_cache_update_whitelist(c2, in3_find_chain(c2, 0x8)));
+  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c2, 0x8)->whitelist->contract, wlc, 20);
+  TEST_ASSERT_TRUE(b_cmp(&in3_find_chain(c, 0x8)->whitelist->addresses, &in3_find_chain(c2, 0x8)->whitelist->addresses));
+  in3_free(c2);
+  ctx_free(ctx);
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -261,5 +304,6 @@ int main() {
   RUN_TEST(test_scache);
   RUN_TEST(test_cache);
   RUN_TEST(test_newchain);
+  RUN_TEST(test_whitelist_cache);
   return TESTS_END();
 }
