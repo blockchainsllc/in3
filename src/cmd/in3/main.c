@@ -556,6 +556,7 @@ int main(int argc, char* argv[]) {
   in3_storage_handler_t storage_handler;
   storage_handler.get_item = storage_get_item;
   storage_handler.set_item = storage_set_item;
+  storage_handler.clear    = storage_clear;
 
   // we want to verify all
   in3_register_eth_full();
@@ -609,6 +610,8 @@ int main(int argc, char* argv[]) {
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
+    else if (strcmp(argv[i], "-ccache") == 0) // clear cache
+      c->cache->clear(c->cache->cptr);
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) { // data
       char* d = argv[++i];
       if (strcmp(d, "-") == 0)
