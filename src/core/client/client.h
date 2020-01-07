@@ -250,13 +250,21 @@ typedef void (*in3_storage_set_item)(
     bytes_t* value /**< the value to store.*/
 );
 
+/**
+ * storage handler function for clearing the cache.
+ **/
+typedef void (*in3_storage_clear)(
+    void* cptr /**< a custom pointer as set in the storage handler*/
+);
+
 /** 
  * storage handler to handle cache.
  **/
 typedef struct in3_storage_handler {
   in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
   in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
-  void*                cptr;     /**< custom pointer which will will be passed to functions */
+  in3_storage_clear    clear;    /**< function pointer clearing all contents of cache.*/
+  void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
 #define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
@@ -644,9 +652,10 @@ in3_signer_t* in3_create_signer(
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
-in3_storage_handler_t* in3_create_storeage_handler(
+in3_storage_handler_t* in3_create_storage_handler(
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 );
 #endif

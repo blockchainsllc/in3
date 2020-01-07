@@ -110,7 +110,7 @@ void test_exec_req() {
  */
 int main() {
   _free(in3_create_signer(NULL, NULL, NULL));
-  _free(in3_create_storeage_handler(NULL, NULL, NULL));
+  _free(in3_create_storage_handler(NULL, NULL, NULL, NULL));
 
   TESTS_BEGIN();
   RUN_TEST(test_configure_request);
