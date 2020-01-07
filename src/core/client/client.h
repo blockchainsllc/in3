@@ -470,6 +470,7 @@ typedef struct in3_t_ {
  * in3_storage_handler_t storage_handler;
  * storage_handler.get_item = storage_get_item;
  * storage_handler.set_item = storage_set_item;
+ * storage_handler.clear = storage_clear;
  *
  * // configure transport
  * client->transport    = send_curl;
@@ -507,6 +508,7 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * in3_storage_handler_t storage_handler;
  * storage_handler.get_item = storage_get_item;
  * storage_handler.set_item = storage_set_item;
+ * storage_handler.clear = storage_clear;
  *
  * // configure transport
  * client->transport    = send_curl;
@@ -655,7 +657,7 @@ in3_signer_t* in3_create_signer(
 in3_storage_handler_t* in3_create_storage_handler(
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
-    in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
+    in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 );
 #endif
