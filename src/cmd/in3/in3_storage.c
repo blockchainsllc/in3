@@ -167,4 +167,8 @@ finish:
 void storage_clear(void* cptr) {
   UNUSED_VAR(cptr);
   rm_recurs(get_storage_dir());
+  // recreate storage dir
+  free(_HOME_DIR);
+  _HOME_DIR = NULL;
+  UNUSED_VAR(get_storage_dir());
 }
