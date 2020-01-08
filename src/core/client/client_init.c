@@ -429,50 +429,70 @@ char* in3_configure(in3_t* c, char* config) {
 
   if (!cnf || !cnf->result) return config_err("in3_configure", "parse error");
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
-    if (iter.token->key == key("autoUpdateList"))
-      c->auto_update_list = d_int(iter.token) ? true : false;
-    else if (iter.token->key == key("chainId"))
-      c->chain_id = chain_id(iter.token);
-    else if (iter.token->key == key("signatureCount"))
-      c->signature_count = (uint8_t) d_int(iter.token);
-    else if (iter.token->key == key("finality"))
-      c->finality = (uint_fast16_t) d_int(iter.token);
-    else if (iter.token->key == key("includeCode"))
-      c->include_code = d_int(iter.token) ? true : false;
-    else if (iter.token->key == key("maxAttempts"))
-      c->max_attempts = d_int(iter.token);
-    else if (iter.token->key == key("keepIn3"))
-      c->keep_in3 = d_int(iter.token);
-    else if (iter.token->key == key("maxBlockCache"))
-      c->max_block_cache = d_int(iter.token);
-    else if (iter.token->key == key("maxCodeCache"))
-      c->max_code_cache = d_int(iter.token);
-    else if (iter.token->key == key("minDeposit"))
-      c->min_deposit = d_long(iter.token);
-    else if (iter.token->key == key("nodeLimit"))
-      c->node_limit = (uint16_t) d_int(iter.token);
-    else if (iter.token->key == key("proof"))
-      c->proof = strcmp(d_string(iter.token), "full") == 0
+    d_token_t* token = iter.token;
+    if (token->key == key("autoUpdateList")) {
+      EXPECT_CONFIG_BOOL(token);
+      c->auto_update_list = d_int(token) ? true : false;
+    } else if (token->key == key("chainId")) {
+      EXPECT_CONFIG(token, (d_type(token) == T_INTEGER && d_int(token) >= 0) || d_type(token) == T_STRING, "expected uint or string value");
+      c->chain_id = chain_id(token);
+    } else if (token->key == key("signatureCount")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
+      c->signature_count = (uint8_t) d_int(token);
+    } else if (token->key == key("finality")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+      c->finality = (uint16_t) d_int(token);
+    } else if (token->key == key("includeCode")) {
+      EXPECT_CONFIG_BOOL(token);
+      c->include_code = d_int(token) ? true : false;
+    } else if (token->key == key("maxAttempts")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+      c->max_attempts = d_int(token);
+    } else if (token->key == key("keepIn3")) {
+      EXPECT_CONFIG_BOOL(token);
+      c->keep_in3 = d_int(token);
+    } else if (token->key == key("maxBlockCache")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= INT32_MAX, "expected positive int32 value");
+      c->max_block_cache = d_int(token);
+    } else if (token->key == key("maxCodeCache")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= INT32_MAX, "expected positive int32 value");
+      c->max_code_cache = d_int(token);
+    } else if (token->key == key("minDeposit")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_long(token) >= 0 && d_long(token) <= UINT64_MAX, "expected uint64 value");
+      c->min_deposit = d_long(token);
+    } else if (token->key == key("nodeLimit")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+      c->node_limit = (uint16_t) d_int(token);
+    } else if (token->key == key("proof")) {
+      EXPECT_CONFIG_STR(token);
+      EXPECT_CONFIG(token, strcmp(d_string(token), "full") && strcmp(d_string(token), "standard") && strcmp(d_string(token), "none"), "expected values - full/standard/none");
+      c->proof = strcmp(d_string(token), "full") == 0
                      ? PROOF_FULL
-                     : (strcmp(d_string(iter.token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
-    else if (iter.token->key == key("replaceLatestBlock"))
-      c->replace_latest_block = (uint16_t) d_int(iter.token);
-    else if (iter.token->key == key("requestCount"))
-      c->request_count = (uint8_t) d_int(iter.token);
-    else if (iter.token->key == key("rpc")) {
+                     : (strcmp(d_string(token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
+    } else if (token->key == key("replaceLatestBlock")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+      c->replace_latest_block = (uint16_t) d_int(token);
+    } else if (token->key == key("requestCount")) {
+      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
+      c->request_count = (uint8_t) d_int(token);
+    } else if (token->key == key("rpc")) {
+      EXPECT_CONFIG_STR(token);
       c->proof         = PROOF_NONE;
       c->chain_id      = ETH_CHAIN_ID_LOCAL;
       c->request_count = 1;
       in3_node_t* n    = &in3_find_chain(c, c->chain_id)->nodelist[0];
       if (n->url) _free(n->url);
-      n->url = malloc(d_len(iter.token) + 1);
+      n->url = malloc(d_len(token) + 1);
       if (!n->url) {
         res = IN3_ENOMEM;
         goto cleanup;
       }
-      strcpy(n->url, d_string(iter.token));
-    } else if (iter.token->key == key("servers") || iter.token->key == key("nodes"))
-      for (d_iterator_t ct = d_iter(iter.token); ct.left; d_iter_next(&ct)) {
+      strcpy(n->url, d_string(token));
+    } else if (token->key == key("servers") || token->key == key("nodes")) {
+      EXPECT_CONFIG_ARR(token);
+      for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
+        EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+
         // register chain
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
         in3_chain_t* chain    = in3_find_chain(c, chain_id);
