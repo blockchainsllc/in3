@@ -43,6 +43,13 @@
 #include <string.h>
 #include <time.h>
 
+#define EXPECT(cond, err) \
+  if (!(cond)) return err;
+#define EXPECT_CONFIG(token, cond, err) EXPECT(cond, key_err(d_get_keystr(token->key), err)) // expects keyname to be in scope
+#define EXPECT_CONFIG_BOOL(token) EXPECT_CONFIG(token, d_type(token) == T_BOOLEAN, "expected boolean value")
+#define EXPECT_CONFIG_STR(token) EXPECT_CONFIG(token, d_type(token) == T_STRING, "expected string value")
+#define EXPECT_CONFIG_ARR(token) EXPECT_CONFIG(token, d_type(token) == T_ARRAY, "expected array")
+
 // set the defaults
 static in3_transport_send     default_transport = NULL;
 static in3_storage_handler_t* default_storage   = NULL;
