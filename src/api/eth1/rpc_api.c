@@ -129,10 +129,13 @@ static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** 
   str_range_t r   = d_to_json(d_get_at(params, 0));
   char        old = r.data[r.len];
   r.data[r.len]   = 0;
-  in3_ret_t ret   = in3_configure(ctx->client, r.data);
+  char* ret   = in3_configure(ctx->client, r.data);
   r.data[r.len]   = old;
-  if (ret) return ctx_set_error(ctx, "Invalid config", ret);
-
+  if (ret) { 
+    ctx_set_error(ctx, ret, IN3_ECONFIG);
+    free(ret);
+    return IN3_ECONFIG;
+  }
   RESPONSE_START();
   sb_add_chars(&response[0]->result, "true");
   RESPONSE_END();
