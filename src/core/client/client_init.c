@@ -45,7 +45,7 @@
 
 #define EXPECT(cond, err) \
   if (!(cond)) return err;
-#define EXPECT_CONFIG(token, cond, err) EXPECT(cond, key_err(d_get_keystr(token->key), err)) // expects keyname to be in scope
+#define EXPECT_CONFIG(token, cond, err) EXPECT(cond, config_err(d_get_keystr(token->key), err)) // expects keyname to be in scope
 #define EXPECT_CONFIG_BOOL(token) EXPECT_CONFIG(token, d_type(token) == T_BOOLEAN, "expected boolean value")
 #define EXPECT_CONFIG_STR(token) EXPECT_CONFIG(token, d_type(token) == T_STRING, "expected string value")
 #define EXPECT_CONFIG_ARR(token) EXPECT_CONFIG(token, d_type(token) == T_ARRAY, "expected array")
@@ -413,7 +413,7 @@ static chain_id_t chain_id(d_token_t* t) {
   return d_long(t);
 }
 
-static inline char* key_err(const char* keyname, const char* err) {
+static inline char* config_err(const char* keyname, const char* err) {
   char* s = malloc(strlen(keyname) + strlen(err) + 4);
   if (s)
     sprintf(s, "%s: %s!", keyname, err);
@@ -427,7 +427,7 @@ char* in3_configure(in3_t* c, char* config) {
   d_track_keynames(0);
   in3_ret_t res = IN3_OK;
 
-  if (!cnf || !cnf->result) return IN3_EINVAL;
+  if (!cnf || !cnf->result) return config_err("in3_configure", "parse error");
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
     if (iter.token->key == key("autoUpdateList"))
       c->auto_update_list = d_int(iter.token) ? true : false;
@@ -538,6 +538,9 @@ char* in3_configure(in3_t* c, char* config) {
         }
         in3_client_run_chain_whitelisting(chain);
       }
+    } else {
+      return config_err(d_get_keystr(token->key), "unsupported config option!");
+    }
   }
 
 cleanup:
