@@ -413,6 +413,13 @@ static chain_id_t chain_id(d_token_t* t) {
   return d_long(t);
 }
 
+static inline char* key_err(const char* keyname, const char* err) {
+  char* s = malloc(strlen(keyname) + strlen(err) + 4);
+  if (s)
+    sprintf(s, "%s: %s!", keyname, err);
+  return s;
+}
+
 char* in3_configure(in3_t* c, char* config) {
   d_track_keynames(1);
   d_clear_keynames();
