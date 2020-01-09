@@ -497,7 +497,7 @@ char* in3_configure(in3_t* c, char* config) {
     } else if (token->key == key("servers") || token->key == key("nodes")) {
       EXPECT_CONFIG_ARR(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
-        EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+        EXPECT_CONFIG(ct.token, d_type(ct.token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
 
         // register chain
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
