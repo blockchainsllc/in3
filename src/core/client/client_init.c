@@ -408,7 +408,9 @@ static chain_id_t chain_id(d_token_t* t) {
     if (!strcmp(c, "mainnet")) return 1;
     if (!strcmp(c, "kovan")) return 0x2a;
     if (!strcmp(c, "goerli")) return 0x5;
-    return 1;
+    // 0 is allowed (as chain_id for local chain) if t is T_INT,
+    // but for T_STRING it's an error
+    return 0;
   }
   return d_long(t);
 }
