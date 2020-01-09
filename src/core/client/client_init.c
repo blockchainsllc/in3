@@ -431,7 +431,7 @@ char* in3_configure(in3_t* c, char* config) {
   d_clear_keynames();
   json_ctx_t* cnf = parse_json(config);
   d_track_keynames(0);
-  in3_ret_t res = IN3_OK;
+  char* res = NULL;
 
   if (!cnf || !cnf->result) return config_err("in3_configure", "parse error");
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
@@ -490,7 +490,7 @@ char* in3_configure(in3_t* c, char* config) {
       if (n->url) _free(n->url);
       n->url = malloc(d_len(token) + 1);
       if (!n->url) {
-        res = IN3_ENOMEM;
+        res = config_err("in3_configure", "OOM");
         goto cleanup;
       }
       strcpy(n->url, d_string(token));
@@ -507,10 +507,13 @@ char* in3_configure(in3_t* c, char* config) {
           bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
           bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
           if (!contract || !registry_id) {
-            res = IN3_EINVAL;
+            res = config_err("in3_configure", "invalid contract/registry");
             goto cleanup;
           }
-          if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) != IN3_OK) goto cleanup;
+          if ((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) != IN3_OK) {
+            res = config_err("in3_configure", "register chain failed");
+            goto cleanup;
+          }
           chain = in3_find_chain(c, chain_id);
           assert(chain != NULL);
         }
@@ -521,7 +524,7 @@ char* in3_configure(in3_t* c, char* config) {
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
           else if (cp.token->key == key("whiteListContract")) {
             if (d_type(cp.token) != T_BYTES || d_len(cp.token) != 20) {
-              res = IN3_EINVAL;
+              res = config_err("in3_configure", "");
               goto cleanup;
             }
 
@@ -535,7 +538,7 @@ char* in3_configure(in3_t* c, char* config) {
             }
           } else if (cp.token->key == key("whiteList")) {
             if (d_type(cp.token) != T_ARRAY) {
-              res = IN3_EINVAL;
+              res = config_err("in3_configure", "");
               goto cleanup;
             }
             int len = d_len(cp.token), i = 0;
@@ -547,7 +550,7 @@ char* in3_configure(in3_t* c, char* config) {
           } else if (cp.token->key == key("registryId")) {
             bytes_t data = d_to_bytes(cp.token);
             if (data.len != 32 || !data.data) {
-              res = IN3_EINVAL;
+              res = config_err("in3_configure", "parse error");
               goto cleanup;
             } else
               memcpy(chain->registry_id, data.data, 32);
@@ -556,20 +559,24 @@ char* in3_configure(in3_t* c, char* config) {
           else if (cp.token->key == key("nodeList")) {
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
-              if ((res = in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
-                                             d_get_longkd(n.token, key("props"), 65535),
-                                             d_get_byteskl(n.token, key("address"), 20)->data)) != IN3_OK) goto cleanup;
+              if ((in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
+                                       d_get_longkd(n.token, key("props"), 65535),
+                                       d_get_byteskl(n.token, key("address"), 20)->data)) != IN3_OK) {
+                res = config_err("in3_configure", "parse error");
+                goto cleanup;
+              }
             }
           }
         }
         in3_client_run_chain_whitelisting(chain);
       }
     } else {
-      return config_err(d_get_keystr(token->key), "unsupported config option!");
+      res = config_err(d_get_keystr(token->key), "unsupported config option!");
+      goto cleanup;
     }
   }
 
 cleanup:
   json_free(cnf);
-  return NULL;
+  return res;
 }
