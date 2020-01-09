@@ -114,11 +114,13 @@ static void test_configure_validation() {
   in3_t* c = in3_for_chain(0);
 
   TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
+
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":1}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"autoUpdateList\":true}");
   TEST_ASSERT_EQUAL(c->auto_update_list, true);
+
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"-1\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0\"}", "expected uint32 or string");
@@ -132,6 +134,87 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL(c->chain_id, 4294967295U);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0xffffffff\"}"); // UINT32_MAX
   TEST_ASSERT_EQUAL(c->chain_id, 0xffffffff);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"-1\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"0x1234\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"value\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":256}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"signatureCount\":0}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"signatureCount\":255}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"signatureCount\":\"0xff\"}");
+  TEST_ASSERT_EQUAL(c->signature_count, 255);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":\"-1\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":\"0x123412341234\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":\"value\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":65536}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":0}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":65535}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":\"0xffff\"}");
+  TEST_ASSERT_EQUAL(c->finality, 65535);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: includeCode", c, "{\"includeCode\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: includeCode", c, "{\"includeCode\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: includeCode", c, "{\"includeCode\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"includeCode\":true}");
+  TEST_ASSERT_EQUAL(c->include_code, true);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"-1\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"0x123412341234\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"value\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":65536}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":0}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":65535}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxAttempts\":\"0xffff\"}");
+  TEST_ASSERT_EQUAL(c->max_attempts, 65535);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: keepIn3", c, "{\"keepIn3\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: keepIn3", c, "{\"keepIn3\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: keepIn3", c, "{\"keepIn3\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"keepIn3\":true}");
+  TEST_ASSERT_EQUAL(c->keep_in3, true);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"-1\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":false}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0x1203030230\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":1}");
+  TEST_ASSERT_EQUAL(c->max_block_cache, 1);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":0}");
+  TEST_ASSERT_EQUAL(c->max_block_cache, 0);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":4294967295}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->max_block_cache, 4294967295U);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxBlockCache\":\"0xffffffff\"}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->max_block_cache, 0xffffffff);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"-1\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"0\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":false}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxCodeCache", c, "{\"maxCodeCache\":\"0x1203030230\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":1}");
+  TEST_ASSERT_EQUAL(c->max_code_cache, 1);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":0}");
+  TEST_ASSERT_EQUAL(c->max_code_cache, 0);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":4294967295}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->max_code_cache, 4294967295U);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":\"0xffffffff\"}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->max_code_cache, 0xffffffff);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"-1\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"0\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":false}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"0x01234567890123456789\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":1}");
+  TEST_ASSERT_EQUAL(c->min_deposit, 1);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":0}");
+  TEST_ASSERT_EQUAL(c->min_deposit, 0);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":18446744073709551615}"); // UINT64_MAX
+  TEST_ASSERT_EQUAL(c->min_deposit, 18446744073709551615ULL);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":\"0xffffffff\"}"); // UINT64_MAX
+  TEST_ASSERT_EQUAL(c->min_deposit, 0xffffffffffffffff);
 
   in3_free(c);
 }
