@@ -53,6 +53,10 @@
 #define EXPECT_CONFIG_BOOL(token) EXPECT_CONFIG(token, d_type(token) == T_BOOLEAN, "expected boolean value")
 #define EXPECT_CONFIG_STR(token) EXPECT_CONFIG(token, d_type(token) == T_STRING, "expected string value")
 #define EXPECT_CONFIG_ARR(token) EXPECT_CONFIG(token, d_type(token) == T_ARRAY, "expected array")
+#define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT64_MAX)
+#define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
+#define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
+#define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
 
 // set the defaults
 static in3_transport_send     default_transport = NULL;
@@ -426,10 +430,6 @@ static inline char* config_err(const char* keyname, const char* err) {
   return s;
 }
 
-static inline bool is_uint32(d_token_t* token) {
-  return ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX);
-}
-
 char* in3_configure(in3_t* c, char* config) {
   d_track_keynames(1);
   d_clear_keynames();
@@ -444,34 +444,34 @@ char* in3_configure(in3_t* c, char* config) {
       EXPECT_CONFIG_BOOL(token);
       c->auto_update_list = d_int(token) ? true : false;
     } else if (token->key == key("chainId")) {
-      EXPECT_CONFIG(token, is_uint32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
+      EXPECT_CONFIG(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
       c->chain_id = chain_id(token);
     } else if (token->key == key("signatureCount")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
+      EXPECT_CONFIG(token, IS_D_UINT8(token), "expected uint8 value");
       c->signature_count = (uint8_t) d_int(token);
     } else if (token->key == key("finality")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+      EXPECT_CONFIG(token, IS_D_UINT16(token), "expected uint16 value");
       c->finality = (uint16_t) d_int(token);
     } else if (token->key == key("includeCode")) {
       EXPECT_CONFIG_BOOL(token);
       c->include_code = d_int(token) ? true : false;
     } else if (token->key == key("maxAttempts")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+      EXPECT_CONFIG(token, IS_D_UINT16(token), "expected uint16 value");
       c->max_attempts = d_int(token);
     } else if (token->key == key("keepIn3")) {
       EXPECT_CONFIG_BOOL(token);
-      c->keep_in3 = d_int(token);
+      c->keep_in3 = d_int(token) ? true : false;
     } else if (token->key == key("maxBlockCache")) {
-      EXPECT_CONFIG(token, is_uint32(token), "expected uint32 value");
+      EXPECT_CONFIG(token, IS_D_UINT32(token), "expected uint32 value");
       c->max_block_cache = d_long(token);
     } else if (token->key == key("maxCodeCache")) {
-      EXPECT_CONFIG(token, is_uint32(token), "expected uint32 value");
+      EXPECT_CONFIG(token, IS_D_UINT32(token), "expected uint32 value");
       c->max_code_cache = d_long(token);
     } else if (token->key == key("minDeposit")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_long(token) >= 0 && d_long(token) <= UINT64_MAX, "expected uint64 value");
+      EXPECT_CONFIG(token, IS_D_UINT64(token), "expected uint64 value");
       c->min_deposit = d_long(token);
     } else if (token->key == key("nodeLimit")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+      EXPECT_CONFIG(token, IS_D_UINT16(token), "expected uint16 value");
       c->node_limit = (uint16_t) d_int(token);
     } else if (token->key == key("proof")) {
       EXPECT_CONFIG_STR(token);
