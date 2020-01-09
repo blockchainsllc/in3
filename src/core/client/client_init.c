@@ -422,6 +422,10 @@ static inline char* config_err(const char* keyname, const char* err) {
   return s;
 }
 
+static inline bool is_uint32(d_token_t* token) {
+  return ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX);
+}
+
 char* in3_configure(in3_t* c, char* config) {
   d_track_keynames(1);
   d_clear_keynames();
@@ -436,7 +440,7 @@ char* in3_configure(in3_t* c, char* config) {
       EXPECT_CONFIG_BOOL(token);
       c->auto_update_list = d_int(token) ? true : false;
     } else if (token->key == key("chainId")) {
-      EXPECT_CONFIG(token, (d_type(token) == T_INTEGER && d_int(token) >= 0) || d_type(token) == T_STRING, "expected uint or string value");
+      EXPECT_CONFIG(token, is_uint32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
       c->chain_id = chain_id(token);
     } else if (token->key == key("signatureCount")) {
       EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
@@ -454,11 +458,11 @@ char* in3_configure(in3_t* c, char* config) {
       EXPECT_CONFIG_BOOL(token);
       c->keep_in3 = d_int(token);
     } else if (token->key == key("maxBlockCache")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= INT32_MAX, "expected positive int32 value");
-      c->max_block_cache = d_int(token);
+      EXPECT_CONFIG(token, is_uint32(token), "expected uint32 value");
+      c->max_block_cache = d_long(token);
     } else if (token->key == key("maxCodeCache")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= INT32_MAX, "expected positive int32 value");
-      c->max_code_cache = d_int(token);
+      EXPECT_CONFIG(token, is_uint32(token), "expected uint32 value");
+      c->max_code_cache = d_long(token);
     } else if (token->key == key("minDeposit")) {
       EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_long(token) >= 0 && d_long(token) <= UINT64_MAX, "expected uint64 value");
       c->min_deposit = d_long(token);
