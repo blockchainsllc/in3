@@ -848,5 +848,3 @@ github_body_release:
     - cat in3-arm7/arm7_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - cat in3-win/win_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c -b "$(cat release_ipfs_hash.txt)" $CI_COMMIT_TAG release_ipfs_hash.txt
-
-
