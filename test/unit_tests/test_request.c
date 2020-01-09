@@ -52,6 +52,16 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define TEST_ASSERT_CONFIGURE_FAIL(desc, in3, config, err_slice) \
+  do {                                                           \
+    char* _err_ = in3_configure(in3, config);                    \
+    TEST_ASSERT_NOT_NULL(str_find(_err_, err_slice));            \
+    free(_err_);                                                 \
+  } while (0)
+
+#define TEST_ASSERT_CONFIGURE_PASS(in3, config) \
+  TEST_ASSERT_NULL(in3_configure(in3, config))
+
 static void test_configure_request() {
   in3_t* c                = in3_for_chain(0);
   c->proof                = PROOF_FULL;
@@ -99,6 +109,33 @@ static void test_exec_req() {
 
   in3_free(c);
 }
+
+static void test_configure_validation() {
+  in3_t* c = in3_for_chain(0);
+
+  TEST_ASSERT_CONFIGURE_FAIL("invalid JSON in config", c, "{\"\"}", "parse error");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"autoUpdateList\":true}");
+  TEST_ASSERT_EQUAL(c->auto_update_list, true);
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"-1\"}", "expected uint32 or string");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"\"}", "expected uint32 or string");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0\"}", "expected uint32 or string");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":false}", "expected uint32 or string");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0x1203030230\"}", "expected uint32 or string");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"mainnet\"}");
+  TEST_ASSERT_EQUAL(c->chain_id, 1);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":0}");
+  TEST_ASSERT_EQUAL(c->chain_id, 0);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":4294967295}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->chain_id, 4294967295U);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0xffffffff\"}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->chain_id, 0xffffffff);
+
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -113,5 +150,6 @@ int main() {
   TESTS_BEGIN();
   RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);
+  RUN_TEST(test_configure_validation);
   return TESTS_END();
 }
