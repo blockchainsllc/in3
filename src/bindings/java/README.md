@@ -32,9 +32,9 @@ After which, install in3 with ```mvn install ```.
 For building the shared library you need to enable java by using the `-DJAVA=true` flag:
 
 ```sh
-git clone git@github.com:slockit/in3-core.git
-mkdir -p in3-core/build
-cd in3-core/build
+git clone git@github.com:slockit/in3-c.git
+mkdir -p in3-c/build
+cd in3-c/build
 cmake -DJAVA=true .. && make
 ```
 
@@ -66,25 +66,25 @@ foreach(module
   third-party/crypto 
   third-party/tommath 
   api/eth1)
-        file(MAKE_DIRECTORY in3-core/src/${module}/outputs)
-        add_subdirectory( in3-core/src/${module} in3-core/src/${module}/outputs )
+        file(MAKE_DIRECTORY in3-c/src/${module}/outputs)
+        add_subdirectory( in3-c/src/${module} in3-c/src/${module}/outputs )
 endforeach()
 
 ```
 
-Step 2: clone [in3-core](https://github.com/slockit/in3-c.git) into the `app`-folder or use this script to clone and update in3:
+Step 2: clone [in3-c](https://github.com/slockit/in3-c.git) into the `app`-folder or use this script to clone and update in3:
 
 ```sh
 #!/usr/bin/env sh
 
-#github-url for in3-core
+#github-url for in3-c
 IN3_SRC=https://github.com/slockit/in3-c.git
 
 cd app
 
 # if it exists we only call git pull
-if [ -d in3-core ]; then
-    cd in3-core
+if [ -d in3-c ]; then
+    cd in3-c
     git pull
     cd ..
 else
@@ -94,7 +94,7 @@ fi
 
 
 # copy the java-sources to the main java path
-cp -r in3-core/src/bindings/java/in3 src/main/java/
+cp -r in3-c/src/bindings/java/in3 src/main/java/
 # but not the native libs, since these will be build
 rm -rf src/main/java/in3/native
 ```

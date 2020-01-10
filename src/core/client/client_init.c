@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "../util/data.h"
+#include "../util/debug.h"
 #include "../util/log.h"
 #include "../util/mem.h"
 #include "cache.h"
