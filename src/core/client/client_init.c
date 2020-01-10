@@ -410,7 +410,7 @@ static chain_id_t chain_id(d_token_t* t) {
 in3_ret_t in3_configure(in3_t* c, const char* config) {
   d_track_keynames(1);
   d_clear_keynames();
-  json_ctx_t* cnf = parse_json(config);
+  json_ctx_t* cnf = parse_json((char*) config);
   d_track_keynames(0);
   in3_ret_t res = IN3_OK;
 
