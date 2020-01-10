@@ -53,6 +53,7 @@
 #define EXPECT_CONFIG_BOOL(token) EXPECT_CONFIG(token, d_type(token) == T_BOOLEAN, "expected boolean value")
 #define EXPECT_CONFIG_STR(token) EXPECT_CONFIG(token, d_type(token) == T_STRING, "expected string value")
 #define EXPECT_CONFIG_ARR(token) EXPECT_CONFIG(token, d_type(token) == T_ARRAY, "expected array")
+#define EXPECT_CONFIG_OBJ(token) EXPECT_CONFIG(token, d_type(token) == T_OBJECT, "expected object")
 #define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT64_MAX)
 #define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
 #define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
@@ -501,9 +502,9 @@ char* in3_configure(in3_t* c, char* config) {
       }
       strcpy(n->url, d_string(token));
     } else if (token->key == key("servers") || token->key == key("nodes")) {
-      EXPECT_CONFIG_ARR(token);
+      EXPECT_CONFIG_OBJ(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
-        EXPECT_CONFIG(ct.token, d_type(ct.token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX, "expected uint16 value");
+        EXPECT_CONFIG_OBJ(ct.token);
 
         // register chain
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
