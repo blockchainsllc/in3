@@ -238,29 +238,6 @@ static void test_in3_client_chain() {
   in3_free(c);
 }
 
-static void test_in3_client_configure() {
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
-
-  // proof
-  in3_configure(c, "{\"proof\":\"standard\"}");
-  TEST_ASSERT_EQUAL(PROOF_STANDARD, c->proof);
-
-  // rpc
-  in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
-  TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
-  TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chain_id);
-  TEST_ASSERT_EQUAL(1, c->request_count);
-  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist->url);
-
-  // missing registryId and contract
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
-
-  // bad registryId
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}"));
-
-  in3_free(c);
-}
-
 static void test_in3_client_context() {
   in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
   in3_ctx_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
@@ -317,7 +294,6 @@ int main() {
   RUN_TEST(test_in3_config);
   RUN_TEST(test_in3_client_rpc);
   RUN_TEST(test_in3_client_chain);
-  RUN_TEST(test_in3_client_configure);
   RUN_TEST(test_in3_client_context);
   return TESTS_END();
 }

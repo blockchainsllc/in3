@@ -110,6 +110,29 @@ static void test_exec_req() {
   in3_free(c);
 }
 
+static void test_configure() {
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
+
+  // proof
+  in3_configure(c, "{\"proof\":\"standard\"}");
+  TEST_ASSERT_EQUAL(PROOF_STANDARD, c->proof);
+
+  // rpc
+  in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
+  TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
+  TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chain_id);
+  TEST_ASSERT_EQUAL(1, c->request_count);
+  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist->url);
+
+  // missing registryId and contract
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
+
+  // bad registryId
+  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}"));
+
+  in3_free(c);
+}
+
 static void test_configure_validation() {
   in3_t* c = in3_for_chain(0);
 
@@ -235,6 +258,7 @@ int main() {
   TESTS_BEGIN();
   RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);
+  RUN_TEST(test_configure);
   RUN_TEST(test_configure_validation);
   return TESTS_END();
 }
