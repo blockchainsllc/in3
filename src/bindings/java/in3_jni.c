@@ -69,6 +69,14 @@ JNIEXPORT void JNICALL Java_in3_IN3_setCacheTimeout(JNIEnv* env, jobject ob, jin
 
 /*
  * Class:     in3_IN3
+ * Method:    setConfig
+ * Signature: (Ljava/lang/String)V
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring val) {
+  in3_configure(get_in3(env, ob), (*env)->GetStringUTFChars(env, val, 0));
+}
+/*
+ * Class:     in3_IN3
  * Method:    getNodeLimit
  * Signature: ()I
  */
@@ -714,7 +722,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclas
   int         data_l = strlen(data) / 2 - 1;
   uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
 
-  hex_to_bytes((char*) key + 2, 32, key_bytes, 32);
+  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
   data_l      = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
   jstring res = NULL;
 
@@ -743,11 +751,12 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
   return NULL;
 }
 
-in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t jsign(in3_ctx_t* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   UNUSED_VAR(type);
-  jclass    cls    = (*jni)->GetObjectClass(jni, (jobject) pk);
+  jclass    cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
   jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/Signer;");
-  jobject   signer = (*jni)->CallObjectMethod(jni, (jobject) pk, mid);
+  jobject   signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
+
   if (!signer) return -1;
 
   char *data = alloca(message.len * 2 + 3), address[43];
