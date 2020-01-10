@@ -60,6 +60,7 @@
 #define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
 #define EXPECT_CONFIG_U16(token) EXPECT_CONFIG(token, IS_D_UINT16(token), "expected uint16 value")
 #define EXPECT_CONFIG_U32(token) EXPECT_CONFIG(token, IS_D_UINT32(token), "expected uint32 value")
+#define EXPECT_CONFIG_KEY_HEXSTR(token) EXPECT_CONFIG(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
 static in3_transport_send     default_transport = NULL;
@@ -433,6 +434,12 @@ static inline char* config_err(const char* keyname, const char* err) {
   return s;
 }
 
+static inline bool is_hex_str(const char* str) {
+  if (str[0] == '0' && str[1] == 'x')
+    str += 2;
+  return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
+}
+
 char* in3_configure(in3_t* c, char* config) {
   d_track_keynames(1);
   d_clear_keynames();
@@ -505,6 +512,7 @@ char* in3_configure(in3_t* c, char* config) {
       EXPECT_CONFIG_OBJ(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
         EXPECT_CONFIG_OBJ(ct.token);
+        EXPECT_CONFIG_KEY_HEXSTR(ct.token);
 
         // register chain
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
