@@ -49,18 +49,19 @@
       (exit);              \
   } while (0)
 
-#define EXPECT_CONFIG(token, cond, err) EXPECT(cond, { res = config_err(d_get_keystr(token->key), err); goto cleanup; })
-#define EXPECT_CONFIG_BOOL(token) EXPECT_CONFIG(token, d_type(token) == T_BOOLEAN, "expected boolean value")
-#define EXPECT_CONFIG_STR(token) EXPECT_CONFIG(token, d_type(token) == T_STRING, "expected string value")
-#define EXPECT_CONFIG_ARR(token) EXPECT_CONFIG(token, d_type(token) == T_ARRAY, "expected array")
-#define EXPECT_CONFIG_OBJ(token) EXPECT_CONFIG(token, d_type(token) == T_OBJECT, "expected object")
+#define EXPECT_CFG(cond, err) EXPECT(cond, { res = err; goto cleanup; })
+#define EXPECT_TOK(token, cond, err) EXPECT_CFG(cond, config_err(d_get_keystr(token->key), err))
+#define EXPECT_TOK_BOOL(token) EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
+#define EXPECT_TOK_STR(token) EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
+#define EXPECT_TOK_ARR(token) EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")
+#define EXPECT_TOK_OBJ(token) EXPECT_TOK(token, d_type(token) == T_OBJECT, "expected object")
 #define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT64_MAX)
 #define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
 #define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
 #define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
-#define EXPECT_CONFIG_U16(token) EXPECT_CONFIG(token, IS_D_UINT16(token), "expected uint16 value")
-#define EXPECT_CONFIG_U32(token) EXPECT_CONFIG(token, IS_D_UINT32(token), "expected uint32 value")
-#define EXPECT_CONFIG_KEY_HEXSTR(token) EXPECT_CONFIG(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
+#define EXPECT_TOK_U16(token) EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
+#define EXPECT_TOK_U32(token) EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
+#define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
 static in3_transport_send     default_transport = NULL;
@@ -451,52 +452,52 @@ char* in3_configure(in3_t* c, char* config) {
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
     d_token_t* token = iter.token;
     if (token->key == key("autoUpdateList")) {
-      EXPECT_CONFIG_BOOL(token);
+      EXPECT_TOK_BOOL(token);
       c->auto_update_list = d_int(token) ? true : false;
     } else if (token->key == key("chainId")) {
-      EXPECT_CONFIG(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
+      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
       c->chain_id = chain_id(token);
     } else if (token->key == key("signatureCount")) {
-      EXPECT_CONFIG(token, IS_D_UINT8(token), "expected uint8 value");
+      EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value");
       c->signature_count = (uint8_t) d_int(token);
     } else if (token->key == key("finality")) {
-      EXPECT_CONFIG_U16(token);
+      EXPECT_TOK_U16(token);
       c->finality = (uint16_t) d_int(token);
     } else if (token->key == key("includeCode")) {
-      EXPECT_CONFIG_BOOL(token);
+      EXPECT_TOK_BOOL(token);
       c->include_code = d_int(token) ? true : false;
     } else if (token->key == key("maxAttempts")) {
-      EXPECT_CONFIG_U16(token);
+      EXPECT_TOK_U16(token);
       c->max_attempts = d_int(token);
     } else if (token->key == key("keepIn3")) {
-      EXPECT_CONFIG_BOOL(token);
+      EXPECT_TOK_BOOL(token);
       c->keep_in3 = d_int(token) ? true : false;
     } else if (token->key == key("maxBlockCache")) {
-      EXPECT_CONFIG_U32(token);
+      EXPECT_TOK_U32(token);
       c->max_block_cache = d_long(token);
     } else if (token->key == key("maxCodeCache")) {
-      EXPECT_CONFIG_U32(token);
+      EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
     } else if (token->key == key("minDeposit")) {
-      EXPECT_CONFIG(token, IS_D_UINT64(token), "expected uint64 value");
+      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
       c->min_deposit = d_long(token);
     } else if (token->key == key("nodeLimit")) {
-      EXPECT_CONFIG_U16(token);
+      EXPECT_TOK_U16(token);
       c->node_limit = (uint16_t) d_int(token);
     } else if (token->key == key("proof")) {
-      EXPECT_CONFIG_STR(token);
-      EXPECT_CONFIG(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");
+      EXPECT_TOK_STR(token);
+      EXPECT_TOK(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");
       c->proof = strcmp(d_string(token), "full") == 0
                      ? PROOF_FULL
                      : (strcmp(d_string(token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
     } else if (token->key == key("replaceLatestBlock")) {
-      EXPECT_CONFIG_U16(token);
+      EXPECT_TOK_U16(token);
       c->replace_latest_block = (uint16_t) d_int(token);
     } else if (token->key == key("requestCount")) {
-      EXPECT_CONFIG(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
+      EXPECT_TOK(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
       c->request_count = (uint8_t) d_int(token);
     } else if (token->key == key("rpc")) {
-      EXPECT_CONFIG_STR(token);
+      EXPECT_TOK_STR(token);
       c->proof         = PROOF_NONE;
       c->chain_id      = ETH_CHAIN_ID_LOCAL;
       c->request_count = 1;
@@ -509,10 +510,10 @@ char* in3_configure(in3_t* c, char* config) {
       }
       strcpy(n->url, d_string(token));
     } else if (token->key == key("servers") || token->key == key("nodes")) {
-      EXPECT_CONFIG_OBJ(token);
+      EXPECT_TOK_OBJ(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
-        EXPECT_CONFIG_OBJ(ct.token);
-        EXPECT_CONFIG_KEY_HEXSTR(ct.token);
+        EXPECT_TOK_OBJ(ct.token);
+        EXPECT_TOK_KEY_HEXSTR(ct.token);
 
         // register chain
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
