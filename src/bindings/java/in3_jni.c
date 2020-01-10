@@ -73,7 +73,14 @@ JNIEXPORT void JNICALL Java_in3_IN3_setCacheTimeout(JNIEnv* env, jobject ob, jin
  * Signature: (Ljava/lang/String)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring val) {
-  in3_configure(get_in3(env, ob), (*env)->GetStringUTFChars(env, val, 0));
+  const char* json_config = (*env)->GetStringUTFChars(env, val, 0);
+  in3_ret_t   result      = in3_configure(get_in3(env, ob), json_config);
+  (*env)->ReleaseStringUTFChars(env, val, json_config);
+  if (result < 0) {
+    // TODO create a human readable error message
+    jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
+    (*env)->ThrowNew(env, Exception, "Invalid configuration!");
+  }
 }
 /*
  * Class:     in3_IN3
