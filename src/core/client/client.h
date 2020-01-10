@@ -616,8 +616,8 @@ in3_chain_t* in3_find_chain(
  * 
  */
 in3_ret_t in3_configure(
-    in3_t* c,     /**< the incubed client */
-    char*  config /**< JSON-string with the configuration to set. */
+    in3_t*      c,     /**< the incubed client */
+    const char* config /**< JSON-string with the configuration to set. */
 );
 
 /**

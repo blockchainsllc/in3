@@ -758,7 +758,8 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
   return NULL;
 }
 
-in3_ret_t jsign(in3_ctx_t* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+  in3_ctx_t* ctx = (in3_ctx_t*) pk;
   UNUSED_VAR(type);
   jclass    cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
   jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/Signer;");
