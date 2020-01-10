@@ -258,17 +258,16 @@ static void test_whitelist_cache() {
   c->chain_id = 0x8;
   setup_test_cache(c);
   in3_set_default_storage(c->cache);
-  TEST_ASSERT_EQUAL(IN3_OK,
-                    in3_configure(c, "{"
-                                     "  \"nodes\": {"
-                                     "    \"0x8\": {"
-                                     "      \"contract\":\"" CONTRACT_ADDRS "\","
-                                     "      \"registryId\":\"" REGISTRY_ID "\","
-                                     "      \"whiteList\": [\"0x1234567890123456789012345678901234567890\", \"0x1234567890123456789000000000000000000000\"],"
-                                     "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
-                                     "    }"
-                                     "  }"
-                                     "}"));
+  TEST_ASSERT_NULL(in3_configure(c, "{"
+                                    "  \"nodes\": {"
+                                    "    \"0x8\": {"
+                                    "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                    "      \"registryId\":\"" REGISTRY_ID "\","
+                                    "      \"whiteList\": [\"0x1234567890123456789012345678901234567890\", \"0x1234567890123456789000000000000000000000\"],"
+                                    "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
+                                    "    }"
+                                    "  }"
+                                    "}"));
   address_t wlc;
   hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, wlc, 20);
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->whitelist->contract, wlc, 20);
