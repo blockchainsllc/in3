@@ -496,7 +496,7 @@ void in3_nodelist_clear(in3_chain_t* chain) {
 
 void in3_node_props_set(in3_node_props_t* node_props, in3_node_props_type_t type, uint8_t value) {
   if (type == NODE_PROP_MIN_BLOCK_HEIGHT) {
-    const uint64_t dp_ = value & 0xFFU;
+    const uint64_t dp_ = value;
     *node_props        = (*node_props & 0xFFFFFFFF) | (dp_ << 32U);
   } else {
     (value != 0) ? ((*node_props) |= type) : ((*node_props) &= ~type);
