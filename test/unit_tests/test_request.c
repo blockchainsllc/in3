@@ -125,10 +125,10 @@ static void test_configure() {
   TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist->url);
 
   // missing registryId and contract
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
+  TEST_ASSERT_NOT_NULL(in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
 
   // bad registryId
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}"));
+  TEST_ASSERT_NOT_NULL(in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}"));
 
   in3_free(c);
 }
