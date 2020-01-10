@@ -49,12 +49,19 @@
       (exit);              \
   } while (0)
 
-#define EXPECT_CFG(cond, err) EXPECT(cond, { res = err; goto cleanup; })
-#define EXPECT_TOK(token, cond, err) EXPECT_CFG(cond, config_err(d_get_keystr(token->key), err))
+#define EXPECT_CFG(cond, err) EXPECT(cond, { \
+  res = malloc(strlen(err) + 1);             \
+  strcpy(res, err);                          \
+  goto cleanup;                              \
+})
+#define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
+#define EXPECT_TOK(token, cond, err) EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(token->key), err))
 #define EXPECT_TOK_BOOL(token) EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
 #define EXPECT_TOK_STR(token) EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
 #define EXPECT_TOK_ARR(token) EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")
 #define EXPECT_TOK_OBJ(token) EXPECT_TOK(token, d_type(token) == T_OBJECT, "expected object")
+#define EXPECT_TOK_ADDR(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 20, "expected address")
+#define EXPECT_TOK_B256(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 32, "expected 256 bit data")
 #define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT64_MAX)
 #define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
 #define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
@@ -518,32 +525,26 @@ char* in3_configure(in3_t* c, char* config) {
         // register chain
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
         in3_chain_t* chain    = in3_find_chain(c, chain_id);
-        if (!chain) {
-          bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
-          bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-          bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
-          if (!contract || !registry_id) {
-            res = config_err("in3_configure", "invalid contract/registry");
-            goto cleanup;
-          }
-          if ((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) != IN3_OK) {
-            res = config_err("in3_configure", "register chain failed");
-            goto cleanup;
-          }
-          chain = in3_find_chain(c, chain_id);
-          assert(chain != NULL);
-        }
+        EXPECT_CFG(!chain, "chain with specified chainId already exists");
+
+        bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
+        bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
+        bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+
+        EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
+        EXPECT_CFG((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) != IN3_OK,
+                   "register chain failed");
+
+        chain = in3_find_chain(c, chain_id);
+        EXPECT_CFG(chain != NULL, "invalid chain id!");
 
         // chain_props
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
-          if (cp.token->key == key("contract"))
+          if (cp.token->key == key("contract")) {
+            EXPECT_TOK_ADDR(ct.token);
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
-          else if (cp.token->key == key("whiteListContract")) {
-            if (d_type(cp.token) != T_BYTES || d_len(cp.token) != 20) {
-              res = config_err("in3_configure", "");
-              goto cleanup;
-            }
-
+          } else if (cp.token->key == key("whiteListContract")) {
+            EXPECT_TOK_ADDR(ct.token);
             if (!chain->whitelist) {
               chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
               chain->whitelist->needs_update = true;
@@ -553,42 +554,40 @@ char* in3_configure(in3_t* c, char* config) {
               chain->whitelist->needs_update = true;
             }
           } else if (cp.token->key == key("whiteList")) {
-            if (d_type(cp.token) != T_ARRAY) {
-              res = config_err("in3_configure", "");
-              goto cleanup;
-            }
+            EXPECT_TOK_ARR(cp.token);
             int len = d_len(cp.token), i = 0;
             whitelist_free(chain->whitelist);
             chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
             chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
-            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20)
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
+              EXPECT_TOK_ADDR(n.token);
               d_bytes_to(n.token, chain->whitelist->addresses.data + i, 20);
+            }
           } else if (cp.token->key == key("registryId")) {
+            EXPECT_TOK_B256(cp.token);
             bytes_t data = d_to_bytes(cp.token);
-            if (data.len != 32 || !data.data) {
-              res = config_err("in3_configure", "parse error");
-              goto cleanup;
-            } else
-              memcpy(chain->registry_id, data.data, 32);
-          } else if (cp.token->key == key("needsUpdate"))
+            memcpy(chain->registry_id, data.data, 32);
+          } else if (cp.token->key == key("needsUpdate")) {
+            EXPECT_TOK_BOOL(cp.token);
             chain->needs_update = d_int(cp.token) ? true : false;
-          else if (cp.token->key == key("nodeList")) {
+          } else if (cp.token->key == key("nodeList")) {
+            EXPECT_TOK_ADDR(ct.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
-              if ((in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
-                                       d_get_longkd(n.token, key("props"), 65535),
-                                       d_get_byteskl(n.token, key("address"), 20)->data)) != IN3_OK) {
-                res = config_err("in3_configure", "parse error");
-                goto cleanup;
-              }
+              EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
+              EXPECT_TOK_STR(d_get(n.token, key("url")));
+              EXPECT_TOK_ADDR(d_get(n.token, key("address")));
+              EXPECT_CFG(in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
+                                             d_get_longkd(n.token, key("props"), 65535),
+                                             d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
+                         "add node failed");
             }
           }
         }
         in3_client_run_chain_whitelisting(chain);
       }
     } else {
-      res = config_err(d_get_keystr(token->key), "unsupported config option!");
-      goto cleanup;
+      EXPECT_TOK(token, false, "unsupported config option!");
     }
   }
 
