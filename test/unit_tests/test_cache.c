@@ -151,7 +151,7 @@ static void test_cache() {
   c2->cache     = c->cache;
   c2->transport = test_transport;
   c2->chain_id  = c->chain_id;
-  in3_configure(c2, "{\"chain_id\":\"0x1\"}");
+  in3_configure(c2, "{\"chainId\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chains_length; i++) {
     if (c2->chains[i].chain_id == 0x1) chain2 = &c2->chains[i];

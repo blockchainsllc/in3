@@ -82,7 +82,7 @@ static void test_in3_config() {
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
            \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
            \"registryId\":\"0x3456789012345678901234567890123456789012345678901234567890ffff\",\
-           \"needsUpdate\":0,\
+           \"needsUpdate\":false,\
            \"nodeList\":[{\
               \"url\":\"#1\",\
               \"props\":\"0xffff\",\

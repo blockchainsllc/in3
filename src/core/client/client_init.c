@@ -532,7 +532,7 @@ char* in3_configure(in3_t* c, char* config) {
         bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
 
         EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-        EXPECT_CFG((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) != IN3_OK,
+        EXPECT_CFG((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
                    "register chain failed");
 
         chain = in3_find_chain(c, chain_id);
@@ -541,10 +541,10 @@ char* in3_configure(in3_t* c, char* config) {
         // chain_props
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
           if (cp.token->key == key("contract")) {
-            EXPECT_TOK_ADDR(ct.token);
+            EXPECT_TOK_ADDR(cp.token);
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
           } else if (cp.token->key == key("whiteListContract")) {
-            EXPECT_TOK_ADDR(ct.token);
+            EXPECT_TOK_ADDR(cp.token);
             if (!chain->whitelist) {
               chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
               chain->whitelist->needs_update = true;
@@ -571,7 +571,7 @@ char* in3_configure(in3_t* c, char* config) {
             EXPECT_TOK_BOOL(cp.token);
             chain->needs_update = d_int(cp.token) ? true : false;
           } else if (cp.token->key == key("nodeList")) {
-            EXPECT_TOK_ADDR(ct.token);
+            EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
               EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
