@@ -539,22 +539,23 @@ char* in3_configure(in3_t* c, char* config) {
         EXPECT_CFG(chain != NULL, "invalid chain id!");
 
         // chain_props
+        bool has_wlc = false, has_man_wl = false;
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
           if (cp.token->key == key("contract")) {
             EXPECT_TOK_ADDR(cp.token);
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
           } else if (cp.token->key == key("whiteListContract")) {
             EXPECT_TOK_ADDR(cp.token);
-            if (!chain->whitelist) {
-              chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
-              chain->whitelist->needs_update = true;
-              memcpy(chain->whitelist->contract, cp.token->data, 20);
-            } else if (memcmp(chain->whitelist->contract, cp.token->data, 20)) {
-              memcpy(chain->whitelist->contract, cp.token->data, 20);
-              chain->whitelist->needs_update = true;
-            }
+            EXPECT_CFG(!has_man_wl, "Cannot specify manual whiteList and whiteListContract together!");
+            has_wlc = true;
+            whitelist_free(chain->whitelist);
+            chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
+            chain->whitelist->needs_update = true;
+            memcpy(chain->whitelist->contract, cp.token->data, 20);
           } else if (cp.token->key == key("whiteList")) {
             EXPECT_TOK_ARR(cp.token);
+            EXPECT_CFG(!has_wlc, "Cannot specify manual whiteList and whiteListContract together!");
+            has_man_wl = true;
             int len = d_len(cp.token), i = 0;
             whitelist_free(chain->whitelist);
             chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
