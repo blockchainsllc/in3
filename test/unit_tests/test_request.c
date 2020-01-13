@@ -295,13 +295,42 @@ static void test_configure_validation() {
   //  TEST_ASSERT_CONFIGURE_FAIL("duplicate chain id", c, "{\"nodes\":{\"0x3f\":{}, \"0x3f\":{}}}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("missing registry id", c, "{\"nodes\":{\"0xf1\":{\"contract\":\"0x0123456789012345678901234567890123456789\"}}}", "invalid contract/registry!");
   TEST_ASSERT_CONFIGURE_FAIL("missing contract", c, "{\"nodes\":{\"0xf1\":{\"registryId\":\"0x0123456789012345678901234567890123456789012345678901234567890123\"}}}", "invalid contract/registry!");
+  TEST_ASSERT_CONFIGURE_FAIL("whiteListContract with manual whiteList",
+                             c, "{"
+                                "  \"nodes\":{"
+                                "    \"0xdeaf\":{"
+                                "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                "      \"registryId\":\"" REGISTRY_ID "\","
+                                "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
+                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
+                                "    }"
+                                "  }"
+                                "}",
+                             "Cannot specify manual whiteList and whiteListContract together!");
+  in3_free(c);
+
+  c = in3_for_chain(0);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{"
+                                "  \"nodes\":{"
+                                "    \"0xdeaf\":{"
+                                "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                "      \"registryId\":\"" REGISTRY_ID "\","
+                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
+                                "    }"
+                                "  }"
+                                "}");
+  uint8_t wl[40];
+  hex_to_bytes("0x01234567890123456789012345678901234567891234567890123456789012345678901234567890", -1, wl, 40);
+  TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0xdeaf)->whitelist->addresses.data, wl, 40);
+  in3_free(c);
+
+  c = in3_for_chain(0);
   TEST_ASSERT_CONFIGURE_PASS(c, "{"
                                 "  \"nodes\":{"
                                 "    \"0xdeaf\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
                                 "      \"registryId\":\"" REGISTRY_ID "\","
                                 "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
-                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\"],"
                                 "      \"nodeList\":[{"
                                 "        \"url\":\"" NODE_URL "\","
                                 "        \"props\":\"0xffff\","
@@ -316,8 +345,7 @@ static void test_configure_validation() {
 
   address_t addr;
   hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, addr, 20);
-  // fixme
-  //  TEST_ASSERT_EQUAL_MEMORY(chain->whitelist->contract, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(chain->whitelist->contract, addr, 20);
   hex_to_bytes(CONTRACT_ADDRS, -1, addr, 20);
   TEST_ASSERT_EQUAL_MEMORY(chain->contract->data, addr, 20);
 
