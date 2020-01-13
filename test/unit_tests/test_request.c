@@ -292,7 +292,6 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":null}}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":[]}}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("empty node obj", c, "{\"nodes\":{\"0xf1\":{}}}", "invalid contract/registry!");
-  //  TEST_ASSERT_CONFIGURE_FAIL("duplicate chain id", c, "{\"nodes\":{\"0x3f\":{}, \"0x3f\":{}}}", "expected object");
   TEST_ASSERT_CONFIGURE_FAIL("missing registry id", c, "{\"nodes\":{\"0xf1\":{\"contract\":\"0x0123456789012345678901234567890123456789\"}}}", "invalid contract/registry!");
   TEST_ASSERT_CONFIGURE_FAIL("missing contract", c, "{\"nodes\":{\"0xf1\":{\"registryId\":\"0x0123456789012345678901234567890123456789012345678901234567890123\"}}}", "invalid contract/registry!");
   TEST_ASSERT_CONFIGURE_FAIL("whiteListContract with manual whiteList",
@@ -306,7 +305,25 @@ static void test_configure_validation() {
                                 "    }"
                                 "  }"
                                 "}",
-                             "Cannot specify manual whiteList and whiteListContract together!");
+                             "cannot specify manual whiteList and whiteListContract together!");
+  TEST_ASSERT_CONFIGURE_FAIL("Duplicate chain id",
+                             c, "{"
+                                "  \"nodes\":{"
+                                "    \"0xdeaf\":{"
+                                "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                "      \"registryId\":\"" REGISTRY_ID "\","
+                                "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
+                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
+                                "    },"
+                                "    \"0xdeaf\":{"
+                                "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                "      \"registryId\":\"" REGISTRY_ID "\","
+                                "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
+                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
+                                "    }"
+                                "  }"
+                                "}",
+                             "chain with specified chainId already exists");
   in3_free(c);
 
   c = in3_for_chain(0);

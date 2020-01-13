@@ -546,7 +546,7 @@ char* in3_configure(in3_t* c, char* config) {
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
           } else if (cp.token->key == key("whiteListContract")) {
             EXPECT_TOK_ADDR(cp.token);
-            EXPECT_CFG(!has_man_wl, "Cannot specify manual whiteList and whiteListContract together!");
+            EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
             has_wlc = true;
             whitelist_free(chain->whitelist);
             chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
@@ -554,7 +554,7 @@ char* in3_configure(in3_t* c, char* config) {
             memcpy(chain->whitelist->contract, cp.token->data, 20);
           } else if (cp.token->key == key("whiteList")) {
             EXPECT_TOK_ARR(cp.token);
-            EXPECT_CFG(!has_wlc, "Cannot specify manual whiteList and whiteListContract together!");
+            EXPECT_CFG(!has_wlc, "cannot specify manual whiteList and whiteListContract together!");
             has_man_wl = true;
             int len = d_len(cp.token), i = 0;
             whitelist_free(chain->whitelist);
