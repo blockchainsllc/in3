@@ -328,7 +328,7 @@ static void test_configure_validation() {
 
   c = in3_for_chain(0);
   TEST_ASSERT_CONFIGURE_PASS(c, "{"
-                                "  \"nodes\":{"
+                                "  \"servers\":{"
                                 "    \"0xdeaf\":{"
                                 "      \"contract\":\"" CONTRACT_ADDRS "\","
                                 "      \"registryId\":\"" REGISTRY_ID "\","
@@ -339,6 +339,20 @@ static void test_configure_validation() {
   uint8_t wl[40];
   hex_to_bytes("0x01234567890123456789012345678901234567891234567890123456789012345678901234567890", -1, wl, 40);
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0xdeaf)->whitelist->addresses.data, wl, 40);
+  in3_free(c);
+
+  c = in3_for_chain(0);
+  TEST_ASSERT_CONFIGURE_FAIL("duplicate whiteList addresses",
+                             c, "{"
+                                "  \"servers\":{"
+                                "    \"0xdeaf\":{"
+                                "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                "      \"registryId\":\"" REGISTRY_ID "\","
+                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x0123456789012345678901234567890123456789\"],"
+                                "    }"
+                                "  }"
+                                "}",
+                             "duplicate address!");
   in3_free(c);
 
   c = in3_for_chain(0);

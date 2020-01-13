@@ -562,6 +562,13 @@ char* in3_configure(in3_t* c, char* config) {
             chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
               EXPECT_TOK_ADDR(n.token);
+              for (uint32_t j = 0; j < chain->whitelist->addresses.len; j += 20) {
+                if (!memcmp(d_bytes(n.token)->data, chain->whitelist->addresses.data + j, 20)) {
+                  whitelist_free(chain->whitelist);
+                  chain->whitelist = NULL;
+                  EXPECT_TOK(cp.token, false, "duplicate address!");
+                }
+              }
               d_bytes_to(n.token, chain->whitelist->addresses.data + i, 20);
             }
           } else if (cp.token->key == key("registryId")) {
