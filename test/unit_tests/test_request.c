@@ -241,6 +241,45 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":\"0xffffffffffffffff\"}"); // UINT64_MAX
   TEST_ASSERT_EQUAL(c->min_deposit, 0xffffffffffffffff);
 
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":\"-1\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":\"0x123412341234\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":\"value\"}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":65536}", "expected uint16");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeLimit\":0}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeLimit\":65535}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeLimit\":\"0xffff\"}");
+  TEST_ASSERT_EQUAL(c->max_attempts, 65535);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: proof", c, "{\"proof\":\"-1\"}", "expected values - full/standard/none");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: proof", c, "{\"proof\":\"0x123412341234\"}", "expected string");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched value: proof", c, "{\"proof\":\"fully\"}", "expected values - full/standard/none");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched value: proof", c, "{\"proof\":\"non\"}", "expected values - full/standard/none");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: proof", c, "{\"proof\":65536}", "expected string");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"proof\":\"standard\"}");
+  TEST_ASSERT_EQUAL(c->proof, PROOF_STANDARD);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"proof\":\"none\"}");
+  TEST_ASSERT_EQUAL(c->proof, PROOF_NONE);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"proof\":\"full\"}");
+  TEST_ASSERT_EQUAL(c->proof, PROOF_FULL);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"-1\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"0x123412341234\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"value\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":65536}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":0}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":255}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"requestCount\":\"0xff\"}");
+  TEST_ASSERT_EQUAL(c->request_count, 255);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":false}", "expected string");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":\"0x123412341234\"}", "expected string");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: rpc", c, "{\"rpc\":65536}", "expected string");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"rpc\":\"rpc.local\"}");
+  TEST_ASSERT_EQUAL(c->proof, PROOF_NONE);
+  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_LOCAL);
+  TEST_ASSERT_EQUAL(c->request_count, 1);
+  TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist[0].url, "rpc.local");
+
   in3_free(c);
 }
 
