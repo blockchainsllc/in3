@@ -200,14 +200,16 @@ in3_signer_t* in3_create_signer(
   return signer;
 }
 
-in3_storage_handler_t* in3_create_storeage_handler(
+in3_storage_handler_t* in3_create_storage_handler(
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 ) {
   in3_storage_handler_t* handler = _calloc(1, sizeof(in3_storage_handler_t));
   handler->cptr                  = cptr;
   handler->get_item              = get_item;
   handler->set_item              = set_item;
+  handler->clear                 = clear;
   return handler;
 }

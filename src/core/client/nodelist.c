@@ -37,6 +37,7 @@
 #include "../util/log.h"
 #include "../util/mem.h"
 #include "../util/utils.h"
+#include "../util/debug.h"
 #include "cache.h"
 #include "context.h"
 #include "keys.h"

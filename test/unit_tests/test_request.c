@@ -90,7 +90,7 @@ void test_exec_req() {
   in3_register_eth_api();
 
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  ;
+
   char* result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
   TEST_ASSERT_EQUAL_STRING("{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432\"}", result);
   _free(result);
@@ -103,6 +103,10 @@ void test_exec_req() {
   TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"No Method defined\"}}", result);
   _free(result);
 
+  result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"The request could not be handled\nNo storage set\"}}", result);
+  _free(result);
+
   in3_free(c);
 }
 /*
@@ -110,7 +114,7 @@ void test_exec_req() {
  */
 int main() {
   _free(in3_create_signer(NULL, NULL, NULL));
-  _free(in3_create_storeage_handler(NULL, NULL, NULL));
+  _free(in3_create_storage_handler(NULL, NULL, NULL, NULL));
 
   TESTS_BEGIN();
   RUN_TEST(test_configure_request);

@@ -139,6 +139,17 @@ static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** 
   return IN3_OK;
 }
 
+static in3_ret_t in3_cacheClear(in3_ctx_t* ctx, in3_response_t** response) {
+  in3_storage_handler_t* cache = ctx->client->cache;
+  if (!cache || !cache->clear)
+    return ctx_set_error(ctx, "No storage set", IN3_ECONFIG);
+  cache->clear(cache->cptr);
+  RESPONSE_START();
+  sb_add_chars(&response[0]->result, "true");
+  RESPONSE_END();
+  return IN3_OK;
+}
+
 static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* r      = ctx->requests[0];
@@ -150,6 +161,7 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(ctx, params, response);
   if (strcmp(method, "web3_sha3") == 0) return in3_sha3(ctx, params, response);
   if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
+  if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(ctx, response);
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
 }
@@ -162,7 +174,8 @@ static int verify(in3_vctx_t* v) {
       strcmp(method, "in3_abiDecode") == 0 ||
       strcmp(method, "in3_checksumAddress") == 0 ||
       strcmp(method, "web3_sha3") == 0 ||
-      strcmp(method, "in3_config") == 0)
+      strcmp(method, "in3_config") == 0 ||
+      strcmp(method, "in3_cacheClear") == 0)
     return IN3_OK;
 
   return parent_verify ? parent_verify(v) : IN3_ENOTSUP;
