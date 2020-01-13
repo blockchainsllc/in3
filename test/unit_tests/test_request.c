@@ -58,9 +58,13 @@
     TEST_ASSERT_NOT_NULL(str_find(_err_, err_slice));            \
     free(_err_);                                                 \
   } while (0)
-
 #define TEST_ASSERT_CONFIGURE_PASS(in3, config) \
   TEST_ASSERT_NULL(in3_configure(in3, config))
+#define CONTRACT_ADDRS "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f"
+#define REGISTRY_ID "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb"
+#define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
+#define NODE_URL "rpc.node"
+#define NODE_ADDRS "0x8904b9813c9ada123f9fccb9123659088dacd477"
 
 static void test_configure_request() {
   in3_t* c                = in3_for_chain(0);
@@ -279,6 +283,53 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_LOCAL);
   TEST_ASSERT_EQUAL(c->request_count, 1);
   TEST_ASSERT_EQUAL_STRING(in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist[0].url, "rpc.local");
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":false}", "expected object");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":\"0x123412341234\"}", "expected object");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes", c, "{\"nodes\":65536}", "expected object");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodes\":{}}");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"n1\":{}}}", "expected hex str");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":null}}", "expected object");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodes entry", c, "{\"nodes\":{\"0x1\":[]}}", "expected object");
+  TEST_ASSERT_CONFIGURE_FAIL("empty node obj", c, "{\"nodes\":{\"0xf1\":{}}}", "invalid contract/registry!");
+  //  TEST_ASSERT_CONFIGURE_FAIL("duplicate chain id", c, "{\"nodes\":{\"0x3f\":{}, \"0x3f\":{}}}", "expected object");
+  TEST_ASSERT_CONFIGURE_FAIL("missing registry id", c, "{\"nodes\":{\"0xf1\":{\"contract\":\"0x0123456789012345678901234567890123456789\"}}}", "invalid contract/registry!");
+  TEST_ASSERT_CONFIGURE_FAIL("missing contract", c, "{\"nodes\":{\"0xf1\":{\"registryId\":\"0x0123456789012345678901234567890123456789012345678901234567890123\"}}}", "invalid contract/registry!");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{"
+                                "  \"nodes\":{"
+                                "    \"0xdeaf\":{"
+                                "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                "      \"registryId\":\"" REGISTRY_ID "\","
+                                "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
+                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\"],"
+                                "      \"nodeList\":[{"
+                                "        \"url\":\"" NODE_URL "\","
+                                "        \"props\":\"0xffff\","
+                                "        \"address\":\"" NODE_ADDRS "\""
+                                "      }],"
+                                "      \"needsUpdate\":true"
+                                "    }"
+                                "  }"
+                                "}");
+  in3_chain_t* chain = in3_find_chain(c, 0xdeaf);
+  TEST_ASSERT_NOT_NULL(chain);
+
+  address_t addr;
+  hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, addr, 20);
+  // fixme
+  //  TEST_ASSERT_EQUAL_MEMORY(chain->whitelist->contract, addr, 20);
+  hex_to_bytes(CONTRACT_ADDRS, -1, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(chain->contract->data, addr, 20);
+
+  bytes32_t b256;
+  hex_to_bytes(REGISTRY_ID, -1, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(chain->registry_id, b256, 32);
+
+  TEST_ASSERT_EQUAL(chain->needs_update, true);
+  TEST_ASSERT_EQUAL_STRING(chain->nodelist[0].url, NODE_URL);
+  TEST_ASSERT_EQUAL(chain->nodelist[0].props, 0xffff);
+  hex_to_bytes(NODE_ADDRS, -1, addr, 20);
+  TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address->data, addr, 20);
 
   in3_free(c);
 }
