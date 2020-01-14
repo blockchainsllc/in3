@@ -69,15 +69,34 @@ public class LogFilter {
     /** a(optional) The maximum number of entries to retrieve (latest first). */
     int limit;
 
+    public void setFromBlock(long fromBlock) {
+    	this.fromBlock = fromBlock;
+    }
+
+    public void setToBlock(long toBlock) {
+    	this.toBlock = toBlock;
+    }
+
+    public void setAddress(String address) {
+    	this.address = address;
+    }
+
+    public void setTopics(Object[] topics) {
+    	this.topics = topics;
+    }
+
+    public void setLimit(int limit) {
+    	this.limit = limit;
+    }
     /**
      * creates a JSON-String.
      */
     public String toString() {
-        StringBuilder sb = new StringBuilder('{');
+        StringBuilder sb = new StringBuilder("{");
         if (fromBlock >= 0)
-            JSON.appendKey(sb, "fromBlock", fromBlock);
+            JSON.appendKey(sb, "fromBlock", "0x" + Long.toHexString(fromBlock));
         if (toBlock >= 0)
-            JSON.appendKey(sb, "toBlock", toBlock);
+            JSON.appendKey(sb, "toBlock", "0x" + Long.toHexString(toBlock));
         if (topics != null)
             JSON.appendKey(sb, "topics", JSON.toJson(topics));
         if (limit > 0)
@@ -85,6 +104,7 @@ public class LogFilter {
         if (address != null)
             JSON.appendKey(sb, "address", JSON.asString(address));
         sb.setCharAt(sb.length() - 1, '}');
+
         return sb.toString();
     }
 
