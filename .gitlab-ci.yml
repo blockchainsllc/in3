@@ -3,53 +3,14 @@ variables:
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
 
 stages:
+  - valgrind
   - build
   - bindings
   - test
   - deploy
   - release
 
-valgrind_testcore:
-  stage: build
-  image: docker.slock.it/build-images/cmake:valgrind
-  allow_failure: true
-  tags:
-    - short-jobs
-  script:
-    - mkdir _build
-    - cd _build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
-    - pwd
-    - ls
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_core
 
-valgrind_testabi:
-  stage: build
-  image: docker.slock.it/build-images/cmake:valgrind
-  allow_failure: true
-  tags:
-    - short-jobs
-  script:
-    - mkdir _build
-    - cd _build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
-    - pwd
-    - ls
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_abi
-
-valgrind_test_bitset:
-  stage: build
-  image: docker.slock.it/build-images/cmake:valgrind
-  allow_failure: true
-  tags:
-    - short-jobs
-  script:
-    - mkdir _build
-    - cd _build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
-    - pwd
-    - ls test
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_bitset
 
 
 .conanbuild:
@@ -244,9 +205,8 @@ cppcheck:
     - cd ..
     - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/test/unity -i/builds/in3/c/in3-core/src/third-party
 
-
-valgrind_testcore:
-  stage: test
+test_core:
+  stage: valgrind
   image: docker.slock.it/build-images/cmake:valgrind
   allow_failure: true
   tags:
@@ -254,8 +214,167 @@ valgrind_testcore:
   script:
     - mkdir _build
     - cd _build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind test/test_core
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_core
+
+test_abi:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_abi
+
+test_bitset:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_bitset
+
+test_cache:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_cache
+
+test_ethapi:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_ethapi
+
+test_filter:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_filter
+
+test_key_hash:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_key_hash
+
+test_logging:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_logging
+
+test_nodelist:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_nodelist
+
+
+test_request:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_request
+
+test_rpc_api:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_rpc_api
+
+test_sign:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_sign
+    
+test_verify_eth_getLog:
+  stage: valgrind
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_verify_eth_getLog
+
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
