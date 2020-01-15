@@ -18,7 +18,7 @@ valgrind_testcore:
   script:
     - mkdir _build
     - cd _build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - pwd
     - ls
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_core
@@ -32,8 +32,9 @@ valgrind_testabi:
   script:
     - mkdir _build
     - cd _build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - pwd
+    - ls
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_abi
 
 valgrind_test_bitset:
@@ -45,8 +46,9 @@ valgrind_test_bitset:
   script:
     - mkdir _build
     - cd _build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - pwd
+    - ls test
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_bitset
 
 
