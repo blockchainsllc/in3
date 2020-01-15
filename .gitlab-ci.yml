@@ -188,6 +188,15 @@ analyse:
     paths:
       - report
 
+cppcheck:
+  stage: build
+  image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - cppcheck  --project=/home/connan/build/compile_commands.json -i/home/conan/test/unity -i/home/conan/src/third-party
+
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
