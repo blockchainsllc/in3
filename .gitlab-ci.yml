@@ -9,6 +9,47 @@ stages:
   - deploy
   - release
 
+valgrind_testcore:
+  stage: build
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - pwd
+    - ls
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_core
+
+valgrind_testabi:
+  stage: build
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - pwd
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_abi
+
+valgrind_test_bitset:
+  stage: build
+  image: docker.slock.it/build-images/cmake:valgrind
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - pwd
+    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=/builds/in3/c/in3-core/suppress.valgrind /builds/in3/c/in3-core/_build/test/test_bitset
+
+
 .conanbuild:
   stage: build
   tags:
