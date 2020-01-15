@@ -212,6 +212,8 @@ test_core:
   tags:
     - short-jobs
   script:
+    - ls
+    - pwd
     - mkdir _build
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
