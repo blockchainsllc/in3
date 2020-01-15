@@ -195,7 +195,13 @@ cppcheck:
   tags:
     - short-jobs
   script:
-    - cppcheck  --project=/home/connan/build/compile_commands.json -i/home/conan/test/unity -i/home/conan/src/third-party
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
+    - cd ..
+    - ls 
+    - pwd
+    - cppcheck  --project=_build/compile_commands.json -i/home/conan/test/unity -i/home/conan/src/third-party
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
