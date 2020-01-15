@@ -216,7 +216,7 @@ test_core:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_core
 
 test_abi:
@@ -230,7 +230,7 @@ test_abi:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_abi
 
 test_bitset:
@@ -244,7 +244,7 @@ test_bitset:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Debug -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_bitset
 
 test_cache:
@@ -258,7 +258,7 @@ test_cache:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_cache
 
 test_ethapi:
@@ -272,7 +272,7 @@ test_ethapi:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_ethapi
 
 test_filter:
@@ -286,7 +286,7 @@ test_filter:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_filter
 
 test_key_hash:
@@ -300,7 +300,7 @@ test_key_hash:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_key_hash
 
 test_logging:
@@ -314,7 +314,7 @@ test_logging:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_logging
 
 test_nodelist:
@@ -328,7 +328,7 @@ test_nodelist:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_nodelist
 
 
@@ -343,7 +343,7 @@ test_request:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_request
 
 test_rpc_api:
@@ -357,7 +357,7 @@ test_rpc_api:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_rpc_api
 
 test_sign:
@@ -371,7 +371,7 @@ test_sign:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_sign
     
 test_verify_eth_getLog:
@@ -385,7 +385,7 @@ test_verify_eth_getLog:
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n } "  >> suppress.valgrind
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_verify_eth_getLog
 
 
