@@ -32,19 +32,12 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory(eth1/rpc)
+# static lib
+add_executable(ipfs
+        ipfs.c
+        ipfs.pb.c
+        pb_encode.c
+        pb_decode.c
+        pb_common.c)
 
-if (ETH_NANO OR ETH_BASIC OR ETH_FULL)
-  add_subdirectory(eth1/nano)
-endif()
-
-if (ETH_BASIC OR ETH_FULL)
-  add_subdirectory(eth1/basic)
-endif()
-
-if (ETH_FULL)
-  add_subdirectory(eth1/full)
-  add_subdirectory(eth1/evm)
-endif()
-
-add_subdirectory(ipfs)
+target_include_directories(ipfs PRIVATE .)
