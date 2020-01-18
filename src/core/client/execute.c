@@ -424,8 +424,8 @@ void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) 
   if (req->times) {
     for (int i = 0; i < req->urls_len; i++)
       ctx->requests_configs[i].time = req->times[i];
+    _free(req->times);
   }
-  _free(req->times);
 
   if (free_response) {
     for (int n = 0; n < req->urls_len; n++) {
