@@ -34,10 +34,10 @@
 
 #include "nodelist.h"
 #include "../util/data.h"
+#include "../util/debug.h"
 #include "../util/log.h"
 #include "../util/mem.h"
 #include "../util/utils.h"
-#include "../util/debug.h"
 #include "cache.h"
 #include "context.h"
 #include "keys.h"
@@ -93,7 +93,6 @@ static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* resul
     }
 
     int old_index                = i;
-    weights[i].weight            = 1;
     n->capacity                  = d_get_intkd(node, K_CAPACITY, 1);
     n->index                     = d_get_intkd(node, K_INDEX, i);
     n->deposit                   = d_get_longk(node, K_DEPOSIT);
@@ -278,8 +277,8 @@ static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* paren
   return ctx_add_required(parent_ctx, ctx_new(c, req));
 }
 
-void in3_ctx_free_nodes(node_weight_t* node) {
-  node_weight_t* last_node = NULL;
+void in3_ctx_free_nodes(node_match_t* node) {
+  node_match_t* last_node = NULL;
   while (node) {
     last_node = node;
     node      = node->next;
@@ -313,17 +312,24 @@ in3_node_props_match(const in3_node_props_t np_config, const in3_node_props_t np
 
 #endif
 
-node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
-                                         int len, _time_t now, float* total_weight, int* total_found,
-                                         in3_node_props_t props) {
+uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa) {
+  const uint32_t avg = n->response_count > 3
+                           ? (n->total_response_time / n->response_count)
+                           : (5000 / (capa + 1000));
+  return 0xFFFF / avg;
+}
+
+node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
+                                        int len, _time_t now, uint32_t* total_weight, int* total_found,
+                                        in3_node_props_t props) {
 
   int                found      = 0;
-  float              weight_sum = 0;
+  uint32_t           weight_sum = 0;
   in3_node_t*        nodeDef    = NULL;
   in3_node_weight_t* weightDef  = NULL;
-  node_weight_t*     prev       = NULL;
-  node_weight_t*     current    = NULL;
-  node_weight_t*     first      = NULL;
+  node_match_t*      prev       = NULL;
+  node_match_t*      current    = NULL;
+  node_match_t*      first      = NULL;
   *total_found                  = 0;
   const in3_chain_t* chain      = in3_find_chain(c, chain_id);
   if (!chain) return NULL;
@@ -342,7 +348,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
 
     weightDef = weights + i;
     if (weightDef->blacklisted_until > (uint64_t) now) continue;
-    current = _malloc(sizeof(node_weight_t));
+    current = _malloc(sizeof(node_match_t));
     if (!current) {
       // TODO clean up memory
       return NULL;
@@ -352,7 +358,7 @@ node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node
     current->weight = weightDef;
     current->next   = NULL;
     current->s      = weight_sum;
-    current->w      = weightDef->weight * nodeDef->capacity * (500 / (weightDef->response_count ? (weightDef->total_response_time / weightDef->response_count) : 500));
+    current->w      = in3_node_calculate_weight(weightDef, nodeDef->capacity);
     weight_sum += current->w;
     found++;
     if (prev) prev->next = current;
@@ -397,13 +403,13 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int request_count, in3_node_props_t props) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_props_t props) {
 
   // get all nodes from the nodelist
   _time_t            now       = _time();
   in3_node_t*        all_nodes = NULL;
   in3_node_weight_t* weights   = NULL;
-  float              total_weight;
+  uint32_t           total_weight;
   int                all_nodes_len, total_found;
 
   in3_ret_t res = in3_node_list_get(ctx, ctx->client->chain_id, false, &all_nodes, &all_nodes_len, &weights);
@@ -411,7 +417,9 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
     return ctx_set_error(ctx, "could not find the chain", res);
 
   // filter out nodes
-  node_weight_t* found = in3_node_list_fill_weight(ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
+  node_match_t* found = in3_node_list_fill_weight(
+      ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len,
+      now, &total_weight, &total_found, props);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -437,17 +445,17 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
     return IN3_OK;
   }
 
-  float          r;
-  int            added   = 0;
-  node_weight_t* last    = NULL;
-  node_weight_t* first   = NULL;
-  node_weight_t* next    = NULL;
-  node_weight_t* current = NULL;
+  uint32_t      r;
+  int           added   = 0;
+  node_match_t* last    = NULL;
+  node_match_t* first   = NULL;
+  node_match_t* next    = NULL;
+  node_match_t* current = NULL;
 
   // we want ot make sure this loop is run only max 10xthe number of requested nodes
   for (int i = 0; added < filled_len && i < filled_len * 10; i++) {
     // pick a random number
-    r = total_weight * ((float) (_rand() % 10000)) / 10000.0;
+    r = _rand() % total_weight;
 
     // find the first node matching it.
     current = found;
@@ -466,7 +474,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int re
 
       if (!next) {
         added++;
-        next         = _calloc(1, sizeof(node_weight_t));
+        next         = _calloc(1, sizeof(node_match_t));
         next->s      = current->s;
         next->w      = current->w;
         next->weight = current->weight;

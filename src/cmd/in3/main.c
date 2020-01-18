@@ -54,6 +54,7 @@
 #include "../http-server/http_server.h"
 #endif
 #include "../../core/client/cache.h"
+#include "../../core/client/nodelist.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/version.h"
@@ -767,13 +768,14 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "in3_weights") == 0) {
     uint64_t     now   = _time();
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
-    printf("   : %40s : %7s : %5s : %s\n----------------------------------------------------------------------------------------\n", "url", "BL", "CNT", "WEIGHT");
+    printf("   : %40s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG","WEIGHT");
     for (int i = 0; i < chain->nodelist_length; i++) {
       in3_node_weight_t* weight      = chain->weights + i;
       in3_node_t*        node        = chain->nodelist + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
+      uint32_t calc_weight = in3_node_calculate_weight(weight,node->capacity);
       if (blacklisted) printf("\033[31m");
-      printf("%2i : %40s : %7i : %5i : %f", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->weight);
+      printf("%2i   %40s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0,calc_weight);
       if (blacklisted) printf("\033[0m");
       printf("\n");
     }
@@ -908,8 +910,12 @@ int main(int argc, char* argv[]) {
   in3_client_rpc(c, method, params, &result, &error);
 
   // update cache
-  if (c->chain_id != ETH_CHAIN_ID_LOCAL)
-    in3_cache_update_nodelist(c, in3_find_chain(c, c->chain_id));
+  if (c->chain_id != ETH_CHAIN_ID_LOCAL) {
+    in3_ctx_t ctx;
+    memset(&ctx, 0, sizeof(in3_ctx_t));
+    ctx.client = c;
+    in3_cache_store_nodelist(&ctx, in3_find_chain(c, c->chain_id));
+  }
 
   // if we need to wait
   if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {

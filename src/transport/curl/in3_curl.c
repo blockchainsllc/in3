@@ -35,6 +35,7 @@
 #include "in3_curl.h"
 #include "../../core/client/client.h"
 #include "../../core/util/log.h"
+#include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include <curl/curl.h>
 #include <string.h>
@@ -55,7 +56,7 @@ static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, voi
   return size * nmemb;
 }
 
-static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, struct curl_slist* headers, in3_response_t* r) {
+static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload, struct curl_slist* headers, in3_response_t* r, uint32_t timeout) {
   CURL*     curl;
   CURLMcode res;
 
@@ -67,6 +68,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
 
     /* Perform the request, res will get the return code */
     res = curl_multi_add_handle(cm, curl);
@@ -78,7 +80,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     sb_add_chars(&r->error, "no curl:");
 }
 
-in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout) {
   CURLM*   cm;
   CURLMsg* msg;
   int      transfers   = 0;
@@ -93,7 +95,7 @@ in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, 
   headers                    = curl_slist_append(headers, "Content-Type: application/json");
   headers                    = curl_slist_append(headers, "charsets: utf-8");
   for (transfers = 0; transfers < min(CURL_MAX_PARALLEL, urls_len); transfers++)
-    readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers);
+    readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers, timeout);
 
   do {
     curl_multi_perform(cm, &still_alive);
@@ -112,7 +114,7 @@ in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, 
         sb_add_chars(&result->error, "E: CURLMsg");
       }
       if (transfers < urls_len) {
-        readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers);
+        readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers, timeout);
         transfers++;
       }
     }
@@ -134,7 +136,7 @@ in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, 
   return IN3_OK;
 }
 
-static void readDataBlocking(const char* url, char* payload, in3_response_t* r) {
+static void readDataBlocking(const char* url, char* payload, in3_response_t* r, uint32_t timeout) {
   CURL*    curl;
   CURLcode res;
 
@@ -154,6 +156,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r) 
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
 
     /* Perform the request, res will get the return code */
     res = curl_easy_perform(curl);
@@ -170,10 +173,10 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r) 
     sb_add_chars(&r->error, "no curl:");
 }
 
-in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result) {
+in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout) {
   int i;
   for (i = 0; i < urls_len; i++)
-    readDataBlocking(urls[i], payload, result + i);
+    readDataBlocking(urls[i], payload, result + i, timeout);
   for (i = 0; i < urls_len; i++) {
     if ((result + i)->error.len) {
       in3_log_debug("curl: failed for %s\n", urls[i]);
@@ -184,12 +187,18 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
 }
 
 in3_ret_t send_curl(in3_request_t* req) {
-//  char** urls, int urls_len, char* payload, in3_response_t* result
+  // set the init-time
+  in3_ret_t res;
+  clock_t   start = clock();
 #ifdef CURL_BLOCKING
-  return send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results);
+  res = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
 #else
-  return send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->results);
+  res = send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
 #endif
+  clock_t t = clock() - start;
+  if (!req->times) req->times = _malloc(sizeof(clock_t) * req->urls_len);
+  for (int i = 0; i < req->urls_len; i++) req->times[i] = t;
+  return res;
 }
 
 /**
