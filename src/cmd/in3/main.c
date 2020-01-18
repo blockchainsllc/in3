@@ -689,8 +689,6 @@ int main(int argc, char* argv[]) {
         pk_file = argv[i];
       else if (strcmp(method, "sign") == 0 && !data)
         data = b_new(argv[i], strlen(argv[i]));
-      else if (to == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0))
-        to = argv[i];
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
