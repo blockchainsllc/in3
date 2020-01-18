@@ -617,11 +617,12 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       _free(bytes);
     } else
       sb_add_chars(&req->results[i].error, "Could not fetch the data!");
+    if (req->results[i].error.len) success = IN3_ERPC;
   }
   clock_t end = clock();
 
   req->times = _malloc(sizeof(clock_t) * req->urls_len);
-  for (int i = 0; i < req->urls_len; i++) req->times = end - start;
+  for (int i = 0; i < req->urls_len; i++) req->times[i] = end - start;
 
   return success;
 }
