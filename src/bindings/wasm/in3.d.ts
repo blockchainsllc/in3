@@ -387,7 +387,7 @@ export class IN3 {
      * 
      * @param fn the function to fetch the response for the given url
      */
-    public static setTransport(fn: (url: string, payload: string) => Promise<string>): void
+    public static setTransport(fn: (url: string, payload: string, timeout?: number) => Promise<string>): void
 
     /**
      * changes the storage handler, which is called to read and write to the cache.

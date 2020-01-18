@@ -314,7 +314,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
           if (!vc.result && ctx->attempt < ctx->client->max_attempts - 1) {
             // if we don't have a result, the node reported an error
             // since we don't know if this error is our fault or the server fault,we don't blacklist the node, but retry
-            res = ctx->verification_state = IN3_EUNKNOWN;
+            res = ctx->verification_state = IN3_ERPC;
             d_token_t* error              = d_get(ctx->responses[i], K_ERROR);
             char*      err_msg            = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
             // this is a workaround to check whether this is

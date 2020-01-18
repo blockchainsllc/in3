@@ -139,6 +139,7 @@ static void test_in3_client_rpc() {
   c->auto_update_list = false;
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
+  c->max_attempts     = 1;
   for (int i = 0; i < c->chains_length; i++)
     c->chains[i].needs_update = false;
 

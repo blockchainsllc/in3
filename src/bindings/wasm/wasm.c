@@ -44,6 +44,7 @@
 #include "../../third-party/crypto/secp256k1.h"
 #include <emscripten.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef ETH_FULL
 #include "../../verifier/eth1/full/eth_full.h"
@@ -138,19 +139,25 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
     if (request == NULL)
       sb_add_chars(sb, ",\"error\",\"could not create request, memory?\"");
     else {
+      request->times = _malloc(sizeof(clock_t) * request->urls_len);
+      clock_t now    = clock();
+      char    tmp[160];
       sb_add_chars(sb, ",\"request\":{ \"type\": ");
       sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+      sb_add_chars(sb, ",\"timeout\":");
+      sprintf(tmp, "%d", (unsigned int) request->timeout);
+      sb_add_chars(sb, tmp);
       sb_add_chars(sb, ",\"payload\":");
       sb_add_chars(sb, request->payload);
       sb_add_chars(sb, ",\"urls\":[");
       for (int i = 0; i < request->urls_len; i++) {
+        request->times[i] = now;
         if (i) sb_add_char(sb, ',');
         sb_add_char(sb, '"');
         sb_add_chars(sb, request->urls[i]);
         sb_add_char(sb, '"');
       }
       sb_add_chars(sb, "],\"ptr\":");
-      char tmp[160];
       sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
       sb_add_chars(sb, tmp);
     }
@@ -170,6 +177,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
+  r->times[i] = clock() - r->times[i];
   if (is_error)
     sb_add_chars(&r->results[i].error, msg);
   else if (ctx->type == CT_SIGN) {
