@@ -59,8 +59,8 @@ static void write_cache_key(char* key, chain_id_t chain_id, const address_t cont
 in3_ret_t in3_cache_init(in3_t* c) {
   // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
   for (int i = 0; i < c->chains_length; i++) {
-    if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) in3_log_debug("Failed to update cached nodelist\n");
-    if (in3_cache_update_whitelist(c, c->chains + i) != IN3_OK) in3_log_debug("Failed to update cached whitelist\n");
+    if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) { in3_log_debug("Failed to update cached nodelist\n"); }
+    if (in3_cache_update_whitelist(c, c->chains + i) != IN3_OK) { in3_log_debug("Failed to update cached whitelist\n"); }
     in3_client_run_chain_whitelisting(c->chains + i);
   }
 
