@@ -591,6 +591,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
 }
 
 in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
+  clock_t start = clock();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
@@ -607,7 +608,7 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
 
   for (int i = 0; i < req->urls_len; i++) {
-    jbyteArray content = (*jni)->GetObjectArrayElement(jni, result, i);
+    jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
     if (content) {
       const size_t l     = (*jni)->GetArrayLength(jni, content);
       uint8_t*     bytes = _malloc(l);
@@ -617,6 +618,10 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
     } else
       sb_add_chars(&req->results[i].error, "Could not fetch the data!");
   }
+  clock_t end = clock();
+
+  req->times = _malloc(sizeof(clock_t) * req->urls_len);
+  for (int i = 0; i < req->urls_len; i++) req->times = end - start;
 
   return success;
 }
