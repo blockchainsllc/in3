@@ -50,17 +50,18 @@
 #endif
 #include "../../core/client/client.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "in3_http.h"
 
 in3_ret_t send_http(in3_request_t* req) {
-  if (!req->times) req->times = _malloc(sizeof(clock_t) * req->urls_len);
+  if (!req->times) req->times = _malloc(sizeof(uint32_t) * req->urls_len);
   for (int n = 0; n < req->urls_len; n++) {
 
     struct hostent*    server;
     struct sockaddr_in serv_addr;
     int                received, bytes, sent, total;
     char *             message = alloca(strlen(req->payload) + 200), response[4096], *url = req->urls[n], host[256];
-    clock_t            start = clock();
+    uint64_t           start = current_ms();
 
     (void) received;
     (void) bytes;
@@ -201,7 +202,7 @@ in3_ret_t send_http(in3_request_t* req) {
 
 #endif
 
-    req->times[n] = clock() - start;
+    req->times[n] = (uint32_t)(current_ms() - start);
 
     // now evaluate the response
 

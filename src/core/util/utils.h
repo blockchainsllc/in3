@@ -142,6 +142,11 @@ char* str_replace_pos(const char* orig, size_t pos, size_t len, const char* rep)
   */
 char* str_find(const char* haystack, const char* needle);
 
+/**
+ * current timestamp in ms. 
+ */
+uint64_t current_ms();
+
 /** changes to pointer (a) and it length (l) to remove leading 0 bytes.*/
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \

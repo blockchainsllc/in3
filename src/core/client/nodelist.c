@@ -315,7 +315,7 @@ in3_node_props_match(const in3_node_props_t np_config, const in3_node_props_t np
 uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa) {
   const uint32_t avg = n->response_count > 4
                            ? (n->total_response_time / n->response_count)
-                           : (4004 / (capa + 1000));
+                           : (10000 / (capa + 100));
   return 0xFFFF / avg;
 }
 

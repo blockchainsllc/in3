@@ -189,14 +189,14 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
 in3_ret_t send_curl(in3_request_t* req) {
   // set the init-time
   in3_ret_t res;
-  clock_t   start = clock();
+  uint64_t  start = current_ms();
 #ifdef CURL_BLOCKING
   res = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
 #else
   res = send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
 #endif
-  clock_t t = clock() - start;
-  if (!req->times) req->times = _malloc(sizeof(clock_t) * req->urls_len);
+  uint32_t t = (uint32_t)(current_ms() - start);
+  if (!req->times) req->times = _malloc(sizeof(uint32_t) * req->urls_len);
   for (int i = 0; i < req->urls_len; i++) req->times[i] = t;
   return res;
 }

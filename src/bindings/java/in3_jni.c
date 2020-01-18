@@ -591,7 +591,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
 }
 
 in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
-  clock_t start = clock();
+  uint64_t start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
@@ -619,10 +619,10 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       sb_add_chars(&req->results[i].error, "Could not fetch the data!");
     if (req->results[i].error.len) success = IN3_ERPC;
   }
-  clock_t end = clock();
+  uint64_t end = current_ms();
 
-  req->times = _malloc(sizeof(clock_t) * req->urls_len);
-  for (int i = 0; i < req->urls_len; i++) req->times[i] = end - start;
+  req->times = _malloc(sizeof(uint32_t) * req->urls_len);
+  for (int i = 0; i < req->urls_len; i++) req->times[i] = (uint32_t)(end - start);
 
   return success;
 }

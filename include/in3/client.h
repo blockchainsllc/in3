@@ -117,7 +117,7 @@ typedef struct in3_request_config {
   bytes_t*           client_signature;       /**< the signature of the client with the client key */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
-  clock_t            time;                   /**< meassured time for the request */
+  uint32_t           time;                   /**< meassured time for the request */
 
 } in3_request_config_t;
 
@@ -328,7 +328,7 @@ typedef struct n3_request {
   int             urls_len; /**< number of urls */
   in3_response_t* results;  /**< the responses*/
   uint32_t        timeout;  /**< the timeout 0= no timeout*/
-  clock_t*        times;    /**< measured times (in ms) which will be used for ajusting the weights */
+  uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
 } in3_request_t;
 
 /** the transport function to be implemented by the transport provider.

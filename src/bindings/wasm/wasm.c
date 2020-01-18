@@ -58,8 +58,12 @@
 
 #define err_string(msg) (":ERROR:" msg)
 
-static char* last_error = NULL;
-
+static char*    last_error = NULL;
+static uint32_t now() {
+  static uint64_t time_offset = 0;
+  if (!time_offset) time_offset = current_ms();
+  return (uint32_t)(current_ms() - time_offset);
+}
 void EMSCRIPTEN_KEEPALIVE in3_set_error(char* data) {
   if (last_error) free(last_error);
   last_error = data ? _strdupn(data, -1) : NULL;
@@ -139,9 +143,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
     if (request == NULL)
       sb_add_chars(sb, ",\"error\",\"could not create request, memory?\"");
     else {
-      request->times = _malloc(sizeof(clock_t) * request->urls_len);
-      clock_t now    = clock();
-      char    tmp[160];
+      request->times = _malloc(sizeof(uint32_t) * request->urls_len);
+      uint32_t now   = now();
+      char     tmp[160];
       sb_add_chars(sb, ",\"request\":{ \"type\": ");
       sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
       sb_add_chars(sb, ",\"timeout\":");
@@ -177,7 +181,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
-  r->times[i] = clock() - r->times[i];
+  r->times[i] = now() - r->times[i];
   if (is_error)
     sb_add_chars(&r->results[i].error, msg);
   else if (ctx->type == CT_SIGN) {
