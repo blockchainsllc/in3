@@ -144,7 +144,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
       sb_add_chars(sb, ",\"error\",\"could not create request, memory?\"");
     else {
       request->times = _malloc(sizeof(uint32_t) * request->urls_len);
-      uint32_t now   = now();
+      uint32_t start = now();
       char     tmp[160];
       sb_add_chars(sb, ",\"request\":{ \"type\": ");
       sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
@@ -155,7 +155,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
       sb_add_chars(sb, request->payload);
       sb_add_chars(sb, ",\"urls\":[");
       for (int i = 0; i < request->urls_len; i++) {
-        request->times[i] = now;
+        request->times[i] = start;
         if (i) sb_add_char(sb, ',');
         sb_add_char(sb, '"');
         sb_add_chars(sb, request->urls[i]);
