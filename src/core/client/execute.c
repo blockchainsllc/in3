@@ -242,7 +242,7 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
 }
 
 static void blacklist_node(node_weight_t* node_weight) {
-  if (node_weight) {
+  if (node_weight && node_weight->weight) {
     // blacklist the node
     node_weight->weight->blacklisted_until = _time() + 3600000;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
@@ -302,7 +302,13 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             vc.proof                 = d_get(vc.proof, K_PROOF);
           }
 
-          if (verifier) {
+          if (!vc.result && ctx->attempt < ctx->client->max_attempts - 1) {
+            // if we don't have a result, the node reported an error
+            // since we don't know if this error is our fault or the server fault,we don't blacklist the node, but retry
+            res = ctx->verification_state = IN3_EUNKNOWN;
+            node->weight                  = NULL;
+            break;
+          } else if (verifier) {
             res = ctx->verification_state = verifier->verify(&vc);
             if (res == IN3_WAITING)
               return res;
@@ -582,7 +588,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       ctx->attempt++;
 
       // should we retry?
-      if (ctx->attempt < ctx->client->max_attempts - 1) {
+      if (ctx->attempt < ctx->client->max_attempts) {
         in3_log_debug("Retrying send request...\n");
         // reset the error and try again
         if (ctx->error) _free(ctx->error);

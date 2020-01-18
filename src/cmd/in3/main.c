@@ -53,6 +53,7 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/cache.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/version.h"
@@ -763,6 +764,22 @@ int main(int argc, char* argv[]) {
       print_val(res->result);
     return 0;
 
+  } else if (strcmp(method, "in3_weights") == 0) {
+    uint64_t     now   = _time();
+    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    printf("   : %40s : %7s : %5s : %s\n----------------------------------------------------------------------------------------\n", "url", "BL", "CNT", "WEIGHT");
+    for (int i = 0; i < chain->nodelist_length; i++) {
+      in3_node_weight_t* weight      = chain->weights + i;
+      in3_node_t*        node        = chain->nodelist + i;
+      uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
+      if (blacklisted) printf("\033[31m");
+      printf("%2i : %40s : %7i : %5i : %f", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->weight);
+      if (blacklisted) printf("\033[0m");
+      printf("\n");
+    }
+
+    return 0;
+
   } else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, to, params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
@@ -889,6 +906,11 @@ int main(int argc, char* argv[]) {
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
+
+  // update cache
+  if (c->chain_id != ETH_CHAIN_ID_LOCAL)
+    in3_cache_update_nodelist(c, in3_find_chain(c, c->chain_id));
+
   // if we need to wait
   if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
     bytes32_t txHash;
