@@ -269,8 +269,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"0\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":false}", "expected uint64");
-  // fixme:
-  // TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"0x01234567890123456789\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"0x012345678901234567\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":1}");
   TEST_ASSERT_EQUAL(c->min_deposit, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":0}");
@@ -285,8 +284,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"0\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":false}", "expected uint64");
-  // fixme:
-  // TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"0x01234567890123456789\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"0x012345678901234567\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":1}");
   TEST_ASSERT_EQUAL(c->node_props, 1);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":0}");
