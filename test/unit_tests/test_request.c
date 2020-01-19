@@ -211,6 +211,18 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"keepIn3\":true}");
   TEST_ASSERT_EQUAL(c->keep_in3, true);
 
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"useBinary\":true}");
+  TEST_ASSERT_EQUAL(c->use_binary, true);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useHttp", c, "{\"useHttp\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useHttp", c, "{\"useHttp\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useHttp", c, "{\"useHttp\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"useHttp\":true}");
+  TEST_ASSERT_EQUAL(c->use_http, true);
+
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"-1\"}", "expected uint32");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"\"}", "expected uint32");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0\"}", "expected uint32");
@@ -239,6 +251,20 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"maxCodeCache\":\"0xffffffff\"}"); // UINT32_MAX
   TEST_ASSERT_EQUAL(c->max_code_cache, 0xffffffff);
 
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"-1\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"0\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":false}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: timeout", c, "{\"timeout\":\"0x1203030230\"}", "expected uint32");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"timeout\":1}");
+  TEST_ASSERT_EQUAL(c->timeout, 1);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"timeout\":0}");
+  TEST_ASSERT_EQUAL(c->timeout, 0);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"timeout\":4294967295}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->timeout, 4294967295U);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"timeout\":\"0xffffffff\"}"); // UINT32_MAX
+  TEST_ASSERT_EQUAL(c->timeout, 0xffffffff);
+
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"-1\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"\"}", "expected uint64");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: minDeposit", c, "{\"minDeposit\":\"0\"}", "expected uint64");
@@ -254,6 +280,22 @@ static void test_configure_validation() {
   // TEST_ASSERT_EQUAL(c->min_deposit, 18446744073709551615ULL);
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"minDeposit\":\"0xffffffffffffffff\"}"); // UINT64_MAX
   TEST_ASSERT_EQUAL(c->min_deposit, 0xffffffffffffffff);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"-1\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"0\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":false}", "expected uint64");
+  // fixme:
+  // TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeProps", c, "{\"nodeProps\":\"0x01234567890123456789\"}", "expected uint64");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":1}");
+  TEST_ASSERT_EQUAL(c->node_props, 1);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":0}");
+  TEST_ASSERT_EQUAL(c->node_props, 0);
+  // fixme:
+  // TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":18446744073709551615}"); // UINT64_MAX
+  // TEST_ASSERT_EQUAL(c->node_props, 18446744073709551615ULL);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"nodeProps\":\"0xffffffffffffffff\"}"); // UINT64_MAX
+  TEST_ASSERT_EQUAL(c->node_props, 0xffffffffffffffff);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":\"-1\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: nodeLimit", c, "{\"nodeLimit\":\"0x123412341234\"}", "expected uint16");

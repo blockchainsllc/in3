@@ -483,15 +483,27 @@ char* in3_configure(in3_t* c, char* config) {
     } else if (token->key == key("keepIn3")) {
       EXPECT_TOK_BOOL(token);
       c->keep_in3 = d_int(token) ? true : false;
+    } else if (token->key == key("useBinary")) {
+      EXPECT_TOK_BOOL(token);
+      c->use_binary = d_int(token) ? true : false;
+    } else if (token->key == key("useHttp")) {
+      EXPECT_TOK_BOOL(token);
+      c->use_http = d_int(token) ? true : false;
     } else if (token->key == key("maxBlockCache")) {
       EXPECT_TOK_U32(token);
       c->max_block_cache = d_long(token);
     } else if (token->key == key("maxCodeCache")) {
       EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
+    } else if (token->key == key("timeout")) {
+      EXPECT_TOK_U32(token);
+      c->timeout = d_long(token);
     } else if (token->key == key("minDeposit")) {
       EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
       c->min_deposit = d_long(token);
+    } else if (token->key == key("nodeProps")) {
+      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
+      c->node_props = d_long(token);
     } else if (token->key == key("nodeLimit")) {
       EXPECT_TOK_U16(token);
       c->node_limit = (uint16_t) d_int(token);
