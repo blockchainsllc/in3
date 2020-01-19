@@ -469,6 +469,10 @@ char* in3_configure(in3_t* c, char* config) {
       c->signature_count = (uint8_t) d_int(token);
     } else if (token->key == key("finality")) {
       EXPECT_TOK_U16(token);
+#ifdef POA
+      if (c->chain_id == ETH_CHAIN_ID_GOERLI || c->chain_id == ETH_CHAIN_ID_KOVAN)
+        EXPECT_CFG(d_int(token) > 0 && d_int(token) <= 100, "expected % value");
+#endif
       c->finality = (uint16_t) d_int(token);
     } else if (token->key == key("includeCode")) {
       EXPECT_TOK_BOOL(token);

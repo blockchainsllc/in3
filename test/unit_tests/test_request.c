@@ -175,10 +175,20 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":\"0x123412341234\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":\"value\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":65536}", "expected uint16");
+#ifndef POA
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":0}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":65535}");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":\"0xffff\"}");
   TEST_ASSERT_EQUAL(c->finality, 65535);
+#else
+  c->chain_id = ETH_CHAIN_ID_GOERLI;
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":101}", "expected %");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: finality", c, "{\"finality\":0}", "expected %");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":1}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":100}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"finality\":\"0x64\"}");
+  TEST_ASSERT_EQUAL(c->finality, 100);
+#endif
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: includeCode", c, "{\"includeCode\":1}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: includeCode", c, "{\"includeCode\":\"1\"}", "expected boolean");
