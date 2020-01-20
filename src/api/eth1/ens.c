@@ -90,7 +90,7 @@ in3_ret_t ens_resolve_address(in3_ctx_t* parent, char* name, const address_t reg
 
   uint8_t   calldata[36], *hash = calldata + 4;
   bytes_t   callbytes = bytes(calldata, 36);
-  address_t resolver;
+  address_t resolver  = {0};
   ens_hash(name, hash);
 
   // check the cache
