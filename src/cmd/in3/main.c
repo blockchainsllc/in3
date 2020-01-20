@@ -54,9 +54,9 @@
 #include "../http-server/http_server.h"
 #endif
 #include "../../core/client/cache.h"
-#include "../../core/client/nodelist.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
@@ -293,6 +293,29 @@ static void execute(in3_t* c, FILE* f) {
     }
   }
 }
+
+char* resolve(in3_t* c, char* name) {
+  if (!name) return NULL;
+  if (name[0] == '0' && name[1] == 'x') return name;
+  if (strchr(name, '.')) {
+    char* params = alloca(strlen(name) + 10);
+    sprintf(params, "[\"%s\"]", name);
+    char *res = NULL, *err = NULL;
+    in3_client_rpc(c, "in3_ens", params, &res, &err);
+    if (err) {
+      res = alloca(strlen(err) + 100);
+      sprintf(res, "Could not resolve %s : %s", name, err);
+      die(res);
+    }
+    if (res[0] == '"') {
+      res[strlen(res) - 1] = 0;
+      res++;
+    }
+    return res;
+  }
+  return name;
+}
+
 // read data from a file and return the bytes
 bytes_t readFile(FILE* f) {
   if (!f) die("Could not read the input file");
@@ -738,7 +761,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, to, params, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), params, block_number, 0, NULL, data);
     method = "eth_call";
   } else if (strcmp(method, "abi_encode") == 0) {
     if (!sig) die("missing signature");
@@ -768,14 +791,14 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "in3_weights") == 0) {
     uint64_t     now   = _time();
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
-    printf("   : %40s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG","WEIGHT");
+    printf("   : %40s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
     for (int i = 0; i < chain->nodelist_length; i++) {
       in3_node_weight_t* weight      = chain->weights + i;
       in3_node_t*        node        = chain->nodelist + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
-      uint32_t calc_weight = in3_node_calculate_weight(weight,node->capacity);
+      uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
       if (blacklisted) printf("\033[31m");
-      printf("%2i   %40s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0,calc_weight);
+      printf("%2i   %40s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight);
       if (blacklisted) printf("\033[0m");
       printf("\n");
     }
@@ -783,7 +806,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, to, params, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
   } else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
