@@ -726,7 +726,7 @@ int main(int argc, char* argv[]) {
                        (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
-                       argv[i]);
+                       resolve(c, argv[i]));
       }
     }
   }
