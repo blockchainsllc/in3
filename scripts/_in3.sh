@@ -29,6 +29,7 @@ subcmds=(
     'in3_weights: shows the weights of nodeList'
     'in3_cacheClear: clears the cache'
     'in3_sign: requests a node to sign. <blocknumber>'
+    'in3_ens: resolve ens-name. <domain> <type> <registryaddress>'
     'send: sends a transaction <signature> ...args'
     'call: calls a contract <signature> ...args'
     'abi_encode: encodes the arguments as described in the method signature using ABI-Encoding. <signature> ...args'
