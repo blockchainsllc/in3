@@ -244,7 +244,7 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
 static void blacklist_node(node_match_t* node_weight) {
   if (node_weight && node_weight->weight) {
     // blacklist the node
-    node_weight->weight->blacklisted_until = _time() + 3600000;
+    node_weight->weight->blacklisted_until = _time() + 3600;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
     in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
