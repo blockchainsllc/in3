@@ -38,7 +38,10 @@ add_executable(ipfs
         ipfs.pb.c
         pb_encode.c
         pb_decode.c
-        pb_common.c)
+        pb_common.c
+        errors.c
+        hashes.c
+        multihash.c)
 
 target_include_directories(ipfs PRIVATE .)
 target_link_libraries(ipfs eth_nano)
