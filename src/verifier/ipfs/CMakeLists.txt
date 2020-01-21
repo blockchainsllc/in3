@@ -41,3 +41,4 @@ add_executable(ipfs
         pb_common.c)
 
 target_include_directories(ipfs PRIVATE .)
+target_link_libraries(ipfs eth_nano)
