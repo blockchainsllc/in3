@@ -151,7 +151,7 @@ static void test_cache() {
   c2->cache     = c->cache;
   c2->transport = test_transport;
   c2->chain_id  = c->chain_id;
-  in3_configure(c2, "{\"chain_id\":\"0x1\"}");
+  in3_configure(c2, "{\"chainId\":\"0x1\"}");
   in3_chain_t* chain2 = NULL;
   for (int i = 0; i < c2->chains_length; i++) {
     if (c2->chains[i].chain_id == 0x1) chain2 = &c2->chains[i];
@@ -258,17 +258,29 @@ static void test_whitelist_cache() {
   c->chain_id = 0x8;
   setup_test_cache(c);
   in3_set_default_storage(c->cache);
-  TEST_ASSERT_EQUAL(IN3_OK,
-                    in3_configure(c, "{"
-                                     "  \"nodes\": {"
-                                     "    \"0x8\": {"
-                                     "      \"contract\":\"" CONTRACT_ADDRS "\","
-                                     "      \"registryId\":\"" REGISTRY_ID "\","
-                                     "      \"whiteList\": [\"0x1234567890123456789012345678901234567890\", \"0x1234567890123456789000000000000000000000\"],"
-                                     "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
-                                     "    }"
-                                     "  }"
-                                     "}"));
+
+  TEST_ASSERT_EQUAL_STRING("cannot specify manual whiteList and whiteListContract together!",
+                           in3_configure(c, "{"
+                                            "  \"nodes\": {"
+                                            "    \"0x7\": {"
+                                            "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                            "      \"registryId\":\"" REGISTRY_ID "\","
+                                            "      \"whiteList\": [\"0x1234567890123456789012345678901234567890\", \"0x1234567890123456789000000000000000000000\"],"
+                                            "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
+                                            "    }"
+                                            "  }"
+                                            "}"));
+
+  TEST_ASSERT_NULL(in3_configure(c, "{"
+                                    "  \"nodes\": {"
+                                    "    \"0x8\": {"
+                                    "      \"contract\":\"" CONTRACT_ADDRS "\","
+                                    "      \"registryId\":\"" REGISTRY_ID "\","
+                                    "      \"whiteListContract\": \"" WHITELIST_CONTRACT_ADDRS "\""
+                                    "    }"
+                                    "  }"
+                                    "}"));
+
   address_t wlc;
   hex_to_bytes(WHITELIST_CONTRACT_ADDRS, -1, wlc, 20);
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c, 0x8)->whitelist->contract, wlc, 20);
