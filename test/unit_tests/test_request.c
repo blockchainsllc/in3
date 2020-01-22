@@ -360,24 +360,6 @@ static void test_configure_validation() {
                                 "  }"
                                 "}",
                              "cannot specify manual whiteList and whiteListContract together!");
-  TEST_ASSERT_CONFIGURE_FAIL("Duplicate chain id",
-                             c, "{"
-                                "  \"nodes\":{"
-                                "    \"0xdeaf\":{"
-                                "      \"contract\":\"" CONTRACT_ADDRS "\","
-                                "      \"registryId\":\"" REGISTRY_ID "\","
-                                "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
-                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
-                                "    },"
-                                "    \"0xdeaf\":{"
-                                "      \"contract\":\"" CONTRACT_ADDRS "\","
-                                "      \"registryId\":\"" REGISTRY_ID "\","
-                                "      \"whiteListContract\":\"" WHITELIST_CONTRACT_ADDRS "\","
-                                "      \"whiteList\":[\"0x0123456789012345678901234567890123456789\", \"0x1234567890123456789012345678901234567890\"],"
-                                "    }"
-                                "  }"
-                                "}",
-                             "chain with specified chainId already exists");
   in3_free(c);
 
   c = in3_for_chain(0);
