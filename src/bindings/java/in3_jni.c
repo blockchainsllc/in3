@@ -79,6 +79,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
   if (error) {
     // TODO create a human readable error message
     jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
+    _free(error);
     (*env)->ThrowNew(env, Exception, error);
   }
 }

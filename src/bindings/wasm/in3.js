@@ -169,7 +169,11 @@ class IN3 {
         this.needsSetConfig = !this.ptr
         if (this.ptr) {
             const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
-            if (r) throw new Error("Error setting the config : " + r);
+            if (r) {
+                const ex = new Error(UTF8ToString(r))
+                _free(r)
+                throw ex
+            }
         }
     }
 

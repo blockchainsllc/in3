@@ -544,7 +544,7 @@ char* in3_configure(in3_t* c, const char* config) {
         // register chain
         chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
         in3_chain_t* chain    = in3_find_chain(c, chain_id);
-        EXPECT_CFG(!chain, "chain with specified chainId already exists");
+        //        EXPECT_CFG(!chain, "chain with specified chainId already exists");
 
         bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
         bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
