@@ -111,6 +111,10 @@ static void test_exec_req() {
   TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"No Method defined\"}}", result);
   _free(result);
 
+  result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"The request could not be handled\nNo storage set\"}}", result);
+  _free(result);
+
   in3_free(c);
 }
 
@@ -448,7 +452,7 @@ static void test_configure_validation() {
  */
 int main() {
   _free(in3_create_signer(NULL, NULL, NULL));
-  _free(in3_create_storeage_handler(NULL, NULL, NULL));
+  _free(in3_create_storage_handler(NULL, NULL, NULL, NULL));
 
   in3_log_set_quiet(true);
   in3_register_eth_basic();

@@ -39,6 +39,7 @@
 
 #include "../../src/core/util/log.h"
 #include "../test_utils.h"
+#include "../../src/core/util/mem.h"
 #include <string.h>
 
 static char* read_file(FILE* file) {
@@ -57,8 +58,9 @@ static char* read_file(FILE* file) {
     r = fread(buffer + len, 1, allocated - len, file);
     len += r;
     if (feof(file)) break;
-    buffer = realloc(buffer, allocated * 2 + 1);
-    allocated *= 2;
+    size_t new_alloc = allocated * 2 + 1;
+    buffer = _realloc(buffer, new_alloc, allocated);
+    allocated = new_alloc;
   }
 
   if (len && buffer[len - 1] == '\n') buffer[len - 1] = 0;

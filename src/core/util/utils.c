@@ -39,6 +39,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
   if (src_len < 32) memset(dst, 0, 32 - src_len);
@@ -267,4 +268,10 @@ char* str_find(char* haystack, const char* needle) {
       return haystack;
   }
   return NULL;
+}
+
+uint64_t current_ms() {
+  struct timeval te;
+  gettimeofday(&te, NULL);
+  return te.tv_sec * 1000L + te.tv_usec / 1000;
 }

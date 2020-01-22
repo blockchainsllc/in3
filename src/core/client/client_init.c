@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "../util/data.h"
+#include "../util/debug.h"
 #include "../util/log.h"
 #include "../util/mem.h"
 #include "cache.h"
@@ -41,6 +42,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <time.h>
 
 #define EXPECT(cond, exit) \
@@ -146,7 +148,6 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
-  weight->weight              = 1;
 }
 
 static void init_ipfs(in3_chain_t* chain) {
@@ -213,6 +214,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->chains_length        = chain_id ? 1 : 5;
   c->chains               = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters              = NULL;
+  c->timeout              = 10000;
 
   //TODO check for failed malloc!
 
@@ -331,7 +333,6 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
-  weight->weight              = 1;
   return IN3_OK;
 }
 in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t address) {
@@ -398,8 +399,10 @@ void in3_free(in3_t* a) {
 
 in3_t* in3_for_chain(chain_id_t chain_id) {
 
-  // initialize random with the timestamp as seed
-  _srand(_time());
+  // initialize random with the timestamp (in nanoseconds) as seed
+  struct timeval te;
+  gettimeofday(&te, NULL);
+  _srand(te.tv_sec * 1000000LL + te.tv_usec);
 
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
@@ -448,10 +451,10 @@ static inline bool is_hex_str(const char* str) {
   return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
 }
 
-char* in3_configure(in3_t* c, char* config) {
+char* in3_configure(in3_t* c, const char* config) {
   d_track_keynames(1);
   d_clear_keynames();
-  json_ctx_t* cnf = parse_json(config);
+  json_ctx_t* cnf = parse_json((char*) config);
   d_track_keynames(0);
   char* res = NULL;
 
