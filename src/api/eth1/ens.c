@@ -1,3 +1,4 @@
+#include "ens.h"
 #include "../../core/client/client.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
@@ -15,7 +16,6 @@ static int next_token(const char* c, int p) {
 }
 
 static in3_ctx_t* find_pending_ctx(in3_ctx_t* ctx, bytes_t data) {
-  //  0x0178b8bfbc2fc00072dc46c13002c1694a202596028a76e974308c6f3b6849c0b081f870
   // ok, we need a request, do we have a useable?
   ctx = ctx->required;
   while (ctx) {
@@ -28,7 +28,7 @@ static in3_ctx_t* find_pending_ctx(in3_ctx_t* ctx, bytes_t data) {
   return NULL;
 }
 
-static in3_ret_t read_address(bytes_t calldata, char* to, in3_ctx_t* parent, address_t dst) {
+static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_t** result) {
   in3_ctx_t* ctx = find_pending_ctx(parent, calldata);
 
   if (ctx) {
@@ -36,7 +36,7 @@ static in3_ret_t read_address(bytes_t calldata, char* to, in3_ctx_t* parent, add
       case CTX_SUCCESS: {
         d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
         if (!ctx->error && rpc_result && d_type(rpc_result) == T_BYTES && d_len(rpc_result) >= 20) {
-          memcpy(dst, rpc_result->data + d_len(rpc_result) - 20, 20);
+          *result = d_bytes(rpc_result);
           //          ctx_remove_required(parent, ctx);
           return IN3_OK;
         } else
@@ -71,20 +71,22 @@ static void ens_hash(char* domain, bytes32_t dst) {
   memcpy(dst, hash, 32);
 }
 
-in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, char* type, address_t dst) {
+in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
   const int len = strlen(name);
   if (*name == '0' && name[1] == 1 && len == 42) {
     hex_to_bytes(name, 40, dst, 20);
     return IN3_OK;
   }
 
+  *res_len = type == ENS_HASH ? 32 : 20;
+
   char*   cachekey  = NULL;
-  bytes_t dst_bytes = bytes(dst, 20);
+  bytes_t dst_bytes = bytes(dst, *res_len);
 
   //check cache
   if (parent->client->cache) {
-    cachekey = alloca(strlen(type) + strlen(name) + 8);
-    sprintf(cachekey, "ens:%s:%s", name, type);
+    cachekey = alloca(strlen(name) + 5);
+    sprintf(cachekey, "ens:%s:%i", name, type);
     bytes_t* cached = parent->client->cache->get_item(parent->client->cache->cptr, cachekey);
     if (cached) {
       memcpy(dst, cached->data, 20);
@@ -94,11 +96,17 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, c
   }
 
   uint8_t   calldata[36], *hash = calldata + 4;
-  bytes_t   callbytes = bytes(calldata, 36);
-  address_t resolver  = {0};
+  bytes_t   callbytes   = bytes(calldata, 36);
+  address_t resolver    = {0};
+  bytes_t*  last_result = NULL;
   ens_hash(name, hash);
 
-  if (strcmp(type, "owner") == 0) {
+  if (type == ENS_HASH) {
+    memcpy(dst, hash, 32);
+    return IN3_OK;
+  }
+
+  if (type == ENS_OWNER) {
     // owner(bytes32)
     calldata[0] = 0x02;
     calldata[1] = 0x57;
@@ -128,31 +136,47 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, c
         return ctx_set_error(parent, "There is no ENS-contract for the current chain", IN3_ENOTSUP);
     }
 
-  in3_ret_t res = read_address(callbytes, registry_address, parent, resolver);
+  in3_ret_t res = exec_call(callbytes, registry_address, parent, &last_result);
   if (res < 0) return res;
+  memcpy(resolver, last_result->data + last_result->len - 20, 20);
   if (memiszero(resolver, 20)) return ctx_set_error(parent, "resolver not registered", IN3_EFIND);
 
-  if (strcmp(type, "resolver") == 0 || strcmp(type, "owner") == 0) {
+  if (type == ENS_RESOLVER || type == ENS_OWNER) {
     memcpy(dst, resolver, 20);
     if (parent->client->cache)
       parent->client->cache->set_item(parent->client->cache->cptr, cachekey, &dst_bytes);
     return IN3_OK;
   }
 
-  // now we change the call to addr(bytes32)
-  calldata[0] = 0x3b;
-  calldata[1] = 0x3b;
-  calldata[2] = 0x57;
-  calldata[3] = 0xde;
+  if (type == ENS_ADDR) {
+    // now we change the call to addr(bytes32)
+    calldata[0] = 0x3b;
+    calldata[1] = 0x3b;
+    calldata[2] = 0x57;
+    calldata[3] = 0xde;
+  } else if (type == ENS_NAME) {
+    /// name(bytes32) = 0x691f3431f2842c92f
+    calldata[0] = 0x69;
+    calldata[1] = 0x1f;
+    calldata[2] = 0x34;
+    calldata[3] = 0x31;
+  }
 
   char r_adr[43];
   bytes_to_hex(resolver, 20, r_adr + 2);
   r_adr[0] = '0';
   r_adr[1] = 'x';
 
-  res = read_address(callbytes, r_adr, parent, dst);
+  res = exec_call(callbytes, r_adr, parent, &last_result);
   if (res < 0) return res;
-  if (memiszero(resolver, 20)) return ctx_set_error(parent, "address not registered", IN3_EFIND);
+
+  if (last_result->len < 20 || memiszero(last_result->data, 20)) return ctx_set_error(parent, "address not registered", IN3_EFIND);
+
+  if (type == ENS_ADDR)
+    memcpy(dst, last_result->data + last_result->len - 20, 20);
+  else if (type == ENS_NAME) {
+  }
+
   if (parent->client->cache)
     parent->client->cache->set_item(parent->client->cache->cptr, cachekey, &dst_bytes);
   return IN3_OK;

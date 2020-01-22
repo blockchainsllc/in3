@@ -37,6 +37,14 @@
 #ifndef _ETH_API_ENS_H_
 #define _ETH_API_ENS_H_
 
-in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, char* type, address_t dst);
+typedef enum {
+  ENS_ADDR     = 0, /**< resolve as address */
+  ENS_RESOLVER = 1, /**< resolver */
+  ENS_OWNER    = 2, /**< owner */
+  ENS_NAME     = 3, /**< name */
+  ENS_HASH     = 4  /**< hash */
+} in3_ens_type;
+
+in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* len);
 
 #endif // _ETH_API_ENS_H_

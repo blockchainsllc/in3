@@ -116,20 +116,31 @@ static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_resp
   return IN3_OK;
 }
 static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
-  char* name     = d_get_string_at(params, 0);
-  char* type     = d_get_string_at(params, 1);
-  char* registry = d_get_string_at(params, 2);
+  char*        name     = d_get_string_at(params, 0);
+  char*        type     = d_get_string_at(params, 1);
+  char*        registry = d_get_string_at(params, 2);
+  int          res_len  = 20;
+  in3_ens_type ens_type = ENS_ADDR;
+  bytes32_t    result;
+
   // verify input
-  if (!name || !strchr(name, '.')) return ctx_set_error(ctx, "the first param msut be a valid domain name", IN3_EINVAL);
   if (!type) type = "addr";
-  if (strcmp(type, "addr") && strcmp(type, "owner") && strcmp(type, "resolver")) return ctx_set_error(ctx, "currently only 'addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
-  if (registry && strlen(registry) != 42) return ctx_set_error(ctx, "you must provide a valid registry-address", IN3_EINVAL);
-  address_t result;
+  if (!name || !strchr(name, '.')) return ctx_set_error(ctx, "the first param msut be a valid domain name", IN3_EINVAL);
+  if (strcmp(type, "addr") == 0)
+    ens_type = ENS_ADDR;
+  else if (strcmp(type, "resolver") == 0)
+    ens_type = ENS_RESOLVER;
+  else if (strcmp(type, "owner") == 0)
+    ens_type = ENS_OWNER;
+  else if (strcmp(type, "hash") == 0)
+    ens_type = ENS_HASH;
+  else
+    return ctx_set_error(ctx, "currently only 'hash','addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
 
   if (registry) hex_to_bytes(registry, -1, result, 20);
-  in3_ret_t res = ens_resolve(ctx, name, registry ? result : NULL, type, result);
+  in3_ret_t res = ens_resolve(ctx, name, registry ? result : NULL, ens_type, result, &res_len);
   if (res < 0) return res;
-  bytes_t result_bytes = bytes(result, 20);
+  bytes_t result_bytes = bytes(result, res_len);
 
   RESPONSE_START();
   sb_add_bytes(&response[0]->result, NULL, &result_bytes, 1, false);
