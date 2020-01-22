@@ -73,7 +73,7 @@ typedef struct weight {
   float              s;      /**< The starting value */
   float              w;      /**< weight value */
   struct weight*     next;   /**< next in the linkedlist or NULL if this is the last element*/
-} node_weight_t;
+} node_match_t;
 
 /**
  * The Request config.
@@ -112,7 +112,7 @@ typedef struct in3_ctx {
   in3_request_config_t* requests_configs;
 
   /* selected nodes to process the request, which are stored as linked list.*/
-  node_weight_t* nodes;
+  node_match_t* nodes;
 
   /** 
    * optional cache-entries. 

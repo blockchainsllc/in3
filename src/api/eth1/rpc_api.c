@@ -39,6 +39,7 @@
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
+#include "ens.h"
 #include "eth_api.h"
 #include <errno.h>
 #include <inttypes.h>
@@ -114,6 +115,38 @@ static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_resp
   RESPONSE_END();
   return IN3_OK;
 }
+static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  char*        name     = d_get_string_at(params, 0);
+  char*        type     = d_get_string_at(params, 1);
+  char*        registry = d_get_string_at(params, 2);
+  int          res_len  = 20;
+  in3_ens_type ens_type = ENS_ADDR;
+  bytes32_t    result;
+
+  // verify input
+  if (!type) type = "addr";
+  if (!name || !strchr(name, '.')) return ctx_set_error(ctx, "the first param msut be a valid domain name", IN3_EINVAL);
+  if (strcmp(type, "addr") == 0)
+    ens_type = ENS_ADDR;
+  else if (strcmp(type, "resolver") == 0)
+    ens_type = ENS_RESOLVER;
+  else if (strcmp(type, "owner") == 0)
+    ens_type = ENS_OWNER;
+  else if (strcmp(type, "hash") == 0)
+    ens_type = ENS_HASH;
+  else
+    return ctx_set_error(ctx, "currently only 'hash','addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
+
+  if (registry) hex_to_bytes(registry, -1, result, 20);
+  in3_ret_t res = ens_resolve(ctx, name, registry ? result : NULL, ens_type, result, &res_len);
+  if (res < 0) return res;
+  bytes_t result_bytes = bytes(result, res_len);
+
+  RESPONSE_START();
+  sb_add_bytes(&response[0]->result, NULL, &result_bytes, 1, false);
+  RESPONSE_END();
+  return IN3_OK;
+}
 static in3_ret_t in3_sha3(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
   if (!params) return ctx_set_error(ctx, "no data", IN3_EINVAL);
   bytes_t data = d_to_bytes(params + 1);
@@ -159,6 +192,7 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (strcmp(method, "in3_abiEncode") == 0) return in3_abiEncode(ctx, params, response);
   if (strcmp(method, "in3_abiDecode") == 0) return in3_abiDecode(ctx, params, response);
   if (strcmp(method, "in3_checksumAddress") == 0) return in3_checkSumAddress(ctx, params, response);
+  if (strcmp(method, "in3_ens") == 0) return in3_ens(ctx, params, response);
   if (strcmp(method, "web3_sha3") == 0) return in3_sha3(ctx, params, response);
   if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
   if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(ctx, response);
@@ -174,6 +208,7 @@ static int verify(in3_vctx_t* v) {
       strcmp(method, "in3_abiDecode") == 0 ||
       strcmp(method, "in3_checksumAddress") == 0 ||
       strcmp(method, "web3_sha3") == 0 ||
+      strcmp(method, "in3_ens") == 0 ||
       strcmp(method, "in3_config") == 0 ||
       strcmp(method, "in3_cacheClear") == 0)
     return IN3_OK;

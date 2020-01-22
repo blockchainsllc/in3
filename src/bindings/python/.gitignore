@@ -1,0 +1,11 @@
+.idea/
+venv/
+venv
+idea
+dist/
+in3.egg-info/
+MANIFEST
+**/**.pyc
+**/**/.DS_Store
+.DS_Store
+
