@@ -38,7 +38,7 @@ class EthAPI {
     /**
      * Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send _call. 
      */
-    callFn(to, method, ...args) {
+    async callFn(to, method, ...args) {
         if (typeof (to) === 'string' && to.endsWith('.eth')) to = await this.resolveENS(to)
 
         if (!method) throw new Error('Missing method-signature')
