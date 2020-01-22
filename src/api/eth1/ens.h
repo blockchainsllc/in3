@@ -37,6 +37,6 @@
 #ifndef _ETH_API_ENS_H_
 #define _ETH_API_ENS_H_
 
-in3_ret_t ens_resolve_address(in3_ctx_t* parent, char* name, const address_t registry, address_t dst);
+in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, char* type, address_t dst);
 
 #endif // _ETH_API_ENS_H_

@@ -71,16 +71,21 @@ static void ens_hash(char* domain, bytes32_t dst) {
   memcpy(dst, hash, 32);
 }
 
-in3_ret_t ens_resolve_address(in3_ctx_t* parent, char* name, const address_t registry, address_t dst) {
+in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, char* type, address_t dst) {
   const int len = strlen(name);
   if (*name == '0' && name[1] == 1 && len == 42) {
     hex_to_bytes(name, 40, dst, 20);
     return IN3_OK;
   }
 
+  char*   cachekey  = NULL;
+  bytes_t dst_bytes = bytes(dst, 20);
+
   //check cache
   if (parent->client->cache) {
-    bytes_t* cached = parent->client->cache->get_item(parent->client->cache->cptr, name);
+    cachekey = alloca(strlen(type) + strlen(name) + 8);
+    sprintf(cachekey, "ens:%s:%s", name, type);
+    bytes_t* cached = parent->client->cache->get_item(parent->client->cache->cptr, cachekey);
     if (cached) {
       memcpy(dst, cached->data, 20);
       b_free(cached);
@@ -93,11 +98,19 @@ in3_ret_t ens_resolve_address(in3_ctx_t* parent, char* name, const address_t reg
   address_t resolver  = {0};
   ens_hash(name, hash);
 
-  // check the cache
-  calldata[0] = 0x01;
-  calldata[1] = 0x78;
-  calldata[2] = 0xb8;
-  calldata[3] = 0xbf;
+  if (strcmp(type, "owner") == 0) {
+    // owner(bytes32)
+    calldata[0] = 0x02;
+    calldata[1] = 0x57;
+    calldata[2] = 0x1b;
+    calldata[3] = 0xe3;
+  } else {
+    // resolver(bytes32)
+    calldata[0] = 0x01;
+    calldata[1] = 0x78;
+    calldata[2] = 0xb8;
+    calldata[3] = 0xbf;
+  }
 
   // find registry-address
   char* registry_address;
@@ -119,6 +132,13 @@ in3_ret_t ens_resolve_address(in3_ctx_t* parent, char* name, const address_t reg
   if (res < 0) return res;
   if (memiszero(resolver, 20)) return ctx_set_error(parent, "resolver not registered", IN3_EFIND);
 
+  if (strcmp(type, "resolver") == 0 || strcmp(type, "owner") == 0) {
+    memcpy(dst, resolver, 20);
+    if (parent->client->cache)
+      parent->client->cache->set_item(parent->client->cache->cptr, cachekey, &dst_bytes);
+    return IN3_OK;
+  }
+
   // now we change the call to addr(bytes32)
   calldata[0] = 0x3b;
   calldata[1] = 0x3b;
@@ -133,9 +153,7 @@ in3_ret_t ens_resolve_address(in3_ctx_t* parent, char* name, const address_t reg
   res = read_address(callbytes, r_adr, parent, dst);
   if (res < 0) return res;
   if (memiszero(resolver, 20)) return ctx_set_error(parent, "address not registered", IN3_EFIND);
-  if (parent->client->cache) {
-    bytes_t res = bytes(dst, 20);
-    parent->client->cache->set_item(parent->client->cache->cptr, name, &res);
-  }
+  if (parent->client->cache)
+    parent->client->cache->set_item(parent->client->cache->cptr, cachekey, &dst_bytes);
   return IN3_OK;
 }

@@ -122,12 +122,12 @@ static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** res
   // verify input
   if (!name || !strchr(name, '.')) return ctx_set_error(ctx, "the first param msut be a valid domain name", IN3_EINVAL);
   if (!type) type = "addr";
-  if (strcmp(type, "addr")) return ctx_set_error(ctx, "currently only 'addr' is allowed as type", IN3_EINVAL);
+  if (strcmp(type, "addr") && strcmp(type, "owner") && strcmp(type, "resolver")) return ctx_set_error(ctx, "currently only 'addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
   if (registry && strlen(registry) != 42) return ctx_set_error(ctx, "you must provide a valid registry-address", IN3_EINVAL);
   address_t result;
 
   if (registry) hex_to_bytes(registry, -1, result, 20);
-  in3_ret_t res = ens_resolve_address(ctx, name, registry ? result : NULL, result);
+  in3_ret_t res = ens_resolve(ctx, name, registry ? result : NULL, type, result);
   if (res < 0) return res;
   bytes_t result_bytes = bytes(result, 20);
 
