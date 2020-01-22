@@ -114,14 +114,14 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
     conf->verification   = VERIFICATION_PROOF;
 
     if (c->signature_count) {
-      node_weight_t*  signer_nodes = NULL;
+      node_match_t*   signer_nodes = NULL;
       const in3_ret_t res          = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, c->node_props | NODE_PROP_SIGNER);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-      const int node_count   = ctx_nodes_len(signer_nodes);
-      conf->signers_length   = node_count;
-      conf->signers          = _malloc(sizeof(bytes_t) * node_count);
-      const node_weight_t* w = signer_nodes;
+      const int node_count  = ctx_nodes_len(signer_nodes);
+      conf->signers_length  = node_count;
+      conf->signers         = _malloc(sizeof(bytes_t) * node_count);
+      const node_match_t* w = signer_nodes;
       for (int i = 0; i < node_count; i++) {
         conf->signers[i].len  = w->node->address->len;
         conf->signers[i].data = w->node->address->data;
@@ -241,10 +241,10 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
   return IN3_OK;
 }
 
-static void blacklist_node(node_weight_t* node_weight) {
-  if (node_weight) {
+static void blacklist_node(node_match_t* node_weight) {
+  if (node_weight && node_weight->weight) {
     // blacklist the node
-    node_weight->weight->blacklisted_until = _time() + 3600000;
+    node_weight->weight->blacklisted_until = _time() + 3600;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
     in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
@@ -260,10 +260,10 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
     chain->whitelist->needs_update = true;
 }
 
-static inline bool is_blacklisted(const node_weight_t* node_weight) { return node_weight && node_weight->weight == NULL; }
+static inline bool is_blacklisted(const node_match_t* node_weight) { return node_weight && node_weight->weight == NULL; }
 
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
-  node_weight_t* node = ctx->nodes;
+  node_match_t* node = ctx->nodes;
 
   // find the verifier
   in3_vctx_t vc;
@@ -272,6 +272,15 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
   // blacklist nodes for missing response
   for (int n = 0; n < nodes_count; n++) {
+
+    // handle times
+    in3_request_config_t* req_conf = ctx->requests_configs + n;
+    if (req_conf->time && node && node->weight) {
+      node->weight->response_count++;
+      node->weight->total_response_time += req_conf->time;
+      req_conf->time = 0; // make sure we count the time only once
+    }
+
     // since nodes_count was detected before, this should not happen!
 
     if (response[n].error.len || !response[n].result.len)
@@ -302,7 +311,19 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             vc.proof                 = d_get(vc.proof, K_PROOF);
           }
 
-          if (verifier) {
+          if (!vc.result && ctx->attempt < ctx->client->max_attempts - 1) {
+            // if we don't have a result, the node reported an error
+            // since we don't know if this error is our fault or the server fault,we don't blacklist the node, but retry
+            ctx->verification_state = IN3_ERPC;
+            d_token_t* error        = d_get(ctx->responses[i], K_ERROR);
+            char*      err_msg      = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
+            // this is a workaround to check whether this is
+            if (err_msg && strncmp(err_msg, "Error:", 6) == 0)
+              blacklist_node(node);
+            else
+              node->weight = NULL;
+            break;
+          } else if (verifier) {
             res = ctx->verification_state = verifier->verify(&vc);
             if (res == IN3_WAITING)
               return res;
@@ -345,9 +366,9 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   in3_ret_t res;
 
   // create url-array
-  char**         urls       = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
-  node_weight_t* node       = ctx->nodes;
-  bool           multichain = false;
+  char**        urls       = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
+  node_match_t* node       = ctx->nodes;
+  bool          multichain = false;
 
   for (int n = 0; n < nodes_count; n++) {
     urls[n] = node->node->url;
@@ -378,6 +399,8 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;
+  request->times         = NULL;
+  request->timeout       = ctx->client->timeout;
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
   request->results = _malloc(sizeof(in3_response_t) * nodes_count);
@@ -397,6 +420,12 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) {
   // free resources
   free_urls(req->urls, req->urls_len, ctx->client->use_http);
+
+  if (req->times) {
+    for (int i = 0; i < req->urls_len; i++)
+      ctx->requests_configs[i].time = req->times[i];
+    _free(req->times);
+  }
 
   if (free_response) {
     for (int n = 0; n < req->urls_len; n++) {
@@ -582,7 +611,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       ctx->attempt++;
 
       // should we retry?
-      if (ctx->attempt < ctx->client->max_attempts - 1) {
+      if (ctx->attempt < ctx->client->max_attempts) {
         in3_log_debug("Retrying send request...\n");
         // reset the error and try again
         if (ctx->error) _free(ctx->error);

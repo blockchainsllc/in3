@@ -48,7 +48,7 @@
 #include "stringbuilder.h"
 #include <stdbool.h>
 #include <stdint.h>
-
+#include <time.h>
 /** the protocol version used when sending requests from the this client */
 #define IN3_PROTO_VER "2.1.0"
 
@@ -117,6 +117,7 @@ typedef struct in3_request_config {
   bytes_t*           client_signature;       /**< the signature of the client with the client key */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
+  uint32_t           time;                   /**< meassured time for the request */
 
 } in3_request_config_t;
 
@@ -164,7 +165,6 @@ typedef struct in3_node_weight {
   uint32_t response_count;      /**< counter for responses */
   uint32_t total_response_time; /**< total of all response times */
   uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
-  float    weight;              /**< current weight*/
 } in3_node_weight_t;
 
 /**
@@ -326,7 +326,9 @@ typedef struct n3_request {
   char*           payload;  /**< the payload to send */
   char**          urls;     /**< array of urls */
   int             urls_len; /**< number of urls */
-  in3_response_t* results;  /** the responses*/
+  in3_response_t* results;  /**< the responses*/
+  uint32_t        timeout;  /**< the timeout 0= no timeout*/
+  uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
 } in3_request_t;
 
 /** the transport function to be implemented by the transport provider.
@@ -616,8 +618,8 @@ in3_chain_t* in3_find_chain(
  * 
  */
 in3_ret_t in3_configure(
-    in3_t* c,     /**< the incubed client */
-    char*  config /**< JSON-string with the configuration to set. */
+    in3_t*      c,     /**< the incubed client */
+    const char* config /**< JSON-string with the configuration to set. */
 );
 
 /**

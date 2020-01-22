@@ -131,7 +131,7 @@ in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   return IN3_OK;
 }
 
-int ctx_nodes_len(node_weight_t* node) {
+int ctx_nodes_len(node_match_t* node) {
   int all = 0;
   while (node) {
     all++;
