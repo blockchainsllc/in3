@@ -5,6 +5,15 @@ class EthAPI {
     send(name, ...params) {
         return this.client.sendRPC(name, params || [])
     }
+    /**
+     * Returns the current price per g wei. ()
+     */
+    async resolveENS(name) {
+        if (name && name.endsWith('.eth'))
+            return this.send('in3_ens', ...arguments)
+        return name
+    }
+
 
     /**
      * Returns the number of most recent block. ()
@@ -30,6 +39,8 @@ class EthAPI {
      * Executes a function of a contract, by passing a [method-signature](https://github.com/ethereumjs/ethereumjs-abi/blob/master/README.md#simple-encoding-and-decoding) and the arguments, which will then be ABI-encoded and send _call. 
      */
     callFn(to, method, ...args) {
+        if (typeof (to) === 'string' && to.endsWith('.eth')) to = await this.resolveENS(to)
+
         if (!method) throw new Error('Missing method-signature')
         const sigPattern = method.match(/(\(.*?\))/g)
         let block = 'latest'
@@ -430,6 +441,7 @@ async function confirm(txHash, api, gasPaid, confirmations, timeout = 10) {
 }
 
 async function prepareTransaction(args, api) {
+    if (typeof (args.to) === 'string' && args.to.endsWith('.eth')) args.to = await api.resolveENS(args.to)
     const sender = args.from || (args.pk && private2address(args.pk))
 
     const tx = {
