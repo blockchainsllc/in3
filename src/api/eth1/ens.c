@@ -171,7 +171,7 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
   res = exec_call(callbytes, r_adr, parent, &last_result);
   if (res < 0) return res;
 
-  if (last_result->len < 20 || memiszero(last_result->data, 20)) return ctx_set_error(parent, "address not registered", IN3_EFIND);
+  if (!last_result || last_result->len < 20 || memiszero(last_result->data, 20)) return ctx_set_error(parent, "address not registered", IN3_EFIND);
 
   if (type == ENS_ADDR)
     memcpy(dst, last_result->data + last_result->len - 20, 20);
