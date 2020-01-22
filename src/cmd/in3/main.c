@@ -325,8 +325,9 @@ bytes_t readFile(FILE* f) {
     r = fread(buffer + len, 1, allocated - len, f);
     len += r;
     if (feof(f)) break;
-    buffer = _realloc(buffer, allocated * 2 + 1, allocated + 1);
-    allocated *= 2;
+    size_t new_alloc = allocated * 2 + 1;
+    buffer = _realloc(buffer, new_alloc, allocated);
+    allocated = new_alloc;
   }
   buffer[len] = 0;
   return bytes(buffer, len);

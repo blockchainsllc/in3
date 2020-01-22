@@ -81,7 +81,9 @@
         "deque": "cpp",
         "memory": "cpp",
         "streambuf": "cpp",
-        "__node_handle": "c"
+        "__node_handle": "c",
+        "cstdlib": "c",
+        "locale": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
