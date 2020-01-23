@@ -1,5 +1,27 @@
 const fixLength = (hex) => hex.length % 2 ? '0' + hex : hex
 
+// Default conversion functions
+let convertBigInt = toBigInt
+let convertBuffer = toUint8Array
+
+// Overriding default convert
+function setConvertBigInt(convertBigFn) {
+        convertBigInt = convertBigFn
+}
+
+function setConvertBuffer(convertBufFn) {
+        convertBuffer = convertBufFn
+}
+
+// // Converts Input to Buffer
+// function toInputToBuffer(val) {
+//     // const buf = require('' + 'buffer/').Buffer
+//     var toBuf = require('' + 'typedarray-to-buffer')
+//     let ta = toUint8Array(val)                           // typed Array
+//     let b = toBuf(ta)
+//     return b;
+//   }
+
 if (typeof(_free) == 'undefined') _free = function(ptr) {
         in3w.ccall("ifree", 'void', ['number'], [ptr])
     }
@@ -73,8 +95,9 @@ function toBigInt(val) {
 
 function keccak(val) {
     if (!val) return val
-    val = toBuffer(val)
-    return call_buffer('keccak', 32, val, val.byteLength)
+    // val = toUint8Array(val)
+    val = convertBuffer(val)
+    return toBuffer(call_buffer('keccak', 32, val, val.byteLength))
 }
 
 function toChecksumAddress(val, chainId = 0) {
@@ -227,11 +250,14 @@ function toNumber(val) {
     }
 }
 
+function toBuffer (val, len = -1) {
+    return convertBuffer(val, len)
+}
 /**
- * converts any value as Buffer
+ * converts any value as Buffer (toUint8Array)
  *  if len === 0 it will return an empty Buffer if the value is 0 or '0x00', since this is the way rlpencode works wit 0-values.
  */
-function toBuffer(val, len = -1) {
+function toUint8Array(val, len = -1) {
     if (val && val._isBigNumber)
         val = val.toHexString();
     if (typeof val == 'string') {
@@ -354,7 +380,6 @@ const util = {
     toHex,
     toNumber,
     toUtf8,
-    checkForError,
     toBigInt,
     toBuffer,
     toSimpleHex,
@@ -369,7 +394,9 @@ const util = {
     splitSignature,
     private2address,
     soliditySha3,
-    createSignatureHash
+    createSignatureHash,
+    toUint8Array,
+    // toInputToBuffer
 }
 
 // add as static proporty and as standard property.

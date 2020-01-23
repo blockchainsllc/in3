@@ -106,7 +106,8 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   in3_ctx_t *p = ctx, *last_waiting = NULL;
-  //  printf("EXE: %p, state=%i \n", p, in3_ctx_state(ctx));
+  printf("EXE: %p \n", ctx);
+  printf("EXE: %p, state=%i \n", p, in3_ctx_state(ctx));
 
   sb_t* sb = sb_new("{\"status\":");
   switch (in3_ctx_execute(ctx)) {
@@ -218,6 +219,8 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
 }
 
 in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
+  printf("%s", 'entered into in3_create_request_ctx')
+  
   char*      src_data = _strdupn(payload, -1);
   in3_ctx_t* ctx      = ctx_new(c, src_data);
   if (ctx->error) {
