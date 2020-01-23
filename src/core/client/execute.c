@@ -257,7 +257,6 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
   if (!ctx->client->auto_update_list) return;
 
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
-    chain->needs_update = true;
     if (chain->nodelist_upd8_params == NULL)
       chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
     memcpy(chain->nodelist_upd8_params->node, node->node->address->data, node->node->address->len);

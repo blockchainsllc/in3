@@ -81,7 +81,6 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->init_addresses  = NULL;
   chain->last_block      = 0;
   chain->contract        = hex_to_new_bytes(contract, 40);
-  chain->needs_update    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodelist        = _malloc(sizeof(in3_node_t) * boot_node_count);
   chain->nodelist_length = boot_node_count;
   chain->weights         = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
@@ -96,6 +95,7 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
     chain->whitelist->last_block     = 0;
     hex_to_bytes(wl_contract, -1, chain->whitelist->contract, 20);
   }
+  chain->nodelist_upd8_params = NULL;
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
@@ -249,12 +249,12 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
       whitelist_free(chain->whitelist);
   }
 
-  chain->chain_id     = chain_id;
-  chain->contract     = b_new((char*) contract, 20);
-  chain->needs_update = false;
-  chain->type         = type;
-  chain->version      = version;
-  chain->whitelist    = NULL;
+  chain->chain_id             = chain_id;
+  chain->contract             = b_new((char*) contract, 20);
+  chain->type                 = type;
+  chain->version              = version;
+  chain->whitelist            = NULL;
+  chain->nodelist_upd8_params = NULL;
   memcpy(chain->registry_id, registry_id, 32);
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
@@ -514,9 +514,7 @@ in3_ret_t in3_configure(in3_t* c, const char* config) {
               goto cleanup;
             } else
               memcpy(chain->registry_id, data.data, 32);
-          } else if (cp.token->key == key("needsUpdate"))
-            chain->needs_update = d_int(cp.token) ? true : false;
-          else if (cp.token->key == key("nodeList")) {
+          } else if (cp.token->key == key("nodeList")) {
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
               if ((res = in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),

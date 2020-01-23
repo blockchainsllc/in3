@@ -296,7 +296,6 @@ void in3_ctx_free_nodes(node_match_t* node) {
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   in3_ctx_t ctx;
   memset(&ctx, 0, sizeof(ctx));
-  chain->needs_update = false;
 
   in3_ret_t ret = update_nodelist(c, chain, &ctx);
   if (ret == IN3_WAITING && ctx.required) {
@@ -398,8 +397,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
   }
 
   // do we need to update the nodelist?
-  if (chain->needs_update || update || ctx_find_required(ctx, "in3_nodeList")) {
-    chain->needs_update = false;
+  if (chain->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
     // now update the nodeList
     res = update_nodelist(ctx->client, chain, ctx);
     if (res < 0) return res;
