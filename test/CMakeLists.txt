@@ -194,5 +194,8 @@ foreach (testdir
 endforeach ()
 
 
+add_executable(test_ipfs test_ipfs.c unity/unity.c)
+target_link_libraries(test_ipfs ipfs)
+
 set_property(TARGET runner PROPERTY C_STANDARD 99)
 set_property(TARGET vmrunner PROPERTY C_STANDARD 99)
