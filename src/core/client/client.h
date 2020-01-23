@@ -230,8 +230,8 @@ typedef struct in3_chain {
   uint8_t            version;         /**< version of the chain */
   in3_whitelist_t*   whitelist;       /**< if set the whitelist of the addresses. */
   struct {
-    address_t node;         /**< node that reported the last_block which necessitated a nodeList update */
-    uint64_t  latest_block; /**< the last blocknumber the nodelistz changed */
+    address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
+    uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
   } * nodelist_upd8_params;
 } in3_chain_t;
 
