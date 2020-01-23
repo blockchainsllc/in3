@@ -228,9 +228,16 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   char seed[67];
   sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
 
+  sb_t* in3_sec = sb_new("{");
+  if (chain->nodelist_upd8_params) {
+    bytes_t addr_ = (bytes_t){.data = chain->nodelist_upd8_params->node, .len = 20};
+    sb_add_bytes(in3_sec, "\"data_nodes\":", &addr_, 1, true);
+  }
+
   // create request
-  char* req = _malloc(300);
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->node_limit, seed);
+  char* req = _malloc(350);
+  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]],\"in3\":%s}", c->node_limit, seed, sb_add_char(in3_sec, '}')->data);
+  sb_free(in3_sec);
 
   // new client
   return ctx_add_required(parent_ctx, ctx_new(c, req));
