@@ -41,53 +41,82 @@ import in3.JSON;
  */
 
 public class LogFilter {
-
+	/**
+     * Quantity or Tag - (optional) (default: latest) Integer block number, or
+     * 'latest' for the last mined block or 'pending', 'earliest' for not yet mined
+     * transactions.
+     */
+    private long fromBlock = Block.LATEST;
     /**
      * Quantity or Tag - (optional) (default: latest) Integer block number, or
      * 'latest' for the last mined block or 'pending', 'earliest' for not yet mined
      * transactions.
      */
-    long fromBlock = Block.LATEST;
-    /**
-     * Quantity or Tag - (optional) (default: latest) Integer block number, or
-     * 'latest' for the last mined block or 'pending', 'earliest' for not yet mined
-     * transactions.
-     */
-    long toBlock = Block.LATEST;
+    private long toBlock = Block.LATEST;
     /**
      * (optional) 20 Bytes - Contract address or a list of addresses from which logs
      * should originate.
      */
-    String address;
+    private String address;
     /**
      * (optional) Array of 32 Bytes Data topics. Topics are order-dependent. It's
      * possible to pass in null to match any topic, or a subarray of multiple topics
      * of which one should be matching.
      */
-    Object[] topics;
+    private Object[] topics;
 
     /** a(optional) The maximum number of entries to retrieve (latest first). */
-    int limit;
+    private int limit;
 
-    public void setFromBlock(long fromBlock) {
-    	this.fromBlock = fromBlock;
-    }
+    public long getFromBlock() {
+		return fromBlock;
+	}
 
-    public void setToBlock(long toBlock) {
-    	this.toBlock = toBlock;
-    }
 
-    public void setAddress(String address) {
-    	this.address = address;
-    }
+	public void setFromBlock(long fromBlock) {
+		this.fromBlock = fromBlock;
+	}
 
-    public void setTopics(Object[] topics) {
-    	this.topics = topics;
-    }
 
-    public void setLimit(int limit) {
-    	this.limit = limit;
-    }
+	public long getToBlock() {
+		return toBlock;
+	}
+
+
+	public void setToBlock(long toBlock) {
+		this.toBlock = toBlock;
+	}
+
+
+	public String getAddress() {
+		return address;
+	}
+
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+
+	public Object[] getTopics() {
+		return topics;
+	}
+
+
+	public void setTopics(Object[] topics) {
+		this.topics = topics;
+	}
+
+
+	public int getLimit() {
+		return limit;
+	}
+
+
+	public void setLimit(int limit) {
+		this.limit = limit;
+	}
+
     /**
      * creates a JSON-String.
      */

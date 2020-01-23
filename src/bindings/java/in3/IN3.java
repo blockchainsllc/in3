@@ -289,6 +289,10 @@ public class IN3 {
         IN3.transport = newTransport;
     }
 
+    public IN3Transport getTransport() {
+    	return IN3.transport;
+    }
+
     // Test it
     public static void main(String[] args) {
         Object[] params = new Object[args.length - 1];

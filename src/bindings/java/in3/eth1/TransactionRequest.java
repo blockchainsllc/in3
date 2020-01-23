@@ -42,33 +42,100 @@ import java.math.*;
  */
 
 public class TransactionRequest {
-
-    /** the from address */
-    public String from;
+	/** the from address */
+    private String from;
 
     /** the recipients address */
-    public String to;
+    private String to;
 
     /** the data */
-    public String data;
+    private String data;
 
     /** the value of the transaction */
-    public BigInteger value;
+    private BigInteger value;
 
     /** the nonce (transactionCount of the sender) */
-    public long nonce = -1;
+    private long nonce = -1;
 
     /** the gas to use */
-    public long gas;
+    private long gas;
 
     /** the gas price to use */
-    public long gasPrice;
+    private long gasPrice;
 
     /** the signature for the function to call */
-    public String function;
+    private String function;
 
     /** the params to use for encoding in the data */
-    public Object[] params;
+    private Object[] params;
+
+    public String getFrom() {
+		return from;
+	}
+
+	public void setFrom(String from) {
+		this.from = from;
+	}
+
+	public String getTo() {
+		return to;
+	}
+
+	public void setTo(String to) {
+		this.to = to;
+	}
+
+	public BigInteger getValue() {
+		return value;
+	}
+
+	public void setValue(BigInteger value) {
+		this.value = value;
+	}
+
+	public long getNonce() {
+		return nonce;
+	}
+
+	public void setNonce(long nonce) {
+		this.nonce = nonce;
+	}
+
+	public long getGas() {
+		return gas;
+	}
+
+	public void setGas(long gas) {
+		this.gas = gas;
+	}
+
+	public long getGasPrice() {
+		return gasPrice;
+	}
+
+	public void setGasPrice(long gasPrice) {
+		this.gasPrice = gasPrice;
+	}
+
+	public String getFunction() {
+		return function;
+	}
+
+	public void setFunction(String function) {
+		this.function = function;
+	}
+
+	public Object[] getParams() {
+		return params;
+	}
+
+	public void setParams(Object[] params) {
+		this.params = params;
+	}
+
+	public void setData(String data) {
+		this.data = data;
+	}
 
     /**
      * creates the data based on the function/params values.
