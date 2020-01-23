@@ -354,6 +354,9 @@ typedef struct in3_filter_t_ {
   /** block no. when filter was created OR eth_getFilterChanges was called */
   uint64_t last_block;
 
+  /** if true the filter was not used previously */
+  bool is_first_usage;
+
   /** method to release owned resources */
   void (*release)(struct in3_filter_t_* f);
 } in3_filter_t;
