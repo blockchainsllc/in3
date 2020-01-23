@@ -1,6 +1,11 @@
 
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
+#include "../../third-party/crypto/sha2.h"
+#include "hashes.h"
 #include "ipfs.pb.h"
+#include "libbase58.h"
+#include "multihash.h"
 #include <pb_decode.h>
 #include <pb_encode.h>
 #include <stdio.h>
@@ -34,7 +39,7 @@ int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
   cb_arg_bytes_t tmp = {.buf = NULL, .len = 0};
   pb_ostream_t   stream;
   size_t         wlen = 0;
-  uint8_t *      buf1 = NULL, *buf2 = NULL;
+  uint8_t *      buf1 = NULL, *buf2 = NULL, *out = NULL;
 
   Data data              = Data_init_zero;
   data.Type              = Data_DataType_File;
@@ -67,14 +72,45 @@ int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
   if (!pb_encode(&stream, PBNode_fields, &node))
     GOTO_RET(EXIT, -1);
 
+  uint8_t* digest     = NULL;
+  size_t   digest_len = 0;
+  if (hash == MH_H_SHA2_256) {
+    uint8_t d_[32] = {0};
+    digest_len     = 32;
+    SHA256_CTX ctx;
+    sha256_Init(&ctx);
+    sha256_Update(&ctx, buf2, stream.bytes_written);
+    sha256_Final(&ctx, d_);
+    digest = d_;
+  }
+
+  if (digest == NULL)
+    GOTO_RET(EXIT, -1);
+
+  size_t mhlen = mh_new_length(hash, digest_len);
+  if ((out = _malloc(mhlen)) == NULL)
+    GOTO_RET(EXIT, -2);
+
+  if (mh_new(out, hash, digest, digest_len) < 0)
+    GOTO_RET(EXIT, -1);
+
+  size_t b58sz = 64;
+  char*  b58   = _malloc(b58sz);
+  if (!b58enc(b58, &b58sz, out, mhlen))
+    ret = -1;
+
+  printf("b58 : %s\n", b58);
+
 EXIT:
+  _free(out);
   _free(buf2);
   _free(buf1);
   return ret;
 }
 
 int main() {
-  const uint8_t buf[] = {0, 1, 2, 3, 4, 0, 1, 2, 3, 4};
-  ipfs_create_hash(buf, 10, 0);
+  bytes_t* buf = hex_to_new_bytes("01020304FF", 10);
+  ipfs_create_hash(buf->data, buf->len, MH_H_SHA2_256);
+  b_free(buf);
   return 0;
 }
