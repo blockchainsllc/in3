@@ -35,8 +35,7 @@ static size_t pb_encode_size(const pb_msgdesc_t* fields, const void* src_struct)
   return 0;
 }
 
-int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
-  int            ret = 0;
+in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, char** b58) {
   in3_ret_t      ret = IN3_OK;
   cb_arg_bytes_t tmp = {.buf = NULL, .len = 0};
   pb_ostream_t   stream;
@@ -97,10 +96,8 @@ int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
     GOTO_RET(EXIT, IN3_EUNKNOWN);
 
   size_t b58sz = 64;
-  char*  b58   = _malloc(b58sz);
-  if (!b58enc(b58, &b58sz, out, mhlen))
-
-  printf("b58 : %s\n", b58);
+  *b58         = _malloc(b58sz);
+  if (!b58enc(*b58, &b58sz, out, mhlen))
     ret = IN3_EUNKNOWN;
 
 EXIT:
