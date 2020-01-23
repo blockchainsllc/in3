@@ -3,12 +3,12 @@
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/sha2.h"
-#include "hashes.h"
+#include "../../third-party/libbase58/libbase58.h"
+#include "../../third-party/multihash/hashes.h"
+#include "../../third-party/multihash/multihash.h"
+#include "../../third-party/nanopb/pb_decode.h"
+#include "../../third-party/nanopb/pb_encode.h"
 #include "ipfs.pb.h"
-#include "libbase58.h"
-#include "multihash.h"
-#include <pb_decode.h>
-#include <pb_encode.h>
 #include <stdio.h>
 #include <stdlib.h>
 
