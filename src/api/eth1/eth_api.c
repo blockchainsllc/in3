@@ -557,10 +557,11 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   uint64_t blkno = eth_blockNumber(in3);
   switch (f->type) {
     case FILTER_EVENT: {
-      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block);
+      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block, !f->is_first_usage);
       *logs       = eth_getLogs(in3, fopt_);
       _free(fopt_);
       f->last_block = blkno + 1;
+      f->is_first_usage = false;
       return 0;
     }
     case FILTER_BLOCK:

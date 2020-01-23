@@ -53,7 +53,7 @@
 
 #define TEST_ASSERT_FILTER_OPT_FROMBLK(opt_str, blk, out_str) \
   do {                                                        \
-    char* opt = filter_opt_set_fromBlock(opt_str, blk);       \
+    char* opt = filter_opt_set_fromBlock(opt_str, blk, true); \
     TEST_ASSERT_EQUAL_STRING(out_str, opt);                   \
     _free(opt);                                               \
   } while (0)
