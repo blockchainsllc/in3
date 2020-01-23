@@ -209,6 +209,15 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result....
+          if (chain->nodelist_upd8_params != NULL) {
+            if (d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->latest_block) {
+              for (int i = 0; i < chain->nodelist_length; ++i)
+                if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
+                  chain->weights[i].blacklisted_until = _time() + 3600000;
+            }
+            _free(chain->nodelist_upd8_params);
+          }
+
           const in3_ret_t res = fill_chain(chain, ctx, r);
           if (res < 0)
             return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
