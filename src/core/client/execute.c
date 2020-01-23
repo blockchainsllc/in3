@@ -250,11 +250,16 @@ static void blacklist_node(node_match_t* node_weight) {
   }
 }
 
-static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3) {
+static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
   if (!ctx->client->auto_update_list) return;
 
-  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block)
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
     chain->needs_update = true;
+    if (chain->nodelist_upd8_params == NULL)
+      chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
+    memcpy(chain->nodelist_upd8_params->node, node->node->address->data, node->node->address->len);
+    chain->nodelist_upd8_params->latest_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
+  }
 
   if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
     chain->whitelist->needs_update = true;
@@ -304,7 +309,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
 
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-            check_autoupdate(ctx, chain, vc.proof);
+            check_autoupdate(ctx, chain, vc.proof, node);
 
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
