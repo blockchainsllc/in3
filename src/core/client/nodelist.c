@@ -210,6 +210,8 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
         if (r) {
           // we have a result....
           if (chain->nodelist_upd8_params != NULL) {
+            // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
+            // about the nodelist update, so we blacklist it for an hour
             if (d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->exp_last_block) {
               for (int i = 0; i < chain->nodelist_length; ++i)
                 if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
