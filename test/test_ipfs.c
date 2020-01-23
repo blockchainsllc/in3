@@ -43,6 +43,17 @@
 static void test_ipfs(void) {
   TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("01020304FF", "hex", "QmPLrtpXZLUBF24Vu5NXqJg4w4sFYSCFLpWVqqSvmUkL1V"));
   TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("Hello World", "utf8", "QmUXTtySmd7LD4p6RG6rZW6RuUuPZXTtNMmRQ6DSQo3aMw"));
+  // fixme - wrong hash for empty content
+  // TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("", "hex", "QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH"));
+  // TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("", "utf8", "QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH"));
+  TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("f870830d01cd85057344cdae83015f9094f21051abfe6ac49da790394f2f96fb2ea"
+                                             "873efef880df38151b24fcc808026a01d139a50af6cdccf1b76a689a74a00050ae3429454b"
+                                             "455473cd048d831ee4ab7a079e558cb7ee74b444ff4ba96035987a04ad6dfaf6addb460208f7a74873bc804",
+                                             "hex", "QmaprwXVzwoBR2qVi3wxGAZsYTHqWjExXjPCFJsiND14Fb"));
+  TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
+                                             "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, "
+                                             "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+                                             "utf8", "QmRNW9kJMUuP7dY7YPSxTCLMS9wMYRTADZ5fYf9EHWCabc"));
 }
 
 int main() {
