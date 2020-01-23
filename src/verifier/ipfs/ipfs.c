@@ -1,4 +1,5 @@
 
+#include "../../core/util/error.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/sha2.h"
@@ -36,6 +37,7 @@ static size_t pb_encode_size(const pb_msgdesc_t* fields, const void* src_struct)
 
 int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
   int            ret = 0;
+  in3_ret_t      ret = IN3_OK;
   cb_arg_bytes_t tmp = {.buf = NULL, .len = 0};
   pb_ostream_t   stream;
   size_t         wlen = 0;
@@ -52,11 +54,11 @@ int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
 
   wlen = pb_encode_size(Data_fields, &data);
   if ((buf1 = _malloc(wlen)) == NULL)
-    GOTO_RET(EXIT, -2);
+    GOTO_RET(EXIT, IN3_ENOMEM);
 
   stream = pb_ostream_from_buffer(buf1, wlen);
   if (!pb_encode(&stream, Data_fields, &data))
-    GOTO_RET(EXIT, -1);
+    GOTO_RET(EXIT, IN3_EUNKNOWN);
 
   PBNode node            = PBNode_init_zero;
   node.Data.funcs.encode = &cb_encode_bytes;
@@ -66,11 +68,11 @@ int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
 
   wlen = pb_encode_size(PBNode_fields, &node);
   if ((buf2 = _malloc(wlen)) == NULL)
-    GOTO_RET(EXIT, -2);
+    GOTO_RET(EXIT, IN3_ENOMEM);
 
   stream = pb_ostream_from_buffer(buf2, wlen);
   if (!pb_encode(&stream, PBNode_fields, &node))
-    GOTO_RET(EXIT, -1);
+    GOTO_RET(EXIT, IN3_EUNKNOWN);
 
   uint8_t* digest     = NULL;
   size_t   digest_len = 0;
@@ -85,21 +87,21 @@ int ipfs_create_hash(const uint8_t* content, size_t len, int hash) {
   }
 
   if (digest == NULL)
-    GOTO_RET(EXIT, -1);
+    GOTO_RET(EXIT, IN3_ENOTSUP);
 
   size_t mhlen = mh_new_length(hash, digest_len);
   if ((out = _malloc(mhlen)) == NULL)
-    GOTO_RET(EXIT, -2);
+    GOTO_RET(EXIT, IN3_ENOMEM);
 
   if (mh_new(out, hash, digest, digest_len) < 0)
-    GOTO_RET(EXIT, -1);
+    GOTO_RET(EXIT, IN3_EUNKNOWN);
 
   size_t b58sz = 64;
   char*  b58   = _malloc(b58sz);
   if (!b58enc(b58, &b58sz, out, mhlen))
-    ret = -1;
 
   printf("b58 : %s\n", b58);
+    ret = IN3_EUNKNOWN;
 
 EXIT:
   _free(out);
