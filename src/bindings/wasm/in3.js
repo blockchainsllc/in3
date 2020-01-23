@@ -295,6 +295,11 @@ IN3.onInit = function (fn) {
     })
 }
 
+// change the Buffer
+IN3.setConvertBuffer = function (fn) {
+    convertBuffer = fn
+}
+
 // also support ES6-modules
 IN3.default = IN3
 
