@@ -107,9 +107,22 @@ EXIT:
   return ret;
 }
 
-int main() {
-  bytes_t* buf = hex_to_new_bytes("01020304FF", 10);
-  ipfs_create_hash(buf->data, buf->len, MH_H_SHA2_256);
+in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char* requsted_hash) {
+  bytes_t* buf;
+  if (!strcmp(encoding, "hex"))
+    buf = hex_to_new_bytes(content, strlen(content));
+  else if (!strcmp(encoding, "utf8"))
+    buf = b_new(content, strlen(content));
+  else
+    return IN3_ENOTSUP;
+
+  if (buf == NULL)
+    return IN3_ENOMEM;
+
+  char*     out = NULL;
+  in3_ret_t ret = ipfs_create_hash(buf->data, buf->len, MH_H_SHA2_256, &out);
+  if (ret == IN3_OK)
+    ret = !strcmp(requsted_hash, out) ? IN3_OK : IN3_EINVALDT;
   b_free(buf);
-  return 0;
+  return ret;
 }
