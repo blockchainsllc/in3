@@ -35,7 +35,7 @@ static size_t pb_encode_size(const pb_msgdesc_t* fields, const void* src_struct)
   return 0;
 }
 
-in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, char** b58) {
+static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, char** b58) {
   in3_ret_t      ret = IN3_OK;
   cb_arg_bytes_t tmp = {.buf = NULL, .len = 0};
   pb_ostream_t   stream;
