@@ -114,8 +114,11 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
     conf->verification   = VERIFICATION_PROOF;
 
     if (c->signature_count) {
-      node_match_t*   signer_nodes = NULL;
-      const in3_ret_t res          = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, c->node_props | NODE_PROP_SIGNER);
+      node_match_t*     signer_nodes = NULL;
+      in3_node_filter_t filter       = NODE_FILTER_INIT;
+      filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), key("signer_nodes"));
+      filter.props                   = c->node_props | NODE_PROP_SIGNER;
+      const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, filter);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       const int node_count  = ctx_nodes_len(signer_nodes);
@@ -588,8 +591,10 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
-        in3_node_props_t props = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, props)) == IN3_OK) {
+        in3_node_filter_t filter = NODE_FILTER_INIT;
+        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), key("data_nodes"));
+        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);

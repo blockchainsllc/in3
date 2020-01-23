@@ -328,7 +328,7 @@ uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa) {
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         int len, _time_t now, uint32_t* total_weight, int* total_found,
-                                        in3_node_props_t props) {
+                                        in3_node_filter_t filter) {
 
   int                found      = 0;
   uint32_t           weight_sum = 0;
@@ -348,10 +348,22 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
 
 #ifdef FILTER_NODES
     // fixme: this compile time check will be redundant once the registry contract is deployed with correct node prop values
-    if (!in3_node_props_match(props, nodeDef->props)) continue;
+    if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
 #else
-    UNUSED_VAR(props);
+    UNUSED_VAR(filter);
 #endif
+
+    if (filter.nodes != NULL) {
+      bool in_filter_nodes = false;
+      for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
+        if (b_cmp(d_bytesl(it.token, 20), nodeDef->address)) {
+          in_filter_nodes = true;
+          break;
+        }
+      }
+      if (!in_filter_nodes)
+        continue;
+    }
 
     weightDef = weights + i;
     if (weightDef->blacklisted_until > (uint64_t) now) continue;
@@ -410,7 +422,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_props_t props) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_filter_t filter) {
 
   // get all nodes from the nodelist
   _time_t            now       = _time();
@@ -426,7 +438,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   // filter out nodes
   node_match_t* found = in3_node_list_fill_weight(
       ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len,
-      now, &total_weight, &total_found, props);
+      now, &total_weight, &total_found, filter);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -439,7 +451,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
     if (blacklisted > all_nodes_len / 2) {
       for (int i = 0; i < all_nodes_len; i++)
         weights[i].blacklisted_until = 0;
-      found = in3_node_list_fill_weight(ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
+      found = in3_node_list_fill_weight(ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter);
     }
 
     if (total_found == 0)
