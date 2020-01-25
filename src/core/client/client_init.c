@@ -107,6 +107,7 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->chain_id        = chain_id;
   chain->init_addresses  = NULL;
   chain->last_block      = 0;
+  chain->verified_hashes = NULL;
   chain->contract        = hex_to_new_bytes(contract, 40);
   chain->needs_update    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodelist        = _malloc(sizeof(in3_node_t) * boot_node_count);
