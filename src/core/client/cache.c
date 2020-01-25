@@ -114,7 +114,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   }
 
   // read verified hashes
-  const int hashes = b_read_int(b, &pos);
+  const unsigned int hashes = b_read_int(b, &pos);
   if (!chain->verified_hashes && hashes) chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
   if (hashes)
     memcpy(chain->verified_hashes, b->data + pos, sizeof(in3_verified_hash_t) * (min(hashes, c->max_verified_hashes)));
