@@ -354,11 +354,11 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   if (!header)
     return vc_err(vc, "no header found");
 
-  int        i;
-  bytes32_t  block_hash;
-  uint64_t   header_number = 0;
-  d_token_t *sig, *signatures;
-  bytes_t    temp, *sig_hash;
+  unsigned int i;
+  bytes32_t    block_hash;
+  uint64_t     header_number = 0;
+  d_token_t *  sig, *signatures;
+  bytes_t      temp, *sig_hash;
 
   // generate the blockhash;
   sha3_to(header, &block_hash);
