@@ -207,7 +207,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->max_attempts         = 3;
   c->max_block_cache      = 0;
   c->max_code_cache       = 0;
-  c->max_verified_hashes  = 0;
+  c->max_verified_hashes  = 5;
   c->min_deposit          = 0;
   c->node_limit           = 0;
   c->proof                = PROOF_STANDARD;
