@@ -156,7 +156,7 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
       }
     }
     bb_write_int(bb, count);
-    bb_write_raw_bytes(bb, chain->verified_hashes, count * sizeof(in3_verification_t));
+    bb_write_raw_bytes(bb, chain->verified_hashes, count * sizeof(in3_verified_hash_t));
   } else
     bb_write_int(bb, 0);
 
