@@ -269,6 +269,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     chain->init_addresses  = NULL;
     chain->whitelist       = NULL;
     chain->last_block      = 0;
+    chain->verified_hashes = NULL;
     c->chains_length++;
 
   } else {
@@ -380,6 +381,7 @@ in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
 void in3_free(in3_t* a) {
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
     whitelist_free(a->chains[i].whitelist);
