@@ -99,6 +99,7 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   chain->nodelist        = _calloc(node_count, sizeof(in3_node_t));
   chain->weights         = _calloc(node_count, sizeof(in3_node_weight_t));
   memcpy(chain->weights, b->data + pos, node_count * sizeof(in3_node_weight_t));
+  chain->nodelist_upd8_params = NULL;
   pos += node_count * sizeof(in3_node_weight_t);
 
   for (int i = 0; i < node_count; i++) {
