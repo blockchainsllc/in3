@@ -95,7 +95,7 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
     chain->whitelist->last_block     = 0;
     hex_to_bytes(wl_contract, -1, chain->whitelist->contract, 20);
   }
-  chain->nodelist_upd8_params = NULL;
+  chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
@@ -233,13 +233,14 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   if (!chain) {
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
-    chain                  = c->chains + c->chains_length;
-    chain->nodelist        = NULL;
-    chain->nodelist_length = 0;
-    chain->weights         = NULL;
-    chain->init_addresses  = NULL;
-    chain->whitelist       = NULL;
-    chain->last_block      = 0;
+    chain                       = c->chains + c->chains_length;
+    chain->nodelist             = NULL;
+    chain->nodelist_length      = 0;
+    chain->weights              = NULL;
+    chain->init_addresses       = NULL;
+    chain->whitelist            = NULL;
+    chain->last_block           = 0;
+    chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
     c->chains_length++;
 
   } else {
@@ -249,12 +250,11 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
       whitelist_free(chain->whitelist);
   }
 
-  chain->chain_id             = chain_id;
-  chain->contract             = b_new((char*) contract, 20);
-  chain->type                 = type;
-  chain->version              = version;
-  chain->whitelist            = NULL;
-  chain->nodelist_upd8_params = NULL;
+  chain->chain_id  = chain_id;
+  chain->contract  = b_new((char*) contract, 20);
+  chain->type      = type;
+  chain->version   = version;
+  chain->whitelist = NULL;
   memcpy(chain->registry_id, registry_id, 32);
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
@@ -354,6 +354,7 @@ void in3_free(in3_t* a) {
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
     whitelist_free(a->chains[i].whitelist);
+    _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->signer) _free(a->signer);
   _free(a->chains);

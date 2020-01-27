@@ -39,6 +39,7 @@
 #include "../util/mem.h"
 #include "../util/utils.h"
 #include "cache.h"
+#include "client.h"
 #include "context.h"
 #include "keys.h"
 #include <stdio.h>
@@ -212,12 +213,14 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
           if (chain->nodelist_upd8_params != NULL) {
             // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
             // about the nodelist update, so we blacklist it for an hour
-            if (d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->exp_last_block) {
+            // Note `exp_last_block` == 0 means this is the first nodelist update
+            if (chain->nodelist_upd8_params->exp_last_block && d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->exp_last_block) {
               for (int i = 0; i < chain->nodelist_length; ++i)
                 if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
                   chain->weights[i].blacklisted_until = _time() + 3600000;
             }
             _free(chain->nodelist_upd8_params);
+            chain->nodelist_upd8_params = NULL;
           }
 
           const in3_ret_t res = fill_chain(chain, ctx, r);
@@ -240,7 +243,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
 
   sb_t* in3_sec = sb_new("{");
-  if (chain->nodelist_upd8_params) {
+  if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
     bytes_t addr_ = (bytes_t){.data = chain->nodelist_upd8_params->node, .len = 20};
     sb_add_bytes(in3_sec, "\"data_nodes\":", &addr_, 1, true);
   }
