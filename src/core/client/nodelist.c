@@ -480,8 +480,12 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
         next->weight = current->weight;
         next->node   = current->node;
 
-        if (last) last->next = next;
         if (!first) first = next;
+        if (last) {
+          last->next = next;
+          last       = last->next;
+        } else
+          last = first;
       }
     }
   }
