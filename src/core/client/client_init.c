@@ -518,7 +518,9 @@ in3_ret_t in3_configure(in3_t* c, const char* config) {
               goto cleanup;
             } else
               memcpy(chain->registry_id, data.data, 32);
-          } else if (cp.token->key == key("nodeList")) {
+          } else if (cp.token->key == key("needsUpdate"))
+            chain->nodelist_upd8_params = d_int(iter.token) ? _calloc(1, sizeof(*(chain->nodelist_upd8_params))) : NULL;
+          else if (cp.token->key == key("nodeList")) {
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
               if ((res = in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
