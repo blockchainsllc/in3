@@ -7,10 +7,7 @@ public class GetBlockRPC {
   //
   public static void main(String[] args) throws Exception {
     // create incubed
-    IN3 in3 = new IN3();
-
-    // configure
-    in3.setChainId(0x1); // set it to mainnet (which is also the default)
+    IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also the default)
 
     // read the latest Block without the Transactions.
     String result = in3.sendRPC("eth_getBlockByNumber", new Object[] { "latest", false });

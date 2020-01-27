@@ -149,12 +149,10 @@ public class APITest {
 
     @Test
     public void getChainId() {
-        // This might be worth testing since there are some integration issues that
-        // might arise from the java <-> c interop even if, at the end, this is just a
-        // fancy getter.
-        String[][] mockedResponses = {};
-        IN3 in3 = builder.constructClient(mockedResponses);
-        Assertions.assertEquals("0x5", in3.getEth1API().getChainId());
+    	// This might be worth testing since there are some integration issues that might arise from the java <-> c interop even if, at the end, this is just a fancy getter.
+    	String[][] mockedResponses = {};
+		IN3 in3 = builder.constructClient(mockedResponses);
+    	Assertions.assertEquals("0x5", in3.getEth1API().getChainId());
     }
 
     @Test
@@ -387,12 +385,11 @@ public class APITest {
         String[][] mockedResponses2 = { { "eth_blockNumber", "eth_blockNumber_4.json" },
                 { "eth_getBlockByNumber", "eth_getBlockByNumber_1.json" } };
 
-        IN3 in3 = builder.constructClient(mockedResponses1);
-        long filterId = in3.getEth1API().newBlockFilter();
+		IN3 in3 = builder.constructClient(mockedResponses1);
+    	long filterId = in3.getEth1API().newBlockFilter();
 
-        // This actually changes the internal state of mock transport with the new
-        // requests (not the best since relies on a side-effect).
-        builder.buildTransport(mockedResponses2);
+    	// This actually changes the internal state of mock transport with the new requests (not the best since relies on a side-effect).
+    	builder.buildTransport(mockedResponses2);
 
         String[] hashList = in3.getEth1API().getFilterChangesFromBlocks(filterId);
         Assertions.assertArrayEquals(

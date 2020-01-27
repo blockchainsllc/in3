@@ -7,15 +7,15 @@ import org.json.JSONObject;
 public class IN3MockBuilder {
     IN3 client;
 
-    public void createNewClient() {
+	public void createNewClient() {
         client = IN3.forChain(Chain.GOERLI);
-    }
+	}
 
-    public void buildTransport(String[][] fileNamesTuple) {
+    public void buildTransport(String[][] fileNameTuples) {
         IN3MockTransport newtransport = new IN3MockTransport();
 
         // TODO Consider on using Apache Commons Pair
-        for (String[] fileNameTuple : fileNameTuples) {
+        for (String[] fileNameTuple: fileNameTuples) {
             newtransport.setMockResponse(fileNameTuple[0], fileNameTuple[1]);
         }
 
@@ -38,7 +38,6 @@ public class IN3MockBuilder {
         configMap.put("requestCount", 1);
         configMap.put("autoUpdateList", false);
         configMap.put("proof", Proof.none);
-        configMap.put("chainId", 5);
         configMap.put("autoUpdateList", false);
         configMap.put("maxAttempts", 1);
         configMap.put("signatureCount", 0);
@@ -48,10 +47,10 @@ public class IN3MockBuilder {
         client.setConfig(configJson.toString());
     }
 
-    public IN3 constructClient(String[][] fileNameTuples) {
-        createNewClient();
-        buildTransport(fileNameTuples);
-        buildConfig();
+	public IN3 constructClient(String[][] fileNameTuples) {
+		createNewClient();
+		buildTransport(fileNameTuples);
+		buildConfig();
         return client;
     }
 }
