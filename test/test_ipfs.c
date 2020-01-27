@@ -37,8 +37,12 @@
 #endif
 #include "../src/core/util/data.h"
 #include "../src/core/util/error.h"
+#include "../src/core/util/mem.h"
+#include "../src/transport/curl/in3_curl.h"
 #include "../src/verifier/ipfs/ipfs.h"
 #include "test_utils.h"
+
+#define LOREM_IPSUM "Lorem ipsum dolor sit amet"
 
 static void test_ipfs(void) {
   TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("01020304FF", "hex", "QmPLrtpXZLUBF24Vu5NXqJg4w4sFYSCFLpWVqqSvmUkL1V"));
@@ -56,8 +60,38 @@ static void test_ipfs(void) {
                                              "utf8", "QmRNW9kJMUuP7dY7YPSxTCLMS9wMYRTADZ5fYf9EHWCabc"));
 }
 
+static void test_ipfs_verifier(void) {
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
+  char * result, *error;
+  char   tmp[100];
+
+  in3_ret_t res = in3_client_rpc(
+      c,                                 //  the configured client
+      "ipfs_put",                        // the rpc-method you want to call.
+      "[\"" LOREM_IPSUM "\", \"utf8\"]", // the arguments as json-string
+      &result,                           // the reference to a pointer whill hold the result
+      &error);
+  TEST_ASSERT_EQUAL(IN3_OK, res);
+
+  sprintf(tmp, "[%s, \"utf8\"]", result);
+  _free(result);
+  result = NULL;
+
+  res = in3_client_rpc(
+      c,          //  the configured client
+      "ipfs_get", // the rpc-method you want to call.
+      tmp,        // the arguments as json-string
+      &result,    // the reference to a pointer whill hold the result
+      &error);
+  TEST_ASSERT_EQUAL(IN3_OK, res);
+  TEST_ASSERT_EQUAL_STRING(result, "\"" LOREM_IPSUM "\"");
+}
+
 int main() {
+  in3_register_ipfs();
+  in3_register_curl();
   TESTS_BEGIN();
   RUN_TEST(test_ipfs);
+  RUN_TEST(test_ipfs_verifier);
   return TESTS_END();
 }
