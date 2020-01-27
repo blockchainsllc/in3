@@ -135,7 +135,9 @@ char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock, bool should_overw
     return str_replace_pos(fopt, pos, len, blockstr);
   }
 
-  return fopt;
+  char* tmp = _malloc(strlen(fopt) + 1);
+  strcpy(tmp, fopt);
+  return tmp;
 }
 
 static void filter_release(in3_filter_t* f) {
