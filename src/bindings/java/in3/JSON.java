@@ -119,7 +119,7 @@ public class JSON {
         return asString(get(key));
     }
 
-    public String[] asStringArray(Object o) {
+    public static String[] asStringArray(Object o) {
         if (o == null)
             return null;
         if (o instanceof Object[]) {

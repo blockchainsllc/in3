@@ -181,8 +181,8 @@ public class API {
      * Polling method for a filter, which returns an array of logs which occurred
      * since last poll.
      */
-    public Block[] getFilterChangesFromBlocks(long id) {
-        return Block.asBlocks(in3.sendRPCasObject("eth_getFilterChanges", new Object[] { JSON.asString(id) }));
+    public String[] getFilterChangesFromBlocks(long id) {
+    	return JSON.asStringArray(in3.sendRPCasObject("eth_getFilterChanges", new Object[] { JSON.asString(id) }));
     }
 
     /**
