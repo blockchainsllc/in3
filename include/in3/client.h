@@ -117,7 +117,7 @@ typedef struct in3_request_config {
   bytes_t*           client_signature;       /**< the signature of the client with the client key */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
-  uint32_t           time;                   /**< meassured time for the request */
+  uint32_t           time;                   /**< meassured time in ms for the request */
 
 } in3_request_config_t;
 
@@ -221,7 +221,6 @@ typedef struct in3_chain {
   chain_id_t         chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
   in3_chain_type_t   type;            /**< chaintype */
   uint64_t           last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  bool               needs_update;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
   int                nodelist_length; /**< number of nodes in the nodeList */
   in3_node_t*        nodelist;        /**< array of nodes */
   in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
@@ -230,6 +229,10 @@ typedef struct in3_chain {
   bytes32_t          registry_id;     /**< the identifier of the registry */
   uint8_t            version;         /**< version of the chain */
   in3_whitelist_t*   whitelist;       /**< if set the whitelist of the addresses. */
+  struct {
+    address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
+    uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
+  } * nodelist_upd8_params;
 } in3_chain_t;
 
 /** 
