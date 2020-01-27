@@ -256,6 +256,9 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   chain->version   = version;
   chain->whitelist = NULL;
   memcpy(chain->registry_id, registry_id, 32);
+  _free(chain->nodelist_upd8_params);
+  chain->nodelist_upd8_params = NULL;
+
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
     chain->whitelist->addresses.data = NULL;
