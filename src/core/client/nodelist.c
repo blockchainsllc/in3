@@ -412,6 +412,11 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 
   // do we need to update the nodelist?
   if (chain->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
+    // if this is the first nodelist update, we clear the chain->nodelist_upd8_params here
+    if (chain->nodelist_upd8_params && !chain->nodelist_upd8_params->exp_last_block) {
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
+    }
     // now update the nodeList
     res = update_nodelist(ctx->client, chain, ctx);
     if (res < 0) return res;
