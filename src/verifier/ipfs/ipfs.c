@@ -1,4 +1,6 @@
 
+#include "ipfs.h"
+#include "../../core/client/keys.h"
 #include "../../core/util/error.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
@@ -8,6 +10,7 @@
 #include "../../third-party/multihash/multihash.h"
 #include "../../third-party/nanopb/pb_decode.h"
 #include "../../third-party/nanopb/pb_encode.h"
+#include "../eth1/nano/eth_nano.h"
 #include "ipfs.pb.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,4 +128,39 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
     ret = !strcmp(requsted_hash, out) ? IN3_OK : IN3_EINVALDT;
   b_free(buf);
   return ret;
+}
+
+in3_ret_t in3_verify_ipfs(in3_vctx_t* vc) {
+  char*      method = NULL;
+  d_token_t* params = d_get(vc->request, K_PARAMS);
+
+  if (vc->config->verification == VERIFICATION_NEVER)
+    return IN3_OK;
+
+  // do we have a result? if not it is a vaslid error-response
+  if (!vc->result)
+    return IN3_OK;
+
+  // do we support this request?
+  if (!(method = d_get_stringk(vc->request, K_METHOD)))
+    return vc_err(vc, "No Method in request defined!");
+
+  if (strcmp(method, "in3_nodeList") && d_type(vc->result) != T_STRING)
+    return vc_err(vc, "Invalid response!");
+
+  if (strcmp(method, "in3_nodeList") == 0)
+    return eth_verify_in3_nodelist(vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
+  else if (strcmp(method, "ipfs_get") == 0)
+    return ipfs_verify_hash(d_string(vc->result), d_get_string_at(params, 1), d_get_string_at(params, 0));
+  else if (strcmp(method, "ipfs_put") == 0)
+    return ipfs_verify_hash(d_get_string_at(params, 0), d_get_string_at(params, 1), d_string(vc->result));
+  else
+    return vc_err(vc, "method cannot be verified with ipfs verifier!");
+}
+
+void in3_register_ipfs() {
+  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
+  v->type           = CHAIN_IPFS;
+  v->verify         = in3_verify_ipfs;
+  in3_register_verifier(v);
 }
