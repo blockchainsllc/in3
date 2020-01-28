@@ -161,6 +161,7 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
   if (ret == IN3_OK)
     ret = !strcmp(requested_hash, out) ? IN3_OK : IN3_EINVALDT;
 
+  _free(out);
   b_free(buf);
   return ret;
 }
