@@ -47,6 +47,7 @@
 static void test_ipfs(void) {
   TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("01020304FF", "hex", "QmPLrtpXZLUBF24Vu5NXqJg4w4sFYSCFLpWVqqSvmUkL1V"));
   TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("Hello World", "utf8", "QmUXTtySmd7LD4p6RG6rZW6RuUuPZXTtNMmRQ6DSQo3aMw"));
+  TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("SGVsbG8gV29ybGQ=", "base64", "QmUXTtySmd7LD4p6RG6rZW6RuUuPZXTtNMmRQ6DSQo3aMw"));
   // fixme - wrong hash for empty content
   // TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("", "hex", "QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH"));
   // TEST_ASSERT_EQUAL(IN3_OK, ipfs_verify_hash("", "utf8", "QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH"));

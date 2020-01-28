@@ -1,10 +1,9 @@
 
 #include "ipfs.h"
 #include "../../core/client/keys.h"
-#include "../../core/util/error.h"
 #include "../../core/util/mem.h"
-#include "../../core/util/utils.h"
 #include "../../third-party/crypto/sha2.h"
+#include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/libbase58/libbase58.h"
 #include "../../third-party/multihash/hashes.h"
 #include "../../third-party/multihash/multihash.h"
@@ -12,7 +11,6 @@
 #include "../../third-party/nanopb/pb_encode.h"
 #include "ipfs.pb.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 #define GOTO_RET(label, val) \
   do {                       \
@@ -35,6 +33,39 @@ static size_t pb_encode_size(const pb_msgdesc_t* fields, const void* src_struct)
   if (pb_encode(&s_, fields, src_struct))
     return s_.bytes_written;
   return 0;
+}
+
+static size_t b64_decode_strlen(const char* ip) {
+  const size_t lip = strlen(ip);
+  size_t       lop = lip / 4 * 3;
+  if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
+    lop -= 2;
+  else if (ip[lip - 1] == '=')
+    lop -= 1;
+  return lop;
+}
+
+static size_t b64_strlen(const char* ip) {
+  size_t lip = strlen(ip);
+  if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
+    lip -= 2;
+  else if (ip[lip - 1] == '=')
+    lip -= 1;
+  return lip;
+}
+
+static char* b64_decode(const char* ip) {
+  size_t lop = b64_decode_strlen(ip);
+  char*  op  = (char*) _malloc(lop + 1);
+  if (op) {
+    char*              c = op;
+    base64_decodestate s;
+    base64_init_decodestate(&s);
+    int cnt = base64_decode_block(ip, b64_strlen(ip), c, &s);
+    c += cnt;
+    *c = 0;
+  }
+  return op;
 }
 
 static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, char** b58) {
@@ -109,13 +140,17 @@ EXIT:
   return ret;
 }
 
-in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char* requsted_hash) {
-  bytes_t* buf;
+in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char* requested_hash) {
+  bytes_t* buf = NULL;
   if (!strcmp(encoding, "hex"))
     buf = hex_to_new_bytes(content, strlen(content));
   else if (!strcmp(encoding, "utf8"))
     buf = b_new(content, strlen(content));
-  else
+  else if (!strcmp(encoding, "base64")) {
+    char* str = b64_decode(content);
+    buf       = b_new(str, strlen(str));
+    _free(str);
+  } else
     return IN3_ENOTSUP;
 
   if (buf == NULL)
@@ -124,7 +159,8 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
   char*     out = NULL;
   in3_ret_t ret = ipfs_create_hash(buf->data, buf->len, MH_H_SHA2_256, &out);
   if (ret == IN3_OK)
-    ret = !strcmp(requsted_hash, out) ? IN3_OK : IN3_EINVALDT;
+    ret = !strcmp(requested_hash, out) ? IN3_OK : IN3_EINVALDT;
+
   b_free(buf);
   return ret;
 }
@@ -150,9 +186,13 @@ in3_ret_t in3_verify_ipfs(in3_vctx_t* vc) {
   if (strcmp(method, "in3_nodeList") == 0)
     return true;
   else if (strcmp(method, "ipfs_get") == 0)
-    return ipfs_verify_hash(d_string(vc->result), d_get_string_at(params, 1), d_get_string_at(params, 0));
+    return ipfs_verify_hash(d_string(vc->result),
+                            d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
+                            d_get_string_at(params, 0));
   else if (strcmp(method, "ipfs_put") == 0)
-    return ipfs_verify_hash(d_get_string_at(params, 0), d_get_string_at(params, 1), d_string(vc->result));
+    return ipfs_verify_hash(d_get_string_at(params, 0),
+                            d_get_string_at(params, 1) ? d_get_string_at(params, 1) : "base64",
+                            d_string(vc->result));
   else
     return vc_err(vc, "method cannot be verified with ipfs verifier!");
 }
