@@ -42,7 +42,35 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <time.h>
+
+#define EXPECT(cond, exit) \
+  do {                     \
+    if (!(cond))           \
+      (exit);              \
+  } while (0)
+
+#define EXPECT_CFG(cond, err) EXPECT(cond, { \
+  res = malloc(strlen(err) + 1);             \
+  strcpy(res, err);                          \
+  goto cleanup;                              \
+})
+#define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
+#define EXPECT_TOK(token, cond, err) EXPECT_CFG_NCP_ERR(cond, config_err(d_get_keystr(token->key), err))
+#define EXPECT_TOK_BOOL(token) EXPECT_TOK(token, d_type(token) == T_BOOLEAN, "expected boolean value")
+#define EXPECT_TOK_STR(token) EXPECT_TOK(token, d_type(token) == T_STRING, "expected string value")
+#define EXPECT_TOK_ARR(token) EXPECT_TOK(token, d_type(token) == T_ARRAY, "expected array")
+#define EXPECT_TOK_OBJ(token) EXPECT_TOK(token, d_type(token) == T_OBJECT, "expected object")
+#define EXPECT_TOK_ADDR(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 20, "expected address")
+#define EXPECT_TOK_B256(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 32, "expected 256 bit data")
+#define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || (d_type(token) == T_BYTES && d_len(token) <= 8)) && d_long(token) >= 0 && d_long(token) <= UINT64_MAX)
+#define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
+#define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
+#define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
+#define EXPECT_TOK_U16(token) EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
+#define EXPECT_TOK_U32(token) EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
+#define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
 static in3_transport_send     default_transport = NULL;
@@ -79,6 +107,7 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->chain_id        = chain_id;
   chain->init_addresses  = NULL;
   chain->last_block      = 0;
+  chain->verified_hashes = NULL;
   chain->contract        = hex_to_new_bytes(contract, 40);
   chain->needs_update    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
   chain->nodelist        = _malloc(sizeof(in3_node_t) * boot_node_count);
@@ -120,7 +149,6 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
-  weight->weight              = 1;
 }
 
 static void init_ipfs(in3_chain_t* chain) {
@@ -179,6 +207,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->max_attempts         = 3;
   c->max_block_cache      = 0;
   c->max_code_cache       = 0;
+  c->max_verified_hashes  = 5;
   c->min_deposit          = 0;
   c->node_limit           = 0;
   c->proof                = PROOF_STANDARD;
@@ -187,6 +216,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->chains_length        = chain_id ? 1 : 5;
   c->chains               = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters              = NULL;
+  c->timeout              = 10000;
 
   //TODO check for failed malloc!
 
@@ -239,6 +269,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     chain->init_addresses  = NULL;
     chain->whitelist       = NULL;
     chain->last_block      = 0;
+    chain->verified_hashes = NULL;
     c->chains_length++;
 
   } else {
@@ -305,7 +336,6 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   weight->blacklisted_until   = 0;
   weight->response_count      = 0;
   weight->total_response_time = 0;
-  weight->weight              = 1;
   return IN3_OK;
 }
 in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t address) {
@@ -351,6 +381,7 @@ in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
 void in3_free(in3_t* a) {
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
     whitelist_free(a->chains[i].whitelist);
@@ -372,8 +403,10 @@ void in3_free(in3_t* a) {
 
 in3_t* in3_for_chain(chain_id_t chain_id) {
 
-  // initialize random with the timestamp as seed
-  _srand(_time());
+  // initialize random with the timestamp (in nanoseconds) as seed
+  struct timeval te;
+  gettimeofday(&te, NULL);
+  _srand(te.tv_sec * 1000000LL + te.tv_usec);
 
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
@@ -402,129 +435,188 @@ static chain_id_t chain_id(d_token_t* t) {
     if (!strcmp(c, "mainnet")) return 1;
     if (!strcmp(c, "kovan")) return 0x2a;
     if (!strcmp(c, "goerli")) return 0x5;
-    return 1;
+    // 0 is allowed (as chain_id for local chain) if t is T_INT,
+    // but for T_STRING it's an error
+    return 0;
   }
   return d_long(t);
 }
 
-in3_ret_t in3_configure(in3_t* c, const char* config) {
+static inline char* config_err(const char* keyname, const char* err) {
+  char* s = malloc(strlen(keyname) + strlen(err) + 4);
+  if (s)
+    sprintf(s, "%s: %s!", keyname, err);
+  return s;
+}
+
+static inline bool is_hex_str(const char* str) {
+  if (str[0] == '0' && str[1] == 'x')
+    str += 2;
+  return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
+}
+
+char* in3_configure(in3_t* c, const char* config) {
   d_track_keynames(1);
   d_clear_keynames();
   json_ctx_t* cnf = parse_json((char*) config);
   d_track_keynames(0);
-  in3_ret_t res = IN3_OK;
+  char* res = NULL;
 
-  if (!cnf || !cnf->result) return IN3_EINVAL;
+  if (!cnf || !cnf->result) return config_err("in3_configure", "parse error");
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
-    if (iter.token->key == key("autoUpdateList"))
-      c->auto_update_list = d_int(iter.token) ? true : false;
-    else if (iter.token->key == key("chainId"))
-      c->chain_id = chain_id(iter.token);
-    else if (iter.token->key == key("signatureCount"))
-      c->signature_count = (uint8_t) d_int(iter.token);
-    else if (iter.token->key == key("finality"))
-      c->finality = (uint_fast16_t) d_int(iter.token);
-    else if (iter.token->key == key("includeCode"))
-      c->include_code = d_int(iter.token) ? true : false;
-    else if (iter.token->key == key("maxAttempts"))
-      c->max_attempts = d_int(iter.token);
-    else if (iter.token->key == key("keepIn3"))
-      c->keep_in3 = d_int(iter.token);
-    else if (iter.token->key == key("maxBlockCache"))
-      c->max_block_cache = d_int(iter.token);
-    else if (iter.token->key == key("maxCodeCache"))
-      c->max_code_cache = d_int(iter.token);
-    else if (iter.token->key == key("minDeposit"))
-      c->min_deposit = d_long(iter.token);
-    else if (iter.token->key == key("nodeLimit"))
-      c->node_limit = (uint16_t) d_int(iter.token);
-    else if (iter.token->key == key("proof"))
-      c->proof = strcmp(d_string(iter.token), "full") == 0
+    d_token_t* token = iter.token;
+    if (token->key == key("autoUpdateList")) {
+      EXPECT_TOK_BOOL(token);
+      c->auto_update_list = d_int(token) ? true : false;
+    } else if (token->key == key("chainId")) {
+      EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
+      c->chain_id = chain_id(token);
+    } else if (token->key == key("signatureCount")) {
+      EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value");
+      c->signature_count = (uint8_t) d_int(token);
+    } else if (token->key == key("finality")) {
+      EXPECT_TOK_U16(token);
+#ifdef POA
+      if (c->chain_id == ETH_CHAIN_ID_GOERLI || c->chain_id == ETH_CHAIN_ID_KOVAN)
+        EXPECT_CFG(d_int(token) > 0 && d_int(token) <= 100, "expected % value");
+#endif
+      c->finality = (uint16_t) d_int(token);
+    } else if (token->key == key("includeCode")) {
+      EXPECT_TOK_BOOL(token);
+      c->include_code = d_int(token) ? true : false;
+    } else if (token->key == key("maxAttempts")) {
+      EXPECT_TOK_U16(token);
+      c->max_attempts = d_int(token);
+    } else if (token->key == key("keepIn3")) {
+      EXPECT_TOK_BOOL(token);
+      c->keep_in3 = d_int(token) ? true : false;
+    } else if (token->key == key("useBinary")) {
+      EXPECT_TOK_BOOL(token);
+      c->use_binary = d_int(token) ? true : false;
+    } else if (token->key == key("useHttp")) {
+      EXPECT_TOK_BOOL(token);
+      c->use_http = d_int(token) ? true : false;
+    } else if (token->key == key("maxBlockCache")) {
+      EXPECT_TOK_U32(token);
+      c->max_block_cache = d_long(token);
+    } else if (token->key == key("maxCodeCache")) {
+      EXPECT_TOK_U32(token);
+      c->max_code_cache = d_long(token);
+    } else if (token->key == key("timeout")) {
+      EXPECT_TOK_U32(token);
+      c->timeout = d_long(token);
+    } else if (token->key == key("minDeposit")) {
+      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
+      c->min_deposit = d_long(token);
+    } else if (token->key == key("nodeProps")) {
+      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
+      c->node_props = d_long(token);
+    } else if (token->key == key("nodeLimit")) {
+      EXPECT_TOK_U16(token);
+      c->node_limit = (uint16_t) d_int(token);
+    } else if (token->key == key("proof")) {
+      EXPECT_TOK_STR(token);
+      EXPECT_TOK(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");
+      c->proof = strcmp(d_string(token), "full") == 0
                      ? PROOF_FULL
-                     : (strcmp(d_string(iter.token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
-    else if (iter.token->key == key("replaceLatestBlock"))
-      c->replace_latest_block = (uint16_t) d_int(iter.token);
-    else if (iter.token->key == key("requestCount"))
-      c->request_count = (uint8_t) d_int(iter.token);
-    else if (iter.token->key == key("rpc")) {
+                     : (strcmp(d_string(token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
+    } else if (token->key == key("replaceLatestBlock")) {
+      EXPECT_TOK_U16(token);
+      c->replace_latest_block = (uint16_t) d_int(token);
+    } else if (token->key == key("requestCount")) {
+      EXPECT_TOK(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
+      c->request_count = (uint8_t) d_int(token);
+    } else if (token->key == key("rpc")) {
+      EXPECT_TOK_STR(token);
       c->proof         = PROOF_NONE;
       c->chain_id      = ETH_CHAIN_ID_LOCAL;
       c->request_count = 1;
       in3_node_t* n    = &in3_find_chain(c, c->chain_id)->nodelist[0];
       if (n->url) _free(n->url);
-      n->url = malloc(d_len(iter.token) + 1);
+      n->url = malloc(d_len(token) + 1);
       if (!n->url) {
-        res = IN3_ENOMEM;
+        res = config_err("in3_configure", "OOM");
         goto cleanup;
       }
-      strcpy(n->url, d_string(iter.token));
-    } else if (iter.token->key == key("servers") || iter.token->key == key("nodes"))
-      for (d_iterator_t ct = d_iter(iter.token); ct.left; d_iter_next(&ct)) {
+      strcpy(n->url, d_string(token));
+    } else if (token->key == key("servers") || token->key == key("nodes")) {
+      EXPECT_TOK_OBJ(token);
+      for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
+        EXPECT_TOK_OBJ(ct.token);
+        EXPECT_TOK_KEY_HEXSTR(ct.token);
+
         // register chain
-        chain_id_t   chain_id = char_to_long(d_get_keystr(ct.token->key), -1);
-        in3_chain_t* chain    = in3_find_chain(c, chain_id);
-        if (!chain) {
-          bytes_t* contract    = d_get_byteskl(ct.token, key("contract"), 20);
-          bytes_t* registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-          bytes_t* wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
-          if (!contract || !registry_id) {
-            res = IN3_EINVAL;
-            goto cleanup;
-          }
-          if ((res = in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) != IN3_OK) goto cleanup;
-          chain = in3_find_chain(c, chain_id);
-          assert(chain != NULL);
-        }
+        chain_id_t chain_id    = char_to_long(d_get_keystr(ct.token->key), -1);
+        bytes_t*   contract    = d_get_byteskl(ct.token, key("contract"), 20);
+        bytes_t*   registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
+        bytes_t*   wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+
+        EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
+        EXPECT_CFG((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
+                   "register chain failed");
+
+        in3_chain_t* chain = in3_find_chain(c, chain_id);
+        EXPECT_CFG(chain != NULL, "invalid chain id!");
 
         // chain_props
+        bool has_wlc = false, has_man_wl = false;
         for (d_iterator_t cp = d_iter(ct.token); cp.left; d_iter_next(&cp)) {
-          if (cp.token->key == key("contract"))
+          if (cp.token->key == key("contract")) {
+            EXPECT_TOK_ADDR(cp.token);
             memcpy(chain->contract->data, cp.token->data, cp.token->len);
-          else if (cp.token->key == key("whiteListContract")) {
-            if (d_type(cp.token) != T_BYTES || d_len(cp.token) != 20) {
-              res = IN3_EINVAL;
-              goto cleanup;
-            }
-
-            if (!chain->whitelist) {
-              chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
-              chain->whitelist->needs_update = true;
-              memcpy(chain->whitelist->contract, cp.token->data, 20);
-            } else if (memcmp(chain->whitelist->contract, cp.token->data, 20)) {
-              memcpy(chain->whitelist->contract, cp.token->data, 20);
-              chain->whitelist->needs_update = true;
-            }
+          } else if (cp.token->key == key("whiteListContract")) {
+            EXPECT_TOK_ADDR(cp.token);
+            EXPECT_CFG(!has_man_wl, "cannot specify manual whiteList and whiteListContract together!");
+            has_wlc = true;
+            whitelist_free(chain->whitelist);
+            chain->whitelist               = _calloc(1, sizeof(in3_whitelist_t));
+            chain->whitelist->needs_update = true;
+            memcpy(chain->whitelist->contract, cp.token->data, 20);
           } else if (cp.token->key == key("whiteList")) {
-            if (d_type(cp.token) != T_ARRAY) {
-              res = IN3_EINVAL;
-              goto cleanup;
-            }
+            EXPECT_TOK_ARR(cp.token);
+            EXPECT_CFG(!has_wlc, "cannot specify manual whiteList and whiteListContract together!");
+            has_man_wl = true;
             int len = d_len(cp.token), i = 0;
             whitelist_free(chain->whitelist);
             chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
             chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
-            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20)
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
+              EXPECT_TOK_ADDR(n.token);
+              for (uint32_t j = 0; j < chain->whitelist->addresses.len; j += 20) {
+                if (!memcmp(d_bytes(n.token)->data, chain->whitelist->addresses.data + j, 20)) {
+                  whitelist_free(chain->whitelist);
+                  chain->whitelist = NULL;
+                  EXPECT_TOK(cp.token, false, "duplicate address!");
+                }
+              }
               d_bytes_to(n.token, chain->whitelist->addresses.data + i, 20);
+            }
           } else if (cp.token->key == key("registryId")) {
+            EXPECT_TOK_B256(cp.token);
             bytes_t data = d_to_bytes(cp.token);
-            if (data.len != 32 || !data.data) {
-              res = IN3_EINVAL;
-              goto cleanup;
-            } else
-              memcpy(chain->registry_id, data.data, 32);
-          } else if (cp.token->key == key("needsUpdate"))
+            memcpy(chain->registry_id, data.data, 32);
+          } else if (cp.token->key == key("needsUpdate")) {
+            EXPECT_TOK_BOOL(cp.token);
             chain->needs_update = d_int(cp.token) ? true : false;
-          else if (cp.token->key == key("nodeList")) {
+          } else if (cp.token->key == key("nodeList")) {
+            EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
-              if ((res = in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
+              EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
+              EXPECT_TOK_STR(d_get(n.token, key("url")));
+              EXPECT_TOK_ADDR(d_get(n.token, key("address")));
+              EXPECT_CFG(in3_client_add_node(c, chain_id, d_get_string(n.token, "url"),
                                              d_get_longkd(n.token, key("props"), 65535),
-                                             d_get_byteskl(n.token, key("address"), 20)->data)) != IN3_OK) goto cleanup;
+                                             d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
+                         "add node failed");
             }
           }
         }
         in3_client_run_chain_whitelisting(chain);
       }
+    } else {
+      EXPECT_TOK(token, false, "unsupported config option!");
+    }
   }
 
 cleanup:

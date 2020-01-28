@@ -74,12 +74,13 @@ JNIEXPORT void JNICALL Java_in3_IN3_setCacheTimeout(JNIEnv* env, jobject ob, jin
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring val) {
   const char* json_config = (*env)->GetStringUTFChars(env, val, 0);
-  in3_ret_t   result      = in3_configure(get_in3(env, ob), json_config);
+  char*       error       = in3_configure(get_in3(env, ob), json_config);
   (*env)->ReleaseStringUTFChars(env, val, json_config);
-  if (result < 0) {
+  if (error) {
     // TODO create a human readable error message
     jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
-    (*env)->ThrowNew(env, Exception, "Invalid configuration!");
+    _free(error);
+    (*env)->ThrowNew(env, Exception, error);
   }
 }
 /*
@@ -591,6 +592,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
 }
 
 in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
+  uint64_t start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
@@ -607,7 +609,7 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
 
   for (int i = 0; i < req->urls_len; i++) {
-    jbyteArray content = (*jni)->GetObjectArrayElement(jni, result, i);
+    jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
     if (content) {
       const size_t l     = (*jni)->GetArrayLength(jni, content);
       uint8_t*     bytes = _malloc(l);
@@ -616,7 +618,12 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       _free(bytes);
     } else
       sb_add_chars(&req->results[i].error, "Could not fetch the data!");
+    if (req->results[i].error.len) success = IN3_ERPC;
   }
+  uint64_t end = current_ms();
+
+  req->times = _malloc(sizeof(uint32_t) * req->urls_len);
+  for (int i = 0; i < req->urls_len; i++) req->times[i] = (uint32_t)(end - start);
 
   return success;
 }

@@ -106,7 +106,9 @@ char* readContent(char* name) {
     r = fread(buffer + len, 1, allocated - len - 1, file);
     len += r;
     if (feof(file)) break;
-    buffer = realloc(buffer, allocated *= 2);
+    size_t new_alloc = allocated * 2;
+    buffer = _realloc(buffer, new_alloc, allocated);
+    allocated = new_alloc;
   }
   buffer[len] = 0;
 
