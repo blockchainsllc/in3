@@ -44,27 +44,31 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+/** shortcut macro for adding a uint to the stringbuilder using sizeof(i) to automaticly determine the size*/
 #define sb_add_hexuint(sb, i) sb_add_hexuint_l(sb, i, sizeof(i))
 
 #ifdef __ZEPHYR__
 typedef unsigned long long uintmax_t;
 #endif
 
+/**
+ * string build struct, which is able to hold and modify a growing string. 
+ */
 typedef struct sb {
-  char*  data;
-  size_t allocted;
-  size_t len;
+  char*  data;     /**< the current string (null terminated)*/
+  size_t allocted; /**< number of bytes currently allocated */
+  size_t len;      /**< the current length of the string */
 } sb_t;
 
-sb_t* sb_new(char* chars);
-sb_t* sb_init(sb_t* sb);
-void  sb_free(sb_t* sb);
+sb_t* sb_new(const char* chars); /**< creates a new stringbuilder and copies the inital characters into it.*/
+sb_t* sb_init(sb_t* sb);         /**< initializes a stringbuilder by allocating memory. */
+void  sb_free(sb_t* sb);         /**< frees all resources of the stringbuilder */
 
-sb_t* sb_add_char(sb_t* sb, char c);
-sb_t* sb_add_chars(sb_t* sb, char* chars);
-sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len);
-sb_t* sb_add_key_value(sb_t* sb, char* key, char* value, int lv, bool as_string);
-sb_t* sb_add_bytes(sb_t* sb, char* prefix, bytes_t* bytes, int len, bool as_array);
-sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);
+sb_t* sb_add_char(sb_t* sb, char c);  /**< add a single character */
+sb_t* sb_add_chars(sb_t* sb, const char* chars); /**< adds a string */
+sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len);  /**< add a string range */
+sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int value_len, bool as_string);  /**< adds a value with an optional key. if as_string is true the value will be quoted. */
+sb_t* sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array);  /**< add bytes as 0x-prefixed hexcoded string (including an optional prefix), if len>1 is passed bytes maybe an array ( if as_array==true)  */
+sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);  /**< add a integer value as hexcoded, 0x-prefixed string*/
 
 #endif

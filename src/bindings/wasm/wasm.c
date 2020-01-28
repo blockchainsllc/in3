@@ -44,6 +44,7 @@
 #include "../../third-party/crypto/secp256k1.h"
 #include <emscripten.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef ETH_FULL
 #include "../../verifier/eth1/full/eth_full.h"
@@ -57,8 +58,12 @@
 
 #define err_string(msg) (":ERROR:" msg)
 
-static char* last_error = NULL;
-
+static char*    last_error = NULL;
+static uint32_t now() {
+  static uint64_t time_offset = 0;
+  if (!time_offset) time_offset = current_ms();
+  return (uint32_t)(current_ms() - time_offset);
+}
 void EMSCRIPTEN_KEEPALIVE in3_set_error(char* data) {
   if (last_error) free(last_error);
   last_error = data ? _strdupn(data, -1) : NULL;
@@ -93,7 +98,7 @@ EM_JS(void, in3_cache_set, (char* key, char* val), {
 bytes_t* storage_get_item(void* cptr, char* key) {
   UNUSED_VAR(cptr);
   char*    val = in3_cache_get(key);
-  bytes_t* res = val ? hex2byte_new_bytes(val, strlen(val)) : NULL;
+  bytes_t* res = val ? hex_to_new_bytes(val, strlen(val)) : NULL;
   return res;
 }
 
@@ -138,19 +143,25 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
     if (request == NULL)
       sb_add_chars(sb, ",\"error\",\"could not create request, memory?\"");
     else {
+      request->times = _malloc(sizeof(uint32_t) * request->urls_len);
+      uint32_t start = now();
+      char     tmp[160];
       sb_add_chars(sb, ",\"request\":{ \"type\": ");
       sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+      sb_add_chars(sb, ",\"timeout\":");
+      sprintf(tmp, "%d", (unsigned int) request->timeout);
+      sb_add_chars(sb, tmp);
       sb_add_chars(sb, ",\"payload\":");
       sb_add_chars(sb, request->payload);
       sb_add_chars(sb, ",\"urls\":[");
       for (int i = 0; i < request->urls_len; i++) {
+        request->times[i] = start;
         if (i) sb_add_char(sb, ',');
         sb_add_char(sb, '"');
         sb_add_chars(sb, request->urls[i]);
         sb_add_char(sb, '"');
       }
       sb_add_chars(sb, "],\"ptr\":");
-      char tmp[160];
       sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
       sb_add_chars(sb, tmp);
     }
@@ -166,21 +177,22 @@ void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
   _free(ptr);
 }
 void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
-  free_request(r, ctx, false);
+  request_free(r, ctx, false);
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
+  r->times[i] = now() - r->times[i];
   if (is_error)
     sb_add_chars(&r->results[i].error, msg);
   else if (ctx->type == CT_SIGN) {
     uint8_t sig[65];
-    hex2byte_arr(msg, -1, sig, 65);
+    hex_to_bytes(msg, -1, sig, 65);
     sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
   } else
     sb_add_chars(&r->results[i].result, msg);
 }
 
-in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
+in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
 // register a chain-verifier for full Ethereum-Support
 #ifdef ETH_FULL
   in3_register_eth_full();
@@ -194,10 +206,10 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create() {
 #ifdef ETH_API
   in3_register_eth_api();
 #endif
-  in3_t* c                  = in3_new();
-  c->cacheStorage           = malloc(sizeof(in3_storage_handler_t));
-  c->cacheStorage->get_item = storage_get_item;
-  c->cacheStorage->set_item = storage_set_item;
+  in3_t* c           = in3_for_chain(chain);
+  c->cache           = malloc(sizeof(in3_storage_handler_t));
+  c->cache->get_item = storage_get_item;
+  c->cache->set_item = storage_set_item;
 
   in3_cache_init(c);
   in3_set_error(NULL);
@@ -208,8 +220,8 @@ void EMSCRIPTEN_KEEPALIVE in3_dispose(in3_t* a) {
   in3_free(a);
   in3_set_error(NULL);
 }
-/* frees the references of the client */
-in3_ret_t EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
+
+char* EMSCRIPTEN_KEEPALIVE in3_config(in3_t* a, char* conf) {
   return in3_configure(a, conf);
 }
 
@@ -219,21 +231,20 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
 
 in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
   char*      src_data = _strdupn(payload, -1);
-  in3_ctx_t* ctx      = new_ctx(c, src_data);
+  in3_ctx_t* ctx      = ctx_new(c, src_data);
   if (ctx->error) {
     in3_set_error(ctx->error);
-    free_ctx(ctx);
+    ctx_free(ctx);
     return NULL;
   }
-
   // add the src-string as cache-entry so it will be freed when finalizing.
-  ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) src_data, 1));
+  in3_cache_add_ptr(&ctx->cache, src_data);
 
   return ctx;
 }
 
-void EMSCRIPTEN_KEEPALIVE in3_free_request(in3_ctx_t* ctx) {
-  free_ctx(ctx);
+void EMSCRIPTEN_KEEPALIVE in3_request_free(in3_ctx_t* ctx) {
+  ctx_free(ctx);
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE keccak(uint8_t* data, int len) {
@@ -274,10 +285,10 @@ char* EMSCRIPTEN_KEEPALIVE abi_encode(char* sig, char* json_params) {
 
   if (set_data(req, params->result, req->in_data) < 0) {
     req_free(req);
-    free_json(params);
+    json_free(params);
     return err_string("invalid input data");
   }
-  free_json(params);
+  json_free(params);
   char* result = malloc(req->call_data->b.len * 2 + 3);
   if (!result) {
     req_free(req);
@@ -304,7 +315,7 @@ char* EMSCRIPTEN_KEEPALIVE abi_decode(char* sig, uint8_t* data, int len) {
   if (!res)
     return err_string("the input data can not be decoded");
   char* result = d_create_json(res->result);
-  free_json(res);
+  json_free(res);
   return result;
 #else
   UNUSED_VAR(sig);

@@ -228,14 +228,6 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs) {
     // verify all receipts
     for (d_iterator_t receipt = d_iter(d_get(it.token, K_RECEIPTS)); receipt.left; d_iter_next(&receipt)) {
       // verify that txn hash matches key
-      bytes_t* txhash         = d_get_byteskl(receipt.token, K_TX_HASH, 32);
-      char     txhash_str[64] = {0};
-      char*    rk_str         = d_get_keystr(receipt.token->key);
-      bytes_to_hex(txhash->data, txhash->len, txhash_str);
-      if (rk_str[0] == '0' && rk_str[1] == 'x') rk_str += 2;
-      if (strcmp(rk_str, txhash_str) != 0)
-        return vc_err(vc, "txn hash mismatch");
-
       if (i == l_logs) return vc_err(vc, "too many receipts in the proof");
       receipt_t* r = receipts + i;
       if (i != bl) memcpy(r, receipts + bl, sizeof(receipt_t)); // copy blocknumber and blockhash

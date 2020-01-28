@@ -40,6 +40,10 @@
 #define in3_codecache_h__
 
 #include "../../../core/client/verifier.h"
-in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target);
+/**
+ * fetches the code and adds it to the context-cache as cache_entry.
+ * So calling this function a second time will take the result from cache.
+ */
+in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target);
 
 #endif

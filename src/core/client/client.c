@@ -44,124 +44,102 @@
 
 in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   // generate the rpc-request
-  const int max = strlen(method) + strlen(params) + 200;
-  char*     req = alloca(max);
-  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
+  const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
+  const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
+  char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
+  if (!req) return NULL;                                                                                // if we don't have the memory for a string, we stop here
+  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
 
   // create a new context by parsing the request
-  in3_ctx_t* ctx = new_ctx(c, req);
+  in3_ctx_t* ctx = ctx_new(c, req);
 
   // this happens if the request is not parseable (JSON-error in params)
-  if (ctx->error) return ctx;
+  if (ctx->error) {
+    if (heap) _free(req); // free request string if we created it in heap
+    ctx->verification_state = IN3_EINVAL;
+    return ctx;
+  }
 
   // execute it
-  if (in3_send_ctx(ctx) == IN3_OK) {
+  in3_ret_t ret = in3_send_ctx(ctx);
+  if (ret == IN3_OK) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
     ctx->error = NULL;
-  }
+  } else
+    ctx->verification_state = ret;
 
-  // return context and hope the calle will clean it.
-  return ctx;
+  if (heap) _free(req); // free request string if we created it in heap
+  return ctx;           // return context and hope the calle will clean it.
 }
 
 in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
   if (!error) return IN3_EINVAL;
-  in3_ret_t res = IN3_OK;
-  // prepare request
-  int   l   = strlen(method) + strlen(params) + 200;
-  char* req = alloca(l);
-  snprintX(req, l, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
-
-  // parse it
-  in3_ctx_t*  ctx = new_ctx(c, req);
-  str_range_t s;
-
-  // make sure result & error are clean
   if (result) result[0] = 0;
-  if (error) *error = NULL;
+  *error         = NULL;
+  in3_ctx_t* ctx = in3_client_rpc_ctx(c, method, params);
+  in3_ret_t  res = ctx ? ctx->verification_state : IN3_ENOMEM;
+
+  if (!ctx) return res;
 
   // check parse-errors
   if (ctx->error) {
-    if (error != NULL) {
-      *error = _malloc(strlen(ctx->error) + 1);
-      strcpy(*error, ctx->error);
-    }
-    res = IN3_EUNKNOWN;
-  } else {
-    // so far everything is good, so we send the request
-    res = in3_send_ctx(ctx);
-    if (res >= 0) {
-
-      // looks good, so we get the result
-      d_token_t* r = d_get(ctx->responses[0], K_RESULT);
-      if (r) {
-        // we have a result and copy it
-        if (result) *result = d_create_json(r);
-      } else if ((r = d_get(ctx->responses[0], K_ERROR))) {
-        // the response was correct but contains a error-object, which we convert into a string
-        if (d_type(r) == T_OBJECT) {
-          char* msg = d_get_stringk(r, K_MESSAGE);
-          if (msg) {
-            if (error != NULL)
-              *error = _strdupn(msg, -1);
-          } else {
-            s = d_to_json(r);
-            if (error != NULL) {
-              *error = _malloc(s.len + 1);
-              strncpy(*error, s.data, s.len);
-              (*error)[s.len] = '\0';
-            }
-          }
-        } else {
-          if (error != NULL) {
-            *error = _malloc(d_len(r) + 1);
-            strncpy(*error, d_string(r), d_len(r));
-            (*error)[d_len(r)] = '\0';
-          }
-        }
-      } else if (ctx->error) {
-        // we don't have a result, but an error, so we copy this
-        if (error != NULL) {
-          *error = _malloc(strlen(ctx->error) + 1);
-          strcpy(*error, ctx->error);
-        }
-      } else {
-        // should not happen
-        if (error != NULL) {
-          *error = _malloc(50);
-          strcpy(*error, "No Result and also no error");
-        }
-      }
-
-    } else if (ctx->error) {
-      // there was an error, copy it
-      if (error != NULL) {
-        *error = _malloc(strlen(ctx->error) + 1);
-        strcpy(*error, ctx->error);
-      }
-    } else {
-      // something went wrong, but no error
-      if (error != NULL) {
-        *error = _malloc(50);
-        strcpy(*error, "Error sending the request");
-      }
-    }
+    // we have an error
+    *error = _malloc(strlen(ctx->error) + 1);
+    strcpy(*error, ctx->error);
+    if (res == IN3_OK) res = IN3_EUNKNOWN;
+    goto clean;
   }
-  free_ctx(ctx);
+
+  // there was an error, but no message, so we create one
+  if (res != IN3_OK) {
+    *error = _strdupn(in3_errmsg(res), -1);
+    goto clean;
+  }
+
+  // do we have an error-property in the response?
+  d_token_t* r = d_get(ctx->responses[0], K_ERROR);
+  if (r) {
+    if (d_type(r) == T_STRING)
+      *error = _strdupn(d_string(r), -1);
+    else if (d_type(r) == T_OBJECT) {
+      char* msg = d_get_stringk(r, K_MESSAGE);
+      *error    = msg ? _strdupn(msg, -1) : d_create_json(r);
+    } else
+      *error = d_create_json(r);
+    res = IN3_ERPC;
+    goto clean;
+  }
+
+  if ((r = d_get(ctx->responses[0], K_RESULT)) == NULL) {
+    // we have no result
+    *error = _strdupn("no result or error in rpc-response", -1);
+    res    = IN3_ERPC;
+    goto clean;
+  }
+
+  // we have a result and copy it
+  if (result) *result = d_create_json(r);
+
+clean:
+  ctx_free(ctx);
 
   // if we have an error, we always return IN3_EUNKNOWN
-  return *error ? IN3_EUNKNOWN : res;
+  return res;
 }
 
+static char* create_rpc_error(uint32_t id, int code, char* error) {
+  char* res = _malloc(strlen(error) + 100);
+  if (res) sprintf(res, "{\"id\":%d,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", id, code, error);
+  return res;
+}
 char* in3_client_exec_req(
     in3_t* c,  /**< [in] the pointer to the incubed client config. */
     char*  req /**< [in] the request as rpc. */
 ) {
-
   // parse it
-  char *     res = NULL, *err_msg = NULL;
-  in3_ctx_t* ctx = new_ctx(c, req);
+  char*      res = NULL;
+  in3_ctx_t* ctx = ctx_new(c, req);
   in3_ret_t  ret;
 
   //  not enough memory
@@ -170,51 +148,39 @@ char* in3_client_exec_req(
   // make sure result & error are clean
   // check parse-errors
   if (ctx->error) {
-    res = _malloc(strlen(ctx->error) + 80);
-    if (!res) {
-      // out of memory
-      free_ctx(ctx);
-      return NULL;
-    }
-    sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"%s\"}}", ctx->error);
-  } else {
-    uint32_t id = d_get_intk(ctx->requests[0], K_ID);
-    ret         = in3_send_ctx(ctx);
-
-    if (ret == IN3_OK) {
-      // succesful (at least we have a useable response)
-      if (c->keep_in3) {
-        // TODO handle binary here as well.
-        str_range_t rr  = d_to_json(ctx->responses[0]);
-        rr.data[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
-        res             = _malloc(rr.len + 1);
-        if (res) sprintf(res, "%s", rr.data);
-      } else {
-        d_token_t* result = d_get(ctx->responses[0], K_RESULT);
-        d_token_t* error  = d_get(ctx->responses[0], K_ERROR);
-        char*      r      = d_create_json(result ? result : error);
-        if (!r) r = _strdupn("no result!", -1);
-        res = r ? _malloc(strlen(r) + 80) : NULL;
-        if (res) {
-          if (result)
-            sprintf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"result\":%s}", id, r);
-          else if (d_type(error) == T_OBJECT)
-            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}", id, error);
-          else
-            printf(res, "{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":-32700,\"message\":%s}}", id, error);
-        }
-        if (r) _free(r);
-      }
-    } else
-      err_msg = in3_errmsg(ret);
+    res = create_rpc_error(0, -32700, ctx->error);
+    goto clean;
   }
 
-  if (!res && err_msg) {
-    res = _malloc(strlen(ctx->error ? ctx->error : err_msg) + 80);
-    if (res) sprintf(res, "{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", ret, ctx->error ? ctx->error : err_msg);
+  uint32_t id = d_get_intk(ctx->requests[0], K_ID);
+  ret         = in3_send_ctx(ctx);
+
+  // do we have an error?
+  if (ctx->error) {
+    res = create_rpc_error(id, ret ? ret : ctx->verification_state, ctx->error);
+    goto clean;
   }
 
-  free_ctx(ctx);
+  // no error message, but an error-code?
+  if (ret != IN3_OK) {
+    res = create_rpc_error(id, ret, in3_errmsg(ret));
+    goto clean;
+  }
+
+  // looks good, so we use the resonse and return it
+  str_range_t rr = d_to_json(ctx->responses[0]), rin3;
+  if (!c->keep_in3 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {
+    while (*rin3.data != ',' && rin3.data > rr.data) rin3.data--;
+    *rin3.data = '}';
+    rr.len     = rin3.data - rr.data + 1;
+  }
+  res         = _malloc(rr.len + 1);
+  res[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
+  if (res) memcpy(res, rr.data, rr.len);
+
+clean:
+
+  ctx_free(ctx);
   return res;
 }
 
@@ -234,14 +200,16 @@ in3_signer_t* in3_create_signer(
   return signer;
 }
 
-in3_storage_handler_t* in3_create_storeage_handler(
+in3_storage_handler_t* in3_create_storage_handler(
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 ) {
   in3_storage_handler_t* handler = _calloc(1, sizeof(in3_storage_handler_t));
   handler->cptr                  = cptr;
   handler->get_item              = get_item;
   handler->set_item              = set_item;
+  handler->clear                 = clear;
   return handler;
 }

@@ -45,6 +45,7 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
+#include "../../src/verifier/eth1/basic/signer-priv.h"
 #include "../../src/verifier/eth1/basic/signer.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
@@ -52,22 +53,18 @@
 #include <unistd.h>
 
 static void test_sign() {
+  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport        = test_transport;
+  c->chain_id         = 0x1;
+  c->auto_update_list = false;
+  c->proof            = PROOF_NONE;
+  c->signature_count  = 0;
 
-  in3_register_eth_basic();
-
-  in3_t* c          = in3_new();
-  c->transport      = test_transport;
-  c->chainId        = 0x1;
-  c->autoUpdateList = false;
-  c->proof          = PROOF_NONE;
-  c->signatureCount = 0;
-
-  for (int i = 0; i < c->chainsCount; i++) c->chains[i].needsUpdate = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
 
   bytes32_t pk;
-  hex2byte_arr("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
+  hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
   eth_set_pk_signer(c, pk);
-  in3_set_default_signer(c->signer);
 
   add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
   add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
@@ -77,15 +74,81 @@ static void test_sign() {
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
   TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
   TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
-  free_ctx(ctx);
+  ctx_free(ctx);
+}
+
+static void test_sign_sans_signer_and_from() {
+  in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  TEST_ASSERT_NOT_NULL(ctx->error);
+  ctx_free(ctx);
+}
+
+static void test_signer() {
+  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  bytes32_t pk;
+  hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
+  eth_set_pk_signer(c, pk);
+  uint8_t    sig[65]  = {0};
+  in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
+  TEST_ASSERT_EQUAL(65, eth_sign(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
+  TEST_ASSERT_FALSE(memiszero(sig, 65));
+  b_free(data);
+  in3_free(c);
+}
+
+static in3_ret_t prep_tx(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx) {
+  *new_tx = parse_json("{\"from\": \"0xb60e8dd61c5d32be8058bb8eb970870f07233155\","
+                       "\"to\": \"0xd46e8dd67c5d32be8058bb8eb970870f07244567\","
+                       "\"gas\": \"0x76c0\","
+                       "\"nonce\": \"0x15\","
+                       "\"gasPrice\": \"0x9184e72a000\","
+                       "\"value\": \"0x9184e72a\","
+                       "\"data\": \"0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675\"}");
+  return d_get_int(old_tx, "success") != 0 ? IN3_OK : IN3_EUNKNOWN;
+}
+
+static void test_signer_prepare_tx() {
+  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  bytes32_t pk;
+  hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
+  eth_set_pk_signer(c, pk);
+
+  in3_ctx_t* ctx        = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  c->signer->prepare_tx = prep_tx;
+  json_ctx_t* jtx       = parse_json("{\"success\":false}");
+  bytes_t     raw_tx    = sign_tx(jtx->result, ctx);
+  TEST_ASSERT_FALSE(raw_tx.data && raw_tx.len);
+  TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
+  json_free(jtx);
+  ctx_free(ctx);
+
+  ctx    = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  jtx    = parse_json("{\"success\":true}");
+  raw_tx = sign_tx(jtx->result, ctx);
+  TEST_ASSERT_TRUE(ctx->type == CT_RPC && ctx->verification_state == IN3_WAITING && ctx->required);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_send_ctx(ctx->required));
+  raw_tx = sign_tx(jtx->result, ctx);
+  TEST_ASSERT_NOT_NULL(raw_tx.data);
+  TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
+  _free(raw_tx.data);
+
+  json_free(jtx);
+  in3_free(c);
 }
 
 /*
  * Main
  */
 int main() {
-  in3_log_set_level(LOG_ERROR);
+  in3_log_set_quiet(true);
+  in3_register_eth_basic();
   TESTS_BEGIN();
   RUN_TEST(test_sign);
+  RUN_TEST(test_sign_sans_signer_and_from);
+  RUN_TEST(test_signer);
+  RUN_TEST(test_signer_prepare_tx);
   return TESTS_END();
 }

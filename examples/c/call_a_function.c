@@ -26,13 +26,13 @@ int main() {
   in3_log_set_prefix("");
 
   // create new incubed client
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // define a address (20byte)
   address_t contract;
 
   // copy the hexcoded string into this address
-  hex2byte_arr("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
+  hex_to_bytes("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
 
   // call function using RPC
   ret = call_func_rpc(c);
@@ -84,7 +84,7 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
   uint32_t number_of_servers = d_int(response->result);
 
   // clean up resources
-  free_json(response);
+  json_free(response);
 
   // output
   printf("Found %u servers registered : \n", number_of_servers);
@@ -105,7 +105,7 @@ in3_ret_t call_func_api(in3_t* c, address_t contract) {
     printf(", deposit = %" PRIu64 "\n", deposit);
 
     // free memory
-    free_json(response);
+    json_free(response);
   }
   return 0;
 }

@@ -188,6 +188,19 @@ analyse:
     paths:
       - report
 
+cppcheck:
+  stage: test
+  image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
+  allow_failure: true
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
+    - cd ..
+    - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/test/unity -i/builds/in3/c/in3-core/src/third-party
+
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
@@ -430,6 +443,7 @@ readthedocs:
   stage: test
   tags:
     - short-jobs
+  allow_failure: true
   dependencies:
     - gcc8
   script:
@@ -638,6 +652,7 @@ release_win:
     paths:
       - in3-win
 
+
 release_maven:
   stage: deploy
   image: docker.slock.it/build-images/maven-deployment-image:latest
@@ -654,6 +669,31 @@ release_maven:
     - touch settings.xml
     - echo $MAVEN_SETTINGS > settings.xml
     - mvn -s settings.xml deploy:deploy-file -DgroupId=it.slock  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/slockit/in3-c
+
+release_pip:
+  stage: deploy
+  image: docker.slock.it/build-images/python-dev-image:latest
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  except:
+    - branches
+  dependencies:
+    - mac_os
+  script:
+    - rm -rf src/bindings/python/in3/bind/slibs/
+    - mkdir src/bindings/python/in3/bind/slibs/
+    - cp mac_build/lib/libin3.dylib src/bindings/python/in3/bind/slibs/.
+    - export version=${CI_COMMIT_TAG}
+    - export download_url=https://github.com/slockit/in3-c/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz
+    - cd src/bindings/python
+    - cp $pypirc ~/.pypirc
+    - ./publish.sh
+  artifacts:
+    paths:
+      - in3-pip
+
 
 pages:
   stage: deploy

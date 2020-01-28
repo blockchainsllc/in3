@@ -71,7 +71,19 @@
         "endian.h": "c",
         "blake2s.h": "c",
         "algorithm": "c",
-        "random": "c"
+        "random": "c",
+        "eth_api.h": "c",
+        "atomic": "c",
+        "cstdint": "c",
+        "error.h": "c",
+        "queue": "c",
+        "stack": "c",
+        "deque": "cpp",
+        "memory": "cpp",
+        "streambuf": "cpp",
+        "__node_handle": "c",
+        "cstdlib": "c",
+        "locale": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

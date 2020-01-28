@@ -88,7 +88,7 @@ function private2address(pk) {
 
 
 function abiEncode(sig, ...params) {
-    convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
+    const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
 }
 function ecSign(pk, data, hashMessage = true, adjustV = true) {

@@ -88,6 +88,8 @@ public class TransactionRequest {
         sb.append("{");
         if (to != null)
             JSON.appendKey(sb, "to", to);
+        if (from != null)
+            JSON.appendKey(sb, "from", from);
         if (gas > 0)
             JSON.appendKey(sb, "gasLimit", JSON.asString(gas));
         if (gasPrice > 0)

@@ -143,7 +143,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
 #ifdef __ZEPHYR__
       char bufTmp[21];
-      snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64tostr(id, bufTmp, sizeof(bufTmp)));
+      snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64_to_str(id, bufTmp, sizeof(bufTmp)));
 #else
       snprintf(tmp, sizeof(tmp), ", \"id\":%" PRId64 "", id);
       // sprintf(tmp, ", \"id\":%" PRId64 "", id);
@@ -154,15 +154,13 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
     _free(raw.data);
-    free_json(ctx->request_context);
+    json_free(ctx->request_context);
 
     // set the new RPC-Request.
     ctx->request_context = parse_json(sb->data);
     ctx->requests[0]     = ctx->request_context->result;
-
-    // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-    ctx->cache = in3_cache_add_entry(ctx->cache, bytes(NULL, 0), bytes((uint8_t*) sb->data, sb->len));
-    _free(sb);
+    in3_cache_add_ptr(&ctx->cache, sb->data); // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+    _free(sb);                                // and we only free the stringbuilder, but not the data itself.
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
@@ -187,7 +185,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_chainId") == 0) {
     RESPONSE_START();
     sb_add_char(&response[0]->result, '"');
-    sb_add_hexuint(&response[0]->result, ctx->client->chainId);
+    sb_add_hexuint(&response[0]->result, ctx->client->chain_id);
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {

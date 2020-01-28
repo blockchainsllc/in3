@@ -42,6 +42,13 @@ Default-Value: `-DBUILD_DOC=OFF`
 Default-Value: `-DCMD=ON`
 
 
+#### ERR_MSG
+
+  if set human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)
+
+Default-Value: `-DERR_MSG=ON`
+
+
 #### ETH_BASIC
 
   build basic eth verification.(all rpc-calls except eth_call)
@@ -159,6 +166,13 @@ Default-Value: `-DTRANSPORTS=ON`
   if true the curl transport will be build (with a dependency to libcurl)
 
 Default-Value: `-DUSE_CURL=ON`
+
+
+#### USE_PRECOMPUTED_EC
+
+  if true the secp256k1 curve uses precompiled tables to boost performance. turning this off makes ecrecover slower, but saves about 37kb.
+
+Default-Value: `-DUSE_PRECOMPUTED_EC=ON`
 
 
 #### USE_SCRYPT

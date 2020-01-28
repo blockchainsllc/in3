@@ -48,6 +48,9 @@ static void test_capabilities(void) {
   in3_node_props_init(&npclient);
   in3_node_props_init(&npserver);
   TEST_ASSERT(in3_node_props_match(npclient, npserver));
+  TEST_ASSERT_EQUAL(in3_node_props_get(npclient, NODE_PROP_MIN_BLOCK_HEIGHT), 0);
+  TEST_ASSERT_FALSE(in3_node_props_get(npclient, NODE_PROP_PROOF));
+  TEST_ASSERT_FALSE(in3_node_props_matches(npclient, NODE_PROP_HTTP));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 6);

@@ -43,6 +43,7 @@
 #include "bytes.h"
 #include <stdint.h>
 
+/** simple swap macro for integral types */
 #define SWAP(a, b) \
   {                \
     void* p = a;   \
@@ -51,22 +52,23 @@
   }
 
 #ifndef min
+/** simple min macro for interagl types */
 #define min(a, b) ((a) < (b) ? (a) : (b))
+/** simple max macro for interagl types */
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-// Check if n1 & n2 are at max err apart
-// Expects n1 & n2 to be integral types
+/**
+ *  Check if n1 & n2 are at max err apart
+ * Expects n1 & n2 to be integral types
+ */
 #define IS_APPROX(n1, n2, err) ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
 
-typedef uint32_t      pb_size_t;
-typedef uint_least8_t pb_byte_t;
-
 /** converts the bytes to a unsigned long (at least the last max len bytes) */
-uint64_t bytes_to_long(uint8_t* data, int len);
+uint64_t bytes_to_long(const uint8_t* data, int len);
 
 /** converts the bytes to a unsigned int (at least the last max len bytes) */
-static inline uint32_t bytes_to_int(uint8_t* data, int len) {
+static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
   switch (len) {
     case 0: return 0;
     case 1: return data[0];
@@ -76,36 +78,45 @@ static inline uint32_t bytes_to_int(uint8_t* data, int len) {
   }
 }
 /** converts a character into a uint64_t*/
-uint64_t c_to_long(char* a, int l);
+uint64_t char_to_long(const char* a, int l);
 
 /**  converts a hexchar to byte (4bit) */
-uint8_t strtohex(char c);
+uint8_t hexchar_to_int(char c);
 
 /** converts a uint64_t to string (char*); buffer-size min. 21 bytes */
-extern const unsigned char* u64tostr(uint64_t value, char* pBuf, int szBuf);
+const unsigned char* u64_to_str(uint64_t value, char* pBuf, int szBuf);
 
-/** convert a c string to a byte array storing it into a existing buffer */
-int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size);
+/**
+ * convert a c hex string to a byte array storing it into an existing buffer.
+ * 
+ * @param  hexdata: the hex string
+ * @param  hexlen: the len of the string to read. -1 will use strlen to determine the length.
+ * @param  out: the byte buffer
+ * @param  outlen: the length of the buffer to write into
+ * @retval the  number of bytes written
+ */
+int hex_to_bytes(const char* hexdata, int hexlen, uint8_t* out, int outlen);
 
 /** convert a c string to a byte array creating a new buffer */
-bytes_t* hex2byte_new_bytes(char* buf, int len);
+bytes_t* hex_to_new_bytes(const char* buf, int len);
 
 /** convefrts a bytes into hex */
-int bytes_to_hex(uint8_t* buffer, int len, char* out);
+int bytes_to_hex(const uint8_t* buffer, int len, char* out);
 
 /** hashes the bytes and creates a new bytes_t */
-bytes_t* sha3(bytes_t* data);
+bytes_t* sha3(const bytes_t* data);
 
 /** writes 32 bytes to the pointer. */
 int sha3_to(bytes_t* data, void* dst);
 
 /** converts a long to 8 bytes */
 void long_to_bytes(uint64_t val, uint8_t* dst);
+
 /** converts a int to 4 bytes */
 void int_to_bytes(uint32_t val, uint8_t* dst);
 
 /** duplicate the string */
-char* _strdupn(char* src, int len);
+char* _strdupn(const char* src, int len);
 
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);
@@ -113,36 +124,69 @@ int min_bytes_len(uint64_t val);
 /**
  * sets a variable value to 32byte word.
  */
-void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
+void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst);
 
-char* str_replace(char* orig, char* rep, char* with);
+/**
+ * replaces a string and returns a copy.
+ * @retval 
+ */
+char* str_replace(const char* orig, const char* rep, const char* with);
 
-char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
+/**
+ * replaces a string at the given position.
+ */
+char* str_replace_pos(const char* orig, size_t pos, size_t len, const char* rep);
 
-// lightweight strstr() replacement
-char* str_find(char* haystack, const char* needle);
+/**
+  * lightweight strstr() replacements
+  */
+char* str_find(const char* haystack, const char* needle);
 
+/** changes to pointer (a) and it length (l) to remove leading 0 bytes.*/
 #define optimize_len(a, l)   \
   while (l > 1 && *a == 0) { \
     l--;                     \
     a++;                     \
   }
 
+/**
+ * executes the expression and expects the return value to be a int indicating the error. 
+ * if the return value is negative it will stop and return this value otherwise continue. 
+ */
 #define TRY(exp)           \
   {                        \
     int _r = (exp);        \
     if (_r < 0) return _r; \
   }
+
+/**
+ * executes the expression and expects the return value to be a int indicating the error. 
+ * the return value will be set to a existing variable (var).
+ * if the return value is negative it will stop and return this value otherwise continue. 
+ */
 #define TRY_SET(var, exp)    \
   {                          \
     var = (exp);             \
     if (var < 0) return var; \
   }
 
+/**
+ * executes the expression and expects the return value to be a int indicating the error. 
+ * if the return value is negative it will stop and jump (goto) to a marked position "clean".
+ * it also expects a previously declared variable "in3_ret_t res".
+ */
 #define TRY_GOTO(exp)        \
   {                          \
     res = (exp);             \
     if (res < 0) goto clean; \
   }
+
+static inline bool memiszero(uint8_t* ptr, size_t l) {
+  while (l > 0 && *ptr == 0) {
+    l--;
+    ptr++;
+  }
+  return !l;
+}
 
 #endif

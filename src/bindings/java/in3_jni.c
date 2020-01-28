@@ -55,25 +55,41 @@ static in3_t* get_in3(JNIEnv* env, jobject obj) {
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_in3_IN3_getCacheTimeout(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->cacheTimeout;
+  return get_in3(env, ob)->cache_timeout;
 }
 
-/*
+/*s
  * Class:     in3_IN3
  * Method:    setCacheTimeout
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setCacheTimeout(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->cacheTimeout = val;
+  get_in3(env, ob)->cache_timeout = val;
 }
 
+/*
+ * Class:     in3_IN3
+ * Method:    setConfig
+ * Signature: (Ljava/lang/String)V
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring val) {
+  const char* json_config = (*env)->GetStringUTFChars(env, val, 0);
+  char*       error       = in3_configure(get_in3(env, ob), json_config);
+  (*env)->ReleaseStringUTFChars(env, val, json_config);
+  if (error) {
+    // TODO create a human readable error message
+    jclass Exception = (*env)->FindClass(env, "java/lang/Exception");
+    _free(error);
+    (*env)->ThrowNew(env, Exception, error);
+  }
+}
 /*
  * Class:     in3_IN3
  * Method:    getNodeLimit
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_in3_IN3_getNodeLimit(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->nodeLimit;
+  return get_in3(env, ob)->node_limit;
 }
 
 /*
@@ -82,7 +98,7 @@ JNIEXPORT jint JNICALL Java_in3_IN3_getNodeLimit(JNIEnv* env, jobject ob) {
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setNodeLimit(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->nodeLimit = val;
+  get_in3(env, ob)->node_limit = val;
 }
 
 /*
@@ -119,7 +135,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray v
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_in3_IN3_getMaxCodeCache(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->maxCodeCache;
+  return get_in3(env, ob)->max_code_cache;
 }
 
 /*
@@ -128,7 +144,7 @@ JNIEXPORT jint JNICALL Java_in3_IN3_getMaxCodeCache(JNIEnv* env, jobject ob) {
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setMaxCodeCache(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->maxCodeCache = val;
+  get_in3(env, ob)->max_code_cache = val;
 }
 
 /*
@@ -137,7 +153,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setMaxCodeCache(JNIEnv* env, jobject ob, jin
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_in3_IN3_getMaxBlockCache(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->maxBlockCache;
+  return get_in3(env, ob)->max_block_cache;
 }
 
 /*
@@ -146,7 +162,7 @@ JNIEXPORT jint JNICALL Java_in3_IN3_getMaxBlockCache(JNIEnv* env, jobject ob) {
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setMaxBlockCache(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->maxBlockCache = val;
+  get_in3(env, ob)->max_block_cache = val;
 }
 
 /*
@@ -194,7 +210,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setProof(JNIEnv* env, jobject ob, jobject va
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_in3_IN3_getRequestCount(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->requestCount;
+  return get_in3(env, ob)->request_count;
 }
 /*
  * Class:     in3_IN3
@@ -202,7 +218,7 @@ JNIEXPORT jint JNICALL Java_in3_IN3_getRequestCount(JNIEnv* env, jobject ob) {
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setRequestCount(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->requestCount = val;
+  get_in3(env, ob)->request_count = val;
 }
 
 /*
@@ -211,7 +227,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setRequestCount(JNIEnv* env, jobject ob, jin
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_in3_IN3_getSignatureCount(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->signatureCount;
+  return get_in3(env, ob)->signature_count;
 }
 
 /*
@@ -220,7 +236,7 @@ JNIEXPORT jint JNICALL Java_in3_IN3_getSignatureCount(JNIEnv* env, jobject ob) {
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setSignatureCount(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->signatureCount = val;
+  get_in3(env, ob)->signature_count = val;
 }
 
 /*
@@ -229,7 +245,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setSignatureCount(JNIEnv* env, jobject ob, j
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_getMinDeposit(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->minDeposit;
+  return get_in3(env, ob)->min_deposit;
 }
 
 /*
@@ -238,7 +254,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_getMinDeposit(JNIEnv* env, jobject ob) {
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setMinDeposit(JNIEnv* env, jobject ob, jlong val) {
-  get_in3(env, ob)->minDeposit = val;
+  get_in3(env, ob)->min_deposit = val;
 }
 
 /*
@@ -247,7 +263,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setMinDeposit(JNIEnv* env, jobject ob, jlong
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_in3_IN3_getReplaceLatestBlock(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->replaceLatestBlock;
+  return get_in3(env, ob)->replace_latest_block;
 }
 
 /*
@@ -256,7 +272,7 @@ JNIEXPORT jint JNICALL Java_in3_IN3_getReplaceLatestBlock(JNIEnv* env, jobject o
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setReplaceLatestBlock(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->replaceLatestBlock = val;
+  get_in3(env, ob)->replace_latest_block = val;
 }
 
 /*
@@ -319,7 +335,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setTimeout(JNIEnv* env, jobject ob, jint val
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->chainId;
+  return get_in3(env, ob)->chain_id;
 }
 
 /*
@@ -328,7 +344,7 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong val) {
-  get_in3(env, ob)->chainId = val;
+  get_in3(env, ob)->chain_id = val;
 }
 
 /*
@@ -337,7 +353,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong va
  * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL Java_in3_IN3_isAutoUpdateList(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->autoUpdateList;
+  return get_in3(env, ob)->auto_update_list;
 }
 
 /*
@@ -346,7 +362,7 @@ JNIEXPORT jboolean JNICALL Java_in3_IN3_isAutoUpdateList(JNIEnv* env, jobject ob
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList(JNIEnv* env, jobject ob, jboolean val) {
-  get_in3(env, ob)->autoUpdateList = val;
+  get_in3(env, ob)->auto_update_list = val;
 }
 
 /*
@@ -356,8 +372,8 @@ JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList(JNIEnv* env, jobject ob, j
  */
 JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider(JNIEnv* env, jobject ob) {
   in3_t* in3 = get_in3(env, ob);
-  if (in3->cacheStorage && in3->cacheStorage->cptr)
-    return (jobject) in3->cacheStorage->cptr;
+  if (in3->cache && in3->cache->cptr)
+    return (jobject) in3->cache->cptr;
   return NULL;
 }
 
@@ -414,7 +430,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv* env, jobject ob, jstring jre
   int         res;
   jstring     js = NULL;
 
-  in3_ctx_t* ctx = new_ctx(get_in3(env, ob), (char*) str);
+  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
     res = in3_send_ctx(ctx);
@@ -446,7 +462,7 @@ JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv* env, jobject ob, jstring jre
   //need to release this string when done with it in order to
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   if (result) {
     js = (*env)->NewStringUTF(env, result);
@@ -518,7 +534,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstri
   int         res;
   jobject     js = NULL;
 
-  in3_ctx_t* ctx = new_ctx(get_in3(env, ob), (char*) str);
+  in3_ctx_t* ctx = ctx_new(get_in3(env, ob), (char*) str);
 
   if (!ctx->error) {
     res = in3_send_ctx(ctx);
@@ -551,7 +567,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstri
   //avoid memory leak
   (*env)->ReleaseStringUTFChars(env, jreq, str);
 
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   if (result)
     return js;
@@ -569,13 +585,14 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv* env, jobject ob, jstri
  */
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_t* in3 = get_in3(env, ob);
-  if (in3->cacheStorage)
-    (*env)->DeleteGlobalRef(env, (jobject) in3->cacheStorage->cptr);
+  if (in3->cache)
+    (*env)->DeleteGlobalRef(env, (jobject) in3->cache->cptr);
 
   in3_free(in3);
 }
 
 in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
+  uint64_t start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
   //payload
@@ -592,7 +609,7 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
 
   for (int i = 0; i < req->urls_len; i++) {
-    jbyteArray content = (*jni)->GetObjectArrayElement(jni, result, i);
+    jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
     if (content) {
       const size_t l     = (*jni)->GetArrayLength(jni, content);
       uint8_t*     bytes = _malloc(l);
@@ -601,7 +618,12 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       _free(bytes);
     } else
       sb_add_chars(&req->results[i].error, "Could not fetch the data!");
+    if (req->results[i].error.len) success = IN3_ERPC;
   }
+  uint64_t end = current_ms();
+
+  req->times = _malloc(sizeof(uint32_t) * req->urls_len);
+  for (int i = 0; i < req->urls_len; i++) req->times[i] = (uint32_t)(end - start);
 
   return success;
 }
@@ -633,7 +655,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
 
   if (set_data(rq, json_ctx->result, rq->in_data) < 0) {
     req_free(rq);
-    free_json(json_ctx);
+    json_free(json_ctx);
     (*env)->ReleaseStringUTFChars(env, json, json_data);
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "invalid data for the given signature");
     return NULL;
@@ -641,7 +663,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_TransactionRequest_abiEncode(JNIEnv* env
 
   jstring res = (jstring) toObject(env, (d_token_t*) &rq->call_data->b);
   req_free(rq);
-  free_json(json_ctx);
+  json_free(json_ctx);
   (*env)->ReleaseStringUTFChars(env, json, json_data);
   return res;
 }
@@ -665,14 +687,14 @@ JNIEXPORT jobject JNICALL Java_in3_eth1_TransactionRequest_abiDecode(JNIEnv* env
   const char* jdata = (*env)->GetStringUTFChars(env, data, 0);
   int         l     = strlen(jdata);
   uint8_t*    bdata = alloca(l >> 1);
-  l                 = hex2byte_arr((char*) jdata + 2, l - 2, bdata, l);
+  l                 = hex_to_bytes((char*) jdata + 2, l - 2, bdata, l);
   (*env)->ReleaseStringUTFChars(env, data, jdata);
 
   json_ctx_t* res    = req_parse_result(rq, bytes(bdata, l));
   jobject     result = res ? toObject(env, res->result) : NULL;
   req_free(rq);
   if (res)
-    free_json(res);
+    json_free(res);
   else
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Error"), "Error decoding the data");
 
@@ -690,7 +712,7 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
 
   bytes32_t prv_key;
   uint8_t   public_key[65], sdata[32];
-  hex2byte_arr((char*) key, -1, prv_key, 32);
+  hex_to_bytes((char*) key, -1, prv_key, 32);
   bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
   ecdsa_get_public_key65(&secp256k1, prv_key, public_key);
   sha3_to(&pubkey_bytes, sdata);
@@ -714,8 +736,8 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclas
   int         data_l = strlen(data) / 2 - 1;
   uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
 
-  hex2byte_arr((char*) key + 2, 32, key_bytes, 32);
-  data_l      = hex2byte_arr((char*) data + 2, -1, data_bytes, data_l + 1);
+  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
+  data_l      = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
   jstring res = NULL;
 
   if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
@@ -744,10 +766,12 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
 }
 
 in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+  in3_ctx_t* ctx = (in3_ctx_t*) pk;
   UNUSED_VAR(type);
-  jclass    cls    = (*jni)->GetObjectClass(jni, (jobject) pk);
+  jclass    cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
   jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/Signer;");
-  jobject   signer = (*jni)->CallObjectMethod(jni, (jobject) pk, mid);
+  jobject   signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
+
   if (!signer) return -1;
 
   char *data = alloca(message.len * 2 + 3), address[43];
@@ -764,7 +788,7 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
 
   if (!jsignature) return -2;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  hex2byte_arr((char*) signature, -1, dst, 65);
+  hex_to_bytes((char*) signature, -1, dst, 65);
   (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
   return 65;
 }
@@ -775,19 +799,19 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob) {
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(0);
   in3_register_eth_full();
   in3_log_set_level(LOG_DEBUG);
-  in3->transport              = Java_in3_IN3_transport;
-  in3->cacheStorage           = _malloc(sizeof(in3_storage_handler_t));
-  in3->cacheStorage->cptr     = (*env)->NewGlobalRef(env, ob);
-  in3->cacheStorage->get_item = storage_get_item;
-  in3->cacheStorage->set_item = storage_set_item;
-  in3->signer                 = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign           = jsign;
-  in3->signer->prepare_tx     = NULL;
-  in3->signer->wallet         = in3->cacheStorage->cptr;
-  jni                         = env;
+  in3->transport          = Java_in3_IN3_transport;
+  in3->cache              = _malloc(sizeof(in3_storage_handler_t));
+  in3->cache->cptr        = (*env)->NewGlobalRef(env, ob);
+  in3->cache->get_item    = storage_get_item;
+  in3->cache->set_item    = storage_set_item;
+  in3->signer             = _malloc(sizeof(in3_signer_t));
+  in3->signer->sign       = jsign;
+  in3->signer->prepare_tx = NULL;
+  in3->signer->wallet     = in3->cache->cptr;
+  jni                     = env;
 
   return (jlong)(size_t) in3;
 }

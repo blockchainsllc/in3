@@ -112,7 +112,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
   vc->ctx->client->proof = proof_;
   res                    = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {
-    free_ctx(ctx_);
+    ctx_free(ctx_);
     return vc_err(vc, ctx_->error);
   }
 
@@ -207,7 +207,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
     rlp_decode(&log_data, 1, &tmp);
     rlp_decode_in_list(&tmp, 0, &tmp);
-    bytes_t* t = hex2byte_new_bytes("55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 64);
+    bytes_t* t = hex_to_new_bytes("55252fa6eee4741b4e24a74a70e9c11fd2c2281df8d6ea13126ff845f7825c89", 64);
     if (!bytes_cmp(tmp, *t))
       return vc_err(vc, "Wrong topic in log");
     b_free(t);
@@ -224,7 +224,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
     bb_write_raw_bytes(vbb, abi, 32);
 
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-      b = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+      b = (d_type(vitr.token) == T_STRING) ? hex_to_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
       memset(abi, 0, 32 - b->len);
       memcpy(abi + 32 - b->len, b->data, b->len);
       bb_write_raw_bytes(vbb, abi, 32);
@@ -242,7 +242,7 @@ static in3_ret_t add_aura_validators(in3_vctx_t* vc, vhist_t** vhp) {
 
   vh_free(vh);
   *vhp = vh_init_nodelist(d_get(ctx_->responses[0], K_RESULT));
-  free_ctx(ctx_);
+  ctx_free(ctx_);
   return res;
 }
 
@@ -331,36 +331,65 @@ in3_ret_t eth_verify_authority(in3_vctx_t* vc, bytes_t** blocks, uint16_t needed
   return passed * 100 / val_len >= needed_finality ? IN3_OK : vc_err(vc, "not enough blocks to reach finality");
 }
 #endif
+
+static void add_verified(int max, in3_chain_t* chain, uint64_t number, bytes32_t hash) {
+  if (!max) return;
+  if (!chain->verified_hashes) chain->verified_hashes = _calloc(max, sizeof(in3_verified_hash_t));
+  int      oldest_index  = 0;
+  uint64_t oldest_number = 0xFFFFFFFFFFFFFFFFLL;
+  for (int i = 0; i < max; i++) {
+    if (chain->verified_hashes[i].block_number < oldest_number) {
+      oldest_index  = i;
+      oldest_number = chain->verified_hashes[i].block_number;
+      if (oldest_number == 0) break;
+    }
+  }
+  chain->verified_hashes[oldest_index].block_number = number;
+  memcpy(chain->verified_hashes[oldest_index].hash, hash, 32);
+}
+
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
   if (!header)
     return vc_err(vc, "no header found");
 
-  in3_ret_t  res = IN3_OK;
-  int        i;
-  uint8_t    block_hash[32];
-  uint64_t   header_number = 0;
-  d_token_t *sig, *signatures;
-  bytes_t    temp, *sig_hash;
+  unsigned int i;
+  bytes32_t    block_hash;
+  uint64_t     header_number = 0;
+  d_token_t *  sig, *signatures;
+  bytes_t      temp, *sig_hash;
 
   // generate the blockhash;
   sha3_to(header, &block_hash);
 
   // if we expect a certain blocknumber, it must match the 8th field in the BlockHeader
-  if (res == IN3_OK && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp) == 1))
+  if (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &temp) == 1)
     header_number = bytes_to_long(temp.data, temp.len);
   else
-    res = vc_err(vc, "Could not rlpdecode the blocknumber");
+    return vc_err(vc, "Could not rlpdecode the blocknumber");
 
   // if we have a blockhash we verify it
-  if (res == IN3_OK && expected_blockhash && memcmp(block_hash, expected_blockhash->data, 32))
-    res = vc_err(vc, "wrong blockhash");
+  if (expected_blockhash && memcmp(block_hash, expected_blockhash->data, 32))
+    return vc_err(vc, "wrong blockhash");
+
+  // already verified?
+  if (vc->chain->verified_hashes) {
+    for (i = 0; i < vc->ctx->client->max_verified_hashes; i++) {
+      if (vc->chain->verified_hashes[i].block_number == header_number) {
+        if (memcmp(vc->chain->verified_hashes[i].hash, block_hash, 32))
+          return vc_err(vc, "invalid blockhash");
+        else
+          return IN3_OK;
+      }
+    }
+  }
 
   // if we expect no signatures ...
-  if (res == IN3_OK && vc->config->signaturesCount == 0) {
+  if (vc->config->signers_length == 0) {
 #ifdef POA
-    vhist_t* vh = NULL;
+    in3_ret_t res = IN3_OK;
+    vhist_t*  vh  = NULL;
     // ... and the chain is a authority chain....
     if (vc->chain && vc->chain->spec && eth_get_engine(vc, header, vc->chain->spec->result, &vh) == ENGINE_AURA) {
       // we merge the current header + finality blocks
@@ -374,15 +403,14 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
       // now we verify these block headers
       res = eth_verify_authority(vc, blocks, vc->config->finality, vh);
       _free(blocks);
-    } else {
-      res = IN3_OK; // we didn't request signatures so blockheader should be ok.
     }
     vh_free(vh);
+    return res;
 #endif
-  } else if (res == IN3_OK && (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signaturesCount))
+  } else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signers_length)
     // no signatures found,even though we expected some.
-    res = vc_err(vc, "missing signatures");
-  else if (res == IN3_OK) {
+    return vc_err(vc, "missing signatures");
+  else {
     // prepare the message to be sigfned
 
     bytes_t msg;
@@ -402,15 +430,18 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     msg.len  = 32;
 
     int confirmed = 0; // confirmed is a bitmask for each signature one bit on order to ensure we have all requested signatures
-    for (i = 0, sig = signatures + 1; i < d_len(signatures); i++, sig = d_next(sig)) {
+    for (i = 0, sig = signatures + 1; i < (uint32_t) d_len(signatures); i++, sig = d_next(sig)) {
       // only if this signature has the correct blockhash and blocknumber we will verify it.
       if (d_get_longk(sig, K_BLOCK) == header_number && ((sig_hash = d_get_byteskl(sig, K_BLOCK_HASH, 32)) ? memcmp(sig_hash->data, block_hash, 32) == 0 : 1))
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    if (confirmed != (1 << vc->config->signaturesCount) - 1) // we must collect all signatures!
-      res = vc_err(vc, "missing signatures");
+    if (confirmed != (1 << vc->config->signers_length) - 1) // we must collect all signatures!
+      return vc_err(vc, "missing signatures");
+
+    // ok, is is verified, so we should add it to the verified hashes
+    add_verified(vc->ctx->client->max_verified_hashes, vc->chain, header_number, block_hash);
   }
 
-  return res;
+  return IN3_OK;
 }

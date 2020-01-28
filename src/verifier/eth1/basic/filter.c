@@ -47,6 +47,7 @@ static bool filter_addrs_valid(d_token_t* addr) {
     return false;
 
   int len = d_len(addr);
+  addr += 1;
   for (int i = 0; i < len; i++, addr = d_next(addr))
     if (d_type(addr) != T_BYTES || d_len(addr) != 20)
       return false;
@@ -159,11 +160,11 @@ in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
   in3_ret_t  res = IN3_OK;
   in3_ctx_t* ctx = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
   if (IN3_OK != (res = ctx_get_error(ctx, 0))) {
-    free_ctx(ctx);
+    ctx_free(ctx);
     return res;
   }
   uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
-  free_ctx(ctx);
+  ctx_free(ctx);
 
   in3_filter_t* f = filter_new(type);
   f->options      = options;
@@ -183,9 +184,9 @@ in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
   }
   in3_filter_t** arr_;
   if (fh->array)
-     arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1), sizeof(in3_filter_t*) * (fh->count));
-  else 
-     arr_ = _malloc(sizeof(in3_filter_t*) * (fh->count + 1) );
+    arr_ = _realloc(fh->array, sizeof(in3_filter_t*) * (fh->count + 1), sizeof(in3_filter_t*) * (fh->count));
+  else
+    arr_ = _malloc(sizeof(in3_filter_t*) * (fh->count + 1));
 
   if (arr_ == NULL) {
     return IN3_ENOMEM;
@@ -222,14 +223,17 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
   in3_ret_t  res  = ctx_get_error(ctx_, 0);
   if (res != IN3_OK) {
     ctx_set_error(ctx, ctx_->error, res);
-    free_ctx(ctx_);
+    ctx_free(ctx_);
     return ctx_set_error(ctx, "internal error, call to eth_blockNumber failed", res);
   }
   uint64_t blkno = d_get_longk(ctx_->responses[0], K_RESULT);
-  free_ctx(ctx_);
+  ctx_free(ctx_);
 
-  in3_filter_t* f    = in3->filters->array[id - 1];
-  char*         fopt = f->options;
+  in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return ctx_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
+
+  char* fopt = f->options;
   switch (f->type) {
     case FILTER_EVENT: {
       if (f->last_block > blkno) {
@@ -243,14 +247,14 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         _free(fopt_);
         if ((res = ctx_get_error(ctx_, 0)) != IN3_OK) {
           ctx_set_error(ctx, ctx_->error, res);
-          free_ctx(ctx_);
+          ctx_free(ctx_);
           return ctx_set_error(ctx, "internal error, call to eth_getLogs failed", res);
         }
         d_token_t* r  = d_get(ctx_->responses[0], K_RESULT);
         char*      jr = d_create_json(r);
         sb_add_chars(result, jr);
         _free(jr);
-        free_ctx(ctx_);
+        ctx_free(ctx_);
         f->last_block = blkno + 1;
       }
       return IN3_OK;
@@ -275,7 +279,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
           sb_add_char(result, '"');
           sb_add_chars(result, h);
           sb_add_char(result, '"');
-          free_ctx(ctx_);
+          ctx_free(ctx_);
         }
         sb_add_char(result, ']');
         f->last_block = blkno;

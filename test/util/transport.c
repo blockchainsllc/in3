@@ -30,7 +30,7 @@ typedef struct response_s {
 } response_t;
 
 static response_t* response_buffer = NULL;
-response_t*        responses;
+static response_t* responses;
 char*              read_json_response_buffer(char* path) {
   char* response_buffer;
   long  length;
@@ -70,7 +70,7 @@ void add_response(char* request_method, char* request_params, char* result, char
   response_t* n     = calloc(1, sizeof(response_t));
   n->request_method = request_method;
   n->request_params = request_params;
-  n->response       = malloc(40 + strlen(result ? result : error) + (in3 ? strlen(in3) + 10 : 0));
+  n->response       = malloc(40 + ((result || error) ? strlen(result ? result : error) : 0) + (in3 ? strlen(in3) + 10 : 0));
   if (in3)
     sprintf(n->response, "[{\"id\":1,\"jsonrpc\":\"2.0\",\"%s\":%s,\"in3\":%s}]", result ? "result" : "error", result ? result : error, in3);
   else
@@ -118,7 +118,7 @@ in3_ret_t test_transport(in3_request_t* req) {
 
   TEST_ASSERT_EQUAL_STRING(responses->request_method, method);
   TEST_ASSERT_EQUAL_STRING(responses->request_params, p);
-  free_json(r);
+  json_free(r);
 
   sb_add_chars(&req->results->result, responses->response);
   response_t* next = responses->next;
@@ -143,7 +143,7 @@ in3_ret_t mock_transport(in3_request_t* req) {
 
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_method, method);
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_params, p);
-  free_json(r);
+  json_free(r);
 
   sb_add_chars(&req->results->result, response_buffer->response);
   return IN3_OK;
