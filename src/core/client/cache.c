@@ -93,12 +93,12 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   in3_nodelist_clear(chain);
 
   // fill data
-  chain->contract        = b_new_fixed_bytes(b, &pos, 20);
-  chain->last_block      = b_read_long(b, &pos);
-  chain->nodelist_length = (node_count = b_read_int(b, &pos));
-  chain->nodelist        = _calloc(node_count, sizeof(in3_node_t));
-  chain->weights         = _calloc(node_count, sizeof(in3_node_weight_t));
-  chain->needs_update    = false;
+  chain->contract             = b_new_fixed_bytes(b, &pos, 20);
+  chain->last_block           = b_read_long(b, &pos);
+  chain->nodelist_length      = (node_count = b_read_int(b, &pos));
+  chain->nodelist             = _calloc(node_count, sizeof(in3_node_t));
+  chain->weights              = _calloc(node_count, sizeof(in3_node_weight_t));
+  chain->nodelist_upd8_params = NULL;
   memcpy(chain->weights, b->data + pos, node_count * sizeof(in3_node_weight_t));
   pos += node_count * sizeof(in3_node_weight_t);
 
