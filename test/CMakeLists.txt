@@ -90,11 +90,11 @@ foreach (file ${files})
 endforeach ()
 target_code_coverage(runner "${files}" AUTO ALL ${coverage_excludes})
 
-file(GLOB files 
-    "testdata/evm/TrieTests/*.json" 
-    "testdata/evm/RLPTests/*.json" 
-    "testdata/evm/vmTests/vmArithmeticTest/*.json" 
-    "testdata/evm/vmTests/vmBitwiseLocigOperation/*.json" 
+file(GLOB files
+    "testdata/evm/TrieTests/*.json"
+    "testdata/evm/RLPTests/*.json"
+    "testdata/evm/vmTests/vmArithmeticTest/*.json"
+    "testdata/evm/vmTests/vmBitwiseLocigOperation/*.json"
 #    "testdata/evm/GeneralStateTests/stRandom2/*.json"
 #    "testdata/evm/GeneralStateTests/stRandom/*.json"
     "testdata/evm/GeneralStateTests/stMemoryTest/*.json"
@@ -192,10 +192,6 @@ foreach (testdir
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 9)
     endforeach ()
 endforeach ()
-
-
-add_executable(test_ipfs test_ipfs.c unity/unity.c)
-target_link_libraries(test_ipfs ipfs transport_curl)
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)
 set_property(TARGET vmrunner PROPERTY C_STANDARD 99)
