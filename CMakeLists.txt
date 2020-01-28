@@ -68,7 +68,7 @@ if(IN3API)
 endif()
 if(IPFS)
   ADD_DEFINITIONS(-DIPFS)
-  set(IN3_VERIFIER ipfs)
+  set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
 endif()
 
 set(PROJECT_VERSION "0.1.0-alpha.0")
