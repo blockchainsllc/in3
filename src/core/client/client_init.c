@@ -104,17 +104,18 @@ static void whitelist_free(in3_whitelist_t* wl) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
-  chain->chain_id        = chain_id;
-  chain->init_addresses  = NULL;
-  chain->last_block      = 0;
-  chain->verified_hashes = NULL;
-  chain->contract        = hex_to_new_bytes(contract, 40);
-  chain->nodelist        = _malloc(sizeof(in3_node_t) * boot_node_count);
-  chain->nodelist_length = boot_node_count;
-  chain->weights         = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
-  chain->type            = type;
-  chain->version         = version;
-  chain->whitelist       = NULL;
+  chain->chain_id             = chain_id;
+  chain->init_addresses       = NULL;
+  chain->last_block           = 0;
+  chain->verified_hashes      = NULL;
+  chain->contract             = hex_to_new_bytes(contract, 40);
+  chain->nodelist             = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodelist_length      = boot_node_count;
+  chain->weights              = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->type                 = type;
+  chain->version              = version;
+  chain->whitelist            = NULL;
+  chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
     chain->whitelist->addresses.data = NULL;
@@ -123,7 +124,6 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
     chain->whitelist->last_block     = 0;
     hex_to_bytes(wl_contract, -1, chain->whitelist->contract, 20);
   }
-  chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
   memset(chain->registry_id, 0, 32);
   if (version > 1) {
     int l = hex_to_bytes(registry_id, -1, chain->registry_id, 32);
