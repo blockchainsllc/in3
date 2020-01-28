@@ -75,6 +75,10 @@ static void response_free(in3_ctx_t* ctx) {
   ctx->nodes            = NULL;
   if (ctx->requests_configs) {
     for (int i = 0; i < ctx->len; i++) {
+      if (ctx->requests_configs[i].verified_hashes) {
+        _free(ctx->requests_configs[i].verified_hashes);
+        ctx->requests_configs[i].verified_hashes = NULL;
+      }
       if (ctx->requests_configs[i].signers_length) {
         if (ctx->requests_configs[i].signers) {
           _free(ctx->requests_configs[i].signers);
@@ -101,7 +105,7 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
-static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request) {
+static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
   const in3_t* c = ctx->client;
 
   conf->chain_id     = c->chain_id;
@@ -131,6 +135,21 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
         w                     = w->next;
       }
       in3_ctx_free_nodes(signer_nodes);
+
+      if (chain->verified_hashes) {
+        conf->verified_hashes_length = ctx->client->max_verified_hashes;
+        for (int i = 0; i < conf->verified_hashes_length; i++) {
+          if (!chain->verified_hashes[i].block_number) {
+            conf->verified_hashes_length = i;
+            break;
+          }
+        }
+        if (conf->verified_hashes_length) {
+          conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
+          for (int i = 0; i < conf->verified_hashes_length; i++)
+            conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
+        }
+      }
     }
   }
 
@@ -247,7 +266,7 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
 static void blacklist_node(node_match_t* node_weight) {
   if (node_weight && node_weight->weight) {
     // blacklist the node
-    node_weight->weight->blacklisted_until = _time() + 3600000;
+    node_weight->weight->blacklisted_until = _time() + 3600;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
     in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
@@ -595,7 +614,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
-            if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
+            if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i], chain)) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);
           }
         } else

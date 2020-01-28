@@ -620,7 +620,7 @@ in3_chain_t* in3_find_chain(
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  * 
  */
-in3_ret_t in3_configure(
+char* in3_configure(
     in3_t*      c,     /**< the incubed client */
     const char* config /**< JSON-string with the configuration to set. */
 );

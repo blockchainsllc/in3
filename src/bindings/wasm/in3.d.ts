@@ -849,6 +849,15 @@ export interface EthAPI {
         warpChunksAmount: Hex;
         warpChunksProcessed: Hex;
     }>;
+
+    /**
+     * resolves a name as an ENS-Domain.
+     * @param name the domain name
+     * @param type the type (currently only addr is supported)
+     * @param registry optionally the address of the registry (default is the mainnet ens registry)
+     */
+    resolveENS(name: string, type = 'addr', registry?: string): Promise<Address>;
+
     /**
      * Creates new message call transaction or a contract creation for signed transactions.
      */

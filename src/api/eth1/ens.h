@@ -32,87 +32,19 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#ifndef TEST
-#define TEST
-#define DEBUG
-#endif
+#include "../../core/client/context.h"
 
-#include "../../src/core/util/log.h"
-#include "../test_utils.h"
-#include "../../src/core/util/mem.h"
-#include <string.h>
+#ifndef _ETH_API_ENS_H_
+#define _ETH_API_ENS_H_
 
-static char* read_file(FILE* file) {
-  if (file == NULL) {
-    printf("File not found!");
-    _Exit(1);
-    return NULL;
-  }
+typedef enum {
+  ENS_ADDR     = 0, /**< resolve as address */
+  ENS_RESOLVER = 1, /**< resolver */
+  ENS_OWNER    = 2, /**< owner */
+  ENS_NAME     = 3, /**< name */
+  ENS_HASH     = 4  /**< hash */
+} in3_ens_type;
 
-  size_t   allocated = 1024;
-  size_t   len       = 0;
-  uint8_t* buffer    = malloc(1025);
-  size_t   r;
+in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* len);
 
-  while (1) {
-    r = fread(buffer + len, 1, allocated - len, file);
-    len += r;
-    if (feof(file)) break;
-    size_t new_alloc = allocated * 2 + 1;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
-  }
-
-  if (len && buffer[len - 1] == '\n') buffer[len - 1] = 0;
-
-  buffer[len] = 0;
-  return (char*) buffer;
-}
-
-static void lock_fn(void* udata, int lock_en) {
-  bool* lock = udata;
-  *lock      = lock_en;
-}
-
-static void test_locking(void) {
-  bool lock = false;
-  in3_log_set_udata(&lock);
-  in3_log_set_lock(lock_fn);
-  in3_log_trace("Test log\n");
-  TEST_ASSERT_FALSE(lock);
-}
-
-static void test_prefix(void) {
-  const char* prefix = "::<< >>";
-  size_t      size;
-  char*       log;
-
-  in3_log_enable_prefix();
-  in3_log_set_prefix(prefix);
-  in3_log_set_quiet(false);
-  in3_log_set_level(LOG_TRACE);
-
-  FILE* fp = fopen("test.log", "w+");
-  in3_log_set_fp(fp);
-  in3_log_info("Testing prefix...");
-  fseek(fp, 0, SEEK_END);
-  size = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-  fclose(fp);
-
-  fp  = fopen("test.log", "rb");
-  log = malloc(size);
-  fread(log, sizeof(char), size, fp);
-  TEST_ASSERT_EQUAL_STRING_LEN(log, prefix, strlen(prefix));
-  fclose(fp);
-}
-
-/*
- * Main
- */
-int main() {
-  TESTS_BEGIN();
-  RUN_TEST(test_locking);
-  RUN_TEST(test_prefix);
-  return TESTS_END();
-}
+#endif // _ETH_API_ENS_H_

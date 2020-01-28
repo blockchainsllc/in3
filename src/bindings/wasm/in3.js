@@ -169,7 +169,11 @@ class IN3 {
         this.needsSetConfig = !this.ptr
         if (this.ptr) {
             const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
-            if (r) throw new Error("Error setting the config : " + r);
+            if (r) {
+                const ex = new Error(UTF8ToString(r))
+                _free(r)
+                throw ex
+            }
         }
     }
 
@@ -192,9 +196,19 @@ class IN3 {
      * sends a request and returns the response.
      */
     async sendRequest(rpc) {
+
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
         if (this.needsSetConfig) this.setConfig()
+
+        // currently we don't handle bulks directly
+        if (Array.isArray(rpc)) return Promise.all(rpc.map(_ => this.sendRequest(_)))
+
+        // replace ens-addresses
+        if (rpc.params && rpc.method != 'in3_ens')
+            for (const p of rpc.params) {
+                if (typeof (p) === 'string' && p.endsWith('.eth')) rpc.params[rpc.indexOf(p)] = await this.eth.resolveENS(p)
+            }
 
         // create the context
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);

@@ -293,6 +293,29 @@ static void execute(in3_t* c, FILE* f) {
     }
   }
 }
+
+char* resolve(in3_t* c, char* name) {
+  if (!name) return NULL;
+  if (name[0] == '0' && name[1] == 'x') return name;
+  if (strchr(name, '.')) {
+    char* params = alloca(strlen(name) + 10);
+    sprintf(params, "[\"%s\"]", name);
+    char *res = NULL, *err = NULL;
+    in3_client_rpc(c, "in3_ens", params, &res, &err);
+    if (err) {
+      res = alloca(strlen(err) + 100);
+      sprintf(res, "Could not resolve %s : %s", name, err);
+      die(res);
+    }
+    if (res[0] == '"') {
+      res[strlen(res) - 1] = 0;
+      res++;
+    }
+    return res;
+  }
+  return name;
+}
+
 // read data from a file and return the bytes
 bytes_t readFile(FILE* f) {
   if (!f) die("Could not read the input file");
@@ -302,8 +325,9 @@ bytes_t readFile(FILE* f) {
     r = fread(buffer + len, 1, allocated - len, f);
     len += r;
     if (feof(f)) break;
-    buffer = _realloc(buffer, allocated * 2 + 1, allocated + 1);
-    allocated *= 2;
+    size_t new_alloc = allocated * 2 + 1;
+    buffer = _realloc(buffer, new_alloc, allocated);
+    allocated = new_alloc;
   }
   buffer[len] = 0;
   return bytes(buffer, len);
@@ -703,7 +727,7 @@ int main(int argc, char* argv[]) {
                        (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
-                       argv[i]);
+                       strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
       }
     }
   }
@@ -738,7 +762,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, to, params, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), params, block_number, 0, NULL, data);
     method = "eth_call";
   } else if (strcmp(method, "abi_encode") == 0) {
     if (!sig) die("missing signature");
@@ -783,7 +807,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, to, params, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
   } else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");

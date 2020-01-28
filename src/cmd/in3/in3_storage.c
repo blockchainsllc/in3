@@ -94,8 +94,9 @@ bytes_t* storage_get_item(void* cptr, char* key) {
       r = fread(buffer + len, 1, allocated - len, file);
       len += r;
       if (feof(file)) break;
-      buffer = _realloc(buffer, allocated * 2, allocated);
-      allocated *= 2;
+      size_t new_alloc = allocated * 2 + 1;
+      buffer = _realloc(buffer, new_alloc, allocated);
+      allocated = new_alloc;
     }
     fclose(file);
 

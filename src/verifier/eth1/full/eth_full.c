@@ -36,6 +36,7 @@
 #include "../../../core/client/context.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/data.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../verifier/eth1/basic/eth_basic.h"
@@ -71,8 +72,15 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
     bytes_t* result    = NULL;
     uint64_t gas_limit = bytes_to_long(gas.data, gas.len);
     if (!gas_limit) gas_limit = 0xFFFFFFFFFFFFFF;
+#ifdef DEBUG
+    in3_log_level_t old = in3_log_get_level();
+    in3_log_set_level(LOG_ERROR);
+#endif
 
     int ret = evm_call(vc, address ? address->data : zeros, value ? value->data : zeros, value ? value->len : 1, data ? data->data : zeros, data ? data->len : 0, from ? from->data : zeros, gas_limit, vc->chain->chain_id, &result);
+#ifdef DEBUG
+    in3_log_set_level(old);
+#endif
 
     switch (ret) {
       case EVM_ERROR_BUFFER_TOO_SMALL:

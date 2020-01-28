@@ -44,7 +44,7 @@
 
 #define NODE_LIST_KEY "nodelist_%d"
 #define WHITTE_LIST_KEY "_0x%s"
-#define CACHE_VERSION 5
+#define CACHE_VERSION 6
 #define MAX_KEYLEN 200
 
 static void write_cache_key(char* key, chain_id_t chain_id, const address_t contract) {
@@ -112,6 +112,13 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
     n->url         = b_new_chars(b, &pos);
     n->whitelisted = false;
   }
+
+  // read verified hashes
+  const unsigned int hashes = b_read_int(b, &pos);
+  if (!chain->verified_hashes && hashes) chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+  if (hashes)
+    memcpy(chain->verified_hashes, b->data + pos, sizeof(in3_verified_hash_t) * (min(hashes, c->max_verified_hashes)));
+
   b_free(b);
   return IN3_OK;
 }
@@ -137,6 +144,21 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
     bb_write_fixed_bytes(bb, n->address);
     bb_write_chars(bb, n->url, strlen(n->url));
   }
+
+  // verified hashes
+  int count = 0;
+  if (chain->verified_hashes) {
+    count = ctx->client->max_verified_hashes;
+    for (int i = 0; i < count; i++) {
+      if (!chain->verified_hashes[i].block_number) {
+        count = i;
+        break;
+      }
+    }
+    bb_write_int(bb, count);
+    bb_write_raw_bytes(bb, chain->verified_hashes, count * sizeof(in3_verified_hash_t));
+  } else
+    bb_write_int(bb, 0);
 
   // create key
   char key[200];
