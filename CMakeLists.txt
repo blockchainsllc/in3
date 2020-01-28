@@ -126,7 +126,7 @@ IF (SEGGER_RTT)
     ADD_DEFINITIONS(-DSEGGER_RTT)
 ENDIF (SEGGER_RTT)
 
-OPTION(FILTER_NODES "if true the nodelist is filtered against config node properties" false)
+OPTION(FILTER_NODES "if true the nodelist is filtered against config node properties" true)
 IF (FILTER_NODES)
     MESSAGE(STATUS "Enable nodelist filter based on properties")
     ADD_DEFINITIONS(-DFILTER_NODES)

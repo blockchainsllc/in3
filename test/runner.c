@@ -295,7 +295,8 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
   for (j = 0; j < c->chains_length; j++) {
-    c->chains[j].needs_update = false;
+    _free(c->chains[j].nodelist_upd8_params);
+    c->chains[j].nodelist_upd8_params = NULL;
 
     if (registry_id) {
       c->chains[j].version = 2;
