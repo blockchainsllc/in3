@@ -100,7 +100,7 @@ typedef struct in3_ctx {
   int len;
 
   /** the number of attempts */
-  int attempt;
+  unsigned int attempt;
 
   /** references to the tokens representring the parsed responses*/
   d_token_t** responses;
