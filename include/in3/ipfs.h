@@ -41,10 +41,15 @@
 
 #include "verifier.h"
 
+/** verifies an IPFS hash. Supported encoding schemes - hex, utf8 and base64 */
 in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char* requsted_hash);
 
+/** entry-function to execute the verification context. */
 in3_ret_t in3_verify_ipfs(in3_vctx_t* vc);
 
+/**
+ * this function should only be called once and will register the IPFS verifier.
+ */
 void in3_register_ipfs();
 
 #endif //IN3_IPFS_H
