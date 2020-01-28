@@ -41,7 +41,7 @@ import in3.JSON;
  */
 
 public class LogFilter {
-	/**
+    /**
      * Quantity or Tag - (optional) (default: latest) Integer block number, or
      * 'latest' for the last mined block or 'pending', 'earliest' for not yet mined
      * transactions.
@@ -69,53 +69,44 @@ public class LogFilter {
     private int limit;
 
     public long getFromBlock() {
-		return fromBlock;
-	}
+        return fromBlock;
+    }
 
+    public void setFromBlock(long fromBlock) {
+        this.fromBlock = fromBlock;
+    }
 
-	public void setFromBlock(long fromBlock) {
-		this.fromBlock = fromBlock;
-	}
+    public long getToBlock() {
+        return toBlock;
+    }
 
+    public void setToBlock(long toBlock) {
+        this.toBlock = toBlock;
+    }
 
-	public long getToBlock() {
-		return toBlock;
-	}
+    public String getAddress() {
+        return address;
+    }
 
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
-	public void setToBlock(long toBlock) {
-		this.toBlock = toBlock;
-	}
+    public Object[] getTopics() {
+        return topics;
+    }
 
+    public void setTopics(Object[] topics) {
+        this.topics = topics;
+    }
 
-	public String getAddress() {
-		return address;
-	}
+    public int getLimit() {
+        return limit;
+    }
 
-
-	public void setAddress(String address) {
-		this.address = address;
-	}
-
-
-	public Object[] getTopics() {
-		return topics;
-	}
-
-
-	public void setTopics(Object[] topics) {
-		this.topics = topics;
-	}
-
-
-	public int getLimit() {
-		return limit;
-	}
-
-
-	public void setLimit(int limit) {
-		this.limit = limit;
-	}
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
 
     /**
      * creates a JSON-String.

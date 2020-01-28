@@ -42,7 +42,7 @@ import java.math.*;
  */
 
 public class TransactionRequest {
-	/** the from address */
+    /** the from address */
     private String from;
 
     /** the recipients address */
@@ -70,72 +70,72 @@ public class TransactionRequest {
     private Object[] params;
 
     public String getFrom() {
-		return from;
-	}
+        return from;
+    }
 
-	public void setFrom(String from) {
-		this.from = from;
-	}
+    public void setFrom(String from) {
+        this.from = from;
+    }
 
-	public String getTo() {
-		return to;
-	}
+    public String getTo() {
+        return to;
+    }
 
-	public void setTo(String to) {
-		this.to = to;
-	}
+    public void setTo(String to) {
+        this.to = to;
+    }
 
-	public BigInteger getValue() {
-		return value;
-	}
+    public BigInteger getValue() {
+        return value;
+    }
 
-	public void setValue(BigInteger value) {
-		this.value = value;
-	}
+    public void setValue(BigInteger value) {
+        this.value = value;
+    }
 
-	public long getNonce() {
-		return nonce;
-	}
+    public long getNonce() {
+        return nonce;
+    }
 
-	public void setNonce(long nonce) {
-		this.nonce = nonce;
-	}
+    public void setNonce(long nonce) {
+        this.nonce = nonce;
+    }
 
-	public long getGas() {
-		return gas;
-	}
+    public long getGas() {
+        return gas;
+    }
 
-	public void setGas(long gas) {
-		this.gas = gas;
-	}
+    public void setGas(long gas) {
+        this.gas = gas;
+    }
 
-	public long getGasPrice() {
-		return gasPrice;
-	}
+    public long getGasPrice() {
+        return gasPrice;
+    }
 
-	public void setGasPrice(long gasPrice) {
-		this.gasPrice = gasPrice;
-	}
+    public void setGasPrice(long gasPrice) {
+        this.gasPrice = gasPrice;
+    }
 
-	public String getFunction() {
-		return function;
-	}
+    public String getFunction() {
+        return function;
+    }
 
-	public void setFunction(String function) {
-		this.function = function;
-	}
+    public void setFunction(String function) {
+        this.function = function;
+    }
 
-	public Object[] getParams() {
-		return params;
-	}
+    public Object[] getParams() {
+        return params;
+    }
 
-	public void setParams(Object[] params) {
-		this.params = params;
-	}
+    public void setParams(Object[] params) {
+        this.params = params;
+    }
 
-	public void setData(String data) {
-		this.data = data;
-	}
+    public void setData(String data) {
+        this.data = data;
+    }
 
     /**
      * creates the data based on the function/params values.
