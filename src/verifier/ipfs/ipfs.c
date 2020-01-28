@@ -10,7 +10,6 @@
 #include "../../third-party/multihash/multihash.h"
 #include "../../third-party/nanopb/pb_decode.h"
 #include "../../third-party/nanopb/pb_encode.h"
-#include "../eth1/nano/eth_nano.h"
 #include "ipfs.pb.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -149,7 +148,7 @@ in3_ret_t in3_verify_ipfs(in3_vctx_t* vc) {
     return vc_err(vc, "Invalid response!");
 
   if (strcmp(method, "in3_nodeList") == 0)
-    return eth_verify_in3_nodelist(vc, d_get_int_at(params, 0), d_get_bytes_at(params, 1), d_get_at(params, 2));
+    return true;
   else if (strcmp(method, "ipfs_get") == 0)
     return ipfs_verify_hash(d_string(vc->result), d_get_string_at(params, 1), d_get_string_at(params, 0));
   else if (strcmp(method, "ipfs_put") == 0)
