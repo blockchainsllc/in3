@@ -41,6 +41,7 @@ OPTION(ETH_NANO "build minimal eth verification.(eth_getTransactionReceipt)" ON)
 OPTION(ETH_BASIC "build basic eth verification.(all rpc-calls except eth_call)" ON)
 OPTION(ETH_FULL "build full eth verification.(including eth_call)" ON)
 OPTION(IN3API "build the USN-API which offer better interfaces and additional functions on top of the pure verification" ON)
+OPTION(IPFS "build IPFS verification" ON)
 OPTION(USE_PRECOMPUTED_EC "if true the secp256k1 curve uses precompiled tables to boost performance. turning this off makes ecrecover slower, but saves about 37kb." ON)
 OPTION(ERR_MSG "if set human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)" ON)
 if (USE_PRECOMPUTED_EC)
@@ -64,6 +65,10 @@ endif()
 if(IN3API) 
   ADD_DEFINITIONS(-DETH_API)
   set(IN3_API eth_api)
+endif()
+if(IPFS)
+  ADD_DEFINITIONS(-DIPFS)
+  set(IN3_VERIFIER ipfs)
 endif()
 
 set(PROJECT_VERSION "0.1.0-alpha.0")
@@ -164,6 +169,7 @@ if (IN3_LIB)
         $<TARGET_OBJECTS:eth_basic_o>
         $<TARGET_OBJECTS:eth_nano_o>
         $<TARGET_OBJECTS:usn_api_o>
+        $<TARGET_OBJECTS:ipfs_o>
     )
     # if we use curl, we include curl transport as well
     if (USE_CURL)
