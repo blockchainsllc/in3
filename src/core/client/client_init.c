@@ -144,6 +144,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
   node->whitelisted = false;
+  node->boot_node   = true;
 
   in3_node_weight_t* weight   = chain->weights + node_index;
   weight->blacklisted_until   = 0;
@@ -301,7 +302,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   return chain->contract ? IN3_OK : IN3_ENOMEM;
 }
 
-in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node_props_t props, address_t address) {
+in3_ret_t in3_client_add_node_internal(in3_t* c, chain_id_t chain_id, char* url, in3_node_props_t props, address_t address, bool is_boot_node) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
   in3_node_t* node       = NULL;
@@ -328,6 +329,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     node->deposit  = 0;
     chain->nodelist_length++;
     node->whitelisted = false;
+    node->boot_node   = is_boot_node;
   } else
     _free(node->url);
 
@@ -341,6 +343,15 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   weight->total_response_time = 0;
   return IN3_OK;
 }
+
+in3_ret_t in3_client_add_boot_node(in3_t* c, chain_id_t chain_id, char* url, in3_node_props_t props, address_t address) {
+  return in3_client_add_node_internal(c, chain_id, url, props, address, true);
+}
+
+in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node_props_t props, address_t address) {
+  return in3_client_add_node_internal(c, chain_id, url, props, address, false);
+}
+
 in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t address) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
@@ -370,6 +381,7 @@ in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t addres
   }
   return IN3_OK;
 }
+
 in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
