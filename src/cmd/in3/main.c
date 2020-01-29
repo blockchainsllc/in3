@@ -53,8 +53,10 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/cache.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
@@ -291,6 +293,29 @@ static void execute(in3_t* c, FILE* f) {
     }
   }
 }
+
+char* resolve(in3_t* c, char* name) {
+  if (!name) return NULL;
+  if (name[0] == '0' && name[1] == 'x') return name;
+  if (strchr(name, '.')) {
+    char* params = alloca(strlen(name) + 10);
+    sprintf(params, "[\"%s\"]", name);
+    char *res = NULL, *err = NULL;
+    in3_client_rpc(c, "in3_ens", params, &res, &err);
+    if (err) {
+      res = alloca(strlen(err) + 100);
+      sprintf(res, "Could not resolve %s : %s", name, err);
+      die(res);
+    }
+    if (res[0] == '"') {
+      res[strlen(res) - 1] = 0;
+      res++;
+    }
+    return res;
+  }
+  return name;
+}
+
 // read data from a file and return the bytes
 bytes_t readFile(FILE* f) {
   if (!f) die("Could not read the input file");
@@ -300,8 +325,9 @@ bytes_t readFile(FILE* f) {
     r = fread(buffer + len, 1, allocated - len, f);
     len += r;
     if (feof(f)) break;
-    buffer = _realloc(buffer, allocated * 2 + 1, allocated + 1);
-    allocated *= 2;
+    size_t new_alloc = allocated * 2 + 1;
+    buffer = _realloc(buffer, new_alloc, allocated);
+    allocated = new_alloc;
   }
   buffer[len] = 0;
   return bytes(buffer, len);
@@ -556,6 +582,7 @@ int main(int argc, char* argv[]) {
   in3_storage_handler_t storage_handler;
   storage_handler.get_item = storage_get_item;
   storage_handler.set_item = storage_set_item;
+  storage_handler.clear    = storage_clear;
 
   // we want to verify all
   in3_register_eth_full();
@@ -609,6 +636,8 @@ int main(int argc, char* argv[]) {
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
+    else if (strcmp(argv[i], "-ccache") == 0) // clear cache
+      c->cache->clear(c->cache->cptr);
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) { // data
       char* d = argv[++i];
       if (strcmp(d, "-") == 0)
@@ -686,8 +715,6 @@ int main(int argc, char* argv[]) {
         pk_file = argv[i];
       else if (strcmp(method, "sign") == 0 && !data)
         data = b_new(argv[i], strlen(argv[i]));
-      else if (to == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0))
-        to = argv[i];
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
@@ -700,7 +727,7 @@ int main(int argc, char* argv[]) {
                        (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
-                       argv[i]);
+                       strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
       }
     }
   }
@@ -735,7 +762,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, to, params, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), params, block_number, 0, NULL, data);
     method = "eth_call";
   } else if (strcmp(method, "abi_encode") == 0) {
     if (!sig) die("missing signature");
@@ -762,8 +789,25 @@ int main(int argc, char* argv[]) {
       print_val(res->result);
     return 0;
 
+  } else if (strcmp(method, "in3_weights") == 0) {
+    uint64_t     now   = _time();
+    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    printf("   : %40s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
+    for (int i = 0; i < chain->nodelist_length; i++) {
+      in3_node_weight_t* weight      = chain->weights + i;
+      in3_node_t*        node        = chain->nodelist + i;
+      uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
+      uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
+      if (blacklisted) printf("\033[31m");
+      printf("%2i   %40s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight);
+      if (blacklisted) printf("\033[0m");
+      printf("\n");
+    }
+
+    return 0;
+
   } else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, to, params, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
   } else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
@@ -825,7 +869,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;
@@ -888,6 +932,21 @@ int main(int argc, char* argv[]) {
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
+
+  // Update nodelist if a newer latest block was reported
+  if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
+    char *r = NULL, *e = NULL;
+    in3_client_rpc(c, "eth_blockNumber", "", &r, &e);
+  }
+
+  // update cache
+  if (c->chain_id != ETH_CHAIN_ID_LOCAL) {
+    in3_ctx_t ctx;
+    memset(&ctx, 0, sizeof(in3_ctx_t));
+    ctx.client = c;
+    in3_cache_store_nodelist(&ctx, in3_find_chain(c, c->chain_id));
+  }
+
   // if we need to wait
   if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
     bytes32_t txHash;

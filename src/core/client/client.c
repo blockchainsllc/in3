@@ -56,15 +56,18 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   // this happens if the request is not parseable (JSON-error in params)
   if (ctx->error) {
     if (heap) _free(req); // free request string if we created it in heap
+    ctx->verification_state = IN3_EINVAL;
     return ctx;
   }
 
   // execute it
-  if (in3_send_ctx(ctx) == IN3_OK) {
+  in3_ret_t ret = in3_send_ctx(ctx);
+  if (ret == IN3_OK) {
     // the request was succesfull, so we delete interim errors (which can happen in case in3 had to retry)
     if (ctx->error) _free(ctx->error);
     ctx->error = NULL;
-  }
+  } else
+    ctx->verification_state = ret;
 
   if (heap) _free(req); // free request string if we created it in heap
   return ctx;           // return context and hope the calle will clean it.
@@ -197,14 +200,16 @@ in3_signer_t* in3_create_signer(
   return signer;
 }
 
-in3_storage_handler_t* in3_create_storeage_handler(
+in3_storage_handler_t* in3_create_storage_handler(
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 ) {
   in3_storage_handler_t* handler = _calloc(1, sizeof(in3_storage_handler_t));
   handler->cptr                  = cptr;
   handler->get_item              = get_item;
   handler->set_item              = set_item;
+  handler->clear                 = clear;
   return handler;
 }

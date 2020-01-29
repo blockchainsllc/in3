@@ -352,16 +352,25 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
         break;
       }
       case A_INT: {
-        if (d_type(d) != T_STRING)
-          return add_error(req, "big negative numbers are not supported (yet)!");
-
-        char*              tmp = d_string(d);
-        unsigned long long n   = strtoull(tmp + 1, NULL, 10);
-        bitset_t*          bs  = bs_from_ull(n, 256);
-        twos_complement(bs);
-        bytes_t b = {.data = bs->bits.p, .len = 32};
-        head_pos += write_right(req, head_pos, (*tmp == '-') ? b : d_to_bytes(d));
-        bs_free(bs);
+        switch (d_type(d)) {
+          case T_STRING: {
+            char*              tmp = d_string(d);
+            unsigned long long n   = strtoull(tmp + 1, NULL, 10);
+            bitset_t*          bs  = bs_from_ull(n, 256);
+            twos_complement(bs);
+            bytes_t b = {.data = bs->bits.p, .len = 32};
+            head_pos += write_right(req, head_pos, (*tmp == '-') ? b : d_to_bytes(d));
+            bs_free(bs);
+            break;
+          }
+          case T_INTEGER:
+          case T_BYTES: {
+            head_pos += write_right(req, head_pos, d_to_bytes(d));
+            break;
+          }
+          default:
+            return add_error(req, "big negative numbers are not supported (yet)!");
+        }
         break;
       }
       case A_ADDRESS:

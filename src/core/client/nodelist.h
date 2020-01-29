@@ -45,6 +45,14 @@
 #ifndef NODELIST_H
 #define NODELIST_H
 
+#define NODE_FILTER_INIT \
+  (in3_node_filter_t) { .props = 0, .nodes = NULL }
+
+typedef struct {
+  in3_node_props_t props;
+  d_token_t*       nodes;
+} in3_node_filter_t;
+
 /** removes all nodes and their weights from the nodelist */
 void in3_nodelist_clear(in3_chain_t* chain);
 
@@ -60,19 +68,23 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 /**
  * filters and fills the weights on a returned linked list.
  */
-node_weight_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, float* total_weight, int* total_found, in3_node_props_t props);
+node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, uint32_t* total_weight, int* total_found, in3_node_filter_t filter);
 
+/**
+ * calculates the weight for a node.
+ */
+uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa);
 /**
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_weight_t** nodes, int request_count, in3_node_props_t props);
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_filter_t filter);
 
 /**
  * forces the client to update the nodelist
  */
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain);
 // weights
-void in3_ctx_free_nodes(node_weight_t* c);
-int  ctx_nodes_len(node_weight_t* root);
+void in3_ctx_free_nodes(node_match_t* c);
+int  ctx_nodes_len(node_match_t* root);
 
 #endif

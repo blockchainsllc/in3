@@ -389,7 +389,7 @@ export default class IN3<BigIntType,BufferType> {
      * 
      * @param fn the function to fetch the response for the given url
      */
-    public static setTransport(fn: (url: string, payload: string) => Promise<string>): void
+    public static setTransport(fn: (url: string, payload: string, timeout?: number) => Promise<string>): void
 
     /**
      * changes the storage handler, which is called to read and write to the cache.
@@ -856,6 +856,15 @@ export interface EthAPI<BigIntType,BufferType> {
         warpChunksAmount: Hex;
         warpChunksProcessed: Hex;
     }>;
+
+    /**
+     * resolves a name as an ENS-Domain.
+     * @param name the domain name
+     * @param type the type (currently only addr is supported)
+     * @param registry optionally the address of the registry (default is the mainnet ens registry)
+     */
+    resolveENS(name: string, type = 'addr', registry?: string): Promise<Address>;
+
     /**
      * Creates new message call transaction or a contract creation for signed transactions.
      */
