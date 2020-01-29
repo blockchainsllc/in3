@@ -22,3 +22,5 @@ cmake-build-debug/
 [._]sw[a-p]
 .gradle/
 bin/
+.classpath
+.project
