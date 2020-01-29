@@ -113,6 +113,9 @@ function private2address(pk) {
 
 function abiEncode(sig, ...params) {
     const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
+
+    console.log('Testlog : ABI Encode  ------> ', sig, JSON.stringify(convert(params)))
+
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
 }
 
@@ -420,12 +423,12 @@ class SimpleSigner {
     }
 
     async sign(data, account, type, ethV = true) {
-        const pk = toBuffer(this.accounts[toChecksumAddress(account)])
+        // const pk = toBuffer(this.accounts[toChecksumAddress(account)])
+        const pk = this.accounts[toChecksumAddress(account)]                             // PK is converting to array buffer inside ecSign
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         return ecSign(pk, data, type, ethV)
 
-        //return { messageHash: util.toHex(data), v: util.toHex(sig.v), r: util.toHex(sig.r), s: util.toHex(sig.s), message: util.toHex(data) }
-    }
+     }
 
 }
 

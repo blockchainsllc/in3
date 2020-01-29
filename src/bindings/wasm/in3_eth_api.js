@@ -304,7 +304,8 @@ class EthAPI {
             }
 
         if (account && account.length == 66) // use direct pk
-            s.signature = toHex(ecSign(util.toBuffer(account), s.messageHash, false))
+            // s.signature = toHex(ecSign(util.toBuffer(account), s.messageHash, false))
+            s.signature = toHex(ecSign(account, s.messageHash, false))
         else if (this.client.signer && await this.client.signer.hasAccount(account)) // use signer
             s.signature = toHex(await this.client.signer.sign(s.messageHash, account, false, true))
         else throw new Error('no signer found to sign for this account')
