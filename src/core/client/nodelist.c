@@ -361,12 +361,12 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
 
 #ifdef FILTER_NODES
     // fixme: this compile time check will be redundant once the registry contract is deployed with correct node prop values
-    if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
+    if (!nodeDef->boot_node && !in3_node_props_match(filter.props, nodeDef->props)) continue;
 #else
     UNUSED_VAR(filter);
 #endif
 
-    if (filter.nodes != NULL) {
+    if (!nodeDef->boot_node && filter.nodes != NULL) {
       bool in_filter_nodes = false;
       for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
         if (b_cmp(d_bytesl(it.token, 20), nodeDef->address)) {
