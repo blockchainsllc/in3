@@ -60,7 +60,7 @@ static void test_sign() {
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   bytes32_t pk;
   hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);

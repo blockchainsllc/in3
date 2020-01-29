@@ -68,7 +68,7 @@ in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3->request_count    = 1; // number of requests to sendp
   in3->chain_id         = chain;
   in3->auto_update_list = false;
-  for (int i = 0; i < in3->chains_length; i++) in3->chains[i].needs_update = false;
+  for (int i = 0; i < in3->chains_length; i++) in3->chains[i].nodelist_upd8_params = NULL;
   return in3;
 }
 

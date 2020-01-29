@@ -70,12 +70,13 @@ static void test_configure_request() {
   in3_t* c                = in3_for_chain(0);
   c->proof                = PROOF_FULL;
   c->signature_count      = 2;
-  c->chains->needs_update = false;
   c->finality             = 10;
   c->include_code         = true;
   c->replace_latest_block = 6;
   c->use_binary           = true;
   c->use_http             = true;
+
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
@@ -420,7 +421,7 @@ static void test_configure_validation() {
   hex_to_bytes(REGISTRY_ID, -1, b256, 32);
   TEST_ASSERT_EQUAL_MEMORY(chain->registry_id, b256, 32);
 
-  TEST_ASSERT_EQUAL(chain->needs_update, true);
+  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params != NULL, true);
   TEST_ASSERT_EQUAL_STRING(chain->nodelist[0].url, NODE_URL);
   TEST_ASSERT_EQUAL(chain->nodelist[0].props, 0xffff);
   hex_to_bytes(NODE_ADDRS, -1, addr, 20);

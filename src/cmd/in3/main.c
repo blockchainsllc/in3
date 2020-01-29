@@ -933,6 +933,12 @@ int main(int argc, char* argv[]) {
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
 
+  // Update nodelist if a newer latest block was reported
+  if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
+    char *r = NULL, *e = NULL;
+    in3_client_rpc(c, "eth_blockNumber", "", &r, &e);
+  }
+
   // update cache
   if (c->chain_id != ETH_CHAIN_ID_LOCAL) {
     in3_ctx_t ctx;
