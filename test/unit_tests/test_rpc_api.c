@@ -119,7 +119,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   bytes_to_hex(chain->registry_id, 32, tmp);
   TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
-  TEST_ASSERT_EQUAL(false, chain->needs_update);
+  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(1, chain->nodelist_length);
 
   bytes_to_hex(chain->whitelist->contract, 20, tmp);
@@ -141,7 +141,7 @@ static void test_in3_client_rpc() {
   c->signature_count  = 0;
   c->max_attempts     = 1;
   for (int i = 0; i < c->chains_length; i++)
-    c->chains[i].needs_update = false;
+    c->chains[i].nodelist_upd8_params = NULL;
 
   // Error response string
   add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
