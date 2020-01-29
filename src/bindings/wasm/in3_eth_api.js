@@ -332,7 +332,7 @@ class EthAPI {
     }
 
     contractAt(abi, address) {
-        const api = this, ob = { address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
+        const api = this, ob = {_address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
             const method = def.name + createSignature(def.inputs)
             if (def.constant) {
