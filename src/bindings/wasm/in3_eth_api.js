@@ -5,6 +5,7 @@ class EthAPI {
     send(name, ...params) {
         return this.client.sendRPC(name, params || [])
     }
+    
     /**
      * Returns the current price per g wei. ()
      */
@@ -13,7 +14,6 @@ class EthAPI {
             return this.send('in3_ens', ...arguments)
         return name
     }
-
 
     /**
      * Returns the number of most recent block. ()
@@ -332,7 +332,7 @@ class EthAPI {
     }
 
     contractAt(abi, address) {
-        const api = this, ob = { _address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
+        const api = this, ob = { address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
             const method = def.name + createSignature(def.inputs)
             if (def.constant) {

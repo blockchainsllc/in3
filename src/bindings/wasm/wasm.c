@@ -231,8 +231,6 @@ char* EMSCRIPTEN_KEEPALIVE in3_last_error() {
 }
 
 in3_ctx_t* EMSCRIPTEN_KEEPALIVE in3_create_request_ctx(in3_t* c, char* payload) {
-  printf("%s", 'entered into in3_create_request_ctx')
-  
   char*      src_data = _strdupn(payload, -1);
   in3_ctx_t* ctx      = ctx_new(c, src_data);
   if (ctx->error) {

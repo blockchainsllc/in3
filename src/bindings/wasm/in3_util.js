@@ -95,19 +95,18 @@ function toBigInt(val) {
 
 function keccak(val) {
     if (!val) return val
-    // val = toUint8Array(val)
-    val = convertBuffer(val)
+    val = toUint8Array(val)
     return toBuffer(call_buffer('keccak', 32, val, val.byteLength))
 }
 
 function toChecksumAddress(val, chainId = 0) {
     if (!val) return val
-    return call_string('to_checksum_address', toBuffer(val, 20), chainId);
+    return call_string('to_checksum_address', toUint8Array(val, 20), chainId);
 }
 
 function private2address(pk) {
     if (!pk) return pk
-    pk = toBuffer(pk)
+    pk = toUint8Array(pk)
     return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength))
 }
 
@@ -118,13 +117,13 @@ function abiEncode(sig, ...params) {
 }
 
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
-    data = toBuffer(data)
-    pk = toBuffer(pk)
+    data = toUint8Array(data)               // Native calls to c expect a uInt8Arry inputs over Buffer
+    pk = toUint8Array(pk)
     return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0)
 }
 
 function abiDecode(sig, data) {
-    data = toBuffer(data)
+    data = toUint8Array(data)
     let res = JSON.parse(call_string('abi_decode', sig, data, data.byteLength))
     if (!Array.isArray(res)) res = [res]
     if (!res.length) return []
@@ -396,7 +395,6 @@ const util = {
     soliditySha3,
     createSignatureHash,
     toUint8Array,
-    // toInputToBuffer
 }
 
 // add as static proporty and as standard property.
