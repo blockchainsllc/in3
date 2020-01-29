@@ -39,6 +39,7 @@
 #include "../util/mem.h"
 #include "../util/utils.h"
 #include "cache.h"
+#include "client.h"
 #include "context.h"
 #include "keys.h"
 #include <stdio.h>
@@ -209,6 +210,19 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
           // we have a result....
+          if (chain->nodelist_upd8_params != NULL) {
+            // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
+            // about the nodelist update, so we blacklist it for an hour
+            // Note `exp_last_block` == 0 means this is the first nodelist update
+            if (chain->nodelist_upd8_params->exp_last_block && d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->exp_last_block) {
+              for (int i = 0; i < chain->nodelist_length; ++i)
+                if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
+                  chain->weights[i].blacklisted_until = _time() + 3600000;
+            }
+            _free(chain->nodelist_upd8_params);
+            chain->nodelist_upd8_params = NULL;
+          }
+
           const in3_ret_t res = fill_chain(chain, ctx, r);
           if (res < 0)
             return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
@@ -228,9 +242,16 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   char seed[67];
   sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
 
+  sb_t* in3_sec = sb_new("{");
+  if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
+    bytes_t addr_ = (bytes_t){.data = chain->nodelist_upd8_params->node, .len = 20};
+    sb_add_bytes(in3_sec, "\"data_nodes\":", &addr_, 1, true);
+  }
+
   // create request
-  char* req = _malloc(300);
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]]}", c->node_limit, seed);
+  char* req = _malloc(350);
+  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]],\"in3\":%s}", c->node_limit, seed, sb_add_char(in3_sec, '}')->data);
+  sb_free(in3_sec);
 
   // new client
   return ctx_add_required(parent_ctx, ctx_new(c, req));
@@ -289,7 +310,6 @@ void in3_ctx_free_nodes(node_match_t* node) {
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
   in3_ctx_t ctx;
   memset(&ctx, 0, sizeof(ctx));
-  chain->needs_update = false;
 
   in3_ret_t ret = update_nodelist(c, chain, &ctx);
   if (ret == IN3_WAITING && ctx.required) {
@@ -321,7 +341,7 @@ uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa) {
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
                                         int len, _time_t now, uint32_t* total_weight, int* total_found,
-                                        in3_node_props_t props) {
+                                        in3_node_filter_t filter) {
 
   int                found      = 0;
   uint32_t           weight_sum = 0;
@@ -341,10 +361,22 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
 
 #ifdef FILTER_NODES
     // fixme: this compile time check will be redundant once the registry contract is deployed with correct node prop values
-    if (!in3_node_props_match(props, nodeDef->props)) continue;
+    if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
 #else
-    UNUSED_VAR(props);
+    UNUSED_VAR(filter);
 #endif
+
+    if (filter.nodes != NULL) {
+      bool in_filter_nodes = false;
+      for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
+        if (b_cmp(d_bytesl(it.token, 20), nodeDef->address)) {
+          in_filter_nodes = true;
+          break;
+        }
+      }
+      if (!in_filter_nodes)
+        continue;
+    }
 
     weightDef = weights + i;
     if (weightDef->blacklisted_until > (uint64_t) now) continue;
@@ -379,8 +411,12 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
   }
 
   // do we need to update the nodelist?
-  if (chain->needs_update || update || ctx_find_required(ctx, "in3_nodeList")) {
-    chain->needs_update = false;
+  if (chain->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
+    // if this is the first nodelist update, we clear the chain->nodelist_upd8_params here
+    if (chain->nodelist_upd8_params && !chain->nodelist_upd8_params->exp_last_block) {
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
+    }
     // now update the nodeList
     res = update_nodelist(ctx->client, chain, ctx);
     if (res < 0) return res;
@@ -403,7 +439,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
   return IN3_OK;
 }
 
-in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_props_t props) {
+in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_filter_t filter) {
 
   // get all nodes from the nodelist
   _time_t            now       = _time();
@@ -419,7 +455,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   // filter out nodes
   node_match_t* found = in3_node_list_fill_weight(
       ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len,
-      now, &total_weight, &total_found, props);
+      now, &total_weight, &total_found, filter);
 
   if (total_found == 0) {
     // no node available, so we should check if we can retry some blacklisted
@@ -432,7 +468,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
     if (blacklisted > all_nodes_len / 2) {
       for (int i = 0; i < all_nodes_len; i++)
         weights[i].blacklisted_until = 0;
-      found = in3_node_list_fill_weight(ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, props);
+      found = in3_node_list_fill_weight(ctx->client, ctx->client->chain_id, all_nodes, weights, all_nodes_len, now, &total_weight, &total_found, filter);
     }
 
     if (total_found == 0)

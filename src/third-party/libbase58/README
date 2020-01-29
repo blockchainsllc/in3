@@ -1,0 +1,5 @@
+- version: 0.1.4
+- website: https://github.com/luke-jr/libbase58
+- download: https://github.com/luke-jr/libbase58/releases/tag/v0.1.4
+- notes:
+  - source unchanged
