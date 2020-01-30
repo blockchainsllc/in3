@@ -267,6 +267,11 @@ public class IN3 {
 
     private native void initcache();
 
+    /**
+     * create a Incubed client using the chain-config.
+     * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
+     * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
+     */
     public static IN3 forChain(long chainId) {
     	return new IN3(chainId);
     }
@@ -293,10 +298,18 @@ public class IN3 {
         return IN3.transport.handle(urls, payload);
     }
 
+
+    /**
+     * sets The transport interface.
+     * This allows to fetch the result of the incubed in a different way.
+     */
     public void setTransport(IN3Transport newTransport) {
         IN3.transport = newTransport;
     }
 
+    /**
+     * returns the current transport implementation.
+     */
     public IN3Transport getTransport() {
     	return IN3.transport;
     }

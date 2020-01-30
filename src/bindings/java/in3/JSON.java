@@ -119,6 +119,9 @@ public class JSON {
         return asString(get(key));
     }
 
+    /**
+     * casts the object to a String[]
+     */
     public static String[] asStringArray(Object o) {
         if (o == null)
             return null;
