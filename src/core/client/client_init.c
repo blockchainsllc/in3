@@ -68,6 +68,7 @@
 #define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
 #define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
 #define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
+#define EXPECT_TOK_U8(token) EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value")
 #define EXPECT_TOK_U16(token) EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
 #define EXPECT_TOK_U32(token) EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
 #define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
@@ -488,7 +489,7 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
       c->chain_id = chain_id(token);
     } else if (token->key == key("signatureCount")) {
-      EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value");
+      EXPECT_TOK_U8(token);
       c->signature_count = (uint8_t) d_int(token);
     } else if (token->key == key("finality")) {
       EXPECT_TOK_U16(token);
@@ -537,8 +538,9 @@ char* in3_configure(in3_t* c, const char* config) {
                      ? PROOF_FULL
                      : (strcmp(d_string(token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
     } else if (token->key == key("replaceLatestBlock")) {
-      EXPECT_TOK_U16(token);
-      c->replace_latest_block = (uint16_t) d_int(token);
+      EXPECT_TOK_U8(token);
+      c->replace_latest_block = (uint8_t) d_int(token);
+      in3_node_props_set(&c->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
     } else if (token->key == key("requestCount")) {
       EXPECT_TOK(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
       c->request_count = (uint8_t) d_int(token);
