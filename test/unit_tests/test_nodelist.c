@@ -53,7 +53,7 @@ static void test_capabilities(void) {
   TEST_ASSERT_FALSE(in3_node_props_matches(npclient, NODE_PROP_HTTP));
 
   in3_node_props_init(&npclient);
-  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 6);
+  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 10);
   in3_node_props_init(&npserver);
   in3_node_props_set(&npserver, NODE_PROP_PROOF, true);
   in3_node_props_set(&npserver, NODE_PROP_MULTICHAIN, true);
@@ -61,8 +61,8 @@ static void test_capabilities(void) {
   in3_node_props_set(&npserver, NODE_PROP_HTTP, true);
   in3_node_props_set(&npserver, NODE_PROP_BINARY, true);
   in3_node_props_set(&npserver, NODE_PROP_ONION, true);
-  in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 10);
-  TEST_ASSERT(in3_node_props_match(npclient, npserver));
+  in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 6);
+  TEST_ASSERT_TRUE(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_PROOF, true);
@@ -98,10 +98,22 @@ static void test_capabilities(void) {
   TEST_ASSERT_FALSE(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
-  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 6);
+  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 5);
   in3_node_props_init(&npserver);
-  in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 5);
+  in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 6);
   TEST_ASSERT_FALSE(in3_node_props_match(npclient, npserver));
+
+  in3_node_props_init(&npclient);
+  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 1);
+  in3_node_props_init(&npserver);
+  in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 1);
+  TEST_ASSERT_TRUE(in3_node_props_match(npclient, npserver));
+
+  in3_node_props_init(&npclient);
+  in3_node_props_set(&npclient, NODE_PROP_MIN_BLOCK_HEIGHT, 0);
+  in3_node_props_init(&npserver);
+  in3_node_props_set(&npserver, NODE_PROP_MIN_BLOCK_HEIGHT, 6);
+  TEST_ASSERT_TRUE(in3_node_props_match(npclient, npserver));
 
   in3_node_props_init(&npclient);
   in3_node_props_set(&npclient, NODE_PROP_PROOF, true);
