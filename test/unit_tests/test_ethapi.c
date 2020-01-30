@@ -133,8 +133,8 @@ static void test_get_filter_changes() {
   json_ctx_t* jopt = parse_json("{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}");
   size_t      fid  = eth_newFilter(in3, jopt);
   TEST_ASSERT_GREATER_THAN(0, fid);
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
   add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf52\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
   // Get changes
   eth_log_t* logs = NULL;
   in3_ret_t  ret  = eth_getFilterChanges(in3, fid, NULL, &logs);
@@ -145,7 +145,6 @@ static void test_get_filter_changes() {
   add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
   size_t bfid = eth_newBlockFilter(in3);
   TEST_ASSERT_GREATER_THAN(0, bfid);
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   add_response("eth_getBlockByNumber",
                "[\"0x84cf59\",false]",
                "{"
@@ -175,6 +174,8 @@ static void test_get_filter_changes() {
                "}",
                NULL,
                NULL);
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+
   // Get changes
   bytes32_t* hashes = NULL;
   ret               = eth_getFilterChanges(in3, bfid, &hashes, NULL);

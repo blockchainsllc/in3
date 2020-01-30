@@ -148,7 +148,7 @@ public class API {
      * Returns the value from a storage position at a given address.
      */
     public String getStorageAt(String address, BigInteger position, long block) {
-        return JSON.asString(in3.sendRPCasObject("eth_getStorage",
+        return JSON.asString(in3.sendRPCasObject("eth_getStorageAt",
                 new Object[] { address, JSON.asString(position), getBlockString(block) }));
     }
 
@@ -181,8 +181,8 @@ public class API {
      * Polling method for a filter, which returns an array of logs which occurred
      * since last poll.
      */
-    public Block[] getFilterChangesFromBlocks(long id) {
-        return Block.asBlocks(in3.sendRPCasObject("eth_getFilterChanges", new Object[] { JSON.asString(id) }));
+    public String[] getFilterChangesFromBlocks(long id) {
+        return JSON.asStringArray(in3.sendRPCasObject("eth_getFilterChanges", new Object[] { JSON.asString(id) }));
     }
 
     /**
@@ -298,8 +298,8 @@ public class API {
     /**
      * uninstall filter.
      */
-    public long uninstallFilter(long filter) {
-        return JSON.asLong(in3.sendRPCasObject("eth_uninstallFilter", new Object[] { JSON.asString(filter) }));
+    public boolean uninstallFilter(long filter) {
+        return (boolean) in3.sendRPCasObject("eth_uninstallFilter", new Object[] { JSON.asString(filter) });
     }
 
     /**
@@ -320,9 +320,9 @@ public class API {
         Signer signer = in3.getSigner();
         if (signer == null)
             throw new RuntimeException("No Signer set. This is needed in order to sign transaction.");
-        if (tx.from == null)
+        if (tx.getFrom() == null)
             throw new RuntimeException("No from address set");
-        if (!signer.hasAccount(tx.from))
+        if (!signer.hasAccount(tx.getFrom()))
             throw new RuntimeException("The from address is not supported by the signer");
         tx = signer.prepareTransaction(in3, tx);
 
@@ -337,9 +337,9 @@ public class API {
      */
     public Object call(String to, String function, Object... params) {
         TransactionRequest req = new TransactionRequest();
-        req.to = to;
-        req.function = function;
-        req.params = params;
+        req.setTo(to);
+        req.setFunction(function);
+        req.setParams(params);
         return call(req, Block.LATEST);
     }
 

@@ -116,23 +116,28 @@ bool filter_opt_valid(d_token_t* tx_params) {
   return true;
 }
 
-char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock) {
+char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock, bool should_overwrite) {
   size_t pos, len;
   char   blockstr[40]; // buffer to hold - "fromBlock": "<21 chars for hex repr (upto UINT64_MAX)>",
   char*  tok = str_find(fopt, "\"fromBlock\"");
-  if (tok) {
+  if (!tok) {
+    sprintf(blockstr, "\"fromBlock\":\"0x%" PRIx64 "\"%c", fromBlock, str_find(fopt, "\"") ? ',' : '\0');
+    tok = str_find(fopt, "{");
+    pos = fopt - tok + 1;
+    len = 0;
+    return str_replace_pos(fopt, pos, len, blockstr);
+  } else if (should_overwrite) {
     sprintf(blockstr, "0x%" PRIx64 "", fromBlock);
     tok = str_find(str_find(tok + 1, ":") + 1, "\"");
     pos = tok - fopt + 1;
     tok = str_find(tok + 1, "\"");
     len = tok - fopt - pos;
-  } else {
-    sprintf(blockstr, "\"fromBlock\":\"0x%" PRIx64 "\"%c", fromBlock, str_find(fopt, "\"") ? ',' : '\0');
-    tok = str_find(fopt, "{");
-    pos = fopt - tok + 1;
-    len = 0;
+    return str_replace_pos(fopt, pos, len, blockstr);
   }
-  return str_replace_pos(fopt, pos, len, blockstr);
+
+  char* tmp = _malloc(strlen(fopt) + 1);
+  strcpy(tmp, fopt);
+  return tmp;
 }
 
 static void filter_release(in3_filter_t* f) {
@@ -147,6 +152,7 @@ static in3_filter_t* filter_new(in3_filter_type_t ft) {
     f->type       = ft;
     f->release    = filter_release;
     f->last_block = 0;
+    f->is_first_usage = true;
   }
   return f;
 }
@@ -240,7 +246,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         sb_add_chars(result, "[]");
       } else {
         sb_t* params = sb_new("[");
-        char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block);
+        char* fopt_ = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
         sb_add_chars(params, fopt_);
         ctx_ = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
         sb_free(params);
@@ -256,6 +262,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         _free(jr);
         ctx_free(ctx_);
         f->last_block = blkno + 1;
+        f->is_first_usage = false;
       }
       return IN3_OK;
     }
