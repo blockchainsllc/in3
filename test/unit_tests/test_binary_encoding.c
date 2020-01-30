@@ -79,13 +79,14 @@ static void test_binary_primitives() {
   int         k_id      = key_("id");
   int         k_jsonrpc = key_("jsonrpc");
   bytes_t    *d      = d_bytes(d_get(ctx->result, k_result));
-  char *str_result = _malloc(d->len);
+  char *str_result = malloc(d->len * 2 + 2);
   bytes_to_hex(d->data,  d->len, str_result);
   char*       jsonrpc   = d_get_stringk(ctx->result, k_jsonrpc);
   int32_t     id_       = d_get_intk(ctx->result, k_id);
   TEST_ASSERT_EQUAL_STRING(str_result, "0000000000000000000000000000000000000000000000000000000000000001");
   TEST_ASSERT_EQUAL_STRING(jsonrpc, "2.0");
   TEST_ASSERT_EQUAL_INT32(id_, 1);
+  free(str_result);
 }
 
 static void test_binary_object() {
@@ -104,7 +105,7 @@ static void test_binary_object() {
     bytes_t*   proof_s        = d_get_bytes_at(d_get(storage_object, k_proof), 0);
     int32_t        key            = d_int(d_get(storage_object, k_key));
     int32_t        value          = d_int(d_get(storage_object, k_value));
-    str_proof = _malloc(proof_s->len);
+    str_proof = malloc(proof_s->len * 2 + 10);
     bytes_to_hex(proof_s->data,  proof_s->len, str_proof);
     TEST_ASSERT_EQUAL_STRING(str_proof,"e3a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56301");
     TEST_ASSERT_EQUAL_INT32(key, 0);
@@ -126,12 +127,13 @@ static void test_binary_array() {
     char *str_proof= NULL;
     for (d_iterator_t iter_arr = d_iter(accounts_array); iter_arr.left; d_iter_next(&iter_arr)) {
       bytes_t* proof_data = d_bytes(iter_arr.token);
-      str_proof = _malloc(proof_data->len);
+      str_proof = malloc(proof_data->len * 2 + 10);
       bytes_to_hex(proof_data->data,  proof_data->len, str_proof);
       TEST_ASSERT_EQUAL_STRING(str_proof, account_proof_array[index]);
       index++;
+      free(str_proof);
     }
-    free(str_proof);
+    
   }
 }
 
