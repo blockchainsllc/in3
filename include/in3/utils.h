@@ -69,13 +69,16 @@ uint64_t bytes_to_long(const uint8_t* data, int len);
 
 /** converts the bytes to a unsigned int (at least the last max len bytes) */
 static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
-  switch (len) {
-    case 0: return 0;
-    case 1: return data[0];
-    case 2: return (((uint32_t) data[0]) << 8) | data[1];
-    case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
-    default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
+  if (data){
+    switch (len) {
+      case 0: return 0;
+      case 1: return data[0];
+      case 2: return (((uint32_t) data[0]) << 8) | data[1];
+      case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
+      default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
+    }
   }
+  else return 0;
 }
 /** converts a character into a uint64_t*/
 uint64_t char_to_long(const char* a, int l);
@@ -141,6 +144,11 @@ char* str_replace_pos(const char* orig, size_t pos, size_t len, const char* rep)
   * lightweight strstr() replacements
   */
 char* str_find(const char* haystack, const char* needle);
+
+/**
+ * current timestamp in ms. 
+ */
+uint64_t current_ms();
 
 /** changes to pointer (a) and it length (l) to remove leading 0 bytes.*/
 #define optimize_len(a, l)   \

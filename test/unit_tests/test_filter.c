@@ -68,7 +68,7 @@ static void test_filter() {
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   char *result = NULL, *error = NULL;
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
@@ -190,7 +190,7 @@ static void test_filter_creation() {
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   TEST_ASSERT_FALSE(filter_remove(c, 1));
   TEST_ASSERT_EQUAL(IN3_EINVAL, filter_add(c, FILTER_EVENT, NULL));
@@ -217,7 +217,7 @@ static void test_filter_changes() {
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 1, NULL));
