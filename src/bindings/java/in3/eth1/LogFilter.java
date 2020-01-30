@@ -108,25 +108,6 @@ public class LogFilter {
         this.limit = limit;
     }
 
-    public void setFromBlock(long fromBlock) {
-    	this.fromBlock = fromBlock;
-    }
-
-    public void setToBlock(long toBlock) {
-    	this.toBlock = toBlock;
-    }
-
-    public void setAddress(String address) {
-    	this.address = address;
-    }
-
-    public void setTopics(Object[] topics) {
-    	this.topics = topics;
-    }
-
-    public void setLimit(int limit) {
-    	this.limit = limit;
-    }
     /**
      * creates a JSON-String.
      */
