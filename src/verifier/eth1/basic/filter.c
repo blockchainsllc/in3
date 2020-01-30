@@ -135,7 +135,9 @@ char* filter_opt_set_fromBlock(char* fopt, uint64_t fromBlock, bool should_overw
     return str_replace_pos(fopt, pos, len, blockstr);
   }
 
-  return fopt;
+  char* tmp = _malloc(strlen(fopt) + 1);
+  strcpy(tmp, fopt);
+  return tmp;
 }
 
 static void filter_release(in3_filter_t* f) {
@@ -147,9 +149,9 @@ static void filter_release(in3_filter_t* f) {
 static in3_filter_t* filter_new(in3_filter_type_t ft) {
   in3_filter_t* f = _malloc(sizeof *f);
   if (f) {
-    f->type       = ft;
-    f->release    = filter_release;
-    f->last_block = 0;
+    f->type           = ft;
+    f->release        = filter_release;
+    f->last_block     = 0;
     f->is_first_usage = true;
   }
   return f;
@@ -244,7 +246,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         sb_add_chars(result, "[]");
       } else {
         sb_t* params = sb_new("[");
-        char* fopt_ = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
+        char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
         sb_add_chars(params, fopt_);
         ctx_ = in3_client_rpc_ctx(in3, "eth_getLogs", sb_add_char(params, ']')->data);
         sb_free(params);
@@ -259,7 +261,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         sb_add_chars(result, jr);
         _free(jr);
         ctx_free(ctx_);
-        f->last_block = blkno + 1;
+        f->last_block     = blkno + 1;
         f->is_first_usage = false;
       }
       return IN3_OK;

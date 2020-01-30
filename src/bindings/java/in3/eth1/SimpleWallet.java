@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import in3.IN3;
+import in3.Loader;
 import in3.Signer;
 
 /**
@@ -45,6 +46,10 @@ import in3.Signer;
  * transactions.
  */
 public class SimpleWallet implements Signer {
+
+    static {
+        Loader.loadLibrary();
+    }
 
     // ke for holding the map
     Map<String, String> privateKeys = new HashMap<String, String>();

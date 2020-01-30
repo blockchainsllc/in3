@@ -104,17 +104,18 @@ static void whitelist_free(in3_whitelist_t* wl) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
-  chain->chain_id        = chain_id;
-  chain->init_addresses  = NULL;
-  chain->last_block      = 0;
-  chain->contract        = hex_to_new_bytes(contract, 40);
-  chain->needs_update    = chain_id == ETH_CHAIN_ID_LOCAL ? 0 : 1;
-  chain->nodelist        = _malloc(sizeof(in3_node_t) * boot_node_count);
-  chain->nodelist_length = boot_node_count;
-  chain->weights         = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
-  chain->type            = type;
-  chain->version         = version;
-  chain->whitelist       = NULL;
+  chain->chain_id             = chain_id;
+  chain->init_addresses       = NULL;
+  chain->last_block           = 0;
+  chain->verified_hashes      = NULL;
+  chain->contract             = hex_to_new_bytes(contract, 40);
+  chain->nodelist             = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodelist_length      = boot_node_count;
+  chain->weights              = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->type                 = type;
+  chain->version              = version;
+  chain->whitelist            = NULL;
+  chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
     chain->whitelist->addresses.data = NULL;
@@ -206,6 +207,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->max_attempts         = 3;
   c->max_block_cache      = 0;
   c->max_code_cache       = 0;
+  c->max_verified_hashes  = 5;
   c->min_deposit          = 0;
   c->node_limit           = 0;
   c->proof                = PROOF_STANDARD;
@@ -260,13 +262,15 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   if (!chain) {
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
-    chain                  = c->chains + c->chains_length;
-    chain->nodelist        = NULL;
-    chain->nodelist_length = 0;
-    chain->weights         = NULL;
-    chain->init_addresses  = NULL;
-    chain->whitelist       = NULL;
-    chain->last_block      = 0;
+    chain                       = c->chains + c->chains_length;
+    chain->nodelist             = NULL;
+    chain->nodelist_length      = 0;
+    chain->weights              = NULL;
+    chain->init_addresses       = NULL;
+    chain->whitelist            = NULL;
+    chain->last_block           = 0;
+    chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
+    chain->verified_hashes      = NULL;
     c->chains_length++;
 
   } else {
@@ -276,13 +280,15 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
       whitelist_free(chain->whitelist);
   }
 
-  chain->chain_id     = chain_id;
-  chain->contract     = b_new((char*) contract, 20);
-  chain->needs_update = false;
-  chain->type         = type;
-  chain->version      = version;
-  chain->whitelist    = NULL;
+  chain->chain_id  = chain_id;
+  chain->contract  = b_new((char*) contract, 20);
+  chain->type      = type;
+  chain->version   = version;
+  chain->whitelist = NULL;
   memcpy(chain->registry_id, registry_id, 32);
+  _free(chain->nodelist_upd8_params);
+  chain->nodelist_upd8_params = NULL;
+
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
     chain->whitelist->addresses.data = NULL;
@@ -378,9 +384,11 @@ in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
 void in3_free(in3_t* a) {
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
     whitelist_free(a->chains[i].whitelist);
+    _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->signer) _free(a->signer);
   _free(a->chains);
@@ -524,10 +532,11 @@ char* in3_configure(in3_t* c, const char* config) {
       c->request_count = (uint8_t) d_int(token);
     } else if (token->key == key("rpc")) {
       EXPECT_TOK_STR(token);
-      c->proof         = PROOF_NONE;
-      c->chain_id      = ETH_CHAIN_ID_LOCAL;
-      c->request_count = 1;
-      in3_node_t* n    = &in3_find_chain(c, c->chain_id)->nodelist[0];
+      c->proof           = PROOF_NONE;
+      c->chain_id        = ETH_CHAIN_ID_LOCAL;
+      c->request_count   = 1;
+      in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
       n->url = malloc(d_len(token) + 1);
       if (!n->url) {
@@ -535,6 +544,8 @@ char* in3_configure(in3_t* c, const char* config) {
         goto cleanup;
       }
       strcpy(n->url, d_string(token));
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
     } else if (token->key == key("servers") || token->key == key("nodes")) {
       EXPECT_TOK_OBJ(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
@@ -593,7 +604,7 @@ char* in3_configure(in3_t* c, const char* config) {
             memcpy(chain->registry_id, data.data, 32);
           } else if (cp.token->key == key("needsUpdate")) {
             EXPECT_TOK_BOOL(cp.token);
-            chain->needs_update = d_int(cp.token) ? true : false;
+            chain->nodelist_upd8_params = d_int(cp.token) ? _calloc(1, sizeof(*(chain->nodelist_upd8_params))) : NULL;
           } else if (cp.token->key == key("nodeList")) {
             EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;

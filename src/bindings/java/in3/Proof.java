@@ -39,10 +39,10 @@ package in3;
  */
 
 public enum Proof {
-	/** No Verification */
-	none,
-	/** Standard Verification of the important properties */
-	standard,
-	/** Full Verification including even uncles wich leads to higher payload */
-	full
+    /** No Verification */
+    none,
+    /** Standard Verification of the important properties */
+    standard,
+    /** Full Verification including even uncles wich leads to higher payload */
+    full
 }

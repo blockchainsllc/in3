@@ -68,7 +68,7 @@ static void test_filter() {
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   char *result = NULL, *error = NULL;
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
@@ -89,9 +89,9 @@ static void test_filter() {
 
   free(result);
 
-  // now we simulate a blocknumber ..55 which is higher then ..52 we registered
+  // now we simulate a blocknumber ..55 which is higher then ..51 we registered
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
   add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf52\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
@@ -100,8 +100,8 @@ static void test_filter() {
 
   free(result);
   // now we simulate a blocknumber ..59 which is higher then ..55 we registered
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf56\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
@@ -190,7 +190,7 @@ static void test_filter_creation() {
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   TEST_ASSERT_FALSE(filter_remove(c, 1));
   TEST_ASSERT_EQUAL(IN3_EINVAL, filter_add(c, FILTER_EVENT, NULL));
@@ -217,7 +217,7 @@ static void test_filter_changes() {
   c->proof            = PROOF_NONE;
   c->signature_count  = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].needs_update = false;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 1, NULL));
@@ -234,7 +234,6 @@ static void test_filter_changes() {
   TEST_ASSERT_EQUAL(1, filter_add(c, FILTER_BLOCK, NULL));
   ctx_free(ctx);
 
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   add_response("eth_getBlockByNumber",
                "[\"0x84cf59\",false]",
                "{"
@@ -264,6 +263,8 @@ static void test_filter_changes() {
                "}",
                NULL,
                NULL);
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+
   ctx          = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   sb_t* result = sb_new("");
   TEST_ASSERT_EQUAL(IN3_OK, filter_get_changes(ctx, 1, result));
