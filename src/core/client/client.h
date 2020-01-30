@@ -111,7 +111,7 @@ typedef struct in3_request_config {
   uint8_t            use_binary;             /**< this flaqg is set, the client should use binary-format */
   bytes_t*           verified_hashes;        /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
   uint16_t           verified_hashes_length; /**< number of verified blockhashes*/
-  uint16_t           latest_block;           /**< the last blocknumber the nodelistz changed */
+  uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
   uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
   in3_verification_t verification;           /**< Verification-type */
   bytes_t*           client_signature;       /**< the signature of the client with the client key */
@@ -411,7 +411,7 @@ typedef struct in3_t_ {
   uint64_t min_deposit;
 
   /** if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
-  uint16_t replace_latest_block;
+  uint8_t replace_latest_block;
 
   /** the number of signatures in percent required for the request*/
   uint16_t finality;
