@@ -532,10 +532,11 @@ char* in3_configure(in3_t* c, const char* config) {
       c->request_count = (uint8_t) d_int(token);
     } else if (token->key == key("rpc")) {
       EXPECT_TOK_STR(token);
-      c->proof         = PROOF_NONE;
-      c->chain_id      = ETH_CHAIN_ID_LOCAL;
-      c->request_count = 1;
-      in3_node_t* n    = &in3_find_chain(c, c->chain_id)->nodelist[0];
+      c->proof           = PROOF_NONE;
+      c->chain_id        = ETH_CHAIN_ID_LOCAL;
+      c->request_count   = 1;
+      in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
       n->url = malloc(d_len(token) + 1);
       if (!n->url) {
@@ -543,6 +544,8 @@ char* in3_configure(in3_t* c, const char* config) {
         goto cleanup;
       }
       strcpy(n->url, d_string(token));
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
     } else if (token->key == key("servers") || token->key == key("nodes")) {
       EXPECT_TOK_OBJ(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
