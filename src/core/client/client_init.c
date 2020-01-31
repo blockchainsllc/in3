@@ -117,6 +117,7 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->version              = version;
   chain->whitelist            = NULL;
   chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
+  chain->avg_block_time       = 0;
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
     chain->whitelist->addresses.data = NULL;
@@ -272,6 +273,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     chain->last_block           = 0;
     chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
     chain->verified_hashes      = NULL;
+    chain->avg_block_time       = 0;
     c->chains_length++;
 
   } else {
@@ -606,6 +608,9 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("needsUpdate")) {
             EXPECT_TOK_BOOL(cp.token);
             chain->nodelist_upd8_params = d_int(cp.token) ? _calloc(1, sizeof(*(chain->nodelist_upd8_params))) : NULL;
+          } else if (cp.token->key == key("avgBlockTime")) {
+            EXPECT_TOK_U16(cp.token);
+            chain->avg_block_time = (uint16_t) d_int(cp.token);
           } else if (cp.token->key == key("nodeList")) {
             EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
