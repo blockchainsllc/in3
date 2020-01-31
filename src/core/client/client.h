@@ -152,7 +152,7 @@ typedef struct in3_node {
   in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;         /**< the url of the node */
   bool             whitelisted; /**< boolean indicating if node exists in whiteList */
-  bool             boot_node;   /**< boolean indicating whether or not a node is a boot node */
+  bool             boot_node;   /**< internal - used to avoid filtering manually added nodes before first nodeList update */
 } in3_node_t;
 
 /**
@@ -583,22 +583,6 @@ in3_ret_t in3_client_register_chain(
     uint8_t          version,     /**< [in] the chain version. */
     address_t        wl_contract  /**< [in] contract of whiteList. */
 );
-
-/** adds a node to a chain ore updates a existing node */
-in3_ret_t in3_client_add_node(
-    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
-    chain_id_t       chain_id, /**< [in] the chain id. */
-    char*            url,      /**< [in] url of the nodes. */
-    in3_node_props_t props,    /**< [in]properties of the node. */
-    address_t        address);        /**< [in] public address of the signer. */
-
-/** adds a boot node to a chain or updates an existing node */
-in3_ret_t in3_client_add_boot_node(
-    in3_t*           client,   /**< [in] the pointer to the incubed client config. */
-    chain_id_t       chain_id, /**< [in] the chain id. */
-    char*            url,      /**< [in] url of the nodes. */
-    in3_node_props_t props,    /**< [in]properties of the node. */
-    address_t        address);        /**< [in] public address of the signer. */
 
 /** removes a node from a nodelist */
 in3_ret_t in3_client_remove_node(
