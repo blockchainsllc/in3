@@ -218,7 +218,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
             if (chain->nodelist_upd8_params->exp_last_block && d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->exp_last_block) {
               for (int i = 0; i < chain->nodelist_length; ++i)
                 if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
-                  chain->weights[i].blacklisted_until = _time() + 3600000;
+                  chain->weights[i].blacklisted_until = _time() + 3600;
             }
             _free(chain->nodelist_upd8_params);
             chain->nodelist_upd8_params = NULL;
