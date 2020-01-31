@@ -361,11 +361,11 @@ vulnerability-analysis:
     - docker
   image: docker.slock.it/build-images/vulnerability-testing-tools
   script:
-    - ls
     - trivy -f json -o vulnerability_analysis.json --input dockerImage.tar
   artifacts:
     paths:
       - vulnerability_analysis.json
+
 ##### deploy #####
 
 dockerhub-deploy:
@@ -720,9 +720,9 @@ release_pip:
 
 pages:
   stage: deploy
-#  only:
-#    refs:
-#      - develop
+  only:
+    refs:
+      - develop
   tags:
     - arm
   dependencies:
