@@ -57,6 +57,13 @@ static void free_nodeList(in3_node_t* nodelist, int count) {
   _free(nodelist);
 }
 
+static bool postpone_update(const in3_chain_t* chain) {
+  if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->timestamp)
+    if (difftime(chain->nodelist_upd8_params->timestamp, _time()) > 0)
+      return true;
+  return false;
+}
+
 static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t      res  = IN3_OK;
   _time_t        _now = _time(); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
@@ -413,6 +420,9 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
     if (chain->nodelist_upd8_params && !chain->nodelist_upd8_params->exp_last_block) {
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
+    } else if (postpone_update(chain)) {
+      in3_log_warn("Update postponed until nodelist change block is atleast %u blocks old", ctx->client->replace_latest_block);
+      return IN3_WAITING;
     }
     // now update the nodeList
     res = update_nodelist(ctx->client, chain, ctx);
