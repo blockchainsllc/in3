@@ -335,7 +335,7 @@ java_macos:
 ##### local_docker_deploy_and_vulnerability_analysis #####
 
 docker:
-  stage: local_docker_deploy_and_vulnerability_analysis
+  stage: local_docker_deploy
   tags:
     - short-jobs
   services:
