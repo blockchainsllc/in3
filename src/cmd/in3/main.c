@@ -614,6 +614,11 @@ int main(int argc, char* argv[]) {
   char*           sig_type     = "raw";
   bool            to_eth       = false;
 
+  // handle clear cache opt before initializing cache
+  for (i = 1; i < argc; i++)
+    if (strcmp(argv[i], "-ccache") == 0)
+      c->cache->clear(c->cache->cptr);
+
   // read data from cache
   in3_cache_init(c);
 
@@ -636,8 +641,8 @@ int main(int argc, char* argv[]) {
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
-    else if (strcmp(argv[i], "-ccache") == 0) // clear cache
-      c->cache->clear(c->cache->cptr);
+    else if (strcmp(argv[i], "-ccache") == 0) // NOOP - should have been handled earlier
+      ;
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) { // data
       char* d = argv[++i];
       if (strcmp(d, "-") == 0)
