@@ -241,6 +241,7 @@ typedef struct in3_chain {
   struct {
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
     uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
+    uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
   } * nodelist_upd8_params;
 } in3_chain_t;
 
