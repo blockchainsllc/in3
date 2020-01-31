@@ -347,10 +347,10 @@ docker:
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
-    - docker save $COMMIT_IMAGE_TAG -o $COMMIT_IMAGE_TAG.tar
+    - docker save $COMMIT_IMAGE_TAG -o dockerImage.tar
   artifacts:
     paths:
-      - $COMMIT_IMAGE_TAG.tar
+      - dockerImage.tar
 
 ##### analyse #####
 vulnerability-analysis:
@@ -362,7 +362,7 @@ vulnerability-analysis:
   image: docker.slock.it/build-images/vulnerability-testing-tools
   script:
     - ls
-    - trivy $COMMIT_IMAGE_TAG.tar
+    - trivy dockerImage.tar
 
 ##### deploy #####
 
