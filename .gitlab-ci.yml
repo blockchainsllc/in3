@@ -362,7 +362,7 @@ vulnerability-analysis:
   image: docker.slock.it/build-images/vulnerability-testing-tools
   script:
     - ls
-    - trivy dockerImage.tar
+    - trivy --input dockerImage.tar
 
 ##### deploy #####
 
