@@ -152,6 +152,7 @@ typedef struct in3_node {
   in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;         /**< the url of the node */
   bool             whitelisted; /**< boolean indicating if node exists in whiteList */
+  bool             boot_node;   /**< internal - used to avoid filtering manually added nodes before first nodeList update */
 } in3_node_t;
 
 /**

@@ -100,6 +100,7 @@ static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* resul
     n->props                     = d_get_longkd(node, K_PROPS, 65535);
     n->url                       = d_get_stringk(node, K_URL);
     n->address                   = d_get_byteskl(node, K_ADDRESS, 20);
+    n->boot_node                 = false; // nodes are considered boot nodes only until first nodeList update succeeds
     const uint64_t register_time = d_get_longk(node, K_REGISTER_TIME);
 
     if (n->address)
@@ -355,11 +356,13 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   if (!chain) return NULL;
 
   for (int i = 0; i < len; i++) {
-    nodeDef = all_nodes + i;
+    nodeDef   = all_nodes + i;
+    weightDef = weights + i;
+
+    if (nodeDef->boot_node) goto SKIP_FILTERING;
     if (chain->whitelist && !nodeDef->whitelisted) continue;
     if (nodeDef->deposit < c->min_deposit) continue;
     if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
-
     if (filter.nodes != NULL) {
       bool in_filter_nodes = false;
       for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
@@ -371,9 +374,9 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
       if (!in_filter_nodes)
         continue;
     }
-
-    weightDef = weights + i;
     if (weightDef->blacklisted_until > (uint64_t) now) continue;
+
+  SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
     if (!current) {
       // TODO clean up memory
