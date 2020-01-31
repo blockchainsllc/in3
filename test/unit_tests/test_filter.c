@@ -53,7 +53,7 @@
 
 #define TEST_ASSERT_FILTER_OPT_FROMBLK(opt_str, blk, out_str) \
   do {                                                        \
-    char* opt = filter_opt_set_fromBlock(opt_str, blk);       \
+    char* opt = filter_opt_set_fromBlock(opt_str, blk, true); \
     TEST_ASSERT_EQUAL_STRING(out_str, opt);                   \
     _free(opt);                                               \
   } while (0)
@@ -89,9 +89,9 @@ static void test_filter() {
 
   free(result);
 
-  // now we simulate a blocknumber ..55 which is higher then ..52 we registered
+  // now we simulate a blocknumber ..55 which is higher then ..51 we registered
+  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
   add_response("eth_blockNumber", "[]", "\"0x84cf55\"", NULL, NULL);
-  add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf52\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
@@ -100,8 +100,8 @@ static void test_filter() {
 
   free(result);
   // now we simulate a blocknumber ..59 which is higher then ..55 we registered
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   add_response("eth_getLogs", "[{\"fromBlock\":\"0x84cf56\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}]", "[]", NULL, NULL);
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
 
   TEST_ASSERT_EQUAL(0, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
   TEST_ASSERT_NULL(error);
@@ -234,7 +234,6 @@ static void test_filter_changes() {
   TEST_ASSERT_EQUAL(1, filter_add(c, FILTER_BLOCK, NULL));
   ctx_free(ctx);
 
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   add_response("eth_getBlockByNumber",
                "[\"0x84cf59\",false]",
                "{"
@@ -264,6 +263,8 @@ static void test_filter_changes() {
                "}",
                NULL,
                NULL);
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+
   ctx          = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   sb_t* result = sb_new("");
   TEST_ASSERT_EQUAL(IN3_OK, filter_get_changes(ctx, 1, result));
