@@ -104,6 +104,15 @@ static void whitelist_free(in3_whitelist_t* wl) {
   _free(wl);
 }
 
+static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
+  switch (id) {
+    case ETH_CHAIN_ID_MAINNET: return 15;
+    case ETH_CHAIN_ID_KOVAN: return 6;
+    case ETH_CHAIN_ID_GOERLI: return 15;
+    default: return 0;
+  }
+}
+
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
@@ -117,7 +126,7 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->version              = version;
   chain->whitelist            = NULL;
   chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
-  chain->avg_block_time       = 0;
+  chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
     chain->whitelist->addresses.data = NULL;
@@ -273,7 +282,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     chain->last_block           = 0;
     chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
     chain->verified_hashes      = NULL;
-    chain->avg_block_time       = 0;
+    chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
     c->chains_length++;
 
   } else {
