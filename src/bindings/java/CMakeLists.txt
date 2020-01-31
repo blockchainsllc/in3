@@ -48,7 +48,10 @@ IF (NOT DEFINED ANDROID_ABI)
   set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.7" "-target" "1.7")
 
   add_jar(in3j 
+    in3/Chain.java 
     in3/IN3.java 
+    in3/IN3DefaultTransport.java 
+    in3/IN3Transport.java 
     in3/JSON.java 
     in3/StorageProvider.java 
     in3/TempStorageProvider.java 
