@@ -6,6 +6,8 @@ stages:
   - build
   - bindings
   - test
+  - local_docker_deploy
+  - analysis
   - deploy
   - release
 
@@ -330,9 +332,10 @@ java_macos:
   tags:
     - mac-mini-runner
 
-##### deploy #####
+##### local_docker_deploy #####
+
 docker:
-  stage: deploy
+  stage: local_docker_deploy
   tags:
     - short-jobs
   services:
@@ -344,6 +347,17 @@ docker:
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
+
+##### analyse #####
+vulnerability-analysis:
+  stage: analysis
+  tags:
+    - short-jobs
+  image: docker.slock.it/build-images/vulnerability-testing-tools
+  script:
+    - trivy docker.slock.it/in3/c/in3-core:$COMMIT_IMAGE_TAG
+
+##### deploy #####
 
 dockerhub-deploy:
   stage: deploy
