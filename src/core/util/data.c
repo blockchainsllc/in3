@@ -288,7 +288,7 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
   else if (d_type(item) == T_BYTES)
     return bytes_to_long(item->data, item->len);
   else if (d_type(item) == T_STRING)
-    return strtoull((char*) item->data, NULL, 10);
+    return _strtoull((char*) item->data, NULL, 10);
   return def_val;
 }
 

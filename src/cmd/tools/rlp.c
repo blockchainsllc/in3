@@ -342,7 +342,7 @@ void add_rlp(bytes_builder_t* bb, char* val) {
     b_free(b);
   } else {
     uint8_t  data[8];
-    uint64_t value = strtoull(val, NULL, 10);
+    uint64_t value = _strtoull(val, NULL, 10);
     bytes_t  bytes = {.len = 0, .data = data};
     if (value) {
       bytes.len  = min_bytes_len(value);

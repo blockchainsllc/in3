@@ -31,8 +31,13 @@
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <malloc.h> // alloca
 #else
+#ifndef __ZEPHYR__
 #include <alloca.h> // alloca
+#else
+#define alloca(s) malloc(s)
 #endif
+#endif
+
 const char b58digits_ordered[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const int8_t b58digits_map[] = {
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,

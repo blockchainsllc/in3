@@ -40,7 +40,11 @@
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
+#ifdef __ZEPHYR__
+#include <zephyr.h>
+#else
 #include <errno.h>
+#endif
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -96,7 +100,11 @@ static void set_errorn(int std_error, char* msg, int len) {
 
 // sets the error and a message
 static void set_error_intern(int std_error, char* msg) {
-  in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
+#ifndef __ZEPHYR__
+    in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
+#else
+    in3_log_error("Request failed due to %s\n", msg);
+#endif
   set_errorn(std_error, msg, strlen(msg));
 }
 
@@ -496,6 +504,8 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
       if (count) {
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
+#elif defined(__ZEPHYR__)
+        k_sleep(timeout);
 #else
         nanosleep((const struct timespec[]){{timeout / 1000, ((long) timeout % 1000) * 1000000L}}, NULL);
 #endif

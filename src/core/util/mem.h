@@ -43,7 +43,9 @@
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <malloc.h> // alloca
 #else
+#ifndef __ZEPHYR__
 #include <alloca.h> // alloca
+#endif
 #endif
 
 #ifdef _MSC_VER

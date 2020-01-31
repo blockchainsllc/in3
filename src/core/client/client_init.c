@@ -42,7 +42,11 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef __ZEPHYR__
 #include <sys/time.h>
+#else
+#include <posix/sys/time.h>
+#endif
 #include <time.h>
 
 #define EXPECT(cond, exit) \
@@ -408,9 +412,7 @@ void in3_free(in3_t* a) {
 in3_t* in3_for_chain(chain_id_t chain_id) {
 
   // initialize random with the timestamp (in nanoseconds) as seed
-  struct timeval te;
-  gettimeofday(&te, NULL);
-  _srand(te.tv_sec * 1000000LL + te.tv_usec);
+  _srand(current_ms());
 
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
