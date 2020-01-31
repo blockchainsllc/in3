@@ -4,6 +4,9 @@ import java.util.HashMap;
 
 import org.json.JSONObject;
 
+import in3.config.ClientConfiguration;
+import in3.config.NodeConfiguration;
+
 public class IN3MockBuilder {
     IN3 client;
 
@@ -23,34 +26,36 @@ public class IN3MockBuilder {
     }
 
     public void buildConfig() {
-        HashMap<String, Object> nodeConfig = new HashMap<String, Object>();
-        nodeConfig.put("needsUpdate", false);
-        nodeConfig.put("contract", "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
-        nodeConfig.put("registryId", "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
+        ClientConfiguration clientConfig = new ClientConfiguration();
 
-        HashMap<String, Object> nodes = new HashMap<String, Object>();
-        nodes.put("0x1", nodeConfig.clone());
-        nodes.put("0x5", nodeConfig.clone());
-        nodes.put("0x2a", nodeConfig.clone());
+        NodeConfiguration nodeConfig1 = new NodeConfiguration(Chain.MAINNET, clientConfig);
+        nodeConfig1.setNeedsUpdate(false);
+        nodeConfig1.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
+        nodeConfig1.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
-        HashMap<String, Object> configMap = new HashMap<String, Object>();
+        NodeConfiguration nodeConfig2 = new NodeConfiguration(Chain.GOERLI, clientConfig);
+        nodeConfig2.setNeedsUpdate(false);
+        nodeConfig2.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
+        nodeConfig2.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
-        configMap.put("requestCount", 1);
-        configMap.put("autoUpdateList", false);
-        configMap.put("proof", Proof.none);
-        configMap.put("autoUpdateList", false);
-        configMap.put("maxAttempts", 1);
-        configMap.put("signatureCount", 0);
-        configMap.put("nodes", nodes);
+        NodeConfiguration nodeConfig3 = new NodeConfiguration(Chain.KOVAN, clientConfig);
+        nodeConfig3.setNeedsUpdate(false);
+        nodeConfig3.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
+        nodeConfig3.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
-        JSONObject configJson = new JSONObject(configMap);
-        client.setConfig(configJson.toString());
+        clientConfig.setRequestCount(1);
+        clientConfig.setAutoUpdateList(false);
+        clientConfig.setProof(Proof.none);
+        clientConfig.setMaxAttempts(1);
+        clientConfig.setSignatureCount(0);
+
+        client.setConfig(clientConfig);
     }
 
-	public IN3 constructClient(String[][] fileNameTuples) {
-		createNewClient();
-		buildTransport(fileNameTuples);
-		buildConfig();
+    public IN3 constructClient(String[][] fileNameTuples) {
+        createNewClient();
+        buildTransport(fileNameTuples);
+        buildConfig();
         return client;
     }
 }

@@ -34,11 +34,9 @@
 
 package in3;
 
-import java.math.BigInteger;
-
-import in3.JSON;
 import in3.Proof;
 import in3.StorageProvider;
+import in3.config.Configuration;
 import in3.eth1.API;
 
 /**
@@ -61,12 +59,15 @@ public class IN3 {
     public native void setCacheTimeout(int val);
 
     /** sets config object in the client */
-    public native void setConfig(String val);
+    private native void setConfig(String val);
 
     /** the limit of nodes to store in the client. */
     public native int getNodeLimit();
 
-    /** sets the limit of nodes to store in the client. */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setNodeLimit(int val);
 
     /** the client key to sign requests */
@@ -74,6 +75,10 @@ public class IN3 {
 
     /** sets the client key to sign requests */
     public native void setKey(byte[] val);
+
+    public void setConfig(Configuration config) {
+        setConfig(config.toJSON());
+    }
 
     /** sets the client key as hexstring to sign requests */
     public void setKey(String val) {
@@ -91,31 +96,46 @@ public class IN3 {
     /** number of max bytes used to cache the code in memory */
     public native int getMaxCodeCache();
 
-    /** sets number of max bytes used to cache the code in memory */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setMaxCodeCache(int val);
 
     /** number of blocks cached in memory */
     public native int getMaxBlockCache();
 
-    /** sets the number of blocks cached in memory */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setMaxBlockCache(int val);
 
     /** the type of proof used */
     public native Proof getProof();
 
-    /** sets the type of proof used */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setProof(Proof val);
 
     /** the number of request send when getting a first answer */
     public native int getRequestCount();
 
-    /** sets the number of requests send when getting a first answer */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setRequestCount(int val);
 
     /** the number of signatures used to proof the blockhash. */
     public native int getSignatureCount();
 
-    /** sets the number of signatures used to proof the blockhash. */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setSignatureCount(int val);
 
     /**
@@ -125,9 +145,9 @@ public class IN3 {
     public native long getMinDeposit();
 
     /**
-     * sets min stake of the server. Only nodes owning at least this amount will be
-     * chosen.
+     * @deprecated replaced by {@link #setConfig()}
      */
+    @Deprecated
     public native void setMinDeposit(long val);
 
     /**
@@ -136,19 +156,28 @@ public class IN3 {
      */
     public native int getReplaceLatestBlock();
 
-    /** replaces the *latest* with blockNumber- specified value */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setReplaceLatestBlock(int val);
 
     /** the number of signatures in percent required for the request */
     public native int getFinality();
 
-    /** sets the number of signatures in percent required for the request */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setFinality(int val);
 
     /** the max number of attempts before giving up */
     public native int getMaxAttempts();
 
-    /** sets the max number of attempts before giving up */
+    /**
+     * @deprecated replaced by {@link #setConfig()}
+     */
+    @Deprecated
     public native void setMaxAttempts(int val);
 
     /**
@@ -179,9 +208,9 @@ public class IN3 {
     public native int getTimeout();
 
     /**
-     * specifies the number of milliseconds before the request times out. increasing
-     * may be helpful if the device uses a slow connection.
+     * @deprecated replaced by {@link #setConfig()}
      */
+    @Deprecated
     public native void setTimeout(int val);
 
     /** servers to filter for the given chain. The chain-id based on EIP-155. */
@@ -196,9 +225,9 @@ public class IN3 {
     public native boolean isAutoUpdateList();
 
     /**
-     * activates the auto update.if true the nodelist will be automaticly updated if
-     * the lastBlock is newer
+     * @deprecated replaced by {@link #setConfig()}
      */
+    @Deprecated
     public native void setAutoUpdateList(boolean val);
 
     /** provides the ability to cache content */
