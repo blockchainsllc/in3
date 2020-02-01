@@ -326,8 +326,8 @@ bytes_t readFile(FILE* f) {
     len += r;
     if (feof(f)) break;
     size_t new_alloc = allocated * 2 + 1;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
   return bytes(buffer, len);
@@ -583,6 +583,7 @@ int main(int argc, char* argv[]) {
   storage_handler.get_item = storage_get_item;
   storage_handler.set_item = storage_set_item;
   storage_handler.clear    = storage_clear;
+  storage_handler.cptr     = NULL;
 
   // we want to verify all
   in3_register_eth_full();
