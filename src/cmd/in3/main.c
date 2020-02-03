@@ -79,6 +79,8 @@ void show_help(char* name) {
   printf("Usage: %s <options> method <params> ... \n\
 \n\
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
+-a             max number of attempts before giving up (default 5)\n\
+-rc            number of request per try (default 1)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
@@ -686,6 +688,10 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-rc") == 0)
+      c->request_count = atoi(argv[++i]);
+    else if (strcmp(argv[i], "-a") == 0)
+      c->max_attempts = atoi(argv[++i]);
     else if (strcmp(argv[i], "-name") == 0)
       name = argv[++i];
     else if (strcmp(argv[i], "-validators") == 0)
