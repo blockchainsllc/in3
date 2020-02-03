@@ -60,6 +60,15 @@ extern "C" {
     TEST_LOG_INTERNAL(#t, "Completed in %fs\n", TIMING_GET()); \
   } while (0)
 
+static inline uint64_t mock_time(void* t) {
+  static uint64_t now;
+  if (t)
+    now = *(uint64_t*) t;
+  else
+    now += rand() % 100;
+  return now;
+}
+
 #ifdef __cplusplus
 }
 #endif
