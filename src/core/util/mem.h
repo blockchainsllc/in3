@@ -58,8 +58,6 @@
 
 #ifdef __ZEPHYR__
 #include <zephyr.h>
-#define _time() k_uptime_get()
-#define _time_t uint64_t
 #define _atol(p) atoi(p)
 #define _srand(p) ;
 #define _rand() (uint32_t) k_uptime_get()
@@ -71,8 +69,6 @@
   do {             \
   } while (0) // FIXME: Fix for zephyr
 #else         /* __ZEPHYR__ */
-#define _time() time(0)
-#define _time_t time_t
 #define _atol(p) atol(p)
 #define _srand(p) srand(p)
 #define _rand() (uint32_t) rand()
@@ -115,5 +111,10 @@ void* _realloc_(void* ptr, size_t size, size_t oldsize, char* file, const char* 
 void* _calloc_(size_t n, size_t size, char* file, const char* func, int line);
 void  _free_(void* ptr);
 #endif /* TEST */
+
+typedef uint64_t (*time_func)(void* t);
+
+void     in3_time_set_func(time_func fn);
+uint64_t in3_time(void *t);
 
 #endif /* __MEM_H__ */

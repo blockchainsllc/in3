@@ -38,6 +38,20 @@
 #include <stdlib.h>
 
 #ifdef __ZEPHYR__
+static uint64_t time_zephyr(void* t) {
+  UNUSED_VAR(t);
+  return k_uptime_get();
+}
+static time_func in3_time_fn = time_zephyr;
+#else  /* __ZEPHYR__ */
+static uint64_t time_libc(void* t) {
+  UNUSED_VAR(t);
+  return time(NULL);
+}
+static time_func in3_time_fn = time_libc;
+#endif /* __ZEPHYR__ */
+
+#ifdef __ZEPHYR__
 // FIXME: Below hack is until af529d1 is merged
 // See https://github.com/zephyrproject-rtos/zephyr/commit/af529d1158c9c85f41a5c15fabf1b3a83bfd9ac2
 #define EXIT_SUCCESS 0
@@ -268,4 +282,13 @@ void mem_reset(int cnt) {
     */
   mem_tracker = NULL;
 }
+
+void in3_time_set_func(time_func fn) {
+  in3_time_fn = fn;
+}
+
+uint64_t in3_time(void* t) {
+  return in3_time_fn(t);
+}
+
 #endif /* TEST */
