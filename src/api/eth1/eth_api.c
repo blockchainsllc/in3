@@ -284,7 +284,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       }
 
       // copy data
-      eth_block_t* b = malloc(s);
+      eth_block_t* b = _malloc(s);
       if (!b) {
         set_error(ENOMEM, "Not enough memory");
         return NULL;
@@ -577,7 +577,7 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
         uint64_t blkcount = blkno - f->last_block;
-        *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
+        *block_hashes     = _malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           eth_block_t* blk = eth_getBlockByNumber(in3, BLKNUM(i), false);
           if (blk) {

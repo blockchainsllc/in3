@@ -231,7 +231,7 @@ char* str_replace(char* orig, char* rep, char* with) {
     ins = tmp + len_rep;
   }
 
-  tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+  tmp = result = _malloc(strlen(orig) + (len_with - len_rep) * count + 1);
 
   if (!result)
     return NULL;
