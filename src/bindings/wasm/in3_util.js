@@ -13,15 +13,6 @@ function setConvertBuffer(convertBufFn) {
         convertBuffer = convertBufFn
 }
 
-// // Converts Input to Buffer
-// function toInputToBuffer(val) {
-//     // const buf = require('' + 'buffer/').Buffer
-//     var toBuf = require('' + 'typedarray-to-buffer')
-//     let ta = toUint8Array(val)                           // typed Array
-//     let b = toBuf(ta)
-//     return b;
-//   }
-
 if (typeof(_free) == 'undefined') _free = function(ptr) {
         in3w.ccall("ifree", 'void', ['number'], [ptr])
     }
@@ -113,14 +104,11 @@ function private2address(pk) {
 
 function abiEncode(sig, ...params) {
     const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
-
-    console.log('Testlog : ABI Encode  ------> ', sig, JSON.stringify(convert(params)))
-
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
 }
 
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
-    data = toUint8Array(data)               // Native calls to c expect a uInt8Arry inputs over Buffer
+    data = toUint8Array(data)              
     pk = toUint8Array(pk)
     return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0)
 }
@@ -423,8 +411,7 @@ class SimpleSigner {
     }
 
     async sign(data, account, type, ethV = true) {
-        // const pk = toBuffer(this.accounts[toChecksumAddress(account)])
-        const pk = this.accounts[toChecksumAddress(account)]                             // PK is converting to array buffer inside ecSign
+        const pk = this.accounts[toChecksumAddress(account)]                          
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         return ecSign(pk, data, type, ethV)
 

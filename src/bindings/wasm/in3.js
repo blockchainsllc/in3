@@ -196,8 +196,6 @@ class IN3 {
      * sends a request and returns the response.
      */
     async sendRequest(rpc) {
-        console.log('\n \n Testlog : RPC Request ------------> : ', rpc)
-
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
         if (this.needsSetConfig) this.setConfig()
@@ -257,11 +255,7 @@ class IN3 {
 
                         case 'rpc':
                             await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
-                                res => { 
-                                    console.log('\n \n Testlog : RPC Response ------------> : ', res) 
-                                    setResponse(res, i, false)
-                                    
-                                  },
+                                res => setResponse(res, i, false),
                                 err => setResponse(err.message || err, i, true)
                             ))).then(freeRequest, err => { freeRequest(); throw err })
                     }
