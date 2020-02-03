@@ -341,18 +341,13 @@ docker:
   services:
     - docker:dind
   image: docker.slock.it/build-images/deployment
-  dependencies:
-    - coverage
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build -t $COMMIT_IMAGE_TAG .
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
-    - docker save $COMMIT_IMAGE_TAG -o dockerImage.tar
-  artifacts:
-    paths:
-      - dockerImage.tar
+
 
 ##### analyse #####
 vulnerability-analysis:
