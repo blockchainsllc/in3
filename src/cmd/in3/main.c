@@ -80,6 +80,7 @@ void show_help(char* name) {
 \n\
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
+-md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
 -eth           converts the result (as wei) to ether.\n\
 -l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
@@ -326,8 +327,8 @@ bytes_t readFile(FILE* f) {
     len += r;
     if (feof(f)) break;
     size_t new_alloc = allocated * 2 + 1;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
   return bytes(buffer, len);
@@ -656,6 +657,8 @@ int main(int argc, char* argv[]) {
       c->replace_latest_block = atoll(argv[++i]);
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
+    else if (strcmp(argv[i], "-md") == 0)
+      c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->keep_in3 = true;
     else if (strcmp(argv[i], "-to") == 0)
