@@ -381,6 +381,13 @@ void set_chain_id(in3_t* c, char* id) {
     c->chains[3].nodelist[0].url = id;
   } else
     c->chain_id = getchain_id(id);
+  if (c->chain_id == 0xFFFFL) {
+    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    if (chain->nodelist_upd8_params) {
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
+    }
+  }
 }
 
 // prepare a eth_call or eth_sendTransaction
