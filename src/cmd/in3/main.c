@@ -796,7 +796,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "in3_weights") == 0) {
-    uint64_t     now   = _time();
+    uint64_t     now   = in3_time(NULL);
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
     printf("   : %40s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
     for (int i = 0; i < chain->nodelist_length; i++) {

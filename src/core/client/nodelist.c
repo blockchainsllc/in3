@@ -59,14 +59,14 @@ static void free_nodeList(in3_node_t* nodelist, int count) {
 
 static bool postpone_update(const in3_chain_t* chain) {
   if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->timestamp)
-    if (difftime(chain->nodelist_upd8_params->timestamp, _time()) > 0)
+    if (difftime(chain->nodelist_upd8_params->timestamp, in3_time(NULL)) > 0)
       return true;
   return false;
 }
 
 static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t      res  = IN3_OK;
-  _time_t        _now = _time(); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
+  uint64_t       _now = in3_time(NULL); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
   const uint64_t now  = (uint64_t) max(0, _now);
 
   // read the nodes
@@ -225,7 +225,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
             if (chain->nodelist_upd8_params->exp_last_block && d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->exp_last_block) {
               for (int i = 0; i < chain->nodelist_length; ++i)
                 if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
-                  chain->weights[i].blacklisted_until = _time() + 3600;
+                  chain->weights[i].blacklisted_until = in3_time(NULL) + 3600;
             }
             _free(chain->nodelist_upd8_params);
             chain->nodelist_upd8_params = NULL;
@@ -348,7 +348,7 @@ uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa) {
 }
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
-                                        int len, _time_t now, uint32_t* total_weight, int* total_found,
+                                        int len, uint64_t now, uint32_t* total_weight, int* total_found,
                                         in3_node_filter_t filter) {
 
   int                found      = 0;
@@ -449,7 +449,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int request_count, in3_node_filter_t filter) {
 
   // get all nodes from the nodelist
-  _time_t            now       = _time();
+  uint64_t           now       = in3_time(NULL);
   in3_node_t*        all_nodes = NULL;
   in3_node_weight_t* weights   = NULL;
   uint32_t           total_weight;

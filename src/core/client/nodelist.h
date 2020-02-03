@@ -68,7 +68,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 /**
  * filters and fills the weights on a returned linked list.
  */
-node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, uint32_t* total_weight, int* total_found, in3_node_filter_t filter);
+node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, uint64_t now, uint32_t* total_weight, int* total_found, in3_node_filter_t filter);
 
 /**
  * calculates the weight for a node.

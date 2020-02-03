@@ -266,7 +266,7 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
 static void blacklist_node(node_match_t* node_weight) {
   if (node_weight && node_weight->weight) {
     // blacklist the node
-    node_weight->weight->blacklisted_until = _time() + 3600;
+    node_weight->weight->blacklisted_until = in3_time(NULL) + 3600;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
     in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
@@ -293,10 +293,10 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
       chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
     memcpy(chain->nodelist_upd8_params->node, node->node->address->data, node->node->address->len);
     chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
-    chain->nodelist_upd8_params->timestamp      = _time() + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
-                                                                       d_get_longk(response_in3, K_CURRENT_BLOCK),
-                                                                       ctx->client->replace_latest_block,
-                                                                       chain->avg_block_time);
+    chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
+                                                                              d_get_longk(response_in3, K_CURRENT_BLOCK),
+                                                                              ctx->client->replace_latest_block,
+                                                                              chain->avg_block_time);
   }
 
   if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
