@@ -143,6 +143,9 @@ ecrecover <msg> <signature>\n\
 \n\
 key <keyfile>\n\
   reads the private key from JSON-Keystore file and returns the private key.\n\
+\n\
+in3_ens <domain> <field>\n\
+  resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
 \n",
          name);
 }
