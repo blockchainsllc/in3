@@ -42,13 +42,31 @@ static uint64_t time_zephyr(void* t) {
   UNUSED_VAR(t);
   return k_uptime_get();
 }
-static time_func in3_time_fn = time_zephyr;
+static int rand_zephyr(void* s) {
+  UNUSED_VAR(s);
+  return (int) rand();
+}
+static void srand_zephyr(unsigned int s) {
+  return;
+}
+static time_func  in3_time_fn  = time_zephyr;
+static rand_func  in3_rand_fn  = rand_zephyr;
+static srand_func in3_srand_fn = srand_zephyr;
 #else  /* __ZEPHYR__ */
 static uint64_t time_libc(void* t) {
   UNUSED_VAR(t);
   return time(NULL);
 }
-static time_func in3_time_fn = time_libc;
+static int rand_libc(void* s) {
+  UNUSED_VAR(s);
+  return rand();
+}
+static void srand_libc(unsigned int s) {
+  return srand(s);
+}
+static time_func  in3_time_fn  = time_libc;
+static rand_func  in3_rand_fn  = rand_libc;
+static srand_func in3_srand_fn = srand_libc;
 #endif /* __ZEPHYR__ */
 
 #ifdef __ZEPHYR__
