@@ -6,7 +6,6 @@ stages:
   - build
   - bindings
   - test
-  - local_docker_deploy
   - analysis
   - deploy
   - release
@@ -176,7 +175,7 @@ coverage:
       - cov_build/ccov/all-merged
 
 analyse:
-  stage: test
+  stage: analysis
   image: docker.slock.it/build-images/cmake:clang9
   allow_failure: false
   tags:
@@ -191,7 +190,7 @@ analyse:
       - report
 
 cppcheck:
-  stage: test
+  stage: analysis
   image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
   allow_failure: true
   tags:
@@ -335,7 +334,7 @@ java_macos:
 ##### local_docker_deploy_and_vulnerability_analysis #####
 
 docker:
-  stage: local_docker_deploy
+  stage: bindings
   tags:
     - short-jobs
   services:
@@ -347,7 +346,6 @@ docker:
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
-
 
 ##### analyse #####
 vulnerability-analysis:
@@ -675,7 +673,6 @@ release_win:
     paths:
       - in3-win
 
-
 release_maven:
   stage: deploy
   image: docker.slock.it/build-images/maven-deployment-image:latest
@@ -716,7 +713,6 @@ release_pip:
   artifacts:
     paths:
       - in3-pip
-
 
 pages:
   stage: deploy
@@ -913,5 +909,3 @@ github_body_release:
     - cat in3-arm7/arm7_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - cat in3-win/win_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c -b "$(cat release_ipfs_hash.txt)" $CI_COMMIT_TAG release_ipfs_hash.txt
-
-
