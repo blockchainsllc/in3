@@ -6,6 +6,8 @@ stages:
   - build
   - bindings
   - test
+  - local_docker_deploy
+  - analysis
   - deploy
   - release
 
@@ -330,9 +332,10 @@ java_macos:
   tags:
     - mac-mini-runner
 
-##### deploy #####
+##### local_docker_deploy_and_vulnerability_analysis #####
+
 docker:
-  stage: deploy
+  stage: local_docker_deploy
   tags:
     - short-jobs
   services:
@@ -344,6 +347,26 @@ docker:
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
+
+
+##### analyse #####
+vulnerability-analysis:
+  stage: analysis
+  tags:
+    - short-jobs
+  dependencies:
+    - docker
+  image: docker.slock.it/build-images/vulnerability-testing-tools
+  script:
+    - export TRIVY_AUTH_URL=$CI_REGISTRY
+    - export TRIVY_USERNAME=gitlab-ci-token
+    - export TRIVY_PASSWORD=$CI_JOB_TOKEN
+    - trivy -f json -o vulnerability_analysis.json --exit-code 1 $COMMIT_IMAGE_TAG
+  artifacts:
+    paths:
+      - vulnerability_analysis.json
+
+##### deploy #####
 
 dockerhub-deploy:
   stage: deploy
@@ -707,6 +730,7 @@ pages:
     - readthedocs
     - coverage
     - analyse
+    - vulnerability-analysis
   script:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
@@ -715,7 +739,8 @@ pages:
     - cp -r cov_build/ccov/all-merged public/coverage
     - cp -r report/* public/code_analysis
     - cp -r doc/build public/rtd
-    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
+    - cp -r vulnerability_analysis.json public/vulnerability_analysis.json
+    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
   artifacts:
     paths:
       - public
