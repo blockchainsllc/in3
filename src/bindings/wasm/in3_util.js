@@ -160,6 +160,9 @@ function toHex(val, bytes) {
                 ? BigInt(val).toString(16)
                 : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
             )
+    else if (typeof val === 'boolean')
+        hex = (val.toString() === 'true' ? 1 : 0).toString(16)
+
     else if (typeof val === 'number' || typeof val === 'bigint')
         hex = val.toString(16)
     else if (val && val._isBigNumber) // BigNumber
