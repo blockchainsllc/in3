@@ -424,7 +424,7 @@ in3_t* in3_for_chain(chain_id_t chain_id) {
   // initialize random with the timestamp (in nanoseconds) as seed
   struct timeval te;
   gettimeofday(&te, NULL);
-  _srand(te.tv_sec * 1000000LL + te.tv_usec);
+  in3_srand(te.tv_sec * 1000000LL + te.tv_usec);
 
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));

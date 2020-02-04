@@ -248,7 +248,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 
   // create random seed
   char seed[67];
-  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
+  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL));
 
   sb_t* in3_sec = sb_new("{");
   if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
@@ -498,7 +498,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   // we want ot make sure this loop is run only max 10xthe number of requested nodes
   for (int i = 0; added < filled_len && i < filled_len * 10; i++) {
     // pick a random number
-    r = _rand() % total_weight;
+    r = in3_rand(NULL) % total_weight;
 
     // find the first node matching it.
     current = found;

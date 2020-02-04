@@ -301,12 +301,11 @@ void mem_reset(int cnt) {
   mem_tracker = NULL;
 }
 
-void in3_time_set_func(time_func fn) {
-  in3_time_fn = fn;
-}
-
-uint64_t in3_time(void* t) {
-  return in3_time_fn(t);
-}
+void     in3_set_func_time(time_func fn) { in3_time_fn = fn; }
+uint64_t in3_time(void* t) { return in3_time_fn(t); }
+void     in3_set_func_rand(rand_func fn) { in3_rand_fn = fn; }
+int      in3_rand(void* s) { return in3_rand_fn(s); }
+void     in3_set_func_srand(srand_func fn) { in3_srand_fn = fn; }
+void     in3_srand(unsigned int s) { return in3_srand_fn(s); }
 
 #endif /* TEST */
