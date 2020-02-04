@@ -219,3 +219,46 @@ Response:
   "result": "0x1Fe2E9bf29aa1938859Af64C413361227d04059a"
 }
 ```
+
+
+### in3_ens
+
+resolves a ens-name.
+the domain names consist of a series of dot-separated labels. Each label must be a valid normalised label as described in [UTS46](https://unicode.org/reports/tr46/) with the options `transitional=false` and `useSTD3AsciiRules=true`. For Javascript implementations, a [library](https://www.npmjs.com/package/idna-uts46) is available that normalises and checks names.
+
+Parameters:
+
+1. `name`: string - the domain name UTS46 compliant string.
+2. `field`: string - the required data, which could be
+    - `addr` - the address ( default )
+    - `resolver` - the address of the resolver
+    - `hash` - the namehash 
+    - `owner` - the owner of the domain
+
+
+
+
+Returns:
+
+the address-string using the upper/lowercase hex characters.
+
+Request:
+
+```js
+{
+    "method":"in3_ens",
+    "params":[
+        "cryptokitties.eth",
+        "addr"
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": "0x06012c8cf97bead5deae237070f9587f8e7a266d"
+}
+```

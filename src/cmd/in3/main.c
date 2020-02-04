@@ -79,7 +79,10 @@ void show_help(char* name) {
   printf("Usage: %s <options> method <params> ... \n\
 \n\
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
+-a             max number of attempts before giving up (default 5)\n\
+-rc            number of request per try (default 1)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
+-md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
 -eth           converts the result (as wei) to ether.\n\
 -l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
@@ -142,6 +145,9 @@ ecrecover <msg> <signature>\n\
 \n\
 key <keyfile>\n\
   reads the private key from JSON-Keystore file and returns the private key.\n\
+\n\
+in3_ens <domain> <field>\n\
+  resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
 \n",
          name);
 }
@@ -326,8 +332,8 @@ bytes_t readFile(FILE* f) {
     len += r;
     if (feof(f)) break;
     size_t new_alloc = allocated * 2 + 1;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
   return bytes(buffer, len);
@@ -377,6 +383,13 @@ void set_chain_id(in3_t* c, char* id) {
     c->chains[3].nodelist[0].url = id;
   } else
     c->chain_id = getchain_id(id);
+  if (c->chain_id == 0xFFFFL) {
+    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    if (chain->nodelist_upd8_params) {
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
+    }
+  }
 }
 
 // prepare a eth_call or eth_sendTransaction
@@ -656,6 +669,8 @@ int main(int argc, char* argv[]) {
       c->replace_latest_block = atoll(argv[++i]);
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
+    else if (strcmp(argv[i], "-md") == 0)
+      c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->keep_in3 = true;
     else if (strcmp(argv[i], "-to") == 0)
@@ -673,6 +688,10 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-rc") == 0)
+      c->request_count = atoi(argv[++i]);
+    else if (strcmp(argv[i], "-a") == 0)
+      c->max_attempts = atoi(argv[++i]);
     else if (strcmp(argv[i], "-name") == 0)
       name = argv[++i];
     else if (strcmp(argv[i], "-validators") == 0)
