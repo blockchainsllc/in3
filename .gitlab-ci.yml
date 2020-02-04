@@ -162,7 +162,7 @@ java:
 # ##### test ######
 
 coverage:
-  stage: test
+  stage: analysis
   image: silkeh/clang:dev
   tags:
     - short-jobs
