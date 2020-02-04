@@ -204,7 +204,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->chain_id             = chain_id ? chain_id : ETH_CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
   c->finality             = 0;
-  c->max_attempts         = 3;
+  c->max_attempts         = 5;
   c->max_block_cache      = 0;
   c->max_code_cache       = 0;
   c->max_verified_hashes  = 5;

@@ -68,6 +68,8 @@ args=(
  '-q[quiet no debug output]'
  '-ri[read response from stdin]'
  '-ro[write raw response to stdout]'
+ '-a[max number of attempts before giving up (default 5)]:attempts:(1 2 3 4 5 6 7 8 9)'
+ '-rc[number of request per try (default 1)]:requestCount:(1 2 3 4 5 6 7 8 9)'
 
  ':method:{_describe command subcmds}'
  ':arg1:{_describe command sig_in3 -- sig_erc20 -- sig_ms}'
