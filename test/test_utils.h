@@ -69,6 +69,15 @@ static inline uint64_t mock_time(void* t) {
   return now;
 }
 
+static inline int mock_rand(void* s) {
+  static uint64_t now;
+  if (s)
+    now = *(int*) s;
+  else
+    now += 1;
+  return now;
+}
+
 #ifdef __cplusplus
 }
 #endif
