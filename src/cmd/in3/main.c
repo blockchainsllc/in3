@@ -378,13 +378,11 @@ uint64_t getchain_id(char* name) {
 
 // set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
-  if (strstr(id, "://")) { // its a url
-    c->chain_id                  = 0xFFFFL;
-    c->chains[3].nodelist[0].url = id;
-  } else
-    c->chain_id = getchain_id(id);
+  c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
   if (c->chain_id == 0xFFFFL) {
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    if (strstr(id, "://")) // its a url
+      chain->nodelist[0].url = id;
     if (chain->nodelist_upd8_params) {
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
@@ -811,14 +809,14 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "in3_weights") == 0) {
     uint64_t     now   = _time();
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
-    printf("   : %40s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
+    printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
     for (int i = 0; i < chain->nodelist_length; i++) {
       in3_node_weight_t* weight      = chain->weights + i;
       in3_node_t*        node        = chain->nodelist + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
       if (blacklisted) printf("\033[31m");
-      printf("%2i   %40s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight);
+      printf("%2i   %45s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight);
       if (blacklisted) printf("\033[0m");
       printf("\n");
     }
