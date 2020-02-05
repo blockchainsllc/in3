@@ -218,7 +218,7 @@ valgrind:
     - make
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > test/suppress.valgrind
     - cd test
-    - for f in test*; do valgrind $VALGRIND_OPTS $f ; done
+    - for f in test*; do valgrind $VALGRIND_OPTS $(pwd)/$f ; done
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
