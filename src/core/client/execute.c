@@ -272,7 +272,7 @@ static void blacklist_node(node_match_t* node_weight) {
   }
 }
 
-static uint16_t update_waittime(uint64_t current_blk, uint64_t nodelist_block, uint8_t repl_latest, uint16_t avg_blktime) {
+static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
   if (nodelist_block > current_blk)
     // misbehaving node, so allow to update right away and it'll get blacklisted due to the expected block mechanism
     return 0;
