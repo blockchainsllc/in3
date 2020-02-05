@@ -109,7 +109,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
     case ETH_CHAIN_ID_MAINNET: return 15;
     case ETH_CHAIN_ID_KOVAN: return 6;
     case ETH_CHAIN_ID_GOERLI: return 15;
-    default: return 0;
+    default: return 5;
   }
 }
 
