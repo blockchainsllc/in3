@@ -126,6 +126,13 @@ Default-Value: `-DIN3_STAGING=OFF`
 Default-Value: `-DJAVA=OFF`
 
 
+#### PKG_CONFIG_EXECUTABLE
+
+  pkg-config executable
+
+Default-Value: `-DPKG_CONFIG_EXECUTABLE=/usr/local/bin/pkg-config`
+
+
 #### POA
 
   support POA verification including validatorlist updates

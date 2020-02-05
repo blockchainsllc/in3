@@ -298,7 +298,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv*, jobject);
  * Method:    init
  * Signature: ()J
  */
-JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject);
+JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject, jlong);
 /*
  * Class:     in3_IN3
  * Method:    initcache

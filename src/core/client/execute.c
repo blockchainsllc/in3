@@ -75,6 +75,10 @@ static void response_free(in3_ctx_t* ctx) {
   ctx->nodes            = NULL;
   if (ctx->requests_configs) {
     for (int i = 0; i < ctx->len; i++) {
+      if (ctx->requests_configs[i].verified_hashes) {
+        _free(ctx->requests_configs[i].verified_hashes);
+        ctx->requests_configs[i].verified_hashes = NULL;
+      }
       if (ctx->requests_configs[i].signers_length) {
         if (ctx->requests_configs[i].signers) {
           _free(ctx->requests_configs[i].signers);
@@ -101,7 +105,7 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
-static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request) {
+static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
   const in3_t* c = ctx->client;
 
   conf->chain_id     = c->chain_id;
@@ -114,8 +118,11 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
     conf->verification   = VERIFICATION_PROOF;
 
     if (c->signature_count) {
-      node_match_t*   signer_nodes = NULL;
-      const in3_ret_t res          = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, c->node_props | NODE_PROP_SIGNER);
+      node_match_t*     signer_nodes = NULL;
+      in3_node_filter_t filter       = NODE_FILTER_INIT;
+      filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), key("signer_nodes"));
+      filter.props                   = c->node_props | NODE_PROP_SIGNER;
+      const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, filter);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       const int node_count  = ctx_nodes_len(signer_nodes);
@@ -128,6 +135,21 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
         w                     = w->next;
       }
       in3_ctx_free_nodes(signer_nodes);
+
+      if (chain->verified_hashes) {
+        conf->verified_hashes_length = ctx->client->max_verified_hashes;
+        for (int i = 0; i < conf->verified_hashes_length; i++) {
+          if (!chain->verified_hashes[i].block_number) {
+            conf->verified_hashes_length = i;
+            break;
+          }
+        }
+        if (conf->verified_hashes_length) {
+          conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
+          for (int i = 0; i < conf->verified_hashes_length; i++)
+            conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
+        }
+      }
     }
   }
 
@@ -250,11 +272,15 @@ static void blacklist_node(node_match_t* node_weight) {
   }
 }
 
-static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3) {
+static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
   if (!ctx->client->auto_update_list) return;
 
-  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block)
-    chain->needs_update = true;
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
+    if (chain->nodelist_upd8_params == NULL)
+      chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
+    memcpy(chain->nodelist_upd8_params->node, node->node->address->data, node->node->address->len);
+    chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
+  }
 
   if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
     chain->whitelist->needs_update = true;
@@ -304,7 +330,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
 
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-            check_autoupdate(ctx, chain, vc.proof);
+            check_autoupdate(ctx, chain, vc.proof, node);
 
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
@@ -583,10 +609,12 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
-        in3_node_props_t props = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
-        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, props)) == IN3_OK) {
+        in3_node_filter_t filter = NODE_FILTER_INIT;
+        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), key("data_nodes"));
+        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
+        if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
-            if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i])) < 0)
+            if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i], chain)) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);
           }
         } else

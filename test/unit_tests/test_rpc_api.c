@@ -82,7 +82,7 @@ static void test_in3_config() {
            \"contract\":\"0x1234567890123456789012345678901234567890\",\
            \"whiteListContract\":\"0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab\",\
            \"registryId\":\"0x3456789012345678901234567890123456789012345678901234567890ffff\",\
-           \"needsUpdate\":0,\
+           \"needsUpdate\":false,\
            \"nodeList\":[{\
               \"url\":\"#1\",\
               \"props\":\"0xffff\",\
@@ -119,7 +119,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL_STRING("1234567890123456789012345678901234567890", tmp);
   bytes_to_hex(chain->registry_id, 32, tmp);
   TEST_ASSERT_EQUAL_STRING("003456789012345678901234567890123456789012345678901234567890ffff", tmp);
-  TEST_ASSERT_EQUAL(false, chain->needs_update);
+  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(1, chain->nodelist_length);
 
   bytes_to_hex(chain->whitelist->contract, 20, tmp);
@@ -141,7 +141,7 @@ static void test_in3_client_rpc() {
   c->signature_count  = 0;
   c->max_attempts     = 1;
   for (int i = 0; i < c->chains_length; i++)
-    c->chains[i].needs_update = false;
+    c->chains[i].nodelist_upd8_params = NULL;
 
   // Error response string
   add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
@@ -239,29 +239,6 @@ static void test_in3_client_chain() {
   in3_free(c);
 }
 
-static void test_in3_client_configure() {
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
-
-  // proof
-  in3_configure(c, "{\"proof\":\"standard\"}");
-  TEST_ASSERT_EQUAL(PROOF_STANDARD, c->proof);
-
-  // rpc
-  in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
-  TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
-  TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chain_id);
-  TEST_ASSERT_EQUAL(1, c->request_count);
-  TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist->url);
-
-  // missing registryId and contract
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
-
-  // bad registryId
-  TEST_ASSERT_EQUAL(IN3_EINVAL, in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}"));
-
-  in3_free(c);
-}
-
 static void test_in3_client_context() {
   in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
   in3_ctx_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
@@ -291,7 +268,7 @@ static void test_in3_client_context() {
   json              = parse_json("{\"error\":{\"msg\":\"Unknown\",\"id\":\"0xf1\"}}");
   ctx->responses[0] = json->result;
   TEST_ASSERT_EQUAL(IN3_ERPC, ctx_check_response_error(ctx, 0));
-  TEST_ASSERT_EQUAL_STRING("{\"msg\":\"Unknown\",\"id\":\"0xf1\"}\nUnknown", ctx->error);
+  TEST_ASSERT_EQUAL_STRING("{\"msg\":\"Unknown\",\"id\":\"0xf1\"}:Unknown", ctx->error);
   json_free(json);
   free(ctx->responses);
   ctx->responses = NULL;
@@ -299,7 +276,7 @@ static void test_in3_client_context() {
   // Test getter/setter
   TEST_ASSERT_EQUAL(IN3_ERPC, ctx_set_error(ctx, "RPC failure", IN3_ERPC));
   TEST_ASSERT_EQUAL(IN3_ERPC, ctx_get_error(ctx, 0));
-  TEST_ASSERT_EQUAL_STRING("RPC failure\n{\"msg\":\"Unknown\",\"id\":\"0xf1\"}\nUnknown", ctx->error);
+  TEST_ASSERT_EQUAL_STRING("RPC failure:{\"msg\":\"Unknown\",\"id\":\"0xf1\"}:Unknown", ctx->error);
 
   ctx_free(ctx);
   in3_free(c);
@@ -318,7 +295,6 @@ int main() {
   RUN_TEST(test_in3_config);
   RUN_TEST(test_in3_client_rpc);
   RUN_TEST(test_in3_client_chain);
-  RUN_TEST(test_in3_client_configure);
   RUN_TEST(test_in3_client_context);
   return TESTS_END();
 }

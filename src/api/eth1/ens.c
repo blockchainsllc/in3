@@ -57,18 +57,18 @@ static in3_ret_t exec_call(bytes_t calldata, char* to, in3_ctx_t* parent, bytes_
   }
 }
 
-static void ens_hash(char* domain, bytes32_t dst) {
-  uint8_t hash[64];
-  bytes_t input = bytes(NULL, 0), root = bytes(hash, 64);
-  int     end = end = strlen(domain);
-  memset(hash, 0, 32);
-  for (int pos = next_token(domain, end - 1);; end = pos, pos = next_token(domain, pos - 1)) {
-    input = bytes((uint8_t*) (domain + pos + 1), end - pos - 1);
-    sha3_to(&input, hash + 32);
-    sha3_to(&root, hash);
-    if (pos < 0) break;
-  }
-  memcpy(dst, hash, 32);
+static void ens_hash(const char* domain, bytes32_t dst) {
+  uint8_t hash[64];                                                                            // we use the first 32 bytes for the root and the 2nd for the name so we can combine them without copying
+  bytes_t input = bytes(NULL, 0), root = bytes(hash, 64);                                      // bytes-strcuts for root
+  int     end = strlen(domain);                                                                // we start with the last token
+  memset(hash, 0, 32);                                                                         // clear root
+  for (int pos = next_token(domain, end - 1);; end = pos, pos = next_token(domain, pos - 1)) { // we start with the last
+    input = bytes((uint8_t*) (domain + pos + 1), end - pos - 1);                               // and iterate through the tokens
+    sha3_to(&input, hash + 32);                                                                // hash the name
+    sha3_to(&root, hash);                                                                      // hash ( root + name )
+    if (pos < 0) break;                                                                        //  last one?
+  }                                                                                            //
+  memcpy(dst, hash, 32);                                                                       // we only the first 32 bytes - the root
 }
 
 in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
@@ -130,7 +130,7 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
   } else
     switch (parent->client->chain_id) {
       case ETH_CHAIN_ID_MAINNET:
-        registry_address = "0x314159265dD8dbb310642f98f50C066173C1259b";
+        registry_address = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
         break;
       default:
         return ctx_set_error(parent, "There is no ENS-contract for the current chain", IN3_ENOTSUP);

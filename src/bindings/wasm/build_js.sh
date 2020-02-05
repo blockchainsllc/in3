@@ -19,7 +19,7 @@ cp "$1/demo.html" .
 
 # create package
 mkdir -p ../module
-cp ../../LICENSE "$1/package.json" $1/README.md ../module/
+cp ../../LICENSE.AGPL "$1/package.json" $1/README.md ../module/
 cp in3.js  ../module/index.js
 cp "$1/in3.d.ts"  ../module/index.d.ts
 if [ -e in3w.wasm ]

@@ -16,6 +16,7 @@ static char* USED_KEYS[] = {
     "nodes",
     "lastBlockNumber",
     "lastNodeList",
+    "lastWhiteList",
     "capacity",
     "index",
     "deposit",
