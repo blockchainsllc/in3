@@ -46,9 +46,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
-//static char* ctx_name(in3_ctx_t* ctx) {
-//  return d_get_stringk(ctx->requests[0], K_METHOD);
-//}
+
+#define WAIT_TIME_CAP 3600
 
 static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
@@ -274,15 +273,13 @@ static void blacklist_node(node_match_t* node_weight) {
 
 static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
   if (nodelist_block > current_blk)
-    // misbehaving node, so allow to update right away and it'll get blacklisted due to the expected block mechanism
+    // misbehaving node, so allow to update right away and it'll get blacklisted due to the exp_last_block mechanism
     return 0;
-  else if (nodelist_block == current_blk)
-    return repl_latest * avg_blktime;
 
   uint64_t diff = current_blk - nodelist_block;
   if (diff >= repl_latest)
     return 0;
-  return (repl_latest - diff) * avg_blktime;
+  return min((repl_latest - diff) * avg_blktime, WAIT_TIME_CAP);
 }
 
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
