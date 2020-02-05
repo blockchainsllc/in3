@@ -63,7 +63,7 @@ extern "C" {
 static inline uint64_t mock_time(void* t) {
   static uint64_t now;
   if (t)
-    now = *(uint64_t*) t;
+    now = (*(uint64_t*) t) ? *(uint64_t*) t : now;
   else
     now += rand() % 100;
   return now;
