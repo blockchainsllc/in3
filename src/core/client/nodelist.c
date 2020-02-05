@@ -422,13 +422,14 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
       chain->nodelist_upd8_params = NULL;
     } else if (postpone_update(chain)) {
       in3_log_warn("Update postponed until nodelist change block is atleast %u blocks old", ctx->client->replace_latest_block);
-      return IN3_WAITING;
+      goto SKIP_UPDATE;
     }
     // now update the nodeList
     res = update_nodelist(ctx->client, chain, ctx);
     if (res < 0) return res;
   }
 
+SKIP_UPDATE:
   // do we need to update the whiitelist?
   if (chain->whitelist                                                                         // only if we have a whitelist
       && (chain->whitelist->needs_update || update || ctx_find_required(ctx, "in3_whiteList")) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result
