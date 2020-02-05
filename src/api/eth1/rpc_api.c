@@ -257,7 +257,6 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
 
   uint8_t sig[65];
   bytes_t sig_bytes = bytes(sig, 65);
-  printf("SIGNER = %d\n", pk->len);
   if (pk->len == 20)
     ctx->client->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, data, *pk, sig);
   else if (!pk->data)
