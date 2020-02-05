@@ -48,6 +48,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+
+#define ETH_SIGN_PREFIX "\x19" \
+                        "Ethereum Signed Message:\n%i"
+
 #define RESPONSE_START()                                                             \
   do {                                                                               \
     *response = _malloc(sizeof(in3_response_t));                                     \
@@ -208,9 +212,7 @@ static in3_ret_t in3_ecrecover(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   bytes_t   pubkey_bytes = {.len = 64, .data = ((uint8_t*) &pub) + 1};
   if (strcmp(sig_type, "eth_sign") == 0) {
     char*     tmp = alloca(msg.len + 30);
-    const int l   = sprintf(tmp, "\x19"
-                               "Ethereum Signed Message:\n%i",
-                          msg.len);
+    const int l   = sprintf(tmp, ETH_SIGN_PREFIX, msg.len);
     memcpy(tmp + l, msg.data, msg.len);
     msg.data = (uint8_t*) tmp;
     msg.len += l;
@@ -237,18 +239,17 @@ static in3_ret_t in3_ecrecover(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   return IN3_OK;
 }
 static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
-  bytes_t  data     = d_to_bytes(d_get_at(params, 0));
-  bytes_t* pk       = d_get_bytes_at(params, 1);
-  char*    sig_type = d_get_string_at(params, 2);
+  bytes_t        data     = d_to_bytes(d_get_at(params, 0));
+  const bytes_t* pk       = d_get_bytes_at(params, 1);
+  char*          sig_type = d_get_string_at(params, 2);
   if (!sig_type) sig_type = "raw";
+
   if (!pk) return ctx_set_error(ctx, "Invalid sprivate key! must be 32 bytes long", IN3_EINVAL);
   if (!data.data) return ctx_set_error(ctx, "Missing message", IN3_EINVAL);
 
   if (strcmp(sig_type, "eth_sign") == 0) {
-    char* tmp = alloca(data.len + 30);
-    int   l   = sprintf(tmp, "\x19"
-                         "Ethereum Signed Message:\n%i",
-                    data.len);
+    char*     tmp = alloca(data.len + 30);
+    const int l   = sprintf(tmp, ETH_SIGN_PREFIX, data.len);
     memcpy(tmp + l, data.data, data.len);
     data.data = (uint8_t*) tmp;
     data.len += l;
