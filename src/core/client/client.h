@@ -61,8 +61,7 @@
 #define ETH_CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
 #define ETH_CHAIN_ID_VOLTA 0x12046  /**< chain_id for volta */
 #define ETH_CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
-
-#define DEF_REPL_LATEST_BLK 6
+#define DEF_REPL_LATEST_BLK 6       /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
