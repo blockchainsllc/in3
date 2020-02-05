@@ -60,15 +60,15 @@ extern "C" {
     TEST_LOG_INTERNAL(#t, "Completed in %fs\n", TIMING_GET()); \
   } while (0)
 
-// if t is NULL, adds a 2 digit random number to previously returned value and returns it
+// if t is NULL, adds 10 to previously returned value and returns it
 // otherwise expects t to point to a uint64_t value; if this value is non-zero the same value is returned
 // otherwise the previously returned value is returned
 static inline uint64_t mock_time(void* t) {
-  static uint64_t now;
+  static uint64_t now = 0;
   if (t)
     now = (*(uint64_t*) t) ? *(uint64_t*) t : now;
   else
-    now += rand() % 100;
+    now += 10;
   return now;
 }
 
