@@ -55,7 +55,7 @@ static srand_func in3_srand_fn = srand_zephyr;
 #else  /* __ZEPHYR__ */
 static uint64_t time_libc(void* t) {
   UNUSED_VAR(t);
-  return time(NULL);
+  return time(t);
 }
 static int rand_libc(void* s) {
   UNUSED_VAR(s);
