@@ -209,25 +209,28 @@ valgrind:
   allow_failure: true
   tags:
     - short-jobs
+  variables:
+    VALGRIND_OPTS: "--leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
   script:
     - mkdir _build
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
-    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_core
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_abi
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_bitset
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_cache
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_ethapi
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_filter
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_key_hash
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_logging
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_nodelist
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_request
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_rpc_api
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_sign
-    - valgrind --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind /builds/in3/c/in3-core/_build/test/test_verify_eth_getLog
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > test/suppress.valgrind
+    - cd test
+    - valgrind $VALGRIND_OPTS test_core
+    - valgrind $VALGRIND_OPTS test_abi
+    - valgrind $VALGRIND_OPTS test_bitset
+    - valgrind $VALGRIND_OPTS test_cache
+    - valgrind $VALGRIND_OPTS test_ethapi
+    - valgrind $VALGRIND_OPTS test_filter
+    - valgrind $VALGRIND_OPTS test_key_hash
+    - valgrind $VALGRIND_OPTS test_logging
+    - valgrind $VALGRIND_OPTS test_nodelist
+    - valgrind $VALGRIND_OPTS test_request
+    - valgrind $VALGRIND_OPTS test_rpc_api
+    - valgrind $VALGRIND_OPTS test_sign
+    - valgrind $VALGRIND_OPTS test_verify_eth_getLog
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
