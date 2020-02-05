@@ -218,19 +218,7 @@ valgrind:
     - make
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > test/suppress.valgrind
     - cd test
-    - valgrind $VALGRIND_OPTS test_core
-    - valgrind $VALGRIND_OPTS test_abi
-    - valgrind $VALGRIND_OPTS test_bitset
-    - valgrind $VALGRIND_OPTS test_cache
-    - valgrind $VALGRIND_OPTS test_ethapi
-    - valgrind $VALGRIND_OPTS test_filter
-    - valgrind $VALGRIND_OPTS test_key_hash
-    - valgrind $VALGRIND_OPTS test_logging
-    - valgrind $VALGRIND_OPTS test_nodelist
-    - valgrind $VALGRIND_OPTS test_request
-    - valgrind $VALGRIND_OPTS test_rpc_api
-    - valgrind $VALGRIND_OPTS test_sign
-    - valgrind $VALGRIND_OPTS test_verify_eth_getLog
+    - for f in test*; do valgrind $VALGRIND_OPTS $f ; done
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
