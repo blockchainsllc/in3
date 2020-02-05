@@ -265,7 +265,7 @@ static void execute(in3_t* c, FILE* f) {
       // time to execute
       in3_ctx_t* ctx = ctx_new(c, sb->data);
       if (ctx->error)
-        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", 1, ctx->error);
+        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
         in3_ret_t ret = in3_send_ctx(ctx);
         uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
@@ -291,7 +291,7 @@ static void execute(in3_t* c, FILE* f) {
             _free(r);
           }
         } else
-          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":\"%s\"}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
       ctx_free(ctx);
       first   = 0;
