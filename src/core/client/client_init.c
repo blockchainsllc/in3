@@ -641,6 +641,11 @@ char* in3_configure(in3_t* c, const char* config) {
     }
   }
 
+  if (c->signature_count && c->chain_id != ETH_CHAIN_ID_LOCAL && !c->replace_latest_block) {
+    printf("signatureCount > 0 without replaceLatestBlock is bound to fail; using default (" STR(DEF_REPL_LATEST_BLK) ")\n");
+    c->replace_latest_block = DEF_REPL_LATEST_BLK;
+  }
+
 cleanup:
   json_free(cnf);
   return res;

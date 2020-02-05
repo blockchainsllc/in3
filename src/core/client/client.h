@@ -62,6 +62,8 @@
 #define ETH_CHAIN_ID_VOLTA 0x12046  /**< chain_id for volta */
 #define ETH_CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
 
+#define DEF_REPL_LATEST_BLK 6
+
 /**
  * type for a chain_id.
  */
@@ -631,7 +633,7 @@ in3_chain_t* in3_find_chain(
  * configures the clent based on a json-config.
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
- * 
+ * Returns NULL on success, and error string on failure (to be freed by caller) - in which case the client state is undefined
  */
 char* in3_configure(
     in3_t*      c,     /**< the incubed client */

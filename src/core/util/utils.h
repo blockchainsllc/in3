@@ -64,6 +64,10 @@
  */
 #define IS_APPROX(n1, n2, err) ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
 
+/** simple macro to stringify other macro defs */
+#define STR_IMPL_(x) #x
+#define STR(x) STR_IMPL_(x)
+
 /** converts the bytes to a unsigned long (at least the last max len bytes) */
 uint64_t bytes_to_long(const uint8_t* data, int len);
 
