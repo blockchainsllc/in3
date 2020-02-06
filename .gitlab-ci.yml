@@ -11,6 +11,16 @@ stages:
   - deploy
   - release
 
+test_qemu:
+  image: docker.io/zephyrprojectrtos/zephyr-build:latest
+  stage: build
+  allow_failure: true
+  script:
+    - git clone https://github.com/zephyrproject-rtos/zephyr --branch v2.0.0
+    - export ZEPHYR_BASE=/workdir/zephyr
+    - west build -b qemu_cortex_m3 qemu
+    - ./zephyr/scripts/sanitycheck -N -i -j 4 -T qemu
+
 .conanbuild:
   stage: build
   tags:
@@ -219,15 +229,7 @@ test_c:
       - testbuild/test
       - Testing
 
-test_qemu:
-  image: docker.io/zephyrprojectrtos/zephyr-build:latest
-  stage: test
-  allow_failure: true
-  script:
-    - git clone https://github.com/zephyrproject-rtos/zephyr --branch v2.0.0
-    - export ZEPHYR_BASE=/workdir/zephyr
-    - west build -b qemu_cortex_m3 qemu
-    - ./zephyr/scripts/sanitycheck -N -i -j 4 -T qemu
+
 
 #test_evm:
 #  image: docker.slock.it/build-images/cmake:gcc8
