@@ -375,7 +375,7 @@ code_quality:
   artifacts:
     paths: [gl-code-quality-report.json]
   variables:
-    CODE_QUALITY_IMAGE: "registry.example.com/codequality-fork:latest"
+    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
 
 vulnerabilities:
   stage: analysis
