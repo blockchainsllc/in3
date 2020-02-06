@@ -364,6 +364,19 @@ docker:
     - docker push $COMMIT_IMAGE_TAG
 
 ##### analyse #####
+
+include:
+  - template: Code-Quality.gitlab-ci.yml
+
+code_quality:
+  stage: analysis
+  tags:
+    - short-jobs
+  artifacts:
+    paths: [gl-code-quality-report.json]
+  variables:
+    CODE_QUALITY_IMAGE: "registry.example.com/codequality-fork:latest"
+
 vulnerabilities:
   stage: analysis
   tags:
