@@ -376,8 +376,8 @@ code_quality:
     paths: [gl-code-quality-report.json]
   variables:
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
-
-vulnerabilities:
+    REPORT_STDOUT: STDOUT
+              
   stage: analysis
   tags:
     - short-jobs
