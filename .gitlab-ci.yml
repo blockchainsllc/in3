@@ -174,7 +174,7 @@ coverage:
     paths:
       - cov_build/ccov/all-merged
 
-analyse:
+clangcheck:
   stage: analysis
   image: docker.slock.it/build-images/cmake:clang9
   allow_failure: false
@@ -364,7 +364,7 @@ docker:
     - docker push $COMMIT_IMAGE_TAG
 
 ##### analyse #####
-vulnerability-analysis:
+vulnerabilities:
   stage: analysis
   tags:
     - short-jobs
@@ -741,7 +741,7 @@ pages:
     - arm7
     - readthedocs
     - coverage
-    - analyse
+    - clangcheck
     - vulnerability-analysis
   script:
     - mkdir -p public/lib
