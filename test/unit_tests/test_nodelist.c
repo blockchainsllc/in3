@@ -145,13 +145,20 @@ static in3_t* in3_init_test(chain_id_t chain) {
   return in3;
 }
 
-static void test_timing() {
-  in3_set_func_time(mock_time);
-  in3_set_func_rand(mock_rand);
-
+// Scenario 1:
+// Begin with 3 nodes in first nodeList update (always taken from a boot node) which happened at block 87989012 (i.e. `lastBlockNumber`).
+// After 200 secs, `eth_blockNumber` returns 87989050 and reports a nodeList update happened at 87989048 (i.e. `lastNodeList`).
+// Since, we have set `replace_latest_block` to default (i.e. 6), we postpone the update for `avg_block_time * 6 - (87989050 - 87989048)) = 60` seconds.
+// A request now shouldn't trigger a nodeList update. We then go to the future (i.e. to expected update time) and run `eth_blockNumber`
+// again; this should trigger a nodeList update.
+static void test_nodelist_update_1() {
   in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
+
+  // start time
+  uint64_t t = 1;
+  in3_time(&t);
 
   // begin with 3 nodes, i.e. one node more than the usual boot nodes
   add_response("in3_nodeList",
@@ -196,7 +203,7 @@ static void test_timing() {
                NULL);
 
   // fast forward to future, after a recent nodeList update (i.e. 2 blocks back)
-  uint64_t t = 200;
+  t = 200;
   in3_time(&t);
   add_response("eth_blockNumber",
                "[]",
@@ -222,7 +229,7 @@ static void test_timing() {
 
   // update must be postponed until block is at least replace_latest_block old
   t = 0;
-  t = in3_time(&t) + (15 * (c->replace_latest_block - 2)); // store expected update time
+  t = in3_time(&t) + (chain->avg_block_time * (c->replace_latest_block - 2)); // store expected update time
   TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->timestamp, t);
   add_response("eth_blockNumber",
                "[]",
@@ -230,13 +237,14 @@ static void test_timing() {
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989051,"
+               "  \"lastNodeList\": 87989048,"
                "  \"execTime\": 59,"
                "  \"rpcTime\": 59,"
                "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
+               "  \"currentBlock\": 87989053,"
                "  \"version\": \"2.0.0\""
                "}");
+
   // another request must not trigger the nodeList update just yet
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
@@ -307,7 +315,9 @@ static void test_timing() {
  */
 int main() {
   TESTS_BEGIN();
+  in3_set_func_time(mock_time);
+  in3_set_func_rand(mock_rand);
   RUN_TEST(test_capabilities);
-  RUN_TEST(test_timing);
+  RUN_TEST(test_nodelist_update_1);
   return TESTS_END();
 }
