@@ -12,7 +12,6 @@ stages:
 
 qemu:
   image: docker.slock.it/build-images/cmake:zephyr
-  pull: always
   stage: build
   script:
     - west build -b qemu_cortex_m3 qemu
