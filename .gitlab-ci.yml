@@ -3,7 +3,6 @@ variables:
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
 
 stages:
-  - valgrind
   - build
   - bindings
   - test
@@ -210,7 +209,7 @@ valgrind:
   tags:
     - short-jobs
   variables:
-    VALGRIND_OPTS: "--leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+    VALGRIND_OPTS: "-q --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
   script:
     - mkdir _build
     - cd _build
