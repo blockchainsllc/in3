@@ -11,14 +11,12 @@ stages:
   - release
 
 test_qemu:
-  image: docker.io/zephyrprojectrtos/zephyr-build:latest
+  image: docker.slock.it/build-images/cmake:zephyr
   stage: build
   allow_failure: true
   script:
-    - git clone https://github.com/zephyrproject-rtos/zephyr --branch v2.0.0
-    - export ZEPHYR_BASE=/workdir/zephyr
     - west build -b qemu_cortex_m3 qemu
-    - ./zephyr/scripts/sanitycheck -N -i -j 4 -T qemu
+    - ./zephyr/scripts/sanitycheck -N -i -vv -j 8 -T qemu
 
 .conanbuild:
   stage: build
