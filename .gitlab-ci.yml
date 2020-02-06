@@ -377,7 +377,8 @@ code_quality:
   variables:
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
     REPORT_STDOUT: STDOUT
-              
+
+vulnerabilities:
   stage: analysis
   tags:
     - short-jobs
