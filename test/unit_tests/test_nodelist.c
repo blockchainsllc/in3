@@ -627,6 +627,163 @@ static void test_nodelist_update_3() {
   in3_free(c);
 }
 
+// Scenario 4: node lies about nodeList update by reporting a newer lastNodeList, but gives old nodeList when asked
+// Begin with 3 nodes in first nodeList update (always taken from a boot node) which happened at block 87989012 (i.e. `lastBlockNumber`).
+// After 200 secs, `eth_blockNumber` returns 87989050 and lies to us saying that a nodeList update happened at 87989038 (i.e. `lastNodeList`).
+// A request now should trigger a nodeList update (taken from same node that reported the update). Because the node lied to us, it cannot
+// furnish a newer nodeList and still gives us an old list. This must be detected and the node should be blacklisted.
+static void test_nodelist_update_4() {
+  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  c->proof                = PROOF_NONE;
+  c->replace_latest_block = DEF_REPL_LATEST_BLK;
+
+  // start time
+  uint64_t t = 1;
+  in3_time(&t);
+
+  // reset rand to be deterministic
+  int s = 0;
+  in3_rand(&s);
+
+  // begin with 3 nodes, i.e. one node more than the usual boot nodes
+  add_response("in3_nodeList",
+               "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
+               "{"
+               " \"nodes\": [{"
+               "   \"url\": \"https://in3-v2.slock.it/mainnet/nd-1\","
+               "   \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
+               "   \"index\": 0,"
+               "   \"deposit\": \"0x2386f26fc10000\","
+               "   \"props\": \"0x6000001dd\","
+               "   \"timeout\": 3456000,"
+               "   \"registerTime\": 1576224418,"
+               "   \"weight\": 2000"
+               "  },"
+               "  {"
+               "   \"url\": \"https://in3-v2.slock.it/mainnet/nd-2\","
+               "   \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+               "   \"index\": 1,"
+               "   \"deposit\": \"0x2386f26fc10000\","
+               "   \"props\": \"0x6000001dd\","
+               "   \"timeout\": 3456000,"
+               "   \"registerTime\": 1576224531,"
+               "   \"weight\": 2000"
+               "  },"
+               "  {"
+               "   \"url\": \"https://in3-v2.slock.it/mainnet/nd-3\","
+               "   \"address\": \"0x945f75c0408c0026a3cd204d36f5e47745182fd4\","
+               "   \"index\": 2,"
+               "   \"deposit\": \"0x2386f26fc10000\","
+               "   \"props\": \"0x6000001dd\","
+               "   \"timeout\": 3456000,"
+               "   \"registerTime\": 1576224604,"
+               "   \"weight\": 2000"
+               " }],"
+               " \"contract\": \"0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f\","
+               " \"registryId\": \"0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb\","
+               " \"lastBlockNumber\": 87989012,"
+               " \"totalServers\": 3"
+               "}",
+               NULL,
+               NULL);
+
+  t = 200;
+  in3_time(&t);
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x8AD72A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989038,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
+
+  uint64_t blk = eth_blockNumber(c);
+  TEST_ASSERT_NOT_EQUAL(0, blk);
+
+  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
+  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
+
+  // reset rand to be deterministic
+  s = 0;
+  in3_rand(&s);
+
+  // any request should now trigger a nodeList update
+  // but since the node lied and cannot give us a new list it gives us the old list
+  add_response("in3_nodeList",
+               "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
+               "{"
+               " \"nodes\": [{"
+               "   \"url\": \"https://in3-v2.slock.it/mainnet/nd-1\","
+               "   \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
+               "   \"index\": 0,"
+               "   \"deposit\": \"0x2386f26fc10000\","
+               "   \"props\": \"0x6000001dd\","
+               "   \"timeout\": 3456000,"
+               "   \"registerTime\": 1576224418,"
+               "   \"weight\": 2000"
+               "  },"
+               "  {"
+               "   \"url\": \"https://in3-v2.slock.it/mainnet/nd-2\","
+               "   \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+               "   \"index\": 1,"
+               "   \"deposit\": \"0x2386f26fc10000\","
+               "   \"props\": \"0x6000001dd\","
+               "   \"timeout\": 3456000,"
+               "   \"registerTime\": 1576224531,"
+               "   \"weight\": 2000"
+               "  },"
+               "  {"
+               "   \"url\": \"https://in3-v2.slock.it/mainnet/nd-3\","
+               "   \"address\": \"0x945f75c0408c0026a3cd204d36f5e47745182fd4\","
+               "   \"index\": 2,"
+               "   \"deposit\": \"0x2386f26fc10000\","
+               "   \"props\": \"0x6000001dd\","
+               "   \"timeout\": 3456000,"
+               "   \"registerTime\": 1576224604,"
+               "   \"weight\": 2000"
+               " }],"
+               " \"contract\": \"0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f\","
+               " \"registryId\": \"0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb\","
+               " \"lastBlockNumber\": 87989012,"
+               " \"totalServers\": 3"
+               "}",
+               NULL,
+               NULL);
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x8AD734\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989012,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 9099060,"
+               "  \"version\": \"2.0.0\""
+               "}");
+  blk = eth_blockNumber(c);
+  TEST_ASSERT_NOT_EQUAL(0, blk);
+  TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
+  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+
+  bool is_blacklisted = false;
+  for (int i = 0; i < chain->nodelist_length; ++i)
+    if (chain->weights[i].blacklisted_until)
+      is_blacklisted = true;
+  TEST_ASSERT_TRUE(is_blacklisted);
+
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -639,5 +796,6 @@ int main() {
   RUN_TEST(test_nodelist_update_1);
   RUN_TEST(test_nodelist_update_2);
   RUN_TEST(test_nodelist_update_3);
+  RUN_TEST(test_nodelist_update_4);
   return TESTS_END();
 }
