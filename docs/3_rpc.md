@@ -262,3 +262,190 @@ Response:
   "result": "0x06012c8cf97bead5deae237070f9587f8e7a266d"
 }
 ```
+
+
+
+
+### in3_pk2address
+
+extracts the address from a private key.
+
+Parameters:
+
+1. `key`: hex - the 32 bytes private key as hex.
+
+Returns:
+
+the address-string.
+
+Request:
+
+```js
+{
+    "method":"in3_pk2address",
+    "params":[
+        "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": "0xdc5c4280d8a286f0f9c8f7f55a5a0c67125efcfd"
+}
+```
+
+
+### in3_pk2public
+
+extracts the public key from a private key.
+
+Parameters:
+
+1. `key`: hex - the 32 bytes private key as hex.
+
+Returns:
+
+the public key.
+
+Request:
+
+```js
+{
+    "method":"in3_pk2public",
+    "params":[
+        "0x0fd65f7da55d811634495754f27ab318a3309e8b4b8a978a50c20a661117435a"
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": "0x0903329708d9380aca47b02f3955800179e18bffbb29be3a644593c5f87e4c7fa960983f78186577eccc909cec71cb5763acd92ef4c74e5fa3c43f3a172c6de1"
+}
+```
+
+
+
+### in3_ecrecover
+
+extracts the public key and address from signature.
+
+Parameters:
+
+1. `msg`: hex - the message the signature is based on.
+2. `sig`: hex - the 65 bytes signature as hex.
+3. `sigtype`: string - the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data). Default: `raw`
+
+Returns:
+
+a object with 2 properties:
+
+- `publicKey` : hex - the 64 byte public key
+- `address` : address - the 20 byte address
+
+Request:
+
+```js
+{
+    "method":"in3_ecrecover",
+    "params":[
+        "0x487b2cbb7997e45b4e9771d14c336b47c87dc2424b11590e32b3a8b9ab327999",
+        "0x0f804ff891e97e8a1c35a2ebafc5e7f129a630a70787fb86ad5aec0758d98c7b454dee5564310d497ddfe814839c8babd3a727692be40330b5b41e7693a445b71c",
+        "hash"
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": {
+      "publicKey": "0x94b26bafa6406d7b636fbb4de4edd62a2654eeecda9505e9a478a66c4f42e504c4481bad171e5ba6f15a5f11c26acfc620f802c6768b603dbcbe5151355bbffb",
+      "address":"0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"
+   }
+}
+```
+
+### in3_signData
+
+signs the given data
+
+Parameters:
+
+1. `msg`: hex - the message to sign.
+2. `key`: hex - the key (32 bytes) or address (20 bytes) of the signer. If the address is passed, the internal signer needs to support this address.
+3. `sigtype`: string - the type of the signature data : `eth_sign` (use the prefix and hash it), `raw` (hash the raw data), `hash` (use the already hashed data). Default: `raw`
+
+Returns:
+
+a object with the following properties:
+
+- `message` : hex - original message used
+- `messageHash` : hex - the hash the signature is based on
+- `signature`: hex - the signature (65 bytes)
+- `r` : hex - the x -value of the EC-Point
+- `s` : hex - the y -value of the EC-Point
+- `v` : number - the sector (0|1) + 27
+
+Request:
+
+```js
+{
+    "method":"in3_signData",
+    "params":[
+        "0x0102030405060708090a0b0c0d0e0f",
+        "0xa8b8759ec8b59d7c13ef3630e8530f47ddb47eba12f00f9024d3d48247b62852",
+        "raw"
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": {
+      "message":"0x0102030405060708090a0b0c0d0e0f",
+      "messageHash":"0x1d4f6fccf1e27711667605e29b6f15adfda262e5aedfc5db904feea2baa75e67",
+      "signature":"0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e95792264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e1521b",
+      "r":"0xa5dea9537d27e4e20b6dfc89fa4b3bc4babe9a2375d64fb32a2eab04559e9579",
+      "s":"0x2264ad1fb83be70c145aec69045da7986b95ee957fb9c5b6d315daa5c0c3e152",
+      "v":27
+   }
+}
+```
+
+
+
+### in3_cacheClear
+
+clears the incubed cache (usually found in the .in3-folder)
+
+
+Request:
+
+```js
+{
+    "method":"in3_cacheClear",
+    "params":[]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": true
+}
+```
