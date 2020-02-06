@@ -378,6 +378,16 @@ code_quality:
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
     REPORT_STDOUT: STDOUT
 
+cpd:
+  stage: analysis
+  image: rawdee/pmd
+  tags:
+    - short-jobs
+  script:
+    - cpd --minimum-tokens 150 --language cpp --exclude src/third-party --files src
+    - cpd --minimum-tokens 150 --language java --files src/bindings/java
+    - cpd --minimum-tokens 150 --language python --files src/bindings/python
+
 vulnerabilities:
   stage: analysis
   tags:
