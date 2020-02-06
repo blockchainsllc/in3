@@ -384,7 +384,7 @@ cpd:
   tags:
     - short-jobs
   script:
-    - cpd --minimum-tokens 150 --language cpp --exclude src/third-party --files src
+    - cpd --minimum-tokens 180 --language cpp --exclude src/third-party --files src
     - cpd --minimum-tokens 150 --language java --files src/bindings/java
     - cpd --minimum-tokens 150 --language python --files src/bindings/python
 
