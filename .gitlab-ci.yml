@@ -742,7 +742,7 @@ pages:
     - readthedocs
     - coverage
     - clangcheck
-    - vulnerability-analysis
+    - vulnerabilities
   script:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
