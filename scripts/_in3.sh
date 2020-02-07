@@ -61,7 +61,7 @@ args=(
  '-debug[if given incubed will output debug information when executing]'
  '-value[the value to send when sending a transaction. (hexvalue or float/integer with the suffix eth]:value:(1.0eth)'
  '-w[instead returning the transaction, it will wait until the transaction is mined and return the transactionreceipt]'
- '-md[specifies the minimum Deposit of a node in order to be selected as a signer]\n\'
+ '-md[specifies the minimum Deposit of a node in order to be selected as a signer]'
  '-json[the result will be returned as json]'
  '-hex[the result will be returned as hex]'
  '-kin3[the response including in3-section is returned]'
