@@ -11,6 +11,8 @@ stages:
   - release
 
 qemu:
+  cache:
+    policy: pull
   image: docker.slock.it/build-images/cmake:zephyr
   stage: build
   script:
