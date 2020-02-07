@@ -6,32 +6,35 @@ import java.util.HashMap;
 import in3.JSON;
 import in3.Proof;
 
-
+/**
+ * Configuration Object for Incubed Client. It holds the state for the root 
+ * of the configuration tree. To be used together with IN3#setConfig.
+ */
 public class ClientConfiguration implements Configuration {
 
     // Based on core/client/client_init.c
-    private int requestCount = 1;
-    private boolean autoUpdateList = true;
+    private Integer requestCount;
+    private Boolean autoUpdateList;
     private Proof proof = Proof.standard;
-    private int maxAttempts = 3;
-    private int signatureCount = 0;
-    private int finality = 0;
-    private boolean includeCode = false;
-    private boolean keepIn3 = false;
-    private boolean useBinary = false;
-    private boolean useHttp = false;
-    private long maxCodeCache = 0;
-    private long timeout = 10000;
-    private long minDeposit = 0;
-    private long nodeProps = 0;
-    private long nodeLimit = 0;
-    private int replaceLatestBlock = 0;
+    private Integer maxAttempts;
+    private Integer signatureCount;
+    private Integer finality;
+    private Boolean includeCode;
+    private Boolean keepIn3;
+    private Boolean useBinary;
+    private Boolean useHttp;
+    private Long maxCodeCache;
+    private Long timeout;
+    private Long minDeposit;
+    private Long nodeProps;
+    private Long nodeLimit;
+    private Integer replaceLatestBlock;
     private String rpc;
-    private long maxBlockCache = 0;
+    private Long maxBlockCache;
 
     private HashMap<Long, NodeConfiguration> nodesConfig = new HashMap<Long, NodeConfiguration>();
 
-    public int getRequestCount() {
+    public Integer getRequestCount() {
         return requestCount;
     }
 
@@ -40,7 +43,7 @@ public class ClientConfiguration implements Configuration {
         this.requestCount = requestCount;
     }
 
-    public boolean isAutoUpdateList() {
+    public Boolean isAutoUpdateList() {
         return autoUpdateList;
     }
 
@@ -61,7 +64,7 @@ public class ClientConfiguration implements Configuration {
         this.proof = proof;
     }
 
-    public int getMaxAttempts() {
+    public Integer getMaxAttempts() {
         return maxAttempts;
     }
 
@@ -70,7 +73,7 @@ public class ClientConfiguration implements Configuration {
         this.maxAttempts = maxAttempts;
     }
 
-    public int getSignatureCount() {
+    public Integer getSignatureCount() {
         return signatureCount;
     }
 
@@ -79,7 +82,7 @@ public class ClientConfiguration implements Configuration {
         this.signatureCount = signatureCount;
     }
 
-    public int getFinality() {
+    public Integer getFinality() {
         return finality;
     }
 
@@ -88,7 +91,7 @@ public class ClientConfiguration implements Configuration {
         this.finality = finality;
     }
 
-    public boolean isIncludeCode() {
+    public Boolean isIncludeCode() {
         return includeCode;
     }
 
@@ -97,7 +100,7 @@ public class ClientConfiguration implements Configuration {
         this.includeCode = includeCode;
     }
 
-    public boolean isKeepIn3() {
+    public Boolean isKeepIn3() {
         return keepIn3;
     }
 
@@ -106,7 +109,7 @@ public class ClientConfiguration implements Configuration {
         this.keepIn3 = keepIn3;
     }
 
-    public boolean isUseBinary() {
+    public Boolean isUseBinary() {
         return useBinary;
     }
 
@@ -115,7 +118,7 @@ public class ClientConfiguration implements Configuration {
         this.useBinary = useBinary;
     }
 
-    public boolean isUseHttp() {
+    public Boolean isUseHttp() {
         return useHttp;
     }
 
@@ -124,7 +127,7 @@ public class ClientConfiguration implements Configuration {
         this.useHttp = useHttp;
     }
 
-    public long getMaxCodeCache() {
+    public Long getMaxCodeCache() {
         return maxCodeCache;
     }
 
@@ -133,7 +136,7 @@ public class ClientConfiguration implements Configuration {
         this.maxCodeCache = maxCodeCache;
     }
 
-    public long getTimeout() {
+    public Long getTimeout() {
         return timeout;
     }
 
@@ -145,7 +148,7 @@ public class ClientConfiguration implements Configuration {
         this.timeout = timeout;
     }
 
-    public long getMinDeposit() {
+    public Long getMinDeposit() {
         return minDeposit;
     }
 
@@ -157,7 +160,7 @@ public class ClientConfiguration implements Configuration {
         this.minDeposit = minDeposit;
     }
 
-    public long getNodeProps() {
+    public Long getNodeProps() {
         return nodeProps;
     }
 
@@ -166,7 +169,7 @@ public class ClientConfiguration implements Configuration {
         this.nodeProps = nodeProps;
     }
 
-    public long getNodeLimit() {
+    public Long getNodeLimit() {
         return nodeLimit;
     }
 
@@ -175,7 +178,7 @@ public class ClientConfiguration implements Configuration {
         this.nodeLimit = nodeLimit;
     }
 
-    public int getReplaceLatestBlock() {
+    public Integer getReplaceLatestBlock() {
         return replaceLatestBlock;
     }
 
@@ -193,7 +196,7 @@ public class ClientConfiguration implements Configuration {
         this.rpc = rpc;
     }
 
-    public long getMaxBlockCache() {
+    public Long getMaxBlockCache() {
         return maxBlockCache;
     }
 
@@ -221,26 +224,60 @@ public class ClientConfiguration implements Configuration {
     public String toString() {
         StringBuilder sb = new StringBuilder("{");
 
-        JSON.appendKey(sb, "requestCount", getRequestCount());
-        JSON.appendKey(sb, "autoUpdateList", isAutoUpdateList());
-        JSON.appendKey(sb, "proof", JSON.asString(getProof()));
-        JSON.appendKey(sb, "maxAttempts", getMaxAttempts());
-        JSON.appendKey(sb, "signatureCount", getSignatureCount());
-        JSON.appendKey(sb, "finality", getFinality());
-        JSON.appendKey(sb, "includeCode", isIncludeCode());
-        JSON.appendKey(sb, "keepIn3", isKeepIn3());
-        JSON.appendKey(sb, "useBinary", isUseBinary());
-        JSON.appendKey(sb, "useHttp", isUseHttp());
-        JSON.appendKey(sb, "maxCodeCache", getMaxCodeCache());
-        JSON.appendKey(sb, "timeout", getTimeout());
-        JSON.appendKey(sb, "minDeposit", getMinDeposit());
-        JSON.appendKey(sb, "nodeProps", getNodeProps());
-        JSON.appendKey(sb, "nodeLimit", getNodeLimit());
-        JSON.appendKey(sb, "replaceLatestBlock", getReplaceLatestBlock());
+        if (getRequestCount() != null) {
+            JSON.appendKey(sb, "requestCount", getRequestCount());
+        }
+        if (isAutoUpdateList() != null) {
+            JSON.appendKey(sb, "autoUpdateList", isAutoUpdateList());
+        }
+        if (getProof() != null) {
+            JSON.appendKey(sb, "proof", JSON.asString(getProof()));
+        }
+        if (getMaxAttempts() != null) {
+            JSON.appendKey(sb, "maxAttempts", getMaxAttempts());
+        }
+        if (getSignatureCount() != null) {
+            JSON.appendKey(sb, "signatureCount", getSignatureCount());
+        }
+        if (getFinality() != null) {
+            JSON.appendKey(sb, "finality", getFinality());
+        }
+        if (isIncludeCode() != null) {
+            JSON.appendKey(sb, "includeCode", isIncludeCode());
+        }
+        if (isKeepIn3() != null) {
+            JSON.appendKey(sb, "keepIn3", isKeepIn3());
+        }
+        if (isUseBinary() != null) {
+            JSON.appendKey(sb, "useBinary", isUseBinary());
+        }
+        if (isUseHttp() != null) {
+            JSON.appendKey(sb, "useHttp", isUseHttp());
+        }
+        if (getMaxCodeCache() != null) {
+            JSON.appendKey(sb, "maxCodeCache", getMaxCodeCache());
+        }
+        if (getTimeout() != null) {
+            JSON.appendKey(sb, "timeout", getTimeout());
+        }
+        if (getMinDeposit() != null) {
+            JSON.appendKey(sb, "minDeposit", getMinDeposit());
+        }
+        if (getNodeProps() != null) {
+            JSON.appendKey(sb, "nodeProps", getNodeProps());
+        }
+        if (getNodeLimit() != null) {
+            JSON.appendKey(sb, "nodeLimit", getNodeLimit());
+        }
+        if (getReplaceLatestBlock() != null) {
+            JSON.appendKey(sb, "replaceLatestBlock", getReplaceLatestBlock());
+        }
         if (getRpc() != null) {
             JSON.appendKey(sb, "rpc", getRpc());
         }
-        JSON.appendKey(sb, "maxBlockCache", getMaxBlockCache());
+        if (getMaxBlockCache() != null) {
+            JSON.appendKey(sb, "maxBlockCache", getMaxBlockCache());
+        }
 
         if (!nodesConfig.isEmpty()) {
             StringBuilder sb2 = new StringBuilder("{");

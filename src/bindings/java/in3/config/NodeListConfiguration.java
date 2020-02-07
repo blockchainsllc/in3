@@ -2,6 +2,9 @@ package in3.config;
 
 import in3.JSON;
 
+/**
+ * Configuration Object for Incubed Client. It represents the nodes of a nodelist.
+ */
 public class NodeListConfiguration {
     private String url;
     private String props;

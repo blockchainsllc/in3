@@ -4,10 +4,14 @@ import java.util.ArrayList;
 
 import in3.JSON;
 
+/**
+ * Part of the configuration hierarchy for IN3 Client. Holds the configuration
+ * a node group in a particular Chain.
+ */
 public class NodeConfiguration implements Configuration {
 
     private long chain;
-    private boolean needsUpdate = true;
+    private Boolean needsUpdate;
     private String contract;
     private String registryId;
     private String whiteListContract;
@@ -23,7 +27,7 @@ public class NodeConfiguration implements Configuration {
         return chain;
     }
 
-    public boolean isNeedsUpdate() {
+    public Boolean isNeedsUpdate() {
         return needsUpdate;
     }
 
@@ -83,8 +87,9 @@ public class NodeConfiguration implements Configuration {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{");
-
-        JSON.appendKey(sb, "needsUpdate", isNeedsUpdate());
+        if (isNeedsUpdate() != null) {
+            JSON.appendKey(sb, "needsUpdate", isNeedsUpdate());
+        }
         if (getContract() != null) {
             JSON.appendKey(sb, "contract", getContract());
         }

@@ -13,12 +13,6 @@ public final class NodeProps {
     public static final long NODE_PROP_BINARY           = 0x10;
     /* filter out non-onion nodes */
     public static final long NODE_PROP_ONION            = 0x20;
-    /* filter out non-signer nodes */
-    public static final long NODE_PROP_SIGNER           = 0x40;
-    /* filter out non-data provider nodes */
-    public static final long NODE_PROP_DATA             = 0x80;
     /* filter out nodes that do not provide stats */
     public static final long NODE_PROP_STATS            = 0x100;
-    /* filter out nodes that will sign blocks with lower min block height than specified */
-    public static final long NODE_PROP_MIN_BLOCK_HEIGHT = 0x400;
 }
