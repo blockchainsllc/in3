@@ -426,6 +426,62 @@ Response:
 ```
 
 
+### in3_decryptKey
+
+decrypts a JSON Keystore file as defined in the [Web3 Secret Storage Definition
+](https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition). The result is the raw private key.
+
+Parameters:
+
+1. `key`: Object - Keydata as object as defined in the keystorefile
+2. `passphrase`: String - the password to decrypt it.
+
+Returns:
+
+a raw private key (32 bytes)
+
+
+Request:
+
+```js
+{
+    "method": "in3_decryptKey",
+    "params": [
+        {
+            "version": 3,
+            "id": "f6b5c0b1-ba7a-4b67-9086-a01ea54ec638",
+            "address": "08aa30739030f362a8dd597fd3fcde283e36f4a1",
+            "crypto": {
+                "ciphertext": "d5c5aafdee81d25bb5ac4048c8c6954dd50c595ee918f120f5a2066951ef992d",
+                "cipherparams": {
+                    "iv": "415440d2b1d6811d5c8a3f4c92c73f49"
+                },
+                "cipher": "aes-128-ctr",
+                "kdf": "pbkdf2",
+                "kdfparams": {
+                    "dklen": 32,
+                    "salt": "691e9ad0da2b44404f65e0a60cf6aabe3e92d2c23b7410fd187eeeb2c1de4a0d",
+                    "c": 16384,
+                    "prf": "hmac-sha256"
+                },
+                "mac": "de651c04fc67fd552002b4235fa23ab2178d3a500caa7070b554168e73359610"
+            }
+        },
+        "test"
+    ]
+}
+```
+
+Response:
+
+```js
+{
+  "id": 1,
+  "result": "0x1ff25594a5e12c1e31ebd8112bdf107d217c1393da8dc7fc9d57696263457546"
+}
+```
+
+
 
 ### in3_cacheClear
 

@@ -240,7 +240,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 
   // create random seed
   char seed[67];
-  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
+  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF);
 
   sb_t* in3_sec = sb_new("{");
   if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
