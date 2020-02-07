@@ -149,11 +149,12 @@ java:
   script:
     - mkdir java_build
     - cd java_build
-    - cmake -DIN3_LIB=false -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
+    - mkdir -p ../src/bindings/java/in3/native/
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
     - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
     - cp ../arm7_build/lib/libin3_jni.so ../src/bindings/java/in3/native/libin3_jni_arm.so
+    - cmake -DIN3_LIB=false -DJAVA_MULTI_LIBS=true -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make in3j
   artifacts:
     paths:
