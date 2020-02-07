@@ -11,7 +11,7 @@ stages:
   - release
 
 qemu:
-  image: docker.slock.it/build-images/zephyr-image:latest
+  image: docker.slock.it/build-images/zephyr-image:master
   stage: build
   script:
     - west build -b qemu_cortex_m3 qemu
