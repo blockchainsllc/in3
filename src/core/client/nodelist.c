@@ -64,6 +64,24 @@ static bool postpone_update(const in3_chain_t* chain) {
   return false;
 }
 
+static inline bool nodelist_exp_last_block_neq(in3_chain_t* chain, uint64_t exp_last_block) {
+  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != exp_last_block);
+}
+
+static inline bool nodelist_first_upd8(in3_chain_t* chain) {
+  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block == 0);
+}
+
+static inline bool nodelist_not_first_upd8(in3_chain_t* chain) {
+  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != 0);
+}
+
+void blacklist_node(in3_chain_t* chain, address_t node_addr, uint64_t secs_from_now) {
+  for (int i = 0; i < chain->nodelist_length; ++i)
+    if (!memcmp(chain->nodelist[i].address->data, node_addr, chain->nodelist[i].address->len))
+      chain->weights[i].blacklisted_until = in3_time(NULL) + secs_from_now;
+}
+
 static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t      res  = IN3_OK;
   uint64_t       _now = in3_time(NULL); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
@@ -211,16 +229,14 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
       case CTX_ERROR:
         // blacklist node that gave us an error response for nodelist (if not first update)
         // and clear nodelist params
-        if (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block)
-          for (int i = 0; i < chain->nodelist_length; ++i)
-            if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
-              chain->weights[i].blacklisted_until = in3_time(NULL) + 3600;
+        if (nodelist_not_first_upd8(chain))
+          blacklist_node(chain, chain->nodelist_upd8_params->node, 3600);
         _free(chain->nodelist_upd8_params);
         chain->nodelist_upd8_params = NULL;
 
         // if first update return error otherwise return IN3_OK, this is because first update is
         // always from a boot node which is presumed to be trusted
-        return (chain->nodelist_upd8_params != NULL && !chain->nodelist_upd8_params->exp_last_block)
+        return nodelist_first_upd8(chain)
                    ? ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC))
                    : IN3_OK;
       case CTX_WAITING_FOR_REQUIRED_CTX:
@@ -230,19 +246,12 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
         if (r) {
-          // we have a result....
-          if (chain->nodelist_upd8_params != NULL) {
-            // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
-            // about the nodelist update, so we blacklist it for an hour
-            // Note `exp_last_block` == 0 means this is the first nodelist update
-            if (chain->nodelist_upd8_params->exp_last_block && d_get_longk(r, K_LAST_BLOCK_NUMBER) != chain->nodelist_upd8_params->exp_last_block) {
-              for (int i = 0; i < chain->nodelist_length; ++i)
-                if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
-                  chain->weights[i].blacklisted_until = in3_time(NULL) + 3600;
-            }
-            _free(chain->nodelist_upd8_params);
-            chain->nodelist_upd8_params = NULL;
-          }
+          // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
+          // about the nodelist update, so we blacklist it for an hour
+          if (nodelist_exp_last_block_neq(chain, d_get_longk(r, K_LAST_BLOCK_NUMBER)))
+            blacklist_node(chain, chain->nodelist_upd8_params->node, 3600);
+          _free(chain->nodelist_upd8_params);
+          chain->nodelist_upd8_params = NULL;
 
           const in3_ret_t res = fill_chain(chain, ctx, r);
           if (res < 0)
@@ -264,7 +273,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL));
 
   sb_t* in3_sec = sb_new("{");
-  if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
+  if (nodelist_not_first_upd8(chain)) {
     bytes_t addr_ = (bytes_t){.data = chain->nodelist_upd8_params->node, .len = 20};
     sb_add_bytes(in3_sec, "\"data_nodes\":", &addr_, 1, true);
   }
@@ -434,11 +443,12 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 
   // do we need to update the nodelist?
   if (chain->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
-    // if this is the first nodelist update, we clear the chain->nodelist_upd8_params here
-    if (chain->nodelist_upd8_params && !chain->nodelist_upd8_params->exp_last_block) {
+    if (nodelist_first_upd8(chain)) {
+      // if this is the first nodelist update, we clear the chain->nodelist_upd8_params here
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
     } else if (postpone_update(chain) || update_in_progress(ctx)) {
+      // skip update if update has been postponed or there's already one in progress
       goto SKIP_UPDATE;
     }
     // now update the nodeList

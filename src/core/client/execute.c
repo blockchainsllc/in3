@@ -288,6 +288,8 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
     if (chain->nodelist_upd8_params == NULL)
       chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
+
+    // overwrite old params since we have a newer nodelist update now
     memcpy(chain->nodelist_upd8_params->node, node->node->address->data, node->node->address->len);
     chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
     chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
