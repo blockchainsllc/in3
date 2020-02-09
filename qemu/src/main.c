@@ -14,7 +14,7 @@
  * **/
 /* Perform in3 requests for http transport */
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
-  for (int i = 0; i < urls_len; i++) {
+  for (int i = 0; i < urls_len; i++) {    
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
       printk("Returning eth_getTransactionReceipt ...\n");
       sb_add_range(&(result[i].result), mock_tx_receipt, 0, mock_tx_receipt_len);
