@@ -76,7 +76,7 @@ static inline bool nodelist_not_first_upd8(in3_chain_t* chain) {
   return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != 0);
 }
 
-void blacklist_node(in3_chain_t* chain, address_t node_addr, uint64_t secs_from_now) {
+static void blacklist_node_addr(in3_chain_t* chain, address_t node_addr, uint64_t secs_from_now) {
   for (int i = 0; i < chain->nodelist_length; ++i)
     if (!memcmp(chain->nodelist[i].address->data, node_addr, chain->nodelist[i].address->len))
       chain->weights[i].blacklisted_until = in3_time(NULL) + secs_from_now;
@@ -230,7 +230,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
         // blacklist node that gave us an error response for nodelist (if not first update)
         // and clear nodelist params
         if (nodelist_not_first_upd8(chain))
-          blacklist_node(chain, chain->nodelist_upd8_params->node, 3600);
+          blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
         _free(chain->nodelist_upd8_params);
         chain->nodelist_upd8_params = NULL;
 
@@ -249,7 +249,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
           // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
           // about the nodelist update, so we blacklist it for an hour
           if (nodelist_exp_last_block_neq(chain, d_get_longk(r, K_LAST_BLOCK_NUMBER)))
-            blacklist_node(chain, chain->nodelist_upd8_params->node, 3600);
+            blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
           _free(chain->nodelist_upd8_params);
           chain->nodelist_upd8_params = NULL;
 
