@@ -209,7 +209,20 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   if (ctx)
     switch (in3_ctx_state(ctx)) {
       case CTX_ERROR:
-        return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
+        // blacklist node that gave us an error response for nodelist (if not first update)
+        // and clear nodelist params
+        if (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block)
+          for (int i = 0; i < chain->nodelist_length; ++i)
+            if (!memcmp(chain->nodelist[i].address->data, chain->nodelist_upd8_params->node, chain->nodelist[i].address->len))
+              chain->weights[i].blacklisted_until = in3_time(NULL) + 3600;
+        _free(chain->nodelist_upd8_params);
+        chain->nodelist_upd8_params = NULL;
+
+        // if first update return error otherwise return IN3_OK, this is because first update is
+        // always from a boot node which is presumed to be trusted
+        return (chain->nodelist_upd8_params != NULL && !chain->nodelist_upd8_params->exp_last_block)
+                   ? ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC))
+                   : IN3_OK;
       case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
