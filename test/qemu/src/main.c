@@ -69,6 +69,15 @@ in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   return in3;
 }
 
+//this instruction makes the qemu exit, not in a clean way yet but it works 
+static inline void _exit_qemu(){
+	register u32_t r0 __asm__("r0");
+  r0 = 0x18;
+	register u32_t r1 __asm__("r1"); 
+  r1 = 0x20026;
+   __asm__ volatile("bkpt #0xAB"); 
+}
+
 void main() {
   // the hash of transaction whose receipt we want to get
   in3_t*    in3 = init_in3(transport_mock, 0x5);
@@ -81,5 +90,5 @@ void main() {
   in3_log_debug("1/1 IN3 TEST PASSED !\n");
   eth_tx_receipt_free(txr);
   in3_free(in3);
-  exit(0);
+  _exit_qemu();
 }

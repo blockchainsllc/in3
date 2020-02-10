@@ -297,7 +297,7 @@ qemu:
   allow_failure: true
   script:
     -  west build -b qemu_cortex_m3 test/qemu
-    -  cd build && ninja run
+    -  qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -vga none -net none -pidfile qemu.pid -serial mon:stdio -semihosting -kernel build/zephyr/zephyr.elf
 
 examples_linux:
   image: docker.slock.it/build-images/cmake:gcc8
