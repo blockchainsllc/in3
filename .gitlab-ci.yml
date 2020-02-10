@@ -296,8 +296,8 @@ qemu:
   stage: test
   allow_failure: true
   script:
-    - west build -b qemu_cortex_m3 qemu
-    - /workdir/zephyr/scripts/sanitycheck -N -i -vv -j 8 -T qemu
+    - west build -b qemu_cortex_m3 test/qemu
+    - /workdir/zephyr/scripts/sanitycheck -N -i -vv -j 8 -T test/qemu
   tags:
     - long-jobs
 
