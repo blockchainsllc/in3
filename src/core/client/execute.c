@@ -279,6 +279,7 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
   uint64_t diff = current_blk - nodelist_block;
   if (diff >= repl_latest)
     return 0;
+  // we need to cap wait time as we might end up waiting for too long for chains with higher block time
   return min((repl_latest - diff) * avg_blktime, WAIT_TIME_CAP);
 }
 
