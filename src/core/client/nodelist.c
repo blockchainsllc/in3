@@ -224,47 +224,47 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   // is there a useable required ctx?
   in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_nodeList");
 
-  if (ctx)
-    switch (in3_ctx_state(ctx)) {
-      case CTX_ERROR:
-        // blacklist node that gave us an error response for nodelist (if not first update)
-        // and clear nodelist params
-        if (nodelist_not_first_upd8(chain))
-          blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
-        _free(chain->nodelist_upd8_params);
-        chain->nodelist_upd8_params = NULL;
+  if (ctx) {
+    if (in3_ctx_state(ctx) == CTX_ERROR || (in3_ctx_state(ctx) == CTX_SUCCESS && !d_get(ctx->responses[0], K_RESULT))) {
+      // blacklist node that gave us an error response for nodelist (if not first update)
+      // and clear nodelist params
+      if (nodelist_not_first_upd8(chain))
+        blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
 
-        // if first update return error otherwise return IN3_OK, this is because first update is
-        // always from a boot node which is presumed to be trusted
-        return nodelist_first_upd8(chain)
-                   ? ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC))
-                   : IN3_OK;
+      // if first update return error otherwise return IN3_OK, this is because first update is
+      // always from a boot node which is presumed to be trusted
+      return nodelist_first_upd8(chain)
+                 ? ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC))
+                 : IN3_OK;
+    }
+
+    switch (in3_ctx_state(ctx)) {
+      case CTX_ERROR: return IN3_OK; /* already handled before*/
       case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
       case CTX_SUCCESS: {
-
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
-        if (r) {
-          // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
-          // about the nodelist update, so we blacklist it for an hour
-          if (nodelist_exp_last_block_neq(chain, d_get_longk(r, K_LAST_BLOCK_NUMBER)))
-            blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
-          _free(chain->nodelist_upd8_params);
-          chain->nodelist_upd8_params = NULL;
+        // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
+        // about the nodelist update, so we blacklist it for an hour
+        if (nodelist_exp_last_block_neq(chain, d_get_longk(r, K_LAST_BLOCK_NUMBER)))
+          blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+        _free(chain->nodelist_upd8_params);
+        chain->nodelist_upd8_params = NULL;
 
-          const in3_ret_t res = fill_chain(chain, ctx, r);
-          if (res < 0)
-            return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
-          else if (c->cache)
-            in3_cache_store_nodelist(ctx, chain);
-          ctx_remove_required(parent_ctx, ctx);
-          in3_client_run_chain_whitelisting(chain);
-          return IN3_OK;
-        } else
-          return ctx_set_error(parent_ctx, "Error updating node_list", ctx_check_response_error(ctx, 0));
+        const in3_ret_t res = fill_chain(chain, ctx, r);
+        if (res < 0)
+          return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
+        else if (c->cache)
+          in3_cache_store_nodelist(ctx, chain);
+        ctx_remove_required(parent_ctx, ctx);
+        in3_client_run_chain_whitelisting(chain);
+        return IN3_OK;
       }
     }
+  }
 
   in3_log_debug("update the nodelist...\n");
 
