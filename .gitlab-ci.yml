@@ -296,7 +296,7 @@ qemu:
   allow_failure: true
   script:
     - west build -b qemu_cortex_m3 qemu
-    - ./scripts/sanitycheck -N -i -vv -j 8 -T qemu
+    - workdir/zephyr/scripts/sanitycheck -N -i -vv -j 8 -T qemu
   tags:
     - long-jobs
 
