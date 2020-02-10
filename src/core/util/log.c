@@ -25,7 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
+#ifdef __ZEPHYR__
+#include <zephyr.h>
+#endif
 #include "log.h"
 #include "mem.h"
 
@@ -107,6 +109,8 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
 
   /* Log to stderr */
   if (!L.quiet) {
+#ifndef __ZEPHYR__
+    printk("ZEPHRY");
     va_list args;
     char    buf[16];
     _localtime(buf);
@@ -127,9 +131,30 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
     }
 
     va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
+    printf(fmt, args);
     va_end(args);
-    fflush(stderr);
+    //fflush(stderr);
+#else
+    va_list args;
+    char    buf[16];
+    _localtime(buf);
+if (L.prefix == NULL) {
+#ifdef LOG_USE_COLOR
+      printk(
+          "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
+          buf, level_colors[level], level_names[level], file, function, line);
+#else
+      printk("%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+#endif
+    } else {
+      printk("%s", L.prefix);
+    }
+     va_start(args, fmt);
+     vprintk(fmt, args);
+     va_end(args);
+     fflush(stderr);
+#endif    
+    //fflush(stderr);
   }
 
   /* Log to file */
