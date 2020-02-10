@@ -784,6 +784,49 @@ static void test_nodelist_update_4() {
   in3_free(c);
 }
 
+// Scenario 5: Boot nodes do not respond for first update
+static void test_nodelist_update_5() {
+  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  c->replace_latest_block = DEF_REPL_LATEST_BLK;
+  c->proof                = PROOF_NONE;
+  c->max_attempts         = 1;
+
+  // start time
+  uint64_t t = 1;
+  in3_time(&t);
+
+  // reset rand to be deterministic
+  int s = 0;
+  in3_rand(&s);
+
+  add_response("in3_nodeList",
+               "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
+               NULL,
+               "\"Internal server error!\"",
+               NULL);
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x8AD72A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989038,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
+
+  uint64_t blk = eth_blockNumber(c);
+  TEST_ASSERT_NOT_EQUAL(0, blk);
+
+  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
+  TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
+
+  in3_free(c);
+}
 /*
  * Main
  */
@@ -797,5 +840,6 @@ int main() {
   RUN_TEST(test_nodelist_update_2);
   RUN_TEST(test_nodelist_update_3);
   RUN_TEST(test_nodelist_update_4);
+  RUN_TEST(test_nodelist_update_5);
   return TESTS_END();
 }
