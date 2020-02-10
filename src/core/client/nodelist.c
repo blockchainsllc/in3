@@ -68,20 +68,6 @@ static inline bool nodelist_exp_last_block_neq(in3_chain_t* chain, uint64_t exp_
   return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != exp_last_block);
 }
 
-static inline bool nodelist_first_upd8(in3_chain_t* chain) {
-  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block == 0);
-}
-
-static inline bool nodelist_not_first_upd8(in3_chain_t* chain) {
-  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != 0);
-}
-
-static void blacklist_node_addr(in3_chain_t* chain, address_t node_addr, uint64_t secs_from_now) {
-  for (int i = 0; i < chain->nodelist_length; ++i)
-    if (!memcmp(chain->nodelist[i].address->data, node_addr, chain->nodelist[i].address->len))
-      chain->weights[i].blacklisted_until = in3_time(NULL) + secs_from_now;
-}
-
 static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t      res  = IN3_OK;
   uint64_t       _now = in3_time(NULL); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
@@ -427,9 +413,13 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   return first;
 }
 
-bool update_in_progress(const in3_ctx_t* ctx) {
+bool ctx_is_method(const in3_ctx_t* ctx, const char* method) {
   const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
-  return (required_method && strcmp(required_method, "in3_nodeList") == 0);
+  return (required_method && strcmp(required_method, method) == 0);
+}
+
+static bool update_in_progress(const in3_ctx_t* ctx) {
+  return ctx_is_method(ctx, "in3_nodeList");
 }
 
 in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights) {
