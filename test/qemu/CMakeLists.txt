@@ -13,7 +13,18 @@ ADD_DEFINITIONS(-DZEPHYR_OS)
 ADD_DEFINITIONS(-DZEPHYR)
 ADD_DEFINITIONS(-DIN3_MATH_LITE)
 #set(CMAKE_C_FLAGS "-fno-stack-protector")
-foreach(dep ../src/core ../src/verifier/eth1/basic ../src/verifier/eth1/full ../src/verifier/eth1/evm  ../src/verifier/eth1/nano ../src/api/eth1 ../src/third-party)
+set(IN3_SRC ../..)
+set(IN3_DEPS 
+${IN3_SRC}/src/core 
+${IN3_SRC}/src/verifier/eth1/basic 
+${IN3_SRC}/src/verifier/eth1/full 
+${IN3_SRC}/src/verifier/eth1/evm  
+${IN3_SRC}/src/verifier/eth1/nano 
+${IN3_SRC}/src/api/eth1 
+${IN3_SRC}//src/third-party
+)
+
+foreach(dep ${IN3_DEPS})
   file(GLOB files "${dep}/**/*.c")
   file(GLOB files2 "${dep}/*.c")
   message("${files}")
