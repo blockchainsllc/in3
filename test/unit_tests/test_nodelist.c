@@ -208,7 +208,7 @@ static void test_nodelist_update_1() {
   in3_time(&t);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD72A\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -292,7 +292,7 @@ static void test_nodelist_update_1() {
                NULL);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD734\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -300,7 +300,7 @@ static void test_nodelist_update_1() {
                "  \"execTime\": 59,"
                "  \"rpcTime\": 59,"
                "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 9099060,"
+               "  \"currentBlock\": 87989050,"
                "  \"version\": \"2.0.0\""
                "}");
   blk = eth_blockNumber(c);
@@ -379,7 +379,7 @@ static void test_nodelist_update_2() {
   in3_time(&t);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD72A\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -469,7 +469,7 @@ static void test_nodelist_update_2() {
                NULL);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD734\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -477,7 +477,7 @@ static void test_nodelist_update_2() {
                "  \"execTime\": 59,"
                "  \"rpcTime\": 59,"
                "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 9099060,"
+               "  \"currentBlock\": 87989050,"
                "  \"version\": \"2.0.0\""
                "}");
   blk = eth_blockNumber(c);
@@ -551,7 +551,7 @@ static void test_nodelist_update_3() {
   in3_time(&t);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD72A\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -608,7 +608,7 @@ static void test_nodelist_update_3() {
                NULL);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD734\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -616,7 +616,7 @@ static void test_nodelist_update_3() {
                "  \"execTime\": 59,"
                "  \"rpcTime\": 59,"
                "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 9099060,"
+               "  \"currentBlock\": 87989050,"
                "  \"version\": \"2.0.0\""
                "}");
   blk = eth_blockNumber(c);
@@ -691,7 +691,7 @@ static void test_nodelist_update_4() {
   in3_time(&t);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD72A\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -759,7 +759,7 @@ static void test_nodelist_update_4() {
                NULL);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD734\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -767,7 +767,7 @@ static void test_nodelist_update_4() {
                "  \"execTime\": 59,"
                "  \"rpcTime\": 59,"
                "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 9099060,"
+               "  \"currentBlock\": 87989050,"
                "  \"version\": \"2.0.0\""
                "}");
   blk = eth_blockNumber(c);
@@ -806,7 +806,7 @@ static void test_nodelist_update_5() {
                NULL);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD72A\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -871,7 +871,7 @@ static void test_nodelist_update_5() {
                NULL);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD734\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
@@ -879,7 +879,7 @@ static void test_nodelist_update_5() {
                "  \"execTime\": 59,"
                "  \"rpcTime\": 59,"
                "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 9099060,"
+               "  \"currentBlock\": 87989050,"
                "  \"version\": \"2.0.0\""
                "}");
   blk = eth_blockNumber(c);
@@ -911,7 +911,7 @@ static void test_nodelist_update_6() {
                NULL);
   add_response("eth_blockNumber",
                "[]",
-               "\"0x8AD72A\"",
+               "\"0x53E9B3A\"",
                NULL,
                "{"
                "  \"lastValidatorChange\": 0,"
