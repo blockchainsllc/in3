@@ -433,11 +433,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 
   // do we need to update the nodelist?
   if (chain->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
-    if (nodelist_first_upd8(chain)) {
-      // if this is the first nodelist update, we clear the chain->nodelist_upd8_params here
-      _free(chain->nodelist_upd8_params);
-      chain->nodelist_upd8_params = NULL;
-    } else if (postpone_update(chain) || update_in_progress(ctx)) {
+    if (postpone_update(chain) || update_in_progress(ctx)) {
       // skip update if update has been postponed or there's already one in progress
       goto SKIP_UPDATE;
     }
