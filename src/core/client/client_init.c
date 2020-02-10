@@ -586,11 +586,12 @@ char* in3_configure(in3_t* c, const char* config) {
             int len = d_len(cp.token), i = 0;
             whitelist_free(chain->whitelist);
             chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
-            chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
+            chain->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
               EXPECT_TOK_ADDR(n.token);
+              const uint8_t* whitelist_address = d_bytes(n.token)->data;
               for (uint32_t j = 0; j < chain->whitelist->addresses.len; j += 20) {
-                if (!memcmp(d_bytes(n.token)->data, chain->whitelist->addresses.data + j, 20)) {
+                if (!memcmp(whitelist_address, chain->whitelist->addresses.data + j, 20)) {
                   whitelist_free(chain->whitelist);
                   chain->whitelist = NULL;
                   EXPECT_TOK(cp.token, false, "duplicate address!");

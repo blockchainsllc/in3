@@ -106,8 +106,8 @@ char* readContent(char* name) {
     len += r;
     if (feof(file)) break;
     size_t new_alloc = allocated * 2;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
 
@@ -213,6 +213,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   // configure in3
   c->request_count = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
   method           = d_get_string(request, "method");
+  bool intern      = d_get_int(test, "intern");
 
   str_range_t s = d_to_json(d_get(request, key("params")));
   if (!method) {
@@ -233,6 +234,19 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   int is_bin = d_get_int(test, "binaryFormat");
 
   in3_client_rpc(c, method, params, is_bin ? NULL : &res, &err);
+
+  if (res && intern) {
+    json_ctx_t* actual_json = parse_json(res);
+    d_token_t*  actual      = actual_json->result;
+    d_token_t*  expected    = d_get(response + 1, key("result"));
+    if (!d_eq(actual, expected)) {
+      err = _malloc(strlen(res) + 200);
+      sprintf(err, "wrong response: %s", res);
+      _free(res);
+      res = NULL;
+    }
+    json_free(actual_json);
+  }
 
   if (err && res) {
     print_error("Error and Result set");

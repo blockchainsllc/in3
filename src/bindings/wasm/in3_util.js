@@ -183,12 +183,14 @@ function toHex(val, bytes) {
         return undefined;
     let hex = ''
     if (typeof val === 'string')
-        hex = val.startsWith('0x') ?
-        val.substr(2) :
-        (parseInt(val[0]) ?
-            BigInt(val).toString(16) :
-            Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
-        )
+        hex = val.startsWith('0x')
+            ? val.substr(2)
+            : (parseInt(val[0])
+                ? BigInt(val).toString(16)
+                : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
+            )
+    else if (typeof val === 'boolean')
+        hex = val ? '01' : '00'
     else if (typeof val === 'number' || typeof val === 'bigint')
         hex = val.toString(16)
     else if (val && val._isBigNumber) // BigNumber

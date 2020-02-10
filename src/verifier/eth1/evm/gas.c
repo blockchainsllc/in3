@@ -77,34 +77,4 @@ void finalize_subcall_gas(evm_t* evm, int success, evm_t* parent) {
   if (success == 0 || success == EVM_ERROR_SUCCESS_CONSUME_GAS) parent->gas += evm->gas;
 }
 
-int selfdestruct_gas(evm_t* evm) {
-  uint8_t adr[20], l, *p;
-  if (evm_stack_pop(evm, adr, 20) < 0) return EVM_ERROR_EMPTY_STACK;
-  account_t* self_account = evm_get_account(evm, evm->address, 1);
-  // TODO check if this account was selfsdesstructed before
-  evm->refund += R_SELFDESTRUCT;
-
-  l = 32;
-  p = self_account->balance;
-  optimize_len(p, l);
-  if (l && (l > 1 || *p != 0)) {
-    if (evm_get_account(evm, adr, 0) == NULL) {
-      if ((evm->properties & EVM_PROP_NO_FINALIZE) == 0) subgas(G_NEWACCOUNT);
-      evm_get_account(evm, adr, 1);
-    }
-    if (transfer_value(evm, evm->address, adr, self_account->balance, 32, 0) < 0) return EVM_ERROR_OUT_OF_GAS;
-  }
-  memset(self_account->balance, 0, 32);
-  memset(self_account->nonce, 0, 32);
-  self_account->code.len = 0;
-  storage_t* s           = NULL;
-  while (self_account->storage) {
-    s                     = self_account->storage;
-    self_account->storage = s->next;
-    _free(s);
-  }
-  evm->state = EVM_STATE_STOPPED;
-  return 0;
-}
-
 #endif
