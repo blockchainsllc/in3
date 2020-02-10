@@ -27,6 +27,7 @@
 #include "util/mem.h"
 #include "block_number.h"
 #include "receipt.h"
+#ifdef __ZEPHYR__
 // for Running the example with out ztest framework must disable CONFIG_ZTEST=y in prj.conf
 #define TEST_Z
 #ifdef TEST_Z
@@ -47,7 +48,6 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
     } else {
       in3_log_debug("Not supported for this mock\n");
     }
-    //sb_add_range(&(result[i].result), mock_eth_call_response, 0, mock_eth_call_response_len);
   }
   return IN3_OK;
 }
@@ -106,4 +106,5 @@ void main() {
   eth_tx_receipt_free(txr);
   in3_free(in3);
 }
+#endif
 #endif

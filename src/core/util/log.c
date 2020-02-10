@@ -110,7 +110,6 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
   /* Log to stderr */
   if (!L.quiet) {
 #ifndef __ZEPHYR__
-    printk("ZEPHRY");
     va_list args;
     char    buf[16];
     _localtime(buf);
