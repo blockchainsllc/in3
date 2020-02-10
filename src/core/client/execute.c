@@ -497,8 +497,26 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
 
     // handle subcontexts first
     while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
-      if ((res = in3_send_ctx(ctx->required)) != IN3_OK)
-        return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
+      if ((res = in3_send_ctx(ctx->required)) != IN3_OK) {
+        if (ctx_is_method(ctx->required, "in3_nodeList")) {
+          ctx_remove_required(ctx, ctx->required);
+
+          // blacklist node that gave us an error response for nodelist (if not first update)
+          // and clear nodelist params
+          in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+
+          if (nodelist_not_first_upd8(chain))
+            blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+          _free(chain->nodelist_upd8_params);
+          chain->nodelist_upd8_params = NULL;
+
+          // if first update return error otherwise return IN3_OK, this is because first update is
+          // always from a boot node which is presumed to be trusted
+          if (nodelist_first_upd8(chain))
+            ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
+        } else
+          ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
+      }
 
       // recheck in order to prepare the request.
       if ((res = in3_ctx_execute(ctx)) != IN3_WAITING) return res;
@@ -550,8 +568,7 @@ in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method)
   in3_ctx_t* sub_ctx = parent->required;
   while (sub_ctx) {
     if (!sub_ctx->requests) continue;
-    const char* required_method = d_get_stringk(sub_ctx->requests[0], K_METHOD);
-    if (required_method && strcmp(required_method, search_method) == 0) return sub_ctx;
+    if (ctx_is_method(sub_ctx, search_method)) return sub_ctx;
     sub_ctx = sub_ctx->required;
   }
   return NULL;
