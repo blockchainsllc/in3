@@ -310,6 +310,26 @@ static in3_ret_t in3_cacheClear(in3_ctx_t* ctx, in3_response_t** response) {
   return IN3_OK;
 }
 
+static in3_ret_t in3_decryptKey(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  d_token_t* keyfile        = d_get_at(params, 0);
+  bytes_t    password_bytes = d_to_bytes(d_get_at(params, 1));
+  bytes32_t  dst;
+  bytes_t    dst_bytes = bytes(dst, 32);
+
+  if (!password_bytes.data) return ctx_set_error(ctx, "you need to specify a passphrase", IN3_EINVAL);
+  if (!keyfile || d_type(keyfile) != T_OBJECT) return ctx_set_error(ctx, "no valid key given", IN3_EINVAL);
+  char* passphrase = alloca(password_bytes.len + 1);
+  memcpy(passphrase, password_bytes.data, password_bytes.len);
+  passphrase[password_bytes.len] = 0;
+  in3_ret_t res                  = decrypt_key(keyfile, passphrase, dst);
+  if (res) return ctx_set_error(ctx, "Invalid key", res);
+
+  RESPONSE_START();
+  sb_add_bytes(&response[0]->result, NULL, &dst_bytes, 1, false);
+  RESPONSE_END();
+  return IN3_OK;
+}
+
 static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* r      = ctx->requests[0];
@@ -327,6 +347,7 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (strcmp(method, "in3_ecrecover") == 0) return in3_ecrecover(ctx, params, response);
   if (strcmp(method, "in3_signData") == 0) return in3_sign_data(ctx, params, response);
   if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(ctx, response);
+  if (strcmp(method, "in3_decryptKey") == 0) return in3_decryptKey(ctx, params, response);
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
 }
@@ -345,6 +366,7 @@ static int verify(in3_vctx_t* v) {
       strcmp(method, "in3_ecrecover") == 0 ||
       strcmp(method, "in3_signData") == 0 ||
       strcmp(method, "in3_pk2public") == 0 ||
+      strcmp(method, "in3_decryptKey") == 0 ||
       strcmp(method, "in3_cacheClear") == 0)
     return IN3_OK;
 

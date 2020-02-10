@@ -295,6 +295,18 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
 bool d_eq(const d_token_t* a, const d_token_t* b) {
   if (a == NULL || b == NULL) return false;
   if (a->len != b->len) return false;
+  if (d_type(a) == T_ARRAY) {
+    for (d_iterator_t ia = d_iter((d_token_t*) a), ib = d_iter((d_token_t*) b); ia.left; d_iter_next(&ia), d_iter_next(&ib)) {
+      if (!d_eq(ia.token, ib.token)) return false;
+    }
+    return true;
+  }
+  if (d_type(a) == T_OBJECT) {
+    for (d_iterator_t ia = d_iter((d_token_t*) a); ia.left; d_iter_next(&ia)) {
+      if (!d_eq(ia.token, d_get((d_token_t*) b, ia.token->key))) return false;
+    }
+    return true;
+  }
   return (a->data && b->data)
              ? b_cmp(d_bytes(a), d_bytes(b))
              : a->data == NULL && b->data == NULL;
