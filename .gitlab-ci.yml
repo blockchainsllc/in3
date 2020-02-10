@@ -267,6 +267,7 @@ java_linux:
   dependencies:
     - java
   script:
+    - cd test/bindings/java
     - ./gradlew test
   tags:
     - short-jobs
@@ -318,7 +319,7 @@ java_arm:
     - java
   stage: test
   script:
-    - echo "SKIPPED"
+    - cd test/bindings/java
     - ./gradlew test
   tags:
     - arm
@@ -328,6 +329,7 @@ java_macos:
   dependencies:
     - java
   script:
+    - cd test/bindings/java
     - ./gradlew test
   tags:
     - mac-mini-runner
