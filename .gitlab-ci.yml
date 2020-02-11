@@ -285,6 +285,7 @@ java_linux:
   dependencies:
     - java
   script:
+    - mv java_build build
     - cd test/bindings/java
     - ./gradlew test
   tags:
@@ -337,6 +338,7 @@ java_arm:
     - java
   stage: test
   script:
+    - mv java_build build
     - cd test/bindings/java
     - ./gradlew test
   tags:
@@ -347,6 +349,7 @@ java_macos:
   dependencies:
     - java
   script:
+    - mv java_build build
     - cd test/bindings/java
     - ./gradlew test
   tags:
