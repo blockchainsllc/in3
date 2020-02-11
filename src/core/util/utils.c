@@ -122,7 +122,7 @@ const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
 }
 #endif
 
-int hex_to_bytes(char* buf, int len, uint8_t* out, int outbuf_size) {
+int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
   if (len == -1) {
     len = strlen(buf);
     if (len >= 2 && *buf == '0' && buf[1] == 'x') {
@@ -146,7 +146,7 @@ int hex_to_bytes(char* buf, int len, uint8_t* out, int outbuf_size) {
 
   return out_len;
 }
-bytes_t* hex_to_new_bytes(char* buf, int len) {
+bytes_t* hex_to_new_bytes(const char* buf, int len) {
   int bytes_len = (len & 1) ? (len + 1) / 2 : len / 2;
 
   uint8_t* b     = _malloc(bytes_len);
@@ -157,7 +157,7 @@ bytes_t* hex_to_new_bytes(char* buf, int len) {
   return bytes;
 }
 
-int bytes_to_hex(uint8_t* buffer, int len, char* out) {
+int bytes_to_hex(const uint8_t* buffer, int len, char* out) {
   const char hex[] = "0123456789abcdef";
   int        i = 0, j = 0;
   while (j < len) {
@@ -178,7 +178,7 @@ int sha3_to(bytes_t* data, void* dst) {
   return 0;
 }
 
-bytes_t* sha3(bytes_t* data) {
+bytes_t* sha3(const bytes_t* data) {
   bytes_t*        out = NULL;
   struct SHA3_CTX ctx;
 
@@ -220,7 +220,7 @@ uint64_t char_to_long(const char* a, int l) {
   return -1;
 }
 
-char* _strdupn(char* src, int len) {
+char* _strdupn(const char* src, int len) {
   if (len < 0) len = strlen(src);
   char* dst = _malloc(len + 1);
   strncpy(dst, src, len);
@@ -235,7 +235,7 @@ int min_bytes_len(uint64_t val) {
   return 8;
 }
 
-char* str_replace(char* orig, char* rep, char* with) {
+char* str_replace(char* orig, const char* rep, const char* with) {
   char* result;
   char* ins;
   char* tmp;

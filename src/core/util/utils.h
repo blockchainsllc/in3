@@ -73,7 +73,7 @@ uint64_t bytes_to_long(const uint8_t* data, int len);
 
 /** converts the bytes to a unsigned int (at least the last max len bytes) */
 static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
-  if (data){
+  if (data) {
     switch (len) {
       case 0: return 0;
       case 1: return data[0];
@@ -81,8 +81,8 @@ static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
       case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
       default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
     }
-  }
-  else return 0;
+  } else
+    return 0;
 }
 /** converts a character into a uint64_t*/
 uint64_t char_to_long(const char* a, int l);
@@ -137,17 +137,17 @@ void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst);
  * replaces a string and returns a copy.
  * @retval 
  */
-char* str_replace(const char* orig, const char* rep, const char* with);
+char* str_replace(char* orig, const char* rep, const char* with);
 
 /**
  * replaces a string at the given position.
  */
-char* str_replace_pos(const char* orig, size_t pos, size_t len, const char* rep);
+char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
 
 /**
   * lightweight strstr() replacements
   */
-char* str_find(const char* haystack, const char* needle);
+char* str_find(char* haystack, const char* needle);
 
 /**
  * current timestamp in ms. 
