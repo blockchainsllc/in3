@@ -165,11 +165,12 @@ static void init_mainnet(in3_chain_t* chain) {
 }
 
 static void init_btc(in3_chain_t* chain) {
-
-  // btc
-  initChain(chain, 0xFF01, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", NULL, 1, 1, CHAIN_BTC);
+  initChain(chain, 0xFF01, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
   initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "http://localhost:8500");
-  chain->needs_update = false;
+  if (chain->nodelist_upd8_params) {
+    _free(chain->nodelist_upd8_params);
+    chain->nodelist_upd8_params = NULL;
+  }
 }
 
 static void init_kovan(in3_chain_t* chain) {
