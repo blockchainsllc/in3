@@ -416,6 +416,7 @@ void in3_free(in3_t* a) {
     _free(a->filters->array);
     _free(a->filters);
   }
+  b_free(a->key);
   _free(a);
 }
 
