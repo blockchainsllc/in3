@@ -366,18 +366,20 @@ docker:
 
 ##### analyse #####
 
-#include:
-#  - template: Code-Quality.gitlab-ci.yml
+include:
+  - template: Code-Quality.gitlab-ci.yml
 
-#code_quality:
-#  stage: analysis
-#  tags:
-#    - short-jobs
-#  artifacts:
-#    paths: [gl-code-quality-report.json]
-#  variables:
-#    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
-#    REPORT_STDOUT: STDOUT
+code_quality:
+  stage: analysis
+  tags:
+    - short-jobs
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  variables:
+    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
+    REPORT_STDOUT: STDOUT
 
 format:
   stage: analysis
