@@ -416,6 +416,25 @@ vulnerabilities:
     paths:
       - vulnerability_analysis.json
 
+metrics:
+  stage: analysis
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+  dependencies:
+    - mac_os
+    - gcc8
+    - wasm
+    - asmjs
+  script:
+    - echo "mac_cmd_size `stat --printf=%s mac_build/bin/in3` " > metrics.txt
+    - echo "wasm_min_size `stat --printf=%s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
+    - echo "wasm_js_size `stat --printf=%s wasm_build/bin/in3.js` " >> metrics.txt
+    - echo "asmjs_js_size `stat --printf=%s asmjs_build/bin/in3.js` " >> metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
+
 ##### deploy #####
 
 dockerhub-deploy:
