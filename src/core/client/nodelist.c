@@ -255,8 +255,9 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   in3_log_debug("update the nodelist...\n");
 
   // create random seed
-  char seed[67];
-  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF);
+  char seed[67] = {'0', 'x'};
+  for (int i = 0, j = 2; i < 8; ++i, j += 8)
+    sprintf(seed + j, "%08x", in3_rand(NULL) % 0xFFFFFFFF);
 
   sb_t* in3_sec = sb_new("{");
   if (nodelist_not_first_upd8(chain)) {
