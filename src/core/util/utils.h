@@ -69,13 +69,16 @@ uint64_t bytes_to_long(const uint8_t* data, int len);
 
 /** converts the bytes to a unsigned int (at least the last max len bytes) */
 static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
-  switch (len) {
-    case 0: return 0;
-    case 1: return data[0];
-    case 2: return (((uint32_t) data[0]) << 8) | data[1];
-    case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
-    default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
-  }
+  if (data) {
+    switch (len) {
+      case 0: return 0;
+      case 1: return data[0];
+      case 2: return (((uint32_t) data[0]) << 8) | data[1];
+      case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
+      default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
+    }
+  } else
+    return 0;
 }
 /** converts a character into a uint64_t*/
 uint64_t char_to_long(const char* a, int l);
@@ -104,7 +107,7 @@ bytes_t* hex_to_new_bytes(const char* buf, int len);
 int bytes_to_hex(const uint8_t* buffer, int len, char* out);
 
 /** hashes the bytes and creates a new bytes_t */
-bytes_t* sha3(bytes_t* data);
+bytes_t* sha3(const bytes_t* data);
 
 /** writes 32 bytes to the pointer. */
 int sha3_to(bytes_t* data, void* dst);
@@ -116,7 +119,7 @@ void long_to_bytes(uint64_t val, uint8_t* dst);
 void int_to_bytes(uint32_t val, uint8_t* dst);
 
 /** duplicate the string */
-char* _strdupn(char* src, int len);
+char* _strdupn(const char* src, int len);
 
 /** calculate the min number of byte to represents the len */
 int min_bytes_len(uint64_t val);
@@ -141,6 +144,11 @@ char* str_replace_pos(const char* orig, size_t pos, size_t len, const char* rep)
   * lightweight strstr() replacements
   */
 char* str_find(const char* haystack, const char* needle);
+
+/**
+ * current timestamp in ms. 
+ */
+uint64_t current_ms();
 
 /** changes to pointer (a) and it length (l) to remove leading 0 bytes.*/
 #define optimize_len(a, l)   \
@@ -180,5 +188,13 @@ char* str_find(const char* haystack, const char* needle);
     res = (exp);             \
     if (res < 0) goto clean; \
   }
+
+static inline bool memiszero(uint8_t* ptr, size_t l) {
+  while (l > 0 && *ptr == 0) {
+    l--;
+    ptr++;
+  }
+  return !l;
+}
 
 #endif

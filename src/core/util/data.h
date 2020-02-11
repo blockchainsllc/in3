@@ -74,8 +74,8 @@ typedef enum {
  * use d_type,  d_len or the cast-function to get the value.
  */
 typedef struct item {
-  uint32_t len;  /**< the length of the content (or number of properties) depending +  type. */
   uint8_t* data; /**< the byte or string-data  */
+  uint32_t len;  /**< the length of the content (or number of properties) depending +  type. */
   d_key_t  key;  /**< the key of the property. */
 } d_token_t;
 
@@ -124,11 +124,11 @@ d_token_t* d_get_at(d_token_t* item, const uint32_t index);                     
 d_token_t* d_next(d_token_t* item);                                             /**< returns the next sibling of an array or object */
 
 void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
-json_ctx_t* parse_binary(bytes_t* data);                           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-json_ctx_t* parse_binary_str(char* data, int len);                 /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
+json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
 json_ctx_t* parse_json(char* js);                                  /**< parses json-data, which needs to be freed after usage! */
 void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
-str_range_t d_to_json(d_token_t* item);                            /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
+str_range_t d_to_json(const d_token_t* item);                      /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
 char*       d_create_json(d_token_t* item);                        /**< creates a json-string. It does not work for objects if the parsed data were binary!*/
 
 json_ctx_t* json_create();

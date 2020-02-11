@@ -207,13 +207,34 @@ static in3_ret_t verify_nodelist_data(in3_vctx_t* vc, const uint32_t node_limit,
   return IN3_OK;
 }
 
-in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses) {
+static in3_ret_t verify_whitelist_data(in3_vctx_t* vc, d_token_t* server_list, d_token_t* storage_proofs) {
+  bytes32_t skey;
+  uint32_t  total_servers = d_get_intk(vc->result, K_TOTAL_SERVERS);
+
+  if ((int) total_servers != d_len(server_list))
+    return vc_err(vc, "wrong number of nodes in the whitelist");
+
+  // now check the content of the whitelist
+  bytes32_t hash;
+  bytes_t*  b = b_new(NULL, 20 * total_servers);
+  int       i = 0;
+  for (d_iterator_t it = d_iter(server_list); it.left; d_iter_next(&it), i += 20)
+    memcpy(b->data + i, d_bytesl(it.token, 20)->data, 20);
+
+  sha3_to(b, hash);
+  b_free(b);
+  TRY(check_storage(vc, storage_proofs, get_storage_array_key(0, 1, 0, 0, skey), hash));
+  return IN3_OK;
+}
+
+static in3_ret_t verify_account(in3_vctx_t* vc, address_t required_contract, d_token_t** storage_proof, d_token_t** servers) {
   uint8_t         hash[32], val[36];
   bytes_t         root, **proof, *account_raw, path = {.data = hash, .len = 32};
-  d_token_t *     server_list = d_get(vc->result, K_NODES), *storage_proof, *t;
+  d_token_t *     server_list = d_get(vc->result, K_NODES), *t;
   bytes_builder_t bb          = {.bsize = 36, .b = {.data = val, .len = 0}};
+  *servers                    = server_list;
 
-  if (d_type(vc->result) != T_OBJECT || !vc->proof || !server_list) return vc_err(vc, "Invalid nodeList response!");
+  if (d_type(vc->result) != T_OBJECT || !vc->proof || !server_list) return vc_err(vc, "Invalid nodelist response!");
 
   // verify the header
   bytes_t* blockHeader = d_get_bytesk(vc->proof, K_BLOCK);
@@ -221,25 +242,29 @@ in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* 
   TRY(eth_verify_blockheader(vc, blockHeader, NULL));
 
   // check contract
-  bytes_t* registry_contract = d_get_byteskl(vc->result, K_CONTRACT, 20);
-  if (!registry_contract || !b_cmp(registry_contract, vc->chain->contract)) return vc_err(vc, "No or wrong Contract!");
+  bytes_t* contract = d_get_byteskl(vc->result, K_CONTRACT, 20);
+  if (!contract || (required_contract && memcmp(contract->data, required_contract, 20)))
+    return vc_err(vc, "No or wrong Contract!");
 
   // check last block
-  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER)) return vc_err(vc, "The signature is based on older block!");
+  if (rlp_decode_in_list(blockHeader, BLOCKHEADER_NUMBER, &root) != 1 || bytes_to_long(root.data, root.len) < d_get_longk(vc->result, K_LAST_BLOCK_NUMBER))
+    return vc_err(vc, "The signature is based on older block!");
 
   // check accounts
   d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
-  if (!accounts || d_len(accounts) != 1) return vc_err(vc, "Invalid accounts!");
+  if (!accounts || d_len(accounts) != 1)
+    return vc_err(vc, "Invalid accounts!");
   d_token_t* account = accounts + 1;
 
   // verify the account proof
   if (rlp_decode_in_list(blockHeader, BLOCKHEADER_STATE_ROOT, &root) != 1) return vc_err(vc, "no state root in the header");
-  if (!b_cmp(d_get_byteskl(account, K_ADDRESS, 20), registry_contract)) return vc_err(vc, "wrong address in the account proof");
+  if (!b_cmp(d_get_byteskl(account, K_ADDRESS, 20), contract)) return vc_err(vc, "wrong address in the account proof");
 
   proof = d_create_bytes_vec(d_get(account, K_ACCOUNT_PROOF));
   if (!proof) return vc_err(vc, "no merkle proof for the account");
+
   account_raw = serialize_account(account);
-  sha3_to(registry_contract, hash);
+  sha3_to(contract, hash);
   if (!trie_verify_proof(&root, &path, proof, account_raw)) {
     _free(proof);
     b_free(account_raw);
@@ -249,13 +274,13 @@ in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* 
   b_free(account_raw);
 
   // now verify storage proofs
-  if (!(storage_proof = d_get(account, K_STORAGE_PROOF))) return vc_err(vc, "no stortage-proof found!");
+  if (!(*storage_proof = d_get(account, K_STORAGE_PROOF))) return vc_err(vc, "no stortage-proof found!");
   if ((t = d_getl(account, K_STORAGE_HASH, 32)))
     root = *d_bytes(t);
   else
     return vc_err(vc, "no storage-hash found!");
 
-  for (d_iterator_t it = d_iter(storage_proof); it.left; d_iter_next(&it)) {
+  for (d_iterator_t it = d_iter(*storage_proof); it.left; d_iter_next(&it)) {
     // prepare the key
     d_bytes_to(d_get(it.token, K_KEY), hash, 32);
     sha3_to(&path, hash);
@@ -275,6 +300,20 @@ in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* 
     _free(proof);
   }
 
+  return IN3_OK;
+}
+
+in3_ret_t eth_verify_in3_whitelist(in3_vctx_t* vc) {
+  d_token_t *storage_proof = NULL, *server_list = NULL;
+  in3_ret_t  res = verify_account(vc, vc->chain->whitelist ? vc->chain->whitelist->contract : NULL, &storage_proof, &server_list);
+
+  return res == IN3_OK ? verify_whitelist_data(vc, server_list, storage_proof) : res;
+}
+
+in3_ret_t eth_verify_in3_nodelist(in3_vctx_t* vc, uint32_t node_limit, bytes_t* seed, d_token_t* required_addresses) {
+  d_token_t *storage_proof = NULL, *server_list = NULL;
+  in3_ret_t  res = verify_account(vc, vc->chain->contract->data, &storage_proof, &server_list);
+
   // now verify the nodelist
-  return verify_nodelist_data(vc, node_limit, seed, required_addresses, server_list, storage_proof);
+  return res == IN3_OK ? verify_nodelist_data(vc, node_limit, seed, required_addresses, server_list, storage_proof) : res;
 }

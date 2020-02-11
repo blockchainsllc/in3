@@ -53,8 +53,10 @@
 #ifdef IN3_SERVER
 #include "../http-server/http_server.h"
 #endif
+#include "../../core/client/cache.h"
 #include "../../core/client/context.h"
 #include "../../core/client/keys.h"
+#include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
 #include "../../verifier/btc/btc.h"
 #include "../../verifier/eth1/basic/signer.h"
@@ -78,7 +80,10 @@ void show_help(char* name) {
   printf("Usage: %s <options> method <params> ... \n\
 \n\
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
+-a             max number of attempts before giving up (default 5)\n\
+-rc            number of request per try (default 1)\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
+-md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
 -eth           converts the result (as wei) to ether.\n\
 -l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
@@ -142,15 +147,22 @@ ecrecover <msg> <signature>\n\
 \n\
 key <keyfile>\n\
   reads the private key from JSON-Keystore file and returns the private key.\n\
+\n\
+in3_weights\n\
+  list all current weights and stats\n\
+\n\
+in3_ens <domain> <field>\n\
+  resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
 \n",
          name);
 }
 
-void die(char* msg) {
+static void die(char* msg) {
   fprintf(stderr, "\033[31mError: %s\033[0m\n", msg);
   exit(EXIT_FAILURE);
 }
 
+static bool debug_mode = false;
 static void print_hex(uint8_t* data, int len) {
   printf("0x");
   for (int i = 0; i < len; i++) printf("%02x", data[i]);
@@ -258,7 +270,7 @@ static void execute(in3_t* c, FILE* f) {
       // time to execute
       in3_ctx_t* ctx = ctx_new(c, sb->data);
       if (ctx->error)
-        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":%s}\n", 1, ctx->error);
+        printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}\n", 1, ctx->verification_state, ctx->error);
       else {
         in3_ret_t ret = in3_send_ctx(ctx);
         uint32_t  id  = d_get_intk(ctx->requests[0], K_ID);
@@ -284,7 +296,7 @@ static void execute(in3_t* c, FILE* f) {
             _free(r);
           }
         } else
-          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":\"%s\"}\n", id, ctx->error == NULL ? "Unknown error" : ctx->error);
+          printf("{\"jsonrpc\":\"2.0\",\"id\":%i,\"error\":{\"code\":%i,\"message\":\"%s\"}}\n", id, ctx->verification_state, ctx->error == NULL ? "Unknown error" : ctx->error);
       }
       ctx_free(ctx);
       first   = 0;
@@ -292,6 +304,29 @@ static void execute(in3_t* c, FILE* f) {
     }
   }
 }
+
+char* resolve(in3_t* c, char* name) {
+  if (!name) return NULL;
+  if (name[0] == '0' && name[1] == 'x') return name;
+  if (strchr(name, '.')) {
+    char* params = alloca(strlen(name) + 10);
+    sprintf(params, "[\"%s\"]", name);
+    char *res = NULL, *err = NULL;
+    in3_client_rpc(c, "in3_ens", params, &res, &err);
+    if (err) {
+      res = alloca(strlen(err) + 100);
+      sprintf(res, "Could not resolve %s : %s", name, err);
+      die(res);
+    }
+    if (res[0] == '"') {
+      res[strlen(res) - 1] = 0;
+      res++;
+    }
+    return res;
+  }
+  return name;
+}
+
 // read data from a file and return the bytes
 bytes_t readFile(FILE* f) {
   if (!f) die("Could not read the input file");
@@ -301,8 +336,9 @@ bytes_t readFile(FILE* f) {
     r = fread(buffer + len, 1, allocated - len, f);
     len += r;
     if (feof(f)) break;
-    buffer = _realloc(buffer, allocated * 2 + 1, allocated + 1);
-    allocated *= 2;
+    size_t new_alloc = allocated * 2 + 1;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
   return bytes(buffer, len);
@@ -348,11 +384,16 @@ uint64_t getchain_id(char* name) {
 
 // set the chain_id in the client
 void set_chain_id(in3_t* c, char* id) {
-  if (strstr(id, "://")) { // its a url
-    c->chain_id                  = 0xFFFFL;
-    c->chains[3].nodelist[0].url = id;
-  } else
-    c->chain_id = getchain_id(id);
+  c->chain_id = strstr(id, "://") ? 0xFFFFL : getchain_id(id);
+  if (c->chain_id == 0xFFFFL) {
+    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    if (strstr(id, "://")) // its a url
+      chain->nodelist[0].url = id;
+    if (chain->nodelist_upd8_params) {
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
+    }
+  }
 }
 
 // prepare a eth_call or eth_sendTransaction
@@ -474,6 +515,10 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 static bytes_t*  last_response;
 static bytes_t   in_response = {.data = NULL, .len = 0};
 static in3_ret_t debug_transport(in3_request_t* req) {
+#ifndef DEBUG
+  if (debug_mode)
+    fprintf(stderr, "send request to %s: \n\033[0;33m%s\033[0m\n", req->urls_len ? req->urls[0] : "none", req->payload);
+#endif
   if (in_response.len) {
     for (int i = 0; i < req->urls_len; i++)
       sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
@@ -485,6 +530,14 @@ static in3_ret_t debug_transport(in3_request_t* req) {
   in3_ret_t r = send_http(req);
 #endif
   last_response = b_new(req->results[0].result.data, req->results[0].result.len);
+#ifndef DEBUG
+  if (debug_mode) {
+    if (req->results[0].result.len)
+      fprintf(stderr, "success response \n\033[0;32m%s\033[0m\n", req->results[0].result.data);
+    else
+      fprintf(stderr, "error response \n\033[0;31m%s\033[0m\n", req->results[0].error.data);
+  }
+#endif
   return r;
 }
 static char*     test_name = NULL;
@@ -546,6 +599,7 @@ int main(int argc, char* argv[]) {
   in3_storage_handler_t storage_handler;
   storage_handler.get_item = storage_get_item;
   storage_handler.set_item = storage_set_item;
+  storage_handler.clear    = storage_clear;
 
   // we want to verify all
   in3_register_eth_full();
@@ -600,6 +654,8 @@ int main(int argc, char* argv[]) {
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
+    else if (strcmp(argv[i], "-ccache") == 0) // clear cache
+      c->cache->clear(c->cache->cptr);
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) { // data
       char* d = argv[++i];
       if (strcmp(d, "-") == 0)
@@ -618,6 +674,8 @@ int main(int argc, char* argv[]) {
       c->replace_latest_block = atoll(argv[++i]);
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
+    else if (strcmp(argv[i], "-md") == 0)
+      c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->keep_in3 = true;
     else if (strcmp(argv[i], "-to") == 0)
@@ -635,6 +693,10 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-rc") == 0)
+      c->request_count = atoi(argv[++i]);
+    else if (strcmp(argv[i], "-a") == 0)
+      c->max_attempts = atoi(argv[++i]);
     else if (strcmp(argv[i], "-name") == 0)
       name = argv[++i];
     else if (strcmp(argv[i], "-validators") == 0)
@@ -655,9 +717,10 @@ int main(int argc, char* argv[]) {
       c->proof = PROOF_NONE;
     else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
       sig_type = argv[++i];
-    else if (strcmp(argv[i], "-debug") == 0)
+    else if (strcmp(argv[i], "-debug") == 0) {
       in3_log_set_level(LOG_TRACE);
-    else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
+      debug_mode = true;
+    } else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)
       c->signature_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-proof") == 0 || strcmp(argv[i], "-p") == 0) {
       if (strcmp(argv[i + 1], "none") == 0)
@@ -678,8 +741,6 @@ int main(int argc, char* argv[]) {
         pk_file = argv[i];
       else if (strcmp(method, "sign") == 0 && !data)
         data = b_new(argv[i], strlen(argv[i]));
-      else if (to == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0))
-        to = argv[i];
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
@@ -692,7 +753,7 @@ int main(int argc, char* argv[]) {
                        (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
-                       argv[i]);
+                       strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
       }
     }
   }
@@ -727,7 +788,7 @@ int main(int argc, char* argv[]) {
 
   // call -> eth_call
   if (strcmp(method, "call") == 0) {
-    req    = prepare_tx(sig, to, params, block_number, 0, NULL, data);
+    req    = prepare_tx(sig, resolve(c, to), params, block_number, 0, NULL, data);
     method = "eth_call";
   } else if (strcmp(method, "abi_encode") == 0) {
     if (!sig) die("missing signature");
@@ -754,8 +815,25 @@ int main(int argc, char* argv[]) {
       print_val(res->result);
     return 0;
 
+  } else if (strcmp(method, "in3_weights") == 0) {
+    uint64_t     now   = _time();
+    in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+    printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
+    for (int i = 0; i < chain->nodelist_length; i++) {
+      in3_node_weight_t* weight      = chain->weights + i;
+      in3_node_t*        node        = chain->nodelist + i;
+      uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
+      uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
+      if (blacklisted) printf("\033[31m");
+      printf("%2i   %45s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight);
+      if (blacklisted) printf("\033[0m");
+      printf("\n");
+    }
+
+    return 0;
+
   } else if (strcmp(method, "send") == 0) {
-    prepare_tx(sig, to, params, NULL, gas_limit, value, data);
+    prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
   } else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
@@ -817,7 +895,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet btc kovan goerli local true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate\n");
+    printf("send call abi_encode abi_decode ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;
@@ -880,6 +958,21 @@ int main(int argc, char* argv[]) {
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
+
+  // Update nodelist if a newer latest block was reported
+  if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
+    char *r = NULL, *e = NULL;
+    in3_client_rpc(c, "eth_blockNumber", "", &r, &e);
+  }
+
+  // update cache
+  if (c->chain_id != ETH_CHAIN_ID_LOCAL) {
+    in3_ctx_t ctx;
+    memset(&ctx, 0, sizeof(in3_ctx_t));
+    ctx.client = c;
+    in3_cache_store_nodelist(&ctx, in3_find_chain(c, c->chain_id));
+  }
+
   // if we need to wait
   if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
     bytes32_t txHash;

@@ -146,6 +146,7 @@ typedef enum evm_state {
     if (key != EVM_ENV_BLOCKHASH) {                            \
       account_t* ac = evm_get_account(evm, address, 0);        \
       uint8_t    tmp[4];                                       \
+      uint8_t    hash[32];                                     \
       if (ac) {                                                \
         data = NULL;                                           \
         if (key == EVM_ENV_BALANCE) {                          \
@@ -159,7 +160,6 @@ typedef enum evm_state {
           data = ac->code.data;                                \
           l    = ac->code.len;                                 \
         } else if (key == EVM_ENV_CODE_HASH && ac->code.len) { \
-          uint8_t hash[32];                                    \
           sha3_to(&ac->code, hash);                            \
           data = hash;                                         \
           l    = 32;                                           \

@@ -60,10 +60,31 @@ in3_ret_t in3_cache_update_nodelist(
 /**
  * stores the nodelist to thes cache. 
  * 
- * It will automaticly called if the nodelist has changed and read from the nodes or the wirght of a node changed.
+ * It will be automatically called if the nodelist has changed and read from the nodes or the weight of a node changed.
  * 
  */
 in3_ret_t in3_cache_store_nodelist(
+    in3_ctx_t*   ctx, /**< the current incubed context */
+    in3_chain_t* chain /**< the chain upating to cache */);
+
+/**
+ * reads the whitelist from cache.
+ *
+ * This function is usually called internally to fill the weights
+ * and whitelist from the the cache.
+ * If you call `in3_cache_init` there is no need to call this explicitly.
+ */
+in3_ret_t in3_cache_update_whitelist(
+    in3_t*       c, /**< the incubed client */
+    in3_chain_t* chain /**< chain to configure */);
+
+/**
+ * stores the whitelist to thes cache.
+ *
+ * It will be automatically called if the whitelist has changed.
+ *
+ */
+in3_ret_t in3_cache_store_whitelist(
     in3_ctx_t*   ctx, /**< the current incubed context */
     in3_chain_t* chain /**< the chain upating to cache */);
 

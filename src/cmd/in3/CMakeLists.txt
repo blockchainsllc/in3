@@ -50,8 +50,8 @@ ENDIF()
 
 
 add_executable(in3 main.c in3_storage.c)
-
-target_link_libraries(in3 ${LIBS} btc eth_full eth_api -lm)
+target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
+target_link_libraries(in3 ${LIBS} eth_full eth_api ipfs btc -lm)
 
 install(TARGETS in3
         DESTINATION /usr/local/bin/

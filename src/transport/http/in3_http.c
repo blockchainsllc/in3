@@ -35,6 +35,7 @@
 #include <stdio.h>  /* printf, sprintf */
 #include <stdlib.h> /* exit, atoi, malloc, free */
 #include <string.h> /* memcpy, memset */
+#include <time.h>
 #include <unistd.h> /* read, write, close */
 #ifdef _WIN32
 // clang-format off
@@ -49,14 +50,18 @@
 #endif
 #include "../../core/client/client.h"
 #include "../../core/util/mem.h"
+#include "../../core/util/utils.h"
 #include "in3_http.h"
 
 in3_ret_t send_http(in3_request_t* req) {
+  if (!req->times) req->times = _malloc(sizeof(uint32_t) * req->urls_len);
   for (int n = 0; n < req->urls_len; n++) {
+
     struct hostent*    server;
     struct sockaddr_in serv_addr;
     int                received, bytes, sent, total;
     char *             message = alloca(strlen(req->payload) + 200), response[4096], *url = req->urls[n], host[256];
+    uint64_t           start = current_ms();
 
     (void) received;
     (void) bytes;
@@ -196,6 +201,8 @@ in3_ret_t send_http(in3_request_t* req) {
     close(sockfd);
 
 #endif
+
+    req->times[n] = (uint32_t)(current_ms() - start);
 
     // now evaluate the response
 

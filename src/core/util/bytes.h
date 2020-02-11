@@ -63,8 +63,8 @@ typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byt
 
 /** a byte array */
 typedef struct bytes {
-  uint32_t len;  /**< the length of the array ion bytes */
   uint8_t* data; /**< the byte-data  */
+  uint32_t len;  /**< the length of the array ion bytes */
 } bytes_t;
 
 /** a byte-buffer to attach byte-functions. */
@@ -73,13 +73,13 @@ typedef struct {
   bytes_t  b;     /**< the bytes struct */
 } bytes_builder_t;
 
-bytes_t* b_new(char* data, int len);                          /**< allocates a new byte array with 0 filled */
-void     b_print(bytes_t* a);                                 /**< prints a the bytes as hex to stdout */
-void     ba_print(uint8_t* a, size_t l);                      /**< prints a the bytes as hex to stdout */
-int      b_cmp(bytes_t* a, bytes_t* b);                       /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
-int      bytes_cmp(bytes_t a, bytes_t b);                     /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+bytes_t* b_new(const char* data, int len);                    /**< allocates a new byte array with 0 filled */
+void     b_print(const bytes_t* a);                           /**< prints a the bytes as hex to stdout */
+void     ba_print(const uint8_t* a, size_t l);                /**< prints a the bytes as hex to stdout */
+int      b_cmp(const bytes_t* a, const bytes_t* b);           /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+int      bytes_cmp(const bytes_t a, const bytes_t b);         /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
 void     b_free(bytes_t* a);                                  /**< frees the data */
-bytes_t* b_dup(bytes_t* a);                                   /**< clones a byte array*/
+bytes_t* b_dup(const bytes_t* a);                             /**< clones a byte array*/
 uint8_t  b_read_byte(bytes_t* b, size_t* pos);                /**< reads a byte on the current position and updates the pos afterwards. */
 uint32_t b_read_int(bytes_t* b, size_t* pos);                 /**< reads a integer on the current position and updates the pos afterwards. */
 uint64_t b_read_long(bytes_t* b, size_t* pos);                /**< reads a long on the current position and updates the pos afterwards. */
@@ -90,8 +90,8 @@ bytes_builder_t* bb_newl(size_t l);                                             
 void             bb_free(bytes_builder_t* bb);                                                             /**< frees a bytebuilder and its content. */
 int              bb_check_size(bytes_builder_t* bb, size_t len);                                           /**< internal helper to increase the buffer if needed */
 void             bb_write_chars(bytes_builder_t* bb, char* c, int len);                                    /**< writes a string to the builder. */
-void             bb_write_dyn_bytes(bytes_builder_t* bb, bytes_t* src);                                    /**< writes bytes to the builder with a prefixed length. */
-void             bb_write_fixed_bytes(bytes_builder_t* bb, bytes_t* src);                                  /**< writes fixed bytes to the builder. */
+void             bb_write_dyn_bytes(bytes_builder_t* bb, const bytes_t* src);                              /**< writes bytes to the builder with a prefixed length. */
+void             bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src);                            /**< writes fixed bytes to the builder. */
 void             bb_write_int(bytes_builder_t* bb, uint32_t val);                                          /**< writes a ineteger to the builder. */
 void             bb_write_long(bytes_builder_t* bb, uint64_t val);                                         /**< writes s long to the builder. */
 void             bb_write_long_be(bytes_builder_t* bb, uint64_t val, int len);                             /**< writes any integer value with the given length of bytes */

@@ -159,8 +159,8 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     // set the new RPC-Request.
     ctx->request_context = parse_json(sb->data);
     ctx->requests[0]     = ctx->request_context->result;
-    ctx->cache           = in3_cache_add_ptr(ctx->cache, sb->data); // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-    _free(sb);                                                      // and we only free the stringbuilder, but not the data itself.
+    in3_cache_add_ptr(&ctx->cache, sb->data); // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
+    _free(sb);                                // and we only free the stringbuilder, but not the data itself.
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
@@ -208,7 +208,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     RESPONSE_START();
     sb_add_chars(&response[0]->result, filter_remove(ctx->client, id) ? "true" : "false");
     RESPONSE_END();
-  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0 || strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterLogs") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
       return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);

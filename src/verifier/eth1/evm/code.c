@@ -38,61 +38,80 @@
 #include <stdio.h>
 #include <string.h>
 
-in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* address, uint8_t* must_free, bytes_t** target) {
-  bytes_t *  res = NULL, *code_hash = NULL, tmp[32];
-  d_token_t* t = NULL;
-
-  // first see, if this is part of the proof
+static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address, bytes_t** target, bytes_t** code_hash) {
   d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
-  int        i;
-  if (accounts) {
-    for (i = 0, t = accounts + 1; i < d_len(accounts); i++, t = d_next(t)) {
-      if (memcmp(d_get_byteskl(t, K_ADDRESS, 20)->data, address, 20) == 0) {
-        code_hash = d_get_byteskl(t, K_CODE_HASH, 32);
-        res       = d_get_bytesk(t, K_CODE);
-        if (res) {
-          sha3_to(res, tmp);
-          if (code_hash && memcmp(code_hash->data, tmp, 32) == 0) {
-            *target = res;
-            return IN3_OK;
-          } else {
-            vc_err(vc, "Wrong codehash");
-            return IN3_EINVAL;
-          }
+  if (!accounts) return IN3_EFIND;
+  for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
+    if (memcmp(d_get_byteskl(iter.token, K_ADDRESS, 20)->data, address, 20) == 0) {
+      // even if we don't have a code, we still set the code_hash, since we need it later to verify
+      *code_hash    = d_get_bytesk(iter.token, K_CODE_HASH);
+      bytes_t* code = d_get_bytesk(iter.token, K_CODE);
+      if (code) {
+        bytes32_t calculated_hash;
+        sha3_to(code, calculated_hash);
+        if (*code_hash && memcmp((*code_hash)->data, calculated_hash, 32) == 0) {
+          *target = code;
+          return IN3_OK;
         }
-        break;
+        vc_err(vc, "Wrong codehash");
+        return IN3_EINVAL;
       }
     }
   }
+  return IN3_EFIND;
+}
 
+static in3_ctx_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
   // ok, we need a request, do we have a useable?
   in3_ctx_t* ctx = vc->ctx->required;
   while (ctx) {
     if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "eth_getCode") == 0) {
-      bytes_t ad = d_to_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
-      if (ad.len == 20 && memcmp(ad.data, address, 20) == 0) break;
+      // the first param of the eth_getCode is the address
+      bytes_t adr = d_to_bytes(d_get_at(d_get(ctx->requests[0], K_PARAMS), 0));
+      if (adr.len == 20 && memcmp(adr.data, address, 20) == 0) return ctx;
     }
     ctx = ctx->required;
   }
+  return NULL;
+}
+
+static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, address_t address, bool* must_free, bytes_t** target) {
+  bytes_t* code_hash = NULL;
+
+  in3_ret_t res = find_code_in_accounts(vc, address, target, &code_hash);
+  // the only allowed error is not found, so keep on searching
+  if (res != IN3_EFIND) return res;
+
+  // ok, we need a request, do we have a useable?
+  in3_ctx_t* ctx = find_pending_code_request(vc, address);
 
   // if we have found one, we verify the result and return the bytes.
   if (ctx)
     switch (in3_ctx_state(ctx)) {
       case CTX_SUCCESS: {
-        if (!ctx->error && ctx->responses[0] && (t = d_get(ctx->responses[0], K_RESULT))) {
-          bytes_t b = d_to_bytes(t);
-          sha3_to(&b, tmp);
-          if (code_hash && memcmp(code_hash->data, tmp, 32) != 0) {
+        d_token_t* rpc_result = d_get(ctx->responses[0], K_RESULT);
+        if (!ctx->error && rpc_result) {
+          bytes32_t calculated_code_hash;
+          bytes_t   code = d_to_bytes(rpc_result);
+          sha3_to(&code, calculated_code_hash);
+          if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");
             ctx_remove_required(vc->ctx, ctx);
             // TODO maybe we should not give up here, but blacklist the node and try again!
             return IN3_EINVAL;
           }
-          *must_free = 1;
+
+          // since this is a sub request and and the code can be big, we don't want to duplicate the code.
+          // so we keep the pointer  from the response and manipulate the resposen, so it won't be freed in the subrequest.
+          *target          = _malloc(sizeof(bytes_t));
+          (*target)->data  = code.data;
+          (*target)->len   = code.len;
+          rpc_result->data = NULL;
+          *must_free       = 1;
+
+          // we always try to cache the code
           if (vc->ctx->client->cache)
-            vc->ctx->client->cache->set_item(vc->ctx->client->cache->cptr, hex_address, &b);
-          else
-            *target = b_dup(d_bytes(t));
+            vc->ctx->client->cache->set_item(vc->ctx->client->cache->cptr, cache_key, *target);
           return IN3_OK;
         } else
           return vc_err(vc, ctx->error);
@@ -103,55 +122,56 @@ in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* hex_address, uint8_t* a
         return IN3_WAITING;
     }
   else {
+    // for subrequests, we always need to allocate the request string, which will be freed when releasing the subrequest.
     char* req = _malloc(200);
-    snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\",\"latest\"]}", hex_address + 1);
+
+    // we can use the cache_key, since it contains the hexencoded string with a "C"-prefix.
+    snprintX(req, 200, "{\"method\":\"eth_getCode\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"0x%s\",\"latest\"]}", cache_key + 1);
     in3_proof_t old_proof  = vc->ctx->client->proof;
     vc->ctx->client->proof = PROOF_NONE; // we don't need proof since we have the codehash!
-    i                      = ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
+    res                    = ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
     vc->ctx->client->proof = old_proof;
-    return i;
+    return res;
   }
 }
-in3_ret_t in3_get_code(in3_vctx_t* vc, uint8_t* address, cache_entry_t** target) {
+
+in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target) {
+  // search in thew cache of the current context
   for (cache_entry_t* en = vc->ctx->cache; en; en = en->next) {
     if (en->key.len == 20 && memcmp(address, en->key.data, 20) == 0) {
       *target = en;
       return IN3_OK;
     }
   }
+
+  // the cache key is always "C"+the hexaddress (without prefix)
   char key_str[43];
   key_str[0] = 'C';
   bytes_to_hex(address, 20, key_str + 1);
-  bytes_t*       b         = NULL;
-  cache_entry_t* entry     = NULL;
-  uint8_t        must_free = 0;
-  in3_ret_t      ret;
+
+  bytes_t*  code      = NULL;
+  bool      must_free = false;
+  in3_ret_t res;
 
   // not cached yet
-  if (vc->ctx->client->cache) {
-    b = vc->ctx->client->cache->get_item(vc->ctx->client->cache->cptr, key_str);
-    if (!b) {
-      ret = in3_get_code_from_client(vc, key_str, address, &must_free, &b);
-      if (ret < 0) return ret;
-      b = vc->ctx->client->cache->get_item(vc->ctx->client->cache->cptr, key_str);
-    } else
-      must_free = 1;
-  } else {
-    ret = in3_get_code_from_client(vc, key_str, address, &must_free, &b);
-    if (ret < 0) return ret;
+  if (vc->ctx->client->cache)
+    code = vc->ctx->client->cache->get_item(vc->ctx->client->cache->cptr, key_str);
+
+  if (code)
+    must_free = 1;
+  else {
+    res = in3_get_code_from_client(vc, key_str, address, &must_free, &code);
+    if (res < 0) return res;
   }
 
-  if (b) {
-    bytes_t key = {.len = 20, .data = _malloc(20)};
+  if (code) {
+    bytes_t key = bytes(_malloc(20), 20);
     memcpy(key.data, address, 20);
-    entry            = _malloc(sizeof(cache_entry_t));
-    entry->next      = vc->ctx->cache;
-    entry->key       = key;
-    entry->must_free = must_free;
-    entry->value     = *b;
-    vc->ctx->cache   = entry;
-    int_to_bytes(b->len, entry->buffer);
-    *target = entry;
+    *target              = in3_cache_add_entry(&vc->ctx->cache, key, *code);
+    (*target)->must_free = must_free;
+
+    // we also store the length into the 4 bytes buffer, so we can reference it later on.
+    int_to_bytes(code->len, (*target)->buffer);
     return IN3_OK;
   }
   return IN3_EFIND;

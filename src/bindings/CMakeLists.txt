@@ -33,6 +33,7 @@
 ###############################################################################
 
 OPTION(JAVA "build the java-binding (shared-lib and jar-file)" OFF)
+OPTION(JAVA_MULTI_LIBS "embedds multiple shared libs in the jar" OFF)
 IF (JAVA)
     add_subdirectory(java)
 ENDIF (JAVA)

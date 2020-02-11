@@ -52,6 +52,7 @@
 #define K_NODES             key("nodes")
 #define K_LAST_BLOCK_NUMBER key("lastBlockNumber")
 #define K_LAST_NODE_LIST    key("lastNodeList")
+#define K_LAST_WHITE_LIST    key("lastWhiteList")
 
 #define K_CAPACITY          key("capacity")
 #define K_INDEX             key("index")

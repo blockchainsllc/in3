@@ -2,9 +2,9 @@
     "name": "in3-wasm",
     "version": "0.0.2",
     "description": "WASM-Version of incubed build from C",
-    "main": "in3.js",
+    "main": "index.js",
     "author": "Simon Jentzsch",
-    "license": "in3",
+    "license": "(AGPL-3.0-or-later OR commercial)",
     "scripts": {
         "doc": "typedoc --includeDeclarations --ignoreCompilerErrors --mode file --excludeExternals --out doc in3.d.ts"
     },

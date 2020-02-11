@@ -41,7 +41,7 @@
 
 // linked list of chain specs
 typedef struct spec_ {
-  chain_id_t      chain_id;
+  chain_id_t    chain_id;
   chainspec_t*  spec;
   struct spec_* next;
 } spec_t;
@@ -165,7 +165,7 @@ chainspec_t* chainspec_create_from_json(d_token_t* data) {
   d_token_t* genesis = d_get(data, key("genesis"));
   if (!genesis) return log_error("no genesis specified");
 
-  if ((params = d_get(d_get(engine, key("Ethash")), key("params"))))
+  if (d_get(d_get(engine, key("Ethash")), key("params")))
     spec->consensus_transitions->type = ETH_POW;
   else if ((params = d_get(d_get(d_get(engine, key("authorityRound")), key("params")), key("validators")))) {
     spec->consensus_transitions->type = ETH_POA_AURA;
@@ -179,7 +179,7 @@ chainspec_t* chainspec_create_from_json(d_token_t* data) {
     } else
       fill_aura(params, spec->consensus_transitions, NULL);
 
-  } else if ((params = d_get(d_get(engine, key("clique")), key("params")))) {
+  } else if (d_get(d_get(engine, key("clique")), key("params"))) {
     bytes_t* extra = d_get_bytes(genesis, "extraData");
     if (!extra) return log_error("no extra data in the genesis-block");
     spec->consensus_transitions->type            = ETH_POA_CLIQUE;

@@ -39,13 +39,16 @@ if (typeof fetch === 'function') {
         get: key => window.localStorage.getItem('in3.' + key),
         set: (key, value) => window.localStorage.setItem('in3.' + key, value)
     }
-    in3w.transport = (url, payload) => fetch(url, {
-        method: 'POST',
-        mode: 'cors', // makes it possible to access them even from the filesystem.
-        headers: { 'Content-Type': 'application/json' },
-        body: payload
-    }).then(res => {
-        if (res.status < 200 || res.status >= 400) throw new Error("Error fetrching" + url + ":" + res.statusText)
+    in3w.transport = (url, payload, timeout) => Promise.race(
+        fetch(url, {
+            method: 'POST',
+            mode: 'cors', // makes it possible to access them even from the filesystem.
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout || 30000))
+    ).then(res => {
+        if (res.status < 200 || res.status >= 400) throw new Error("Error fetching" + url + ":" + res.statusText)
         return res.text()
     })
 }
@@ -68,14 +71,14 @@ else {
     try {
         // if axios is available, we use it
         const axios = require('' + 'axios')
-        in3w.transport = (url, payload) => axios.post(url, JSON.parse(payload), { headers: { 'Content-Type': 'application/json' } })
+        in3w.transport = (url, payload, timeout = 30000) => axios.post(url, JSON.parse(payload), { timeout, headers: { 'Content-Type': 'application/json' } })
             .then(res => {
                 if (res.status != 200) throw new Error("Invalid satus")
                 return JSON.stringify(res.data)
             })
     } catch (xx) {
         // if not we use the raw http-implementation of nodejs
-        in3w.transport = (url, payload) => new Promise((resolve, reject) => {
+        in3w.transport = (url, payload, timeout = 30000) => new Promise((resolve, reject) => {
             try {
                 const postData = payload;//JSON.stringify(payload);
                 const m = require(url.startsWith('https') ? 'https' : 'http')
@@ -96,6 +99,7 @@ else {
                         res.on('end', () => resolve(result))
                     }
                 })
+                req.setTimeout(timeout, (e) => reject(new Error('timeout')))
                 req.on('error', (e) => reject(new Error(e.message)))
                 req.write(postData);
                 req.end();
@@ -165,7 +169,11 @@ class IN3 {
         this.needsSetConfig = !this.ptr
         if (this.ptr) {
             const r = in3w.ccall('in3_config', 'number', ['number', 'string'], [this.ptr, JSON.stringify(this.config)]);
-            if (r) throw new Error("Error setting the config : " + r);
+            if (r) {
+                const ex = new Error(UTF8ToString(r))
+                _free(r)
+                throw ex
+            }
         }
     }
 
@@ -188,9 +196,19 @@ class IN3 {
      * sends a request and returns the response.
      */
     async sendRequest(rpc) {
+
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
         if (this.needsSetConfig) this.setConfig()
+
+        // currently we don't handle bulks directly
+        if (Array.isArray(rpc)) return Promise.all(rpc.map(_ => this.sendRequest(_)))
+
+        // replace ens-addresses
+        if (rpc.params && rpc.method != 'in3_ens')
+            for (const p of rpc.params) {
+                if (typeof (p) === 'string' && p.endsWith('.eth')) rpc.params[rpc.indexOf(p)] = await this.eth.resolveENS(p)
+            }
 
         // create the context
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
@@ -237,7 +255,7 @@ class IN3 {
                             break;
 
                         case 'rpc':
-                            await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload)).then(
+                            await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
                                 res => setResponse(res, i, false),
                                 err => setResponse(err.message || err, i, true)
                             ))).then(freeRequest, err => { freeRequest(); throw err })

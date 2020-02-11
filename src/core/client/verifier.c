@@ -35,6 +35,7 @@
 #include "verifier.h"
 #include "../util/stringbuilder.h"
 #include "client.h"
+#include "keys.h"
 
 static in3_verifier_t* verifiers = NULL;
 
@@ -58,12 +59,18 @@ in3_verifier_t* in3_get_verifier(in3_chain_type_t type) {
   return NULL;
 }
 
-in3_ret_t vc_err(in3_vctx_t* vc, char* msg) {
+in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg) {
+
+#ifdef ERR_MSG
   sb_t* sb = sb_new("[");
-  sb_add_hexuint(sb, vc->id);
+  sb_add_hexuint(sb, d_get_intk(vc->request, K_ID));
   sb_add_chars(sb, "]:");
   sb_add_chars(sb, msg);
   (void) ctx_set_error(vc->ctx, sb->data, IN3_EUNKNOWN);
   sb_free(sb);
+#else
+  (void) msg;
+  (void) vc;
+#endif
   return IN3_EUNKNOWN;
 }

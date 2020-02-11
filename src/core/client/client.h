@@ -48,7 +48,7 @@
 #include "../util/stringbuilder.h"
 #include <stdbool.h>
 #include <stdint.h>
-
+#include <time.h>
 /** the protocol version used when sending requests from the this client */
 #define IN3_PROTO_VER "2.1.0"
 
@@ -117,6 +117,7 @@ typedef struct in3_request_config {
   bytes_t*           client_signature;       /**< the signature of the client with the client key */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
+  uint32_t           time;                   /**< meassured time in ms for the request */
 
 } in3_request_config_t;
 
@@ -144,12 +145,13 @@ typedef enum {
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
-  bytes_t*         address;  /**< address of the server */
-  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t         capacity; /**< the maximal capacity able to handle */
-  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
-  char*            url;      /**< the url of the node */
+  bytes_t*         address;     /**< address of the server */
+  uint64_t         deposit;     /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t         index;       /**< index within the nodelist, also used in the contract as key */
+  uint32_t         capacity;    /**< the maximal capacity able to handle */
+  in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  char*            url;         /**< the url of the node */
+  bool             whitelisted; /**< boolean indicating if node exists in whiteList */
 } in3_node_t;
 
 /**
@@ -160,10 +162,9 @@ typedef struct in3_node {
  * These weights will also be stored in the cache (if available)
  */
 typedef struct in3_node_weight {
-  float    weight;              /**< current weight*/
   uint32_t response_count;      /**< counter for responses */
   uint32_t total_response_time; /**< total of all response times */
-  uint64_t blacklistedUntil;    /**< if >0 this node is blacklisted until k. k is a unix timestamp */
+  uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
 } in3_node_weight_t;
 
 /**
@@ -202,22 +203,43 @@ static inline bool in3_node_props_matches(in3_node_props_t np, in3_node_props_ty
 }
 
 /**
+ * defines a whitelist structure used for the nodelist.
+ */
+typedef struct in3_whitelist {
+  address_t contract;     /**< address of whiteList contract. If specified, whiteList is always auto-updated and manual whiteList is overridden */
+  bytes_t   addresses;    /**< serialized list of node addresses that constitute the whiteList */
+  uint64_t  last_block;   /**< last blocknumber the whiteList was updated, which is used to detect changed in the whitelist */
+  bool      needs_update; /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
+} in3_whitelist_t;
+
+/**represents a blockhash which was previously verified*/
+typedef struct in3_verified_hash {
+  uint64_t  block_number; /**< the number of the block */
+  bytes32_t hash;         /**< the blockhash */
+} in3_verified_hash_t;
+
+/**
  * Chain definition inside incubed.
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
  */
 typedef struct in3_chain {
-  chain_id_t         chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
-  in3_chain_type_t   type;            /**< chaintype */
-  uint64_t           last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
-  bool               needs_update;    /**< if true the nodelist should be updated and will trigger a `in3_nodeList`-request before the next request is send. */
-  int                nodelist_length; /**< number of nodes in the nodeList */
-  in3_node_t*        nodelist;        /**< array of nodes */
-  in3_node_weight_t* weights;         /**< stats and weights recorded for each node */
-  bytes_t**          init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
-  bytes_t*           contract;        /**< the address of the registry contract */
-  bytes32_t          registry_id;     /**< the identifier of the registry */
-  uint8_t            version;         /**< version of the chain */
+  chain_id_t           chain_id;        /**< chain_id, which could be a free or based on the public ethereum networkId*/
+  in3_chain_type_t     type;            /**< chaintype */
+  uint64_t             last_block;      /**< last blocknumber the nodeList was updated, which is used to detect changed in the nodelist*/
+  int                  nodelist_length; /**< number of nodes in the nodeList */
+  in3_node_t*          nodelist;        /**< array of nodes */
+  in3_node_weight_t*   weights;         /**< stats and weights recorded for each node */
+  bytes_t**            init_addresses;  /**< array of addresses of nodes that should always part of the nodeList */
+  bytes_t*             contract;        /**< the address of the registry contract */
+  bytes32_t            registry_id;     /**< the identifier of the registry */
+  uint8_t              version;         /**< version of the chain */
+  in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
+  in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
+  struct {
+    address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
+    uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
+  } * nodelist_upd8_params;
 } in3_chain_t;
 
 /** 
@@ -238,13 +260,21 @@ typedef void (*in3_storage_set_item)(
     bytes_t* value /**< the value to store.*/
 );
 
+/**
+ * storage handler function for clearing the cache.
+ **/
+typedef void (*in3_storage_clear)(
+    void* cptr /**< a custom pointer as set in the storage handler*/
+);
+
 /** 
  * storage handler to handle cache.
  **/
 typedef struct in3_storage_handler {
   in3_storage_get_item get_item; /**< function pointer returning a stored value for the given key.*/
   in3_storage_set_item set_item; /**< function pointer setting a stored value for the given key.*/
-  void*                cptr;     /**< custom pointer which will will be passed to functions */
+  in3_storage_clear    clear;    /**< function pointer clearing all contents of cache.*/
+  void*                cptr;     /**< custom pointer which will be passed to functions */
 } in3_storage_handler_t;
 
 #define IN3_SIGN_ERR_REJECTED -1          /**< return value used by the signer if the the signature-request was rejected. */
@@ -306,7 +336,9 @@ typedef struct n3_request {
   char*           payload;  /**< the payload to send */
   char**          urls;     /**< array of urls */
   int             urls_len; /**< number of urls */
-  in3_response_t* results;  /** the responses*/
+  in3_response_t* results;  /**< the responses*/
+  uint32_t        timeout;  /**< the timeout 0= no timeout*/
+  uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
 } in3_request_t;
 
 /** the transport function to be implemented by the transport provider.
@@ -331,6 +363,9 @@ typedef struct in3_filter_t_ {
 
   /** block no. when filter was created OR eth_getFilterChanges was called */
   uint64_t last_block;
+
+  /** if true the filter was not used previously */
+  bool is_first_usage;
 
   /** method to release owned resources */
   void (*release)(struct in3_filter_t_* f);
@@ -384,7 +419,10 @@ typedef struct in3_t_ {
   uint16_t finality;
 
   /** the max number of attempts before giving up*/
-  uint16_t max_attempts;
+  uint_fast16_t max_attempts;
+
+  /** max number of verified hashes to cache */
+  uint_fast16_t max_verified_hashes;
 
   /** specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. */
   uint32_t timeout;
@@ -450,6 +488,7 @@ typedef struct in3_t_ {
  * in3_storage_handler_t storage_handler;
  * storage_handler.get_item = storage_get_item;
  * storage_handler.set_item = storage_set_item;
+ * storage_handler.clear = storage_clear;
  *
  * // configure transport
  * client->transport    = send_curl;
@@ -487,6 +526,7 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * in3_storage_handler_t storage_handler;
  * storage_handler.get_item = storage_get_item;
  * storage_handler.set_item = storage_set_item;
+ * storage_handler.clear = storage_clear;
  *
  * // configure transport
  * client->transport    = send_curl;
@@ -542,7 +582,8 @@ in3_ret_t in3_client_register_chain(
     in3_chain_type_t type,        /**< [in] the verification type of the chain. */
     address_t        contract,    /**< [in] contract of the registry. */
     bytes32_t        registry_id, /**< [in] the identifier of the registry. */
-    uint8_t          version      /**< [in] the chain version. */
+    uint8_t          version,     /**< [in] the chain version. */
+    address_t        wl_contract  /**< [in] contract of whiteList. */
 );
 
 /** adds a node to a chain ore updates a existing node */
@@ -592,9 +633,9 @@ in3_chain_t* in3_find_chain(
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  * 
  */
-in3_ret_t in3_configure(
-    in3_t* c,     /**< the incubed client */
-    char*  config /**< JSON-string with the configuration to set. */
+char* in3_configure(
+    in3_t*      c,     /**< the incubed client */
+    const char* config /**< JSON-string with the configuration to set. */
 );
 
 /**
@@ -631,9 +672,10 @@ in3_signer_t* in3_create_signer(
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
-in3_storage_handler_t* in3_create_storeage_handler(
+in3_storage_handler_t* in3_create_storage_handler(
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
+    in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 );
 #endif

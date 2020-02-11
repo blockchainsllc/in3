@@ -49,45 +49,45 @@
  * These are used within a request context to cache values and automaticly free them.
  */
 typedef struct cache_entry {
-  bytes_t             key;  /**<  an optional key of the entry*/
-  bytes_t             value;  /**< the value */
-  uint8_t             must_free; /**< if true, the cache-entry will be freed when the request context is cleaned up. */
+  bytes_t             key;       /**<  an optional key of the entry*/
+  bytes_t             value;     /**< the value */
   uint8_t             buffer[4]; /**< the buffer is used to store extra data, which will be cleaned when freed. */
-  struct cache_entry* next; /**< pointer to the next entry.*/
+  bool                must_free; /**< if true, the cache-entry will be freed when the request context is cleaned up. */
+  struct cache_entry* next;      /**< pointer to the next entry.*/
 } cache_entry_t;
 
 /**
  * get the entry for a given key.
  */
 bytes_t* in3_cache_get_entry(
-  cache_entry_t* cache,  /**< the root entry of the linked list. */
-  bytes_t* key           /**< the key to compare with */
-); 
+    cache_entry_t* cache, /**< the root entry of the linked list. */
+    bytes_t*       key    /**< the key to compare with */
+);
 
 /**
  * adds an entry to the linked list.
  */
 cache_entry_t* in3_cache_add_entry(
-  cache_entry_t* cache,  /**< the root entry of the linked list. */
-  bytes_t key,           /**< an optional key */
-  bytes_t value          /**< the value of the entry */
+    cache_entry_t** cache, /**< the root entry of the linked list. */
+    bytes_t         key,   /**< an optional key */
+    bytes_t         value  /**< the value of the entry */
 );
 
 /**
  * clears all entries in the linked list.
  */
 void in3_cache_free(
-  cache_entry_t* cache /**< the root entry of the linked list. */
+    cache_entry_t* cache /**< the root entry of the linked list. */
 );
 
 /**
  * adds a pointer, which should be freed when the context is freed.
  */
 static inline cache_entry_t* in3_cache_add_ptr(
-  cache_entry_t* cache, /**< the root entry of the linked list. */
-  void* ptr /**< pointer to memory which shold be freed. */
+    cache_entry_t** cache, /**< the root entry of the linked list. */
+    void*           ptr    /**< pointer to memory which shold be freed. */
 ) {
-  return in3_cache_add_entry(cache,bytes(NULL,0),bytes((uint8_t*)ptr,1));
+  return in3_cache_add_entry(cache, bytes(NULL, 0), bytes((uint8_t*) ptr, 1));
 }
 
 #endif

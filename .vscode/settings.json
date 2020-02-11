@@ -80,7 +80,11 @@
         "stack": "c",
         "deque": "cpp",
         "memory": "cpp",
-        "streambuf": "cpp"
+        "streambuf": "cpp",
+        "__node_handle": "c",
+        "cstdlib": "c",
+        "locale": "c",
+        "eth_call_response_binary.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

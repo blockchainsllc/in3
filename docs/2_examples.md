@@ -36,13 +36,13 @@ int main() {
   in3_log_set_prefix("");
 
   // create new incubed client
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // define a address (20byte)
   address_t contract;
 
   // copy the hexcoded string into this address
-  hex2byte_arr("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
+  hex_to_bytes("0x2736D225f85740f42D17987100dc8d58e9e16252", -1, contract, 20);
 
   // call function using RPC
   ret = call_func_rpc(c);
@@ -153,7 +153,7 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // get balance using raw RPC call
   get_balance_rpc(in3);
@@ -190,7 +190,7 @@ void get_balance_rpc(in3_t* in3) {
 void get_balance_api(in3_t* in3) {
   // the address of account whose balance we want to get
   address_t account;
-  hex2byte_arr("0xc94770007dda54cF92009BFF0dE90c06F603a09f", -1, account, 20);
+  hex_to_bytes("0xc94770007dda54cF92009BFF0dE90c06F603a09f", -1, account, 20);
 
   // get balance of account
   long double balance = as_double(eth_getBalance(in3, account, BLKNUM_EARLIEST()));
@@ -233,7 +233,7 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // get block using raw RPC call
   get_block_rpc(in3);
@@ -314,8 +314,8 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3   = in3_new();
-  in3->chainId = ETH_CHAIN_ID_KOVAN;
+  in3_t* in3    = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3->chain_id = ETH_CHAIN_ID_KOVAN;
 
   // get logs using raw RPC call
   get_logs_rpc(in3);
@@ -428,7 +428,7 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // get tx using raw RPC call
   get_tx_rpc(in3);
@@ -465,7 +465,7 @@ void get_tx_rpc(in3_t* in3) {
 void get_tx_api(in3_t* in3) {
   // the hash of transaction that we want to get
   bytes32_t tx_hash;
-  hex2byte_arr("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
+  hex_to_bytes("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
 
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
@@ -513,7 +513,7 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // get tx receipt using raw RPC call
   get_tx_receipt_rpc(in3);
@@ -550,7 +550,7 @@ void get_tx_receipt_rpc(in3_t* in3) {
 void get_tx_receipt_api(in3_t* in3) {
   // the hash of transaction whose receipt we want to get
   bytes32_t tx_hash;
-  hex2byte_arr("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
+  hex_to_bytes("0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab5252287c34bc5d12457eab0e", -1, tx_hash, 32);
 
   // get the tx receipt by hash
   eth_tx_receipt_t* txr = eth_getTransactionReceipt(in3, tx_hash);
@@ -601,11 +601,11 @@ int main() {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* in3 = in3_new();
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // convert the hexstring to bytes
   bytes32_t pk;
-  hex2byte_arr(ETH_PRIVATE_KEY, -1, pk, 32);
+  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
 
   // create a simple signer with this key
   eth_set_pk_signer(in3, pk);
@@ -648,10 +648,10 @@ void send_tx_rpc(in3_t* in3) {
 void send_tx_api(in3_t* in3) {
   // prepare parameters
   address_t to, from;
-  hex2byte_arr("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
-  hex2byte_arr("0xd46e8dd67c5d32be8058bb8eb970870f07244567", -1, to, 20);
+  hex_to_bytes("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
+  hex_to_bytes("0xd46e8dd67c5d32be8058bb8eb970870f07244567", -1, to, 20);
 
-  bytes_t* data = hex2byte_new_bytes("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", 82);
+  bytes_t* data = hex_to_new_bytes("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", 82);
 
   // send the tx
   bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_UNDEFINED(uint64_t));
@@ -710,21 +710,21 @@ int main(int argc, char* argv[]) {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
   // switch to goerli
-  c->chainId = 0x5;
+  c->chain_id = 0x5;
 
   // setting up a usn-device-config
   usn_device_conf_t usn;
   usn.booking_handler    = handle_booking;                                          // this is the handler, which is called for each rent/return or start/stop
   usn.c                  = c;                                                       // the incubed client
-  usn.chain_id           = c->chainId;                                              // the chain_id
+  usn.chain_id           = c->chain_id;                                             // the chain_id
   usn.devices            = NULL;                                                    // this will contain the list of devices supported
   usn.len_devices        = 0;                                                       // and length of this list
   usn.now                = 0;                                                       // the current timestamp
   unsigned int wait_time = 5;                                                       // the time to wait between the internval
-  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, usn.contract, 20); // address of the usn-contract, which we copy from hex
+  hex_to_bytes("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, usn.contract, 20); // address of the usn-contract, which we copy from hex
 
   // register a usn-device
   usn_register_device(&usn, "office@slockit");
@@ -804,14 +804,11 @@ int main(int argc, char* argv[]) {
   in3_register_curl();
 
   // create new incubed client
-  in3_t* c = in3_new();
-
-  // switch to goerli
-  c->chainId = 0x5;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
 
   // address of the usn-contract, which we copy from hex
   address_t contract;
-  hex2byte_arr("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
+  hex_to_bytes("0x85Ec283a3Ed4b66dF4da23656d4BF8A507383bca", -1, contract, 20);
 
   // read the key from args - I know this is not safe, but this is just a example.
   if (argc < 3) {

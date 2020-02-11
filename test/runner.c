@@ -41,6 +41,7 @@
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
 #include "../src/verifier/eth1/full/eth_full.h"
+#include "../src/verifier/ipfs/ipfs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,7 +106,9 @@ char* readContent(char* name) {
     r = fread(buffer + len, 1, allocated - len - 1, file);
     len += r;
     if (feof(file)) break;
-    buffer = realloc(buffer, allocated *= 2);
+    size_t new_alloc = allocated * 2;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
 
@@ -211,6 +214,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   // configure in3
   c->request_count = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
   method           = d_get_string(request, "method");
+  bool intern      = d_get_int(test, "intern");
 
   str_range_t s = d_to_json(d_get(request, key("params")));
   if (!method) {
@@ -231,6 +235,19 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   int is_bin = d_get_int(test, "binaryFormat");
 
   in3_client_rpc(c, method, params, is_bin ? NULL : &res, &err);
+
+  if (res && intern) {
+    json_ctx_t* actual_json = parse_json(res);
+    d_token_t*  actual      = actual_json->result;
+    d_token_t*  expected    = d_get(response + 1, key("result"));
+    if (!d_eq(actual, expected)) {
+      err = _malloc(strlen(res) + 200);
+      sprintf(err, "wrong response: %s", res);
+      _free(res);
+      res = NULL;
+    }
+    json_free(actual_json);
+  }
 
   if (err && res) {
     print_error("Error and Result set");
@@ -293,7 +310,9 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
   for (j = 0; j < c->chains_length; j++) {
-    c->chains[j].needs_update = false;
+    _free(c->chains[j].nodelist_upd8_params);
+    c->chains[j].nodelist_upd8_params = NULL;
+
     if (registry_id) {
       c->chains[j].version = 2;
       memcpy(c->chains[j].registry_id, d_bytesl(registry_id, 32)->data, 32);
@@ -312,7 +331,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
           if (i < c->signature_count)
             memcpy(c->chains[j].nodelist[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
           else
-            c->chains[j].weights[i].blacklistedUntil = 0xFFFFFFFFFFFFFF;
+            c->chains[j].weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
         }
       }
     }
@@ -424,6 +443,7 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
   in3_register_eth_full();
   in3_register_eth_api();
+  in3_register_ipfs();
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
   char** names = malloc(sizeof(char*));

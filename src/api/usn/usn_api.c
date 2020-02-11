@@ -47,7 +47,7 @@
 #define K_ACTION key("action")
 #define K_TRANSACTIONHASH key("transactionHash")
 #define K_SIGNATURE key("signature")
-
+#ifdef ERR_MSG
 #define reject_if(c, m)            \
   if (c) {                         \
     if (parsed) json_free(parsed); \
@@ -61,8 +61,21 @@
     result->action    = NULL; \
     goto clean;               \
   }
-
-//static int exec_eth_call(in3_t* c, address_t to, )
+#else
+#define reject_if(c, m)            \
+  if (c) {                         \
+    if (parsed) json_free(parsed); \
+    result.error_msg = "E";        \
+    result.action    = NULL;       \
+    return result;                 \
+  }
+#define rejectp_if(c, m)      \
+  if (c) {                    \
+    result->error_msg = "E";  \
+    result->action    = NULL; \
+    goto clean;               \
+  }
+#endif
 
 static d_token_t* get_rented_event(d_token_t* receipt) {
   bytes32_t event_hash;

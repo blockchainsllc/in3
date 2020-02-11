@@ -95,10 +95,16 @@ static void set_errorn(int std_error, char* msg, int len) {
 }
 
 // sets the error and a message
-static void set_error(int std_error, char* msg) {
+static void set_error_intern(int std_error, char* msg) {
   in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
   set_errorn(std_error, msg, strlen(msg));
 }
+
+#ifdef ERR_MSG
+#define set_error(e, msg) set_error_intern(e, msg)
+#else
+#define set_error(e, msg) set_error_intern(e, "E")
+#endif
 
 /** copies bytes to a fixed length destination (leftpadding 0 if needed).*/
 static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
@@ -151,7 +157,11 @@ static d_token_t* get_result(in3_ctx_t* ctx) {
   if (ctx->error) {                   // error means something went wrong during verification or a timeout occured.
     set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;
+  } else if (!ctx->responses) {
+    set_error(IN3_ERPC, "No response");
+    return NULL;
   }
+
   d_token_t* t = d_get(ctx->responses[0], K_RESULT);
   if (t) return t; // everthing is good, we have a result
 
@@ -461,8 +471,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     params_add_blk_num_t(params, block);
   } else {
     set_error(0, req->error ? req->error : "Error parsing the request-data");
-    sb_free(
-        params);
+    sb_free(params);
     req_free(req);
     return NULL;
   }
@@ -541,14 +550,18 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   if (id == 0 || id > in3->filters->count)
     return IN3_EINVAL;
 
-  uint64_t      blkno = eth_blockNumber(in3);
-  in3_filter_t* f     = in3->filters->array[id - 1];
+  in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
+  uint64_t blkno = eth_blockNumber(in3);
   switch (f->type) {
     case FILTER_EVENT: {
-      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block);
+      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block, !f->is_first_usage);
       *logs       = eth_getLogs(in3, fopt_);
       _free(fopt_);
-      f->last_block = blkno + 1;
+      f->last_block     = blkno + 1;
+      f->is_first_usage = false;
       return 0;
     }
     case FILTER_BLOCK:
@@ -581,10 +594,13 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
     return IN3_EINVAL;
 
   in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
   switch (f->type) {
     case FILTER_EVENT:
       *logs = eth_getLogs(in3, f->options);
-      return 0;
+      return (*logs) ? IN3_OK : IN3_EUNKNOWN;
     default:
       return IN3_ENOTSUP;
   }
