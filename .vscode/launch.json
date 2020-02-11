@@ -5,6 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 cmd",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "call",
+                "-to",
+                "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f",
+                "nodes(uint256):(string,uint,uint64,uint192,uint64,address,bytes32)",
+                "0"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "in3 json",
+            "program": "${workspaceFolder}/build/bin/json",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "-f",
+                "data.hex"
+            ]
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "test.js",
@@ -16,7 +41,7 @@
             "name": "run test",
             "program": "${workspaceFolder}/build/test/runner",
             "args": [
-                "../test/testdata/requests/eth_getLogs.json",
+                "../test/testdata/requests/eth_logs_invalid.json",
                 "-t",
                 "1"
             ],
@@ -25,9 +50,23 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "run binary test",
+            "program": "${workspaceFolder}/build/test/test_binary_encoding",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run ethapi test",
+            "program": "${workspaceFolder}/build/test/test_ethapi",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "run abi test",
-            "program": "${workspaceFolder}/build/test/test_filter",
-            "cwd": "${workspaceFolder}"
+            "program": "${workspaceFolder}/build/test/test_cache",
+            "cwd": "${workspaceFolder}/build"
         },
         {
             "type": "node",
@@ -80,9 +119,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/in3",
             "args": [
-                "-debug",
-                "eth_getTransactionByHash",
-                "0xf5a47818d4f7465ff6edcb4b9af6b7913e514970738c9561457dc862ffc875e2"
+                "-s",
+                "1",
+                "eth_getBlockByNumber",
+                "latest",
+                "false"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
@@ -192,12 +233,31 @@
             "name": "cmd",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/in3",
+            "program": "${workspaceFolder}/build/bin/btc",
             "args": [
                 "-debug",
                 "-c",
                 "https://rpc.slock.it/mainnet",
                 "eth_blockNumber"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "btc_v",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "args": [
+                "-debug",
+                "-c",
+                "btc",
+                "getblock",
+                "0000000000000521e7f446a2929d03d8fd23c012d98ac53f2f8c9cd2d4f820a6",
+                "true"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

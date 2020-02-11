@@ -56,8 +56,6 @@ else ()
 endif ()
 message(STATUS "check for curl....: ${CURL_FOUND} ")
 
-#ADD_DEFINITIONS(-DCURL_BLOCKING)
-
 if (CURL_FOUND)
     message(STATUS "Found CURL version: ${CURL_VERSION_STRING} shoudl be type=${LIBCURL_LINKTYPE} but  ${LIBCURL_TYPE}")
     message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")

@@ -1,0 +1,7 @@
+- version: 1.1.0
+- website: https://github.com/libtom/libtommath
+- download: https://github.com/libtom/libtommath/releases/tag/v1.1.0
+- notes:
+  - **DO NOT** modify `tommath_superclass.h`
+  - See `CMakeLists.txt` for required files
+

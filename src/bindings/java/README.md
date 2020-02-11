@@ -14,17 +14,27 @@ java -cp in3.jar in3.IN3 eth_getBlockByNumber latest false
 ### Downloading
 
 
-Just download the latest jar-file [here](_downloads/in3.jar).
+The jar file can be downloaded from the latest release. [here](https://github.com/slockit/in3-c/releases).
 
+Alternatively, If you wish to download Incubed using the maven package manager, add this to your pom.xml
+```
+<dependency>
+  <groupId>it.slock</groupId>
+  <artifactId>in3</artifactId>
+  <version>2.21</version>
+</dependency> 
+```
+
+After which, install in3 with ```mvn install ```.
 
 ###  Building
 
 For building the shared library you need to enable java by using the `-DJAVA=true` flag:
 
 ```sh
-git clone git@github.com:slockit/in3-core.git
-mkdir -p in3-core/build
-cd in3-core/build
+git clone git@github.com:slockit/in3-c.git
+mkdir -p in3-c/build
+cd in3-c/build
 cmake -DJAVA=true .. && make
 ```
 
@@ -32,7 +42,7 @@ You will find the `in3.jar` in the build/lib - folder.
 
 ### Android
 
-In order to use incubed in android simply follow these steps:
+In order to use Incubed in android simply follow these steps:
 
 Step 1: Create a top-level CMakeLists.txt in android project inside app folder and link this to gradle. Follow the steps using this [guide](https://developer.android.com/studio/projects/gradle-external-native-builds) on howto link.
 
@@ -56,25 +66,25 @@ foreach(module
   third-party/crypto 
   third-party/tommath 
   api/eth1)
-        file(MAKE_DIRECTORY in3-core/src/${module}/outputs)
-        add_subdirectory( in3-core/src/${module} in3-core/src/${module}/outputs )
+        file(MAKE_DIRECTORY in3-c/src/${module}/outputs)
+        add_subdirectory( in3-c/src/${module} in3-c/src/${module}/outputs )
 endforeach()
 
 ```
 
-Step 2: clone [in3-core](https://git.slock.it/in3/c/in3-core.git) into the `app`-folder or use this script to clone and update incubed:
+Step 2: clone [in3-c](https://github.com/slockit/in3-c.git) into the `app`-folder or use this script to clone and update in3:
 
 ```sh
 #!/usr/bin/env sh
 
-#github-url for in3-core
-IN3_SRC=git@github.com:SlockItEarlyAccess/in3-core.git
+#github-url for in3-c
+IN3_SRC=https://github.com/slockit/in3-c.git
 
 cd app
 
 # if it exists we only call git pull
-if [ -d in3-core ]; then
-    cd in3-core
+if [ -d in3-c ]; then
+    cd in3-c
     git pull
     cd ..
 else
@@ -84,7 +94,7 @@ fi
 
 
 # copy the java-sources to the main java path
-cp -r in3-core/src/bindings/java/in3 src/main/java/
+cp -r in3-c/src/bindings/java/in3 src/main/java/
 # but not the native libs, since these will be build
 rm -rf src/main/java/in3/native
 ```
@@ -94,12 +104,12 @@ Step 3: Use methods available in app/src/main/java/in3/IN3.java from android act
 
 Here is example how to use it:
 
-https://github.com/SlockItEarlyAccess/in3-android-example
+https://github.com/slockit/in3-example-android
 
 
 ## Examples
 
-### Using Incubed directly
+### Using in3 directly
 
 ```java
 import in3.IN3;
@@ -125,7 +135,7 @@ public class HelloIN3 {
 
 ### Using the API
 
-Incubed also offers a API for getting Information directly in a structured way.
+in3 also offers a API for getting Information directly in a structured way.
 
 #### Reading Blocks
 

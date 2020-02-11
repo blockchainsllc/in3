@@ -34,8 +34,6 @@
 
 package in3;
 
-import java.net.*;
-import java.io.*;
 import java.math.BigInteger;
 
 import in3.JSON;
@@ -54,11 +52,16 @@ public class IN3 {
     private StorageProvider provider;
     private Signer signer;
 
+    private static IN3Transport transport = new IN3DefaultTransport();
+
     /** number of seconds requests can be cached. */
     public native int getCacheTimeout();
 
     /** sets number of seconds requests can be cached. */
     public native void setCacheTimeout(int val);
+
+    /** sets config object in the client */
+    public native void setConfig(String val);
 
     /** the limit of nodes to store in the client. */
     public native int getNodeLimit();
@@ -255,19 +258,31 @@ public class IN3 {
      * raw request from it and return the result.
      */
     public Object sendRPCasObject(String method, Object[] params) {
-        JSON j = new JSON();
         return this.sendobject(toRPC(method, params));
     }
 
     private native void free();
 
-    private native long init();
+    private native long init(long chainId);
 
     private native void initcache();
 
-    /** constrcutor. creates a new Incubed client. */
+    /**
+     * create a Incubed client using the chain-config.
+     * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
+     * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
+     */
+    public static IN3 forChain(long chainId) {
+    	return new IN3(chainId);
+    }
+
+    @Deprecated
     public IN3() {
-        ptr = init();
+        ptr = init(0);
+    }
+
+    private IN3(long chainAlias) {
+        ptr = init(chainAlias);
     }
 
     protected void finalize() {
@@ -280,38 +295,23 @@ public class IN3 {
 
     /** internal function to handle the internal requests */
     static byte[][] sendRequest(String[] urls, byte[] payload) {
-        byte[][] result = new byte[urls.length][];
-        // todo run it in threads....
-        for (int i = 0; i < urls.length; i++) {
-            try {
-                URL url = new URL(urls[i]);
-                URLConnection con = url.openConnection();
-                HttpURLConnection http = (HttpURLConnection) con;
-                http.setRequestMethod("POST");
-                http.setUseCaches(false);
-                http.setDoOutput(true);
-                http.setRequestProperty("Content-Type", "application/json");
-                http.setRequestProperty("Accept", "application/json");
-                http.setRequestProperty("charsets", "utf-8");
-                http.connect();
-                OutputStream os = http.getOutputStream();
-                os.write(payload);
-                InputStream is = http.getInputStream();
+        return IN3.transport.handle(urls, payload);
+    }
 
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                int nRead;
-                byte[] data = new byte[1024];
-                while ((nRead = is.read(data, 0, data.length)) != -1)
-                    buffer.write(data, 0, nRead);
 
-                buffer.flush();
-                is.close();
-                result[i] = buffer.toByteArray();
-            } catch (Exception ex) {
-                result[i] = null;
-            }
-        }
-        return result;
+    /**
+     * sets The transport interface.
+     * This allows to fetch the result of the incubed in a different way.
+     */
+    public void setTransport(IN3Transport newTransport) {
+        IN3.transport = newTransport;
+    }
+
+    /**
+     * returns the current transport implementation.
+     */
+    public IN3Transport getTransport() {
+    	return IN3.transport;
     }
 
     // Test it
@@ -321,7 +321,7 @@ public class IN3 {
             params[i - 1] = args[i];
 
         // create client
-        IN3 in3 = new IN3();
+        IN3 in3 = IN3.forChain(Chain.MAINNET);
 
         // set cache in tempfolder
         in3.setStorageProvider(new in3.TempStorageProvider());

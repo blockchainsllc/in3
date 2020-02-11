@@ -47,8 +47,11 @@ IF (NOT DEFINED ANDROID_ABI)
   include_directories(${JNI_INCLUDE_DIRS})
   set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.7" "-target" "1.7")
 
-  add_jar(in3j 
+  set(SOURCES
+    in3/Chain.java 
     in3/IN3.java 
+    in3/IN3DefaultTransport.java 
+    in3/IN3Transport.java 
     in3/JSON.java 
     in3/StorageProvider.java 
     in3/TempStorageProvider.java 
@@ -64,14 +67,23 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/eth1/Log.java
     in3/eth1/LogFilter.java
     in3/eth1/SimpleWallet.java
+  )
 
-    in3/native/libin3_jni.dylib 
-    in3/native/libin3_jni.so 
-    in3/native/libin3_jni_arm.so
-    in3/native/in3_jni.dll
+  if(JAVA_MULTI_LIBS)
+    set(SOURCES
+      ${SOURCES}
+      in3/native/libin3_jni.dylib 
+      in3/native/libin3_jni.so 
+      in3/native/libin3_jni_arm.so
+      in3/native/in3_jni.dll
+    )
+  endif()
 
-    OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
-    OUTPUT_NAME in3
+  add_jar(in3j 
+      ${SOURCES}
+
+      OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
+      OUTPUT_NAME in3
   )
 
 ENDIF ()

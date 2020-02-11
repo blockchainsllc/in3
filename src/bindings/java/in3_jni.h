@@ -50,6 +50,13 @@ JNIEXPORT jint JNICALL Java_in3_IN3_getCacheTimeout(JNIEnv*, jobject);
 
 /*
  * Class:     in3_IN3
+ * Method:    setConfig
+ * Signature: (Ljava/lang/String)V
+ */
+JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring val);
+
+/*
+ * Class:     in3_IN3
  * Method:    setCacheTimeout
  * Signature: (I)V
  */
@@ -291,7 +298,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv*, jobject);
  * Method:    init
  * Signature: ()J
  */
-JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject);
+JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv*, jobject, jlong);
 /*
  * Class:     in3_IN3
  * Method:    initcache

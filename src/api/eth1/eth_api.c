@@ -63,7 +63,7 @@
     _res_ = (HANDLE_RESULT);                                                              \
   else                                                                                    \
     memset(&_res_, 0, sizeof(RETURN_TYPE));                                               \
-  free_ctx(_ctx_);                                                                        \
+  ctx_free(_ctx_);                                                                        \
   sb_free(params);                                                                        \
   return _res_;
 
@@ -95,10 +95,16 @@ static void set_errorn(int std_error, char* msg, int len) {
 }
 
 // sets the error and a message
-static void set_error(int std_error, char* msg) {
+static void set_error_intern(int std_error, char* msg) {
   in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
   set_errorn(std_error, msg, strlen(msg));
 }
+
+#ifdef ERR_MSG
+#define set_error(e, msg) set_error_intern(e, msg)
+#else
+#define set_error(e, msg) set_error_intern(e, "E")
+#endif
 
 /** copies bytes to a fixed length destination (leftpadding 0 if needed).*/
 static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
@@ -148,18 +154,22 @@ static uint256_t uint256_from_bytes(bytes_t bytes) {
 
 /** returns the result from a previously executed ctx*/
 static d_token_t* get_result(in3_ctx_t* ctx) {
-  d_token_t* res = d_get(ctx->responses[0], K_RESULT);
-  if (res) return res;                                // everthing is good, we have a result
-  if (ctx->error)                                     // error means something went wrong during verification or a timeout occured.
-    set_error(ETIMEDOUT, ctx->error);                 // so we copy the error as last_error
-  else {                                              // but since we did not get a result and even without a error
-    d_token_t* r = d_get(ctx->responses[0], K_ERROR); // we find the error in the response from the server
-    if (d_type(r) == T_OBJECT) {                      // the response was correct but contains a error-object, which we convert into a string
-      str_range_t s = d_to_json(r);                   // this will not work, if we used binary-format, since we don't know the propnames in this case!!!
-      set_errorn(ETIMEDOUT, s.data, s.len);           // set error as json
-    } else                                            // or we have a string
-      set_errorn(ETIMEDOUT, d_string(r), d_len(r));   // and can simply copy it
+  if (ctx->error) {                   // error means something went wrong during verification or a timeout occured.
+    set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
+    return NULL;
+  } else if (!ctx->responses) {
+    set_error(IN3_ERPC, "No response");
+    return NULL;
   }
+
+  d_token_t* t = d_get(ctx->responses[0], K_RESULT);
+  if (t) return t; // everthing is good, we have a result
+
+  // if no result, we expect an error
+  t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
+  set_error(ETIMEDOUT, !t
+                           ? "No result or error in response"
+                           : (d_type(t) == T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
   return NULL;
 }
 
@@ -430,9 +440,9 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
           json_array_add_value(args, json_create_bytes(in_data, va_arg(ap, bytes_t)));
           break;
         case A_STRING:
+        case A_INT:
           json_array_add_value(args, json_create_string(in_data, va_arg(ap, char*)));
           break;
-        case A_INT:
         case A_UINT: {
           if (p->type_len <= 4)
             json_array_add_value(args, json_create_int(in_data, va_arg(ap, uint32_t)));
@@ -449,7 +459,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     }
 
     if (res >= 0 && (res = set_data(req, args, req->in_data)) < 0) req->error = "could not set the data";
-    free_json(in_data);
+    json_free(in_data);
   }
   if (res >= 0) {
     bytes_t to = bytes(contract, 20);
@@ -461,8 +471,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     params_add_blk_num_t(params, block);
   } else {
     set_error(0, req->error ? req->error : "Error parsing the request-data");
-    sb_free(
-        params);
+    sb_free(params);
     req_free(req);
     return NULL;
   }
@@ -483,7 +492,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
   d_token_t* result = get_result(ctx);
   if (result) {
     if (d_type(result) == T_NULL) {
-      free_ctx(ctx);
+      ctx_free(ctx);
       if (count) {
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
@@ -498,11 +507,11 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
     } else {
       //
       char* c = d_create_json(result);
-      free_ctx(ctx);
+      ctx_free(ctx);
       return c;
     }
   }
-  free_ctx(ctx);
+  ctx_free(ctx);
   set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
   return NULL;
 }
@@ -541,14 +550,18 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
   if (id == 0 || id > in3->filters->count)
     return IN3_EINVAL;
 
-  uint64_t      blkno = eth_blockNumber(in3);
-  in3_filter_t* f     = in3->filters->array[id - 1];
+  in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
+  uint64_t blkno = eth_blockNumber(in3);
   switch (f->type) {
     case FILTER_EVENT: {
-      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block);
+      char* fopt_ = filter_opt_set_fromBlock(f->options, f->last_block, !f->is_first_usage);
       *logs       = eth_getLogs(in3, fopt_);
       _free(fopt_);
-      f->last_block = blkno + 1;
+      f->last_block     = blkno + 1;
+      f->is_first_usage = false;
       return 0;
     }
     case FILTER_BLOCK:
@@ -581,16 +594,19 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
     return IN3_EINVAL;
 
   in3_filter_t* f = in3->filters->array[id - 1];
+  if (!f)
+    return IN3_EFIND;
+
   switch (f->type) {
     case FILTER_EVENT:
       *logs = eth_getLogs(in3, f->options);
-      return 0;
+      return (*logs) ? IN3_OK : IN3_EUNKNOWN;
     default:
       return IN3_ENOTSUP;
   }
 }
 
-void free_log(eth_log_t* log) {
+void log_free(eth_log_t* log) {
   _free(log->data.data);
   _free(log->topics);
   _free(log);
@@ -699,11 +715,11 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
   return NULL;
 }
 
-void free_tx_receipt(eth_tx_receipt_t* txr) {
+void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
   eth_log_t *curr = txr->logs, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
-    free_log(curr);
+    log_free(curr);
     curr = next;
   }
   _free(txr);
@@ -715,9 +731,9 @@ eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash) {
   rpc_exec("eth_getTransactionReceipt", eth_tx_receipt_t*, parse_tx_receipt(result));
 }
 
-eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, bytes32_t hash, size_t index) {
+eth_block_t* eth_getUncleByBlockNumberAndIndex(in3_t* in3, eth_blknum_t block, size_t index) {
   rpc_init;
-  params_add_bytes(params, bytes(hash, 32));
+  params_add_blk_num_t(params, block);
   params_add_number(params, index);
   rpc_exec("eth_getUncleByBlockNumberAndIndex", eth_block_t*, eth_getBlock(result, true));
 }
@@ -766,7 +782,7 @@ bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data) {
   rpc_exec("eth_sendRawTransaction", bytes_t*, b_dup(d_bytes(result)));
 }
 
-in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]) {
+in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]) {
   char tmp[64], msg[41], *hexadr;
   int  p = chain_id ? sprintf(tmp, "%i0x", (uint32_t) chain_id) : 0;
   bytes_to_hex(adr, 20, tmp + p);
@@ -779,6 +795,6 @@ in3_ret_t to_checksum(address_t adr, uint64_t chain_id, char out[43]) {
   out[1]  = 'x';
   out[42] = 0;
   for (int i = 0; i < 40; i++)
-    out[i + 2] = strtohex(msg[i]) >= 8 ? (hexadr[i] > 0x60 ? (hexadr[i] - 0x20) : hexadr[i]) : hexadr[i];
+    out[i + 2] = hexchar_to_int(msg[i]) >= 8 ? (hexadr[i] > 0x60 ? (hexadr[i] - 0x20) : hexadr[i]) : hexadr[i];
   return IN3_OK;
 }

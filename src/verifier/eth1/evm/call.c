@@ -36,8 +36,8 @@
 #include "../../../core/util/mem.h"
 #include "big.h"
 #include "evm.h"
-#include "gas.h"
 #include "evm_mem.h"
+#include "gas.h"
 #include <string.h>
 #ifdef EVM_GAS
 #include "accounts.h"
@@ -108,8 +108,9 @@ int evm_prepare_evm(evm_t*      evm,
 
   evm->properties = EVM_PROP_CONSTANTINOPL;
 
-  evm->env     = env;
-  evm->env_ptr = env_ptr;
+  evm->env      = env;
+  evm->env_ptr  = env_ptr;
+  evm->chain_id = 1;
 
   evm->gas_price.data = NULL;
   evm->gas_price.len  = 0;
@@ -173,6 +174,7 @@ int evm_sub_call(evm_t*    parent,
   int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
 
   evm.properties      = parent->properties;
+  evm.chain_id        = parent->chain_id;
   evm.call_data.data  = data;
   evm.call_data.len   = l_data;
   evm.call_value.data = value;
@@ -224,10 +226,12 @@ int evm_call(void*     vc,
              uint8_t* data, uint32_t l_data,
              address_t caller,
              uint64_t  gas,
+             uint64_t  chain_id,
              bytes_t** result) {
 
   evm_t evm;
-  int   res = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc, 0);
+  int   res    = evm_prepare_evm(&evm, address, address, caller, caller, in3_get_env, vc, 0);
+  evm.chain_id = chain_id;
 
   // check if the caller is empty
   uint8_t* ccaller = caller;

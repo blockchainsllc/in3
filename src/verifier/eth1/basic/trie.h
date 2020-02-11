@@ -90,10 +90,10 @@ typedef struct trie_codec {
  * This is a Patricia Merkle Tree.
  */
 typedef struct trie {
-  in3_hasher_t  hasher;   /**< hash-function. */
-  trie_codec_t* codec;    /**< encoding of the nocds. */
-  uint8_t       root[32]; /**< The root-hash. */
-  trie_node_t*  nodes;    /**< linked list of containes nodes */
+  in3_hasher_t  hasher; /**< hash-function. */
+  trie_codec_t* codec;  /**< encoding of the nocds. */
+  bytes32_t     root;   /**< The root-hash. */
+  trie_node_t*  nodes;  /**< linked list of containes nodes */
 } trie_t;
 
 /**

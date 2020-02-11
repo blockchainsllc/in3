@@ -5,7 +5,7 @@
   "main": "js/src/index.js",
   "scripts": {
     "build": "tsc -p .",
-    "test": "mocha --timeout 15000 --full-trace testRunner.js testApi.js",
+    "test": "mocha --timeout 15000 --full-trace testRunner.js testApi.js testUtil.js",
     "test_api": "mocha --timeout 15000 --full-trace  testApi.js",
     "test_fail": "mocha --timeout 15000 --full-trace  testApi.js testRunner.js ",
     "test_all": "mocha --timeout 15000 --full-trace  *.js"

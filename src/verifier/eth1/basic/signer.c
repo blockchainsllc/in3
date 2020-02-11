@@ -88,7 +88,7 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
   // create it
   sprintf(req, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params);
   // and add the request context to the parent.
-  return ctx_add_required(parent, new_ctx(parent->client, req));
+  return ctx_add_required(parent, ctx_new(parent->client, req));
 }
 
 /** signs the given data */
@@ -130,7 +130,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   if (ctx->client->signer && ctx->client->signer->prepare_tx) {
     in3_ret_t r = ctx->client->signer->prepare_tx(ctx, tx, &new_json);
     if (r != IN3_OK) {
-      if (new_json) free_json(new_json);
+      if (new_json) json_free(new_json);
       ctx_set_error(ctx, "error tryting to prepare the tx", r);
       return bytes(NULL, 0);
     }
@@ -145,7 +145,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
       if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
-        if (new_json) free_json(new_json);
+        if (new_json) json_free(new_json);
         ctx_set_error(ctx, "you need to specify the from-address in the tx!", IN3_EINVAL);
         return bytes(NULL, 0);
       }
@@ -188,12 +188,12 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       res = ret;
   }
   if (res < 0) {
-    if (new_json) free_json(new_json);
+    if (new_json) json_free(new_json);
     ctx_set_error(ctx, "error preparing the tx", res);
     return bytes(NULL, 0);
   }
 
-  uint64_t v = ctx->requests_configs->chainId ? ctx->requests_configs->chainId : ctx->client->chainId;
+  uint64_t v = ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id;
   if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
 
   // create raw without signature
@@ -204,6 +204,9 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
 #ifdef __clang_analyzer__
   memset(sig, 0, 65);
 #endif
+
+  bytes_t* nonce_cpy     = b_dup(&nonce);
+  bytes_t* gas_price_cpy = b_dup(&gas_price);
 
   // sign the raw message
   if (nonce.data && gas_price.data && gas_limit.data) {
@@ -229,7 +232,6 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
           break;
         }
       }
-
     else {
       bytes_t from_b = bytes(from, 20);
       sb_t*   req    = sb_new("{\"method\":\"sign_ec_hash\",\"params\":[");
@@ -237,7 +239,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       sb_add_chars(req, ",");
       sb_add_bytes(req, NULL, &from_b, 1, false);
       sb_add_chars(req, "]}");
-      c       = new_ctx(ctx->client, req->data);
+      c       = ctx_new(ctx->client, req->data);
       c->type = CT_SIGN;
       res     = ctx_add_required(ctx, c);
       _free(req); // we only free the builder, but  not the data
@@ -246,14 +248,20 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
     res = IN3_EINVAL;
 
   // free temp resources
-  if (new_json) free_json(new_json);
+  if (new_json) json_free(new_json);
   b_free(raw);
-  if (res < 0) return bytes(NULL, 0);
+  if (res < 0) {
+    b_free(nonce_cpy);
+    b_free(gas_price_cpy);
+    return bytes(NULL, 0);
+  }
 
   // create raw transaction with signature
-  raw            = serialize_tx_raw(nonce, gas_price, gas_limit, to, value, data, 27 + sig[64] + (v ? (v * 2 + 8) : 0), bytes(sig, 32), bytes(sig + 32, 32));
+  raw            = serialize_tx_raw(*nonce_cpy, *gas_price_cpy, gas_limit, to, value, data, 27 + sig[64] + (v ? (v * 2 + 8) : 0), bytes(sig, 32), bytes(sig + 32, 32));
   bytes_t raw_tx = bytes(raw->data, raw->len);
   _free(raw); // we only free the struct, not the data!
+  b_free(nonce_cpy);
+  b_free(gas_price_cpy);
 
   return raw_tx;
 }

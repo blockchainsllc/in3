@@ -62,24 +62,25 @@ typedef enum evm_state {
 #define gas_options
 #endif
 
-#define EVM_ERROR_EMPTY_STACK -1             /**< the no more elements on the stack  */
-#define EVM_ERROR_INVALID_OPCODE -2          /**< the opcode is not supported  */
-#define EVM_ERROR_BUFFER_TOO_SMALL -3        /**< reading data from a position, which is not initialized  */
-#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -4   /**< the memory-offset does not exist  */
-#define EVM_ERROR_INVALID_JUMPDEST -5        /**< the jump destination is not marked as valid destination  */
-#define EVM_ERROR_INVALID_PUSH -6            /**< the push data is empy */
-#define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -7 /**< error handling the call, usually because static-calls are not allowed to change state  */
-#define EVM_ERROR_TIMEOUT -8                 /**< the evm ran into a loop  */
-#define EVM_ERROR_INVALID_ENV -9             /**< the enviroment could not deliver the data  */
-#define EVM_ERROR_OUT_OF_GAS -10             /**< not enough gas to exewcute the opcode  */
-#define EVM_ERROR_BALANCE_TOO_LOW -11        /**< not enough funds to transfer the requested value.  */
-#define EVM_ERROR_STACK_LIMIT -12            /**< stack limit reached  */
-#define EVM_ERROR_SUCCESS_CONSUME_GAS -13    /**< write success but consume all gas */
+#define EVM_ERROR_EMPTY_STACK -20             /**< the no more elements on the stack  */
+#define EVM_ERROR_INVALID_OPCODE -21          /**< the opcode is not supported  */
+#define EVM_ERROR_BUFFER_TOO_SMALL -22        /**< reading data from a position, which is not initialized  */
+#define EVM_ERROR_ILLEGAL_MEMORY_ACCESS -23   /**< the memory-offset does not exist  */
+#define EVM_ERROR_INVALID_JUMPDEST -24        /**< the jump destination is not marked as valid destination  */
+#define EVM_ERROR_INVALID_PUSH -25            /**< the push data is empy */
+#define EVM_ERROR_UNSUPPORTED_CALL_OPCODE -26 /**< error handling the call, usually because static-calls are not allowed to change state  */
+#define EVM_ERROR_TIMEOUT -27                 /**< the evm ran into a loop  */
+#define EVM_ERROR_INVALID_ENV -28             /**< the enviroment could not deliver the data  */
+#define EVM_ERROR_OUT_OF_GAS -29              /**< not enough gas to exewcute the opcode  */
+#define EVM_ERROR_BALANCE_TOO_LOW -30         /**< not enough funds to transfer the requested value.  */
+#define EVM_ERROR_STACK_LIMIT -31             /**< stack limit reached  */
+#define EVM_ERROR_SUCCESS_CONSUME_GAS -32     /**< write success but consume all gas */
 
 #define EVM_PROP_FRONTIER 1
 #define EVM_PROP_EIP150 2
 #define EVM_PROP_EIP158 4
 #define EVM_PROP_CONSTANTINOPL 16
+#define EVM_PROP_ISTANBUL 32
 #define EVM_PROP_NO_FINALIZE 32768
 #define EVM_PROP_STATIC 256
 
@@ -145,6 +146,7 @@ typedef enum evm_state {
     if (key != EVM_ENV_BLOCKHASH) {                            \
       account_t* ac = evm_get_account(evm, address, 0);        \
       uint8_t    tmp[4];                                       \
+      uint8_t    hash[32];                                     \
       if (ac) {                                                \
         data = NULL;                                           \
         if (key == EVM_ENV_BALANCE) {                          \
@@ -158,7 +160,6 @@ typedef enum evm_state {
           data = ac->code.data;                                \
           l    = ac->code.len;                                 \
         } else if (key == EVM_ENV_CODE_HASH && ac->code.len) { \
-          uint8_t hash[32];                                    \
           sha3_to(&ac->code, hash);                            \
           data = hash;                                         \
           l    = 32;                                           \
@@ -242,6 +243,7 @@ typedef struct evm {
   // define the enviroment-function.
   evm_get_env env;
   void*       env_ptr;
+  uint64_t    chain_id; /**< the chain_id as returned by the opcode */
 
   // tx values
   uint8_t* address;    /**< the address of the current storage*/
@@ -285,20 +287,18 @@ int evm_sub_call(evm_t*   parent,
                  wlen_t   mode,
                  uint32_t out_offset, uint32_t out_len);
 
-int     evm_ensure_memory(evm_t* evm, uint32_t max_pos);
-int     in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
-int     evm_call(void*    vc,
-                 uint8_t  address[20],
-                 uint8_t* value, wlen_t l_value,
-                 uint8_t* data, uint32_t l_data,
-                 uint8_t   caller[20],
-                 uint64_t  gas,
-                 bytes_t** result);
-void    evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
-void    evm_free(evm_t* evm);
-int     evm_run_precompiled(evm_t* evm, const uint8_t address[20]);
-uint8_t evm_is_precompiled(evm_t* evm, uint8_t address[20]);
-void    uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]);
+int  evm_ensure_memory(evm_t* evm, uint32_t max_pos);
+int  in3_get_env(void* evm_ptr, uint16_t evm_key, uint8_t* in_data, int in_len, uint8_t** out_data, int offset, int len);
+int  evm_call(void*    vc,
+              uint8_t  address[20],
+              uint8_t* value, wlen_t l_value,
+              uint8_t* data, uint32_t l_data,
+              uint8_t   caller[20],
+              uint64_t  gas,
+              uint64_t  chain_id,
+              bytes_t** result);
+void evm_print_stack(evm_t* evm, uint64_t last_gas, uint32_t pos);
+void evm_free(evm_t* evm);
 
 int evm_execute(evm_t* evm);
 

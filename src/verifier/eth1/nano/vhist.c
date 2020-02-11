@@ -42,7 +42,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define VALIDATOR_LIST_KEY ("validatorlist_%" PRIx64)
+#define VALIDATOR_LIST_KEY "validatorlist_%d"
 
 static in3_ret_t bb_find(bytes_builder_t* bb, uint8_t* v, size_t l) {
   if (v) {
@@ -185,7 +185,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
   bb_write_int(vh->diffs, d_len(vs));
   if (d_type(vs) == T_ARRAY) {
     for (d_iterator_t vitr = d_iter(vs); vitr.left; d_iter_next(&vitr)) {
-      b   = (d_type(vitr.token) == T_STRING) ? hex2byte_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
+      b   = (d_type(vitr.token) == T_STRING) ? hex_to_new_bytes(d_string(vitr.token), 40) : d_bytesl(vitr.token, 20);
       ret = bb_find(vh->vldtrs, b->data, 20);
       if (ret == IN3_EFIND) {
         bb_write_int(vh->diffs, vh->vldtrs->b.len / 20);
@@ -199,7 +199,7 @@ void vh_add_state(vhist_t* vh, d_token_t* state, bool is_spec) {
 }
 
 void vh_cache_save(vhist_t* vh, in3_t* c) {
-  if (!c->cacheStorage) return;
+  if (!c->cache) return;
   char             k[35];
   bytes_builder_t* cbb  = bb_new();
   uint8_t          vers = 1;
@@ -210,8 +210,8 @@ void vh_cache_save(vhist_t* vh, in3_t* c) {
   b.data = (uint8_t*) &vh->last_change_block;
   b.len  = sizeof(vh->last_change_block);
   rlp_encode_item(cbb, &b);
-  sprintf(k, VALIDATOR_LIST_KEY, c->chainId);
-  c->cacheStorage->set_item(c->cacheStorage->cptr, k, &cbb->b);
+  sprintf(k, VALIDATOR_LIST_KEY, c->chain_id);
+  c->cache->set_item(c->cache->cptr, k, &cbb->b);
   bb_free(cbb);
 }
 
@@ -219,9 +219,9 @@ vhist_t* vh_cache_retrieve(in3_t* c) {
   char     k[35];
   bytes_t *v_ = NULL, b_;
   vhist_t* vh = NULL;
-  if (c->cacheStorage) {
-    sprintf(k, VALIDATOR_LIST_KEY, c->chainId);
-    v_ = c->cacheStorage->get_item(c->cacheStorage->cptr, k);
+  if (c->cache) {
+    sprintf(k, VALIDATOR_LIST_KEY, c->chain_id);
+    v_ = c->cache->get_item(c->cache->cptr, k);
     if (v_) {
       rlp_decode(v_, 0, &b_);
       uint8_t vers;
