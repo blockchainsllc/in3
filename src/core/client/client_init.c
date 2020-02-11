@@ -568,16 +568,17 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK_KEY_HEXSTR(ct.token);
 
         // register chain
-        chain_id_t chain_id    = char_to_long(d_get_keystr(ct.token->key), -1);
-        bytes_t*   contract    = d_get_byteskl(ct.token, key("contract"), 20);
-        bytes_t*   registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-        bytes_t*   wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+        chain_id_t   chain_id    = char_to_long(d_get_keystr(ct.token->key), -1);
+        bytes_t*     contract    = d_get_byteskl(ct.token, key("contract"), 20);
+        bytes_t*     registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
+        bytes_t*     wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+        in3_chain_t* chain       = in3_find_chain(c, chain_id);
 
         EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-        EXPECT_CFG((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
+        EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
                    "register chain failed");
 
-        in3_chain_t* chain = in3_find_chain(c, chain_id);
+        chain = in3_find_chain(c, chain_id);
         EXPECT_CFG(chain != NULL, "invalid chain id!");
 
         // chain_props

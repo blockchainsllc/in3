@@ -46,3 +46,7 @@ if (ETH_FULL)
   add_subdirectory(eth1/full)
   add_subdirectory(eth1/evm)
 endif()
+
+if (IPFS)
+  add_subdirectory(ipfs)
+endif()
