@@ -180,6 +180,11 @@ async function runSingleTest(test, c) {
                 needsUpdate: false,
                 contract: '0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f',
                 registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
+            },
+            '0x7d0': {
+                needsUpdate: false,
+                contract: '0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9',
+                registryId: '0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb'
             }
         }
     })

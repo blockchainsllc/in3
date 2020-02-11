@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
   in3_register_curl(); // use curl as the default for sending out requests
 
-  in3_t* in3 = in3_new(); // create new incubed client
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET); // create new incubed client
  
   char *result, *error;  // prepare 2 pointers for the result.
 

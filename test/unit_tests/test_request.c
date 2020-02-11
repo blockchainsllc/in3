@@ -113,31 +113,36 @@ static void test_exec_req() {
   _free(result);
 
   result = in3_client_exec_req(c, "{\"method\":\"in3_cacheClear\",\"params\":[]}");
-  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"The request could not be handled\nNo storage set\"}}", result);
+  TEST_ASSERT_EQUAL_STRING("{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"code\":-6,\"message\":\"The request could not be handled:No storage set\"}}", result);
   _free(result);
 
   in3_free(c);
 }
 
 static void test_configure() {
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
+  in3_t* c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
+  char*  tmp = NULL;
 
   // proof
-  in3_configure(c, "{\"proof\":\"standard\"}");
+  tmp = in3_configure(c, "{\"proof\":\"standard\"}");
   TEST_ASSERT_EQUAL(PROOF_STANDARD, c->proof);
+  free(tmp);
 
   // rpc
-  in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
+  tmp = in3_configure(c, "{\"rpc\":\"http://rpc.slock.it\"}");
   TEST_ASSERT_EQUAL(PROOF_NONE, c->proof);
   TEST_ASSERT_EQUAL(ETH_CHAIN_ID_LOCAL, c->chain_id);
   TEST_ASSERT_EQUAL(1, c->request_count);
   TEST_ASSERT_EQUAL_STRING("http://rpc.slock.it", in3_find_chain(c, ETH_CHAIN_ID_LOCAL)->nodelist->url);
+  free(tmp);
 
   // missing registryId and contract
-  TEST_ASSERT_NOT_NULL(in3_configure(c, "{\"nodes\":{\"0x8\":{}}}"));
+  TEST_ASSERT_NOT_NULL((tmp = in3_configure(c, "{\"nodes\":{\"0x8\":{}}}")));
+  free(tmp);
 
   // bad registryId
-  TEST_ASSERT_NOT_NULL(in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}"));
+  TEST_ASSERT_NOT_NULL((tmp = in3_configure(c, "{\"nodes\":{\"0x8\":{\"registryId\":\"0x987\"}}}")));
+  free(tmp);
 
   in3_free(c);
 }

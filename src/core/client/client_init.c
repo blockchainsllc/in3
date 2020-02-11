@@ -204,7 +204,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->chain_id             = chain_id ? chain_id : ETH_CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
   c->finality             = 0;
-  c->max_attempts         = 3;
+  c->max_attempts         = 5;
   c->max_block_cache      = 0;
   c->max_code_cache       = 0;
   c->max_verified_hashes  = 5;
@@ -553,16 +553,17 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK_KEY_HEXSTR(ct.token);
 
         // register chain
-        chain_id_t chain_id    = char_to_long(d_get_keystr(ct.token->key), -1);
-        bytes_t*   contract    = d_get_byteskl(ct.token, key("contract"), 20);
-        bytes_t*   registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-        bytes_t*   wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+        chain_id_t   chain_id    = char_to_long(d_get_keystr(ct.token->key), -1);
+        bytes_t*     contract    = d_get_byteskl(ct.token, key("contract"), 20);
+        bytes_t*     registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
+        bytes_t*     wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+        in3_chain_t* chain       = in3_find_chain(c, chain_id);
 
         EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-        EXPECT_CFG((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
+        EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
                    "register chain failed");
 
-        in3_chain_t* chain = in3_find_chain(c, chain_id);
+        chain = in3_find_chain(c, chain_id);
         EXPECT_CFG(chain != NULL, "invalid chain id!");
 
         // chain_props
@@ -586,11 +587,12 @@ char* in3_configure(in3_t* c, const char* config) {
             int len = d_len(cp.token), i = 0;
             whitelist_free(chain->whitelist);
             chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
-            chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
+            chain->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
               EXPECT_TOK_ADDR(n.token);
+              const uint8_t* whitelist_address = d_bytes(n.token)->data;
               for (uint32_t j = 0; j < chain->whitelist->addresses.len; j += 20) {
-                if (!memcmp(d_bytes(n.token)->data, chain->whitelist->addresses.data + j, 20)) {
+                if (!memcmp(whitelist_address, chain->whitelist->addresses.data + j, 20)) {
                   whitelist_free(chain->whitelist);
                   chain->whitelist = NULL;
                   EXPECT_TOK(cp.token, false, "duplicate address!");

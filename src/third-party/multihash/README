@@ -1,0 +1,4 @@
+- commit: eab4cb9fda22d38c1117380699992d50d5453f51
+- website: https://github.com/multiformats/c-multihash
+- notes:
+  - modified includes to use quotes instead of angular brackets
