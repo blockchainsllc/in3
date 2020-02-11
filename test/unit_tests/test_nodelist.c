@@ -162,6 +162,19 @@ static void test_nodelist_update_1() {
   in3_time(&t);
 
   // begin with 3 nodes, i.e. one node more than the usual boot nodes
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989048,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -206,19 +219,6 @@ static void test_nodelist_update_1() {
   // fast forward to future, after a recent nodeList update (i.e. 2 blocks back)
   t = 200;
   in3_time(&t);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989048,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
 
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
@@ -260,6 +260,19 @@ static void test_nodelist_update_1() {
 
   // any request should now trigger a nodeList update
   // in new update node 3 was removed
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989048,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -290,19 +303,6 @@ static void test_nodelist_update_1() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989048,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 2);
@@ -333,6 +333,19 @@ static void test_nodelist_update_2() {
   in3_rand(&s);
 
   // begin with 3 nodes, i.e. one node more than the usual boot nodes
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989049,"
+               "  \"execTime\": 52,"
+               "  \"rpcTime\": 65,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -377,19 +390,6 @@ static void test_nodelist_update_2() {
   // fast forward to future, after a recent nodeList update (i.e. 2 blocks back)
   t = 200;
   in3_time(&t);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989049,"
-               "  \"execTime\": 52,"
-               "  \"rpcTime\": 65,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
 
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
@@ -437,6 +437,19 @@ static void test_nodelist_update_2() {
 
   // any request should now trigger a nodeList update
   // in new update node 3 was removed
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989048,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -467,19 +480,6 @@ static void test_nodelist_update_2() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989048,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 2);
@@ -506,6 +506,19 @@ static void test_nodelist_update_3() {
   in3_rand(&s);
 
   // begin with 3 nodes, i.e. one node more than the usual boot nodes
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989038,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -549,19 +562,6 @@ static void test_nodelist_update_3() {
 
   t = 200;
   in3_time(&t);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989038,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
 
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
@@ -576,6 +576,19 @@ static void test_nodelist_update_3() {
   in3_rand(&s);
 
   // any request should now trigger a nodeList update
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989038,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -606,19 +619,6 @@ static void test_nodelist_update_3() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989038,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 2);
@@ -646,6 +646,19 @@ static void test_nodelist_update_4() {
   in3_rand(&s);
 
   // begin with 3 nodes, i.e. one node more than the usual boot nodes
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989038,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -689,19 +702,6 @@ static void test_nodelist_update_4() {
 
   t = 200;
   in3_time(&t);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989038,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
 
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
@@ -717,6 +717,19 @@ static void test_nodelist_update_4() {
 
   // any request should now trigger a nodeList update
   // but since the node lied and cannot give us a new list it gives us the old list
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989012,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -757,19 +770,6 @@ static void test_nodelist_update_4() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989012,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
@@ -799,11 +799,6 @@ static void test_nodelist_update_5() {
   int s = 0;
   in3_rand(&s);
 
-  add_response("in3_nodeList",
-               "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
-               NULL,
-               "\"Internal server error!\"",
-               NULL);
   add_response("eth_blockNumber",
                "[]",
                "\"0x53E9B3A\"",
@@ -817,6 +812,11 @@ static void test_nodelist_update_5() {
                "  \"currentBlock\": 87989050,"
                "  \"version\": \"2.0.0\""
                "}");
+  add_response("in3_nodeList",
+               "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
+               NULL,
+               "\"Internal server error!\"",
+               NULL);
 
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
@@ -829,6 +829,19 @@ static void test_nodelist_update_5() {
   s = 0;
   in3_rand(&s);
 
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989038,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -869,19 +882,6 @@ static void test_nodelist_update_5() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989038,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
@@ -904,11 +904,6 @@ static void test_nodelist_update_6() {
   int s = 0;
   in3_rand(&s);
 
-  add_response("in3_nodeList",
-               "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
-               "{}",
-               NULL,
-               NULL);
   add_response("eth_blockNumber",
                "[]",
                "\"0x53E9B3A\"",
@@ -922,6 +917,11 @@ static void test_nodelist_update_6() {
                "  \"currentBlock\": 87989050,"
                "  \"version\": \"2.0.0\""
                "}");
+  add_response("in3_nodeList",
+               "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
+               "{}",
+               NULL,
+               NULL);
 
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
@@ -936,6 +936,19 @@ static void test_nodelist_update_6() {
 
   c->proof = PROOF_NONE;
 
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989038,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -976,19 +989,6 @@ static void test_nodelist_update_6() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989038,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
   blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
@@ -1014,6 +1014,19 @@ static void test_nodelist_update_7() {
   in3_rand(&s);
 
   // begin with 3 nodes, i.e. one node more than the usual boot nodes
+  add_response("eth_blockNumber",
+               "[]",
+               "\"0x53E9B3A\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989999,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989050,"
+               "  \"version\": \"2.0.0\""
+               "}");
   add_response("in3_nodeList",
                "[0,\"0x0000000100000002000000030000000400000005000000060000000700000008\",[]]",
                "{"
@@ -1054,19 +1067,6 @@ static void test_nodelist_update_7() {
                "}",
                NULL,
                NULL);
-  add_response("eth_blockNumber",
-               "[]",
-               "\"0x53E9B3A\"",
-               NULL,
-               "{"
-               "  \"lastValidatorChange\": 0,"
-               "  \"lastNodeList\": 87989999,"
-               "  \"execTime\": 59,"
-               "  \"rpcTime\": 59,"
-               "  \"rpcCount\": 1,"
-               "  \"currentBlock\": 87989050,"
-               "  \"version\": \"2.0.0\""
-               "}");
 
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
