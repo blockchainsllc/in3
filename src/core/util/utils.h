@@ -201,4 +201,16 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
   return !l;
 }
 
+/* Pluggable functions */
+typedef uint64_t (*time_func)(void* t);
+typedef int (*rand_func)(void* s);
+typedef void (*srand_func)(unsigned int s);
+
+void     in3_set_func_time(time_func fn);
+uint64_t in3_time(void* t);
+void     in3_set_func_rand(rand_func fn);
+int      in3_rand(void* s);
+void     in3_set_func_srand(srand_func fn);
+void     in3_srand(unsigned int s);
+
 #endif

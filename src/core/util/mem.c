@@ -38,38 +38,6 @@
 #include <stdlib.h>
 
 #ifdef __ZEPHYR__
-static uint64_t time_zephyr(void* t) {
-  UNUSED_VAR(t);
-  return k_uptime_get();
-}
-static int rand_zephyr(void* s) {
-  UNUSED_VAR(s);
-  return (int) rand();
-}
-static void srand_zephyr(unsigned int s) {
-  return;
-}
-static time_func  in3_time_fn  = time_zephyr;
-static rand_func  in3_rand_fn  = rand_zephyr;
-static srand_func in3_srand_fn = srand_zephyr;
-#else  /* __ZEPHYR__ */
-static uint64_t time_libc(void* t) {
-  UNUSED_VAR(t);
-  return time(t);
-}
-static int rand_libc(void* s) {
-  UNUSED_VAR(s);
-  return rand();
-}
-static void srand_libc(unsigned int s) {
-  return srand(s);
-}
-static time_func  in3_time_fn  = time_libc;
-static rand_func  in3_rand_fn  = rand_libc;
-static srand_func in3_srand_fn = srand_libc;
-#endif /* __ZEPHYR__ */
-
-#ifdef __ZEPHYR__
 // FIXME: Below hack is until af529d1 is merged
 // See https://github.com/zephyrproject-rtos/zephyr/commit/af529d1158c9c85f41a5c15fabf1b3a83bfd9ac2
 #define EXIT_SUCCESS 0
@@ -300,12 +268,5 @@ void mem_reset(int cnt) {
     */
   mem_tracker = NULL;
 }
-
-void     in3_set_func_time(time_func fn) { in3_time_fn = fn; }
-uint64_t in3_time(void* t) { return in3_time_fn(t); }
-void     in3_set_func_rand(rand_func fn) { in3_rand_fn = fn; }
-int      in3_rand(void* s) { return in3_rand_fn(s); }
-void     in3_set_func_srand(srand_func fn) { in3_srand_fn = fn; }
-void     in3_srand(unsigned int s) { return in3_srand_fn(s); }
 
 #endif /* TEST */

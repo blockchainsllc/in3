@@ -108,16 +108,4 @@ void* _calloc_(size_t n, size_t size, char* file, const char* func, int line);
 void  _free_(void* ptr);
 #endif /* TEST */
 
-/* Pluggable functions */
-typedef uint64_t (*time_func)(void* t);
-typedef int (*rand_func)(void* s);
-typedef void (*srand_func)(unsigned int s);
-
-void     in3_set_func_time(time_func fn);
-uint64_t in3_time(void* t);
-void     in3_set_func_rand(rand_func fn);
-int      in3_rand(void* s);
-void     in3_set_func_srand(srand_func fn);
-void     in3_srand(unsigned int s);
-
 #endif /* __MEM_H__ */
