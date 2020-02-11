@@ -55,6 +55,9 @@
 #ifdef ETH_NANO
 #include "../../verifier/eth1/nano/eth_nano.h"
 #endif
+#ifdef IPFS
+#include "../../verifier/ipfs/ipfs.h"
+#endif
 
 #define err_string(msg) (":ERROR:" msg)
 
@@ -206,6 +209,10 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
 #ifdef ETH_API
   in3_register_eth_api();
 #endif
+#ifdef IPFS
+  in3_register_ipfs();
+#endif
+
   in3_t* c           = in3_for_chain(chain);
   c->cache           = malloc(sizeof(in3_storage_handler_t));
   c->cache->get_item = storage_get_item;

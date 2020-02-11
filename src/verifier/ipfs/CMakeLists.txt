@@ -32,21 +32,17 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory(eth1/rpc)
+# static lib
+add_library(ipfs_o OBJECT
+        ipfs.c
+        ipfs.pb.c
+        ../../third-party/nanopb/pb_encode.c
+        ../../third-party/nanopb/pb_decode.c
+        ../../third-party/nanopb/pb_common.c
+        ../../third-party/libb64/cdecode.c
+        ../../third-party/multihash/errors.c
+        ../../third-party/multihash/hashes.c
+        ../../third-party/multihash/multihash.c)
+add_library(ipfs STATIC $<TARGET_OBJECTS:ipfs_o>)
 
-if (ETH_NANO OR ETH_BASIC OR ETH_FULL)
-  add_subdirectory(eth1/nano)
-endif()
-
-if (ETH_BASIC OR ETH_FULL)
-  add_subdirectory(eth1/basic)
-endif()
-
-if (ETH_FULL)
-  add_subdirectory(eth1/full)
-  add_subdirectory(eth1/evm)
-endif()
-
-if (IPFS)
-  add_subdirectory(ipfs)
-endif()
+target_link_libraries(ipfs eth_nano)
