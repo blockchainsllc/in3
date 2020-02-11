@@ -366,18 +366,29 @@ docker:
 
 ##### analyse #####
 
-#include:
-#  - template: Code-Quality.gitlab-ci.yml
+include:
+  - template: Code-Quality.gitlab-ci.yml
 
-#code_quality:
-#  stage: analysis
-#  tags:
-#    - short-jobs
-#  artifacts:
-#    paths: [gl-code-quality-report.json]
-#  variables:
-#    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
-#    REPORT_STDOUT: STDOUT
+code_quality:
+  stage: analysis
+  tags:
+    - short-jobs
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  variables:
+    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
+    REPORT_STDOUT: STDOUT
+
+format:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang10
+  tags:
+    - short-jobs
+  script:
+    - find src/core/ src/cmd/ src/api/ src/verifier/ src/transport/ \( -name "*.c" -o -name "*.h" \) | xargs clang-format-10 -i
+    - git diff --patch --exit-code
 
 cpd:
   stage: analysis
@@ -404,6 +415,25 @@ vulnerabilities:
   artifacts:
     paths:
       - vulnerability_analysis.json
+
+metrics:
+  stage: analysis
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+  dependencies:
+    - mac_os
+    - gcc8
+    - wasm
+    - asmjs
+  script:
+    - echo "mac_cmd_size `stat --printf=%s mac_build/bin/in3` " > metrics.txt
+    - echo "wasm_min_size `stat --printf=%s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
+    - echo "wasm_js_size `stat --printf=%s wasm_build/bin/in3.js` " >> metrics.txt
+    - echo "asmjs_js_size `stat --printf=%s asmjs_build/bin/in3.js` " >> metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
 
 ##### deploy #####
 
