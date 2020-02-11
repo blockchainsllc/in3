@@ -436,7 +436,7 @@ metrics:
     - echo "wasm_js_size `stat -c=%s wasm_build/bin/in3.js` " >> metrics.txt
     - echo "asmjs_js_size `stat -c=%s asmjs_build/bin/in3.js` " >> metrics.txt
     - echo "gcc8_size `stat -c=%s x64_build/bin/in3` " >> metrics.txt
-    - ehco "reported metrics"; cat metrics.txt
+    - echo "reported metrics"; cat metrics.txt
   artifacts:
     reports:
       metrics: metrics.txt
