@@ -158,6 +158,7 @@ java:
     - make in3j
   artifacts:
     paths:
+      - src/bindings/java/in3/native/
       - java_build/lib
 
 # ##### test ######
@@ -281,9 +282,12 @@ test_asmjs:
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
+  dependencies:
+    - java
   script:
-    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
-  allow_failure: true
+    - mv java_build build
+    - cd test/bindings/java
+    - ./gradlew test
   tags:
     - short-jobs
 
@@ -330,21 +334,24 @@ examples_macos:
 
 java_arm:
   image: armv7/armhf-java8
-  allow_failure: true
   dependencies:
     - java
   stage: test
   script:
-    - echo "SKIPPED"
-  #    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+    - mv java_build build
+    - cd test/bindings/java
+    - ./gradlew test
   tags:
     - arm
 
 java_macos:
   stage: test
-  allow_failure: true
+  dependencies:
+    - java
   script:
-    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+    - mv java_build build
+    - cd test/bindings/java
+    - ./gradlew test
   tags:
     - mac-mini-runner
 
