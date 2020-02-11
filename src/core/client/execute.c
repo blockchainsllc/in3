@@ -286,6 +286,11 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
   if (!ctx->client->auto_update_list) return;
 
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
+    // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
+    return;
+  }
+
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
     if (chain->nodelist_upd8_params == NULL)
       chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
