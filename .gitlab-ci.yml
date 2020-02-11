@@ -74,8 +74,8 @@ clang50:
   image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
 
-clang9:
-  image: docker.slock.it/build-images/cmake:clang9
+clang10:
+  image: docker.slock.it/build-images/cmake:clang10
   extends: .conanbuild
 
 mac_os:
@@ -177,15 +177,15 @@ coverage:
 
 clangcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang9
+  image: docker.slock.it/build-images/cmake:clang10
   allow_failure: false
   tags:
     - short-jobs
   script:
     - mkdir _build
     - cd _build
-    - scan-build-9 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-9 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
+    - scan-build-10 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-10 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
   artifacts:
     paths:
       - report
@@ -431,11 +431,12 @@ metrics:
     - wasm
     - asmjs
   script:
-    - echo "mac_cmd_size `stat -c=%s mac_build/bin/in3` " > metrics.txt
-    - echo "wasm_min_size `stat -c=%s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
-    - echo "wasm_js_size `stat -c=%s wasm_build/bin/in3.js` " >> metrics.txt
-    - echo "asmjs_js_size `stat -c=%s asmjs_build/bin/in3.js` " >> metrics.txt
-    - echo "gcc8_size `stat -c=%s x64_build/bin/in3` " >> metrics.txt
+    - echo "mac_cmd_size `stat -c %s mac_build/bin/in3` " > metrics.txt
+    - echo "wasm_min_size `stat -c %s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
+    - echo "wasm_js_size `stat -c %s wasm_build/bin/in3.js` " >> metrics.txt
+    - echo "asmjs_js_size `stat -c %s asmjs_build/bin/in3.js` " >> metrics.txt
+    - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
+    - echo "reported metrics"; cat metrics.txt
   artifacts:
     reports:
       metrics: metrics.txt
