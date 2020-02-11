@@ -508,6 +508,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("keepIn3")) {
       EXPECT_TOK_BOOL(token);
       c->keep_in3 = d_int(token) ? true : false;
+    } else if (token->key == key("key")) {
+      EXPECT_TOK_B256(token);
+      c->key = b_dup(d_bytes(token));
     } else if (token->key == key("useBinary")) {
       EXPECT_TOK_BOOL(token);
       c->use_binary = d_int(token) ? true : false;
