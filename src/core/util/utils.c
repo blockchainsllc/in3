@@ -49,7 +49,7 @@ static uint64_t time_zephyr(void* t) {
 }
 static int rand_zephyr(void* s) {
   UNUSED_VAR(s);
-  return (int) rand();
+  return (int) k_uptime_get();
 }
 static void srand_zephyr(unsigned int s) {
   return;
