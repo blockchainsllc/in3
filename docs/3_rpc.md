@@ -20,55 +20,66 @@ Parameters:
 The config params support the following properties :
 
 
-* **[autoUpdateList](https://github.com/slockit/in3/blob/master/src/types/types.ts#L255)** :`boolean` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer
+* **autoUpdateList** :`boolean` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer
     example: true
 
-* **[chainId](https://github.com/slockit/in3/blob/master/src/types/types.ts#L240)** :`string` - servers to filter for the given chain. The chain-id based on EIP-155.
+* **chainId** :`string` - servers to filter for the given chain. The chain-id based on EIP-155.
     example: 0x1
 
-* **[finality](https://github.com/slockit/in3/blob/master/src/types/types.ts#L230)** :`number` *(optional)*  - the number in percent needed in order reach finality (% of signature of the validators)
+* **signatureCount** :`number` *(optional)*  - number of signatures requested
+    example: 2
+    
+* **finality** :`number` *(optional)*  - the number in percent needed in order reach finality (% of signature of the validators)
     example: 50
 
-* **[includeCode](https://github.com/slockit/in3/blob/master/src/types/types.ts#L187)** :`boolean` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+* **includeCode** :`boolean` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
     example: true
 
-* **[keepIn3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L187)** :`boolean` *(optional)*  - if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
-    example: false
-
-* **[key](https://github.com/slockit/in3/blob/master/src/types/types.ts#L169)** :`any` *(optional)*  - the client key to sign requests
-    example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-
-* **[maxAttempts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L182)** :`number` *(optional)*  - max number of attempts in case a response is rejected
+* **maxAttempts** :`number` *(optional)*  - max number of attempts in case a response is rejected
     example: 10
 
-* **[maxBlockCache](https://github.com/slockit/in3/blob/master/src/types/types.ts#L197)** :`number` *(optional)*  - number of number of blocks cached  in memory
+* **keepIn3** :`boolean` *(optional)*  - if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
+    example: false
+
+* **key** :`any` *(optional)*  - the client key to sign requests
+    example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+
+* **useBinary** :`boolean` *(optional)*  - if true the client will use binary format.
+    example: false
+
+* **useHttp** :`boolean` *(optional)*  - if true the client will try to use http instead of https.
+    example: false
+
+* **maxBlockCache** :`number` *(optional)*  - number of number of blocks cached  in memory
     example: 100
 
-* **[maxCodeCache](https://github.com/slockit/in3/blob/master/src/types/types.ts#L192)** :`number` *(optional)*  - number of max bytes used to cache the code in memory
+* **maxCodeCache** :`number` *(optional)*  - number of max bytes used to cache the code in memory
     example: 100000
 
-* **[minDeposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L215)** :`number` - min stake of the server. Only nodes owning at least this amount will be chosen.
+* **timeout** :`number` *(optional)*  - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
+    example: 100000
 
-* **[nodeLimit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L155)** :`number` *(optional)*  - the limit of nodes to store in the client.
+* **minDeposit** :`number` - min stake of the server. Only nodes owning at least this amount will be chosen.
+
+* **nodeProps** :`number` *(optional)*  - bitmask used to identify the capabilities of the node.
+
+* **nodeLimit** :`number` *(optional)*  - the limit of nodes to store in the client.
     example: 150
 
-* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L206)** :`'none'`|`'standard'`|`'full'` *(optional)*  - if true the nodes should send a proof of the response
+* **proof** :`'none'`|`'standard'`|`'full'` *(optional)*  - if true the nodes should send a proof of the response
     example: true
 
-* **[replaceLatestBlock](https://github.com/slockit/in3/blob/master/src/types/types.ts#L220)** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+* **replaceLatestBlock** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
     example: 6
 
-* **[requestCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L225)** :`number` - the number of request send when getting a first answer
+* **requestCount** :`number` - the number of request send when getting a first answer
     example: 3
 
-* **[rpc](https://github.com/slockit/in3/blob/master/src/types/types.ts#L267)** :`string` *(optional)*  - url of one or more rpc-endpoints to use. (list can be comma seperated)
+* **rpc** :`string` *(optional)*  - url of one or more rpc-endpoints to use. (list can be comma seperated)
 
-* **[servers](https://github.com/slockit/in3/blob/master/src/types/types.ts#L271)** *(optional)*  - the nodelist per chain
+* **verifiedHashes** :`string`[] *(optional)*  - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
 
-* **[signatureCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L211)** :`number` *(optional)*  - number of signatures requested
-    example: 2
-
-* **[verifiedHashes](https://github.com/slockit/in3/blob/master/src/types/types.ts#L201)** :`string`[] *(optional)*  - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
+* **servers** *(optional)*  - the nodelist per chain
 
 Returns:
 
