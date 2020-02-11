@@ -256,7 +256,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 
   // create random seed
   char seed[67];
-  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL), in3_rand(NULL));
+  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF, in3_rand(NULL) % 0xFFFFFFFF);
 
   sb_t* in3_sec = sb_new("{");
   if (nodelist_not_first_upd8(chain)) {
@@ -433,10 +433,10 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 
   // do we need to update the nodelist?
   if (chain->nodelist_upd8_params || update || ctx_find_required(ctx, "in3_nodeList")) {
-    if (postpone_update(chain) || update_in_progress(ctx)) {
-      // skip update if update has been postponed or there's already one in progress
+    // skip update if update has been postponed or there's already one in progress
+    if (postpone_update(chain) || update_in_progress(ctx))
       goto SKIP_UPDATE;
-    }
+
     // now update the nodeList
     res = update_nodelist(ctx->client, chain, ctx);
     if (res < 0) return res;

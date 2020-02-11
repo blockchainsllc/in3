@@ -132,7 +132,6 @@ void finalize_subcall_gas(evm_t* evm, int success, evm_t* parent);
 
 void update_gas(evm_t* evm, int* res, evm_t* parent, address_t address, address_t code_address, address_t caller, uint64_t gas,
                 wlen_t mode, uint8_t* value, wlen_t l_value);
-int  selfdestruct_gas(evm_t* evm);
 void update_account_code(evm_t* evm, account_t* new_account);
 #endif
 
@@ -141,7 +140,6 @@ void update_account_code(evm_t* evm, account_t* new_account);
 #define INIT_EVM(evm) evm_init(evm)
 #define INIT_GAS(evm) init_gas(evm)
 #define SUBGAS(evm, g) subgas(evm, g)
-#define SELFDESTRUCT_GAS(evm, g) selfdestruct_gas(evm)
 #define KEEP_TRACK_GAS(evm) evm->gas
 #define FINALIZE_SUBCALL_GAS(evm, success, parent) finalize_subcall_gas(evm, success, parent)
 #define UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value)          \
@@ -187,6 +185,5 @@ void update_account_code(evm_t* evm, account_t* new_account);
 #define UPDATE_SUBCALL_GAS(...)
 #define FINALIZE_AND_REFUND_GAS(...)
 #define KEEP_TRACK_GAS(evm) 0
-#define SELFDESTRUCT_GAS(evm, g) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
 #define UPDATE_ACCOUNT_CODE(...)
 #endif

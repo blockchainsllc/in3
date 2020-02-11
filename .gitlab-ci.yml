@@ -6,6 +6,7 @@ stages:
   - build
   - bindings
   - test
+  - analysis
   - deploy
   - release
 
@@ -148,11 +149,12 @@ java:
   script:
     - mkdir java_build
     - cd java_build
-    - cmake -DIN3_LIB=false -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
+    - mkdir -p ../src/bindings/java/in3/native/
     - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
     - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
     - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
     - cp ../arm7_build/lib/libin3_jni.so ../src/bindings/java/in3/native/libin3_jni_arm.so
+    - cmake -DIN3_LIB=false -DJAVA_MULTI_LIBS=true -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make in3j
   artifacts:
     paths:
@@ -161,7 +163,7 @@ java:
 # ##### test ######
 
 coverage:
-  stage: test
+  stage: analysis
   image: silkeh/clang:dev
   tags:
     - short-jobs
@@ -173,8 +175,8 @@ coverage:
     paths:
       - cov_build/ccov/all-merged
 
-analyse:
-  stage: test
+clangcheck:
+  stage: analysis
   image: docker.slock.it/build-images/cmake:clang9
   allow_failure: false
   tags:
@@ -189,7 +191,7 @@ analyse:
       - report
 
 cppcheck:
-  stage: test
+  stage: analysis
   image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
   allow_failure: true
   tags:
@@ -200,6 +202,22 @@ cppcheck:
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
     - cd ..
     - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/test/unity -i/builds/in3/c/in3-core/src/third-party
+
+valgrind:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:valgrind
+  #  allow_failure: true
+  tags:
+    - short-jobs
+  variables:
+    VALGRIND_OPTS: "-q --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
+    - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f || echo "Failed but ignored for now"; done
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -330,9 +348,10 @@ java_macos:
   tags:
     - mac-mini-runner
 
-##### deploy #####
+##### local_docker_deploy_and_vulnerability_analysis #####
+
 docker:
-  stage: deploy
+  stage: bindings
   tags:
     - short-jobs
   services:
@@ -344,6 +363,49 @@ docker:
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
+
+##### analyse #####
+
+#include:
+#  - template: Code-Quality.gitlab-ci.yml
+
+#code_quality:
+#  stage: analysis
+#  tags:
+#    - short-jobs
+#  artifacts:
+#    paths: [gl-code-quality-report.json]
+#  variables:
+#    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
+#    REPORT_STDOUT: STDOUT
+
+cpd:
+  stage: analysis
+  image: rawdee/pmd
+  tags:
+    - short-jobs
+  script:
+    - cpd --minimum-tokens 180 --language cpp --exclude src/third-party --files src
+    - cpd --minimum-tokens 150 --language java --files src/bindings/java
+    - cpd --minimum-tokens 150 --language python --files src/bindings/python
+
+vulnerabilities:
+  stage: analysis
+  tags:
+    - short-jobs
+  dependencies:
+    - docker
+  image: docker.slock.it/build-images/vulnerability-testing-tools
+  script:
+    - export TRIVY_AUTH_URL=$CI_REGISTRY
+    - export TRIVY_USERNAME=gitlab-ci-token
+    - export TRIVY_PASSWORD=$CI_JOB_TOKEN
+    - trivy -f json -o vulnerability_analysis.json --exit-code 1 $COMMIT_IMAGE_TAG
+  artifacts:
+    paths:
+      - vulnerability_analysis.json
+
+##### deploy #####
 
 dockerhub-deploy:
   stage: deploy
@@ -652,7 +714,6 @@ release_win:
     paths:
       - in3-win
 
-
 release_maven:
   stage: deploy
   image: docker.slock.it/build-images/maven-deployment-image:latest
@@ -694,7 +755,6 @@ release_pip:
     paths:
       - in3-pip
 
-
 pages:
   stage: deploy
   only:
@@ -706,7 +766,8 @@ pages:
     - arm7
     - readthedocs
     - coverage
-    - analyse
+    - clangcheck
+    - vulnerabilities
   script:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
@@ -715,7 +776,8 @@ pages:
     - cp -r cov_build/ccov/all-merged public/coverage
     - cp -r report/* public/code_analysis
     - cp -r doc/build public/rtd
-    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
+    - cp -r vulnerability_analysis.json public/vulnerability_analysis.json
+    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
   artifacts:
     paths:
       - public
@@ -888,5 +950,3 @@ github_body_release:
     - cat in3-arm7/arm7_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - cat in3-win/win_release_ipfs_hash.txt >> release_ipfs_hash.txt
     - ghr -u slockIt -r in3-c -b "$(cat release_ipfs_hash.txt)" $CI_COMMIT_TAG release_ipfs_hash.txt
-
-

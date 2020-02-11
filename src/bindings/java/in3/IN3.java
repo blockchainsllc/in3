@@ -263,13 +263,26 @@ public class IN3 {
 
     private native void free();
 
-    private native long init();
+    private native long init(long chainId);
 
     private native void initcache();
 
-    /** constrcutor. creates a new Incubed client. */
+    /**
+     * create a Incubed client using the chain-config.
+     * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
+     * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
+     */
+    public static IN3 forChain(long chainId) {
+    	return new IN3(chainId);
+    }
+
+    @Deprecated
     public IN3() {
-        ptr = init();
+        ptr = init(0);
+    }
+
+    private IN3(long chainAlias) {
+        ptr = init(chainAlias);
     }
 
     protected void finalize() {
@@ -285,8 +298,20 @@ public class IN3 {
         return IN3.transport.handle(urls, payload);
     }
 
+
+    /**
+     * sets The transport interface.
+     * This allows to fetch the result of the incubed in a different way.
+     */
     public void setTransport(IN3Transport newTransport) {
         IN3.transport = newTransport;
+    }
+
+    /**
+     * returns the current transport implementation.
+     */
+    public IN3Transport getTransport() {
+    	return IN3.transport;
     }
 
     // Test it
@@ -296,7 +321,7 @@ public class IN3 {
             params[i - 1] = args[i];
 
         // create client
-        IN3 in3 = new IN3();
+        IN3 in3 = IN3.forChain(Chain.MAINNET);
 
         // set cache in tempfolder
         in3.setStorageProvider(new in3.TempStorageProvider());
