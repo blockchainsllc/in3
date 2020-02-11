@@ -262,7 +262,7 @@ int op_shift(evm_t* evm, uint8_t left) {
   else if (left == 2) { // signed shift right
     big_shift_right(res, 32, pos);
     if (l == 32 && (*b & 128)) { // the original number was signed
-      for (l = 0; l<pos> > 3; l++) res[l] = 0xFF;
+      for (l = 0; l < (pos >> 3); l++) res[l] = 0xFF;
       l = 8 - (pos % 8);
       res[pos >> 3] |= (0XFF >> l) << l;
       return evm_stack_push(evm, res, 32);
