@@ -50,6 +50,20 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "run binary test",
+            "program": "${workspaceFolder}/build/test/test_binary_encoding",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run ethapi test",
+            "program": "${workspaceFolder}/build/test/test_ethapi",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "run abi test",
             "program": "${workspaceFolder}/build/test/test_cache",
             "cwd": "${workspaceFolder}/build"

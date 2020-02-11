@@ -63,8 +63,8 @@ bytes_t read_from_stdin(FILE* file) {
     len += r;
     if (feof(file)) break;
     size_t new_alloc = allocated * 2 + 1;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
 
   buffer[len] = 0;

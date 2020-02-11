@@ -41,7 +41,7 @@
 
 // linked list of chain specs
 typedef struct spec_ {
-  chain_id_t      chain_id;
+  chain_id_t    chain_id;
   chainspec_t*  spec;
   struct spec_* next;
 } spec_t;

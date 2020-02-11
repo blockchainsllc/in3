@@ -208,7 +208,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     RESPONSE_START();
     sb_add_chars(&response[0]->result, filter_remove(ctx->client, id) ? "true" : "false");
     RESPONSE_END();
-  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0) {
+  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0 || strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterLogs") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
       return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
