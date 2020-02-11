@@ -204,7 +204,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->chain_id             = chain_id ? chain_id : ETH_CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
   c->finality             = 0;
-  c->max_attempts         = 3;
+  c->max_attempts         = 5;
   c->max_block_cache      = 0;
   c->max_code_cache       = 0;
   c->max_verified_hashes  = 5;
@@ -532,10 +532,11 @@ char* in3_configure(in3_t* c, const char* config) {
       c->request_count = (uint8_t) d_int(token);
     } else if (token->key == key("rpc")) {
       EXPECT_TOK_STR(token);
-      c->proof         = PROOF_NONE;
-      c->chain_id      = ETH_CHAIN_ID_LOCAL;
-      c->request_count = 1;
-      in3_node_t* n    = &in3_find_chain(c, c->chain_id)->nodelist[0];
+      c->proof           = PROOF_NONE;
+      c->chain_id        = ETH_CHAIN_ID_LOCAL;
+      c->request_count   = 1;
+      in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
       n->url = malloc(d_len(token) + 1);
       if (!n->url) {
@@ -543,6 +544,8 @@ char* in3_configure(in3_t* c, const char* config) {
         goto cleanup;
       }
       strcpy(n->url, d_string(token));
+      _free(chain->nodelist_upd8_params);
+      chain->nodelist_upd8_params = NULL;
     } else if (token->key == key("servers") || token->key == key("nodes")) {
       EXPECT_TOK_OBJ(token);
       for (d_iterator_t ct = d_iter(token); ct.left; d_iter_next(&ct)) {
@@ -584,11 +587,12 @@ char* in3_configure(in3_t* c, const char* config) {
             int len = d_len(cp.token), i = 0;
             whitelist_free(chain->whitelist);
             chain->whitelist            = _calloc(1, sizeof(in3_whitelist_t));
-            chain->whitelist->addresses = bytes(_malloc(len * 20), len * 20);
+            chain->whitelist->addresses = bytes(_calloc(1, len * 20), len * 20);
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i += 20) {
               EXPECT_TOK_ADDR(n.token);
+              const uint8_t* whitelist_address = d_bytes(n.token)->data;
               for (uint32_t j = 0; j < chain->whitelist->addresses.len; j += 20) {
-                if (!memcmp(d_bytes(n.token)->data, chain->whitelist->addresses.data + j, 20)) {
+                if (!memcmp(whitelist_address, chain->whitelist->addresses.data + j, 20)) {
                   whitelist_free(chain->whitelist);
                   chain->whitelist = NULL;
                   EXPECT_TOK(cp.token, false, "duplicate address!");

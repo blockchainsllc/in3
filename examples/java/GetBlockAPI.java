@@ -7,10 +7,7 @@ public class GetBlockAPI {
   //
   public static void main(String[] args) throws Exception {
     // create incubed
-    IN3 in3 = new IN3();
-
-    // configure
-    in3.setChainId(0x1); // set it to mainnet (which is also dthe default)
+    IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
     // read the latest Block including all Transactions.
     Block latestBlock = in3.getEth1API().getBlockByNumber(Block.LATEST, true);

@@ -240,7 +240,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 
   // create random seed
   char seed[67];
-  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand(), _rand());
+  sprintf(seed, "0x%08x%08x%08x%08x%08x%08x%08x%08x", _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF, _rand() % 0xFFFFFFFF);
 
   sb_t* in3_sec = sb_new("{");
   if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
@@ -401,6 +401,11 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   return first;
 }
 
+bool update_in_progress(const in3_ctx_t* ctx) {
+  const char* required_method = d_get_stringk(ctx->requests[0], K_METHOD);
+  return (required_method && strcmp(required_method, "in3_nodeList") == 0);
+}
+
 in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in3_node_t** nodelist, int* nodelist_length, in3_node_weight_t** weights) {
   in3_ret_t    res   = IN3_EFIND;
   in3_chain_t* chain = in3_find_chain(ctx->client, chain_id);
@@ -416,12 +421,16 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
     if (chain->nodelist_upd8_params && !chain->nodelist_upd8_params->exp_last_block) {
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
+    } else if (update_in_progress(ctx)) {
+      goto SKIP_UPDATE;
     }
+
     // now update the nodeList
     res = update_nodelist(ctx->client, chain, ctx);
     if (res < 0) return res;
   }
 
+SKIP_UPDATE:
   // do we need to update the whiitelist?
   if (chain->whitelist                                                                         // only if we have a whitelist
       && (chain->whitelist->needs_update || update || ctx_find_required(ctx, "in3_whiteList")) // which has the needs_update-flag (or forced) or we have already sent the request and are now picking up the result

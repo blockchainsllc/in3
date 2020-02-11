@@ -59,15 +59,8 @@ char*              read_json_response_buffer(char* path) {
 }
 
 void add_response(char* request_method, char* request_params, char* result, char* error, char* in3) {
-  response_t* r = responses;
-  while (r) {
-    if (r->next)
-      r = r->next;
-    else
-      break;
-  }
-
   response_t* n     = calloc(1, sizeof(response_t));
+  n->next           = responses;
   n->request_method = request_method;
   n->request_params = request_params;
   n->response       = malloc(40 + ((result || error) ? strlen(result ? result : error) : 0) + (in3 ? strlen(in3) + 10 : 0));
@@ -76,10 +69,7 @@ void add_response(char* request_method, char* request_params, char* result, char
   else
     sprintf(n->response, "[{\"id\":1,\"jsonrpc\":\"2.0\",\"%s\":%s}]", result ? "result" : "error", result ? result : error);
 
-  if (r)
-    r->next = n;
-  else
-    responses = n;
+  responses = n;
 }
 
 /* add response - request mock from json*/
@@ -123,7 +113,7 @@ in3_ret_t test_transport(in3_request_t* req) {
   sb_add_chars(&req->results->result, responses->response);
   response_t* next = responses->next;
   _free(responses->response);
-  //_free(responses);
+  _free(responses);
   responses = next;
   return IN3_OK;
 }

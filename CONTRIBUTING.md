@@ -56,9 +56,13 @@ This CLA allows either an individual or an entity (the “Corporation”) to sub
 If You have not already done so, please complete and sign, then scan and email a PDF file of this CLA to incubed@blockchains.com.  Please read this document carefully before signing and keep a copy for your records.
 
 Name of Individual or Corporation:__________________________________________
+
 Mailing address:________________________________________________________
+
 Country:_______________________________________________________________
+
 Telephone:_____________________________________________________________
+
 E-Mail:________________________________________________________________
 
 You accept and agree to the following terms and conditions for Your present and future Contributions submitted to Company. Except for the license granted herein to Company and recipients of software distributed by Company, You reserve all right, title, and interest in and to Your Contributions.

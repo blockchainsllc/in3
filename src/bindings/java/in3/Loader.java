@@ -47,18 +47,22 @@ import java.util.Arrays;
 public class Loader {
 
     private static boolean loaded = false;
+    /*
+        Based on the assumptions of: https://developer.android.com/ndk/guides/abis.html
+        The name has to be the same of the target library of CMakeLists.txt
+    */
+    private static final String TARGET_LINK_LIBRARY = "in3_jni";
 
     private static String getLibName() {
         final String os = System.getProperty("os.name").toLowerCase();
         final String arch = System.getProperty("os.arch").toLowerCase();
         final String model = System.getProperty("sun.arch.data.model");
-        if (os.indexOf("linux") >= 0) {
-            if (arch.indexOf("arm") >= 0)
+        if (os.indexOf("linux") >= 0 && arch.indexOf("arm") >= 0) {
                 return "in3_jni_arm";
         }
-        if (model != null && model.equals("32"))
-            return "in3_jni_32";
-        return "in3_jni";
+        if ("32".equals(model)) return "in3_jni_32";
+
+        return TARGET_LINK_LIBRARY;
     }
 
     private static byte[] md5(InputStream is) throws IOException {
@@ -85,10 +89,9 @@ public class Loader {
 
         try {
             // try to load it from the path
-            System.loadLibrary(getLibName());
+            System.loadLibrary(TARGET_LINK_LIBRARY);
             return;
-        } catch (java.lang.UnsatisfiedLinkError x) {
-        }
+        } catch (java.lang.UnsatisfiedLinkError ignored) {}
 
         // ok, not found, so we use the one in the package.
 
