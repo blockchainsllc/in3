@@ -45,7 +45,7 @@ endif()
 
 # first we build the runners
 add_executable(runner runner.c)
-target_link_libraries(runner eth_full eth_api)
+target_link_libraries(runner eth_full eth_api ipfs)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner eth_full)
@@ -90,11 +90,11 @@ foreach (file ${files})
 endforeach ()
 target_code_coverage(runner "${files}" AUTO ALL ${coverage_excludes})
 
-file(GLOB files 
-    "testdata/evm/TrieTests/*.json" 
-    "testdata/evm/RLPTests/*.json" 
-    "testdata/evm/vmTests/vmArithmeticTest/*.json" 
-    "testdata/evm/vmTests/vmBitwiseLocigOperation/*.json" 
+file(GLOB files
+    "testdata/evm/TrieTests/*.json"
+    "testdata/evm/RLPTests/*.json"
+    "testdata/evm/vmTests/vmArithmeticTest/*.json"
+    "testdata/evm/vmTests/vmBitwiseLocigOperation/*.json"
 #    "testdata/evm/GeneralStateTests/stRandom2/*.json"
 #    "testdata/evm/GeneralStateTests/stRandom/*.json"
     "testdata/evm/GeneralStateTests/stMemoryTest/*.json"
@@ -192,7 +192,6 @@ foreach (testdir
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 9)
     endforeach ()
 endforeach ()
-
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)
 set_property(TARGET vmrunner PROPERTY C_STANDARD 99)

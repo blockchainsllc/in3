@@ -295,6 +295,18 @@ uint64_t d_longd(const d_token_t* item, const uint64_t def_val) {
 bool d_eq(const d_token_t* a, const d_token_t* b) {
   if (a == NULL || b == NULL) return false;
   if (a->len != b->len) return false;
+  if (d_type(a) == T_ARRAY) {
+    for (d_iterator_t ia = d_iter((d_token_t*) a), ib = d_iter((d_token_t*) b); ia.left; d_iter_next(&ia), d_iter_next(&ib)) {
+      if (!d_eq(ia.token, ib.token)) return false;
+    }
+    return true;
+  }
+  if (d_type(a) == T_OBJECT) {
+    for (d_iterator_t ia = d_iter((d_token_t*) a); ia.left; d_iter_next(&ia)) {
+      if (!d_eq(ia.token, d_get((d_token_t*) b, ia.token->key))) return false;
+    }
+    return true;
+  }
   return (a->data && b->data)
              ? b_cmp(d_bytes(a), d_bytes(b))
              : a->data == NULL && b->data == NULL;
@@ -365,8 +377,8 @@ d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int pare
 }
 
 int parse_key(json_ctx_t* jp) {
-  char* start = jp->c;
-  int   r;
+  const char* start = jp->c;
+  int         r;
   while (true) {
     switch (*(jp->c++)) {
       case 0: return -2;
@@ -429,9 +441,9 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
 }
 
 int parse_string(json_ctx_t* jp, d_token_t* item) {
-  char*  start = jp->c;
-  size_t l, i;
-  int    n;
+  const char* start = jp->c;
+  size_t      l, i;
+  int         n;
 
   while (true) {
     switch (*(jp->c++)) {
@@ -447,20 +459,20 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
           } else if (l < 10 && !(l > 3 && start[2] == '0' && start[3] == '0')) { // we can accept up to 3,4 bytes as integer
             item->len = T_INTEGER << 28;
             for (i = 2; i < l; i++)
-              item->len |= strtohex(start[i]) << ((l - i - 1) << 2);
+              item->len |= hexchar_to_int(start[i]) << ((l - i - 1) << 2);
           } else {
             // we need to allocate bytes for it. and so set the type to bytes
             item->len  = ((l & 1) ? l - 1 : l - 2) >> 1;
             item->data = _malloc(item->len);
-            if (l & 1) item->data[0] = strtohex(start[2]);
+            if (l & 1) item->data[0] = hexchar_to_int(start[2]);
             l = (l & 1) + 2;
             for (i = l - 2, n = l; i < item->len; i++, n += 2)
-              item->data[i] = strtohex(start[n]) << 4 | strtohex(start[n + 1]);
+              item->data[i] = hexchar_to_int(start[n]) << 4 | hexchar_to_int(start[n + 1]);
           }
         } else if (l == 6 && *start == '\\' && start[1] == 'u') {
           item->len   = 1;
           item->data  = _malloc(1);
-          *item->data = strtohex(start[4]) << 4 | strtohex(start[5]);
+          *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
         } else {
           item->len  = l | T_STRING << 28;
           item->data = _malloc(l + 1);
@@ -569,7 +581,7 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   }
 }
 
-void free_json(json_ctx_t* jp) {
+void json_free(json_ctx_t* jp) {
   if (!jp || jp->result == NULL) return;
   if (!d_is_binary_ctx(jp)) {
     size_t i;
@@ -594,18 +606,18 @@ json_ctx_t* parse_json(char* js) {
     _free(parser);                                                   // also free the parse since it does not make sense to parse  now.
     return NULL;                                                     // NULL means no memory
   }                                                                  //
-  int res = parse_object(parser, -1, 0);                             // now parse starting without parent (-1)
+  const int res = parse_object(parser, -1, 0);                       // now parse starting without parent (-1)
   if (res < 0) {                                                     // error parsing?
-    free_json(parser);                                               // clean up
+    json_free(parser);                                               // clean up
     return NULL;                                                     // and return null
   }                                                                  //
   parser->c = js;                                                    // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 
-static int find_end(char* str) {
-  int   l = 0;
-  char* c = str;
+static int find_end(const char* str) {
+  int         l = 0;
+  const char* c = str;
   while (*c != 0) {
     switch (*(c++)) {
       case '{':
@@ -689,10 +701,15 @@ char* d_create_json(d_token_t* item) {
   return NULL;
 }
 
-str_range_t d_to_json(d_token_t* item) {
+str_range_t d_to_json(const d_token_t* item) {
   str_range_t s;
-  s.data = (char*) item->data;
-  s.len  = find_end(s.data);
+  if (item) {
+    s.data = (char*) item->data;
+    s.len  = find_end(s.data);
+  } else {
+    s.data = NULL;
+    s.len  = 0;
+  }
   return s;
 }
 
@@ -714,9 +731,9 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
   return n;
 }
 
-static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
-  uint16_t key;
-  d_type_t type = d[*p] >> 5; // first 3 bits define the type
+static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p) {
+  uint16_t       key;
+  const d_type_t type = d[*p] >> 5; // first 3 bits define the type
 
   // calculate len
   uint32_t len = d[(*p)++] & 0x1F, i; // the other 5 bits  (0-31) the length
@@ -768,12 +785,12 @@ static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
       }
       break;
     case T_STRING:
-      t->data = d + ((*p)++);
+      t->data = (uint8_t*) d + ((*p)++);
       if (t->data[len] != 0) return 1;
       *p += len;
       break;
     case T_BYTES:
-      t->data = d + (*p);
+      t->data = (uint8_t*) d + (*p);
       *p += len;
       break;
     default:
@@ -782,12 +799,12 @@ static int read_token(json_ctx_t* jp, uint8_t* d, size_t* p) {
   return 0;
 }
 
-json_ctx_t* parse_binary_str(char* data, int len) {
-  bytes_t b = {.data = (uint8_t*) data, .len = len};
+json_ctx_t* parse_binary_str(const char* data, int len) {
+  const bytes_t b = {.data = (uint8_t*) data, .len = len};
   return parse_binary(&b);
 }
 
-json_ctx_t* parse_binary(bytes_t* data) {
+json_ctx_t* parse_binary(const bytes_t* data) {
   size_t      p = 0, error = 0;
   json_ctx_t* jp = _calloc(1, sizeof(json_ctx_t));
   jp->c          = (char*) data->data;

@@ -32,6 +32,9 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#ifndef __MEM_H__
+#define __MEM_H__
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -48,9 +51,6 @@
 #else
 #define _NOINLINE_ __attribute__((noinline))
 #endif
-
-#ifndef __MEM_H__
-#define __MEM_H__
 
 #ifndef UNUSED_VAR
 #define UNUSED_VAR(x) (void) (x)
@@ -99,10 +99,17 @@ void   mem_reset(int cnt);
 void   memstack();
 int    mem_stack_size();
 #else /* TEST */
+#ifdef ERR_MSG
 #define _malloc(s) _malloc_(s, __FILE__, __func__, __LINE__)
 #define _calloc(n, s) _calloc_(n, s, __FILE__, __func__, __LINE__)
 #define _free(p) _free_(p)
 #define _realloc(p, s, o) _realloc_(p, s, o, __FILE__, __func__, __LINE__)
+#else
+#define _malloc(s) _malloc_(s, "F", "F", 0)
+#define _calloc(n, s) _calloc_(n, s, "F", "F", 0)
+#define _free(p) _free_(p)
+#define _realloc(p, s, o) _realloc_(p, s, o, "F", "F", 0)
+#endif
 void* _malloc_(size_t size, char* file, const char* func, int line);
 void* _realloc_(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line);
 void* _calloc_(size_t n, size_t size, char* file, const char* func, int line);

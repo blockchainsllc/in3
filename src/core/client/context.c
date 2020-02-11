@@ -42,41 +42,40 @@
 #include <stdio.h>
 #include <string.h>
 
-in3_ctx_t* new_ctx(in3_t* client, char* req_data) {
+in3_ctx_t* ctx_new(in3_t* client, char* req_data) {
 
-  in3_ctx_t* c = _calloc(1, sizeof(in3_ctx_t));
-  if (!c) return NULL;
-  c->attempt = 0;
-  c->cache   = NULL;
-  c->client  = client;
+  in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
+  if (!ctx) return NULL;
+  ctx->client             = client;
+  ctx->verification_state = IN3_WAITING;
 
   if (req_data != NULL) {
-    c->request_context = parse_json(req_data);
-    if (!c->request_context) {
-      ctx_set_error(c, "Error parsing the JSON-request!", IN3_EINVAL);
-      return c;
+    ctx->request_context = parse_json(req_data);
+    if (!ctx->request_context) {
+      ctx_set_error(ctx, "Error parsing the JSON-request!", IN3_EINVAL);
+      return ctx;
     }
 
-    if (d_type(c->request_context->result) == T_OBJECT) {
+    if (d_type(ctx->request_context->result) == T_OBJECT) {
       // it is a single result
-      c->requests    = _malloc(sizeof(d_type_t*));
-      c->requests[0] = c->request_context->result;
-      c->len         = 1;
-    } else if (d_type(c->request_context->result) == T_ARRAY) {
+      ctx->requests    = _malloc(sizeof(d_token_t*));
+      ctx->requests[0] = ctx->request_context->result;
+      ctx->len         = 1;
+    } else if (d_type(ctx->request_context->result) == T_ARRAY) {
       // we have an array, so we need to store the request-data as array
-      d_token_t* t = c->request_context->result + 1;
-      c->len       = d_len(c->request_context->result);
-      c->requests  = _malloc(sizeof(d_type_t*) * c->len);
-      for (int i = 0; i < c->len; i++, t = d_next(t))
-        c->requests[i] = t;
+      d_token_t* t  = ctx->request_context->result + 1;
+      ctx->len      = d_len(ctx->request_context->result);
+      ctx->requests = _malloc(sizeof(d_token_t*) * ctx->len);
+      for (int i = 0; i < ctx->len; i++, t = d_next(t))
+        ctx->requests[i] = t;
     } else
-      ctx_set_error(c, "The Request is not a valid structure!", IN3_EINVAL);
+      ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
   }
 
-  if (c->len)
-    c->requests_configs = _calloc(c->len, sizeof(in3_request_config_t));
+  if (ctx->len)
+    ctx->requests_configs = _calloc(ctx->len, sizeof(in3_request_config_t));
 
-  return c;
+  return ctx;
 }
 
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
@@ -93,30 +92,37 @@ in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
     return ctx_set_error(c, d_string(r), IN3_ERPC);
 }
 
-in3_ret_t ctx_set_error(in3_ctx_t* c, char* msg, in3_ret_t errnumber) {
+in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumber) {
   // if this is just waiting, it is not an error!
   if (errnumber == IN3_WAITING) return errnumber;
-  int   l   = strlen(msg);
-  char* dst = NULL;
-  if (c->error) {
-    dst = _malloc(l + 2 + strlen(c->error));
-    strcpy(dst, msg);
-    dst[l] = '\n';
-    strcpy(dst + l + 1, c->error);
-    _free(c->error);
-  } else {
-    dst = _malloc(l + 1);
-    strcpy(dst, msg);
+  if (message) {
+    const int l   = strlen(message);
+    char*     dst = NULL;
+    if (ctx->error) {
+      dst = _malloc(l + 2 + strlen(ctx->error));
+      strcpy(dst, message);
+      dst[l] = ':';
+      strcpy(dst + l + 1, ctx->error);
+      _free(ctx->error);
+    } else {
+      dst = _malloc(l + 1);
+      strcpy(dst, message);
+    }
+    ctx->error = dst;
+    in3_log_error("%s:", message);
+  } else if (!ctx->error) {
+    ctx->error    = _malloc(2);
+    ctx->error[0] = 'E';
+    ctx->error[1] = 0;
   }
-  c->error = dst;
-  in3_log_error("%s\n", msg);
+  ctx->verification_state = errnumber;
   return errnumber;
 }
 
 in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   if (ctx->error)
     return IN3_ERPC;
-  else if (id > ctx->len)
+  else if (id >= ctx->len)
     return IN3_EINVAL;
   else if (!ctx->responses || !ctx->responses[id])
     return IN3_ERPCNRES;
@@ -125,11 +131,11 @@ in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   return IN3_OK;
 }
 
-int ctx_nodes_len(node_weight_t* c) {
+int ctx_nodes_len(node_match_t* node) {
   int all = 0;
-  while (c) {
+  while (node) {
     all++;
-    c = c->next;
+    node = node->next;
   }
   return all;
 }

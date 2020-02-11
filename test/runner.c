@@ -41,6 +41,7 @@
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
 #include "../src/verifier/eth1/full/eth_full.h"
+#include "../src/verifier/ipfs/ipfs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,7 +106,9 @@ char* readContent(char* name) {
     r = fread(buffer + len, 1, allocated - len - 1, file);
     len += r;
     if (feof(file)) break;
-    buffer = realloc(buffer, allocated *= 2);
+    size_t new_alloc = allocated * 2;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
 
@@ -209,8 +212,9 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   char       params[10000];
 
   // configure in3
-  c->requestCount = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
-  method          = d_get_string(request, "method");
+  c->request_count = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
+  method           = d_get_string(request, "method");
+  bool intern      = d_get_int(test, "intern");
 
   str_range_t s = d_to_json(d_get(request, key("params")));
   if (!method) {
@@ -231,6 +235,19 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   int is_bin = d_get_int(test, "binaryFormat");
 
   in3_client_rpc(c, method, params, is_bin ? NULL : &res, &err);
+
+  if (res && intern) {
+    json_ctx_t* actual_json = parse_json(res);
+    d_token_t*  actual      = actual_json->result;
+    d_token_t*  expected    = d_get(response + 1, key("result"));
+    if (!d_eq(actual, expected)) {
+      err = _malloc(strlen(res) + 200);
+      sprintf(err, "wrong response: %s", res);
+      _free(res);
+      res = NULL;
+    }
+    json_free(actual_json);
+  }
 
   if (err && res) {
     print_error("Error and Result set");
@@ -285,15 +302,17 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
     sprintf(temp, "Request #%i", counter);
   printf("\n%2i : %-60s ", counter, temp);
 
-  in3_t* c = in3_new();
+  in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
   int    j;
   c->max_attempts        = 1;
-  c->includeCode         = 1;
+  c->include_code        = 1;
   c->transport           = send_mock;
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
-  for (j = 0; j < c->chainsCount; j++) {
-    c->chains[j].needsUpdate = false;
+  for (j = 0; j < c->chains_length; j++) {
+    _free(c->chains[j].nodelist_upd8_params);
+    c->chains[j].nodelist_upd8_params = NULL;
+
     if (registry_id) {
       c->chains[j].version = 2;
       memcpy(c->chains[j].registry_id, d_bytesl(registry_id, 32)->data, 32);
@@ -303,16 +322,16 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   c->proof = proof;
 
   d_token_t* signatures = d_get(test, key("signatures"));
-  c->chainId            = d_get_longkd(test, key("chainId"), 1);
+  c->chain_id           = d_get_longkd(test, key("chainId"), 1);
   if (signatures) {
-    c->signatureCount = d_len(signatures);
-    for (j = 0; j < c->chainsCount; j++) {
-      if (c->chains[j].chainId == c->chainId) {
-        for (i = 0; i < c->chains[j].nodeListLength; i++) {
-          if (i < c->signatureCount)
-            memcpy(c->chains[j].nodeList[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
+    c->signature_count = d_len(signatures);
+    for (j = 0; j < c->chains_length; j++) {
+      if (c->chains[j].chain_id == c->chain_id) {
+        for (i = 0; i < c->chains[j].nodelist_length; i++) {
+          if (i < c->signature_count)
+            memcpy(c->chains[j].nodelist[i].address->data, d_get_bytes_at(signatures, i)->data, 20);
           else
-            c->chains[j].weights[i].blacklistedUntil = 0xFFFFFFFFFFFFFF;
+            c->chains[j].weights[i].blacklisted_until = 0xFFFFFFFFFFFFFF;
         }
       }
     }
@@ -405,7 +424,7 @@ int runRequests(char** names, int test_index, int mem_track) {
     }
 
     free(content);
-    free_json(parsed);
+    json_free(parsed);
     name = names[++n];
   }
   printf("\n%2i of %2i successfully tested", total - failed, total);
@@ -424,6 +443,7 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
   in3_register_eth_full();
   in3_register_eth_api();
+  in3_register_ipfs();
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
   char** names = malloc(sizeof(char*));

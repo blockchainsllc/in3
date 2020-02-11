@@ -75,7 +75,7 @@ static void respond(int s, in3_t* in3) {
       rest += 3;
       if (strlen(rest) > 2 && (rest[0] == '{' || rest[0] == '[')) {
         // execute in3
-        in3_ctx_t* ctx = new_ctx(in3, rest);
+        in3_ctx_t* ctx = ctx_new(in3, rest);
         if (ctx == NULL)
           printf("HTTP/1.1 500 Not Handled\r\n\r\nInvalid request.\r\n");
         else if (ctx->error)
@@ -104,7 +104,7 @@ static void respond(int s, in3_t* in3) {
             printf("HTTP/1.1 500 Not Handled\r\n\r\nCould not execute\r\n");
         }
         if (ctx)
-          free_ctx(ctx);
+          ctx_free(ctx);
 
       } else
         rest = NULL;

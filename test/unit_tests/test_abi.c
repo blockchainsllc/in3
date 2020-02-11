@@ -57,29 +57,39 @@
     free(tmp);                                                                                       \
   }
 #define TEST_ABI_DESC(description, signature, input, expected) TEST_ABI(signature, input, expected)
-#define TEST_ASSERT_ABI_ENCODE(description, signature, input, output) TEST_ASSERT_EQUAL_STRING(abi_encode("test(" signature ")", input) + (!strncmp(output, "Error:", 6) ? 0 : 10), output)
-#define TEST_ASSERT_ABI_DECODE(description, signature, input, output) TEST_ASSERT_EQUAL_STRING(abi_decode("test():(" signature ")", input), output)
+#define TEST_ASSERT_ABI_ENCODE(description, signature, input, output)                 \
+  {                                                                                   \
+    char* tmp = abi_encode("test(" signature ")", input);                             \
+    TEST_ASSERT_EQUAL_STRING(tmp + (!strncmp(output, "Error:", 6) ? 0 : 10), output); \
+    if (tmp) free(tmp);                                                               \
+  }
+#define TEST_ASSERT_ABI_DECODE(description, signature, input, output) \
+  {                                                                   \
+    char* tmp = abi_decode("test():(" signature ")", input);          \
+    TEST_ASSERT_EQUAL_STRING(tmp, output);                            \
+    if (tmp) free(tmp);                                               \
+  }
 
 static char* abi_encode(char* sig, char* json_params) {
   call_request_t* req = parseSignature(sig);
-  if (!req) return err_string("invalid function signature");
+  if (!req) return strdup(err_string("invalid function signature"));
 
   json_ctx_t* params = parse_json(json_params);
   if (!params) {
     req_free(req);
-    return err_string("invalid json data");
+    return strdup(err_string("invalid json data"));
   }
 
   if (set_data(req, params->result, req->in_data) < 0) {
     req_free(req);
-    free_json(params);
-    return err_string("invalid input data");
+    json_free(params);
+    return strdup(err_string("invalid input data"));
   }
-  free_json(params);
+  json_free(params);
   char* result = malloc(req->call_data->b.len * 2 + 3);
   if (!result) {
     req_free(req);
-    return err_string("malloc failed for the result");
+    return strdup(err_string("malloc failed for the result"));
   }
   bytes_to_hex(req->call_data->b.data, req->call_data->b.len, result + 2);
   result[0] = '0';
@@ -90,17 +100,17 @@ static char* abi_encode(char* sig, char* json_params) {
 
 static char* abi_decode(char* sig, char* hex_data) {
   call_request_t* req = parseSignature(sig);
-  if (!req) return err_string("invalid function signature");
+  if (!req) return strdup(err_string("invalid function signature"));
   int     l = strlen(hex_data);
   uint8_t data[l >> 1];
-  l = hex2byte_arr(hex_data, -1, data, l >> 1);
+  l = hex_to_bytes(hex_data, -1, data, l >> 1);
 
   json_ctx_t* res = req_parse_result(req, bytes(data, l));
   req_free(req);
   if (!res)
-    return err_string("the input data can not be decoded");
+    return strdup(err_string("the input data can not be decoded"));
   char* result = d_create_json(res->result);
-  free_json(res);
+  json_free(res);
   // Enclose output in square brackets if not already the case
   if (result[0] != '[') {
     size_t l_ = strlen(result);

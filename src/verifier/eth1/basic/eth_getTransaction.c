@@ -71,7 +71,7 @@ in3_ret_t eth_verify_tx_values(in3_vctx_t* vc, d_token_t* tx, bytes_t* raw) {
 
   // check chain id
   if ((t = d_get(tx, K_CHAIN_ID)) && (unsigned) d_int(t) != chain_id)
-    return vc_err(vc, "wrong chainID");
+    return vc_err(vc, "wrong chain_id");
 
   // All transaction signatures whose s-value is greater than secp256k1n/2 are considered invalid.
   if (!s || s->len > 32 || (s->len == 32 && memcmp(s->data, secp256k1n_2, 32) > 0))
@@ -209,7 +209,7 @@ in3_ret_t eth_verify_eth_getTransactionByBlock(in3_vctx_t* vc, d_token_t* blk, u
     return vc_err(vc, "No block hash & number found");
   }
 
-  if (d_get(vc->result, K_TRANSACTION_INDEX) && tx_idx != (uint32_t)d_get_intk(vc->result, K_TRANSACTION_INDEX))
+  if (d_get(vc->result, K_TRANSACTION_INDEX) && tx_idx != (uint32_t) d_get_intk(vc->result, K_TRANSACTION_INDEX))
     return vc_err(vc, "The transaction index does not match the required");
 
   res = eth_verify_blockheader(vc, blockHeader, d_get_byteskl(vc->result, K_BLOCK_HASH, 32));

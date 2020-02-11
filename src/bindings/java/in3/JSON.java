@@ -119,7 +119,10 @@ public class JSON {
         return asString(get(key));
     }
 
-    public String[] asStringArray(Object o) {
+    /**
+     * casts the object to a String[]
+     */
+    public static String[] asStringArray(Object o) {
         if (o == null)
             return null;
         if (o instanceof Object[]) {
@@ -212,5 +215,30 @@ public class JSON {
 
     public static void appendKey(StringBuilder sb, String key, Object value) {
         sb.append("\"").append(key).append("\":").append(toJson(value)).append(",");
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((map == null) ? 0 : map.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        JSON other = (JSON) obj;
+        if (map == null) {
+            if (other.map != null)
+                return false;
+        } else if (!map.equals(other.map))
+            return false;
+        return true;
     }
 }

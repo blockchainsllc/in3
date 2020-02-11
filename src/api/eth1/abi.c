@@ -157,11 +157,11 @@ static void remove_parens(char* s, size_t l) {
 }
 
 char* escape_tuples(char* sig, size_t l, char** startb, char** ends) {
-  if(*sig){
+  if (*sig) {
     char* sig_ = _strdupn(sig, l);
     *startb    = memchr(sig_, '(', l);
     *ends      = memchr(sig_, ':', l);
-    remove_parens(sig_ + (*startb - sig_) + 1, (*ends ? (*ends - *startb) : (l - (*startb - sig_))) - 2);
+    remove_parens(sig_ + (*startb - sig_) + 1, (*ends ? (unsigned) (*ends - *startb) : (l - (*startb - sig_))) - 2);
     if (*ends) {
       *startb = memchr(*ends, '(', l);
       if (*startb) remove_parens(sig_ + (*startb - sig_) + 1, strlen(sig_ + (*startb - sig_) + 2));
@@ -184,7 +184,7 @@ call_request_t* parseSignature(char* sig) {
   }
 
   char*            s         = escape_tuples(sig, l, &startb, &ends);
-  bytes_t          signature = bytes((uint8_t*) s, ends ? (ends - s) : strlen(s));
+  bytes_t          signature = bytes((uint8_t*) s, ends ? (unsigned) (ends - s) : strlen(s));
   bytes32_t        hash;
   bytes_builder_t* tokens = bb_new();
   if (!parse_tuple(tokens, startb + 1)) {
@@ -352,16 +352,25 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
         break;
       }
       case A_INT: {
-        if (d_type(d) != T_STRING)
-          return add_error(req, "big negative numbers are not supported (yet)!");
-
-        char*              tmp = d_string(d);
-        unsigned long long n   = strtoull(tmp + 1, NULL, 10);
-        bitset_t*          bs  = bs_from_ull(n, 256);
-        twos_complement(bs);
-        bytes_t b = {.data = bs->bits.p, .len = 32};
-        head_pos += write_right(req, head_pos, (*tmp == '-') ? b : d_to_bytes(d));
-        bs_free(bs);
+        switch (d_type(d)) {
+          case T_STRING: {
+            char*              tmp = d_string(d);
+            unsigned long long n   = strtoull(tmp + 1, NULL, 10);
+            bitset_t*          bs  = bs_from_ull(n, 256);
+            twos_complement(bs);
+            bytes_t b = {.data = bs->bits.p, .len = 32};
+            head_pos += write_right(req, head_pos, (*tmp == '-') ? b : d_to_bytes(d));
+            bs_free(bs);
+            break;
+          }
+          case T_INTEGER:
+          case T_BYTES: {
+            head_pos += write_right(req, head_pos, d_to_bytes(d));
+            break;
+          }
+          default:
+            return add_error(req, "big negative numbers are not supported (yet)!");
+        }
         break;
       }
       case A_ADDRESS:

@@ -88,7 +88,7 @@ function private2address(pk) {
 
 
 function abiEncode(sig, ...params) {
-    convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
+    const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
 }
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
@@ -160,6 +160,8 @@ function toHex(val, bytes) {
                 ? BigInt(val).toString(16)
                 : Object.keys(val).map(_ => padStart(val.charCodeAt(_).toString(16), 2, '0')).join('')
             )
+    else if (typeof val === 'boolean')
+        hex = val ? '01' : '00'
     else if (typeof val === 'number' || typeof val === 'bigint')
         hex = val.toString(16)
     else if (val && val._isBigNumber) // BigNumber
