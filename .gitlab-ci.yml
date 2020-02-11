@@ -379,6 +379,15 @@ docker:
 #    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
 #    REPORT_STDOUT: STDOUT
 
+format:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang10
+  tags:
+    - short-jobs
+  script:
+    - find src/core/ src/cmd/ src/api/ src/verifier/ src/transport/ \( -name "*.c" -o -name "*.h" \) | xargs clang-format-10 -i
+    - git diff --patch --exit-code
+
 cpd:
   stage: analysis
   image: rawdee/pmd
