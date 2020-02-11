@@ -48,10 +48,20 @@ IF (IN3_SERVER)
     set(LIBS ${LIBS} http_server)
 ENDIF()
 
+if (BTC)
+    ADD_DEFINITIONS(-DBTC)
+    set(LIBS ${LIBS} btc)
+endif()
+
+if (IPFS)
+    ADD_DEFINITIONS(-DIPFS)
+    set(LIBS ${LIBS} ipfs)
+endif()
+
 
 add_executable(in3 main.c in3_storage.c)
 target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
-target_link_libraries(in3 ${LIBS} eth_full eth_api ipfs btc -lm)
+target_link_libraries(in3 ${LIBS} eth_full eth_api  -lm)
 
 install(TARGETS in3
         DESTINATION /usr/local/bin/

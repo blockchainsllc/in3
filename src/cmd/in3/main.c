@@ -58,7 +58,6 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
-#include "../../verifier/btc/btc.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -70,6 +69,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef BTC
+#include "../../verifier/btc/btc.h"
+#endif
+#ifdef IPFS
+#include "../../verifier/ipfs/ipfs.h"
+#endif
 
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
@@ -603,7 +609,12 @@ int main(int argc, char* argv[]) {
 
   // we want to verify all
   in3_register_eth_full();
+#ifdef IPFS
+  in3_register_ipfs();
+#endif
+#ifdef BTC
   in3_register_btc();
+#endif
   in3_register_eth_api();
   in3_log_set_level(LOG_INFO);
 
