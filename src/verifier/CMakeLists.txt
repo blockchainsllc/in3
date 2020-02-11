@@ -50,3 +50,7 @@ endif()
 if (IPFS)
   add_subdirectory(ipfs)
 endif()
+
+IF (BTC)
+    add_subdirectory(btc)
+ENDIF(BTC)
