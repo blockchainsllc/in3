@@ -36,14 +36,11 @@ require('mocha')
 const { assert } = require('chai')
 const { createClient, mockResponse, IN3, beforeTest } = require('./util/mocker')
 
-
+const contractCode = require('./responses/eth_getCode.json')
 
 describe('API-Tests', () => {
     beforeEach(beforeTest)
     afterEach(IN3.freeAll)
-    it('checkSumAddress', async () => {
-        assert.equal(IN3.util.toChecksumAddress('0xbc0ea09c1651a3d5d40bacb4356fb59159a99564'), '0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564')
-    })
 
     it('eth_callFn', async () => {
         mockResponse('eth_call', 'serverData')
@@ -56,6 +53,7 @@ describe('API-Tests', () => {
         assert.equal(res[2], 0xffff)
         assert.equal(res[3], 0xffffn)
     })
+
     it('send_transaction', async () => {
         mockResponse('eth_gasPrice', 'default')
         mockResponse('eth_estimateGas', '1M')
@@ -106,8 +104,57 @@ describe('API-Tests', () => {
 
     })
 
+    it('blockNumber', async () => {
+        mockResponse('eth_blockNumber', '0x1')
+        const res = await createClient().eth.blockNumber()
+        assert.equal(res, 3220)
+    })
+
+    it('getLogs', async () => {
+        mockResponse('eth_getLogs', 'logs')
+        const res = await createClient().eth.getLogs({ "fromBlock": "0x834B77", "toBlock": "0x834B77", "address": "0xdac17f958d2ee523a2206206994597c13d831ec7" })
+        assert.isArray(res)
+        assert.equal(res[0].data, "0x0000000000000000000000000000000000000000000000000000000349d05c5c")
+        assert.equal(res[0].transactionHash, "0x20be6d27ed6a4c99c5dbeeb9081e114a9b400c52b80c4d10096c94ad7d3c1af6")
+    })
+
+    it('getTransactionReceipt', async () => {
+        mockResponse('eth_getTransactionReceipt', 'receipt')
+        const res = await createClient().eth.getTransactionReceipt("0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2")
+        assert.equal(res.to, "0x5b8174e20996ec743f01d3b55a35dd376429c596")
+        assert.equal(res.status, "0x1")
+        assert.equal(res.logs[0].address, "0x5b8174e20996ec743f01d3b55a35dd376429c596")
+
+    })
+
+    it('getTransactionByHash', async () => {
+        mockResponse('eth_getTransactionByHash', 'tx')
+        const res = await createClient().eth.getTransactionByHash("0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2")
+        assert.equal(res.blockHash, "0x8220e66456e40636bff3a440832c9f179e4811d4e28269c7ab70142c3e5f9be2")
+        assert.equal(res.from, "0x3a9e354dee60df25c0389badafec8457e36ebfd2")
+
+    })
+
+    it('getBalance', async () => {
+        mockResponse('eth_getBalance', 'balance')
+        const res = await createClient().eth.getBalance("0x4144FFD5430a8518fa2d84ef5606Fd7e1921cE27")
+        assert.equal(res, 3646260000000000000)
+
+    })
+
+    it('getCode', async () => {
+        mockResponse('eth_getCode', 'codetest')
+        const res = await createClient().eth.getCode("0xdAC17F958D2ee523a2206206994597C13D831ec7")
+        assert.equal(res, contractCode.codetest.result)
+
+    })
+
+    it('getStorageAt', async () => {
+        mockResponse('eth_getStorageAt', 'storage')
+        const res = await createClient().eth.getStorageAt("0x862174623bc39e57de552538f424806b947d3d05","0x0")
+        assert.equal(res, "0x0")
+
+    })
 
 
 })
-
-

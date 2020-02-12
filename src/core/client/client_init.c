@@ -164,6 +164,15 @@ static void init_mainnet(in3_chain_t* chain) {
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
 }
 
+static void init_btc(in3_chain_t* chain) {
+  initChain(chain, 0xFF01, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
+  initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "http://localhost:8500");
+  if (chain->nodelist_upd8_params) {
+    _free(chain->nodelist_upd8_params);
+    chain->nodelist_upd8_params = NULL;
+  }
+}
+
 static void init_kovan(in3_chain_t* chain) {
 #ifdef IN3_STAGING
   // kovan
@@ -213,7 +222,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->proof                = PROOF_STANDARD;
   c->replace_latest_block = 0;
   c->request_count        = 1;
-  c->chains_length        = chain_id ? 1 : 5;
+  c->chains_length        = chain_id ? 1 : 6;
   c->chains               = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters              = NULL;
   c->timeout              = 10000;
@@ -233,6 +242,9 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_IPFS)
     init_ipfs(chain++);
+
+  if (!chain_id || chain_id == ETH_CHAIN_ID_BTC)
+    init_btc(chain++);
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_LOCAL) {
     initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
@@ -553,16 +565,17 @@ char* in3_configure(in3_t* c, const char* config) {
         EXPECT_TOK_KEY_HEXSTR(ct.token);
 
         // register chain
-        chain_id_t chain_id    = char_to_long(d_get_keystr(ct.token->key), -1);
-        bytes_t*   contract    = d_get_byteskl(ct.token, key("contract"), 20);
-        bytes_t*   registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
-        bytes_t*   wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+        chain_id_t   chain_id    = char_to_long(d_get_keystr(ct.token->key), -1);
+        bytes_t*     contract    = d_get_byteskl(ct.token, key("contract"), 20);
+        bytes_t*     registry_id = d_get_byteskl(ct.token, key("registryId"), 32);
+        bytes_t*     wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
+        in3_chain_t* chain       = in3_find_chain(c, chain_id);
 
         EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-        EXPECT_CFG((in3_client_register_chain(c, chain_id, CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
+        EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
                    "register chain failed");
 
-        in3_chain_t* chain = in3_find_chain(c, chain_id);
+        chain = in3_find_chain(c, chain_id);
         EXPECT_CFG(chain != NULL, "invalid chain id!");
 
         // chain_props

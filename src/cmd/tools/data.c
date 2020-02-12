@@ -63,8 +63,8 @@ bytes_t read_from_stdin(FILE* file) {
     len += r;
     if (feof(file)) break;
     size_t new_alloc = allocated * 2 + 1;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
 
   buffer[len] = 0;
@@ -274,6 +274,10 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     json_ctx_t* ctx = parse_binary(&input);
+    if (!ctx) {
+      printf("Invalid binary data!\n");
+      return 1;
+    }
     printf("%s\n", d_create_json(ctx->result));
     return 0;
   }
