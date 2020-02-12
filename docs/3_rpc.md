@@ -84,7 +84,9 @@ The config params support the following properties :
     * **registryId** :`bytes32`  - identifier of the registry.
     * **needsUpdate** :`bool` *(optional)*  - if set, the nodeList will be updated before next request.
     * **avgBlockTime** :`uint16_t` *(optional)*  - average block time (seconds) for this chain.
-    * **verifiedHashes** :`JSON object with uint64_t key (block number) and bytes32 value (hash)` *(optional)*  - if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
+    * **verifiedHashes** :`array of JSON objects` *(optional)*  - if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request. MUST contain the following fields:
+        * **block** :`uint64_t`  - block number.
+        * **hash** : `bytes32`  - verified hash corresponding to block number.
     * **nodeList** :`array of JSON objects` *(optional)*  - manual nodeList, each JSON object may contain the following fields:
         * **url** :`string`  - URL of the node.
         * **address** :`address`  - address of the node.

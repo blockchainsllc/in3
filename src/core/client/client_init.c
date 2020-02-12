@@ -642,6 +642,17 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("avgBlockTime")) {
             EXPECT_TOK_U16(cp.token);
             chain->avg_block_time = (uint16_t) d_int(cp.token);
+          } else if (cp.token->key == key("verifiedHashes")) {
+            EXPECT_TOK_ARR(cp.token);
+            _free(chain->verified_hashes);
+            chain->verified_hashes = _calloc(d_len(cp.token), sizeof(in3_verified_hash_t));
+            int i                  = 0;
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
+              EXPECT_TOK_U64(d_get(n.token, key("block")));
+              EXPECT_TOK_B256(d_get(n.token, key("hash")));
+              chain->verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
+              memcpy(chain->verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
+            }
           } else if (cp.token->key == key("nodeList")) {
             EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
