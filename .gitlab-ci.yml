@@ -31,7 +31,7 @@ stages:
 
 qemu:
   image: docker.slock.it/build-images/zephyr-image:latest
-  stage: test
+  stage: build
   script:
     - export ZEPHYR_BASE=.
     - pwd && ls -la . && ls -la /home/user
