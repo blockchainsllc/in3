@@ -34,12 +34,10 @@
 
 #include "eth_api.h"   //wrapper for easier use
 #include "eth_basic.h" // the full ethereum verifier containing the EVM
-#include "util/debug.h"
 #include "util/log.h"
 #include "util/mem.h"
 #include "block_number.h"
 #include "receipt.h"
-#include <sys/__assert.h>
 /**
  * In3 Setup and usage
  * **/
@@ -47,7 +45,7 @@
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int i = 0; i < urls_len; i++) {    
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
-      printk("Returning eth_blockNumber ...\n");
+      printk("Returning eth_getTransactionReceipt ...\n");
       sb_add_range(&(result[i].result), mock_tx_receipt, 0, mock_tx_receipt_len);
     } else if (strstr(payload, "eth_blockNumber") != NULL) {
       printk("Returning eth_blockNumber ...\n");
