@@ -34,7 +34,8 @@ qemu:
   stage: build
   script:
     - west init -m https://github.com/zephyrproject-rtos/zephyr --mr v2.0.0
-    - source /workdir/zephyr/zephyr-env.sh
+    - export ZEPHYR_BASE=/builds/in3/c/in3-core
+    - source /builds/in3/c/in3-core/zephyr/zephyr-env.sh
     - west build -b qemu_cortex_m3 test/qemu
     - qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -vga none -net none -pidfile qemu.pid -serial mon:stdio -semihosting -kernel build/zephyr/zephyr.elf 2> /dev/null
 gcc8:
