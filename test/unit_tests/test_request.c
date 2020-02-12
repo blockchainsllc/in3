@@ -408,7 +408,14 @@ static void test_configure_validation() {
                                 "        \"props\":\"0xffff\","
                                 "        \"address\":\"" NODE_ADDRS "\""
                                 "      }],"
-                                "      \"needsUpdate\":true"
+                                "      \"needsUpdate\":true,"
+                                "      \"verifiedHashes\":[{"
+                                "        \"block\": \"0x234ad3\","
+                                "        \"hash\": \"0x1230980495039470913820938019274231230980495039470913820938019274\""
+                                "      },{"
+                                "        \"block\": \"0x234a99\","
+                                "        \"hash\": \"0xda879213bf9834ff2eade0921348dda879213bf9834ff2eade0921348d238130\""
+                                "      }]"
                                 "    }"
                                 "  }"
                                 "}");
@@ -430,6 +437,14 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL(chain->nodelist[0].props, 0xffff);
   hex_to_bytes(NODE_ADDRS, -1, addr, 20);
   TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address->data, addr, 20);
+
+  TEST_ASSERT_EQUAL(0x234ad3, chain->verified_hashes[0].block_number);
+  hex_to_bytes("0x1230980495039470913820938019274231230980495039470913820938019274", -1, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(chain->verified_hashes[0].hash, b256, 32);
+
+  TEST_ASSERT_EQUAL(0x234a99, chain->verified_hashes[1].block_number);
+  hex_to_bytes("0xda879213bf9834ff2eade0921348dda879213bf9834ff2eade0921348d238130", -1, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(chain->verified_hashes[1].hash, b256, 32);
 
   in3_free(c);
 }
