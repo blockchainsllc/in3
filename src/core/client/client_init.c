@@ -71,6 +71,7 @@
 #define EXPECT_TOK_U8(token) EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value")
 #define EXPECT_TOK_U16(token) EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
 #define EXPECT_TOK_U32(token) EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
+#define EXPECT_TOK_U64(token) EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value")
 #define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
@@ -540,10 +541,10 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK_U32(token);
       c->timeout = d_long(token);
     } else if (token->key == key("minDeposit")) {
-      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
+      EXPECT_TOK_U64(token);
       c->min_deposit = d_long(token);
     } else if (token->key == key("nodeProps")) {
-      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
+      EXPECT_TOK_U64(token);
       c->node_props = d_long(token);
     } else if (token->key == key("nodeLimit")) {
       EXPECT_TOK_U16(token);
@@ -559,7 +560,7 @@ char* in3_configure(in3_t* c, const char* config) {
       c->replace_latest_block = (uint8_t) d_int(token);
       in3_node_props_set(&c->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
     } else if (token->key == key("requestCount")) {
-      EXPECT_TOK(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
+      EXPECT_TOK_U8(token);
       c->request_count = (uint8_t) d_int(token);
     } else if (token->key == key("rpc")) {
       EXPECT_TOK_STR(token);
