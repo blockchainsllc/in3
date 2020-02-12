@@ -235,6 +235,13 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
   sb_add_char(sb, ']');
   return IN3_OK;
 }
+static void update_nodelist_cache(in3_ctx_t* ctx) {
+  // we don't update weights for local chains.
+  if (!ctx->client->cache || ctx->client->chain_id == ETH_CHAIN_ID_LOCAL) return;
+  chain_id_t chain_id = ctx->requests_configs[0].chain_id;
+  if (!chain_id) chain_id = ctx->client->chain_id;
+  in3_cache_store_nodelist(ctx, in3_find_chain(ctx->client, chain_id));
+}
 
 static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
 
@@ -628,6 +635,9 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // ok, we have a response, then we try to evaluate the responses
       // verify responses and return the node with the correct result.
       ret = find_valid_result(ctx, ctx->nodes == NULL ? 1 : ctx_nodes_len(ctx->nodes), ctx->raw_response, chain, verifier);
+
+      // update weights in the cache
+      update_nodelist_cache(ctx);
 
       // we wait or are have successfully verified the response
       if (ret == IN3_WAITING || ret == IN3_OK) return ret;

@@ -104,7 +104,14 @@ static bytes_t* cache_get_item(void* cptr, char* key) {
 static void cache_set_item(void* cptr, char* key, bytes_t* value) {
   cache_t* cache = (cache_t*) cptr;
   int      i     = 0;
-  while (i < MAX_ENTRIES && cache->keys[i]) i++;
+  while (i < MAX_ENTRIES && cache->keys[i]) {
+    if (strcmp(cache->keys[i], key) == 0) {
+      _free(cache->keys[i]);
+      _free(cache->values[i].data);
+      break;
+    }
+    i++;
+  }
   cache->keys[i]   = strdup(key);
   cache->values[i] = bytes(malloc(value->len), value->len);
   memcpy(cache->values[i].data, value->data, value->len);
@@ -126,10 +133,7 @@ static void test_cache() {
   c->transport = test_transport;
   setup_test_cache(c);
 
-  in3_chain_t* chain = NULL;
-  for (int i = 0; i < c->chains_length; i++) {
-    if (c->chains[i].chain_id == 0x1) chain = &c->chains[i];
-  }
+  in3_chain_t* chain = in3_find_chain(c, 0x1);
 
   TEST_ASSERT_TRUE(chain != NULL);
   TEST_ASSERT_EQUAL_INT32(2, chain->nodelist_length);
@@ -152,10 +156,7 @@ static void test_cache() {
   c2->transport = test_transport;
   c2->chain_id  = c->chain_id;
   in3_configure(c2, "{\"chainId\":\"0x1\"}");
-  in3_chain_t* chain2 = NULL;
-  for (int i = 0; i < c2->chains_length; i++) {
-    if (c2->chains[i].chain_id == 0x1) chain2 = &c2->chains[i];
-  }
+  in3_chain_t* chain2 = in3_find_chain(c2, 0x1);
 
   // the nodeList should have 2 nodes still
   TEST_ASSERT_EQUAL_INT32(2, chain2->nodelist_length);
