@@ -175,7 +175,6 @@ typedef enum evm_state {
     }                                                          \
   } while (0)
 
-
 #define OP_CREATE(evm, use_salt) op_create(evm, use_salt)
 #define OP_SELFDESTRUCT(evm) op_selfdestruct(evm)
 #define OP_LOG(evm, len) op_log(evm, len)

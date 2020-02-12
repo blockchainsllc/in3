@@ -45,9 +45,9 @@
 
 #ifdef __ZEPHYR__
 #include <zephyr.h>
-#define _strtoull(str,endptr, base) strtoul(str, endptr, base)
+#define _strtoull(str, endptr, base) strtoul(str, endptr, base)
 #else
-#define _strtoull(str,endptr, base) strtoull(str, endptr, base)
+#define _strtoull(str, endptr, base) strtoull(str, endptr, base)
 #endif
 /** simple swap macro for integral types */
 #define SWAP(a, b) \

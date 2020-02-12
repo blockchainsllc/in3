@@ -189,7 +189,7 @@ long double as_double(uint256_t d);                                          /**
 uint64_t    as_long(uint256_t d);                                            /**< Converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
 uint256_t   to_uint256(uint64_t value);                                      /**< Converts a uint64_t into its uint256_t representation. */
 in3_ret_t   decrypt_key(d_token_t* key_data, char* password, bytes32_t dst); /**< Decrypts the private key from a json keystore file using PBKDF2 or SCRYPT (if enabled) */
-void        _log_free(eth_log_t* log);                                        /**< Frees a eth_log_t object */
+void        _log_free(eth_log_t* log);                                       /**< Frees a eth_log_t object */
 void        eth_tx_receipt_free(eth_tx_receipt_t* txr);                      /**< Frees a eth_tx_receipt_t object */
 
 // more helper

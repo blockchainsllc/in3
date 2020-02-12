@@ -137,7 +137,7 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
     va_list args;
     char    buf[16];
     _localtime(buf);
-if (L.prefix == NULL) {
+    if (L.prefix == NULL) {
 #ifdef LOG_USE_COLOR
       printk(
           "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
@@ -148,11 +148,11 @@ if (L.prefix == NULL) {
     } else {
       printk("%s", L.prefix);
     }
-     va_start(args, fmt);
-     vprintk(fmt, args);
-     va_end(args);
-     fflush(stderr);
-#endif    
+    va_start(args, fmt);
+    vprintk(fmt, args);
+    va_end(args);
+    fflush(stderr);
+#endif
     //fflush(stderr);
   }
 

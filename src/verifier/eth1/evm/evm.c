@@ -46,7 +46,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-int exit_zero(void) { return 0; } 
+int exit_zero(void) { return 0; }
 int evm_stack_push(evm_t* evm, uint8_t* data, uint8_t len) {
   if (evm->stack_size == EVM_STACK_LIMIT || len > 32) return EVM_ERROR_STACK_LIMIT;
   // we need to make sure the data ref is not part of the stack and would be ionvalidated now
