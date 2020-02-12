@@ -30,14 +30,13 @@ stages:
       - $BUILD/lib
 
 qemu:
-  image: docker.slock.it/build-images/zephyr-image:latest
+  image: docker.io/zephyrprojectrtos/zephyr-build:v0.12
   stage: build
   script:
-    - export ZEPHYR_BASE=.
-    - pwd && ls -la . && ls -la /home/user
-    - west init
+    - west init -m https://github.com/zephyrproject-rtos/zephyr --mr v2.0.0
+    - source /workdir/zephyr/zephyr-env.sh
     - west build -b qemu_cortex_m3 test/qemu
-    - qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -vga none -net none -pidfile qemu.pid -serial mon:stdio -semihosting -kernel build/zephyr/zephyr.elf 2&> /dev/null
+    - qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -vga none -net none -pidfile qemu.pid -serial mon:stdio -semihosting -kernel build/zephyr/zephyr.elf 2> /dev/null
 gcc8:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: build
