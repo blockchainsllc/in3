@@ -1,13 +1,26 @@
 const fixLength = (hex) => hex.length % 2 ? '0' + hex : hex
 
-if (typeof (_free) == 'undefined') _free = function (ptr) {
-    in3w.ccall("ifree", 'void', ['number'], [ptr])
+// Default conversion functions
+let convertBigInt = toBigInt
+let convertBuffer = toUint8Array
+
+// Overriding default convert
+function setConvertBigInt(convertBigFn) {
+        convertBigInt = convertBigFn
 }
-/**
- * internal function calling a wasm-function, which returns a string.
- * @param {*} name 
- * @param  {...any} params_values 
- */
+
+function setConvertBuffer(convertBufFn) {
+        convertBuffer = convertBufFn
+}
+
+if (typeof(_free) == 'undefined') _free = function(ptr) {
+        in3w.ccall("ifree", 'void', ['number'], [ptr])
+    }
+    /**
+     * internal function calling a wasm-function, which returns a string.
+     * @param {*} name 
+     * @param  {...any} params_values 
+     */
 function call_string(name, ...params_values) {
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
@@ -16,6 +29,7 @@ function call_string(name, ...params_values) {
     _free(res)
     return result
 }
+
 function call_buffer(name, len, ...params_values) {
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
@@ -72,17 +86,18 @@ function toBigInt(val) {
 
 function keccak(val) {
     if (!val) return val
-    val = toBuffer(val)
-    return call_buffer('keccak', 32, val, val.byteLength)
+    val = toUint8Array(val)
+    return toBuffer(call_buffer('keccak', 32, val, val.byteLength))
 }
+
 function toChecksumAddress(val, chainId = 0) {
     if (!val) return val
-    return call_string('to_checksum_address', toBuffer(val, 20), chainId);
+    return call_string('to_checksum_address', toUint8Array(val, 20), chainId);
 }
 
 function private2address(pk) {
     if (!pk) return pk
-    pk = toBuffer(pk)
+    pk = toUint8Array(pk)
     return toChecksumAddress(call_buffer('private_to_address', 20, pk, pk.byteLength))
 }
 
@@ -91,19 +106,21 @@ function abiEncode(sig, ...params) {
     const convert = a => Array.isArray(a) ? a.map(convert) : toHex(a)
     return call_string('abi_encode', sig, JSON.stringify(convert(params)))
 }
+
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
-    data = toBuffer(data)
-    pk = toBuffer(pk)
+    data = toUint8Array(data)              
+    pk = toUint8Array(pk)
     return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0)
 }
 
 function abiDecode(sig, data) {
-    data = toBuffer(data)
+    data = toUint8Array(data)
     let res = JSON.parse(call_string('abi_decode', sig, data, data.byteLength))
     if (!Array.isArray(res)) res = [res]
     if (!res.length) return []
     return convertTypes(splitTypes(sig.substr(sig.indexOf(':') + 1)), res)
 }
+
 function convertType(val, t) {
     const isArray = t.indexOf('[')
     if (isArray >= 0) {
@@ -114,17 +131,23 @@ function convertType(val, t) {
 
     if (t.startsWith('(')) return convertTypes(splitTypes(t), val)
     switch (t) {
-        case 'bool': return !!toNumber(val)
-        case 'address': return toHex(val, 20)
-        case 'string': return toUtf8(val)
-        case 'bytes': return toHex(val)
+        case 'bool':
+            return !!toNumber(val)
+        case 'address':
+            return toHex(val, 20)
+        case 'string':
+            return toUtf8(val)
+        case 'bytes':
+            return toHex(val)
         case 'uint8':
         case 'uint16':
-        case 'uint32': return toNumber(val)
+        case 'uint32':
+            return toNumber(val)
         default:
             return t.startsWith('bytes') ? toHex(val) : toBigInt(val)
     }
 }
+
 function convertTypes(types, res) {
     if (types.length != res.length) throw new Error('Mismatch in result def')
     return res.map((val, i) => convertType(val, types[i]))
@@ -132,11 +155,17 @@ function convertTypes(types, res) {
 
 function splitTypes(types, removeBrackets = true) {
     if (removeBrackets && types.startsWith('(') && types.endsWith(')')) types = types.substr(1, types.length - 2)
-    let p = 0, l = 0, res = []
+    let p = 0,
+        l = 0,
+        res = []
     for (let i = 0; i < types.length; i++)
         switch (types[i]) {
-            case '(': l++; break;
-            case ')': l--; break;
+            case '(':
+                l++;
+                break;
+            case ')':
+                l--;
+                break;
             case ',':
                 if (!l) {
                     res.push(types.substring(p, i))
@@ -171,8 +200,7 @@ function toHex(val, bytes) {
     else if (val && val.byteLength) {
         const ar = val.buffer ? val : new Uint8Array(val)
         for (let i = 0; i < val.byteLength; i++) hex += padStart(ar[i].toString(16), 2, '0')
-    }
-    else
+    } else
         throw new Error('Unknown or unsupported type : ' + JSON.stringify(val))
 
     if (bytes)
@@ -207,18 +235,21 @@ function toNumber(val) {
                 try {
                     return val.toNumber()
                 }
-                catch (ex) {
-                    return toNumber(val.toHexString())
-                }
+            catch (ex) {
+                return toNumber(val.toHexString())
+            }
             throw new Error('can not convert a ' + (typeof val) + ' to number');
     }
 }
 
+function toBuffer (val, len = -1) {
+    return convertBuffer(val, len)
+}
 /**
- * converts any value as Buffer
+ * converts any value as Buffer (toUint8Array)
  *  if len === 0 it will return an empty Buffer if the value is 0 or '0x00', since this is the way rlpencode works wit 0-values.
  */
-function toBuffer(val, len = -1) {
+function toUint8Array(val, len = -1) {
     if (val && val._isBigNumber)
         val = val.toHexString();
     if (typeof val == 'string') {
@@ -230,23 +261,21 @@ function toBuffer(val, len = -1) {
             val = fixLength(val.substr(2))
             b = new Uint8Array(val.length >> 1)
             for (let i = 0; i < b.byteLength; i++) b[i] = parseInt('0x' + val.substr(i << 1, 2))
-        }
-        else {
+        } else {
             b = new Uint8Array(val.length)
             for (let i = 0; i < b.byteLength; i++) b[i] = val.charCodeAt(i)
         }
         val = b
-    }
-    else if (typeof val == 'number')
+    } else if (typeof val == 'number')
         val = val === 0 && len === 0 ? new Uint8Array(0) : toBuffer(fixLength(val.toString(16)), len);
     else if (val && val.redIMul)
         val = val.toArrayLike(Uint8Array)
     if (!val)
         val = new Uint8Array(0)
-    // since rlp encodes an empty array for a 0 -value we create one if the required len===0
+        // since rlp encodes an empty array for a 0 -value we create one if the required len===0
     if (len == 0 && val.byteLength == 1 && val[0] === 0)
         return new Uint8Array(0)
-    // if we have a defined length, we should padLeft 00 or cut the left content to ensure length
+            // if we have a defined length, we should padLeft 00 or cut the left content to ensure length
     if (len > 0 && val.byteLength && val.byteLength !== len) {
         if (val.byteLength > len) return val.slice(val.byteLength - len)
         let b = new Uint8Array(len)
@@ -316,13 +345,33 @@ function padEnd(val, minLength, fill = ' ') {
     return val;
 }
 
+function soliditySha3(...args) {
+
+    const abiCoder = new AbiCoder()
+    return toHex(keccak(abiCoder.encode(args.map(_ => {
+        switch (typeof (_)) {
+            case 'number':
+                return _ < 0 ? 'int256' : 'uint256'
+            case 'string':
+                return _.substr(0, 2) === '0x' ? 'bytes' : 'string'
+            case 'boolean':
+                return 'bool'
+            default:
+                return BN.isBN(_) ? 'uint256' : 'bytes'
+        }
+    }), args.map(encodeEtheresBN))))
+}
+
+function createSignatureHash(def) {
+    return keccak(def.name + createSignature(def.inputs))
+}
+
 const util = {
     checkForError,
     promisify,
     toHex,
     toNumber,
     toUtf8,
-    checkForError,
     toBigInt,
     toBuffer,
     toSimpleHex,
@@ -335,14 +384,15 @@ const util = {
     abiDecode,
     ecSign,
     splitSignature,
-    private2address
+    private2address,
+    soliditySha3,
+    createSignatureHash,
+    toUint8Array,
 }
 
 // add as static proporty and as standard property.
 IN3.util = util
 IN3.prototype.util = util
-
-
 
 
 class SimpleSigner {
@@ -363,12 +413,11 @@ class SimpleSigner {
     }
 
     async sign(data, account, type, ethV = true) {
-        const pk = toBuffer(this.accounts[toChecksumAddress(account)])
+        const pk = this.accounts[toChecksumAddress(account)]                          
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         return ecSign(pk, data, type, ethV)
 
-        //return { messageHash: util.toHex(data), v: util.toHex(sig.v), r: util.toHex(sig.r), s: util.toHex(sig.s), message: util.toHex(data) }
-    }
+     }
 
 }
 

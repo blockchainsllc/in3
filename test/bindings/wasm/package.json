@@ -6,9 +6,10 @@
   "scripts": {
     "build": "tsc -p .",
     "test": "mocha --timeout 15000 --full-trace testRunner.js testApi.js testUtil.js",
-    "test_api": "mocha --timeout 15000 --full-trace  testApi.js",
+    "test_api": "mocha --inspect-brk  --timeout 15000 --full-trace  testApi.js",
     "test_fail": "mocha --timeout 15000 --full-trace  testApi.js testRunner.js ",
-    "test_all": "mocha --timeout 15000 --full-trace  *.js"
+    "test_all": "mocha --timeout 15000 --full-trace  *.js",
+    "test_runner": "mocha --inspect-brk --timeout 15000 --full-trace  testRunner.js"
   },
   "nyc": {
     "include": [

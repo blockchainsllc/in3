@@ -196,7 +196,6 @@ class IN3 {
      * sends a request and returns the response.
      */
     async sendRequest(rpc) {
-
         // ensure we have created the instance.
         if (!this.ptr) await this._ensure_ptr();
         if (this.needsSetConfig) this.setConfig()
@@ -313,8 +312,16 @@ IN3.onInit = function (fn) {
     })
 }
 
+// change the Buffer
+IN3.setConvertBuffer = function (fn) {
+    convertBuffer = fn
+}
+
 // also support ES6-modules
 IN3.default = IN3
+
+// the default export should be generic (in TS), but the member IN3 uses defaults
+IN3.IN3 = IN3
 
 // defined the export
 if (typeof module !== "undefined")

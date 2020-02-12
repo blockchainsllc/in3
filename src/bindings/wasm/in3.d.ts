@@ -342,9 +342,11 @@ export declare interface RPCResponse {
     result?: any
 }
 
-
-export class IN3 {
-
+export default class IN3Generic<BigIntType, BufferType> {
+    /**
+     * IN3 config
+     */
+    public config: IN3Config;
     /**
      * creates a new client.
      * @param config a optional config
@@ -369,7 +371,7 @@ export class IN3 {
      * 
      * if the response contains an error, this will be thrown. if not the result will be returned.
      */
-    public sendRPC(method: string, params: any[]): Promise<any>;
+    public sendRPC(method: string, params?: any[]): Promise<any>;
 
     /**
      * disposes the Client. This must be called in order to free allocated memory!
@@ -379,7 +381,7 @@ export class IN3 {
     /**
      * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.
      */
-    public signer: Signer;
+    public signer: Signer<BigIntType, BufferType>;
 
 
     /**
@@ -415,20 +417,43 @@ export class IN3 {
     /**
      * eth1 API.
      */
-    public eth: EthAPI
+    public eth: EthAPI<BigIntType, BufferType>
 
     /**
      * collection of util-functions.
      */
-    public util: Utils
+    public util: Utils<BufferType>
 
     /**
      * collection of util-functions.
      */
-    public static util: Utils
+    public static util: Utils<any>
+
+    public static setConvertBigInt(convert: (any) => any)
+    public static setConvertBuffer(convert: (any) => any)
+    // public static setConvertBuffer<BufferType>(val: any, len?: number) : BufferType
 
     /** supporting both ES6 and UMD usage */
-    public static default: typeof IN3
+    public static default: typeof IN3Generic
+}
+
+/**
+ * default Incubed client with
+ * bigint for big numbers
+ * Uint8Array for bytes
+ */
+export class IN3 extends IN3Generic<bigint, Uint8Array> {
+
+    /**
+ * creates a new client.
+ * @param config a optional config
+ */
+    public constructor(config?: Partial<IN3Config>);
+
+
+    public static setConvertBigInt(convert: (any) => any)
+    public static setConvertBuffer(convert: (any) => any)
+
 }
 
 /**
@@ -686,9 +711,9 @@ export type TxRequest = {
     confirmations?: number
 }
 
-export declare interface Signer {
+export declare interface Signer<BigIntType, BufferType> {
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (client: IN3, tx: Transaction) => Promise<Transaction>
+    prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
@@ -697,13 +722,13 @@ export declare interface Signer {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
 }
 
-export interface EthAPI {
-    client: IN3;
-    signer?: Signer;
-    constructor(client: IN3);
+export interface EthAPI<BigIntType, BufferType> {
+    client: IN3Generic<BigIntType, BufferType>;
+    signer?: Signer<BigIntType, BufferType>;
+    constructor(client: IN3Generic<BigIntType, BufferType>);
     /**
      * Returns the number of most recent block. (as number)
      */
@@ -731,7 +756,7 @@ export interface EthAPI {
     /**
      * Returns the balance of the account of given address in wei (as hex).
      */
-    getBalance(address: Address, block?: BlockType): Promise<bigint>;
+    getBalance(address: Address, block?: BlockType): Promise<BigIntType>;
     /**
      * Returns code at a given address.
      */
@@ -856,7 +881,7 @@ export interface EthAPI {
      * @param type the type (currently only addr is supported)
      * @param registry optionally the address of the registry (default is the mainnet ens registry)
      */
-    resolveENS(name: string, type = 'addr', registry?: string): Promise<Address>;
+    resolveENS(name: string, type: Address, registry?: string): Promise<Address>;
 
     /**
      * Creates new message call transaction or a contract creation for signed transactions.
@@ -867,10 +892,11 @@ export interface EthAPI {
      * @param account the address to sign the message with (if this is a 32-bytes hex-string it will be used as private key)
      * @param data the data to sign (Buffer, hexstring or utf8-string)
      */
-    sign(account: Address, data: Data): Promise<Signature>;
+    sign(account: Address, data: Data): Promise<BufferType>;
     /** sends a Transaction */
     sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
-    contractAt(abi: ABI[], address: Address): {
+
+    contractAt(abi: ABI[], address?: Address): {
         [methodName: string]: any;
         _address: Address;
         _eventHashes: any;
@@ -908,19 +934,19 @@ export interface EthAPI {
             decode: any;
         };
         _abi: ABI[];
-        _in3: IN3;
+        _in3: IN3Generic<BigIntType, BufferType>;
     };
     decodeEventData(log: Log, d: ABI): any;
     hashMessage(data: Data): Hex;
 }
-export declare class SimpleSigner implements Signer {
+export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigIntType, BufferType> {
     accounts: {
-        [ac: string]: Uint8Array;
+        [ac: string]: BufferType;
     };
-    constructor(...pks: (hash | Uint8Array)[]);
+    constructor(...pks: (Hash | BufferType)[]);
     addAccount(pk: Hash): string;
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (client: IN3, tx: Transaction) => Promise<Transaction>
+    prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
@@ -929,15 +955,17 @@ export declare class SimpleSigner implements Signer {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<Uint8Array>
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
 }
 
 /**
  * Collection of different util-functions.
  */
-export declare interface Utils {
+export declare interface Utils<BufferType> {
+    // toInputToBuffer(data: Hex | BufferType | number | bigint, len?: number): BufferType 
+
     createSignatureHash(def: ABI): Hex;
-    createSignature(fields: ABIField[]): string;
+
     decodeEvent(log: Log, d: ABI): any;
     soliditySha3(...args: any[]): string;
 
@@ -967,20 +995,39 @@ export declare interface Utils {
      * calculates the keccack hash for the given data.
      * @param data the data as Uint8Array or hex data.
      */
-    keccak(data: Uint8Array | Data): Uint8Array
+    keccak(data: BufferType | Data): BufferType
 
     /**
      * converts any value to a hex string (with prefix 0x).
      * optionally the target length can be specified (in bytes)
      */
-    toHex(data: Hex | Uint8Array | number | bigint, len?: number): Hex
+    toHex(data: Hex | BufferType | number | bigint, len?: number): Hex
+
+    /** removes all leading 0 in the hexstring */
+    toMinHex(key: string | BufferType | number): string;
 
     /**
      * converts any value to a Uint8Array.
      * optionally the target length can be specified (in bytes)
      */
-    toBuffer(data: Hex | Uint8Array | number | bigint, len?: number): Uint8Array
+    toUint8Array(data: Hex | BufferType | number | bigint, len?: number): BufferType
 
+    /**
+     * converts any value to a Buffer.
+     * optionally the target length can be specified (in bytes)
+     */
+    toBuffer(data: Hex | BufferType | number | bigint, len?: number): BufferType
+
+    /**
+     * converts any value to a hex string (with prefix 0x).
+     * optionally the target length can be specified (in bytes)
+     */
+    toNumber(data: string | BufferType | number | bigint): number
+
+    /**
+     * convert to String
+     */
+    toUtf8(val: any): string;
 
     /**
      * create a signature (65 bytes) for the given message and kexy
@@ -989,7 +1036,7 @@ export declare interface Utils {
      * @param hashFirst if true the message will be hashed first (default:true), if not the message is the hash.
      * @param adjustV if true (default) the v value will be adjusted by adding 27
      */
-    ecSign(pk: Uint8Array | Hex, msg: Uint8Array | Hex, hashFirst?: boolean, adjustV?: boolean): Uint8Array
+    ecSign(pk: Hex | BufferType, msg: Hex | BufferType, hashFirst?: boolean, adjustV?: boolean): BufferType
 
     /**
      * takes raw signature (65 bytes) and splits it into a signature object.
@@ -997,14 +1044,14 @@ export declare interface Utils {
      * @param message  the message
      * @param hashFirst if true (default) this will be taken as raw-data and will be hashed first.
      */
-    splitSignature(signature: Uint8Array | Hex, message: Uint8Array | Hex, hashFirst?: boolean): Signature
+    splitSignature(signature: Hex | BufferType, message: BufferType | Hex, hashFirst?: boolean): Signature
 
     /**
      * generates the public address from the private key.
      * @param pk the private key.
      */
-    private2address(pk: Hex | Uint8Array): Address
+    private2address(pk: Hex | BufferType): Address
 
 }
 
-export = IN3
+// export = IN3                                 //--dev
