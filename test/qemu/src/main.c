@@ -47,6 +47,7 @@
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int i = 0; i < urls_len; i++) {    
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
+      printk("Returning eth_blockNumber ...\n");
       sb_add_range(&(result[i].result), mock_tx_receipt, 0, mock_tx_receipt_len);
     } else if (strstr(payload, "eth_blockNumber") != NULL) {
       printk("Returning eth_blockNumber ...\n");
@@ -68,7 +69,7 @@ in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3_log_set_quiet(0);
   in3_log_set_level(LOG_DEBUG);
   in3_register_eth_basic();
-  in3 = in3_for_chain(0);
+  in3 = in3_for_chain(chain);
   if (custom_transport)
     in3->transport = custom_transport; // use curl to handle the requests
   in3->request_count    = 1;           // number of requests to sendp
@@ -78,7 +79,10 @@ in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3->chain_id         = chain;
   in3->auto_update_list = false;
   in3->use_binary       = true;
-  for (int i = 0; i < in3->chains_length; i++) in3->chains[i].nodelist_upd8_params = NULL;
+  for (int i = 0; i < in3->chains_length; i++){
+    _free(in3->chains[i].nodelist_upd8_params);
+    in3->chains[i].nodelist_upd8_params = NULL;
+  } 
   return in3;
 }
 

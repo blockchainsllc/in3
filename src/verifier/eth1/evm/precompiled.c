@@ -108,7 +108,6 @@ int pre_modexp(evm_t* evm) {
   if (evm->call_data.len < 96) return -1;
   uint8_t      res[64];
   uint_fast8_t hp = 0;
-  hp              = 0;
   uint32_t l_base = bytes_to_int(evm->call_data.data + 28, 4);
   uint32_t l_exp  = bytes_to_int(evm->call_data.data + 28 + 32, 4);
   uint32_t l_mod  = bytes_to_int(evm->call_data.data + 28 + 64, 4);

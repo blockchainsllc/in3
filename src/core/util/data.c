@@ -103,7 +103,7 @@ d_key_t keyn(const char* c, const size_t len) {
 }
 
 void add_keyname(const char* name, d_key_t value, size_t len) {
-  keyname_t* kn = _malloc(sizeof(keyname_t));
+  keyname_t* kn = malloc(sizeof(keyname_t));
 #ifdef IN3_DONT_HASH_KEYS
   __keynames_len++;
   kn->next = NULL;
@@ -118,7 +118,7 @@ void add_keyname(const char* name, d_key_t value, size_t len) {
 #endif
 
   kn->key  = value;
-  kn->name = _malloc(len + 1);
+  kn->name = malloc(len + 1);
   memcpy(kn->name, name, len);
   kn->name[len] = 0;
 }

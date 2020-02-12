@@ -183,8 +183,7 @@ int evm_sub_call(evm_t*    parent,
   // if this is a static call, we set the static flag which can be checked before any state-chage occur.
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
 
-  account_t* new_account;
-  new_account = NULL;
+  account_t* new_account = NULL;
   UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call
