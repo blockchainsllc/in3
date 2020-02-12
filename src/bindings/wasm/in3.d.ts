@@ -342,7 +342,7 @@ export declare interface RPCResponse {
     result?: any
 }
 
-export default class IN3<BigIntType,BufferType> {
+export default class IN3Generic<BigIntType, BufferType> {
     /**
      * IN3 config
      */
@@ -351,7 +351,7 @@ export default class IN3<BigIntType,BufferType> {
      * creates a new client.
      * @param config a optional config
      */
-    public constructor(config?: Partial<IN3Config> );
+    public constructor(config?: Partial<IN3Config>);
 
     /**
      * sets configuration properties. You can pass a partial object specifieing any of defined properties.
@@ -381,7 +381,7 @@ export default class IN3<BigIntType,BufferType> {
     /**
      * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.
      */
-    public signer: Signer<BigIntType,BufferType>;
+    public signer: Signer<BigIntType, BufferType>;
 
 
     /**
@@ -417,7 +417,7 @@ export default class IN3<BigIntType,BufferType> {
     /**
      * eth1 API.
      */
-    public eth: EthAPI<BigIntType,BufferType>
+    public eth: EthAPI<BigIntType, BufferType>
 
     /**
      * collection of util-functions.
@@ -429,14 +429,32 @@ export default class IN3<BigIntType,BufferType> {
      */
     public static util: Utils<any>
 
-    public static setConvertBigInt(convert:(any)=>any)
-    public static setConvertBuffer(convert:(any)=>any)
+    public static setConvertBigInt(convert: (any) => any)
+    public static setConvertBuffer(convert: (any) => any)
     // public static setConvertBuffer<BufferType>(val: any, len?: number) : BufferType
 
     /** supporting both ES6 and UMD usage */
-    public static default: typeof IN3
+    public static default: typeof IN3Generic
 }
-export type IN3Native = IN3<bigint,Uint8Array>
+
+/**
+ * default Incubed client with
+ * bigint for big numbers
+ * Uint8Array for bytes
+ */
+export class IN3 extends IN3Generic<bigint, Uint8Array> {
+
+    /**
+ * creates a new client.
+ * @param config a optional config
+ */
+    public constructor(config?: Partial<IN3Config>);
+
+
+    public static setConvertBigInt(convert: (any) => any)
+    public static setConvertBuffer(convert: (any) => any)
+
+}
 
 /**
  * BlockNumber or predefined Block
@@ -693,9 +711,9 @@ export type TxRequest = {
     confirmations?: number
 }
 
-export declare interface Signer<BigIntType,BufferType> {
+export declare interface Signer<BigIntType, BufferType> {
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (client: IN3<BigIntType,BufferType>, tx: Transaction) => Promise<Transaction>
+    prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
@@ -704,13 +722,13 @@ export declare interface Signer<BigIntType,BufferType> {
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>         
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
 }
 
-export interface EthAPI<BigIntType,BufferType> {
-    client: IN3<BigIntType,BufferType>;
-    signer?: Signer<BigIntType,BufferType>;
-    constructor(client: IN3<BigIntType,BufferType>);
+export interface EthAPI<BigIntType, BufferType> {
+    client: IN3Generic<BigIntType, BufferType>;
+    signer?: Signer<BigIntType, BufferType>;
+    constructor(client: IN3Generic<BigIntType, BufferType>);
     /**
      * Returns the number of most recent block. (as number)
      */
@@ -916,19 +934,19 @@ export interface EthAPI<BigIntType,BufferType> {
             decode: any;
         };
         _abi: ABI[];
-        _in3: IN3<BigIntType,BufferType>;
+        _in3: IN3Generic<BigIntType, BufferType>;
     };
     decodeEventData(log: Log, d: ABI): any;
     hashMessage(data: Data): Hex;
 }
-export declare class SimpleSigner<BigIntType,BufferType> implements Signer<BigIntType,BufferType> {
+export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigIntType, BufferType> {
     accounts: {
         [ac: string]: BufferType;
     };
     constructor(...pks: (Hash | BufferType)[]);
     addAccount(pk: Hash): string;
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
-    prepareTransaction?: (client: IN3<BigIntType,BufferType>, tx: Transaction) => Promise<Transaction>
+    prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
     hasAccount(account: Address): Promise<boolean>
@@ -937,7 +955,7 @@ export declare class SimpleSigner<BigIntType,BufferType> implements Signer<BigIn
      * signing of any data. 
      * if hashFirst is true the data should be hashed first, otherwise the data is the hash.
      */
-    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>        
+    sign: (data: Hex, account: Address, hashFirst?: boolean, ethV?: boolean) => Promise<BufferType>
 }
 
 /**
@@ -945,7 +963,7 @@ export declare class SimpleSigner<BigIntType,BufferType> implements Signer<BigIn
  */
 export declare interface Utils<BufferType> {
     // toInputToBuffer(data: Hex | BufferType | number | bigint, len?: number): BufferType 
-    
+
     createSignatureHash(def: ABI): Hex;
 
     decodeEvent(log: Log, d: ABI): any;
@@ -992,24 +1010,24 @@ export declare interface Utils<BufferType> {
      * converts any value to a Uint8Array.
      * optionally the target length can be specified (in bytes)
      */
-    toUint8Array(data: Hex | BufferType | number | bigint, len?: number): BufferType            
+    toUint8Array(data: Hex | BufferType | number | bigint, len?: number): BufferType
 
     /**
      * converts any value to a Buffer.
      * optionally the target length can be specified (in bytes)
      */
-    toBuffer(data: Hex | BufferType | number | bigint, len?: number): BufferType  
-    
+    toBuffer(data: Hex | BufferType | number | bigint, len?: number): BufferType
+
     /**
      * converts any value to a hex string (with prefix 0x).
      * optionally the target length can be specified (in bytes)
      */
-    toNumber(data: string | BufferType | number | bigint): number                               
+    toNumber(data: string | BufferType | number | bigint): number
 
     /**
      * convert to String
      */
-    toUtf8(val: any): string;                                                               
+    toUtf8(val: any): string;
 
     /**
      * create a signature (65 bytes) for the given message and kexy
@@ -1026,7 +1044,7 @@ export declare interface Utils<BufferType> {
      * @param message  the message
      * @param hashFirst if true (default) this will be taken as raw-data and will be hashed first.
      */
-    splitSignature(signature: Hex| BufferType, message: BufferType | Hex, hashFirst?: boolean): Signature
+    splitSignature(signature: Hex | BufferType, message: BufferType | Hex, hashFirst?: boolean): Signature
 
     /**
      * generates the public address from the private key.

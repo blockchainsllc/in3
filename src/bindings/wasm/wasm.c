@@ -114,10 +114,7 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   in3_ctx_t *p = ctx, *last_waiting = NULL;
-  printf("EXE: %p \n", ctx);
-  printf("EXE: %p, state=%i \n", p, in3_ctx_state(ctx));
-
-  sb_t* sb = sb_new("{\"status\":");
+  sb_t*      sb = sb_new("{\"status\":");
   switch (in3_ctx_execute(ctx)) {
     case IN3_OK:
       sb_add_chars(sb, "\"ok\", \"result\":");

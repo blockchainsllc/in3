@@ -320,6 +320,9 @@ IN3.setConvertBuffer = function (fn) {
 // also support ES6-modules
 IN3.default = IN3
 
+// the default export should be generic (in TS), but the member IN3 uses defaults
+IN3.IN3 = IN3
+
 // defined the export
 if (typeof module !== "undefined")
     module.exports = IN3
