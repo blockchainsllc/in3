@@ -20,66 +20,75 @@ Parameters:
 The config params support the following properties :
 
 
-* **autoUpdateList** :`boolean` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer
+* **autoUpdateList** :`bool` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer.
     example: true
 
-* **chainId** :`string` - servers to filter for the given chain. The chain-id based on EIP-155.
+* **chainId** :`uint32_t` or `string (mainnet/kovan/goerli)` - servers to filter for the given chain. The chain-id based on EIP-155.
     example: 0x1
 
-* **signatureCount** :`number` *(optional)*  - number of signatures requested
+* **signatureCount** :`uint8_t` *(optional)*  - number of signatures requested.
     example: 2
     
-* **finality** :`number` *(optional)*  - the number in percent needed in order reach finality (% of signature of the validators)
+* **finality** :`uint16_t` *(optional)*  - the number in percent needed in order reach finality (% of signature of the validators).
     example: 50
 
-* **includeCode** :`boolean` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+* **includeCode** :`bool` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
     example: true
 
-* **maxAttempts** :`number` *(optional)*  - max number of attempts in case a response is rejected
+* **maxAttempts** :`uint16_t` *(optional)*  - max number of attempts in case a response is rejected.
     example: 10
 
-* **keepIn3** :`boolean` *(optional)*  - if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
+* **keepIn3** :`bool` *(optional)*  - if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
     example: false
 
-* **key** :`any` *(optional)*  - the client key to sign requests
+* **key** :`bytes32` *(optional)*  - the client key to sign requests.
     example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
 
-* **useBinary** :`boolean` *(optional)*  - if true the client will use binary format.
+* **useBinary** :`bool` *(optional)*  - if true the client will use binary format.
     example: false
 
-* **useHttp** :`boolean` *(optional)*  - if true the client will try to use http instead of https.
+* **useHttp** :`bool` *(optional)*  - if true the client will try to use http instead of https.
     example: false
 
-* **maxBlockCache** :`number` *(optional)*  - number of number of blocks cached  in memory
+* **maxBlockCache** :`uint32_t` *(optional)*  - number of number of blocks cached  in memory.
     example: 100
 
-* **maxCodeCache** :`number` *(optional)*  - number of max bytes used to cache the code in memory
+* **maxCodeCache** :`uint32_t` *(optional)*  - number of max bytes used to cache the code in memory.
     example: 100000
 
-* **timeout** :`number` *(optional)*  - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
+* **timeout** :`uint32_t` *(optional)*  - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
     example: 100000
 
-* **minDeposit** :`number` - min stake of the server. Only nodes owning at least this amount will be chosen.
+* **minDeposit** :`uint64_t` - min stake of the server. Only nodes owning at least this amount will be chosen.
 
-* **nodeProps** :`number` *(optional)*  - bitmask used to identify the capabilities of the node.
+* **nodeProps** :`uint64_t` bitmask *(optional)*  - used to identify the capabilities of the node.
 
-* **nodeLimit** :`number` *(optional)*  - the limit of nodes to store in the client.
+* **nodeLimit** :`uint16_t` *(optional)*  - the limit of nodes to store in the client.
     example: 150
 
-* **proof** :`'none'`|`'standard'`|`'full'` *(optional)*  - if true the nodes should send a proof of the response
+* **proof** :`string (none/standard/full)` *(optional)*  - if true the nodes should send a proof of the response.
     example: true
 
-* **replaceLatestBlock** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+* **replaceLatestBlock** :`uint8_t` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
     example: 6
 
-* **requestCount** :`number` - the number of request send when getting a first answer
+* **requestCount** :`uint8_t` - the number of request send when getting a first answer.
     example: 3
 
 * **rpc** :`string` *(optional)*  - url of one or more rpc-endpoints to use. (list can be comma seperated)
 
-* **verifiedHashes** :`string`[] *(optional)*  - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
-
-* **servers** *(optional)*  - the nodelist per chain
+* **servers**/**nodes** : `collection of JSON objects with chain Id (hex string) as key` *(optional)*  - the value of each JSON object defines the nodelist per chain and may contain the following fields:
+    * **contract** :`address`  - address of the registry contract.
+    * **whiteListContract** :`address` *(optional, cannot be combined with whiteList)*  - address of the whiteList contract.
+    * **whiteList** :`array of addresses` *(optional, cannot be combined with whiteListContract)*  - manual whitelist.
+    * **registryId** :`bytes32`  - identifier of the registry.
+    * **needsUpdate** :`bool` *(optional)*  - if set, the nodeList will be updated before next request.
+    * **avgBlockTime** :`uint16_t` *(optional)*  - average block time (seconds) for this chain.
+    * **verifiedHashes** :`JSON object with uint64_t key (block number) and bytes32 value (hash)` *(optional)*  - if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
+    * **nodeList** :`array of JSON objects` *(optional)*  - manual nodeList, each JSON object may contain the following fields:
+        * **url** :`string`  - URL of the node.
+        * **address** :`address`  - address of the node.
+        * **props** :`uint64_t` bitmask *(optional)*  - used to identify the capabilities of the node (defaults to 65535).
 
 Returns:
 
@@ -91,29 +100,27 @@ Example:
 Request:
 ```js
 {
-  "method":"in3_config",
-  "params":[{
-      "chainId":"0x5",
-      "maxAttempts":4,
-      "nodeLimit":10
-      "servers":{
-          "0x1": [
-              "nodeList": [
-                  {
-                    "address":"0x1234567890123456789012345678901234567890",
-                    "url":"https://mybootnode-A.com",
-                    "props":"0xFFFF",
-                  },
-                  {
-                    "address":"0x1234567890123456789012345678901234567890",
-                    "url":"https://mybootnode-B.com",
-                    "props":"0xFFFF",
-                  }
-              ]
-          ]
-      }
-
-   }]
+	"method": "in3_config",
+	"params": [{
+		"chainId": "0x5",
+		"maxAttempts": 4,
+		"nodeLimit": 10,
+		"servers": {
+			"0x1": {
+				"nodeList": [{
+						"address": "0x1234567890123456789012345678901234567890",
+						"url": "https://mybootnode-A.com",
+						"props": "0xFFFF"
+					},
+					{
+						"address": "0x1234567890123456789012345678901234567890",
+						"url": "https://mybootnode-B.com",
+						"props": "0xFFFF"
+					}
+				]
+			}
+		}
+	}]
 }
 ```
 
@@ -122,7 +129,7 @@ Response:
 ```js
 {
   "id": 1,
-  "result": true,
+  "result": true
 }
 ```
 
