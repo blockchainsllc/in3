@@ -274,6 +274,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
           sprintf(params, "[\"0x%" PRIx64 "\", false]", i);
           ctx_ = in3_client_rpc_ctx(in3, "eth_getBlockByNumber", params);
           if ((res = ctx_get_error(ctx_, 0)) != IN3_OK) {
+            ctx->verification_state = res;
             // error or block doesn't exist (unlikely)
             in3_log_warn("Failed to get block by number!\n");
             continue;

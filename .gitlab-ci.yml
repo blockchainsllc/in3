@@ -76,8 +76,8 @@ clang50:
   image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
 
-clang9:
-  image: docker.slock.it/build-images/cmake:clang9
+clang10:
+  image: docker.slock.it/build-images/cmake:clang10
   extends: .conanbuild
 
 mac_os:
@@ -160,6 +160,7 @@ java:
     - make in3j
   artifacts:
     paths:
+      - src/bindings/java/in3/native/
       - java_build/lib
 
 # ##### test ######
@@ -179,15 +180,15 @@ coverage:
 
 clangcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang9
+  image: docker.slock.it/build-images/cmake:clang10
   allow_failure: false
   tags:
     - short-jobs
   script:
     - mkdir _build
     - cd _build
-    - scan-build-9 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-9 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
+    - scan-build-10 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-10 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
   artifacts:
     paths:
       - report
@@ -295,9 +296,12 @@ test_qemu:
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
+  dependencies:
+    - java
   script:
-    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
-  allow_failure: true
+    - mv java_build build
+    - cd test/bindings/java
+    - ./gradlew test
   tags:
     - short-jobs
 
@@ -346,21 +350,24 @@ examples_macos:
 
 java_arm:
   image: armv7/armhf-java8
-  allow_failure: true
   dependencies:
     - java
   stage: test
   script:
-    - echo "SKIPPED"
-  #    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+    - mv java_build build
+    - cd test/bindings/java
+    - ./gradlew test
   tags:
     - arm
 
 java_macos:
   stage: test
-  allow_failure: true
+  dependencies:
+    - java
   script:
-    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+    - mv java_build build
+    - cd test/bindings/java
+    - ./gradlew test
   tags:
     - mac-mini-runner
 
@@ -382,18 +389,33 @@ docker:
 
 ##### analyse #####
 
-#include:
-#  - template: Code-Quality.gitlab-ci.yml
+include:
+  - template: Code-Quality.gitlab-ci.yml
 
-#code_quality:
-#  stage: analysis
-#  tags:
-#    - short-jobs
-#  artifacts:
-#    paths: [gl-code-quality-report.json]
-#  variables:
-#    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
-#    REPORT_STDOUT: STDOUT
+code_quality:
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  except:
+    - branches
+  stage: analysis
+  tags:
+    - short-jobs
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  variables:
+    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
+    REPORT_STDOUT: STDOUT
+
+format:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang10
+  tags:
+    - short-jobs
+  script:
+    - find src/core/ src/cmd/ src/api/ src/verifier/ src/transport/ \( -name "*.c" -o -name "*.h" \) | xargs clang-format-10 -i
+    - git diff --patch --exit-code
 
 cpd:
   stage: analysis
@@ -420,6 +442,27 @@ vulnerabilities:
   artifacts:
     paths:
       - vulnerability_analysis.json
+
+metrics:
+  stage: analysis
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+  dependencies:
+    - mac_os
+    - gcc8
+    - wasm
+    - asmjs
+  script:
+    - echo "mac_cmd_size `stat -c %s mac_build/bin/in3` " > metrics.txt
+    - echo "wasm_min_size `stat -c %s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
+    - echo "wasm_js_size `stat -c %s wasm_build/bin/in3.js` " >> metrics.txt
+    - echo "asmjs_js_size `stat -c %s asmjs_build/bin/in3.js` " >> metrics.txt
+    - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
+    - echo "reported metrics"; cat metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
 
 ##### deploy #####
 

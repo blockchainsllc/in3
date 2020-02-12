@@ -13,21 +13,36 @@
 apply plugin: 'java'
 apply plugin: "eclipse"
 
+def jarSourceFolder = "./../../../build/lib/in3.jar"
+def jarOutputFolder = "./target"
+
+test.dependsOn 'copyJarToBindings'
+
+task createLibDir {
+    mkdir jarOutputFolder
+}
+
+task copyJarToBindings(type: Copy) {
+    dependsOn 'createLibDir'
+    from jarSourceFolder
+    into jarOutputFolder
+}
+
 sourceSets {
     main {
         java {
-            srcDirs = ['./src/bindings/java']
+            srcDirs = [jarOutputFolder]
         }
         resources {
-            srcDirs = ['./src/bindings/java']
+            srcDirs = [jarOutputFolder]
         }
     }
     test {
         java {
-            srcDirs = ['./test/bindings/java/test']
+            srcDirs = ['./test']
         }
         resources {
-            srcDirs = ['./test/bindings/java/resources']
+            srcDirs = ['./resources']
         }
     }
 }
@@ -49,6 +64,7 @@ repositories {
 dependencies {
     // Use JUnit test framework
     // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine
+    compile fileTree(include: ['*.jar'], dir: jarOutputFolder)
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.0-RC1'
     testImplementation 'org.json:json:20190722'
 	testImplementation 'commons-io:commons-io:2.6'

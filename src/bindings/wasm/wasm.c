@@ -55,6 +55,9 @@
 #ifdef ETH_NANO
 #include "../../verifier/eth1/nano/eth_nano.h"
 #endif
+#ifdef IPFS
+#include "../../verifier/ipfs/ipfs.h"
+#endif
 
 #define err_string(msg) (":ERROR:" msg)
 
@@ -111,9 +114,7 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   in3_ctx_t *p = ctx, *last_waiting = NULL;
-  //  printf("EXE: %p, state=%i \n", p, in3_ctx_state(ctx));
-
-  sb_t* sb = sb_new("{\"status\":");
+  sb_t*      sb = sb_new("{\"status\":");
   switch (in3_ctx_execute(ctx)) {
     case IN3_OK:
       sb_add_chars(sb, "\"ok\", \"result\":");
@@ -122,12 +123,10 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
     case IN3_WAITING:
       sb_add_chars(sb, "\"waiting\"");
       while (p) {
-        //        printf("   - %s response : %p, state= %i\n", d_get_stringk(p->requests[0], K_METHOD), p->raw_response, in3_ctx_state(p));
         if (!p->raw_response && in3_ctx_state(p) == CTX_WAITING_FOR_RESPONSE)
           last_waiting = p;
         p = p->required;
       }
-      //      printf("   *> last = %s\n", d_get_stringk(last_waiting->requests[0], K_METHOD));
       if (!last_waiting)
         sb_add_chars(sb, ",\"error\":\"could not find the last waiting context\"");
       break;
@@ -167,7 +166,6 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
     }
   }
   sb_add_char(sb, '}');
-  //  printf("       %s\n", sb->data);
 
   char* r = sb->data;
   _free(sb);
@@ -206,6 +204,10 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
 #ifdef ETH_API
   in3_register_eth_api();
 #endif
+#ifdef IPFS
+  in3_register_ipfs();
+#endif
+
   in3_t* c           = in3_for_chain(chain);
   c->cache           = malloc(sizeof(in3_storage_handler_t));
   c->cache->get_item = storage_get_item;

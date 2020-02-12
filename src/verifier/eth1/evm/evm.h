@@ -146,7 +146,7 @@ typedef enum evm_state {
     if (key != EVM_ENV_BLOCKHASH) {                            \
       account_t* ac = evm_get_account(evm, address, 0);        \
       uint8_t    tmp[4];                                       \
-      uint8_t hash[32];                                    \
+      uint8_t    hash[32];                                     \
       if (ac) {                                                \
         data = NULL;                                           \
         if (key == EVM_ENV_BALANCE) {                          \

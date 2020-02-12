@@ -1,0 +1,102 @@
+[
+  {
+    "descr": "utf8",
+    "chainId": "0x7d0",
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "ipfs_get",
+      "params": [
+        "QmWYddCPs7uR9EvHNCZzpguVFVNfHc6aM3hPVzPdAEESMc",
+        "utf8"
+      ]
+    },
+    "response": [
+      {
+        "id": 1,
+        "result": "1",
+        "jsonrpc": "2.0"
+      }
+    ]
+  },
+  {
+    "descr": "utf8",
+    "chainId": "0x7d0",
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "ipfs_get",
+      "params": [
+        "QmRNW9kJMUuP7dY7YPSxTCLMS9wMYRTADZ5fYf9EHWCabc",
+        "utf8"
+      ]
+    },
+    "response": [
+      {
+        "id": 1,
+        "result": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "jsonrpc": "2.0"
+      }
+    ]
+  },
+  {
+    "descr": "hex",
+    "chainId": "0x7d0",
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "ipfs_get",
+      "params": [
+        "QmPLrtpXZLUBF24Vu5NXqJg4w4sFYSCFLpWVqqSvmUkL1V",
+        "hex"
+      ]
+    },
+    "response": [
+      {
+        "id": 1,
+        "result": "01020304FF",
+        "jsonrpc": "2.0"
+      }
+    ]
+  },
+  {
+    "descr": "hex long",
+    "chainId": "0x7d0",
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "ipfs_get",
+      "params": [
+        "QmaprwXVzwoBR2qVi3wxGAZsYTHqWjExXjPCFJsiND14Fb",
+        "hex"
+      ]
+    },
+    "response": [
+      {
+        "id": 1,
+        "result": "f870830d01cd85057344cdae83015f9094f21051abfe6ac49da790394f2f96fb2ea873efef880df38151b24fcc808026a01d139a50af6cdccf1b76a689a74a00050ae3429454b455473cd048d831ee4ab7a079e558cb7ee74b444ff4ba96035987a04ad6dfaf6addb460208f7a74873bc804",
+        "jsonrpc": "2.0"
+      }
+    ]
+  },
+  {
+    "descr": "base64",
+    "chainId": "0x7d0",
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "ipfs_get",
+      "params": [
+        "QmUXTtySmd7LD4p6RG6rZW6RuUuPZXTtNMmRQ6DSQo3aMw",
+        "base64"
+      ]
+    },
+    "response": [
+      {
+        "id": 1,
+        "result": "SGVsbG8gV29ybGQ=",
+        "jsonrpc": "2.0"
+      }
+    ]
+  }
+]

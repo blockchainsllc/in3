@@ -233,12 +233,31 @@
             "name": "cmd",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/in3",
+            "program": "${workspaceFolder}/build/bin/btc",
             "args": [
                 "-debug",
                 "-c",
                 "https://rpc.slock.it/mainnet",
                 "eth_blockNumber"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "btc_v",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "args": [
+                "-debug",
+                "-c",
+                "btc",
+                "getblock",
+                "0000000000000521e7f446a2929d03d8fd23c012d98ac53f2f8c9cd2d4f820a6",
+                "true"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",

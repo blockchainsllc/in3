@@ -95,8 +95,8 @@ bytes_t* storage_get_item(void* cptr, char* key) {
       len += r;
       if (feof(file)) break;
       size_t new_alloc = allocated * 2 + 1;
-      buffer = _realloc(buffer, new_alloc, allocated);
-      allocated = new_alloc;
+      buffer           = _realloc(buffer, new_alloc, allocated);
+      allocated        = new_alloc;
     }
     fclose(file);
 
@@ -144,7 +144,7 @@ static void rm_recurs(const char* path) {
   remove(path);
 }
 #else
-static int unlink_cb(const char* fpath, const struct stat* sb, int typeflag, struct FTW *ftwbuf) {
+static int unlink_cb(const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf) {
   UNUSED_VAR(sb);
   UNUSED_VAR(typeflag);
   UNUSED_VAR(ftwbuf);

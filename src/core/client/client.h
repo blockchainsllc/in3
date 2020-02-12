@@ -59,7 +59,7 @@
 #define ETH_CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
 #define ETH_CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
 #define ETH_CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
-#define ETH_CHAIN_ID_VOLTA 0x12046  /**< chain_id for volta */
+#define ETH_CHAIN_ID_BTC 0x99       /**< chain_id for btc */
 #define ETH_CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
 
 /**

@@ -70,6 +70,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef BTC
+#include "../../verifier/btc/btc.h"
+#endif
+#ifdef IPFS
+#include "../../verifier/ipfs/ipfs.h"
+#endif
+
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
 #endif
@@ -87,6 +94,7 @@ void show_help(char* name) {
 -eth           converts the result (as wei) to ether.\n\
 -l, -latest    replaces \"latest\" with latest BlockNumber - the number of blocks given.\n\
 -s, -signs     number of signatures to use when verifying.\n\
+-f             finality : number of blocks on top of the current one.\n\
 -port          if specified it will run as http-server listening to the given port.\n\
 -b, -block     the blocknumber to use when making calls. could be either latest (default),earliest or a hexnumbner\n\
 -to            the target address of the call\n\
@@ -145,6 +153,9 @@ ecrecover <msg> <signature>\n\
 \n\
 key <keyfile>\n\
   reads the private key from JSON-Keystore file and returns the private key.\n\
+\n\
+in3_weights\n\
+  list all current weights and stats\n\
 \n\
 in3_ens <domain> <field>\n\
   resolves a ens-domain. field can be addr(deault), owner, resolver or hash\n\
@@ -367,6 +378,7 @@ uint64_t getchain_id(char* name) {
   if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
   if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
   if (strcmp(name, "ipfs") == 0) return ETH_CHAIN_ID_IPFS;
+  if (strcmp(name, "btc") == 0) return ETH_CHAIN_ID_BTC;
   if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
@@ -597,6 +609,12 @@ int main(int argc, char* argv[]) {
 
   // we want to verify all
   in3_register_eth_full();
+#ifdef IPFS
+  in3_register_ipfs();
+#endif
+#ifdef BTC
+  in3_register_btc();
+#endif
   in3_register_eth_api();
   in3_log_set_level(LOG_INFO);
 
@@ -696,6 +714,8 @@ int main(int argc, char* argv[]) {
       validators = argv[++i];
     else if (strcmp(argv[i], "-hex") == 0)
       force_hex = true;
+    else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "-finality") == 0)
+      c->finality = (uint16_t) atoi(argv[++i]);
     else if (strcmp(argv[i], "-response-out") == 0 || strcmp(argv[i], "-ro") == 0)
       out_response = true;
     else if (strcmp(argv[i], "-response-in") == 0 || strcmp(argv[i], "-ri") == 0)
@@ -737,11 +757,11 @@ int main(int argc, char* argv[]) {
       else {
         // otherwise we add it to the params
         if (p > 1) params[p++] = ',';
-        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x')
+        if (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x' && strlen(argv[i]) < 16)
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,
-                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && *(argv[i] + 1) != 'x'))
+                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
                        strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
@@ -954,14 +974,6 @@ int main(int argc, char* argv[]) {
   if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
     in3_client_rpc(c, "eth_blockNumber", "", &r, &e);
-  }
-
-  // update cache
-  if (c->chain_id != ETH_CHAIN_ID_LOCAL) {
-    in3_ctx_t ctx;
-    memset(&ctx, 0, sizeof(in3_ctx_t));
-    ctx.client = c;
-    in3_cache_store_nodelist(&ctx, in3_find_chain(c, c->chain_id));
   }
 
   // if we need to wait
