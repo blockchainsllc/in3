@@ -42,7 +42,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef __ZEPHYR__
 #include <sys/time.h>
+#endif
 #include <time.h>
 
 #define EXPECT(cond, exit) \
@@ -420,9 +422,7 @@ void in3_free(in3_t* a) {
 in3_t* in3_for_chain(chain_id_t chain_id) {
 
   // initialize random with the timestamp (in nanoseconds) as seed
-  struct timeval te;
-  gettimeofday(&te, NULL);
-  _srand(te.tv_sec * 1000000LL + te.tv_usec);
+  _srand(current_ms());
 
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
@@ -459,7 +459,7 @@ static chain_id_t chain_id(d_token_t* t) {
 }
 
 static inline char* config_err(const char* keyname, const char* err) {
-  char* s = malloc(strlen(keyname) + strlen(err) + 4);
+  char* s = _malloc(strlen(keyname) + strlen(err) + 4);
   if (s)
     sprintf(s, "%s: %s!", keyname, err);
   return s;
@@ -550,7 +550,7 @@ char* in3_configure(in3_t* c, const char* config) {
       in3_chain_t* chain = in3_find_chain(c, c->chain_id);
       in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
-      n->url = malloc(d_len(token) + 1);
+      n->url = _malloc(d_len(token) + 1);
       if (!n->url) {
         res = config_err("in3_configure", "OOM");
         goto cleanup;

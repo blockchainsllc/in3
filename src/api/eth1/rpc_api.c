@@ -379,13 +379,13 @@ void in3_register_eth_api() {
   if (v) {
     parent_verify = v->verify;
     parent_handle = v->pre_handle;
-    v->verify     = verify;
+    v->verify     = (in3_verify) verify;
     v->pre_handle = eth_handle_intern;
   } else {
     in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
     v->type           = CHAIN_ETH;
     v->pre_handle     = eth_handle_intern;
-    v->verify         = verify;
+    v->verify         = (in3_verify) verify;
     in3_register_verifier(v);
   }
 }

@@ -39,7 +39,7 @@
 #include "../../../core/util/bytes.h"
 #ifndef evm_h__
 #define evm_h__
-
+int exit_zero(void);
 //#define EVM_GAS
 /** the current state of the evm*/
 typedef enum evm_state {
@@ -183,7 +183,7 @@ typedef enum evm_state {
 #define OP_LOG(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
 #define OP_SLOAD_GAS(...)
 #define OP_CREATE(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
-#define OP_ACCOUNT_GAS(...) 0
+#define OP_ACCOUNT_GAS(...) exit_zero()
 #define OP_SELFDESTRUCT(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE
 #define OP_EXTCODECOPY_GAS(evm)
 #define OP_SSTORE(...) EVM_ERROR_UNSUPPORTED_CALL_OPCODE

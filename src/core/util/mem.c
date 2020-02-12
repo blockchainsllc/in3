@@ -36,23 +36,7 @@
 #include "debug.h"
 #include "log.h"
 #include <stdlib.h>
-
 #ifdef __ZEPHYR__
-// FIXME: Below hack is until af529d1 is merged
-// See https://github.com/zephyrproject-rtos/zephyr/commit/af529d1158c9c85f41a5c15fabf1b3a83bfd9ac2
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE 1
-
-static void exit(int status) {
-  UNUSED_VAR(status);
-  printk("in3 exit\n");
-  fflush(stdout);
-#ifdef IN3_EXIT_SYSTEMRESET
-  NVIC_SystemReset();
-#endif
-  while (1) {}
-}
-
 void* k_realloc(void* ptr, size_t size, size_t oldsize) {
   void* new = NULL;
 

@@ -40,7 +40,11 @@
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
+#ifdef __ZEPHYR__
+#include <zephyr.h>
+#else
 #include <errno.h>
+#endif
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -96,7 +100,11 @@ static void set_errorn(int std_error, char* msg, int len) {
 
 // sets the error and a message
 static void set_error_intern(int std_error, char* msg) {
+#ifndef __ZEPHYR__
   in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
+#else
+  in3_log_error("Request failed due to %s\n", msg);
+#endif
   set_errorn(std_error, msg, strlen(msg));
 }
 
@@ -276,7 +284,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       }
 
       // copy data
-      eth_block_t* b = malloc(s);
+      eth_block_t* b = _malloc(s);
       if (!b) {
         set_error(ENOMEM, "Not enough memory");
         return NULL;
@@ -496,6 +504,8 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
       if (count) {
 #if defined(_WIN32) || defined(WIN32)
         Sleep(timeout);
+#elif defined(__ZEPHYR__)
+        k_sleep(timeout);
 #else
         nanosleep((const struct timespec[]){{timeout / 1000, ((long) timeout % 1000) * 1000000L}}, NULL);
 #endif
@@ -567,7 +577,7 @@ in3_ret_t eth_getFilterChanges(in3_t* in3, size_t id, bytes32_t** block_hashes, 
     case FILTER_BLOCK:
       if (blkno > f->last_block) {
         uint64_t blkcount = blkno - f->last_block;
-        *block_hashes     = malloc(sizeof(bytes32_t) * blkcount);
+        *block_hashes     = _malloc(sizeof(bytes32_t) * blkcount);
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           eth_block_t* blk = eth_getBlockByNumber(in3, BLKNUM(i), false);
           if (blk) {
@@ -606,7 +616,7 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
   }
 }
 
-void log_free(eth_log_t* log) {
+void _log_free(eth_log_t* log) {
   _free(log->data.data);
   _free(log->topics);
   _free(log);
@@ -719,7 +729,7 @@ void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
   eth_log_t *curr = txr->logs, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
-    log_free(curr);
+    _log_free(curr);
     curr = next;
   }
   _free(txr);
