@@ -37,7 +37,7 @@ qemu:
     - export ZEPHYR_BASE=/builds/in3/c/in3-core
     - source /builds/in3/c/in3-core/zephyr/zephyr-env.sh
     - west build -b qemu_cortex_m3 test/qemu
-    - qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -vga none -net none -pidfile qemu.pid -serial mon:stdio -semihosting -kernel build/zephyr/zephyr.elf 2> /dev/null
+    - ./scripts/qemu.sh 2> /dev/null
 gcc8:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: build

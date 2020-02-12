@@ -47,10 +47,9 @@
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int i = 0; i < urls_len; i++) {    
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
-      in3_log_debug("Returning eth_getTransactionReceipt ...\n");
       sb_add_range(&(result[i].result), mock_tx_receipt, 0, mock_tx_receipt_len);
     } else if (strstr(payload, "eth_blockNumber") != NULL) {
-      in3_log_debug("Returning eth_blockNumber ...\n");
+      printk("Returning eth_blockNumber ...\n");
       sb_add_range(&(result[i].result), block_number_res, 0, block_number_res_len);
     } else {
       in3_log_debug("Not supported for this mock\n");
@@ -99,9 +98,9 @@ void main() {
   hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
   // get the tx receipt by hash
   eth_tx_receipt_t* txr = eth_getTransactionReceipt(in3, tx_hash);
-  in3_log_debug("status %d\n", txr->status);
-  in3_log_debug("gas %d\n", txr->gas_used);
-  in3_log_debug("IN3 TEST PASSED !\n");
+  printk("status: %d ", txr->status);
+  printk("gas: %lld ", txr->gas_used);
+  printk("IN3 TEST PASSED !\n");
   eth_tx_receipt_free(txr);
   in3_free(in3);
   _exit_qemu();
