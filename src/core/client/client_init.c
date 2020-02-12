@@ -653,6 +653,8 @@ char* in3_configure(in3_t* c, const char* config) {
                                              d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                          "add node failed");
             }
+          } else {
+            EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }
         in3_client_run_chain_whitelisting(chain);
