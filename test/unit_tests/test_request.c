@@ -163,14 +163,13 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":false}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0x1203030230\"}", "expected uint32 or string");
+  TEST_ASSERT_CONFIGURE_FAIL("uinitialized chain: chainId", c, "{\"chainId\":0}", "chain corresponding to chain id not initialized!");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"mainnet\"}");
   TEST_ASSERT_EQUAL(c->chain_id, 1);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":0}");
-  TEST_ASSERT_EQUAL(c->chain_id, 0);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":4294967295}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->chain_id, 4294967295U);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0xffffffff\"}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->chain_id, 0xffffffff);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":5}");
+  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_GOERLI);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x2a\"}");
+  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_KOVAN);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"0x1234\"}", "expected uint8");

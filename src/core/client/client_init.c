@@ -670,6 +670,8 @@ char* in3_configure(in3_t* c, const char* config) {
     c->replace_latest_block = DEF_REPL_LATEST_BLK;
   }
 
+  EXPECT_CFG(in3_find_chain(c, c->chain_id), "chain corresponding to chain id not initialized!");
+
 cleanup:
   json_free(cnf);
   return res;
