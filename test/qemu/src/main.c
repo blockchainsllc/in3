@@ -39,6 +39,7 @@
 #include "util/mem.h"
 #include "block_number.h"
 #include "receipt.h"
+#include <ztest.h>
 /**
  * In3 Setup and usage
  * **/
@@ -46,13 +47,13 @@
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
   for (int i = 0; i < urls_len; i++) {    
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
-      in3_log_debug("Returning eth_getTransactionReceipt ...\n");
+      //in3_log_debug("Returning eth_getTransactionReceipt ...\n");
       sb_add_range(&(result[i].result), mock_tx_receipt, 0, mock_tx_receipt_len);
     } else if (strstr(payload, "eth_blockNumber") != NULL) {
-      in3_log_debug("Returning eth_blockNumber ...\n");
+      //in3_log_debug("Returning eth_blockNumber ...\n");
       sb_add_range(&(result[i].result), block_number_res, 0, block_number_res_len);
     } else {
-      in3_log_debug("Not supported for this mock\n");
+      //in3_log_debug("Not supported for this mock\n");
     }
   }
   return IN3_OK;
@@ -65,8 +66,8 @@ in3_ret_t transport_mock(in3_request_t* req) {
 in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   //int    err;
-  in3_log_set_quiet(0);
-  in3_log_set_level(LOG_DEBUG);
+  //in3_log_set_quiet(0);
+  //in3_log_set_level(LOG_DEBUG);
   in3_register_eth_basic();
   in3 = in3_for_chain(0);
   if (custom_transport)
@@ -91,17 +92,29 @@ static inline void _exit_qemu(){
    __asm__ volatile("bkpt #0xAB"); 
 }
 
-void main() {
+static void test_receipt(void) {
   // the hash of transaction whose receipt we want to get
   in3_t*    in3 = init_in3(transport_mock, 0x5);
   bytes32_t tx_hash;
   hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
   // get the tx receipt by hash
   eth_tx_receipt_t* txr = eth_getTransactionReceipt(in3, tx_hash);
-  in3_log_debug("status %d\n", txr->status);
+  //in3_log_debug("status %d\n", txr->status);
   in3_log_debug("gas %d\n", txr->gas_used);
   in3_log_debug("1/1 IN3 TEST PASSED !\n");
-  eth_tx_receipt_free(txr);
-  in3_free(in3);
-  _exit_qemu();
+  //eth_tx_receipt_free(txr);
+  zassert_true(1 , "1 was false");
+  //in3_free(in3);
+  //_exit_qemu();
 }
+
+
+void test_main(void)
+{
+		ztest_test_suite(common,
+		ztest_unit_test(test_receipt)
+	);
+
+	ztest_run_test_suite(common);
+}
+

@@ -5,8 +5,8 @@ project(z_in3)
 
 target_sources(app PRIVATE src/main.c)
 
-ADD_DEFINITIONS(-DTEST)
-ADD_DEFINITIONS(-DDEBUG)
+#ADD_DEFINITIONS(-DTEST)
+#ADD_DEFINITIONS(-DDEBUG)
 SET(CMAKE_BUILD_TYPE Debug)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 ADD_DEFINITIONS(-DZEPHYR_OS)
@@ -17,8 +17,6 @@ set(IN3_SRC ../..)
 set(IN3_DEPS 
 ${IN3_SRC}/src/core 
 ${IN3_SRC}/src/verifier/eth1/basic 
-${IN3_SRC}/src/verifier/eth1/full 
-${IN3_SRC}/src/verifier/eth1/evm  
 ${IN3_SRC}/src/verifier/eth1/nano 
 ${IN3_SRC}/src/api/eth1 
 ${IN3_SRC}//src/third-party

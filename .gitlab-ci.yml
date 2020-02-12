@@ -29,6 +29,15 @@ stages:
       - $BUILD/bin
       - $BUILD/lib
 
+qemu:
+  image: docker.slock.it/build-images/zephyr-image:latest
+  stage: test
+  script:
+    - export ZEPHYR_BASE=.
+    - pwd && ls -la . && ls -la /home/user
+    - west init
+    - west build -b qemu_cortex_m3 test/qemu
+    - qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -vga none -net none -pidfile qemu.pid -serial mon:stdio -semihosting -kernel build/zephyr/zephyr.elf 2&> /dev/null
 gcc8:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: build
@@ -291,13 +300,7 @@ java_linux:
   tags:
     - short-jobs
 
-qemu:
-  image: docker.slock.it/build-images/cmake:zephyr
-  stage: test
-  allow_failure: true
-  script:
-    -  west build -b qemu_cortex_m3 test/qemu
-    -  qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -vga none -net none -pidfile qemu.pid -serial mon:stdio -semihosting -kernel build/zephyr/zephyr.elf
+
 
 examples_linux:
   image: docker.slock.it/build-images/cmake:gcc8
