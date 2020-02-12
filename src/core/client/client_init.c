@@ -44,8 +44,6 @@
 #include <string.h>
 #ifndef __ZEPHYR__
 #include <sys/time.h>
-#else
-#include <posix/sys/time.h>
 #endif
 #include <time.h>
 
