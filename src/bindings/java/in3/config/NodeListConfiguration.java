@@ -7,7 +7,7 @@ import in3.JSON;
  */
 public class NodeListConfiguration {
     private String url;
-    private String props;
+    private Long props;
     private String address;
 
     public NodeListConfiguration(NodeConfiguration config) {
@@ -24,12 +24,12 @@ public class NodeListConfiguration {
         this.url = url;
     }
 
-    public String getProps() {
+    public long getProps() {
         return props;
     }
 
     /* used to identify the capabilities of the node */
-    public void setProps(String props) {
+    public void setProps(long props) {
         this.props = props;
     }
 

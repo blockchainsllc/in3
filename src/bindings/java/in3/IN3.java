@@ -36,6 +36,7 @@ package in3;
 
 import in3.Proof;
 import in3.StorageProvider;
+import in3.config.ClientConfiguration;
 import in3.config.Configuration;
 import in3.eth1.API;
 
@@ -46,29 +47,41 @@ import in3.eth1.API;
  */
 public class IN3 {
 
+    static {
+        Loader.loadLibrary();
+    }
+
     private long ptr;
     private StorageProvider provider;
     private Signer signer;
 
     private static IN3Transport transport = new IN3DefaultTransport();
+    private ClientConfiguration config;
 
-    /** number of seconds requests can be cached. */
-    public native int getCacheTimeout();
+    @Deprecated
+    public IN3() {
+        ptr = init(0);
+    }
 
-    /** sets number of seconds requests can be cached. */
-    public native void setCacheTimeout(int val);
+    private IN3(long chainAlias) {
+        ptr = init(chainAlias);
+    }
+
+    /**
+     * create a Incubed client using the chain-config.
+     * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
+     * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
+     */
+    public static IN3 forChain(long chainId) {
+        return new IN3(chainId);
+    }
+
+    protected void finalize() {
+        free();
+    }
 
     /** sets config object in the client */
     private native void setConfig(String val);
-
-    /** the limit of nodes to store in the client. */
-    public native int getNodeLimit();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setNodeLimit(int val);
 
     /** the client key to sign requests */
     public native byte[] getKey();
@@ -76,8 +89,17 @@ public class IN3 {
     /** sets the client key to sign requests */
     public native void setKey(byte[] val);
 
-    public void setConfig(Configuration config) {
+    protected void setConfig(ClientConfiguration config) {
+        this.config = config;
+    }
+
+    protected void applyConfig() {
         setConfig(config.toJSON());
+        config.markAsSynced();
+    }
+
+    public ClientConfiguration getConfig() {
+        return config;
     }
 
     /** sets the client key as hexstring to sign requests */
@@ -93,92 +115,12 @@ public class IN3 {
         }
     }
 
-    /** number of max bytes used to cache the code in memory */
-    public native int getMaxCodeCache();
-
     /**
-     * @deprecated replaced by {@link #setConfig()}
+     * sets the signer or wallet.
      */
-    @Deprecated
-    public native void setMaxCodeCache(int val);
-
-    /** number of blocks cached in memory */
-    public native int getMaxBlockCache();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setMaxBlockCache(int val);
-
-    /** the type of proof used */
-    public native Proof getProof();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setProof(Proof val);
-
-    /** the number of request send when getting a first answer */
-    public native int getRequestCount();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setRequestCount(int val);
-
-    /** the number of signatures used to proof the blockhash. */
-    public native int getSignatureCount();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setSignatureCount(int val);
-
-    /**
-     * min stake of the server. Only nodes owning at least this amount will be
-     * chosen.
-     */
-    public native long getMinDeposit();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setMinDeposit(long val);
-
-    /**
-     * if specified, the blocknumber *latest* will be replaced by blockNumber-
-     * specified value
-     */
-    public native int getReplaceLatestBlock();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setReplaceLatestBlock(int val);
-
-    /** the number of signatures in percent required for the request */
-    public native int getFinality();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setFinality(int val);
-
-    /** the max number of attempts before giving up */
-    public native int getMaxAttempts();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setMaxAttempts(int val);
+    public void setSigner(Signer signer) {
+        this.signer = signer;
+    }
 
     /**
      * returns the signer or wallet.
@@ -195,47 +137,6 @@ public class IN3 {
     }
 
     /**
-     * sets the signer or wallet.
-     */
-    public void setSigner(Signer signer) {
-        this.signer = signer;
-    }
-
-    /**
-     * specifies the number of milliseconds before the request times out. increasing
-     * may be helpful if the device uses a slow connection.
-     */
-    public native int getTimeout();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setTimeout(int val);
-
-    /** servers to filter for the given chain. The chain-id based on EIP-155. */
-    public native long getChainId();
-
-    /** sets the chain to be used. The chain-id based on EIP-155. */
-    public native void setChainId(long val);
-
-    /**
-     * if true the nodelist will be automaticly updated if the lastBlock is newer
-     */
-    public native boolean isAutoUpdateList();
-
-    /**
-     * @deprecated replaced by {@link #setConfig()}
-     */
-    @Deprecated
-    public native void setAutoUpdateList(boolean val);
-
-    /** provides the ability to cache content */
-    public StorageProvider getStorageProvider() {
-        return provider;
-    }
-
-    /**
      * provides the ability to cache content like nodelists, contract codes and
      * validatorlists
      */
@@ -243,6 +144,32 @@ public class IN3 {
         provider = val;
         initcache();
     }
+
+    /** provides the ability to cache content */
+    public StorageProvider getStorageProvider() {
+        return provider;
+    }
+
+    /**
+     * sets The transport interface.
+     * This allows to fetch the result of the incubed in a different way.
+     */
+    public void setTransport(IN3Transport newTransport) {
+        IN3.transport = newTransport;
+    }
+
+    /**
+     * returns the current transport implementation.
+     */
+    public IN3Transport getTransport() {
+    	return IN3.transport;
+    }
+
+    /** servers to filter for the given chain. The chain-id based on EIP-155. */
+    public native long getChainId();
+
+    /** sets the chain to be used. The chain-id based on EIP-155. */
+    public native void setChainId(long val);
 
     /**
      * send a request. The request must a valid json-string with method and params
@@ -287,39 +214,10 @@ public class IN3 {
      * raw request from it and return the result.
      */
     public Object sendRPCasObject(String method, Object[] params) {
+        if (!config.isSynced()) {
+            this.applyConfig();
+        }
         return this.sendobject(toRPC(method, params));
-    }
-
-    private native void free();
-
-    private native long init(long chainId);
-
-    private native void initcache();
-
-    /**
-     * create a Incubed client using the chain-config.
-     * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
-     * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
-     */
-    public static IN3 forChain(long chainId) {
-    	return new IN3(chainId);
-    }
-
-    @Deprecated
-    public IN3() {
-        ptr = init(0);
-    }
-
-    private IN3(long chainAlias) {
-        ptr = init(chainAlias);
-    }
-
-    protected void finalize() {
-        free();
-    }
-
-    static {
-        Loader.loadLibrary();
     }
 
     /** internal function to handle the internal requests */
@@ -327,21 +225,11 @@ public class IN3 {
         return IN3.transport.handle(urls, payload);
     }
 
+    private native void free();
 
-    /**
-     * sets The transport interface.
-     * This allows to fetch the result of the incubed in a different way.
-     */
-    public void setTransport(IN3Transport newTransport) {
-        IN3.transport = newTransport;
-    }
+    private native long init(long chainId);
 
-    /**
-     * returns the current transport implementation.
-     */
-    public IN3Transport getTransport() {
-    	return IN3.transport;
-    }
+    private native void initcache();
 
     // Test it
     public static void main(String[] args) {

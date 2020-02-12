@@ -8,7 +8,7 @@ import in3.Proof;
 
 /**
  * Configuration Object for Incubed Client. It holds the state for the root 
- * of the configuration tree. To be used together with IN3#setConfig.
+ * of the configuration tree. Should be retrieved from the client instance as IN3#getConfig()
  */
 public class ClientConfiguration implements Configuration {
 
@@ -32,7 +32,12 @@ public class ClientConfiguration implements Configuration {
     private String rpc;
     private Long maxBlockCache;
 
+    private String serialzedState;
+
     private HashMap<Long, NodeConfiguration> nodesConfig = new HashMap<Long, NodeConfiguration>();
+
+    // Make the constructor private in order to ensure people use client.getConfig()
+    private ClientConfiguration() {}
 
     public Integer getRequestCount() {
         return requestCount;
@@ -220,6 +225,14 @@ public class ClientConfiguration implements Configuration {
         nodesConfig.put(configuration.getChain(), configuration);
     }
 
+    public void markAsSynced() {
+        serialzedState = toJSON();
+    }
+
+    public boolean isSynced() {
+        return toJSON().equals(serialzedState);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{");
@@ -295,7 +308,6 @@ public class ClientConfiguration implements Configuration {
 
     @Override
     public String toJSON() {
-        // TODO Auto-generated method stub
         return JSON.toJson(this);
     }
 }

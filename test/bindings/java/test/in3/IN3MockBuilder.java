@@ -26,7 +26,7 @@ public class IN3MockBuilder {
     }
 
     public void buildConfig() {
-        ClientConfiguration clientConfig = new ClientConfiguration();
+        ClientConfiguration clientConfig = client.getConfig();
 
         NodeConfiguration nodeConfig1 = new NodeConfiguration(Chain.MAINNET, clientConfig);
         nodeConfig1.setNeedsUpdate(false);
@@ -48,8 +48,6 @@ public class IN3MockBuilder {
         clientConfig.setProof(Proof.none);
         clientConfig.setMaxAttempts(1);
         clientConfig.setSignatureCount(0);
-
-        client.setConfig(clientConfig);
     }
 
     public IN3 constructClient(String[][] fileNameTuples) {

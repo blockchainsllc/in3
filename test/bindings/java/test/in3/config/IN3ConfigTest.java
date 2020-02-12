@@ -18,7 +18,7 @@ public class IN3ConfigTest {
         final String nodeConfigOutputKey = "nodes";
         final String nodeListConfigOutputKey = "nodeList";
 
-        ClientConfiguration clientConfig = new ClientConfiguration();
+        ClientConfiguration clientConfig = client.getConfig();
 
         NodeConfiguration nodeConfig = new NodeConfiguration(Chain.GOERLI, clientConfig);
         nodeConfig.setNeedsUpdate(false);
@@ -31,7 +31,7 @@ public class IN3ConfigTest {
         Assertions.assertTrue(jsonObject1.has(nodeConfigOutputKey));
 
         NodeListConfiguration nodeListConfig = new NodeListConfiguration(nodeConfig);
-        nodeListConfig.setProps("someProp");
+        nodeListConfig.setProps(Long.valueOf(0x0));
         nodeListConfig.setUrl("scheme://userinfo@host:port/path?query#fragment");
         nodeListConfig.setAddress("0x0");
 
@@ -44,9 +44,9 @@ public class IN3ConfigTest {
     }
 
     @Test
-    public void setConfigChangesNativeState() {
-        // This is not the correct place for this test but it will suffice for this.
-        ClientConfiguration config = new ClientConfiguration();
+    public void isSynced() {
+        ClientConfiguration config = client.getConfig();
+        Assertions.assertTrue(config.isSynced());
 
         int requestCount = 1;
         boolean autoUpdateList = false;
@@ -60,19 +60,14 @@ public class IN3ConfigTest {
         config.setMaxAttempts(maxAttempts);
         config.setSignatureCount(signatureCount);
 
-        client.setConfig(config);
-
-        Assertions.assertTrue(requestCount == client.getRequestCount());
-        Assertions.assertTrue(autoUpdateList == client.isAutoUpdateList());
-        Assertions.assertTrue(proof == client.getProof());
-        Assertions.assertTrue(maxAttempts == client.getMaxAttempts());
-        Assertions.assertTrue(signatureCount == client.getSignatureCount());
+        Assertions.assertTrue(!config.isSynced());
+        client.getEth1API().getChainId();
+        Assertions.assertTrue(config.isSynced());
     }
 
     @Test
-    public void setConfigThrowsIllegalArgumentException() {
-        // This is not the correct place for this test but it will suffice for this.
-        ClientConfiguration config = new ClientConfiguration();
+    public void dispatchRequestInvalidConfig() {
+        ClientConfiguration config = client.getConfig();
 
         NodeConfiguration nodeConfig = new NodeConfiguration(Chain.GOERLI, config);
         nodeConfig.setNeedsUpdate(false);
@@ -86,7 +81,7 @@ public class IN3ConfigTest {
         });
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-           client.setConfig(config);
+            client.getEth1API().getGasPrice();
         });
     }
 }
