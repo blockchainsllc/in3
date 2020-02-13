@@ -534,7 +534,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
     while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
       res = in3_send_ctx(ctx->required);
       if (res == IN3_EIGNORE)
-        handle_failable(ctx);
+        ctx_handle_failable(ctx);
       else if (res != IN3_OK)
         return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
 
