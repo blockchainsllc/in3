@@ -43,6 +43,12 @@
 #include "bytes.h"
 #include <stdint.h>
 
+#ifdef __ZEPHYR__
+#include <zephyr.h>
+#define _strtoull(str, endptr, base) strtoul(str, endptr, base)
+#else
+#define _strtoull(str, endptr, base) strtoull(str, endptr, base)
+#endif
 /** simple swap macro for integral types */
 #define SWAP(a, b) \
   {                \
@@ -64,7 +70,12 @@
  */
 #define IS_APPROX(n1, n2, err) ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
 
-/** simple macro to stringify other macro defs */
+/**
+ * simple macro to stringify other macro defs
+ * eg. usage - to concatenate a const with a string at compile time ->
+ * #define SOME_CONST_UINT 10U
+ * printf("Using default value of " STR(SOME_CONST_UINT));
+ */
 #define STR_IMPL_(x) #x
 #define STR(x) STR_IMPL_(x)
 
@@ -201,16 +212,49 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
   return !l;
 }
 
-/* Pluggable functions */
-typedef uint64_t (*time_func)(void* t);
-typedef int (*rand_func)(void* s);
-typedef void (*srand_func)(unsigned int s);
+/**
+ * Pluggable functions:
+ * Mechanism to replace library functions with custom alternatives. This is particularly useful for
+ * embedded systems which have their own time or rand functions.
+ *
+ * eg.
+ * // define function with specified signature
+ * uint64_t my_time(void* t) {
+ *  // ...
+ * }
+ *
+ * // then call in3_set_func_*()
+ * int main() {
+ *  in3_set_func_time(my_time);
+ *  // Henceforth, all library calls will use my_time() instead of the platform default time function
+ * }
+ */
 
+/**
+ * time function
+ * defaults to k_uptime_get() for zeohyr and time(NULL) for other platforms
+ * expected to return a u64 value representative of time (from epoch/start)
+ */
+typedef uint64_t (*time_func)(void* t);
 void     in3_set_func_time(time_func fn);
 uint64_t in3_time(void* t);
-void     in3_set_func_rand(rand_func fn);
-int      in3_rand(void* s);
-void     in3_set_func_srand(srand_func fn);
-void     in3_srand(unsigned int s);
+
+/**
+ * rand function
+ * defaults to k_uptime_get() for zeohyr and rand() for other platforms
+ * expected to return a random number
+ */
+typedef int (*rand_func)(void* s);
+void in3_set_func_rand(rand_func fn);
+int  in3_rand(void* s);
+
+/**
+ * srand function
+ * defaults to NOOP for zephyr and srand() for other platforms
+ * expected to set the seed for a new sequence of random numbers to be returned by in3_rand()
+ */
+typedef void (*srand_func)(unsigned int s);
+void in3_set_func_srand(srand_func fn);
+void in3_srand(unsigned int s);
 
 #endif
