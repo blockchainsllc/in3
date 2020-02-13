@@ -494,6 +494,9 @@ void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) 
   _free(req);
 }
 
+static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
+  return ctx_is_method(ctx, "in3_nodeList");
+}
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   int       retry_count = 0;
   in3_ret_t res;
@@ -695,9 +698,14 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         ctx->error = NULL;
         // now try again, which should end in waiting for the next request.
         return in3_ctx_execute(ctx);
-      } else
+      } else {
+        if (ctx_is_allowed_to_fail(ctx)) {
+          ret                     = IN3_EIGNORE;
+          ctx->verification_state = IN3_EIGNORE;
+        }
         // we give up
         return ctx->error ? (ret ? ret : IN3_ERPC) : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
+      }
     }
 
     case CT_SIGN: {
