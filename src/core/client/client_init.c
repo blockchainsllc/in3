@@ -537,6 +537,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxCodeCache")) {
       EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
+    } else if (token->key == key("maxVerifiedHashes")) {
+      EXPECT_TOK_U16(token);
+      c->max_verified_hashes = d_long(token);
     } else if (token->key == key("timeout")) {
       EXPECT_TOK_U32(token);
       c->timeout = d_long(token);
@@ -644,6 +647,7 @@ char* in3_configure(in3_t* c, const char* config) {
             chain->avg_block_time = (uint16_t) d_int(cp.token);
           } else if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
+            EXPECT_TOK(cp.token, d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
             _free(chain->verified_hashes);
             chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
             int i                  = 0;
