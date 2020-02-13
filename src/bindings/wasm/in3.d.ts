@@ -1052,6 +1052,4 @@ export declare interface Utils<BufferType> {
      */
     private2address(pk: Hex | BufferType): Address
 
-}
-
-// export = IN3                                 //--dev
+}                              
