@@ -497,6 +497,26 @@ void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) 
 static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
   return ctx_is_method(ctx, "in3_nodeList");
 }
+
+in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
+  ctx_remove_required(ctx, ctx->required);
+
+  // blacklist node that gave us an error response for nodelist (if not first update)
+  // and clear nodelist params
+  in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+
+  if (nodelist_not_first_upd8(chain))
+    blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+  _free(chain->nodelist_upd8_params);
+  chain->nodelist_upd8_params = NULL;
+
+  // if first update return error otherwise return IN3_OK, this is because first update is
+  // always from a boot node which is presumed to be trusted
+  if (nodelist_first_upd8(chain))
+    return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
+  return IN3_OK;
+}
+
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   int       retry_count = 0;
   in3_ret_t res;
@@ -512,26 +532,11 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
 
     // handle subcontexts first
     while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
-      if ((res = in3_send_ctx(ctx->required)) != IN3_OK) {
-        if (ctx_is_method(ctx->required, "in3_nodeList")) {
-          ctx_remove_required(ctx, ctx->required);
-
-          // blacklist node that gave us an error response for nodelist (if not first update)
-          // and clear nodelist params
-          in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
-
-          if (nodelist_not_first_upd8(chain))
-            blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
-          _free(chain->nodelist_upd8_params);
-          chain->nodelist_upd8_params = NULL;
-
-          // if first update return error otherwise return IN3_OK, this is because first update is
-          // always from a boot node which is presumed to be trusted
-          if (nodelist_first_upd8(chain))
-            ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
-        } else
-          ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
-      }
+      res = in3_send_ctx(ctx->required);
+      if (res == IN3_EIGNORE)
+        handle_failable(ctx);
+      else if (res != IN3_OK)
+        return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
 
       // recheck in order to prepare the request.
       if ((res = in3_ctx_execute(ctx)) != IN3_WAITING) return res;
@@ -597,7 +602,7 @@ in3_ret_t ctx_add_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
 }
 
 in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
-
+  if (!ctx) return IN3_OK;
   in3_ctx_t* p = parent;
   while (p) {
     if (p->required == ctx) {
