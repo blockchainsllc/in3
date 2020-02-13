@@ -116,6 +116,22 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   in3_ctx_t *p = ctx, *last_waiting = NULL;
   sb_t*      sb = sb_new("{\"status\":");
   switch (in3_ctx_execute(ctx)) {
+    case IN3_EIGNORE:
+      while (p) {
+        if (p->required && p->required->verification_state == IN3_EIGNORE) {
+          last_waiting = p;
+          break;
+        }
+        p = p->required;
+      }
+      if (!last_waiting) {
+        sb_add_chars(sb, ",\"error\":\"could not find the last waiting context\"");
+        break;
+      } else {
+        ctx_handle_failable(last_waiting);
+        sb_free(sb);
+        return ctx_execute(ctx);
+      }
     case IN3_OK:
       sb_add_chars(sb, "\"ok\", \"result\":");
       sb_add_chars(sb, ctx->response_context->c);
