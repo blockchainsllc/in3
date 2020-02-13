@@ -336,9 +336,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
       }
     }
   }
-
   int fail = execRequest(c, test, fuzz_prop != NULL);
-
   in3_free(c);
 
   if (mem_get_memleak_cnt()) {

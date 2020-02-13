@@ -982,14 +982,6 @@ int main(int argc, char* argv[]) {
     in3_client_rpc(c, "eth_blockNumber", "", &r, &e);
   }
 
-  // update cache
-  if (c->chain_id != ETH_CHAIN_ID_LOCAL) {
-    in3_ctx_t ctx;
-    memset(&ctx, 0, sizeof(in3_ctx_t));
-    ctx.client = c;
-    in3_cache_store_nodelist(&ctx, in3_find_chain(c, c->chain_id));
-  }
-
   // if we need to wait
   if (!error && result && wait && strcmp(method, "eth_sendTransaction") == 0) {
     bytes32_t txHash;

@@ -364,6 +364,25 @@
             "MIMode": "lldb"
         },
         {
+            "name": "Keynames",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/runner",
+            "args": [
+                "-m",
+                "22",
+                "../test/testdata/requests/eth_getBalance_not_existent.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "logging": {
+                "trace": true
+            }
+        },
+        {
             "name": "vmrunner_",
             "type": "cppdbg",
             "request": "launch",

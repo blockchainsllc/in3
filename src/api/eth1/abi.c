@@ -355,7 +355,7 @@ static int encode(call_request_t* req, d_token_t* data, var_t* tuple, int head_p
         switch (d_type(d)) {
           case T_STRING: {
             char*              tmp = d_string(d);
-            unsigned long long n   = strtoull(tmp + 1, NULL, 10);
+            unsigned long long n   = _strtoull(tmp + 1, NULL, 10);
             bitset_t*          bs  = bs_from_ull(n, 256);
             twos_complement(bs);
             bytes_t b = {.data = bs->bits.p, .len = 32};

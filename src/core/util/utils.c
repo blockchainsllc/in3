@@ -40,7 +40,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef __ZEPHYR__
 #include <sys/time.h>
+#else
+#include <posix/sys/time.h>
+#endif
 
 #ifdef __ZEPHYR__
 static uint64_t time_zephyr(void* t) {
@@ -107,7 +111,7 @@ uint8_t hexchar_to_int(char c) {
 }
 #ifdef __ZEPHYR__
 
-const char* u64tostr(uint64_t value, char* buffer, int buffer_len) {
+const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
   // buffer has to be at least 21 bytes (max u64 val = 18446744073709551615 has 20 digits + '\0')
   if (buffer_len < 21) return "<ERR(u64tostr): buffer too small>";
 
@@ -258,7 +262,7 @@ char* str_replace(char* orig, const char* rep, const char* with) {
     ins = tmp + len_rep;
   }
 
-  tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+  tmp = result = _malloc(strlen(orig) + (len_with - len_rep) * count + 1);
 
   if (!result)
     return NULL;
@@ -304,9 +308,13 @@ char* str_find(char* haystack, const char* needle) {
 }
 
 uint64_t current_ms() {
+#ifndef __ZEPHYR__
   struct timeval te;
   gettimeofday(&te, NULL);
   return te.tv_sec * 1000L + te.tv_usec / 1000;
+#else
+  return 1000L;
+#endif
 }
 
 void     in3_set_func_time(time_func fn) { in3_time_fn = fn; }

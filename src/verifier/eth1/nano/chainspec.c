@@ -60,7 +60,13 @@ static void           fill_aura(d_token_t* validators, consensus_transition_t* t
   d_token_t* contract = d_get(validators, key("contract"));
   d_token_t* list     = d_get(validators, key("list"));
   if (!contract) contract = d_get(validators, key("safeContract"));
+
+#ifndef __ZEPHYR__
   if (block) t->transition_block = atoll(block);
+#else
+  if (block) t->transition_block = atoi(block);
+#endif
+
   t->type = ETH_POA_AURA;
   if (contract) {
     t->contract = _calloc(20, 1);
