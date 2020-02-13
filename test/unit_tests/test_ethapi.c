@@ -220,7 +220,7 @@ static void test_get_logs() {
   while (logs) {
     l    = logs;
     logs = logs->next;
-    _log_free(l);
+    eth_log_free(l);
   }
   eth_uninstallFilter(in3, fid);
   json_free(jopt);
