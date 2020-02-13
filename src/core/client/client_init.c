@@ -645,7 +645,7 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
             _free(chain->verified_hashes);
-            chain->verified_hashes = _calloc(d_len(cp.token), sizeof(in3_verified_hash_t));
+            chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
             int i                  = 0;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
               EXPECT_TOK_U64(d_get(n.token, key("block")));
