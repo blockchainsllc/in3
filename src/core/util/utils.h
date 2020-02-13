@@ -102,7 +102,7 @@ uint64_t char_to_long(const char* a, int l);
 uint8_t hexchar_to_int(char c);
 
 /** converts a uint64_t to string (char*); buffer-size min. 21 bytes */
-const unsigned char* u64_to_str(uint64_t value, char* pBuf, int szBuf);
+const char* u64_to_str(uint64_t value, char* pBuf, int szBuf);
 
 /**
  * convert a c hex string to a byte array storing it into an existing buffer.
