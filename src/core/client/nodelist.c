@@ -47,6 +47,7 @@
 #include <time.h>
 
 #define DAY 24 * 2600
+#define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
 
 static void free_nodeList(in3_node_t* nodelist, int count) {
   // clean chain..
@@ -59,7 +60,7 @@ static void free_nodeList(in3_node_t* nodelist, int count) {
 
 static bool postpone_update(const in3_chain_t* chain) {
   if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->timestamp)
-    if (difftime(chain->nodelist_upd8_params->timestamp, in3_time(NULL)) > 0)
+    if (DIFFTIME(chain->nodelist_upd8_params->timestamp, in3_time(NULL)) > 0)
       return true;
   return false;
 }
