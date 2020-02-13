@@ -407,4 +407,13 @@ in3_ctx_t* in3_client_rpc_ctx(
     char*  params  /**< [in] params as string. */
 );
 
+/**
+ * handles a failable context
+ *
+ * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
+*/
+in3_ret_t ctx_handle_failable(
+    in3_ctx_t* ctx /**< [in] the current request context. */
+);
+
 #endif

@@ -67,6 +67,7 @@ typedef enum {
   IN3_ETRANS   = -14, /**< Transport error */
   IN3_ERANGE   = -15, /**< Not in range */
   IN3_WAITING  = -16, /**< the process can not be finished since we are waiting for responses */
+  IN3_EIGNORE  = -17, /**< Ignorable error */
 } in3_ret_t;
 
 /** Optional type similar to C++ std::optional
