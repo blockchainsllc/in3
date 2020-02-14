@@ -24,4 +24,4 @@ cmake-build-debug/
 bin/
 .classpath
 .project
-target/
+*.class
