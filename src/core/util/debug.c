@@ -96,6 +96,7 @@ char* in3_errmsg(in3_ret_t err /**< the error code */) {
     case IN3_ETRANS: return "transport error";
     case IN3_ERANGE: return "out of range";
     case IN3_WAITING: return "waiting for data";
+    case IN3_EIGNORE: return "ignoreable error";
   }
   return NULL;
 #else

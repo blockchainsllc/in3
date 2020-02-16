@@ -61,6 +61,7 @@
 #define ETH_CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
 #define ETH_CHAIN_ID_BTC 0x99       /**< chain_id for btc */
 #define ETH_CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6       /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -111,7 +112,7 @@ typedef struct in3_request_config {
   uint8_t            use_binary;             /**< this flaqg is set, the client should use binary-format */
   bytes_t*           verified_hashes;        /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
   uint16_t           verified_hashes_length; /**< number of verified blockhashes*/
-  uint16_t           latest_block;           /**< the last blocknumber the nodelistz changed */
+  uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
   uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
   in3_verification_t verification;           /**< Verification-type */
   bytes_t*           client_signature;       /**< the signature of the client with the client key */
@@ -152,6 +153,7 @@ typedef struct in3_node {
   in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
   char*            url;         /**< the url of the node */
   bool             whitelisted; /**< boolean indicating if node exists in whiteList */
+  bool             boot_node;   /**< internal - used to avoid filtering manually added nodes before first nodeList update */
 } in3_node_t;
 
 /**
@@ -236,9 +238,11 @@ typedef struct in3_chain {
   uint8_t              version;         /**< version of the chain */
   in3_verified_hash_t* verified_hashes; /**< contains the list of already verified blockhashes */
   in3_whitelist_t*     whitelist;       /**< if set the whitelist of the addresses. */
+  uint16_t             avg_block_time;  /**< average block time (seconds) for this chain (calculated internally) */
   struct {
     address_t node;           /**< node that reported the last_block which necessitated a nodeList update */
     uint64_t  exp_last_block; /**< the last_block when the nodelist last changed reported by this node */
+    uint64_t  timestamp;      /**< approx. time when nodelist must be updated (i.e. when reported last_block will be considered final) */
   } * nodelist_upd8_params;
 } in3_chain_t;
 
@@ -413,7 +417,7 @@ typedef struct in3_t_ {
   uint64_t min_deposit;
 
   /** if specified, the blocknumber *latest* will be replaced by blockNumber- specified value */
-  uint16_t replace_latest_block;
+  uint8_t replace_latest_block;
 
   /** the number of signatures in percent required for the request*/
   uint16_t finality;
@@ -631,7 +635,7 @@ in3_chain_t* in3_find_chain(
  * configures the clent based on a json-config.
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
- * 
+ * Returns NULL on success, and error string on failure (to be freed by caller) - in which case the client state is undefined
  */
 char* in3_configure(
     in3_t*      c,     /**< the incubed client */

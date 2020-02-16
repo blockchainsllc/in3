@@ -616,7 +616,7 @@ in3_ret_t eth_getFilterLogs(in3_t* in3, size_t id, eth_log_t** logs) {
   }
 }
 
-void _log_free(eth_log_t* log) {
+void eth_log_free(eth_log_t* log) {
   _free(log->data.data);
   _free(log->topics);
   _free(log);
@@ -729,7 +729,7 @@ void eth_tx_receipt_free(eth_tx_receipt_t* txr) {
   eth_log_t *curr = txr->logs, *next = NULL;
   while (curr != NULL) {
     next = curr->next;
-    _log_free(curr);
+    eth_log_free(curr);
     curr = next;
   }
   _free(txr);

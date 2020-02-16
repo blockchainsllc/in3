@@ -46,9 +46,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
-//static char* ctx_name(in3_ctx_t* ctx) {
-//  return d_get_stringk(ctx->requests[0], K_METHOD);
-//}
+
+#define WAIT_TIME_CAP 3600
 
 static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
@@ -273,20 +272,43 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
 static void blacklist_node(node_match_t* node_weight) {
   if (node_weight && node_weight->weight) {
     // blacklist the node
-    node_weight->weight->blacklisted_until = _time() + 3600;
+    node_weight->weight->blacklisted_until = in3_time(NULL) + 3600;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
     in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
 }
 
+static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, uint8_t repl_latest, uint16_t avg_blktime) {
+  if (nodelist_block > current_blk)
+    // misbehaving node, so allow to update right away and it'll get blacklisted due to the exp_last_block mechanism
+    return 0;
+
+  uint64_t diff = current_blk - nodelist_block;
+  if (diff >= repl_latest)
+    return 0;
+  // we need to cap wait time as we might end up waiting for too long for chains with higher block time
+  return min((repl_latest - diff) * avg_blktime, WAIT_TIME_CAP);
+}
+
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
   if (!ctx->client->auto_update_list) return;
+
+  if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
+    // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
+    return;
+  }
 
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > chain->last_block) {
     if (chain->nodelist_upd8_params == NULL)
       chain->nodelist_upd8_params = _malloc(sizeof(*(chain->nodelist_upd8_params)));
+
+    // overwrite old params since we have a newer nodelist update now
     memcpy(chain->nodelist_upd8_params->node, node->node->address->data, node->node->address->len);
     chain->nodelist_upd8_params->exp_last_block = d_get_longk(response_in3, K_LAST_NODE_LIST);
+    chain->nodelist_upd8_params->timestamp      = in3_time(NULL) + update_waittime(d_get_longk(response_in3, K_LAST_NODE_LIST),
+                                                                              d_get_longk(response_in3, K_CURRENT_BLOCK),
+                                                                              ctx->client->replace_latest_block,
+                                                                              chain->avg_block_time);
   }
 
   if (chain->whitelist && d_get_longk(response_in3, K_LAST_WHITE_LIST) > chain->whitelist->last_block)
@@ -472,6 +494,29 @@ void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) 
   _free(req);
 }
 
+static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
+  return ctx_is_method(ctx, "in3_nodeList");
+}
+
+in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
+  ctx_remove_required(ctx, ctx->required);
+
+  // blacklist node that gave us an error response for nodelist (if not first update)
+  // and clear nodelist params
+  in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
+
+  if (nodelist_not_first_upd8(chain))
+    blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+  _free(chain->nodelist_upd8_params);
+  chain->nodelist_upd8_params = NULL;
+
+  // if first update return error otherwise return IN3_OK, this is because first update is
+  // always from a boot node which is presumed to be trusted
+  if (nodelist_first_upd8(chain))
+    return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
+  return IN3_OK;
+}
+
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   int       retry_count = 0;
   in3_ret_t res;
@@ -487,7 +532,10 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
 
     // handle subcontexts first
     while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
-      if ((res = in3_send_ctx(ctx->required)) != IN3_OK)
+      res = in3_send_ctx(ctx->required);
+      if (res == IN3_EIGNORE)
+        ctx_handle_failable(ctx);
+      else if (res != IN3_OK)
         return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
 
       // recheck in order to prepare the request.
@@ -540,8 +588,7 @@ in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method)
   in3_ctx_t* sub_ctx = parent->required;
   while (sub_ctx) {
     if (!sub_ctx->requests) continue;
-    const char* required_method = d_get_stringk(sub_ctx->requests[0], K_METHOD);
-    if (required_method && strcmp(required_method, search_method) == 0) return sub_ctx;
+    if (ctx_is_method(sub_ctx, search_method)) return sub_ctx;
     sub_ctx = sub_ctx->required;
   }
   return NULL;
@@ -555,7 +602,7 @@ in3_ret_t ctx_add_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
 }
 
 in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
-
+  if (!ctx) return IN3_OK;
   in3_ctx_t* p = parent;
   while (p) {
     if (p->required == ctx) {
@@ -656,9 +703,14 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         ctx->error = NULL;
         // now try again, which should end in waiting for the next request.
         return in3_ctx_execute(ctx);
-      } else
+      } else {
+        if (ctx_is_allowed_to_fail(ctx)) {
+          ret                     = IN3_EIGNORE;
+          ctx->verification_state = IN3_EIGNORE;
+        }
         // we give up
         return ctx->error ? (ret ? ret : IN3_ERPC) : ctx_set_error(ctx, "reaching max_attempts and giving up", IN3_ELIMIT);
+      }
     }
 
     case CT_SIGN: {

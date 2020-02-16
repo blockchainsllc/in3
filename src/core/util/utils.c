@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "utils.h"
 #include "../../third-party/crypto/sha3.h"
 #include "bytes.h"
 #include "debug.h"
@@ -45,7 +46,39 @@
 #include <posix/sys/time.h>
 #endif
 
-void uint256_set(uint8_t* src, wlen_t src_len, uint8_t dst[32]) {
+#ifdef __ZEPHYR__
+static uint64_t time_zephyr(void* t) {
+  UNUSED_VAR(t);
+  return k_uptime_get();
+}
+static int rand_zephyr(void* s) {
+  UNUSED_VAR(s);
+  return (int) k_uptime_get();
+}
+static void srand_zephyr(unsigned int s) {
+  return;
+}
+static time_func  in3_time_fn  = time_zephyr;
+static rand_func  in3_rand_fn  = rand_zephyr;
+static srand_func in3_srand_fn = srand_zephyr;
+#else  /* __ZEPHYR__ */
+static uint64_t time_libc(void* t) {
+  UNUSED_VAR(t);
+  return time(t);
+}
+static int rand_libc(void* s) {
+  UNUSED_VAR(s);
+  return rand();
+}
+static void srand_libc(unsigned int s) {
+  return srand(s);
+}
+static time_func  in3_time_fn  = time_libc;
+static rand_func  in3_rand_fn  = rand_libc;
+static srand_func in3_srand_fn = srand_libc;
+#endif /* __ZEPHYR__ */
+
+void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst) {
   if (src_len < 32) memset(dst, 0, 32 - src_len);
   memcpy(dst + 32 - src_len, src, src_len);
 }
@@ -93,7 +126,7 @@ const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
 }
 #endif
 
-int hex_to_bytes(char* buf, int len, uint8_t* out, int outbuf_size) {
+int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
   if (len == -1) {
     len = strlen(buf);
     if (len >= 2 && *buf == '0' && buf[1] == 'x') {
@@ -117,7 +150,7 @@ int hex_to_bytes(char* buf, int len, uint8_t* out, int outbuf_size) {
 
   return out_len;
 }
-bytes_t* hex_to_new_bytes(char* buf, int len) {
+bytes_t* hex_to_new_bytes(const char* buf, int len) {
   int bytes_len = (len & 1) ? (len + 1) / 2 : len / 2;
 
   uint8_t* b     = _malloc(bytes_len);
@@ -128,7 +161,7 @@ bytes_t* hex_to_new_bytes(char* buf, int len) {
   return bytes;
 }
 
-int bytes_to_hex(uint8_t* buffer, int len, char* out) {
+int bytes_to_hex(const uint8_t* buffer, int len, char* out) {
   const char hex[] = "0123456789abcdef";
   int        i = 0, j = 0;
   while (j < len) {
@@ -149,7 +182,7 @@ int sha3_to(bytes_t* data, void* dst) {
   return 0;
 }
 
-bytes_t* sha3(bytes_t* data) {
+bytes_t* sha3(const bytes_t* data) {
   bytes_t*        out = NULL;
   struct SHA3_CTX ctx;
 
@@ -191,7 +224,7 @@ uint64_t char_to_long(const char* a, int l) {
   return -1;
 }
 
-char* _strdupn(char* src, int len) {
+char* _strdupn(const char* src, int len) {
   if (len < 0) len = strlen(src);
   char* dst = _malloc(len + 1);
   strncpy(dst, src, len);
@@ -206,7 +239,7 @@ int min_bytes_len(uint64_t val) {
   return 8;
 }
 
-char* str_replace(char* orig, char* rep, char* with) {
+char* str_replace(char* orig, const char* rep, const char* with) {
   char* result;
   char* ins;
   char* tmp;
@@ -283,3 +316,10 @@ uint64_t current_ms() {
   return 1000L;
 #endif
 }
+
+void     in3_set_func_time(time_func fn) { in3_time_fn = fn; }
+uint64_t in3_time(void* t) { return in3_time_fn(t); }
+void     in3_set_func_rand(rand_func fn) { in3_rand_fn = fn; }
+int      in3_rand(void* s) { return in3_rand_fn(s); }
+void     in3_set_func_srand(srand_func fn) { in3_srand_fn = fn; }
+void     in3_srand(unsigned int s) { return in3_srand_fn(s); }

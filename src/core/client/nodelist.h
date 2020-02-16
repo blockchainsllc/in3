@@ -68,7 +68,7 @@ in3_ret_t in3_node_list_get(in3_ctx_t* ctx, chain_id_t chain_id, bool update, in
 /**
  * filters and fills the weights on a returned linked list.
  */
-node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, _time_t now, uint32_t* total_weight, int* total_found, in3_node_filter_t filter);
+node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights, int len, uint64_t now, uint32_t* total_weight, int* total_found, in3_node_filter_t filter);
 
 /**
  * calculates the weight for a node.
@@ -86,5 +86,20 @@ in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain);
 // weights
 void in3_ctx_free_nodes(node_match_t* c);
 int  ctx_nodes_len(node_match_t* root);
+bool ctx_is_method(const in3_ctx_t* ctx, const char* method);
+
+static inline bool nodelist_first_upd8(const in3_chain_t* chain) {
+  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block == 0);
+}
+
+static inline bool nodelist_not_first_upd8(const in3_chain_t* chain) {
+  return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != 0);
+}
+
+static inline void blacklist_node_addr(const in3_chain_t* chain, const address_t node_addr, uint64_t secs_from_now) {
+  for (int i = 0; i < chain->nodelist_length; ++i)
+    if (!memcmp(chain->nodelist[i].address->data, node_addr, chain->nodelist[i].address->len))
+      chain->weights[i].blacklisted_until = in3_time(NULL) + secs_from_now;
+}
 
 #endif

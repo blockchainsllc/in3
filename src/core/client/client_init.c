@@ -70,8 +70,10 @@
 #define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
 #define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
 #define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
+#define EXPECT_TOK_U8(token) EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value")
 #define EXPECT_TOK_U16(token) EXPECT_TOK(token, IS_D_UINT16(token), "expected uint16 value")
 #define EXPECT_TOK_U32(token) EXPECT_TOK(token, IS_D_UINT32(token), "expected uint32 value")
+#define EXPECT_TOK_U64(token) EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value")
 #define EXPECT_TOK_KEY_HEXSTR(token) EXPECT_TOK(token, is_hex_str(d_get_keystr(token->key)), "expected hex str")
 
 // set the defaults
@@ -105,6 +107,15 @@ static void whitelist_free(in3_whitelist_t* wl) {
   _free(wl);
 }
 
+static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
+  switch (id) {
+    case ETH_CHAIN_ID_MAINNET: return 15;
+    case ETH_CHAIN_ID_KOVAN: return 6;
+    case ETH_CHAIN_ID_GOERLI: return 15;
+    default: return 5;
+  }
+}
+
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
@@ -118,6 +129,7 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->version              = version;
   chain->whitelist            = NULL;
   chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
+  chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
   if (wl_contract) {
     chain->whitelist                 = _malloc(sizeof(in3_whitelist_t));
     chain->whitelist->addresses.data = NULL;
@@ -285,6 +297,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     chain->last_block           = 0;
     chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
     chain->verified_hashes      = NULL;
+    chain->avg_block_time       = avg_block_time_for_chain_id(chain_id);
     c->chains_length++;
 
   } else {
@@ -355,6 +368,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
   weight->total_response_time = 0;
   return IN3_OK;
 }
+
 in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t address) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
@@ -384,6 +398,7 @@ in3_ret_t in3_client_remove_node(in3_t* c, chain_id_t chain_id, address_t addres
   }
   return IN3_OK;
 }
+
 in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
   in3_chain_t* chain = in3_find_chain(c, chain_id);
   if (!chain) return IN3_EFIND;
@@ -416,13 +431,14 @@ void in3_free(in3_t* a) {
     _free(a->filters->array);
     _free(a->filters);
   }
+  b_free(a->key);
   _free(a);
 }
 
 in3_t* in3_for_chain(chain_id_t chain_id) {
 
   // initialize random with the timestamp (in nanoseconds) as seed
-  _srand(current_ms());
+  in3_srand(current_ms());
 
   // create new client
   in3_t* c = _calloc(1, sizeof(in3_t));
@@ -488,7 +504,7 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
       c->chain_id = chain_id(token);
     } else if (token->key == key("signatureCount")) {
-      EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value");
+      EXPECT_TOK_U8(token);
       c->signature_count = (uint8_t) d_int(token);
     } else if (token->key == key("finality")) {
       EXPECT_TOK_U16(token);
@@ -506,6 +522,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("keepIn3")) {
       EXPECT_TOK_BOOL(token);
       c->keep_in3 = d_int(token) ? true : false;
+    } else if (token->key == key("key")) {
+      EXPECT_TOK_B256(token);
+      c->key = b_dup(d_bytes(token));
     } else if (token->key == key("useBinary")) {
       EXPECT_TOK_BOOL(token);
       c->use_binary = d_int(token) ? true : false;
@@ -518,14 +537,17 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxCodeCache")) {
       EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
+    } else if (token->key == key("maxVerifiedHashes")) {
+      EXPECT_TOK_U16(token);
+      c->max_verified_hashes = d_long(token);
     } else if (token->key == key("timeout")) {
       EXPECT_TOK_U32(token);
       c->timeout = d_long(token);
     } else if (token->key == key("minDeposit")) {
-      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
+      EXPECT_TOK_U64(token);
       c->min_deposit = d_long(token);
     } else if (token->key == key("nodeProps")) {
-      EXPECT_TOK(token, IS_D_UINT64(token), "expected uint64 value");
+      EXPECT_TOK_U64(token);
       c->node_props = d_long(token);
     } else if (token->key == key("nodeLimit")) {
       EXPECT_TOK_U16(token);
@@ -537,10 +559,11 @@ char* in3_configure(in3_t* c, const char* config) {
                      ? PROOF_FULL
                      : (strcmp(d_string(token), "standard") == 0 ? PROOF_STANDARD : PROOF_NONE);
     } else if (token->key == key("replaceLatestBlock")) {
-      EXPECT_TOK_U16(token);
-      c->replace_latest_block = (uint16_t) d_int(token);
+      EXPECT_TOK_U8(token);
+      c->replace_latest_block = (uint8_t) d_int(token);
+      in3_node_props_set(&c->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
     } else if (token->key == key("requestCount")) {
-      EXPECT_TOK(token, d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX, "expected uint8 value");
+      EXPECT_TOK_U8(token);
       c->request_count = (uint8_t) d_int(token);
     } else if (token->key == key("rpc")) {
       EXPECT_TOK_STR(token);
@@ -619,6 +642,21 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("needsUpdate")) {
             EXPECT_TOK_BOOL(cp.token);
             chain->nodelist_upd8_params = d_int(cp.token) ? _calloc(1, sizeof(*(chain->nodelist_upd8_params))) : NULL;
+          } else if (cp.token->key == key("avgBlockTime")) {
+            EXPECT_TOK_U16(cp.token);
+            chain->avg_block_time = (uint16_t) d_int(cp.token);
+          } else if (cp.token->key == key("verifiedHashes")) {
+            EXPECT_TOK_ARR(cp.token);
+            EXPECT_TOK(cp.token, (unsigned) d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
+            _free(chain->verified_hashes);
+            chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+            int i                  = 0;
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
+              EXPECT_TOK_U64(d_get(n.token, key("block")));
+              EXPECT_TOK_B256(d_get(n.token, key("hash")));
+              chain->verified_hashes[i].block_number = d_get_longk(n.token, key("block"));
+              memcpy(chain->verified_hashes[i].hash, d_get_byteskl(n.token, key("hash"), 32)->data, 32);
+            }
           } else if (cp.token->key == key("nodeList")) {
             EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
@@ -631,6 +669,8 @@ char* in3_configure(in3_t* c, const char* config) {
                                              d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                          "add node failed");
             }
+          } else {
+            EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }
         in3_client_run_chain_whitelisting(chain);
@@ -639,6 +679,13 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK(token, false, "unsupported config option!");
     }
   }
+
+  if (c->signature_count && c->chain_id != ETH_CHAIN_ID_LOCAL && !c->replace_latest_block) {
+    in3_log_warn("signatureCount > 0 without replaceLatestBlock is bound to fail; using default (" STR(DEF_REPL_LATEST_BLK) ")\n");
+    c->replace_latest_block = DEF_REPL_LATEST_BLK;
+  }
+
+  EXPECT_CFG(in3_find_chain(c, c->chain_id), "chain corresponding to chain id not initialized!");
 
 cleanup:
   json_free(cnf);

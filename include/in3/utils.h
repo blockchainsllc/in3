@@ -43,6 +43,12 @@
 #include "bytes.h"
 #include <stdint.h>
 
+#ifdef __ZEPHYR__
+#include <zephyr.h>
+#define _strtoull(str, endptr, base) strtoul(str, endptr, base)
+#else
+#define _strtoull(str, endptr, base) strtoull(str, endptr, base)
+#endif
 /** simple swap macro for integral types */
 #define SWAP(a, b) \
   {                \
@@ -64,12 +70,21 @@
  */
 #define IS_APPROX(n1, n2, err) ((n1 > n2) ? ((n1 - n2) <= err) : ((n2 - n1) <= err))
 
+/**
+ * simple macro to stringify other macro defs
+ * eg. usage - to concatenate a const with a string at compile time ->
+ * #define SOME_CONST_UINT 10U
+ * printf("Using default value of " STR(SOME_CONST_UINT));
+ */
+#define STR_IMPL_(x) #x
+#define STR(x) STR_IMPL_(x)
+
 /** converts the bytes to a unsigned long (at least the last max len bytes) */
 uint64_t bytes_to_long(const uint8_t* data, int len);
 
 /** converts the bytes to a unsigned int (at least the last max len bytes) */
 static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
-  if (data){
+  if (data) {
     switch (len) {
       case 0: return 0;
       case 1: return data[0];
@@ -77,8 +92,8 @@ static inline uint32_t bytes_to_int(const uint8_t* data, int len) {
       case 3: return (((uint32_t) data[0]) << 16) | (((uint32_t) data[1]) << 8) | data[2];
       default: return (((uint32_t) data[0]) << 24) | (((uint32_t) data[1]) << 16) | (((uint32_t) data[2]) << 8) | data[3];
     }
-  }
-  else return 0;
+  } else
+    return 0;
 }
 /** converts a character into a uint64_t*/
 uint64_t char_to_long(const char* a, int l);
@@ -87,7 +102,7 @@ uint64_t char_to_long(const char* a, int l);
 uint8_t hexchar_to_int(char c);
 
 /** converts a uint64_t to string (char*); buffer-size min. 21 bytes */
-const unsigned char* u64_to_str(uint64_t value, char* pBuf, int szBuf);
+const char* u64_to_str(uint64_t value, char* pBuf, int szBuf);
 
 /**
  * convert a c hex string to a byte array storing it into an existing buffer.
@@ -133,17 +148,17 @@ void uint256_set(const uint8_t* src, wlen_t src_len, bytes32_t dst);
  * replaces a string and returns a copy.
  * @retval 
  */
-char* str_replace(const char* orig, const char* rep, const char* with);
+char* str_replace(char* orig, const char* rep, const char* with);
 
 /**
  * replaces a string at the given position.
  */
-char* str_replace_pos(const char* orig, size_t pos, size_t len, const char* rep);
+char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
 
 /**
   * lightweight strstr() replacements
   */
-char* str_find(const char* haystack, const char* needle);
+char* str_find(char* haystack, const char* needle);
 
 /**
  * current timestamp in ms. 
@@ -196,5 +211,50 @@ static inline bool memiszero(uint8_t* ptr, size_t l) {
   }
   return !l;
 }
+
+/**
+ * Pluggable functions:
+ * Mechanism to replace library functions with custom alternatives. This is particularly useful for
+ * embedded systems which have their own time or rand functions.
+ *
+ * eg.
+ * // define function with specified signature
+ * uint64_t my_time(void* t) {
+ *  // ...
+ * }
+ *
+ * // then call in3_set_func_*()
+ * int main() {
+ *  in3_set_func_time(my_time);
+ *  // Henceforth, all library calls will use my_time() instead of the platform default time function
+ * }
+ */
+
+/**
+ * time function
+ * defaults to k_uptime_get() for zeohyr and time(NULL) for other platforms
+ * expected to return a u64 value representative of time (from epoch/start)
+ */
+typedef uint64_t (*time_func)(void* t);
+void     in3_set_func_time(time_func fn);
+uint64_t in3_time(void* t);
+
+/**
+ * rand function
+ * defaults to k_uptime_get() for zeohyr and rand() for other platforms
+ * expected to return a random number
+ */
+typedef int (*rand_func)(void* s);
+void in3_set_func_rand(rand_func fn);
+int  in3_rand(void* s);
+
+/**
+ * srand function
+ * defaults to NOOP for zephyr and srand() for other platforms
+ * expected to set the seed for a new sequence of random numbers to be returned by in3_rand()
+ */
+typedef void (*srand_func)(unsigned int s);
+void in3_set_func_srand(srand_func fn);
+void in3_srand(unsigned int s);
 
 #endif

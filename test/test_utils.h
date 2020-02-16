@@ -60,6 +60,30 @@ extern "C" {
     TEST_LOG_INTERNAL(#t, "Completed in %fs\n", TIMING_GET()); \
   } while (0)
 
+// if t is NULL, adds 10 to previously returned value and returns it
+// otherwise expects t to point to a uint64_t value; if this value is non-zero the same value is returned
+// otherwise the previously returned value is returned
+static inline uint64_t mock_time(void* t) {
+  static uint64_t now = 0;
+  if (t)
+    now = (*(uint64_t*) t) ? *(uint64_t*) t : now;
+  else
+    now += 10;
+  return now;
+}
+
+// a not-so-random number generator
+// starts with zero and returns a number that is one more than the previously returned value, unless
+// s is not NULL, in which case s is treated as a pointer to int and it's `pointed-to' value is returned
+static inline int mock_rand(void* s) {
+  static uint64_t rand = 0;
+  if (s)
+    rand = *(int*) s;
+  else
+    rand += 1;
+  return rand;
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -252,4 +252,5 @@ void mem_reset(int cnt) {
     */
   mem_tracker = NULL;
 }
+
 #endif /* TEST */

@@ -53,7 +53,6 @@ option(IN3_LIB "if true a shared anmd static library with all in3-modules will b
 option(TEST "builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance" OFF)
 option(FAST_MATH "Math optimizations used in the EVM. This will also increase the filesize." OFF)
 option(SEGGER_RTT "Use the segger real time transfer terminal as the logging mechanism" OFF)
-option(FILTER_NODES "if true the nodelist is filtered against config node properties" OFF)
 option(CURL_BLOCKING "if true the curl-request will block until the response is received" OFF)
 
 if (USE_PRECOMPUTED_EC)
@@ -71,18 +70,18 @@ if (ERR_MSG)
   ADD_DEFINITIONS(-DERR_MSG)
 endif()
 
-if(ETH_FULL) 
+if(ETH_FULL)
   ADD_DEFINITIONS(-DETH_FULL)
   set(IN3_VERIFIER eth_full)
-elseif(ETH_BASIC) 
+elseif(ETH_BASIC)
   ADD_DEFINITIONS(-DETH_BASIC)
   set(IN3_VERIFIER eth_basic)
-elseif(ETH_NANO) 
+elseif(ETH_NANO)
   ADD_DEFINITIONS(-DETH_NANO)
   set(IN3_VERIFIER eth_nano)
 endif()
 
-if(IN3API) 
+if(IN3API)
   ADD_DEFINITIONS(-DETH_API)
   set(IN3_API eth_api)
 endif()
@@ -112,12 +111,6 @@ if(SEGGER_RTT)
     MESSAGE(STATUS "Enable segger RTT for logging")
     ADD_DEFINITIONS(-DSEGGER_RTT)
 endif(SEGGER_RTT)
-
-if(FILTER_NODES)
-    MESSAGE(STATUS "Enable nodelist filter based on properties")
-    ADD_DEFINITIONS(-DFILTER_NODES)
-endif(FILTER_NODES)
-
 
 # handle version
 if (TAG_VERSION)

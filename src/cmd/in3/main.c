@@ -606,6 +606,7 @@ int main(int argc, char* argv[]) {
   storage_handler.get_item = storage_get_item;
   storage_handler.set_item = storage_set_item;
   storage_handler.clear    = storage_clear;
+  storage_handler.cptr     = NULL;
 
   // we want to verify all
   in3_register_eth_full();
@@ -643,6 +644,11 @@ int main(int argc, char* argv[]) {
   char*           sig_type     = "raw";
   bool            to_eth       = false;
 
+  // handle clear cache opt before initializing cache
+  for (i = 1; i < argc; i++)
+    if (strcmp(argv[i], "-ccache") == 0)
+      c->cache->clear(c->cache->cptr);
+
   // read data from cache
   in3_cache_init(c);
 
@@ -665,8 +671,8 @@ int main(int argc, char* argv[]) {
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
-    else if (strcmp(argv[i], "-ccache") == 0) // clear cache
-      c->cache->clear(c->cache->cptr);
+    else if (strcmp(argv[i], "-ccache") == 0) // NOOP - should have been handled earlier
+      ;
     else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-data") == 0) { // data
       char* d = argv[++i];
       if (strcmp(d, "-") == 0)
@@ -827,7 +833,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "in3_weights") == 0) {
-    uint64_t     now   = _time();
+    uint64_t     now   = in3_time(NULL);
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
     printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
     for (int i = 0; i < chain->nodelist_length; i++) {

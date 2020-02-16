@@ -20,55 +20,77 @@ Parameters:
 The config params support the following properties :
 
 
-* **[autoUpdateList](https://github.com/slockit/in3/blob/master/src/types/types.ts#L255)** :`boolean` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer
+* **autoUpdateList** :`bool` *(optional)*  - if true the nodelist will be automaticly updated if the lastBlock is newer.
     example: true
 
-* **[chainId](https://github.com/slockit/in3/blob/master/src/types/types.ts#L240)** :`string` - servers to filter for the given chain. The chain-id based on EIP-155.
+* **chainId** :`uint32_t` or `string (mainnet/kovan/goerli)` - servers to filter for the given chain. The chain-id based on EIP-155.
     example: 0x1
 
-* **[finality](https://github.com/slockit/in3/blob/master/src/types/types.ts#L230)** :`number` *(optional)*  - the number in percent needed in order reach finality (% of signature of the validators)
+* **signatureCount** :`uint8_t` *(optional)*  - number of signatures requested.
+    example: 2
+    
+* **finality** :`uint16_t` *(optional)*  - the number in percent needed in order reach finality (% of signature of the validators).
     example: 50
 
-* **[includeCode](https://github.com/slockit/in3/blob/master/src/types/types.ts#L187)** :`boolean` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
+* **includeCode** :`bool` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
     example: true
 
-* **[keepIn3](https://github.com/slockit/in3/blob/master/src/types/types.ts#L187)** :`boolean` *(optional)*  - if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
-    example: false
-
-* **[key](https://github.com/slockit/in3/blob/master/src/types/types.ts#L169)** :`any` *(optional)*  - the client key to sign requests
-    example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-
-* **[maxAttempts](https://github.com/slockit/in3/blob/master/src/types/types.ts#L182)** :`number` *(optional)*  - max number of attempts in case a response is rejected
+* **maxAttempts** :`uint16_t` *(optional)*  - max number of attempts in case a response is rejected.
     example: 10
 
-* **[maxBlockCache](https://github.com/slockit/in3/blob/master/src/types/types.ts#L197)** :`number` *(optional)*  - number of number of blocks cached  in memory
+* **keepIn3** :`bool` *(optional)*  - if true, requests sent to the input sream of the comandline util will be send theor responses in the same form as the server did.
+    example: false
+
+* **key** :`bytes32` *(optional)*  - the client key to sign requests.
+    example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+
+* **useBinary** :`bool` *(optional)*  - if true the client will use binary format.
+    example: false
+
+* **useHttp** :`bool` *(optional)*  - if true the client will try to use http instead of https.
+    example: false
+
+* **maxBlockCache** :`uint32_t` *(optional)*  - number of number of blocks cached  in memory.
     example: 100
 
-* **[maxCodeCache](https://github.com/slockit/in3/blob/master/src/types/types.ts#L192)** :`number` *(optional)*  - number of max bytes used to cache the code in memory
+* **maxCodeCache** :`uint32_t` *(optional)*  - number of max bytes used to cache the code in memory.
     example: 100000
 
-* **[minDeposit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L215)** :`number` - min stake of the server. Only nodes owning at least this amount will be chosen.
+* **timeout** :`uint32_t` *(optional)*  - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
+    example: 100000
 
-* **[nodeLimit](https://github.com/slockit/in3/blob/master/src/types/types.ts#L155)** :`number` *(optional)*  - the limit of nodes to store in the client.
+* **minDeposit** :`uint64_t` - min stake of the server. Only nodes owning at least this amount will be chosen.
+
+* **nodeProps** :`uint64_t` bitmask *(optional)*  - used to identify the capabilities of the node.
+
+* **nodeLimit** :`uint16_t` *(optional)*  - the limit of nodes to store in the client.
     example: 150
 
-* **[proof](https://github.com/slockit/in3/blob/master/src/types/types.ts#L206)** :`'none'`|`'standard'`|`'full'` *(optional)*  - if true the nodes should send a proof of the response
+* **proof** :`string (none/standard/full)` *(optional)*  - if true the nodes should send a proof of the response.
     example: true
 
-* **[replaceLatestBlock](https://github.com/slockit/in3/blob/master/src/types/types.ts#L220)** :`number` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+* **replaceLatestBlock** :`uint8_t` *(optional)*  - if specified, the blocknumber *latest* will be replaced by blockNumber- specified value.
     example: 6
 
-* **[requestCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L225)** :`number` - the number of request send when getting a first answer
+* **requestCount** :`uint8_t` - the number of request send when getting a first answer.
     example: 3
 
-* **[rpc](https://github.com/slockit/in3/blob/master/src/types/types.ts#L267)** :`string` *(optional)*  - url of one or more rpc-endpoints to use. (list can be comma seperated)
+* **rpc** :`string` *(optional)*  - url of one or more rpc-endpoints to use. (list can be comma seperated)
 
-* **[servers](https://github.com/slockit/in3/blob/master/src/types/types.ts#L271)** *(optional)*  - the nodelist per chain
-
-* **[signatureCount](https://github.com/slockit/in3/blob/master/src/types/types.ts#L211)** :`number` *(optional)*  - number of signatures requested
-    example: 2
-
-* **[verifiedHashes](https://github.com/slockit/in3/blob/master/src/types/types.ts#L201)** :`string`[] *(optional)*  - if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
+* **servers**/**nodes** : `collection of JSON objects with chain Id (hex string) as key` *(optional)*  - the value of each JSON object defines the nodelist per chain and may contain the following fields:
+    * **contract** :`address`  - address of the registry contract.
+    * **whiteListContract** :`address` *(optional, cannot be combined with whiteList)*  - address of the whiteList contract.
+    * **whiteList** :`array of addresses` *(optional, cannot be combined with whiteListContract)*  - manual whitelist.
+    * **registryId** :`bytes32`  - identifier of the registry.
+    * **needsUpdate** :`bool` *(optional)*  - if set, the nodeList will be updated before next request.
+    * **avgBlockTime** :`uint16_t` *(optional)*  - average block time (seconds) for this chain.
+    * **verifiedHashes** :`array of JSON objects` *(optional)*  - if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request. MUST contain the following fields:
+        * **block** :`uint64_t`  - block number.
+        * **hash** : `bytes32`  - verified hash corresponding to block number.
+    * **nodeList** :`array of JSON objects` *(optional)*  - manual nodeList, each JSON object may contain the following fields:
+        * **url** :`string`  - URL of the node.
+        * **address** :`address`  - address of the node.
+        * **props** :`uint64_t` bitmask *(optional)*  - used to identify the capabilities of the node (defaults to 65535).
 
 Returns:
 
@@ -80,29 +102,27 @@ Example:
 Request:
 ```js
 {
-  "method":"in3_config",
-  "params":[{
-      "chainId":"0x5",
-      "maxAttempts":4,
-      "nodeLimit":10
-      "servers":{
-          "0x1": [
-              "nodeList": [
-                  {
-                    "address":"0x1234567890123456789012345678901234567890",
-                    "url":"https://mybootnode-A.com",
-                    "props":"0xFFFF",
-                  },
-                  {
-                    "address":"0x1234567890123456789012345678901234567890",
-                    "url":"https://mybootnode-B.com",
-                    "props":"0xFFFF",
-                  }
-              ]
-          ]
-      }
-
-   }]
+	"method": "in3_config",
+	"params": [{
+		"chainId": "0x5",
+		"maxAttempts": 4,
+		"nodeLimit": 10,
+		"servers": {
+			"0x1": {
+				"nodeList": [{
+						"address": "0x1234567890123456789012345678901234567890",
+						"url": "https://mybootnode-A.com",
+						"props": "0xFFFF"
+					},
+					{
+						"address": "0x1234567890123456789012345678901234567890",
+						"url": "https://mybootnode-B.com",
+						"props": "0xFFFF"
+					}
+				]
+			}
+		}
+	}]
 }
 ```
 
@@ -111,7 +131,7 @@ Response:
 ```js
 {
   "id": 1,
-  "result": true,
+  "result": true
 }
 ```
 

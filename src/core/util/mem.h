@@ -60,11 +60,7 @@
 
 #ifdef __ZEPHYR__
 #include <zephyr.h>
-#define _time() k_uptime_get()
-#define _time_t uint64_t
 #define _atol(p) atoi(p)
-#define _srand(p) ;
-#define _rand() (uint32_t) k_uptime_get()
 #define _localtime(b__)                          \
   do {                                           \
     sprintf(b__, "%" PRId32, k_uptime_get_32()); \
@@ -73,11 +69,7 @@
   do {             \
   } while (0) // FIXME: Fix for zephyr
 #else         /* __ZEPHYR__ */
-#define _time() time(0)
-#define _time_t time_t
 #define _atol(p) atol(p)
-#define _srand(p) srand(p)
-#define _rand() (uint32_t) rand()
 #define _localtime(b__)                                              \
   do {                                                               \
     time_t     t                                    = time(NULL);    \

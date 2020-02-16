@@ -163,14 +163,13 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":false}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"0x1203030230\"}", "expected uint32 or string");
+  TEST_ASSERT_CONFIGURE_FAIL("uinitialized chain: chainId", c, "{\"chainId\":0}", "chain corresponding to chain id not initialized!");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"mainnet\"}");
   TEST_ASSERT_EQUAL(c->chain_id, 1);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":0}");
-  TEST_ASSERT_EQUAL(c->chain_id, 0);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":4294967295}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->chain_id, 4294967295U);
-  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0xffffffff\"}"); // UINT32_MAX
-  TEST_ASSERT_EQUAL(c->chain_id, 0xffffffff);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":5}");
+  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_GOERLI);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"chainId\":\"0x2a\"}");
+  TEST_ASSERT_EQUAL(c->chain_id, ETH_CHAIN_ID_KOVAN);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: signatureCount", c, "{\"signatureCount\":\"0x1234\"}", "expected uint8");
@@ -220,6 +219,14 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: keepIn3", c, "{\"keepIn3\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"keepIn3\":true}");
   TEST_ASSERT_EQUAL(c->keep_in3, true);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":1}", "expected 256 bit data");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":\"1\"}", "expected 256 bit data");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":\"0x00000\"}", "expected 256 bit data");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
+  bytes32_t b256;
+  hex_to_bytes("0x1234567890123456789012345678901234567890123456789012345678901234", -1, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(c->key->data, b256, 32);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":1}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"1\"}", "expected boolean");
@@ -326,6 +333,16 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"proof\":\"full\"}");
   TEST_ASSERT_EQUAL(c->proof, PROOF_FULL);
 
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: replaceLatestBlock", c, "{\"replaceLatestBlock\":\"-1\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: replaceLatestBlock", c, "{\"replaceLatestBlock\":\"0x123412341234\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: replaceLatestBlock", c, "{\"replaceLatestBlock\":\"value\"}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: replaceLatestBlock", c, "{\"replaceLatestBlock\":65536}", "expected uint8");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"replaceLatestBlock\":0}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"replaceLatestBlock\":255}");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"replaceLatestBlock\":\"0xff\"}");
+  TEST_ASSERT_EQUAL(c->replace_latest_block, 255);
+  TEST_ASSERT_EQUAL(in3_node_props_get(c->node_props, NODE_PROP_MIN_BLOCK_HEIGHT), c->replace_latest_block);
+
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"-1\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"0x123412341234\"}", "expected uint8");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: requestCount", c, "{\"requestCount\":\"value\"}", "expected uint8");
@@ -409,7 +426,15 @@ static void test_configure_validation() {
                                 "        \"props\":\"0xffff\","
                                 "        \"address\":\"" NODE_ADDRS "\""
                                 "      }],"
-                                "      \"needsUpdate\":true"
+                                "      \"needsUpdate\":true,"
+                                "      \"avgBlockTime\":7,"
+                                "      \"verifiedHashes\":[{"
+                                "        \"block\": \"0x234ad3\","
+                                "        \"hash\": \"0x1230980495039470913820938019274231230980495039470913820938019274\""
+                                "      },{"
+                                "        \"block\": \"0x234a99\","
+                                "        \"hash\": \"0xda879213bf9834ff2eade0921348dda879213bf9834ff2eade0921348d238130\""
+                                "      }]"
                                 "    }"
                                 "  }"
                                 "}");
@@ -422,7 +447,6 @@ static void test_configure_validation() {
   hex_to_bytes(CONTRACT_ADDRS, -1, addr, 20);
   TEST_ASSERT_EQUAL_MEMORY(chain->contract->data, addr, 20);
 
-  bytes32_t b256;
   hex_to_bytes(REGISTRY_ID, -1, b256, 32);
   TEST_ASSERT_EQUAL_MEMORY(chain->registry_id, b256, 32);
 
@@ -431,6 +455,16 @@ static void test_configure_validation() {
   TEST_ASSERT_EQUAL(chain->nodelist[0].props, 0xffff);
   hex_to_bytes(NODE_ADDRS, -1, addr, 20);
   TEST_ASSERT_EQUAL_MEMORY(chain->nodelist[0].address->data, addr, 20);
+
+  TEST_ASSERT_EQUAL(0x234ad3, chain->verified_hashes[0].block_number);
+  hex_to_bytes("0x1230980495039470913820938019274231230980495039470913820938019274", -1, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(chain->verified_hashes[0].hash, b256, 32);
+
+  TEST_ASSERT_EQUAL(0x234a99, chain->verified_hashes[1].block_number);
+  hex_to_bytes("0xda879213bf9834ff2eade0921348dda879213bf9834ff2eade0921348d238130", -1, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(chain->verified_hashes[1].hash, b256, 32);
+
+  TEST_ASSERT_EQUAL(7, chain->avg_block_time);
 
   in3_free(c);
 }
