@@ -3,7 +3,7 @@ package in3;
 /**
  * Constants for Chain-specs
  */
-public class Chain {
+public final class Chain {
     /**
      * support for multiple chains, a client can then switch between different chains (but consumes more memory)
      */

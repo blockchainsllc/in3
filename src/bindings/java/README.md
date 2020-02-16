@@ -120,13 +120,10 @@ public class HelloIN3 {
        String blockNumber = args[0]; 
 
        // create incubed
-       IN3 in3 = new IN3();
-
-       // configure
-       in3.setChainId(0x1);  // set it to mainnet (which is also dthe default)
+       IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
        // execute the request
-       String jsonResult = in3.sendRPC("eth_getBlockByNumber",new Object[]{ blockNumber ,true});
+       String jsonResult = in3.sendRPC("eth_getBlockByNumber", new Object[]{ blockNumber, true});
 
        ....
    }
@@ -144,15 +141,13 @@ in3 also offers a API for getting Information directly in a structured way.
 import java.util.*;
 import in3.*;
 import in3.eth1.*;
+import java.math.BigInteger;
 
 public class HelloIN3 {  
    // 
     public static void main(String[] args) throws Exception {
         // create incubed
-        IN3 in3 = new IN3();
-
-        // configure
-        in3.setChainId(0x1); // set it to mainnet (which is also dthe default)
+        IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
         // read the latest Block including all Transactions.
         Block latestBlock = in3.getEth1API().getBlockByNumber(Block.LATEST, true);
@@ -188,16 +183,13 @@ public class HelloIN3 {
    // 
    public static void main(String[] args) {
        // create incubed
-       IN3 in3 = new IN3();
-
-       // configure
-       in3.setChainId(0x1);  // set it to mainnet (which is also dthe default)
+       IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
        // call a contract, which uses eth_call to get the result. 
-       Object[] result = (Object[]) in3.getEth1API().call(                                   // call a function of a contract
-            "0x2736D225f85740f42D17987100dc8d58e9e16252",                       // address of the contract
-            "servers(uint256):(string,address,uint256,uint256,uint256,address)",// function signature
-            1);                                                                 // first argument, which is the index of the node we are looking for.
+       Object[] result = (Object[]) in3.getEth1API().call(                       // call a function of a contract
+            "0x2736D225f85740f42D17987100dc8d58e9e16252",                        // address of the contract
+            "servers(uint256):(string,address,uint256,uint256,uint256,address)", // function signature
+            1);                                                                  // first argument, which is the index of the node we are looking for.
 
         System.out.println("url     : " + result[0]);
         System.out.println("owner   : " + result[1]);
@@ -228,12 +220,9 @@ import in3.eth1.*;
 
 public class Example {
     //
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException {
         // create incubed
-        IN3 in3 = new IN3();
-
-        // configure
-        in3.setChainId(0x1); // set it to mainnet (which is also dthe default)
+        IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
         // create a wallet managing the private keys
         SimpleWallet wallet = new SimpleWallet();
@@ -264,6 +253,44 @@ public class Example {
 
         System.out.println("Transaction sent with hash = " + txHash);
 
+    }
+}
+```
+
+#### Changing the default configuration
+
+In order to change the default configuration, just use the classes inside in3.config package.
+
+```java
+package in3;
+
+import in3.*;
+import in3.config.*;
+import in3.eth1.Block;
+
+public class Example {
+    //
+    public static void main(String[] args) {
+        // create incubed client
+        IN3 in3 = IN3.forChain(Chain.GOERLI); // set it to goerli
+
+        // Setup a Configuration object for the client
+        ClientConfiguration clientConfig = new ClientConfiguration();
+        clientConfig.setReplaceLatestBlock(6); // define that latest will be -6
+        clientConfig.setAutoUpdateList(false); // prevents node automatic update
+        clientConfig.setMaxAttempts(1); // sets max attempts to 1 before giving up
+        clientConfig.setProof(Proof.none); // does not require proof (not recommended)
+
+        // Setup the NodeConfiguration object for the nodes on a certain chain
+        NodeConfiguration nodeConfiguration = new NodeConfiguration(Chain.GOERLI, clientConfig);
+        nodeConfiguration.setNeedsUpdate(false);
+        nodeConfiguration.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
+        nodeConfiguration.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
+
+        in3.setConfig(clientConfig);
+
+        Block block = in3.getEth1API().getBlockByNumber(Block.LATEST, true);
+        System.out.println(block.getHash());
     }
 }
 ```

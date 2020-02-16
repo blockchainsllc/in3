@@ -58,7 +58,10 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/Proof.java 
     in3/Loader.java
     in3/Signer.java
-
+    in3/config/Configuration.java
+    in3/config/ClientConfiguration.java
+    in3/config/NodeConfiguration.java
+    in3/config/NodeListConfiguration.java
     in3/eth1/API.java
     in3/eth1/Block.java
     in3/eth1/Transaction.java
