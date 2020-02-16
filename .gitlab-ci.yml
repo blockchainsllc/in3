@@ -286,7 +286,7 @@ test_qemu:
     - west init -m https://github.com/zephyrproject-rtos/zephyr --mr v2.0.0
     - export ZEPHYR_BASE=/builds/in3/c/in3-core
     - source /builds/in3/c/in3-core/zephyr/zephyr-env.sh
-    - west build -b qemu_cortex_m3 test/qemu
+    - west build -b qemu_cortex_m3 c/test/qemu
     - ./scripts/qemu.sh 2> /dev/null
 
 java_linux:
