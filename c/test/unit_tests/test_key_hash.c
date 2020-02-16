@@ -48,7 +48,7 @@ static void test_key_hash_collisions();
 // Internal implementation that mirrors key() from data.c with IN3_DONT_HASH_KEYS not defined
 d_key_t key_(const char* c) {
   uint16_t val = 0;
-  size_t l = strlen(c);
+  size_t   l   = strlen(c);
   for (; l; l--, c++) val ^= *c | val << 7;
   return val;
 }
@@ -117,7 +117,7 @@ void test_key_hash_collisions() {
   TEST_ASSERT(hashes != NULL);
 
   const char* delim      = "\n";
-  char*       keyfilestr = filetostr("../src/core/client/keys.h");
+  char*       keyfilestr = filetostr("../c/src/core/client/keys.h");
   TEST_ASSERT_MESSAGE(keyfilestr != NULL, "File keys.h not found!");
   // skip legal header
   char* keys = strstr(keyfilestr, "*/");

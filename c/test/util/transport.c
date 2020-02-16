@@ -10,7 +10,7 @@
 #include "../test_utils.h"
 #include <stdio.h>
 #include <unistd.h>
-#define MOCK_PATH "../test/testdata/mock/%s.json"
+#define MOCK_PATH "../c/test/testdata/mock/%s.json"
 
 static void clean_json_str(char* s) {
   const char* d = s;

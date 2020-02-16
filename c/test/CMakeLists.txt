@@ -31,6 +31,7 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 
 include_directories(. ../src)
 include(cmake/code-coverage.cmake)
@@ -63,8 +64,8 @@ foreach (file ${files})
      target_link_libraries("${testname}" core eth_full eth_api)
      add_test(
                 NAME "in3_${testname}"
-                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${testname}
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
+                WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
      add_dependencies(tests "${testname}")
 
@@ -84,8 +85,8 @@ foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "in3_${testname}"
-            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/runner ${file}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file}
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
     )
 endforeach ()
 target_code_coverage(runner "${files}" AUTO ALL ${coverage_excludes})
@@ -186,8 +187,8 @@ foreach (testdir
         get_filename_component(testname "${file}" NAME_WE)
         add_test(
                 NAME "evm/${testdir}/${testname}"
-                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vmrunner ${file}
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
+                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file}
+                WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 9)
     endforeach ()

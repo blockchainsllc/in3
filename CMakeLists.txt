@@ -144,6 +144,21 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# build tests
+if(TEST)
+    MESSAGE(STATUS "Build Tests and add debug infos")
+    ADD_DEFINITIONS(-DTEST)
+    ADD_DEFINITIONS(-DLOG_USE_COLOR)
+    ADD_DEFINITIONS(-DIN3_DONT_HASH_KEYS)
+    ADD_DEFINITIONS(-DIN3_EXPORT_TEST=)
+    ADD_DEFINITIONS(-DIN3_IMPORT_TEST=extern)
+    ADD_DEFINITIONS(-DDEBUG)
+    SET(CMAKE_BUILD_TYPE Debug)
+    enable_testing()
+    add_subdirectory(c/test)
+    add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 16)
+endif(TEST)
+
 
 add_subdirectory(c)
 add_subdirectory(docs)

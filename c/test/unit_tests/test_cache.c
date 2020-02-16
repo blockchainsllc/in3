@@ -57,7 +57,7 @@
 static in3_ret_t test_transport(in3_request_t* req) {
   char* buffer = NULL;
   long  length;
-  FILE* f = fopen("../test/testdata/requests/in3_nodeList.json", "r");
+  FILE* f = fopen("../c/test/testdata/requests/in3_nodeList.json", "r");
   if (f) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
@@ -76,7 +76,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
       perror("getcwd() error");
       return 1;
     }
-    printf("Error coudl not find the testdata 'test/testdata/requests/in3_nodeList.json'\n");
+    printf("Error coudl not find the testdata 'c/test/testdata/requests/in3_nodeList.json'\n");
     exit(1);
   }
 
