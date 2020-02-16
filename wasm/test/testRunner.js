@@ -33,13 +33,13 @@
  *******************************************************************************/
 
 const fs = require('fs')
-const IN3 = require('../../../build/bin/in3.js')
+const IN3 = require('../../build/bin/in3.js')
 const { util } = require('in3-common')
 const Client = IN3.default
 
 require('mocha')
 const { assert } = require('chai')
-const testDir = '../../testdata/requests'
+const testDir = '../../c/test/testdata/requests'
 if (process.argv.find(_ => _.indexOf('mocha') >= 0)) {
 
     describe('JSON-Tests', () => {
