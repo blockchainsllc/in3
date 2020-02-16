@@ -647,7 +647,7 @@ char* in3_configure(in3_t* c, const char* config) {
             chain->avg_block_time = (uint16_t) d_int(cp.token);
           } else if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
-            EXPECT_TOK(cp.token, d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
+            EXPECT_TOK(cp.token, (unsigned) d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
             _free(chain->verified_hashes);
             chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
             int i                  = 0;
