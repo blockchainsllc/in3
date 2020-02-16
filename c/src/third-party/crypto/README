@@ -1,0 +1,5 @@
+- version: 1.1.0
+- website: https://github.com/trezor/trezor-firmware/tree/master/crypto
+- notes:
+  - files mostly imported on an as-needed basis
+  - base58.c:35 we need to include zephyr header file for it to enable alloca.h header

@@ -1,0 +1,33 @@
+{
+    "request": [
+        {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "eth_getUncleCountByBlockNumber",
+            "params": [
+                "0xdb60"
+            ],
+            "in3": {
+                "version": "2.1.0",
+                "chainId": "0x1",
+                "verification": "proof"
+            }
+        }
+    ],
+    "response": [
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": "0x1",
+            "in3": {
+                "lastValidatorChange": 0,
+                "lastNodeList": 8669495,
+                "execTime": 167,
+                "rpcTime": 167,
+                "rpcCount": 1,
+                "currentBlock": 9021974,
+                "version": "2.0.0"
+            }
+        }
+    ]
+}

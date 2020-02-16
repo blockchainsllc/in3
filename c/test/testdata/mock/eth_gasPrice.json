@@ -1,0 +1,30 @@
+{
+    "request": [
+        {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "eth_gasPrice",
+            "params": [],
+            "in3": {
+                "version": "2.1.0",
+                "chainId": "0x5",
+                "verification": "proof"
+            }
+        }
+    ],
+    "response": [
+        {
+            "jsonrpc": "2.0",
+            "result": "0x77359400",
+            "id": 1,
+            "in3": {
+                "lastValidatorChange": 0,
+                "lastNodeList": 1527136,
+                "execTime": 68,
+                "rpcTime": 68,
+                "rpcCount": 1,
+                "currentBlock": 1727430
+            }
+        }
+    ]
+}

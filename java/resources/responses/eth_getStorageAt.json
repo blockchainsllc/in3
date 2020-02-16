@@ -1,0 +1,16 @@
+[
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "in3": {
+            "lastValidatorChange": 0,
+            "lastNodeList": 9279143,
+            "execTime": 3892,
+            "rpcTime": 3890,
+            "rpcCount": 1,
+            "currentBlock": 9279505,
+            "version": "2.1.0"
+        }
+    }
+]
