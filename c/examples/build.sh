@@ -13,7 +13,7 @@ if [ ! -d /usr/local/include/in3 ]; then
   fi
 
   # set the library path to use the local
-  BUILDARGS="-L../../build/lib/ -I../../include"
+  BUILDARGS="-L../../build/lib/ -I../../c/include"
 fi
 
 # now build the examples build
