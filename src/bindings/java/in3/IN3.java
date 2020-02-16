@@ -98,6 +98,10 @@ public class IN3 {
         config.markAsSynced();
     }
 
+    /**
+     * returns the current configuration.
+     * any changes to the configuration will be applied witth the next request.
+     */
     public ClientConfiguration getConfig() {
         return config;
     }
@@ -206,6 +210,9 @@ public class IN3 {
      * raw request from it and return the result.
      */
     public String sendRPC(String method, Object[] params) {
+        if (!config.isSynced()) {
+            this.applyConfig();
+        }
         return this.send(toRPC(method, params));
     }
 
