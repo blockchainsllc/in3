@@ -9,7 +9,7 @@ if [ ! -d /usr/local/include/in3 ]; then
      mkdir -p ../../build
      cd ../../build
      cmake .. && make 
-     cd ../examples/c
+     cd ../c/examples
   fi
 
   # set the library path to use the local
