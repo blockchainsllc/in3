@@ -492,14 +492,33 @@ function decodeEventData(log, def) {
     if (!d) return null//throw new Error('Could not find the ABI')
     return decodeEvent(log, d)
 }
+
 function decodeEvent(log, d) {
     const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed), r = { event: d && d.name }
-    if (indexed.length)
-        decodeResult(indexed.map(_ => _.type), Buffer.concat(log.topics.slice(1).map(serialize.bytes))).forEach((v, i) => r[indexed[i].name] = v)
+
+    if (indexed.length){
+        let logBufs = appendBuffers(log.topics.slice(1).map(_ => toBuffer(_)))
+        abiDecode(`prefix():${createSignature(indexed)}`, logBufs).forEach((v, i) => r[indexed[i].name] = v)
+    }
     if (unindexed.length)
-        decodeResult(unindexed.map(_ => _.type), serialize.bytes(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
+        abiDecode(`prefix():${createSignature(unindexed)}`, toBuffer(log.data)).forEach((v, i) => r[unindexed[i].name] = v)
     return r
 }
+
+/** Concatenating the Typed Buffer arrays together */
+function appendBuffers(buffers) {
+    const totalLength = buffers.reduce((acc, value) => acc + value.length, 0);
+    if (!buffers.length) return null;
+    let result = new Uint8Array(totalLength);
+  
+    // for each array - copy it over result; next array is copied right after the previous one
+    let length = 0;
+    for(let array of buffers) {
+      result.set(array, length);
+      length += array.length;
+    } 
+    return result; 
+  }
 
 function toHexBlock(b) {
     return typeof b === 'string' ? b : util.toMinHex(b)
@@ -521,40 +540,3 @@ function fixBytesValues(input, type) {
 function encodeEtheresBN(val) {
     return val && BN.isBN(val) ? toHex(val) : val
 }
-
-function encodeFunction(signature, args) {
-    const inputParams = signature.split(':')[0]
-
-    const abiCoder = new AbiCoder()
-
-    const typeTemp = inputParams.substring(inputParams.indexOf('(') + 1, (inputParams.indexOf(')')))
-
-    const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
-    const methodHash = (methodID(signature.substr(0, signature.indexOf('(')), typeArray)).toString('hex')
-
-    for (let i = 0; i < args.length; i++) {
-        args[i] = fixBytesValues(args[i], typeArray[i])
-    }
-    try {
-        return methodHash + abiCoder.encode(typeArray, args.map(encodeEtheresBN)).substr(2)
-    } catch (e) {
-        throw new Error(`Error trying to encode ${signature} with the params ${args}: ${e}`)
-    }
-}
-
-function decodeFunction(signature, args) {
-    const outputParams = signature.split(':')[1]
-
-    const abiCoder = new AbiCoder()
-
-    const typeTemp = outputParams.substring(outputParams.indexOf('(') + 1, (outputParams.indexOf(')')))
-
-    const typeArray = typeTemp.length > 0 ? typeTemp.split(",") : []
-
-    try {
-        return abiCoder.decode(typeArray, util.toBuffer(args))
-    } catch (e) {
-        throw new Error(`Error trying to decode ${signature} with the params ${args}: ${e}`)
-    }
-}
-
