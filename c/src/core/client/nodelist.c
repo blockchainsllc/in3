@@ -46,7 +46,7 @@
 #include <string.h>
 #include <time.h>
 
-#define DAY 24 * 2600
+#define DAY 24 * 3600
 #define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
 
 static void free_nodeList(in3_node_t* nodelist, int count) {
