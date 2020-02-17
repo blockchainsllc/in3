@@ -7,6 +7,16 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "_runner_",
+            "program": "${workspaceFolder}/build/test/runner",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "c/test/testdata/requests/in3_ens.json"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "in3 cmd",
             "program": "${workspaceFolder}/build/bin/in3",
             "cwd": "${workspaceFolder}",

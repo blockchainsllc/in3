@@ -107,7 +107,7 @@ char* readContent(char* name) {
     len += r;
     if (feof(file)) break;
     size_t new_alloc = allocated * 2;
-    buffer           = _realloc(buffer, new_alloc, allocated);
+    buffer           = realloc(buffer, new_alloc);
     allocated        = new_alloc;
   }
   buffer[len] = 0;
@@ -218,11 +218,11 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   char       params[10000];
 
   // configure in3
-  c->request_count = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
-  method           = d_get_string(request, "method");
-  bool intern      = d_get_int(test, "intern");
+  c->request_count   = (t = d_get(config, key("requestCount"))) ? d_int(t) : 1;
+  method             = d_get_string(request, "method");
+  bool        intern = d_get_int(test, "intern");
+  str_range_t s      = d_to_json(d_get(request, key("params")));
 
-  str_range_t s = d_to_json(d_get(request, key("params")));
   if (!method) {
     printf("NO METHOD");
     return -1;
@@ -236,6 +236,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
 
   char *res = NULL, *err = NULL;
   int   success = must_fail ? 0 : d_get_intkd(test, key("success"), 1);
+  if (intern) _tmp_pos++; // if this is a intern, then the first response is the expected, while the all other come after this.
 
   //  _tmp_response = response;
   int is_bin = d_get_int(test, "binaryFormat");
@@ -313,6 +314,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   c->max_attempts        = 1;
   c->include_code        = 1;
   c->transport           = send_mock;
+  c->cache               = NULL;
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
   for (j = 0; j < c->chains_length; j++) {
