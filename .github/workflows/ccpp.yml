@@ -40,13 +40,15 @@ jobs:
       - name: build
         run: cd build; make
       - name: test
-        run: cd build; make ccov-all && make ccov-all-report
+        run: cd build; make test
+      - name: summary
+        run: cd build; ../scripts/lcov_report.sh | xargs llvm-cov report
       - name: export
         run: |
           apt-get update
           apt-get install -y curl
           cd build
-          cat ccov/binaries.list | xargs llvm-cov export -instr-profile ccov/all-merged.profdata -format=lcov "-ignore-filename-regex=.*(third|test).*" > coverage.info
+          ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > coverage.info
       - uses: codecov/codecov-action@v1.0.3
         with:
           token: ${{secrets.CODECOV_TOKEN}}
