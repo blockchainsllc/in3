@@ -157,7 +157,7 @@ if(TEST)
     SET(CMAKE_BUILD_TYPE Debug)
     enable_testing()
     add_subdirectory(c/test)
-    add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 16)
+    add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 8)
 endif(TEST)
 
 
@@ -165,9 +165,9 @@ add_subdirectory(c)
 add_subdirectory(docs)
 
 IF (JAVA)
-    add_subdirectory(java)
+    add_subdirectory(java/src)
 ENDIF (JAVA)
 
 IF (WASM)
-    add_subdirectory(wasm)
+    add_subdirectory(wasm/src)
 ENDIF (WASM)
