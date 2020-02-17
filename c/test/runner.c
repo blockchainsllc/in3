@@ -118,8 +118,10 @@ char* readContent(char* name) {
   return buffer;
 }
 
-static bytes_t* _tmp_response;
-static int      fuzz_pos = -1;
+static int        fuzz_pos       = -1;
+static d_token_t* _tmp_responses = NULL;
+static int        _tmp_pos       = 0;
+static bool       _tmp_bin       = false;
 
 static int find_hex(char* str, int start, int len) {
   int i;
@@ -164,42 +166,46 @@ static str_range_t find_prop_name(char* p, char* start) {
   return res;
 }
 
-static void prepare_response(int count, d_token_t* response_array, int as_bin, int fuzz_pos) {
-  if (!as_bin) {
+static void prepare_response(int count, d_token_t* response_array, int as_bin, int _fuzz_pos) {
+  _tmp_responses = response_array;
+  _tmp_bin       = as_bin;
+  fuzz_pos       = _fuzz_pos;
+  _tmp_pos       = 0;
+}
+
+static int send_mock(in3_request_t* req) {
+  int     i;
+  bytes_t response;
+  if (d_len(_tmp_responses) <= _tmp_pos) {
+    for (i = 0; i < req->urls_len; i++)
+      sb_add_chars(&(req->results + i)->error, "Reached end of available responses!");
+    return IN3_EINVAL;
+  }
+
+  if (!_tmp_bin) {
     sb_t*       sb = sb_new(NULL);
-    str_range_t r  = d_to_json(d_get_at(response_array, 0));
+    str_range_t r  = d_to_json(d_get_at(_tmp_responses, _tmp_pos));
     sb_add_char(sb, '[');
     sb_add_range(sb, r.data, 0, r.len);
     sb_add_char(sb, ']');
 
     if (fuzz_pos >= 0)
       mod_hex(sb->data + fuzz_pos + 1);
-    _tmp_response       = _malloc(sizeof(bytes_t));
-    _tmp_response->data = (uint8_t*) sb->data;
-    _tmp_response->len  = sb->len;
+    response = bytes((uint8_t*) sb->data, sb->len);
     _free(sb);
   } else {
     bytes_builder_t* bb = bb_new();
-    d_serialize_binary(bb, response_array + 1);
-    _tmp_response       = _malloc(sizeof(bytes_t));
-    _tmp_response->data = bb->b.data;
-    _tmp_response->len  = bb->b.len;
+    d_serialize_binary(bb, _tmp_responses + _tmp_pos + 1);
+    response = bb->b;
     _free(bb);
   }
-}
 
-static int send_mock(in3_request_t* req) {
   // printf("payload: %s\n",payload);
-  int i;
   for (i = 0; i < req->urls_len; i++)
-    // rioght now we always add the same response
-    // TODO later support array of responses.
-    sb_add_range(&(req->results + i)->result, (char*) _tmp_response->data, 0, _tmp_response->len);
+    sb_add_range(&(req->results + i)->result, (char*) response.data, 0, response.len);
 
-  if (_tmp_response) {
-    free(_tmp_response->data);
-    free(_tmp_response);
-  }
+  _free(response.data);
+  _tmp_pos++;
   return 0;
 }
 
