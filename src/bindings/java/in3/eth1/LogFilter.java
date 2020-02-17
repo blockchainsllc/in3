@@ -118,7 +118,7 @@ public class LogFilter {
         if (toBlock >= 0)
             JSON.appendKey(sb, "toBlock", "0x" + Long.toHexString(toBlock));
         if (topics != null)
-            JSON.appendKey(sb, "topics", JSON.toJson(topics));
+            JSON.appendKey(sb, "topics", topics);
         if (limit > 0)
             JSON.appendKey(sb, "limit", JSON.asString(limit));
         if (address != null)
