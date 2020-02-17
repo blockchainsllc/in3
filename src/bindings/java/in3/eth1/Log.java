@@ -87,7 +87,7 @@ public class Log {
      * integer of the transactions index position log was created from. null when
      * its pending log.
      */
-    public int gettTansactionIndex() {
+    public int getTransactionIndex() {
         return JSON.asInt(data.get("transactionIndex"));
     }
 
@@ -130,6 +130,13 @@ public class Log {
      */
     public String[] getTopics() {
         return data.getStringArray("topics");
+    }
+
+    /*
+     * data param of Log (contains the non-indexed arguments of the log)
+     */
+    public String getLogData() {
+        return data.getString("data");
     }
 
 }
