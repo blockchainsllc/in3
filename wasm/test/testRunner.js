@@ -122,7 +122,7 @@ async function run_test(files, filter) {
 
 async function runSingleTest(test, c) {
     test = JSON.parse(JSON.stringify(test))
-    let res = 0
+    let res = test.intern ? 1 : 0
     const config = test.config || {}, result = { descr: test.descr, c, success: false, error: undefined }
     let accounts = {}
 
@@ -151,6 +151,7 @@ async function runSingleTest(test, c) {
             return Promise.resolve([validatorResponse])
         }
         */
+        if (test.response.length <= res) return Promise.reject(new Error('Not enought responses!'))
         test.response[res].id = data[0].id
         const r = test.response[res++]
         accounts = r.in3 && r.in3.proof && r.in3.proof.accounts

@@ -15,7 +15,7 @@ jobs:
       - name: make
         run: cd build; make
       - name: test
-        run: cd test/bindings/wasm; npm i; npm test
+        run: cd wasm/test; npm i; npm test
 
   asmjs:
     runs-on: ubuntu-latest
@@ -29,4 +29,4 @@ jobs:
       - name: make
         run: cd build; make
       - name: test
-        run: cd test/bindings/wasm; npm i; npm test
+        run: cd wasm/test; npm i; npm test
