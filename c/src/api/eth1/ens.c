@@ -126,7 +126,7 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
     registry_address = alloca(43);
     bytes_to_hex(registry, 20, registry_address + 2);
     registry_address[0] = '0';
-    registry_address[0] = 'x';
+    registry_address[1] = 'x';
   } else
     switch (parent->client->chain_id) {
       case ETH_CHAIN_ID_MAINNET:
