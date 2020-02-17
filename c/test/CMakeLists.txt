@@ -32,15 +32,23 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
+set_property(GLOBAL PROPERTY C_STANDARD 99)
+
+#include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 include_directories(. ../src)
-include(cmake/code-coverage.cmake)
 
 # handle codecoverage
 if (CODE_COVERAGE)
+  add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set (LDFLAGS "${LDFLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+
+
   # we exclude all headers, tests and thridparty-code
-  set(coverage_excludes "EXCLUDE" "test/*" "*.h" "src/third-party/*"  "../src/third-party/*")
-  add_code_coverage_all_targets(${coverage_excludes})
+  set(coverage_excludes "EXCLUDE" "c/test/*" "*.h" "c/src/third-party/*"  "../c/src/third-party/*")
 endif()
 
 
@@ -60,14 +68,13 @@ file(GLOB files "unit_tests/*.c")
 foreach (file ${files})
      get_filename_component(testname "${file}" NAME_WE)
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
-     target_code_coverage("${testname}" "" AUTO ALL ${coverage_excludes})
      target_link_libraries("${testname}" core eth_full eth_api)
      add_test(
                 NAME "in3_${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
+                COMMAND bash -c "LLVM_PROFILE_FILE=in3_${testname}.profraw ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}"
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
-     add_dependencies(tests "${testname}")
+    add_dependencies(tests "${testname}")
 
 endforeach ()
 
@@ -85,25 +92,11 @@ foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "in3_${testname}"
-            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file}
+            COMMAND bash -c "LLVM_PROFILE_FILE=in3_${testname}.profraw ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file}"
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
     )
-endforeach ()
-target_code_coverage(runner "${files}" AUTO ALL ${coverage_excludes})
 
-file(GLOB files
-    "testdata/evm/TrieTests/*.json"
-    "testdata/evm/RLPTests/*.json"
-    "testdata/evm/vmTests/vmArithmeticTest/*.json"
-    "testdata/evm/vmTests/vmBitwiseLocigOperation/*.json"
-#    "testdata/evm/GeneralStateTests/stRandom2/*.json"
-#    "testdata/evm/GeneralStateTests/stRandom/*.json"
-    "testdata/evm/GeneralStateTests/stMemoryTest/*.json"
-#    "testdata/evm/GeneralStateTests/stCodeCopyTest/*.json"
-#    "testdata/evm/GeneralStateTests/stRefundTest/*.json"
-#    "testdata/evm/GeneralStateTests/stLogTests/*.json"
-)
-target_code_coverage(vmrunner "${files}" AUTO ALL ${coverage_excludes})
+endforeach ()
 
 
 foreach (testdir
@@ -187,10 +180,13 @@ foreach (testdir
         get_filename_component(testname "${file}" NAME_WE)
         add_test(
                 NAME "evm/${testdir}/${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file}
+                COMMAND bash -c "LLVM_PROFILE_FILE=evm_${testdir}_${testname}.profraw ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file}"
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
-        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES TIMEOUT 9)
+        set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 
+          TIMEOUT 9
+          )
+
     endforeach ()
 endforeach ()
 

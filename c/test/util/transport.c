@@ -101,7 +101,7 @@ in3_ret_t test_transport(in3_request_t* req) {
   d_token_t*  request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
   char*       method  = d_get_string(request, "method");
   str_range_t params  = d_to_json(d_get(request, key("params")));
-  char        p[params.len + 1];
+  char*       p       = alloca(params.len + 1);
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
   clean_json_str(p);
@@ -126,7 +126,7 @@ in3_ret_t mock_transport(in3_request_t* req) {
   TEST_ASSERT_NOT_NULL_MESSAGE(response_buffer, "no request registered");
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
   str_range_t params = d_to_json(d_get(request, key("params")));
-  char        p[params.len + 1];
+  char*       p      = alloca(params.len + 1);
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
   clean_json_str(p);

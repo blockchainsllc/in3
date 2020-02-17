@@ -31,6 +31,7 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 add_library(transport_http_o OBJECT in3_http.c)
 target_compile_definitions(transport_http_o PRIVATE -D_POSIX_C_SOURCE=199309L)

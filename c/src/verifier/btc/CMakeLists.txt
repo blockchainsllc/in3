@@ -1,4 +1,6 @@
 
+include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
+
 # static lib
 add_library(btc_o OBJECT
         btc_merkle.c

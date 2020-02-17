@@ -171,7 +171,11 @@ coverage:
   script:
     - mkdir cov_build; cd cov_build
     - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
-    - make -j8 &&  make ccov-all && make ccov-all-report
+    - make -j8 &&  make ptest
+    - ../scripts/lcov_report.sh | xargs llvm-cov report
+    - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
+    - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
+
   artifacts:
     paths:
       - cov_build/ccov/all-merged

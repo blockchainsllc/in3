@@ -31,6 +31,7 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 OPTION(USE_SCRYPT "if scrypt is installed, it will link dynamicly to the shared scrypt lib." OFF)
 IF (USE_SCRYPT)

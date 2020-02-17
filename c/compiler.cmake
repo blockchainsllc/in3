@@ -48,7 +48,10 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.12.4")
 endif()
 
 if (CODE_COVERAGE)
+  add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set (LDFLAGS "${LDFLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
 endif()
 
