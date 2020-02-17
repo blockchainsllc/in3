@@ -71,10 +71,13 @@ foreach (file ${files})
      target_link_libraries("${testname}" core eth_full eth_api)
      add_test(
                 NAME "in3_${testname}"
-                COMMAND bash -c "LLVM_PROFILE_FILE=in3_${testname}.profraw ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}"
+                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
-    add_dependencies(tests "${testname}")
+      set_tests_properties("in3_${testname}" PROPERTIES 
+        ENVIRONMENT LLVM_PROFILE_FILE=in3_${testname}.profraw
+      )
+      add_dependencies(tests "${testname}")
 
 endforeach ()
 
@@ -92,8 +95,11 @@ foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "in3_${testname}"
-            COMMAND bash -c "LLVM_PROFILE_FILE=in3_${testname}.profraw ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file}"
+            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file}
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
+    )
+    set_tests_properties("in3_${testname}" PROPERTIES 
+      ENVIRONMENT LLVM_PROFILE_FILE=in3_${testname}.profraw
     )
 
 endforeach ()
@@ -180,11 +186,12 @@ foreach (testdir
         get_filename_component(testname "${file}" NAME_WE)
         add_test(
                 NAME "evm/${testdir}/${testname}"
-                COMMAND bash -c "LLVM_PROFILE_FILE=evm_${testdir}_${testname}.profraw ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file}"
+                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 
           TIMEOUT 9
+          ENVIRONMENT LLVM_PROFILE_FILE=evm_${testdir}_${testname}.profraw
           )
 
     endforeach ()
