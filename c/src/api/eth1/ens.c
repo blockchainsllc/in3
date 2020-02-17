@@ -73,7 +73,7 @@ static void ens_hash(const char* domain, bytes32_t dst) {
 
 in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, in3_ens_type type, uint8_t* dst, int* res_len) {
   const int len = strlen(name);
-  if (*name == '0' && name[1] == 1 && len == 42) {
+  if (*name == '0' && name[1] == 'x' && len == 42) {
     hex_to_bytes(name, 40, dst, 20);
     return IN3_OK;
   }
