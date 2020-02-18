@@ -239,32 +239,30 @@ static void test_in3_client_chain() {
   in3_free(c);
 }
 
-static void checksum(d_token_t* params, chain_id_t chain, char * result) {
-  bytes_t* adr = d_get_bytes_at(params, 0);
-  in3_ret_t res = to_checksum(adr->data, chain, result);
-
+static void checksum(d_token_t* params, chain_id_t chain, char* result) {
+  bytes_t*  adr = d_get_bytes_at(params, 0);
+  in3_ret_t res = to_checksum(adr->data, 0, result);
 }
 
 static void test_in3_checksum_rpc() {
-  char * result = NULL, *error = NULL;
-  in3_t* in3            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3->chain_id         = ETH_CHAIN_ID_MAINNET;
-  in3->auto_update_list = false;
-
-  json_ctx_t* json  = parse_json("[\"0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2\",false]");
-  d_token_t* address        = &json->result[0];
-  char ret_checksum[43];
-  checksum(address, ETH_CHAIN_ID_MAINNET, ret_checksum);
-  
-  in3_ret_t ret = in3_client_rpc(in3, "in3_checksumAddress", "[\"0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2\",false]", &result, &error);
+  char*       param_test = "[\"0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2\",false]";
+  char *      result = NULL, *error = NULL;
+  in3_t*      in3     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  json_ctx_t* json    = parse_json(param_test);
+  d_token_t*  address = &json->result[0];
+  char        ret_checksum[43];
+  checksum(address, 0, ret_checksum);
+  in3_ret_t ret = in3_client_rpc(in3, "in3_checksumAddress", param_test, &result, &error);
+  // remove quotes from result
+  char str_result[43];
+  memcpy(str_result, &result[1], 42);
+  str_result[42] = '\0';
   TEST_ASSERT_EQUAL(ret, IN3_OK);
   TEST_ASSERT_EQUAL(error, NULL);
-  TEST_ASSERT_EQUAL_STRING(ret_checksum, result);
+  TEST_ASSERT_EQUAL_STRING(ret_checksum, str_result);
   free(result);
   free(error);
 }
-
-
 
 static void test_in3_client_context() {
   in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
@@ -315,16 +313,14 @@ static void test_in3_client_context() {
 int main() {
   in3_register_eth_full();
   in3_register_eth_api();
-  in3_log_set_quiet(false);
-  in3_log_set_level(LOG_TRACE);
-
+  in3_log_set_quiet(true);
 
   // now run tests
   TESTS_BEGIN();
-  // RUN_TEST(test_in3_config);
-  // RUN_TEST(test_in3_client_rpc);
-   RUN_TEST(test_in3_checksum_rpc);
-  // RUN_TEST(test_in3_client_chain);
-  // RUN_TEST(test_in3_client_context);
+  RUN_TEST(test_in3_config);
+  RUN_TEST(test_in3_client_rpc);
+  RUN_TEST(test_in3_checksum_rpc);
+  RUN_TEST(test_in3_client_chain);
+  RUN_TEST(test_in3_client_context);
   return TESTS_END();
 }
