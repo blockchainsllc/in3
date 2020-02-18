@@ -116,16 +116,16 @@ static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_resp
   in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->client->chain_id : 0, result);
   if (res) return ctx_set_error(ctx, "Could not create the checksum address", res);
   RESPONSE_START();
-  sb_add_char(&response[0]->result, '"');
+  sb_add_char(&response[0]->result, '\'');
   sb_add_chars(&response[0]->result, result);
-  sb_add_char(&response[0]->result, '"');
+  sb_add_char(&response[0]->result, '\'');
   RESPONSE_END();
   return IN3_OK;
 }
 static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
   char*        name     = d_get_string_at(params, 0);
   char*        type     = d_get_string_at(params, 1);
-  char*        registry = d_get_string_at(params, 2);
+  bytes_t      registry = d_to_bytes(d_get_at(params, 2));
   int          res_len  = 20;
   in3_ens_type ens_type = ENS_ADDR;
   bytes32_t    result;
@@ -143,9 +143,9 @@ static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** res
     ens_type = ENS_HASH;
   else
     return ctx_set_error(ctx, "currently only 'hash','addr','owner' or 'resolver' are allowed as type", IN3_EINVAL);
+  if (registry.data && registry.len != 20) return ctx_set_error(ctx, "the registry must be a 20 bytes address", IN3_EINVAL);
 
-  if (registry) hex_to_bytes(registry, -1, result, 20);
-  in3_ret_t res = ens_resolve(ctx, name, registry ? result : NULL, ens_type, result, &res_len);
+  in3_ret_t res = ens_resolve(ctx, name, registry.data, ens_type, result, &res_len);
   if (res < 0) return res;
   bytes_t result_bytes = bytes(result, res_len);
 

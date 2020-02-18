@@ -11,7 +11,9 @@
             "program": "${workspaceFolder}/build/test/runner",
             "cwd": "${workspaceFolder}",
             "args": [
-                "c/test/testdata/requests/in3_ens.json"
+                "c/test/testdata/requests/in3_ens.json",
+                "-t",
+                "3"
             ]
         },
         {
