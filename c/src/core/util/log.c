@@ -130,9 +130,9 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
     }
 
     va_start(args, fmt);
-    printf(fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
-    //fflush(stderr);
+    fflush(stderr);
 #else
     va_list args;
     char    buf[16];
