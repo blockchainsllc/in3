@@ -149,7 +149,8 @@
             "method": "in3_ens",
             "params": [
                 "incubed.eth",
-                "owner"
+                "owner",
+                "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e"
             ]
         },
         "response": [
