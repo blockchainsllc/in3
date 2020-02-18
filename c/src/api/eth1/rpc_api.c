@@ -116,9 +116,9 @@ static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_resp
   in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->client->chain_id : 0, result);
   if (res) return ctx_set_error(ctx, "Could not create the checksum address", res);
   RESPONSE_START();
-  sb_add_char(&response[0]->result, '"');
+  sb_add_char(&response[0]->result, '\'');
   sb_add_chars(&response[0]->result, result);
-  sb_add_char(&response[0]->result, '"');
+  sb_add_char(&response[0]->result, '\'');
   RESPONSE_END();
   return IN3_OK;
 }
