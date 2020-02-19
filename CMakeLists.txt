@@ -53,8 +53,15 @@ option(IN3_LIB "if true a shared anmd static library with all in3-modules will b
 option(TEST "builds the tests and also adds special memory-management, which detects memory leaks, but will cause slower performance" OFF)
 option(FAST_MATH "Math optimizations used in the EVM. This will also increase the filesize." OFF)
 option(SEGGER_RTT "Use the segger real time transfer terminal as the logging mechanism" OFF)
-option(FILTER_NODES "if true the nodelist is filtered against config node properties" OFF)
 option(CURL_BLOCKING "if true the curl-request will block until the response is received" OFF)
+option(JAVA "build the java-binding (shared-lib and jar-file)" OFF)
+option(JAVA_MULTI_LIBS "embedds multiple shared libs in the jar" OFF)
+option(WASM "Includes the WASM-Build. In order to build it you need emscripten as toolchain. Usually you also want to turn off other builds in this case." OFF)
+option(ASMJS "compiles the code as asm.js." OFF)
+option(WASM_EMBED "embedds the wasm as base64-encoded into the js-file" ON)
+option(WASM_EMMALLOC "use ther smaller EMSCRIPTEN Malloc, which reduces the size about 10k, but may be a bit slower" ON)
+option(WASM_SYNC "intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)" OFF)
+option(CODE_COVERAGE  "Builds targets with code coverage instrumentation. (Requires GCC or Clang)"  OFF)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -71,18 +78,18 @@ if (ERR_MSG)
   ADD_DEFINITIONS(-DERR_MSG)
 endif()
 
-if(ETH_FULL) 
+if(ETH_FULL)
   ADD_DEFINITIONS(-DETH_FULL)
   set(IN3_VERIFIER eth_full)
-elseif(ETH_BASIC) 
+elseif(ETH_BASIC)
   ADD_DEFINITIONS(-DETH_BASIC)
   set(IN3_VERIFIER eth_basic)
-elseif(ETH_NANO) 
+elseif(ETH_NANO)
   ADD_DEFINITIONS(-DETH_NANO)
   set(IN3_VERIFIER eth_nano)
 endif()
 
-if(IN3API) 
+if(IN3API)
   ADD_DEFINITIONS(-DETH_API)
   set(IN3_API eth_api)
 endif()
@@ -113,12 +120,6 @@ if(SEGGER_RTT)
     ADD_DEFINITIONS(-DSEGGER_RTT)
 endif(SEGGER_RTT)
 
-if(FILTER_NODES)
-    MESSAGE(STATUS "Enable nodelist filter based on properties")
-    ADD_DEFINITIONS(-DFILTER_NODES)
-endif(FILTER_NODES)
-
-
 # handle version
 if (TAG_VERSION)
    set(PROJECT_VERSION "${TAG_VERSION}")
@@ -139,6 +140,11 @@ ADD_DEFINITIONS(-DIN3_VERSION_MINOR=${PROJECT_VERSION_MINOR})
 ADD_DEFINITIONS(-DIN3_VERSION_PATCH=${PROJECT_VERSION_PATCH})
 
 
+# define output dir structure
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 # build tests
 if(TEST)
     MESSAGE(STATUS "Build Tests and add debug infos")
@@ -150,72 +156,18 @@ if(TEST)
     ADD_DEFINITIONS(-DDEBUG)
     SET(CMAKE_BUILD_TYPE Debug)
     enable_testing()
-    add_subdirectory(test)
-    add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 16)
+    add_subdirectory(c/test)
+    add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 8)
 endif(TEST)
 
 
-# define output dir structure
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-include("${PROJECT_SOURCE_DIR}/compiler.cmake")
-
-#  build modules
-add_subdirectory(src/third-party)
-add_subdirectory(src/core)
-add_subdirectory(src/transport)
-add_subdirectory(src/verifier)
-add_subdirectory(src/bindings)
-add_subdirectory(src/api)
-add_subdirectory(src/cmd)
+add_subdirectory(c)
 add_subdirectory(docs)
 
+IF (JAVA)
+    add_subdirectory(java/src)
+ENDIF (JAVA)
 
-# create the library
-if (IN3_LIB)
-    set(IN3_LIBS
-        $<TARGET_OBJECTS:core_o>
-        $<TARGET_OBJECTS:crypto_o>
-        $<TARGET_OBJECTS:tommath_o>
-        $<TARGET_OBJECTS:evm_o>
-        $<TARGET_OBJECTS:eth_full_o>
-        $<TARGET_OBJECTS:eth_api_o>
-        $<TARGET_OBJECTS:eth_basic_o>
-        $<TARGET_OBJECTS:eth_nano_o>
-        $<TARGET_OBJECTS:usn_api_o>
-        $<TARGET_OBJECTS:ipfs_o>
-    )
-    # if we use curl, we include curl transport as well
-    if (USE_CURL)
-        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
-    endif()
-
-    # create the libraries
-    add_library(in3_bundle STATIC ${IN3_LIBS} )
-    add_library(in3_lib    SHARED ${IN3_LIBS} )
-    set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
-    set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-
-    # for curl we need to add the dependency
-    if (USE_CURL)
-       target_link_libraries(in3_lib transport_curl)
-    endif()
-
-    # install
-    INSTALL(TARGETS in3_bundle
-      DESTINATION "lib"
-    )
-    INSTALL(TARGETS in3_lib
-        DESTINATION lib
-        PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE)
-    INSTALL (
-        DIRECTORY ${CMAKE_SOURCE_DIR}/include/
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.h*")
-
-endif()
+IF (WASM)
+    add_subdirectory(wasm/src)
+ENDIF (WASM)
