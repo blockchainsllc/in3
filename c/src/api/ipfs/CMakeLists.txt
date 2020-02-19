@@ -31,11 +31,8 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
-
-IF (IN3API)
-    add_subdirectory(eth1)
-    add_subdirectory(usn)
-    add_subdirectory(ipfs)
-ENDIF (IN3API)
-
+add_library(ipfs_api_o OBJECT ipfs_api.c)
+add_library(ipfs_api STATIC $<TARGET_OBJECTS:ipfs_api_o>)
+target_link_libraries(ipfs_api core)
