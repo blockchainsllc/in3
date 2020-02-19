@@ -328,10 +328,9 @@ static void test_eth_gas_price(void) {
 static void test_eth_getblock_number(void) {
   in3_t*       in3   = init_in3(mock_transport, 0x5);
   eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(1692767), true);
-
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
-  free(block);
   TEST_ASSERT_EQUAL_INT64(block->number, 1692767);
+  free(block);
   in3_free(in3);
 }
 

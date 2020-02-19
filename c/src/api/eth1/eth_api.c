@@ -224,6 +224,7 @@ static void params_add_bool(sb_t* sb, bool val) {
 /** copy the data from the token to a eth_tx_t-object */
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   bytes_t b             = d_to_bytes(d_get(t, K_INPUT));
+
   tx->signature[64]     = d_get_intk(t, K_V);
   tx->block_number      = d_get_longk(t, K_BLOCK_NUMBER);
   tx->gas               = d_get_longk(t, K_GAS);
@@ -231,7 +232,7 @@ static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   tx->nonce             = d_get_longk(t, K_NONCE);
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
   tx->transaction_index = d_get_intk(t, K_TRANSACTION_INDEX);
-  memcpy(tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
+  memcpy(tx, b.data, b.len); // copy the data right after the tx-struct.
   copy_fixed(tx->block_hash, 32, d_to_bytes(d_getl(t, K_BLOCK_HASH, 32)));
   copy_fixed(tx->from, 20, d_to_bytes(d_getl(t, K_FROM, 20)));
   copy_fixed(tx->to, 20, d_to_bytes(d_getl(t, K_TO, 20)));

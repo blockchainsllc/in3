@@ -122,9 +122,9 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->last_block           = 0;
   chain->verified_hashes      = NULL;
   chain->contract             = hex_to_new_bytes(contract, 40);
-  chain->nodelist             = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodelist             = _calloc(boot_node_count, sizeof(in3_node_t));
   chain->nodelist_length      = boot_node_count;
-  chain->weights              = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->weights              = _calloc(boot_node_count, sizeof(in3_node_weight_t));
   chain->type                 = type;
   chain->version              = version;
   chain->whitelist            = NULL;
@@ -154,6 +154,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->index      = node_index;
   node->capacity   = 1;
   node->deposit    = 0;
+  node->boot_node = true;
   node->props      = chain->chain_id == ETH_CHAIN_ID_LOCAL ? 0x0 : 0xFF;
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
