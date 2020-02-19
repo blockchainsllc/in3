@@ -2,18 +2,20 @@
 
 #include <in3/client.h>   // the core client
 #include <in3/in3_curl.h> // transport implementation
-#include <in3/ipfs.h>     // IPFS verifier
+#include <in3/ipfs.h>     // IPFS verifier module
+#include <in3/ipfs_api.h> // IPFS API module
 #include <stdio.h>
 
 #define LOREM_IPSUM "Lorem ipsum dolor sit amet"
+#define return_err(err)                                \
+  do {                                                 \
+    printf(__FILE__ ":%d::Error %s\n", __LINE__, err); \
+    return;                                            \
+  } while (0)
 
-int main() {
-  in3_register_ipfs();
-  in3_register_curl();
-
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
-  char * result, *error;
-  char   tmp[100];
+static void ipfs_rpc_example(in3_t* c) {
+  char *result, *error;
+  char  tmp[100];
 
   in3_ret_t res = in3_client_rpc(
       c,
@@ -22,7 +24,7 @@ int main() {
       &result,
       &error);
   if (res != IN3_OK)
-    return -1;
+    return_err(in3_errmsg(res));
 
   printf("IPFS hash: %s\n", result);
   sprintf(tmp, "[%s, \"utf8\"]", result);
@@ -36,7 +38,44 @@ int main() {
       &result,
       &error);
   if (res != IN3_OK)
-    return -1;
+    return_err(in3_errmsg(res));
+  res = strcmp(result, "\"" LOREM_IPSUM "\"");
+  if (res) return_err("Content mismatch");
+}
 
-  return strcmp(result, "\"" LOREM_IPSUM "\"");
+static void ipfs_api_example(in3_t* c) {
+  char* multihash = ipfs_put(c, LOREM_IPSUM, IPFS_ENC_UTF8);
+  if (multihash == NULL)
+    return_err("ipfs_put API call error");
+  printf("IPFS hash: %s\n", multihash);
+
+  char* content = ipfs_get(c, multihash, IPFS_ENC_UTF8);
+  free(multihash);
+  if (content == NULL)
+    return_err("ipfs_get API call error");
+
+  int res = strcmp(content, "\"" LOREM_IPSUM "\"");
+  free(content);
+  if (res)
+    return_err("Content mismatch");
+}
+
+int main() {
+  // register a chain-verifier for IPFS-Support (only called once)
+  in3_register_ipfs();
+  // use curl as the default for sending out requests (only called once)
+  in3_register_curl();
+
+  // create new incubed client
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
+
+  // IPFS put/get using raw RPC calls
+  ipfs_rpc_example(c);
+
+  // IPFS put/get using API
+  ipfs_api_example(c);
+
+  // cleanup client after usage
+  in3_free(c);
+  return 0;
 }
