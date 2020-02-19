@@ -2,7 +2,7 @@
 cd ..
 rm -rf include
 mkdir -p include/in3
-find src -type d >include/in3/.dirs
+find c -type d >include/in3/.dirs
 while read path; do
   # find headers in path
   find $path -name "*.h" -maxdepth 1 -exec bash -c 'for file in "$1";
