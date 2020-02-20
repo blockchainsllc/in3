@@ -594,12 +594,13 @@ char* in3_configure(in3_t* c, const char* config) {
         bytes_t*     wl_contract = d_get_byteskl(ct.token, key("whiteListContract"), 20);
         in3_chain_t* chain       = in3_find_chain(c, chain_id);
 
-        EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
-        EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract->data, registry_id->data, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
-                   "register chain failed");
-
-        chain = in3_find_chain(c, chain_id);
-        EXPECT_CFG(chain != NULL, "invalid chain id!");
+        if (!chain) {
+          EXPECT_CFG(contract && registry_id, "invalid contract/registry!");
+          EXPECT_CFG((in3_client_register_chain(c, chain_id, chain ? chain->type : CHAIN_ETH, contract ? contract->data : chain->contract->data, registry_id ? registry_id->data : chain->registry_id, 2, wl_contract ? wl_contract->data : NULL)) == IN3_OK,
+                     "register chain failed");
+          chain = in3_find_chain(c, chain_id);
+          EXPECT_CFG(chain != NULL, "invalid chain id!");
+        }
 
         // chain_props
         bool has_wlc = false, has_man_wl = false;
@@ -641,7 +642,13 @@ char* in3_configure(in3_t* c, const char* config) {
             memcpy(chain->registry_id, data.data, 32);
           } else if (cp.token->key == key("needsUpdate")) {
             EXPECT_TOK_BOOL(cp.token);
-            chain->nodelist_upd8_params = d_int(cp.token) ? _calloc(1, sizeof(*(chain->nodelist_upd8_params))) : NULL;
+            if (!d_int(cp.token)) {
+              if (chain->nodelist_upd8_params) {
+                _free(chain->nodelist_upd8_params);
+                chain->nodelist_upd8_params = NULL;
+              }
+            } else if (!chain->nodelist_upd8_params)
+              chain->nodelist_upd8_params = _calloc(1, sizeof(*(chain->nodelist_upd8_params)));
           } else if (cp.token->key == key("avgBlockTime")) {
             EXPECT_TOK_U16(cp.token);
             chain->avg_block_time = (uint16_t) d_int(cp.token);
