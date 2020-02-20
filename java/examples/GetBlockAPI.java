@@ -1,7 +1,7 @@
-import java.util.*;
 import in3.*;
 import in3.eth1.*;
 import java.math.BigInteger;
+import java.util.*;
 
 public class GetBlockAPI {
   //
@@ -25,5 +25,4 @@ public class GetBlockAPI {
 
     System.out.println("total Value transfered in all Transactions : " + sum + " wei");
   }
-
 }
