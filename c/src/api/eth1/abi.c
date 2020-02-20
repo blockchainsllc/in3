@@ -163,7 +163,7 @@ char* escape_tuples(char* sig, size_t l, char** startb, char** ends) {
     *ends      = memchr(sig_, ':', l);
     remove_parens(sig_ + (*startb - sig_) + 1, (*ends ? (unsigned) (*ends - *startb) : (l - (*startb - sig_))) - 2);
     if (*ends) {
-      *startb = memchr(*ends, '(', l);
+      *startb = memchr(*ends, '(', strlen(*ends));
       if (*startb) remove_parens(sig_ + (*startb - sig_) + 1, strlen(sig_ + (*startb - sig_) + 2));
     }
     *ends   = memchr(sig_, ':', l);

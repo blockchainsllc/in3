@@ -223,7 +223,7 @@ static void params_add_bool(sb_t* sb, bool val) {
 
 /** copy the data from the token to a eth_tx_t-object */
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
-  bytes_t b             = d_to_bytes(d_get(t, K_INPUT));
+  bytes_t b = d_to_bytes(d_get(t, K_INPUT));
 
   tx->signature[64]     = d_get_intk(t, K_V);
   tx->block_number      = d_get_longk(t, K_BLOCK_NUMBER);
@@ -522,8 +522,8 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
       return c;
     }
   }
-  ctx_free(ctx);
   set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
+  ctx_free(ctx);
   return NULL;
 }
 

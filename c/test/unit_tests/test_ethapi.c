@@ -578,6 +578,19 @@ static void test_send_raw_tx(void) {
 /*
  * Main
  */
+int main_tmp() {
+  in3_log_set_quiet(true);
+  in3_log_set_level(LOG_ERROR);
+
+  // now run tests
+  TESTS_BEGIN();
+  //PASSING..
+  RUN_TEST(test_wait_for_receipt);
+  RUN_TEST(test_get_result_no_error);
+  RUN_TEST(test_get_nonexistent_block);
+  RUN_TEST(test_eth_call_multiple);
+  return TESTS_END();
+}
 int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
