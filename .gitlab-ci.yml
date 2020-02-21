@@ -312,17 +312,11 @@ examples_linux:
   stage: test
   dependencies:
     - gcc8
-    - wasm
   script:
     - mv x64_build build
     - cd c/examples
     - ./build.sh
     - cd ../../java/examples
-    - ./build.sh
-    - cd ../..
-    - mv build arm7_build
-    - mv wasm_build build
-    - cd wasm/examples
     - ./build.sh
   tags:
     - short-jobs
@@ -332,15 +326,9 @@ examples_arm:
   stage: test
   dependencies:
     - arm7
-    - wasm
   script:
     - mv arm7_build build
     - cd c/examples
-    - ./build.sh
-    - cd ../..
-    - mv build arm7_build
-    - mv wasm_build build
-    - cd wasm/examples
     - ./build.sh
   tags:
     - arm
