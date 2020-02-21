@@ -319,9 +319,10 @@ examples_linux:
     - ./build.sh
     - cd ../../java/examples
     - ./build.sh
+    - cd ../..
     - mv build arm7_build
     - mv wasm_build build
-    - cd ../../wasm/examples
+    - cd wasm/examples
     - ./build.sh
   tags:
     - short-jobs
@@ -336,9 +337,10 @@ examples_arm:
     - mv arm7_build build
     - cd c/examples
     - ./build.sh
+    - cd ../..
     - mv build arm7_build
     - mv wasm_build build
-    - cd ../../wasm/examples
+    - cd wasm/examples
     - ./build.sh
   tags:
     - arm
@@ -354,9 +356,10 @@ examples_macos:
     - ./build.sh
     - cd ../../java/examples
     - ./build.sh
+    - cd ../..
     - mv build mac_build
     - mv wasm_build build
-    - cd ../../wasm/examples
+    - cd wasm/examples
     - ./build.sh
   tags:
     - mac-mini-runner
