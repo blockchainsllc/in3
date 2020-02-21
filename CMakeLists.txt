@@ -165,8 +165,7 @@ endif(TEST)
 add_subdirectory(c)
 
 IF (JAVA)
-   add_subdirectory(java/src)
-   add_subdirectory(java/docs)
+   add_subdirectory(java)
 ENDIF (JAVA)
 
 IF (WASM)

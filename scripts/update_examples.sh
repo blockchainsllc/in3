@@ -12,7 +12,7 @@ printf "# Examples\n\n" > $README
 
 for f in *.c; 
   do 
-    printf "### ${f%%.*}\n\nsource : [in3-c/examples/c/$f](https://github.com/slockit/in3-c/blob/master/c/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/c/examples/$f](https://github.com/slockit/in3-c/blob/master/c/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
     printf "\n\n\`\`\`c\n" >> $DOC
     cat $f >> $DOC
@@ -40,7 +40,7 @@ printf "# Examples\n\n" > $README
 
 for f in *.java; 
   do 
-    printf "### ${f%%.*}\n\nsource : [in3-c/examples/java/$f](https://github.com/slockit/in3-c/blob/master/java/examples/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/java/examples/$f](https://github.com/slockit/in3-c/blob/master/java/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
     printf "\n\n\`\`\`java\n" >> $DOC
     cat $f >> $DOC
