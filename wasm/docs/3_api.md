@@ -28,7 +28,7 @@ If you want to change this type, use [setConverBuffer()](#setconvertbuffer) func
 
 ##### Generics
 
-```
+```js
 import {IN3Generic} from 'in3-wasm'
 import BN from 'bn.js'
 
