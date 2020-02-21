@@ -340,7 +340,7 @@ examples_arm:
     - mv wasm_build build
     - cd ../../wasm/examples
     - ./build.sh
-   tags:
+  tags:
     - arm
 
 examples_macos:
