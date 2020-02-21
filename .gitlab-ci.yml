@@ -330,8 +330,6 @@ examples_arm:
     - mv arm7_build build
     - cd c/examples
     - ./build.sh
-    - cd ../../java/examples
-    - ./build.sh
   tags:
     - arm
 
