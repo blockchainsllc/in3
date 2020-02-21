@@ -1,11 +1,10 @@
 # first we can indicate the documentation build as an option and set it to ON by default
-option(BUILD_DOC "generates the documenation with doxygen." OFF)
 if (BUILD_DOC)
   # check if Doxygen is installed
   find_package(Doxygen)
   if (DOXYGEN_FOUND)
       # set input and output files
-      set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/../docs/Doxyfile.in)
+      set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
       set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 
       # request to configure the file

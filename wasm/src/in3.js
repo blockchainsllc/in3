@@ -264,6 +264,7 @@ class IN3 {
         }
     }
 
+
     async sendRPC(method, params) {
         const res = await this.sendRequest({ method, params })
         if (res.error) throw new Error(res.error.message || res.error)

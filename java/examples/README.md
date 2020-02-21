@@ -1,13 +1,31 @@
-# Examples for Java
+# Examples
 
--  [GetBlockRPC](./GetBlockRPC.java)
-   getting a block as raw verfified JSON-RPC-Result
+
+-  [CallFunction](./CallFunction.java)
+   Calling Functions of Contracts
+
+-  [Configure](./Configure.java)
+   Changing the default configuration
+
+-  [GetBalance](./GetBalance.java)
+   getting the Balance with or without API
 
 -  [GetBlockAPI](./GetBlockAPI.java)
-   getting a block as verified structured dat 
+   getting a block with API
 
+-  [GetBlockRPC](./GetBlockRPC.java)
+   getting a block without API
 
-## Building 
+-  [GetTransaction](./GetTransaction.java)
+   getting a Transaction with or without API
+
+-  [GetTransactionReceipt](./GetTransactionReceipt.java)
+   getting a TransactionReceipt with or without API
+
+-  [SendTransaction](./SendTransaction.java)
+   Sending Transactions
+
+### Building 
 
 In order to run those examples, you only need a Java SDK installed.
 

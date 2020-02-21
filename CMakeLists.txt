@@ -39,6 +39,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_mo
 project(in3)
 
 # options
+option(BUILD_DOC "generates the documenation with doxygen." OFF)
 option(TAG_VERSION "the tagged version, which should be used" 2.0.0)
 option(ETH_NANO "build minimal eth verification.(eth_getTransactionReceipt)" ON)
 option(ETH_BASIC "build basic eth verification.(all rpc-calls except eth_call)" ON)
@@ -162,10 +163,10 @@ endif(TEST)
 
 
 add_subdirectory(c)
-add_subdirectory(docs)
 
 IF (JAVA)
-    add_subdirectory(java/src)
+   add_subdirectory(java/src)
+   add_subdirectory(java/docs)
 ENDIF (JAVA)
 
 IF (WASM)
