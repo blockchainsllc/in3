@@ -41,7 +41,8 @@ gcc8:
     paths:
       - x64_build/bin
       - x64_build/lib
-      - x64_build/docs/doc_doxygen
+      - x64_build/c/docs/doc_doxygen
+      - x64_build/java/docs/doc_doxygen
 
 win_mingw:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
@@ -92,7 +93,8 @@ mac_os:
 
   artifacts:
     paths:
-      - mac_build/docs
+      - mac_build/c/docs
+      - mac_build/java/docs
       - mac_build/lib
       - mac_build/bin
   tags:
