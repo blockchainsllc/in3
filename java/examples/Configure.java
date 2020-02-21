@@ -15,7 +15,7 @@ public class Configure {
     IN3 in3 = IN3.forChain(Chain.GOERLI); // set it to goerli
 
     // Setup a Configuration object for the client
-    ClientConfiguration clientConfig = new ClientConfiguration();
+    ClientConfiguration clientConfig = in3.getConfig();
     clientConfig.setReplaceLatestBlock(6); // define that latest will be -6
     clientConfig.setAutoUpdateList(false); // prevents node automatic update
     clientConfig.setMaxAttempts(1);        // sets max attempts to 1 before giving up

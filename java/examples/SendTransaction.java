@@ -39,10 +39,10 @@ public class SendTransaction {
 
     // create a Transaction
     TransactionRequest tx = new TransactionRequest();
-    tx.from               = account;
-    tx.to                 = "0x1234567890123456789012345678901234567890";
-    tx.function           = "transfer(address,uint256)";
-    tx.params             = new Object[] {receipient, value};
+    tx.setFrom(account);
+    tx.setTo("0x1234567890123456789012345678901234567890");
+    tx.setFunction("transfer(address,uint256)");
+    tx.setParams(new Object[] {receipient, value});
 
     String txHash = in3.getEth1API().sendTransaction(tx);
 
