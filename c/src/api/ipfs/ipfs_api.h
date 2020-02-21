@@ -54,7 +54,8 @@ typedef enum {
   IPFS_ENC_B64
 } ipfs_enc_t;
 
-char* ipfs_put(in3_t* in3, const char* content, ipfs_enc_t encoding);   /**< Returns the IPFS multihash of stored content. Returns NULL on error, result must be freed by caller. */
-char* ipfs_get(in3_t* in3, const char* multihash, ipfs_enc_t encoding); /**< Returns the content associated with specified multihash. Returns NULL on error, result must be freed by caller. */
+char* ipfs_put(in3_t* in3, const char* content, ipfs_enc_t encoding);          /**< Returns the IPFS multihash of stored content on success OR NULL on error. Result must be freed by caller. */
+char* ipfs_put_bytes(in3_t* in3, const bytes_t* content, ipfs_enc_t encoding); /**< Returns the IPFS multihash of stored content on success OR NULL on error. Result must be freed by caller. */
+char* ipfs_get(in3_t* in3, const char* multihash, ipfs_enc_t encoding);        /**< Returns the content associated with specified multihash on success OR NULL on error. Result must be freed by caller. */
 
 #endif //IN3_IPFS_API_H

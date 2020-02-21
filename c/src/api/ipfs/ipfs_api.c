@@ -55,6 +55,16 @@ char* ipfs_put(in3_t* in3, const char* content, ipfs_enc_t encoding) {
   rpc_exec("ipfs_put", char*, _strdupn(d_string(result), -1));
 }
 
+char* ipfs_put_bytes(in3_t* in3, const bytes_t* content, ipfs_enc_t encoding) {
+  rpc_init;
+  sb_add_char(params, '\"');
+  sb_add_bytes(params, NULL, content, 1, false);
+  sb_add_chars(params, "\",\"");
+  sb_add_chars(params, enc_to_str(encoding));
+  sb_add_char(params, '\"');
+  rpc_exec("ipfs_put", char*, _strdupn(d_string(result), -1));
+}
+
 char* ipfs_get(in3_t* in3, const char* multihash, ipfs_enc_t encoding) {
   rpc_init;
   sb_add_char(params, '\"');
