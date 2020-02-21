@@ -61,7 +61,7 @@ public class Configure {
     IN3 in3 = IN3.forChain(Chain.GOERLI); // set it to goerli
 
     // Setup a Configuration object for the client
-    ClientConfiguration clientConfig = new ClientConfiguration();
+    ClientConfiguration clientConfig = in3.getConfig();
     clientConfig.setReplaceLatestBlock(6); // define that latest will be -6
     clientConfig.setAutoUpdateList(false); // prevents node automatic update
     clientConfig.setMaxAttempts(1);        // sets max attempts to 1 before giving up
@@ -318,10 +318,10 @@ public class SendTransaction {
 
     // create a Transaction
     TransactionRequest tx = new TransactionRequest();
-    tx.from               = account;
-    tx.to                 = "0x1234567890123456789012345678901234567890";
-    tx.function           = "transfer(address,uint256)";
-    tx.params             = new Object[] {receipient, value};
+    tx.setFrom(account);
+    tx.setTo("0x1234567890123456789012345678901234567890");
+    tx.setFunction("transfer(address,uint256)");
+    tx.setParams(new Object[] {receipient, value});
 
     String txHash = in3.getEth1API().sendTransaction(tx);
 
