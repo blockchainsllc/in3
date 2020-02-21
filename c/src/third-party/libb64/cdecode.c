@@ -6,6 +6,7 @@ For details, see http://sourceforge.net/projects/libb64
 */
 
 #include "cdecode.h"
+#include <string.h>
 
 int base64_decode_value(char value_in)
 {
@@ -86,3 +87,35 @@ int base64_decode_block(const char* code_in, const int length_in, char* plaintex
 	return plainchar - plaintext_out;
 }
 
+size_t base64_decode_strlen(const char* ip) {
+  const size_t lip = strlen(ip);
+  size_t       lop = lip / 4 * 3;
+  if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
+    lop -= 2;
+  else if (ip[lip - 1] == '=')
+    lop -= 1;
+  return lop;
+}
+
+static size_t base64_strlen_nopad(const char* ip) {
+  size_t lip = strlen(ip);
+  if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
+    lip -= 2;
+  else if (ip[lip - 1] == '=')
+    lip -= 1;
+  return lip;
+}
+
+char* base64_decode(const char* ip) {
+  size_t lop = base64_decode_strlen(ip);
+  char*  op  = (char*) malloc(lop + 1);
+  if (op) {
+    char*              c = op;
+    base64_decodestate s;
+    base64_init_decodestate(&s);
+    int cnt = base64_decode_block(ip, base64_strlen_nopad(ip), c, &s);
+    c += cnt;
+    *c = 0;
+  }
+  return op;
+}
