@@ -312,11 +312,16 @@ examples_linux:
   stage: test
   dependencies:
     - gcc8
+    - wasm
   script:
     - mv x64_build build
     - cd c/examples
     - ./build.sh
     - cd ../../java/examples
+    - ./build.sh
+    - mv build arm7_build
+    - mv wasm_build build
+    - cd ../../wasm/examples
     - ./build.sh
   tags:
     - short-jobs
@@ -326,22 +331,32 @@ examples_arm:
   stage: test
   dependencies:
     - arm7
+    - wasm
   script:
     - mv arm7_build build
     - cd c/examples
     - ./build.sh
-  tags:
+    - mv build arm7_build
+    - mv wasm_build build
+    - cd ../../wasm/examples
+    - ./build.sh
+   tags:
     - arm
 
 examples_macos:
   stage: test
   dependencies:
     - mac_os
+    - wasm
   script:
     - mv mac_build build
     - cd c/examples
     - ./build.sh
     - cd ../../java/examples
+    - ./build.sh
+    - mv build mac_build
+    - mv wasm_build build
+    - cd ../../wasm/examples
     - ./build.sh
   tags:
     - mac-mini-runner

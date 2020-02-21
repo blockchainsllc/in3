@@ -63,7 +63,7 @@ README="README.md"
 
 cd ../python/examples
 
-printf "# Examples\n\n" > $DOC
+printf "## Examples\n\n" > $DOC
 printf "# Examples\n\n" > $README
 
 for f in *.py; 
@@ -80,4 +80,42 @@ done
 
 cat ../../python/docs/build_examples.md_ >> $DOC
 cat ../../python/docs/build_examples.md_ >> $README
+cd ../../scripts
+
+
+# WASM
+
+DOC="../../wasm/docs/2_examples.md"
+README="README.md"
+
+cd ../wasm/examples
+
+printf "## Examples\n\n" > $DOC
+printf "# Examples\n\n" > $README
+
+for f in *.js *.ts; 
+  do 
+    printf "### ${f%%.*}\n\nsource : [in3-c/wasm/examples/$f](https://github.com/slockit/in3-c/blob/master/wasm/examples/$f)\n\n" >> $DOC
+    cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
+    printf "\n\n\`\`\`js\n" >> $DOC
+    cat $f >> $DOC
+    printf "\n\`\`\`\n\n" >> $DOC
+
+    printf "\n-  [${f%%.*}](./$f)\n   " >> $README
+    cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $README
+done
+for f in *.html; 
+  do 
+    printf "### ${f%%.*}\n\nsource : [in3-c/wasm/examples/$f](https://github.com/slockit/in3-c/blob/master/wasm/examples/$f)\n\n" >> $DOC
+    cat $f | grep "^<!--" | sed "s/<!-- \(.*\)-->/\\1/g" >> $DOC
+    printf "\n\n\`\`\`html\n" >> $DOC
+    cat $f >> $DOC
+    printf "\n\`\`\`\n\n" >> $DOC
+
+    printf "\n-  [${f%%.*}](./$f)\n   " >> $README
+    cat $f | grep "^<!--" | sed "s/<!-- \(.*\)-->/\\1/g" >> $README
+done
+
+cat ../../wasm/docs/build_examples.md_ >> $DOC
+cat ../../wasm/docs/build_examples.md_ >> $README
 

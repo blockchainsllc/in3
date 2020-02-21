@@ -379,6 +379,15 @@ export default class IN3Generic<BigIntType, BufferType> {
     public free();
 
     /**
+     * returns a Object, which can be used as Web3Provider.
+     * 
+     * ```
+     * const web3 = new Web3(new IN3().createWeb3Provider())
+     * ```
+     */
+    public createWeb3Provider(): any
+
+    /**
      * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.
      */
     public signer: Signer<BigIntType, BufferType>;
