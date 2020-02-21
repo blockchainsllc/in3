@@ -41,7 +41,8 @@ gcc8:
     paths:
       - x64_build/bin
       - x64_build/lib
-      - x64_build/docs/doc_doxygen
+      - x64_build/c/docs/doc_doxygen
+      - x64_build/java/docs/doc_doxygen
 
 win_mingw:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
@@ -92,7 +93,8 @@ mac_os:
 
   artifacts:
     paths:
-      - mac_build/docs
+      - mac_build/c/docs
+      - mac_build/java/docs
       - mac_build/lib
       - mac_build/bin
   tags:
@@ -327,8 +329,6 @@ examples_arm:
   script:
     - mv arm7_build build
     - cd c/examples
-    - ./build.sh
-    - cd ../../java/examples
     - ./build.sh
   tags:
     - arm
@@ -570,8 +570,8 @@ readthedocs:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cd generator
     - npm i && npm run build
-    - bin/slockit-doxygen ../x64_build/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
-    - bin/slockit-doxygen ../x64_build/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
+    - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
+    - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - cd ../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:

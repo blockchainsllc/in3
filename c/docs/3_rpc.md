@@ -78,6 +78,7 @@ The config params support the following properties :
 * **rpc** :`string` *(optional)*  - url of one or more rpc-endpoints to use. (list can be comma seperated)
 
 * **servers**/**nodes** : `collection of JSON objects with chain Id (hex string) as key` *(optional)*  - the value of each JSON object defines the nodelist per chain and may contain the following fields:
+    
     * **contract** :`address`  - address of the registry contract.
     * **whiteListContract** :`address` *(optional, cannot be combined with whiteList)*  - address of the whiteList contract.
     * **whiteList** :`array of addresses` *(optional, cannot be combined with whiteListContract)*  - manual whitelist.
@@ -85,9 +86,12 @@ The config params support the following properties :
     * **needsUpdate** :`bool` *(optional)*  - if set, the nodeList will be updated before next request.
     * **avgBlockTime** :`uint16_t` *(optional)*  - average block time (seconds) for this chain.
     * **verifiedHashes** :`array of JSON objects` *(optional)*  - if the client sends an array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request. MUST contain the following fields:
+
         * **block** :`uint64_t`  - block number.
         * **hash** : `bytes32`  - verified hash corresponding to block number.
+
     * **nodeList** :`array of JSON objects` *(optional)*  - manual nodeList, each JSON object may contain the following fields:
+    
         * **url** :`string`  - URL of the node.
         * **address** :`address`  - address of the node.
         * **props** :`uint64_t` bitmask *(optional)*  - used to identify the capabilities of the node (defaults to 65535).

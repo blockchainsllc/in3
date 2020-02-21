@@ -19,6 +19,9 @@
 -  [get_transaction_receipt](./get_transaction_receipt.c)
     validating the result or receipt of an transaction
 
+-  [ipfs_put_get](./ipfs_put_get.c)
+    using the IPFS module
+
 -  [send_transaction](./send_transaction.c)
    sending a transaction including signing it with a private key
 

@@ -1,16 +1,18 @@
 #!/bin/sh
 
-DOC="../../docs/2_examples.md"
+# C
+
+DOC="../../c/docs/2_examples.md"
 README="README.md"
 
-cd ../examples/c
+cd ../c/examples
 
 printf "# Examples\n\n" > $DOC
 printf "# Examples\n\n" > $README
 
 for f in *.c; 
   do 
-    printf "### ${f%%.*}\n\nsource : [in3-c/examples/c/$f](https://github.com/slockit/in3-c/blob/master/examples/c/$f)\n\n" >> $DOC
+    printf "### ${f%%.*}\n\nsource : [in3-c/c/examples/$f](https://github.com/slockit/in3-c/blob/master/c/examples/$f)\n\n" >> $DOC
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
     printf "\n\n\`\`\`c\n" >> $DOC
     cat $f >> $DOC
@@ -20,6 +22,62 @@ for f in *.c;
     cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $README
 done
 
-cat ../../docs/build_examples.md_ >> $DOC
-cat ../../docs/build_examples.md_ >> $README
+cat ../../c/docs/build_examples.md_ >> $DOC
+cat ../../c/docs/build_examples.md_ >> $README
+cd ../../scripts
+
+
+
+# JAVA
+
+DOC="../../java/docs/2_examples.md"
+README="README.md"
+
+cd ../java/examples
+
+printf "# Examples\n\n" > $DOC
+printf "# Examples\n\n" > $README
+
+for f in *.java; 
+  do 
+    printf "### ${f%%.*}\n\nsource : [in3-c/java/examples/$f](https://github.com/slockit/in3-c/blob/master/java/examples/$f)\n\n" >> $DOC
+    cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
+    printf "\n\n\`\`\`java\n" >> $DOC
+    cat $f >> $DOC
+    printf "\n\`\`\`\n\n" >> $DOC
+
+    printf "\n-  [${f%%.*}](./$f)\n   " >> $README
+    cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $README
+done
+
+cat ../../java/docs/build_examples.md_ >> $DOC
+cat ../../java/docs/build_examples.md_ >> $README
+cd ../../scripts
+
+
+
+# PYTHON
+
+DOC="../../python/docs/2_examples.md"
+README="README.md"
+
+cd ../python/examples
+
+printf "# Examples\n\n" > $DOC
+printf "# Examples\n\n" > $README
+
+for f in *.py; 
+  do 
+    printf "### ${f%%.*}\n\nsource : [in3-c/python/examples/$f](https://github.com/slockit/in3-c/blob/master/python/examples/$f)\n\n" >> $DOC
+    cat $f | grep ^/// | sed "s/### //g" >> $DOC
+    printf "\n\n\`\`\`python\n" >> $DOC
+    cat $f >> $DOC
+    printf "\n\`\`\`\n\n" >> $DOC
+
+    printf "\n-  [${f%%.*}](./$f)\n   " >> $README
+    cat $f | grep ^/// | sed "s/### //g" >> $README
+done
+
+cat ../../python/docs/build_examples.md_ >> $DOC
+cat ../../python/docs/build_examples.md_ >> $README
 
