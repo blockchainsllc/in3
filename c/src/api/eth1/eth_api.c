@@ -487,7 +487,17 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
   if (res >= 0) {
     if (only_estimate) {
-      rpc_exec("eth_estimateGas", d_token_t*, result);
+      in3_ctx_t* _ctx_           = in3_client_rpc_ctx(in3, "eth_estimateGas", sb_add_char(params, ']')->data);
+      d_token_t* result          = get_result(_ctx_);
+      d_token_t* estimate_result = _malloc(sizeof(d_token_t));
+      //get a copy of the result instead of using the result pointer
+      estimate_result->data = NULL;
+      memcpy(estimate_result->data, result->data, result->len);
+      estimate_result->len = result->len;
+      estimate_result->key = result->key;
+      ctx_free(_ctx_);
+      sb_free(params);
+      return estimate_result;
     } else {
       rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
     }

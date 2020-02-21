@@ -265,12 +265,14 @@ static void test_get_tx_hash(void) {
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NOT_NULL(tx);
+  free(tx);
 
   // get non-existent txn
   in3->transport = test_transport;
   add_response("eth_getTransactionByHash", "[\"0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164\"]", "null", NULL, NULL);
   tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NULL(tx);
+  free(tx);
 
   in3_free(in3);
 }
@@ -488,11 +490,13 @@ static void test_utilities(void) {
   uint256_t u256 = {0};
   //  hex_to_bytes("0xac1b824795e1eb1f", -1, u256.data, 32);
   bytes32_t var;
+  memset(var, 0, 32);
   hex_to_bytes("0xac1b824795e1eb1f", -1, var, 32);
   uint256_set(var, 32, u256.data);
   long double d = as_double(u256);
   TEST_ASSERT_TRUE(d > 0.0);
   uint64_t u64 = as_long(u256);
+  TEST_ASSERT_TRUE(d > 0ll);
 }
 
 static void test_eth_call_multiple(void) {
@@ -578,19 +582,6 @@ static void test_send_raw_tx(void) {
 /*
  * Main
  */
-int main_tmp() {
-  in3_log_set_quiet(true);
-  in3_log_set_level(LOG_ERROR);
-
-  // now run tests
-  TESTS_BEGIN();
-  //PASSING..
-  RUN_TEST(test_wait_for_receipt);
-  RUN_TEST(test_get_result_no_error);
-  RUN_TEST(test_get_nonexistent_block);
-  RUN_TEST(test_eth_call_multiple);
-  return TESTS_END();
-}
 int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
