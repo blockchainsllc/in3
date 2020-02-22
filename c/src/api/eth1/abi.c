@@ -253,15 +253,14 @@ static int head_size(var_t* t, bool single) {
     var_t* s = NULL;
     for (i = 0, s = t + 1; i < t->type_len; i++, s = t_next(s)) a += head_size(s, false);
   } else if (t->type == A_BYTES || t->type == A_STRING)
-    a = word_size(t->type_len);
+    a = word_size(t->type_len) * 32;
   return single ? a : (a * f);
 }
 
 static int check_buffer(call_request_t* req, int pos) {
   if ((uint32_t) pos > req->call_data->b.len) {
-    if (bb_check_size(req->call_data, pos -
-
-                                          req->call_data->b.len) < 0) return -1;
+    if (bb_check_size(req->call_data, pos - req->call_data->b.len) < 0)
+      return -1;
     req->call_data->b.len = pos;
   }
   return 0;
