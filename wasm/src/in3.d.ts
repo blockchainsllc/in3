@@ -33,22 +33,79 @@
  *******************************************************************************/
 
 /**
- * the iguration of the IN3-Client. This can be paritally overriden for every request.
+ * the configuration of the IN3-Client. This can be changed at any time.
+ * All properties are optional and will be verified when sending the next request.
  */
 export declare interface IN3Config {
     /**
-     * number of seconds requests can be cached.
+     * if true the nodelist will be automaticly updated if the lastBlock is newer.
+     * 
+     * default: true
      */
-    cacheTimeout?: number
+    autoUpdateList?: boolean
+
+    /**
+     * The chain-id based on EIP-155.
+     * or the name of the supported chain.
+     * 
+     * Currently we support 'mainnet', 'goerli', 'kovan', 'ipfs' and 'local'
+     * 
+     * While most of the chains use preconfigured chain settings, 
+     * 'local' actually uses the local running client turning of proof.
+     * 
+     * example: '0x1' or 'mainnet' or 'goerli'
+     * 
+     * default: 'mainnet'
+     */
+    chainId: string // ^0x[0-9a-fA-F]+$
+
+    /**
+     * number of signatures requested. The more signatures, the more security you get, but responses may take longer.
+     * 
+     * default: 0
+     */
+    signatureCount?: number
+
+    /**
+     * the number in percent needed in order reach finality if you run on a POA-Chain.
+     * (% of signature of the validators)
+     * 
+     * default: 0
+     */
+    finality?: number
+
+    /**
+     * if true, the request should include the codes of all accounts. 
+     * Otherwise only the the codeHash is returned. 
+     * In this case the client may ask by calling eth_getCode() afterwards
+     * 
+     * default: false
+     */
+    includeCode?: boolean
+
+    /**
+     * max number of attempts in case a response is rejected.
+     * Incubed will retry to find a different node giving a verified response.
+     * 
+     * default: 5
+     */
+    maxAttempts?: number
+
+
+    /**
+     * if true, the in3-section of the response will be kept and returned. 
+     * Otherwise it will be removed after validating the data. 
+     * This is useful for debugging or if the proof should be used afterwards.
+     * 
+     * default: false
+     */
+    keepIn3?: boolean
+
     /**
      * the limit of nodes to store in the client.
      * example: 150
      */
     nodeLimit?: number
-    /**
-     * if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.
-     */
-    keepIn3?: boolean
     /**
      * the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding
      * example: json
@@ -67,16 +124,6 @@ export declare interface IN3Config {
      * if true the the request may be handled without proof in case of an error. (use with care!)
      */
     retryWithoutProof?: boolean
-    /**
-     * max number of attempts in case a response is rejected
-     * example: 10
-     */
-    maxAttempts?: number
-    /**
-     * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
-     * example: true
-     */
-    includeCode?: boolean
     /**
      * number of max bytes used to cache the code in memory
      * example: 100000
@@ -97,11 +144,6 @@ export declare interface IN3Config {
      */
     proof?: 'none' | 'standard' | 'full'
     /**
-     * number of signatures requested
-     * example: 2
-     */
-    signatureCount?: number
-    /**
      * min stake of the server. Only nodes owning at least this amount will be chosen.
      */
     minDeposit: number
@@ -116,20 +158,10 @@ export declare interface IN3Config {
      */
     requestCount: number
     /**
-     * the number in percent needed in order reach finality (% of signature of the validators)
-     * example: 50
-     */
-    finality?: number
-    /**
      * specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
      * example: 3000
      */
     timeout?: number
-    /**
-     * servers to filter for the given chain. The chain-id based on EIP-155.
-     * example: 0x1
-     */
-    chainId: string // ^0x[0-9a-fA-F]+$
     /**
      * main chain-registry contract
      * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
@@ -140,11 +172,6 @@ export declare interface IN3Config {
      * example: 0x1
      */
     mainChain?: string // ^0x[0-9a-fA-F]+$
-    /**
-     * if true the nodelist will be automaticly updated if the lastBlock is newer
-     * example: true
-     */
-    autoUpdateList?: boolean
     /**
      * url of one or more rpc-endpoints to use. (list can be comma seperated)
      */
@@ -370,6 +397,8 @@ export default class IN3Generic<BigIntType, BufferType> {
      * sends a RPC-Requests specified by name and params.
      * 
      * if the response contains an error, this will be thrown. if not the result will be returned.
+     * 
+     * @param method the method to call. 
      */
     public sendRPC(method: string, params?: any[]): Promise<any>;
 
@@ -377,6 +406,15 @@ export default class IN3Generic<BigIntType, BufferType> {
      * disposes the Client. This must be called in order to free allocated memory!
      */
     public free();
+
+    /**
+     * returns a Object, which can be used as Web3Provider.
+     * 
+     * ```
+     * const web3 = new Web3(new IN3().createWeb3Provider())
+     * ```
+     */
+    public createWeb3Provider(): any
 
     /**
      * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.

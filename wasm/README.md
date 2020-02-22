@@ -1,5 +1,7 @@
 # Incubed client as WASM
 
+## Installing
+
 This client uses the in3-core sources compiled to wasm. The wasm is included into the js-file wich makes it easier to include the data.
 This module has **no** dependencies! All it needs is included inta a wasm of about 300kB.
 

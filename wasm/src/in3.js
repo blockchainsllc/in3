@@ -39,14 +39,14 @@ if (typeof fetch === 'function') {
         get: key => window.localStorage.getItem('in3.' + key),
         set: (key, value) => window.localStorage.setItem('in3.' + key, value)
     }
-    in3w.transport = (url, payload, timeout) => Promise.race(
+    in3w.transport = (url, payload, timeout) => Promise.race([
         fetch(url, {
             method: 'POST',
             mode: 'cors', // makes it possible to access them even from the filesystem.
             headers: { 'Content-Type': 'application/json' },
             body: payload
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout || 30000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout || 30000))]
     ).then(res => {
         if (res.status < 200 || res.status >= 400) throw new Error("Error fetching" + url + ":" + res.statusText)
         return res.text()
@@ -270,6 +270,8 @@ class IN3 {
         if (res.error) throw new Error(res.error.message || res.error)
         return res.result
     }
+
+    createWeb3Provider() { return this }
 
     free() {
         if (this.ptr) {
