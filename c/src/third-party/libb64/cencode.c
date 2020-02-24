@@ -120,7 +120,7 @@ char* base64_encode(const uint8_t* input, size_t len) {
   cnt = base64_encode_block((char*) input, len, c, &s);
   c += cnt;
   cnt = base64_encode_blockend(c, &s);
-  c += cnt;
+  c += (cnt - 1);
   *c = 0;
   return output;
 }
