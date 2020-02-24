@@ -107,18 +107,18 @@ int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 	return codechar - code_out;
 }
 
-size_t b64_encode_strlen(const char* ip) {
-  return ((4 * strlen(ip) / 3) + 3) & ~3U;
+size_t base64_encode_strlen(size_t len) {
+  return ((4 * len / 3) + 3) & ~3U;
 }
 
-char* b64_encode(const char* input) {
-  char*              output = (char*) _malloc(b64_encode_strlen(input) + 1);
+char* base64_encode(const uint8_t* input, size_t len) {
+  char*              output = malloc(b64_encode_strlen(len) + 1);
   char*              c      = output;
   int                cnt    = 0;
   base64_encodestate s;
 
   base64_init_encodestate(&s);
-  cnt = base64_encode_block(input, strlen(input), c, &s);
+  cnt = base64_encode_block(input, len, c, &s);
   c += cnt;
   cnt = base64_encode_blockend(c, &s);
   c += cnt;
