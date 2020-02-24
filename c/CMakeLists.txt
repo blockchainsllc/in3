@@ -49,6 +49,7 @@ if (IN3_LIB)
     set(IN3_LIBS
         $<TARGET_OBJECTS:core_o>
         $<TARGET_OBJECTS:crypto_o>
+        $<TARGET_OBJECTS:b64_o>
         $<TARGET_OBJECTS:tommath_o>
         $<TARGET_OBJECTS:evm_o>
         $<TARGET_OBJECTS:eth_full_o>
@@ -57,6 +58,7 @@ if (IN3_LIB)
         $<TARGET_OBJECTS:eth_nano_o>
         $<TARGET_OBJECTS:usn_api_o>
         $<TARGET_OBJECTS:ipfs_o>
+        $<TARGET_OBJECTS:ipfs_api_o>
     )
     # if we use curl, we include curl transport as well
     if (USE_CURL)
