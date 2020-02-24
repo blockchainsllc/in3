@@ -8,6 +8,8 @@ For details, see http://sourceforge.net/projects/libb64
 #ifndef BASE64_CENCODE_H
 #define BASE64_CENCODE_H
 
+#include <stdlib.h>
+
 typedef enum
 {
 	step_A, step_B, step_C

@@ -107,10 +107,10 @@ static size_t base64_strlen_nopad(const char* ip) {
 }
 
 uint8_t* base64_decode(const char* ip, size_t* len) {
-  *len = base64_decode_strlen(ip);
-  uint8_t*  op  = malloc(*len);
+  *len        = base64_decode_strlen(ip);
+  uint8_t* op = malloc(*len);
   if (op) {
-    uint8_t*              c = op;
+    char*              c = (char*) op;
     base64_decodestate s;
     base64_init_decodestate(&s);
     int cnt = base64_decode_block(ip, base64_strlen_nopad(ip), c, &s);
