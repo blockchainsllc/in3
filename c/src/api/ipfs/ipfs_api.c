@@ -34,43 +34,30 @@
 
 #include "ipfs_api.h"
 #include "../../core/util/mem.h"
+#include "../../third-party/libb64/cdecode.h"
+#include "../../third-party/libb64/cencode.h"
 #include "../api_utils.h"
 
-static const char* enc_to_str(ipfs_enc_t enc) {
-  switch (enc) {
-    case IPFS_ENC_HEX: return "hex";
-    case IPFS_ENC_UTF8: return "utf8";
-    case IPFS_ENC_B64: return "base64";
-    default: return NULL;
-  }
+static bytes_t* b64_to_bytes(const char* b64) {
+  size_t   l    = 0;
+  uint8_t* data = base64_decode(b64, &l);
+  return b_new((char*) data, l);
 }
 
-char* ipfs_put(in3_t* in3, const char* content, ipfs_enc_t encoding) {
+char* ipfs_put(in3_t* in3, const bytes_t* content) {
+  char* b64 = base64_encode(content->data, content->len);
   rpc_init;
   sb_add_char(params, '\"');
-  sb_add_chars(params, content);
-  sb_add_chars(params, "\",\"");
-  sb_add_chars(params, enc_to_str(encoding));
-  sb_add_char(params, '\"');
+  sb_add_chars(params, b64);
+  sb_add_chars(params, "\",\"base64\"");
+  free(b64);
   rpc_exec("ipfs_put", char*, _strdupn(d_string(result), -1));
 }
 
-char* ipfs_put_bytes(in3_t* in3, const bytes_t* content, ipfs_enc_t encoding) {
-  rpc_init;
-  sb_add_char(params, '\"');
-  sb_add_bytes(params, NULL, content, 1, false);
-  sb_add_chars(params, "\",\"");
-  sb_add_chars(params, enc_to_str(encoding));
-  sb_add_char(params, '\"');
-  rpc_exec("ipfs_put", char*, _strdupn(d_string(result), -1));
-}
-
-char* ipfs_get(in3_t* in3, const char* multihash, ipfs_enc_t encoding) {
+bytes_t* ipfs_get(in3_t* in3, const char* multihash) {
   rpc_init;
   sb_add_char(params, '\"');
   sb_add_chars(params, multihash);
-  sb_add_chars(params, "\",\"");
-  sb_add_chars(params, enc_to_str(encoding));
-  sb_add_char(params, '\"');
-  rpc_exec("ipfs_get", char*, _strdupn(d_string(result), -1));
+  sb_add_chars(params, "\",\"base64\"");
+  rpc_exec("ipfs_get", bytes_t*, b64_to_bytes(d_string(result)));
 }
