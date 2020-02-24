@@ -5,3 +5,4 @@
   - source unchanged - import only C sources
   - usage based on incl. example
   - added helpers for encoding/decoding and calculating o/p length.
+  - overwrite trailing \n with \0 in encode.
