@@ -114,9 +114,10 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
   else if (!strcmp(encoding, "utf8"))
     buf = b_new(content, strlen(content));
   else if (!strcmp(encoding, "base64")) {
-    char* str = base64_decode(content);
-    buf       = b_new(str, strlen(str));
-    _free(str);
+    size_t   l    = 0;
+    uint8_t* data = base64_decode(content, &l);
+    buf           = b_new((char*) data, l);
+    free(data);
   } else
     return IN3_ENOTSUP;
 
