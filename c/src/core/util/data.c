@@ -441,16 +441,17 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
 }
 
 int parse_string(json_ctx_t* jp, d_token_t* item) {
-  const char* start = jp->c;
-  size_t      l, i;
-  int         n;
+  char*  start = jp->c;
+  size_t l, i;
+  int    n;
 
   while (true) {
     switch (*(jp->c++)) {
       case 0: return -2;
+      case '\'':
       case '"':
         l = jp->c - start - 1;
-        if (l > 1 && *start == '0' && start[1] == 'x') {
+        if (l > 1 && *start == '0' && start[1] == 'x' && *(start - 1) != '\'') {
           // this is a hex-value
           if (l == 2) {
             // empty byte array
@@ -474,6 +475,11 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
           item->data  = _malloc(1);
           *item->data = hexchar_to_int(start[4]) << 4 | hexchar_to_int(start[5]);
         } else {
+          if (*(start - 1) == '\'') {
+            // this is a escape-sequence which forces this to handled as string
+            // here we do change or fix the input string because this would be an invalid string otherwise.
+            *(jp->c - 1) = (*(start - 1) = '"');
+          }
           item->len  = l | T_STRING << 28;
           item->data = _malloc(l + 1);
           memcpy(item->data, start, l);
@@ -541,6 +547,7 @@ int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
         }
       }
     case '"':
+    case '\'':
       return parse_string(jp, parsed_next_item(jp, T_STRING, key, parent));
     case 't':
       if (strncmp(jp->c, "rue", 3) == 0) {
