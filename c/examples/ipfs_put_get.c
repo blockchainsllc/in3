@@ -44,18 +44,19 @@ static void ipfs_rpc_example(in3_t* c) {
 }
 
 static void ipfs_api_example(in3_t* c) {
-  char* multihash = ipfs_put(c, LOREM_IPSUM, IPFS_ENC_UTF8);
+  bytes_t b         = {.data = (uint8_t*) LOREM_IPSUM, .len = strlen(LOREM_IPSUM)};
+  char*   multihash = ipfs_put(c, &b);
   if (multihash == NULL)
     return_err("ipfs_put API call error");
   printf("IPFS hash: %s\n", multihash);
 
-  char* content = ipfs_get(c, multihash, IPFS_ENC_UTF8);
+  bytes_t* content = ipfs_get(c, multihash);
   free(multihash);
   if (content == NULL)
     return_err("ipfs_get API call error");
 
-  int res = strcmp(content, "\"" LOREM_IPSUM "\"");
-  free(content);
+  int res = strncmp((char*) content->data, LOREM_IPSUM, content->len);
+  b_free(content);
   if (res)
     return_err("Content mismatch");
 }
@@ -70,7 +71,7 @@ int main() {
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
 
   // IPFS put/get using raw RPC calls
-  ipfs_rpc_example(c);
+//  ipfs_rpc_example(c);
 
   // IPFS put/get using API
   ipfs_api_example(c);
