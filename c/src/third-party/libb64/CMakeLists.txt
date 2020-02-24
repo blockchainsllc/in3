@@ -32,16 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_subdirectory( crypto )
-
-if (ETH_FULL)
-  add_subdirectory( tommath )
-endif()
-
-if (USE_SEGGER_RTT)
-  add_subdirectory( segger_rtt )
-endif()
-
-if (IPFS)
-  add_subdirectory( libb64 )
-endif()
+add_library(b64_o OBJECT
+        cencode.c
+        cdecode.c
+        )
+add_library(b64 STATIC $<TARGET_OBJECTS:b64_o>)
