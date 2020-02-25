@@ -488,15 +488,13 @@ static void test_get_uncle_blknum_index(void) {
 
 static void test_utilities(void) {
   uint256_t u256 = {0};
-  //  hex_to_bytes("0xac1b824795e1eb1f", -1, u256.data, 32);
   bytes32_t var;
   memset(var, 0, 32);
   hex_to_bytes("0xac1b824795e1eb1f", -1, var, 32);
   uint256_set(var, 32, u256.data);
   long double d = as_double(u256);
   TEST_ASSERT_TRUE(d > 0.0);
-  uint64_t u64 = as_long(u256);
-  TEST_ASSERT_TRUE(d > 0ll);
+  uint64_t l = as_long(u256);
 }
 
 static void test_eth_call_multiple(void) {
