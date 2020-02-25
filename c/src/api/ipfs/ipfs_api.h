@@ -45,7 +45,7 @@
 #include "../../core/client/client.h"
 #include "../../core/util/bytes.h"
 
-char*    ipfs_put(in3_t* in3, const bytes_t* content); /**< Returns the IPFS multihash of stored content on success OR NULL on error. Result must be freed by caller. */
-bytes_t* ipfs_get(in3_t* in3, const char* multihash);  /**< Returns the content associated with specified multihash on success OR NULL on error. Result must be freed by caller. */
+char*    ipfs_put(in3_t* in3, const bytes_t* content); /**< Returns the IPFS multihash of stored content on success OR NULL on error (check api_last_error()). Result must be freed by caller. */
+bytes_t* ipfs_get(in3_t* in3, const char* multihash);  /**< Returns the content associated with specified multihash on success OR NULL on error (check api_last_error()). Result must be freed by caller. */
 
 #endif //IN3_IPFS_API_H

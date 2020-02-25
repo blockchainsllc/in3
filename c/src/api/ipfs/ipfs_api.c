@@ -36,7 +36,7 @@
 #include "../../core/util/mem.h"
 #include "../../third-party/libb64/cdecode.h"
 #include "../../third-party/libb64/cencode.h"
-#include "../api_utils.h"
+#include "../utils/api_utils_priv.h"
 
 static bytes_t* b64_to_bytes(const char* b64) {
   size_t   l    = 0;
