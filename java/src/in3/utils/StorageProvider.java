@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package in3;
+package in3.utils;
 
 
 /**
@@ -50,4 +50,9 @@ public interface StorageProvider {
      * stores a item in the cache.
      */
     void setItem(String key/** the key for the item */, byte[] content /** the value to store */);
+
+    /**
+     * clear the cache.
+     */
+    boolean clear();
 }

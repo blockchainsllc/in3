@@ -1,18 +1,19 @@
 package in3;
 
-import java.util.HashMap;
-
-import org.json.JSONObject;
-
 import in3.config.ClientConfiguration;
 import in3.config.NodeConfiguration;
 
 public class IN3MockBuilder {
-    IN3 client;
+    private IN3 client;
+    private long chainId;
 
-	public void createNewClient() {
-        client = IN3.forChain(Chain.GOERLI);
-	}
+    public IN3MockBuilder(long chainId) {
+        this.chainId = chainId;
+    }
+
+    public void createNewClient() {
+           client = IN3.forChain(getChainId());
+    }
 
     public void buildTransport(String[][] fileNameTuples) {
         IN3MockTransport newtransport = new IN3MockTransport();
@@ -55,5 +56,9 @@ public class IN3MockBuilder {
         buildTransport(fileNameTuples);
         buildConfig();
         return client;
+    }
+
+    private long getChainId() {
+        return chainId;
     }
 }

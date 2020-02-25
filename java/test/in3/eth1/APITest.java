@@ -9,12 +9,12 @@ public class APITest {
 
     @BeforeAll
     public static void setBuilder() {
-        builder = new IN3MockBuilder();
+        builder = new IN3MockBuilder(Chain.MAINNET);
     }
 
     @Test
     public void call() {
-        String[][] mockedResponses = { { "eth_call", "eth_call.json" } };
+        String[][] mockedResponses = { { "eth_call", "eth_call_1.json" } };
         IN3 in3 = builder.constructClient(mockedResponses);
 
         String to = "0x2736D225f85740f42D17987100dc8d58e9e16252";
@@ -152,7 +152,7 @@ public class APITest {
         // This might be worth testing since there are some integration issues that might arise from the java <-> c interop even if, at the end, this is just a fancy getter.
         String[][] mockedResponses = {};
         IN3 in3 = builder.constructClient(mockedResponses);
-        Assertions.assertEquals("0x5", in3.getEth1API().getChainId());
+        Assertions.assertEquals("0x1", in3.getEth1API().getChainId());
     }
 
     @Test
@@ -394,5 +394,42 @@ public class APITest {
         String[] hashList = in3.getEth1API().getFilterChangesFromBlocks(filterId);
         Assertions.assertArrayEquals(
                 new String[] { "0x03b1815a066ba71eab8e6622afa3e596b80580c2b1056990199dd974db66337e" }, hashList);
+    }
+
+    @Test
+    public void abiEncode() {
+        IN3 in3 = builder.constructClient(new String[][] {});
+        String signature = "getBalance(address)";
+        String[] params = new String[] { "0x1234567890123456789012345678901234567890" };
+        String expected = "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890";
+        String result = in3.getEth1API().abiEncode(signature, params);
+        Assertions.assertEquals(expected, result);
+    }
+
+    @Test
+    public void abiDecode() {
+        IN3 in3 = builder.constructClient(new String[][] {});
+        String signature = "(address,uint256)";
+        String encoded = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005";
+        String[] expectedDecode = new String[] { "0x1234567890123456789012345678901234567890", "0x5" };
+        String[] result = in3.getEth1API().abiDecode(signature, encoded);
+        Assertions.assertArrayEquals(expectedDecode, result);
+    }
+
+    @Test
+    public void checkSumAddress() {
+        IN3 in3 = builder.constructClient(new String[][] {});
+        String address = "0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564";
+        String result = in3.getEth1API().checksumAddress("0xbc0ea09c1651a3d5d40bacb4356fb59159a99564");
+        Assertions.assertEquals(address, result);
+    }
+
+    @Test
+    public void ens() {
+        IN3 in3 = builder.constructClient(new String[][] {
+            { "eth_call", "eth_call_2.json" }
+        });
+        String result = in3.getEth1API().ens("cryptokitties.eth");
+        Assertions.assertEquals("0x06012c8cf97bead5deae237070f9587f8e7a266d", result);
     }
 }

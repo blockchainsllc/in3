@@ -330,7 +330,7 @@ extern "C" {
  * Method:    key
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv*, jclass, jstring);
+JNIEXPORT jint JNICALL Java_in3_utils_JSON_key(JNIEnv*, jclass, jstring);
 
 #ifdef __cplusplus
 }

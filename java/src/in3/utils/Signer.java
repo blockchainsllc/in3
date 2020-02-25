@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package in3;
+package in3.utils;
 
 import in3.IN3;
 import in3.eth1.TransactionRequest;
@@ -48,7 +48,7 @@ public interface Signer {
     TransactionRequest prepareTransaction(IN3 in3, TransactionRequest tx);
 
     /** returns true if the account is supported (or unlocked) */
-    boolean hasAccount(String address);
+    boolean canSign(String address);
 
     /** signing of the raw data. */
     String sign(String data, String address);

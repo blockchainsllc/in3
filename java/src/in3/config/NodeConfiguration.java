@@ -2,7 +2,7 @@ package in3.config;
 
 import java.util.ArrayList;
 
-import in3.JSON;
+import in3.utils.JSON;
 
 /**
  * Part of the configuration hierarchy for IN3 Client. Holds the configuration
@@ -87,6 +87,7 @@ public class NodeConfiguration implements Configuration {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{");
+
         if (isNeedsUpdate() != null) {
             JSON.appendKey(sb, "needsUpdate", isNeedsUpdate());
         }
@@ -109,6 +110,7 @@ public class NodeConfiguration implements Configuration {
         if (getWhiteListContract() != null) {
             JSON.appendKey(sb, "whiteListContract", getWhiteListContract());
         }
+
         sb.setCharAt(sb.length() - 1, '}');
 
         return sb.toString();

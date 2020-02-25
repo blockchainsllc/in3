@@ -1,6 +1,6 @@
 package in3.config;
 
-import in3.JSON;
+import in3.utils.JSON;
 
 /**
  * Configuration Object for Incubed Client. It represents the nodes of a nodelist.

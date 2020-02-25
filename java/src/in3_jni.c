@@ -44,6 +44,7 @@
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/api/eth1/eth_api.h"
 #include "../../c/src/verifier/eth1/full/eth_full.h"
 #ifdef IPFS
 #include "../../c/src/verifier/ipfs/ipfs.h"
@@ -387,7 +388,7 @@ static JNIEnv* jni = NULL;
 
 static jobject get_storage_handler(void* cptr) {
   jclass    cls = (*jni)->GetObjectClass(jni, (jobject) cptr);
-  jmethodID mid = (*jni)->GetMethodID(jni, cls, "getStorageProvider", "()Lin3/StorageProvider;");
+  jmethodID mid = (*jni)->GetMethodID(jni, cls, "getStorageProvider", "()Lin3/utils/StorageProvider;");
   return (*jni)->CallObjectMethod(jni, (jobject) cptr, mid);
 }
 
@@ -415,7 +416,14 @@ void storage_set_item(void* cptr, char* key, bytes_t* content) {
 
   jbyteArray bytes = (*jni)->NewByteArray(jni, content->len);
   (*jni)->SetByteArrayRegion(jni, bytes, 0, content->len, (jbyte*) content->data);
-  (*jni)->CallVoidMethod(jni, handler, (*jni)->GetMethodID(jni, (*jni)->GetObjectClass(jni, handler), "setItem", "(Ljava/lang/String;[B)V"), (*jni)->NewStringUTF(jni, key), bytes);
+  (*jni)->CallObjectMethod(jni, handler, (*jni)->GetMethodID(jni, (*jni)->GetObjectClass(jni, handler), "setItem", "(Ljava/lang/String;[B)V"), (*jni)->NewStringUTF(jni, key), bytes);
+}
+
+void storage_clear(void* cptr) {
+  jobject handler = get_storage_handler(cptr);
+  if (!handler) return;
+
+  (*jni)->CallObjectMethod(jni, handler, (*jni)->GetMethodID(jni, (*jni)->GetObjectClass(jni, handler), "clear", "(V)B"));
 }
 
 JNIEXPORT void JNICALL Java_in3_IN3_initcache(JNIEnv* env, jobject ob) {
@@ -502,7 +510,7 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
       return (*env)->NewStringUTF(env, tmp);
     }
     case T_OBJECT: {
-      clz           = (*env)->FindClass(env, "in3/JSON");
+      clz           = (*env)->FindClass(env, "in3/utils/JSON");
       jobject   map = (*env)->NewObject(env, clz, (*env)->GetMethodID(env, clz, "<init>", "()V"));
       jmethodID put = (*env)->GetMethodID(env, clz, "put", "(ILjava/lang/Object;)V");
       for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter))
@@ -518,7 +526,7 @@ static jobject toObject(JNIEnv* env, d_token_t* t) {
   return NULL;
 }
 
-JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv* env, jclass ob, jstring k) {
+JNIEXPORT jint JNICALL Java_in3_utils_JSON_key(JNIEnv* env, jclass ob, jstring k) {
   jint        val = 0;
   const char* str = (*env)->GetStringUTFChars(env, k, 0);
   val             = key(str);
@@ -775,7 +783,7 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
   in3_ctx_t* ctx = (in3_ctx_t*) pk;
   UNUSED_VAR(type);
   jclass    cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
-  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/Signer;");
+  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
   jobject   signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
 
   if (!signer) return -1;
@@ -820,8 +828,8 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
     jproof = (*jni)->GetStaticFieldID(jni, jproofcls, "standard", "Lin3/Proof;");
   }
 
-  jobject enumVal = (jobject)(*jni)->GetStaticObjectField(jni, jproofcls, jproof);
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_proof_mid, enumVal);
+  jobject proofval = (jobject)(*jni)->GetStaticObjectField(jni, jproofcls, jproof);
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_proof_mid, proofval);
 
   jmethodID set_max_attempts_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxAttempts", "(I)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_attempts_mid, (jint) c->max_attempts);
@@ -857,13 +865,10 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_node_props_mid, (jlong) c->request_count);
 
   jmethodID set_node_limit_mid = (*jni)->GetMethodID(jni, jconfigclass, "setNodeLimit", "(J)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_node_limit_mid, (jlong) c->node_props);
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_node_limit_mid, (jlong) c->node_limit);
 
   jmethodID set_replace_latest_block_mid = (*jni)->GetMethodID(jni, jconfigclass, "setReplaceLatestBlock", "(I)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_replace_latest_block_mid, (jint) c->replace_latest_block);
-
-  // jmethodID set_rpc_mid = (*jni)->GetMethodID(jni, jconfigclass, "setRpc", "(Ljava/lang/String;)V;");
-  // (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_rpc_mid, (jstring) c->request_count);
 
   jmethodID set_max_block_cache_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxBlockCache", "(J)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_block_cache_mid, (jlong) c->max_block_cache);
@@ -889,7 +894,6 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
 
     for (int i = 0; i < chain.nodelist_length; i++) {
       in3_node_t node = chain.nodelist[i];
-
       jobject   jnodelistconfigobj = (*jni)->NewObject(jni, jnodelistconfigclass, (*jni)->GetMethodID(jni, jnodelistconfigclass, "<init>", "(Lin3/config/NodeConfiguration;)V"), jnodeconfigobj);
       jmethodID set_address_mid    = (*jni)->GetMethodID(jni, jnodelistconfigclass, "setAddress", "(Ljava/lang/String;)V");
       bytes_to_hex(node.address->data, node.address->len, tmp + 2);
@@ -942,12 +946,14 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
 #endif
 
   in3_t* in3 = in3_for_chain(jchain);
+  in3_register_eth_api();
   in3_log_set_level(LOG_DEBUG);
   in3->transport          = Java_in3_IN3_transport;
   in3->cache              = _malloc(sizeof(in3_storage_handler_t));
   in3->cache->cptr        = (*env)->NewGlobalRef(env, ob);
   in3->cache->get_item    = storage_get_item;
   in3->cache->set_item    = storage_set_item;
+  in3->cache->clear       = storage_clear;
   in3->signer             = _malloc(sizeof(in3_signer_t));
   in3->signer->sign       = jsign;
   in3->signer->prepare_tx = NULL;

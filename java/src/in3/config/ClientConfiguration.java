@@ -3,8 +3,8 @@ package in3.config;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import in3.JSON;
 import in3.Proof;
+import in3.utils.JSON;
 
 /**
  * Configuration Object for Incubed Client. It holds the state for the root 

@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package in3;
+package in3.utils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -84,4 +84,14 @@ public class TempStorageProvider implements StorageProvider {
         }
     }
 
+    @Override
+    public boolean clear() {
+        try {
+            // TODO perform whatever action necessary to clear cache
+            return true;
+        } catch (Throwable t) {
+            t.printStackTrace();
+            return false;
+        }
+    }
 }
