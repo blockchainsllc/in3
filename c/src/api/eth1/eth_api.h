@@ -43,6 +43,7 @@
 #define ETH_API_H
 
 #include "../../core/client/client.h"
+#include "../utils/api_utils.h"
 #include <stdarg.h>
 
 /** Initializer macros for eth_blknum_t */
@@ -51,7 +52,10 @@
 #define BLKNUM_EARLIEST() ((eth_blknum_t){.def = BLK_EARLIEST, .is_u64 = false})
 #define BLKNUM_PENDING() ((eth_blknum_t){.def = BLK_PENDING, .is_u64 = false})
 
-/** 
+/**< The current error or null if all is ok */
+#define eth_last_error() api_last_error()
+
+/**
  * a 32 byte long integer used to store ethereum-numbers. 
  * 
  * use the as_long() or as_double() to convert this to a useable number.
@@ -182,7 +186,7 @@ bytes_t*          eth_sendTransaction(in3_t* in3, address_t from, address_t to, 
 bytes_t*          eth_sendRawTransaction(in3_t* in3, bytes_t data);                                        /**< Creates new message call transaction or a contract creation for signed transactions. Returns (32 Bytes) - the transaction hash, or the zero hash if the transaction is not yet available. Free after use with b_free(). */
 eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);                                /**< Returns the receipt of a transaction by transaction hash. Free result after use with eth_tx_receipt_free() */
 char*             eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);                                     /**< Waits for receipt of a transaction requested by transaction hash. */
-char*             eth_last_error();                                                                        /**< The current error or null if all is ok */
+//char*             eth_last_error();                                                                        /**< The current error or null if all is ok */
 
 // Helper functions
 long double as_double(uint256_t d);                                          /**< Converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no guarantee to have the full precision. */
