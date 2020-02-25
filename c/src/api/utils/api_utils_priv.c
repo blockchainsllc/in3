@@ -37,22 +37,22 @@
 #include "api_utils.h"
 
 // forward decl
-void set_error(int std_error, const char* msg);
-char* api_last_error(void);
+void  set_error(int err, const char* msg);
+char* get_error(void);
 
 // last error string
 static char* last_error = NULL;
 // API get error function
-static get_error_fn api_get_error = api_last_error;
+static get_error_fn get_error_impl = get_error;
 // API set error function
-static set_error_fn api_set_error = set_error;
+static set_error_fn set_error_impl = set_error;
 
 void api_get_error_fn(get_error_fn fn) {
-  api_get_error = fn;
+  get_error_impl = fn;
 }
 
 void api_set_error_fn(set_error_fn fn) {
-  api_set_error = fn;
+  set_error_impl = fn;
 }
 
 // sets the error and a message
@@ -74,28 +74,32 @@ static void set_error_intern(int std_error, const char* msg) {
   set_errorn(std_error, msg, strlen(msg));
 }
 
-void set_error(int std_error, const char* msg) {
-#ifdef ERR_MSG
-  return set_error_intern(std_error, msg);
-#else
-  return set_error_intern(std_error, "E");
-#endif
-}
-
-char* api_last_error(void) {
+char* get_error(void) {
   return last_error;
 }
 
-void in3_set_error(int err, const char* msg) {
-  return api_set_error(err, msg);
+char* api_last_error(void) {
+  return get_error_impl();
+}
+
+void set_error(int err, const char* msg) {
+#ifdef ERR_MSG
+  return set_error_intern(err, msg);
+#else
+  return set_error_intern(err, "E");
+#endif
+}
+
+void api_set_error(int err, const char* msg) {
+  return set_error_impl(err, msg);
 }
 
 d_token_t* get_result(in3_ctx_t* ctx) {
   if (ctx->error) {                       // error means something went wrong during verification or a timeout occured.
-    in3_set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
+    api_set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
     return NULL;
   } else if (!ctx->responses) {
-    in3_set_error(IN3_ERPC, "No response");
+    api_set_error(IN3_ERPC, "No response");
     return NULL;
   }
 
@@ -104,7 +108,7 @@ d_token_t* get_result(in3_ctx_t* ctx) {
 
   // if no result, we expect an error
   t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
-  in3_set_error(ETIMEDOUT, !t
+  api_set_error(ETIMEDOUT, !t
                                ? "No result or error in response"
                                : (d_type(t) == T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
   return NULL;

@@ -39,7 +39,7 @@
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
-#include "../api_utils.h"
+#include "../utils/api_utils_priv.h"
 #include "abi.h"
 
 /** copies bytes to a fixed length destination (leftpadding 0 if needed).*/
@@ -170,7 +170,7 @@ static uint32_t get_tx_size(d_token_t* tx) { return d_to_bytes(d_get(tx, K_INPUT
 static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
   if (result) {
     if (d_type(result) == T_NULL)
-      set_error(EAGAIN, "Block does not exist");
+      api_set_error(EAGAIN, "Block does not exist");
     else {
       d_token_t* sealed = d_get(result, K_SEAL_FIELDS);
       d_token_t* txs    = d_get(result, K_TRANSACTIONS);
@@ -193,7 +193,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       // copy data
       eth_block_t* b = _malloc(s);
       if (!b) {
-        set_error(ENOMEM, "Not enough memory");
+        api_set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
       uint8_t* p = (uint8_t*) b + sizeof(eth_block_t); // pointer where we add the next data after the block-struct
@@ -385,7 +385,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     sb_add_char(params, '}');
     params_add_blk_num_t(params, block);
   } else {
-    set_error(0, req->error ? req->error : "Error parsing the request-data");
+    api_set_error(0, req->error ? req->error : "Error parsing the request-data");
     sb_free(params);
     req_free(req);
     return NULL;
@@ -418,7 +418,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 #endif
         return wait_for_receipt(in3, params, timeout + timeout, count - 1);
       } else {
-        set_error(1, "timeout waiting for the receipt");
+        api_set_error(1, "timeout waiting for the receipt");
         return NULL;
       }
     } else {
@@ -429,7 +429,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
     }
   }
   ctx_free(ctx);
-  set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
+  api_set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
   return NULL;
 }
 
@@ -565,12 +565,12 @@ uint64_t eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, cha
 static eth_tx_t* parse_tx(d_token_t* result) {
   if (result) {
     if (d_type(result) == T_NULL)
-      set_error(EAGAIN, "Transaction does not exist");
+      api_set_error(EAGAIN, "Transaction does not exist");
     else {
       uint32_t  s  = get_tx_size(result);
       eth_tx_t* tx = malloc(s);
       if (!tx) {
-        set_error(ENOMEM, "Not enough memory");
+        api_set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
       write_tx(result, tx);
@@ -610,11 +610,11 @@ uint64_t eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t blo
 static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
   if (result) {
     if (d_type(result) == T_NULL)
-      set_error(EAGAIN, "Error getting the Receipt!");
+      api_set_error(EAGAIN, "Error getting the Receipt!");
     else {
       eth_tx_receipt_t* txr = _malloc(sizeof(*txr));
       if (!txr) {
-        set_error(ENOMEM, "Not enough memory");
+        api_set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
       txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);

@@ -44,7 +44,7 @@ IF (USE_SCRYPT)
     ADD_DEFINITIONS(-DSCRYPT)
   endif()
 endif()
-add_library(eth_api_o OBJECT eth_api.c abi.c key.c rpc_api.c ens.c)
+add_library(eth_api_o OBJECT eth_api.c abi.c key.c rpc_api.c ens.c ../utils/api_utils_priv.c)
 target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
 
 add_library(eth_api STATIC $<TARGET_OBJECTS:eth_api_o>)

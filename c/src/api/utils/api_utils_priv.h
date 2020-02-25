@@ -86,7 +86,7 @@
 #define params_add_first_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, false)
 #define params_add_next_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, true)
 
-void in3_set_error(int err, const char* msg);
+void api_set_error(int err, const char* msg);
 
 /** returns the result from a previously executed ctx */
 d_token_t* get_result(in3_ctx_t* ctx);
