@@ -32,56 +32,25 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package in3;
+package in3.utils;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import in3.IN3;
+import in3.eth1.TransactionRequest;
 
 /**
- * a simple Storage Provider storing the cache in the temp-folder.
+ * a Interface responsible for signing data or transactions.
  */
-public class TempStorageProvider implements StorageProvider {
+public interface Signer {
+    /**
+     * optiional method which allows to change the transaction-data before sending
+     * it. This can be used for redirecting it through a multisig.
+     */
+    TransactionRequest prepareTransaction(IN3 in3, TransactionRequest tx);
 
-    private static File tmp = new File(System.getProperty("java.io.tmpdir"));
-    private static String in3Prefix = "in3_cache_";
+    /** returns true if the account is supported (or unlocked) */
+    boolean hasAccount(String address);
 
-    @Override
-    public byte[] getItem(String key) {
-
-        File f = new File(tmp, in3Prefix + key);
-        if (f.exists()) {
-            BufferedInputStream is = null;
-            try {
-                is = new BufferedInputStream(new FileInputStream(f));
-                byte[] content = new byte[(int) f.length()];
-                int offset = 0;
-                while (offset < content.length)
-                    offset += is.read(content, offset, content.length - offset);
-                return content;
-            } catch (Exception ex) {
-                return null;
-            } finally {
-                try {
-                    if (is != null)
-                        is.close();
-                } catch (IOException io) {
-                }
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public void setItem(String key, byte[] content) {
-        try {
-            FileOutputStream os = new FileOutputStream(new File(tmp, in3Prefix + key));
-            os.write(content);
-            os.close();
-        } catch (IOException ex) {
-        }
-    }
+    /** signing of the raw data. */
+    String sign(String data, String address);
 
 }

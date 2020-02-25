@@ -3,6 +3,7 @@ package in3.config;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import in3.*;
+import in3.utils.JSON;
 
 public class IN3ConfigTest {
     // This class is more akin to integrated tests since, as you can see, it relies on multiple Objects.

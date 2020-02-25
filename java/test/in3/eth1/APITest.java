@@ -9,12 +9,12 @@ public class APITest {
 
     @BeforeAll
     public static void setBuilder() {
-        builder = new IN3MockBuilder();
+        builder = new IN3MockBuilder(Chain.GOERLI);
     }
 
     @Test
     public void call() {
-        String[][] mockedResponses = { { "eth_call", "eth_call.json" } };
+        String[][] mockedResponses = { { "eth_call", "eth_call_1.json" } };
         IN3 in3 = builder.constructClient(mockedResponses);
 
         String to = "0x2736D225f85740f42D17987100dc8d58e9e16252";

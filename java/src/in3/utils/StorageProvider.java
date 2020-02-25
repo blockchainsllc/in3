@@ -32,25 +32,27 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package in3;
+package in3.utils;
 
-import in3.IN3;
-import in3.eth1.TransactionRequest;
 
 /**
- * a Interface responsible for signing data or transactions.
+ * Provider methods to cache data.
+ * These data could be nodelists, contract codes or validator changes.
  */
-public interface Signer {
+public interface StorageProvider {
     /**
-     * optiional method which allows to change the transaction-data before sending
-     * it. This can be used for redirecting it through a multisig.
+     * returns a item from cache ()
+     * @return the bytes or null if not found.
      */
-    TransactionRequest prepareTransaction(IN3 in3, TransactionRequest tx);
+    byte[] getItem(String key /** the key for the item */);
 
-    /** returns true if the account is supported (or unlocked) */
-    boolean hasAccount(String address);
+    /**
+     * stores a item in the cache.
+     */
+    void setItem(String key/** the key for the item */, byte[] content /** the value to store */);
 
-    /** signing of the raw data. */
-    String sign(String data, String address);
-
+    /**
+     * clear the cache.
+     */
+    boolean clear();
 }

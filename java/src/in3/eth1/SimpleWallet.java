@@ -39,7 +39,7 @@ import java.util.Map;
 
 import in3.IN3;
 import in3.Loader;
-import in3.Signer;
+import in3.utils.Signer;
 
 /**
  * a simple Implementation for holding private keys to sing data or

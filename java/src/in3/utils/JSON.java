@@ -32,11 +32,11 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package in3;
+package in3.utils;
 
 import java.util.*;
 
-import in3.eth1.Log;
+import in3.Loader;
 
 import java.math.*;
 
@@ -129,7 +129,7 @@ public class JSON {
             Object[] a = (Object[]) o;
             String[] s = new String[a.length];
             for (int i = 0; i < s.length; i++)
-                s[i] = a[i] == null ? null : a[i].toString();
+                s[i] = a[i] == null ? null : asString(a[i]);
             return s;
         }
         return null;

@@ -36,6 +36,8 @@ package in3.eth1;
 
 import in3.*;
 import in3.eth1.*;
+import in3.utils.JSON;
+import in3.utils.Signer;
 
 import java.math.BigInteger;
 

@@ -49,18 +49,22 @@ IF (NOT DEFINED ANDROID_ABI)
   set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.7" "-target" "1.7")
 
   set(SOURCES
-    in3/Chain.java 
-    in3/IN3.java 
-    in3/IN3DefaultTransport.java 
-    in3/IN3Transport.java 
-    in3/JSON.java 
-    in3/StorageProvider.java 
-    in3/TempStorageProvider.java 
-    in3/Proof.java 
+    in3/Chain.java
+    in3/EcRecoverResult.java
+    in3/EnsField.java
+    in3/IN3Transport.java
+    in3/IN3DefaultTransport.java
+    in3/IN3.java
     in3/Loader.java
-    in3/Signer.java
-    in3/config/Configuration.java
+    in3/Node.java
+    in3/NodeList.java
+    in3/NodeProps.java
+    in3/Proof.java
+    in3/Signature.java
+    in3/SignatureType.java
+    in3/SignedBlockHash.java
     in3/config/ClientConfiguration.java
+    in3/config/Configuration.java
     in3/config/NodeConfiguration.java
     in3/config/NodeListConfiguration.java
     in3/eth1/API.java
@@ -71,22 +75,26 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/eth1/Log.java
     in3/eth1/LogFilter.java
     in3/eth1/SimpleWallet.java
+    in3/utils/JSON.java
+    in3/utils/Signer.java
+    in3/utils/StorageProvider.java
+    in3/utils/TempStorageProvider.java
   )
 
   if(JAVA_MULTI_LIBS)
     set(SOURCES
       ${SOURCES}
-      in3/native/libin3_jni.dylib 
-      in3/native/libin3_jni.so 
+      in3/native/libin3_jni.dylib
+      in3/native/libin3_jni.so
       in3/native/libin3_jni_arm.so
       in3/native/in3_jni.dll
     )
   endif()
 
-  add_jar(in3j 
+  add_jar(in3j
       ${SOURCES}
 
-      OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib 
+      OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib
       OUTPUT_NAME in3
   )
 
