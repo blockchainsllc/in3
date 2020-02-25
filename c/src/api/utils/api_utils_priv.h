@@ -32,15 +32,15 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#ifndef IN3_API_UTILS_H
-#define IN3_API_UTILS_H
+#ifndef IN3_API_UTILS_PRIV_H
+#define IN3_API_UTILS_PRIV_H
 
-#include "../core/client/context.h"
-#include "../core/client/keys.h"
-#include "../core/util/data.h"
-#include "../core/util/error.h"
-#include "../core/util/log.h"
-#include "../core/util/utils.h"
+#include "../../core/client/context.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/data.h"
+#include "../../core/util/error.h"
+#include "../../core/util/log.h"
+#include "../../core/util/utils.h"
 #ifdef __ZEPHYR__
 #include <zephyr.h>
 #else
@@ -86,54 +86,9 @@
 #define params_add_first_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, false)
 #define params_add_next_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, true)
 
-// last error string
-static char* last_error = NULL;
-char*        eth_last_error() { return last_error; }
+void in3_set_error(int err, const char* msg);
 
-// sets the error and a message
-static void set_errorn(int std_error, char* msg, int len) {
-  errno = std_error;
-  if (last_error) _free(last_error);
-  last_error = _malloc(len + 1);
-  memcpy(last_error, msg, len);
-  last_error[len] = 0;
-}
+/** returns the result from a previously executed ctx */
+d_token_t* get_result(in3_ctx_t* ctx);
 
-// sets the error and a message
-static void set_error_intern(int std_error, char* msg) {
-#ifndef __ZEPHYR__
-  in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
-#else
-  in3_log_error("Request failed due to %s\n", msg);
-#endif
-  set_errorn(std_error, msg, strlen(msg));
-}
-
-#ifdef ERR_MSG
-#define set_error(e, msg) set_error_intern(e, msg)
-#else
-#define set_error(e, msg) set_error_intern(e, "E")
-#endif
-
-/** returns the result from a previously executed ctx*/
-static inline d_token_t* get_result(in3_ctx_t* ctx) {
-  if (ctx->error) {                   // error means something went wrong during verification or a timeout occured.
-    set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
-    return NULL;
-  } else if (!ctx->responses) {
-    set_error(IN3_ERPC, "No response");
-    return NULL;
-  }
-
-  d_token_t* t = d_get(ctx->responses[0], K_RESULT);
-  if (t) return t; // everthing is good, we have a result
-
-  // if no result, we expect an error
-  t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
-  set_error(ETIMEDOUT, !t
-                           ? "No result or error in response"
-                           : (d_type(t) == T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
-  return NULL;
-}
-
-#endif //IN3_API_UTILS_H
+#endif //IN3_API_UTILS_PRIV_H
