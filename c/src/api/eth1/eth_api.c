@@ -429,6 +429,12 @@ static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   return res;
 }
 
+static uint64_t* d_to_u64ptr(d_token_t* res) {
+  uint64_t* p = _malloc(sizeof(uint64_t));
+  *p          = d_long(res);
+  return p;
+}
+
 static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t block, bool only_estimate, char* fn_sig, va_list ap) {
   rpc_init;
   int             res = 0;
@@ -487,17 +493,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
   if (res >= 0) {
     if (only_estimate) {
-      in3_ctx_t* _ctx_           = in3_client_rpc_ctx(in3, "eth_estimateGas", sb_add_char(params, ']')->data);
-      d_token_t* result          = get_result(_ctx_);
-      d_token_t* estimate_result = _malloc(sizeof(d_token_t));
-      //get a copy of the result instead of using the result pointer
-      estimate_result->data = NULL;
-      memcpy(estimate_result->data, result->data, result->len);
-      estimate_result->len = result->len;
-      estimate_result->key = result->key;
-      ctx_free(_ctx_);
-      sb_free(params);
-      return estimate_result;
+      rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
     } else {
       rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
     }
@@ -661,9 +657,11 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char
 uint64_t eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...) {
   va_list ap;
   va_start(ap, fn_sig);
-  d_token_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
+  uint64_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
   va_end(ap);
-  return d_long(response);
+  uint64_t tmp = *response;
+  _free(response);
+  return tmp;
 }
 
 static eth_tx_t* parse_tx(d_token_t* result) {
