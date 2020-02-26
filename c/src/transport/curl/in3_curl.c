@@ -34,6 +34,7 @@
 
 #include "in3_curl.h"
 #include "../../core/client/client.h"
+#include "../../core/client/version.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
@@ -94,6 +95,7 @@ in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, 
   headers                    = curl_slist_append(headers, "Accept: application/json");
   headers                    = curl_slist_append(headers, "Content-Type: application/json");
   headers                    = curl_slist_append(headers, "charsets: utf-8");
+  headers                    = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
   for (transfers = 0; transfers < min(CURL_MAX_PARALLEL, urls_len); transfers++)
     readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers, timeout);
 
@@ -153,6 +155,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
     headers                    = curl_slist_append(headers, "Accept: application/json");
     headers                    = curl_slist_append(headers, "Content-Type: application/json");
     headers                    = curl_slist_append(headers, "charsets: utf-8");
+    headers                    = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
@@ -165,7 +168,6 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
       sb_add_chars(&r->error, "curl_easy_perform() failed:");
       sb_add_chars(&r->error, (char*) curl_easy_strerror(res));
     }
-
     curl_slist_free_all(headers);
     /* always cleanup */
     curl_easy_cleanup(curl);
