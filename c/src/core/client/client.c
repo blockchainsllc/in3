@@ -169,7 +169,7 @@ char* in3_client_exec_req(
 
   // looks good, so we use the resonse and return it
   str_range_t rr = d_to_json(ctx->responses[0]), rin3;
-  if (!c->keep_in3 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {
+  if ((c->flags & FLAGS_KEEP_IN3) == 0 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {
     while (*rin3.data != ',' && rin3.data > rr.data) rin3.data--;
     *rin3.data = '}';
     rr.len     = rin3.data - rr.data + 1;

@@ -43,6 +43,7 @@
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
@@ -55,12 +56,11 @@
 
 static void test_in3_config() {
 
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  ;
-  c->transport        = test_transport;
-  c->auto_update_list = false;
-  c->proof            = PROOF_NONE;
-  c->signature_count  = 0;
+  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport       = test_transport;
+  c->flags           = FLAGS_STATS;
+  c->proof           = PROOF_NONE;
+  c->signature_count = 0;
 
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "in3_config", "[{\
      \"chainId\":7,\
@@ -97,9 +97,9 @@ static void test_in3_config() {
   ctx_free(ctx);
 
   TEST_ASSERT_EQUAL(7, c->chain_id);
-  TEST_ASSERT_EQUAL(true, c->auto_update_list);
+  TEST_ASSERT_EQUAL(FLAGS_AUTO_UPDATE_LIST, c->flags & FLAGS_AUTO_UPDATE_LIST);
   TEST_ASSERT_EQUAL(50, c->finality);
-  TEST_ASSERT_EQUAL(true, c->include_code);
+  TEST_ASSERT_EQUAL(FLAGS_INCLUDE_CODE, c->flags & FLAGS_INCLUDE_CODE);
   TEST_ASSERT_EQUAL(99, c->max_attempts);
   TEST_ASSERT_EQUAL(98, c->max_block_cache);
   TEST_ASSERT_EQUAL(97, c->max_code_cache);
@@ -109,7 +109,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(94, c->replace_latest_block);
   TEST_ASSERT_EQUAL(93, c->request_count);
   TEST_ASSERT_EQUAL(92, c->signature_count);
-  TEST_ASSERT_EQUAL(1, c->keep_in3);
+  TEST_ASSERT_EQUAL(FLAGS_KEEP_IN3, c->flags & FLAGS_KEEP_IN3);
 
   in3_chain_t* chain = in3_find_chain(c, 7);
   TEST_ASSERT_NOT_NULL(chain);
@@ -134,12 +134,12 @@ static void test_in3_config() {
 
 static void test_in3_client_rpc() {
   char * result = NULL, *error = NULL;
-  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport        = test_transport;
-  c->auto_update_list = false;
-  c->proof            = PROOF_NONE;
-  c->signature_count  = 0;
-  c->max_attempts     = 1;
+  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport       = test_transport;
+  c->flags           = FLAGS_STATS;
+  c->proof           = PROOF_NONE;
+  c->signature_count = 0;
+  c->max_attempts    = 1;
   for (int i = 0; i < c->chains_length; i++)
     c->chains[i].nodelist_upd8_params = NULL;
 
@@ -183,7 +183,7 @@ static void test_in3_client_rpc() {
 
   // test in3_client_exec_req() with keep_in3 set to true
   // TODO: also test with use_binary set to true
-  c->keep_in3 = true;
+  c->flags |= FLAGS_KEEP_IN3;
   add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
   char* response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
   TEST_ASSERT_NOT_NULL(response);
@@ -191,7 +191,7 @@ static void test_in3_client_rpc() {
   free(response);
 
   // test in3_client_exec_req() with keep_in3 set to false
-  c->keep_in3 = false;
+  BITMASK_CLEAR(c->flags, FLAGS_KEEP_IN3);
   add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
   response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
   TEST_ASSERT_NOT_NULL(response);

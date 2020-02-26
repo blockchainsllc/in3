@@ -107,9 +107,8 @@ typedef enum {
  */
 typedef struct in3_request_config {
   chain_id_t         chain_id;               /**< the chain to be used. this is holding the integer-value of the hexstring. */
-  uint8_t            include_code;           /**< if true the code needed will always be devlivered.  */
+  uint_fast8_t       flags;                  /**< the current flags from the client. */
   uint8_t            use_full_proof;         /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
-  uint8_t            use_binary;             /**< this flaqg is set, the client should use binary-format */
   bytes_t*           verified_hashes;        /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
   uint16_t           verified_hashes_length; /**< number of verified blockhashes*/
   uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
@@ -140,6 +139,19 @@ typedef enum {
   NODE_PROP_STATS            = 0x100, /* filter out nodes that do not provide stats */
   NODE_PROP_MIN_BLOCK_HEIGHT = 0x400, /* filter out nodes that will sign blocks with lower min block height than specified */
 } in3_node_props_type_t;
+
+/**
+ * a list of flags definiing the behavior of the incubed client.
+ */
+typedef enum {
+  FLAGS_KEEP_IN3         = 0x1,  /* the in3-section with the proof will also returned */
+  FLAGS_AUTO_UPDATE_LIST = 0x2,  /* the nodelist will be automaticly updated if the last_block is newer  */
+  FLAGS_INCLUDE_CODE     = 0x4,  /* the code is included when sending eth_call-requests  */
+  FLAGS_BINARY           = 0x8,  /* the client will use binary format  */
+  FLAGS_HTTP             = 0x10, /* the client will try to use http instead of https  */
+  FLAGS_STATS            = 0x20, /* nodes will keep track of the stats (default=true)  */
+
+} in3_flags_type_t;
 
 /** incubed node-configuration. 
  * 
@@ -434,9 +446,6 @@ typedef struct in3_t_ {
   /** servers to filter for the given chain. The chain-id based on EIP-155.*/
   chain_id_t chain_id;
 
-  /** if true the nodelist will be automaticly updated if the last_block is newer */
-  uint8_t auto_update_list;
-
   /** a cache handler offering 2 functions ( setItem(string,string), getItem(string) ) */
   in3_storage_handler_t* cache;
 
@@ -446,17 +455,8 @@ typedef struct in3_t_ {
   /** the transporthandler sending requests */
   in3_transport_send transport;
 
-  /** includes the code when sending eth_call-requests */
-  uint8_t include_code;
-
-  /** if true the client will use binary format*/
-  uint8_t use_binary;
-
-  /** if true the client will try to use http instead of https*/
-  uint8_t use_http;
-
-  /** if true the in3-section with the proof will also returned*/
-  uint8_t keep_in3;
+  /** a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines*/
+  uint_fast8_t flags;
 
   /** chain spec and nodeList definitions*/
   in3_chain_t* chains;
