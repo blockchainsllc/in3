@@ -540,6 +540,14 @@ char* in3_configure(in3_t* c, const char* config) {
       c->max_code_cache = d_long(token);
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
+      in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      if (c->max_verified_hashes < d_long(token)) {
+        chain->verified_hashes = _realloc(chain->verified_hashes,
+                                          sizeof(in3_verified_hash_t) * d_long(token),
+                                          sizeof(in3_verified_hash_t) * c->max_verified_hashes);
+        // clear newly allocated memory
+        memset(chain->verified_hashes + c->max_verified_hashes, 0, (d_long(token) - c->max_verified_hashes) * sizeof(in3_verified_hash_t));
+      }
       c->max_verified_hashes = d_long(token);
     } else if (token->key == key("timeout")) {
       EXPECT_TOK_U32(token);
@@ -656,9 +664,12 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
             EXPECT_TOK(cp.token, (unsigned) d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
-            _free(chain->verified_hashes);
-            chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
-            int i                  = 0;
+            if (!chain->verified_hashes)
+              chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+            else
+              // clear extra verified_hashes (preceding ones will be overwritten anyway)
+              memset(chain->verified_hashes + d_len(cp.token), 0, (c->max_verified_hashes - d_len(cp.token)) * sizeof(in3_verified_hash_t));
+            int i = 0;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
               EXPECT_TOK_U64(d_get(n.token, key("block")));
               EXPECT_TOK_B256(d_get(n.token, key("hash")));
