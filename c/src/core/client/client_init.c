@@ -157,8 +157,8 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->deposit    = 0;
   node->props      = 0xFF;
   node->url        = _malloc(strlen(url) + 1);
+  BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
   memcpy(node->url, url, strlen(url) + 1);
-  node->whitelisted = false;
 
   in3_node_weight_t* weight   = chain->weights + node_index;
   weight->blacklisted_until   = 0;
@@ -351,8 +351,8 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     node->index    = chain->nodelist_length;
     node->capacity = 1;
     node->deposit  = 0;
+    BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
     chain->nodelist_length++;
-    node->whitelisted = false;
   } else
     _free(node->url);
 

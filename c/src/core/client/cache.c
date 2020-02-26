@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "cache.h"
+#include "../util/bitset.h"
 #include "../util/log.h"
 #include "../util/mem.h"
 #include "../util/utils.h"
@@ -103,14 +104,14 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   pos += node_count * sizeof(in3_node_weight_t);
 
   for (int i = 0; i < node_count; i++) {
-    in3_node_t* n  = chain->nodelist + i;
-    n->capacity    = b_read_int(b, &pos);
-    n->index       = b_read_int(b, &pos);
-    n->deposit     = b_read_long(b, &pos);
-    n->props       = b_read_long(b, &pos);
-    n->address     = b_new_fixed_bytes(b, &pos, 20);
-    n->url         = b_new_chars(b, &pos);
-    n->whitelisted = false;
+    in3_node_t* n = chain->nodelist + i;
+    n->capacity   = b_read_int(b, &pos);
+    n->index      = b_read_int(b, &pos);
+    n->deposit    = b_read_long(b, &pos);
+    n->props      = b_read_long(b, &pos);
+    n->address    = b_new_fixed_bytes(b, &pos, 20);
+    n->url        = b_new_chars(b, &pos);
+    BIT_CLEAR(n->attrs, ATTR_WHITELISTED);
   }
 
   // read verified hashes

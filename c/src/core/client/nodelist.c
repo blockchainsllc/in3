@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "nodelist.h"
+#include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/debug.h"
 #include "../util/log.h"
@@ -105,15 +106,14 @@ static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* resul
       break;
     }
 
-    int old_index                = i;
-    n->capacity                  = d_get_intkd(node, K_CAPACITY, 1);
-    n->index                     = d_get_intkd(node, K_INDEX, i);
-    n->deposit                   = d_get_longk(node, K_DEPOSIT);
-    n->props                     = d_get_longkd(node, K_PROPS, 65535);
-    n->url                       = d_get_stringk(node, K_URL);
-    n->address                   = d_get_byteskl(node, K_ADDRESS, 20);
-    n->boot_node                 = false; // nodes are considered boot nodes only until first nodeList update succeeds
-    const uint64_t register_time = d_get_longk(node, K_REGISTER_TIME);
+    int old_index = i;
+    n->capacity   = d_get_intkd(node, K_CAPACITY, 1);
+    n->index      = d_get_intkd(node, K_INDEX, i);
+    n->deposit    = d_get_longk(node, K_DEPOSIT);
+    n->props      = d_get_longkd(node, K_PROPS, 65535);
+    n->url        = d_get_stringk(node, K_URL);
+    n->address    = d_get_byteskl(node, K_ADDRESS, 20);
+    BIT_CLEAR(n->attrs, ATTR_BOOT_NODE); // nodes are considered boot nodes only until first nodeList update succeeds
 
     if (n->address)
       n->address = b_dup(n->address); // create a copy since the src will be freed.
@@ -135,6 +135,7 @@ static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* resul
     if (old_index >= 0) memcpy(weights + i, chain->weights + old_index, sizeof(in3_node_weight_t));
 
     // if this is a newly registered node, we wait 24h before we use it, since this is the time where mallicous nodes may be unregistered.
+    const uint64_t register_time = d_get_longk(node, K_REGISTER_TIME);
     if (now && register_time + DAY > now && now > register_time)
       weights[i].blacklisted_until = register_time + DAY;
 
@@ -167,12 +168,12 @@ void in3_client_run_chain_whitelisting(in3_chain_t* chain) {
     return;
 
   for (int j = 0; j < chain->nodelist_length; ++j)
-    chain->nodelist[j].whitelisted = false;
+    BIT_CLEAR(chain->nodelist[j].attrs, ATTR_WHITELISTED);
 
   for (size_t i = 0; i < chain->whitelist->addresses.len / 20; i += 20) {
     for (int j = 0; j < chain->nodelist_length; ++j)
       if (!memcmp(chain->whitelist->addresses.data + i, chain->nodelist[j].address, 20))
-        chain->nodelist[j].whitelisted = true;
+        BIT_SET(chain->nodelist[j].attrs, ATTR_WHITELISTED);
   }
 }
 
@@ -375,8 +376,8 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
     nodeDef   = all_nodes + i;
     weightDef = weights + i;
 
-    if (nodeDef->boot_node) goto SKIP_FILTERING;
-    if (chain->whitelist && !nodeDef->whitelisted) continue;
+    if (BIT_CHECK(nodeDef->attrs, ATTR_BOOT_NODE)) goto SKIP_FILTERING;
+    if (chain->whitelist && !BIT_CHECK(nodeDef->attrs, ATTR_WHITELISTED)) continue;
     if (nodeDef->deposit < c->min_deposit) continue;
     if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
     if (filter.nodes != NULL) {
