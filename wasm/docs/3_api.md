@@ -26,7 +26,7 @@ Per default we use `UInt8Array`. This is used whenever we work with raw bytes.
 
 If you want to change this type, use [setConverBuffer()](#setconvertbuffer) function.
 
-##### Generics
+#### Generics
 
 ```js
 import {IN3Generic} from 'in3-wasm'
@@ -42,5 +42,8 @@ IN3Generic.setConverBigInt(val => new BN(val))
 ```
 
 
-While the In3Client-class is the default import, the following imports can be used:
+
+### Package
+
+While the In3Client-class is also the default import, the following imports can be used:
 
