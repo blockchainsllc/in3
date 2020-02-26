@@ -62,11 +62,11 @@ static void test_filter() {
 
   in3_register_eth_basic();
 
-  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport        = test_transport;
-  c->auto_update_list = false;
-  c->proof            = PROOF_NONE;
-  c->signature_count  = 0;
+  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport       = test_transport;
+  c->flags           = FLAGS_STATS;
+  c->proof           = PROOF_NONE;
+  c->signature_count = 0;
 
   for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
@@ -184,11 +184,11 @@ static void test_filter_from_block_manip() {
 static void test_filter_creation() {
   in3_register_eth_basic();
 
-  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport        = test_transport;
-  c->auto_update_list = false;
-  c->proof            = PROOF_NONE;
-  c->signature_count  = 0;
+  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport       = test_transport;
+  c->flags           = FLAGS_STATS;
+  c->proof           = PROOF_NONE;
+  c->signature_count = 0;
 
   for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
@@ -211,11 +211,11 @@ static void test_filter_creation() {
 static void test_filter_changes() {
   in3_register_eth_basic();
 
-  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport        = test_transport;
-  c->auto_update_list = false;
-  c->proof            = PROOF_NONE;
-  c->signature_count  = 0;
+  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport       = test_transport;
+  c->flags           = FLAGS_STATS;
+  c->proof           = PROOF_NONE;
+  c->signature_count = 0;
 
   for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
@@ -274,7 +274,7 @@ static void test_filter_changes() {
   add_response("eth_blockNumber", "[]", "\"0x84cf60\"", NULL, NULL);
   TEST_ASSERT_EQUAL(2, filter_add(c, FILTER_BLOCK, NULL));
   add_response("eth_blockNumber", "[]", "\"0x84cf60\"", NULL, NULL);
-  ctx          = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  ctx    = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   result = sb_new("");
   TEST_ASSERT_EQUAL(IN3_OK, filter_get_changes(ctx, 2, result));
   TEST_ASSERT_EQUAL_STRING("[]", result->data);

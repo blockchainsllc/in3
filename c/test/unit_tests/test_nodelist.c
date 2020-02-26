@@ -223,10 +223,10 @@ static void test_capabilities(void) {
 
 static in3_t* in3_init_test(chain_id_t chain) {
   in3_register_eth_full();
-  in3_t* in3            = in3_for_chain(chain);
-  in3->chain_id         = chain;
-  in3->transport        = test_transport;
-  in3->auto_update_list = 1;
+  in3_t* in3     = in3_for_chain(chain);
+  in3->chain_id  = chain;
+  in3->transport = test_transport;
+  in3->flags |= FLAGS_AUTO_UPDATE_LIST;
   return in3;
 }
 

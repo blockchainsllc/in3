@@ -53,12 +53,12 @@
 #include <unistd.h>
 
 static void test_sign() {
-  in3_t* c            = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport        = test_transport;
-  c->chain_id         = 0x1;
-  c->auto_update_list = false;
-  c->proof            = PROOF_NONE;
-  c->signature_count  = 0;
+  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport       = test_transport;
+  c->chain_id        = 0x1;
+  c->flags           = FLAGS_STATS;
+  c->proof           = PROOF_NONE;
+  c->signature_count = 0;
 
   for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 

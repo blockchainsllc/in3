@@ -312,7 +312,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
   int    j;
   c->max_attempts        = 1;
-  c->include_code        = 1;
+  c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST;
   c->transport           = send_mock;
   c->cache               = NULL;
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));

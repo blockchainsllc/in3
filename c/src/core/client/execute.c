@@ -110,7 +110,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   conf->chain_id     = c->chain_id;
   conf->finality     = c->finality;
   conf->latest_block = c->replace_latest_block;
-  conf->use_binary   = c->use_binary;
+  conf->flags        = c->flags;
 
   if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
     conf->use_full_proof = c->proof == PROOF_FULL;
@@ -219,11 +219,13 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latest_block));
       if (rc->signers_length)
         sb_add_bytes(sb, ",\"signers\":", rc->signers, rc->signers_length, true);
-      if (rc->include_code && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
+      if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
       if (rc->use_full_proof)
         sb_add_chars(sb, ",\"useFullProof\":true");
-      if (rc->use_binary)
+      if ((rc->flags & FLAGS_STATS) == 0)
+        sb_add_chars(sb, ",\"stats\":false");
+      if ((rc->flags & FLAGS_BINARY))
         sb_add_chars(sb, ",\"useBinary\":true");
       if (rc->verified_hashes_length)
         sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verified_hashes, rc->verified_hashes_length, true);
@@ -291,7 +293,7 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
 }
 
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
-  if (!ctx->client->auto_update_list) return;
+  if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
 
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
     // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
@@ -432,7 +434,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
     if (in3_node_props_get(node->node->props, NODE_PROP_MULTICHAIN)) multichain = true;
 
     // cif we use_http, we need to malloc a new string, so we also need to free it later!
-    if (ctx->client->use_http) urls[n] = convert_to_http_url(urls[n]);
+    if (ctx->client->flags & FLAGS_HTTP) urls[n] = convert_to_http_url(urls[n]);
 
     node = node->next;
   }
@@ -443,7 +445,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   if (res < 0) {
     // we clean up
     sb_free(payload);
-    free_urls(urls, nodes_count, ctx->client->use_http);
+    free_urls(urls, nodes_count, ctx->client->flags & FLAGS_HTTP);
     // since we cannot return an error, we set the error in the context and return NULL, indicating the error.
     ctx_set_error(ctx, "could not generate the payload", res);
     return NULL;
@@ -474,7 +476,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
 void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) {
   // free resources
-  free_urls(req->urls, req->urls_len, ctx->client->use_http);
+  free_urls(req->urls, req->urls_len, ctx->client->flags & FLAGS_HTTP);
 
   if (req->times) {
     for (int i = 0; i < req->urls_len; i++)
@@ -665,7 +667,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
         filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), key("data_nodes"));
-        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | (ctx->client->use_http ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
+        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i], chain)) < 0)
