@@ -32,18 +32,18 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "block_number.h"
 #include "eth_api.h"   //wrapper for easier use
 #include "eth_basic.h" // the full ethereum verifier containing the EVM
+#include "receipt.h"
 #include "util/log.h"
 #include "util/mem.h"
-#include "block_number.h"
-#include "receipt.h"
 /**
  * In3 Setup and usage
  * **/
 /* Perform in3 requests for http transport */
 in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_response_t* result) {
-  for (int i = 0; i < urls_len; i++) {    
+  for (int i = 0; i < urls_len; i++) {
     if (strstr(payload, "eth_getTransactionReceipt") != NULL) {
       printk("Returning eth_getTransactionReceipt ...\n");
       sb_add_range(&(result[i].result), mock_tx_receipt, 0, mock_tx_receipt_len);
@@ -70,27 +70,25 @@ in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3 = in3_for_chain(chain);
   if (custom_transport)
     in3->transport = custom_transport; // use curl to handle the requests
-  in3->request_count    = 1;           // number of requests to sendp
-  in3->include_code     = 1;
-  in3->max_attempts     = 1;
-  in3->request_count    = 1; // number of requests to sendp
-  in3->chain_id         = chain;
-  in3->auto_update_list = false;
-  in3->use_binary       = true;
-  for (int i = 0; i < in3->chains_length; i++){
+  in3->request_count = 1;              // number of requests to sendp
+  in3->max_attempts  = 1;
+  in3->request_count = 1; // number of requests to sendp
+  in3->chain_id      = chain;
+  in3->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_BINARY;
+  for (int i = 0; i < in3->chains_length; i++) {
     _free(in3->chains[i].nodelist_upd8_params);
     in3->chains[i].nodelist_upd8_params = NULL;
-  } 
+  }
   return in3;
 }
 
-//this instruction makes the qemu exit, not in a clean way yet but it works 
-static inline void _exit_qemu(){
-	register u32_t r0 __asm__("r0");
+//this instruction makes the qemu exit, not in a clean way yet but it works
+static inline void _exit_qemu() {
+  register u32_t r0 __asm__("r0");
   r0 = 0x18;
-	register u32_t r1 __asm__("r1"); 
+  register u32_t r1 __asm__("r1");
   r1 = 0x20026;
-   __asm__ volatile("bkpt #0xAB"); 
+  __asm__ volatile("bkpt #0xAB");
 }
 
 void main() {

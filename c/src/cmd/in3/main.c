@@ -287,7 +287,7 @@ static void execute(in3_t* c, FILE* f) {
         }
 
         if (ret == IN3_OK) {
-          if (c->keep_in3) {
+          if (c->flags & FLAGS_KEEP_IN3) {
             str_range_t rr  = d_to_json(ctx->responses[0]);
             rr.data[rr.len] = 0;
             printf("%s\n", rr.data);
@@ -699,7 +699,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-md") == 0)
       c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
-      c->keep_in3 = true;
+      c->flags |= FLAGS_KEEP_IN3;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -868,7 +868,7 @@ int main(int argc, char* argv[]) {
           sprintf(tr, "The node is marked as not supporting Data-Providing");
         else if (c->proof != PROOF_NONE && (node->props & NODE_PROP_PROOF) == 0)
           sprintf(tr, "The node is marked as able to provide proof");
-        else if (c->use_http && (node->props & NODE_PROP_HTTP) == 0)
+        else if ((c->flags & FLAGS_HTTP) && (node->props & NODE_PROP_HTTP) == 0)
           sprintf(tr, "The node is marked as able to support http-requests");
         else
           tr = ctx->error;

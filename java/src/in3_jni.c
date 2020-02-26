@@ -38,6 +38,7 @@
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
@@ -353,7 +354,7 @@ JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong va
  * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL Java_in3_IN3_isAutoUpdateList(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->auto_update_list;
+  return (get_in3(env, ob)->flags & FLAGS_AUTO_UPDATE_LIST) != 0;
 }
 
 /*
@@ -362,7 +363,7 @@ JNIEXPORT jboolean JNICALL Java_in3_IN3_isAutoUpdateList(JNIEnv* env, jobject ob
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList(JNIEnv* env, jobject ob, jboolean val) {
-  get_in3(env, ob)->auto_update_list = val;
+  BITMASK_SET_BOOL(get_in3(env, ob)->flags, FLAGS_AUTO_UPDATE_LIST, val);
 }
 
 /*
@@ -803,7 +804,7 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_request_count_mid, (jint) c->request_count);
 
   jmethodID set_auto_update_list_mid = (*jni)->GetMethodID(jni, jconfigclass, "setAutoUpdateList", "(Z)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_auto_update_list_mid, (jboolean) c->auto_update_list);
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_auto_update_list_mid, (jboolean)(c->flags & FLAGS_AUTO_UPDATE_LIST) != 0);
 
   jclass    jproofcls     = (*jni)->FindClass(jni, "in3/Proof");
   jmethodID set_proof_mid = (*jni)->GetMethodID(jni, jconfigclass, "setProof", "(Lin3/Proof;)V");
@@ -827,16 +828,16 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_finality_mid, (jint) c->finality);
 
   jmethodID set_include_code_mid = (*jni)->GetMethodID(jni, jconfigclass, "setIncludeCode", "(Z)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_include_code_mid, (jboolean) c->include_code);
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_include_code_mid, (jboolean)(c->flags & FLAGS_INCLUDE_CODE) != 0);
 
   jmethodID set_keep_in3_mid = (*jni)->GetMethodID(jni, jconfigclass, "setKeepIn3", "(Z)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_keep_in3_mid, (jboolean) c->keep_in3);
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_keep_in3_mid, (jboolean)(c->flags & FLAGS_KEEP_IN3) != 0);
 
   jmethodID set_use_binary_mid = (*jni)->GetMethodID(jni, jconfigclass, "setUseBinary", "(Z)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_use_binary_mid, (jboolean) c->use_binary);
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_use_binary_mid, (jboolean)(c->flags & FLAGS_BINARY) != 0);
 
   jmethodID set_use_http_mid = (*jni)->GetMethodID(jni, jconfigclass, "setUseHttp", "(Z)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_use_http_mid, (jboolean) c->use_http);
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_use_http_mid, (jboolean)(c->flags & FLAGS_HTTP) != 0);
 
   jmethodID set_max_code_cache_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxCodeCache", "(J)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_code_cache_mid, (jlong) c->max_code_cache);
