@@ -34,8 +34,13 @@
 
 
 IF (IN3API)
+    add_library(in3_api_utils OBJECT utils/api_utils_priv.c)
+
     add_subdirectory(eth1)
     add_subdirectory(usn)
-    add_subdirectory(ipfs)
+
+    IF (IPFS)
+        add_subdirectory(ipfs)
+    ENDIF (IPFS)
 ENDIF (IN3API)
 
