@@ -644,7 +644,7 @@ int main(int argc, char* argv[]) {
   char*           sig_type         = "raw";
   bool            to_eth           = false;
 #ifdef __MINGW32__
-  c->use_http = true;
+  c->flags |= FLAGS_HTTP;
 #endif
 
   // handle clear cache opt before initializing cache
