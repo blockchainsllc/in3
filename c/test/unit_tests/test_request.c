@@ -238,6 +238,12 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"useHttp\":true}");
   TEST_ASSERT_EQUAL(FLAGS_HTTP, c->flags & FLAGS_HTTP);
 
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"stats\":false}");
+  TEST_ASSERT_EQUAL(0, c->flags & FLAGS_STATS);
+
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"-1\"}", "expected uint32");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"\"}", "expected uint32");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"0\"}", "expected uint32");
