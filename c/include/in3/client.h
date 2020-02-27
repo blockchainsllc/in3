@@ -128,28 +128,28 @@ typedef struct in3_request_config {
 typedef uint64_t in3_node_props_t;
 
 typedef enum {
-  NODE_PROP_PROOF            = 0x1,   /* filter out nodes which are providing no proof */
-  NODE_PROP_MULTICHAIN       = 0x2,   /* filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
-  NODE_PROP_ARCHIVE          = 0x4,   /* filter out non-archive supporting nodes */
-  NODE_PROP_HTTP             = 0x8,   /* filter out non-http nodes  */
-  NODE_PROP_BINARY           = 0x10,  /* filter out nodes that don't support binary encoding */
-  NODE_PROP_ONION            = 0x20,  /* filter out non-onion nodes */
-  NODE_PROP_SIGNER           = 0x40,  /* filter out non-signer nodes */
-  NODE_PROP_DATA             = 0x80,  /* filter out non-data provider nodes */
-  NODE_PROP_STATS            = 0x100, /* filter out nodes that do not provide stats */
-  NODE_PROP_MIN_BLOCK_HEIGHT = 0x400, /* filter out nodes that will sign blocks with lower min block height than specified */
+  NODE_PROP_PROOF            = 0x1,   /**< filter out nodes which are providing no proof */
+  NODE_PROP_MULTICHAIN       = 0x2,   /**< filter out nodes other then which have capability of the same RPC endpoint may also accept requests for different chains */
+  NODE_PROP_ARCHIVE          = 0x4,   /**< filter out non-archive supporting nodes */
+  NODE_PROP_HTTP             = 0x8,   /**< filter out non-http nodes  */
+  NODE_PROP_BINARY           = 0x10,  /**< filter out nodes that don't support binary encoding */
+  NODE_PROP_ONION            = 0x20,  /**< filter out non-onion nodes */
+  NODE_PROP_SIGNER           = 0x40,  /**< filter out non-signer nodes */
+  NODE_PROP_DATA             = 0x80,  /**< filter out non-data provider nodes */
+  NODE_PROP_STATS            = 0x100, /**< filter out nodes that do not provide stats */
+  NODE_PROP_MIN_BLOCK_HEIGHT = 0x400, /**< filter out nodes that will sign blocks with lower min block height than specified */
 } in3_node_props_type_t;
 
 /**
- * a list of flags definiing the behavior of the incubed client.
+ * a list of flags definiing the behavior of the incubed client. They should be used as bitmask for the flags-property.
  */
 typedef enum {
-  FLAGS_KEEP_IN3         = 0x1,  /* the in3-section with the proof will also returned */
-  FLAGS_AUTO_UPDATE_LIST = 0x2,  /* the nodelist will be automaticly updated if the last_block is newer  */
-  FLAGS_INCLUDE_CODE     = 0x4,  /* the code is included when sending eth_call-requests  */
-  FLAGS_BINARY           = 0x8,  /* the client will use binary format  */
-  FLAGS_HTTP             = 0x16, /* the client will try to use http instead of https  */
-  FLAGS_STATS            = 0x32, /* nodes will keep track of the stats (default=true)  */
+  FLAGS_KEEP_IN3         = 0x1,  /**< the in3-section with the proof will also returned */
+  FLAGS_AUTO_UPDATE_LIST = 0x2,  /**< the nodelist will be automaticly updated if the last_block is newer  */
+  FLAGS_INCLUDE_CODE     = 0x4,  /**< the code is included when sending eth_call-requests  */
+  FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
+  FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
+  FLAGS_STATS            = 0x20, /**< nodes will keep track of the stats (default=true)  */
 
 } in3_flags_type_t;
 
