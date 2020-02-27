@@ -71,7 +71,7 @@ int main() {
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
 
   // IPFS put/get using raw RPC calls
-//  ipfs_rpc_example(c);
+  ipfs_rpc_example(c);
 
   // IPFS put/get using API
   ipfs_api_example(c);
