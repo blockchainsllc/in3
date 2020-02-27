@@ -38,6 +38,7 @@
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
@@ -947,4 +948,9 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_set_jclient_config(in3, ob);
 
   return (jlong)(size_t) in3;
+}
+
+JNIEXPORT jstring JNICALL Java_in3_IN3_getVersion(JNIEnv* env, jclass c) {
+  UNUSED_VAR(c);
+  return (*env)->NewStringUTF(env, IN3_VERSION);
 }

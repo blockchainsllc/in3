@@ -224,7 +224,7 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
       if (rc->use_full_proof)
         sb_add_chars(sb, ",\"useFullProof\":true");
       if ((rc->flags & FLAGS_STATS) == 0)
-        sb_add_chars(sb, ",\"stats\":false");
+        sb_add_chars(sb, ",\"noStats\":true");
       if ((rc->flags & FLAGS_BINARY))
         sb_add_chars(sb, ",\"useBinary\":true");
       if (rc->verified_hashes_length)

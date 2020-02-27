@@ -88,6 +88,7 @@ void show_help(char* name) {
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -a             max number of attempts before giving up (default 5)\n\
 -rc            number of request per try (default 1)\n\
+-ns            no stats if set requests will not be part of the official metrics and considered a service request\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
@@ -737,6 +738,8 @@ int main(int argc, char* argv[]) {
       json = true;
     else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;
+    else if (strcmp(argv[i], "-ns") == 0)
+      c->flags ^= FLAGS_STATS;
     else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
       sig_type = argv[++i];
     else if (strcmp(argv[i], "-debug") == 0) {
