@@ -438,7 +438,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
       return c;
     }
   }
-  set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
+  api_set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
   ctx_free(ctx);
   return NULL;
 }
