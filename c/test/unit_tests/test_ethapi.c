@@ -264,6 +264,13 @@ static void test_get_tx_hash(void) {
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NOT_NULL(tx);
+  TEST_ASSERT_EQUAL(36, tx->data.len);
+  TEST_ASSERT_EQUAL(1, tx->data.data[35]); // based on the mockdata the
+  TEST_ASSERT_EQUAL(0x17a7a4, tx->block_number);
+  TEST_ASSERT_EQUAL(0x31, tx->nonce);
+  TEST_ASSERT_EQUAL(0xa3d7, tx->gas);
+  TEST_ASSERT_EQUAL(0, tx->transaction_index);
+
   free(tx);
 
   // get non-existent txn
