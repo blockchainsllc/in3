@@ -102,8 +102,7 @@ void test_in3_ipfs_api_long() {
  */
 int main() {
   in3_register_ipfs();
-  in3_log_set_quiet(false);
-  in3_log_set_level(LOG_TRACE);
+  in3_log_set_quiet(true);
 
   TESTS_BEGIN();
   RUN_TEST(test_in3_ipfs_api);
