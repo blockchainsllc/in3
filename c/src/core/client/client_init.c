@@ -158,6 +158,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->props      = 0xFF;
   node->url        = _malloc(strlen(url) + 1);
   BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
+  BIT_SET(node->attrs, ATTR_BOOT_NODE);
   memcpy(node->url, url, strlen(url) + 1);
 
   in3_node_weight_t* weight   = chain->weights + node_index;
@@ -679,7 +680,8 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("nodeList")) {
             EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
-            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
+            int i = 0;
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
               EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
               EXPECT_TOK_STR(d_get(n.token, key("url")));
               EXPECT_TOK_ADDR(d_get(n.token, key("address")));
@@ -687,6 +689,7 @@ char* in3_configure(in3_t* c, const char* config) {
                                              d_get_longkd(n.token, key("props"), 65535),
                                              d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                          "add node failed");
+              BIT_SET(chain->nodelist[i].attrs, ATTR_BOOT_NODE);
             }
           } else {
             EXPECT_TOK(cp.token, false, "unsupported config option!");

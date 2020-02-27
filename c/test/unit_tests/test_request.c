@@ -470,6 +470,10 @@ static void test_configure_validation() {
 
   TEST_ASSERT_EQUAL(7, chain->avg_block_time);
 
+  // test that all added nodes are marked as boot nodes
+  for (int i = 0; i < chain->nodelist_length; ++i) {
+    TEST_ASSERT_TRUE(!!(chain->nodelist[i].attrs & (1 << ATTR_BOOT_NODE)));
+  }
   in3_free(c);
 }
 
