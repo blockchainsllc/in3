@@ -41,6 +41,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Class:     in3_IN3
+ * Method:    getVersion
+ * Signature: (I)V
+ */
+JNIEXPORT jstring JNICALL Java_in3_IN3_getVersion(JNIEnv*, jclass);
+
 /*
  * Class:     in3_IN3
  * Method:    getCacheTimeout

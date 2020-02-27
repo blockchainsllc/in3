@@ -220,10 +220,15 @@ static void params_add_bool(sb_t* sb, bool val) {
   if (sb->len > 1) sb_add_char(sb, ',');
   sb_add_chars(sb, val ? "true" : "false");
 }
+static size_t align(size_t val) {
+  const size_t add = val % sizeof(void*);
+  return add ? (sizeof(void*) - add + val) : val;
+}
 
 /** copy the data from the token to a eth_tx_t-object */
 static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
-  bytes_t b             = d_to_bytes(d_get(t, K_INPUT));
+  bytes_t b = d_to_bytes(d_get(t, K_INPUT));
+
   tx->signature[64]     = d_get_intk(t, K_V);
   tx->block_number      = d_get_longk(t, K_BLOCK_NUMBER);
   tx->gas               = d_get_longk(t, K_GAS);
@@ -231,7 +236,7 @@ static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   tx->nonce             = d_get_longk(t, K_NONCE);
   tx->data              = bytes((uint8_t*) tx + sizeof(eth_tx_t), b.len);
   tx->transaction_index = d_get_intk(t, K_TRANSACTION_INDEX);
-  memcpy(tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
+  memcpy((uint8_t*) tx + sizeof(eth_tx_t), b.data, b.len); // copy the data right after the tx-struct.
   copy_fixed(tx->block_hash, 32, d_to_bytes(d_getl(t, K_BLOCK_HASH, 32)));
   copy_fixed(tx->from, 20, d_to_bytes(d_getl(t, K_FROM, 20)));
   copy_fixed(tx->to, 20, d_to_bytes(d_getl(t, K_TO, 20)));
@@ -240,11 +245,10 @@ static uint32_t write_tx(d_token_t* t, eth_tx_t* tx) {
   copy_fixed(tx->signature, 32, d_to_bytes(d_getl(t, K_R, 32)));
   copy_fixed(tx->signature + 32, 32, d_to_bytes(d_getl(t, K_S, 32)));
 
-  return sizeof(eth_tx_t) + b.len;
+  return align(sizeof(eth_tx_t) + b.len);
 }
-
 /** calculate the tx size as struct+data */
-static uint32_t get_tx_size(d_token_t* tx) { return d_to_bytes(d_get(tx, K_INPUT)).len + sizeof(eth_tx_t); }
+static uint32_t get_tx_size(d_token_t* tx) { return align(d_to_bytes(d_get(tx, K_INPUT)).len) + sizeof(eth_tx_t); }
 
 /** 
  * allocates memory for the block and all required lists like the transactions and copies the data.
@@ -270,26 +274,26 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       bytes_t    extra  = d_to_bytes(d_get(result, K_EXTRA_DATA));
 
       // calc size
-      uint32_t s = sizeof(eth_block_t);
+      uint32_t s = align(sizeof(eth_block_t));
       if (include_tx) {
         for (d_iterator_t it = d_iter(txs); it.left; d_iter_next(&it))
           s += get_tx_size(it.token); // add all struct-size for each transaction
       } else                          // or
         s += 32 * d_len(txs);         // just the transaction hashes
-      s += extra.len;                 // extra-data
+      s += align(extra.len);          // extra-data
       for (d_iterator_t sf = d_iter(sealed); sf.left; d_iter_next(&sf)) {
         bytes_t t = d_to_bytes(sf.token);
         rlp_decode(&t, 0, &t);
-        s += t.len + sizeof(bytes_t); // for each field in the selad-fields we need a bytes_t-struct in the array + the data itself
+        s += align(t.len) + align(sizeof(bytes_t)); // for each field in the selad-fields we need a bytes_t-struct in the array + the data itself
       }
 
       // copy data
-      eth_block_t* b = _malloc(s);
+      eth_block_t* b = _calloc(1, s);
       if (!b) {
         set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
-      uint8_t* p = (uint8_t*) b + sizeof(eth_block_t); // pointer where we add the next data after the block-struct
+      uint8_t* p = (uint8_t*) b + align(sizeof(eth_block_t)); // pointer where we add the next data after the block-struct
       copy_fixed(b->author, 20, d_to_bytes(d_getl(result, K_AUTHOR, 20)));
       copy_fixed(b->difficulty.data, 32, d_to_bytes(d_get(result, K_DIFFICULTY)));
       copy_fixed(b->hash, 32, d_to_bytes(d_getl(result, K_HASH, 32)));
@@ -311,15 +315,15 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       b->seal_fields_count = d_len(sealed);
       b->extra_data        = bytes(p, extra.len);
       memcpy(p, extra.data, extra.len);
-      p += extra.len;
+      p += align(extra.len);
       b->seal_fields = (void*) p;
-      p += sizeof(bytes_t) * b->seal_fields_count;
+      p += align(sizeof(bytes_t)) * b->seal_fields_count;
       for (d_iterator_t sfitr = d_iter(sealed); sfitr.left; d_iter_next(&sfitr)) {
         bytes_t sf = d_to_bytes(sfitr.token);
         rlp_decode(&sf, 0, &sf);
         b->seal_fields[b->seal_fields_count - sfitr.left] = bytes(p, sf.len);
         memcpy(p, sf.data, sf.len);
-        p += sf.len;
+        p += align(sf.len);
       }
 
       b->tx_data   = include_tx ? (eth_tx_t*) p : NULL;
@@ -428,6 +432,12 @@ static json_ctx_t* parse_call_result(call_request_t* req, d_token_t* result) {
   return res;
 }
 
+static uint64_t* d_to_u64ptr(d_token_t* res) {
+  uint64_t* p = _malloc(sizeof(uint64_t));
+  *p          = d_long(res);
+  return p;
+}
+
 static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t block, bool only_estimate, char* fn_sig, va_list ap) {
   rpc_init;
   int             res = 0;
@@ -486,7 +496,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
   if (res >= 0) {
     if (only_estimate) {
-      rpc_exec("eth_estimateGas", d_token_t*, result);
+      rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
     } else {
       rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
     }
@@ -521,8 +531,8 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
       return c;
     }
   }
-  ctx_free(ctx);
   set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
+  ctx_free(ctx);
   return NULL;
 }
 
@@ -650,9 +660,11 @@ json_ctx_t* eth_call_fn(in3_t* in3, address_t contract, eth_blknum_t block, char
 uint64_t eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, char* fn_sig, ...) {
   va_list ap;
   va_start(ap, fn_sig);
-  d_token_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
+  uint64_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
   va_end(ap);
-  return d_long(response);
+  uint64_t tmp = *response;
+  _free(response);
+  return tmp;
 }
 
 static eth_tx_t* parse_tx(d_token_t* result) {

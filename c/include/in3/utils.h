@@ -161,6 +161,11 @@ char* str_replace_pos(char* orig, size_t pos, size_t len, const char* rep);
 char* str_find(char* haystack, const char* needle);
 
 /**
+ * remove all html-tags in the text.
+ */
+char* str_remove_html(char* data);
+
+/**
  * current timestamp in ms. 
  */
 uint64_t current_ms();

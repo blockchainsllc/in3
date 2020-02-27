@@ -374,7 +374,6 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   for (int i = 0; i < len; i++) {
     nodeDef   = all_nodes + i;
     weightDef = weights + i;
-
     if (nodeDef->boot_node) goto SKIP_FILTERING;
     if (chain->whitelist && !nodeDef->whitelisted) continue;
     if (nodeDef->deposit < c->min_deposit) continue;

@@ -46,382 +46,385 @@ import in3.utils.StorageProvider;
  *
  */
 public class IN3 {
-    private static final String ABI_ENCODE = "in3_abiEncode";
-    private static final String ABI_DECODE = "in3_abiDecode";
-    private static final String CHECKSUM_ADDRESS = "in3_checksumAddress";
-    private static final String ENS = "in3_ens";
-    private static final String SHA3 = "web3_sha3";
-    private static final String CONFIG = "in3_config";
-    private static final String PK2ADDRESS = "in3_pk2address";
-    private static final String PK2PUBLIC = "in3_pk2public";
-    private static final String ECRECOVER = "in3_ecrecover";
-    private static final String SIGN_DATA = "in3_signData";
-    private static final String NODE_LIST = "in3_nodeList";
-    private static final String SIGN = "in3_sign";
-    private static final String CACHE_CLEAR = "in3_cacheClear";
-    private static final String DECRYPT_KEY = "in3_decryptKey";
+  private static final String ABI_ENCODE       = "in3_abiEncode";
+  private static final String ABI_DECODE       = "in3_abiDecode";
+  private static final String CHECKSUM_ADDRESS = "in3_checksumAddress";
+  private static final String ENS              = "in3_ens";
+  private static final String SHA3             = "web3_sha3";
+  private static final String CONFIG           = "in3_config";
+  private static final String PK2ADDRESS       = "in3_pk2address";
+  private static final String PK2PUBLIC        = "in3_pk2public";
+  private static final String ECRECOVER        = "in3_ecrecover";
+  private static final String SIGN_DATA        = "in3_signData";
+  private static final String NODE_LIST        = "in3_nodeList";
+  private static final String SIGN             = "in3_sign";
+  private static final String CACHE_CLEAR      = "in3_cacheClear";
+  private static final String DECRYPT_KEY      = "in3_decryptKey";
 
-    private static final String ENS_SUFFIX = ".ETH";
+  private static final String ENS_SUFFIX = ".ETH";
 
-    static {
-        Loader.loadLibrary();
-    }
+  static {
+    Loader.loadLibrary();
+  }
 
-    private long ptr;
-    private StorageProvider provider;
-    private Signer signer;
+  private long            ptr;
+  private StorageProvider provider;
+  private Signer          signer;
 
-    private static IN3Transport transport = new IN3DefaultTransport();
-    private ClientConfiguration config;
+  private static IN3Transport transport = new IN3DefaultTransport();
+  private ClientConfiguration config;
 
-    @Deprecated
-    public IN3() {
-        ptr = init(0);
-    }
+  @Deprecated
+  public IN3() {
+    ptr = init(0);
+  }
 
-    private IN3(long chainAlias) {
-        ptr = init(chainAlias);
-    }
+  private IN3(long chainAlias) {
+    ptr = init(chainAlias);
+  }
 
-    /**
+  /**
      * create a Incubed client using the chain-config.
      * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
      * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
      */
-    public static IN3 forChain(long chainId) {
-        return new IN3(chainId);
-    }
+  public static IN3 forChain(long chainId) {
+    return new IN3(chainId);
+  }
 
-    protected void finalize() {
-        free();
-    }
+  protected void finalize() {
+    free();
+  }
 
-    /** sets config object in the client */
-    private native void setConfig(String val);
+  /** sets config object in the client */
+  private native void setConfig(String val);
 
-    /** the client key to sign requests */
-    public native byte[] getKey();
+  /** the client key to sign requests */
+  public native byte[] getKey();
 
-    /** sets the client key to sign requests */
-    public native void setKey(byte[] val);
+  /** sets the client key to sign requests */
+  public native void setKey(byte[] val);
 
-    protected void setConfig(ClientConfiguration config) {
-        this.config = config;
-    }
+  protected void setConfig(ClientConfiguration config) {
+    this.config = config;
+  }
 
-    protected void applyConfig() {
-        setConfig(config.toJSON());
-        config.markAsSynced();
-    }
+  protected void applyConfig() {
+    setConfig(config.toJSON());
+    config.markAsSynced();
+  }
 
-    /**
+  /**
      * returns the current configuration.
      * any changes to the configuration will be applied witth the next request.
      */
-    public ClientConfiguration getConfig() {
-        return config;
-    }
+  public ClientConfiguration getConfig() {
+    return config;
+  }
 
-    /** sets the client key as hexstring to sign requests */
-    public void setKey(String val) {
-        if (val == null)
-            setKey((byte[]) null);
-        else {
-            byte[] key = new byte[32];
-            for (int i = 0; i < 32; i++)
-                key[i] = (byte) ((Character.digit(val.charAt(i * 2 + 2), 16) << 4)
-                        | Character.digit(val.charAt(i * 2 + 3), 16));
-            setKey(key);
-        }
+  /** sets the client key as hexstring to sign requests */
+  public void setKey(String val) {
+    if (val == null)
+      setKey((byte[]) null);
+    else {
+      byte[] key = new byte[32];
+      for (int i = 0; i < 32; i++)
+        key[i] = (byte) ((Character.digit(val.charAt(i * 2 + 2), 16) << 4) | Character.digit(val.charAt(i * 2 + 3), 16));
+      setKey(key);
     }
+  }
 
-    /**
+  /**
      * sets the signer or wallet.
      */
-    public void setSigner(Signer signer) {
-        this.signer = signer;
-    }
+  public void setSigner(Signer signer) {
+    this.signer = signer;
+  }
 
-    /**
+  /**
      * returns the signer or wallet.
      */
-    public Signer getSigner() {
-        return signer;
-    }
+  public Signer getSigner() {
+    return signer;
+  }
 
-    /**
+  /**
      * gets the ethereum-api
      */
-    public API getEth1API() {
-        return new API(this);
-    }
+  public API getEth1API() {
+    return new API(this);
+  }
 
-    /**
+  /**
      * provides the ability to cache content like nodelists, contract codes and
      * validatorlists
      */
-    public void setStorageProvider(StorageProvider val) {
-        provider = val;
-        initcache();
-    }
+  public void setStorageProvider(StorageProvider val) {
+    provider = val;
+    initcache();
+  }
 
-    /** provides the ability to cache content */
-    public StorageProvider getStorageProvider() {
-        return provider;
-    }
+  /** provides the ability to cache content */
+  public StorageProvider getStorageProvider() {
+    return provider;
+  }
 
-    /**
+  /**
      * sets The transport interface.
      * This allows to fetch the result of the incubed in a different way.
      */
-    public void setTransport(IN3Transport newTransport) {
-        IN3.transport = newTransport;
-    }
+  public void setTransport(IN3Transport newTransport) {
+    IN3.transport = newTransport;
+  }
 
-    /**
+  /**
      * returns the current transport implementation.
      */
-    public IN3Transport getTransport() {
-    	return IN3.transport;
-    }
+  public IN3Transport getTransport() {
+    return IN3.transport;
+  }
 
-    /** servers to filter for the given chain. The chain-id based on EIP-155. */
-    public native long getChainId();
+  /** servers to filter for the given chain. The chain-id based on EIP-155. */
+  public native long getChainId();
 
-    /** sets the chain to be used. The chain-id based on EIP-155. */
-    public native void setChainId(long val);
+  /** sets the chain to be used. The chain-id based on EIP-155. */
+  public native void setChainId(long val);
 
-    /**
+  /**
      * send a request. The request must a valid json-string with method and params
      */
-    public native String send(String request);
+  public native String send(String request);
 
-    /**
+  /**
      * send a request but returns a object like array or map with the parsed
      * response. The request must a valid json-string with method and params
      */
-    public native Object sendobject(String request);
+  public native Object sendobject(String request);
 
-    private String toRPC(String method, Object[] params) {
-        String p = "";
-        for (int i = 0; i < params.length; i++) {
-            if (p.length() > 0)
-                p += ",";
-            if (params[i] == null)
-                p += "null";
-            else if (params[i] instanceof String) {
-                String s = (String) params[i];
-                if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
-                    p += s;
-                else
-                    p += "\"" + s + "\"";
-            } else
-                p += JSON.toJson(params[i]);
-        }
-        return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
+  private String toRPC(String method, Object[] params) {
+    String p = "";
+    for (int i = 0; i < params.length; i++) {
+      if (p.length() > 0)
+        p += ",";
+      if (params[i] == null)
+        p += "null";
+      else if (params[i] instanceof String) {
+        String s = (String) params[i];
+        if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
+          p += s;
+        else
+          p += "\"" + s + "\"";
+      } else
+        p += JSON.toJson(params[i]);
+    }
+    return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
+  }
+
+  private String toRPC(String method, Object[] params, Object[] address) {
+    String p = "";
+    for (int i = 0; i < params.length; i++) {
+      if (p.length() > 0)
+        p += ",";
+      if (params[i] == null)
+        p += "null";
+      else if (params[i] instanceof String) {
+        String s = (String) params[i];
+        if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
+          p += s;
+        else
+          p += "\"" + s + "\"";
+      } else
+        p += JSON.toJson(params[i]);
     }
 
-    private String toRPC(String method, Object[] params, Object[] address) {
-        String p = "";
-        for (int i = 0; i < params.length; i++) {
-            if (p.length() > 0)
-                p += ",";
-            if (params[i] == null)
-                p += "null";
-            else if (params[i] instanceof String) {
-                String s = (String) params[i];
-                if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
-                    p += s;
-                else
-                    p += "\"" + s + "\"";
-            } else
-                p += JSON.toJson(params[i]);
-        }
+    return "{\"in3\":{\"data_nodes\":" + JSON.toJson(address) + "}, \"method\":\"" + method + "\", \"params\":[" + p + "]}";
+  }
 
-        return "{\"in3\":{\"data_nodes\":" + JSON.toJson(address) + "}, \"method\":\"" + method + "\", \"params\":[" + p + "]}";
-    }
-
-    /**
+  /**
      * send a RPC request by only passing the method and params. It will create the
      * raw request from it and return the result.
      */
-    public String sendRPC(String method, Object[] params) {
-        if (!config.isSynced()) {
-            this.applyConfig();
-        }
-        return this.send(toRPC(method, params));
+  public String sendRPC(String method, Object[] params) {
+    if (!config.isSynced()) {
+      this.applyConfig();
+    }
+    return this.send(toRPC(method, params));
+  }
+
+  private Object sendObjectRPC(String method, Object[] params, String[] address) {
+    if (!config.isSynced()) {
+      this.applyConfig();
+    }
+    return this.sendobject(toRPC(method, params, address));
+  }
+
+  private Object sendRPCasObject(String method, Object[] params, boolean useEnsResolver) {
+    if (!config.isSynced()) {
+      this.applyConfig();
     }
 
-    private Object sendObjectRPC(String method, Object[] params, String[] address) {
-        if (!config.isSynced()) {
-            this.applyConfig();
-        }
-        return this.sendobject(toRPC(method, params, address));
-    }
+    Object[] resolvedParams = useEnsResolver ? handleEns(params) : params;
+    return this.sendobject(toRPC(method, resolvedParams));
+  }
 
-    private Object sendRPCasObject(String method, Object[] params, boolean useEnsResolver) {
-        if (!config.isSynced()) {
-            this.applyConfig();
-        }
-
-        Object[] resolvedParams = useEnsResolver ? handleEns(params) : params;
-        return this.sendobject(toRPC(method, resolvedParams));
-    }
-
-    /**
+  /**
      * send a RPC request by only passing the method and params. It will create the
      * raw request from it and return the result.
      */
-    public Object sendRPCasObject(String method, Object[] params) {
-        return sendRPCasObject(method, params, true);
-    }
+  public Object sendRPCasObject(String method, Object[] params) {
+    return sendRPCasObject(method, params, true);
+  }
 
-    /** internal function to handle the internal requests */
-    static byte[][] sendRequest(String[] urls, byte[] payload) {
-        return IN3.transport.handle(urls, payload);
-    }
+  /** internal function to handle the internal requests */
+  static byte[][] sendRequest(String[] urls, byte[] payload) {
+    return IN3.transport.handle(urls, payload);
+  }
 
-    private native void free();
+  private native void free();
 
-    private native long init(long chainId);
+  private native long init(long chainId);
 
-    private native void initcache();
+  private native void initcache();
 
-    /**
+  /** 
+     *  returns the current incubed version.
+     */
+  public static native String getVersion();
+
+  /**
      * encodes the arguments as described in the method signature using ABI-Encoding.
      */
-    public String abiEncode(String signature, String[] params) {
-        Object rawResult = sendRPCasObject(ABI_ENCODE, new Object[] {
-                signature,
-                params
-        });
-        return JSON.asString(rawResult);
-    }
+  public String abiEncode(String signature, String[] params) {
+    Object rawResult = sendRPCasObject(ABI_ENCODE, new Object[] {
+                                                       signature,
+                                                       params});
+    return JSON.asString(rawResult);
+  }
 
-    /**
+  /**
      * decodes the data based on the signature.
      */
-    public String[] abiDecode(String signature, String encoded) {
-        Object rawResult = sendRPCasObject(ABI_DECODE, new Object[] { signature, encoded });
-        return JSON.asStringArray(rawResult);
-    }
+  public String[] abiDecode(String signature, String encoded) {
+    Object rawResult = sendRPCasObject(ABI_DECODE, new Object[] {signature, encoded});
+    return JSON.asStringArray(rawResult);
+  }
 
-    /**
+  /**
      * converts the given address to a checksum address.
      */
-    public String checksumAddress(String address) {
-        return checksumAddress(address, null);
-    }
+  public String checksumAddress(String address) {
+    return checksumAddress(address, null);
+  }
 
-    /**
+  /**
      * converts the given address to a checksum address. Second parameter includes the chainId.
      */
-    public String checksumAddress(String address, Boolean useChainId) {
-        return JSON.asString(sendRPCasObject(CHECKSUM_ADDRESS, new Object[] { address, useChainId }));
-    }
+  public String checksumAddress(String address, Boolean useChainId) {
+    return JSON.asString(sendRPCasObject(CHECKSUM_ADDRESS, new Object[] {address, useChainId}));
+  }
 
-    /**
+  /**
      * resolve ens-name.
      */
-    public String ens(String name) {
-        return ens(name, null);
-    }
+  public String ens(String name) {
+    return ens(name, null);
+  }
 
-    /**
+  /**
      * resolve ens-name. Second parameter especifies if it is an address, owner, resolver or hash.
      */
-    public String ens(String name, EnsField type) {
-        return JSON.asString(sendRPCasObject(ENS, new Object[] { name, type }, false));
-    }
+  public String ens(String name, EnsField type) {
+    return JSON.asString(sendRPCasObject(ENS, new Object[] {name, type}, false));
+  }
 
-    /**
+  /**
      * extracts the public address from a private key.
      */
-    public String pk2address(String key) {
-        return JSON.asString(sendRPCasObject(PK2ADDRESS, new Object[] { key }));
-    }
+  public String pk2address(String key) {
+    return JSON.asString(sendRPCasObject(PK2ADDRESS, new Object[] {key}));
+  }
 
-    /**
+  /**
      * extracts the public key from a private key.
      */
-    public String pk2public(String key) {
-        return JSON.asString(sendRPCasObject(PK2PUBLIC, new Object[] { key }));
-    }
+  public String pk2public(String key) {
+    return JSON.asString(sendRPCasObject(PK2PUBLIC, new Object[] {key}));
+  }
 
-    /**
+  /**
      * extracts the address and public key from a signature.
      */
-    public EcRecoverResult ecrecover(String msg, String sig) {
-        return ecrecover(msg, sig, null);
-    }
+  public EcRecoverResult ecrecover(String msg, String sig) {
+    return ecrecover(msg, sig, null);
+  }
 
-    /**
+  /**
      * extracts the address and public key from a signature.
      */
-    public EcRecoverResult ecrecover(String msg, String sig, SignatureType sigType) {
-        return EcRecoverResult.asEcRecoverResult(sendRPCasObject(ECRECOVER, new Object[] { msg, sig, JSON.asString(sigType) }));
-    }
+  public EcRecoverResult ecrecover(String msg, String sig, SignatureType sigType) {
+    return EcRecoverResult.asEcRecoverResult(sendRPCasObject(ECRECOVER, new Object[] {msg, sig, JSON.asString(sigType)}));
+  }
 
-    // TODO Make an object out of this signed data
-    public Signature signData(String msg, String key) {
-        return Signature.asSignature(signData(msg, key, null));
-    }
+  // TODO Make an object out of this signed data
+  public Signature signData(String msg, String key) {
+    return Signature.asSignature(signData(msg, key, null));
+  }
 
-    public Signature signData(String msg, String key, SignatureType sigType) {
-        return Signature.asSignature(sendRPCasObject(SIGN_DATA, new Object[] { msg, key, JSON.asString(sigType) }));
-    }
+  public Signature signData(String msg, String key, SignatureType sigType) {
+    return Signature.asSignature(sendRPCasObject(SIGN_DATA, new Object[] {msg, key, JSON.asString(sigType)}));
+  }
 
-    // TODO make an object out of this key
-    public String decryptKey(String key, String passphrase) {
-        return JSON.asString(sendRPCasObject(DECRYPT_KEY, new Object[] { key, passphrase }));
-    }
+  // TODO make an object out of this key
+  public String decryptKey(String key, String passphrase) {
+    return JSON.asString(sendRPCasObject(DECRYPT_KEY, new Object[] {key, passphrase}));
+  }
 
-    /**
+  /**
      * clears the cache.
      */
-    public boolean cacheClear() {
-        return (boolean) sendRPCasObject(CACHE_CLEAR, new Object[] {});
-    }
+  public boolean cacheClear() {
+    return (boolean) sendRPCasObject(CACHE_CLEAR, new Object[] {});
+  }
 
-    /**
+  /**
      * restrieves the node list
      */
-    public Node[] nodeList() {
-        NodeList nl = NodeList.asNodeList(sendRPCasObject(NODE_LIST, new Object[] {}));
-        return nl.getNodes();
-    }
+  public Node[] nodeList() {
+    NodeList nl = NodeList.asNodeList(sendRPCasObject(NODE_LIST, new Object[] {}));
+    return nl.getNodes();
+  }
 
-    /**
+  /**
      * request for a signature of an already verified hash.
      */
-    public SignedBlockHash[] sign(VerifiedHash[] blocks, String[] address) {
-        return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, blocks, address));
+  public SignedBlockHash[] sign(VerifiedHash[] blocks, String[] address) {
+    return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, blocks, address));
+  }
+
+  protected Object[] handleEns(Object[] params) {
+    Object[] result = params.clone();
+    for (int i = 0; i < result.length; i++) {
+      if (result[i] != null && result[i].toString().toUpperCase().endsWith(ENS_SUFFIX)) {
+        result[i] = (Object) ens(result[i].toString());
+      }
     }
 
-    protected Object[] handleEns(Object[] params) {
-        Object[] result = params.clone();
-        for (int i = 0; i < result.length; i++) {
-            if (result[i] != null && result[i].toString().toUpperCase().endsWith(ENS_SUFFIX)) {
-                result[i] = (Object) ens(result[i].toString());
-            }
-        }
+    return result;
+  }
 
-        return result;
-    }
+  // Test it
+  public static void main(String[] args) {
+    Object[] params = new Object[args.length - 1];
+    for (int i = 1; i < args.length; i++)
+      params[i - 1] = args[i];
 
-    // Test it
-    public static void main(String[] args) {
-        Object[] params = new Object[args.length - 1];
-        for (int i = 1; i < args.length; i++)
-            params[i - 1] = args[i];
+    // create client
+    IN3 in3 = IN3.forChain(Chain.MAINNET);
 
-        // create client
-        IN3 in3 = IN3.forChain(Chain.MAINNET);
+    // set cache in tempfolder
+    in3.setStorageProvider(new in3.utils.TempStorageProvider());
 
-        // set cache in tempfolder
-        in3.setStorageProvider(new in3.utils.TempStorageProvider());
-
-        // execute the command
-        System.out.println(in3.sendRPC(args[0], params));
-    }
+    // execute the command
+    System.out.println(in3.sendRPC(args[0], params));
+  }
 }

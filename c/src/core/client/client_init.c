@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../util/bitset.h"
 #include "../util/data.h"
 #include "../util/debug.h"
 #include "../util/log.h"
@@ -122,9 +123,9 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->last_block           = 0;
   chain->verified_hashes      = NULL;
   chain->contract             = hex_to_new_bytes(contract, 40);
-  chain->nodelist             = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodelist             = _calloc(boot_node_count, sizeof(in3_node_t));
   chain->nodelist_length      = boot_node_count;
-  chain->weights              = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->weights              = _calloc(boot_node_count, sizeof(in3_node_weight_t));
   chain->type                 = type;
   chain->version              = version;
   chain->whitelist            = NULL;
@@ -154,7 +155,8 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->index      = node_index;
   node->capacity   = 1;
   node->deposit    = 0;
-  node->props      = chain->chain_id == ETH_CHAIN_ID_LOCAL ? 0x0 : 0xFF;
+  node->props      = 0xFF;
+  node->boot_node  = true;
   node->url        = _malloc(strlen(url) + 1);
   memcpy(node->url, url, strlen(url) + 1);
   node->whitelisted = false;
@@ -217,13 +219,10 @@ static void init_goerli(in3_chain_t* chain) {
 }
 
 static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
-  c->auto_update_list     = 1;
+  c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST;
   c->cache                = NULL;
   c->signer               = NULL;
   c->cache_timeout        = 0;
-  c->use_binary           = 0;
-  c->use_http             = 0;
-  c->include_code         = 0;
   c->chain_id             = chain_id ? chain_id : ETH_CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
   c->finality             = 0;
@@ -499,7 +498,7 @@ char* in3_configure(in3_t* c, const char* config) {
     d_token_t* token = iter.token;
     if (token->key == key("autoUpdateList")) {
       EXPECT_TOK_BOOL(token);
-      c->auto_update_list = d_int(token) ? true : false;
+      BITMASK_SET_BOOL(c->flags, FLAGS_AUTO_UPDATE_LIST, (d_int(token) ? true : false));
     } else if (token->key == key("chainId")) {
       EXPECT_TOK(token, IS_D_UINT32(token) || (d_type(token) == T_STRING && chain_id(token) != 0), "expected uint32 or string value (mainnet/goerli/kovan)");
       c->chain_id = chain_id(token);
@@ -515,22 +514,25 @@ char* in3_configure(in3_t* c, const char* config) {
       c->finality = (uint16_t) d_int(token);
     } else if (token->key == key("includeCode")) {
       EXPECT_TOK_BOOL(token);
-      c->include_code = d_int(token) ? true : false;
+      BITMASK_SET_BOOL(c->flags, FLAGS_INCLUDE_CODE, (d_int(token) ? true : false));
     } else if (token->key == key("maxAttempts")) {
       EXPECT_TOK_U16(token);
       c->max_attempts = d_int(token);
     } else if (token->key == key("keepIn3")) {
       EXPECT_TOK_BOOL(token);
-      c->keep_in3 = d_int(token) ? true : false;
+      BITMASK_SET_BOOL(c->flags, FLAGS_KEEP_IN3, (d_int(token) ? true : false));
+    } else if (token->key == key("stats")) {
+      EXPECT_TOK_BOOL(token);
+      BITMASK_SET_BOOL(c->flags, FLAGS_STATS, (d_int(token) ? true : false));
     } else if (token->key == key("key")) {
       EXPECT_TOK_B256(token);
       c->key = b_dup(d_bytes(token));
     } else if (token->key == key("useBinary")) {
       EXPECT_TOK_BOOL(token);
-      c->use_binary = d_int(token) ? true : false;
+      BITMASK_SET_BOOL(c->flags, FLAGS_BINARY, (d_int(token) ? true : false));
     } else if (token->key == key("useHttp")) {
       EXPECT_TOK_BOOL(token);
-      c->use_http = d_int(token) ? true : false;
+      BITMASK_SET_BOOL(c->flags, FLAGS_HTTP, (d_int(token) ? true : false));
     } else if (token->key == key("maxBlockCache")) {
       EXPECT_TOK_U32(token);
       c->max_block_cache = d_long(token);

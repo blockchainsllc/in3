@@ -88,6 +88,7 @@ void show_help(char* name) {
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -a             max number of attempts before giving up (default 5)\n\
 -rc            number of request per try (default 1)\n\
+-ns            no stats if set requests will not be part of the official metrics and considered a service request\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
@@ -287,7 +288,7 @@ static void execute(in3_t* c, FILE* f) {
         }
 
         if (ret == IN3_OK) {
-          if (c->keep_in3) {
+          if (c->flags & FLAGS_KEEP_IN3) {
             str_range_t rr  = d_to_json(ctx->responses[0]);
             rr.data[rr.len] = 0;
             printf("%s\n", rr.data);
@@ -644,7 +645,7 @@ int main(int argc, char* argv[]) {
   char*           sig_type         = "raw";
   bool            to_eth           = false;
 #ifdef __MINGW32__
-  c->use_http = true;
+  c->flags |= FLAGS_HTTP;
 #endif
 
   // handle clear cache opt before initializing cache
@@ -699,7 +700,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-md") == 0)
       c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
-      c->keep_in3 = true;
+      c->flags |= FLAGS_KEEP_IN3;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -737,6 +738,8 @@ int main(int argc, char* argv[]) {
       json = true;
     else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;
+    else if (strcmp(argv[i], "-ns") == 0)
+      c->flags ^= FLAGS_STATS;
     else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
       sig_type = argv[++i];
     else if (strcmp(argv[i], "-debug") == 0) {
@@ -868,7 +871,7 @@ int main(int argc, char* argv[]) {
           sprintf(tr, "The node is marked as not supporting Data-Providing");
         else if (c->proof != PROOF_NONE && (node->props & NODE_PROP_PROOF) == 0)
           sprintf(tr, "The node is marked as able to provide proof");
-        else if (c->use_http && (node->props & NODE_PROP_HTTP) == 0)
+        else if ((c->flags & FLAGS_HTTP) && (node->props & NODE_PROP_HTTP) == 0)
           sprintf(tr, "The node is marked as able to support http-requests");
         else
           tr = ctx->error;
