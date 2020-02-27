@@ -217,14 +217,14 @@ valgrind:
   tags:
     - short-jobs
   variables:
-    VALGRIND_OPTS: "-q --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+    VALGRIND_OPTS: "-v -q --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
   script:
     - mkdir _build
     - cd _build
     - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
     - make
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
-    - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f || echo "Failed but ignored for now"; done
+    - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f; done
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8

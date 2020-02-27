@@ -101,7 +101,8 @@ static void test_prefix(void) {
   fclose(fp);
 
   fp  = fopen("test.log", "rb");
-  log = malloc(size);
+  log = _malloc(size + 1);
+  log[size] = 0;
   fread(log, sizeof(char), size, fp);
   TEST_ASSERT_EQUAL_STRING_LEN(log, prefix, strlen(prefix));
   fclose(fp);

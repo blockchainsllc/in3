@@ -81,8 +81,6 @@ static int compare(const void* a, const void* b) {
 }
 
 static uint16_t collision(uint16_t* hashes, size_t sz) {
-  qsort(hashes, sz, sizeof(uint16_t), compare);
-
   bool dup = false;
   int  i   = 1;
   for (; i < sz; ++i) {
@@ -102,7 +100,8 @@ static char* filetostr(const char* filename) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
-    buffer = _malloc(length);
+    buffer = _malloc(length + 1);
+    buffer[length] = 0;
     if (buffer) {
       fread(buffer, 1, length, f);
     }
@@ -130,16 +129,21 @@ void test_key_hash_collisions() {
       hashes = _realloc(hashes, cap * 2 * sizeof(*hashes), cap);
       cap *= 2;
     }
-    char* kstr = substr(tok, "key(\"", "\")");
+    char* kstr= substr(tok, "key(\"", "\")");
     if (kstr) {
       hashes[i] = key_(kstr);
 #ifdef DEBUG
       printf("\"%s\" => [%u]\n", kstr, hashes[i]);
 #endif
     }
+    else{
+      hashes[i]= 0;
+    }
   }
+  uint16_t nc = -1;
+  qsort(hashes, i, sizeof(uint16_t), compare);
+  nc = collision(hashes, i);
+  TEST_ASSERT_EQUAL(0, nc);
   _free(keyfilestr);
-
-  TEST_ASSERT_EQUAL(0, collision(hashes, i));
   _free(hashes);
 }
