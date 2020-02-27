@@ -157,8 +157,8 @@ typedef enum {
  * a list of node attributes (mostly used internally)
  */
 typedef enum {
-  ATTR_WHITELISTED = 1U, /**< indicates if node exists in whiteList */
-  ATTR_BOOT_NODE   = 2U, /**< used to avoid filtering manually added nodes before first nodeList update */
+  ATTR_WHITELISTED = 1, /**< indicates if node exists in whiteList */
+  ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
 } in3_node_attr_type_t;
 
 typedef uint8_t in3_node_attr_t;
