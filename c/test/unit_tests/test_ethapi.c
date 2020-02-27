@@ -264,12 +264,21 @@ static void test_get_tx_hash(void) {
   // get the tx by hash
   eth_tx_t* tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NOT_NULL(tx);
+  TEST_ASSERT_EQUAL(36, tx->data.len);
+  TEST_ASSERT_EQUAL(1, tx->data.data[35]); // based on the mockdata the
+  TEST_ASSERT_EQUAL(0x17a7a4, tx->block_number);
+  TEST_ASSERT_EQUAL(0x31, tx->nonce);
+  TEST_ASSERT_EQUAL(0xa3d7, tx->gas);
+  TEST_ASSERT_EQUAL(0, tx->transaction_index);
+
+  free(tx);
 
   // get non-existent txn
   in3->transport = test_transport;
   add_response("eth_getTransactionByHash", "[\"0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164\"]", "null", NULL, NULL);
   tx = eth_getTransactionByHash(in3, tx_hash);
   TEST_ASSERT_NULL(tx);
+  free(tx);
 
   in3_free(in3);
 }
@@ -327,10 +336,9 @@ static void test_eth_gas_price(void) {
 static void test_eth_getblock_number(void) {
   in3_t*       in3   = init_in3(mock_transport, 0x5);
   eth_block_t* block = eth_getBlockByNumber(in3, BLKNUM(1692767), true);
-
   // if the result is null there was an error an we can get the latest error message from eth_lat_error()
-  free(block);
   TEST_ASSERT_EQUAL_INT64(block->number, 1692767);
+  free(block);
   in3_free(in3);
 }
 
@@ -486,13 +494,13 @@ static void test_get_uncle_blknum_index(void) {
 
 static void test_utilities(void) {
   uint256_t u256 = {0};
-  //  hex_to_bytes("0xac1b824795e1eb1f", -1, u256.data, 32);
   bytes32_t var;
+  memset(var, 0, 32);
   hex_to_bytes("0xac1b824795e1eb1f", -1, var, 32);
   uint256_set(var, 32, u256.data);
   long double d = as_double(u256);
   TEST_ASSERT_TRUE(d > 0.0);
-  uint64_t u64 = as_long(u256);
+  uint64_t l = as_long(u256);
 }
 
 static void test_eth_call_multiple(void) {

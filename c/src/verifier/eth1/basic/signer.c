@@ -248,7 +248,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
     res = IN3_EINVAL;
 
   // free temp resources
-  if (new_json) json_free(new_json);
+  if (ctx->verification_state != IN3_WAITING && new_json) json_free(new_json);
   b_free(raw);
   if (res < 0) {
     b_free(nonce_cpy);
