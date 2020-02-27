@@ -42,6 +42,7 @@ add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
+add_subdirectory(docs)
 
 
 # create the library

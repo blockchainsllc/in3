@@ -47,210 +47,211 @@ import in3.eth1.API;
  */
 public class IN3 {
 
-    static {
-        Loader.loadLibrary();
-    }
+  static {
+    Loader.loadLibrary();
+  }
 
-    private long ptr;
-    private StorageProvider provider;
-    private Signer signer;
+  private long            ptr;
+  private StorageProvider provider;
+  private Signer          signer;
 
-    private static IN3Transport transport = new IN3DefaultTransport();
-    private ClientConfiguration config;
+  private static IN3Transport transport = new IN3DefaultTransport();
+  private ClientConfiguration config;
 
-    @Deprecated
-    public IN3() {
-        ptr = init(0);
-    }
+  @Deprecated
+  public IN3() {
+    ptr = init(0);
+  }
 
-    private IN3(long chainAlias) {
-        ptr = init(chainAlias);
-    }
+  private IN3(long chainAlias) {
+    ptr = init(chainAlias);
+  }
 
-    /**
+  /**
      * create a Incubed client using the chain-config.
      * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
      * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
      */
-    public static IN3 forChain(long chainId) {
-        return new IN3(chainId);
-    }
+  public static IN3 forChain(long chainId) {
+    return new IN3(chainId);
+  }
 
-    protected void finalize() {
-        free();
-    }
+  protected void finalize() {
+    free();
+  }
 
-    /** sets config object in the client */
-    private native void setConfig(String val);
+  /** sets config object in the client */
+  private native void setConfig(String val);
 
-    /** the client key to sign requests */
-    public native byte[] getKey();
+  /** the client key to sign requests */
+  public native byte[] getKey();
 
-    /** sets the client key to sign requests */
-    public native void setKey(byte[] val);
+  /** sets the client key to sign requests */
+  public native void setKey(byte[] val);
 
-    protected void setConfig(ClientConfiguration config) {
-        this.config = config;
-    }
+  protected void setConfig(ClientConfiguration config) {
+    this.config = config;
+  }
 
-    protected void applyConfig() {
-        setConfig(config.toJSON());
-        config.markAsSynced();
-    }
+  protected void applyConfig() {
+    setConfig(config.toJSON());
+    config.markAsSynced();
+  }
 
-    /**
+  /**
      * returns the current configuration.
      * any changes to the configuration will be applied witth the next request.
      */
-    public ClientConfiguration getConfig() {
-        return config;
-    }
+  public ClientConfiguration getConfig() {
+    return config;
+  }
 
-    /** sets the client key as hexstring to sign requests */
-    public void setKey(String val) {
-        if (val == null)
-            setKey((byte[]) null);
-        else {
-            byte[] key = new byte[32];
-            for (int i = 0; i < 32; i++)
-                key[i] = (byte) ((Character.digit(val.charAt(i * 2 + 2), 16) << 4)
-                        | Character.digit(val.charAt(i * 2 + 3), 16));
-            setKey(key);
-        }
+  /** sets the client key as hexstring to sign requests */
+  public void setKey(String val) {
+    if (val == null)
+      setKey((byte[]) null);
+    else {
+      byte[] key = new byte[32];
+      for (int i = 0; i < 32; i++)
+        key[i] = (byte) ((Character.digit(val.charAt(i * 2 + 2), 16) << 4) | Character.digit(val.charAt(i * 2 + 3), 16));
+      setKey(key);
     }
+  }
 
-    /**
+  /**
      * sets the signer or wallet.
      */
-    public void setSigner(Signer signer) {
-        this.signer = signer;
-    }
+  public void setSigner(Signer signer) {
+    this.signer = signer;
+  }
 
-    /**
+  /**
      * returns the signer or wallet.
      */
-    public Signer getSigner() {
-        return signer;
-    }
+  public Signer getSigner() {
+    return signer;
+  }
 
-    /**
+  /**
      * gets the ethereum-api
      */
-    public in3.eth1.API getEth1API() {
-        return new API(this);
-    }
+  public in3.eth1.API getEth1API() {
+    return new API(this);
+  }
 
-    /**
+  /**
      * provides the ability to cache content like nodelists, contract codes and
      * validatorlists
      */
-    public void setStorageProvider(StorageProvider val) {
-        provider = val;
-        initcache();
-    }
+  public void setStorageProvider(StorageProvider val) {
+    provider = val;
+    initcache();
+  }
 
-    /** provides the ability to cache content */
-    public StorageProvider getStorageProvider() {
-        return provider;
-    }
+  /** provides the ability to cache content */
+  public StorageProvider getStorageProvider() {
+    return provider;
+  }
 
-    /**
+  /**
      * sets The transport interface.
      * This allows to fetch the result of the incubed in a different way.
      */
-    public void setTransport(IN3Transport newTransport) {
-        IN3.transport = newTransport;
-    }
+  public void setTransport(IN3Transport newTransport) {
+    IN3.transport = newTransport;
+  }
 
-    /**
+  /**
      * returns the current transport implementation.
      */
-    public IN3Transport getTransport() {
-    	return IN3.transport;
-    }
+  public IN3Transport getTransport() {
+    return IN3.transport;
+  }
 
-    /** servers to filter for the given chain. The chain-id based on EIP-155. */
-    public native long getChainId();
+  /** servers to filter for the given chain. The chain-id based on EIP-155. */
+  public native long getChainId();
 
-    /** sets the chain to be used. The chain-id based on EIP-155. */
-    public native void setChainId(long val);
+  /** sets the chain to be used. The chain-id based on EIP-155. */
+  public native void setChainId(long val);
 
-    /**
+  /**
      * send a request. The request must a valid json-string with method and params
      */
-    public native String send(String request);
+  public native String send(String request);
 
-    /**
+  /**
      * send a request but returns a object like array or map with the parsed
      * response. The request must a valid json-string with method and params
      */
-    public native Object sendobject(String request);
+  public native Object sendobject(String request);
 
-    private String toRPC(String method, Object[] params) {
-        String p = "";
-        for (int i = 0; i < params.length; i++) {
-            if (p.length() > 0)
-                p += ",";
-            if (params[i] == null)
-                p += "null";
-            else if (params[i] instanceof String) {
-                String s = (String) params[i];
-                if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
-                    p += s;
-                else
-                    p += "\"" + s + "\"";
-            } else
-                p += params[i].toString();
-        }
-        return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
+  private String toRPC(String method, Object[] params) {
+    String p = "";
+    for (int i = 0; i < params.length; i++) {
+      if (p.length() > 0)
+        p += ",";
+      if (params[i] == null)
+        p += "null";
+      else if (params[i] instanceof String) {
+        String s = (String) params[i];
+        if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
+          p += s;
+        else
+          p += "\"" + s + "\"";
+      } else
+        p += params[i].toString();
     }
+    return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
+  }
 
-    /**
+  /**
      * send a RPC request by only passing the method and params. It will create the
      * raw request from it and return the result.
      */
-    public String sendRPC(String method, Object[] params) {
-        if (!config.isSynced()) {
-            this.applyConfig();
-        }
-        return this.send(toRPC(method, params));
+  public String sendRPC(String method, Object[] params) {
+    if (!config.isSynced()) {
+      this.applyConfig();
     }
+    return this.send(toRPC(method, params));
+  }
 
-    /**
+  /**
      * send a RPC request by only passing the method and params. It will create the
      * raw request from it and return the result.
      */
-    public Object sendRPCasObject(String method, Object[] params) {
-        if (!config.isSynced()) {
-            this.applyConfig();
-        }
-        return this.sendobject(toRPC(method, params));
+  public Object sendRPCasObject(String method, Object[] params) {
+    if (!config.isSynced()) {
+      this.applyConfig();
     }
+    return this.sendobject(toRPC(method, params));
+  }
 
-    /** internal function to handle the internal requests */
-    static byte[][] sendRequest(String[] urls, byte[] payload) {
-        return IN3.transport.handle(urls, payload);
-    }
+  /** internal function to handle the internal requests */
+  static byte[][] sendRequest(String[] urls, byte[] payload) {
+    return IN3.transport.handle(urls, payload);
+  }
 
-    private native void free();
+  private native void free();
 
-    private native long init(long chainId);
+  private native long init(long chainId);
 
-    private native void initcache();
+  private native void initcache();
 
-    // Test it
-    public static void main(String[] args) {
-        Object[] params = new Object[args.length - 1];
-        for (int i = 1; i < args.length; i++)
-            params[i - 1] = args[i];
+  public static native String getVersion();
 
-        // create client
-        IN3 in3 = IN3.forChain(Chain.MAINNET);
+  // Test it
+  public static void main(String[] args) {
+    Object[] params = new Object[args.length - 1];
+    for (int i = 1; i < args.length; i++)
+      params[i - 1] = args[i];
 
-        // set cache in tempfolder
-        in3.setStorageProvider(new in3.TempStorageProvider());
+    // create client
+    IN3 in3 = IN3.forChain(Chain.MAINNET);
 
-        // execute the command
-        System.out.println(in3.sendRPC(args[0], params));
-    }
+    // set cache in tempfolder
+    in3.setStorageProvider(new in3.TempStorageProvider());
+
+    // execute the command
+    System.out.println(in3.sendRPC(args[0], params));
+  }
 }

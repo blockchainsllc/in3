@@ -307,6 +307,33 @@ char* str_find(char* haystack, const char* needle) {
   return NULL;
 }
 
+char* str_remove_html(char* data) {
+  int len = strlen(data), i = 0, dst = 0, html = 0;
+  for (; i < len; i++) {
+    switch (data[i]) {
+      case '<':
+        html = true;
+        break;
+      case '>':
+        html = false;
+        break;
+      case '\n':
+      case '\t':
+      case '\r':
+      case ' ':
+        if (dst && data[dst - 1] != ' ')
+          data[dst++] = ' ';
+        break;
+
+      default:
+        if (!html)
+          data[dst++] = data[i];
+    }
+  }
+  data[dst] = 0;
+  return data;
+}
+
 uint64_t current_ms() {
 #ifndef __ZEPHYR__
   struct timeval te;

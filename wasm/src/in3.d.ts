@@ -33,103 +33,139 @@
  *******************************************************************************/
 
 /**
- * the iguration of the IN3-Client. This can be paritally overriden for every request.
+ * the configuration of the IN3-Client. This can be changed at any time.
+ * All properties are optional and will be verified when sending the next request.
  */
 export declare interface IN3Config {
     /**
-     * number of seconds requests can be cached.
+     * if true the nodelist will be automaticly updated if the lastBlock is newer.
+     * 
+     * default: true
      */
-    cacheTimeout?: number
+    autoUpdateList?: boolean
+
     /**
-     * the limit of nodes to store in the client.
-     * example: 150
+     * The chain-id based on EIP-155.
+     * or the name of the supported chain.
+     * 
+     * Currently we support 'mainnet', 'goerli', 'kovan', 'ipfs' and 'local'
+     * 
+     * While most of the chains use preconfigured chain settings, 
+     * 'local' actually uses the local running client turning of proof.
+     * 
+     * example: '0x1' or 'mainnet' or 'goerli'
+     * 
+     * default: 'mainnet'
      */
-    nodeLimit?: number
+    chainId: string // ^0x[0-9a-fA-F]+$
+
     /**
-     * if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.
-     */
-    keepIn3?: boolean
-    /**
-     * the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding
-     * example: json
-     */
-    format?: 'json' | 'jsonRef' | 'cbor'
-    /**
-     * the client key to sign requests
-     * example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-     */
-    key?: any
-    /**
-     * if true the config will be adjusted depending on the request
-     */
-    autoConfig?: boolean
-    /**
-     * if true the the request may be handled without proof in case of an error. (use with care!)
-     */
-    retryWithoutProof?: boolean
-    /**
-     * max number of attempts in case a response is rejected
-     * example: 10
-     */
-    maxAttempts?: number
-    /**
-     * if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
-     * example: true
-     */
-    includeCode?: boolean
-    /**
-     * number of max bytes used to cache the code in memory
-     * example: 100000
-     */
-    maxCodeCache?: number
-    /**
-     * number of number of blocks cached  in memory
-     * example: 100
-     */
-    maxBlockCache?: number
-    /**
-     * if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
-     */
-    verifiedHashes?: string /* bytes32 */[]
-    /**
-     * if true the nodes should send a proof of the response
-     * example: true
-     */
-    proof?: 'none' | 'standard' | 'full'
-    /**
-     * number of signatures requested
-     * example: 2
+     * number of signatures requested. The more signatures, the more security you get, but responses may take longer.
+     * 
+     * default: 0
      */
     signatureCount?: number
+
     /**
-     * min stake of the server. Only nodes owning at least this amount will be chosen.
-     */
-    minDeposit: number
-    /**
-     * if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
-     * example: 6
-     */
-    replaceLatestBlock?: number
-    /**
-     * the number of request send when getting a first answer
-     * example: 3
-     */
-    requestCount: number
-    /**
-     * the number in percent needed in order reach finality (% of signature of the validators)
-     * example: 50
+     * the number in percent needed in order reach finality if you run on a POA-Chain.
+     * (% of signature of the validators)
+     * 
+     * default: 0
      */
     finality?: number
+
+    /**
+     * if true, the request should include the codes of all accounts. 
+     * Otherwise only the the codeHash is returned. 
+     * In this case the client may ask by calling eth_getCode() afterwards
+     * 
+     * default: false
+     */
+    includeCode?: boolean
+
+    /**
+     * max number of attempts in case a response is rejected.
+     * Incubed will retry to find a different node giving a verified response.
+     * 
+     * default: 5
+     */
+    maxAttempts?: number
+
+
+    /**
+     * if true, the in3-section of the response will be kept and returned. 
+     * Otherwise it will be removed after validating the data. 
+     * This is useful for debugging or if the proof should be used afterwards.
+     * 
+     * default: false
+     */
+    keepIn3?: boolean
+
+    /**
+     * the limit of nodes to store in the client. If set a random seed will be picked, which is the base for a deterministic verifiable partial nodelist.
+     * 
+     * default: 0
+     */
+    nodeLimit?: number
+
+    /**
+     * if false, the requests will not be included in the stats of the nodes ( or marked as intern ). 
+     * 
+     * default: true
+     */
+    stats?: boolean
+
+    /**
+     * number of max bytes used to cache the code in memory.
+     * 
+     * default: 0
+     */
+    maxCodeCache?: number
+
     /**
      * specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
-     * example: 3000
+     * 
+     * default: 5000
      */
     timeout?: number
     /**
-     * servers to filter for the given chain. The chain-id based on EIP-155.
-     * example: 0x1
+     * min stake of the server. Only nodes owning at least this amount will be chosen.
+     * 
+     * default: 0
      */
-    chainId: string // ^0x[0-9a-fA-F]+$
+    minDeposit: number
+
+    /**
+     * a bitmask-value combining the minimal properties as filter for the selected nodes. See https://in3.readthedocs.io/en/develop/spec.html#node-structure for details. 
+     */
+    nodeProps: number | Hex
+
+    /**
+     * if true the nodes should send a proof of the response
+     * 
+     * default: 'standard'
+     */
+    proof?: 'none' | 'standard' | 'full'
+
+    /**
+     * if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+     * 
+     * default: 6
+     */
+    replaceLatestBlock?: number
+
+    /**
+     * the number of request send when getting a first answer
+     * 
+     * default: 1
+     */
+    requestCount: number
+
+    /**
+     * url of a rpc-endpoints to use. If this is set proof will be turned off and it will be treated like local_chain.
+     */
+    rpc?: string
+
     /**
      * main chain-registry contract
      * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
@@ -141,66 +177,60 @@ export declare interface IN3Config {
      */
     mainChain?: string // ^0x[0-9a-fA-F]+$
     /**
-     * if true the nodelist will be automaticly updated if the lastBlock is newer
-     * example: true
+     * the nodelists per chain. the chain_id will be used as key within the object.
      */
-    autoUpdateList?: boolean
-    /**
-     * url of one or more rpc-endpoints to use. (list can be comma seperated)
-     */
-    rpc?: string
-    /**
-     * the nodelist per chain
-     */
-    servers?: {
+    nodes?: {
         [name: string]: {
             /**
-             * name of the module responsible for handling the verification
-             */
-            verifier?: string
-            /**
-             * a alias for the chain
-             */
-            name?: string
-            /**
-             * a list of addresses which should always be part of the nodelist when getting an update
-             * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945,0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1
-             */
-            initAddresses?: string[]
-            /**
-             * the blockNumber of the last event in the registry
-             * example: 23498798
-             */
-            lastBlock?: number
-            /**
              * the address of the registry contract
+             * 
              * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
              */
-            contract?: string
+            contract?: Address
+
             /**
-             * if true the nodelist should be updated.
+             * address of the whiteList contract. (optional, cannot be combined with whiteList)
+             * 
+             * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
+             */
+            whiteListContract?: Address
+
+            /**
+             * manuall list of whitelisted addresses. (optional, cannot be combined with whiteListContract)
+             * 
+             * example: ['0xe36179e2286ef405e929C90ad3E70E649B22a945']
+             */
+            whiteList?: Address[]
+
+            /**
+             * if true the nodelist should be updated. This flag will be set to false after the first successfull update.
+             * 
+             * default: true
              */
             needsUpdate?: boolean
-            /**
-             * the chainid for the contract
-             * example: 0x8
-             */
-            contractChain?: string
+
             /**
              * the list of nodes
              */
             nodeList?: IN3NodeConfig[]
+
             /**
-             * the list of authority nodes for handling conflicts
-             * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945,0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1
+             * if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
              */
-            nodeAuthorities?: string[]
+            verifiedHashes?: Hex /* bytes32 */[]
+
             /**
-             * the weights of nodes depending on former performance which is used internally
+             * identifier of the registry.
              */
-            weights?: {
-                [name: string]: IN3NodeWeight
-            }
+            registryId?: Hex /* bytes32 */[]
+
+            /**
+             * average block time (seconds) for this chain.
+             * 
+             * default: 14
+             */
+            avgBlockTime?: number
+
         }
     }
 }
@@ -370,6 +400,8 @@ export default class IN3Generic<BigIntType, BufferType> {
      * sends a RPC-Requests specified by name and params.
      * 
      * if the response contains an error, this will be thrown. if not the result will be returned.
+     * 
+     * @param method the method to call. 
      */
     public sendRPC(method: string, params?: any[]): Promise<any>;
 
@@ -377,6 +409,15 @@ export default class IN3Generic<BigIntType, BufferType> {
      * disposes the Client. This must be called in order to free allocated memory!
      */
     public free();
+
+    /**
+     * returns a Object, which can be used as Web3Provider.
+     * 
+     * ```
+     * const web3 = new Web3(new IN3().createWeb3Provider())
+     * ```
+     */
+    public createWeb3Provider(): any
 
     /**
      * the signer, if specified this interface will be used to sign transactions, if not, sending transaction will not be possible.

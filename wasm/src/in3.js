@@ -39,14 +39,14 @@ if (typeof fetch === 'function') {
         get: key => window.localStorage.getItem('in3.' + key),
         set: (key, value) => window.localStorage.setItem('in3.' + key, value)
     }
-    in3w.transport = (url, payload, timeout) => Promise.race(
+    in3w.transport = (url, payload, timeout) => Promise.race([
         fetch(url, {
             method: 'POST',
             mode: 'cors', // makes it possible to access them even from the filesystem.
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion() },
             body: payload
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout || 30000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeout || 30000))]
     ).then(res => {
         if (res.status < 200 || res.status >= 400) throw new Error("Error fetching" + url + ":" + res.statusText)
         return res.text()
@@ -71,7 +71,7 @@ else {
     try {
         // if axios is available, we use it
         const axios = require('' + 'axios')
-        in3w.transport = (url, payload, timeout = 30000) => axios.post(url, JSON.parse(payload), { timeout, headers: { 'Content-Type': 'application/json' } })
+        in3w.transport = (url, payload, timeout = 30000) => axios.post(url, JSON.parse(payload), { timeout, headers: { 'Content-Type': 'application/json', 'User-Agent': 'in3 wasm ' + getVersion(), in3: 'wasm ' + getVersion() } })
             .then(res => {
                 if (res.status != 200) throw new Error("Invalid satus")
                 return JSON.stringify(res.data)
@@ -85,6 +85,8 @@ else {
                 const req = m.request(url, {
                     method: 'POST',
                     headers: {
+                        'User-Agent': 'in3 wasm ' + getVersion(),
+                        in3: 'wasm ' + getVersion(),
                         'Content-Type': 'application/json',
                         'Content-Length': Buffer.byteLength(postData)
                     },
@@ -112,7 +114,11 @@ else {
         })
     }
 }
-
+function getVersion() {
+    if (in3w._version) return in3w._version
+    in3w._version = in3w.ccall('in3_version', 'string', [], [])
+    return in3w._version
+}
 
 // keep track of all created client instances
 const clients = {}
@@ -264,11 +270,14 @@ class IN3 {
         }
     }
 
+
     async sendRPC(method, params) {
         const res = await this.sendRequest({ method, params })
         if (res.error) throw new Error(res.error.message || res.error)
         return res.result
     }
+
+    createWeb3Provider() { return this }
 
     free() {
         if (this.ptr) {

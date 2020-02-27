@@ -1,0 +1,16 @@
+
+### Building 
+
+In order to run those examples, you need to install in3-wasm and typescript first.
+The build.sh will do this and the run the tsc-compiler
+
+```sh
+./build.sh
+```
+
+In order to run a example use
+
+```
+node build/get_block_api.ts
+```
+

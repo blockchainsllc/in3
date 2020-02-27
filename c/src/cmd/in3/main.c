@@ -88,6 +88,7 @@ void show_help(char* name) {
 -c, -chain     the chain to use. (mainnet,kovan,tobalaba,goerli,local or any RPCURL)\n\
 -a             max number of attempts before giving up (default 5)\n\
 -rc            number of request per try (default 1)\n\
+-ns            no stats if set requests will not be part of the official metrics and considered a service request\n\
 -p, -proof     specifies the Verification level: (none, standard(default), full)\n\
 -md            specifies the minimum Deposit of a node in order to be selected as a signer\n\
 -np            short for -p none\n\
@@ -287,7 +288,7 @@ static void execute(in3_t* c, FILE* f) {
         }
 
         if (ret == IN3_OK) {
-          if (c->keep_in3) {
+          if (c->flags & FLAGS_KEEP_IN3) {
             str_range_t rr  = d_to_json(ctx->responses[0]);
             rr.data[rr.len] = 0;
             printf("%s\n", rr.data);
@@ -620,29 +621,32 @@ int main(int argc, char* argv[]) {
   in3_log_set_level(LOG_INFO);
 
   // create the client
-  in3_t* c                     = in3_for_chain(0);
-  c->transport                 = debug_transport;
-  c->request_count             = 1;
-  c->use_http                  = true;
-  c->cache                     = &storage_handler;
-  bool            out_response = false;
-  bool            force_hex    = false;
-  char*           sig          = NULL;
-  char*           to           = NULL;
-  char*           block_number = "latest";
-  char*           name         = NULL;
-  call_request_t* req          = NULL;
-  bool            json         = false;
-  uint64_t        gas_limit    = 100000;
-  char*           value        = NULL;
-  bool            wait         = false;
-  char*           pwd          = NULL;
-  char*           pk_file      = NULL;
-  char*           validators   = NULL;
-  bytes_t*        data         = NULL;
-  char*           port         = NULL;
-  char*           sig_type     = "raw";
-  bool            to_eth       = false;
+  in3_t* c                         = in3_for_chain(0);
+  c->transport                     = debug_transport;
+  c->request_count                 = 1;
+  c->cache                         = &storage_handler;
+  bool            out_response     = false;
+  bool            run_test_request = false;
+  bool            force_hex        = false;
+  char*           sig              = NULL;
+  char*           to               = NULL;
+  char*           block_number     = "latest";
+  char*           name             = NULL;
+  call_request_t* req              = NULL;
+  bool            json             = false;
+  uint64_t        gas_limit        = 100000;
+  char*           value            = NULL;
+  bool            wait             = false;
+  char*           pwd              = NULL;
+  char*           pk_file          = NULL;
+  char*           validators       = NULL;
+  bytes_t*        data             = NULL;
+  char*           port             = NULL;
+  char*           sig_type         = "raw";
+  bool            to_eth           = false;
+#ifdef __MINGW32__
+  c->flags |= FLAGS_HTTP;
+#endif
 
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
@@ -689,12 +693,14 @@ int main(int argc, char* argv[]) {
       block_number = argv[++i];
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
+    else if (strcmp(argv[i], "-tr") == 0)
+      run_test_request = true;
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
       c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
-      c->keep_in3 = true;
+      c->flags |= FLAGS_KEEP_IN3;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -732,6 +738,8 @@ int main(int argc, char* argv[]) {
       json = true;
     else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;
+    else if (strcmp(argv[i], "-ns") == 0)
+      c->flags ^= FLAGS_STATS;
     else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
       sig_type = argv[++i];
     else if (strcmp(argv[i], "-debug") == 0) {
@@ -833,18 +841,46 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "in3_weights") == 0) {
+    c->max_attempts    = 1;
     uint64_t     now   = in3_time(NULL);
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
-    printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", "WEIGHT");
+    printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", run_test_request ? "WEIGHT   : LAST_BLOCK" : "WEIGHT");
     for (int i = 0; i < chain->nodelist_length; i++) {
-      in3_node_weight_t* weight      = chain->weights + i;
+      in3_ctx_t* ctx = NULL;
+      if (run_test_request) {
+        char req[300];
+        char adr[41];
+        bytes_to_hex((chain->nodelist + i)->address->data, 20, adr);
+        sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"data_nodes\":[\"0x%s\"]}}", adr);
+        ctx = ctx_new(c, req);
+        if (ctx) in3_send_ctx(ctx);
+      }
       in3_node_t*        node        = chain->nodelist + i;
+      in3_node_weight_t* weight      = chain->weights + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
       if (blacklisted) printf("\033[31m");
-      printf("%2i   %45s   %7i   %5i   %5i  %5i", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight);
+      char* tr = NULL;
+      if (ctx) {
+        tr = _malloc(100);
+        if (!ctx->error) {
+          sprintf(tr, "#%i", d_get_intk(ctx->responses[0], K_RESULT));
+        }
+
+        else if ((node->props & NODE_PROP_DATA) == 0)
+          sprintf(tr, "The node is marked as not supporting Data-Providing");
+        else if (c->proof != PROOF_NONE && (node->props & NODE_PROP_PROOF) == 0)
+          sprintf(tr, "The node is marked as able to provide proof");
+        else if ((c->flags & FLAGS_HTTP) && (node->props & NODE_PROP_HTTP) == 0)
+          sprintf(tr, "The node is marked as able to support http-requests");
+        else
+          tr = ctx->error;
+      }
+      printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
       if (blacklisted) printf("\033[0m");
       printf("\n");
+      if (tr && tr != ctx->error) _free(tr);
+      if (ctx) ctx_free(ctx);
     }
 
     return 0;

@@ -71,10 +71,8 @@ static void test_configure_request() {
   c->proof                = PROOF_FULL;
   c->signature_count      = 2;
   c->finality             = 10;
-  c->include_code         = true;
+  c->flags                = FLAGS_INCLUDE_CODE | FLAGS_BINARY | FLAGS_HTTP | FLAGS_AUTO_UPDATE_LIST;
   c->replace_latest_block = 6;
-  c->use_binary           = true;
-  c->use_http             = true;
 
   for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
@@ -156,7 +154,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: autoUpdateList", c, "{\"autoUpdateList\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"autoUpdateList\":true}");
-  TEST_ASSERT_EQUAL(c->auto_update_list, true);
+  TEST_ASSERT_EQUAL(c->flags & FLAGS_AUTO_UPDATE_LIST, FLAGS_AUTO_UPDATE_LIST);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"-1\"}", "expected uint32 or string");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: chainId", c, "{\"chainId\":\"\"}", "expected uint32 or string");
@@ -203,7 +201,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: includeCode", c, "{\"includeCode\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: includeCode", c, "{\"includeCode\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"includeCode\":true}");
-  TEST_ASSERT_EQUAL(c->include_code, true);
+  TEST_ASSERT_EQUAL(FLAGS_INCLUDE_CODE, c->flags & FLAGS_INCLUDE_CODE);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"-1\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"0x123412341234\"}", "expected uint16");
@@ -218,7 +216,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: keepIn3", c, "{\"keepIn3\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: keepIn3", c, "{\"keepIn3\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"keepIn3\":true}");
-  TEST_ASSERT_EQUAL(c->keep_in3, true);
+  TEST_ASSERT_EQUAL(FLAGS_KEEP_IN3, c->flags & FLAGS_KEEP_IN3);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":1}", "expected 256 bit data");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: key", c, "{\"key\":\"1\"}", "expected 256 bit data");
@@ -232,13 +230,19 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"useBinary\":true}");
-  TEST_ASSERT_EQUAL(c->use_binary, true);
+  TEST_ASSERT_EQUAL(FLAGS_BINARY, c->flags & FLAGS_BINARY);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useHttp", c, "{\"useHttp\":1}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useHttp", c, "{\"useHttp\":\"1\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useHttp", c, "{\"useHttp\":\"0x00000\"}", "expected boolean");
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"useHttp\":true}");
-  TEST_ASSERT_EQUAL(c->use_http, true);
+  TEST_ASSERT_EQUAL(FLAGS_HTTP, c->flags & FLAGS_HTTP);
+
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: stats", c, "{\"stats\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"stats\":false}");
+  TEST_ASSERT_EQUAL(0, c->flags & FLAGS_STATS);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"-1\"}", "expected uint32");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxBlockCache", c, "{\"maxBlockCache\":\"\"}", "expected uint32");

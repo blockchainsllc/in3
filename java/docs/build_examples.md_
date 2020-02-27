@@ -1,0 +1,17 @@
+
+### Building 
+
+In order to run those examples, you only need a Java SDK installed.
+
+```
+./build.sh
+```
+
+will build all examples in this directory.
+
+In order to run a example use
+
+```
+java -cp $IN3/build/lib/in3.jar:. GetBlockAPI
+```
+

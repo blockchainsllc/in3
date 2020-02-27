@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ..
+cd ../c
 rm -rf include
 mkdir -p c/include/in3
 find c -type d >c/include/in3/.dirs

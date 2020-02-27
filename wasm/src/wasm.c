@@ -39,6 +39,7 @@
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
@@ -93,9 +94,14 @@ EM_JS(char*, in3_cache_get, (char* key), {
   }
   return 0;
 })
+
 EM_JS(void, in3_cache_set, (char* key, char* val), {
   Module.in3_cache.set(UTF8ToString(key),UTF8ToString(val));
 })
+
+char* EMSCRIPTEN_KEEPALIVE  in3_version() {
+    return IN3_VERSION;
+}
 // clang-format on
 
 bytes_t* storage_get_item(void* cptr, char* key) {

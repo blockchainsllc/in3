@@ -1,0 +1,21 @@
+<!-- use incubed directly in html -->
+<html>
+    <head>
+        <script src="node_modules/in3-wasm/index.js"></script>
+    </head>
+
+    <body>
+        IN3-Demo
+        <div>
+            result:
+            <pre id="result"> ...waiting... </pre>
+        </div>
+        <script>
+            var in3 = new IN3({ chainId: 0x1, replaceLatestBlock: 6 });
+            in3.eth.getBlockByNumber('latest', false)
+                .then(block => document.getElementById('result').innerHTML = JSON.stringify(block, null, 2))
+                .catch(alert)
+        </script>
+    </body>
+
+</html>
