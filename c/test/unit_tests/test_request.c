@@ -96,6 +96,29 @@ static void test_configure_request() {
   in3_free(c);
 }
 
+static void test_configure_signed_request() {
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_LOCAL);
+  TEST_ASSERT_NULL(in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}"));
+  c->flags = FLAGS_INCLUDE_CODE;
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
+
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+  in3_request_t* request = in3_create_request(ctx);
+  json_ctx_t*    json    = parse_json(request->payload);
+  d_token_t*     in3     = d_get(d_get_at(json->result, 0), K_IN3);
+  TEST_ASSERT_NOT_NULL(in3);
+  bytes_t* sig = d_get_bytes(in3, "sig");
+  TEST_ASSERT_NOT_NULL(sig);
+  TEST_ASSERT_EQUAL(65, sig->len);
+  char hex[150];
+  TEST_ASSERT_EQUAL(65 * 2, bytes_to_hex(sig->data, sig->len, hex)); // 65bytes *2
+  TEST_ASSERT_EQUAL_STRING("8e39d2066cf9d1898e6bc9fbbfaa8fd6b9e5a86515e643f537c831982718866d0903e91f5f8824363dd3754fe550b37aa1e6eeb3742f13ad36d3321972e959a701", hex);
+  request_free(request, ctx, false);
+  json_free(json);
+  ctx_free(ctx);
+  in3_free(c);
+}
 static void test_exec_req() {
   in3_t* c      = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   char*  result = in3_client_exec_req(c, "{\"method\":\"web3_sha3\",\"params\":[\"0x1234\"]}");
@@ -224,7 +247,7 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}");
   bytes32_t b256;
   hex_to_bytes("0x1234567890123456789012345678901234567890123456789012345678901234", -1, b256, 32);
-  TEST_ASSERT_EQUAL_MEMORY(c->key->data, b256, 32);
+  TEST_ASSERT_EQUAL_MEMORY(c->key, b256, 32);
 
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":1}", "expected boolean");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: useBinary", c, "{\"useBinary\":\"1\"}", "expected boolean");
@@ -489,5 +512,6 @@ int main() {
   RUN_TEST(test_exec_req);
   RUN_TEST(test_configure);
   RUN_TEST(test_configure_validation);
+  RUN_TEST(test_configure_signed_request);
   return TESTS_END();
 }

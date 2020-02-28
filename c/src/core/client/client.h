@@ -114,7 +114,6 @@ typedef struct in3_request_config {
   uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
   uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
   in3_verification_t verification;           /**< Verification-type */
-  bytes_t*           client_signature;       /**< the signature of the client with the client key */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
   uint32_t           time;                   /**< meassured time in ms for the request */
@@ -407,8 +406,8 @@ typedef struct in3_t_ {
   /** the limit of nodes to store in the client. */
   uint16_t node_limit;
 
-  /** the client key to sign requests */
-  bytes_t* key;
+  /** the client key to sign requests (pointer to 32bytes private key seed) */
+  void* key;
 
   /** number of max bytes used to cache the code in memory */
   uint32_t max_code_cache;

@@ -430,7 +430,7 @@ void in3_free(in3_t* a) {
     _free(a->filters->array);
     _free(a->filters);
   }
-  b_free(a->key);
+  if (a->key) _free(a->key);
   _free(a);
 }
 
@@ -524,9 +524,6 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("stats")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_STATS, (d_int(token) ? true : false));
-    } else if (token->key == key("key")) {
-      EXPECT_TOK_B256(token);
-      c->key = b_dup(d_bytes(token));
     } else if (token->key == key("useBinary")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_BINARY, (d_int(token) ? true : false));
@@ -539,6 +536,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxCodeCache")) {
       EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
+    } else if (token->key == key("key")) {
+      EXPECT_TOK_B256(token);
+      memcpy(c->key = _calloc(32, 1), token->data, token->len);
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
       c->max_verified_hashes = d_long(token);
