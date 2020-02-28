@@ -156,7 +156,6 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->capacity   = 1;
   node->deposit    = 0;
   node->props      = 0xFF;
-  node->boot_node  = true;
   node->url        = _malloc(strlen(url) + 1);
   BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
   BIT_SET(node->attrs, ATTR_BOOT_NODE);
