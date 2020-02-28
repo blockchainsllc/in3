@@ -7,7 +7,6 @@ target_sources(app PRIVATE src/main.c)
 
 ADD_DEFINITIONS(-DTEST)
 ADD_DEFINITIONS(-DDEBUG)
-ADD_DEFINITIONS(-DIPFS=false)
 
 SET(CMAKE_BUILD_TYPE Debug)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
@@ -20,7 +19,8 @@ set(IN3_DEPS
 ${IN3_SRC}/src/core 
 ${IN3_SRC}/src/verifier/eth1/basic 
 ${IN3_SRC}/src/verifier/eth1/nano 
-${IN3_SRC}/src/api/eth1 
+${IN3_SRC}/src/api/eth1
+${IN3_SRC}/src/api/utils
 ${IN3_SRC}/src/third-party
 )
 
