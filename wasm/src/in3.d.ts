@@ -102,66 +102,75 @@ export declare interface IN3Config {
     keepIn3?: boolean
 
     /**
-     * the limit of nodes to store in the client.
-     * example: 150
+     * the key to sign requests. This is required for payments.
+     */
+    key?: Hash
+
+    /**
+     * the limit of nodes to store in the client. If set a random seed will be picked, which is the base for a deterministic verifiable partial nodelist.
+     * 
+     * default: 0
      */
     nodeLimit?: number
+
     /**
-     * the format for sending the data to the client. Default is json, but using cbor means using only 30-40% of the payload since it is using binary encoding
-     * example: json
+     * if false, the requests will not be included in the stats of the nodes ( or marked as intern ). 
+     * 
+     * default: true
      */
-    format?: 'json' | 'jsonRef' | 'cbor'
+    stats?: boolean
+
     /**
-     * the client key to sign requests
-     * example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-     */
-    key?: any
-    /**
-     * if true the config will be adjusted depending on the request
-     */
-    autoConfig?: boolean
-    /**
-     * if true the the request may be handled without proof in case of an error. (use with care!)
-     */
-    retryWithoutProof?: boolean
-    /**
-     * number of max bytes used to cache the code in memory
-     * example: 100000
+     * number of max bytes used to cache the code in memory.
+     * 
+     * default: 0
      */
     maxCodeCache?: number
-    /**
-     * number of number of blocks cached  in memory
-     * example: 100
-     */
-    maxBlockCache?: number
-    /**
-     * if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
-     */
-    verifiedHashes?: string /* bytes32 */[]
-    /**
-     * if true the nodes should send a proof of the response
-     * example: true
-     */
-    proof?: 'none' | 'standard' | 'full'
-    /**
-     * min stake of the server. Only nodes owning at least this amount will be chosen.
-     */
-    minDeposit: number
-    /**
-     * if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
-     * example: 6
-     */
-    replaceLatestBlock?: number
-    /**
-     * the number of request send when getting a first answer
-     * example: 3
-     */
-    requestCount: number
+
     /**
      * specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection.
-     * example: 3000
+     * 
+     * default: 5000
      */
     timeout?: number
+    /**
+     * min stake of the server. Only nodes owning at least this amount will be chosen.
+     * 
+     * default: 0
+     */
+    minDeposit: number
+
+    /**
+     * a bitmask-value combining the minimal properties as filter for the selected nodes. See https://in3.readthedocs.io/en/develop/spec.html#node-structure for details. 
+     */
+    nodeProps: number | Hex
+
+    /**
+     * if true the nodes should send a proof of the response
+     * 
+     * default: 'standard'
+     */
+    proof?: 'none' | 'standard' | 'full'
+
+    /**
+     * if specified, the blocknumber *latest* will be replaced by blockNumber- specified value
+     * 
+     * default: 6
+     */
+    replaceLatestBlock?: number
+
+    /**
+     * the number of request send when getting a first answer
+     * 
+     * default: 1
+     */
+    requestCount: number
+
+    /**
+     * url of a rpc-endpoints to use. If this is set proof will be turned off and it will be treated like local_chain.
+     */
+    rpc?: string
+
     /**
      * main chain-registry contract
      * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
@@ -173,61 +182,60 @@ export declare interface IN3Config {
      */
     mainChain?: string // ^0x[0-9a-fA-F]+$
     /**
-     * url of one or more rpc-endpoints to use. (list can be comma seperated)
+     * the nodelists per chain. the chain_id will be used as key within the object.
      */
-    rpc?: string
-    /**
-     * the nodelist per chain
-     */
-    servers?: {
+    nodes?: {
         [name: string]: {
             /**
-             * name of the module responsible for handling the verification
-             */
-            verifier?: string
-            /**
-             * a alias for the chain
-             */
-            name?: string
-            /**
-             * a list of addresses which should always be part of the nodelist when getting an update
-             * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945,0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1
-             */
-            initAddresses?: string[]
-            /**
-             * the blockNumber of the last event in the registry
-             * example: 23498798
-             */
-            lastBlock?: number
-            /**
              * the address of the registry contract
+             * 
              * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
              */
-            contract?: string
+            contract?: Address
+
             /**
-             * if true the nodelist should be updated.
+             * address of the whiteList contract. (optional, cannot be combined with whiteList)
+             * 
+             * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945
+             */
+            whiteListContract?: Address
+
+            /**
+             * manuall list of whitelisted addresses. (optional, cannot be combined with whiteListContract)
+             * 
+             * example: ['0xe36179e2286ef405e929C90ad3E70E649B22a945']
+             */
+            whiteList?: Address[]
+
+            /**
+             * if true the nodelist should be updated. This flag will be set to false after the first successfull update.
+             * 
+             * default: true
              */
             needsUpdate?: boolean
-            /**
-             * the chainid for the contract
-             * example: 0x8
-             */
-            contractChain?: string
+
             /**
              * the list of nodes
              */
             nodeList?: IN3NodeConfig[]
+
             /**
-             * the list of authority nodes for handling conflicts
-             * example: 0xe36179e2286ef405e929C90ad3E70E649B22a945,0x6d17b34aeaf95fee98c0437b4ac839d8a2ece1b1
+             * if the client sends a array of blockhashes the server will not deliver any signatures or blockheaders for these blocks, but only return a string with a number. This is automaticly updated by the cache, but can be overriden per request.
              */
-            nodeAuthorities?: string[]
+            verifiedHashes?: Hex /* bytes32 */[]
+
             /**
-             * the weights of nodes depending on former performance which is used internally
+             * identifier of the registry.
              */
-            weights?: {
-                [name: string]: IN3NodeWeight
-            }
+            registryId?: Hex /* bytes32 */[]
+
+            /**
+             * average block time (seconds) for this chain.
+             * 
+             * default: 14
+             */
+            avgBlockTime?: number
+
         }
     }
 }

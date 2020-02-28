@@ -67,8 +67,8 @@
 #define EXPECT_TOK_OBJ(token) EXPECT_TOK(token, d_type(token) == T_OBJECT, "expected object")
 #define EXPECT_TOK_ADDR(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 20, "expected address")
 #define EXPECT_TOK_B256(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 32, "expected 256 bit data")
-#define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || (d_type(token) == T_BYTES && d_len(token) <= 8)) && d_long(token) >= 0 && d_long(token) <= UINT64_MAX)
-#define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
+#define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || (d_type(token) == T_BYTES && d_len(token) <= 8)) && d_long(token) <= UINT64_MAX)
+#define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) <= UINT32_MAX)
 #define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
 #define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
 #define EXPECT_TOK_U8(token) EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value")
@@ -123,9 +123,9 @@ IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* co
   chain->last_block           = 0;
   chain->verified_hashes      = NULL;
   chain->contract             = hex_to_new_bytes(contract, 40);
-  chain->nodelist             = _malloc(sizeof(in3_node_t) * boot_node_count);
+  chain->nodelist             = _calloc(boot_node_count, sizeof(in3_node_t));
   chain->nodelist_length      = boot_node_count;
-  chain->weights              = _malloc(sizeof(in3_node_weight_t) * boot_node_count);
+  chain->weights              = _calloc(boot_node_count, sizeof(in3_node_weight_t));
   chain->type                 = type;
   chain->version              = version;
   chain->whitelist            = NULL;
@@ -156,6 +156,7 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->capacity   = 1;
   node->deposit    = 0;
   node->props      = 0xFF;
+  node->boot_node  = true;
   node->url        = _malloc(strlen(url) + 1);
   BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
   BIT_SET(node->attrs, ATTR_BOOT_NODE);
@@ -430,7 +431,7 @@ void in3_free(in3_t* a) {
     _free(a->filters->array);
     _free(a->filters);
   }
-  b_free(a->key);
+  if (a->key) _free(a->key);
   _free(a);
 }
 
@@ -524,9 +525,6 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("stats")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_STATS, (d_int(token) ? true : false));
-    } else if (token->key == key("key")) {
-      EXPECT_TOK_B256(token);
-      c->key = b_dup(d_bytes(token));
     } else if (token->key == key("useBinary")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_BINARY, (d_int(token) ? true : false));
@@ -539,6 +537,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxCodeCache")) {
       EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
+    } else if (token->key == key("key")) {
+      EXPECT_TOK_B256(token);
+      memcpy(c->key = _calloc(32, 1), token->data, token->len);
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
       in3_chain_t* chain = in3_find_chain(c, c->chain_id);

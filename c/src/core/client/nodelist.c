@@ -73,7 +73,7 @@ static inline bool nodelist_exp_last_block_neq(in3_chain_t* chain, uint64_t exp_
 static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t      res  = IN3_OK;
   uint64_t       _now = in3_time(NULL); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
-  const uint64_t now  = (uint64_t) max(0, _now);
+  const uint64_t now  = (uint64_t) _now;
 
   // read the nodes
   d_token_t *nodes = d_get(result, K_NODES), *t;

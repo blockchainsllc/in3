@@ -40,10 +40,9 @@ add_library(ipfs_o OBJECT
         ../../third-party/nanopb/pb_encode.c
         ../../third-party/nanopb/pb_decode.c
         ../../third-party/nanopb/pb_common.c
-        ../../third-party/libb64/cdecode.c
         ../../third-party/multihash/errors.c
         ../../third-party/multihash/hashes.c
         ../../third-party/multihash/multihash.c)
 add_library(ipfs STATIC $<TARGET_OBJECTS:ipfs_o>)
 
-target_link_libraries(ipfs eth_nano)
+target_link_libraries(ipfs eth_nano b64)
