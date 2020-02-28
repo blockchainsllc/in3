@@ -539,6 +539,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxCodeCache")) {
       EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
+    } else if (token->key == key("key")) {
+      EXPECT_TOK_B256(token);
+      memcpy(c->key = _calloc(32, 1), token->data, token->len);
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
       c->max_verified_hashes = d_long(token);

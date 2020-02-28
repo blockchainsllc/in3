@@ -110,6 +110,7 @@ void show_help(char* name) {
 -hex           if given the result will be returned as hex.\n\
 -kin3          if kin3 is specified, the response including in3-section is returned\n\
 -debug         if given incubed will output debug information when executing. \n\
+-k             32bytes raw private key to sign requests.\n\
 -q             quit. no additional output. \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
@@ -736,7 +737,11 @@ int main(int argc, char* argv[]) {
       wait = true;
     else if (strcmp(argv[i], "-json") == 0)
       json = true;
-    else if (strcmp(argv[i], "-np") == 0)
+    else if (strcmp(argv[i], "-k") == 0) {
+      if (argc <= i + 1 || strlen(argv[i + 1]) > 66) die("Invalid signer key");
+      c->key = _calloc(32, 1);
+      hex_to_bytes(argv[++i], -1, c->key, 32);
+    } else if (strcmp(argv[i], "-np") == 0)
       c->proof = PROOF_NONE;
     else if (strcmp(argv[i], "-ns") == 0)
       c->flags ^= FLAGS_STATS;
