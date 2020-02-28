@@ -40,6 +40,7 @@ add_subdirectory(src/third-party)
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
+add_subdirectory(src/pay)
 add_subdirectory(src/api)
 add_subdirectory(src/cmd)
 add_subdirectory(docs)
@@ -64,6 +65,10 @@ if (IN3_LIB)
     # if we use curl, we include curl transport as well
     if (USE_CURL)
         set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
+    endif()
+
+    if (PAY_ETH)
+       set(IN3_LIBS ${IN3_LIBS}  $<TARGET_OBJECTS:pay_eth_o>)
     endif()
 
     # create the libraries

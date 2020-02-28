@@ -48,6 +48,10 @@
 #endif
 #include <time.h>
 
+#ifdef PAY_ETH
+#include "../../pay/eth/pay_eth.h"
+#endif
+
 #define EXPECT(cond, exit) \
   do {                     \
     if (!(cond))           \
@@ -554,6 +558,19 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("nodeLimit")) {
       EXPECT_TOK_U16(token);
       c->node_limit = (uint16_t) d_int(token);
+    } else if (token->key == key("pay")) {
+      EXPECT_TOK_OBJ(token);
+      char* type = d_get_string(token, "type");
+      if (!type) type = "eth";
+      if (strcmp(type, "eth")) {
+#ifdef PAY_ETH
+        char* err = pay_eth_configure(c, token);
+        EXPECT_TOK(token, err == NULL, err);
+#else
+        EXPECT_TOK(token, token, "pay_eth is not supporterd. Please build with -DPAY_ETH");
+#endif
+      }
+
     } else if (token->key == key("proof")) {
       EXPECT_TOK_STR(token);
       EXPECT_TOK(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");

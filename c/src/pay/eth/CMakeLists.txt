@@ -33,40 +33,6 @@
 ###############################################################################
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
-OPTION(USE_CURL "if true the curl transport will be build (with a dependency to libcurl)" ON)
-IF (USE_CURL)
-    message("using curl for comandline")
-    ADD_DEFINITIONS(-DUSE_CURL)
-    set(LIBS ${LIBS} transport_curl)
-else()
-    message("using http for comandline")
-    set(LIBS ${LIBS} transport_http)
-ENDIF()
-
-IF (IN3_SERVER)
-    message("using server for comandline")
-    ADD_DEFINITIONS(-DIN3_SERVER)
-    set(LIBS ${LIBS} http_server)
-ENDIF()
-
-if (BTC)
-    ADD_DEFINITIONS(-DBTC)
-    set(LIBS ${LIBS} btc)
-endif()
-
-if (IPFS)
-    ADD_DEFINITIONS(-DIPFS)
-    set(LIBS ${LIBS} ipfs)
-endif()
-
-
-add_executable(in3 main.c in3_storage.c)
-target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
-target_link_libraries(in3 ${LIBS} eth_full eth_api ${IN3_API} -lm)
-
-install(TARGETS in3
-        DESTINATION /usr/local/bin/
-        PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE)
+add_library(pay_eth_o OBJECT pay_eth.c)
+add_library(pay_eth STATIC $<TARGET_OBJECTS:pay_eth_o>)
+target_link_libraries(pay_eth core eth_basic)
