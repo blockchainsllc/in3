@@ -129,10 +129,10 @@ JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray v
   if (in3->key) b_free(in3->key);
   in3->key = NULL;
   if (val == NULL) return;
-  in3->key       = _malloc(sizeof(bytes_t));
-  in3->key->len  = (*env)->GetArrayLength(env, val);
-  in3->key->data = _malloc(in3->key->len);
-  (*env)->GetByteArrayRegion(env, val, 0, in3->key->len, (jbyte*) in3->key->data);
+  int len = (*env)->GetArrayLength(env, val);
+  if (len > 32) (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), "Invalid Signer key!");
+  in3->key = _calloc(1, 32);
+  (*env)->GetByteArrayRegion(env, val, 0, len, (jbyte*) in3->key);
 }
 
 /*

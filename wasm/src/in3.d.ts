@@ -102,6 +102,11 @@ export declare interface IN3Config {
     keepIn3?: boolean
 
     /**
+     * the key to sign requests. This is required for payments.
+     */
+    key?: Hash
+
+    /**
      * the limit of nodes to store in the client. If set a random seed will be picked, which is the base for a deterministic verifiable partial nodelist.
      * 
      * default: 0
