@@ -61,7 +61,3 @@ add_library(core_o OBJECT
         )
 add_library(core STATIC $<TARGET_OBJECTS:core_o>)
 target_link_libraries(core crypto)
-
-if (PAY_ETH)
-  target_link_libraries(core pay_eth)
-endif()

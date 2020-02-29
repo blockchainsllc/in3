@@ -748,4 +748,19 @@ in3_storage_handler_t* in3_create_storage_handler(
     in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 );
+#ifdef PAY
+/**
+  *  configure function for a payment.
+  */
+typedef char* (*pay_configure)(in3_t* c, d_token_t* config);
+
+/**
+ * registers a payment provider
+ */
+void in3_register_payment(
+    char*         name,   /**< name of the payment-type */
+    pay_configure handler /**< pointer to the handler- */
+);
+#endif
+
 #endif

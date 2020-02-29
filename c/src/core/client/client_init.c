@@ -48,8 +48,36 @@
 #endif
 #include <time.h>
 
-#ifdef PAY_ETH
-#include "../../pay/eth/pay_eth.h"
+#ifdef PAY
+typedef struct payment {
+  d_key_t         name;
+  pay_configure   configure;
+  struct payment* next;
+
+} pay_configure_t;
+
+static pay_configure_t* payments = NULL;
+
+static pay_configure_t* find_payment(char* name) {
+  d_key_t k = key(name);
+  for (pay_configure_t* p = payments; p; p = p->next) {
+    if (k == p->name) return p;
+  }
+  return NULL;
+}
+
+void in3_register_payment(
+    char*         name,   /**< name of the payment-type */
+    pay_configure handler /**< pointer to the handler- */
+) {
+  if (find_payment(name)) return;
+  pay_configure_t* p = _malloc(sizeof(pay_configure_t));
+  p->configure       = handler;
+  p->name            = key(name);
+  p->next            = payments;
+  payments           = p;
+}
+
 #endif
 
 #define EXPECT(cond, exit) \
@@ -574,15 +602,15 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK_OBJ(token);
       char* type = d_get_string(token, "type");
       if (!type) type = "eth";
-      if (strcmp(type, "eth") == 0) {
-#ifdef PAY_ETH
-        char* err = pay_eth_configure(c, token);
-        EXPECT_TOK(token, err == NULL, err);
+#ifdef PAY
+      pay_configure_t* p = find_payment(type);
+      EXPECT_TOK(token, p, "the payment type was not registered");
+      char* err = p->configure(c, token);
+      EXPECT_TOK(token, err == NULL, err);
+
 #else
-        EXPECT_TOK(token, false, "pay_eth is not supporterd. Please build with -DPAY_ETH");
+      EXPECT_TOK(token, false, "pay_eth is not supporterd. Please build with -DPAY_ETH");
 #endif
-      } else
-        EXPECT_TOK(token, false, "unsupported config option!");
 
     } else if (token->key == key("proof")) {
       EXPECT_TOK_STR(token);

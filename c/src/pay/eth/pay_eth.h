@@ -51,6 +51,8 @@ typedef struct in3_pay_eth_config {
   uint64_t gas_price;
 } in3_pay_eth_config_t;
 
+void in3_register_pay_eth();
+
 char* pay_eth_configure(in3_t* c, d_token_t* cconfig);
 
 #endif

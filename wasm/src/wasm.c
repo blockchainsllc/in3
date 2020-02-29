@@ -59,6 +59,9 @@
 #ifdef IPFS
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
+#ifdef PAY_ETH
+#include "../../c/src/pay/eth/pay_eth.h"
+#endif
 
 #define err_string(msg) (":ERROR:" msg)
 
@@ -228,6 +231,9 @@ in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
 #endif
 #ifdef IPFS
   in3_register_ipfs();
+#endif
+#ifdef PAY_ETH
+  in3_register_pay_eth();
 #endif
 
   in3_t* c           = in3_for_chain(chain);

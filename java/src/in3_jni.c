@@ -49,6 +49,9 @@
 #include "../../c/src/verifier/ipfs/ipfs.h"
 
 #endif
+#ifdef PAY_ETH
+#include "../../c/src/pay/eth/pay_eth.h"
+#endif
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   jlong l = (*env)->GetLongField(env, obj, (*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), "ptr", "J"));
@@ -939,6 +942,9 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
 
 #ifdef IPFS
   in3_register_ipfs();
+#endif
+#ifdef PAY_ETH
+  in3_register_pay_eth();
 #endif
 
   in3_t* in3 = in3_for_chain(jchain);

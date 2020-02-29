@@ -157,3 +157,7 @@ char* pay_eth_configure(in3_t* c, d_token_t* config) {
   conf->bulk_size            = d_get_longkd(config, key("bulk_size"), 1000);
   return NULL;
 }
+
+void in3_register_pay_eth() {
+  in3_register_payment("eth", pay_eth_configure);
+}
