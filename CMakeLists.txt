@@ -105,7 +105,7 @@ endif()
 
 if(PAY_ETH)
   ADD_DEFINITIONS(-DPAY_ETH -DPAY)
-  set(IN3_API pay_eth ${IN3_API} )
+  set(IN3_API  ${IN3_API} pay_eth)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
