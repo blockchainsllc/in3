@@ -108,6 +108,7 @@ in3_ret_t pay_eth_handle_request(void* _ctx, sb_t* sb, in3_request_config_t* rc,
   in3_ctx_t*            ctx     = _ctx;
   const uint64_t        units   = calc_request_units(ctx);
   bool                  started = false;
+  if (!rc) return IN3_OK;
 
   // TODO if we have a request Count > 1 we are currently still sending the same payload,
   // but for payments, we may need different payload for each.
