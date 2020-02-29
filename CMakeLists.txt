@@ -63,7 +63,7 @@ option(WASM_EMBED "embedds the wasm as base64-encoded into the js-file" ON)
 option(WASM_EMMALLOC "use ther smaller EMSCRIPTEN Malloc, which reduces the size about 10k, but may be a bit slower" ON)
 option(WASM_SYNC "intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)" OFF)
 option(CODE_COVERAGE  "Builds targets with code coverage instrumentation. (Requires GCC or Clang)"  OFF)
-option(PAY_ETH  "support for direct Eth-Payment"  OFF)
+option(PAY_ETH  "support for direct Eth-Payment"  ON)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -104,7 +104,7 @@ if(IPFS)
 endif()
 
 if(PAY_ETH)
-  ADD_DEFINITIONS(-DPAY_ETH)
+  ADD_DEFINITIONS(-DPAY_ETH -DPAY)
   set(IN3_API ${IN3_API} pay_eth)
 endif()
 

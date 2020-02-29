@@ -44,6 +44,13 @@
 
 #include "../../core/client/client.h"
 
+typedef struct in3_pay_eth_config {
+  uint64_t bulk_size;
+  uint64_t max_price;
+  uint64_t nonce;
+  uint64_t gas_price;
+} in3_pay_eth_config_t;
+
 char* pay_eth_configure(in3_t* c, d_token_t* cconfig);
 
 #endif

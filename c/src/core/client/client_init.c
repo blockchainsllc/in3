@@ -435,6 +435,18 @@ void in3_free(in3_t* a) {
     _free(a->filters);
   }
   if (a->key) _free(a->key);
+
+#ifdef PAY
+  if (a->pay) {
+    if (a->pay->cptr) {
+      if (a->pay->free)
+        a->pay->free(a->pay->cptr);
+      else
+        _free(a->pay->cptr);
+    }
+    _free(a->pay);
+  }
+#endif
   _free(a);
 }
 
@@ -562,14 +574,15 @@ char* in3_configure(in3_t* c, const char* config) {
       EXPECT_TOK_OBJ(token);
       char* type = d_get_string(token, "type");
       if (!type) type = "eth";
-      if (strcmp(type, "eth")) {
+      if (strcmp(type, "eth") == 0) {
 #ifdef PAY_ETH
         char* err = pay_eth_configure(c, token);
         EXPECT_TOK(token, err == NULL, err);
 #else
-        EXPECT_TOK(token, token, "pay_eth is not supporterd. Please build with -DPAY_ETH");
+        EXPECT_TOK(token, false, "pay_eth is not supporterd. Please build with -DPAY_ETH");
 #endif
-      }
+      } else
+        EXPECT_TOK(token, false, "unsupported config option!");
 
     } else if (token->key == key("proof")) {
       EXPECT_TOK_STR(token);

@@ -178,6 +178,10 @@ typedef struct in3_node_weight {
   uint32_t response_count;      /**< counter for responses */
   uint32_t total_response_time; /**< total of all response times */
   uint64_t blacklisted_until;   /**< if >0 this node is blacklisted until k. k is a unix timestamp */
+#ifdef PAY
+  uint32_t price; /**< the price per request unit */
+  uint64_t payed; /**< already payed */
+#endif
 } in3_node_weight_t;
 
 /**
@@ -334,6 +338,65 @@ typedef struct in3_signer {
 
 } in3_signer_t;
 
+/** 
+ * 
+ * payment prepearation function.
+ * 
+ * allows the payment to handle things before the request will be send.
+ * 
+*/
+typedef in3_ret_t (*in3_pay_prepare)(void* ctx, void* cptr);
+
+/** 
+ * 
+ * called after receiving a parseable response with a in3-section.
+ * 
+ * 
+*/
+typedef in3_ret_t (*in3_pay_follow_up)(void* ctx, void* node, d_token_t* in3, d_token_t* error, void* cptr);
+
+/** 
+ * 
+ * free function for the custom pointer.
+ * 
+ * 
+*/
+typedef void (*in3_pay_free)(void* cptr);
+
+/** 
+ * 
+ * handles the request.
+ * 
+ * this function is called when the in3-section of payload of the request is built and allows the handler to add properties. 
+ * 
+*/
+typedef in3_ret_t (*in3_pay_handle_request)(void* ctx, sb_t* sb, in3_request_config_t* rc, void* cptr);
+
+/** 
+ * 
+ * the payment handler.
+ * 
+ * if a payment handler is set it will be used when generating the request.
+ * 
+*/
+typedef struct in3_pay {
+  /* payment prepearation function.*/
+  in3_pay_prepare prepare;
+
+  /* payment prepearation function.*/
+  in3_pay_follow_up follow_up;
+
+  /* this function is called when the in3-section of payload of the request is built and allows the handler to add properties. .*/
+  in3_pay_handle_request handle_request;
+
+  /* frees the custom pointer (cptr).*/
+  in3_pay_free free;
+
+  /* custom object whill will be passed to functions */
+  void* cptr;
+
+} in3_pay_t;
+
 /** response-object. 
  * 
  * if the error has a length>0 the response will be rejected
@@ -451,6 +514,10 @@ typedef struct in3_t_ {
   /** signer-struct managing a wallet */
   in3_signer_t* signer;
 
+#ifdef PAY
+  /** payment handler. if set it will add payment to each request */
+  in3_pay_t* pay;
+#endif
   /** the transporthandler sending requests */
   in3_transport_send transport;
 
