@@ -421,7 +421,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             else if (res < 0) {
               blacklist_node(node);
               break;
-            } else
+            } else if (d_get(ctx->responses[i], K_IN3))
               check_autoupdate(ctx, chain, d_get(ctx->responses[i], K_IN3), node);
           } else
             ctx->verification_state = IN3_OK;
