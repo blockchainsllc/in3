@@ -84,7 +84,10 @@
         "__node_handle": "c",
         "cstdlib": "c",
         "locale": "c",
-        "eth_call_response_binary.h": "c"
+        "eth_call_response_binary.h": "c",
+        "malloc.h": "c",
+        "memzero.h": "c",
+        "eth_basic.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

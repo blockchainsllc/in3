@@ -14,6 +14,7 @@ _build
 cmake-build-debug/
 .vscode/
 .idea/
+.settings/
 # Vim
 [._]*.s[a-v][a-z]
 [._]*.sw[a-p]
@@ -24,3 +25,6 @@ cmake-build-debug/
 bin/
 .classpath
 .project
+*.class
+target/
+.cproject
