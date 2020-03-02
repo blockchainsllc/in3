@@ -572,13 +572,21 @@ readthedocs:
   dependencies:
     - gcc8
   script:
+    - cd scripts
+    - ./update_examples.sh
+    - cd ..
+    - export PRE_DOC=`cat wasm/docs/*.md`
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cd generator
     - npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
-    - cd ../doc/docs && make html && make latexpdf && make text
+    - cd ../wasm/src
+    - npm i typedoc
+    - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json in3.d.ts
+    - cat doc.json | ../../generator/bin/node_modules/.bin/slockit-docu in3.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
+    - cd ../../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:
       - doc/build
