@@ -582,6 +582,7 @@ readthedocs:
     - npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
+    - chmod 777 bin/*
     - cd ../wasm/src
     - npm i typedoc
     - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json in3.d.ts
