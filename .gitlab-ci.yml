@@ -607,6 +607,7 @@ release_mac_and_wasm:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-mac-wasm
@@ -615,14 +616,17 @@ release_mac_and_wasm:
     - cp -r ../mac_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/c/include --exclude=in3-mac-wasm/js-wasm --exclude=in3-mac-wasm/js-asmjs --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/c/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
+    - mv wasm/release-wasm .
+    - mv wasm/release-asmjs .
+    - tar -zcv --exclude=in3-mac-wasm/python --exclude=in3-mac-wasm/java --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "Mac release:" $IPFS_HASH >> in3-mac-wasm/mac_release_ipfs_hash.txt
@@ -642,6 +646,7 @@ release_x64:
     - readthedocs
     - wasm
     - asmjs
+    - java
   only:
     - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
@@ -655,10 +660,11 @@ release_x64:
     - cp -r ../x64_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../asmjs_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-x64/src --exclude=in3-x64/c/include --exclude=in3-x64/js-asmjs --exclude=in3-x64/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x64.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "x64 release:" $IPFS_HASH >> in3-x64/x64_release_ipfs_hash.txt
@@ -684,6 +690,7 @@ release_x86:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x86
@@ -692,10 +699,11 @@ release_x86:
     - cp -r ../x86_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-x86/src --exclude=in3-x86/c/include --exclude=in3-x86/js-asmjs --exclude=in3-x86/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x86.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_x86.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "x86 release:" $IPFS_HASH >> in3-x86/x86_release_ipfs_hash.txt
@@ -721,19 +729,20 @@ release_arm7:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-arm7
     - cd in3-arm7
-    - mkdir doc
     - cp -r ../arm7_build/bin .
     - cp -r ../arm7_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-arm7/src --exclude=in3-arm7/c/include --exclude=in3-arm7/js-asmjs --exclude=in3-arm7/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_arm7.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_arm7.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "arm7 release:" $IPFS_HASH >> in3-arm7/arm7_release_ipfs_hash.txt
@@ -759,11 +768,11 @@ release_win:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-win
     - cd in3-win
-    - mkdir doc
     - cp -r ../win_build/bin .
     - cp -r ../win_build/lib .
     - mv bin/in3 bin/in3.exe
@@ -772,10 +781,11 @@ release_win:
     - mv lib/libin3.so lib/in3.dll
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-win/src --exclude=in3-win/c/include --exclude=in3-win/js-asmjs --exclude=in3-win/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_windows.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_windows.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "windows release:" $IPFS_HASH >> in3-win/win_release_ipfs_hash.txt
