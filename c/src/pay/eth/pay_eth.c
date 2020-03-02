@@ -154,7 +154,8 @@ char* pay_eth_configure(in3_t* c, d_token_t* config) {
   c->pay->follow_up          = pay_eth_follow_up;
   c->pay->cptr               = _calloc(1, sizeof(in3_pay_eth_config_t));
   in3_pay_eth_config_t* conf = c->pay->cptr;
-  conf->bulk_size            = d_get_longkd(config, key("bulk_size"), 1000);
+  conf->bulk_size            = d_get_longkd(config, key("bulkSize"), 1000);
+  conf->max_price            = d_get_longkd(config, key("maxPrice"), 10);
   return NULL;
 }
 
