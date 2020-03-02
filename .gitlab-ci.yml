@@ -861,18 +861,19 @@ pages:
     - readthedocs
   when: manual
   script:
-    - mv scripts/debian/changelog-in3 scripts/debian/changelog
-    - mv scripts/debian/control-in3 scripts/debian/control
-    - mv scripts/debian/rules-in3 scripts/debian/rules
-    - rm -rf scripts/debian/*-dev
-    - echo "" >> scripts/debian/changelog
-    - echo "in3 (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> scripts/debian/changelog
-    - echo "" >> scripts/debian/changelog
-    - echo "  * Check https://github.com/slockit/in3 for changelog " >> scripts/debian/changelog
-    - echo "" >> scripts/debian/changelog
-    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> scripts/debian/changelog
-    - echo "" >> scripts/debian/changelog
-    - cat scripts/debian/changelog
+    - mv scripts/debian .
+    - mv debian/changelog-in3 debian/changelog
+    - mv debian/control-in3 debian/control
+    - mv debian/rules-in3 debian/rules
+    - rm -rf debian/*-dev
+    - echo "" >> debian/changelog
+    - echo "in3 (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
+    - echo "" >> debian/changelog
+    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
+    - echo "" >> debian/changelog
+    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
+    - echo "" >> debian/changelog
+    - cat debian/changelog
     - mkdir ~/.gnupg && chmod 700 ~/.gnupg
     - echo -e "use-agent\npinentry-mode loopback" > ~/.gnupg/gpg.conf
     - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
@@ -920,18 +921,19 @@ debian_package_deploy_disco:
     - readthedocs
   when: manual
   script:
-    - mv scripts/debian/changelog-dev scripts/debian/changelog
-    - mv scripts/debian/control-dev scripts/debian/control
-    - mv scripts/debian/rules-dev scripts/debian/rules
-    - rm -rf scripts/debian/*-in3
-    - echo "" >> scripts/debian/changelog
-    - echo "in3-dev (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> scripts/debian/changelog
-    - echo "" >> scripts/debian/changelog
-    - echo "  * Check https://github.com/slockit/in3 for changelog " >> scripts/debian/changelog
-    - echo "" >> scripts/debian/changelog
-    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> scripts/debian/changelog
-    - echo "" >> scripts/debian/changelog
-    - cat scripts/debian/changelog
+    - mv scripts/debian .
+    - mv debian/changelog-dev debian/changelog
+    - mv debian/control-dev debian/control
+    - mv debian/rules-dev debian/rules
+    - rm -rf debian/*-in3
+    - echo "" >> debian/changelog
+    - echo "in3-dev (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
+    - echo "" >> debian/changelog
+    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
+    - echo "" >> debian/changelog
+    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
+    - echo "" >> debian/changelog
+    - cat debian/changelog
     - mkdir ~/.gnupg && chmod 700 ~/.gnupg
     - echo -e "use-agent\npinentry-mode loopback" > ~/.gnupg/gpg.conf
     - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
