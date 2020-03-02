@@ -421,13 +421,16 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             else if (res < 0) {
               blacklist_node(node);
               break;
-            } else if (d_get(ctx->responses[i], K_IN3))
-              check_autoupdate(ctx, chain, d_get(ctx->responses[i], K_IN3), node);
+            }
           } else
             ctx->verification_state = IN3_OK;
         }
       }
     }
+    
+    // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
+    if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
+      check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
     if (!node || !is_blacklisted(node))
