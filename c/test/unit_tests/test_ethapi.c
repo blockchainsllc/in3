@@ -587,8 +587,8 @@ static void test_send_raw_tx(void) {
  * Main
  */
 int main() {
-  in3_log_set_quiet(true);
-  in3_log_set_level(LOG_ERROR);
+  in3_log_set_quiet(false);
+  in3_log_set_level(LOG_TRACE);
 
   // now run tests
   TESTS_BEGIN();
