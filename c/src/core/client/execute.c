@@ -427,7 +427,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         }
       }
     }
-    
+
     // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
     if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
       check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
