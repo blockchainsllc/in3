@@ -32,67 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-
-#  build modules
-add_subdirectory(src/third-party)
-add_subdirectory(src/core)
-add_subdirectory(src/transport)
-add_subdirectory(src/verifier)
-add_subdirectory(src/api)
-IF (ETH_FULL)
-    add_subdirectory(src/cmd)
-endif()
-add_subdirectory(docs)
-
-
-
-# create the library
-if (IN3_LIB)
-    set(IN3_LIBS
-        $<TARGET_OBJECTS:core_o>
-        $<TARGET_OBJECTS:crypto_o>
-        $<TARGET_OBJECTS:b64_o>
-        $<TARGET_OBJECTS:tommath_o>
-        $<TARGET_OBJECTS:evm_o>
-        $<TARGET_OBJECTS:eth_full_o>
-        $<TARGET_OBJECTS:eth_api_o>
-        $<TARGET_OBJECTS:eth_basic_o>
-        $<TARGET_OBJECTS:eth_nano_o>
-        $<TARGET_OBJECTS:usn_api_o>
-        $<TARGET_OBJECTS:ipfs_o>
-        $<TARGET_OBJECTS:ipfs_api_o>
-    )
-    # if we use curl, we include curl transport as well
-    if (USE_CURL)
-        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
-    endif()
-
-    # create the libraries
-    add_library(in3_bundle STATIC ${IN3_LIBS} )
-    add_library(in3_lib    SHARED ${IN3_LIBS} )
-    set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
-    set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-
-    # for curl we need to add the dependency
-    if (USE_CURL)
-       target_link_libraries(in3_lib transport_curl)
-    endif()
-
-    # install
-    INSTALL(TARGETS in3_bundle
-      DESTINATION "lib"
-    )
-    INSTALL(TARGETS in3_lib
-        DESTINATION lib
-        PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE)
-    INSTALL (
-        DIRECTORY ${CMAKE_SOURCE_DIR}/include/
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.h*")
-
-endif()
+add_library(b64_o OBJECT
+        cencode.c
+        cdecode.c
+        )
+add_library(b64 STATIC $<TARGET_OBJECTS:b64_o>)

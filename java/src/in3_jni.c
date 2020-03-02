@@ -45,6 +45,10 @@
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
 #include "../../c/src/verifier/eth1/full/eth_full.h"
+#ifdef IPFS
+#include "../../c/src/verifier/ipfs/ipfs.h"
+
+#endif
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   jlong l = (*env)->GetLongField(env, obj, (*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), "ptr", "J"));
@@ -125,10 +129,10 @@ JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray v
   if (in3->key) b_free(in3->key);
   in3->key = NULL;
   if (val == NULL) return;
-  in3->key       = _malloc(sizeof(bytes_t));
-  in3->key->len  = (*env)->GetArrayLength(env, val);
-  in3->key->data = _malloc(in3->key->len);
-  (*env)->GetByteArrayRegion(env, val, 0, in3->key->len, (jbyte*) in3->key->data);
+  int len = (*env)->GetArrayLength(env, val);
+  if (len > 32) (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), "Invalid Signer key!");
+  in3->key = _calloc(1, 32);
+  (*env)->GetByteArrayRegion(env, val, 0, len, (jbyte*) in3->key);
 }
 
 /*
@@ -931,8 +935,13 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_t* in3 = in3_for_chain(jchain);
   in3_register_eth_full();
+
+#ifdef IPFS
+  in3_register_ipfs();
+#endif
+
+  in3_t* in3 = in3_for_chain(jchain);
   in3_log_set_level(LOG_DEBUG);
   in3->transport          = Java_in3_IN3_transport;
   in3->cache              = _malloc(sizeof(in3_storage_handler_t));

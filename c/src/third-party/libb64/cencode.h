@@ -8,6 +8,9 @@ For details, see http://sourceforge.net/projects/libb64
 #ifndef BASE64_CENCODE_H
 #define BASE64_CENCODE_H
 
+#include <stdint.h>
+#include <stdlib.h>
+
 typedef enum
 {
 	step_A, step_B, step_C
@@ -27,5 +30,7 @@ char base64_encode_value(char value_in);
 int base64_encode_block(const char* plaintext_in, int length_in, char* code_out, base64_encodestate* state_in);
 
 int base64_encode_blockend(char* code_out, base64_encodestate* state_in);
+
+char* base64_encode(const uint8_t* input, size_t len);
 
 #endif /* BASE64_CENCODE_H */

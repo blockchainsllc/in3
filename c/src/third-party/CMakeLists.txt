@@ -41,3 +41,7 @@ endif()
 if (USE_SEGGER_RTT)
   add_subdirectory( segger_rtt )
 endif()
+
+if (IPFS)
+  add_subdirectory( libb64 )
+endif()

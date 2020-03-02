@@ -35,39 +35,6 @@ static size_t pb_encode_size(const pb_msgdesc_t* fields, const void* src_struct)
   return 0;
 }
 
-static size_t b64_decode_strlen(const char* ip) {
-  const size_t lip = strlen(ip);
-  size_t       lop = lip / 4 * 3;
-  if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
-    lop -= 2;
-  else if (ip[lip - 1] == '=')
-    lop -= 1;
-  return lop;
-}
-
-static size_t b64_strlen(const char* ip) {
-  size_t lip = strlen(ip);
-  if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
-    lip -= 2;
-  else if (ip[lip - 1] == '=')
-    lip -= 1;
-  return lip;
-}
-
-static char* b64_decode(const char* ip) {
-  size_t lop = b64_decode_strlen(ip);
-  char*  op  = (char*) _malloc(lop + 1);
-  if (op) {
-    char*              c = op;
-    base64_decodestate s;
-    base64_init_decodestate(&s);
-    int cnt = base64_decode_block(ip, b64_strlen(ip), c, &s);
-    c += cnt;
-    *c = 0;
-  }
-  return op;
-}
-
 static in3_ret_t ipfs_create_hash(const uint8_t* content, size_t len, int hash, char** b58) {
   in3_ret_t      ret = IN3_OK;
   cb_arg_bytes_t tmp = {.buf = NULL, .len = 0};
@@ -147,9 +114,10 @@ in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char
   else if (!strcmp(encoding, "utf8"))
     buf = b_new(content, strlen(content));
   else if (!strcmp(encoding, "base64")) {
-    char* str = b64_decode(content);
-    buf       = b_new(str, strlen(str));
-    _free(str);
+    size_t   l    = 0;
+    uint8_t* data = base64_decode(content, &l);
+    buf           = b_new((char*) data, l);
+    free(data);
   } else
     return IN3_ENOTSUP;
 
