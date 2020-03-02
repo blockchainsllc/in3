@@ -585,7 +585,7 @@ readthedocs:
     - cd ../wasm/src
     - npm i typedoc
     - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json in3.d.ts
-    - cat doc.json | ../../generator/bin/node_modules/.bin/slockit-docu in3.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
+    - cat doc.json | ../../generator/bin/slockit-docu in3.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
     - cd ../../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:
