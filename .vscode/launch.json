@@ -7,6 +7,18 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "_runner_",
+            "program": "${workspaceFolder}/build/test/runner",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "c/test/testdata/requests/in3_ens.json",
+                "-t",
+                "3"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "in3 cmd",
             "program": "${workspaceFolder}/build/bin/in3",
             "cwd": "${workspaceFolder}",
@@ -52,6 +64,13 @@
             "request": "launch",
             "name": "run binary test",
             "program": "${workspaceFolder}/build/test/test_binary_encoding",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run rpcapi test",
+            "program": "${workspaceFolder}/build/test/test_rpc_api",
             "cwd": "${workspaceFolder}/build"
         },
         {
@@ -233,12 +252,31 @@
             "name": "cmd",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/in3",
+            "program": "${workspaceFolder}/build/bin/btc",
             "args": [
                 "-debug",
                 "-c",
                 "https://rpc.slock.it/mainnet",
                 "eth_blockNumber"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "btc_v",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/in3",
+            "args": [
+                "-debug",
+                "-c",
+                "btc",
+                "getblock",
+                "0000000000000521e7f446a2929d03d8fd23c012d98ac53f2f8c9cd2d4f820a6",
+                "true"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build",
@@ -343,6 +381,25 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb"
+        },
+        {
+            "name": "Keynames",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/runner",
+            "args": [
+                "-m",
+                "22",
+                "../test/testdata/requests/eth_getBalance_not_existent.json"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "logging": {
+                "trace": true
+            }
         },
         {
             "name": "vmrunner_",

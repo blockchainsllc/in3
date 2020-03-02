@@ -6,6 +6,7 @@ stages:
   - build
   - bindings
   - test
+  - analysis
   - deploy
   - release
 
@@ -40,7 +41,8 @@ gcc8:
     paths:
       - x64_build/bin
       - x64_build/lib
-      - x64_build/docs/doc_doxygen
+      - x64_build/c/docs/doc_doxygen
+      - x64_build/java/docs/doc_doxygen
 
 win_mingw:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
@@ -73,8 +75,8 @@ clang50:
   image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
 
-clang9:
-  image: docker.slock.it/build-images/cmake:clang9
+clang10:
+  image: docker.slock.it/build-images/cmake:clang10
   extends: .conanbuild
 
 mac_os:
@@ -91,7 +93,8 @@ mac_os:
 
   artifacts:
     paths:
-      - mac_build/docs
+      - mac_build/c/docs
+      - mac_build/java/docs
       - mac_build/lib
       - mac_build/bin
   tags:
@@ -148,48 +151,54 @@ java:
   script:
     - mkdir java_build
     - cd java_build
-    - cmake -DIN3_LIB=false -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
-    - cp ../mac_build/lib/libin3_jni.dylib ../src/bindings/java/in3/native/
-    - cp ../win_build/lib/libin3_jni.so ../src/bindings/java/in3/native/in3_jni.dll
-    - cp ../x64_build/lib/libin3_jni.so ../src/bindings/java/in3/native/
-    - cp ../arm7_build/lib/libin3_jni.so ../src/bindings/java/in3/native/libin3_jni_arm.so
+    - mkdir -p ../java/src/in3/native/
+    - cp ../mac_build/lib/libin3_jni.dylib ../java/src/in3/native/
+    - cp ../win_build/lib/libin3_jni.so ../java/src/in3/native/in3_jni.dll
+    - cp ../x64_build/lib/libin3_jni.so ../java/src/in3/native/
+    - cp ../arm7_build/lib/libin3_jni.so ../java/src/in3/native/libin3_jni_arm.so
+    - cmake -DIN3_LIB=false -DJAVA_MULTI_LIBS=true -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make in3j
   artifacts:
     paths:
+      - java/src/in3/native/
       - java_build/lib
 
 # ##### test ######
 
 coverage:
-  stage: test
+  stage: analysis
   image: silkeh/clang:dev
   tags:
     - short-jobs
   script:
     - mkdir cov_build; cd cov_build
     - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
-    - make -j8 &&  make ccov-all && make ccov-all-report
+    - make -j8 &&  make ptest
+    - ../scripts/lcov_report.sh | xargs llvm-cov report
+    - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
+    - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
+
   artifacts:
     paths:
       - cov_build/ccov/all-merged
 
-analyse:
-  stage: test
-  image: docker.slock.it/build-images/cmake:clang9
+clangcheck:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang10
   allow_failure: false
   tags:
     - short-jobs
   script:
     - mkdir _build
     - cd _build
-    - scan-build-9 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-9 --status-bugs --exclude ../src/third-party --force-analyze-debug-code -o ../report make
+    - scan-build-10 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-10 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make
   artifacts:
     paths:
       - report
 
 cppcheck:
-  stage: test
+  stage: analysis
   image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
   allow_failure: true
   tags:
@@ -199,7 +208,23 @@ cppcheck:
     - cd _build
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
     - cd ..
-    - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/test/unity -i/builds/in3/c/in3-core/src/third-party
+    - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/c/test/unity -i/builds/in3/c/in3-core/c/src/third-party
+
+valgrind:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:valgrind
+  #  allow_failure: true
+  tags:
+    - short-jobs
+  variables:
+    VALGRIND_OPTS: "-v -q --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DCMAKE_BUILD_TYPE=Release -DTEST=true -DDEBUG=false ..
+    - make
+    - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
+    - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f; done
 
 test_c:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -241,7 +266,7 @@ test_wasm:
     - short-jobs
   script:
     - mv wasm_build build
-    - cd test/bindings/wasm
+    - cd wasm/test
     - sh /prepare.sh
     - npm install
     - npm test
@@ -255,17 +280,30 @@ test_asmjs:
     - short-jobs
   script:
     - mv asmjs_build build
-    - cd test/bindings/wasm
+    - cd wasm/test
     - sh /prepare.sh
     - npm install
     - npm test
 
+test_qemu:
+  image: docker.io/zephyrprojectrtos/zephyr-build:v0.12
+  stage: test
+  script:
+    - west init -m https://github.com/zephyrproject-rtos/zephyr --mr v2.0.0
+    - export ZEPHYR_BASE=/builds/in3/c/in3-core
+    - source /builds/in3/c/in3-core/zephyr/zephyr-env.sh
+    - west build -b qemu_cortex_m3 c/test/qemu
+    - ./scripts/qemu.sh 2> /dev/null
+
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: test
+  dependencies:
+    - java
   script:
-    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
-  allow_failure: true
+    - mv java_build build
+    - cd java
+    - ./gradlew test
   tags:
     - short-jobs
 
@@ -276,9 +314,9 @@ examples_linux:
     - gcc8
   script:
     - mv x64_build build
-    - cd examples/c
+    - cd c/examples
     - ./build.sh
-    - cd ../java
+    - cd ../../java/examples
     - ./build.sh
   tags:
     - short-jobs
@@ -290,9 +328,7 @@ examples_arm:
     - arm7
   script:
     - mv arm7_build build
-    - cd examples/c
-    - ./build.sh
-    - cd ../java
+    - cd c/examples
     - ./build.sh
   tags:
     - arm
@@ -301,38 +337,48 @@ examples_macos:
   stage: test
   dependencies:
     - mac_os
+    - wasm
   script:
     - mv mac_build build
-    - cd examples/c
+    - cd c/examples
     - ./build.sh
-    - cd ../java
+    - cd ../../java/examples
+    - ./build.sh
+    - cd ../..
+    - mv build mac_build
+    - mv wasm_build build
+    - cd wasm/examples
     - ./build.sh
   tags:
     - mac-mini-runner
 
 java_arm:
   image: armv7/armhf-java8
-  allow_failure: true
   dependencies:
     - java
   stage: test
   script:
-    - echo "SKIPPED"
-  #    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+    - mv java_build build
+    - cd java
+    - ./gradlew test
   tags:
     - arm
 
 java_macos:
   stage: test
-  allow_failure: true
+  dependencies:
+    - java
   script:
-    - java -cp java_build/lib/in3.jar in3.IN3 eth_blockNumber
+    - mv java_build build
+    - cd java
+    - ./gradlew test
   tags:
     - mac-mini-runner
 
-##### deploy #####
+##### local_docker_deploy_and_vulnerability_analysis #####
+
 docker:
-  stage: deploy
+  stage: bindings
   tags:
     - short-jobs
   services:
@@ -344,6 +390,85 @@ docker:
     - docker tag $COMMIT_IMAGE_TAG $RELEASE_IMAGE_TAG
     - docker push $RELEASE_IMAGE_TAG
     - docker push $COMMIT_IMAGE_TAG
+
+##### analyse #####
+
+include:
+  - template: Code-Quality.gitlab-ci.yml
+
+code_quality:
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  except:
+    - branches
+  stage: analysis
+  tags:
+    - short-jobs
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  variables:
+    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/security-products/codequality:latest"
+    REPORT_STDOUT: STDOUT
+
+format:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:clang10
+  tags:
+    - short-jobs
+  script:
+    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ \( -name "*.c" -o -name "*.h" \) | xargs clang-format-10 -i
+    - git diff --patch --exit-code
+
+cpd:
+  stage: analysis
+  image: rawdee/pmd
+  tags:
+    - short-jobs
+  script:
+    - cpd --minimum-tokens 180 --language cpp --exclude c/src/third-party --files c/src
+    - cpd --minimum-tokens 150 --language java --files java/src
+    - cpd --minimum-tokens 150 --language python --files python
+
+vulnerabilities:
+  stage: analysis
+  tags:
+    - short-jobs
+  dependencies:
+    - docker
+  image: docker.slock.it/build-images/vulnerability-testing-tools
+  script:
+    - export TRIVY_AUTH_URL=$CI_REGISTRY
+    - export TRIVY_USERNAME=gitlab-ci-token
+    - export TRIVY_PASSWORD=$CI_JOB_TOKEN
+    - trivy -f json -o vulnerability_analysis.json --exit-code 1 $COMMIT_IMAGE_TAG
+  artifacts:
+    paths:
+      - vulnerability_analysis.json
+
+metrics:
+  stage: analysis
+  image: docker.slock.it/build-images/deployment
+  tags:
+    - short-jobs
+  dependencies:
+    - mac_os
+    - gcc8
+    - wasm
+    - asmjs
+  script:
+    - echo "mac_cmd_size `stat -c %s mac_build/bin/in3` " > metrics.txt
+    - echo "wasm_min_size `stat -c %s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
+    - echo "wasm_js_size `stat -c %s wasm_build/bin/in3.js` " >> metrics.txt
+    - echo "asmjs_js_size `stat -c %s asmjs_build/bin/in3.js` " >> metrics.txt
+    - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
+    - echo "reported metrics"; cat metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
+
+##### deploy #####
 
 dockerhub-deploy:
   stage: deploy
@@ -451,8 +576,8 @@ readthedocs:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cd generator
     - npm i && npm run build
-    - bin/slockit-doxygen ../x64_build/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
-    - bin/slockit-doxygen ../x64_build/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
+    - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
+    - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - cd ../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:
@@ -480,16 +605,16 @@ release_mac_and_wasm:
     - cd in3-mac-wasm
     - cp -r ../mac_build/bin .
     - cp -r ../mac_build/lib .
-    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js-wasm
     - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/js-wasm --exclude=in3-mac-wasm/js-asmjs --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
+    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/c/include --exclude=in3-mac-wasm/js-wasm --exclude=in3-mac-wasm/js-asmjs --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
+    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/c/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "Mac release:" $IPFS_HASH >> in3-mac-wasm/mac_release_ipfs_hash.txt
@@ -520,12 +645,12 @@ release_x64:
     - cd in3-x64
     - cp -r ../x64_build/bin .
     - cp -r ../x64_build/lib .
-    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js-wasm
     - cp -r ../asmjs_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3-x64/src --exclude=in3-x64/include --exclude=in3-x64/js-asmjs --exclude=in3-x64/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
+    - tar -zcv --exclude=in3-x64/src --exclude=in3-x64/c/include --exclude=in3-x64/js-asmjs --exclude=in3-x64/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x64.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "x64 release:" $IPFS_HASH >> in3-x64/x64_release_ipfs_hash.txt
@@ -557,12 +682,12 @@ release_x86:
     - cd in3-x86
     - cp -r ../x86_build/bin .
     - cp -r ../x86_build/lib .
-    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js-wasm
     - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3-x86/src --exclude=in3-x86/include --exclude=in3-x86/js-asmjs --exclude=in3-x86/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
+    - tar -zcv --exclude=in3-x86/src --exclude=in3-x86/c/include --exclude=in3-x86/js-asmjs --exclude=in3-x86/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x86.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_x86.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "x86 release:" $IPFS_HASH >> in3-x86/x86_release_ipfs_hash.txt
@@ -595,12 +720,12 @@ release_arm7:
     - mkdir doc
     - cp -r ../arm7_build/bin .
     - cp -r ../arm7_build/lib .
-    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js-wasm
     - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3-arm7/src --exclude=in3-arm7/include --exclude=in3-arm7/js-asmjs --exclude=in3-arm7/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
+    - tar -zcv --exclude=in3-arm7/src --exclude=in3-arm7/c/include --exclude=in3-arm7/js-asmjs --exclude=in3-arm7/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_arm7.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_arm7.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "arm7 release:" $IPFS_HASH >> in3-arm7/arm7_release_ipfs_hash.txt
@@ -637,12 +762,12 @@ release_win:
     - mv bin/rlp bin/rlp.exe
     - mv bin/json bin/json.exe
     - mv lib/libin3.so lib/in3.dll
-    - cp -r ../include ../examples ../src ../CMakeLists.txt ../compiler.cmake ../README.md  ../LICENSE ../LICENSE.AGPL .
+    - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
     - cp -r ../wasm_build/module js-wasm
     - cp -r ../wasm_build/module js-asmjs
     - cd ..
-    - tar -zcv --exclude=in3-win/src --exclude=in3-win/include --exclude=in3-win/js-asmjs --exclude=in3-win/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
+    - tar -zcv --exclude=in3-win/src --exclude=in3-win/c/include --exclude=in3-win/js-asmjs --exclude=in3-win/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_windows.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_windows.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "windows release:" $IPFS_HASH >> in3-win/win_release_ipfs_hash.txt
@@ -651,7 +776,6 @@ release_win:
   artifacts:
     paths:
       - in3-win
-
 
 release_maven:
   stage: deploy
@@ -682,18 +806,17 @@ release_pip:
   dependencies:
     - mac_os
   script:
-    - rm -rf src/bindings/python/in3/bind/slibs/
-    - mkdir src/bindings/python/in3/bind/slibs/
-    - cp mac_build/lib/libin3.dylib src/bindings/python/in3/bind/slibs/.
+    - rm -rf python/in3/bind/slibs/
+    - mkdir python/in3/bind/slibs/
+    - cp mac_build/lib/libin3.dylib python/in3/bind/slibs/.
     - export version=${CI_COMMIT_TAG}
     - export download_url=https://github.com/slockit/in3-c/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - cd src/bindings/python
+    - cd python
     - cp $pypirc ~/.pypirc
     - ./publish.sh
   artifacts:
     paths:
       - in3-pip
-
 
 pages:
   stage: deploy
@@ -706,7 +829,8 @@ pages:
     - arm7
     - readthedocs
     - coverage
-    - analyse
+    - clangcheck
+    - vulnerabilities
   script:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
@@ -715,7 +839,8 @@ pages:
     - cp -r cov_build/ccov/all-merged public/coverage
     - cp -r report/* public/code_analysis
     - cp -r doc/build public/rtd
-    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
+    - cp -r vulnerability_analysis.json public/vulnerability_analysis.json
+    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
   artifacts:
     paths:
       - public
@@ -736,18 +861,18 @@ pages:
     - readthedocs
   when: manual
   script:
-    - mv debian/changelog-in3 debian/changelog
-    - mv debian/control-in3 debian/control
-    - mv debian/rules-in3 debian/rules
-    - rm -rf debian/*-dev
-    - echo "" >> debian/changelog
-    - echo "in3 (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
-    - echo "" >> debian/changelog
-    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
-    - echo "" >> debian/changelog
-    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
-    - echo "" >> debian/changelog
-    - cat debian/changelog
+    - mv scripts/debian/changelog-in3 scripts/debian/changelog
+    - mv scripts/debian/control-in3 scripts/debian/control
+    - mv scripts/debian/rules-in3 scripts/debian/rules
+    - rm -rf scripts/debian/*-dev
+    - echo "" >> scripts/debian/changelog
+    - echo "in3 (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> scripts/debian/changelog
+    - echo "" >> scripts/debian/changelog
+    - echo "  * Check https://github.com/slockit/in3 for changelog " >> scripts/debian/changelog
+    - echo "" >> scripts/debian/changelog
+    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> scripts/debian/changelog
+    - echo "" >> scripts/debian/changelog
+    - cat scripts/debian/changelog
     - mkdir ~/.gnupg && chmod 700 ~/.gnupg
     - echo -e "use-agent\npinentry-mode loopback" > ~/.gnupg/gpg.conf
     - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
@@ -795,18 +920,18 @@ debian_package_deploy_disco:
     - readthedocs
   when: manual
   script:
-    - mv debian/changelog-dev debian/changelog
-    - mv debian/control-dev debian/control
-    - mv debian/rules-dev debian/rules
-    - rm -rf debian/*-in3
-    - echo "" >> debian/changelog
-    - echo "in3-dev (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> debian/changelog
-    - echo "" >> debian/changelog
-    - echo "  * Check https://github.com/slockit/in3 for changelog " >> debian/changelog
-    - echo "" >> debian/changelog
-    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> debian/changelog
-    - echo "" >> debian/changelog
-    - cat debian/changelog
+    - mv scripts/debian/changelog-dev scripts/debian/changelog
+    - mv scripts/debian/control-dev scripts/debian/control
+    - mv scripts/debian/rules-dev scripts/debian/rules
+    - rm -rf scripts/debian/*-in3
+    - echo "" >> scripts/debian/changelog
+    - echo "in3-dev (${VERSION:1}~${DISTRO}) ${DISTRO}; urgency=medium" >> scripts/debian/changelog
+    - echo "" >> scripts/debian/changelog
+    - echo "  * Check https://github.com/slockit/in3 for changelog " >> scripts/debian/changelog
+    - echo "" >> scripts/debian/changelog
+    - echo  " -- devops_slock.it <devops@slock.it> " $(date -R)  >> scripts/debian/changelog
+    - echo "" >> scripts/debian/changelog
+    - cat scripts/debian/changelog
     - mkdir ~/.gnupg && chmod 700 ~/.gnupg
     - echo -e "use-agent\npinentry-mode loopback" > ~/.gnupg/gpg.conf
     - echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf

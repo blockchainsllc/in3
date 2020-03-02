@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ..
+cd ../c
 rm -rf include
 mkdir -p include/in3
 find src -type d >include/in3/.dirs
