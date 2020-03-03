@@ -202,10 +202,10 @@ I:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06
 P:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06ae28d285a71b5 | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff |
 
 */
-#define __code(n)                             \
-  {                                           \
+#define __code(n)                     \
+  {                                   \
     in3_log_trace(COLOR_GREEN_S2, n); \
-    return;                                   \
+    return;                           \
   }
 void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   uint8_t op = evm->code.data[pos];
@@ -218,29 +218,29 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   }
 
   if (last_gas > evm->gas) {
-    in3_log_trace("%" PRIu64 " %03i "COLOR_YELLOW_PRIu64" %02x : ", evm->gas, pos, last_gas - evm->gas, op);
+    in3_log_trace("%" PRIu64 " %03i " COLOR_YELLOW_PRIu64 " %02x : ", evm->gas, pos, last_gas - evm->gas, op);
   } else {
-    in3_log_trace("%" PRIu64 " %03i "COLOR_YELLOW_PRIu64plus" %02x : ", evm->gas, pos, evm->gas - last_gas, op);
+    in3_log_trace("%" PRIu64 " %03i " COLOR_YELLOW_PRIu64plus " %02x : ", evm->gas, pos, evm->gas - last_gas, op);
   }
 #else
   UNUSED_VAR(last_gas);
   in3_log_trace("\n%03i       %02x : ", pos, op);
 #endif
   if (op >= 0x60 && op <= 0x7F) {
-    in3_log_trace(COLOR_GREEN_STR_INT"    %s","PUSH", op - 0x5F, (op - 0x05F) < 10 ? " " : "");
+    in3_log_trace(COLOR_GREEN_STR_INT "    %s", "PUSH", op - 0x5F, (op - 0x05F) < 10 ? " " : "");
     //    for (int j = 0; j < op - 0x5F; j++) printf("%02x", evm->code.data[evm->pos + j + 1]);
     return;
   }
   if (op >= 0x80 && op <= 0x8F) {
-    in3_log_trace(COLOR_GREEN_STR_INT"     %s", "DUP", op - 0x7F, (op - 0x7F) < 10 ? " " : "");
+    in3_log_trace(COLOR_GREEN_STR_INT "     %s", "DUP", op - 0x7F, (op - 0x7F) < 10 ? " " : "");
     return;
   }
   if (op >= 0x90 && op <= 0x9F) {
-    in3_log_trace(COLOR_GREEN_STR_INT"    %s", "SWAP", op - 0x8F, (op - 0x8F) < 10 ? " " : "");
+    in3_log_trace(COLOR_GREEN_STR_INT "    %s", "SWAP", op - 0x8F, (op - 0x8F) < 10 ? " " : "");
     return;
   }
   if (op >= 0xA0 && op <= 0xA4) {
-    in3_log_trace(COLOR_GREEN_STR_INT"      ", "LOG", op - 0xA0);
+    in3_log_trace(COLOR_GREEN_STR_INT "      ", "LOG", op - 0xA0);
     return;
   }
 

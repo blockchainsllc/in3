@@ -444,7 +444,7 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
   if (with_hash) in3_log_trace("<%02x%02x%02x>", n->hash[0], n->hash[1], n->hash[2]);
   switch (n->type) {
     case NODE_BRANCH:
-      in3_log_trace(""COLOR_YELLOW" ","<BRANCH>");
+      in3_log_trace("" COLOR_YELLOW " ", "<BRANCH>");
       tmp = trie_node_get_item(n, 16);
       if (tmp.len) {
         in3_log_trace(" = ");
@@ -452,13 +452,13 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
       }
       for (i = 0; i < 16; i++) {
         if (rlp_decode(&n->items, i, &tmp) == 2) {
-          sprintf(_prefix, ""COLOR_GREEN_X1" : (EMBED) ", i);
+          sprintf(_prefix, "" COLOR_GREEN_X1 " : (EMBED) ", i);
           //          b_print(&tmp);
           trie_node_t* t = get_node_target(trie, n, i);
           dump_handle(trie, t, with_hash, level + 1, _prefix);
           _free(t);
         } else if (tmp.len) {
-          sprintf(_prefix, ""COLOR_GREEN_X1" : ", i);
+          sprintf(_prefix, "" COLOR_GREEN_X1 " : ", i);
           dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);
         }
       }

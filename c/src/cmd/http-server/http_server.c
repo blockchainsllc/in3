@@ -132,7 +132,7 @@ void http_run_server(const char* port, in3_t* in3) {
 
   printf(
       "Server started %shttp://127.0.0.1:%s%s\n",
-      "\033[92m", port, "\033[0m");
+      COLORT_LIGHTGREEN, port, COLORT_RESET);
 
   for (int i = 0; i < MAX_CON; i++) clients[i] = -1;
 

@@ -9,10 +9,10 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "colors.h"
 #include "utils.h"
 #include <stdarg.h>
 #include <stdio.h>
-#include "colors.h"
 #define LOG_VERSION "0.1.0"
 
 typedef void (*in3_log_LockFn)(void* udata, int lock);
