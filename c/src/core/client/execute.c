@@ -115,16 +115,20 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   conf->latest_block = c->replace_latest_block;
   conf->flags        = c->flags;
 
-  if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
+  if (c->proof == PROOF_STANDARD || c->proof == PROOF_FULL || ctx_is_method(ctx, "in3_nodeList")) {
+    // For nodeList request, we always ask for proof & atleast one signature
+    uint8_t total_sig_cnt = c->signature_count ? c->signature_count
+                                               : ctx_is_method(ctx, "in3_nodeList") ? 1 : 0;
+
     conf->use_full_proof = c->proof == PROOF_FULL;
     conf->verification   = VERIFICATION_PROOF;
 
-    if (c->signature_count) {
+    if (total_sig_cnt) {
       node_match_t*     signer_nodes = NULL;
       in3_node_filter_t filter       = NODE_FILTER_INIT;
       filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), key("signerNodes"));
       filter.props                   = c->node_props | NODE_PROP_SIGNER;
-      const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, filter);
+      const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
       if (res < 0)
         return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
       const int node_count  = ctx_nodes_len(signer_nodes);
