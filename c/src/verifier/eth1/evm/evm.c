@@ -227,20 +227,20 @@ void evm_print_op(evm_t* evm, uint64_t last_gas, uint32_t pos) {
   in3_log_trace("\n%03i       %02x : ", pos, op);
 #endif
   if (op >= 0x60 && op <= 0x7F) {
-    in3_log_trace("\x1B[32mPUSH%i\x1B[0m    %s", op - 0x5F, (op - 0x05F) < 10 ? " " : "");
+    in3_log_trace(COLOR_GREEN_STR_INT"    %s","PUSH", op - 0x5F, (op - 0x05F) < 10 ? " " : "");
     //    for (int j = 0; j < op - 0x5F; j++) printf("%02x", evm->code.data[evm->pos + j + 1]);
     return;
   }
   if (op >= 0x80 && op <= 0x8F) {
-    in3_log_trace("\x1B[32mDUP%i\x1B[0m     %s", op - 0x7F, (op - 0x7F) < 10 ? " " : "");
+    in3_log_trace(COLOR_GREEN_STR_INT"     %s", "DUP", op - 0x7F, (op - 0x7F) < 10 ? " " : "");
     return;
   }
   if (op >= 0x90 && op <= 0x9F) {
-    in3_log_trace("\x1B[32mSWAP%i\x1B[0m    %s", op - 0x8F, (op - 0x8F) < 10 ? " " : "");
+    in3_log_trace(COLOR_GREEN_STR_INT"    %s", "SWAP", op - 0x8F, (op - 0x8F) < 10 ? " " : "");
     return;
   }
   if (op >= 0xA0 && op <= 0xA4) {
-    in3_log_trace("\x1B[32mLOG%i\x1B[0m      ", op - 0xA0);
+    in3_log_trace(COLOR_GREEN_STR_INT"      ", "LOG", op - 0xA0);
     return;
   }
 
