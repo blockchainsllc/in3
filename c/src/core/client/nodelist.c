@@ -263,7 +263,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sb_t* in3_sec = sb_new("{");
   if (nodelist_not_first_upd8(chain)) {
     bytes_t addr_ = (bytes_t){.data = chain->nodelist_upd8_params->node, .len = 20};
-    sb_add_bytes(in3_sec, "\"data_nodes\":", &addr_, 1, true);
+    sb_add_bytes(in3_sec, "\"dataNodes\":", &addr_, 1, true);
   }
 
   // create request

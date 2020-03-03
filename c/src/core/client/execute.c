@@ -122,7 +122,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
     if (c->signature_count) {
       node_match_t*     signer_nodes = NULL;
       in3_node_filter_t filter       = NODE_FILTER_INIT;
-      filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), key("signer_nodes"));
+      filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), key("signerNodes"));
       filter.props                   = c->node_props | NODE_PROP_SIGNER;
       const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, filter);
       if (res < 0)
@@ -703,7 +703,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
-        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), key("data_nodes"));
+        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), key("dataNodes"));
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
