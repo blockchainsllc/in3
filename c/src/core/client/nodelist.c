@@ -374,10 +374,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   for (int i = 0; i < len; i++) {
     nodeDef   = all_nodes + i;
     weightDef = weights + i;
-    if (nodeDef->boot_node) goto SKIP_FILTERING;
-    if (chain->whitelist && !nodeDef->whitelisted) continue;
-    if (nodeDef->deposit < c->min_deposit) continue;
-    if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
+
     if (filter.nodes != NULL) {
       bool in_filter_nodes = false;
       for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
@@ -388,7 +385,11 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
       }
       if (!in_filter_nodes)
         continue;
-    }
+    } else if (nodeDef->boot_node)
+      goto SKIP_FILTERING;
+    if (chain->whitelist && !nodeDef->whitelisted) continue;
+    if (nodeDef->deposit < c->min_deposit) continue;
+    if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
     if (weightDef->blacklisted_until > (uint64_t) now) continue;
 
   SKIP_FILTERING:
