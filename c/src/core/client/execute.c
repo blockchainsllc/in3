@@ -107,6 +107,13 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
+static d_token_t* d_get_in3_param(d_token_t* params, const char* keystr) {
+  if (d_len(params) < 1) return NULL;
+  d_token_t* last_param = d_get_at(params, d_len(params) - 1);
+  if (d_type(last_param) != T_OBJECT) return NULL;
+  return d_get(d_get(last_param, K_IN3), key(keystr));
+}
+
 static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
   const in3_t* c = ctx->client;
 
@@ -126,7 +133,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
     if (total_sig_cnt) {
       node_match_t*     signer_nodes = NULL;
       in3_node_filter_t filter       = NODE_FILTER_INIT;
-      filter.nodes                   = d_get(d_get(d_get_at(d_get(ctx->requests[0], K_PARAMS), d_len(d_get(ctx->requests[0], K_PARAMS)) - 1), K_IN3), key("signerNodes"));
+      filter.nodes                   = d_get_in3_param(d_get(ctx->requests[0], K_PARAMS), "signerNodes");
       filter.props                   = c->node_props | NODE_PROP_SIGNER;
       const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
       if (res < 0)
@@ -673,6 +680,7 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
 void ctx_free(in3_ctx_t* ctx) {
   if (ctx) free_ctx_intern(ctx, false);
 }
+
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
@@ -707,7 +715,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
-        filter.nodes             = d_get(d_get(d_get_at(d_get(ctx->requests[0], K_PARAMS), d_len(d_get(ctx->requests[0], K_PARAMS)) - 1), K_IN3), key("dataNodes"));
+        filter.nodes             = d_get_in3_param(d_get(ctx->requests[0], K_PARAMS), "dataNodes");
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
