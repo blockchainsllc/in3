@@ -118,6 +118,6 @@ endif()
 
 if (MSVC OR MSYS OR MINGW)
     # for detecting Windows compilers
-    target_link_libraries(transport_curl_o ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
-    target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
+    target_link_libraries(transport_curl_o ws2_32 wsock32 -static gcc -Lcrypto stdc++ winpthread -L/home/conan/xc/mingw64/ssl/lib/libcrypto.a -L/home/conan/xc/mingw64/ssl/lib/libssl.a -dynamic)
+    target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -L/home/conan/xc/mingw64/ssl/lib/libcrypto.a -L/home/conan/xc/mingw64/ssl/lib/libssl.a -dynamic)
 endif ()
