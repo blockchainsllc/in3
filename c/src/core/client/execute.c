@@ -396,10 +396,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
           vc.config  = ctx->requests_configs + i;
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
-
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-            check_autoupdate(ctx, chain, vc.proof, node);
-
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
@@ -430,6 +427,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         }
       }
     }
+
+    // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
+    if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
+      check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
     if (!node || !is_blacklisted(node))
