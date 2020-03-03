@@ -62,7 +62,7 @@
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/chainspec.h"
-#include "../tools/colors_term.h"
+#include "../../core/util/colors.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
