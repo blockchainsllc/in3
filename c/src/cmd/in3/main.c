@@ -58,11 +58,11 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
+#include "../../core/util/colors.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/chainspec.h"
-#include "../../core/util/colors.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
