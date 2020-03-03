@@ -35,6 +35,7 @@
 #include "http_server.h"
 #include "../../core/client/context.h"
 #include "../../core/util/mem.h"
+#include "../tools/colors_term.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>

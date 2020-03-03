@@ -526,7 +526,7 @@ static bytes_t   in_response = {.data = NULL, .len = 0};
 static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
-    fprintf(stderr, "send request to %s: \n" COLORTR_YELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
+    fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
   if (in_response.len) {
     for (int i = 0; i < req->urls_len; i++)
@@ -544,7 +544,7 @@ static in3_ret_t debug_transport(in3_request_t* req) {
     if (req->results[0].result.len)
       fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].result.data);
     else
-      fprintf(stderr, "error response \n\"COLORT_RRED"%s"COLORT_RESET"\n", req->results[0].error.data);
+      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].error.data);
   }
 #endif
   return r;

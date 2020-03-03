@@ -2,10 +2,10 @@
 // Control sequences, based on ANSI.
 // Can be used to control color, and clear the screen
 //
-#define RESET "\x1B[0m" // Reset to default colors
-#define CLEAR "\x1B[2J" // Clear screen, reposition cursor to top left
 
 #ifdef LOG_USE_COLOR
+#define RESET "\x1B[0m" // Reset to default colors
+#define CLEAR "\x1B[2J" // Clear screen, reposition cursor to top left
 #define COLOR_BLACK "\x1B[30m"
 #define COLOR_RED "\x1B[31m"
 #define COLOR_GREEN "\x1B[32m"
@@ -15,18 +15,18 @@
 #define COLOR_CYAN "\x1B[36m"
 #define COLOR_WHITE "\x1B[37m"
 #define COLOR_DEFAULT "\x1B[39m"
-#define COLOR_DEFAULT "\x1B[39m"
 #else
-#define COLOR_BLACK ""
-#define COLOR_RED ""
-#define COLOR_GREEN ""
-#define COLOR_YELLOW ""
-#define COLOR_BLUE ""
-#define COLOR_MAGENTA ""
-#define COLOR_CYAN ""
-#define COLOR_WHITE ""
-#define COLOR_DEFAULT ""
-#define COLOR_DEFAULT ""
+#define RESET " " // Reset to default colors
+#define CLEAR " " // Clear screen, reposition cursor to top left
+#define COLOR_BLACK " "
+#define COLOR_RED " "
+#define COLOR_GREEN " "
+#define COLOR_YELLOW " "
+#define COLOR_BLUE " "
+#define COLOR_MAGENTA " "
+#define COLOR_CYAN " "
+#define COLOR_WHITE " "
+#define COLOR_DEFAULT " "
 #endif
 
 #define COLOR_RED_STR COLOR_RED "%s" RESET
