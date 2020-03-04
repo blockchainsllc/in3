@@ -59,6 +59,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
+#include "../../core/util/colors.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -167,7 +168,7 @@ in3_ens <domain> <field>\n\
 }
 
 static void die(char* msg) {
-  fprintf(stderr, "\033[31mError: %s\033[0m\n", msg);
+  fprintf(stderr, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
   exit(EXIT_FAILURE);
 }
 
@@ -180,7 +181,7 @@ static void print_hex(uint8_t* data, int len) {
 // helper to read the password from tty
 void read_pass(char* pw, int pwsize) {
   int i = 0, ch = 0;
-  fprintf(stderr, "\033[8m"); //conceal typing and save position
+  fprintf(stderr, COLORT_HIDDEN); //conceal typing and save position
   while (true) {
     ch = getchar();
     if (ch == '\r' || ch == '\n' || ch == EOF) break; //get characters until CR or NL
@@ -190,7 +191,7 @@ void read_pass(char* pw, int pwsize) {
     }
     i++;
   }
-  fprintf(stderr, "\033[28m"); //reveal typing
+  fprintf(stderr, COLORT_RESETHIDDEN); //reveal typing
 }
 
 // accepts a value as
@@ -526,7 +527,7 @@ static bytes_t   in_response = {.data = NULL, .len = 0};
 static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
-    fprintf(stderr, "send request to %s: \n\033[0;33m%s\033[0m\n", req->urls_len ? req->urls[0] : "none", req->payload);
+    fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
   if (in_response.len) {
     for (int i = 0; i < req->urls_len; i++)
@@ -542,9 +543,9 @@ static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode) {
     if (req->results[0].result.len)
-      fprintf(stderr, "success response \n\033[0;32m%s\033[0m\n", req->results[0].result.data);
+      fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].result.data);
     else
-      fprintf(stderr, "error response \n\033[0;31m%s\033[0m\n", req->results[0].error.data);
+      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].error.data);
   }
 #endif
   return r;
@@ -892,13 +893,13 @@ int main(int argc, char* argv[]) {
           tr = ctx->error;
       }
       if (blacklisted)
-        printf("\033[31m");
+        printf(COLORT_RED);
       else if (warning)
-        printf("\033[33m");
+        printf(COLORT_YELLOW);
       else
-        printf("\033[32m");
+        printf(COLORT_GREEN);
       printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
-      printf("\033[0m\n");
+      printf(COLORT_RESET "\n");
       if (tr && tr != ctx->error) _free(tr);
       if (ctx) ctx_free(ctx);
     }
