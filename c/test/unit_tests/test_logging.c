@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -38,8 +38,8 @@
 #endif
 
 #include "../../src/core/util/log.h"
-#include "../test_utils.h"
 #include "../../src/core/util/mem.h"
+#include "../test_utils.h"
 #include <string.h>
 
 static char* read_file(FILE* file) {
@@ -59,8 +59,8 @@ static char* read_file(FILE* file) {
     len += r;
     if (feof(file)) break;
     size_t new_alloc = allocated * 2 + 1;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
 
   if (len && buffer[len - 1] == '\n') buffer[len - 1] = 0;
@@ -100,8 +100,8 @@ static void test_prefix(void) {
   fseek(fp, 0, SEEK_SET);
   fclose(fp);
 
-  fp  = fopen("test.log", "rb");
-  log = _malloc(size + 1);
+  fp        = fopen("test.log", "rb");
+  log       = _malloc(size + 1);
   log[size] = 0;
   fread(log, sizeof(char), size, fp);
   TEST_ASSERT_EQUAL_STRING_LEN(log, prefix, strlen(prefix));

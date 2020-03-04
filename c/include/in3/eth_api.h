@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -42,8 +42,8 @@
 #ifndef ETH_API_H
 #define ETH_API_H
 
-#include "client.h"
 #include "api_utils.h"
+#include "client.h"
 #include <stdarg.h>
 
 /** Initializer macros for eth_blknum_t */
