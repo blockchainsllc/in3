@@ -426,7 +426,7 @@ static void print_nibbles(bytes_t* path) {
     in3_log_trace("%01x", *p);
     p++;
   }
-  in3_log_trace(RESET);
+  in3_log_trace(COLOR_RESET);
   _free(nibbles);
 }
 

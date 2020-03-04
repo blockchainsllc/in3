@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -116,8 +116,8 @@ clear the screen
 */
 
 #ifdef LOG_USE_COLOR
-#define RESET "\x1B[0m" // Reset to default colors
-#define CLEAR "\x1B[2J" // Clear screen, reposition cursor to top left
+#define COLOR_RESET "\x1B[0m" // Reset to default colors
+#define COLOR_CLEAR "\x1B[2J" // Clear screen, reposition cursor to top left
 #define COLOR_BLACK "\x1B[30m"
 #define COLOR_RED "\x1B[31m"
 #define COLOR_GREEN "\x1B[32m"
@@ -128,8 +128,8 @@ clear the screen
 #define COLOR_WHITE "\x1B[37m"
 #define COLOR_DEFAULT "\x1B[39m"
 #else
-#define RESET " " // Reset to default colors
-#define CLEAR " " // Clear screen, reposition cursor to top left
+#define COLOR_RESET " " // Reset to default colors
+#define COLOR_CLEAR " " // Clear screen, reposition cursor to top left
 #define COLOR_BLACK " "
 #define COLOR_RED " "
 #define COLOR_GREEN " "
@@ -141,16 +141,16 @@ clear the screen
 #define COLOR_DEFAULT " "
 #endif
 
-#define COLOR_RED_STR COLOR_RED "%s" RESET
-#define COLOR_GREEN_STR COLOR_GREEN "%s" RESET
-#define COLOR_GREEN_S2 COLOR_GREEN "%-10s" RESET
-#define COLOR_GREEN_X1 COLOR_GREEN "%01x" RESET
-#define COLOR_GREEN_STR_INT COLOR_GREEN "%s%i" RESET
-#define COLOR_YELLOW_STR COLOR_YELLOW "%s" RESET
-#define COLOR_YELLOW_STR COLOR_YELLOW "%s" RESET
-#define COLOR_MAGENTA_STR COLOR_MAGENTA "%s" RESET
-#define COLOR_YELLOW_PRIu64 COLOR_YELLOW "%5" PRIu64 "" RESET
-#define COLOR_YELLOW_PRIu64plus COLOR_YELLOW "%5" PRIu64 "" RESET
+#define COLOR_RED_STR COLOR_RED "%s" COLOR_RESET
+#define COLOR_GREEN_STR COLOR_GREEN "%s" COLOR_RESET
+#define COLOR_GREEN_S2 COLOR_GREEN "%-10s" COLOR_RESET
+#define COLOR_GREEN_X1 COLOR_GREEN "%01x" COLOR_RESET
+#define COLOR_GREEN_STR_INT COLOR_GREEN "%s%i" COLOR_RESET
+#define COLOR_YELLOW_STR COLOR_YELLOW "%s" COLOR_RESET
+#define COLOR_YELLOW_STR COLOR_YELLOW "%s" COLOR_RESET
+#define COLOR_MAGENTA_STR COLOR_MAGENTA "%s" COLOR_RESET
+#define COLOR_YELLOW_PRIu64 COLOR_YELLOW "%5" PRIu64 "" COLOR_RESET
+#define COLOR_YELLOW_PRIu64plus COLOR_YELLOW "%5" PRIu64 "" COLOR_RESET
 #define COLOR_BRIGHT_BLACK "\x1B[90m"
 #define COLOR_BRIGHT_RED "\x1B[91m"
 #define COLOR_BRIGHT_GREEN "\x1B[92m"
