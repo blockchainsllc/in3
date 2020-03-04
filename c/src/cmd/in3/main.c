@@ -38,6 +38,7 @@
 
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
+#include "../../core/util/bitset.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
@@ -846,7 +847,9 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "in3_weights") == 0) {
-    c->max_attempts    = 1;
+    c->max_attempts = 1;
+    uint32_t block = 0, b = 0;
+    BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     uint64_t     now   = in3_time(NULL);
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
     printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", run_test_request ? "WEIGHT   : LAST_BLOCK" : "WEIGHT");
@@ -864,26 +867,38 @@ int main(int argc, char* argv[]) {
       in3_node_weight_t* weight      = chain->weights + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
-      if (blacklisted) printf("\033[31m");
-      char* tr = NULL;
+      char *             tr = NULL, *warning = NULL;
       if (ctx) {
-        tr = _malloc(100);
+        tr = _malloc(300);
         if (!ctx->error) {
-          sprintf(tr, "#%i", d_get_intk(ctx->responses[0], K_RESULT));
-        }
+          b = d_get_intk(ctx->responses[0], K_RESULT);
+          if (block < b) block = b;
 
+          if (b < block - 1)
+            sprintf((warning = tr), "#%i ( out of sync : %i blocks behind latest )", b, block - b);
+          else if (strncmp(node->url, "https://", 8))
+            sprintf((warning = tr), "#%i (missing https, which is required in a browser )", b);
+          else
+            sprintf(tr, "#%i", b);
+        } else if (!strlen(node->url) || !node->props)
+          sprintf((warning = tr), "No URL spcified anymore props = %i ", (int) (node->props & 0xFFFFFF));
         else if ((node->props & NODE_PROP_DATA) == 0)
-          sprintf(tr, "The node is marked as not supporting Data-Providing");
+          sprintf((warning = tr), "The node is marked as not supporting Data-Providing");
         else if (c->proof != PROOF_NONE && (node->props & NODE_PROP_PROOF) == 0)
-          sprintf(tr, "The node is marked as able to provide proof");
+          sprintf((warning = tr), "The node is marked as able to provide proof");
         else if ((c->flags & FLAGS_HTTP) && (node->props & NODE_PROP_HTTP) == 0)
-          sprintf(tr, "The node is marked as able to support http-requests");
+          sprintf((warning = tr), "The node is marked as able to support http-requests");
         else
           tr = ctx->error;
       }
+      if (blacklisted)
+        printf("\033[31m");
+      else if (warning)
+        printf("\033[33m");
+      else
+        printf("\033[32m");
       printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
-      if (blacklisted) printf("\033[0m");
-      printf("\n");
+      printf("\033[0m\n");
       if (tr && tr != ctx->error) _free(tr);
       if (ctx) ctx_free(ctx);
     }
