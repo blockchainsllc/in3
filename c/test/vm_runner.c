@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -79,8 +79,8 @@ char* readContent(char* name) {
     len += r;
     if (feof(file)) break;
     size_t new_alloc = allocated * 2;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
 
