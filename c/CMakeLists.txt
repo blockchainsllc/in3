@@ -41,8 +41,11 @@ add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
 add_subdirectory(src/api)
-add_subdirectory(src/cmd)
+IF (ETH_FULL)
+    add_subdirectory(src/cmd)
+endif()
 add_subdirectory(docs)
+
 
 
 # create the library
