@@ -52,7 +52,4 @@ public interface Signer {
 
   /** signing of the raw data. */
   String sign(String data, String address);
-
-  /** signing of the raw data. */
-  String sign(String data, String address);
 }
