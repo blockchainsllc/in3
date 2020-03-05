@@ -88,11 +88,6 @@ public class SimpleWallet implements Signer {
     return privateKeys.containsKey(address.toLowerCase());
   }
 
-  /** returns true if the account is supported (or unlocked) */
-  public boolean hasAccount(String address) {
-    return privateKeys.containsKey(address.toLowerCase());
-  }
-
   /** signing of the raw data. */
   public String sign(String data, String address) {
     String key = privateKeys.get(address.toLowerCase());
