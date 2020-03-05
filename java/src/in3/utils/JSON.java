@@ -53,8 +53,7 @@ public class JSON {
 
   private static native int key(String name);
 
-  JSON() {
-  }
+  JSON() {}
 
   /**
      * gets the property
