@@ -29,7 +29,6 @@ import * as web3 from 'web3'
 const IN3Client c = new IN3Client({
     proof              : 'standard',
     signatureCount     : 1,
-    requestCount       : 2,
     chainId            : 'mainnet',
     replaceLatestBlock : 10
  })
@@ -62,7 +61,6 @@ import In3Client from 'in3-wasm'
 const in3 = new In3Client({
     proof              : 'standard',
     signatureCount     : 1,
-    requestCount       : 2,
     chainId            : 'mainnet',
     replaceLatestBlock : 10
 })

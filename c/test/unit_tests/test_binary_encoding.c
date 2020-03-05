@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -50,7 +50,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-
 d_key_t key_(const char* c) {
   uint16_t val = 0;
   size_t   l   = strlen(c);
@@ -64,25 +63,24 @@ const char* account_proof_array[] = {
     "f90211a0e857fc28938ccaace8c403128bf9848fef722f25f8d55c9dfcddd980b0b85c7ea0329d29fce8ca4e4807205751e9f4376926e3d56dc3bb639345e410dc20bc2c7ba0075edfc7246e4719a2c09c397c4cea41d448254820f1974a70841b9d58e3bcdda08f48b35a917b095ed73971faf013879b77a2838de736651b48a6aaa10ab15e8fa0c5983fe9441f72cc6cb8b579f7071224280661a45a14408401bb1f759dbf0128a03b8cbc5ed56781199fb4fb9768c2ddcc2bdf00816097ec10291b30ac8964bd76a0d3a8e19461710aee36c32068722261863b86c7eacb50188e8f30deaffae024d2a0f1b377bcc8de17636d7f51dbb5377fdc8b9b98da3ea32edbafd10ff557e65f67a01756aebd26a37a6dfa2ebab54206ec14a4ed1c0771316a93b2302d029dc9fb77a016cc5db286c0a3694dd0a5dfbf17ae7e6e71ee86345f5b447c47703d216e8a49a0985de3d814a4a420fb4aa29cea550447ff26700e6f8201979853e2ab58ffb881a05c37520f1f9b351efb77546b89ba562cab7e3ff846f660d2924a327149fda54aa007b0f783eeecba8d2e1b19cd27bc32962d21c78589fb2469918c27fa1fb9f3f5a07aadde6f5a16f1bc14deae2cfdc59a3b12fa4334c8ab3ca938a0ad1f165171d7a08553712a5b419ad8742e02c1b2826f9d6f226ec29205f317460e3543c4432cfaa0989cbf17578dc31a7048bb6f7951bbcb4390a4dc34548749ddec5808ff70179080",
     "f901d1a0e58784367fe398679d1e6bf78a3dde3fa10c258a65eea417848eaa9c1365c52880a02c563764c450274db1cb7ed88cb682e357593263c87f03702e61f27038e6e922a07922b0a621b87690b1d9c3ac5d65453e8986f7119310aaa2382ce97790c970f6a03b791f9b5ea7b53ccc84bab05c1ab7fc182e5bd509489443e243a52834f12c4da02f3649d1bacefd45f4b86a92519e11fefde52bf9c033de305ab01e52da1e48e1a0a5b9e0f7516da5fc7363da0173758cf09a9d5e690871de79cb679c4fc58461a3a01b364c944363705f8ece380cff7c2e97f02ec60bf1dfab7fb05416650e521e07a0d4fc2dbc2c9cda95844bd354e7b15d597129986c08d647936566cdc6e6706703a0c0e749ab6f93f5e2d8c3ddce4069b14209bc1af57ae92495a2aab329c05cec4680a02ce6842baa2cf1f1ae3ca83d14671d0542a68d56ee6e5988fcf3bebe350871fba08b653c5eec87175195fbc9f2d4ea4812f247e8750c82a898da213754dd432740a067fd774407561e7a0a58dab51f060e6aae9f328b5b0da61eabb9c3fbdc7d0885a0fd684711826b61ca2db1c759aa1fa7358076077d6b39eebb634372acaf24d513a0f6a420560467e2f0373f048d29563653021b07d9e6bec69b0b441a2aba5c184680",
     "f8718080a05962e5c16b55955a1b3e61772a6e724d3a1781d01560a451af4863fd8e9fa93a808080a01f98d45e3935f95ab00d8719a0fc6622c7b94f222ac5a8646cddda41c9d2a05f80808080a0fa04c9c955cb58796e3c31163dfc2a7eabe844afa89b2fa56e41e374498b3d788080808080",
-    "f8679e3f79d03bccd3d5515f1e14b1abc5eefe027e5a7252bcfd9f428823d3593db846f8440180a0821e2556a290c86405f8160a2d662042a431ba456b9db265c79bb837c04be5f0a08bfc1c7c7464660a68ba241ea78b6a1d36cd85b5cb4fba521d4270bd0c7d7bb7"
-};
+    "f8679e3f79d03bccd3d5515f1e14b1abc5eefe027e5a7252bcfd9f428823d3593db846f8440180a0821e2556a290c86405f8160a2d662042a431ba456b9db265c79bb837c04be5f0a08bfc1c7c7464660a68ba241ea78b6a1d36cd85b5cb4fba521d4270bd0c7d7bb7"};
 
-static json_ctx_t * init() {
+static json_ctx_t* init() {
   bytes_t b = {.data = (uint8_t*) mock_eth_call_response, .len = mock_eth_call_response_len};
   //print_debug(&b);
   return parse_binary(&b);
 }
 
 static void test_binary_primitives() {
-  json_ctx_t* ctx       = init();
-  int         k_result  = key_("result");
-  int         k_id      = key_("id");
-  int         k_jsonrpc = key_("jsonrpc");
-  bytes_t    *d      = d_bytes(d_get(ctx->result, k_result));
-  char *str_result = malloc(d->len * 2 + 2);
-  bytes_to_hex(d->data,  d->len, str_result);
-  char*       jsonrpc   = d_get_stringk(ctx->result, k_jsonrpc);
-  int32_t     id_       = d_get_intk(ctx->result, k_id);
+  json_ctx_t* ctx        = init();
+  int         k_result   = key_("result");
+  int         k_id       = key_("id");
+  int         k_jsonrpc  = key_("jsonrpc");
+  bytes_t*    d          = d_bytes(d_get(ctx->result, k_result));
+  char*       str_result = malloc(d->len * 2 + 2);
+  bytes_to_hex(d->data, d->len, str_result);
+  char*   jsonrpc = d_get_stringk(ctx->result, k_jsonrpc);
+  int32_t id_     = d_get_intk(ctx->result, k_id);
   TEST_ASSERT_EQUAL_STRING(str_result, "0000000000000000000000000000000000000000000000000000000000000001");
   TEST_ASSERT_EQUAL_STRING(jsonrpc, "2.0");
   TEST_ASSERT_EQUAL_INT32(id_, 1);
@@ -98,16 +96,16 @@ static void test_binary_object() {
   int         k_proof        = key_("proof");
   int         k_value        = key_("value");
   //test object
-  d_token_t* accounts = d_get(d_get(d_get(ctx->result, k_in3), k_proof), k_accounts);
-  char *str_proof = NULL;
+  d_token_t* accounts  = d_get(d_get(d_get(ctx->result, k_in3), k_proof), k_accounts);
+  char*      str_proof = NULL;
   for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
     d_token_t* storage_object = d_get_at(d_get(iter.token, k_storageProof), 0);
     bytes_t*   proof_s        = d_get_bytes_at(d_get(storage_object, k_proof), 0);
-    int32_t        key            = d_int(d_get(storage_object, k_key));
-    int32_t        value          = d_int(d_get(storage_object, k_value));
-    str_proof = malloc(proof_s->len * 2 + 10);
-    bytes_to_hex(proof_s->data,  proof_s->len, str_proof);
-    TEST_ASSERT_EQUAL_STRING(str_proof,"e3a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56301");
+    int32_t    key            = d_int(d_get(storage_object, k_key));
+    int32_t    value          = d_int(d_get(storage_object, k_value));
+    str_proof                 = malloc(proof_s->len * 2 + 10);
+    bytes_to_hex(proof_s->data, proof_s->len, str_proof);
+    TEST_ASSERT_EQUAL_STRING(str_proof, "e3a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56301");
     TEST_ASSERT_EQUAL_INT32(key, 0);
     TEST_ASSERT_EQUAL_INT32(value, 1);
   }
@@ -123,17 +121,16 @@ static void test_binary_array() {
   d_token_t* accounts = d_get(d_get(d_get(ctx->result, k_in3), k_proof), k_accounts);
   for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
     d_token_t* accounts_array = d_get(iter.token, k_accountProof);
-    int index =0;
-    char *str_proof= NULL;
+    int        index          = 0;
+    char*      str_proof      = NULL;
     for (d_iterator_t iter_arr = d_iter(accounts_array); iter_arr.left; d_iter_next(&iter_arr)) {
       bytes_t* proof_data = d_bytes(iter_arr.token);
-      str_proof = malloc(proof_data->len * 2 + 10);
-      bytes_to_hex(proof_data->data,  proof_data->len, str_proof);
+      str_proof           = malloc(proof_data->len * 2 + 10);
+      bytes_to_hex(proof_data->data, proof_data->len, str_proof);
       TEST_ASSERT_EQUAL_STRING(str_proof, account_proof_array[index]);
       index++;
       free(str_proof);
     }
-    
   }
 }
 

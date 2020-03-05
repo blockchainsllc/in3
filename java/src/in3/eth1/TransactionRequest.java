@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -44,147 +44,146 @@ import java.math.*;
  */
 
 public class TransactionRequest {
-    /** the from address */
-    private String from;
+  /** the from address */
+  private String from;
 
-    /** the recipients address */
-    private String to;
+  /** the recipients address */
+  private String to;
 
-    /** the data */
-    private String data;
+  /** the data */
+  private String data;
 
-    /** the value of the transaction */
-    private BigInteger value;
+  /** the value of the transaction */
+  private BigInteger value;
 
-    /** the nonce (transactionCount of the sender) */
-    private long nonce = -1;
+  /** the nonce (transactionCount of the sender) */
+  private long nonce = -1;
 
-    /** the gas to use */
-    private long gas;
+  /** the gas to use */
+  private long gas;
 
-    /** the gas price to use */
-    private long gasPrice;
+  /** the gas price to use */
+  private long gasPrice;
 
-    /** the signature for the function to call */
-    private String function;
+  /** the signature for the function to call */
+  private String function;
 
-    /** the params to use for encoding in the data */
-    private Object[] params;
+  /** the params to use for encoding in the data */
+  private Object[] params;
 
-    public String getFrom() {
-        return from;
-    }
+  public String getFrom() {
+    return from;
+  }
 
-    public void setFrom(String from) {
-        this.from = from;
-    }
+  public void setFrom(String from) {
+    this.from = from;
+  }
 
-    public String getTo() {
-        return to;
-    }
+  public String getTo() {
+    return to;
+  }
 
-    public void setTo(String to) {
-        this.to = to;
-    }
+  public void setTo(String to) {
+    this.to = to;
+  }
 
-    public BigInteger getValue() {
-        return value;
-    }
+  public BigInteger getValue() {
+    return value;
+  }
 
-    public void setValue(BigInteger value) {
-        this.value = value;
-    }
+  public void setValue(BigInteger value) {
+    this.value = value;
+  }
 
-    public long getNonce() {
-        return nonce;
-    }
+  public long getNonce() {
+    return nonce;
+  }
 
-    public void setNonce(long nonce) {
-        this.nonce = nonce;
-    }
+  public void setNonce(long nonce) {
+    this.nonce = nonce;
+  }
 
-    public long getGas() {
-        return gas;
-    }
+  public long getGas() {
+    return gas;
+  }
 
-    public void setGas(long gas) {
-        this.gas = gas;
-    }
+  public void setGas(long gas) {
+    this.gas = gas;
+  }
 
-    public long getGasPrice() {
-        return gasPrice;
-    }
+  public long getGasPrice() {
+    return gasPrice;
+  }
 
-    public void setGasPrice(long gasPrice) {
-        this.gasPrice = gasPrice;
-    }
+  public void setGasPrice(long gasPrice) {
+    this.gasPrice = gasPrice;
+  }
 
-    public String getFunction() {
-        return function;
-    }
+  public String getFunction() {
+    return function;
+  }
 
-    public void setFunction(String function) {
-        this.function = function;
-    }
+  public void setFunction(String function) {
+    this.function = function;
+  }
 
-    public Object[] getParams() {
-        return params;
-    }
+  public Object[] getParams() {
+    return params;
+  }
 
-    public void setParams(Object[] params) {
-        this.params = params;
-    }
+  public void setParams(Object[] params) {
+    this.params = params;
+  }
 
-    public void setData(String data) {
-        this.data = data;
-    }
+  public void setData(String data) {
+    this.data = data;
+  }
 
-    /**
+  /**
      * creates the data based on the function/params values.
      */
-    public String getData() {
-        String result = data == null || data.length() < 2 ? "0x" : data;
-        if (function != null) {
-            String fnData = abiEncode(function, JSON.toJson(params));
-            if (fnData != null && fnData.length() > 2 && fnData.startsWith("0x"))
-                result += fnData.substring(2 + (result.length() > 2 ? 8 : 0));
-        }
-        return result;
+  public String getData() {
+    String result = data == null || data.length() < 2 ? "0x" : data;
+    if (function != null) {
+      String fnData = abiEncode(function, JSON.toJson(params));
+      if (fnData != null && fnData.length() > 2 && fnData.startsWith("0x"))
+        result += fnData.substring(2 + (result.length() > 2 ? 8 : 0));
     }
+    return result;
+  }
 
-    public String getTransactionJson() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        if (to != null)
-            JSON.appendKey(sb, "to", to);
-        if (from != null)
-            JSON.appendKey(sb, "from", from);
-        if (gas > 0)
-            JSON.appendKey(sb, "gasLimit", JSON.asString(gas));
-        if (gasPrice > 0)
-            JSON.appendKey(sb, "gasPrice", JSON.asString(gasPrice));
-        if (value != null)
-            JSON.appendKey(sb, "value", JSON.asString(value));
-        if (nonce >= 0)
-            JSON.appendKey(sb, "nonce", JSON.asString(nonce));
-        JSON.appendKey(sb, "data", getData());
-        sb.setCharAt(sb.length() - 1, '}');
-        return sb.toString();
-    }
+  public String getTransactionJson() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("{");
+    if (to != null)
+      JSON.appendKey(sb, "to", to);
+    if (from != null)
+      JSON.appendKey(sb, "from", from);
+    if (gas > 0)
+      JSON.appendKey(sb, "gasLimit", JSON.asString(gas));
+    if (gasPrice > 0)
+      JSON.appendKey(sb, "gasPrice", JSON.asString(gasPrice));
+    if (value != null)
+      JSON.appendKey(sb, "value", JSON.asString(value));
+    if (nonce >= 0)
+      JSON.appendKey(sb, "nonce", JSON.asString(nonce));
+    JSON.appendKey(sb, "data", getData());
+    sb.setCharAt(sb.length() - 1, '}');
+    return sb.toString();
+  }
 
-    public Object getResult(String data) {
-        if (function == null)
-            return data;
-        Object[] res = (Object[]) abiDecode(function, data);
-        return res.length == 1 ? res[0] : res;
-    }
+  public Object getResult(String data) {
+    if (function == null)
+      return data;
+    Object[] res = (Object[]) abiDecode(function, data);
+    return res.length == 1 ? res[0] : res;
+  }
 
-    static {
-        Loader.loadLibrary();
-    }
+  static {
+    Loader.loadLibrary();
+  }
 
-    private static native String abiEncode(String function, String jsonParams);
+  private static native String abiEncode(String function, String jsonParams);
 
-    private static native Object abiDecode(String function, String data);
-
+  private static native Object abiDecode(String function, String data);
 }
