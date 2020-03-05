@@ -1,7 +1,7 @@
 package in3.config;
 
 /**
- * a INterface class, which is able to generate a JSON-String.
+ * an Interface class, which is able to generate a JSON-String.
  */
 public interface Configuration {
   /**

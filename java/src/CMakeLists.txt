@@ -60,12 +60,11 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/NodeList.java
     in3/NodeProps.java
     in3/Proof.java
-    in3/SignatureType.java
     in3/SignedBlockHash.java
     in3/config/ClientConfiguration.java
+    in3/config/ChainConfiguration.java
     in3/config/Configuration.java
     in3/config/NodeConfiguration.java
-    in3/config/NodeListConfiguration.java
     in3/eth1/API.java
     in3/eth1/Block.java
     in3/eth1/Log.java
@@ -78,6 +77,7 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/utils/Crypto.java
     in3/utils/JSON.java
     in3/utils/Signature.java
+    in3/utils/SignatureType.java
     in3/utils/Signer.java
     in3/utils/StorageProvider.java
     in3/utils/TempStorageProvider.java

@@ -1,7 +1,7 @@
 package in3.utils;
 
 /**
- * pojo that represents the result of an ecrecover operation (see: Crypto class).
+ * Pojo that represents the result of an ecrecover operation (see: Crypto class).
  */
 public class Account {
   private JSON data;

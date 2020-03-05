@@ -3,7 +3,6 @@ package in3.utils;
 import in3.Chain;
 import in3.IN3;
 import in3.IN3MockBuilder;
-import in3.SignatureType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package in3;
 
+import in3.config.ChainConfiguration;
 import in3.config.ClientConfiguration;
-import in3.config.NodeConfiguration;
 
 public class IN3MockBuilder {
   private IN3  client;
@@ -29,17 +29,17 @@ public class IN3MockBuilder {
   public void buildConfig() {
     ClientConfiguration clientConfig = client.getConfig();
 
-    NodeConfiguration nodeConfig1 = new NodeConfiguration(Chain.MAINNET, clientConfig);
+    ChainConfiguration nodeConfig1 = new ChainConfiguration(Chain.MAINNET, clientConfig);
     nodeConfig1.setNeedsUpdate(false);
     nodeConfig1.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     nodeConfig1.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
-    NodeConfiguration nodeConfig2 = new NodeConfiguration(Chain.GOERLI, clientConfig);
+    ChainConfiguration nodeConfig2 = new ChainConfiguration(Chain.GOERLI, clientConfig);
     nodeConfig2.setNeedsUpdate(false);
     nodeConfig2.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     nodeConfig2.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
-    NodeConfiguration nodeConfig3 = new NodeConfiguration(Chain.KOVAN, clientConfig);
+    ChainConfiguration nodeConfig3 = new ChainConfiguration(Chain.KOVAN, clientConfig);
     nodeConfig3.setNeedsUpdate(false);
     nodeConfig3.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     nodeConfig3.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");

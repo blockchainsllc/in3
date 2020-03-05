@@ -21,7 +21,7 @@ public class IN3ConfigTest {
 
     ClientConfiguration clientConfig = client.getConfig();
 
-    NodeConfiguration nodeConfig = new NodeConfiguration(Chain.GOERLI, clientConfig);
+    ChainConfiguration nodeConfig = new ChainConfiguration(Chain.GOERLI, clientConfig);
     nodeConfig.setNeedsUpdate(false);
     nodeConfig.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     nodeConfig.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
@@ -31,7 +31,7 @@ public class IN3ConfigTest {
     JSONObject jsonObject1 = new JSONObject(clientConfig.toJSON());
     Assertions.assertTrue(jsonObject1.has(nodeConfigOutputKey));
 
-    NodeListConfiguration nodeListConfig = new NodeListConfiguration(nodeConfig);
+    NodeConfiguration nodeListConfig = new NodeConfiguration(nodeConfig);
     nodeListConfig.setProps(Long.valueOf(0x0));
     nodeListConfig.setUrl("scheme://userinfo@host:port/path?query#fragment");
     nodeListConfig.setAddress("0x0");
@@ -70,7 +70,7 @@ public class IN3ConfigTest {
   public void dispatchRequestInvalidConfig() {
     ClientConfiguration config = client.getConfig();
 
-    NodeConfiguration nodeConfig = new NodeConfiguration(Chain.GOERLI, config);
+    ChainConfiguration nodeConfig = new ChainConfiguration(Chain.GOERLI, config);
     nodeConfig.setNeedsUpdate(false);
     nodeConfig.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     nodeConfig.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");

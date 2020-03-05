@@ -282,17 +282,17 @@ JNIEXPORT void JNICALL Java_in3_IN3_setStorageProvider(JNIEnv*, jobject, jobject
 
 /*
  * Class:     in3_IN3
- * Method:    send
+ * Method:    sendinternal
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv*, jobject, jstring);
+JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv*, jobject, jstring);
 
 /*
  * Class:     in3_IN3
- * Method:    sendobject
+ * Method:    sendobjectinternal
  * Signature: (Ljava/lang/String;)Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv*, jobject, jstring);
+JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv*, jobject, jstring);
 
 /*
  * Class:     in3_IN3

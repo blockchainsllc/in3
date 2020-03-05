@@ -2,8 +2,10 @@ package in3.utils;
 
 import in3.IN3;
 import in3.Loader;
-import in3.SignatureType;
 
+/**
+ * a Wrapper for crypto-related helper functions.
+ */
 public class Crypto {
 
   static {
@@ -23,6 +25,9 @@ public class Crypto {
     this.in3 = in3;
   }
 
+  /**
+     * returns a signature given a message and a key.
+     */
   public Signature signData(String msg, String key, SignatureType sigType) {
     return Signature.asSignature(in3.sendRPCasObject(SIGN_DATA, new Object[] {msg, key, JSON.asString(sigType)}));
   }
@@ -59,7 +64,9 @@ public class Crypto {
     return Account.asAccount(in3.sendRPCasObject(ECRECOVER, new Object[] {msg, sig, JSON.asString(sigType)}));
   }
 
-  // TODO Make an object out of this signed data
+  /**
+     * returns a signature given a message and a key.
+     */
   public Signature signData(String msg, String key) {
     return Signature.asSignature(signData(msg, key, null));
   }

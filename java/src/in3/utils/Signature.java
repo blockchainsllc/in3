@@ -1,5 +1,8 @@
 package in3.utils;
 
+/*
+ * Class that represents a Signature
+ */
 public class Signature {
 
   private JSON data;
@@ -21,21 +24,43 @@ public class Signature {
     return new Signature((JSON) o);
   }
 
+  /*
+   * returns the message
+   */
   public String getMessage() {
     return data.getString(MESSAGE);
   }
+  /*
+   * returns the hash of the message
+   */
   public String getMessageHash() {
     return data.getString(MESSAGE_HASH);
   }
+
+  /*
+   * returns the signature
+   */
   public String getSignature() {
     return data.getString(SIGNATURE);
   }
+
+  /*
+   * returns R
+   */
   public String getR() {
     return data.getString(R);
   }
+
+  /*
+   * returns S
+   */
   public String getS() {
     return data.getString(S);
   }
+
+  /*
+   * returns V
+   */
   public long getV() {
     return data.getLong(V);
   }

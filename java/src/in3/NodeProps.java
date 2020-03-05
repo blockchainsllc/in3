@@ -1,5 +1,8 @@
 package in3;
 
+/*
+ * Constants for props of an IN3 node.
+ */
 public final class NodeProps {
   /* filter out nodes which are providing no proof */
   public static final long NODE_PROP_PROOF = 0x1;

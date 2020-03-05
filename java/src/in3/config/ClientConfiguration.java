@@ -34,7 +34,7 @@ public class ClientConfiguration implements Configuration {
 
   private String serialzedState;
 
-  private HashMap<Long, NodeConfiguration> nodesConfig = new HashMap<Long, NodeConfiguration>();
+  private HashMap<Long, ChainConfiguration> chainsConfig = new HashMap<Long, ChainConfiguration>();
 
   // Make the constructor private in order to ensure people use client.getConfig()
   private ClientConfiguration() {}
@@ -219,19 +219,19 @@ public class ClientConfiguration implements Configuration {
     this.maxBlockCache = maxBlockCache;
   }
 
-  public HashMap<Long, NodeConfiguration> getNodesConfig() {
-    return nodesConfig;
+  public HashMap<Long, ChainConfiguration> getNodesConfig() {
+    return chainsConfig;
   }
 
-  public void setNodesConfig(HashMap<Long, NodeConfiguration> nodesConfig) {
-    this.nodesConfig = nodesConfig;
+  public void setChainsConfig(HashMap<Long, ChainConfiguration> chainsConfig) {
+    this.chainsConfig = chainsConfig;
   }
 
-  protected void addNodeConfiguration(NodeConfiguration configuration) {
+  protected void addChainConfiguration(ChainConfiguration configuration) {
     /*
          * This is stored in a HashMap to ensure uniqueness between chains without changing NodeConfiguration equals or toHash methods
          */
-    nodesConfig.put(configuration.getChain(), configuration);
+    chainsConfig.put(configuration.getChain(), configuration);
   }
 
   public void markAsSynced() {
@@ -304,10 +304,10 @@ public class ClientConfiguration implements Configuration {
       JSON.appendKey(sb, "maxBlockCache", getMaxBlockCache());
     }
 
-    if (!nodesConfig.isEmpty()) {
+    if (!chainsConfig.isEmpty()) {
       StringBuilder sb2 = new StringBuilder("{");
-      for (NodeConfiguration nodeConfig : nodesConfig.values()) {
-        JSON.appendKey(sb2, JSON.asString(nodeConfig.getChain()), nodeConfig);
+      for (ChainConfiguration chainConfig : chainsConfig.values()) {
+        JSON.appendKey(sb2, JSON.asString(chainConfig.getChain()), chainConfig);
       }
 
       sb2.setCharAt(sb2.length() - 1, '}');

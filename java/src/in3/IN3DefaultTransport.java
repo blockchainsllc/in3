@@ -3,6 +3,9 @@ package in3;
 import java.io.*;
 import java.net.*;
 
+/*
+ * Default implementation for HTTP transport in the java using java.net.HttpURLConnection
+ */
 class IN3DefaultTransport implements IN3Transport {
 
   @Override

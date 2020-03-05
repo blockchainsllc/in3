@@ -192,13 +192,26 @@ public class IN3 {
   /**
      * send a request. The request must a valid json-string with method and params
      */
-  public native String send(String request);
+  public String send(String request) {
+    if (!config.isSynced()) {
+      this.applyConfig();
+    }
+    return sendinternal(request);
+  }
+
+  private native String sendinternal(String request);
 
   /**
      * send a request but returns a object like array or map with the parsed
      * response. The request must a valid json-string with method and params
      */
-  public native Object sendobject(String request);
+  public Object sendobject(String request) {
+    if (!config.isSynced()) {
+      this.applyConfig();
+    }
+    return sendobjectinternal(request);
+  }
+  private native Object sendobjectinternal(String request);
 
   private String toRPC(String method, Object[] params) {
     String p = "";
@@ -244,24 +257,14 @@ public class IN3 {
      * raw request from it and return the result.
      */
   public String sendRPC(String method, Object[] params) {
-    if (!config.isSynced()) {
-      this.applyConfig();
-    }
     return this.send(toRPC(method, params));
   }
 
   private Object sendObjectRPC(String method, Object[] params, String[] address) {
-    if (!config.isSynced()) {
-      this.applyConfig();
-    }
     return this.sendobject(toRPC(method, params, address));
   }
 
   public Object sendRPCasObject(String method, Object[] params, boolean useEnsResolver) {
-    if (!config.isSynced()) {
-      this.applyConfig();
-    }
-
     Object[] resolvedParams = useEnsResolver ? handleEns(params) : params;
     return this.sendobject(toRPC(method, resolvedParams));
   }

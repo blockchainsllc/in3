@@ -2,7 +2,10 @@ package in3;
 
 import in3.utils.JSON;
 
-public class NodeList {
+/*
+ * Class that represents an aggregation of IN3 nodes.
+ */
+class NodeList {
   private JSON data;
 
   private NodeList(JSON data) {
@@ -28,6 +31,7 @@ public class NodeList {
     return new NodeList((JSON) o);
   }
 
+  /** returns an array of IN3Node */
   public IN3Node[] getNodes() {
     Object obj = data.get("nodes");
     if (obj != null) {

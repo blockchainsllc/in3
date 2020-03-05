@@ -13,17 +13,17 @@ public class GetTransaction {
     // create incubed
     IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
-    Transaction txn = GetTransactionAPI(in3);
+    Transaction txn = getTransactionAPI(in3);
     System.out.println("Transaction API #blockNumber: " + txn.getBlockNumber());
 
-    System.out.println("Transaction RPC :" + GetTransactionRPC(in3));
+    System.out.println("Transaction RPC :" + getTransactionRPC(in3));
   }
 
-  static Transaction GetTransactionAPI(IN3 in3) {
+  static Transaction getTransactionAPI(IN3 in3) {
     return in3.getEth1API().getTransactionByHash(TXN_HASH);
   }
 
-  static String GetTransactionRPC(IN3 in3) {
+  static String getTransactionRPC(IN3 in3) {
     return in3.sendRPC("eth_getTransactionByHash", new Object[] {TXN_HASH});
   }
 }
