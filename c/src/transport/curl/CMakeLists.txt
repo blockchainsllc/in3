@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -118,6 +118,6 @@ endif()
 
 if (MSVC OR MSYS OR MINGW)
     # for detecting Windows compilers
-    target_link_libraries(transport_curl_o ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
-    target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -dynamic)
+    target_link_libraries(transport_curl_o ws2_32 wsock32 -static gcc -Lcrypto stdc++ winpthread -L/home/conan/xc/mingw64/ssl/lib/libcrypto.a -L/home/conan/xc/mingw64/ssl/lib/libssl.a -dynamic)
+    target_link_libraries(transport_curl ws2_32 wsock32 -static gcc stdc++ winpthread -L/home/conan/xc/mingw64/ssl/lib/libcrypto.a -L/home/conan/xc/mingw64/ssl/lib/libssl.a -dynamic)
 endif ()

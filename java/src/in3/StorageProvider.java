@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -34,20 +34,19 @@
 
 package in3;
 
-
 /**
  * Provider methods to cache data.
  * These data could be nodelists, contract codes or validator changes.
  */
 public interface StorageProvider {
-    /**
+  /**
      * returns a item from cache ()
      * @return the bytes or null if not found.
      */
-    byte[] getItem(String key /** the key for the item */);
+  byte[] getItem(String key /** the key for the item */);
 
-    /**
+  /**
      * stores a item in the cache.
      */
-    void setItem(String key/** the key for the item */, byte[] content /** the value to store */);
+  void setItem(String key /** the key for the item */, byte[] content /** the value to store */);
 }
