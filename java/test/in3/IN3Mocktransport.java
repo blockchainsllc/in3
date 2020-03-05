@@ -12,8 +12,8 @@ class IN3MockTransport implements IN3Transport {
   private static final String PROPERTIES_FILENAME = "config.properties";
   private static final String RESPONSES_DIR       = "responsesDir";
 
-  private static final int FIRST_INDEX = 0;
-  private static final String METHOD   = "method";
+  private static final int    FIRST_INDEX = 0;
+  private static final String METHOD      = "method";
 
   public Map<String, byte[]> requestToResponse;
 
