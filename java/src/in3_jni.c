@@ -852,6 +852,9 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jmethodID set_use_http_mid = (*jni)->GetMethodID(jni, jconfigclass, "setUseHttp", "(Z)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_use_http_mid, (jboolean)(c->flags & FLAGS_HTTP) != 0);
 
+  jmethodID set_stats_mid = (*jni)->GetMethodID(jni, jconfigclass, "setStats", "(Z)V");
+  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_stats_mid, (jboolean)(c->flags & FLAGS_STATS) != 0);
+
   jmethodID set_max_code_cache_mid = (*jni)->GetMethodID(jni, jconfigclass, "setMaxCodeCache", "(J)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_max_code_cache_mid, (jlong) c->max_code_cache);
 
