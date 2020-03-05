@@ -2,7 +2,9 @@ BasedOnStyle: LLVM
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignTrailingComments: true
+AlignAfterOpenBracket: Align
 AlignEscapedNewlines: Right
+AlignOperands: true
 AllowShortBlocksOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
