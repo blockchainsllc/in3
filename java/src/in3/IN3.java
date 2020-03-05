@@ -36,7 +36,9 @@ package in3;
 
 import in3.config.ClientConfiguration;
 import in3.eth1.API;
+import in3.utils.Crypto;
 import in3.utils.JSON;
+import in3.utils.Signature;
 import in3.utils.Signer;
 import in3.utils.StorageProvider;
 
@@ -46,20 +48,10 @@ import in3.utils.StorageProvider;
  *
  */
 public class IN3 {
-  private static final String ABI_ENCODE       = "in3_abiEncode";
-  private static final String ABI_DECODE       = "in3_abiDecode";
-  private static final String CHECKSUM_ADDRESS = "in3_checksumAddress";
-  private static final String ENS              = "in3_ens";
-  private static final String SHA3             = "web3_sha3";
-  private static final String CONFIG           = "in3_config";
-  private static final String PK2ADDRESS       = "in3_pk2address";
-  private static final String PK2PUBLIC        = "in3_pk2public";
-  private static final String ECRECOVER        = "in3_ecrecover";
-  private static final String SIGN_DATA        = "in3_signData";
-  private static final String NODE_LIST        = "in3_nodeList";
-  private static final String SIGN             = "in3_sign";
-  private static final String CACHE_CLEAR      = "in3_cacheClear";
-  private static final String DECRYPT_KEY      = "in3_decryptKey";
+  private static final String CONFIG      = "in3_config";
+  private static final String NODE_LIST   = "in3_nodeList";
+  private static final String SIGN        = "in3_sign";
+  private static final String CACHE_CLEAR = "in3_cacheClear";
 
   private static final String ENS_SUFFIX = ".ETH";
 
@@ -153,6 +145,13 @@ public class IN3 {
      */
   public API getEth1API() {
     return new API(this);
+  }
+
+  /**
+   * gets the utils/crypto-api
+   */
+  public Crypto getCrypto() {
+    return new Crypto(this);
   }
 
   /**
@@ -258,7 +257,7 @@ public class IN3 {
     return this.sendobject(toRPC(method, params, address));
   }
 
-  private Object sendRPCasObject(String method, Object[] params, boolean useEnsResolver) {
+  public Object sendRPCasObject(String method, Object[] params, boolean useEnsResolver) {
     if (!config.isSynced()) {
       this.applyConfig();
     }
@@ -280,7 +279,7 @@ public class IN3 {
     return IN3.transport.handle(urls, payload);
   }
 
-  private native void free();
+  protected native void free();
 
   private native long init(long chainId);
 
@@ -292,94 +291,6 @@ public class IN3 {
   public static native String getVersion();
 
   /**
-     * encodes the arguments as described in the method signature using ABI-Encoding.
-     */
-  public String abiEncode(String signature, String[] params) {
-    Object rawResult = sendRPCasObject(ABI_ENCODE, new Object[] {
-                                                       signature,
-                                                       params});
-    return JSON.asString(rawResult);
-  }
-
-  /**
-     * decodes the data based on the signature.
-     */
-  public String[] abiDecode(String signature, String encoded) {
-    Object rawResult = sendRPCasObject(ABI_DECODE, new Object[] {signature, encoded});
-    return JSON.asStringArray(rawResult);
-  }
-
-  /**
-     * converts the given address to a checksum address.
-     */
-  public String checksumAddress(String address) {
-    return checksumAddress(address, null);
-  }
-
-  /**
-     * converts the given address to a checksum address. Second parameter includes the chainId.
-     */
-  public String checksumAddress(String address, Boolean useChainId) {
-    return JSON.asString(sendRPCasObject(CHECKSUM_ADDRESS, new Object[] {address, useChainId}));
-  }
-
-  /**
-     * resolve ens-name.
-     */
-  public String ens(String name) {
-    return ens(name, null);
-  }
-
-  /**
-     * resolve ens-name. Second parameter especifies if it is an address, owner, resolver or hash.
-     */
-  public String ens(String name, EnsField type) {
-    return JSON.asString(sendRPCasObject(ENS, new Object[] {name, type}, false));
-  }
-
-  /**
-     * extracts the public address from a private key.
-     */
-  public String pk2address(String key) {
-    return JSON.asString(sendRPCasObject(PK2ADDRESS, new Object[] {key}));
-  }
-
-  /**
-     * extracts the public key from a private key.
-     */
-  public String pk2public(String key) {
-    return JSON.asString(sendRPCasObject(PK2PUBLIC, new Object[] {key}));
-  }
-
-  /**
-     * extracts the address and public key from a signature.
-     */
-  public EcRecoverResult ecrecover(String msg, String sig) {
-    return ecrecover(msg, sig, null);
-  }
-
-  /**
-     * extracts the address and public key from a signature.
-     */
-  public EcRecoverResult ecrecover(String msg, String sig, SignatureType sigType) {
-    return EcRecoverResult.asEcRecoverResult(sendRPCasObject(ECRECOVER, new Object[] {msg, sig, JSON.asString(sigType)}));
-  }
-
-  // TODO Make an object out of this signed data
-  public Signature signData(String msg, String key) {
-    return Signature.asSignature(signData(msg, key, null));
-  }
-
-  public Signature signData(String msg, String key, SignatureType sigType) {
-    return Signature.asSignature(sendRPCasObject(SIGN_DATA, new Object[] {msg, key, JSON.asString(sigType)}));
-  }
-
-  // TODO make an object out of this key
-  public String decryptKey(String key, String passphrase) {
-    return JSON.asString(sendRPCasObject(DECRYPT_KEY, new Object[] {key, passphrase}));
-  }
-
-  /**
      * clears the cache.
      */
   public boolean cacheClear() {
@@ -389,7 +300,7 @@ public class IN3 {
   /**
      * restrieves the node list
      */
-  public Node[] nodeList() {
+  public IN3Node[] nodeList() {
     NodeList nl = NodeList.asNodeList(sendRPCasObject(NODE_LIST, new Object[] {}));
     return nl.getNodes();
   }
@@ -397,7 +308,7 @@ public class IN3 {
   /**
      * request for a signature of an already verified hash.
      */
-  public SignedBlockHash[] sign(VerifiedHash[] blocks, String[] address) {
+  public SignedBlockHash[] sign(BlockID[] blocks, String[] address) {
     return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, blocks, address));
   }
 
@@ -405,7 +316,7 @@ public class IN3 {
     Object[] result = params.clone();
     for (int i = 0; i < result.length; i++) {
       if (result[i] != null && result[i].toString().toUpperCase().endsWith(ENS_SUFFIX)) {
-        result[i] = (Object) ens(result[i].toString());
+        result[i] = (Object) getEth1API().ens(result[i].toString());
       }
     }
 
@@ -420,7 +331,6 @@ public class IN3 {
 
     // create client
     IN3 in3 = IN3.forChain(Chain.MAINNET);
-
     // set cache in tempfolder
     in3.setStorageProvider(new in3.utils.TempStorageProvider());
 

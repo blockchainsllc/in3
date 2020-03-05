@@ -48,7 +48,7 @@ public interface Signer {
     TransactionRequest prepareTransaction(IN3 in3, TransactionRequest tx);
 
     /** returns true if the account is supported (or unlocked) */
-    boolean hasAccount(String address);
+    boolean canSign(String address);
 
     /** signing of the raw data. */
     String sign(String data, String address);

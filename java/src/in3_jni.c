@@ -34,6 +34,7 @@
 
 #include "in3_jni.h"
 #include "../../c/src/api/eth1/abi.h"
+#include "../../c/src/api/eth1/eth_api.h"
 #include "../../c/src/core/client/cache.h"
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context.h"
@@ -44,8 +45,11 @@
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
-#include "../../c/src/api/eth1/eth_api.h"
 #include "../../c/src/verifier/eth1/full/eth_full.h"
+#ifdef IPFS
+#include "../../c/src/verifier/ipfs/ipfs.h"
+
+#endif
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   jlong l = (*env)->GetLongField(env, obj, (*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), "ptr", "J"));
@@ -126,10 +130,10 @@ JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray v
   if (in3->key) b_free(in3->key);
   in3->key = NULL;
   if (val == NULL) return;
-  in3->key       = _malloc(sizeof(bytes_t));
-  in3->key->len  = (*env)->GetArrayLength(env, val);
-  in3->key->data = _malloc(in3->key->len);
-  (*env)->GetByteArrayRegion(env, val, 0, in3->key->len, (jbyte*) in3->key->data);
+  int len = (*env)->GetArrayLength(env, val);
+  if (len > 32) (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), "Invalid Signer key!");
+  in3->key = _calloc(1, 32);
+  (*env)->GetByteArrayRegion(env, val, 0, len, (jbyte*) in3->key);
 }
 
 /*
@@ -889,9 +893,9 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
     jclass jnodelistconfigclass = (*jni)->FindClass(jni, "in3/config/NodeListConfiguration");
 
     for (int i = 0; i < chain.nodelist_length; i++) {
-      in3_node_t node = chain.nodelist[i];
-      jobject   jnodelistconfigobj = (*jni)->NewObject(jni, jnodelistconfigclass, (*jni)->GetMethodID(jni, jnodelistconfigclass, "<init>", "(Lin3/config/NodeConfiguration;)V"), jnodeconfigobj);
-      jmethodID set_address_mid    = (*jni)->GetMethodID(jni, jnodelistconfigclass, "setAddress", "(Ljava/lang/String;)V");
+      in3_node_t node               = chain.nodelist[i];
+      jobject    jnodelistconfigobj = (*jni)->NewObject(jni, jnodelistconfigclass, (*jni)->GetMethodID(jni, jnodelistconfigclass, "<init>", "(Lin3/config/NodeConfiguration;)V"), jnodeconfigobj);
+      jmethodID  set_address_mid    = (*jni)->GetMethodID(jni, jnodelistconfigclass, "setAddress", "(Ljava/lang/String;)V");
       bytes_to_hex(node.address->data, node.address->len, tmp + 2);
       (*jni)->CallVoidMethod(jni, jnodelistconfigobj, set_address_mid, (*jni)->NewStringUTF(jni, tmp));
       jmethodID set_url_mid = (*jni)->GetMethodID(jni, jnodelistconfigclass, "setUrl", "(Ljava/lang/String;)V");
@@ -935,8 +939,13 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_t* in3 = in3_for_chain(jchain);
   in3_register_eth_full();
+
+#ifdef IPFS
+  in3_register_ipfs();
+#endif
+
+  in3_t* in3 = in3_for_chain(jchain);
   in3_register_eth_api();
   in3_log_set_level(LOG_DEBUG);
   in3->transport          = Java_in3_IN3_transport;

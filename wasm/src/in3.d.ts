@@ -102,6 +102,11 @@ export declare interface IN3Config {
     keepIn3?: boolean
 
     /**
+     * the key to sign requests. This is required for payments.
+     */
+    key?: Hash
+
+    /**
      * the limit of nodes to store in the client. If set a random seed will be picked, which is the base for a deterministic verifiable partial nodelist.
      * 
      * default: 0
@@ -757,7 +762,7 @@ export declare interface Signer<BigIntType, BufferType> {
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
-    hasAccount(account: Address): Promise<boolean>
+    canSign(address: Address): Promise<boolean>
 
     /** 
      * signing of any data. 
@@ -990,7 +995,7 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
-    hasAccount(account: Address): Promise<boolean>
+    canSign(address: Address): Promise<boolean>
 
     /** 
      * signing of any data. 

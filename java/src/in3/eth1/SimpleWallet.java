@@ -86,7 +86,7 @@ public class SimpleWallet implements Signer {
     }
 
     /** returns true if the account is supported (or unlocked) */
-    public boolean hasAccount(String address) {
+    public boolean canSign(String address) {
         return privateKeys.containsKey(address.toLowerCase());
     }
 

@@ -39,80 +39,8 @@
 #include "../../core/util/mem.h"
 #include "../../verifier/eth1/basic/filter.h"
 #include "../../verifier/eth1/nano/rlp.h"
+#include "../utils/api_utils_priv.h"
 #include "abi.h"
-#ifdef __ZEPHYR__
-#include <zephyr.h>
-#else
-#include <errno.h>
-#endif
-#include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
-#if defined(_WIN32) || defined(WIN32)
-#include <windows.h>
-#else
-#include <time.h>
-#endif
-
-// create the params as stringbuilder
-#define rpc_init sb_t* params = sb_new("[")
-
-// execute the request after the params have been set.
-#define rpc_exec(METHOD, RETURN_TYPE, HANDLE_RESULT)                                      \
-  errno              = 0;                                                                 \
-  in3_ctx_t*  _ctx_  = in3_client_rpc_ctx(in3, (METHOD), sb_add_char(params, ']')->data); \
-  d_token_t*  result = get_result(_ctx_);                                                 \
-  RETURN_TYPE _res_;                                                                      \
-  if (result)                                                                             \
-    _res_ = (HANDLE_RESULT);                                                              \
-  else                                                                                    \
-    memset(&_res_, 0, sizeof(RETURN_TYPE));                                               \
-  ctx_free(_ctx_);                                                                        \
-  sb_free(params);                                                                        \
-  return _res_;
-
-#define params_add_key_pair(params, key, sb_add_func, quote_val, prefix_comma) \
-  do {                                                                         \
-    if (prefix_comma) sb_add_chars(params, ", ");                              \
-    sb_add_char(params, '\"');                                                 \
-    sb_add_chars(params, key);                                                 \
-    sb_add_chars(params, "\": ");                                              \
-    if (quote_val) sb_add_char(params, '\"');                                  \
-    sb_add_func;                                                               \
-    if (quote_val) sb_add_char(params, '\"');                                  \
-  } while (0)
-
-#define params_add_first_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, false)
-#define params_add_next_pair(params, key, sb_add_func, quote_val) params_add_key_pair(params, key, sb_add_func, quote_val, true)
-
-// last error string
-static char* last_error = NULL;
-char*        eth_last_error() { return last_error; }
-
-// sets the error and a message
-static void set_errorn(int std_error, char* msg, int len) {
-  errno = std_error;
-  if (last_error) _free(last_error);
-  last_error = _malloc(len + 1);
-  memcpy(last_error, msg, len);
-  last_error[len] = 0;
-}
-
-// sets the error and a message
-static void set_error_intern(int std_error, char* msg) {
-#ifndef __ZEPHYR__
-  in3_log_error("Request failed due to %s - %s\n", strerror(std_error), msg);
-#else
-  in3_log_error("Request failed due to %s\n", msg);
-#endif
-  set_errorn(std_error, msg, strlen(msg));
-}
-
-#ifdef ERR_MSG
-#define set_error(e, msg) set_error_intern(e, msg)
-#else
-#define set_error(e, msg) set_error_intern(e, "E")
-#endif
 
 /** copies bytes to a fixed length destination (leftpadding 0 if needed).*/
 static void copy_fixed(uint8_t* dst, uint32_t len, bytes_t data) {
@@ -158,27 +86,6 @@ static uint256_t uint256_from_bytes(bytes_t bytes) {
   uint256_t d;
   copy_fixed(d.data, 32, bytes);
   return d;
-}
-
-/** returns the result from a previously executed ctx*/
-static d_token_t* get_result(in3_ctx_t* ctx) {
-  if (ctx->error) {                   // error means something went wrong during verification or a timeout occured.
-    set_error(ETIMEDOUT, ctx->error); // so we copy the error as last_error
-    return NULL;
-  } else if (!ctx->responses) {
-    set_error(IN3_ERPC, "No response");
-    return NULL;
-  }
-
-  d_token_t* t = d_get(ctx->responses[0], K_RESULT);
-  if (t) return t; // everthing is good, we have a result
-
-  // if no result, we expect an error
-  t = d_get(ctx->responses[0], K_ERROR); // we we have an error...
-  set_error(ETIMEDOUT, !t
-                           ? "No result or error in response"
-                           : (d_type(t) == T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
-  return NULL;
 }
 
 /** adds a number as hex */
@@ -267,7 +174,7 @@ static uint32_t get_tx_size(d_token_t* tx) { return align(d_to_bytes(d_get(tx, K
 static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
   if (result) {
     if (d_type(result) == T_NULL)
-      set_error(EAGAIN, "Block does not exist");
+      api_set_error(EAGAIN, "Block does not exist");
     else {
       d_token_t* sealed = d_get(result, K_SEAL_FIELDS);
       d_token_t* txs    = d_get(result, K_TRANSACTIONS);
@@ -290,7 +197,7 @@ static eth_block_t* eth_getBlock(d_token_t* result, bool include_tx) {
       // copy data
       eth_block_t* b = _calloc(1, s);
       if (!b) {
-        set_error(ENOMEM, "Not enough memory");
+        api_set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
       uint8_t* p = (uint8_t*) b + align(sizeof(eth_block_t)); // pointer where we add the next data after the block-struct
@@ -488,7 +395,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
     sb_add_char(params, '}');
     params_add_blk_num_t(params, block);
   } else {
-    set_error(0, req->error ? req->error : "Error parsing the request-data");
+    api_set_error(0, req->error ? req->error : "Error parsing the request-data");
     sb_free(params);
     req_free(req);
     return NULL;
@@ -521,7 +428,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
 #endif
         return wait_for_receipt(in3, params, timeout + timeout, count - 1);
       } else {
-        set_error(1, "timeout waiting for the receipt");
+        api_set_error(1, "timeout waiting for the receipt");
         return NULL;
       }
     } else {
@@ -531,7 +438,7 @@ static char* wait_for_receipt(in3_t* in3, char* params, int timeout, int count) 
       return c;
     }
   }
-  set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
+  api_set_error(3, ctx->error ? ctx->error : "Error getting the Receipt!");
   ctx_free(ctx);
   return NULL;
 }
@@ -670,12 +577,12 @@ uint64_t eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, cha
 static eth_tx_t* parse_tx(d_token_t* result) {
   if (result) {
     if (d_type(result) == T_NULL)
-      set_error(EAGAIN, "Transaction does not exist");
+      api_set_error(EAGAIN, "Transaction does not exist");
     else {
       uint32_t  s  = get_tx_size(result);
       eth_tx_t* tx = malloc(s);
       if (!tx) {
-        set_error(ENOMEM, "Not enough memory");
+        api_set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
       write_tx(result, tx);
@@ -715,11 +622,11 @@ uint64_t eth_getTransactionCount(in3_t* in3, address_t address, eth_blknum_t blo
 static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
   if (result) {
     if (d_type(result) == T_NULL)
-      set_error(EAGAIN, "Error getting the Receipt!");
+      api_set_error(EAGAIN, "Error getting the Receipt!");
     else {
       eth_tx_receipt_t* txr = _malloc(sizeof(*txr));
       if (!txr) {
-        set_error(ENOMEM, "Not enough memory");
+        api_set_error(ENOMEM, "Not enough memory");
         return NULL;
       }
       txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);

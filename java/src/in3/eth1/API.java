@@ -47,6 +47,40 @@ import java.math.BigInteger;
  */
 public class API {
 
+    // Methods
+    private static final String GET_BLOCK_BY_NUMBER = "eth_getBlockByNumber";
+    private static final String BLOCK_BY_HASH = "eth_getBlockByHash";
+    private static final String BLOCK_NUMBER = "eth_blockNumber";
+    private static final String GAS_PRICE = "eth_gasPrice";
+    private static final String CHAIN_ID = "eth_chainId";
+    private static final String CALL = "eth_call";
+    private static final String ESTIMATE_GAS = "eth_estimateGas";
+    private static final String GET_BALANCE = "eth_getBalance";
+    private static final String GET_CODE = "eth_getCode";
+    private static final String GET_STORAGE_AT = "eth_getStorageAt";
+    private static final String GET_BLOCK_TRANSACTION_COUNT_BY_HASH = "eth_getBlockTransactionCountByHash";
+    private static final String GET_BLOCK_TRANSACTION_COUNT_BY_NUMBER = "eth_getBlockTransactionCountByNumber";
+    private static final String GET_FILTER_CHANGES = "eth_getFilterChanges";
+    private static final String GET_FILTER_LOGS = "eth_getFilterLogs";
+    private static final String GET_LOGS = "eth_getLogs";
+    private static final String GET_TRANSACTION_BY_BLOCK_HASH_AND_INDEX = "eth_getTransactionByBlockHashAndIndex";
+    private static final String GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX = "eth_getTransactionByBlockNumberAndIndex";
+    private static final String GET_TRANSACTION_BY_HASH = "eth_getTransactionByHash";
+    private static final String GET_TRANSACTION_COUNT = "eth_getTransactionCount";
+    private static final String GET_TRANSACTION_RECEIPT = "eth_getTransactionReceipt";
+    private static final String GET_UNCLE_BY_BLOCK_NUMBER_AND_INDEX = "eth_getUncleByBlockNumberAndIndex";
+    private static final String GET_UNCLE_COUNT_BY_BLOCK_HASH = "eth_getUncleCountByBlockHash";
+    private static final String GET_UNCLE_COUNT_BY_BLOCK_NUMBER = "eth_getUncleCountByBlockNumber";
+    private static final String NEW_BLOCK_FILTER = "eth_newBlockFilter";
+    private static final String NEW_FILTER = "eth_newFilter";
+    private static final String UNINSTALL_FILTER = "eth_uninstallFilter";
+    private static final String SEND_RAW_TRANSACTION = "eth_sendRawTransaction";
+    private static final String SEND_TRANSACTION = "eth_sendTransaction";
+    private static final String ABI_ENCODE       = "in3_abiEncode";
+    private static final String ABI_DECODE       = "in3_abiDecode";
+    private static final String CHECKSUM_ADDRESS = "in3_checksumAddress";
+    private static final String ENS              = "in3_ens";
+
     private IN3 in3;
 
     /**
@@ -66,7 +100,7 @@ public class API {
                                  * transactionhashes
                                  */
     ) {
-        return Block.asBlock(in3.sendRPCasObject("eth_getBlockByNumber",
+        return Block.asBlock(in3.sendRPCasObject(GET_BLOCK_BY_NUMBER,
                 new Object[] { getBlockString(block), includeTransactions }));
     }
 
@@ -80,21 +114,21 @@ public class API {
                                  */
     ) {
         return Block
-                .asBlock(in3.sendRPCasObject("eth_getBlockByHash", new Object[] { blockHash, includeTransactions }));
+                .asBlock(in3.sendRPCasObject(BLOCK_BY_HASH, new Object[] { blockHash, includeTransactions }));
     }
 
     /**
      * the current BlockNumber.
      */
     public long getBlockNumber() {
-        return JSON.asLong(in3.sendRPCasObject("eth_blockNumber", new Object[] {}));
+        return JSON.asLong(in3.sendRPCasObject(BLOCK_NUMBER, new Object[] {}));
     }
 
     /**
      * the current Gas Price.
      */
     public long getGasPrice() {
-        return JSON.asLong(in3.sendRPCasObject("eth_gasPrice", new Object[] {}));
+        return JSON.asLong(in3.sendRPCasObject(GAS_PRICE, new Object[] {}));
     }
 
     /**
@@ -102,7 +136,7 @@ public class API {
      * block. Null is returned if not available.
      */
     public String getChainId() {
-        return JSON.asString(in3.sendRPCasObject("eth_chainId", new Object[] {}));
+        return JSON.asString(in3.sendRPCasObject(CHAIN_ID, new Object[] {}));
     }
 
     /**
@@ -114,7 +148,7 @@ public class API {
     public Object call(TransactionRequest request, /** < the transaction to call. */
     long block /** < the Block used to for the state. */
     ) {
-        return request.getResult((String) in3.sendRPCasObject("eth_call",
+        return request.getResult((String) in3.sendRPCasObject(CALL,
                 new Object[] { request.getTransactionJson(), getBlockString(block) }));
     }
 
@@ -127,7 +161,7 @@ public class API {
     public long estimateGas(TransactionRequest request, /** < the transaction to call. */
     long block /** < the Block used to for the state. */
     ) {
-        return JSON.asLong(in3.sendRPCasObject("eth_estimateGas",
+        return JSON.asLong(in3.sendRPCasObject(ESTIMATE_GAS,
                 new Object[] { request.getTransactionJson(), getBlockString(block) }));
     }
 
@@ -136,21 +170,21 @@ public class API {
      */
     public BigInteger getBalance(String address, long block) {
         return JSON
-                .asBigInteger(in3.sendRPCasObject("eth_getBalance", new Object[] { address, getBlockString(block) }));
+                .asBigInteger(in3.sendRPCasObject(GET_BALANCE, new Object[] { address, getBlockString(block) }));
     }
 
     /**
      * Returns code at a given address.
      */
     public String getCode(String address, long block) {
-        return JSON.asString(in3.sendRPCasObject("eth_getCode", new Object[] { address, getBlockString(block) }));
+        return JSON.asString(in3.sendRPCasObject(GET_CODE, new Object[] { address, getBlockString(block) }));
     }
 
     /**
      * Returns the value from a storage position at a given address.
      */
     public String getStorageAt(String address, BigInteger position, long block) {
-        return JSON.asString(in3.sendRPCasObject("eth_getStorageAt",
+        return JSON.asString(in3.sendRPCasObject(GET_STORAGE_AT,
                 new Object[] { address, JSON.asString(position), getBlockString(block) }));
     }
 
@@ -159,7 +193,7 @@ public class API {
      * block hash.
      */
     public long getBlockTransactionCountByHash(String blockHash) {
-        return JSON.asLong(in3.sendRPCasObject("eth_getBlockTransactionCountByHash", new Object[] { blockHash }));
+        return JSON.asLong(in3.sendRPCasObject(GET_BLOCK_TRANSACTION_COUNT_BY_HASH, new Object[] { blockHash }));
     }
 
     /**
@@ -168,7 +202,7 @@ public class API {
      */
     public long getBlockTransactionCountByNumber(long block) {
         return JSON.asLong(
-                in3.sendRPCasObject("eth_getBlockTransactionCountByNumber", new Object[] { getBlockString(block) }));
+                in3.sendRPCasObject(GET_BLOCK_TRANSACTION_COUNT_BY_NUMBER, new Object[] { getBlockString(block) }));
     }
 
     /**
@@ -176,7 +210,7 @@ public class API {
      * since last poll.
      */
     public Log[] getFilterChangesFromLogs(long id) {
-        return Log.asLogs(in3.sendRPCasObject("eth_getFilterChanges", new Object[] { JSON.asString(id) }));
+        return Log.asLogs(in3.sendRPCasObject(GET_FILTER_CHANGES, new Object[] { JSON.asString(id) }));
     }
 
     /**
@@ -184,7 +218,7 @@ public class API {
      * since last poll.
      */
     public String[] getFilterChangesFromBlocks(long id) {
-        return JSON.asStringArray(in3.sendRPCasObject("eth_getFilterChanges", new Object[] { JSON.asString(id) }));
+        return JSON.asStringArray(in3.sendRPCasObject(GET_FILTER_CHANGES, new Object[] { JSON.asString(id) }));
     }
 
     /**
@@ -192,7 +226,7 @@ public class API {
      * since last poll.
      */
     public Log[] getFilterLogs(long id) {
-        return Log.asLogs(in3.sendRPCasObject("eth_getFilterLogs", new Object[] { JSON.asString(id) }));
+        return Log.asLogs(in3.sendRPCasObject(GET_FILTER_LOGS, new Object[] { JSON.asString(id) }));
     }
 
     /**
@@ -200,7 +234,7 @@ public class API {
      * since last poll.
      */
     public Log[] getLogs(LogFilter filter) {
-        return Log.asLogs(in3.sendRPCasObject("eth_getLogs", new Object[] { filter.toString() }));
+        return Log.asLogs(in3.sendRPCasObject(GET_LOGS, new Object[] { filter.toString() }));
     }
 
     /**
@@ -208,7 +242,7 @@ public class API {
      * position.
      */
     public Transaction getTransactionByBlockHashAndIndex(String blockHash, int index) {
-        return Transaction.asTransaction(in3.sendRPCasObject("eth_getTransactionByBlockHashAndIndex",
+        return Transaction.asTransaction(in3.sendRPCasObject(GET_TRANSACTION_BY_BLOCK_HASH_AND_INDEX,
                 new Object[] { blockHash, JSON.asString(index) }));
     }
 
@@ -217,7 +251,7 @@ public class API {
      * position.
      */
     public Transaction getTransactionByBlockNumberAndIndex(long block, int index) {
-        return Transaction.asTransaction(in3.sendRPCasObject("eth_getTransactionByBlockNumberAndIndex",
+        return Transaction.asTransaction(in3.sendRPCasObject(GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX,
                 new Object[] { JSON.asString(block), JSON.asString(index) }));
     }
 
@@ -226,7 +260,7 @@ public class API {
      */
     public Transaction getTransactionByHash(String transactionHash) {
         return Transaction
-                .asTransaction(in3.sendRPCasObject("eth_getTransactionByHash", new Object[] { transactionHash }));
+                .asTransaction(in3.sendRPCasObject(GET_TRANSACTION_BY_HASH, new Object[] { transactionHash }));
     }
 
     /**
@@ -234,7 +268,7 @@ public class API {
      */
     public BigInteger getTransactionCount(String address, long block) {
         return JSON.asBigInteger(
-                in3.sendRPCasObject("eth_getTransactionCount", new Object[] { address, getBlockString(block) }));
+                in3.sendRPCasObject(GET_TRANSACTION_COUNT, new Object[] { address, getBlockString(block) }));
     }
 
     /**
@@ -242,7 +276,7 @@ public class API {
      */
     public TransactionReceipt getTransactionReceipt(String transactionHash) {
         return TransactionReceipt.asTransactionReceipt(
-                in3.sendRPCasObject("eth_getTransactionReceipt", new Object[] { transactionHash }));
+                in3.sendRPCasObject(GET_TRANSACTION_RECEIPT, new Object[] { transactionHash }));
     }
 
     /**
@@ -250,7 +284,7 @@ public class API {
      * Note: An uncle doesn't contain individual transactions.
      */
     public Block getUncleByBlockNumberAndIndex(long block, int pos) {
-        return Block.asBlock(in3.sendRPCasObject("eth_getUncleByBlockNumberAndIndex",
+        return Block.asBlock(in3.sendRPCasObject(GET_UNCLE_BY_BLOCK_NUMBER_AND_INDEX,
                 new Object[] { getBlockString(block), JSON.asString(pos) }));
     }
 
@@ -259,7 +293,7 @@ public class API {
      * hash.
      */
     public long getUncleCountByBlockHash(String block) {
-        return JSON.asLong(in3.sendRPCasObject("eth_getUncleCountByBlockHash", new Object[] { block }));
+        return JSON.asLong(in3.sendRPCasObject(GET_UNCLE_COUNT_BY_BLOCK_HASH, new Object[] { block }));
     }
 
     /**
@@ -268,7 +302,7 @@ public class API {
      */
     public long getUncleCountByBlockNumber(long block) {
         return JSON
-                .asLong(in3.sendRPCasObject("eth_getUncleCountByBlockNumber", new Object[] { getBlockString(block) }));
+                .asLong(in3.sendRPCasObject(GET_UNCLE_COUNT_BY_BLOCK_NUMBER, new Object[] { getBlockString(block) }));
     }
 
     /**
@@ -276,7 +310,7 @@ public class API {
      * the state has changed, call eth_getFilterChanges.
      */
     public long newBlockFilter() {
-        return JSON.asLong(in3.sendRPCasObject("eth_newBlockFilter", new Object[] {}));
+        return JSON.asLong(in3.sendRPCasObject(NEW_BLOCK_FILTER, new Object[] {}));
     }
 
     /**
@@ -294,14 +328,14 @@ public class API {
      * 
      */
     public long newLogFilter(LogFilter filter) {
-        return JSON.asLong(in3.sendRPCasObject("eth_newFilter", new Object[] { filter.toString() }));
+        return JSON.asLong(in3.sendRPCasObject(NEW_FILTER, new Object[] { filter.toString() }));
     }
 
     /**
      * uninstall filter.
      */
     public boolean uninstallFilter(long filter) {
-        return (boolean) in3.sendRPCasObject("eth_uninstallFilter", new Object[] { JSON.asString(filter) });
+        return (boolean) in3.sendRPCasObject(UNINSTALL_FILTER, new Object[] { JSON.asString(filter) });
     }
 
     /**
@@ -311,11 +345,57 @@ public class API {
      * @return transactionHash
      */
     public String sendRawTransaction(String data) {
-        return JSON.asString(in3.sendRPCasObject("eth_sendRawTransaction", new Object[] { data }));
+        return JSON.asString(in3.sendRPCasObject(SEND_RAW_TRANSACTION, new Object[] { data }));
     }
 
     /**
-     * sends a Transaction as desribed by the TransactionRequest. This will require
+       * encodes the arguments as described in the method signature using ABI-Encoding.
+       */
+    public String abiEncode(String signature, String[] params) {
+      Object rawResult = in3.sendRPCasObject(ABI_ENCODE, new Object[] {
+                                                         signature,
+                                                         params});
+      return JSON.asString(rawResult);
+    }
+
+    /**
+       * decodes the data based on the signature.
+       */
+    public String[] abiDecode(String signature, String encoded) {
+      Object rawResult = in3.sendRPCasObject(ABI_DECODE, new Object[] {signature, encoded});
+      return JSON.asStringArray(rawResult);
+    }
+
+    /**
+       * converts the given address to a checksum address.
+       */
+    public String checksumAddress(String address) {
+      return checksumAddress(address, null);
+    }
+
+    /**
+       * converts the given address to a checksum address. Second parameter includes the chainId.
+       */
+    public String checksumAddress(String address, Boolean useChainId) {
+      return JSON.asString(in3.sendRPCasObject(CHECKSUM_ADDRESS, new Object[] {address, useChainId}));
+    }
+
+    /**
+       * resolve ens-name.
+       */
+    public String ens(String name) {
+      return ens(name, null);
+    }
+
+    /**
+       * resolve ens-name. Second parameter especifies if it is an address, owner, resolver or hash.
+       */
+    public String ens(String name, ENSMethod type) {
+      return JSON.asString(in3.sendRPCasObject(ENS, new Object[] {name, type}, false));
+    }
+
+    /**
+     * sends a Transaction as described by the TransactionRequest. This will require
      * a signer to be set in order to sign the transaction.
      */
     public String sendTransaction(TransactionRequest tx) {
@@ -324,11 +404,11 @@ public class API {
             throw new RuntimeException("No Signer set. This is needed in order to sign transaction.");
         if (tx.getFrom() == null)
             throw new RuntimeException("No from address set");
-        if (!signer.hasAccount(tx.getFrom()))
+        if (!signer.canSign(tx.getFrom()))
             throw new RuntimeException("The from address is not supported by the signer");
         tx = signer.prepareTransaction(in3, tx);
 
-        return JSON.asString(in3.sendRPCasObject("eth_sendTransaction", new Object[] { tx.getTransactionJson() }));
+        return JSON.asString(in3.sendRPCasObject(SEND_TRANSACTION, new Object[] { tx.getTransactionJson() }));
     }
 
     /**

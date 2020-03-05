@@ -32,6 +32,9 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
+#include "../../third-party/crypto/sha3.h"
 #include "../util/data.h"
 #include "../util/log.h"
 #include "../util/mem.h"
@@ -168,42 +171,70 @@ static void free_urls(char** urls, int len, bool free_items) {
   _free(urls);
 }
 
+static int add_bytes_to_hash(struct SHA3_CTX* msg_hash, void* data, int len) {
+  if (msg_hash) sha3_Update(msg_hash, data, len);
+  return len;
+}
+
+static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
+  switch (d_type(t)) {
+    case T_ARRAY:
+    case T_OBJECT:
+      for (d_iterator_t iter = d_iter(t); iter.left; d_iter_next(&iter))
+        add_token_to_hash(msg_hash, iter.token);
+      return;
+    case T_NULL:
+      return;
+
+    default: {
+      bytes_t b = d_to_bytes(t);
+      sha3_Update(msg_hash, b.data, b.len);
+    }
+  }
+}
+
 static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
   static unsigned long rpc_id_counter = 1;
   char                 temp[100];
+  struct SHA3_CTX*     msg_hash = c->client->key ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  //  sha3_Update(&ctx, data->data, data->len);
+  //  keccak_Final(&ctx, dst);
+
   sb_add_char(sb, '[');
 
   for (int i = 0; i < c->len; i++) {
     d_token_t *request_token = c->requests[i], *t;
+    if (msg_hash) sha3_256_Init(msg_hash);
 
     if (i > 0) sb_add_char(sb, ',');
     sb_add_char(sb, '{');
     if ((t = d_get(request_token, K_ID)) == NULL)
-      sb_add_key_value(sb, "id", temp, sprintf(temp, "%lu", rpc_id_counter++), false);
+      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%lu", rpc_id_counter++)), false);
     else if (d_type(t) == T_INTEGER)
-      sb_add_key_value(sb, "id", temp, sprintf(temp, "%i", d_int(t)), false);
+      sb_add_key_value(sb, "id", temp, add_bytes_to_hash(msg_hash, temp, sprintf(temp, "%i", d_int(t))), false);
     else
-      sb_add_key_value(sb, "id", d_string(t), d_len(t), true);
+      sb_add_key_value(sb, "id", d_string(t), add_bytes_to_hash(msg_hash, d_string(t), d_len(t)), true);
     sb_add_char(sb, ',');
     sb_add_key_value(sb, "jsonrpc", "2.0", 3, true);
     sb_add_char(sb, ',');
     if ((t = d_get(request_token, K_METHOD)) == NULL)
       return ctx_set_error(c, "missing method-property in request", IN3_EINVAL);
     else
-      sb_add_key_value(sb, "method", d_string(t), d_len(t), true);
+      sb_add_key_value(sb, "method", d_string(t), add_bytes_to_hash(msg_hash, d_string(t), d_len(t)), true);
     sb_add_char(sb, ',');
     if ((t = d_get(request_token, K_PARAMS)) == NULL)
       sb_add_key_value(sb, "params", "[]", 2, false);
     else {
       //TODO this only works with JSON!!!!
       const str_range_t ps = d_to_json(t);
+      if (msg_hash) add_token_to_hash(msg_hash, t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
     }
 
     in3_request_config_t* rc = c->requests_configs + i;
-    if (rc->verification == VERIFICATION_PROOF) {
+    if (rc->verification == VERIFICATION_PROOF || msg_hash) {
       // add in3
-      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"proof\",\"version\": \"%s\"", IN3_PROTO_VER));
+      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", rc->verification == VERIFICATION_NEVER ? "never" : "proof", IN3_PROTO_VER));
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
       const in3_chain_t* chain = in3_find_chain(c->client, c->requests_configs->chain_id ? c->requests_configs->chain_id : c->client->chain_id);
@@ -211,8 +242,14 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
         const bytes_t adr = bytes(chain->whitelist->contract, 20);
         sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
       }
-      if (rc->client_signature)
-        sb_add_bytes(sb, ",\"clientSignature\":", rc->client_signature, 1, false);
+      if (msg_hash) {
+        uint8_t sig[65], hash[32];
+        bytes_t sig_bytes = bytes(sig, 65);
+        keccak_Final(msg_hash, hash);
+        if (ecdsa_sign_digest(&secp256k1, c->client->key, hash, sig, sig + 64, NULL) < 0)
+          return ctx_set_error(c, "could not sign the request", IN3_EINVAL);
+        sb_add_bytes(sb, ",\"sig\":", &sig_bytes, 1, false);
+      }
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
       if (rc->latest_block)
@@ -359,10 +396,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
           vc.config  = ctx->requests_configs + i;
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
-
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-            check_autoupdate(ctx, chain, vc.proof, node);
-
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
@@ -393,6 +427,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         }
       }
     }
+
+    // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
+    if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
+      check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
     if (!node || !is_blacklisted(node))

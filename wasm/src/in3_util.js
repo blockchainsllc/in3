@@ -408,12 +408,12 @@ class SimpleSigner {
     }
 
 
-    async hasAccount(account) {
-        return !!this.accounts[toChecksumAddress(account)]
+    async canSign(address) {
+        return !!this.accounts[toChecksumAddress(address)]
     }
 
     async sign(data, account, type, ethV = true) {
-        const pk = this.accounts[toChecksumAddress(account)]                          
+        const pk = this.accounts[toChecksumAddress(account)]
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         return ecSign(pk, data, type, ethV)
 

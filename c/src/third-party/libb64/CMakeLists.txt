@@ -32,15 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
-IF (IN3API)
-    add_library(in3_api_utils STATIC utils/api_utils_priv.c)
-
-    add_subdirectory(eth1)
-    add_subdirectory(usn)
-
-    IF (IPFS)
-        add_subdirectory(ipfs)
-    ENDIF (IPFS)
-ENDIF (IN3API)
-
+add_library(b64_o OBJECT
+        cencode.c
+        cdecode.c
+        )
+add_library(b64 STATIC $<TARGET_OBJECTS:b64_o>)

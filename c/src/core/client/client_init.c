@@ -67,8 +67,8 @@
 #define EXPECT_TOK_OBJ(token) EXPECT_TOK(token, d_type(token) == T_OBJECT, "expected object")
 #define EXPECT_TOK_ADDR(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 20, "expected address")
 #define EXPECT_TOK_B256(token) EXPECT_TOK(token, d_type(token) == T_BYTES && d_len(token) == 32, "expected 256 bit data")
-#define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || (d_type(token) == T_BYTES && d_len(token) <= 8)) && d_long(token) >= 0 && d_long(token) <= UINT64_MAX)
-#define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) >= 0 && d_long(token) <= UINT32_MAX)
+#define IS_D_UINT64(token) ((d_type(token) == T_INTEGER || (d_type(token) == T_BYTES && d_len(token) <= 8)) && d_long(token) <= UINT64_MAX)
+#define IS_D_UINT32(token) ((d_type(token) == T_INTEGER || d_type(token) == T_BYTES) && d_long(token) <= UINT32_MAX)
 #define IS_D_UINT16(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT16_MAX)
 #define IS_D_UINT8(token) (d_type(token) == T_INTEGER && d_int(token) >= 0 && d_int(token) <= UINT8_MAX)
 #define EXPECT_TOK_U8(token) EXPECT_TOK(token, IS_D_UINT8(token), "expected uint8 value")
@@ -226,7 +226,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->chain_id             = chain_id ? chain_id : ETH_CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
   c->finality             = 0;
-  c->max_attempts         = 5;
+  c->max_attempts         = 7;
   c->max_block_cache      = 0;
   c->max_code_cache       = 0;
   c->max_verified_hashes  = 5;
@@ -430,7 +430,7 @@ void in3_free(in3_t* a) {
     _free(a->filters->array);
     _free(a->filters);
   }
-  b_free(a->key);
+  if (a->key) _free(a->key);
   _free(a);
 }
 
@@ -524,9 +524,6 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("stats")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_STATS, (d_int(token) ? true : false));
-    } else if (token->key == key("key")) {
-      EXPECT_TOK_B256(token);
-      c->key = b_dup(d_bytes(token));
     } else if (token->key == key("useBinary")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_BINARY, (d_int(token) ? true : false));
@@ -539,6 +536,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxCodeCache")) {
       EXPECT_TOK_U32(token);
       c->max_code_cache = d_long(token);
+    } else if (token->key == key("key")) {
+      EXPECT_TOK_B256(token);
+      memcpy(c->key = _calloc(32, 1), token->data, token->len);
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
       c->max_verified_hashes = d_long(token);
