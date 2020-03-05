@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p .",
     "test": "mocha --timeout 15000 --full-trace testRunner.js testApi.js testUtil.js",
+    "test_report": "mocha --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testApi.js testUtil.js",
     "test_api": "mocha --inspect-brk  --timeout 15000 --full-trace  testApi.js",
     "test_fail": "mocha --timeout 15000 --full-trace  testApi.js testRunner.js ",
     "test_all": "mocha --timeout 15000 --full-trace  *.js",
@@ -41,6 +42,7 @@
     "chai": "^4.1.2",
     "handlebars": ">=4.1.2",
     "mocha": "^5.1.1",
+    "mocha-junit-reporter": "^1.23.3",
     "nyc": "^11.8.0",
     "source-map-support": "^0.5.6"
   },

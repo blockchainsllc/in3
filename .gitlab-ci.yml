@@ -269,7 +269,10 @@ test_wasm:
     - cd wasm/test
     - sh /prepare.sh
     - npm install
-    - npm test
+    - npm run test_report
+  artifacts:
+    reports:
+      junit: wasm/test/mocha.xml
 
 test_asmjs:
   image: docker.slock.it/build-images/node:10-alpine
