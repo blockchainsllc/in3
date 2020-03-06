@@ -421,7 +421,7 @@ format:
   tags:
     - short-jobs
   script:
-    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ \( -name "*.c" -o -name "*.h" \) | xargs clang-format-10 -i
+    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-10 -i
     - git diff --patch --exit-code
 
 cpd:
