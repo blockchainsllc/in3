@@ -49,6 +49,7 @@ sourceSets {
 }
 
 test {
+//    systemProperty "java.library.path", "../build/lib"
     useJUnitPlatform()
 }
 
