@@ -85,38 +85,46 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
 
   // verify the blockdata
   bytes_t* header = d_get_bytesk(vc->proof, K_BLOCK);
-  if (!header) return vc_err(vc, "no blockheader");
-  if (eth_verify_blockheader(vc, header, block_hash) != IN3_OK) return vc_err(vc, "invalid blockheader");
+  if (!header)
+    return vc_err(vc, "no blockheader");
+  if (eth_verify_blockheader(vc, header, block_hash) != IN3_OK)
+    return vc_err(vc, "invalid blockheader");
+
+  // check blocknumber
   if (!block_hash && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) != 1 || bytes_to_long(tmp.data, tmp.len) != blockNumber))
     return vc_err(vc, "Invalid blocknumber");
 
-  rlp_decode_in_list(header, BLOCKHEADER_TRANSACTIONS_ROOT, &t_root);
+  // extract transaction root
+  if (rlp_decode_in_list(header, BLOCKHEADER_TRANSACTIONS_ROOT, &t_root) != 1)
+    return vc_err(vc, "invalid transaction root");
 
   // if we have transaction, we need to verify them as well
-  if ((transactions = d_get(vc->proof, K_TRANSACTIONS))) {
-    // verify transaction count
-    if (d_len(transactions) != count)
-      return vc_err(vc, "Transaction count mismatch");
+  if (!(transactions = d_get(vc->proof, K_TRANSACTIONS)))
+    vc_err(vc, "Missing transaction-properties");
 
-    trie_t* trie = trie_new();
-    for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
-      bool     is_raw_tx = d_type(t) == T_BYTES;
-      bytes_t* path      = create_tx_path(i);
-      bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
-      trie_set_value(trie, path, tx);
-      if (!is_raw_tx) b_free(tx);
-      b_free(path);
-    }
+  // verify transaction count
+  if (d_len(transactions) != count)
+    return vc_err(vc, "Transaction count mismatch");
 
-    if (t_root.len != 32 || memcmp(t_root.data, trie->root, 32))
-      res = vc_err(vc, "Wrong Transaction root");
+  trie_t* trie = trie_new();
+  for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
+    bool     is_raw_tx = d_type(t) == T_BYTES;
+    bytes_t* path      = create_tx_path(i);
+    bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
+    trie_set_value(trie, path, tx);
+    if (!is_raw_tx) b_free(tx);
+    b_free(path);
+  }
 
-    trie_free(trie);
-  } else
-    res = vc_err(vc, "Missing transaction-properties");
+  // check tx root
+  if (t_root.len != 32 || memcmp(t_root.data, trie->root, 32))
+    res = vc_err(vc, "Wrong Transaction root");
+
+  trie_free(trie);
 
   return res;
 }
+
 in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber) {
 
   in3_ret_t  res = IN3_OK;
