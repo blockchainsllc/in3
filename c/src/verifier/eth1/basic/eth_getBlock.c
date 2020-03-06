@@ -71,8 +71,11 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
 
   in3_ret_t  res = IN3_OK;
   int        i;
-  d_token_t *transactions, *t, *t2 = NULL;
-  bytes_t    t_root;
+  d_token_t *transactions, *t = NULL;
+  bytes_t    t_root, tmp;
+  if (d_type(vc->result) != T_INTEGER)
+    return vc_err(vc, "Invalid transaction count");
+
   //transactions count
   int32_t count = d_int(vc->result);
 
@@ -83,11 +86,11 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
   // verify the blockdata
   bytes_t* header = d_get_bytesk(vc->proof, K_BLOCK);
   if (!header) return vc_err(vc, "no blockheader");
-  if (eth_verify_blockheader(vc, header, NULL)) return vc_err(vc, "invalid blockheader");
+  if (block_hash && eth_verify_blockheader(vc, header, block_hash)) return vc_err(vc, "invalid blockheader");
+  if (!block_hash && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) != 1 || bytes_to_long(tmp.data, tmp.len) != blockNumber))
+    return vc_err(vc, "Invalid blocknumber");
 
   rlp_decode_in_list(header, BLOCKHEADER_TRANSACTIONS_ROOT, &t_root);
-
-  bool full_proof = vc->config->use_full_proof;
 
   // if we have transaction, we need to verify them as well
   if ((transactions = d_get(vc->proof, K_TRANSACTIONS))) {
@@ -100,23 +103,9 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
       bool     is_raw_tx = d_type(t) == T_BYTES;
       bytes_t* path      = create_tx_path(i);
       bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
-      bytes_t* h         = (full_proof) ? sha3(tx) : NULL;
-
-      if (!is_raw_tx) {
-        if (eth_verify_tx_values(vc, t, tx))
-          res = IN3_EUNKNOWN;
-        if (block_hash && (t2 = d_getl(t, K_BLOCK_HASH, 32)) && !b_cmp(d_bytes(t2), block_hash))
-          res = vc_err(vc, "Wrong Blockhash in tx");
-        if (blockNumber && (t2 = d_get(t, K_BLOCK_NUMBER)) && d_long(t2) != blockNumber)
-          res = vc_err(vc, "Wrong Blocknumber in tx");
-        if ((t2 = d_get(t, K_TRANSACTION_INDEX)) && d_int(t2) != i)
-          res = vc_err(vc, "Wrong Transaction index in tx");
-      }
-
       trie_set_value(trie, path, tx);
       if (!is_raw_tx) b_free(tx);
       b_free(path);
-      if (h) b_free(h);
     }
 
     if (t_root.len != 32 || memcmp(t_root.data, trie->root, 32))
