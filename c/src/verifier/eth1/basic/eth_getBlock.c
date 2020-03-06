@@ -85,26 +85,22 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
   if (!header) return vc_err(vc, "no blockheader");
   if (eth_verify_blockheader(vc, header, NULL)) return vc_err(vc, "invalid blockheader");
 
-  // rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp);
   rlp_decode_in_list(header, BLOCKHEADER_TRANSACTIONS_ROOT, &t_root);
-  // rlp_decode_in_list(header, BLOCKHEADER_PARENT_HASH, &bhash);
-  // int64_t bnumber = bytes_to_long(tmp.data, tmp.len);
 
-  bool include_full_tx = d_get_int_at(d_get(vc->request, K_PARAMS), 1);
-  bool full_proof      = vc->config->use_full_proof;
+  bool full_proof = vc->config->use_full_proof;
 
   // if we have transaction, we need to verify them as well
-  if ((transactions = d_get(include_full_tx ? vc->result : vc->proof, K_TRANSACTIONS))) {
+  if ((transactions = d_get(vc->proof, K_TRANSACTIONS))) {
     // verify transaction count
     if (d_len(transactions) != count)
-      return vc_err(vc, "no count found!");
+      return vc_err(vc, "Transaction count mismatch");
 
     trie_t* trie = trie_new();
     for (i = 0, t = transactions + 1; i < d_len(transactions); i++, t = d_next(t)) {
       bool     is_raw_tx = d_type(t) == T_BYTES;
       bytes_t* path      = create_tx_path(i);
       bytes_t* tx        = is_raw_tx ? d_bytes(t) : serialize_tx(t);
-      bytes_t* h         = (full_proof || !include_full_tx) ? sha3(tx) : NULL;
+      bytes_t* h         = (full_proof) ? sha3(tx) : NULL;
 
       if (!is_raw_tx) {
         if (eth_verify_tx_values(vc, t, tx))
@@ -127,11 +123,6 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
       res = vc_err(vc, "Wrong Transaction root");
 
     trie_free(trie);
-
-    // verify uncles
-    if (res == IN3_OK && full_proof)
-      return eth_verify_uncles(vc, d_get_bytesk(vc->result, K_SHA3_UNCLES)->data, d_get(vc->proof, K_UNCLES), d_get(vc->result, K_UNCLES));
-
   } else
     res = vc_err(vc, "Missing transaction-properties");
 
