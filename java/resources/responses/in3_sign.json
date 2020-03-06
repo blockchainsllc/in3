@@ -1,0 +1,25 @@
+[
+    {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": [
+            {
+                "blockHash": "0x2a8bf38abe3fec478a2029e74ac95ecdbef95ff2fb832786ba4c5231c8cea480",
+                "block": 9551793,
+                "r": "0x16cf7b94a7276532ceff4bf6fd50fd01f2c2962a5f0887c70c75943ce9e08b77",
+                "s": "0x01f51c90e7f3493acf3c5b4efbed63534711f6209b2c47c34074f4882b92feaa",
+                "v": 27,
+                "msgHash": "0x0284928ef6fd270bacbfdba3087d0c50ad2db74af54c8bda8209b8ac9e41cfe1"
+            }
+        ],
+        "in3": {
+            "lastValidatorChange": 0,
+            "lastNodeList": 9422326,
+            "execTime": 60,
+            "rpcTime": 58,
+            "rpcCount": 1,
+            "currentBlock": 9552071,
+            "version": "2.1.0"
+        }
+    }
+]

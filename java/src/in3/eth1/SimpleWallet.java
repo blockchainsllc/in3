@@ -36,9 +36,8 @@ package in3.eth1;
 
 import in3.IN3;
 import in3.Loader;
-import in3.Signer;
-import java.util.HashMap;
-import java.util.Map;
+import in3.utils.Signer;
+import java.util.*;
 
 /**
  * a simple Implementation for holding private keys to sing data or
@@ -85,7 +84,7 @@ public class SimpleWallet implements Signer {
   }
 
   /** returns true if the account is supported (or unlocked) */
-  public boolean hasAccount(String address) {
+  public boolean canSign(String address) {
     return privateKeys.containsKey(address.toLowerCase());
   }
 

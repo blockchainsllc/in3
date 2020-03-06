@@ -34,11 +34,13 @@
 
 package in3;
 
-import in3.Proof;
-import in3.StorageProvider;
 import in3.config.ClientConfiguration;
-import in3.config.Configuration;
 import in3.eth1.API;
+import in3.utils.Crypto;
+import in3.utils.JSON;
+import in3.utils.Signature;
+import in3.utils.Signer;
+import in3.utils.StorageProvider;
 
 /**
  * This is the main class creating the incubed client. The client can then be
@@ -46,6 +48,12 @@ import in3.eth1.API;
  *
  */
 public class IN3 {
+  private static final String CONFIG      = "in3_config";
+  private static final String NODE_LIST   = "in3_nodeList";
+  private static final String SIGN        = "in3_sign";
+  private static final String CACHE_CLEAR = "in3_cacheClear";
+
+  private static final String ENS_SUFFIX = ".ETH";
 
   static {
     Loader.loadLibrary();
@@ -135,8 +143,15 @@ public class IN3 {
   /**
      * gets the ethereum-api
      */
-  public in3.eth1.API getEth1API() {
+  public API getEth1API() {
     return new API(this);
+  }
+
+  /**
+   * gets the utils/crypto-api
+   */
+  public Crypto getCrypto() {
+    return new Crypto(this);
   }
 
   /**
@@ -177,13 +192,26 @@ public class IN3 {
   /**
      * send a request. The request must a valid json-string with method and params
      */
-  public native String send(String request);
+  public String send(String request) {
+    if (!config.isSynced()) {
+      this.applyConfig();
+    }
+    return sendinternal(request);
+  }
+
+  private native String sendinternal(String request);
 
   /**
      * send a request but returns a object like array or map with the parsed
      * response. The request must a valid json-string with method and params
      */
-  public native Object sendobject(String request);
+  public Object sendobject(String request) {
+    if (!config.isSynced()) {
+      this.applyConfig();
+    }
+    return sendobjectinternal(request);
+  }
+  private native Object sendobjectinternal(String request);
 
   private String toRPC(String method, Object[] params) {
     String p = "";
@@ -199,9 +227,29 @@ public class IN3 {
         else
           p += "\"" + s + "\"";
       } else
-        p += params[i].toString();
+        p += JSON.toJson(params[i]);
     }
     return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
+  }
+
+  private String toRPC(String method, Object[] params, Object[] address) {
+    String p = "";
+    for (int i = 0; i < params.length; i++) {
+      if (p.length() > 0)
+        p += ",";
+      if (params[i] == null)
+        p += "null";
+      else if (params[i] instanceof String) {
+        String s = (String) params[i];
+        if (s.charAt(0) == '{' || s.equals("true") || s.equals("false"))
+          p += s;
+        else
+          p += "\"" + s + "\"";
+      } else
+        p += JSON.toJson(params[i]);
+    }
+
+    return "{\"in3\":{\"data_nodes\":" + JSON.toJson(address) + "}, \"method\":\"" + method + "\", \"params\":[" + p + "]}";
   }
 
   /**
@@ -209,10 +257,16 @@ public class IN3 {
      * raw request from it and return the result.
      */
   public String sendRPC(String method, Object[] params) {
-    if (!config.isSynced()) {
-      this.applyConfig();
-    }
     return this.send(toRPC(method, params));
+  }
+
+  private Object sendObjectRPC(String method, Object[] params, String[] address) {
+    return this.sendobject(toRPC(method, params, address));
+  }
+
+  public Object sendRPCasObject(String method, Object[] params, boolean useEnsResolver) {
+    Object[] resolvedParams = useEnsResolver ? handleEns(params) : params;
+    return this.sendobject(toRPC(method, resolvedParams));
   }
 
   /**
@@ -220,10 +274,7 @@ public class IN3 {
      * raw request from it and return the result.
      */
   public Object sendRPCasObject(String method, Object[] params) {
-    if (!config.isSynced()) {
-      this.applyConfig();
-    }
-    return this.sendobject(toRPC(method, params));
+    return sendRPCasObject(method, params, true);
   }
 
   /** internal function to handle the internal requests */
@@ -231,13 +282,49 @@ public class IN3 {
     return IN3.transport.handle(urls, payload);
   }
 
-  private native void free();
+  protected native void free();
 
   private native long init(long chainId);
 
   private native void initcache();
 
+  /** 
+     *  returns the current incubed version.
+     */
   public static native String getVersion();
+
+  /**
+     * clears the cache.
+     */
+  public boolean cacheClear() {
+    return (boolean) sendRPCasObject(CACHE_CLEAR, new Object[] {});
+  }
+
+  /**
+     * restrieves the node list
+     */
+  public IN3Node[] nodeList() {
+    NodeList nl = NodeList.asNodeList(sendRPCasObject(NODE_LIST, new Object[] {}));
+    return nl.getNodes();
+  }
+
+  /**
+     * request for a signature of an already verified hash.
+     */
+  public SignedBlockHash[] sign(BlockID[] blocks, String[] address) {
+    return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, blocks, address));
+  }
+
+  protected Object[] handleEns(Object[] params) {
+    Object[] result = params.clone();
+    for (int i = 0; i < result.length; i++) {
+      if (result[i] != null && result[i].toString().toUpperCase().endsWith(ENS_SUFFIX)) {
+        result[i] = (Object) getEth1API().ens(result[i].toString());
+      }
+    }
+
+    return result;
+  }
 
   // Test it
   public static void main(String[] args) {
@@ -247,9 +334,8 @@ public class IN3 {
 
     // create client
     IN3 in3 = IN3.forChain(Chain.MAINNET);
-
     // set cache in tempfolder
-    in3.setStorageProvider(new in3.TempStorageProvider());
+    in3.setStorageProvider(new in3.utils.TempStorageProvider());
 
     // execute the command
     System.out.println(in3.sendRPC(args[0], params));
