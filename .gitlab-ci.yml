@@ -385,6 +385,7 @@ java_macos:
   script:
     - mv java_build build
     - cd java
+    - ulimit -c unlimited
     - ./gradlew test
   tags:
     - mac-mini-runner
