@@ -10,21 +10,20 @@
     Need to change this because its generating garbage in the build directory... consider on using a custom nonjava pipeline
     it is also kind of schizophrenic to have a standalone build system for running tests
 */
-plugins {
-    id 'java'
-    id 'jacoco'
-    id 'com.github.ksoichiro.console.reporter' version '0.6.2'
-}
+apply plugin: 'java'
+apply plugin: "eclipse"
 
 def jarSourceFolder = "../build/lib/in3.jar"
 def jarOutputFolder = "./target"
 
-// Custom tasks for testing the .jar
+test.dependsOn 'copyJarToBindings'
+
 task createLibDir {
     mkdir jarOutputFolder
 }
 
 task copyJarToBindings(type: Copy) {
+    dependsOn 'createLibDir'
     from jarSourceFolder
     into jarOutputFolder
 }
@@ -40,16 +39,19 @@ sourceSets {
     }
     test {
         java {
-            srcDirs = ['test']
+            srcDirs = ['./test']
         }
         resources {
-            srcDirs = ['resources']
+            srcDirs = ['./resources']
         }
     }
 }
 
 test {
-//    systemProperty "java.library.path", "../build/lib"
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
     useJUnitPlatform()
 }
 
@@ -67,37 +69,3 @@ dependencies {
     testImplementation 'org.json:json:20190722'
 	testImplementation 'commons-io:commons-io:2.6'
 }
-
-jacocoTestReport {
-    sourceSets {
-        main {
-            java {
-                srcDirs = ['./src']
-            }
-            resources {
-                srcDirs = ['./src']
-            }
-        }
-    }
-}
-
-/*
-  * Custom sourceSets definition for running the tasks. Since building the .jar has a point of failure (aka the CMakeLists.txt) its desirable to test the .jar
-  * For the actual coverage report to work, jacoco plugin must know the source code hence the specific sourceMaps.
-*/
-consoleReporter {
-    jacoco {
-        onlyWhenCoverageTaskExecuted true
-        reportAfterBuildFinished false
-    }
-}
-
-/*
-  * Testing tasks pipeline. Since the key task is testing, this sequence was built arround it.
-  * Also note that the coverage report plugin has a bug on it so we had to disable the attachment of the report after the build
-  * and do it manually here (see: https://github.com/ksoichiro/gradle-console-reporter/issues/7).
-*/
-test.dependsOn 'createLibDir'
-test.dependsOn 'copyJarToBindings'
-test.finalizedBy jacocoTestReport
-jacocoTestReport.finalizedBy reportCoverage

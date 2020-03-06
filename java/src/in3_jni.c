@@ -52,6 +52,7 @@
 #endif
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
+  if (obj == NULL || env == NULL || (*env)->GetObjectClass(env, obj) == NULL) return NULL;
   jlong l = (*env)->GetLongField(env, obj, (*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), "ptr", "J"));
   return (in3_t*) (size_t) l;
 }

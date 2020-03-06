@@ -384,14 +384,13 @@ java_macos:
     - java
   script:
     - mv java_build build
-    - cd java
-    - ulimit -c unlimited
-    - ./gradlew test
+    - cd java; cp test/build_test.gradle build.gradle
+    - ulimit -c unlimited; ./gradlew test
   tags:
     - mac-mini-runner
-  artifacts:
-    reports:
-      junit: java/build/test-results/test/TEST-*.xml
+#  artifacts:
+#    reports:
+#      junit: java/build/test-results/test/TEST-*.xml
 
 ##### local_docker_deploy_and_vulnerability_analysis #####
 
