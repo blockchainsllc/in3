@@ -86,7 +86,7 @@ in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block
   // verify the blockdata
   bytes_t* header = d_get_bytesk(vc->proof, K_BLOCK);
   if (!header) return vc_err(vc, "no blockheader");
-  if (block_hash && eth_verify_blockheader(vc, header, block_hash)) return vc_err(vc, "invalid blockheader");
+  if (eth_verify_blockheader(vc, header, block_hash) != IN3_OK) return vc_err(vc, "invalid blockheader");
   if (!block_hash && (rlp_decode_in_list(header, BLOCKHEADER_NUMBER, &tmp) != 1 || bytes_to_long(tmp.data, tmp.len) != blockNumber))
     return vc_err(vc, "Invalid blocknumber");
 
