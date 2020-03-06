@@ -860,6 +860,9 @@ pages:
   stage: deploy
   tags:
     - arm
+  only:
+    refs:
+      - develop
   dependencies:
     - arm7
     - readthedocs
