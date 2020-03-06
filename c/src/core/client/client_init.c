@@ -410,6 +410,7 @@ in3_ret_t in3_client_clear_nodes(in3_t* c, chain_id_t chain_id) {
 
 /* frees the data */
 void in3_free(in3_t* a) {
+  if (!a) return;
   int i;
   for (i = 0; i < a->chains_length; i++) {
     if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
@@ -419,9 +420,9 @@ void in3_free(in3_t* a) {
     _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->signer) _free(a->signer);
-  _free(a->chains);
+  if (a->chains) _free(a->chains);
 
-  if (a->filters != NULL) {
+  if (a->filters) {
     in3_filter_t* f = NULL;
     for (size_t j = 0; j < a->filters->count; j++) {
       f = a->filters->array[j];

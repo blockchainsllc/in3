@@ -599,7 +599,8 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv* env, jobject o
  */
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_t* in3 = get_in3(env, ob);
-  if (in3->cache)
+  if (!in3) return;
+  if (in3->cache && in3->cache->cptr)
     (*env)->DeleteGlobalRef(env, (jobject) in3->cache->cptr);
 
   in3_free(in3);
