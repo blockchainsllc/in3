@@ -1,4 +1,4 @@
-package in3;
+package in3.eth1;
 
 /*
  * Constants for the ens resolver
