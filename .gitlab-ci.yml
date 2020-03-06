@@ -388,6 +388,9 @@ java_macos:
     - ulimit -c unlimited; ./gradlew test
   tags:
     - mac-mini-runner
+#  artifacts:
+#    reports:
+#      junit: java/build/test-results/test/TEST-*.xml
 
 ##### local_docker_deploy_and_vulnerability_analysis #####
 
