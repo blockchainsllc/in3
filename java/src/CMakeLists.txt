@@ -51,7 +51,6 @@ IF (NOT DEFINED ANDROID_ABI)
   set(SOURCES
     in3/BlockID.java
     in3/Chain.java
-    in3/ENSMethod.java
     in3/IN3.java
     in3/IN3DefaultTransport.java
     in3/IN3Node.java
@@ -65,6 +64,7 @@ IF (NOT DEFINED ANDROID_ABI)
     in3/config/ChainConfiguration.java
     in3/config/Configuration.java
     in3/config/NodeConfiguration.java
+    in3/eth1/ENSMethod.java
     in3/eth1/API.java
     in3/eth1/Block.java
     in3/eth1/Log.java
