@@ -82,24 +82,18 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   if (!method) return vc_err(vc, "No Method in request defined!");
 
   if (strcmp(method, "eth_getTransactionByHash") == 0)
-    // for txReceipt, we need the txhash
     return eth_verify_eth_getTransaction(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0));
   else if (!strcmp(method, "eth_getTransactionByBlockHashAndIndex") || !strcmp(method, "eth_getTransactionByBlockNumberAndIndex")) {
     return eth_verify_eth_getTransactionByBlock(vc, d_get_at(d_get(vc->request, K_PARAMS), 0), d_get_int_at(d_get(vc->request, K_PARAMS), 1));
   } else if (strcmp(method, "eth_getBlockByNumber") == 0)
-    // for txReceipt, we need the txhash
     return eth_verify_eth_getBlock(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
   else if (strcmp(method, "eth_getBlockTransactionCountByHash") == 0)
-    // for txReceipt, we need the txhash
     return eth_verify_eth_getBlockTransactionCount(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
   else if (strcmp(method, "eth_getBlockTransactionCountByNumber") == 0)
-    // for txReceipt, we need the txhash
     return eth_verify_eth_getBlockTransactionCount(vc, NULL, d_get_long_at(d_get(vc->request, K_PARAMS), 0));
   else if (strcmp(method, "eth_getBlockByHash") == 0)
-    // for txReceipt, we need the txhash
     return eth_verify_eth_getBlock(vc, d_get_bytes_at(d_get(vc->request, K_PARAMS), 0), 0);
   else if (strcmp(method, "eth_getBalance") == 0 || strcmp(method, "eth_getCode") == 0 || strcmp(method, "eth_getStorageAt") == 0 || strcmp(method, "eth_getTransactionCount") == 0)
-    // for txReceipt, we need the txhash
     return eth_verify_account_proof(vc);
   else if (strcmp(method, "eth_gasPrice") == 0)
     return IN3_OK;
