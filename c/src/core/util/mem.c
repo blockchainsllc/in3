@@ -222,7 +222,7 @@ void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* 
     }
     t = t->next;
   }
-  printf("realloc a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
+  //printf("realloc a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
   return _realloc_(ptr, size, oldsize, file, func, line);
 }
 

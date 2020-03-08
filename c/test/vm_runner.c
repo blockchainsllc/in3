@@ -95,6 +95,8 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   char* descr = NULL;
   int   i;
 
+  char* sname = strstr(name, "/testdata/");
+  if (sname) name = sname + 10;
   int l = strlen(name), fail = 0;
   if (name[l - 5] == '.') name[l - 5] = 0;
   char*    tname = d_get_keystr(test->key);

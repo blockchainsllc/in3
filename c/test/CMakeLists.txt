@@ -56,6 +56,9 @@ endif()
 add_executable(runner runner.c)
 target_link_libraries(runner eth_full eth_api ipfs)
 
+add_executable(junit util/junit.c)
+target_link_libraries(junit eth_full)
+
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner eth_full)
 
