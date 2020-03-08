@@ -86,17 +86,21 @@ mac_os:
     - cd mac_build
     - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
     - make
-    - CTEST_OUTPUT_ON_FAILURE=1 make test
+    - ctest -V | tee ../mac_test_c.log | test/junit > ../mac_test_c.xml
     - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
     - make
 
   artifacts:
+    reports:
+      junit: mac_test_c.xml
     paths:
       - mac_build/c/docs
       - mac_build/java/docs
       - mac_build/lib
       - mac_build/bin
+      - mac_test_c.xml
+      - mac_test_c.log
   tags:
     - mac-mini-runner
 
@@ -239,7 +243,7 @@ test_c:
     - cd testbuild
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - CTEST_OUTPUT_ON_FAILURE=1 make test
+    - make test
   artifacts:
     paths:
       - testbuild/test

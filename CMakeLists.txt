@@ -164,6 +164,7 @@ if(TEST)
     enable_testing()
     add_subdirectory(c/test)
     add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 8)
+    add_custom_target(rtest COMMAND ${CMAKE_CTEST_COMMAND} -V )
 endif(TEST)
 
 
