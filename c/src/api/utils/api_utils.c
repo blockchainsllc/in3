@@ -32,9 +32,9 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "api_utils_priv.h"
-#include "../../core/util/mem.h"
 #include "api_utils.h"
+#include "../../core/util/mem.h"
+#include "api_utils_priv.h"
 
 // forward decl
 void  set_error(int err, const char* msg);
