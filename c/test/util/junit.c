@@ -86,6 +86,16 @@ static void add_testcase(suite_t* suite, char* name, char* file, char* error) {
   sb_add_chars(sb, "</testcase>\n");
 }
 
+static bool start_with_number(char* c) {
+  int count = 0;
+  for (; *c; c++, count++) {
+    if ((*c >= '0' && *c <= '9') || *c == ' ') continue;
+    if (*c == ':' && count) return true;
+    return false;
+  }
+  return false;
+}
+
 int main(int argc, char* argv[]) {
   char*  full_line = NULL;
   size_t line_n    = 0;
@@ -150,12 +160,12 @@ int main(int argc, char* argv[]) {
           char* pass  = strtok(NULL, ":");
           char* error = (pass && strcmp(pass, "FAIL") == 0) ? pass + 6 : NULL;
           add_testcase(last_suite, name, file, error);
-        } else if (last_suite->type == TYPE_JSON && out[p] == ':') {
+        } else if (last_suite->type == TYPE_JSON && out[p] == ':' && start_with_number(out)) {
           char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
           out[65]     = 0;
           char* name  = trim(out + p + 1);
           add_testcase(last_suite, name, "runner", error);
-        } else if (last_suite->type == TYPE_EVM && out[p] == ':') {
+        } else if (last_suite->type == TYPE_EVM && out[p] == ':' && start_with_number(out)) {
           char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
           out[65]     = 0;
           char* name  = trim(out + p + 1);
