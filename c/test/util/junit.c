@@ -79,7 +79,9 @@ static void add_testcase(suite_t* suite, char* name, char* file, char* error) {
   escape(sb, file);
   sb_add_chars(sb, "\">");
   if (error) {
-    sb_add_chars(sb, "\n      <failure type=\"assert\" message=\"");
+    sb_add_chars(sb, "\n      <failure type=\"");
+    escape(sb, suite->name);
+    sb_add_chars(sb, "\" message=\"");
     escape(sb, error);
     sb_add_chars(sb, "\"/>\n    ");
   }
