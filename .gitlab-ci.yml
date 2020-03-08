@@ -239,7 +239,6 @@ test_c:
     - cd testbuild
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - cd testbuild
     - ctest -V | tee all.log | test/junit > all.xml 
   artifacts:
     paths:
