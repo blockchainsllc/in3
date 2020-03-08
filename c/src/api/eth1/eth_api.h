@@ -55,15 +55,6 @@
 /**< The current error or null if all is ok */
 #define eth_last_error() api_last_error()
 
-/**
- * a 32 byte long integer used to store ethereum-numbers. 
- * 
- * use the as_long() or as_double() to convert this to a useable number.
-*/
-typedef struct {
-  uint8_t data[32];
-} uint256_t;
-
 /** Optional types */
 DEFINE_OPTIONAL_T(uint64_t);
 DEFINE_OPTIONAL_T(bytes_t);
@@ -186,16 +177,12 @@ bytes_t*          eth_sendTransaction(in3_t* in3, address_t from, address_t to, 
 bytes_t*          eth_sendRawTransaction(in3_t* in3, bytes_t data);                                        /**< Creates new message call transaction or a contract creation for signed transactions. Returns (32 Bytes) - the transaction hash, or the zero hash if the transaction is not yet available. Free after use with b_free(). */
 eth_tx_receipt_t* eth_getTransactionReceipt(in3_t* in3, bytes32_t tx_hash);                                /**< Returns the receipt of a transaction by transaction hash. Free result after use with eth_tx_receipt_free() */
 char*             eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash);                                     /**< Waits for receipt of a transaction requested by transaction hash. */
+void              eth_log_free(eth_log_t* log);                                                            /**< Frees a eth_log_t object */
+void              eth_tx_receipt_free(eth_tx_receipt_t* txr);                                              /**< Frees a eth_tx_receipt_t object */
 
-// Helper functions
-long double as_double(uint256_t d);                                          /**< Converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no guarantee to have the full precision. */
-uint64_t    as_long(uint256_t d);                                            /**< Converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
-uint256_t   to_uint256(uint64_t value);                                      /**< Converts a uint64_t into its uint256_t representation. */
-in3_ret_t   decrypt_key(d_token_t* key_data, char* password, bytes32_t dst); /**< Decrypts the private key from a json keystore file using PBKDF2 or SCRYPT (if enabled) */
-void        eth_log_free(eth_log_t* log);                                    /**< Frees a eth_log_t object */
-void        eth_tx_receipt_free(eth_tx_receipt_t* txr);                      /**< Frees a eth_tx_receipt_t object */
+/**
+ * this function should only be called once and will register the eth-API verifier.
+ */
+void in3_register_eth_api();
 
-// more helper
-in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]); /**< converts the given address to a checksum address. If chain_id is passed, it will use the EIP1191 to include it as well. */
-void      in3_register_eth_api();
 #endif

@@ -41,6 +41,26 @@
 #ifndef IN3_API_UTILS_H
 #define IN3_API_UTILS_H
 
+#include "client.h"
+
+/**
+ * a 32 byte long integer used to store ethereum-numbers.
+ *
+ * use the as_long() or as_double() to convert this to a useable number.
+*/
+typedef struct {
+  uint8_t data[32];
+} uint256_t;
+
+// Helper functions
+long double as_double(uint256_t d);                                          /**< Converts a uint256_t in a long double. Important: since a long double stores max 16 byte, there is no guarantee to have the full precision. */
+uint64_t    as_long(uint256_t d);                                            /**< Converts a uint256_t in a long . Important: since a long double stores 8 byte, this will only use the last 8 byte of the value. */
+uint256_t   to_uint256(uint64_t value);                                      /**< Converts a uint64_t into its uint256_t representation. */
+in3_ret_t   decrypt_key(d_token_t* key_data, char* password, bytes32_t dst); /**< Decrypts the private key from a json keystore file using PBKDF2 or SCRYPT (if enabled) */
+
+// more helper
+in3_ret_t to_checksum(address_t adr, chain_id_t chain_id, char out[43]); /**< converts the given address to a checksum address. If chain_id is passed, it will use the EIP1191 to include it as well. */
+
 /**
  * function to set error. Will only be called internally.
  * default implementation is NOT MT safe!
