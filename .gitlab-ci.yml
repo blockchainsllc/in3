@@ -239,11 +239,16 @@ test_c:
     - cd testbuild
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - CTEST_OUTPUT_ON_FAILURE=1 make test
+    - cd testbuild
+    - ctest -V | tee all.log | test/junit > all.xml 
   artifacts:
     paths:
       - testbuild/test
+      - testbuild/all.log
+      - testbuild/all.xml
       - Testing
+    reports:
+      junit: testbuild/all.xml
 
 #test_evm:
 #  image: docker.slock.it/build-images/cmake:gcc8

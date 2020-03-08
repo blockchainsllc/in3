@@ -53,9 +53,13 @@ static void escape(sb_t* sb, char* c) {
         sb_add_chars(sb, "&amp;");
         break;
       case '"':
-        sb_add_chars(sb, "&quote;");
+        sb_add_chars(sb, "&quot;");
         break;
-
+      case '\'':
+        sb_add_chars(sb, "&apos;");
+        break;
+      case 27:
+        break;
       default:
         sb_add_char(sb, *c);
         break;
@@ -147,13 +151,13 @@ int main(int argc, char* argv[]) {
           char* error = (pass && strcmp(pass, "FAIL") == 0) ? pass + 6 : NULL;
           add_testcase(last_suite, name, file, error);
         } else if (last_suite->type == TYPE_JSON && out[p] == ':') {
-          char* error = strstr(out + 67, "OK") == NULL ? "Failed" : NULL;
-          out[67]     = 0;
+          char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
+          out[65]     = 0;
           char* name  = trim(out + p + 1);
           add_testcase(last_suite, name, "runner", error);
         } else if (last_suite->type == TYPE_EVM && out[p] == ':') {
-          char* error = strstr(out + 67, "OK") == NULL ? "Failed" : NULL;
-          out[67]     = 0;
+          char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
+          out[65]     = 0;
           char* name  = trim(out + p + 1);
           if (strstr(name, ":"))
             name = strstr(name, ":") + 2;
@@ -181,7 +185,7 @@ int main(int argc, char* argv[]) {
              last_suite->type == TYPE_EVM ? "evm" : (last_suite->type == TYPE_JSON ? "json" : "unit"),
              last_suite->name, last_suite->total, last_suite->fails, last_suite->index - 1, last_suite->time);
       if (last_suite->testcases.len) printf("%s", last_suite->testcases.data);
-      if (last_suite->props.len) printf("    <properties>\n%s    <properties>\n", last_suite->props.data);
+      if (last_suite->props.len) printf("    <properties>\n%s    </properties>\n", last_suite->props.data);
       if (last_suite->out.len) printf("    <system-out>\n%s    </system-out>\n", last_suite->out.data);
       printf("  </testsuite>\n");
 
@@ -189,4 +193,6 @@ int main(int argc, char* argv[]) {
     }
   }
   printf("</testsuites>");
+
+  return failed ? -1 : 0;
 }
