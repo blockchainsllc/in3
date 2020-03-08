@@ -242,6 +242,8 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   int is_bin = d_get_int(test, "binaryFormat");
 
   in3_client_rpc(c, method, params, is_bin ? NULL : &res, &err);
+  fflush(stdout);
+  fflush(stderr);
   printf("\n%2i : %-60s ", counter, descr);
 
   if (res && intern) {
