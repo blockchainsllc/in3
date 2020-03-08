@@ -70,7 +70,7 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc);
 in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber);
 
 /**
- * this function should only be called once and will register the eth-nano verifier.
+ * this function should only be called once and will register the eth-basic verifier.
  */
 void in3_register_eth_basic();
 

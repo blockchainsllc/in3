@@ -60,6 +60,7 @@ if (IN3_LIB)
         $<TARGET_OBJECTS:usn_api_o>
         $<TARGET_OBJECTS:ipfs_o>
         $<TARGET_OBJECTS:ipfs_api_o>
+        $<TARGET_OBJECTS:api_utils_o>
     )
     # if we use curl, we include curl transport as well
     if (USE_CURL)
