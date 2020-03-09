@@ -110,7 +110,9 @@ int main(int argc, char* argv[]) {
   memset(&suite, 0, sizeof(suite_t));
   suite_t* last_suite = &suite;
   printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuites>\n");
-  int n = 0;
+  int  n = 0;
+  char last_json_test[300], tmp[500];
+  last_json_test[0] = 0;
 
   while ((n = getline(&full_line, &line_n, stdin)) > 0) {
     //    printf("%i:%i|%s", n, (int) line_n, full_line);
@@ -166,15 +168,21 @@ int main(int argc, char* argv[]) {
           char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
           out[65]     = 0;
           char* name  = trim(out + p + 1);
-          add_testcase(last_suite, name, "runner", error);
+          if (*name == '.') {
+            sprintf(tmp, "%s%s", last_json_test, name);
+            add_testcase(last_suite, name, "runner", error);
+          } else {
+            strcpy(last_json_test, name);
+            add_testcase(last_suite, name, "runner", error);
+          }
         } else if (last_suite->type == TYPE_EVM && out[p] == ':' && start_with_number(out)) {
           char* error = strstr(out + 66, "OK") == NULL ? "Failed" : NULL;
           out[65]     = 0;
           char* name  = trim(out + p + 1);
-          if (strstr(name, ":"))
-            name = strstr(name, ":") + 2;
-          else
+          if (!strstr(name, ":"))
             name = last_suite->name;
+          //            name = strstr(name, ":") + 2;
+          //          else
           add_testcase(last_suite, name, "runner", error);
         }
       }
