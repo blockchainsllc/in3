@@ -407,6 +407,9 @@ in3_ctx_t* in3_client_rpc_ctx(
     char*  params  /**< [in] params as string. */
 );
 
+in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, /**< [in] the clientt config. */
+                                  char*  req /**< [in] rpc method. */);
+
 /**
  * handles a failable context
  *
