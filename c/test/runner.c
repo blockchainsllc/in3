@@ -241,7 +241,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   //  _tmp_response = response;
   int is_bin = d_get_int(test, "binaryFormat");
 
-  in3_client_rpc(c, method, params, is_bin ? NULL : &res, &err);
+  in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err);
 
   if (res && intern) {
     json_ctx_t* actual_json = parse_json(res);
