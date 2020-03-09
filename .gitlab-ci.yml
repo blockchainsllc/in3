@@ -78,7 +78,7 @@ clang50:
 clang10:
   image: docker.slock.it/build-images/cmake:clang10
   extends: .conanbuild
-
+      
 mac_os:
   stage: build
   script:
@@ -263,6 +263,22 @@ test_c:
 #    - IN3_SKIPTESTS=randomStatetest642,stZeroKnowledge,ecadd,returndatacopyPythonBug,Call1024PreCalls,recursiveCreateReturnValue,static_Call50000_sha256 ../../../../testbuild/test/vmrunner  */*.json || echo "\n ignoring failure .."
 #    - cd ../vmTests
 #    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
+
+
+test_android:
+  image: cangol/android-gradle
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - git clone git@github.com:slockit/in3-example-android.git
+    - cd in3-example-android/app
+    - cp -r ../../java/src/in3 src/main/java/
+    - mkdir in3-c
+    - mv ../../c ../../java in3-c/
+    - cd ..
+    - gradlew build
+
 
 test_wasm:
   image: docker.slock.it/build-images/node:10-alpine
