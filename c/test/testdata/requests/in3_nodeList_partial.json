@@ -1,6 +1,7 @@
 [
   {
     "descr": "partial in3 nodelist",
+    "fuzzer": true,
     "chainId": "0x1",
     "verification": "proof",
     "request": {
@@ -8,15 +9,13 @@
       "params": [
         "0x2",
         "0xd355433cb98bdc18c5a1a28a04e218650e349d47bc0bc15cb51f71a53d12620e",
-        [],
-        {
-          "in3": {
-            "signerNodes": [
-              "0x1fe2e9bf29aa1938859af64c413361227d04059a"
-            ]
-          }
-        }
-      ]
+        [ ]
+      ],
+      "in3": {
+        "signerNodes": [
+          "0x1fe2e9bf29aa1938859af64c413361227d04059a"
+        ]
+      }
     },
     "response": [
       {

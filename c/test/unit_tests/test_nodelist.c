@@ -541,6 +541,8 @@ static void test_nodelist_update_6() {
   // reset rand to be deterministic
   s = 0;
   in3_rand(&s);
+  t = 3720;
+  in3_time(&t);
 
   c->proof = PROOF_NONE;
 

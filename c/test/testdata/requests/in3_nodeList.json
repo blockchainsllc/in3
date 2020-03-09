@@ -6,15 +6,12 @@
     "verification": "proof",
     "request": {
       "method": "in3_nodeList",
-      "params": [
-        {
-          "in3": {
-            "signerNodes": [
-              "0x1fe2e9bf29aa1938859af64c413361227d04059a"
-            ]
-          }
-        }
-      ]
+      "params": [ ],
+      "in3": {
+        "signerNodes": [
+          "0x1fe2e9bf29aa1938859af64c413361227d04059a"
+        ]
+      }
     },
     "response": [
       {
