@@ -384,12 +384,13 @@ java_arm:
 
 java_macos:
   stage: test
+  allow_failure: true
   dependencies:
     - java
   script:
     - mv java_build build
     - cd java; cp test/build_test.gradle build.gradle
-    - ulimit -c unlimited; ./gradlew test
+    - ./gradlew test
   tags:
     - mac-mini-runner
 #  artifacts:
