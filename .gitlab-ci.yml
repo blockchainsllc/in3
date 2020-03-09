@@ -271,13 +271,14 @@ test_android:
   tags:
     - short-jobs
   script:
-    - git clone git@github.com:slockit/in3-example-android.git
+    - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android/app
     - cp -r ../../java/src/in3 src/main/java/
-    - mkdir in3-c
     - mv ../../c ../../java in3-c/
+    - mkdir c
+    - cp in3-c/c/compiler.cmake c/
     - cd ..
-    - gradlew build
+    - ./gradlew build
 
 
 test_wasm:
