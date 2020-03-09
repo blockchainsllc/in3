@@ -170,7 +170,7 @@ int main(int argc, char* argv[]) {
           char* name  = trim(out + p + 1);
           if (*name == '.') {
             sprintf(tmp, "%s%s", last_json_test, name);
-            add_testcase(last_suite, name, "runner", error);
+            add_testcase(last_suite, tmp, "runner", error);
           } else {
             strcpy(last_json_test, name);
             add_testcase(last_suite, name, "runner", error);
