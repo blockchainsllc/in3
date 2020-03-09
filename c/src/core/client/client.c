@@ -78,13 +78,11 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   return ctx;           // return context and hope the calle will clean it.
 }
 
-in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
-  if (!error) return IN3_EINVAL;
+static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   if (result) result[0] = 0;
-  *error         = NULL;
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, method, params);
-  in3_ret_t  res = ctx ? ctx->verification_state : IN3_ENOMEM;
+  *error = NULL;
 
+  in3_ret_t res = ctx ? ctx->verification_state : IN3_ENOMEM;
   if (!ctx) return res;
 
   // check parse-errors
@@ -131,6 +129,16 @@ clean:
 
   // if we have an error, we always return IN3_EUNKNOWN
   return res;
+}
+
+in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
+  if (!error) return IN3_EINVAL;
+  return ctx_rpc(in3_client_rpc_ctx(c, method, params), result, error);
+}
+
+in3_ret_t in3_client_rpc_raw(in3_t* c, char* request, char** result, char** error) {
+  if (!error) return IN3_EINVAL;
+  return ctx_rpc(in3_client_rpc_ctx_raw(c, request), result, error);
 }
 
 static char* create_rpc_error(uint32_t id, int code, char* error) {
