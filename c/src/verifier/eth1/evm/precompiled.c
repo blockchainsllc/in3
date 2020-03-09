@@ -149,6 +149,9 @@ int pre_modexp(evm_t* evm) {
 
   subgas(lm * MAX(1, ael) / G_PRE_MODEXP_GQUAD_DIVISOR);
 
+#else
+  UNUSED_VAR(hp);
+
 #endif
   // we use gmp for now
   mp_int m_base, m_exp, m_mod, m_res;
