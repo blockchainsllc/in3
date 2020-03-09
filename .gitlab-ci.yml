@@ -279,6 +279,9 @@ test_android:
     - cp in3-c/c/compiler.cmake c/
     - cd ..
     - ./gradlew build
+  artifacts:
+    paths:
+      - in3-example-android/app/build/outputs/apk
 
 
 test_wasm:
