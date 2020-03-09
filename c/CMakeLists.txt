@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -41,8 +41,11 @@ add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
 add_subdirectory(src/api)
-add_subdirectory(src/cmd)
+IF (ETH_FULL)
+    add_subdirectory(src/cmd)
+endif()
 add_subdirectory(docs)
+
 
 
 # create the library

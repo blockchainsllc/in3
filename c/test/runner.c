@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -209,7 +209,7 @@ static int send_mock(in3_request_t* req) {
   return 0;
 }
 
-int execRequest(in3_t* c, d_token_t* test, int must_fail) {
+int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* descr) {
   d_token_t* request  = d_get(test, key("request"));
   d_token_t* response = d_get(test, key("response"));
   d_token_t* config   = d_get(request, key("config"));
@@ -242,6 +242,9 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail) {
   int is_bin = d_get_int(test, "binaryFormat");
 
   in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err);
+  fflush(stdout);
+  fflush(stderr);
+  printf("\n%2i : %-60s ", counter, descr);
 
   if (res && intern) {
     json_ctx_t* actual_json = parse_json(res);
@@ -307,7 +310,6 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
       strcpy(temp, descr);
   } else
     sprintf(temp, "Request #%i", counter);
-  printf("\n%2i : %-60s ", counter, temp);
 
   in3_t* c = in3_for_chain(d_get_intkd(test, key("chainId"), 1));
   int    j;
@@ -344,7 +346,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
       }
     }
   }
-  int fail = execRequest(c, test, fuzz_prop != NULL);
+  int fail = execRequest(c, test, fuzz_prop != NULL, counter, temp);
   in3_free(c);
 
   if (mem_get_memleak_cnt()) {

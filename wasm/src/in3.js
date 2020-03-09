@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -251,7 +251,7 @@ class IN3 {
                             try {
                                 const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
                                 if (!this.signer) throw new Error('no signer set to handle signing')
-                                if (!(await this.signer.hasAccount(account))) throw new Error('unknown account ' + account)
+                                if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
                                 setResponse(toHex(await this.signer.sign(message, account, true, false)), 0, false)
                             } catch (ex) {
                                 setResponse(ex.message || ex, 0, true)

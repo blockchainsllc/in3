@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -282,17 +282,17 @@ JNIEXPORT void JNICALL Java_in3_IN3_setStorageProvider(JNIEnv*, jobject, jobject
 
 /*
  * Class:     in3_IN3
- * Method:    send
+ * Method:    sendinternal
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_in3_IN3_send(JNIEnv*, jobject, jstring);
+JNIEXPORT jstring JNICALL Java_in3_IN3_sendinternal(JNIEnv*, jobject, jstring);
 
 /*
  * Class:     in3_IN3
- * Method:    sendobject
+ * Method:    sendobjectinternal
  * Signature: (Ljava/lang/String;)Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_in3_IN3_sendobject(JNIEnv*, jobject, jstring);
+JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv*, jobject, jstring);
 
 /*
  * Class:     in3_IN3
@@ -330,7 +330,7 @@ extern "C" {
  * Method:    key
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_in3_JSON_key(JNIEnv*, jclass, jstring);
+JNIEXPORT jint JNICALL Java_in3_utils_JSON_key(JNIEnv*, jclass, jstring);
 
 #ifdef __cplusplus
 }

@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -34,6 +34,7 @@
 
 #include "http_server.h"
 #include "../../core/client/context.h"
+#include "../../core/util/colors.h"
 #include "../../core/util/mem.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -132,7 +133,7 @@ void http_run_server(const char* port, in3_t* in3) {
 
   printf(
       "Server started %shttp://127.0.0.1:%s%s\n",
-      "\033[92m", port, "\033[0m");
+      COLORT_LIGHTGREEN, port, COLORT_RESET);
 
   for (int i = 0; i < MAX_CON; i++) clients[i] = -1;
 

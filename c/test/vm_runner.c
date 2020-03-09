@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -79,8 +79,8 @@ char* readContent(char* name) {
     len += r;
     if (feof(file)) break;
     size_t new_alloc = allocated * 2;
-    buffer = _realloc(buffer, new_alloc, allocated);
-    allocated = new_alloc;
+    buffer           = _realloc(buffer, new_alloc, allocated);
+    allocated        = new_alloc;
   }
   buffer[len] = 0;
 
@@ -95,6 +95,8 @@ int run_test(d_token_t* test, int counter, char* name, uint32_t props) {
   char* descr = NULL;
   int   i;
 
+  char* sname = strstr(name, "/testdata/");
+  if (sname) name = sname + 10;
   int l = strlen(name), fail = 0;
   if (name[l - 5] == '.') name[l - 5] = 0;
   char*    tname = d_get_keystr(test->key);

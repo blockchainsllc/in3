@@ -9,6 +9,7 @@ _build
 **/.vscode/ipch/
 **/.DS_Store
 /.metadata/
+/build.gradle
 .DS_Store
 /RemoteSystemsTempFiles/
 cmake-build-debug/

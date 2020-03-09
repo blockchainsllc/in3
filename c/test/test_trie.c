@@ -3,7 +3,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -105,7 +105,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
       });
 
 #ifdef TRIETEST
-        trie_dump(trie, 0);
+      trie_dump(trie, 0);
 #endif
     }
   } else {
@@ -134,7 +134,7 @@ int test_trie(d_token_t* test, uint32_t props, uint64_t* ms) {
         ba_print(value_bytes.data, value_bytes.len);
       });
 #ifdef TRIETEST
-        trie_dump(trie, 0);
+      trie_dump(trie, 0);
 #endif
     }
   }

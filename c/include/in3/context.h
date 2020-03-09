@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H

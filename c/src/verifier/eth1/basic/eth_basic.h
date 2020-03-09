@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -68,6 +68,11 @@ in3_ret_t eth_verify_account_proof(in3_vctx_t* vc);
  * verifies a block
  */
 in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber);
+
+/**
+ * verifies block transaction count by number or hash
+ */
+in3_ret_t eth_verify_eth_getBlockTransactionCount(in3_vctx_t* vc, bytes_t* block_hash, uint64_t blockNumber);
 
 /**
  * this function should only be called once and will register the eth-nano verifier.
