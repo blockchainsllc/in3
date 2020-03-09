@@ -168,12 +168,13 @@ int mem_stack_size() {
 }
 
 void memstack() {
-  printf("\n M:");
+  printf("\n M-Stack ");
   mem_p_t* t = mem_tracker;
   while (t) {
     printf("[%p %zu ] ", t->ptr, t->size);
     t = t->next;
   }
+  printf("\n");
 }
 
 void t_free(void* ptr, char* file, const char* func, int line) {
