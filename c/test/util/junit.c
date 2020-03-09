@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
           if (strstr(name, ":"))
             name = strstr(name, ":") + 2;
           else
-            name = "main";
+            name = last_suite->name;
           add_testcase(last_suite, name, "runner", error);
         }
       }
