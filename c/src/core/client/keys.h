@@ -157,3 +157,5 @@
 
 #define K_FROM_BLOCK        key("fromBlock")
 #define K_TO_BLOCK          key("toBlock")
+#define K_SIGNER_NODES      key("signerNodes")
+#define K_DATA_NODES        key("dataNodes")

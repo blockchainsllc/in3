@@ -107,13 +107,6 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
-static d_token_t* d_get_in3_param(d_token_t* params, const char* keystr) {
-  if (d_len(params) < 1) return NULL;
-  d_token_t* last_param = d_get_at(params, d_len(params) - 1);
-  if (d_type(last_param) != T_OBJECT) return NULL;
-  return d_get(d_get(last_param, K_IN3), key(keystr));
-}
-
 static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG));
 }
@@ -140,7 +133,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
     in3_node_filter_t filter       = NODE_FILTER_INIT;
-    filter.nodes                   = d_get_in3_param(d_get(ctx->requests[0], K_PARAMS), "signerNodes");
+    filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
     filter.props                   = c->node_props | NODE_PROP_SIGNER;
     const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
     if (res < 0)
@@ -714,7 +707,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
-        filter.nodes             = d_get_in3_param(d_get(ctx->requests[0], K_PARAMS), "dataNodes");
+        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
