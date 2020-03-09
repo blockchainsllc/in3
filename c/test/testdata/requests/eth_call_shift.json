@@ -9,7 +9,7 @@
             "params": [
                 {
                     "to": "0x2A4bDFC5a8C202C50ee9fff66447775679600d48",
-                    "data": "0xFF20965255"
+                    "data": "0x20965255"
                 },
                 "latest"
             ]
