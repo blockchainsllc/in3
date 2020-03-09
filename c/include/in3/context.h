@@ -396,9 +396,20 @@ in3_ret_t ctx_get_error(
     in3_ctx_t* ctx, /**< [in] the current request context. */
     int        id   /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
+
 /** 
  * sends a request and returns a context used to access the result or errors. 
  * 
+ * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
+*/
+in3_ctx_t* in3_client_rpc_ctx_raw(
+    in3_t* c,      /**< [in] the client config. */
+    char*  request /**< [in] rpc request. */
+);
+
+/**
+ * sends a request and returns a context used to access the result or errors.
+ *
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
 in3_ctx_t* in3_client_rpc_ctx(
@@ -406,9 +417,6 @@ in3_ctx_t* in3_client_rpc_ctx(
     char*  method, /**< [in] rpc method. */
     char*  params  /**< [in] params as string. */
 );
-
-in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, /**< [in] the clientt config. */
-                                  char*  req /**< [in] rpc method. */);
 
 /**
  * handles a failable context
