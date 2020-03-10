@@ -689,7 +689,9 @@ char* in3_configure(in3_t* c, const char* config) {
                                              d_get_longkd(n.token, key("props"), 65535),
                                              d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                          "add node failed");
+#ifndef __clang_analyzer__
               BIT_SET(chain->nodelist[i].attrs, ATTR_BOOT_NODE);
+#endif
             }
           } else {
             EXPECT_TOK(cp.token, false, "unsupported config option!");
