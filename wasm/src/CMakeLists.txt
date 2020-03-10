@@ -60,7 +60,13 @@ if (WASM_SYNC)
 endif(WASM_SYNC)
 
 add_executable(in3w wasm.c)
-target_link_libraries(in3w ${IN3_VERIFIER} ${IN3_API})
+
+if(USE_SCRYPT)
+   target_link_libraries(in3w ${IN3_VERIFIER} ${IN3_API} scrypt)
+else(USE_SCRYPT)
+   target_link_libraries(in3w ${IN3_VERIFIER} ${IN3_API})
+endif(USE_SCRYPT)
+
 set_target_properties(in3w PROPERTIES LINK_FLAGS "${EMC_PROPS}")
 
 add_custom_command(TARGET in3w

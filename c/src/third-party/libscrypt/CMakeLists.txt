@@ -31,9 +31,17 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-
-add_library(eth_api_o OBJECT eth_api.c abi.c key.c rpc_api.c ens.c ../utils/api_utils_priv.c)
-target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
-add_library(eth_api STATIC $<TARGET_OBJECTS:eth_api_o>)
-target_link_libraries(eth_api eth_nano in3_api_utils ${LIBS})
+add_library(scrypt_o OBJECT
+        b64.c
+        crypto_scrypt-hexconvert.c
+        crypto-mcf.c
+        crypto_scrypt-check.c
+        crypto_scrypt-hash.c
+        crypto_scrypt-nosse.c
+        sha256.c
+        crypto_scrypt-hash.c
+        slowequals.c
+        )
+ADD_DEFINITIONS(-DSCRYPT)
+target_compile_definitions(scrypt_o PRIVATE -D_POSIX_C_SOURCE=200112L)
+add_library(scrypt STATIC $<TARGET_OBJECTS:scrypt_o>)
