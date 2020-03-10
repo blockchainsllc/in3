@@ -131,7 +131,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         p = p->required;
       }
       if (!last_waiting) {
-        sb_add_chars(sb, "\"error\",\"error\":\"could not find the last waiting context\"");
+        sb_add_chars(sb, "\"error\",\"error\":\"could not find the last ignored context\"");
         break;
       } else {
         ctx_handle_failable(last_waiting);
