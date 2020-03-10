@@ -12,7 +12,7 @@ public class IN3Test {
         {"eth_call", "eth_call_2.json"},
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
-    IN3MockBuilder builder = new IN3MockBuilder(Chain.MAINNET);
+    IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
     in3                    = builder.constructClient(mockedResponses);
   }
 
