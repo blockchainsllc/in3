@@ -57,5 +57,10 @@ int libscrypt_salt_gen(uint8_t *salt, size_t len)
 
 	return 0;
 }
+#else
+int libscrypt_salt_gen(uint8_t *salt, size_t len) {
+	if (salt || len) return -1;
+	return -1;
+}
 
 #endif
