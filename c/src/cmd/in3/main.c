@@ -650,7 +650,9 @@ int main(int argc, char* argv[]) {
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
-
+#ifndef USE_CURL
+  c->flags |= FLAGS_HTTP;
+#endif
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
