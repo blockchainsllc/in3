@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -100,7 +100,7 @@ static char* filetostr(const char* filename) {
     fseek(f, 0, SEEK_END);
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
-    buffer = _malloc(length + 1);
+    buffer         = _malloc(length + 1);
     buffer[length] = 0;
     if (buffer) {
       fread(buffer, 1, length, f);
@@ -129,15 +129,14 @@ void test_key_hash_collisions() {
       hashes = _realloc(hashes, cap * 2 * sizeof(*hashes), cap);
       cap *= 2;
     }
-    char* kstr= substr(tok, "key(\"", "\")");
+    char* kstr = substr(tok, "key(\"", "\")");
     if (kstr) {
       hashes[i] = key_(kstr);
 #ifdef DEBUG
       printf("\"%s\" => [%u]\n", kstr, hashes[i]);
 #endif
-    }
-    else{
-      hashes[i]= 0;
+    } else {
+      hashes[i] = 0;
     }
   }
   uint16_t nc = -1;

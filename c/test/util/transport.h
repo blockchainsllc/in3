@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -40,8 +40,8 @@ extern "C" {
 #endif
 
 #include "../../src/core/client/client.h"
-void add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
-void add_response_test(char* test);
+void      add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
+void      add_response_test(char* test);
 in3_ret_t test_transport(in3_request_t* req);
 in3_ret_t mock_transport(in3_request_t* req);
 

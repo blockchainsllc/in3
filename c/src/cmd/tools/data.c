@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -37,6 +37,7 @@
  * */
 
 #include "../../core/util/data.h"
+#include "../../core/util/colors.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "used_keys.h"
@@ -100,15 +101,15 @@ static void init_keys() {
 }
 
 static void print_hex(uint8_t* d, uint32_t l, char* color) {
-  if (color) printf("\033[%sm", color);
+  if (color) printf(COLORT_SELECT, color);
   for (uint32_t i = 0; i < l; i++)
     printf("%02x", d[i]);
   printf(" ");
-  if (color) printf("\033[0m");
+  if (color) printf(COLORT_RESET);
 }
 
 static int read_token(uint8_t* d, size_t* p, int level, int* index, int keyval) {
-  printf("%03i: \033[0;31m", *index);
+  printf("%03i: " COLORT_RRED, *index);
   d_type_t type = d[*p] >> 5;
   uint32_t len  = d[*p] & 0x1F, i; // the other 5 bits  (0-31) the length
                                    // first 3 bits define the type
@@ -143,11 +144,11 @@ static int read_token(uint8_t* d, size_t* p, int level, int* index, int keyval) 
   }
   printf(" ");
 
-  for (int i = 0; i < level; i++) printf("\033[1;30m.\033[0m ");
+  for (int i = 0; i < level; i++) printf(COLORT_BBLACK "." COLORT_RESET);
   if (keyval >= 0) {
     char* keyname = d_get_keystr((d_key_t) keyval);
     if (keyname)
-      printf("\033[0;35m%s\033[0m ", keyname);
+      printf(COLORT_RMAGENTA "%s" COLORT_RESET, keyname);
     else {
       uint8_t tmp[2];
       tmp[0] = (keyval >> 8) & 0xFF;

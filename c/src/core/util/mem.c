@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -168,12 +168,13 @@ int mem_stack_size() {
 }
 
 void memstack() {
-  printf("\n M:");
+  printf("\n M-Stack ");
   mem_p_t* t = mem_tracker;
   while (t) {
     printf("[%p %zu ] ", t->ptr, t->size);
     t = t->next;
   }
+  printf("\n");
 }
 
 void t_free(void* ptr, char* file, const char* func, int line) {
@@ -222,7 +223,7 @@ void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* 
     }
     t = t->next;
   }
-  printf("realloc a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
+  //printf("realloc a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
   return _realloc_(ptr, size, oldsize, file, func, line);
 }
 

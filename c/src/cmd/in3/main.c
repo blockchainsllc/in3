@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -38,6 +38,7 @@
 
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
+#include "../../core/util/bitset.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
 #include "../../core/util/log.h"
@@ -58,6 +59,7 @@
 #include "../../core/client/keys.h"
 #include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
+#include "../../core/util/colors.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -166,7 +168,7 @@ in3_ens <domain> <field>\n\
 }
 
 static void die(char* msg) {
-  fprintf(stderr, "\033[31mError: %s\033[0m\n", msg);
+  fprintf(stderr, COLORT_RED "Error: %s" COLORT_RESET "\n", msg);
   exit(EXIT_FAILURE);
 }
 
@@ -179,7 +181,7 @@ static void print_hex(uint8_t* data, int len) {
 // helper to read the password from tty
 void read_pass(char* pw, int pwsize) {
   int i = 0, ch = 0;
-  fprintf(stderr, "\033[8m"); //conceal typing and save position
+  fprintf(stderr, COLORT_HIDDEN); //conceal typing and save position
   while (true) {
     ch = getchar();
     if (ch == '\r' || ch == '\n' || ch == EOF) break; //get characters until CR or NL
@@ -189,7 +191,7 @@ void read_pass(char* pw, int pwsize) {
     }
     i++;
   }
-  fprintf(stderr, "\033[28m"); //reveal typing
+  fprintf(stderr, COLORT_RESETHIDDEN); //reveal typing
 }
 
 // accepts a value as
@@ -525,7 +527,7 @@ static bytes_t   in_response = {.data = NULL, .len = 0};
 static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
-    fprintf(stderr, "send request to %s: \n\033[0;33m%s\033[0m\n", req->urls_len ? req->urls[0] : "none", req->payload);
+    fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
   if (in_response.len) {
     for (int i = 0; i < req->urls_len; i++)
@@ -541,9 +543,9 @@ static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode) {
     if (req->results[0].result.len)
-      fprintf(stderr, "success response \n\033[0;32m%s\033[0m\n", req->results[0].result.data);
+      fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].result.data);
     else
-      fprintf(stderr, "error response \n\033[0;31m%s\033[0m\n", req->results[0].error.data);
+      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].error.data);
   }
 #endif
   return r;
@@ -648,7 +650,9 @@ int main(int argc, char* argv[]) {
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
-
+#ifndef USE_CURL
+  c->flags |= FLAGS_HTTP;
+#endif
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
@@ -846,7 +850,9 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "in3_weights") == 0) {
-    c->max_attempts    = 1;
+    c->max_attempts = 1;
+    uint32_t block = 0, b = 0;
+    BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     uint64_t     now   = in3_time(NULL);
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
     printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", run_test_request ? "WEIGHT   : LAST_BLOCK" : "WEIGHT");
@@ -864,26 +870,38 @@ int main(int argc, char* argv[]) {
       in3_node_weight_t* weight      = chain->weights + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
-      if (blacklisted) printf("\033[31m");
-      char* tr = NULL;
+      char *             tr = NULL, *warning = NULL;
       if (ctx) {
-        tr = _malloc(100);
+        tr = _malloc(300);
         if (!ctx->error) {
-          sprintf(tr, "#%i", d_get_intk(ctx->responses[0], K_RESULT));
-        }
+          b = d_get_intk(ctx->responses[0], K_RESULT);
+          if (block < b) block = b;
 
+          if (b < block - 1)
+            sprintf((warning = tr), "#%i ( out of sync : %i blocks behind latest )", b, block - b);
+          else if (strncmp(node->url, "https://", 8))
+            sprintf((warning = tr), "#%i (missing https, which is required in a browser )", b);
+          else
+            sprintf(tr, "#%i", b);
+        } else if (!strlen(node->url) || !node->props)
+          sprintf((warning = tr), "No URL spcified anymore props = %i ", (int) (node->props & 0xFFFFFF));
         else if ((node->props & NODE_PROP_DATA) == 0)
-          sprintf(tr, "The node is marked as not supporting Data-Providing");
+          sprintf((warning = tr), "The node is marked as not supporting Data-Providing");
         else if (c->proof != PROOF_NONE && (node->props & NODE_PROP_PROOF) == 0)
-          sprintf(tr, "The node is marked as able to provide proof");
+          sprintf((warning = tr), "The node is marked as able to provide proof");
         else if ((c->flags & FLAGS_HTTP) && (node->props & NODE_PROP_HTTP) == 0)
-          sprintf(tr, "The node is marked as able to support http-requests");
+          sprintf((warning = tr), "The node is marked as able to support http-requests");
         else
           tr = ctx->error;
       }
+      if (blacklisted)
+        printf(COLORT_RED);
+      else if (warning)
+        printf(COLORT_YELLOW);
+      else
+        printf(COLORT_GREEN);
       printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
-      if (blacklisted) printf("\033[0m");
-      printf("\n");
+      printf(COLORT_RESET "\n");
       if (tr && tr != ctx->error) _free(tr);
       if (ctx) ctx_free(ctx);
     }

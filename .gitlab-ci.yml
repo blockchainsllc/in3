@@ -78,7 +78,7 @@ clang50:
 clang10:
   image: docker.slock.it/build-images/cmake:clang10
   extends: .conanbuild
-
+      
 mac_os:
   stage: build
   script:
@@ -86,17 +86,21 @@ mac_os:
     - cd mac_build
     - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
     - make
-    - CTEST_OUTPUT_ON_FAILURE=1 make test
+    - ctest -V | tee ../mac_test_c.log | test/junit > ../mac_test_c.xml
     - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
     - make
 
   artifacts:
+    reports:
+      junit: mac_test_c.xml
     paths:
       - mac_build/c/docs
       - mac_build/java/docs
       - mac_build/lib
       - mac_build/bin
+      - mac_test_c.xml
+      - mac_test_c.log
   tags:
     - mac-mini-runner
 
@@ -170,6 +174,8 @@ coverage:
   image: silkeh/clang:dev
   tags:
     - short-jobs
+  dependencies:
+    - java_linux
   script:
     - mkdir cov_build; cd cov_build
     - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
@@ -177,7 +183,8 @@ coverage:
     - ../scripts/lcov_report.sh | xargs llvm-cov report
     - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
     - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
-
+    - mkdir jcov
+    - cp -r ../java/build/reports/jacoco/test cov_build
   artifacts:
     paths:
       - cov_build/ccov/all-merged
@@ -236,7 +243,7 @@ test_c:
     - cd testbuild
     - cmake -DTEST=true -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - CTEST_OUTPUT_ON_FAILURE=1 make test
+    - make test
   artifacts:
     paths:
       - testbuild/test
@@ -257,6 +264,26 @@ test_c:
 #    - cd ../vmTests
 #    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
+
+test_android:
+  image: cangol/android-gradle
+  stage: test
+  tags:
+    - short-jobs
+  script:
+    - git clone https://github.com/slockit/in3-example-android.git
+    - cd in3-example-android/app
+    - cp -r ../../java/src/in3 src/main/java/
+    - mv ../../c ../../java in3-c/
+    - mkdir c
+    - cp in3-c/c/compiler.cmake c/
+    - cd ..
+    - ./gradlew build
+  artifacts:
+    paths:
+      - in3-example-android/app/build/outputs/apk
+
+
 test_wasm:
   image: docker.slock.it/build-images/node:10-alpine
   dependencies:
@@ -269,7 +296,10 @@ test_wasm:
     - cd wasm/test
     - sh /prepare.sh
     - npm install
-    - npm test
+    - npm run test_report
+  artifacts:
+    reports:
+      junit: wasm/test/mocha.xml
 
 test_asmjs:
   image: docker.slock.it/build-images/node:10-alpine
@@ -306,6 +336,11 @@ java_linux:
     - ./gradlew test
   tags:
     - short-jobs
+  artifacts:
+    paths:
+      - java/build/reports/jacoco/test
+    reports:
+      junit: java/build/test-results/test/TEST-*.xml
 
 examples_linux:
   image: docker.slock.it/build-images/cmake:gcc8
@@ -363,17 +398,24 @@ java_arm:
     - ./gradlew test
   tags:
     - arm
+  artifacts:
+    reports:
+      junit: java/build/test-results/test/TEST-*.xml
 
 java_macos:
   stage: test
+  allow_failure: true
   dependencies:
     - java
   script:
     - mv java_build build
-    - cd java
+    - cd java; cp test/build_test.gradle build.gradle
     - ./gradlew test
   tags:
     - mac-mini-runner
+#  artifacts:
+#    reports:
+#      junit: java/build/test-results/test/TEST-*.xml
 
 ##### local_docker_deploy_and_vulnerability_analysis #####
 
@@ -418,7 +460,7 @@ format:
   tags:
     - short-jobs
   script:
-    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ \( -name "*.c" -o -name "*.h" \) | xargs clang-format-10 -i
+    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-10 -i
     - git diff --patch --exit-code
 
 cpd:
@@ -457,11 +499,13 @@ metrics:
     - gcc8
     - wasm
     - asmjs
+    - java
   script:
     - echo "mac_cmd_size `stat -c %s mac_build/bin/in3` " > metrics.txt
     - echo "wasm_min_size `stat -c %s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
     - echo "wasm_js_size `stat -c %s wasm_build/bin/in3.js` " >> metrics.txt
     - echo "asmjs_js_size `stat -c %s asmjs_build/bin/in3.js` " >> metrics.txt
+    - echo "java_size `stat -c %s java_build/lib/in3.jar` " > metrics.txt
     - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
     - echo "reported metrics"; cat metrics.txt
   artifacts:
@@ -572,13 +616,22 @@ readthedocs:
   dependencies:
     - gcc8
   script:
+    - cd scripts
+    - ./update_examples.sh
+    - cd ..
+    - export PRE_DOC=`cat wasm/docs/*.md`
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cd generator
     - npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
-    - cd ../doc/docs && make html && make latexpdf && make text
+    - chmod 777 bin/*
+    - cd ../wasm/src
+    - npm i typedoc
+    - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json in3.d.ts
+    - cat doc.json | ../../generator/bin/slockit-docu in3.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
+    - cd ../../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:
       - doc/build
@@ -599,6 +652,7 @@ release_mac_and_wasm:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-mac-wasm
@@ -607,14 +661,17 @@ release_mac_and_wasm:
     - cp -r ../mac_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/c/include --exclude=in3-mac-wasm/js-wasm --exclude=in3-mac-wasm/js-asmjs --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - tar -zcv --exclude=in3-mac-wasm/src --exclude=in3-mac-wasm/c/include --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
+    - mv wasm/release-wasm .
+    - mv wasm/release-asmjs .
+    - tar -zcv --exclude=in3-mac-wasm/python --exclude=in3-mac-wasm/java --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "Mac release:" $IPFS_HASH >> in3-mac-wasm/mac_release_ipfs_hash.txt
@@ -634,6 +691,7 @@ release_x64:
     - readthedocs
     - wasm
     - asmjs
+    - java
   only:
     - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
   except:
@@ -647,10 +705,11 @@ release_x64:
     - cp -r ../x64_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../asmjs_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-x64/src --exclude=in3-x64/c/include --exclude=in3-x64/js-asmjs --exclude=in3-x64/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x64.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "x64 release:" $IPFS_HASH >> in3-x64/x64_release_ipfs_hash.txt
@@ -676,6 +735,7 @@ release_x86:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x86
@@ -684,10 +744,11 @@ release_x86:
     - cp -r ../x86_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-x86/src --exclude=in3-x86/c/include --exclude=in3-x86/js-asmjs --exclude=in3-x86/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x86.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_x86.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "x86 release:" $IPFS_HASH >> in3-x86/x86_release_ipfs_hash.txt
@@ -713,19 +774,20 @@ release_arm7:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-arm7
     - cd in3-arm7
-    - mkdir doc
     - cp -r ../arm7_build/bin .
     - cp -r ../arm7_build/lib .
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-arm7/src --exclude=in3-arm7/c/include --exclude=in3-arm7/js-asmjs --exclude=in3-arm7/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_arm7.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_arm7.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "arm7 release:" $IPFS_HASH >> in3-arm7/arm7_release_ipfs_hash.txt
@@ -751,11 +813,11 @@ release_win:
     - readthedocs
     - wasm
     - asmjs
+    - java
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-win
     - cd in3-win
-    - mkdir doc
     - cp -r ../win_build/bin .
     - cp -r ../win_build/lib .
     - mv bin/in3 bin/in3.exe
@@ -764,10 +826,11 @@ release_win:
     - mv lib/libin3.so lib/in3.dll
     - cp -r ../c  ../java ../CMakeLists.txt ../python ../wasm ../README.md  ../LICENSE ../LICENSE.AGPL .
     - cp -r ../doc/build doc
-    - cp -r ../wasm_build/module js-wasm
-    - cp -r ../wasm_build/module js-asmjs
+    - cp -r ../wasm_build/module wasm/release-wasm
+    - cp -r ../asmjs_build/module wasm/release-asmjs
+    - cp ../java_build/lib/in3.jar lib/in3.jar
     - cd ..
-    - tar -zcv --exclude=in3-win/src --exclude=in3-win/c/include --exclude=in3-win/js-asmjs --exclude=in3-win/js-wasm --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
+    - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_windows.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_windows.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - echo "windows release:" $IPFS_HASH >> in3-win/win_release_ipfs_hash.txt
@@ -820,17 +883,18 @@ release_pip:
 
 pages:
   stage: deploy
+  tags:
+    - arm
   only:
     refs:
       - develop
-  tags:
-    - arm
   dependencies:
     - arm7
     - readthedocs
     - coverage
     - clangcheck
     - vulnerabilities
+    - java_linux
   script:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
@@ -840,7 +904,8 @@ pages:
     - cp -r report/* public/code_analysis
     - cp -r doc/build public/rtd
     - cp -r vulnerability_analysis.json public/vulnerability_analysis.json
-    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage</a></li></ul></body></html>" > public/index.html
+    - cp -r java/build/reports/jacoco/test/html    public/coverage_java
+    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li></ul></body></html>" > public/index.html
   artifacts:
     paths:
       - public

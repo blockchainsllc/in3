@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -38,11 +38,11 @@
  * This context is passed to the verifier.
  * */
 
+#include "client.h"
+#include "context.h"
 #include "data.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
-#include "context.h"
 #include <stdbool.h>
 #include <stdint.h>
 
