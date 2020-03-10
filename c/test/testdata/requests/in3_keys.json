@@ -145,5 +145,24 @@
                 "jsonrpc": "2.0"
             }
         ]
+    },
+    {
+        "descr": "in3_decryptKey scrypt",
+        "chainId": "0x1",
+        "intern": true,
+        "request": {
+            "method": "in3_decryptKey",
+            "params": [
+                {"version":3,"id":"c6efce20-e867-4ced-914b-996480c31757","address":"50a5dda1e41c1858f771d3dac944b75d5626d1b2","crypto":{"ciphertext":"d13228a430d6ec1108a7e076ceed39102fb21b0b0fe53cadf5a0d0f7496c9ee0","cipherparams":{"iv":"0b7adca34fb47b1250bd1b7944cc94e9"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"d748c19fe9982fbc3c7f3cea203f3ed948f9a4eb07729bfe112fe5f647e1bca6","n":131072,"r":8,"p":1},"mac":"43aa4502be45f2679eb3a63971fb9f7e6fb2425e14099746a0c87076a8b729c4"}},
+                "ABCabc123AB"
+            ]
+        },
+        "response": [
+            {
+                "id": 1,
+                "result": "0x7e455c36bba6b1083ea5ad1a414e2a047d143d828b035e19c4d697902b1c76b7",
+                "jsonrpc": "2.0"
+            }
+        ]
     }
 ]
