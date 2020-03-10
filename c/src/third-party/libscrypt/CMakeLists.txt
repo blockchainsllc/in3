@@ -40,6 +40,7 @@ add_library(scrypt_o OBJECT
         crypto_scrypt-nosse.c
         sha256.c
         crypto_scrypt-hash.c
+        crypto-scrypt-saltgen.c
         slowequals.c
         )
 ADD_DEFINITIONS(-DSCRYPT)

@@ -3,6 +3,13 @@
 #include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <malloc.h> // alloca
+#else
+#ifndef __ZEPHYR__
+#include <alloca.h> // alloca
+#endif
+#endif
 
 /* Disable on Windows, there is no /dev/urandom.
    Link-time error is better than runtime error. */
@@ -16,7 +23,7 @@
 
 int libscrypt_salt_gen(uint8_t *salt, size_t len)
 {
-	unsigned char buf[len];
+	unsigned char *buf = alloca(len);
 	size_t data_read = 0;
 	int urandom = open(RNGDEV, O_RDONLY);
 
