@@ -301,6 +301,22 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_sendobjectinternal(JNIEnv*, jobject, jstr
  */
 JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv*, jobject);
 
+#ifdef IPFS
+/*
+ * Class:     in3_ipfs_API
+ * Method:    base64Decode
+ * Signature: (Ljava/lang/String;)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_in3_ipfs_API_base64Decode(JNIEnv* env, jobject ob, jstring jinput);
+
+/*
+ * Class:     in3_ipfs_API
+ * Method:    base64Encode
+ * Signature: ([B)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob, jbyteArray jinput);
+#endif
+
 /*
  * Class:     in3_IN3
  * Method:    init

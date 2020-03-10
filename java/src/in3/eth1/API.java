@@ -83,7 +83,7 @@ public class API {
   private IN3 in3;
 
   /**
-     * creates a API using the given incubed instance.
+     * creates an eth1.API using the given incubed instance.
      */
   public API(IN3 in3) {
     this.in3 = in3;
