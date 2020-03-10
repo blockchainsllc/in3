@@ -40,6 +40,12 @@ public class IN3MockBuilder {
     chainConfig2.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     chainConfig2.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
+    // Necessary for nodelist test to pass
+    NodeConfiguration nodeConfig = new NodeConfiguration(chainConfig2);
+    nodeConfig.setUrl("https://in3-v2.slock.it/goerli/nd-2");
+    nodeConfig.setAddress("0x1fe2e9bf29aa1938859af64c413361227d04059a");
+    nodeConfig.setProps(0);
+
     ChainConfiguration chainConfig3 = new ChainConfiguration(Chain.KOVAN, clientConfig);
     chainConfig3.setNeedsUpdate(false);
     chainConfig3.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
