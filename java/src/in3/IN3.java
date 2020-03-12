@@ -330,10 +330,10 @@ public class IN3 {
     if (dataNodeAdresses != null && dataNodeAdresses.length > 0) {
       IN3Props props = new IN3Props();
       props.setDataNodes(dataNodeAdresses);
-      return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, new Object[] { blocks }, props));
+      return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, new Object[] {blocks}, props));
     }
 
-    return SignedBlockHash.asSignedBlockHashs(sendRPCasObject(SIGN, new Object[] { blocks }));
+    return SignedBlockHash.asSignedBlockHashs(sendRPCasObject(SIGN, new Object[] {blocks}));
   }
 
   protected Object[] handleEns(Object[] params) {

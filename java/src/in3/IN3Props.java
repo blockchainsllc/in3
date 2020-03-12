@@ -1,13 +1,13 @@
 package in3;
 
-import java.util.HashMap;
 import in3.utils.JSON;
+import java.util.HashMap;
 
 public class IN3Props {
 
   HashMap<String, Object> props;
 
-  private static final String DATA_NODES = "dataNodes";
+  private static final String DATA_NODES   = "dataNodes";
   private static final String SIGNER_NODES = "signerNodes";
 
   public IN3Props() {

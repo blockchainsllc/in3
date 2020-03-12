@@ -10,7 +10,7 @@ public class IN3Test {
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
     IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
-    IN3 in3                = builder.constructClient(mockedResponses);
+    IN3            in3     = builder.constructClient(mockedResponses);
 
     String url          = "https://in3-v2.slock.it/goerli/nd-1";
     String address      = "0x45d45e6ff99e6c34a235d263965910298985fcfe";
@@ -22,8 +22,7 @@ public class IN3Test {
     int    weight       = 2000;
 
     IN3Node[] list = in3.nodeList(new String[] {
-      "0x45d45e6ff99e6c34a235d263965910298985fcfe"
-    });
+        "0x45d45e6ff99e6c34a235d263965910298985fcfe"});
 
     Assertions.assertTrue(list.length > 0);
     Assertions.assertEquals(url, list[0].getUrl());
@@ -43,7 +42,7 @@ public class IN3Test {
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
     IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
-    IN3 in3                = builder.constructClient(mockedResponses);
+    IN3            in3     = builder.constructClient(mockedResponses);
 
     // This test, for now is a lie.
     boolean result = in3.cacheClear();
@@ -57,7 +56,7 @@ public class IN3Test {
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
     IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
-    IN3 in3                = builder.constructClient(mockedResponses);
+    IN3            in3     = builder.constructClient(mockedResponses);
 
     BlockID[] vR = new BlockID[] {
         BlockID.fromHash("0x2a8bf38abe3fec478a2029e74ac95ecdbef95ff2fb832786ba4c5231c8cea480")};
@@ -78,7 +77,7 @@ public class IN3Test {
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
     IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
-    IN3 in3                = builder.constructClient(mockedResponses);
+    IN3            in3     = builder.constructClient(mockedResponses);
 
     // This test may seem pointless but it intends to test the proper conversion of the jni getConfig to a valid String.
     String configJson = in3.getConfig().toJSON();
@@ -92,7 +91,7 @@ public class IN3Test {
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
     IN3MockBuilder builder = new IN3MockBuilder(Chain.MAINNET);
-    IN3 in3                = builder.constructClient(mockedResponses);
+    IN3            in3     = builder.constructClient(mockedResponses);
 
     String[] params = new String[] {
         "cryptokitties.eth",
@@ -115,7 +114,7 @@ public class IN3Test {
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
     IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
-    IN3 in3                = builder.constructClient(mockedResponses);
+    IN3            in3     = builder.constructClient(mockedResponses);
 
     in3.free();
   }
