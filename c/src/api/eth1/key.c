@@ -41,7 +41,7 @@
 
 #ifdef SCRYPT
 // only if scrypt is installed we support it.
-#include <libscrypt.h>
+#include "../../third-party/libscrypt/libscrypt.h"
 #endif
 
 in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {

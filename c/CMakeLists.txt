@@ -69,6 +69,10 @@ if (IN3_LIB)
         set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
     endif()
 
+    if (USE_SCRYPT)
+       set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
+    endif()
+
     # create the libraries
     add_library(in3_bundle STATIC ${IN3_LIBS} )
     add_library(in3_lib    SHARED ${IN3_LIBS} )

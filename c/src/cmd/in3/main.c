@@ -318,7 +318,7 @@ static void execute(in3_t* c, FILE* f) {
 char* resolve(in3_t* c, char* name) {
   if (!name) return NULL;
   if (name[0] == '0' && name[1] == 'x') return name;
-  if (strchr(name, '.')) {
+  if (strstr(name, ".eth")) {
     char* params = alloca(strlen(name) + 10);
     sprintf(params, "[\"%s\"]", name);
     char *res = NULL, *err = NULL;
@@ -650,7 +650,9 @@ int main(int argc, char* argv[]) {
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
-
+#ifndef USE_CURL
+  c->flags |= FLAGS_HTTP;
+#endif
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
