@@ -1,7 +1,7 @@
 [
   {
     "descr": "in3_nodeList",
-    "chainId": "0x5",
+    "chainId": "0x0",
     "fuzzer": true,
     "verification": "proof",
     "request": {

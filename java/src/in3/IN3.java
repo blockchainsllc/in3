@@ -211,6 +211,7 @@ public class IN3 {
     }
     return sendobjectinternal(request);
   }
+
   private native Object sendobjectinternal(String request);
 
   private String toRPC(String method, Object[] params) {
@@ -232,7 +233,7 @@ public class IN3 {
     return "{\"method\":\"" + method + "\", \"params\":[" + p + "]}";
   }
 
-  private String toRPC(String method, Object[] params, Object[] address) {
+  private String toRPC(String method, Object[] params, IN3Props props) {
     String p = "";
     for (int i = 0; i < params.length; i++) {
       if (p.length() > 0)
@@ -249,7 +250,7 @@ public class IN3 {
         p += JSON.toJson(params[i]);
     }
 
-    return "{\"in3\":{\"data_nodes\":" + JSON.toJson(address) + "}, \"method\":\"" + method + "\", \"params\":[" + p + "]}";
+    return "{\"in3\":" + props.toJSON() + ", \"method\":\"" + method + "\", \"params\":[" + p + "]}";
   }
 
   /**
@@ -260,8 +261,8 @@ public class IN3 {
     return this.send(toRPC(method, params));
   }
 
-  private Object sendObjectRPC(String method, Object[] params, String[] address) {
-    return this.sendobject(toRPC(method, params, address));
+  private Object sendObjectRPC(String method, Object[] params, IN3Props props) {
+    return this.sendobject(toRPC(method, params, props));
   }
 
   public Object sendRPCasObject(String method, Object[] params, boolean useEnsResolver) {
@@ -304,15 +305,35 @@ public class IN3 {
      * restrieves the node list
      */
   public IN3Node[] nodeList() {
-    NodeList nl = NodeList.asNodeList(sendRPCasObject(NODE_LIST, new Object[] {}));
+    return nodeList(new String[] {});
+  }
+
+  /**
+     * restrieves the node list
+     */
+  protected IN3Node[] nodeList(String[] signerNodeAddresses) {
+    NodeList nl;
+    if (signerNodeAddresses != null && signerNodeAddresses.length > 0) {
+      IN3Props props = new IN3Props();
+      props.setSignerNodes(signerNodeAddresses);
+      nl = NodeList.asNodeList(sendObjectRPC(NODE_LIST, new Object[] {}, props));
+    }
+
+    nl = NodeList.asNodeList(sendRPCasObject(NODE_LIST, new Object[] {}));
     return nl.getNodes();
   }
 
   /**
      * request for a signature of an already verified hash.
      */
-  public SignedBlockHash[] sign(BlockID[] blocks, String[] address) {
-    return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, blocks, address));
+  public SignedBlockHash[] sign(BlockID[] blocks, String[] dataNodeAdresses) {
+    if (dataNodeAdresses != null && dataNodeAdresses.length > 0) {
+      IN3Props props = new IN3Props();
+      props.setDataNodes(dataNodeAdresses);
+      return SignedBlockHash.asSignedBlockHashs(sendObjectRPC(SIGN, new Object[] { blocks }, props));
+    }
+
+    return SignedBlockHash.asSignedBlockHashs(sendRPCasObject(SIGN, new Object[] { blocks }));
   }
 
   protected Object[] handleEns(Object[] params) {
