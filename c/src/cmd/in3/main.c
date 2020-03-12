@@ -318,7 +318,7 @@ static void execute(in3_t* c, FILE* f) {
 char* resolve(in3_t* c, char* name) {
   if (!name) return NULL;
   if (name[0] == '0' && name[1] == 'x') return name;
-  if (strchr(name, '.')) {
+  if (strstr(name, ".eth")) {
     char* params = alloca(strlen(name) + 10);
     sprintf(params, "[\"%s\"]", name);
     char *res = NULL, *err = NULL;
