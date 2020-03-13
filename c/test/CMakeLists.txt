@@ -54,7 +54,7 @@ endif()
 
 # first we build the runners
 add_executable(runner runner.c)
-target_link_libraries(runner eth_full eth_api ipfs)
+target_link_libraries(runner eth_full eth_api ipfs init)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
 target_link_libraries(vmrunner eth_full)
