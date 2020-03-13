@@ -58,7 +58,6 @@
 in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3_t* in3 = NULL;
   int    err;
-  in3_register_eth_full();
   in3 = in3_for_chain(0);
   if (custom_transport)
     in3->transport = custom_transport; // use curl to handle the requests
@@ -589,6 +588,7 @@ static void test_send_raw_tx(void) {
 int main() {
   in3_log_set_quiet(true);
   in3_log_set_level(LOG_ERROR);
+  in3_register_eth_full();
 
   // now run tests
   TESTS_BEGIN();
