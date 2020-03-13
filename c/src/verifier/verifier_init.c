@@ -1,5 +1,6 @@
 #include "verifier_init.h"
 #include "../api/eth1/eth_api.h"
+#include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
 #include "../verifier/eth1/nano/eth_nano.h"
@@ -25,6 +26,9 @@ static void verifier_init() {
 #endif
 #ifdef IPFS
   in3_register_ipfs();
+#endif
+#ifdef BTC
+  in3_register_btc();
 #endif
 }
 
