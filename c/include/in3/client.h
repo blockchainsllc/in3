@@ -555,7 +555,9 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * 
  * @returns the incubed instance.
  */
-in3_t* in3_for_chain(
+#define in3_for_chain(chain_id) in3_for_chain_default(chain_id)
+
+in3_t* in3_for_chain_default(
     chain_id_t chain_id /**< the chain_id (see ETH_CHAIN_ID_... constants). */
 );
 
