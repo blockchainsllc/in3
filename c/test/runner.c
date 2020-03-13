@@ -42,7 +42,7 @@
 #include "../src/core/util/mem.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include "../src/verifier/ipfs/ipfs.h"
-#include "verifier/verifier_init.h"
+#include "verifier/in3_init.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

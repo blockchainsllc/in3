@@ -1,5 +1,6 @@
-#include "verifier_init.h"
+#include "in3_init.h"
 #include "../api/eth1/eth_api.h"
+#include "../transport/curl/in3_curl.h"
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
@@ -8,10 +9,7 @@
 
 static bool initialized;
 
-static void verifier_init() {
-  if (initialized) return;
-  initialized = true;
-
+static void init_verifier() {
 #ifdef ETH_FULL
   in3_register_eth_full();
 #endif
@@ -33,6 +31,9 @@ static void verifier_init() {
 }
 
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
-  verifier_init();
+  if (!initialized) {
+    initialized = true;
+    init_verifier();
+  }
   return in3_for_chain_default(chain_id);
 }
