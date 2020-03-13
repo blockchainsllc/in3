@@ -138,6 +138,12 @@ in3_nodeList\n\
 in3_sign <blocknumber>\n\
   requests a node to sign. in order to specify the signer, you need to pass the url with -c\n\
 \n\
+ipfs_get <ipfs_hash>\n\
+  requests and verifies the content for a given ipfs-hash and write the content to stdout\n\
+\n\
+ipfs_put\n\
+  reads a content from stdin and pushes to the ipfs-network. it write the ipfs-hash to stdout.\n\
+\n\
 in3_stats\n\
   returns the stats of a node. unless you specify the node with -c <rpcurl> it will pick a random node.\n\
 \n\
@@ -991,7 +997,7 @@ int main(int argc, char* argv[]) {
 
     return 0;
   } else if (strcmp(method, "autocompletelist") == 0) {
-    printf("send call abi_encode abi_decode ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
+    printf("send call abi_encode abi_decode ipfs_get ipfs_put ecrecover key -sigtype -st eth_sign raw hash sign createkey -ri -ro keystore unlock pk2address pk2public mainnet tobalaba kovan goerli local volta true false latest -np -debug -c -chain -p -version -proof -s -signs -b -block -to -d -data -gas_limit -value -w -wait -hex -json in3_nodeList in3_stats in3_sign web3_clientVersion web3_sha3 net_version net_peerCount net_listening eth_protocolVersion eth_syncing eth_coinbase eth_mining eth_hashrate eth_gasPrice eth_accounts eth_blockNumber eth_getBalance eth_getStorageAt eth_getTransactionCount eth_getBlockTransactionCountByHash eth_getBlockTransactionCountByNumber eth_getUncleCountByBlockHash eth_getUncleCountByBlockNumber eth_getCode eth_sign eth_sendTransaction eth_sendRawTransaction eth_call eth_estimateGas eth_getBlockByHash eth_getBlockByNumber eth_getTransactionByHash eth_getTransactionByBlockHashAndIndex eth_getTransactionByBlockNumberAndIndex eth_getTransactionReceipt eth_pendingTransactions eth_getUncleByBlockHashAndIndex eth_getUncleByBlockNumberAndIndex eth_getCompilers eth_compileLLL eth_compileSolidity eth_compileSerpent eth_newFilter eth_newBlockFilter eth_newPendingTransactionFilter eth_uninstallFilter eth_getFilterChanges eth_getFilterLogs eth_getLogs eth_getWork eth_submitWork eth_submitHashrate in3_cacheClear\n");
     return 0;
   } else if (strcmp(method, "createkey") == 0) {
     time_t t;
