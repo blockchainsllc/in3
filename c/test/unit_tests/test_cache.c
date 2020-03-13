@@ -126,9 +126,6 @@ void static setup_test_cache(in3_t* c) {
 }
 
 static void test_cache() {
-
-  in3_register_eth_nano();
-
   in3_t* c     = in3_for_chain(0x1);
   c->transport = test_transport;
   setup_test_cache(c);
@@ -172,8 +169,6 @@ static void test_cache() {
 }
 
 static void test_newchain() {
-
-  in3_register_eth_nano();
   in3_set_default_transport(test_transport);
 
   in3_t* c    = in3_for_chain(0);
@@ -308,6 +303,7 @@ static void test_whitelist_cache() {
 int main() {
   TEST_ASSERT_EQUAL(0, mem_stack_size());
   memstack();
+  in3_register_eth_nano();
   in3_log_set_udata_(NULL);
   in3_log_set_lock_(NULL);
   in3_log_set_fp_(NULL);
