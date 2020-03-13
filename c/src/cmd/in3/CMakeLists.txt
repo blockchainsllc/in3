@@ -56,7 +56,7 @@ endif()
 
 if (IPFS)
     ADD_DEFINITIONS(-DIPFS)
-    set(LIBS ${LIBS} ipfs)
+    set(LIBS ${LIBS} ipfs ipfs_api )
 endif()
 
 

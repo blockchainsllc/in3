@@ -76,6 +76,7 @@
 #include "../../verifier/btc/btc.h"
 #endif
 #ifdef IPFS
+#include "../../api/ipfs/ipfs_api.h"
 #include "../../verifier/ipfs/ipfs.h"
 #endif
 
@@ -602,6 +603,7 @@ int main(int argc, char* argv[]) {
   // define vars
   char *method = NULL, params[50000];
   params[0]    = '[';
+  params[1]    = 0;
   int       p  = 1, i;
   bytes32_t pk;
 
@@ -848,7 +850,24 @@ int main(int argc, char* argv[]) {
     else
       print_val(res->result);
     return 0;
+#ifdef IPFS
+  } else if (strcmp(method, "ipfs_get") == 0) {
+    c->chain_id = ETH_CHAIN_ID_IPFS;
+    int size    = strlen(params);
+    if (p == 1 || params[1] != '"' || size < 20 || strstr(params + 2, "\"") == NULL) die("missing ipfs has");
+    params[size - 2] = 0;
+    bytes_t* content = ipfs_get(c, params + 2);
+    if (!content) die("IPFS hash not found!");
+    fwrite(content->data, content->len, 1, stdout);
+    fflush(stdout);
+    return 0;
 
+  } else if (strcmp(method, "ipfs_put") == 0) {
+    c->chain_id = ETH_CHAIN_ID_IPFS;
+    printf("%s\n", ipfs_put(c, get_std_in()));
+    return 0;
+
+#endif
   } else if (strcmp(method, "in3_weights") == 0) {
     c->max_attempts = 1;
     uint32_t block = 0, b = 0;
@@ -907,7 +926,6 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
-
   } else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
