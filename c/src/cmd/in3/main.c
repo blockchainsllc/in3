@@ -863,8 +863,10 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "ipfs_put") == 0) {
-    c->chain_id = ETH_CHAIN_ID_IPFS;
-    printf("%s\n", ipfs_put(c, get_std_in()));
+    c->chain_id         = ETH_CHAIN_ID_IPFS;
+    bytes_t data        = readFile(stdin);
+    data.data[data.len] = 0;
+    printf("%s\n", ipfs_put(c, &data));
     return 0;
 
 #endif
