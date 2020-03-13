@@ -385,12 +385,12 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
       }
       if (!in_filter_nodes)
         continue;
-    } else if (nodeDef->boot_node)
-      goto SKIP_FILTERING;
+    }
+    if (weightDef->blacklisted_until > (uint64_t) now) continue;
+    if (nodeDef->boot_node) goto SKIP_FILTERING;
     if (chain->whitelist && !nodeDef->whitelisted) continue;
     if (nodeDef->deposit < c->min_deposit) continue;
     if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
-    if (weightDef->blacklisted_until > (uint64_t) now) continue;
 
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
