@@ -434,7 +434,7 @@ void in3_free(in3_t* a) {
   _free(a);
 }
 
-in3_t* in3_for_chain(chain_id_t chain_id) {
+in3_t* in3_for_chain_default(chain_id_t chain_id) {
 
   // initialize random with the timestamp (in nanoseconds) as seed
   in3_srand(current_ms());
