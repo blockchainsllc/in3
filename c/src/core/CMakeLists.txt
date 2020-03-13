@@ -38,8 +38,8 @@ include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 # This module does not have any dependencies and cannot be used without additional modules providing verification and transport.
 OPTION(IN3_STAGING "if true, the client will use the staging-network instead of the live ones" OFF)
 IF (IN3_STAGING)
-   ADD_DEFINITIONS(-DIN3_STAGING)
-ENDIF(IN3_STAGING)
+    ADD_DEFINITIONS(-DIN3_STAGING)
+ENDIF (IN3_STAGING)
 
 add_library(core_o OBJECT
         client/context.c
@@ -61,3 +61,7 @@ add_library(core_o OBJECT
         )
 add_library(core STATIC $<TARGET_OBJECTS:core_o>)
 target_link_libraries(core crypto)
+
+add_library(init_o OBJECT ../verifier/verifier_init.c)
+add_library(init STATIC $<TARGET_OBJECTS:init_o>)
+target_link_libraries(init eth_full eth_api ipfs)
