@@ -44,11 +44,7 @@
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
-#include "../../c/src/verifier/eth1/full/eth_full.h"
-#ifdef IPFS
-#include "../../c/src/verifier/ipfs/ipfs.h"
-
-#endif
+#include "../../c/src/verifier/in3_init.h"
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   jlong l = (*env)->GetLongField(env, obj, (*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), "ptr", "J"));
@@ -935,12 +931,6 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_register_eth_full();
-
-#ifdef IPFS
-  in3_register_ipfs();
-#endif
-
   in3_t* in3 = in3_for_chain(jchain);
   in3_log_set_level(LOG_DEBUG);
   in3->transport          = Java_in3_IN3_transport;
