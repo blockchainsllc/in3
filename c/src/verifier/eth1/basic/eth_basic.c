@@ -224,7 +224,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 }
 
 void in3_register_eth_basic() {
-  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
+  in3_verifier_t* v = calloc(1, sizeof(in3_verifier_t));
   v->type           = CHAIN_ETH;
   v->pre_handle     = eth_handle_intern;
   v->verify         = in3_verify_eth_basic;

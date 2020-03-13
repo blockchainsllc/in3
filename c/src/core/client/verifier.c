@@ -33,7 +33,6 @@
  *******************************************************************************/
 
 #include "verifier.h"
-#include "../util/stringbuilder.h"
 #include "client.h"
 #include "keys.h"
 
