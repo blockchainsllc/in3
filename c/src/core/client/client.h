@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -149,7 +149,7 @@ typedef enum {
   FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
   FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
   FLAGS_STATS            = 0x20, /**< nodes will keep track of the stats (default=true)  */
-
+  FLAGS_NODE_LIST_NO_SIG = 0x40  /**< nodelist update request will not automatically ask for signatures and proof */
 } in3_flags_type_t;
 
 /** incubed node-configuration. 
@@ -623,6 +623,13 @@ in3_ret_t in3_client_rpc(
     char*  method, /**< [in] the name of the rpc-funcgtion to call. */
     char*  params, /**< [in] docs for input parameter v. */
     char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
+    char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
+
+/** sends a request and stores the result in the provided buffer */
+in3_ret_t in3_client_rpc_raw(
+    in3_t* c,       /**< [in] the pointer to the incubed client config. */
+    char*  request, /**< [in] the rpc request including method and params. */
+    char** result,  /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 

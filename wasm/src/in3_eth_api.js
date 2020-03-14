@@ -305,7 +305,7 @@ class EthAPI {
 
         if (account && account.length == 66) // use direct pk
             s.signature = toHex(ecSign(account, s.messageHash, false))
-        else if (this.client.signer && await this.client.signer.hasAccount(account)) // use signer
+        else if (this.client.signer && await this.client.signer.canSign(account)) // use signer
             s.signature = toHex(await this.client.signer.sign(s.messageHash, account, false, true))
         else throw new Error('no signer found to sign for this account')
         return { ...splitSignature(s.signature, message, false), ...s, messageHash: toHex(s.messageHash) }
@@ -313,7 +313,7 @@ class EthAPI {
 
     /** sends a Transaction */
     async sendTransaction(args) {
-        if (!args.pk && (!this.client.signer || !(await this.client.signer.hasAccount(args.from)))) throw new Error('missing signer!')
+        if (!args.pk && (!this.client.signer || !(await this.client.signer.canSign(args.from)))) throw new Error('missing signer!')
 
         // prepare
         const tx = await prepareTransaction(args, this)

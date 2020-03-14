@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -226,7 +226,7 @@ static in3_t* in3_init_test(chain_id_t chain) {
   in3_t* in3     = in3_for_chain(chain);
   in3->chain_id  = chain;
   in3->transport = test_transport;
-  in3->flags |= FLAGS_AUTO_UPDATE_LIST;
+  in3->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
   return in3;
 }
 
@@ -584,6 +584,82 @@ static void test_nodelist_update_7() {
   in3_free(c);
 }
 
+// Scenario 8: Newer `lastNodeList` with wrong response
+// Begin with 3 nodes in first nodeList update (always taken from a boot node) which happened at block 87989012 (i.e. `lastBlockNumber`).
+// After 200 secs, `eth_blockNumber` returns an error result but reports a nodeList update happened at 87989038 (i.e. `lastNodeList`).
+// Since the result was not valid, we must not accept the `lastNodeList` and should not trigger a nodeList update.
+// A request now should trigger a nodeList update.
+static void test_nodelist_update_8() {
+  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  c->proof                = PROOF_NONE;
+  c->replace_latest_block = DEF_REPL_LATEST_BLK;
+  c->max_attempts         = 0;
+
+  // start time
+  uint64_t t = 1;
+  in3_time(&t);
+
+  // reset rand to be deterministic
+  int s = 0;
+  in3_rand(&s);
+
+  // begin with 3 nodes, i.e. one node more than the usual boot nodes
+  ADD_RESPONSE_BLOCK_NUMBER("87989038", "87989050", "0x53E9B3A");
+  ADD_RESPONSE_NODELIST_3("87989038");
+
+  t = 200;
+  in3_time(&t);
+  TEST_ASSERT_NOT_EQUAL(0, eth_blockNumber(c));
+
+  // reset rand to be deterministic
+  s = 0;
+  in3_rand(&s);
+
+  // test that nodelist_upd8_params are not set when we have an error response
+  add_response("eth_blockNumber",
+               "[]",
+               NULL,
+               "\"Error: Internal server error\"",
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989049,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989092,"
+               "  \"version\": \"2.0.0\""
+               "}");
+  TEST_ASSERT_EQUAL(0, eth_blockNumber(c));
+  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+
+  // test that nodelist_upd8_params are not set when we have a response without proof
+  c->proof = PROOF_STANDARD;
+  add_response("eth_getBalance",
+               "[\"0x000000000000000000000000000000000000dead\",\"latest\"]",
+               "\"0x2a595770eb8ed0c5827\"",
+               NULL,
+               "{"
+               "  \"lastValidatorChange\": 0,"
+               "  \"lastNodeList\": 87989049,"
+               "  \"execTime\": 59,"
+               "  \"rpcTime\": 59,"
+               "  \"rpcCount\": 1,"
+               "  \"currentBlock\": 87989092,"
+               "  \"version\": \"2.0.0\""
+               "}");
+
+  address_t addr;
+  hex_to_bytes("0x000000000000000000000000000000000000dead", -1, addr, 20);
+  long double balance = as_double(eth_getBalance(c, addr, BLKNUM_LATEST()));
+  TEST_ASSERT_EQUAL(0, balance);
+
+  chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  TEST_ASSERT_NULL(chain->nodelist_upd8_params);
+
+  in3_free(c);
+}
+
 /*
  * Main
  */
@@ -600,5 +676,6 @@ int main() {
   RUN_TEST(test_nodelist_update_5);
   RUN_TEST(test_nodelist_update_6);
   RUN_TEST(test_nodelist_update_7);
+  RUN_TEST(test_nodelist_update_8);
   return TESTS_END();
 }

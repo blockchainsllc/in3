@@ -87,7 +87,9 @@
         "eth_call_response_binary.h": "c",
         "malloc.h": "c",
         "memzero.h": "c",
-        "eth_basic.h": "c"
+        "eth_basic.h": "c",
+        "sha2.h": "c",
+        "pb_decode.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: LLVM, AlignConsecutiveAssignments: true, AlignConsecutiveDeclarations: true, AlignTrailingComments: true, AllowShortBlocksOnASingleLine: true, AllowShortCaseLabelsOnASingleLine: true, AllowShortIfStatementsOnASingleLine: true }",

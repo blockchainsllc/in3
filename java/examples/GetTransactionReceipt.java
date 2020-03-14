@@ -13,17 +13,17 @@ public class GetTransactionReceipt {
     // create incubed
     IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also the default)
 
-    TransactionReceipt txn = GetTransactionReceiptAPI(in3);
+    TransactionReceipt txn = getTransactionReceiptAPI(in3);
     System.out.println("TransactionRerceipt API : for txIndex " + txn.getTransactionIndex() + " Block num " + txn.getBlockNumber() + " Gas used " + txn.getGasUsed() + " status " + txn.getStatus());
 
-    System.out.println("TransactionReceipt RPC : " + GetTransactionReceiptRPC(in3));
+    System.out.println("TransactionReceipt RPC : " + getTransactionReceiptRPC(in3));
   }
 
-  static TransactionReceipt GetTransactionReceiptAPI(IN3 in3) {
+  static TransactionReceipt getTransactionReceiptAPI(IN3 in3) {
     return in3.getEth1API().getTransactionReceipt(TRANSACTION_HASH);
   }
 
-  static String GetTransactionReceiptRPC(IN3 in3) {
+  static String getTransactionReceiptRPC(IN3 in3) {
     return in3.sendRPC("eth_getTransactionReceipt", new Object[] {TRANSACTION_HASH});
   }
 }

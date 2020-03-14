@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -56,7 +56,7 @@ endif()
 
 if (IPFS)
     ADD_DEFINITIONS(-DIPFS)
-    set(LIBS ${LIBS} ipfs)
+    set(LIBS ${LIBS} ipfs ipfs_api )
 endif()
 
 

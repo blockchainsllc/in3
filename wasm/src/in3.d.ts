@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -762,7 +762,7 @@ export declare interface Signer<BigIntType, BufferType> {
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
-    hasAccount(account: Address): Promise<boolean>
+    canSign(address: Address): Promise<boolean>
 
     /** 
      * signing of any data. 
@@ -995,7 +995,7 @@ export declare class SimpleSigner<BigIntType, BufferType> implements Signer<BigI
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
 
     /** returns true if the account is supported (or unlocked) */
-    hasAccount(account: Address): Promise<boolean>
+    canSign(address: Address): Promise<boolean>
 
     /** 
      * signing of any data. 

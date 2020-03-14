@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  *
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  *
  *
  * COMMERCIAL LICENSE USAGE
@@ -169,6 +169,9 @@ int evm_sub_call(evm_t*    parent,
                  uint32_t out_offset, uint32_t out_len
 
 ) {
+
+  UNUSED_VAR(gas);
+
   // create a new evm
   evm_t evm;
   int   res = evm_prepare_evm(&evm, address, code_address, origin, caller, parent->env, parent->env_ptr, mode), success = 0;
@@ -184,6 +187,7 @@ int evm_sub_call(evm_t*    parent,
   if (mode == EVM_CALL_MODE_STATIC) evm.properties |= EVM_PROP_STATIC;
 
   account_t* new_account = NULL;
+  UNUSED_VAR(new_account);
   UPDATE_SUBCALL_GAS(evm, parent, address, code_address, caller, gas, mode, value, l_value);
 
   // execute the internal call

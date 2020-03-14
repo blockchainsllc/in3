@@ -7,7 +7,7 @@ target_sources(app PRIVATE src/main.c)
 
 ADD_DEFINITIONS(-DTEST)
 ADD_DEFINITIONS(-DDEBUG)
-
+ADD_DEFINITIONS(-DUSE_SCRYPT=false)
 SET(CMAKE_BUILD_TYPE Debug)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 ADD_DEFINITIONS(-DZEPHYR_OS)
@@ -21,14 +21,15 @@ ${IN3_SRC}/src/verifier/eth1/basic
 ${IN3_SRC}/src/verifier/eth1/nano 
 ${IN3_SRC}/src/api/eth1
 ${IN3_SRC}/src/api/utils
-${IN3_SRC}/src/third-party
+${IN3_SRC}/src/third-party/crypto
+${IN3_SRC}/src/third-party/tommath
 )
 
 foreach(dep ${IN3_DEPS})
   file(GLOB files "${dep}/**/*.c")
   file(GLOB files2 "${dep}/*.c")
-  message("${files}")
-  message("${files2}")
+  #temp fix for building with a GLOB and not include all 3rd party libs
+  list(FILTER files EXCLUDE REGEX ".*aestst.c$")
   target_sources(app PRIVATE "${files}" "${files2}")
   include_directories ("${dep}")
 endforeach()
