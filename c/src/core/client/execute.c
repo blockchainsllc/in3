@@ -124,11 +124,10 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
+  conf->use_full_proof  = c->proof == PROOF_FULL;
+  conf->verification    = VERIFICATION_PROOF;
   uint8_t total_sig_cnt = c->signature_count ? c->signature_count
                                              : auto_ask_sig(ctx) ? 1 : 0;
-
-  conf->use_full_proof = c->proof == PROOF_FULL;
-  conf->verification   = VERIFICATION_PROOF;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
