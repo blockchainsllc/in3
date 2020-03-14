@@ -226,7 +226,7 @@ static in3_t* in3_init_test(chain_id_t chain) {
   in3_t* in3     = in3_for_chain(chain);
   in3->chain_id  = chain;
   in3->transport = test_transport;
-  in3->flags |= FLAGS_AUTO_UPDATE_LIST;
+  in3->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
   return in3;
 }
 

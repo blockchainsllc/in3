@@ -42,20 +42,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
-  // generate the rpc-request
-  const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
-  const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
-  char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
-  if (!req) return NULL;                                                                                // if we don't have the memory for a string, we stop here
-  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
-
+in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, char* req) {
   // create a new context by parsing the request
   in3_ctx_t* ctx = ctx_new(c, req);
 
   // this happens if the request is not parseable (JSON-error in params)
   if (ctx->error) {
-    if (heap) _free(req); // free request string if we created it in heap
     ctx->verification_state = IN3_EINVAL;
     return ctx;
   }
@@ -69,17 +61,28 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
   } else
     ctx->verification_state = ret;
 
+  return ctx; // return context and hope the calle will clean it.
+}
+
+in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
+  // generate the rpc-request
+  const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
+  const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
+  char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
+  if (!req) return NULL;                                                                                // if we don't have the memory for a string, we stop here
+  snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
+
+  in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
+
   if (heap) _free(req); // free request string if we created it in heap
   return ctx;           // return context and hope the calle will clean it.
 }
 
-in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
-  if (!error) return IN3_EINVAL;
+static in3_ret_t ctx_rpc(in3_ctx_t* ctx, char** result, char** error) {
   if (result) result[0] = 0;
-  *error         = NULL;
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, method, params);
-  in3_ret_t  res = ctx ? ctx->verification_state : IN3_ENOMEM;
+  *error = NULL;
 
+  in3_ret_t res = ctx ? ctx->verification_state : IN3_ENOMEM;
   if (!ctx) return res;
 
   // check parse-errors
@@ -126,6 +129,16 @@ clean:
 
   // if we have an error, we always return IN3_EUNKNOWN
   return res;
+}
+
+in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
+  if (!error) return IN3_EINVAL;
+  return ctx_rpc(in3_client_rpc_ctx(c, method, params), result, error);
+}
+
+in3_ret_t in3_client_rpc_raw(in3_t* c, char* request, char** result, char** error) {
+  if (!error) return IN3_EINVAL;
+  return ctx_rpc(in3_client_rpc_ctx_raw(c, request), result, error);
 }
 
 static char* create_rpc_error(uint32_t id, int code, char* error) {

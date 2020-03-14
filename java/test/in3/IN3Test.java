@@ -3,31 +3,26 @@ package in3;
 import org.junit.jupiter.api.*;
 
 public class IN3Test {
-
-  private IN3 in3;
-
-  @BeforeEach
-  public void setBuilder() {
+  @Test
+  public void nodeList() {
     String[][] mockedResponses = {
         {"eth_call", "eth_call_2.json"},
         {"in3_nodeList", "in3_nodeList.json"},
         {"in3_sign", "in3_sign.json"}};
-    IN3MockBuilder builder = new IN3MockBuilder(Chain.MAINNET);
-    in3                    = builder.constructClient(mockedResponses);
-  }
+    IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
+    IN3            in3     = builder.constructClient(mockedResponses);
 
-  @Test
-  public void nodeList() {
-    String url          = "https://in3-v2.slock.it/mainnet/nd-1";
+    String url          = "https://in3-v2.slock.it/goerli/nd-1";
     String address      = "0x45d45e6ff99e6c34a235d263965910298985fcfe";
     int    index        = 0;
     String deposit      = "0x2386f26fc10000";
-    long   props        = 0x06000001ddL;
+    long   props        = 0x1ddL;
     int    timeout      = 3456000;
-    int    registerTime = 1576224418;
+    int    registerTime = 1576227711;
     int    weight       = 2000;
 
-    IN3Node[] list = in3.nodeList();
+    IN3Node[] list = in3.nodeList(new String[] {
+        "0x45d45e6ff99e6c34a235d263965910298985fcfe"});
 
     Assertions.assertTrue(list.length > 0);
     Assertions.assertEquals(url, list[0].getUrl());
@@ -42,6 +37,13 @@ public class IN3Test {
 
   @Test
   public void cacheClear() {
+    String[][] mockedResponses = {
+        {"eth_call", "eth_call_2.json"},
+        {"in3_nodeList", "in3_nodeList.json"},
+        {"in3_sign", "in3_sign.json"}};
+    IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
+    IN3            in3     = builder.constructClient(mockedResponses);
+
     // This test, for now is a lie.
     boolean result = in3.cacheClear();
     Assertions.assertTrue(result);
@@ -49,6 +51,13 @@ public class IN3Test {
 
   @Test
   public void sign() {
+    String[][] mockedResponses = {
+        {"eth_call", "eth_call_2.json"},
+        {"in3_nodeList", "in3_nodeList.json"},
+        {"in3_sign", "in3_sign.json"}};
+    IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
+    IN3            in3     = builder.constructClient(mockedResponses);
+
     BlockID[] vR = new BlockID[] {
         BlockID.fromHash("0x2a8bf38abe3fec478a2029e74ac95ecdbef95ff2fb832786ba4c5231c8cea480")};
     String[] address         = new String[] {"0x1fe2e9bf29aa1938859af64c413361227d04059a"};
@@ -63,6 +72,13 @@ public class IN3Test {
 
   @Test
   public void getConfig() {
+    String[][] mockedResponses = {
+        {"eth_call", "eth_call_2.json"},
+        {"in3_nodeList", "in3_nodeList.json"},
+        {"in3_sign", "in3_sign.json"}};
+    IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
+    IN3            in3     = builder.constructClient(mockedResponses);
+
     // This test may seem pointless but it intends to test the proper conversion of the jni getConfig to a valid String.
     String configJson = in3.getConfig().toJSON();
     Assertions.assertNotNull(configJson);
@@ -70,6 +86,13 @@ public class IN3Test {
 
   @Test
   public void handleEns() {
+    String[][] mockedResponses = {
+        {"eth_call", "eth_call_2.json"},
+        {"in3_nodeList", "in3_nodeList.json"},
+        {"in3_sign", "in3_sign.json"}};
+    IN3MockBuilder builder = new IN3MockBuilder(Chain.MAINNET);
+    IN3            in3     = builder.constructClient(mockedResponses);
+
     String[] params = new String[] {
         "cryptokitties.eth",
         "0x0102030405060708090a0b0c0d0e0f",
@@ -86,6 +109,13 @@ public class IN3Test {
 
   @Test
   public void free() {
+    String[][] mockedResponses = {
+        {"eth_call", "eth_call_2.json"},
+        {"in3_nodeList", "in3_nodeList.json"},
+        {"in3_sign", "in3_sign.json"}};
+    IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
+    IN3            in3     = builder.constructClient(mockedResponses);
+
     in3.free();
   }
 }

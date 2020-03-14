@@ -263,7 +263,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
   sb_t* in3_sec = sb_new("{");
   if (nodelist_not_first_upd8(chain)) {
     bytes_t addr_ = (bytes_t){.data = chain->nodelist_upd8_params->node, .len = 20};
-    sb_add_bytes(in3_sec, "\"data_nodes\":", &addr_, 1, true);
+    sb_add_bytes(in3_sec, "\"dataNodes\":", &addr_, 1, true);
   }
 
   // create request
@@ -362,8 +362,8 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
 
   int                found      = 0;
   uint32_t           weight_sum = 0;
-  in3_node_t*        nodeDef    = NULL;
-  in3_node_weight_t* weightDef  = NULL;
+  in3_node_t*        node_def   = NULL;
+  in3_node_weight_t* weight_def = NULL;
   node_match_t*      prev       = NULL;
   node_match_t*      current    = NULL;
   node_match_t*      first      = NULL;
@@ -372,16 +372,13 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
   if (!chain) return NULL;
 
   for (int i = 0; i < len; i++) {
-    nodeDef   = all_nodes + i;
-    weightDef = weights + i;
-    if (nodeDef->boot_node) goto SKIP_FILTERING;
-    if (chain->whitelist && !nodeDef->whitelisted) continue;
-    if (nodeDef->deposit < c->min_deposit) continue;
-    if (!in3_node_props_match(filter.props, nodeDef->props)) continue;
+    node_def   = all_nodes + i;
+    weight_def = weights + i;
+
     if (filter.nodes != NULL) {
       bool in_filter_nodes = false;
       for (d_iterator_t it = d_iter(filter.nodes); it.left; d_iter_next(&it)) {
-        if (b_cmp(d_bytesl(it.token, 20), nodeDef->address)) {
+        if (b_cmp(d_bytesl(it.token, 20), node_def->address)) {
           in_filter_nodes = true;
           break;
         }
@@ -389,7 +386,11 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
       if (!in_filter_nodes)
         continue;
     }
-    if (weightDef->blacklisted_until > (uint64_t) now) continue;
+    if (weight_def->blacklisted_until > (uint64_t) now) continue;
+    if (node_def->boot_node) goto SKIP_FILTERING;
+    if (chain->whitelist && !node_def->whitelisted) continue;
+    if (node_def->deposit < c->min_deposit) continue;
+    if (!in3_node_props_match(filter.props, node_def->props)) continue;
 
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
@@ -398,11 +399,11 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
       return NULL;
     }
     if (!first) first = current;
-    current->node   = nodeDef;
-    current->weight = weightDef;
+    current->node   = node_def;
+    current->weight = weight_def;
     current->next   = NULL;
     current->s      = weight_sum;
-    current->w      = in3_node_calculate_weight(weightDef, nodeDef->capacity);
+    current->w      = in3_node_calculate_weight(weight_def, node_def->capacity);
     weight_sum += current->w;
     found++;
     if (prev) prev->next = current;

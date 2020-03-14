@@ -889,7 +889,7 @@ int main(int argc, char* argv[]) {
         char req[300];
         char adr[41];
         bytes_to_hex((chain->nodelist + i)->address->data, 20, adr);
-        sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"data_nodes\":[\"0x%s\"]}}", adr);
+        sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
         ctx = ctx_new(c, req);
         if (ctx) in3_send_ctx(ctx);
       }
