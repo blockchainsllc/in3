@@ -35,10 +35,8 @@
 package in3;
 
 import in3.config.ClientConfiguration;
-import in3.eth1.API;
 import in3.utils.Crypto;
 import in3.utils.JSON;
-import in3.utils.Signature;
 import in3.utils.Signer;
 import in3.utils.StorageProvider;
 
@@ -141,10 +139,17 @@ public class IN3 {
   }
 
   /**
+     * gets the ipfs-api
+     */
+  public in3.ipfs.API getIpfs() {
+    return new in3.ipfs.API(this);
+  }
+
+  /**
      * gets the ethereum-api
      */
-  public API getEth1API() {
-    return new API(this);
+  public in3.eth1.API getEth1API() {
+    return new in3.eth1.API(this);
   }
 
   /**

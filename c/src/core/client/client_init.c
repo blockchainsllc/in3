@@ -169,9 +169,9 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
 
 static void init_ipfs(in3_chain_t* chain) {
   // ipfs
-  initChain(chain, 0x7d0, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 2, CHAIN_IPFS, NULL);
-  initNode(chain, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "https://in3.slock.it/ipfs/nd-1");
-  initNode(chain, 1, "243D5BB48A47bEd0F6A89B61E4660540E856A33D", "https://in3.slock.it/ipfs/nd-5");
+  initChain(chain, 0x7d0, "a93b57289070550c82edb1106e12bb37138948b8", "f0162ec6d785ee990e36bad865251f45af0916cf136169540c02b0dd9cb69196", 2, 2, CHAIN_IPFS, NULL);
+  initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/ipfs/nd-1");
+  initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/ipfs/nd-5");
 }
 
 static void init_mainnet(in3_chain_t* chain) {

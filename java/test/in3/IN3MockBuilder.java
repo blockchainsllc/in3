@@ -44,6 +44,11 @@ public class IN3MockBuilder {
     chainConfig3.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
     chainConfig3.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
+    ChainConfiguration nodeConfig4 = new ChainConfiguration(Chain.IPFS, clientConfig);
+    nodeConfig4.setNeedsUpdate(false);
+    nodeConfig4.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
+    nodeConfig4.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
+
     clientConfig.setRequestCount(1);
     clientConfig.setAutoUpdateList(false);
     clientConfig.setProof(Proof.none);
