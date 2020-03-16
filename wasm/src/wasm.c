@@ -43,6 +43,8 @@
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/third-party/libb64/cdecode.h"
+#include "../../c/src/third-party/libb64/cencode.h"
 #include <emscripten.h>
 #include <string.h>
 #include <time.h>
@@ -88,7 +90,7 @@ EM_JS(char*, in3_cache_get, (char* key), {
   var val = Module.in3_cache.get(UTF8ToString(key));
   if (val) {
     var len = (val.length << 2) + 1;
-    var ret = stackAlloc(len); 
+    var ret = stackAlloc(len);
     stringToUTF8(val, ret, len);
     return ret;
   }
@@ -210,6 +212,17 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
     sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
   } else
     sb_add_chars(&r->results[i].result, msg);
+}
+
+uint8_t* EMSCRIPTEN_KEEPALIVE base64Decode(char* input) {
+  size_t   len = 0;
+  uint8_t* b64 = base64_decode(input, &len);
+  return b64;
+}
+
+char* EMSCRIPTEN_KEEPALIVE base64Encode(uint8_t* input, int len) {
+  char* b64 = base64_encode(input, len);
+  return b64;
 }
 
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
