@@ -339,9 +339,9 @@ function base64Decode(val) {
     if ((typeof val) !== 'string') throw new Error('Must be a string as input')
     let lip = val.len
     let len = lip / 4 * 3
-    if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
+    if (lip > 1 && val[lip - 2] == '=' && val[lip - 1] == '=')
         len -= 2
-    else if (ip[lip - 1] == '=')
+    else if (val[lip - 1] == '=')
         len -= 1
 
     return call_buffer('base64Decode', len, val)
