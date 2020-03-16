@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -45,6 +45,7 @@ option(ETH_NANO "build minimal eth verification.(eth_getTransactionReceipt)" ON)
 option(ETH_BASIC "build basic eth verification.(all rpc-calls except eth_call)" ON)
 option(ETH_FULL "build full eth verification.(including eth_call)" ON)
 option(IPFS "build IPFS verification" ON)
+option(COLOR "Enable color codes for debug" ON)
 option(BTC "if true, the bitcoin verifiers will be build" OFF)
 option(IN3API "build the USN-API which offer better interfaces and additional functions on top of the pure verification" ON)
 option(USE_PRECOMPUTED_EC "if true the secp256k1 curve uses precompiled tables to boost performance. turning this off makes ecrecover slower, but saves about 37kb." ON)
@@ -63,7 +64,7 @@ option(WASM_EMBED "embedds the wasm as base64-encoded into the js-file" ON)
 option(WASM_EMMALLOC "use ther smaller EMSCRIPTEN Malloc, which reduces the size about 10k, but may be a bit slower" ON)
 option(WASM_SYNC "intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)" OFF)
 option(CODE_COVERAGE  "Builds targets with code coverage instrumentation. (Requires GCC or Clang)"  OFF)
-
+OPTION(USE_SCRYPT "if scrypt is installed, it will link dynamicly to the shared scrypt lib." ON)
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
 else()
@@ -98,6 +99,11 @@ if(IPFS)
     ADD_DEFINITIONS(-DIPFS)
     set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
 endif()
+
+if(COLOR AND NOT (MSVC OR MSYS OR MINGW))
+   ADD_DEFINITIONS(-DLOG_USE_COLOR)
+endif()
+
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     ADD_DEFINITIONS(-DDEBUG)
@@ -150,7 +156,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 if(TEST)
     MESSAGE(STATUS "Build Tests and add debug infos")
     ADD_DEFINITIONS(-DTEST)
-    ADD_DEFINITIONS(-DLOG_USE_COLOR)
     ADD_DEFINITIONS(-DIN3_DONT_HASH_KEYS)
     ADD_DEFINITIONS(-DIN3_EXPORT_TEST=)
     ADD_DEFINITIONS(-DIN3_IMPORT_TEST=extern)
@@ -159,6 +164,7 @@ if(TEST)
     enable_testing()
     add_subdirectory(c/test)
     add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 8)
+    add_custom_target(rtest COMMAND ${CMAKE_CTEST_COMMAND} -V )
 endif(TEST)
 
 

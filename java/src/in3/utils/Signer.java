@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -32,22 +32,24 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-package in3;
+package in3.utils;
 
+import in3.IN3;
+import in3.eth1.TransactionRequest;
 
 /**
- * Provider methods to cache data.
- * These data could be nodelists, contract codes or validator changes.
+ * a Interface responsible for signing data or transactions.
  */
-public interface StorageProvider {
-    /**
-     * returns a item from cache ()
-     * @return the bytes or null if not found.
+public interface Signer {
+  /**
+     * optiional method which allows to change the transaction-data before sending
+     * it. This can be used for redirecting it through a multisig.
      */
-    byte[] getItem(String key /** the key for the item */);
+  TransactionRequest prepareTransaction(IN3 in3, TransactionRequest tx);
 
-    /**
-     * stores a item in the cache.
-     */
-    void setItem(String key/** the key for the item */, byte[] content /** the value to store */);
+  /** returns true if the account is supported (or unlocked) */
+  boolean canSign(String address);
+
+  /** signing of the raw data. */
+  String sign(String data, String address);
 }

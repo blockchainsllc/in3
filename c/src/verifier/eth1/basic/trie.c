@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -421,12 +421,12 @@ static void hexprint(uint8_t* a, int l) {
 }
 static void print_nibbles(bytes_t* path) {
   uint8_t *nibbles = trie_path_to_nibbles(*path, true), *p = nibbles;
-  in3_log_trace("\x1B[32m");
+  in3_log_trace(COLOR_GREEN);
   while (*p != 0xFF) {
     in3_log_trace("%01x", *p);
     p++;
   }
-  in3_log_trace("\x1B[0m");
+  in3_log_trace(COLOR_RESET);
   _free(nibbles);
 }
 
@@ -444,7 +444,7 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
   if (with_hash) in3_log_trace("<%02x%02x%02x>", n->hash[0], n->hash[1], n->hash[2]);
   switch (n->type) {
     case NODE_BRANCH:
-      in3_log_trace("\x1B[33m<BRANCH>\x1B[0m ");
+      in3_log_trace("" COLOR_YELLOW " ", "<BRANCH>");
       tmp = trie_node_get_item(n, 16);
       if (tmp.len) {
         in3_log_trace(" = ");
@@ -452,19 +452,19 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
       }
       for (i = 0; i < 16; i++) {
         if (rlp_decode(&n->items, i, &tmp) == 2) {
-          sprintf(_prefix, "\x1B[32m%01x\x1B[0m : (EMBED) ", i);
+          sprintf(_prefix, "" COLOR_GREEN_X1 " : (EMBED) ", i);
           //          b_print(&tmp);
           trie_node_t* t = get_node_target(trie, n, i);
           dump_handle(trie, t, with_hash, level + 1, _prefix);
           _free(t);
         } else if (tmp.len) {
-          sprintf(_prefix, "\x1B[32m%01x\x1B[0m : ", i);
+          sprintf(_prefix, "" COLOR_GREEN_X1 " : ", i);
           dump_handle(trie, get_node(trie, hash_key(tmp.data)), with_hash, level + 1, _prefix);
         }
       }
       break;
     case NODE_LEAF:
-      in3_log_trace("\x1B[33m<LEAF \x1B[0m");
+      in3_log_trace(COLOR_YELLOW_STR, "<LEAF");
       tmp = trie_node_get_item(n, 0);
       print_nibbles(&tmp);
       in3_log_trace(">");
@@ -473,7 +473,7 @@ static void dump_handle(trie_t* trie, trie_node_t* n, uint8_t with_hash, int lev
       hexprint(tmp.data, tmp.len);
       break;
     case NODE_EXT:
-      in3_log_trace("\x1B[33m<EXT \x1B[0m");
+      in3_log_trace(COLOR_YELLOW_STR, "<EXT ");
       tmp = trie_node_get_item(n, 0);
       print_nibbles(&tmp);
       in3_log_trace(">");

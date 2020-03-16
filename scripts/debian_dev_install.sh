@@ -11,4 +11,4 @@ mkdir -p "$DESTDIR/usr/include/in3-dev/"
 mkdir -p "$DESTDIR/usr/include/in3/"
 
 cp -r build/lib/* "$DESTDIR/usr/lib/in3/" # moving lib files
-cp -r include/in3/*.h "$DESTDIR/usr/include/in3/" # moving include files
+cp -r c/include/in3/*.h "$DESTDIR/usr/include/in3/" # moving include files

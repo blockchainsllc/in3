@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -41,7 +41,7 @@
 
 #ifdef SCRYPT
 // only if scrypt is installed we support it.
-#include <libscrypt.h>
+#include "../../third-party/libscrypt/libscrypt.h"
 #endif
 
 in3_ret_t decrypt_key(d_token_t* key_data, char* password, bytes32_t dst) {

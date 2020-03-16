@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -157,3 +157,5 @@
 
 #define K_FROM_BLOCK        key("fromBlock")
 #define K_TO_BLOCK          key("toBlock")
+#define K_SIGNER_NODES      key("signerNodes")
+#define K_DATA_NODES        key("dataNodes")

@@ -2,7 +2,7 @@
 # This file is part of the Incubed project.
 # Sources: https://github.com/slockit/in3-c
 # 
-# Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+# Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
 # 
 # 
 # COMMERCIAL LICENSE USAGE
@@ -33,19 +33,12 @@
 ###############################################################################
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
-OPTION(USE_SCRYPT "if scrypt is installed, it will link dynamicly to the shared scrypt lib." OFF)
-IF (USE_SCRYPT)
-  find_package(scrypt)
-
-  if (${scrypt_FOUND})
-    MESSAGE(STATUS "Found Scrypt in ${scrypt_INCLUDE_DIRS})")
-    include_directories(${scrypt_INCLUDE_DIRS})
-    set(LIBS ${LIBS} ${scrypt_LIBRARIES})
-    ADD_DEFINITIONS(-DSCRYPT)
-  endif()
-endif()
 add_library(eth_api_o OBJECT eth_api.c abi.c key.c rpc_api.c ens.c)
 target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)
-
 add_library(eth_api STATIC $<TARGET_OBJECTS:eth_api_o>)
 target_link_libraries(eth_api eth_nano api_utils ${LIBS})
+
+if (USE_SCRYPT)
+  target_link_libraries(eth_api scrypt)
+  ADD_DEFINITIONS(-DSCRYPT)
+endif()

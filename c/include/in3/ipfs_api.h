@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  *
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  *
  *
  * COMMERCIAL LICENSE USAGE
@@ -42,8 +42,8 @@
 #ifndef IN3_IPFS_API_H
 #define IN3_IPFS_API_H
 
-#include "client.h"
 #include "bytes.h"
+#include "client.h"
 
 char*    ipfs_put(in3_t* in3, const bytes_t* content); /**< Returns the IPFS multihash of stored content on success OR NULL on error (check api_last_error()). Result must be freed by caller. */
 bytes_t* ipfs_get(in3_t* in3, const char* multihash);  /**< Returns the content associated with specified multihash on success OR NULL on error (check api_last_error()). Result must be freed by caller. */

@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -151,7 +151,7 @@ describe('API-Tests', () => {
 
     it('getStorageAt', async () => {
         mockResponse('eth_getStorageAt', 'storage')
-        const res = await createClient().eth.getStorageAt("0x862174623bc39e57de552538f424806b947d3d05","0x0")
+        const res = await createClient().eth.getStorageAt("0x862174623bc39e57de552538f424806b947d3d05", "0x0")
         assert.equal(res, "0x0")
 
     })

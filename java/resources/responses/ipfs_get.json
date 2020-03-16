@@ -1,0 +1,15 @@
+[
+    {
+        "id": 1,
+        "result": "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ=",
+        "jsonrpc": "2.0",
+        "in3": {
+            "lastValidatorChange": 0,
+            "lastNodeList": 8525528,
+            "execTime": 14,
+            "rpcTime": 0,
+            "rpcCount": 0,
+            "currentBlock": 17091918
+        }
+    }
+]

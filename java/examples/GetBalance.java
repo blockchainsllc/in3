@@ -13,16 +13,16 @@ public class GetBalance {
     // create incubed
     IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
-    System.out.println("Balance API" + GetBalanceAPI(in3).longValue());
+    System.out.println("Balance API" + getBalanceAPI(in3).longValue());
 
-    System.out.println("Balance RPC " + GetBalanceRPC(in3));
+    System.out.println("Balance RPC " + getBalanceRPC(in3));
   }
 
-  static BigInteger GetBalanceAPI(IN3 in3) {
+  static BigInteger getBalanceAPI(IN3 in3) {
     return in3.getEth1API().getBalance(AC_ADDR, Block.LATEST);
   }
 
-  static String GetBalanceRPC(IN3 in3) {
+  static String getBalanceRPC(IN3 in3) {
     return in3.sendRPC("eth_getBalance", new Object[] {AC_ADDR, "latest"});
   }
 }

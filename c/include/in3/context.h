@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -396,9 +396,20 @@ in3_ret_t ctx_get_error(
     in3_ctx_t* ctx, /**< [in] the current request context. */
     int        id   /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
+
 /** 
  * sends a request and returns a context used to access the result or errors. 
  * 
+ * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
+*/
+in3_ctx_t* in3_client_rpc_ctx_raw(
+    in3_t* c,      /**< [in] the client config. */
+    char*  request /**< [in] rpc request. */
+);
+
+/**
+ * sends a request and returns a context used to access the result or errors.
+ *
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
 in3_ctx_t* in3_client_rpc_ctx(

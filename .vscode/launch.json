@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "Debug (Attach)",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "5005"
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "_runner_",

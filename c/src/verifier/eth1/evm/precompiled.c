@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -148,6 +148,9 @@ int pre_modexp(evm_t* evm) {
     lm = lm * lm / 16 + 480 * lm - 199680;
 
   subgas(lm * MAX(1, ael) / G_PRE_MODEXP_GQUAD_DIVISOR);
+
+#else
+  UNUSED_VAR(hp);
 
 #endif
   // we use gmp for now

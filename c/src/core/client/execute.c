@@ -2,7 +2,7 @@
  * This file is part of the Incubed project.
  * Sources: https://github.com/slockit/in3-c
  * 
- * Copyright (C) 2018-2019 slock.it GmbH, Blockchains LLC
+ * Copyright (C) 2018-2020 slock.it GmbH, Blockchains LLC
  * 
  * 
  * COMMERCIAL LICENSE USAGE
@@ -107,60 +107,62 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
-static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
-  const in3_t* c = ctx->client;
+static bool auto_ask_sig(const in3_ctx_t* ctx) {
+  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG));
+}
 
+static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
+  UNUSED_VAR(request);
+
+  const in3_t* c     = ctx->client;
   conf->chain_id     = c->chain_id;
   conf->finality     = c->finality;
   conf->latest_block = c->replace_latest_block;
   conf->flags        = c->flags;
 
-  if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
-    conf->use_full_proof = c->proof == PROOF_FULL;
-    conf->verification   = VERIFICATION_PROOF;
+  if (c->proof == PROOF_NONE && !auto_ask_sig(ctx))
+    return IN3_OK;
 
-    if (c->signature_count) {
-      node_match_t*     signer_nodes = NULL;
-      in3_node_filter_t filter       = NODE_FILTER_INIT;
-      filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), key("signer_nodes"));
-      filter.props                   = c->node_props | NODE_PROP_SIGNER;
-      const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, filter);
-      if (res < 0)
-        return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-      const int node_count  = ctx_nodes_len(signer_nodes);
-      conf->signers_length  = node_count;
-      conf->signers         = _malloc(sizeof(bytes_t) * node_count);
-      const node_match_t* w = signer_nodes;
-      for (int i = 0; i < node_count; i++) {
-        conf->signers[i].len  = w->node->address->len;
-        conf->signers[i].data = w->node->address->data;
-        w                     = w->next;
+  // For nodeList request, we always ask for proof & atleast one signature
+  conf->use_full_proof  = c->proof == PROOF_FULL;
+  conf->verification    = VERIFICATION_PROOF;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count
+                                             : auto_ask_sig(ctx) ? 1 : 0;
+
+  if (total_sig_cnt) {
+    node_match_t*     signer_nodes = NULL;
+    in3_node_filter_t filter       = NODE_FILTER_INIT;
+    filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
+    filter.props                   = c->node_props | NODE_PROP_SIGNER;
+    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
+    if (res < 0)
+      return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
+    const int node_count  = ctx_nodes_len(signer_nodes);
+    conf->signers_length  = node_count;
+    conf->signers         = _malloc(sizeof(bytes_t) * node_count);
+    const node_match_t* w = signer_nodes;
+    for (int i = 0; i < node_count; i++) {
+      conf->signers[i].len  = w->node->address->len;
+      conf->signers[i].data = w->node->address->data;
+      w                     = w->next;
+    }
+    in3_ctx_free_nodes(signer_nodes);
+
+    if (chain->verified_hashes) {
+      conf->verified_hashes_length = ctx->client->max_verified_hashes;
+      for (int i = 0; i < conf->verified_hashes_length; i++) {
+        if (!chain->verified_hashes[i].block_number) {
+          conf->verified_hashes_length = i;
+          break;
+        }
       }
-      in3_ctx_free_nodes(signer_nodes);
-
-      if (chain->verified_hashes) {
-        conf->verified_hashes_length = ctx->client->max_verified_hashes;
-        for (int i = 0; i < conf->verified_hashes_length; i++) {
-          if (!chain->verified_hashes[i].block_number) {
-            conf->verified_hashes_length = i;
-            break;
-          }
-        }
-        if (conf->verified_hashes_length) {
-          conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
-          for (int i = 0; i < conf->verified_hashes_length; i++)
-            conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
-        }
+      if (conf->verified_hashes_length) {
+        conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
+        for (int i = 0; i < conf->verified_hashes_length; i++)
+          conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
       }
     }
   }
-
-  if (request) {
-    d_token_t* in3 = d_get(request, K_IN3);
-    if (in3 == NULL) return IN3_OK;
-    //TODO read config from request. This way we can test requests with preselected signers.
-  }
-
   return IN3_OK;
 }
 
@@ -396,10 +398,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
           vc.config  = ctx->requests_configs + i;
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
-
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-            check_autoupdate(ctx, chain, vc.proof, node);
-
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
@@ -430,6 +429,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         }
       }
     }
+
+    // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
+    if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
+      check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
     if (!node || !is_blacklisted(node))
@@ -589,9 +592,13 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             in3_request_t* request = in3_create_request(ctx);
             if (request == NULL)
               return IN3_ENOMEM;
-            in3_log_trace("... request to \x1B[35m%s\x1B[33m\n... %s\x1B[0m\n", request->urls[0], request->payload);
+            in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
             ctx->client->transport(request);
-            in3_log_trace("... response: \n... \x1B[%sm%s\x1B[0m\n", request->results[0].error.len ? "31" : "32", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
+            if (request->results[0].error.len) {
+              in3_log_trace("... response: \n... " COLOR_RED_STR "\n", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
+            } else {
+              in3_log_trace("... response: \n... " COLOR_GREEN_STR "\n", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
+            }
             request_free(request, ctx, false);
             break;
           } else
@@ -669,6 +676,7 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
 void ctx_free(in3_ctx_t* ctx) {
   if (ctx) free_ctx_intern(ctx, false);
 }
+
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
@@ -703,7 +711,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
-        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), key("data_nodes"));
+        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {
