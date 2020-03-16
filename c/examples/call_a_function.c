@@ -1,9 +1,9 @@
 /// This example shows how to call functions on a smart contract eiither directly or using the api to encode the arguments
 
-#include <in3/client.h>   // the core client
-#include <in3/eth_api.h>  // wrapper for easier use
-#include <in3/eth_full.h> // the full ethereum verifier containing the EVM
+#include <in3/client.h> // the core client
+#include <in3/eth_api.h>
 #include <in3/in3_curl.h> // transport implementation
+#include <in3/in3_init.h>
 #include <in3/log.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -13,10 +13,6 @@ static in3_ret_t call_func_api(in3_t* c, address_t contract);
 
 int main() {
   in3_ret_t ret = IN3_OK;
-
-  // register a chain-verifier for full Ethereum-Support in order to verify eth_call
-  // this needs to be called only once.
-  in3_register_eth_full();
 
   // use curl as the default for sending out requests
   // this needs to be called only once.

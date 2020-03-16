@@ -1,11 +1,11 @@
 /// sending a transaction including signing it with a private key
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
-#include <in3/signer.h>    // default signer implementation
-
+#include <in3/client.h> // the core client
+#include <in3/eth_api.h>
+#include <in3/in3_curl.h> // transport implementation
+#include <in3/in3_init.h>
+#include <in3/signer.h> // default signer implementation
+#include <in3/utils.h>
 #include <stdio.h>
 
 // fixme: This is only for the sake of demo. Do NOT store private keys as plaintext.
@@ -15,11 +15,6 @@ static void send_tx_rpc(in3_t* in3);
 static void send_tx_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify txs
-  // this needs to be called only once
-  in3_register_eth_basic();
-
   // use curl as the default for sending out requests
   // this needs to be called only once.
   in3_register_curl();

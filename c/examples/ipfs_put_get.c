@@ -2,8 +2,8 @@
 
 #include <in3/client.h>   // the core client
 #include <in3/in3_curl.h> // transport implementation
-#include <in3/ipfs.h>     // IPFS verifier module
-#include <in3/ipfs_api.h> // IPFS API module
+#include <in3/in3_init.h>
+#include <in3/ipfs_api.h>
 #include <stdio.h>
 
 #define LOREM_IPSUM "Lorem ipsum dolor sit amet"
@@ -62,8 +62,6 @@ static void ipfs_api_example(in3_t* c) {
 }
 
 int main() {
-  // register a chain-verifier for IPFS-Support (only called once)
-  in3_register_ipfs();
   // use curl as the default for sending out requests (only called once)
   in3_register_curl();
 

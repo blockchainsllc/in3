@@ -1,11 +1,12 @@
 /// how to send a rent transaction to a usn contract usinig the usn-api.
 
+#include <in3/api_utils.h>
 #include <in3/client.h>   // the core client
-#include <in3/eth_api.h>  // wrapper for easier use
-#include <in3/eth_full.h> // the full ethereum verifier containing the EVM
 #include <in3/in3_curl.h> // transport implementation
-#include <in3/signer.h>   // signer-api
-#include <in3/usn_api.h>  // api for renting
+#include <in3/in3_init.h>
+#include <in3/signer.h>  // signer-api
+#include <in3/usn_api.h> // api for renting
+#include <in3/utils.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -35,11 +36,6 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
 }
 
 int main(int argc, char* argv[]) {
-
-  // register a chain-verifier for full Ethereum-Support in order to verify eth_call
-  // this needs to be called only once.
-  in3_register_eth_full();
-
   // use curl as the default for sending out requests
   // this needs to be called only once.
   in3_register_curl();
