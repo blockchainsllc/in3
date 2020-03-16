@@ -6,21 +6,21 @@ let convertBuffer = toUint8Array
 
 // Overriding default convert
 function setConvertBigInt(convertBigFn) {
-        convertBigInt = convertBigFn
+    convertBigInt = convertBigFn
 }
 
 function setConvertBuffer(convertBufFn) {
-        convertBuffer = convertBufFn
+    convertBuffer = convertBufFn
 }
 
-if (typeof(_free) == 'undefined') _free = function(ptr) {
-        in3w.ccall("ifree", 'void', ['number'], [ptr])
-    }
-    /**
-     * internal function calling a wasm-function, which returns a string.
-     * @param {*} name 
-     * @param  {...any} params_values 
-     */
+if (typeof (_free) == 'undefined') _free = function (ptr) {
+    in3w.ccall("ifree", 'void', ['number'], [ptr])
+}
+/**
+ * internal function calling a wasm-function, which returns a string.
+ * @param {*} name 
+ * @param  {...any} params_values 
+ */
 function call_string(name, ...params_values) {
     const res = in3w.ccall(name, 'number', params_values.map(_ => _ && _.__proto__ === Uint8Array.prototype ? 'array' : typeof _), params_values)
     if (!res) return null
@@ -61,26 +61,26 @@ function Utf8ArrayToStr(array) {
     out = "";
     len = array.length;
     i = 0;
-    while(i < len) {
-    c = array[i++];
-        switch(c >> 4) {
-        case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-            // 0xxxxxxx
-            out += String.fromCharCode(c);
-            break;
-        case 12: case 13:
-            // 110x xxxx   10xx xxxx
-            char2 = array[i++];
-            out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
-            break;
-        case 14:
-            // 1110 xxxx  10xx xxxx  10xx xxxx
-            char2 = array[i++];
-            char3 = array[i++];
-            out += String.fromCharCode(((c & 0x0F) << 12) |
-                        ((char2 & 0x3F) << 6) |
-                        ((char3 & 0x3F) << 0));
-            break;
+    while (i < len) {
+        c = array[i++];
+        switch (c >> 4) {
+            case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+                // 0xxxxxxx
+                out += String.fromCharCode(c);
+                break;
+            case 12: case 13:
+                // 110x xxxx   10xx xxxx
+                char2 = array[i++];
+                out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
+                break;
+            case 14:
+                // 1110 xxxx  10xx xxxx  10xx xxxx
+                char2 = array[i++];
+                char3 = array[i++];
+                out += String.fromCharCode(((c & 0x0F) << 12) |
+                    ((char2 & 0x3F) << 6) |
+                    ((char3 & 0x3F) << 0));
+                break;
         }
     }
 
@@ -272,14 +272,14 @@ function toNumber(val) {
                 try {
                     return val.toNumber()
                 }
-            catch (ex) {
-                return toNumber(val.toHexString())
-            }
+                catch (ex) {
+                    return toNumber(val.toHexString())
+                }
             throw new Error('can not convert a ' + (typeof val) + ' to number');
     }
 }
 
-function toBuffer (val, len = -1) {
+function toBuffer(val, len = -1) {
     return convertBuffer(val, len)
 }
 /**
@@ -309,10 +309,10 @@ function toUint8Array(val, len = -1) {
         val = val.toArrayLike(Uint8Array)
     if (!val)
         val = new Uint8Array(0)
-        // since rlp encodes an empty array for a 0 -value we create one if the required len===0
+    // since rlp encodes an empty array for a 0 -value we create one if the required len===0
     if (len == 0 && val.byteLength == 1 && val[0] === 0)
         return new Uint8Array(0)
-            // if we have a defined length, we should padLeft 00 or cut the left content to ensure length
+    // if we have a defined length, we should padLeft 00 or cut the left content to ensure length
     if (len > 0 && val.byteLength && val.byteLength !== len) {
         if (val.byteLength > len) return val.slice(val.byteLength - len)
         let b = new Uint8Array(len)
@@ -341,7 +341,8 @@ function base64Decode(val) {
  * encodes to base64
  */
 function base64Encode(val) {
-    return in3w.ccall("base64Encode", 'string', ['array', 'number'], [val, val.length]);
+    return call_string('base64Encode', val, val.length)
+    //    return in3w.ccall("base64Encode", 'string', ['array', 'number'], [val, val.length]);
 }
 /**
  * returns a address from a private key
@@ -468,7 +469,7 @@ class SimpleSigner {
         if (!pk || pk.length != 32) throw new Error('Account not found for signing ' + account)
         return ecSign(pk, data, type, ethV)
 
-     }
+    }
 
 }
 
