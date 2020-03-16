@@ -335,14 +335,22 @@ function toSimpleHex(val) {
  * decodes to base64
  */
 function base64Decode(val) {
-    return in3w.ccall("base64Decode", 'string', ['string'], [val]);
+    // calculate the length
+    if ((typeof val) !== 'string') throw new Error('Must be a string as input')
+    let lip = val.len
+    let len = lip / 4 * 3
+    if (lip > 1 && ip[lip - 2] == '=' && ip[lip - 1] == '=')
+        len -= 2
+    else if (ip[lip - 1] == '=')
+        len -= 1
+
+    return call_buffer('base64Decode', len, val)
 }
 /**
  * encodes to base64
  */
 function base64Encode(val) {
     return call_string('base64Encode', val, val.length)
-    //    return in3w.ccall("base64Encode", 'string', ['array', 'number'], [val, val.length]);
 }
 /**
  * returns a address from a private key

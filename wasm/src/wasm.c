@@ -215,13 +215,13 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
 }
 
 uint8_t* EMSCRIPTEN_KEEPALIVE base64Decode(char* input) {
-  size_t      len   = 0;
-  uint8_t*    b64   = base64_decode(input, &len);
+  size_t   len = 0;
+  uint8_t* b64 = base64_decode(input, &len);
   return b64;
 }
 
 char* EMSCRIPTEN_KEEPALIVE base64Encode(uint8_t* input, int len) {
-  char*  b64  = base64_encode(input, len);
+  char* b64 = base64_encode(input, len);
   return b64;
 }
 
