@@ -126,7 +126,6 @@ void static setup_test_cache(in3_t* c) {
 }
 
 static void test_cache() {
-  in3_register_eth_nano();
   in3_t* c     = in3_for_chain(ETH_CHAIN_ID_GOERLI);
   c->transport = test_transport;
   setup_test_cache(c);
