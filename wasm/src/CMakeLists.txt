@@ -47,26 +47,20 @@ IF (CMAKE_BUILD_TYPE MATCHES Debug)
 #   set(EMC_PROPS "${EMC_PROPS} --source-map-base 'http://localhost/build/bin/' --emit-symbol-map -g -s ASSERTIONS=1 ")
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
-if (WASM_EMBED) 
+if (WASM_EMBED)
    set(EMC_PROPS "${EMC_PROPS} -s SUPPORT_BASE64_EMBEDDING=0 -s SINGLE_FILE=1")
 endif(WASM_EMBED)
 
-if (WASM_EMMALLOC) 
+if (WASM_EMMALLOC)
    set(EMC_PROPS "${EMC_PROPS} -s MALLOC=emmalloc")
 endif(WASM_EMMALLOC)
 
-if (WASM_SYNC) 
+if (WASM_SYNC)
    set(EMC_PROPS "${EMC_PROPS} -s WASM_ASYNC_COMPILATION=0")
 endif(WASM_SYNC)
 
 add_executable(in3w wasm.c)
-<<<<<<< HEAD
 target_link_libraries(in3w init)
-=======
-
-target_link_libraries(in3w ${IN3_VERIFIER} ${IN3_API})
-
->>>>>>> develop
 set_target_properties(in3w PROPERTIES LINK_FLAGS "${EMC_PROPS}")
 
 add_custom_command(TARGET in3w
