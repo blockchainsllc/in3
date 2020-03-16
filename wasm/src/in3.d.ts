@@ -1105,7 +1105,9 @@ export declare interface Utils<BufferType> {
     private2address(pk: Hex | BufferType): Address
 
 }
-
+/**
+ * API for storing and retrieving IPFS-data.
+ */
 export declare interface IpfsAPI<BufferType> {
     /**
      * retrieves the content for a hash from IPFS.
