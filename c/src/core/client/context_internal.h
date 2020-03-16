@@ -36,6 +36,12 @@
 
 #include "context.h"
 
+#ifdef ERR_MSG
+#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
+#else
+#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)
+#endif
+
 /**
  * creates a request-object, which then need to be filled with the responses.
  *

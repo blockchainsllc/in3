@@ -48,12 +48,6 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#ifdef ERR_MSG
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
-#else
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)
-#endif
-
 /**
  * type of the request context,
  */

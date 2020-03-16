@@ -1,6 +1,6 @@
 #include "ens.h"
 #include "../../core/client/client.h"
-#include "../../core/client/context.h"
+#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/util/bytes.h"
 #include "../../core/util/data.h"

@@ -41,7 +41,7 @@
 #include "../util/utils.h"
 #include "cache.h"
 #include "client.h"
-#include "context.h"
+#include "context_internal.h"
 #include "keys.h"
 #include <stdio.h>
 #include <string.h>
