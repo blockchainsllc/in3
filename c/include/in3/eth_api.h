@@ -42,8 +42,8 @@
 #ifndef ETH_API_H
 #define ETH_API_H
 
-#include "api_utils.h"
 #include "client.h"
+#include "api_utils.h"
 #include <stdarg.h>
 
 /** Initializer macros for eth_blknum_t */
