@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 #include "../../c/src/core/client/client.h"
-#include "../../c/src/core/client/context.h"
+#include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"

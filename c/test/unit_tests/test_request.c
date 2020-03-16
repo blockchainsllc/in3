@@ -41,7 +41,7 @@
 
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/cache.h"
-#include "../../src/core/client/context.h"
+#include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/data.h"
