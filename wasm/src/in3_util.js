@@ -337,7 +337,7 @@ function toSimpleHex(val) {
 function base64Decode(val) {
     // calculate the length
     if ((typeof val) !== 'string') throw new Error('Must be a string as input')
-    let lip = val.len
+    let lip = val.length
     let len = lip / 4 * 3
     if (lip > 1 && val[lip - 2] == '=' && val[lip - 1] == '=')
         len -= 2
