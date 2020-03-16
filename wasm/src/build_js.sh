@@ -11,6 +11,7 @@ cat in3w.js | sed "s/uncaughtException/ue/g" >> $TARGET_JS
 cat "$1/in3.js" >> $TARGET_JS
 cat "$1/in3_util.js" >> $TARGET_JS
 cat "$1/in3_eth_api.js" >> $TARGET_JS
+cat "$1/in3_ipfs_api.js" >> $TARGET_JS
 # we return the default export
 echo " return IN3; })();" >> $TARGET_JS
 
@@ -23,7 +24,7 @@ if [ -e in3w.wasm ]
  then cp in3w.wasm  ../module/
 fi
 if [ $2 == "true" ]
- then 
+ then
    cat "$1/package.json" | sed  's/wasm/asmjs/g' > ../module/package.json
    cat "$1/../README.md" | sed  's/wasm/asmjs/g' > ../module/README.md
 fi

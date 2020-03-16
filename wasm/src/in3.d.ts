@@ -465,6 +465,12 @@ export default class IN3Generic<BigIntType, BufferType> {
      */
     public eth: EthAPI<BigIntType, BufferType>
 
+
+    /**
+     * ipfs API.
+     */
+    public ipfs: IpfsAPI<BufferType>
+
     /**
      * collection of util-functions.
      */
@@ -1098,4 +1104,18 @@ export declare interface Utils<BufferType> {
      */
     private2address(pk: Hex | BufferType): Address
 
-}                              
+}
+
+export declare interface IpfsAPI<BufferType> {
+    /**
+     * retrieves the content for a hash from IPFS.
+     * @param multihash  the IPFS-hash to fetch
+     *
+     */
+    get(multihash: string): Promise<BufferType>
+    /**
+     * stores the data on ipfs and returns the IPFS-Hash.
+     * @param content puts a IPFS content
+     */
+    put(content: BufferType): Promise<string>
+}

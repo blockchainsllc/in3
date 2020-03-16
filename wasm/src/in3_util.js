@@ -53,8 +53,45 @@ function promisify(self, fn, ...args) {
     })
 }
 
+// Credit to: https://stackoverflow.com/questions/8936984/uint8array-to-string-in-javascript
+function Utf8ArrayToStr(array) {
+    var out, i, len, c;
+    var char2, char3;
+
+    out = "";
+    len = array.length;
+    i = 0;
+    while(i < len) {
+    c = array[i++];
+        switch(c >> 4) {
+        case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+            // 0xxxxxxx
+            out += String.fromCharCode(c);
+            break;
+        case 12: case 13:
+            // 110x xxxx   10xx xxxx
+            char2 = array[i++];
+            out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
+            break;
+        case 14:
+            // 1110 xxxx  10xx xxxx  10xx xxxx
+            char2 = array[i++];
+            char3 = array[i++];
+            out += String.fromCharCode(((c & 0x0F) << 12) |
+                        ((char2 & 0x3F) << 6) |
+                        ((char3 & 0x3F) << 0));
+            break;
+        }
+    }
+
+    return out;
+}
+
 function toUtf8(val) {
     if (!val) return val
+    if (val.constructor == Uint8Array) {
+        return Utf8ArrayToStr(val)
+    }
     if (typeof val === 'string' && val.startsWith('0x')) {
         const hex = fixLength(val).substr(2)
         let str = ''
@@ -108,7 +145,7 @@ function abiEncode(sig, ...params) {
 }
 
 function ecSign(pk, data, hashMessage = true, adjustV = true) {
-    data = toUint8Array(data)              
+    data = toUint8Array(data)
     pk = toUint8Array(pk)
     return call_buffer('ec_sign', 65, pk, hashMessage ? 1 : 0, data, data.byteLength, adjustV ? 1 : 0)
 }
@@ -295,6 +332,18 @@ function toSimpleHex(val) {
     return '0x' + hex;
 }
 /**
+ * decodes to base64
+ */
+function base64Decode(val) {
+    return in3w.ccall("base64Decode", 'string', ['string'], [val]);
+}
+/**
+ * encodes to base64
+ */
+function base64Encode(val) {
+    return in3w.ccall("base64Encode", 'string', ['array', 'number'], [val, val.length]);
+}
+/**
  * returns a address from a private key
  */
 function getAddress(pk) {
@@ -388,6 +437,8 @@ const util = {
     soliditySha3,
     createSignatureHash,
     toUint8Array,
+    base64Decode,
+    base64Encode
 }
 
 // add as static proporty and as standard property.
