@@ -118,7 +118,7 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
 }
 
 void in3_register_eth_full() {
-  in3_verifier_t* v = calloc(1, sizeof(in3_verifier_t));
+  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
   v->type           = CHAIN_ETH;
   v->pre_handle     = eth_handle_intern;
   v->verify         = (in3_verify) in3_verify_eth_full;

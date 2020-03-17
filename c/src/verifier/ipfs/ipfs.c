@@ -167,7 +167,7 @@ in3_ret_t in3_verify_ipfs(in3_vctx_t* vc) {
 }
 
 void in3_register_ipfs() {
-  in3_verifier_t* v = calloc(1, sizeof(in3_verifier_t));
+  in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
   v->type           = CHAIN_IPFS;
   v->verify         = in3_verify_ipfs;
   in3_register_verifier(v);
