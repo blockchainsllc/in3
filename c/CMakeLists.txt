@@ -52,6 +52,7 @@ add_subdirectory(docs)
 if (IN3_LIB)
     set(IN3_LIBS
         $<TARGET_OBJECTS:core_o>
+        $<TARGET_OBJECTS:init_o>
         $<TARGET_OBJECTS:crypto_o>
         $<TARGET_OBJECTS:b64_o>
         $<TARGET_OBJECTS:tommath_o>
