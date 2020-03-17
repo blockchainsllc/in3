@@ -54,18 +54,47 @@ if (IN3_LIB)
         $<TARGET_OBJECTS:core_o>
         $<TARGET_OBJECTS:init_o>
         $<TARGET_OBJECTS:crypto_o>
-        $<TARGET_OBJECTS:b64_o>
-        $<TARGET_OBJECTS:tommath_o>
-        $<TARGET_OBJECTS:evm_o>
-        $<TARGET_OBJECTS:eth_full_o>
-        $<TARGET_OBJECTS:eth_api_o>
-        $<TARGET_OBJECTS:eth_basic_o>
-        $<TARGET_OBJECTS:eth_nano_o>
-        $<TARGET_OBJECTS:usn_api_o>
-        $<TARGET_OBJECTS:ipfs_o>
-        $<TARGET_OBJECTS:ipfs_api_o>
-        $<TARGET_OBJECTS:api_utils_o>
     )
+
+    if (ETH_FULL)
+      set(IN3_LIBS ${IN3_LIBS} 
+         $<TARGET_OBJECTS:tommath_o> 
+         $<TARGET_OBJECTS:evm_o> 
+         $<TARGET_OBJECTS:eth_full_o>
+      )
+    endif()
+
+    if (ETH_BASIC) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:eth_basic_o>
+        )
+    endif()
+
+    if (ETH_NANO) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:eth_nano_o>
+        )
+    endif()
+
+    if (IPFS) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:b64_o>
+            $<TARGET_OBJECTS:ipfs_o>
+        )
+        if (IN3API) 
+            set(IN3_LIBS ${IN3_LIBS} 
+                $<TARGET_OBJECTS:ipfs_api_o>
+            )
+        endif()
+    endif()
+
+    if (IN3API) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:eth_api_o>
+            $<TARGET_OBJECTS:usn_api_o>
+            $<TARGET_OBJECTS:api_utils_o>
+        )
+    endif()
 
     if (USE_SCRYPT)
        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
