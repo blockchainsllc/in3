@@ -54,7 +54,7 @@ endif()
 
 # first we build the runners
 add_executable(runner runner.c)
-target_link_libraries(runner eth_full eth_api ipfs init)
+target_link_libraries(runner eth_full eth_api ipfs)
 
 add_executable(junit util/junit.c)
 target_link_libraries(junit eth_full)
