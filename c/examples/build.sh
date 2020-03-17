@@ -18,6 +18,6 @@ fi
 
 # now build the examples build
 for f in *.c; 
-  do gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -lin3 -lcurl -linit -D_POSIX_C_SOURCE=199309L
+  do gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -lin3 -lcurl -D_POSIX_C_SOURCE=199309L
 done
 
