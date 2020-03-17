@@ -65,14 +65,20 @@ option(WASM_EMMALLOC "use ther smaller EMSCRIPTEN Malloc, which reduces the size
 option(WASM_SYNC "intiaializes the WASM synchronisly, which allows to require and use it the same function, but this will not be supported by chrome (4k limit)" OFF)
 option(CODE_COVERAGE  "Builds targets with code coverage instrumentation. (Requires GCC or Clang)"  OFF)
 OPTION(USE_SCRYPT "if scrypt is installed, it will link dynamicly to the shared scrypt lib." ON)
+OPTION(USE_CURL "if true the curl transport will be built (with a dependency to libcurl)" ON)
+
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
 else()
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=0)
 endif()
 
-if (CURL_BLOCKING)
-  ADD_DEFINITIONS(-DCURL_BLOCKING)
+if (USE_CURL)
+    ADD_DEFINITIONS(-DUSE_CURL)
+    set(IN3_TRANSPORT ${IN3_TRANSPORT} transport_curl)
+    if (CURL_BLOCKING)
+        ADD_DEFINITIONS(-DCURL_BLOCKING)
+    endif()
 endif()
 
 

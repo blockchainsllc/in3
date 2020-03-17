@@ -64,4 +64,4 @@ target_link_libraries(core crypto)
 
 add_library(init_o OBJECT ../verifier/in3_init.c)
 add_library(init STATIC $<TARGET_OBJECTS:init_o>)
-target_link_libraries(init ${IN3_VERIFIER} ${IN3_API})
+target_link_libraries(init ${IN3_VERIFIER} ${IN3_API} ${IN3_TRANSPORT})

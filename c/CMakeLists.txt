@@ -66,10 +66,6 @@ if (IN3_LIB)
         $<TARGET_OBJECTS:ipfs_api_o>
         $<TARGET_OBJECTS:api_utils_o>
     )
-    # if we use curl, we include curl transport as well
-    if (USE_CURL)
-        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
-    endif()
 
     if (USE_SCRYPT)
        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
@@ -80,11 +76,7 @@ if (IN3_LIB)
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-
-    # for curl we need to add the dependency
-    if (USE_CURL)
-       target_link_libraries(in3_lib transport_curl)
-    endif()
+    target_link_libraries(in3_lib ${IN3_TRANSPORT})
 
     # install
     INSTALL(TARGETS in3_bundle

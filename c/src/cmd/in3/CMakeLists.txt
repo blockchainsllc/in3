@@ -33,10 +33,8 @@
 ###############################################################################
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
-OPTION(USE_CURL "if true the curl transport will be build (with a dependency to libcurl)" ON)
 IF (USE_CURL)
     message("using curl for comandline")
-    ADD_DEFINITIONS(-DUSE_CURL)
     set(LIBS ${LIBS} transport_curl)
 else()
     message("using http for comandline")
