@@ -184,9 +184,9 @@ java:
     - mkdir java_build
     - cd java_build
     - mkdir -p ../java/src/in3/native/
-    - cp ../mac_jni/lib/libin3_jni.dylib ../java/src/in3/native/
+    - cp ../mac_jni/libin3_jni.dylib ../java/src/in3/native/
     - cp ../win_jni/lib/libin3_jni.so ../java/src/in3/native/in3_jni.dll
-    - cp ../x64_jni/lib/libin3_jni.so ../java/src/in3/native/
+    - cp ../x64_jni/libin3_jni.so ../java/src/in3/native/
     - cp ../arm_jni_build/lib/libin3_jni.so ../java/src/in3/native/libin3_jni_arm.so
     - cmake -DIN3_LIB=false -DJAVA_MULTI_LIBS=true -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make in3j
