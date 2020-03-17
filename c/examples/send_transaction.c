@@ -1,10 +1,10 @@
 /// sending a transaction including signing it with a private key
 
-#include <in3/client.h> // the core client
-#include <in3/eth_api.h>
-#include <in3/in3_curl.h> // transport implementation
-#include <in3/in3_init.h>
-#include <in3/signer.h> // default signer implementation
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
+#include <in3/signer.h>   // default signer implementation
 #include <in3/utils.h>
 #include <stdio.h>
 

@@ -1,9 +1,9 @@
 ///  using the IPFS module
 
 #include <in3/client.h>   // the core client
-#include <in3/in3_curl.h> // transport implementation
-#include <in3/in3_init.h>
-#include <in3/ipfs_api.h>
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/ipfs_api.h> // access ipfs-api
+#include <in3/log.h>      // logging functions
 #include <stdio.h>
 
 #define LOREM_IPSUM "Lorem ipsum dolor sit amet"

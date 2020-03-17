@@ -1,11 +1,10 @@
 /// how to send a rent transaction to a usn contract usinig the usn-api.
 
 #include <in3/api_utils.h>
-#include <in3/client.h>   // the core client
-#include <in3/in3_curl.h> // transport implementation
-#include <in3/in3_init.h>
-#include <in3/signer.h>  // signer-api
-#include <in3/usn_api.h> // api for renting
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/signer.h>   // signer-api
+#include <in3/usn_api.h>  // api for renting
 #include <in3/utils.h>
 #include <inttypes.h>
 #include <stdio.h>
