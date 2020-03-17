@@ -34,22 +34,18 @@
 
 // @PUBLIC_HEADER
 /** @file
- * IPFS verification.
+ * IN3 init module for auto initializing verifiers and transport based on build config.
  * */
-#ifndef IN3_IPFS_H
-#define IN3_IPFS_H
+#ifndef IN3_IN3_INIT_H
+#define IN3_IN3_INIT_H
 
-#include "verifier.h"
+#include "client.h"
 
-/** verifies an IPFS hash. Supported encoding schemes - hex, utf8 and base64 */
-in3_ret_t ipfs_verify_hash(const char* content, const char* encoding, const char* requsted_hash);
+#ifdef in3_for_chain
+#undef in3_for_chain
+#define in3_for_chain(chain_id) in3_for_chain_auto_init(chain_id)
+#endif
 
-/** entry-function to execute the verification context. */
-in3_ret_t in3_verify_ipfs(in3_vctx_t* vc);
+in3_t* in3_for_chain_auto_init(chain_id_t chain_id);
 
-/**
- * this function should only be called once and will register the IPFS verifier.
- */
-void in3_register_ipfs();
-
-#endif //IN3_IPFS_H
+#endif //IN3_IN3_INIT_H

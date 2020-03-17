@@ -33,8 +33,8 @@
  *******************************************************************************/
 
 #include "verifier.h"
-#include "../util/stringbuilder.h"
 #include "client.h"
+#include "context_internal.h"
 #include "keys.h"
 
 static in3_verifier_t* verifiers = NULL;
