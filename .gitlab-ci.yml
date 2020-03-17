@@ -34,11 +34,17 @@ gcc8:
     - short-jobs
   script:
     - mkdir x64_build
+    - mkdir x64_jni
     - cd x64_build
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DUSE_CURL=false ..
+    - make in3_jni
+    - cp lib/libin3_jni.so ../x64_jni/
+    - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make
   artifacts:
     paths:
+      - x64_jni
       - x64_build/bin
       - x64_build/lib
       - x64_build/c/docs/doc_doxygen
@@ -48,8 +54,15 @@ win_mingw:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
   extends: .conanbuild
   variables:
-    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true"
+    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=false"
     BUILD: "win_build"
+
+win_jni:
+  image: docker.slock.it/build-images/cmake:gcc7-mingw
+  extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DUSE_CURL=false -DJAVA=true"
+    BUILD: "win_jni"
 
 arm7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
@@ -92,10 +105,15 @@ mac_os:
   stage: build
   script:
     - mkdir mac_build
+    - mkdir mac_jni
     - cd mac_build
     - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
     - make
     - ctest -V | tee ../mac_test_c.log | test/junit > ../mac_test_c.xml
+    - rm -rf *
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true -DUSE_CURL=false -DUSE_SCRYPT=true ..
+    - make in3_jni
+    - cp lib/libin3_jni.dylib ../mac_jni/
     - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
     - make
@@ -104,6 +122,7 @@ mac_os:
     reports:
       junit: mac_test_c.xml
     paths:
+      - mac_jni
       - mac_build/c/docs
       - mac_build/java/docs
       - mac_build/lib
@@ -158,16 +177,16 @@ java:
     - short-jobs
   dependencies:
     - mac_os
-    - win_mingw
+    - win_jni
     - gcc8
     - arm_jni
   script:
     - mkdir java_build
     - cd java_build
     - mkdir -p ../java/src/in3/native/
-    - cp ../mac_build/lib/libin3_jni.dylib ../java/src/in3/native/
-    - cp ../win_build/lib/libin3_jni.so ../java/src/in3/native/in3_jni.dll
-    - cp ../x64_build/lib/libin3_jni.so ../java/src/in3/native/
+    - cp ../mac_jni/lib/libin3_jni.dylib ../java/src/in3/native/
+    - cp ../win_jni/lib/libin3_jni.so ../java/src/in3/native/in3_jni.dll
+    - cp ../x64_jni/lib/libin3_jni.so ../java/src/in3/native/
     - cp ../arm_jni_build/lib/libin3_jni.so ../java/src/in3/native/libin3_jni_arm.so
     - cmake -DIN3_LIB=false -DJAVA_MULTI_LIBS=true -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make in3j
