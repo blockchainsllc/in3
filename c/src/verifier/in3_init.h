@@ -34,7 +34,7 @@
 
 // @PUBLIC_HEADER
 /** @file
- * Ethereum Nanon verification.
+ * IN3 init module for auto initializing verifiers and transport based on build config.
  * */
 #ifndef IN3_IN3_INIT_H
 #define IN3_IN3_INIT_H
