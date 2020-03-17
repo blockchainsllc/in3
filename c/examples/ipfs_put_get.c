@@ -62,9 +62,6 @@ static void ipfs_api_example(in3_t* c) {
 }
 
 int main() {
-  // use curl as the default for sending out requests (only called once)
-  in3_register_curl();
-
   // create new incubed client
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
 

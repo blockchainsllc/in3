@@ -14,10 +14,6 @@ static in3_ret_t call_func_api(in3_t* c, address_t contract);
 int main() {
   in3_ret_t ret = IN3_OK;
 
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // Remove log prefix for readability
   in3_log_set_prefix("");
 

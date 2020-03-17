@@ -36,10 +36,6 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
 }
 
 int main(int argc, char* argv[]) {
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
 
