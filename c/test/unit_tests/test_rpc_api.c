@@ -41,7 +41,7 @@
 
 #include "../../src/api/eth1/abi.h"
 #include "../../src/api/eth1/eth_api.h"
-#include "../../src/core/client/context.h"
+#include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"

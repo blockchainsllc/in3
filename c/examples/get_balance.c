@@ -1,25 +1,16 @@
 ///  get the Balance with the API and also as direct RPC-call
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
-
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
+#include <in3/utils.h>
 #include <stdio.h>
 
 static void get_balance_rpc(in3_t* in3);
 static void get_balance_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify accounts
-  // this needs to be called only once
-  in3_register_eth_basic();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 

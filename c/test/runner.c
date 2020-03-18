@@ -241,7 +241,7 @@ int execRequest(in3_t* c, d_token_t* test, int must_fail, int counter, char* des
   //  _tmp_response = response;
   int is_bin = d_get_int(test, "binaryFormat");
 
-  in3_client_rpc(c, method, params, is_bin ? NULL : &res, &err);
+  in3_client_rpc_raw(c, d_string(request), is_bin ? NULL : &res, &err);
   fflush(stdout);
   fflush(stderr);
   printf("\n%2i : %-60s ", counter, descr);
@@ -452,6 +452,7 @@ int main(int argc, char* argv[]) {
   in3_register_eth_full();
   in3_register_eth_api();
   in3_register_ipfs();
+
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
   char** names = malloc(sizeof(char*));

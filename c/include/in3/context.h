@@ -38,21 +38,15 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
-#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
 #define CONTEXT_H
-
-#ifdef ERR_MSG
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
-#else
-#define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)
-#endif
 
 /**
  * type of the request context,
@@ -263,31 +257,6 @@ in3_ctx_state_t in3_ctx_state(
 );
 
 /**
- * creates a request-object, which then need to be filled with the responses.
- * 
- * each request object contains a array of reponse-objects. In order to set the response, you need to call
- * 
- * ```c
- * // set a succesfull response
- * sb_add_chars(&request->results[0].result, my_response);
- * // set a error response
- * sb_add_chars(&request->results[0].error, my_error);
- * ```
- */
-in3_request_t* in3_create_request(
-    in3_ctx_t* ctx /**< [in] the request context. */
-);
-
-/**
- * frees a previuosly allocated request.
- */
-void request_free(
-    in3_request_t*   req,          /**< [in] the request. */
-    const in3_ctx_t* ctx,          /**< [in] the request context. */
-    bool             response_free /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */
-);
-
-/**
  * frees all resources allocated during the request.
  * 
  * But this will not free the request string passed when creating the context!
@@ -373,21 +342,6 @@ in3_ret_t ctx_check_response_error(
     in3_ctx_t* c, /**< [in] the current request context. */
     int        i  /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
-/**
- * sets the error message in the context.
- * 
- * If there is a previous error it will append it.
- * the return value will simply be passed so you can use it like
- * 
- * ```c
- *   return ctx_set_error(ctx, "wrong number of arguments", IN3_EINVAL)
- * ```
- */
-in3_ret_t ctx_set_error_intern(
-    in3_ctx_t* c,        /**< [in] the current request context. */
-    char*      msg,      /**< [in] the error message. (This string will be copied) */
-    in3_ret_t  errnumber /**< [in] the error code to return */
-);
 
 /**
  * determins the errorcode for the given request.
@@ -396,24 +350,26 @@ in3_ret_t ctx_get_error(
     in3_ctx_t* ctx, /**< [in] the current request context. */
     int        id   /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
+
 /** 
  * sends a request and returns a context used to access the result or errors. 
  * 
+ * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
+*/
+in3_ctx_t* in3_client_rpc_ctx_raw(
+    in3_t* c,      /**< [in] the client config. */
+    char*  request /**< [in] rpc request. */
+);
+
+/**
+ * sends a request and returns a context used to access the result or errors.
+ *
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
 in3_ctx_t* in3_client_rpc_ctx(
     in3_t* c,      /**< [in] the clientt config. */
     char*  method, /**< [in] rpc method. */
     char*  params  /**< [in] params as string. */
-);
-
-/**
- * handles a failable context
- *
- * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
-*/
-in3_ret_t ctx_handle_failable(
-    in3_ctx_t* ctx /**< [in] the current request context. */
 );
 
 #endif

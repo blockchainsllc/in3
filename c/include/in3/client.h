@@ -114,7 +114,6 @@ typedef struct in3_request_config {
   uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
   uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
   in3_verification_t verification;           /**< Verification-type */
-  bytes_t*           client_signature;       /**< the signature of the client with the client key */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
   uint32_t           time;                   /**< meassured time in ms for the request */
@@ -150,22 +149,31 @@ typedef enum {
   FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
   FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
   FLAGS_STATS            = 0x20, /**< nodes will keep track of the stats (default=true)  */
-
+  FLAGS_NODE_LIST_NO_SIG = 0x40  /**< nodelist update request will not automatically ask for signatures and proof */
 } in3_flags_type_t;
+
+/**
+ * a list of node attributes (mostly used internally)
+ */
+typedef enum {
+  ATTR_WHITELISTED = 1, /**< indicates if node exists in whiteList */
+  ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
+} in3_node_attr_type_t;
+
+typedef uint8_t in3_node_attr_t;
 
 /** incubed node-configuration. 
  * 
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  bytes_t*         address;     /**< address of the server */
-  uint64_t         deposit;     /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t         index;       /**< index within the nodelist, also used in the contract as key */
-  uint32_t         capacity;    /**< the maximal capacity able to handle */
-  in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
-  char*            url;         /**< the url of the node */
-  bool             whitelisted; /**< boolean indicating if node exists in whiteList */
-  bool             boot_node;   /**< internal - used to avoid filtering manually added nodes before first nodeList update */
+  bytes_t*         address;  /**< address of the server */
+  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
+  uint32_t         capacity; /**< the maximal capacity able to handle */
+  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  char*            url;      /**< the url of the node */
+  uint8_t          attrs;    /**< bitmask of internal attributes */
 } in3_node_t;
 
 /**
@@ -407,8 +415,8 @@ typedef struct in3_t_ {
   /** the limit of nodes to store in the client. */
   uint16_t node_limit;
 
-  /** the client key to sign requests */
-  bytes_t* key;
+  /** the client key to sign requests (pointer to 32bytes private key seed) */
+  void* key;
 
   /** number of max bytes used to cache the code in memory */
   uint32_t max_code_cache;
@@ -547,7 +555,9 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * 
  * @returns the incubed instance.
  */
-in3_t* in3_for_chain(
+#define in3_for_chain(chain_id) in3_for_chain_default(chain_id)
+
+in3_t* in3_for_chain_default(
     chain_id_t chain_id /**< the chain_id (see ETH_CHAIN_ID_... constants). */
 );
 
@@ -557,6 +567,13 @@ in3_ret_t in3_client_rpc(
     char*  method, /**< [in] the name of the rpc-funcgtion to call. */
     char*  params, /**< [in] docs for input parameter v. */
     char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
+    char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
+
+/** sends a request and stores the result in the provided buffer */
+in3_ret_t in3_client_rpc_raw(
+    in3_t* c,       /**< [in] the pointer to the incubed client config. */
+    char*  request, /**< [in] the rpc request including method and params. */
+    char** result,  /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
     char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 

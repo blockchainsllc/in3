@@ -33,7 +33,9 @@
 ###############################################################################
 
 add_subdirectory( crypto )
-
+if(USE_SCRYPT)
+  add_subdirectory( libscrypt )
+endif()
 if (ETH_FULL)
   add_subdirectory( tommath )
 endif()

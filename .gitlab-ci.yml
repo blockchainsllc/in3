@@ -34,11 +34,17 @@ gcc8:
     - short-jobs
   script:
     - mkdir x64_build
+    - mkdir x64_jni
     - cd x64_build
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DUSE_CURL=false ..
+    - make in3_jni
+    - cp lib/libin3_jni.so ../x64_jni/
+    - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make
   artifacts:
     paths:
+      - x64_jni
       - x64_build/bin
       - x64_build/lib
       - x64_build/c/docs/doc_doxygen
@@ -48,8 +54,15 @@ win_mingw:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
   extends: .conanbuild
   variables:
-    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=true"
+    CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=false"
     BUILD: "win_build"
+
+win_jni:
+  image: docker.slock.it/build-images/cmake:gcc7-mingw
+  extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DUSE_CURL=false -DJAVA=true"
+    BUILD: "win_jni"
 
 arm7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
@@ -57,8 +70,17 @@ arm7:
   tags:
     - arm
   variables:
-    CONAN_OPTS: "-DJAVA=true"
+    CONAN_OPTS: "-DJAVA=false"
     BUILD: "arm7_build"
+
+arm_jni:
+  image: docker.slock.it/build-images/cmake:gcc8-armv7
+  extends: .conanbuild
+  tags:
+    - arm
+  variables:
+    CONAN_OPTS: "-DJAVA=true -DUSE_CURL=false"
+    BUILD: "arm_jni_build"
 
 gcc8-x86:
   image: docker.slock.it/build-images/cmake:gcc8-x86
@@ -78,15 +100,20 @@ clang50:
 clang10:
   image: docker.slock.it/build-images/cmake:clang10
   extends: .conanbuild
-      
+
 mac_os:
   stage: build
   script:
     - mkdir mac_build
+    - mkdir mac_jni
     - cd mac_build
     - cmake -DTEST=true -DTAG_VERSION=$CI_COMMIT_TAG -DEVM_GAS=true -DCMAKE_BUILD_TYPE=Debug -DLIBCURL_TYPE=shared ..
     - make
     - ctest -V | tee ../mac_test_c.log | test/junit > ../mac_test_c.xml
+    - rm -rf *
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true -DUSE_CURL=false -DUSE_SCRYPT=true ..
+    - make in3_jni
+    - cp lib/libin3_jni.dylib ../mac_jni/
     - rm -rf *
     - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true ..
     - make
@@ -95,6 +122,7 @@ mac_os:
     reports:
       junit: mac_test_c.xml
     paths:
+      - mac_jni
       - mac_build/c/docs
       - mac_build/java/docs
       - mac_build/lib
@@ -149,17 +177,17 @@ java:
     - short-jobs
   dependencies:
     - mac_os
-    - win_mingw
+    - win_jni
     - gcc8
-    - arm7
+    - arm_jni
   script:
     - mkdir java_build
     - cd java_build
     - mkdir -p ../java/src/in3/native/
-    - cp ../mac_build/lib/libin3_jni.dylib ../java/src/in3/native/
-    - cp ../win_build/lib/libin3_jni.so ../java/src/in3/native/in3_jni.dll
-    - cp ../x64_build/lib/libin3_jni.so ../java/src/in3/native/
-    - cp ../arm7_build/lib/libin3_jni.so ../java/src/in3/native/libin3_jni_arm.so
+    - cp ../mac_jni/libin3_jni.dylib ../java/src/in3/native/
+    - cp ../win_jni/lib/libin3_jni.so ../java/src/in3/native/in3_jni.dll
+    - cp ../x64_jni/libin3_jni.so ../java/src/in3/native/
+    - cp ../arm_jni_build/lib/libin3_jni.so ../java/src/in3/native/libin3_jni_arm.so
     - cmake -DIN3_LIB=false -DJAVA_MULTI_LIBS=true -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
     - make in3j
   artifacts:
@@ -264,7 +292,6 @@ test_c:
 #    - cd ../vmTests
 #    - ../../../../testbuild/test/vmrunner */*.json || echo "\n ignoring failure .."
 
-
 test_android:
   image: cangol/android-gradle
   stage: test
@@ -275,14 +302,11 @@ test_android:
     - cd in3-example-android/app
     - cp -r ../../java/src/in3 src/main/java/
     - mv ../../c ../../java in3-c/
-    - mkdir c
-    - cp in3-c/c/compiler.cmake c/
     - cd ..
     - ./gradlew build
   artifacts:
     paths:
       - in3-example-android/app/build/outputs/apk
-
 
 test_wasm:
   image: docker.slock.it/build-images/node:10-alpine
@@ -669,8 +693,6 @@ release_mac_and_wasm:
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"
     - ghr -u slockIt -r in3-c $CI_COMMIT_TAG in3_${CI_COMMIT_TAG}_mac.tar.gz
-    - mv wasm/release-wasm .
-    - mv wasm/release-asmjs .
     - tar -zcv --exclude=in3-mac-wasm/python --exclude=in3-mac-wasm/java --exclude=in3-mac-wasm/bin --exclude=in3-mac-wasm/lib --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_wasm.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_wasm.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_wasm.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
     - "IPFS_HASH=$(echo $IPFS_RESPONSE | sed -e 's/[{}]/''/g' | awk -v RS=',' -F: '/IpfsHash/ {print $2}')"

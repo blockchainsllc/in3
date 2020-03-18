@@ -45,10 +45,11 @@
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
-#include "../../c/src/verifier/eth1/full/eth_full.h"
+#include "../../c/src/verifier/in3_init.h"
 #ifdef IPFS
+#include "../../c/src/third-party/libb64/cdecode.h"
+#include "../../c/src/third-party/libb64/cencode.h"
 #include "../../c/src/verifier/ipfs/ipfs.h"
-
 #endif
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
@@ -938,18 +939,44 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, marked_as_synced);
 }
 
+#ifdef IPFS
+/*
+ * Class:     in3_ipfs_API
+ * Method:    base64Decode
+ * Signature: (Ljava/lang/String;)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_in3_ipfs_API_base64Decode(JNIEnv* env, jobject ob, jstring jinput) {
+  UNUSED_VAR(ob);
+  size_t      len   = 0;
+  const char* input = (*env)->GetStringUTFChars(env, jinput, 0);
+  uint8_t*    b64   = base64_decode(input, &len);
+  (*env)->ReleaseStringUTFChars(env, jinput, input);
+  jbyteArray res = (*env)->NewByteArray(env, len);
+  (*env)->SetByteArrayRegion(env, res, 0, len, (jbyte*) b64);
+  return res;
+}
+
+/*
+ * Class:     in3_ipfs_API
+ * Method:    base64Encode
+ * Signature: ([B)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob, jbyteArray jinput) {
+  UNUSED_VAR(ob);
+  jbyte* body = (*env)->GetByteArrayElements(env, jinput, 0);
+  char*  b64  = base64_encode((uint8_t*) body, (*env)->GetArrayLength(env, jinput));
+  (*env)->ReleaseByteArrayElements(env, jinput, body, 0);
+  jstring jresult = (*env)->NewStringUTF(env, b64);
+  return jresult;
+}
+#endif
+
 /*
  * Class:     in3_IN3
  * Method:    init
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_register_eth_full();
-
-#ifdef IPFS
-  in3_register_ipfs();
-#endif
-
   in3_t* in3 = in3_for_chain(jchain);
   in3_register_eth_api();
   in3_log_set_level(LOG_DEBUG);

@@ -36,7 +36,7 @@ include(${PROJECT_SOURCE_DIR}/c/compiler.cmake)
 
 IF (ASMJS)
   set(CMAKE_EXECUTABLE_SUFFIX ".js")
-  set(EMC_PROPS "-O1 -s FINALIZE_ASM_JS=1 -s NODEJS_CATCH_REJECTION=0  -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
+  set(EMC_PROPS "-O1 -s ALLOW_MEMORY_GROWTH=1  -s FINALIZE_ASM_JS=1 -s NODEJS_CATCH_REJECTION=0  -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
 else(ASMJS)
   set(EMC_PROPS "-Oz -s ALLOW_MEMORY_GROWTH=1 -s NODEJS_CATCH_REJECTION=0 -s EXPORT_NAME=in3w -s WASM=1  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
 endif(ASMJS)
@@ -47,20 +47,20 @@ IF (CMAKE_BUILD_TYPE MATCHES Debug)
 #   set(EMC_PROPS "${EMC_PROPS} --source-map-base 'http://localhost/build/bin/' --emit-symbol-map -g -s ASSERTIONS=1 ")
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
-if (WASM_EMBED) 
+if (WASM_EMBED)
    set(EMC_PROPS "${EMC_PROPS} -s SUPPORT_BASE64_EMBEDDING=0 -s SINGLE_FILE=1")
 endif(WASM_EMBED)
 
-if (WASM_EMMALLOC) 
+if (WASM_EMMALLOC)
    set(EMC_PROPS "${EMC_PROPS} -s MALLOC=emmalloc")
 endif(WASM_EMMALLOC)
 
-if (WASM_SYNC) 
+if (WASM_SYNC)
    set(EMC_PROPS "${EMC_PROPS} -s WASM_ASYNC_COMPILATION=0")
 endif(WASM_SYNC)
 
 add_executable(in3w wasm.c)
-target_link_libraries(in3w ${IN3_VERIFIER} ${IN3_API})
+target_link_libraries(in3w init)
 set_target_properties(in3w PROPERTIES LINK_FLAGS "${EMC_PROPS}")
 
 add_custom_command(TARGET in3w

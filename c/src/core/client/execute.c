@@ -42,7 +42,7 @@
 #include "../util/utils.h"
 #include "cache.h"
 #include "client.h"
-#include "context.h"
+#include "context_internal.h"
 #include "keys.h"
 #include "nodelist.h"
 #include "verifier.h"
@@ -107,60 +107,62 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
-static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
-  const in3_t* c = ctx->client;
+static bool auto_ask_sig(const in3_ctx_t* ctx) {
+  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG));
+}
 
+static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
+  UNUSED_VAR(request);
+
+  const in3_t* c     = ctx->client;
   conf->chain_id     = c->chain_id;
   conf->finality     = c->finality;
   conf->latest_block = c->replace_latest_block;
   conf->flags        = c->flags;
 
-  if ((c->proof == PROOF_STANDARD || c->proof == PROOF_FULL)) {
-    conf->use_full_proof = c->proof == PROOF_FULL;
-    conf->verification   = VERIFICATION_PROOF;
+  if (c->proof == PROOF_NONE && !auto_ask_sig(ctx))
+    return IN3_OK;
 
-    if (c->signature_count) {
-      node_match_t*     signer_nodes = NULL;
-      in3_node_filter_t filter       = NODE_FILTER_INIT;
-      filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), key("signer_nodes"));
-      filter.props                   = c->node_props | NODE_PROP_SIGNER;
-      const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, c->signature_count, filter);
-      if (res < 0)
-        return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-      const int node_count  = ctx_nodes_len(signer_nodes);
-      conf->signers_length  = node_count;
-      conf->signers         = _malloc(sizeof(bytes_t) * node_count);
-      const node_match_t* w = signer_nodes;
-      for (int i = 0; i < node_count; i++) {
-        conf->signers[i].len  = w->node->address->len;
-        conf->signers[i].data = w->node->address->data;
-        w                     = w->next;
+  // For nodeList request, we always ask for proof & atleast one signature
+  conf->use_full_proof  = c->proof == PROOF_FULL;
+  conf->verification    = VERIFICATION_PROOF;
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count
+                                             : auto_ask_sig(ctx) ? 1 : 0;
+
+  if (total_sig_cnt) {
+    node_match_t*     signer_nodes = NULL;
+    in3_node_filter_t filter       = NODE_FILTER_INIT;
+    filter.nodes                   = d_get(d_get(ctx->requests[0], K_IN3), K_SIGNER_NODES);
+    filter.props                   = c->node_props | NODE_PROP_SIGNER;
+    const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
+    if (res < 0)
+      return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
+    const int node_count  = ctx_nodes_len(signer_nodes);
+    conf->signers_length  = node_count;
+    conf->signers         = _malloc(sizeof(bytes_t) * node_count);
+    const node_match_t* w = signer_nodes;
+    for (int i = 0; i < node_count; i++) {
+      conf->signers[i].len  = w->node->address->len;
+      conf->signers[i].data = w->node->address->data;
+      w                     = w->next;
+    }
+    in3_ctx_free_nodes(signer_nodes);
+
+    if (chain->verified_hashes) {
+      conf->verified_hashes_length = ctx->client->max_verified_hashes;
+      for (int i = 0; i < conf->verified_hashes_length; i++) {
+        if (!chain->verified_hashes[i].block_number) {
+          conf->verified_hashes_length = i;
+          break;
+        }
       }
-      in3_ctx_free_nodes(signer_nodes);
-
-      if (chain->verified_hashes) {
-        conf->verified_hashes_length = ctx->client->max_verified_hashes;
-        for (int i = 0; i < conf->verified_hashes_length; i++) {
-          if (!chain->verified_hashes[i].block_number) {
-            conf->verified_hashes_length = i;
-            break;
-          }
-        }
-        if (conf->verified_hashes_length) {
-          conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
-          for (int i = 0; i < conf->verified_hashes_length; i++)
-            conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
-        }
+      if (conf->verified_hashes_length) {
+        conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
+        for (int i = 0; i < conf->verified_hashes_length; i++)
+          conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
       }
     }
   }
-
-  if (request) {
-    d_token_t* in3 = d_get(request, K_IN3);
-    if (in3 == NULL) return IN3_OK;
-    //TODO read config from request. This way we can test requests with preselected signers.
-  }
-
   return IN3_OK;
 }
 
@@ -674,6 +676,7 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
 void ctx_free(in3_ctx_t* ctx) {
   if (ctx) free_ctx_intern(ctx, false);
 }
+
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
@@ -708,7 +711,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       // if we don't have a nodelist, we try to get it.
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
-        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), key("data_nodes"));
+        filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
           for (int i = 0; i < ctx->len; i++) {

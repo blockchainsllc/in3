@@ -67,11 +67,11 @@ public class Configure {
     clientConfig.setMaxAttempts(1);        // sets max attempts to 1 before giving up
     clientConfig.setProof(Proof.none);     // does not require proof (not recommended)
 
-    // Setup the NodeConfiguration object for the nodes on a certain chain
-    NodeConfiguration nodeConfiguration = new NodeConfiguration(Chain.GOERLI, clientConfig);
-    nodeConfiguration.setNeedsUpdate(false);
-    nodeConfiguration.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
-    nodeConfiguration.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
+    // Setup the ChainConfiguration object for the nodes on a certain chain
+    ChainConfiguration chainConfiguration = new ChainConfiguration(Chain.GOERLI, clientConfig);
+    chainConfiguration.setNeedsUpdate(false);
+    chainConfiguration.setContract("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f");
+    chainConfiguration.setRegistryId("0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb");
 
     in3.setConfig(clientConfig);
 
@@ -104,16 +104,16 @@ public class GetBalance {
     // create incubed
     IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
-    System.out.println("Balance API" + GetBalanceAPI(in3).longValue());
+    System.out.println("Balance API" + getBalanceAPI(in3).longValue());
 
-    System.out.println("Balance RPC " + GetBalanceRPC(in3));
+    System.out.println("Balance RPC " + getBalanceRPC(in3));
   }
 
-  static BigInteger GetBalanceAPI(IN3 in3) {
+  static BigInteger getBalanceAPI(IN3 in3) {
     return in3.getEth1API().getBalance(AC_ADDR, Block.LATEST);
   }
 
-  static String GetBalanceRPC(IN3 in3) {
+  static String getBalanceRPC(IN3 in3) {
     return in3.sendRPC("eth_getBalance", new Object[] {AC_ADDR, "latest"});
   }
 }
@@ -213,17 +213,17 @@ public class GetTransaction {
     // create incubed
     IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also dthe default)
 
-    Transaction txn = GetTransactionAPI(in3);
+    Transaction txn = getTransactionAPI(in3);
     System.out.println("Transaction API #blockNumber: " + txn.getBlockNumber());
 
-    System.out.println("Transaction RPC :" + GetTransactionRPC(in3));
+    System.out.println("Transaction RPC :" + getTransactionRPC(in3));
   }
 
-  static Transaction GetTransactionAPI(IN3 in3) {
+  static Transaction getTransactionAPI(IN3 in3) {
     return in3.getEth1API().getTransactionByHash(TXN_HASH);
   }
 
-  static String GetTransactionRPC(IN3 in3) {
+  static String getTransactionRPC(IN3 in3) {
     return in3.sendRPC("eth_getTransactionByHash", new Object[] {TXN_HASH});
   }
 }
@@ -252,17 +252,17 @@ public class GetTransactionReceipt {
     // create incubed
     IN3 in3 = IN3.forChain(Chain.MAINNET); // set it to mainnet (which is also the default)
 
-    TransactionReceipt txn = GetTransactionReceiptAPI(in3);
+    TransactionReceipt txn = getTransactionReceiptAPI(in3);
     System.out.println("TransactionRerceipt API : for txIndex " + txn.getTransactionIndex() + " Block num " + txn.getBlockNumber() + " Gas used " + txn.getGasUsed() + " status " + txn.getStatus());
 
-    System.out.println("TransactionReceipt RPC : " + GetTransactionReceiptRPC(in3));
+    System.out.println("TransactionReceipt RPC : " + getTransactionReceiptRPC(in3));
   }
 
-  static TransactionReceipt GetTransactionReceiptAPI(IN3 in3) {
+  static TransactionReceipt getTransactionReceiptAPI(IN3 in3) {
     return in3.getEth1API().getTransactionReceipt(TRANSACTION_HASH);
   }
 
-  static String GetTransactionReceiptRPC(IN3 in3) {
+  static String getTransactionReceiptRPC(IN3 in3) {
     return in3.sendRPC("eth_getTransactionReceipt", new Object[] {TRANSACTION_HASH});
   }
 }

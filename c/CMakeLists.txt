@@ -52,21 +52,52 @@ add_subdirectory(docs)
 if (IN3_LIB)
     set(IN3_LIBS
         $<TARGET_OBJECTS:core_o>
+        $<TARGET_OBJECTS:init_o>
         $<TARGET_OBJECTS:crypto_o>
-        $<TARGET_OBJECTS:b64_o>
-        $<TARGET_OBJECTS:tommath_o>
-        $<TARGET_OBJECTS:evm_o>
-        $<TARGET_OBJECTS:eth_full_o>
-        $<TARGET_OBJECTS:eth_api_o>
-        $<TARGET_OBJECTS:eth_basic_o>
-        $<TARGET_OBJECTS:eth_nano_o>
-        $<TARGET_OBJECTS:usn_api_o>
-        $<TARGET_OBJECTS:ipfs_o>
-        $<TARGET_OBJECTS:ipfs_api_o>
     )
-    # if we use curl, we include curl transport as well
-    if (USE_CURL)
-        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:transport_curl_o>)
+
+    if (ETH_FULL)
+      set(IN3_LIBS ${IN3_LIBS} 
+         $<TARGET_OBJECTS:tommath_o> 
+         $<TARGET_OBJECTS:evm_o> 
+         $<TARGET_OBJECTS:eth_full_o>
+      )
+    endif()
+
+    if (ETH_BASIC) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:eth_basic_o>
+        )
+    endif()
+
+    if (ETH_NANO) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:eth_nano_o>
+        )
+    endif()
+
+    if (IPFS) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:b64_o>
+            $<TARGET_OBJECTS:ipfs_o>
+        )
+        if (IN3API) 
+            set(IN3_LIBS ${IN3_LIBS} 
+                $<TARGET_OBJECTS:ipfs_api_o>
+            )
+        endif()
+    endif()
+
+    if (IN3API) 
+        set(IN3_LIBS ${IN3_LIBS} 
+            $<TARGET_OBJECTS:eth_api_o>
+            $<TARGET_OBJECTS:usn_api_o>
+            $<TARGET_OBJECTS:api_utils_o>
+        )
+    endif()
+
+    if (USE_SCRYPT)
+       set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
     endif()
 
     # create the libraries
@@ -74,11 +105,7 @@ if (IN3_LIB)
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-
-    # for curl we need to add the dependency
-    if (USE_CURL)
-       target_link_libraries(in3_lib transport_curl)
-    endif()
+    target_link_libraries(in3_lib ${IN3_TRANSPORT})
 
     # install
     INSTALL(TARGETS in3_bundle
