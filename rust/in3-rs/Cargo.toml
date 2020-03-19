@@ -1,14 +1,11 @@
 [package]
-name = "in3"
-readme = "README.md"
-version = "0.0.1"
+name = "magic"
+version = "0.1.0"
+authors = ["slockit"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-in3-sys = { path = "../in3-sys"}
+in3-sys = { path = "../in3-sys" }
 libc = { version = "0.2", default-features = false }
-
-[dev-dependencies]
-macho = "0.*"
-criterion = "0.2"
-rayon = "1.1"
-

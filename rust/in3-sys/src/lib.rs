@@ -4,30 +4,7 @@
 //! We recommend against using this crate directly.
 //! Instead, consider using [in3-rs], which provides a high-level, safe, "Rusty" interface.
 //!
-//! [in3]: https://github.com/aquynh/in3
 //! [in3-rs]: https://github.com/in3-rust/in3-rs
-//!
-//! # Supported disassembly architectures
-//!
-//! * `arm`: ARM
-//! * `arm64`: ARM64 (also known as AArch64)
-//! * `mips`: MIPS
-//! * `ppc`: PowerPC
-//! * `sparc`: SPARC
-//! * `sysz`: System z
-//! * `x86`: x86 family (includes 16, 32, and 64 bit modes)
-//! * `xcore`: XCore
-//!
-//! For each architecture, *at least* the following types are defined (replace `ARCH` with
-//! architecture names shown above):
-//!
-//! * `enum ARCH_insn`: instruction ids
-//! * `enum ARCH_insn_group`: architecture-specific group ids
-//! * `enum ARCH_op_type`: instruction operand types ids
-//! * `enum ARCH_reg`<sup>1</sup>: register ids
-//! * `struct ARCH_op_mem`: operand referring to memory
-//! * `struct cs_ARCH_op`: instruction operand
-//! * `struct cs_ARCH`: instruction
 //!
 //! **Note**: documentation for functions/types was taken directly from
 //! [In3 C headers][in3 headers].
