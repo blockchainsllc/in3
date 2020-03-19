@@ -31,35 +31,26 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-
-#ifdef ETH_API
-#include "../../c/src/api/eth1/abi.h"
-#include "../../c/src/api/eth1/eth_api.h"
-#endif
 #include "../../c/src/core/client/client.h"
-#include "../../c/src/core/client/context.h"
+#include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/verifier/in3_init.h"
+
+#ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
+#endif
 #include <emscripten.h>
 #include <string.h>
 #include <time.h>
 
-#ifdef ETH_FULL
-#include "../../c/src/verifier/eth1/full/eth_full.h"
-#endif
-#ifdef ETH_BASIC
-#include "../../c/src/verifier/eth1/basic/eth_basic.h"
-#endif
-#ifdef ETH_NANO
-#include "../../c/src/verifier/eth1/nano/eth_nano.h"
-#endif
-#ifdef IPFS
-#include "../../c/src/verifier/ipfs/ipfs.h"
+#ifdef ETH_API
+#include "../../c/src/api/eth1/abi.h"
+#include "../../c/src/api/utils/api_utils.h"
 #endif
 
 #define err_string(msg) (":ERROR:" msg)
@@ -213,6 +204,7 @@ void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int
   } else
     sb_add_chars(&r->results[i].result, msg);
 }
+#ifdef IPFS
 
 uint8_t* EMSCRIPTEN_KEEPALIVE base64Decode(char* input) {
   size_t   len = 0;
@@ -224,25 +216,8 @@ char* EMSCRIPTEN_KEEPALIVE base64Encode(uint8_t* input, int len) {
   char* b64 = base64_encode(input, len);
   return b64;
 }
-
+#endif
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
-// register a chain-verifier for full Ethereum-Support
-#ifdef ETH_FULL
-  in3_register_eth_full();
-#endif
-#ifdef ETH_BASIC
-  in3_register_eth_basic();
-#endif
-#ifdef ETH_NANO
-  in3_register_eth_nano();
-#endif
-#ifdef ETH_API
-  in3_register_eth_api();
-#endif
-#ifdef IPFS
-  in3_register_ipfs();
-#endif
-
   in3_t* c           = in3_for_chain(chain);
   c->cache           = malloc(sizeof(in3_storage_handler_t));
   c->cache->get_item = storage_get_item;

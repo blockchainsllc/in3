@@ -32,9 +32,9 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "api_utils_priv.h"
-#include "../../core/util/mem.h"
 #include "api_utils.h"
+#include "../../core/util/mem.h"
+#include "api_utils_priv.h"
 
 // forward decl
 void  set_error(int err, const char* msg);
@@ -112,4 +112,30 @@ d_token_t* get_result(in3_ctx_t* ctx) {
                                ? "No result or error in response"
                                : (d_type(t) != T_OBJECT ? d_string(t) : d_get_stringk(t, K_MESSAGE)));
   return NULL;
+}
+
+uint256_t to_uint256(uint64_t value) {
+  uint256_t data;
+  memset(data.data, 0, 32);
+  long_to_bytes(value, data.data + 24);
+  return data;
+}
+
+/** converts a uint256 to a long double */
+long double as_double(uint256_t d) {
+  uint8_t* p = d.data;
+  int      l = 32;
+  optimize_len(p, l);
+  if (l < 9)
+    return bytes_to_long(p, l);
+  else {
+    long double val = 6277101735386680763835789423207666416102355444464034512896.0L * bytes_to_long(d.data, 8);
+    val += 340282366920938463463374607431768211456.0L * bytes_to_long(d.data + 8, 8);
+    val += 18446744073709551616.0L * bytes_to_long(d.data + 16, 8);
+    return val + bytes_to_long(d.data + 24, 8);
+  }
+}
+/** converts a uint256_t to a int (by taking the last 8 bytes) */
+uint64_t as_long(uint256_t d) {
+  return bytes_to_long(d.data + 32 - 8, 8);
 }

@@ -45,12 +45,11 @@
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
-#include "../../c/src/verifier/eth1/full/eth_full.h"
+#include "../../c/src/verifier/in3_init.h"
 #ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
 #include "../../c/src/third-party/libb64/cencode.h"
 #include "../../c/src/verifier/ipfs/ipfs.h"
-
 #endif
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
@@ -978,12 +977,6 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_register_eth_full();
-
-#ifdef IPFS
-  in3_register_ipfs();
-#endif
-
   in3_t* in3 = in3_for_chain(jchain);
   in3_register_eth_api();
   in3_log_set_level(LOG_DEBUG);

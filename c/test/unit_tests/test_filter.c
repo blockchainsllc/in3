@@ -59,9 +59,6 @@
   } while (0)
 
 static void test_filter() {
-
-  in3_register_eth_basic();
-
   in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
@@ -182,8 +179,6 @@ static void test_filter_from_block_manip() {
 }
 
 static void test_filter_creation() {
-  in3_register_eth_basic();
-
   in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
@@ -209,8 +204,6 @@ static void test_filter_creation() {
 }
 
 static void test_filter_changes() {
-  in3_register_eth_basic();
-
   in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
@@ -288,6 +281,7 @@ static void test_filter_changes() {
 int main() {
   in3_log_set_quiet(true);
   TESTS_BEGIN();
+  in3_register_eth_basic();
   RUN_TEST(test_filter);
   RUN_TEST(test_filter_opt_validation);
   RUN_TEST(test_filter_from_block_manip);

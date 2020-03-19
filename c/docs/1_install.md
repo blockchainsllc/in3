@@ -28,6 +28,13 @@ When configuring cmake, you can set a lot of different incubed specific like `cm
 Default-Value: `-DASMJS=OFF`
 
 
+#### BTC
+
+  if true, the bitcoin verifiers will be build
+
+Default-Value: `-DBTC=OFF`
+
+
 #### BUILD_DOC
 
   generates the documenation with doxygen.
@@ -40,6 +47,20 @@ Default-Value: `-DBUILD_DOC=OFF`
   build the comandline utils
 
 Default-Value: `-DCMD=ON`
+
+
+#### CODE_COVERAGE
+
+  Builds targets with code coverage instrumentation. (Requires GCC or Clang)
+
+Default-Value: `-DCODE_COVERAGE=OFF`
+
+
+#### COLOR
+
+  Enable color codes for debug
+
+Default-Value: `-DCOLOR=ON`
 
 
 #### ERR_MSG
@@ -112,6 +133,13 @@ Default-Value: `-DIN3_SERVER=OFF`
 Default-Value: `-DIN3_STAGING=OFF`
 
 
+#### IPFS
+
+  build IPFS verification
+
+Default-Value: `-DIPFS=ON`
+
+
 #### JAVA
 
   build the java-binding (shared-lib and jar-file)
@@ -163,7 +191,7 @@ Default-Value: `-DTRANSPORTS=ON`
 
 #### USE_CURL
 
-  if true the curl transport will be build (with a dependency to libcurl)
+  if true the curl transport will be built (with a dependency to libcurl)
 
 Default-Value: `-DUSE_CURL=ON`
 
@@ -177,9 +205,9 @@ Default-Value: `-DUSE_PRECOMPUTED_EC=ON`
 
 #### USE_SCRYPT
 
-  if scrypt is installed, it will link dynamicly to the shared scrypt lib.
+  integrate scrypt into the build in order to allow decrypt_key for scrypt encoded keys.
 
-Default-Value: `-DUSE_SCRYPT=OFF`
+Default-Value: `-DUSE_SCRYPT=ON`
 
 
 #### WASM

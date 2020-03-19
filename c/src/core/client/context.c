@@ -38,6 +38,7 @@
 #include "../util/mem.h"
 #include "../util/stringbuilder.h"
 #include "client.h"
+#include "context_internal.h"
 #include "keys.h"
 #include <stdio.h>
 #include <string.h>
