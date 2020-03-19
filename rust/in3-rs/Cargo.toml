@@ -1,0 +1,14 @@
+[package]
+name = "in3"
+readme = "README.md"
+version = "0.0.1"
+
+[dependencies]
+in3-sys = { path = "../in3-sys"}
+libc = { version = "0.2", default-features = false }
+
+[dev-dependencies]
+macho = "0.*"
+criterion = "0.2"
+rayon = "1.1"
+
