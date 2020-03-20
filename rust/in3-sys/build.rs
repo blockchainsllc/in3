@@ -36,15 +36,8 @@
 //! * `cs_mode`
 
 extern crate bindgen;
-
 extern crate cc;
-
 extern crate regex;
-
-use {
-    regex::Regex,
-    std::{fs::File, io::Write},
-};
 
 use std::env;
 use std::fs::copy;
@@ -88,8 +81,8 @@ fn write_bindgen_bindings(
         "pre_generated".into(),
         BINDINGS_FILE.into(),
     ]
-    .iter()
-    .collect();
+        .iter()
+        .collect();
     let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Stable_1_19)
         .size_t_is_usize(true)
@@ -108,7 +101,7 @@ fn write_bindgen_bindings(
         .rustified_enum(".*");
 
     // Whitelist cs_.* functions and types
-    let pattern = String::from("in3_.*");
+    let pattern = String::from(".*");
     builder = builder
         .whitelist_function(&pattern)
         .whitelist_type(&pattern);
@@ -122,7 +115,6 @@ fn write_bindgen_bindings(
     //Copy binding to other path 
     copy(out_bindings_path, pregenerated_bindgen_header)
         .expect("Unable to update in3 bindings");
-
 }
 
 fn main() {
@@ -132,6 +124,7 @@ fn main() {
 
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
     println!("cargo:rustc-link-lib=in3");
+    println!("cargo:rustc-link-search={}/../../build/lib", env_var("CARGO_MANIFEST_DIR"));
 
     let out_bindings_path = PathBuf::from(env_var("OUT_DIR")).join(BINDINGS_FILE);
 
@@ -140,5 +133,4 @@ fn main() {
         &header_search_paths,
         out_bindings_path,
     );
-
 }
