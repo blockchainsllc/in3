@@ -22,6 +22,7 @@ impl Drop for In3 {
 
 #[cfg(test)]
 mod tests {
+
     #[test]
     fn eth_block_number() {
         unsafe {
