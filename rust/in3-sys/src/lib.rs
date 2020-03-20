@@ -22,8 +22,6 @@
 
 extern crate libc;
 
-use libc::c_int;
-
 // Bindings should be copied here
 include!(concat!(env!("OUT_DIR"), "/in3.rs"));
 
