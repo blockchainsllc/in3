@@ -71,7 +71,7 @@ file(GLOB files "unit_tests/*.c")
 foreach (file ${files})
      get_filename_component(testname "${file}" NAME_WE)
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
-     target_link_libraries("${testname}" core eth_full  ipfs  ${IN3_API})
+     target_link_libraries("${testname}" core eth_full  ipfs ipfs_api ${IN3_API})
      add_test(
                 NAME "in3_${testname}"
                 COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
