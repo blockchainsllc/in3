@@ -1,10 +1,10 @@
 use std::ffi;
 
-struct Client {
+pub struct Client {
     ptr: *mut in3_sys::in3_t,
 }
 
-enum ChainId {
+pub enum ChainId {
     Multichain = 0x0,
     Mainnet = 0x01,
     Kovan = 0x2a,
@@ -16,7 +16,7 @@ enum ChainId {
     Local = 0xffff,
 }
 
-trait ClientNew<T> {
+pub trait ClientNew<T> {
     fn new(_: T) -> Client;
 }
 
@@ -35,7 +35,7 @@ impl ClientNew<ChainId> for Client {
 }
 
 impl Client {
-    fn rpc(&self, request: &str) -> Result<String, String> {
+    pub fn rpc(&self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
         let err: *mut *mut i8 = &mut null;
