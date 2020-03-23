@@ -908,6 +908,9 @@ int main(int argc, char* argv[]) {
             sprintf((warning = tr), "#%i ( out of sync : %i blocks behind latest )", b, block - b);
           else if (strncmp(node->url, "https://", 8))
             sprintf((warning = tr), "#%i (missing https, which is required in a browser )", b);
+          else if (!IS_APPROX(d_get_intk(ctx->responses[0], K_RESULT), d_get_intk(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK), 1))
+            sprintf((warning = tr), "#%i ( current block mismatch: %i blocks apart )", b,
+                    d_get_intk(ctx->responses[0], K_RESULT) - d_get_intk(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
           else
             sprintf(tr, "#%i", b);
         } else if (!strlen(node->url) || !node->props)
