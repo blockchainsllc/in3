@@ -478,6 +478,8 @@ typedef struct in3_t_ {
   /** used to identify the capabilities of the node. */
   in3_node_props_t node_props;
 
+  /** pointer to internal data */
+  void* internal;
 } in3_t;
 
 /** creates a new Incubes configuration and returns the pointer.
