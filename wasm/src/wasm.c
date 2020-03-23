@@ -52,9 +52,6 @@
 #include "../../c/src/api/eth1/abi.h"
 #include "../../c/src/api/utils/api_utils.h"
 #endif
-#ifdef PAY_ETH
-#include "../../c/src/pay/eth/pay_eth.h"
-#endif
 
 #define err_string(msg) (":ERROR:" msg)
 

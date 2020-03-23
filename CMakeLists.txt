@@ -110,8 +110,7 @@ endif()
 
 if(PAY_ETH)
   ADD_DEFINITIONS(-DPAY_ETH -DPAY)
-  set(IN3_API  ${IN3_API} pay_eth)
-  set(IN3_VERIFIER ${IN3_VERIFIER} eth_pay)
+  set(IN3_API ${IN3_API} pay_eth)
 endif()
 
 if(IPFS)

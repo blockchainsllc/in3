@@ -51,9 +51,6 @@
 #include "../../c/src/third-party/libb64/cencode.h"
 #include "../../c/src/verifier/ipfs/ipfs.h"
 #endif
-#ifdef PAY_ETH
-#include "../../c/src/pay/eth/pay_eth.h"
-#endif
 
 static in3_t* get_in3(JNIEnv* env, jobject obj) {
   if (obj == NULL || env == NULL || (*env)->GetObjectClass(env, obj) == NULL) return NULL;
