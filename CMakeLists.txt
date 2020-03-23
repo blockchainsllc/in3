@@ -108,22 +108,15 @@ if(IN3API)
     set(IN3_API eth_api)
 endif()
 
-if(IPFS)
-<<<<<<< CMakeLists.txt
-  ADD_DEFINITIONS(-DIPFS)
-  set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
-  if(IN3API)
-     set(IN3_API ${IN3_API} ipfs_api)
-  endif(IN3API)
-endif()
-
 if(PAY_ETH)
   ADD_DEFINITIONS(-DPAY_ETH -DPAY)
   set(IN3_API  ${IN3_API} pay_eth)
-=======
+  set(IN3_VERIFIER ${IN3_VERIFIER} eth_pay)
+endif()
+
+if(IPFS)
     ADD_DEFINITIONS(-DIPFS)
     set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
->>>>>>> CMakeLists.txt
 endif()
 
 if(COLOR AND NOT (MSVC OR MSYS OR MINGW))

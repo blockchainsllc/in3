@@ -6,6 +6,7 @@
 #include "../verifier/eth1/full/eth_full.h"
 #include "../verifier/eth1/nano/eth_nano.h"
 #include "../verifier/ipfs/ipfs.h"
+#include "../pay/eth/pay_eth.h"
 
 static bool initialized;
 
@@ -28,6 +29,10 @@ static void init_verifier() {
 #ifdef BTC
   in3_register_btc();
 #endif
+#ifdef PAY_ETH
+  in3_register_pay_eth();
+#endif
+
 }
 
 static void init_transport() {
