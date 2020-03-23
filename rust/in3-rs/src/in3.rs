@@ -1,7 +1,5 @@
 use std::ffi;
 
-use in3_sys::*;
-
 struct Client {
     ptr: *mut in3_sys::in3_t,
 }
@@ -37,21 +35,19 @@ impl ClientNew<ChainId> for Client {
 }
 
 impl Client {
-    fn eth_getBalance() -> String {
+    fn rpc(&self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
-        let mut res: *mut *mut i8 = &mut null;
+        let res: *mut *mut i8 = &mut null;
         let err: *mut *mut i8 = &mut null;
         unsafe {
-            let _ = in3_sys::in3_client_rpc(Client::new(ChainId::Mainnet).ptr, ffi::CString::new("eth_getBalance").unwrap().as_ptr(),
-                                            ffi::CString::new("[\"0xc94770007dda54cF92009BFF0dE90c06F603a09f\", \"latest\"]").unwrap().as_ptr(), res, err);
-            // to view run with `cargo test -- --nocapture`
-            ffi::CStr::from_ptr(*res).to_str().unwrap().to_string()
-        }
-    }
-
-    fn eth_blockNumber(in3: &mut Client) {
-        unsafe {
-            in3_sys::eth_blockNumber(in3.ptr);
+            let ret = in3_sys::in3_client_rpc_raw(self.ptr,
+                                                  ffi::CString::new(request).unwrap().as_ptr(),
+                                                  res, err);
+            return if ret == in3_sys::in3_ret_t::IN3_OK {
+                Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
+            } else {
+                Err(ffi::CStr::from_ptr(*err).to_str().unwrap().to_string())
+            };
         }
     }
 }
@@ -69,15 +65,4 @@ mod tests {
     use std::ffi;
 
     use super::*;
-
-    #[test]
-    fn test_eth_block_number() {
-        let mut in3 = Client::new(ChainId::Mainnet);
-        Client::eth_blockNumber(&mut in3);
-    }
-
-    #[test]
-    fn test_eth_get_balance() {
-        println!("------> balance: {}", Client::eth_getBalance());
-    }
 }
