@@ -23,7 +23,12 @@ pub trait ClientNew<T> {
 impl ClientNew<u32> for Client {
     fn new(chain_id: u32) -> Client {
         unsafe {
-            Client { ptr: in3_sys::in3_for_chain_auto_init(chain_id) }
+            let mut c = Client { ptr: in3_sys::in3_for_chain_auto_init(chain_id) };
+
+            // save reference to Client in in3_t->internal ptr
+            let c_ptr: *mut ffi::c_void = &mut c as *mut _ as *mut ffi::c_void;
+            (*c.ptr).internal = c_ptr;
+            c
         }
     }
 }
@@ -35,6 +40,10 @@ impl ClientNew<ChainId> for Client {
 }
 
 impl Client {
+    unsafe fn ref_from_ptr(&mut self) -> *mut Client {
+        (*self.ptr).internal as *mut Client
+    }
+
     pub fn rpc(&self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
