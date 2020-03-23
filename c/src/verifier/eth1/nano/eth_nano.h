@@ -32,7 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
 /** @file
  * Ethereum Nanon verification.
  * */
@@ -88,4 +87,5 @@ void in3_register_eth_nano();
  * The result must be freed after use!
  */
 bytes_t* create_tx_path(uint32_t index);
+
 #endif // in3_eth_nano_h__

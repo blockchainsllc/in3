@@ -152,19 +152,28 @@ typedef enum {
   FLAGS_NODE_LIST_NO_SIG = 0x40  /**< nodelist update request will not automatically ask for signatures and proof */
 } in3_flags_type_t;
 
+/**
+ * a list of node attributes (mostly used internally)
+ */
+typedef enum {
+  ATTR_WHITELISTED = 1, /**< indicates if node exists in whiteList */
+  ATTR_BOOT_NODE   = 2, /**< used to avoid filtering manually added nodes before first nodeList update */
+} in3_node_attr_type_t;
+
+typedef uint8_t in3_node_attr_t;
+
 /** incubed node-configuration. 
  * 
  * These information are read from the Registry contract and stored in this struct representing a server or node.
  */
 typedef struct in3_node {
-  bytes_t*         address;     /**< address of the server */
-  uint64_t         deposit;     /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
-  uint32_t         index;       /**< index within the nodelist, also used in the contract as key */
-  uint32_t         capacity;    /**< the maximal capacity able to handle */
-  in3_node_props_t props;       /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
-  char*            url;         /**< the url of the node */
-  bool             whitelisted; /**< boolean indicating if node exists in whiteList */
-  bool             boot_node;   /**< internal - used to avoid filtering manually added nodes before first nodeList update */
+  bytes_t*         address;  /**< address of the server */
+  uint64_t         deposit;  /**< the deposit stored in the registry contract, which this would lose if it sends a wrong blockhash */
+  uint32_t         index;    /**< index within the nodelist, also used in the contract as key */
+  uint32_t         capacity; /**< the maximal capacity able to handle */
+  in3_node_props_t props;    /**< used to identify the capabilities of the node. See in3_node_props_type_t in nodelist.h */
+  char*            url;      /**< the url of the node */
+  uint8_t          attrs;    /**< bitmask of internal attributes */
 } in3_node_t;
 
 /**
@@ -613,7 +622,9 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * 
  * @returns the incubed instance.
  */
-in3_t* in3_for_chain(
+#define in3_for_chain(chain_id) in3_for_chain_default(chain_id)
+
+in3_t* in3_for_chain_default(
     chain_id_t chain_id /**< the chain_id (see ETH_CHAIN_ID_... constants). */
 );
 

@@ -188,10 +188,10 @@ static void initNode(in3_chain_t* chain, int node_index, char* address, char* ur
   node->capacity   = 1;
   node->deposit    = 0;
   node->props      = 0xFF;
-  node->boot_node  = true;
   node->url        = _malloc(strlen(url) + 1);
+  BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
+  BIT_SET(node->attrs, ATTR_BOOT_NODE);
   memcpy(node->url, url, strlen(url) + 1);
-  node->whitelisted = false;
 
   in3_node_weight_t* weight   = chain->weights + node_index;
   weight->blacklisted_until   = 0;
@@ -384,8 +384,8 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
     node->index    = chain->nodelist_length;
     node->capacity = 1;
     node->deposit  = 0;
+    BIT_CLEAR(node->attrs, ATTR_WHITELISTED);
     chain->nodelist_length++;
-    node->whitelisted = false;
   } else
     _free(node->url);
 
@@ -479,7 +479,7 @@ void in3_free(in3_t* a) {
   _free(a);
 }
 
-in3_t* in3_for_chain(chain_id_t chain_id) {
+in3_t* in3_for_chain_default(chain_id_t chain_id) {
 
   // initialize random with the timestamp (in nanoseconds) as seed
   in3_srand(current_ms());
@@ -586,6 +586,14 @@ char* in3_configure(in3_t* c, const char* config) {
       memcpy(c->key = _calloc(32, 1), token->data, token->len);
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
+      in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      if (c->max_verified_hashes < d_long(token)) {
+        chain->verified_hashes = _realloc(chain->verified_hashes,
+                                          sizeof(in3_verified_hash_t) * d_long(token),
+                                          sizeof(in3_verified_hash_t) * c->max_verified_hashes);
+        // clear newly allocated memory
+        memset(chain->verified_hashes + c->max_verified_hashes, 0, (d_long(token) - c->max_verified_hashes) * sizeof(in3_verified_hash_t));
+      }
       c->max_verified_hashes = d_long(token);
     } else if (token->key == key("timeout")) {
       EXPECT_TOK_U32(token);
@@ -716,9 +724,12 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("verifiedHashes")) {
             EXPECT_TOK_ARR(cp.token);
             EXPECT_TOK(cp.token, (unsigned) d_len(cp.token) <= c->max_verified_hashes, "expected array len <= maxVerifiedHashes");
-            _free(chain->verified_hashes);
-            chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
-            int i                  = 0;
+            if (!chain->verified_hashes)
+              chain->verified_hashes = _calloc(c->max_verified_hashes, sizeof(in3_verified_hash_t));
+            else
+              // clear extra verified_hashes (preceding ones will be overwritten anyway)
+              memset(chain->verified_hashes + d_len(cp.token), 0, (c->max_verified_hashes - d_len(cp.token)) * sizeof(in3_verified_hash_t));
+            int i = 0;
             for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
               EXPECT_TOK_U64(d_get(n.token, key("block")));
               EXPECT_TOK_B256(d_get(n.token, key("hash")));
@@ -728,7 +739,8 @@ char* in3_configure(in3_t* c, const char* config) {
           } else if (cp.token->key == key("nodeList")) {
             EXPECT_TOK_ARR(cp.token);
             if (in3_client_clear_nodes(c, chain_id) < 0) goto cleanup;
-            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n)) {
+            int i = 0;
+            for (d_iterator_t n = d_iter(cp.token); n.left; d_iter_next(&n), i++) {
               EXPECT_CFG(d_get(n.token, key("url")) && d_get(n.token, key("address")), "expected URL & address");
               EXPECT_TOK_STR(d_get(n.token, key("url")));
               EXPECT_TOK_ADDR(d_get(n.token, key("address")));
@@ -736,6 +748,9 @@ char* in3_configure(in3_t* c, const char* config) {
                                              d_get_longkd(n.token, key("props"), 65535),
                                              d_get_byteskl(n.token, key("address"), 20)->data) == IN3_OK,
                          "add node failed");
+#ifndef __clang_analyzer__
+              BIT_SET(chain->nodelist[i].attrs, ATTR_BOOT_NODE);
+#endif
             }
           } else {
             EXPECT_TOK(cp.token, false, "unsupported config option!");

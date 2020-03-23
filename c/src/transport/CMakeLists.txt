@@ -32,7 +32,6 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-OPTION(USE_CURL "if true " ON)
 OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 IF (TRANSPORTS)
     IF (USE_CURL)

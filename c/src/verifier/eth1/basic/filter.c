@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 #include "filter.h"
-#include "../../../core/client/context.h"
+#include "../../../core/client/context_internal.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"

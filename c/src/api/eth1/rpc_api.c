@@ -32,7 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "../../core/client/context.h"
+#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/client/verifier.h"
 #include "../../core/util/log.h"

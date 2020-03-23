@@ -11,10 +11,9 @@ This example shows how to call functions on a smart contract eiither directly or
 /// This example shows how to call functions on a smart contract eiither directly or using the api to encode the arguments
 
 #include <in3/client.h>   // the core client
-#include <in3/eth_api.h>  // wrapper for easier use
-#include <in3/eth_full.h> // the full ethereum verifier containing the EVM
-#include <in3/in3_curl.h> // transport implementation
-#include <in3/log.h>
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -23,14 +22,6 @@ static in3_ret_t call_func_api(in3_t* c, address_t contract);
 
 int main() {
   in3_ret_t ret = IN3_OK;
-
-  // register a chain-verifier for full Ethereum-Support in order to verify eth_call
-  // this needs to be called only once.
-  in3_register_eth_full();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
 
   // Remove log prefix for readability
   in3_log_set_prefix("");
@@ -132,26 +123,17 @@ source : [in3-c/c/examples/get_balance.c](https://github.com/slockit/in3-c/blob/
 ```c
 ///  get the Balance with the API and also as direct RPC-call
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
-
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
+#include <in3/utils.h>
 #include <stdio.h>
 
 static void get_balance_rpc(in3_t* in3);
 static void get_balance_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify accounts
-  // this needs to be called only once
-  in3_register_eth_basic();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
@@ -211,10 +193,10 @@ source : [in3-c/c/examples/get_block.c](https://github.com/slockit/in3-c/blob/ma
 ```c
 ///  using the basic-module to get and verify a Block with the API and also as direct RPC-call
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -223,15 +205,6 @@ static void get_block_rpc(in3_t* in3);
 static void get_block_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify blocks
-  // this needs to be called only once
-  in3_register_eth_basic();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
@@ -292,11 +265,10 @@ source : [in3-c/c/examples/get_logs.c](https://github.com/slockit/in3-c/blob/mas
 ```c
 ///  fetching events and verify them with eth_getLogs
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
-
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -304,15 +276,6 @@ static void get_logs_rpc(in3_t* in3);
 static void get_logs_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify logs
-  // this needs to be called only once
-  in3_register_eth_basic();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* in3    = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   in3->chain_id = ETH_CHAIN_ID_KOVAN;
@@ -407,26 +370,17 @@ checking the transaction data
 ```c
 /// checking the transaction data
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
-
+#include <in3/client.h> // the core client
+#include <in3/eth_api.h>
+#include <in3/in3_curl.h> // transport implementation
+#include <in3/in3_init.h>
+#include <in3/utils.h>
 #include <stdio.h>
 
 static void get_tx_rpc(in3_t* in3);
 static void get_tx_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify txs
-  // this needs to be called only once
-  in3_register_eth_basic();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
@@ -491,11 +445,11 @@ source : [in3-c/c/examples/get_transaction_receipt.c](https://github.com/slockit
 ```c
 ///  validating the result or receipt of an transaction
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
-
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
+#include <in3/utils.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -503,15 +457,6 @@ static void get_tx_receipt_rpc(in3_t* in3);
 static void get_tx_receipt_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify tx receipts
-  // this needs to be called only once
-  in3_register_eth_basic();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
@@ -577,19 +522,21 @@ source : [in3-c/c/examples/ipfs_put_get.c](https://github.com/slockit/in3-c/blob
 ///  using the IPFS module
 
 #include <in3/client.h>   // the core client
-#include <in3/in3_curl.h> // transport implementation
-#include <in3/ipfs.h>     // IPFS verifier
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/ipfs_api.h> // access ipfs-api
+#include <in3/log.h>      // logging functions
 #include <stdio.h>
 
 #define LOREM_IPSUM "Lorem ipsum dolor sit amet"
+#define return_err(err)                                \
+  do {                                                 \
+    printf(__FILE__ ":%d::Error %s\n", __LINE__, err); \
+    return;                                            \
+  } while (0)
 
-int main() {
-  in3_register_ipfs();
-  in3_register_curl();
-
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
-  char * result, *error;
-  char   tmp[100];
+static void ipfs_rpc_example(in3_t* c) {
+  char *result, *error;
+  char  tmp[100];
 
   in3_ret_t res = in3_client_rpc(
       c,
@@ -598,7 +545,7 @@ int main() {
       &result,
       &error);
   if (res != IN3_OK)
-    return -1;
+    return_err(in3_errmsg(res));
 
   printf("IPFS hash: %s\n", result);
   sprintf(tmp, "[%s, \"utf8\"]", result);
@@ -612,10 +559,44 @@ int main() {
       &result,
       &error);
   if (res != IN3_OK)
-    return -1;
-
-  return strcmp(result, "\"" LOREM_IPSUM "\"");
+    return_err(in3_errmsg(res));
+  res = strcmp(result, "\"" LOREM_IPSUM "\"");
+  if (res) return_err("Content mismatch");
 }
+
+static void ipfs_api_example(in3_t* c) {
+  bytes_t b         = {.data = (uint8_t*) LOREM_IPSUM, .len = strlen(LOREM_IPSUM)};
+  char*   multihash = ipfs_put(c, &b);
+  if (multihash == NULL)
+    return_err("ipfs_put API call error");
+  printf("IPFS hash: %s\n", multihash);
+
+  bytes_t* content = ipfs_get(c, multihash);
+  free(multihash);
+  if (content == NULL)
+    return_err("ipfs_get API call error");
+
+  int res = strncmp((char*) content->data, LOREM_IPSUM, content->len);
+  b_free(content);
+  if (res)
+    return_err("Content mismatch");
+}
+
+int main() {
+  // create new incubed client
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
+
+  // IPFS put/get using raw RPC calls
+  ipfs_rpc_example(c);
+
+  // IPFS put/get using API
+  ipfs_api_example(c);
+
+  // cleanup client after usage
+  in3_free(c);
+  return 0;
+}
+
 ```
 
 ### send_transaction
@@ -628,12 +609,12 @@ sending a transaction including signing it with a private key
 ```c
 /// sending a transaction including signing it with a private key
 
-#include <in3/client.h>    // the core client
-#include <in3/eth_api.h>   // wrapper for easier use
-#include <in3/eth_basic.h> // use the basic module
-#include <in3/in3_curl.h>  // transport implementation
-#include <in3/signer.h>    // default signer implementation
-
+#include <in3/client.h>   // the core client
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
+#include <in3/signer.h>   // default signer implementation
+#include <in3/utils.h>
 #include <stdio.h>
 
 // fixme: This is only for the sake of demo. Do NOT store private keys as plaintext.
@@ -643,15 +624,6 @@ static void send_tx_rpc(in3_t* in3);
 static void send_tx_api(in3_t* in3);
 
 int main() {
-
-  // register a chain-verifier for basic Ethereum-Support, which is enough to verify txs
-  // this needs to be called only once
-  in3_register_eth_basic();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
@@ -732,11 +704,12 @@ a example how to watch usn events and act upon it.
 /// a example how to watch usn events and act upon it.
 
 #include <in3/client.h>   // the core client
-#include <in3/eth_api.h>  // wrapper for easier use
-#include <in3/eth_full.h> // the full ethereum verifier containing the EVM
-#include <in3/in3_curl.h> // transport implementation
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
+#include <in3/log.h>      // logging functions
 #include <in3/signer.h>   // signer-api
-#include <in3/usn_api.h>  // api for renting
+#include <in3/usn_api.h>
+#include <in3/utils.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <time.h>
@@ -752,15 +725,6 @@ static int handle_booking(usn_event_t* ev) {
 }
 
 int main(int argc, char* argv[]) {
-
-  // register a chain-verifier for full Ethereum-Support in order to verify eth_call
-  // this needs to be called only once.
-  in3_register_eth_full();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
@@ -811,12 +775,12 @@ how to send a rent transaction to a usn contract usinig the usn-api.
 ```c
 /// how to send a rent transaction to a usn contract usinig the usn-api.
 
-#include <in3/client.h>   // the core client
-#include <in3/eth_api.h>  // wrapper for easier use
-#include <in3/eth_full.h> // the full ethereum verifier containing the EVM
-#include <in3/in3_curl.h> // transport implementation
+#include <in3/api_utils.h>
+#include <in3/eth_api.h>  // functions for direct api-access
+#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
 #include <in3/signer.h>   // signer-api
 #include <in3/usn_api.h>  // api for renting
+#include <in3/utils.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -846,15 +810,6 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
 }
 
 int main(int argc, char* argv[]) {
-
-  // register a chain-verifier for full Ethereum-Support in order to verify eth_call
-  // this needs to be called only once.
-  in3_register_eth_full();
-
-  // use curl as the default for sending out requests
-  // this needs to be called only once.
-  in3_register_curl();
-
   // create new incubed client
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
 

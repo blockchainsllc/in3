@@ -161,6 +161,7 @@ class IN3 {
         this.needsSetConfig = !!config
         this.ptr = 0;
         this.eth = new EthAPI(this)
+        this.ipfs = new IpfsAPI(this)
     }
 
     /**

@@ -35,7 +35,7 @@
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 add_library(in3_jni SHARED in3_jni.c)
-target_link_libraries(in3_jni ${IN3_VERIFIER}  ${IN3_API})
+target_link_libraries(in3_jni init)
 
 IF (NOT DEFINED ANDROID_ABI)
 
