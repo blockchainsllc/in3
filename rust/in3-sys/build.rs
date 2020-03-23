@@ -36,8 +36,6 @@
 //! * `cs_mode`
 
 extern crate bindgen;
-extern crate cc;
-extern crate regex;
 
 use std::env;
 use std::fs::copy;

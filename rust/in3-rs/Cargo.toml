@@ -1,7 +1,8 @@
 [package]
 name = "in3"
 version = "0.1.0"
-authors = ["slockit"]
+authors = ["slock.it <in3@slock.it>"]
+description = "High level bindings to IN3 library"
 edition = "2018"
 
 [dependencies]
