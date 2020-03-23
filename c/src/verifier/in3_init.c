@@ -1,12 +1,12 @@
 #include "in3_init.h"
 #include "../api/eth1/eth_api.h"
+#include "../pay/eth/pay_eth.h"
 #include "../transport/curl/in3_curl.h"
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
 #include "../verifier/eth1/nano/eth_nano.h"
 #include "../verifier/ipfs/ipfs.h"
-#include "../pay/eth/pay_eth.h"
 
 static bool initialized;
 
@@ -32,7 +32,6 @@ static void init_verifier() {
 #ifdef PAY_ETH
   in3_register_pay_eth();
 #endif
-
 }
 
 static void init_transport() {
