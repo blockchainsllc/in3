@@ -896,7 +896,7 @@ int main(int argc, char* argv[]) {
       in3_node_t*        node        = chain->nodelist + i;
       in3_node_weight_t* weight      = chain->weights + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
-      uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
+      uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity, now);
       char *             tr = NULL, *warning = NULL;
       if (ctx) {
         tr = _malloc(300);
