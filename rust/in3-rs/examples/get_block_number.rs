@@ -3,7 +3,13 @@ extern crate in3;
 use in3::prelude::*;
 
 fn main() {
-    let c = Client::new(ChainId::Mainnet);
+    let mut c = Client::new(ChainId::Mainnet);
+    c.set_transport(Box::new(|payload: &str, urls: &[&str]| {
+        let mut responses = vec![];
+        responses.push("{kjlk}".to_string());
+        responses.push("{asd}".to_string());
+        return responses;
+    }));
     match c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#) {
         Ok(res) => println!("{}", res),
         Err(err) => println!("{}", err)
