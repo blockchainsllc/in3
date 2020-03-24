@@ -4,6 +4,7 @@
  3. Start using ledger nano s device with Incubed 
 
 # Setup development environment for ledger nano s
+ Setting up dev environment for Ledger nano s is one time activity and Signer application will be available to install directly from Ledger Manager in future. Ledger applications need linux System (recommended is Ubuntu) to build the binary to be installed on Ledger nano devices
   
 ## Download Toolchains and Nanos ledger SDK (As per latest Ubuntu LTS)
 
@@ -72,5 +73,7 @@ $ make load
 ===================================================================
 
 # Start using ledger nano s device with Incubed 
+
+
 
 Open the application on your ledger nano s usb device and make signing requests from incubed
