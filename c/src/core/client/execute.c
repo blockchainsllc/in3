@@ -387,8 +387,8 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
       if (ctx->responses) _free(ctx->responses);
       if (ctx->response_context) json_free(ctx->response_context);
 
-      node->weight->blacklisted_until = 0;                                                                        // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
-      in3_ret_t res                   = ctx_parse_response(ctx, response[n].result.data, response[n].result.len); // parse the result
+      if (node && node->weight) node->weight->blacklisted_until = 0;                            // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
+      in3_ret_t res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len); // parse the result
       if (res < 0)
         blacklist_node(node);
       else {

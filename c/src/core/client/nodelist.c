@@ -519,7 +519,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   // we want ot make sure this loop is run only max 10xthe number of requested nodes
   for (int i = 0; added < filled_len && i < filled_len * 10; i++) {
     // pick a random number
-    r = in3_rand(NULL) % total_weight;
+    r = total_weight ? (in3_rand(NULL) % total_weight) : 0;
 
     // find the first node matching it.
     current = found;
