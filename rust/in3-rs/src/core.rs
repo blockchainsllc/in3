@@ -56,18 +56,33 @@ impl Client {
         unsafe {
             let payload = ffi::CStr::from_ptr((*request).payload).to_str().unwrap();
             let urls_len = (*request).urls_len;
-            for i in 0..urls_len {
-                let url = ffi::CStr::from_ptr(*(*request).urls.offset(i as isize)).to_str().unwrap();
+            for i in 0..urls_len as usize {
+                let url = ffi::CStr::from_ptr(*(*request).urls.add(i)).to_str().unwrap();
                 urls.push(url);
             }
-            println!("==================> {:?}", urls);
-            let c = Client::get_ref(client);
-            let responses = match &mut (*c).transport {
-                None => { vec!["empty".to_string()] }
+
+            let c = Client::get_internal(client);
+            let responses: Vec<Result<String, String>> = match &mut (*c).transport {
+                None => { vec![Ok("empty".to_string())] }
                 Some(transport) => { (*transport)(payload, &urls) }
             };
-            println!("==================> {:?}", responses);
+
+            for (i, resp) in responses.iter().enumerate() {
+                match resp {
+                    Err(err) => {
+                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).error, ffi::CString::new(err.to_string()).unwrap().as_ptr());
+                    }
+                    Ok(res) => {
+                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).result, ffi::CString::new(res.to_string()).unwrap().as_ptr());
+                    }
+                }
+            }
+
+            if urls_len as usize != responses.len() {
+                return in3_sys::in3_ret_t::IN3_ETRANS;
+            }
         }
+
         in3_sys::in3_ret_t::IN3_OK
     }
 
