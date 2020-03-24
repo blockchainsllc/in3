@@ -63,13 +63,15 @@ impl Client {
 
             let c = Client::get_internal(client);
             let responses: Vec<Result<String, String>> = match &mut (*c).transport {
-                None => { vec![Ok("empty".to_string())] }
+                None => { panic!("Missing transport!") }
                 Some(transport) => { (*transport)(payload, &urls) }
             };
 
+            let mut any_err = false;
             for (i, resp) in responses.iter().enumerate() {
                 match resp {
                     Err(err) => {
+                        any_err = true;
                         in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).error, ffi::CString::new(err.to_string()).unwrap().as_ptr());
                     }
                     Ok(res) => {
@@ -78,7 +80,7 @@ impl Client {
                 }
             }
 
-            if urls_len as usize != responses.len() {
+            if urls_len as usize != responses.len() || any_err {
                 return in3_sys::in3_ret_t::IN3_ETRANS;
             }
         }
