@@ -54,6 +54,6 @@
  * c->transport = send_http;
  * ```
  */
-in3_ret_t send_http(in3_request_t* req);
+in3_ret_t send_http(in3_t* c, in3_request_t* req);
 
 #endif // in3_http_h__
