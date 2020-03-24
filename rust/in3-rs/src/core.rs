@@ -2,7 +2,7 @@ use std::ffi;
 
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
-    transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<String>>>,
+    transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>>,
 }
 
 pub enum ChainId {
@@ -46,7 +46,7 @@ impl ClientNew<ChainId> for Client {
 }
 
 impl Client {
-    pub fn set_transport(&mut self, transport: Box<dyn FnMut(&str, &[&str]) -> Vec<String>>) {
+    pub fn set_transport(&mut self, transport: Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>) {
         self.transport = Some(transport);
         unsafe {
             (*self.ptr).transport = Some(Client::in3_rust_transport);
