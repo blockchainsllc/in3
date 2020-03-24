@@ -14,7 +14,7 @@ fn http_send(url: &str, payload: &str) -> Result<String, Box<dyn std::error::Err
     Ok(res.text().unwrap())
 }
 
-fn transport_http(payload: &str, urls: &[&str]) -> Vec<Result<String, String>> {
+pub(crate) fn transport_http(payload: &str, urls: &[&str]) -> Vec<Result<String, String>> {
     let mut responses = vec![];
     for url in urls {
         match http_send(url, payload) {
