@@ -30,10 +30,6 @@ impl ClientNew<u32> for Client {
             };
             (*c.ptr).max_attempts = 1;
             (*c.ptr).request_count = 3;
-
-            // save reference to Client in in3_t->internal ptr
-            let c_ptr: *mut ffi::c_void = &mut c as *mut _ as *mut ffi::c_void;
-            (*c.ptr).internal = c_ptr;
             c
         }
     }
@@ -50,7 +46,7 @@ impl Client {
         self.transport = Some(transport);
         unsafe {
             (*self.ptr).transport = Some(Client::in3_rust_transport);
-            self.set_ref();
+            self.update_internal();
         }
     }
 
@@ -75,11 +71,11 @@ impl Client {
         in3_sys::in3_ret_t::IN3_OK
     }
 
-    unsafe fn get_ref(ptr: *mut in3_sys::in3_t) -> *mut Client {
+    unsafe fn get_internal(ptr: *mut in3_sys::in3_t) -> *mut Client {
         (*ptr).internal as *mut Client
     }
 
-    unsafe fn set_ref(&mut self) {
+    unsafe fn update_internal(&mut self) {
         let c_ptr: *mut ffi::c_void = self as *mut _ as *mut ffi::c_void;
         (*self.ptr).internal = c_ptr;
     }
