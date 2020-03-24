@@ -1,7 +1,8 @@
 # Integration of ledger nano s with incubed 
  1. Setup development environment for ledger nano s
  2. Build and install ledger nano Signer app into Ledger nano s usb device 
- 3. Start using ledger nano s device with Incubed 
+ 3. Install libusb hidlib 
+ 4. Start using ledger nano s device with Incubed 
 
 # Setup development environment for ledger nano s
  Setting up dev environment for Ledger nano s is one time activity and Signer application will be available to install directly from Ledger Manager in future. Ledger applications need linux System (recommended is Ubuntu) to build the binary to be installed on Ledger nano devices
@@ -69,6 +70,10 @@ Once the setup is done,  go to ledger-incubed-firmware-app folder and run:-
 
 $ make
 $ make load
+
+===================================================================
+
+# Install libusb hidlib 
 
 ===================================================================
 
