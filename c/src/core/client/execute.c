@@ -51,6 +51,7 @@
 #include <time.h>
 
 #define WAIT_TIME_CAP 3600
+#define BLACKLISTTIME 7 * 24 * 3600
 
 static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
@@ -313,7 +314,7 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
 static void blacklist_node(node_match_t* node_weight) {
   if (node_weight && node_weight->weight) {
     // blacklist the node
-    node_weight->weight->blacklisted_until = in3_time(NULL) + 3600;
+    node_weight->weight->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
     in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
@@ -548,7 +549,7 @@ in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
   in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
 
   if (nodelist_not_first_upd8(chain))
-    blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+    blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
   _free(chain->nodelist_upd8_params);
   chain->nodelist_upd8_params = NULL;
 

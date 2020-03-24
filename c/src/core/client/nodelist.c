@@ -49,6 +49,7 @@
 
 #define DAY 24 * 3600
 #define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
+#define BLACKLISTTIME 7 * DAY
 
 static void free_nodeList(in3_node_t* nodelist, int count) {
   // clean chain..
@@ -217,7 +218,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
       // blacklist node that gave us an error response for nodelist (if not first update)
       // and clear nodelist params
       if (nodelist_not_first_upd8(chain))
-        blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+        blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
 
@@ -238,7 +239,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
         // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
         // about the nodelist update, so we blacklist it for an hour
         if (nodelist_exp_last_block_neq(chain, d_get_longk(r, K_LAST_BLOCK_NUMBER)))
-          blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+          blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
         _free(chain->nodelist_upd8_params);
         chain->nodelist_upd8_params = NULL;
 
