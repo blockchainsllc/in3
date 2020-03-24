@@ -65,7 +65,7 @@ $ sudo apt-get install libc6-dev:i386
 ===================================================================
 
 # Build and install ledger nano Signer app into Ledger nano s usb device 
-## Once the setup is done,  go to ledger-incubed-signer folder and run:-
+Once the setup is done,  go to ledger-incubed-firmware-app folder and run:-
 
 $ make
 $ make load
