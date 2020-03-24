@@ -356,8 +356,10 @@ uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t
   const uint32_t avg = n->response_count > 4
                            ? (n->total_response_time / n->response_count)
                            : (10000 / (max(capa, 100) + 100));
-  const uint32_t blacklist_factor = ((now - n->blacklisted_until) < BLACKLISTWEIGHT) ? (BLACKLISTWEIGHT + n->blacklisted_until - now) : BLACKLISTWEIGHT;
-  return (0xFFFF / avg) * blacklist_factor / BLACKLISTWEIGHT;
+  const uint32_t blacklist_factor = ((now - n->blacklisted_until) < BLACKLISTWEIGHT)
+                                        ? ((now - n->blacklisted_until) * 100 / (BLACKLISTWEIGHT))
+                                        : 100;
+  return (0xFFFF / avg) * blacklist_factor / 100;
 }
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
