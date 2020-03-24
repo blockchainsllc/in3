@@ -14758,6 +14758,715 @@ extern "C" {
         cptr: *mut libc::c_void,
     ) -> *mut in3_storage_handler_t;
 }
+#[doc = " represents a single cache entry in a linked list."]
+#[doc = " These are used within a request context to cache values and automaticly free them."]
+#[repr(C)]
+#[derive(Debug, Copy)]
+pub struct cache_entry {
+    #[doc = "<  an optional key of the entry"]
+    pub key: bytes_t,
+    #[doc = "< the value"]
+    pub value: bytes_t,
+    #[doc = "< the buffer is used to store extra data, which will be cleaned when freed."]
+    pub buffer: [u8; 4usize],
+    #[doc = "< if true, the cache-entry will be freed when the request context is cleaned up."]
+    pub must_free: bool,
+    #[doc = "< pointer to the next entry."]
+    pub next: *mut cache_entry,
+}
+#[test]
+fn bindgen_test_layout_cache_entry() {
+    assert_eq!(
+        ::core::mem::size_of::<cache_entry>(),
+        48usize,
+        concat!("Size of: ", stringify!(cache_entry))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<cache_entry>(),
+        8usize,
+        concat!("Alignment of ", stringify!(cache_entry))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).key as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(key)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).value as *const _ as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(value)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).buffer as *const _ as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(buffer)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).must_free as *const _ as usize },
+        36usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(must_free)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).next as *const _ as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(next)
+        )
+    );
+}
+impl Clone for cache_entry {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+pub type cache_entry_t = cache_entry;
+extern "C" {
+    #[doc = " get the entry for a given key."]
+    pub fn in3_cache_get_entry(cache: *mut cache_entry_t, key: *mut bytes_t) -> *mut bytes_t;
+}
+extern "C" {
+    #[doc = " adds an entry to the linked list."]
+    pub fn in3_cache_add_entry(
+        cache: *mut *mut cache_entry_t,
+        key: bytes_t,
+        value: bytes_t,
+    ) -> *mut cache_entry_t;
+}
+extern "C" {
+    #[doc = " clears all entries in the linked list."]
+    pub fn in3_cache_free(cache: *mut cache_entry_t);
+}
+extern "C" {
+    #[doc = " converts the bytes to a unsigned long (at least the last max len bytes)"]
+    pub fn bytes_to_long(data: *const u8, len: libc::c_int) -> u64;
+}
+extern "C" {
+    #[doc = " converts a character into a uint64_t"]
+    pub fn char_to_long(a: *const libc::c_char, l: libc::c_int) -> u64;
+}
+extern "C" {
+    #[doc = "  converts a hexchar to byte (4bit)"]
+    pub fn hexchar_to_int(c: libc::c_char) -> u8;
+}
+extern "C" {
+    #[doc = " converts a uint64_t to string (char*); buffer-size min. 21 bytes"]
+    pub fn u64_to_str(
+        value: u64,
+        pBuf: *mut libc::c_char,
+        szBuf: libc::c_int,
+    ) -> *const libc::c_char;
+}
+extern "C" {
+    #[doc = " convert a c hex string to a byte array storing it into an existing buffer."]
+    #[doc = ""]
+    #[doc = " @param  hexdata: the hex string"]
+    #[doc = " @param  hexlen: the len of the string to read. -1 will use strlen to determine the length."]
+    #[doc = " @param  out: the byte buffer"]
+    #[doc = " @param  outlen: the length of the buffer to write into"]
+    #[doc = " @retval the  number of bytes written"]
+    pub fn hex_to_bytes(
+        hexdata: *const libc::c_char,
+        hexlen: libc::c_int,
+        out: *mut u8,
+        outlen: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    #[doc = " convert a c string to a byte array creating a new buffer"]
+    pub fn hex_to_new_bytes(buf: *const libc::c_char, len: libc::c_int) -> *mut bytes_t;
+}
+extern "C" {
+    #[doc = " convefrts a bytes into hex"]
+    pub fn bytes_to_hex(buffer: *const u8, len: libc::c_int, out: *mut libc::c_char)
+        -> libc::c_int;
+}
+extern "C" {
+    #[doc = " hashes the bytes and creates a new bytes_t"]
+    pub fn sha3(data: *const bytes_t) -> *mut bytes_t;
+}
+extern "C" {
+    #[doc = " writes 32 bytes to the pointer."]
+    pub fn sha3_to(data: *mut bytes_t, dst: *mut libc::c_void) -> libc::c_int;
+}
+extern "C" {
+    #[doc = " converts a long to 8 bytes"]
+    pub fn long_to_bytes(val: u64, dst: *mut u8);
+}
+extern "C" {
+    #[doc = " converts a int to 4 bytes"]
+    pub fn int_to_bytes(val: u32, dst: *mut u8);
+}
+extern "C" {
+    #[doc = " duplicate the string"]
+    pub fn _strdupn(src: *const libc::c_char, len: libc::c_int) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " calculate the min number of byte to represents the len"]
+    pub fn min_bytes_len(val: u64) -> libc::c_int;
+}
+extern "C" {
+    #[doc = " sets a variable value to 32byte word."]
+    pub fn uint256_set(src: *const u8, src_len: wlen_t, dst: *mut u8);
+}
+extern "C" {
+    #[doc = " replaces a string and returns a copy."]
+    #[doc = " @retval"]
+    pub fn str_replace(
+        orig: *mut libc::c_char,
+        rep: *const libc::c_char,
+        with: *const libc::c_char,
+    ) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " replaces a string at the given position."]
+    pub fn str_replace_pos(
+        orig: *mut libc::c_char,
+        pos: usize,
+        len: usize,
+        rep: *const libc::c_char,
+    ) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " lightweight strstr() replacements"]
+    pub fn str_find(haystack: *mut libc::c_char, needle: *const libc::c_char) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " remove all html-tags in the text."]
+    pub fn str_remove_html(data: *mut libc::c_char) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " current timestamp in ms."]
+    pub fn current_ms() -> u64;
+}
+#[doc = " time function"]
+#[doc = " defaults to k_uptime_get() for zeohyr and time(NULL) for other platforms"]
+#[doc = " expected to return a u64 value representative of time (from epoch/start)"]
+pub type time_func = ::core::option::Option<unsafe extern "C" fn(t: *mut libc::c_void) -> u64>;
+extern "C" {
+    pub fn in3_set_func_time(fn_: time_func);
+}
+extern "C" {
+    pub fn in3_time(t: *mut libc::c_void) -> u64;
+}
+#[doc = " rand function"]
+#[doc = " defaults to k_uptime_get() for zeohyr and rand() for other platforms"]
+#[doc = " expected to return a random number"]
+pub type rand_func =
+    ::core::option::Option<unsafe extern "C" fn(s: *mut libc::c_void) -> libc::c_int>;
+extern "C" {
+    pub fn in3_set_func_rand(fn_: rand_func);
+}
+extern "C" {
+    pub fn in3_rand(s: *mut libc::c_void) -> libc::c_int;
+}
+#[doc = " srand function"]
+#[doc = " defaults to NOOP for zephyr and srand() for other platforms"]
+#[doc = " expected to set the seed for a new sequence of random numbers to be returned by in3_rand()"]
+pub type srand_func = ::core::option::Option<unsafe extern "C" fn(s: libc::c_uint)>;
+extern "C" {
+    pub fn in3_set_func_srand(fn_: srand_func);
+}
+extern "C" {
+    pub fn in3_srand(s: libc::c_uint);
+}
+#[repr(u32)]
+#[doc = " type of the request context,"]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum ctx_type {
+    #[doc = "< a json-rpc request, which needs to be send to a incubed node"]
+    CT_RPC = 0,
+    #[doc = "< a sign request"]
+    CT_SIGN = 1,
+}
+pub use self::ctx_type as ctx_type_t;
+#[doc = " the weight of a certain node as linked list."]
+#[doc = ""]
+#[doc = " This will be used when picking the nodes to send the request to. A linked list of these structs desribe the result."]
+#[repr(C)]
+#[derive(Debug, Copy)]
+pub struct weight {
+    #[doc = "< the node definition including the url"]
+    pub node: *mut in3_node_t,
+    #[doc = "< the current weight and blacklisting-stats"]
+    pub weight: *mut in3_node_weight_t,
+    #[doc = "< The starting value"]
+    pub s: f32,
+    #[doc = "< weight value"]
+    pub w: f32,
+    #[doc = "< next in the linkedlist or NULL if this is the last element"]
+    pub next: *mut weight,
+}
+#[test]
+fn bindgen_test_layout_weight() {
+    assert_eq!(
+        ::core::mem::size_of::<weight>(),
+        32usize,
+        concat!("Size of: ", stringify!(weight))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<weight>(),
+        8usize,
+        concat!("Alignment of ", stringify!(weight))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<weight>())).node as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(weight),
+            "::",
+            stringify!(node)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<weight>())).weight as *const _ as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(weight),
+            "::",
+            stringify!(weight)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<weight>())).s as *const _ as usize },
+        16usize,
+        concat!("Offset of field: ", stringify!(weight), "::", stringify!(s))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<weight>())).w as *const _ as usize },
+        20usize,
+        concat!("Offset of field: ", stringify!(weight), "::", stringify!(w))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<weight>())).next as *const _ as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(weight),
+            "::",
+            stringify!(next)
+        )
+    );
+}
+impl Clone for weight {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+pub type node_match_t = weight;
+#[doc = " The Request config."]
+#[doc = ""]
+#[doc = " This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards."]
+#[repr(C)]
+#[derive(Debug, Copy)]
+pub struct in3_ctx {
+    #[doc = " the type of the request"]
+    pub type_: ctx_type_t,
+    #[doc = " reference to the client"]
+    pub client: *mut in3_t,
+    #[doc = " the result of the json-parser for the request."]
+    pub request_context: *mut json_ctx_t,
+    #[doc = " the result of the json-parser for the response."]
+    pub response_context: *mut json_ctx_t,
+    #[doc = " in case of an error this will hold the message, if not it points to `NULL`"]
+    pub error: *mut libc::c_char,
+    #[doc = " the number of requests"]
+    pub len: libc::c_int,
+    #[doc = " the number of attempts"]
+    pub attempt: libc::c_uint,
+    #[doc = " references to the tokens representring the parsed responses"]
+    pub responses: *mut *mut d_token_t,
+    #[doc = " references to the tokens representring the requests"]
+    pub requests: *mut *mut d_token_t,
+    #[doc = " array of configs adjusted for each request."]
+    pub requests_configs: *mut in3_request_config_t,
+    pub nodes: *mut node_match_t,
+    #[doc = " optional cache-entries."]
+    #[doc = ""]
+    #[doc = " These entries will be freed when cleaning up the context."]
+    pub cache: *mut cache_entry_t,
+    #[doc = " the raw response-data, which should be verified."]
+    pub raw_response: *mut in3_response_t,
+    #[doc = " pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context."]
+    pub required: *mut in3_ctx,
+    #[doc = " state of the verification"]
+    pub verification_state: in3_ret_t,
+}
+#[test]
+fn bindgen_test_layout_in3_ctx() {
+    assert_eq!(
+        ::core::mem::size_of::<in3_ctx>(),
+        112usize,
+        concat!("Size of: ", stringify!(in3_ctx))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<in3_ctx>(),
+        8usize,
+        concat!("Alignment of ", stringify!(in3_ctx))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).type_ as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(type_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).client as *const _ as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(client)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).request_context as *const _ as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(request_context)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).response_context as *const _ as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(response_context)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).error as *const _ as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(error)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).len as *const _ as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(len)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).attempt as *const _ as usize },
+        44usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(attempt)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).responses as *const _ as usize },
+        48usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(responses)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).requests as *const _ as usize },
+        56usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(requests)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).requests_configs as *const _ as usize },
+        64usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(requests_configs)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).nodes as *const _ as usize },
+        72usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(nodes)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).cache as *const _ as usize },
+        80usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(cache)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).raw_response as *const _ as usize },
+        88usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(raw_response)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).required as *const _ as usize },
+        96usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(required)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_ctx>())).verification_state as *const _ as usize },
+        104usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_ctx),
+            "::",
+            stringify!(verification_state)
+        )
+    );
+}
+impl Clone for in3_ctx {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+pub type in3_ctx_t = in3_ctx;
+#[repr(i32)]
+#[doc = " The current state of the context."]
+#[doc = ""]
+#[doc = " you can check this state after each execute-call."]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum state {
+    #[doc = "< The ctx has a verified result."]
+    CTX_SUCCESS = 0,
+    #[doc = "< there are required contexts, which need to be resolved first"]
+    CTX_WAITING_FOR_REQUIRED_CTX = 1,
+    #[doc = "< the response is not set yet"]
+    CTX_WAITING_FOR_RESPONSE = 2,
+    #[doc = "< the request has a error"]
+    CTX_ERROR = -1,
+}
+pub use self::state as in3_ctx_state_t;
+extern "C" {
+    #[doc = " creates a new context."]
+    #[doc = ""]
+    #[doc = " the request data will be parsed and represented in the context."]
+    #[doc = " calling this function will only parse the request data, but not send anything yet."]
+    #[doc = ""]
+    #[doc = "  *Important*: the req_data will not be cloned but used during the execution. The caller of the this function is also responsible for freeing this string afterwards."]
+    pub fn ctx_new(client: *mut in3_t, req_data: *const libc::c_char) -> *mut in3_ctx_t;
+}
+extern "C" {
+    #[doc = " sends a previously created context to nodes and verifies it."]
+    #[doc = ""]
+    #[doc = " The execution happens within the same thread, thich mean it will be blocked until the response ha beedn received and verified."]
+    #[doc = " In order to handle calls asynchronously, you need to call the `in3_ctx_execute` function and provide the data as needed."]
+    pub fn in3_send_ctx(ctx: *mut in3_ctx_t) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " tries to execute the context, but stops whenever data are required."]
+    #[doc = ""]
+    #[doc = " This function should be used in order to call data in a asyncronous way,"]
+    #[doc = " since this function will not use the transport-function to actually send it."]
+    #[doc = ""]
+    #[doc = " The caller is responsible for delivering the required responses."]
+    #[doc = " After calling you need to check the return-value:"]
+    #[doc = " - IN3_WAITING : provide the required data and then call in3_ctx_execute again."]
+    #[doc = " - IN3_OK : success, we have a result."]
+    #[doc = " - any other status = error"]
+    #[doc = ""]
+    #[doc = " Here is a example how to use this function:"]
+    #[doc = ""]
+    #[doc = " ```c"]
+    #[doc = ""]
+    #[doc = "in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {"]
+    #[doc = "in3_ret_t ret;"]
+    #[doc = "while ((ret = in3_ctx_execute(ctx))) {"]
+    #[doc = "if (ret != IN3_WAITING) return ret;"]
+    #[doc = ""]
+    #[doc = "while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {"]
+    #[doc = "if ((ret = in3_send_ctx(ctx->required))) return ret;"]
+    #[doc = ""]
+    #[doc = "if ((ret = in3_ctx_execute(ctx)) != IN3_WAITING) return ret;"]
+    #[doc = "}"]
+    #[doc = ""]
+    #[doc = "if (!ctx->raw_response) {"]
+    #[doc = ""]
+    #[doc = "switch (ctx->type) {"]
+    #[doc = ""]
+    #[doc = "case CT_RPC: {"]
+    #[doc = ""]
+    #[doc = "in3_request_t* request = in3_create_request(ctx);"]
+    #[doc = ""]
+    #[doc = "ctx->client->transport(request);"]
+    #[doc = ""]
+    #[doc = "request_free(request, ctx, false);"]
+    #[doc = "break;"]
+    #[doc = "}"]
+    #[doc = ""]
+    #[doc = "case CT_SIGN: {"]
+    #[doc = "d_token_t* params = d_get(ctx->requests[0], K_PARAMS);"]
+    #[doc = "bytes_t    data   = d_to_bytes(d_get_at(params, 0));"]
+    #[doc = "bytes_t    from   = d_to_bytes(d_get_at(params, 1));"]
+    #[doc = ""]
+    #[doc = "ctx->raw_response = _malloc(sizeof(in3_response_t));"]
+    #[doc = "sb_init(&ctx->raw_response[0].error);"]
+    #[doc = "sb_init(&ctx->raw_response[0].result);"]
+    #[doc = ""]
+    #[doc = "uint8_t sig[65];"]
+    #[doc = "ret = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);"]
+    #[doc = "if (ret < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, ret);"]
+    #[doc = "sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);"]
+    #[doc = "}"]
+    #[doc = "}"]
+    #[doc = "}"]
+    #[doc = "}"]
+    #[doc = "return ret;"]
+    #[doc = "}"]
+    #[doc = " ```"]
+    pub fn in3_ctx_execute(ctx: *mut in3_ctx_t) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " returns the current state of the context."]
+    pub fn in3_ctx_state(ctx: *mut in3_ctx_t) -> in3_ctx_state_t;
+}
+extern "C" {
+    #[doc = " frees all resources allocated during the request."]
+    #[doc = ""]
+    #[doc = " But this will not free the request string passed when creating the context!"]
+    pub fn ctx_free(ctx: *mut in3_ctx_t);
+}
+extern "C" {
+    #[doc = " adds a new context as a requirment."]
+    #[doc = ""]
+    #[doc = " Whenever a verifier needs more data and wants to send a request, we should create the request and add it as dependency and stop."]
+    #[doc = ""]
+    #[doc = " If the function is called again, we need to search and see if the required status is now useable."]
+    #[doc = ""]
+    #[doc = " Here is an example of how to use it:"]
+    #[doc = ""]
+    #[doc = " ```c"]
+    #[doc = "in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t* dst) {"]
+    #[doc = "in3_ctx_t* ctx = ctx_find_required(parent, method);"]
+    #[doc = "if (ctx) {"]
+    #[doc = "switch (in3_ctx_state(ctx)) {"]
+    #[doc = "case CTX_ERROR:"]
+    #[doc = "return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);"]
+    #[doc = "case CTX_WAITING_FOR_REQUIRED_CTX:"]
+    #[doc = "case CTX_WAITING_FOR_RESPONSE:"]
+    #[doc = "return IN3_WAITING;"]
+    #[doc = ""]
+    #[doc = "case CTX_SUCCESS: {"]
+    #[doc = "d_token_t* r = d_get(ctx->responses[0], K_RESULT);"]
+    #[doc = "if (r) {"]
+    #[doc = "dst = d_to_bytes(r);"]
+    #[doc = "return IN3_OK;"]
+    #[doc = "} else"]
+    #[doc = "return ctx_check_response_error(parent, 0);"]
+    #[doc = "}"]
+    #[doc = "}"]
+    #[doc = "}"]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = "char* req = _malloc(strlen(method) + strlen(params) + 200);"]
+    #[doc = "sprintf(req, \"{\\\"method\\\":\\\"%s\\\",\\\"jsonrpc\\\":\\\"2.0\\\",\\\"id\\\":1,\\\"params\\\":%s}\", method, params);"]
+    #[doc = "return ctx_add_required(parent, ctx_new(parent->client, req));"]
+    #[doc = "}"]
+    #[doc = " ```"]
+    pub fn ctx_add_required(parent: *mut in3_ctx_t, ctx: *mut in3_ctx_t) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " searches within the required request contextes for one with the given method."]
+    #[doc = ""]
+    #[doc = " This method is used internaly to find a previously added context."]
+    pub fn ctx_find_required(
+        parent: *const in3_ctx_t,
+        method: *const libc::c_char,
+    ) -> *mut in3_ctx_t;
+}
+extern "C" {
+    #[doc = " removes a required context after usage."]
+    #[doc = " removing will also call free_ctx to free resources."]
+    pub fn ctx_remove_required(parent: *mut in3_ctx_t, ctx: *mut in3_ctx_t) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " check if the response contains a error-property and reports this as error in the context."]
+    pub fn ctx_check_response_error(c: *mut in3_ctx_t, i: libc::c_int) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " determins the errorcode for the given request."]
+    pub fn ctx_get_error(ctx: *mut in3_ctx_t, id: libc::c_int) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " sends a request and returns a context used to access the result or errors."]
+    #[doc = ""]
+    #[doc = " This context *MUST* be freed with ctx_free(ctx) after usage to release the resources."]
+    pub fn in3_client_rpc_ctx_raw(c: *mut in3_t, request: *const libc::c_char) -> *mut in3_ctx_t;
+}
+extern "C" {
+    #[doc = " sends a request and returns a context used to access the result or errors."]
+    #[doc = ""]
+    #[doc = " This context *MUST* be freed with ctx_free(ctx) after usage to release the resources."]
+    pub fn in3_client_rpc_ctx(
+        c: *mut in3_t,
+        method: *const libc::c_char,
+        params: *const libc::c_char,
+    ) -> *mut in3_ctx_t;
+}
 #[doc = " a 32 byte long integer used to store ethereum-numbers."]
 #[doc = ""]
 #[doc = " use the as_long() or as_double() to convert this to a useable number."]
@@ -15984,6 +16693,44 @@ extern "C" {
 }
 extern "C" {
     pub fn in3_for_chain_auto_init(chain_id: chain_id_t) -> *mut in3_t;
+}
+extern "C" {
+    #[doc = " creates a request-object, which then need to be filled with the responses."]
+    #[doc = ""]
+    #[doc = " each request object contains a array of reponse-objects. In order to set the response, you need to call"]
+    #[doc = ""]
+    #[doc = " ```c"]
+    #[doc = " // set a succesfull response"]
+    #[doc = " sb_add_chars(&request->results[0].result, my_response);"]
+    #[doc = " // set a error response"]
+    #[doc = " sb_add_chars(&request->results[0].error, my_error);"]
+    #[doc = " ```"]
+    pub fn in3_create_request(ctx: *mut in3_ctx_t) -> *mut in3_request_t;
+}
+extern "C" {
+    #[doc = " frees a previuosly allocated request."]
+    pub fn request_free(req: *mut in3_request_t, ctx: *const in3_ctx_t, response_free: bool);
+}
+extern "C" {
+    #[doc = " sets the error message in the context."]
+    #[doc = ""]
+    #[doc = " If there is a previous error it will append it."]
+    #[doc = " the return value will simply be passed so you can use it like"]
+    #[doc = ""]
+    #[doc = " ```c"]
+    #[doc = "   return ctx_set_error(ctx, \"wrong number of arguments\", IN3_EINVAL)"]
+    #[doc = " ```"]
+    pub fn ctx_set_error_intern(
+        c: *mut in3_ctx_t,
+        msg: *mut libc::c_char,
+        errnumber: in3_ret_t,
+    ) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " handles a failable context"]
+    #[doc = ""]
+    #[doc = " This context *MUST* be freed with ctx_free(ctx) after usage to release the resources."]
+    pub fn ctx_handle_failable(ctx: *mut in3_ctx_t) -> in3_ret_t;
 }
 pub type __builtin_va_list = [__va_list_tag; 1usize];
 #[repr(C)]
