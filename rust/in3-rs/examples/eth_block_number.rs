@@ -8,7 +8,7 @@ fn main() {
         let mut responses = vec![];
         responses.push(Ok("{kjlk}".to_string()));
         responses.push(Err("{asd}".to_string()));
-        return responses;
+        responses
     }));
     match c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#) {
         Ok(res) => println!("{}", res),
