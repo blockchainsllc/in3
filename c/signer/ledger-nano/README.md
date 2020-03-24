@@ -74,11 +74,11 @@ $ make load
 ===================================================================
 
 # Install libusb hidlib 
+HIDAPI library is required to interact with ledger nano s device over usb , it is available for multiple platforms and can be cross compiled easily 
 
+https://github.com/libusb/hidapi
 ===================================================================
 
 # Start using ledger nano s device with Incubed 
-
-
 
 Open the application on your ledger nano s usb device and make signing requests from incubed
