@@ -49,7 +49,8 @@
 
 #define DAY 24 * 3600
 #define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
-#define BLACKLISTTIME 7 * DAY
+#define BLACKLISTTIME DAY
+#define BLACKLISTWEIGHT 7 * DAY
 
 static void free_nodeList(in3_node_t* nodelist, int count) {
   // clean chain..
@@ -351,11 +352,12 @@ IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t np_config, cons
   return min_blk_ht_conf ? (min_blk_ht <= min_blk_ht_conf) : true;
 }
 
-uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa) {
+uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t now) {
   const uint32_t avg = n->response_count > 4
                            ? (n->total_response_time / n->response_count)
                            : (10000 / (max(capa, 100) + 100));
-  return 0xFFFF / avg;
+  const uint32_t blacklist_factor = ((now - n->blacklisted_until) < BLACKLISTWEIGHT) ? (BLACKLISTWEIGHT + n->blacklisted_until - now) : BLACKLISTWEIGHT;
+  return (0xFFFF / avg) * blacklist_factor / BLACKLISTWEIGHT;
 }
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
@@ -405,7 +407,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
     current->weight = weight_def;
     current->next   = NULL;
     current->s      = weight_sum;
-    current->w      = in3_node_calculate_weight(weight_def, node_def->capacity);
+    current->w      = in3_node_calculate_weight(weight_def, node_def->capacity, now);
     weight_sum += current->w;
     found++;
     if (prev) prev->next = current;
