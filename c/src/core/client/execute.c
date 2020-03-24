@@ -51,7 +51,7 @@
 #include <time.h>
 
 #define WAIT_TIME_CAP 3600
-#define BLACKLISTTIME 7 * 24 * 3600
+#define BLACKLISTTIME 24 * 3600
 
 static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
