@@ -35,16 +35,16 @@ CLANGPATH="<path>/clang-arm-fropi/bin/"
 
 ## Download and install ledger python tools 
 
-Installation prerequisites :
-$ sudo apt-get install libudev-dev
-$ sudo apt-get install libusb-1.0-0-dev
-$ sudo apt-get install python-dev (python 2.7)
-$ sudo apt-get install virtualenv
+Installation prerequisites : </br>
+$ sudo apt-get install libudev-dev </br>
+$ sudo apt-get install libusb-1.0-0-dev </br>
+$ sudo apt-get install python-dev (python 2.7) </br>
+$ sudo apt-get install virtualenv </br>
 
-Installation of ledgerblue:
-$ virtualenv ledger
-$ source ledger/bin/activate
-$ pip install ledgerblue
+Installation of ledgerblue:</br>
+$ virtualenv ledger</br>
+$ source ledger/bin/activate</br>
+$ pip install ledgerblue</br>
 
 Ref: https://github.com/LedgerHQ/blue-loader-python
 
@@ -54,21 +54,22 @@ Ref: https://github.com/LedgerHQ/blue-loader-python
 
 $ git clone https://github.com/LedgerHQ/udev-rules
 
-run script from the above download 
+run script from the above download </br>
 $ sudo ./add_udev_rules.sh
 
 
 
 ## Open new terminal and check for following installations :-
-
+</br>
 $ sudo apt-get install gcc-multilib
 $ sudo apt-get install libc6-dev:i386
+
 ===================================================================
 
 # Build and install ledger nano Signer app into Ledger nano s usb device 
 Once the setup is done,  go to ledger-incubed-firmware-app folder and run:-
 
-$ make
+$ make</br>
 $ make load
 
 ===================================================================
@@ -76,7 +77,7 @@ $ make load
 # Install libusb hidlib 
 HIDAPI library is required to interact with ledger nano s device over usb , it is available for multiple platforms and can be cross compiled easily 
 
-https://github.com/libusb/hidapi
+Ref: https://github.com/libusb/hidapi
 ===================================================================
 
 # Start using ledger nano s device with Incubed 
