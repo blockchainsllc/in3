@@ -11,7 +11,7 @@ fn send_request() {
         let _ = in3.execute(&mut ctx);
         let mut request = Request::new(&mut ctx);
         loop {
-            let res = in3.execute(&mut ctx);
+            let mut res = in3.execute(&mut ctx);
             match res {
                 In3Ret::OK => {
                     println!("OK");
@@ -19,6 +19,7 @@ fn send_request() {
                 },
                 In3Ret::WAITING => {
                     println!("WAITING");
+                    res = in3.send(&mut ctx);
                 },
                 _ => {
                     println!("detault");

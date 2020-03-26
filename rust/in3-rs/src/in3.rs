@@ -100,9 +100,8 @@ impl Client {
             in3_sys::in3_configure(self.ptr, config_c.as_ptr());
         }
     }
-    pub fn execute(&self, ctx : &mut Ctx) -> In3Ret {
-        unsafe {
-            match in3_sys::in3_ctx_execute(ctx.ptr) {
+    fn ctx_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret{
+            match ret {
                 in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
                 in3_sys::in3_ret_t::IN3_ENOMEM => In3Ret::ENOMEM,
                 in3_sys::in3_ret_t::IN3_EUNKNOWN => In3Ret::EUNKNOWN,
@@ -122,9 +121,18 @@ impl Client {
                 in3_sys::in3_ret_t::IN3_WAITING => In3Ret::WAITING,
                 in3_sys::in3_ret_t::IN3_EIGNORE => In3Ret::EIGNORE,
             }
+    }
+    pub fn execute(&self, ctx : &mut Ctx) -> In3Ret {
+        unsafe {
+            self.ctx_unwrap(in3_sys::in3_ctx_execute(ctx.ptr))
         }
     }
 
+    pub fn send(&self, ctx : &mut Ctx) -> In3Ret {
+        unsafe {
+            self.ctx_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
+        }
+    }
 
 }
 
