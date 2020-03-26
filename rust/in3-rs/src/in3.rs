@@ -3,9 +3,43 @@ use in3_sys::*;
 use std::ffi;
 use in3_sys::in3_ret_t;
 
+pub enum ChainId {
+    Multichain = 0x0,
+    Mainnet = 0x01,
+    Kovan = 0x2a,
+    Tobalaba = 0x44d,
+    Goerli = 0x5,
+    Evan = 0x4b1,
+    Ipfs = 0x7d0,
+    Btc = 0x99,
+    Local = 0xffff,
+}
+pub enum In3Ret {
+    OK,
+    EUNKNOWN,
+    ENOMEM,
+    ENOTSUP,
+    EINVAL,
+    EFIND,
+    ECONFIG,
+    ELIMIT,
+    EVERS,
+    EINVALDT,
+    EPASS,
+    ERPC,
+    ERPCNRES,
+    EUSNURL,
+    ETRANS,
+    ERANGE,
+    WAITING,
+    EIGNORE,
+}
+
+
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
 }
+
 
 pub struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
@@ -48,40 +82,22 @@ impl Request {
     }
 }
 
-pub enum In3Ret {
-    OK,
-    EUNKNOWN,
-    ENOMEM,
-    ENOTSUP,
-    EINVAL,
-    EFIND,
-    ECONFIG,
-    ELIMIT,
-    EVERS,
-    EINVALDT,
-    EPASS,
-    ERPC,
-    ERPCNRES,
-    EUSNURL,
-    ETRANS,
-    ERANGE,
-    WAITING,
-    EIGNORE,
-}
 
 impl Client {
-    pub fn new() -> Client {
+
+    pub fn new(chain_id: ChainId) -> Client {
         unsafe {
-            Client { ptr: in3_sys::in3_for_chain_auto_init(1) }
+            Client { ptr: in3_sys::in3_for_chain_auto_init(chain_id as u32) }
         }
     }
+
     // eth get balance with rpc call
     fn eth_get_balance_rpc() ->  String {
             let mut null: *mut i8 = std::ptr::null_mut();
             let res: *mut *mut i8 = &mut null;
             let err: *mut *mut i8 = &mut null;
             unsafe {
-                let _ = in3_sys::in3_client_rpc(Client::new().ptr, ffi::CString::new("eth_getBalance").unwrap().as_ptr(),
+                let _ = in3_sys::in3_client_rpc(Client::new(ChainId::Mainnet).ptr, ffi::CString::new("eth_getBalance").unwrap().as_ptr(),
                                                 ffi::CString::new("[\"0xc94770007dda54cF92009BFF0dE90c06F603a09f\", \"latest\"]").unwrap().as_ptr(), res, err);
                 // to view run with `cargo test -- --nocapture`
                 ffi::CStr::from_ptr(*res).to_str().unwrap().to_string()
@@ -133,6 +149,36 @@ impl Client {
             self.ctx_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
         }
     }
+    pub fn rpc(&self, request: &str) -> Result<String, String> {
+        let mut null: *mut i8 = std::ptr::null_mut();
+        let res: *mut *mut i8 = &mut null;
+        let err: *mut *mut i8 = &mut null;
+        unsafe {
+            let ret = in3_sys::in3_client_rpc_raw(self.ptr,
+                                                  ffi::CString::new(request).unwrap().as_ptr(),
+                                                  res, err);
+            return if ret == in3_sys::in3_ret_t::IN3_OK {
+                Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
+            } else {
+                Err(ffi::CStr::from_ptr(*err).to_str().unwrap().to_string())
+            };
+        }
+    }
+    pub async fn arpc(&self, request: &str) -> Result<String, String> {
+        let mut null: *mut i8 = std::ptr::null_mut();
+        let res: *mut *mut i8 = &mut null;
+        let err: *mut *mut i8 = &mut null;
+        unsafe {
+            let ret = in3_sys::in3_client_rpc_raw(self.ptr,
+                                                  ffi::CString::new(request).unwrap().as_ptr(),
+                                                  res, err);
+            return if ret == in3_sys::in3_ret_t::IN3_OK {
+                Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
+            } else {
+                Err(ffi::CStr::from_ptr(*err).to_str().unwrap().to_string())
+            };
+        }
+    }
 
 }
 
@@ -152,20 +198,20 @@ mod tests {
 
     //#[test]
     fn test_eth_blknum() {
-        let mut in3 = Client::new();
+        let mut in3 = Client::new(ChainId::Mainnet);
         Client::eth_block_number(&mut in3);
     }
 
     #[test]
     fn test_in3_config() {
-        let mut in3 = Client::new();
+        let mut in3 = Client::new(ChainId::Mainnet);
         let mut config = String::from("{\"autoUpdateList\":false,\"nodes\":{\"0x7d0\": {\"needsUpdate\":false}}}");
         let c = in3.configure(config);
     }
     
     #[test]
     fn test_in3_create_request() {
-        let mut in3 = Client::new();
+        let mut in3 = Client::new(ChainId::Mainnet);
         let mut req_s = String::from(r#"{"method":"eth_blockNumber","params":[]}"#);
         let mut ctx = Ctx::new(&mut in3, req_s);
         let mut request = Request::new(&mut ctx);
