@@ -31,6 +31,14 @@ impl Drop for Ctx {
 pub struct Request {
     ptr: *mut in3_sys::in3_request_t,
 }
+//TODO:implement drpo for Request, need ctx param 
+// impl Drop for Request {
+//     fn drop(&mut self) {
+//         unsafe {
+//             in3_sys::request_free(self.ptr);
+//         }
+//     }
+// }
 
 impl Request {
     pub fn new(ctx : &mut Ctx) -> Request {
@@ -38,6 +46,27 @@ impl Request {
             Request { ptr: in3_sys::in3_create_request(ctx.ptr) }
         }
     }
+}
+
+pub enum In3Ret {
+    OK,
+    EUNKNOWN,
+    ENOMEM,
+    ENOTSUP,
+    EINVAL,
+    EFIND,
+    ECONFIG,
+    ELIMIT,
+    EVERS,
+    EINVALDT,
+    EPASS,
+    ERPC,
+    ERPCNRES,
+    EUSNURL,
+    ETRANS,
+    ERANGE,
+    WAITING,
+    EIGNORE,
 }
 
 impl Client {
@@ -49,7 +78,7 @@ impl Client {
     // eth get balance with rpc call
     fn eth_get_balance_rpc() ->  String {
             let mut null: *mut i8 = std::ptr::null_mut();
-            let mut res: *mut *mut i8 = &mut null;
+            let res: *mut *mut i8 = &mut null;
             let err: *mut *mut i8 = &mut null;
             unsafe {
                 let _ = in3_sys::in3_client_rpc(Client::new().ptr, ffi::CString::new("eth_getBalance").unwrap().as_ptr(),
@@ -71,12 +100,30 @@ impl Client {
             in3_sys::in3_configure(self.ptr, config_c.as_ptr());
         }
     }
-    pub fn execute(&self, ctx : &mut Ctx) -> in3_ret_t {
+    pub fn execute(&self, ctx : &mut Ctx) -> In3Ret {
         unsafe {
-            in3_sys::in3_ctx_execute(ctx.ptr)
+            match in3_sys::in3_ctx_execute(ctx.ptr) {
+                in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
+                in3_sys::in3_ret_t::IN3_ENOMEM => In3Ret::ENOMEM,
+                in3_sys::in3_ret_t::IN3_EUNKNOWN => In3Ret::EUNKNOWN,
+                in3_sys::in3_ret_t::IN3_ENOTSUP => In3Ret::ENOTSUP,
+                in3_sys::in3_ret_t::IN3_EINVAL => In3Ret::EINVAL,
+                in3_sys::in3_ret_t::IN3_EFIND => In3Ret::EFIND,
+                in3_sys::in3_ret_t::IN3_ECONFIG => In3Ret::ECONFIG,
+                in3_sys::in3_ret_t::IN3_ELIMIT => In3Ret::ELIMIT,
+                in3_sys::in3_ret_t::IN3_EVERS => In3Ret::EVERS,
+                in3_sys::in3_ret_t::IN3_EINVALDT => In3Ret::EINVALDT,
+                in3_sys::in3_ret_t::IN3_EPASS => In3Ret::EPASS,
+                in3_sys::in3_ret_t::IN3_ERPC => In3Ret::ERPC,
+                in3_sys::in3_ret_t::IN3_ERPCNRES => In3Ret::ERPCNRES,
+                in3_sys::in3_ret_t::IN3_EUSNURL => In3Ret::EUSNURL,
+                in3_sys::in3_ret_t::IN3_ETRANS => In3Ret::ETRANS,
+                in3_sys::in3_ret_t::IN3_ERANGE => In3Ret::ERANGE,
+                in3_sys::in3_ret_t::IN3_WAITING => In3Ret::WAITING,
+                in3_sys::in3_ret_t::IN3_EIGNORE => In3Ret::EIGNORE,
+            }
         }
     }
-
 
 
 }
