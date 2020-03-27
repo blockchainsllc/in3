@@ -87,7 +87,7 @@ fn write_bindgen_bindings(
         .use_core()
         .ctypes_prefix("libc")
         .header(
-            find_in3_header(header_search_paths, "in3.h")
+            find_in3_header(header_search_paths, "in3.rs.h")
                 .expect("Could not find header")
                 .to_str()
                 .unwrap(),
