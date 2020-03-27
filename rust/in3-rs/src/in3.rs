@@ -92,7 +92,7 @@ impl Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: None,
             };
-            //c.set_transport(Box::new(crate::transport::transport_http));
+            c.set_transport(Box::new(crate::transport::transport_http));
             c
         }
     }

@@ -3,7 +3,6 @@ extern crate reqwest;
 use reqwest::{blocking, header};
 
 fn http_send(url: &str, payload: &str) -> Result<String, Box<dyn std::error::Error>> {
-    println!("=============================");
     let header_json = header::HeaderValue::from_static("application/json");
     let client = blocking::Client::new();
     let res = client.post(url)
