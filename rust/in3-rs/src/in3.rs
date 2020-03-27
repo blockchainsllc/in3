@@ -166,11 +166,15 @@ impl Client {
     }
 
     // in3 client config
-    pub fn configure(&mut self, config: &str) {
+    pub fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
-            in3_sys::in3_configure(self.ptr, config_c.as_ptr());
+            let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
+            if err.as_ref().is_some() {
+                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
+            }
         }
+        Ok(())
     }
 
     fn in3_ret_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret {
@@ -274,22 +278,20 @@ impl Drop for Client {
 
 #[cfg(test)]
 mod tests {
-    use std::ffi;
-
     use super::*;
 
     #[test]
     fn test_in3_config() {
-        let mut in3 = Client::new(ChainId::Mainnet);
-        let mut config = String::from();
-        let c = in3.configure("{\"autoUpdateList\":false,\"nodes\":{\"0x7d0\": {\"needsUpdate\":false}}}");
+        let mut in3 = Client::new(chain::MAINNET);
+        let c = in3.configure(r#"{"autoUpdateList":false}"#);
+        assert_eq!(c.is_err(), false);
     }
 
     #[test]
     fn test_in3_create_request() {
-        let mut in3 = Client::new(ChainId::Mainnet);
+        let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method":"eth_blockNumber","params":[]}"#);
-        let mut request = Request::new(&mut ctx);
+        let _request = Request::new(&mut ctx);
         let _ = in3.execute(&mut ctx);
     }
 }
