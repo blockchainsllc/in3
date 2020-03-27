@@ -1,4 +1,5 @@
 use std::ffi;
+
 use in3_sys::in3_ret_t;
 
 pub enum In3Ret {
@@ -50,7 +51,7 @@ impl Ctx {
     pub fn new(in3: &mut Client, config: String) -> Ctx {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
-            Ctx { ptr: in3_sys::ctx_new(in3.ptr, config_c.as_ptr())}
+            Ctx { ptr: in3_sys::ctx_new(in3.ptr, config_c.as_ptr()) }
         }
     }
 }
@@ -76,7 +77,7 @@ pub struct Request {
 // }
 
 impl Request {
-    pub fn new(ctx : &mut Ctx) -> Request {
+    pub fn new(ctx: &mut Ctx) -> Request {
         unsafe {
             Request { ptr: in3_sys::in3_create_request(ctx.ptr) }
         }
@@ -85,7 +86,6 @@ impl Request {
 
 
 impl Client {
-
     pub fn new(chain_id: chain::ChainId) -> Client {
         unsafe {
             let mut c = Client {
@@ -103,7 +103,7 @@ impl Client {
                 (*self.ptr).flags |= (1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
             } else {
                 (*self.ptr).flags &= !(1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
-                for i  in 0..(*self.ptr).chains_length as isize {
+                for i in 0..(*self.ptr).chains_length as isize {
                     (*(*self.ptr).chains.offset(i)).nodelist_upd8_params = std::ptr::null_mut();
                 }
             }
@@ -175,36 +175,36 @@ impl Client {
         }
     }
 
-    fn in3_ret_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret{
-            match ret {
-                in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
-                in3_sys::in3_ret_t::IN3_ENOMEM => In3Ret::ENOMEM,
-                in3_sys::in3_ret_t::IN3_EUNKNOWN => In3Ret::EUNKNOWN,
-                in3_sys::in3_ret_t::IN3_ENOTSUP => In3Ret::ENOTSUP,
-                in3_sys::in3_ret_t::IN3_EINVAL => In3Ret::EINVAL,
-                in3_sys::in3_ret_t::IN3_EFIND => In3Ret::EFIND,
-                in3_sys::in3_ret_t::IN3_ECONFIG => In3Ret::ECONFIG,
-                in3_sys::in3_ret_t::IN3_ELIMIT => In3Ret::ELIMIT,
-                in3_sys::in3_ret_t::IN3_EVERS => In3Ret::EVERS,
-                in3_sys::in3_ret_t::IN3_EINVALDT => In3Ret::EINVALDT,
-                in3_sys::in3_ret_t::IN3_EPASS => In3Ret::EPASS,
-                in3_sys::in3_ret_t::IN3_ERPC => In3Ret::ERPC,
-                in3_sys::in3_ret_t::IN3_ERPCNRES => In3Ret::ERPCNRES,
-                in3_sys::in3_ret_t::IN3_EUSNURL => In3Ret::EUSNURL,
-                in3_sys::in3_ret_t::IN3_ETRANS => In3Ret::ETRANS,
-                in3_sys::in3_ret_t::IN3_ERANGE => In3Ret::ERANGE,
-                in3_sys::in3_ret_t::IN3_WAITING => In3Ret::WAITING,
-                in3_sys::in3_ret_t::IN3_EIGNORE => In3Ret::EIGNORE,
-            }
+    fn in3_ret_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret {
+        match ret {
+            in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
+            in3_sys::in3_ret_t::IN3_ENOMEM => In3Ret::ENOMEM,
+            in3_sys::in3_ret_t::IN3_EUNKNOWN => In3Ret::EUNKNOWN,
+            in3_sys::in3_ret_t::IN3_ENOTSUP => In3Ret::ENOTSUP,
+            in3_sys::in3_ret_t::IN3_EINVAL => In3Ret::EINVAL,
+            in3_sys::in3_ret_t::IN3_EFIND => In3Ret::EFIND,
+            in3_sys::in3_ret_t::IN3_ECONFIG => In3Ret::ECONFIG,
+            in3_sys::in3_ret_t::IN3_ELIMIT => In3Ret::ELIMIT,
+            in3_sys::in3_ret_t::IN3_EVERS => In3Ret::EVERS,
+            in3_sys::in3_ret_t::IN3_EINVALDT => In3Ret::EINVALDT,
+            in3_sys::in3_ret_t::IN3_EPASS => In3Ret::EPASS,
+            in3_sys::in3_ret_t::IN3_ERPC => In3Ret::ERPC,
+            in3_sys::in3_ret_t::IN3_ERPCNRES => In3Ret::ERPCNRES,
+            in3_sys::in3_ret_t::IN3_EUSNURL => In3Ret::EUSNURL,
+            in3_sys::in3_ret_t::IN3_ETRANS => In3Ret::ETRANS,
+            in3_sys::in3_ret_t::IN3_ERANGE => In3Ret::ERANGE,
+            in3_sys::in3_ret_t::IN3_WAITING => In3Ret::WAITING,
+            in3_sys::in3_ret_t::IN3_EIGNORE => In3Ret::EIGNORE,
+        }
     }
 
-    pub fn execute(&self, ctx : &mut Ctx) -> In3Ret {
+    pub fn execute(&self, ctx: &mut Ctx) -> In3Ret {
         unsafe {
             //self.in3_ret_unwrap(in3_sys::in3_ctx_execute(ctx.ptr));
             match in3_sys::in3_ctx_execute(ctx.ptr) {
                 in3_sys::in3_ret_t::IN3_WAITING => {
                     println!("wait");
-                    let mut last_waiting=Ctx {ptr:(*ctx.ptr).required };
+                    let mut last_waiting = Ctx { ptr: (*ctx.ptr).required };
                     //let client = (*last_waiting.ptr).client;
                     if (*ctx.ptr).required == std::ptr::null_mut() {
                         let req: *mut in3_sys::in3_request_t = in3_sys::in3_create_request(ctx.ptr);
@@ -214,22 +214,19 @@ impl Client {
                             None => { panic!("Missing transport!") }
                             Some(transport) => { (*transport)(self.ptr, req) }
                         };
-                    }
-                    else{
+                    } else {
                         self.execute(&mut last_waiting);
                     }
-                    
-                    
+
+
                     In3Ret::WAITING
-                },
+                }
                 _ => In3Ret::OK
-
             }
-
         }
     }
 
-    pub fn send(&self, ctx : &mut Ctx) -> In3Ret {
+    pub fn send(&self, ctx: &mut Ctx) -> In3Ret {
         unsafe {
             self.in3_ret_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
         }
@@ -266,7 +263,6 @@ impl Client {
             };
         }
     }
-
 }
 
 
@@ -283,14 +279,14 @@ mod tests {
     use std::ffi;
 
     use super::*;
-    
+
     #[test]
     fn test_in3_config() {
         let mut in3 = Client::new(ChainId::Mainnet);
         let mut config = String::from("{\"autoUpdateList\":false,\"nodes\":{\"0x7d0\": {\"needsUpdate\":false}}}");
         let c = in3.configure(config);
     }
-    
+
     #[test]
     fn test_in3_create_request() {
         let mut in3 = Client::new(ChainId::Mainnet);
@@ -298,7 +294,5 @@ mod tests {
         let mut ctx = Ctx::new(&mut in3, req_s);
         let mut request = Request::new(&mut ctx);
         let _ = in3.execute(&mut ctx);
-
     }
-
 }
