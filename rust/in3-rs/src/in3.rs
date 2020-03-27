@@ -41,7 +41,7 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn new(in3: &mut Client, config: String) -> Ctx {
+    pub fn new(in3: &mut Client, config: &str) -> Ctx {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
             Ctx { ptr: in3_sys::ctx_new(in3.ptr, config_c.as_ptr()) }
@@ -166,7 +166,7 @@ impl Client {
     }
 
     // in3 client config
-    pub fn configure(&mut self, config: String) {
+    pub fn configure(&mut self, config: &str) {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
             in3_sys::in3_configure(self.ptr, config_c.as_ptr());
@@ -230,7 +230,7 @@ impl Client {
         }
     }
 
-    pub fn rpc(&self, request: &str) -> Result<String, String> {
+    pub fn rpc(&mut self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
         let err: *mut *mut i8 = &mut null;
@@ -281,15 +281,14 @@ mod tests {
     #[test]
     fn test_in3_config() {
         let mut in3 = Client::new(ChainId::Mainnet);
-        let mut config = String::from("{\"autoUpdateList\":false,\"nodes\":{\"0x7d0\": {\"needsUpdate\":false}}}");
-        let c = in3.configure(config);
+        let mut config = String::from();
+        let c = in3.configure("{\"autoUpdateList\":false,\"nodes\":{\"0x7d0\": {\"needsUpdate\":false}}}");
     }
 
     #[test]
     fn test_in3_create_request() {
         let mut in3 = Client::new(ChainId::Mainnet);
-        let mut req_s = String::from(r#"{"method":"eth_blockNumber","params":[]}"#);
-        let mut ctx = Ctx::new(&mut in3, req_s);
+        let mut ctx = Ctx::new(&mut in3, r#"{"method":"eth_blockNumber","params":[]}"#);
         let mut request = Request::new(&mut ctx);
         let _ = in3.execute(&mut ctx);
     }
