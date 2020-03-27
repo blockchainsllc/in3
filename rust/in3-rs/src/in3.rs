@@ -1,7 +1,5 @@
 use std::ffi;
 
-use in3_sys::in3_ret_t;
-
 pub enum In3Ret {
     OK,
     EUNKNOWN,
@@ -59,7 +57,7 @@ impl Ctx {
 impl Drop for Ctx {
     fn drop(&mut self) {
         unsafe {
-            //in3_sys::ctx_free(self.ptr);
+            in3_sys::ctx_free(self.ptr);
         }
     }
 }
@@ -100,7 +98,7 @@ impl Client {
     pub fn set_auto_update_nodelist(&mut self, auto_update: bool) {
         unsafe {
             if auto_update {
-                (*self.ptr).flags |= (1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
+                (*self.ptr).flags |= 1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8;
             } else {
                 (*self.ptr).flags &= !(1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
                 for i in 0..(*self.ptr).chains_length as isize {
@@ -114,7 +112,6 @@ impl Client {
         self.transport = Some(transport);
         unsafe {
             (*self.ptr).transport = Some(Client::in3_rust_transport);
-            //in3_sys::in3_set_default_transport(Some(Client::in3_rust_transport));
             self.update_internal();
         }
     }
