@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-pub mod core;
+pub mod in3;
 mod transport;
 
 pub mod prelude {
-    pub use crate::core::*;
+    pub use crate::in3::*;
 }
