@@ -1,28 +1,27 @@
 use std::ffi;
 
+pub mod chain {
+    pub type ChainId = u32;
+
+    pub const MULTICHAIN: u32 = 0x0;
+    pub const MAINNET: u32 = 0x01;
+    pub const KOVAN: u32 = 0x2a;
+    pub const TOBALABA: u32 = 0x44d;
+    pub const GOERLI: u32 = 0x5;
+    pub const EVAN: u32 = 0x4b1;
+    pub const IPFS: u32 = 0x7d0;
+    pub const BTC: u32 = 0x99;
+    pub const LOCAL: u32 = 0xffff;
+}
+
+
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
     transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>>,
 }
 
-pub enum ChainId {
-    Multichain = 0x0,
-    Mainnet = 0x01,
-    Kovan = 0x2a,
-    Tobalaba = 0x44d,
-    Goerli = 0x5,
-    Evan = 0x4b1,
-    Ipfs = 0x7d0,
-    Btc = 0x99,
-    Local = 0xffff,
-}
-
-pub trait ClientNew<T> {
-    fn new(_: T) -> Client;
-}
-
-impl ClientNew<u32> for Client {
-    fn new(chain_id: u32) -> Client {
+impl Client {
+    pub fn new(chain_id: chain::ChainId) -> Client {
         unsafe {
             let mut c = Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
@@ -32,19 +31,11 @@ impl ClientNew<u32> for Client {
             c
         }
     }
-}
 
-impl ClientNew<ChainId> for Client {
-    fn new(chain_id: ChainId) -> Client {
-        Client::new(chain_id as u32)
-    }
-}
-
-impl Client {
     pub fn set_auto_update_nodelist(&mut self, auto_update: bool) {
         unsafe {
             if auto_update {
-                (*self.ptr).flags |= (1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
+                (*self.ptr).flags |= 1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8;
             } else {
                 (*self.ptr).flags &= !(1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
             }
