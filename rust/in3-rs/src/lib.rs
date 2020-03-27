@@ -1,8 +1,8 @@
-mod in3;
-pub use crate::in3::*;
+#![allow(dead_code)]
+
+pub mod in3;
+mod transport;
 
 pub mod prelude {
-    pub use crate::{
-        Client, Ctx, Request, In3Ret, ChainId,
-    };
+    pub use crate::in3::*;
 }

@@ -14147,9 +14147,11 @@ impl Clone for n3_request {
     }
 }
 pub type in3_request_t = n3_request;
+pub type in3_t = in3_t_;
 #[doc = " the transport function to be implemented by the transport provider."]
-pub type in3_transport_send =
-    ::core::option::Option<unsafe extern "C" fn(request: *mut in3_request_t) -> in3_ret_t>;
+pub type in3_transport_send = ::core::option::Option<
+    unsafe extern "C" fn(in3: *mut in3_t, request: *mut in3_request_t) -> in3_ret_t,
+>;
 #[repr(u32)]
 #[doc = " Filter type used internally when managing filters."]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -14344,12 +14346,14 @@ pub struct in3_t_ {
     pub filters: *mut in3_filter_handler_t,
     #[doc = " used to identify the capabilities of the node."]
     pub node_props: in3_node_props_t,
+    #[doc = " pointer to internal data"]
+    pub internal: *mut libc::c_void,
 }
 #[test]
 fn bindgen_test_layout_in3_t_() {
     assert_eq!(
         ::core::mem::size_of::<in3_t_>(),
-        120usize,
+        128usize,
         concat!("Size of: ", stringify!(in3_t_))
     );
     assert_eq!(
@@ -14587,13 +14591,22 @@ fn bindgen_test_layout_in3_t_() {
             stringify!(node_props)
         )
     );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_t_>())).internal as *const _ as usize },
+        120usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_t_),
+            "::",
+            stringify!(internal)
+        )
+    );
 }
 impl Clone for in3_t_ {
     fn clone(&self) -> Self {
         *self
     }
 }
-pub type in3_t = in3_t_;
 extern "C" {
     #[doc = " creates a new Incubes configuration and returns the pointer."]
     #[doc = ""]

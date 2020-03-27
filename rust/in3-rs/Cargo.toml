@@ -1,12 +1,12 @@
 [package]
 name = "in3"
 version = "0.1.0"
-authors = ["slockit"]
+authors = ["slock.it <in3@slock.it>"]
+description = "High level bindings to IN3 library"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 in3-sys = { path = "../in3-sys" }
 libc = { version = "0.2", default-features = false }
 futures = "0.3.4"
+reqwest = { version = "0.10", features = ["blocking", "json"] }

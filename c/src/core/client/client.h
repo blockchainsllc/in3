@@ -365,9 +365,11 @@ typedef struct n3_request {
   uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
 } in3_request_t;
 
+typedef struct in3_t_ in3_t;
+
 /** the transport function to be implemented by the transport provider.
  */
-typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
+typedef in3_ret_t (*in3_transport_send)(in3_t* in3, in3_request_t* request);
 
 /**
  * Filter type used internally when managing filters.
@@ -408,7 +410,7 @@ typedef struct in3_filter_handler_t_ {
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
  */
-typedef struct in3_t_ {
+struct in3_t_ {
   /** number of seconds requests can be cached. */
   uint32_t cache_timeout;
 
@@ -478,7 +480,9 @@ typedef struct in3_t_ {
   /** used to identify the capabilities of the node. */
   in3_node_props_t node_props;
 
-} in3_t;
+  /** pointer to internal data */
+  void* internal;
+};
 
 /** creates a new Incubes configuration and returns the pointer.
  * 

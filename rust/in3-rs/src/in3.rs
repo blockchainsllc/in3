@@ -1,19 +1,6 @@
-//extern crate in3_sys;
-use in3_sys::*;
 use std::ffi;
 use in3_sys::in3_ret_t;
 
-pub enum ChainId {
-    Multichain = 0x0,
-    Mainnet = 0x01,
-    Kovan = 0x2a,
-    Tobalaba = 0x44d,
-    Goerli = 0x5,
-    Evan = 0x4b1,
-    Ipfs = 0x7d0,
-    Btc = 0x99,
-    Local = 0xffff,
-}
 pub enum In3Ret {
     OK,
     EUNKNOWN,
@@ -35,11 +22,25 @@ pub enum In3Ret {
     EIGNORE,
 }
 
+pub mod chain {
+    pub type ChainId = u32;
+
+    pub const MULTICHAIN: u32 = 0x0;
+    pub const MAINNET: u32 = 0x01;
+    pub const KOVAN: u32 = 0x2a;
+    pub const TOBALABA: u32 = 0x44d;
+    pub const GOERLI: u32 = 0x5;
+    pub const EVAN: u32 = 0x4b1;
+    pub const IPFS: u32 = 0x7d0;
+    pub const BTC: u32 = 0x99;
+    pub const LOCAL: u32 = 0xffff;
+}
+
 
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
+    transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>>,
 }
-
 
 pub struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
@@ -57,7 +58,7 @@ impl Ctx {
 impl Drop for Ctx {
     fn drop(&mut self) {
         unsafe {
-            in3_sys::ctx_free(self.ptr);
+            //in3_sys::ctx_free(self.ptr);
         }
     }
 }
@@ -85,11 +86,17 @@ impl Request {
 
 impl Client {
 
-    pub fn new(chain_id: ChainId) -> Client {
+    pub fn new(chain_id: chain::ChainId) -> Client {
         unsafe {
-            Client { ptr: in3_sys::in3_for_chain_auto_init(chain_id as u32) }
+            let mut c = Client {
+                ptr: in3_sys::in3_for_chain_auto_init(chain_id),
+                transport: None,
+            };
+            //c.set_transport(Box::new(crate::transport::transport_http));
+            c
         }
     }
+
     pub fn set_auto_update_nodelist(&mut self, auto_update: bool) {
         unsafe {
             if auto_update {
@@ -103,25 +110,63 @@ impl Client {
         }
     }
 
-
-    // eth get balance with rpc call
-    fn eth_get_balance_rpc() ->  String {
-            let mut null: *mut i8 = std::ptr::null_mut();
-            let res: *mut *mut i8 = &mut null;
-            let err: *mut *mut i8 = &mut null;
-            unsafe {
-                let _ = in3_sys::in3_client_rpc(Client::new(ChainId::Mainnet).ptr, ffi::CString::new("eth_getBalance").unwrap().as_ptr(),
-                                                ffi::CString::new("[\"0xc94770007dda54cF92009BFF0dE90c06F603a09f\", \"latest\"]").unwrap().as_ptr(), res, err);
-                // to view run with `cargo test -- --nocapture`
-                ffi::CStr::from_ptr(*res).to_str().unwrap().to_string()
-            }
-
-    }
-    fn eth_block_number(in3 : &mut Client) {
+    pub fn set_transport(&mut self, transport: Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>) {
+        self.transport = Some(transport);
         unsafe {
-            in3_sys::eth_blockNumber(in3.ptr);
+            (*self.ptr).transport = Some(Client::in3_rust_transport);
+            //in3_sys::in3_set_default_transport(Some(Client::in3_rust_transport));
+            self.update_internal();
         }
     }
+
+    extern fn in3_rust_transport(client: *mut in3_sys::in3_t, request: *mut in3_sys::in3_request_t) -> in3_sys::in3_ret_t {
+        // internally calls the rust transport impl, i.e. Client.transport
+        let mut urls = Vec::new();
+
+        unsafe {
+            let payload = ffi::CStr::from_ptr((*request).payload).to_str().unwrap();
+            let urls_len = (*request).urls_len;
+            for i in 0..urls_len as usize {
+                let url = ffi::CStr::from_ptr(*(*request).urls.add(i)).to_str().unwrap();
+                urls.push(url);
+            }
+
+            let c = Client::get_internal(client);
+            let responses: Vec<Result<String, String>> = match &mut (*c).transport {
+                None => { panic!("Missing transport!") }
+                Some(transport) => { (*transport)(payload, &urls) }
+            };
+
+            let mut any_err = false;
+            for (i, resp) in responses.iter().enumerate() {
+                match resp {
+                    Err(err) => {
+                        any_err = true;
+                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).error, ffi::CString::new(err.to_string()).unwrap().as_ptr());
+                    }
+                    Ok(res) => {
+                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).result, ffi::CString::new(res.to_string()).unwrap().as_ptr());
+                    }
+                }
+            }
+
+            if urls_len as usize != responses.len() || any_err {
+                return in3_sys::in3_ret_t::IN3_ETRANS;
+            }
+        }
+
+        in3_sys::in3_ret_t::IN3_OK
+    }
+
+    unsafe fn get_internal(ptr: *mut in3_sys::in3_t) -> *mut Client {
+        (*ptr).internal as *mut Client
+    }
+
+    unsafe fn update_internal(&mut self) {
+        let c_ptr: *mut ffi::c_void = self as *mut _ as *mut ffi::c_void;
+        (*self.ptr).internal = c_ptr;
+    }
+
     // in3 client config
     pub fn configure(&mut self, config: String) {
         unsafe {
@@ -129,6 +174,7 @@ impl Client {
             in3_sys::in3_configure(self.ptr, config_c.as_ptr());
         }
     }
+
     fn in3_ret_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret{
             match ret {
                 in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
@@ -151,33 +197,28 @@ impl Client {
                 in3_sys::in3_ret_t::IN3_EIGNORE => In3Ret::EIGNORE,
             }
     }
+
     pub fn execute(&self, ctx : &mut Ctx) -> In3Ret {
         unsafe {
-
             //self.in3_ret_unwrap(in3_sys::in3_ctx_execute(ctx.ptr));
             match in3_sys::in3_ctx_execute(ctx.ptr) {
                 in3_sys::in3_ret_t::IN3_WAITING => {
                     println!("wait");
                     let mut last_waiting=Ctx {ptr:(*ctx.ptr).required };
-                    //let mut null: *mut i8 = std::ptr::null_mut();
-
-                    //
-                    
+                    //let client = (*last_waiting.ptr).client;
                     if (*ctx.ptr).required == std::ptr::null_mut() {
-                        in3_sys::in3_create_request(ctx.ptr);
+                        let req: *mut in3_sys::in3_request_t = in3_sys::in3_create_request(ctx.ptr);
+                        // ((*(*ctx.ptr).client).transport.unwrap())((*ctx.ptr).client, req);
+
+                        match &mut (*self.ptr).transport {
+                            None => { panic!("Missing transport!") }
+                            Some(transport) => { (*transport)(self.ptr, req) }
+                        };
                     }
                     else{
                         self.execute(&mut last_waiting);
                     }
-                    //
-                    //in3_sys::in3_ctx_execute((*ctx.ptr).required);  
-                    // loop {
-                    //     if !(*ctx)->raw_response && in3_sys::in3_ctx_state(&mut ctx) == in3_sys::state::CTX_WAITING_FOR_RESPONSE {
-                    //         last_waiting = p;
-                    //     }
-                    //     p = p->required;
-                            
-                    // }
+                    
                     
                     In3Ret::WAITING
                 },
@@ -193,6 +234,7 @@ impl Client {
             self.in3_ret_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
         }
     }
+
     pub fn rpc(&self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
@@ -208,6 +250,7 @@ impl Client {
             };
         }
     }
+
     pub async fn arpc(&self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
@@ -226,6 +269,7 @@ impl Client {
 
 }
 
+
 impl Drop for Client {
     fn drop(&mut self) {
         unsafe {
@@ -239,13 +283,7 @@ mod tests {
     use std::ffi;
 
     use super::*;
-
-    //#[test]
-    fn test_eth_blknum() {
-        let mut in3 = Client::new(ChainId::Mainnet);
-        Client::eth_block_number(&mut in3);
-    }
-
+    
     #[test]
     fn test_in3_config() {
         let mut in3 = Client::new(ChainId::Mainnet);
@@ -263,8 +301,4 @@ mod tests {
 
     }
 
-    //#[test]
-    fn test_eth_get_balance() {
-            println!("------> balance: {}", Client::eth_get_balance_rpc());
-    }
 }

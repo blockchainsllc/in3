@@ -593,7 +593,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             if (request == NULL)
               return IN3_ENOMEM;
             in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
-            ctx->client->transport(request);
+            ctx->client->transport(ctx->client, request);
             if (request->results[0].error.len) {
               in3_log_trace("... response: \n... " COLOR_RED_STR "\n", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
             } else {

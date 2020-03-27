@@ -188,7 +188,8 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
   return IN3_OK;
 }
 
-in3_ret_t send_curl(in3_request_t* req) {
+in3_ret_t send_curl(in3_t* c, in3_request_t* req) {
+  UNUSED_VAR(c);
   // set the init-time
   in3_ret_t res;
   uint64_t  start = current_ms();
