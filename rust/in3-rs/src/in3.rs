@@ -153,7 +153,38 @@ impl Client {
     }
     pub fn execute(&self, ctx : &mut Ctx) -> In3Ret {
         unsafe {
-            self.in3_ret_unwrap(in3_sys::in3_ctx_execute(ctx.ptr))
+
+            //self.in3_ret_unwrap(in3_sys::in3_ctx_execute(ctx.ptr));
+            match in3_sys::in3_ctx_execute(ctx.ptr) {
+                in3_sys::in3_ret_t::IN3_WAITING => {
+                    println!("wait");
+                    let mut last_waiting=Ctx {ptr:(*ctx.ptr).required };
+                    //let mut null: *mut i8 = std::ptr::null_mut();
+
+                    //
+                    
+                    if (*ctx.ptr).required == std::ptr::null_mut() {
+                        in3_sys::in3_create_request(ctx.ptr);
+                    }
+                    else{
+                        self.execute(&mut last_waiting);
+                    }
+                    //
+                    //in3_sys::in3_ctx_execute((*ctx.ptr).required);  
+                    // loop {
+                    //     if !(*ctx)->raw_response && in3_sys::in3_ctx_state(&mut ctx) == in3_sys::state::CTX_WAITING_FOR_RESPONSE {
+                    //         last_waiting = p;
+                    //     }
+                    //     p = p->required;
+                            
+                    // }
+                    
+                    In3Ret::WAITING
+                },
+                _ => In3Ret::OK
+
+            }
+
         }
     }
 
