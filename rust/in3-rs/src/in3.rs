@@ -90,6 +90,19 @@ impl Client {
             Client { ptr: in3_sys::in3_for_chain_auto_init(chain_id as u32) }
         }
     }
+    pub fn set_auto_update_nodelist(&mut self, auto_update: bool) {
+        unsafe {
+            if auto_update {
+                (*self.ptr).flags |= (1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
+            } else {
+                (*self.ptr).flags &= !(1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
+                for i  in 0..(*self.ptr).chains_length as isize {
+                    (*(*self.ptr).chains.offset(i)).nodelist_upd8_params = std::ptr::null_mut();
+                }
+            }
+        }
+    }
+
 
     // eth get balance with rpc call
     fn eth_get_balance_rpc() ->  String {
@@ -109,14 +122,14 @@ impl Client {
             in3_sys::eth_blockNumber(in3.ptr);
         }
     }
-    // in3 client config : TODO: all is self, we already have in3
+    // in3 client config
     pub fn configure(&mut self, config: String) {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
             in3_sys::in3_configure(self.ptr, config_c.as_ptr());
         }
     }
-    fn ctx_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret{
+    fn in3_ret_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret{
             match ret {
                 in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
                 in3_sys::in3_ret_t::IN3_ENOMEM => In3Ret::ENOMEM,
@@ -140,13 +153,13 @@ impl Client {
     }
     pub fn execute(&self, ctx : &mut Ctx) -> In3Ret {
         unsafe {
-            self.ctx_unwrap(in3_sys::in3_ctx_execute(ctx.ptr))
+            self.in3_ret_unwrap(in3_sys::in3_ctx_execute(ctx.ptr))
         }
     }
 
     pub fn send(&self, ctx : &mut Ctx) -> In3Ret {
         unsafe {
-            self.ctx_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
+            self.in3_ret_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
         }
     }
     pub fn rpc(&self, request: &str) -> Result<String, String> {

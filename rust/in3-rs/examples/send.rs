@@ -6,12 +6,15 @@ use in3::prelude::*;
 use futures::executor::block_on;
 
 async fn sendt() {
-    let mut in3 = Client::new(ChainId::Mainnet);
+    let mut client = Client::new(ChainId::Mainnet);
+    let mut config = String::from("{\"autoUpdateList\":false,\"nodes\":{\"0x7d0\": {\"needsUpdate\":false}}}");
+    client.configure(config);
+    client.set_auto_update_nodelist(true);
     let mut req_s = String::from("{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-    let mut ctx = Ctx::new(&mut in3, req_s);
-    let mut res = in3.execute(&mut ctx);
-    let mut request = Request::new(&mut ctx);
-    in3.send(&mut ctx);
+    let mut ctx = Ctx::new(&mut client, req_s);
+    //let mut request = Request::new(&mut ctx);
+    //let mut res = in3.execute(&mut ctx);
+    client.send(&mut ctx);
     println!("end");
 }
 
@@ -20,9 +23,9 @@ fn send_request() {
         let mut req_s = String::from("{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
         //let mut req_s = String::from(r#"{"method":"eth_blockNumber","params":[]}"#);
         let mut ctx = Ctx::new(&mut in3, req_s);
-        let mut res = in3.execute(&mut ctx);
-        let mut request = Request::new(&mut ctx);
+        //let mut request = Request::new(&mut ctx);
         loop {
+            let mut res = in3.execute(&mut ctx);
             match res {
                 In3Ret::OK => {
                     println!("OK");
@@ -30,7 +33,7 @@ fn send_request() {
                 },
                 In3Ret::WAITING => {
                     println!("WAITING");
-                    res = in3.send(&mut ctx);
+                    //res = in3.send(&mut ctx);
                 },
                 _ => {
                     println!("detault");
