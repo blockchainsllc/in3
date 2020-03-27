@@ -36,11 +36,6 @@ pub mod chain {
 }
 
 
-pub struct Client {
-    ptr: *mut in3_sys::in3_t,
-    transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>>,
-}
-
 pub struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
 }
@@ -62,6 +57,7 @@ impl Drop for Ctx {
     }
 }
 
+
 pub struct Request {
     ptr: *mut in3_sys::in3_request_t,
 }
@@ -82,6 +78,11 @@ impl Request {
     }
 }
 
+
+pub struct Client {
+    ptr: *mut in3_sys::in3_t,
+    transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>>,
+}
 
 impl Client {
     pub fn new(chain_id: chain::ChainId) -> Client {
