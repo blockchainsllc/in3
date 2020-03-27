@@ -96,19 +96,6 @@ impl Client {
         }
     }
 
-    pub fn set_auto_update_nodelist(&mut self, auto_update: bool) {
-        unsafe {
-            if auto_update {
-                (*self.ptr).flags |= 1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8;
-            } else {
-                (*self.ptr).flags &= !(1u8 >> in3_sys::in3_flags_type_t::FLAGS_AUTO_UPDATE_LIST as u8);
-                for i in 0..(*self.ptr).chains_length as isize {
-                    (*(*self.ptr).chains.offset(i)).nodelist_upd8_params = std::ptr::null_mut();
-                }
-            }
-        }
-    }
-
     pub fn set_transport(&mut self, transport: Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>) {
         self.transport = Some(transport);
         unsafe {
