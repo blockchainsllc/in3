@@ -5,24 +5,23 @@ use futures::executor::block_on;
 use in3::prelude::*;
 
 async fn send_async() {
-    let mut client = Client::new(chain::MAINNET);
+    let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    let mut ctx = Ctx::new(&mut client, r#"{"method": "eth_blockNumber", "params": []}"#);
-    client.send(&mut ctx);
+    let mut ctx = Ctx::new(&mut c, r#"{"method": "eth_blockNumber", "params": []}"#);
+    c.send(&mut ctx);
 }
 
 fn send_request() {
-    let mut in3 = Client::new(chain::MAINNET);
+    let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
-    let _res = in3.execute(&mut ctx);
-    println!("end");
+    let mut ctx = Ctx::new(&mut c, r#"{"method": "eth_blockNumber", "params": []}"#);
+    let _res = c.execute(&mut ctx);
 }
 
 fn rpc_call() {
-    let mut client = Client::new(chain::MAINNET);
-    client.configure(r#"{"autoUpdateList":false,"nodes":{"0x7d0": {"needsUpdate":false}}}"#);
-    match client.rpc(r#"{"method": "eth_blockNumber", "params": []}"#) {
+    let mut c = Client::new(chain::MAINNET);
+    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    match c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#) {
         Ok(res) => println!("{}", res),
         Err(err) => println!("{}", err)
     }
