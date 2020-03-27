@@ -122,8 +122,6 @@ fn main() {
 
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
     println!("cargo:rustc-link-lib=static=in3");
-    println!("cargo:rustc-link-lib=static=transport_curl");
-    println!("cargo:rustc-link-lib=curl");
     println!("cargo:rustc-link-search={}/../../build/lib", env_var("CARGO_MANIFEST_DIR"));
 
     let out_bindings_path = PathBuf::from(env_var("OUT_DIR")).join(BINDINGS_FILE);
