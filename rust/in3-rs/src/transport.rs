@@ -1,12 +1,10 @@
 extern crate reqwest;
 
-use std::collections::HashMap;
-
-use reqwest::header;
+use reqwest::{blocking, header};
 
 fn http_send(url: &str, payload: &str) -> Result<String, Box<dyn std::error::Error>> {
     let header_json = header::HeaderValue::from_static("application/json");
-    let client = reqwest::blocking::Client::new();
+    let client = blocking::Client::new();
     let res = client.post(url)
         .body(payload.to_string())
         .header(header::CONTENT_TYPE, header_json)
@@ -18,7 +16,7 @@ pub(crate) fn transport_http(payload: &str, urls: &[&str]) -> Vec<Result<String,
     let mut responses = vec![];
     for url in urls {
         match http_send(url, payload) {
-            Err(e) => responses.push(Err("Transport error".to_string())),
+            Err(_) => responses.push(Err("Transport error".to_string())),
             Ok(res) => responses.push(Ok(res))
         }
     }
