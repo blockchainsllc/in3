@@ -28,7 +28,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_http() {
+    fn test_transport_http() {
         let res = transport_http(r#"{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"in3":{"verification":"proof","version": "2.1.0"}}"#
                                  , &["https://in3-v2.slock.it/mainnet/nd-3"]);
         println!("{:?}", res);
