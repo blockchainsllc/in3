@@ -44,7 +44,7 @@ pub struct Ctx {
 impl Ctx {
     pub fn new(in3: &mut Client, config_str: &'static str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
-        let mut ptr: *mut in3_sys::in3_ctx_t;
+        let ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
             ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
         }
@@ -57,8 +57,8 @@ impl Ctx {
             let req = in3_sys::in3_create_request(self.ptr);
             let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
             println!("{}, {}", payload, self.config.to_str().unwrap());
+            Client::in3_ret_unwrap(ret)
         }
-        In3Ret::OK
     }
 }
 
@@ -73,7 +73,7 @@ impl Drop for Ctx {
 
 pub struct Request {
     ptr: *mut in3_sys::in3_request_t,
-    ctx_ptr: *mut in3_sys::in3_ctx_t,
+    ctx_ptr: *const in3_sys::in3_ctx_t,
 }
 
 impl Request {
@@ -180,7 +180,7 @@ impl Client {
         Ok(())
     }
 
-    fn in3_ret_unwrap(&self, ret: in3_sys::in3_ret_t) -> In3Ret {
+    fn in3_ret_unwrap(ret: in3_sys::in3_ret_t) -> In3Ret {
         match ret {
             in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
             in3_sys::in3_ret_t::IN3_ENOMEM => In3Ret::ENOMEM,
@@ -205,7 +205,7 @@ impl Client {
 
     pub fn send(&self, ctx: &mut Ctx) -> In3Ret {
         unsafe {
-            self.in3_ret_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
+            Self::in3_ret_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
         }
     }
 
