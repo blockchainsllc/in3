@@ -73,20 +73,21 @@ impl Drop for Ctx {
 
 pub struct Request {
     ptr: *mut in3_sys::in3_request_t,
+    ctx_ptr: *mut in3_sys::in3_ctx_t,
 }
-//TODO:implement drpo for Request, need ctx param 
-// impl Drop for Request {
-//     fn drop(&mut self) {
-//         unsafe {
-//             in3_sys::request_free(self.ptr);
-//         }
-//     }
-// }
 
 impl Request {
     pub fn new(ctx: &mut Ctx) -> Request {
         unsafe {
-            Request { ptr: in3_sys::in3_create_request(ctx.ptr) }
+            Request { ptr: in3_sys::in3_create_request(ctx.ptr), ctx_ptr: ctx.ptr }
+        }
+    }
+}
+
+impl Drop for Request {
+    fn drop(&mut self) {
+        unsafe {
+            in3_sys::request_free(self.ptr, self.ctx_ptr, false);
         }
     }
 }
