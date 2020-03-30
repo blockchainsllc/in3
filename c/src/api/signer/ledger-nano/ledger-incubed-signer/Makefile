@@ -1,24 +1,21 @@
+TARGET ?= libledgersigner.so
+SRC_DIRS ?= ./
 
-CC = gcc  # C compiler
-CFLAGS = -fPIC -Wall -Wextra -O2 -g  # C flags
-LDFLAGS = -shared   # linking flags
-RM = rm -f   # rm command
-TARGET_LIB = libledgersigner.so  # target lib
-LDLIBS = -lhidapi 
-SRCS = ledger_signer.c device_apdu_commands.c   # source files
-OBJS = $(SRCS:.c=.o)
+SRCS := ledger_signer.c device_apdu_commands.c  
+OBJS := $(addsuffix .o,$(basename $(SRCS)))
+DEPS := $(OBJS:.o=.d)
+LDFLAGS := -shared
+LDLIBS := -lhidapi
 
-.PHONY: all
-all: ${TARGET_LIB}
+INC_FLAGS := -I/usr/local/include/hidapi -I./
 
-$(TARGET_LIB): $(OBJS)
-	$(CC) ${LDFLAGS} -o $@ $^ 
+CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
 
-$(SRCS:.c=.d):%.d:%.c
-	$(CC) $(CFLAGS) -MM $< >$@ 
-
-include $(SRCS:.c=.d)
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LOADLIBES) $(LDLIBS)
 
 .PHONY: clean
 clean:
-	-${RM} ${TARGET_LIB} ${OBJS} $(SRCS:.c=.d)
+	$(RM) $(TARGET) $(OBJS) $(DEPS)
+
+-include $(DEPS)
