@@ -546,7 +546,7 @@ static in3_ret_t debug_transport(in3_t* c, in3_request_t* req) {
 #else
   in3_ret_t r = send_http(c, req);
 #endif
-  last_response = b_new(req->results[0].result.data, req->results[0].result.len);
+  last_response = b_new((uint8_t*) req->results[0].result.data, req->results[0].result.len);
 #ifndef DEBUG
   if (debug_mode) {
     if (req->results[0].result.len)
@@ -782,7 +782,7 @@ int main(int argc, char* argv[]) {
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
       else if (strcmp(method, "sign") == 0 && !data)
-        data = b_new(argv[i], strlen(argv[i]));
+        data = b_new((uint8_t*) argv[i], strlen(argv[i]));
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
@@ -947,7 +947,7 @@ int main(int argc, char* argv[]) {
                            "Ethereum Signed Message:\n%zu",
                       data->len);
       memcpy(tmp + l, data->data, data->len);
-      data     = b_new(tmp, l + data->len);
+      data     = b_new((uint8_t*) tmp, l + data->len);
       sig_type = "raw";
     }
 
@@ -1038,7 +1038,7 @@ int main(int argc, char* argv[]) {
                            "Ethereum Signed Message:\n%zu",
                       msg.len);
       memcpy(tmp + l, msg.data, msg.len);
-      msg = *b_new(tmp, l + msg.len);
+      msg = *b_new((uint8_t*) tmp, l + msg.len);
     }
     if (strcmp(sig_type, "hash") == 0) {
       if (msg.len != 32) die("The message hash must be 32 byte");
