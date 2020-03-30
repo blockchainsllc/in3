@@ -45,7 +45,6 @@ macro_rules! in3_error_def {
 }
 
 in3_error_def!(
-    => Ok = IN3_OK;
     => NoMemory = IN3_ENOMEM;
     => UnknownError = IN3_EUNKNOWN;
     => NotSupported = IN3_ENOTSUP;

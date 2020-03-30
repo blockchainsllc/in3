@@ -1,25 +1,6 @@
 use std::ffi;
 
-pub enum In3Ret {
-    OK,
-    EUNKNOWN,
-    ENOMEM,
-    ENOTSUP,
-    EINVAL,
-    EFIND,
-    ECONFIG,
-    ELIMIT,
-    EVERS,
-    EINVALDT,
-    EPASS,
-    ERPC,
-    ERPCNRES,
-    EUSNURL,
-    ETRANS,
-    ERANGE,
-    WAITING,
-    EIGNORE,
-}
+use crate::error::In3Result;
 
 pub mod chain {
     pub type ChainId = u32;
@@ -51,13 +32,16 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub fn execute(&mut self) -> In3Ret {
+    pub fn execute(&mut self) -> In3Result<()> {
         unsafe {
             let ret = in3_sys::in3_ctx_execute(self.ptr);
             let req = in3_sys::in3_create_request(self.ptr);
             let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
             println!("{}, {}", payload, self.config.to_str().unwrap());
-            Client::in3_ret_unwrap(ret)
+            match ret {
+                in3_sys::in3_ret_t::IN3_OK => Ok(()),
+                _ => Err(ret.into()),
+            }
         }
     }
 }
@@ -118,7 +102,7 @@ impl Client {
         }
     }
 
-    extern fn in3_rust_transport(client: *mut in3_sys::in3_t, request: *mut in3_sys::in3_request_t) -> in3_sys::in3_ret_t {
+    extern fn in3_rust_transport(client: *mut in3_sys::in3_t, request: *mut in3_sys::in3_request_t) -> in3_sys::in3_ret_t::Type {
         // internally calls the rust transport impl, i.e. Client.transport
         let mut urls = Vec::new();
 
@@ -180,32 +164,13 @@ impl Client {
         Ok(())
     }
 
-    fn in3_ret_unwrap(ret: in3_sys::in3_ret_t) -> In3Ret {
-        match ret {
-            in3_sys::in3_ret_t::IN3_OK => In3Ret::OK,
-            in3_sys::in3_ret_t::IN3_ENOMEM => In3Ret::ENOMEM,
-            in3_sys::in3_ret_t::IN3_EUNKNOWN => In3Ret::EUNKNOWN,
-            in3_sys::in3_ret_t::IN3_ENOTSUP => In3Ret::ENOTSUP,
-            in3_sys::in3_ret_t::IN3_EINVAL => In3Ret::EINVAL,
-            in3_sys::in3_ret_t::IN3_EFIND => In3Ret::EFIND,
-            in3_sys::in3_ret_t::IN3_ECONFIG => In3Ret::ECONFIG,
-            in3_sys::in3_ret_t::IN3_ELIMIT => In3Ret::ELIMIT,
-            in3_sys::in3_ret_t::IN3_EVERS => In3Ret::EVERS,
-            in3_sys::in3_ret_t::IN3_EINVALDT => In3Ret::EINVALDT,
-            in3_sys::in3_ret_t::IN3_EPASS => In3Ret::EPASS,
-            in3_sys::in3_ret_t::IN3_ERPC => In3Ret::ERPC,
-            in3_sys::in3_ret_t::IN3_ERPCNRES => In3Ret::ERPCNRES,
-            in3_sys::in3_ret_t::IN3_EUSNURL => In3Ret::EUSNURL,
-            in3_sys::in3_ret_t::IN3_ETRANS => In3Ret::ETRANS,
-            in3_sys::in3_ret_t::IN3_ERANGE => In3Ret::ERANGE,
-            in3_sys::in3_ret_t::IN3_WAITING => In3Ret::WAITING,
-            in3_sys::in3_ret_t::IN3_EIGNORE => In3Ret::EIGNORE,
-        }
-    }
-
-    pub fn send(&self, ctx: &mut Ctx) -> In3Ret {
+    pub fn send(&self, ctx: &mut Ctx) -> In3Result<()> {
         unsafe {
-            Self::in3_ret_unwrap(in3_sys::in3_send_ctx(ctx.ptr))
+            let ret = in3_sys::in3_send_ctx(ctx.ptr);
+            match ret {
+                in3_sys::in3_ret_t::IN3_OK => Ok(()),
+                _ => Err(ret.into()),
+            }
         }
     }
 
