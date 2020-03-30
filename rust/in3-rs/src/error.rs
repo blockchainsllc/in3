@@ -96,7 +96,7 @@ impl From<&Error> for in3_sys::in3_ret_t {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::Error;
 
     #[test]
