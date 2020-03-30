@@ -76,7 +76,7 @@ impl Drop for Request {
     }
 }
 
-
+#[derive(Default)]
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
     transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>>,
@@ -87,7 +87,7 @@ impl Client {
         unsafe {
             let mut c = Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
-                transport: None,
+                ..Default::default()
             };
             c.set_transport(Box::new(crate::transport::transport_http));
             c
