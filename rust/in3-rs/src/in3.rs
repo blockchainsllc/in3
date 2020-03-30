@@ -169,12 +169,12 @@ impl Client {
     }
 
     // in3 client config
-    pub fn configure(&mut self, config: &str) -> Result<(), &'static str> {
-        let config_str = ffi::CString::new(config).expect("config not readable");
+    pub fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
-            let err = in3_sys::in3_configure(self.ptr, config_str.as_ptr());
+            let config_c = ffi::CString::new(config).expect("CString::new failed");
+            let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
             if err.as_ref().is_some() {
-                return Err(ffi::CStr::from_ptr(err).to_str().unwrap());
+                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
             }
         }
         Ok(())
