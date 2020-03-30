@@ -271,17 +271,17 @@ typedef struct in3_chain {
  * @returns the found result. if the key is found this function should return the values as bytes otherwise `NULL`.
  **/
 typedef bytes_t* (*in3_storage_get_item)(
-    void* cptr, /**< a custom pointer as set in the storage handler*/
-    char* key   /**< the key to search in the cache */
+    void*       cptr, /**< a custom pointer as set in the storage handler*/
+    const char* key   /**< the key to search in the cache */
 );
 
 /** 
  * storage handler function for writing to the cache.
  **/
 typedef void (*in3_storage_set_item)(
-    void*    cptr, /**< a custom pointer as set in the storage handler*/
-    char*    key,  /**< the key to store the value.*/
-    bytes_t* value /**< the value to store.*/
+    void*       cptr, /**< a custom pointer as set in the storage handler*/
+    const char* key,  /**< the key to store the value.*/
+    bytes_t*    value /**< the value to store.*/
 );
 
 /**

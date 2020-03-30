@@ -944,7 +944,7 @@ int main(int argc, char* argv[]) {
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(data->len + 30);
       int   l   = sprintf(tmp, "\x19"
-                           "Ethereum Signed Message:\n%i",
+                           "Ethereum Signed Message:\n%zu",
                       data->len);
       memcpy(tmp + l, data->data, data->len);
       data     = b_new(tmp, l + data->len);
@@ -1035,7 +1035,7 @@ int main(int argc, char* argv[]) {
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(msg.len + 30);
       int   l   = sprintf(tmp, "\x19"
-                           "Ethereum Signed Message:\n%i",
+                           "Ethereum Signed Message:\n%zu",
                       msg.len);
       memcpy(tmp + l, msg.data, msg.len);
       msg = *b_new(tmp, l + msg.len);

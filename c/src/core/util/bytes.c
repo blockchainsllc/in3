@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 
-bytes_t* b_new(const char* data, int len) {
+bytes_t* b_new(const char* data, size_t len) {
   bytes_t* b = _calloc(1, sizeof(bytes_t));
 
   b->len  = len;
