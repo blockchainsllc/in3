@@ -127,10 +127,12 @@ impl Client {
                 match resp {
                     Err(err) => {
                         any_err = true;
-                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).error, ffi::CString::new(err.to_string()).unwrap().as_ptr());
+                        let err_str = ffi::CString::new(err.to_string()).unwrap();
+                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).error, err_str.as_ptr());
                     }
                     Ok(res) => {
-                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).result, ffi::CString::new(res.to_string()).unwrap().as_ptr());
+                        let res_str = ffi::CString::new(res.to_string()).unwrap();
+                        in3_sys::sb_add_chars(&mut (*(*request).results.add(i)).result, res_str.as_ptr());
                     }
                 }
             }
@@ -225,25 +227,10 @@ impl Client {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
         let err: *mut *mut i8 = &mut null;
+        let req_str = ffi::CString::new(request).unwrap();
         unsafe {
             let ret = in3_sys::in3_client_rpc_raw(self.ptr,
-                                                  ffi::CString::new(request).unwrap().as_ptr(),
-                                                  res, err);
-            return if ret == in3_sys::in3_ret_t::IN3_OK {
-                Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
-            } else {
-                Err(ffi::CStr::from_ptr(*err).to_str().unwrap().to_string())
-            };
-        }
-    }
-
-    pub async fn arpc(&self, request: &str) -> Result<String, String> {
-        let mut null: *mut i8 = std::ptr::null_mut();
-        let res: *mut *mut i8 = &mut null;
-        let err: *mut *mut i8 = &mut null;
-        unsafe {
-            let ret = in3_sys::in3_client_rpc_raw(self.ptr,
-                                                  ffi::CString::new(request).unwrap().as_ptr(),
+                                                  req_str.as_ptr(),
                                                   res, err);
             return if ret == in3_sys::in3_ret_t::IN3_OK {
                 Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
