@@ -15,7 +15,7 @@ fn send_request() {
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     let mut ctx = Ctx::new(&mut c, r#"{"method": "eth_blockNumber", "params": []}"#);
-    let _res = c.execute(&mut ctx);
+    let _res = ctx.execute();
 }
 
 fn rpc_call() {

@@ -251,6 +251,6 @@ mod tests {
         let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method":"eth_blockNumber","params":[]}"#);
         let _request = Request::new(&mut ctx);
-        let _ = in3.execute(&mut ctx);
+        let _ = ctx.execute();
     }
 }
