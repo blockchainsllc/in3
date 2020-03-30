@@ -38,14 +38,27 @@ pub mod chain {
 
 pub struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
+    config: ffi::CString,
 }
 
 impl Ctx {
-    pub fn new(in3: &mut Client, config: &str) -> Ctx {
+    pub fn new(in3: &mut Client, config_str: &'static str) -> Ctx {
+        let config = ffi::CString::new(config_str).expect("CString::new failed");
+        let mut ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
-            let config_c = ffi::CString::new(config).expect("CString::new failed");
-            Ctx { ptr: in3_sys::ctx_new(in3.ptr, config_c.as_ptr()) }
+            ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
         }
+        Ctx { ptr, config }
+    }
+
+    pub fn execute(&mut self) -> In3Ret {
+        unsafe {
+            let ret = in3_sys::in3_ctx_execute(self.ptr);
+            let req = in3_sys::in3_create_request(self.ptr);
+            let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
+            println!("{}, {}", payload, self.config.to_str().unwrap());
+        }
+        In3Ret::OK
     }
 }
 
@@ -186,34 +199,6 @@ impl Client {
             in3_sys::in3_ret_t::IN3_ERANGE => In3Ret::ERANGE,
             in3_sys::in3_ret_t::IN3_WAITING => In3Ret::WAITING,
             in3_sys::in3_ret_t::IN3_EIGNORE => In3Ret::EIGNORE,
-        }
-    }
-
-    pub fn execute(&self, ctx: &mut Ctx) -> In3Ret {
-        unsafe {
-            //self.in3_ret_unwrap(in3_sys::in3_ctx_execute(ctx.ptr));
-            match in3_sys::in3_ctx_execute(ctx.ptr) {
-                in3_sys::in3_ret_t::IN3_WAITING => {
-                    println!("wait");
-                    let mut last_waiting = Ctx { ptr: (*ctx.ptr).required };
-                    //let client = (*last_waiting.ptr).client;
-                    if (*ctx.ptr).required == std::ptr::null_mut() {
-                        let req: *mut in3_sys::in3_request_t = in3_sys::in3_create_request(ctx.ptr);
-                        // ((*(*ctx.ptr).client).transport.unwrap())((*ctx.ptr).client, req);
-
-                        match &mut (*self.ptr).transport {
-                            None => { panic!("Missing transport!") }
-                            Some(transport) => { (*transport)(self.ptr, req) }
-                        };
-                    } else {
-                        self.execute(&mut last_waiting);
-                    }
-
-
-                    In3Ret::WAITING
-                }
-                _ => In3Ret::OK
-            }
         }
     }
 
