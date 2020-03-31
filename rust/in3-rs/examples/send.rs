@@ -1,6 +1,6 @@
 extern crate in3;
 
-use futures::executor::block_on;
+use async_std::task;
 
 use in3::prelude::*;
 
@@ -30,7 +30,7 @@ fn rpc_call() {
 fn main() {
     rpc_call();
     let future = send_async();
-    block_on(future);
+    task::block_on(future);
     send_request();
 }
 
