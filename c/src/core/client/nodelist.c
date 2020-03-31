@@ -49,6 +49,8 @@
 
 #define DAY 24 * 3600
 #define DIFFTIME(t1, t0) (double) (t1 > t0 ? t1 - t0 : 0)
+#define BLACKLISTTIME DAY
+#define BLACKLISTWEIGHT 7 * DAY
 
 static void free_nodeList(in3_node_t* nodelist, int count) {
   // clean chain..
@@ -217,7 +219,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
       // blacklist node that gave us an error response for nodelist (if not first update)
       // and clear nodelist params
       if (nodelist_not_first_upd8(chain))
-        blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+        blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
 
@@ -238,7 +240,7 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
         // if the `lastBlockNumber` != `exp_last_block`, we can be certain that `chain->nodelist_upd8_params->node` lied to us
         // about the nodelist update, so we blacklist it for an hour
         if (nodelist_exp_last_block_neq(chain, d_get_longk(r, K_LAST_BLOCK_NUMBER)))
-          blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+          blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
         _free(chain->nodelist_upd8_params);
         chain->nodelist_upd8_params = NULL;
 
@@ -350,11 +352,14 @@ IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t np_config, cons
   return min_blk_ht_conf ? (min_blk_ht <= min_blk_ht_conf) : true;
 }
 
-uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa) {
+uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t now) {
   const uint32_t avg = n->response_count > 4
                            ? (n->total_response_time / n->response_count)
                            : (10000 / (max(capa, 100) + 100));
-  return 0xFFFF / avg;
+  const uint32_t blacklist_factor = ((now - n->blacklisted_until) < BLACKLISTWEIGHT)
+                                        ? ((now - n->blacklisted_until) * 100 / (BLACKLISTWEIGHT))
+                                        : 100;
+  return (0xFFFF / avg) * blacklist_factor / 100;
 }
 
 node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_t* all_nodes, in3_node_weight_t* weights,
@@ -404,7 +409,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
     current->weight = weight_def;
     current->next   = NULL;
     current->s      = weight_sum;
-    current->w      = in3_node_calculate_weight(weight_def, node_def->capacity);
+    current->w      = in3_node_calculate_weight(weight_def, node_def->capacity, now);
     weight_sum += current->w;
     found++;
     if (prev) prev->next = current;
@@ -514,7 +519,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   // we want ot make sure this loop is run only max 10xthe number of requested nodes
   for (int i = 0; added < filled_len && i < filled_len * 10; i++) {
     // pick a random number
-    r = in3_rand(NULL) % total_weight;
+    r = total_weight ? (in3_rand(NULL) % total_weight) : 0;
 
     // find the first node matching it.
     current = found;

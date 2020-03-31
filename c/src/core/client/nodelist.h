@@ -73,7 +73,7 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
 /**
  * calculates the weight for a node.
  */
-uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa);
+uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t now);
 /**
  * picks (based on the config) a random number of nodes and returns them as weightslist.
  */
