@@ -16,7 +16,7 @@ backcall==0.1.0
 base58==1.0.3
 -e git+https://github.com/bigchaindb/bigchaindb.git@16a9888d1e4d9ebbf733a2e0b7528cdde30b572b#egg=BigchainDB
 bigchaindb-abci==0.5.1
-bleach==3.1.1
+bleach==3.1.4
 botocore==1.13.2
 certifi==2019.9.11
 cffi==1.12.3
