@@ -93,7 +93,7 @@ typedef struct cache_s {
   bytes_t values[MAX_ENTRIES];
   char*   keys[MAX_ENTRIES];
 } cache_t;
-static bytes_t* cache_get_item(void* cptr, char* key) {
+static bytes_t* cache_get_item(void* cptr, const char* key) {
   cache_t* cache = (cache_t*) cptr;
   for (int i = 0; i < MAX_ENTRIES && cache->keys[i]; i++) {
     if (strcmp(cache->keys[i], key) == 0)
@@ -101,7 +101,7 @@ static bytes_t* cache_get_item(void* cptr, char* key) {
   }
   return NULL;
 }
-static void cache_set_item(void* cptr, char* key, bytes_t* value) {
+static void cache_set_item(void* cptr, const char* key, bytes_t* value) {
   cache_t* cache = (cache_t*) cptr;
   int      i     = 0;
   while (i < MAX_ENTRIES && cache->keys[i]) {

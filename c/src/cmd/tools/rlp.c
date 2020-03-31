@@ -245,7 +245,7 @@ void write(bytes_t* data, char* l, char** tt) {
       else if (t.len == 32)
         d = printf("<hash>");
       else
-        d = printf("<data %i>", t.len);
+        d = printf("<data %zu>", t.len);
 
       for (j = d; j < 17; j++) printf(" ");
       if (t.len > 0)

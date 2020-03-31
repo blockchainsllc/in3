@@ -11730,7 +11730,7 @@ pub struct bytes {
     #[doc = "< the byte-data"]
     pub data: *mut u8,
     #[doc = "< the length of the array ion bytes"]
-    pub len: u32,
+    pub len: usize,
 }
 #[test]
 fn bindgen_test_layout_bytes() {
@@ -11776,7 +11776,7 @@ pub type bytes_t = bytes;
 #[derive(Debug, Copy)]
 pub struct bytes_builder_t {
     #[doc = "< size of the currently allocated bytes"]
-    pub bsize: u32,
+    pub bsize: usize,
     #[doc = "< the bytes struct"]
     pub b: bytes_t,
 }
@@ -11819,7 +11819,7 @@ impl Clone for bytes_builder_t {
     }
 }
 extern "C" {
-    pub fn b_new(data: *const libc::c_char, len: libc::c_int) -> *mut bytes_t;
+    pub fn b_new(data: *const u8, len: usize) -> *mut bytes_t;
 }
 extern "C" {
     pub fn b_print(a: *const bytes_t);
@@ -12884,54 +12884,53 @@ extern "C" {
 extern "C" {
     pub fn in3_srand(s: libc::c_uint);
 }
-#[repr(i32)]
-#[doc = " ERROR types  used as return values."]
-#[doc = ""]
-#[doc = " All values (except IN3_OK) indicate an error."]
-#[doc = " IN3_WAITING may be treated like an error, since we have stop executing until the response has arrived, but it is a valid return value."]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum in3_ret_t {
+pub mod in3_ret_t {
+    #[doc = " ERROR types  used as return values."]
+    #[doc = ""]
+    #[doc = " All values (except IN3_OK) indicate an error."]
+    #[doc = " IN3_WAITING may be treated like an error, since we have stop executing until the response has arrived, but it is a valid return value."]
+    pub type Type = i32;
     #[doc = "< Success"]
-    IN3_OK = 0,
+    pub const IN3_OK: Type = 0;
     #[doc = "< Unknown error - usually accompanied with specific error msg"]
-    IN3_EUNKNOWN = -1,
+    pub const IN3_EUNKNOWN: Type = -1;
     #[doc = "< No memory"]
-    IN3_ENOMEM = -2,
+    pub const IN3_ENOMEM: Type = -2;
     #[doc = "< Not supported"]
-    IN3_ENOTSUP = -3,
+    pub const IN3_ENOTSUP: Type = -3;
     #[doc = "< Invalid value"]
-    IN3_EINVAL = -4,
+    pub const IN3_EINVAL: Type = -4;
     #[doc = "< Not found"]
-    IN3_EFIND = -5,
+    pub const IN3_EFIND: Type = -5;
     #[doc = "< Invalid config"]
-    IN3_ECONFIG = -6,
+    pub const IN3_ECONFIG: Type = -6;
     #[doc = "< Limit reached"]
-    IN3_ELIMIT = -7,
+    pub const IN3_ELIMIT: Type = -7;
     #[doc = "< Version mismatch"]
-    IN3_EVERS = -8,
+    pub const IN3_EVERS: Type = -8;
     #[doc = "< Data invalid, eg. invalid/incomplete JSON"]
-    IN3_EINVALDT = -9,
+    pub const IN3_EINVALDT: Type = -9;
     #[doc = "< Wrong password"]
-    IN3_EPASS = -10,
+    pub const IN3_EPASS: Type = -10;
     #[doc = "< RPC error (i.e. in3_ctx_t::error set)"]
-    IN3_ERPC = -11,
+    pub const IN3_ERPC: Type = -11;
     #[doc = "< RPC no response"]
-    IN3_ERPCNRES = -12,
+    pub const IN3_ERPCNRES: Type = -12;
     #[doc = "< USN URL parse error"]
-    IN3_EUSNURL = -13,
+    pub const IN3_EUSNURL: Type = -13;
     #[doc = "< Transport error"]
-    IN3_ETRANS = -14,
+    pub const IN3_ETRANS: Type = -14;
     #[doc = "< Not in range"]
-    IN3_ERANGE = -15,
+    pub const IN3_ERANGE: Type = -15;
     #[doc = "< the process can not be finished since we are waiting for responses"]
-    IN3_WAITING = -16,
+    pub const IN3_WAITING: Type = -16;
     #[doc = "< Ignorable error"]
-    IN3_EIGNORE = -17,
+    pub const IN3_EIGNORE: Type = -17;
 }
 extern "C" {
     #[doc = " converts a error code into a string."]
     #[doc = " These strings are constants and do not need to be freed."]
-    pub fn in3_errmsg(err: in3_ret_t) -> *mut libc::c_char;
+    pub fn in3_errmsg(err: in3_ret_t::Type) -> *mut libc::c_char;
 }
 pub type clock_t = __darwin_clock_t;
 pub type time_t = __darwin_time_t;
@@ -14063,11 +14062,11 @@ pub type in3_chain_t = in3_chain;
 #[doc = " storage handler function for reading from cache."]
 #[doc = " @returns the found result. if the key is found this function should return the values as bytes otherwise `NULL`."]
 pub type in3_storage_get_item = ::core::option::Option<
-    unsafe extern "C" fn(cptr: *mut libc::c_void, key: *mut libc::c_char) -> *mut bytes_t,
+    unsafe extern "C" fn(cptr: *mut libc::c_void, key: *const libc::c_char) -> *mut bytes_t,
 >;
 #[doc = " storage handler function for writing to the cache."]
 pub type in3_storage_set_item = ::core::option::Option<
-    unsafe extern "C" fn(cptr: *mut libc::c_void, key: *mut libc::c_char, value: *mut bytes_t),
+    unsafe extern "C" fn(cptr: *mut libc::c_void, key: *const libc::c_char, value: *mut bytes_t),
 >;
 #[doc = " storage handler function for clearing the cache."]
 pub type in3_storage_clear = ::core::option::Option<unsafe extern "C" fn(cptr: *mut libc::c_void)>;
@@ -14164,7 +14163,7 @@ pub type in3_sign = ::core::option::Option<
         message: bytes_t,
         account: bytes_t,
         dst: *mut u8,
-    ) -> in3_ret_t,
+    ) -> in3_ret_t::Type,
 >;
 #[doc = " transform transaction function."]
 #[doc = ""]
@@ -14175,7 +14174,7 @@ pub type in3_prepare_tx = ::core::option::Option<
         ctx: *mut libc::c_void,
         old_tx: *mut d_token_t,
         new_tx: *mut *mut json_ctx_t,
-    ) -> in3_ret_t,
+    ) -> in3_ret_t::Type,
 >;
 #[repr(C)]
 #[derive(Debug, Copy)]
@@ -14384,7 +14383,7 @@ pub type in3_request_t = n3_request;
 pub type in3_t = in3_t_;
 #[doc = " the transport function to be implemented by the transport provider."]
 pub type in3_transport_send = ::core::option::Option<
-    unsafe extern "C" fn(in3: *mut in3_t, request: *mut in3_request_t) -> in3_ret_t,
+    unsafe extern "C" fn(in3: *mut in3_t, request: *mut in3_request_t) -> in3_ret_t::Type,
 >;
 #[repr(u32)]
 #[doc = " Filter type used internally when managing filters."]
@@ -14890,7 +14889,7 @@ extern "C" {
         params: *const libc::c_char,
         result: *mut *mut libc::c_char,
         error: *mut *mut libc::c_char,
-    ) -> in3_ret_t;
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " sends a request and stores the result in the provided buffer"]
@@ -14899,7 +14898,7 @@ extern "C" {
         request: *const libc::c_char,
         result: *mut *mut libc::c_char,
         error: *mut *mut libc::c_char,
-    ) -> in3_ret_t;
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " executes a request and returns result as string. in case of an error, the error-property of the result will be set."]
@@ -14927,7 +14926,7 @@ extern "C" {
         registry_id: *mut u8,
         version: u8,
         wl_contract: *mut u8,
-    ) -> in3_ret_t;
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " adds a node to a chain ore updates a existing node"]
@@ -14937,7 +14936,7 @@ extern "C" {
         url: *mut libc::c_char,
         props: in3_node_props_t,
         address: *mut u8,
-    ) -> in3_ret_t;
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " removes a node from a nodelist"]
@@ -14945,11 +14944,11 @@ extern "C" {
         client: *mut in3_t,
         chain_id: chain_id_t,
         address: *mut u8,
-    ) -> in3_ret_t;
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " removes all nodes from the nodelist"]
-    pub fn in3_client_clear_nodes(client: *mut in3_t, chain_id: chain_id_t) -> in3_ret_t;
+    pub fn in3_client_clear_nodes(client: *mut in3_t, chain_id: chain_id_t) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " frees the references of the client"]
@@ -14959,7 +14958,7 @@ extern "C" {
     #[doc = " inits the cache."]
     #[doc = ""]
     #[doc = " this will try to read the nodelist from cache."]
-    pub fn in3_cache_init(c: *mut in3_t) -> in3_ret_t;
+    pub fn in3_cache_init(c: *mut in3_t) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " finds the chain-config for the given chain_id."]
@@ -15127,7 +15126,7 @@ pub struct in3_ctx {
     #[doc = " pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context."]
     pub required: *mut in3_ctx,
     #[doc = " state of the verification"]
-    pub verification_state: in3_ret_t,
+    pub verification_state: in3_ret_t::Type,
 }
 #[test]
 fn bindgen_test_layout_in3_ctx() {
@@ -15328,7 +15327,7 @@ extern "C" {
     #[doc = ""]
     #[doc = " The execution happens within the same thread, thich mean it will be blocked until the response ha beedn received and verified."]
     #[doc = " In order to handle calls asynchronously, you need to call the `in3_ctx_execute` function and provide the data as needed."]
-    pub fn in3_send_ctx(ctx: *mut in3_ctx_t) -> in3_ret_t;
+    pub fn in3_send_ctx(ctx: *mut in3_ctx_t) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " tries to execute the context, but stops whenever data are required."]
@@ -15391,7 +15390,7 @@ extern "C" {
     #[doc = "return ret;"]
     #[doc = "}"]
     #[doc = " ```"]
-    pub fn in3_ctx_execute(ctx: *mut in3_ctx_t) -> in3_ret_t;
+    pub fn in3_ctx_execute(ctx: *mut in3_ctx_t) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " returns the current state of the context."]
@@ -15440,7 +15439,7 @@ extern "C" {
     #[doc = "return ctx_add_required(parent, ctx_new(parent->client, req));"]
     #[doc = "}"]
     #[doc = " ```"]
-    pub fn ctx_add_required(parent: *mut in3_ctx_t, ctx: *mut in3_ctx_t) -> in3_ret_t;
+    pub fn ctx_add_required(parent: *mut in3_ctx_t, ctx: *mut in3_ctx_t) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " searches within the required request contextes for one with the given method."]
@@ -15454,15 +15453,15 @@ extern "C" {
 extern "C" {
     #[doc = " removes a required context after usage."]
     #[doc = " removing will also call free_ctx to free resources."]
-    pub fn ctx_remove_required(parent: *mut in3_ctx_t, ctx: *mut in3_ctx_t) -> in3_ret_t;
+    pub fn ctx_remove_required(parent: *mut in3_ctx_t, ctx: *mut in3_ctx_t) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " check if the response contains a error-property and reports this as error in the context."]
-    pub fn ctx_check_response_error(c: *mut in3_ctx_t, i: libc::c_int) -> in3_ret_t;
+    pub fn ctx_check_response_error(c: *mut in3_ctx_t, i: libc::c_int) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " determins the errorcode for the given request."]
-    pub fn ctx_get_error(ctx: *mut in3_ctx_t, id: libc::c_int) -> in3_ret_t;
+    pub fn ctx_get_error(ctx: *mut in3_ctx_t, id: libc::c_int) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " sends a request and returns a context used to access the result or errors."]
@@ -15509,14 +15508,14 @@ extern "C" {
     pub fn ctx_set_error_intern(
         c: *mut in3_ctx_t,
         msg: *mut libc::c_char,
-        errnumber: in3_ret_t,
-    ) -> in3_ret_t;
+        errnumber: in3_ret_t::Type,
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " handles a failable context"]
     #[doc = ""]
     #[doc = " This context *MUST* be freed with ctx_free(ctx) after usage to release the resources."]
-    pub fn ctx_handle_failable(ctx: *mut in3_ctx_t) -> in3_ret_t;
+    pub fn ctx_handle_failable(ctx: *mut in3_ctx_t) -> in3_ret_t::Type;
 }
 #[doc = " a 32 byte long integer used to store ethereum-numbers."]
 #[doc = ""]
@@ -15568,10 +15567,14 @@ extern "C" {
         key_data: *mut d_token_t,
         password: *mut libc::c_char,
         dst: *mut u8,
-    ) -> in3_ret_t;
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
-    pub fn to_checksum(adr: *mut u8, chain_id: chain_id_t, out: *mut libc::c_char) -> in3_ret_t;
+    pub fn to_checksum(
+        adr: *mut u8,
+        chain_id: chain_id_t,
+        out: *mut libc::c_char,
+    ) -> in3_ret_t::Type;
 }
 #[doc = " function to set error. Will only be called internally."]
 #[doc = " default implementation is NOT MT safe!"]
@@ -16629,13 +16632,13 @@ extern "C" {
     pub fn eth_getLogs(in3: *mut in3_t, fopt: *mut libc::c_char) -> *mut eth_log_t;
 }
 extern "C" {
-    pub fn eth_newFilter(in3: *mut in3_t, options: *mut json_ctx_t) -> in3_ret_t;
+    pub fn eth_newFilter(in3: *mut in3_t, options: *mut json_ctx_t) -> in3_ret_t::Type;
 }
 extern "C" {
-    pub fn eth_newBlockFilter(in3: *mut in3_t) -> in3_ret_t;
+    pub fn eth_newBlockFilter(in3: *mut in3_t) -> in3_ret_t::Type;
 }
 extern "C" {
-    pub fn eth_newPendingTransactionFilter(in3: *mut in3_t) -> in3_ret_t;
+    pub fn eth_newPendingTransactionFilter(in3: *mut in3_t) -> in3_ret_t::Type;
 }
 extern "C" {
     pub fn eth_uninstallFilter(in3: *mut in3_t, id: usize) -> bool;
@@ -16646,10 +16649,14 @@ extern "C" {
         id: usize,
         block_hashes: *mut *mut bytes32_t,
         logs: *mut *mut eth_log_t,
-    ) -> in3_ret_t;
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
-    pub fn eth_getFilterLogs(in3: *mut in3_t, id: usize, logs: *mut *mut eth_log_t) -> in3_ret_t;
+    pub fn eth_getFilterLogs(
+        in3: *mut in3_t,
+        id: usize,
+        logs: *mut *mut eth_log_t,
+    ) -> in3_ret_t::Type;
 }
 extern "C" {
     pub fn eth_chainId(in3: *mut in3_t) -> u64;
@@ -16755,7 +16762,7 @@ extern "C" {
     #[doc = " ..."]
     #[doc = " c->transport = send_curl;"]
     #[doc = " ```"]
-    pub fn send_curl(c: *mut in3_t, req: *mut in3_request_t) -> in3_ret_t;
+    pub fn send_curl(c: *mut in3_t, req: *mut in3_request_t) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " registers curl as a default transport."]

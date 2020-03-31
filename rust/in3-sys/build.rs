@@ -96,6 +96,7 @@ fn write_bindgen_bindings(
         .prepend_enum_name(false)
         .generate_comments(true)
         .impl_debug(true)
+        .constified_enum_module("in3_ret_t")
         .rustified_enum(".*");
 
     // Whitelist cs_.* functions and types
