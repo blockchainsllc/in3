@@ -31,18 +31,10 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
-
-IF (IN3API)
-    add_library(api_utils_o OBJECT utils/api_utils.c)
-    add_library(api_utils STATIC $<TARGET_OBJECTS:api_utils_o>)
-
-    add_subdirectory(eth1)
-    add_subdirectory(usn)
-    add_subdirectory(signer/ledger-nano/ledger-incubed-signer)
-
-    IF (IPFS)
-        add_subdirectory(ipfs)
-    ENDIF (IPFS)
-ENDIF (IN3API)
-
+add_library(ledger_signer_o OBJECT ledger_signer.c )
+target_compile_definitions(ledger_signer_o PRIVATE -D_POSIX_C_SOURCE=199309L)
+add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
+include_directories("/usr/local/include/hidapi")
+target_link_libraries(ledger_signer hidapi ${LIBS})

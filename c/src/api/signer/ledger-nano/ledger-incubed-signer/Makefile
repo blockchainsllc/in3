@@ -1,4 +1,4 @@
-TARGET ?= libledgersigner.so
+TARGET ?= libledgersigner.a
 SRC_DIRS ?= ./
 
 SRCS := ledger_signer.c device_apdu_commands.c  
