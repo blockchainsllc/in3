@@ -57,10 +57,13 @@ impl Ctx {
             let req = in3_sys::in3_create_request(self.ptr);
             let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
             println!("{}, {}", payload, self.config.to_str().unwrap());
+            let in3_transport = (*(*self.ptr).client).transport.unwrap();
+            in3_transport((*self.ptr).client, req);
             Client::in3_ret_unwrap(ret)
         }
     }
 }
+    
 
 impl Drop for Ctx {
     fn drop(&mut self) {
@@ -105,7 +108,7 @@ impl Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: None,
             };
-            c.set_transport(Box::new(crate::transport::transport_http));
+            //c.set_transport(Box::new(crate::transport::transport_http));
             c
         }
     }

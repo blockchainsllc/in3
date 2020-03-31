@@ -28,9 +28,9 @@ fn rpc_call() {
 }
 
 fn main() {
-    rpc_call();
-    let future = send_async();
-    task::block_on(future);
+    // rpc_call();
+    // let future = send_async();
+    // task::block_on(future);
     send_request();
 }
 

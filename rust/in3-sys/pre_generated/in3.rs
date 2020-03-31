@@ -16745,6 +16745,22 @@ extern "C" {
 extern "C" {
     pub fn in3_for_chain_auto_init(chain_id: chain_id_t) -> *mut in3_t;
 }
+extern "C" {
+    #[doc = " a transport function using curl."]
+    #[doc = ""]
+    #[doc = " You can use it by setting the transport-function-pointer in the in3_t->transport to this function:"]
+    #[doc = ""]
+    #[doc = " ```c"]
+    #[doc = " #include <in3/in3_curl.h>"]
+    #[doc = " ..."]
+    #[doc = " c->transport = send_curl;"]
+    #[doc = " ```"]
+    pub fn send_curl(c: *mut in3_t, req: *mut in3_request_t) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " registers curl as a default transport."]
+    pub fn in3_register_curl();
+}
 pub type __builtin_va_list = [__va_list_tag; 1usize];
 #[repr(C)]
 #[derive(Debug, Copy)]
