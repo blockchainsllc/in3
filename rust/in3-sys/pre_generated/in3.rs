@@ -12650,6 +12650,240 @@ impl Clone for d_iterator {
     }
 }
 pub type d_iterator_t = d_iterator;
+#[doc = " represents a single cache entry in a linked list."]
+#[doc = " These are used within a request context to cache values and automaticly free them."]
+#[repr(C)]
+#[derive(Debug, Copy)]
+pub struct cache_entry {
+    #[doc = "<  an optional key of the entry"]
+    pub key: bytes_t,
+    #[doc = "< the value"]
+    pub value: bytes_t,
+    #[doc = "< the buffer is used to store extra data, which will be cleaned when freed."]
+    pub buffer: [u8; 4usize],
+    #[doc = "< if true, the cache-entry will be freed when the request context is cleaned up."]
+    pub must_free: bool,
+    #[doc = "< pointer to the next entry."]
+    pub next: *mut cache_entry,
+}
+#[test]
+fn bindgen_test_layout_cache_entry() {
+    assert_eq!(
+        ::core::mem::size_of::<cache_entry>(),
+        48usize,
+        concat!("Size of: ", stringify!(cache_entry))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<cache_entry>(),
+        8usize,
+        concat!("Alignment of ", stringify!(cache_entry))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).key as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(key)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).value as *const _ as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(value)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).buffer as *const _ as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(buffer)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).must_free as *const _ as usize },
+        36usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(must_free)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<cache_entry>())).next as *const _ as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(cache_entry),
+            "::",
+            stringify!(next)
+        )
+    );
+}
+impl Clone for cache_entry {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+pub type cache_entry_t = cache_entry;
+extern "C" {
+    #[doc = " get the entry for a given key."]
+    pub fn in3_cache_get_entry(cache: *mut cache_entry_t, key: *mut bytes_t) -> *mut bytes_t;
+}
+extern "C" {
+    #[doc = " adds an entry to the linked list."]
+    pub fn in3_cache_add_entry(
+        cache: *mut *mut cache_entry_t,
+        key: bytes_t,
+        value: bytes_t,
+    ) -> *mut cache_entry_t;
+}
+extern "C" {
+    #[doc = " clears all entries in the linked list."]
+    pub fn in3_cache_free(cache: *mut cache_entry_t);
+}
+extern "C" {
+    #[doc = " converts the bytes to a unsigned long (at least the last max len bytes)"]
+    pub fn bytes_to_long(data: *const u8, len: libc::c_int) -> u64;
+}
+extern "C" {
+    #[doc = " converts a character into a uint64_t"]
+    pub fn char_to_long(a: *const libc::c_char, l: libc::c_int) -> u64;
+}
+extern "C" {
+    #[doc = "  converts a hexchar to byte (4bit)"]
+    pub fn hexchar_to_int(c: libc::c_char) -> u8;
+}
+extern "C" {
+    #[doc = " converts a uint64_t to string (char*); buffer-size min. 21 bytes"]
+    pub fn u64_to_str(
+        value: u64,
+        pBuf: *mut libc::c_char,
+        szBuf: libc::c_int,
+    ) -> *const libc::c_char;
+}
+extern "C" {
+    #[doc = " convert a c hex string to a byte array storing it into an existing buffer."]
+    #[doc = ""]
+    #[doc = " @param  hexdata: the hex string"]
+    #[doc = " @param  hexlen: the len of the string to read. -1 will use strlen to determine the length."]
+    #[doc = " @param  out: the byte buffer"]
+    #[doc = " @param  outlen: the length of the buffer to write into"]
+    #[doc = " @retval the  number of bytes written"]
+    pub fn hex_to_bytes(
+        hexdata: *const libc::c_char,
+        hexlen: libc::c_int,
+        out: *mut u8,
+        outlen: libc::c_int,
+    ) -> libc::c_int;
+}
+extern "C" {
+    #[doc = " convert a c string to a byte array creating a new buffer"]
+    pub fn hex_to_new_bytes(buf: *const libc::c_char, len: libc::c_int) -> *mut bytes_t;
+}
+extern "C" {
+    #[doc = " convefrts a bytes into hex"]
+    pub fn bytes_to_hex(buffer: *const u8, len: libc::c_int, out: *mut libc::c_char)
+        -> libc::c_int;
+}
+extern "C" {
+    #[doc = " hashes the bytes and creates a new bytes_t"]
+    pub fn sha3(data: *const bytes_t) -> *mut bytes_t;
+}
+extern "C" {
+    #[doc = " writes 32 bytes to the pointer."]
+    pub fn sha3_to(data: *mut bytes_t, dst: *mut libc::c_void) -> libc::c_int;
+}
+extern "C" {
+    #[doc = " converts a long to 8 bytes"]
+    pub fn long_to_bytes(val: u64, dst: *mut u8);
+}
+extern "C" {
+    #[doc = " converts a int to 4 bytes"]
+    pub fn int_to_bytes(val: u32, dst: *mut u8);
+}
+extern "C" {
+    #[doc = " duplicate the string"]
+    pub fn _strdupn(src: *const libc::c_char, len: libc::c_int) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " calculate the min number of byte to represents the len"]
+    pub fn min_bytes_len(val: u64) -> libc::c_int;
+}
+extern "C" {
+    #[doc = " sets a variable value to 32byte word."]
+    pub fn uint256_set(src: *const u8, src_len: wlen_t, dst: *mut u8);
+}
+extern "C" {
+    #[doc = " replaces a string and returns a copy."]
+    #[doc = " @retval"]
+    pub fn str_replace(
+        orig: *mut libc::c_char,
+        rep: *const libc::c_char,
+        with: *const libc::c_char,
+    ) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " replaces a string at the given position."]
+    pub fn str_replace_pos(
+        orig: *mut libc::c_char,
+        pos: usize,
+        len: usize,
+        rep: *const libc::c_char,
+    ) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " lightweight strstr() replacements"]
+    pub fn str_find(haystack: *mut libc::c_char, needle: *const libc::c_char) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " remove all html-tags in the text."]
+    pub fn str_remove_html(data: *mut libc::c_char) -> *mut libc::c_char;
+}
+extern "C" {
+    #[doc = " current timestamp in ms."]
+    pub fn current_ms() -> u64;
+}
+#[doc = " time function"]
+#[doc = " defaults to k_uptime_get() for zeohyr and time(NULL) for other platforms"]
+#[doc = " expected to return a u64 value representative of time (from epoch/start)"]
+pub type time_func = ::core::option::Option<unsafe extern "C" fn(t: *mut libc::c_void) -> u64>;
+extern "C" {
+    pub fn in3_set_func_time(fn_: time_func);
+}
+extern "C" {
+    pub fn in3_time(t: *mut libc::c_void) -> u64;
+}
+#[doc = " rand function"]
+#[doc = " defaults to k_uptime_get() for zeohyr and rand() for other platforms"]
+#[doc = " expected to return a random number"]
+pub type rand_func =
+    ::core::option::Option<unsafe extern "C" fn(s: *mut libc::c_void) -> libc::c_int>;
+extern "C" {
+    pub fn in3_set_func_rand(fn_: rand_func);
+}
+extern "C" {
+    pub fn in3_rand(s: *mut libc::c_void) -> libc::c_int;
+}
+#[doc = " srand function"]
+#[doc = " defaults to NOOP for zephyr and srand() for other platforms"]
+#[doc = " expected to set the seed for a new sequence of random numbers to be returned by in3_rand()"]
+pub type srand_func = ::core::option::Option<unsafe extern "C" fn(s: libc::c_uint)>;
+extern "C" {
+    pub fn in3_set_func_srand(fn_: srand_func);
+}
+extern "C" {
+    pub fn in3_srand(s: libc::c_uint);
+}
 #[repr(i32)]
 #[doc = " ERROR types  used as return values."]
 #[doc = ""]
@@ -14771,240 +15005,6 @@ extern "C" {
         cptr: *mut libc::c_void,
     ) -> *mut in3_storage_handler_t;
 }
-#[doc = " represents a single cache entry in a linked list."]
-#[doc = " These are used within a request context to cache values and automaticly free them."]
-#[repr(C)]
-#[derive(Debug, Copy)]
-pub struct cache_entry {
-    #[doc = "<  an optional key of the entry"]
-    pub key: bytes_t,
-    #[doc = "< the value"]
-    pub value: bytes_t,
-    #[doc = "< the buffer is used to store extra data, which will be cleaned when freed."]
-    pub buffer: [u8; 4usize],
-    #[doc = "< if true, the cache-entry will be freed when the request context is cleaned up."]
-    pub must_free: bool,
-    #[doc = "< pointer to the next entry."]
-    pub next: *mut cache_entry,
-}
-#[test]
-fn bindgen_test_layout_cache_entry() {
-    assert_eq!(
-        ::core::mem::size_of::<cache_entry>(),
-        48usize,
-        concat!("Size of: ", stringify!(cache_entry))
-    );
-    assert_eq!(
-        ::core::mem::align_of::<cache_entry>(),
-        8usize,
-        concat!("Alignment of ", stringify!(cache_entry))
-    );
-    assert_eq!(
-        unsafe { &(*(::core::ptr::null::<cache_entry>())).key as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(cache_entry),
-            "::",
-            stringify!(key)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::core::ptr::null::<cache_entry>())).value as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(cache_entry),
-            "::",
-            stringify!(value)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::core::ptr::null::<cache_entry>())).buffer as *const _ as usize },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(cache_entry),
-            "::",
-            stringify!(buffer)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::core::ptr::null::<cache_entry>())).must_free as *const _ as usize },
-        36usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(cache_entry),
-            "::",
-            stringify!(must_free)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::core::ptr::null::<cache_entry>())).next as *const _ as usize },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(cache_entry),
-            "::",
-            stringify!(next)
-        )
-    );
-}
-impl Clone for cache_entry {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-pub type cache_entry_t = cache_entry;
-extern "C" {
-    #[doc = " get the entry for a given key."]
-    pub fn in3_cache_get_entry(cache: *mut cache_entry_t, key: *mut bytes_t) -> *mut bytes_t;
-}
-extern "C" {
-    #[doc = " adds an entry to the linked list."]
-    pub fn in3_cache_add_entry(
-        cache: *mut *mut cache_entry_t,
-        key: bytes_t,
-        value: bytes_t,
-    ) -> *mut cache_entry_t;
-}
-extern "C" {
-    #[doc = " clears all entries in the linked list."]
-    pub fn in3_cache_free(cache: *mut cache_entry_t);
-}
-extern "C" {
-    #[doc = " converts the bytes to a unsigned long (at least the last max len bytes)"]
-    pub fn bytes_to_long(data: *const u8, len: libc::c_int) -> u64;
-}
-extern "C" {
-    #[doc = " converts a character into a uint64_t"]
-    pub fn char_to_long(a: *const libc::c_char, l: libc::c_int) -> u64;
-}
-extern "C" {
-    #[doc = "  converts a hexchar to byte (4bit)"]
-    pub fn hexchar_to_int(c: libc::c_char) -> u8;
-}
-extern "C" {
-    #[doc = " converts a uint64_t to string (char*); buffer-size min. 21 bytes"]
-    pub fn u64_to_str(
-        value: u64,
-        pBuf: *mut libc::c_char,
-        szBuf: libc::c_int,
-    ) -> *const libc::c_char;
-}
-extern "C" {
-    #[doc = " convert a c hex string to a byte array storing it into an existing buffer."]
-    #[doc = ""]
-    #[doc = " @param  hexdata: the hex string"]
-    #[doc = " @param  hexlen: the len of the string to read. -1 will use strlen to determine the length."]
-    #[doc = " @param  out: the byte buffer"]
-    #[doc = " @param  outlen: the length of the buffer to write into"]
-    #[doc = " @retval the  number of bytes written"]
-    pub fn hex_to_bytes(
-        hexdata: *const libc::c_char,
-        hexlen: libc::c_int,
-        out: *mut u8,
-        outlen: libc::c_int,
-    ) -> libc::c_int;
-}
-extern "C" {
-    #[doc = " convert a c string to a byte array creating a new buffer"]
-    pub fn hex_to_new_bytes(buf: *const libc::c_char, len: libc::c_int) -> *mut bytes_t;
-}
-extern "C" {
-    #[doc = " convefrts a bytes into hex"]
-    pub fn bytes_to_hex(buffer: *const u8, len: libc::c_int, out: *mut libc::c_char)
-        -> libc::c_int;
-}
-extern "C" {
-    #[doc = " hashes the bytes and creates a new bytes_t"]
-    pub fn sha3(data: *const bytes_t) -> *mut bytes_t;
-}
-extern "C" {
-    #[doc = " writes 32 bytes to the pointer."]
-    pub fn sha3_to(data: *mut bytes_t, dst: *mut libc::c_void) -> libc::c_int;
-}
-extern "C" {
-    #[doc = " converts a long to 8 bytes"]
-    pub fn long_to_bytes(val: u64, dst: *mut u8);
-}
-extern "C" {
-    #[doc = " converts a int to 4 bytes"]
-    pub fn int_to_bytes(val: u32, dst: *mut u8);
-}
-extern "C" {
-    #[doc = " duplicate the string"]
-    pub fn _strdupn(src: *const libc::c_char, len: libc::c_int) -> *mut libc::c_char;
-}
-extern "C" {
-    #[doc = " calculate the min number of byte to represents the len"]
-    pub fn min_bytes_len(val: u64) -> libc::c_int;
-}
-extern "C" {
-    #[doc = " sets a variable value to 32byte word."]
-    pub fn uint256_set(src: *const u8, src_len: wlen_t, dst: *mut u8);
-}
-extern "C" {
-    #[doc = " replaces a string and returns a copy."]
-    #[doc = " @retval"]
-    pub fn str_replace(
-        orig: *mut libc::c_char,
-        rep: *const libc::c_char,
-        with: *const libc::c_char,
-    ) -> *mut libc::c_char;
-}
-extern "C" {
-    #[doc = " replaces a string at the given position."]
-    pub fn str_replace_pos(
-        orig: *mut libc::c_char,
-        pos: usize,
-        len: usize,
-        rep: *const libc::c_char,
-    ) -> *mut libc::c_char;
-}
-extern "C" {
-    #[doc = " lightweight strstr() replacements"]
-    pub fn str_find(haystack: *mut libc::c_char, needle: *const libc::c_char) -> *mut libc::c_char;
-}
-extern "C" {
-    #[doc = " remove all html-tags in the text."]
-    pub fn str_remove_html(data: *mut libc::c_char) -> *mut libc::c_char;
-}
-extern "C" {
-    #[doc = " current timestamp in ms."]
-    pub fn current_ms() -> u64;
-}
-#[doc = " time function"]
-#[doc = " defaults to k_uptime_get() for zeohyr and time(NULL) for other platforms"]
-#[doc = " expected to return a u64 value representative of time (from epoch/start)"]
-pub type time_func = ::core::option::Option<unsafe extern "C" fn(t: *mut libc::c_void) -> u64>;
-extern "C" {
-    pub fn in3_set_func_time(fn_: time_func);
-}
-extern "C" {
-    pub fn in3_time(t: *mut libc::c_void) -> u64;
-}
-#[doc = " rand function"]
-#[doc = " defaults to k_uptime_get() for zeohyr and rand() for other platforms"]
-#[doc = " expected to return a random number"]
-pub type rand_func =
-    ::core::option::Option<unsafe extern "C" fn(s: *mut libc::c_void) -> libc::c_int>;
-extern "C" {
-    pub fn in3_set_func_rand(fn_: rand_func);
-}
-extern "C" {
-    pub fn in3_rand(s: *mut libc::c_void) -> libc::c_int;
-}
-#[doc = " srand function"]
-#[doc = " defaults to NOOP for zephyr and srand() for other platforms"]
-#[doc = " expected to set the seed for a new sequence of random numbers to be returned by in3_rand()"]
-pub type srand_func = ::core::option::Option<unsafe extern "C" fn(s: libc::c_uint)>;
-extern "C" {
-    pub fn in3_set_func_srand(fn_: srand_func);
-}
-extern "C" {
-    pub fn in3_srand(s: libc::c_uint);
-}
 #[repr(u32)]
 #[doc = " type of the request context,"]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -15479,6 +15479,44 @@ extern "C" {
         method: *const libc::c_char,
         params: *const libc::c_char,
     ) -> *mut in3_ctx_t;
+}
+extern "C" {
+    #[doc = " creates a request-object, which then need to be filled with the responses."]
+    #[doc = ""]
+    #[doc = " each request object contains a array of reponse-objects. In order to set the response, you need to call"]
+    #[doc = ""]
+    #[doc = " ```c"]
+    #[doc = " // set a succesfull response"]
+    #[doc = " sb_add_chars(&request->results[0].result, my_response);"]
+    #[doc = " // set a error response"]
+    #[doc = " sb_add_chars(&request->results[0].error, my_error);"]
+    #[doc = " ```"]
+    pub fn in3_create_request(ctx: *mut in3_ctx_t) -> *mut in3_request_t;
+}
+extern "C" {
+    #[doc = " frees a previuosly allocated request."]
+    pub fn request_free(req: *mut in3_request_t, ctx: *const in3_ctx_t, response_free: bool);
+}
+extern "C" {
+    #[doc = " sets the error message in the context."]
+    #[doc = ""]
+    #[doc = " If there is a previous error it will append it."]
+    #[doc = " the return value will simply be passed so you can use it like"]
+    #[doc = ""]
+    #[doc = " ```c"]
+    #[doc = "   return ctx_set_error(ctx, \"wrong number of arguments\", IN3_EINVAL)"]
+    #[doc = " ```"]
+    pub fn ctx_set_error_intern(
+        c: *mut in3_ctx_t,
+        msg: *mut libc::c_char,
+        errnumber: in3_ret_t,
+    ) -> in3_ret_t;
+}
+extern "C" {
+    #[doc = " handles a failable context"]
+    #[doc = ""]
+    #[doc = " This context *MUST* be freed with ctx_free(ctx) after usage to release the resources."]
+    pub fn ctx_handle_failable(ctx: *mut in3_ctx_t) -> in3_ret_t;
 }
 #[doc = " a 32 byte long integer used to store ethereum-numbers."]
 #[doc = ""]
@@ -16706,44 +16744,6 @@ extern "C" {
 }
 extern "C" {
     pub fn in3_for_chain_auto_init(chain_id: chain_id_t) -> *mut in3_t;
-}
-extern "C" {
-    #[doc = " creates a request-object, which then need to be filled with the responses."]
-    #[doc = ""]
-    #[doc = " each request object contains a array of reponse-objects. In order to set the response, you need to call"]
-    #[doc = ""]
-    #[doc = " ```c"]
-    #[doc = " // set a succesfull response"]
-    #[doc = " sb_add_chars(&request->results[0].result, my_response);"]
-    #[doc = " // set a error response"]
-    #[doc = " sb_add_chars(&request->results[0].error, my_error);"]
-    #[doc = " ```"]
-    pub fn in3_create_request(ctx: *mut in3_ctx_t) -> *mut in3_request_t;
-}
-extern "C" {
-    #[doc = " frees a previuosly allocated request."]
-    pub fn request_free(req: *mut in3_request_t, ctx: *const in3_ctx_t, response_free: bool);
-}
-extern "C" {
-    #[doc = " sets the error message in the context."]
-    #[doc = ""]
-    #[doc = " If there is a previous error it will append it."]
-    #[doc = " the return value will simply be passed so you can use it like"]
-    #[doc = ""]
-    #[doc = " ```c"]
-    #[doc = "   return ctx_set_error(ctx, \"wrong number of arguments\", IN3_EINVAL)"]
-    #[doc = " ```"]
-    pub fn ctx_set_error_intern(
-        c: *mut in3_ctx_t,
-        msg: *mut libc::c_char,
-        errnumber: in3_ret_t,
-    ) -> in3_ret_t;
-}
-extern "C" {
-    #[doc = " handles a failable context"]
-    #[doc = ""]
-    #[doc = " This context *MUST* be freed with ctx_free(ctx) after usage to release the resources."]
-    pub fn ctx_handle_failable(ctx: *mut in3_ctx_t) -> in3_ret_t;
 }
 pub type __builtin_va_list = [__va_list_tag; 1usize];
 #[repr(C)]
