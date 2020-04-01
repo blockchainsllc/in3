@@ -32,18 +32,28 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub fn execute(&mut self) -> In3Result<()> {
+    pub async fn execute(&mut self) -> In3Result<()> {
         unsafe {
-            let ret = in3_sys::in3_ctx_execute(self.ptr);
-            let req = in3_sys::in3_create_request(self.ptr);
-            let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
-            println!("{}, {}", payload, self.config.to_str().unwrap());
-            let in3_transport = (*(*self.ptr).client).transport.unwrap();
-            in3_transport((*self.ptr).client, req);
-            match ret {
-                in3_sys::in3_ret_t::IN3_OK => Ok(()),
-                _ => Err(ret.into()),
-            }
+            let ret = loop {
+                let ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
+                match ctx_ret {
+                    in3_sys::in3_ret_t::IN3_WAITING => {
+                        println!("IN3_WAITING");
+                    },
+                    in3_sys::in3_ret_t::IN3_OK => {
+                        let req = in3_sys::in3_create_request(self.ptr);
+                        let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
+                        println!("{}, {}", payload, self.config.to_str().unwrap());
+                        let in3_transport = (*(*self.ptr).client).transport.unwrap();
+                        in3_transport((*self.ptr).client, req);
+                        break Ok(());
+                    },
+                    _ => {
+                        break Err(ctx_ret.into());
+                    },
+                }
+            };
+            ret       
         }
     }
 }
@@ -102,6 +112,12 @@ impl Client {
             }
             c
         }
+    }
+
+    pub async fn send_request(&mut self, config_str: &'static str)-> In3Result<()>{
+        let mut ctx = Ctx::new(self, config_str);
+        let _res = ctx.execute().await;
+        _res
     }
 
     pub fn set_transport(&mut self, transport: Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>) {
