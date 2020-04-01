@@ -5,7 +5,7 @@
 #include <in3/log.h>      // logging functions
 #include <in3/signer.h>   // default signer implementation
 #include <in3/utils.h>
-#include <../src/api/signer/ledger-nano/ledger-incubed-signer/ledger_signer.h>
+#include <in3/ledger_signer.h>
 #include <stdio.h>
 
 
