@@ -4,14 +4,20 @@ use async_std::task;
 
 use in3::prelude::*;
 
-async fn send_async() {
+fn send() {
     let mut c = Client::new(chain::MAINNET, false);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     let mut ctx = Ctx::new(&mut c, r#"{"method": "eth_blockNumber", "params": []}"#);
     c.send(&mut ctx);
 }
 
-fn send_request() {
+async fn send_request() {
+    let mut c = Client::new(chain::MAINNET, false);
+    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    c.send_request(r#"{"method": "eth_blockNumber", "params": []}"#).await;
+}
+
+fn send_execute() {
     let mut c = Client::new(chain::MAINNET, true);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     let mut ctx = Ctx::new(&mut c, r#"{"method": "eth_blockNumber", "params": []}"#);
@@ -28,10 +34,10 @@ fn rpc_call() {
 }
 
 fn main() {
-    // rpc_call();
-    // let future = send_async();
-    // task::block_on(future);
-    send_request();
+    //rpc_call();
+    let future = send_request();
+    task::block_on(future);
+    //send_request();
 }
 
 

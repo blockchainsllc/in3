@@ -32,28 +32,73 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub async fn execute(&mut self) -> In3Result<()> {
+   
+    pub async fn execute(&mut self) -> In3Result<String> {
         unsafe {
+            let mut ctx_ret; 
             let ret = loop {
-                let ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
+                ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
+                let mut last_waiting: *mut in3_sys::in3_ctx_t;
+                let mut p: *mut in3_sys::in3_ctx_t;
+                last_waiting = (*self.ptr).required;
+                p = self.ptr;
                 match ctx_ret {
                     in3_sys::in3_ret_t::IN3_WAITING => {
-                        println!("IN3_WAITING");
+                        while p != std::ptr::null_mut() {
+                            let state = in3_sys::in3_ctx_state(p);
+                            let res = (*p).raw_response;
+                            if  res  == std::ptr::null_mut() && state == in3_sys::state::CTX_WAITING_FOR_RESPONSE {
+                                last_waiting = p;
+                            }
+                            p = (*last_waiting).required;
+                        }
+                        if last_waiting != std::ptr::null_mut() {
+
+                            let req_type = (*last_waiting).type_;
+                            match req_type {
+                                in3_sys::ctx_type::CT_SIGN => {
+                                    println!("TODO CT_SIGN");
+                                    break Ok("TODO");
+                                },
+                                in3_sys::ctx_type::CT_RPC => {
+                                    let req = in3_sys::in3_create_request(last_waiting);
+                                    let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
+                                    println!("{}, {}", payload, self.config.to_str().unwrap());
+                                    let in3_transport = (*(*self.ptr).client).transport.unwrap();
+                                    in3_transport((*self.ptr).client, req);
+                                    let result = (*(*req).results.offset(0)).result;
+                                    let len = result.len;
+                                    let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+                                    println!("{}", data);
+                                    if len != 0 {
+                                        break Ok(data);
+                                    }
+                                    else{
+                                        let error = (*(*req).results.offset(0)).error;
+                                        let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
+                                        break Err(err);
+                                    }
+                                    //let len = (*result).len;
+                                    
+                                }
+                            }
+                        }
+                        else {
+                            // break Err("Cound not find the last waiting context");
+                            break Ok("Success");
+                        }
+                        
                     },
                     in3_sys::in3_ret_t::IN3_OK => {
-                        let req = in3_sys::in3_create_request(self.ptr);
-                        let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
-                        println!("{}, {}", payload, self.config.to_str().unwrap());
-                        let in3_transport = (*(*self.ptr).client).transport.unwrap();
-                        in3_transport((*self.ptr).client, req);
-                        break Ok(());
+                        
                     },
                     _ => {
-                        break Err(ctx_ret.into());
+                        break Err("EIGNORE");
                     },
                 }
             };
-            ret       
+            let ret_str:String = ret.unwrap().to_owned();
+            Ok(ret_str)       
         }
     }
 }
@@ -92,9 +137,6 @@ impl Drop for Request {
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
     transport: Option<Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>>,
-    storage_get: Option<Box<dyn FnMut(&str) -> Vec<u8>>>,
-    storage_set: Option<Box<dyn FnMut(&str, &[u8])>>,
-    storage_clear: Option<Box<dyn FnMut()>>,
 }
 
 impl Client {
@@ -103,71 +145,37 @@ impl Client {
             let mut c = Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: None,
-                storage_get: None,
-                storage_set: None,
-                storage_clear: None,
             };
-            if !custom_transport  {
+            if custom_transport  {
                 c.set_transport(Box::new(crate::transport::transport_http));
             }
             c
         }
     }
 
-    pub async fn send_request(&mut self, config_str: &'static str)-> In3Result<()>{
+    pub async fn send_request(&mut self, config_str: &'static str)-> In3Result<String>{
         let mut ctx = Ctx::new(self, config_str);
         let _res = ctx.execute().await;
         _res
+    }
+
+    pub fn send(&self, ctx: &mut Ctx) -> In3Result<()> {
+        unsafe {
+            let ret = in3_sys::in3_send_ctx(ctx.ptr);
+            match ret {
+                in3_sys::in3_ret_t::IN3_OK => Ok(()),
+                _ => Err(ret.into()),
+            }
+        }
     }
 
     pub fn set_transport(&mut self, transport: Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>) {
         self.transport = Some(transport);
         unsafe {
             (*self.ptr).transport = Some(Client::in3_rust_transport);
-            (*self.ptr).cache = in3_sys::in3_create_storage_handler(Some(Client::in3_rust_storage_get),
-                                                                    Some(Client::in3_rust_storage_set),
-                                                                    Some(Client::in3_rust_storage_clear),
-                                                                    self.ptr as *mut libc::c_void);
             self.update_internal();
         }
     }
-
-    pub fn set_storage<T>(&mut self, get: Box<dyn FnMut(&str) -> Vec<u8>>,
-                          set: Box<dyn FnMut(&str, &[u8])>,
-                          clear: Box<dyn FnMut()>) {
-        self.storage_get = Some(get);
-        self.storage_set = Some(set);
-        self.storage_clear = Some(clear);
-        unsafe {
-            (*(*self.ptr).cache).get_item = Some(Client::in3_rust_storage_get);
-            (*(*self.ptr).cache).set_item = Some(Client::in3_rust_storage_set);
-            (*(*self.ptr).cache).clear = Some(Client::in3_rust_storage_clear);
-            self.update_internal();
-        }
-    }
-
-    unsafe extern fn in3_rust_storage_get(cptr: *mut libc::c_void, key: *const libc::c_char) -> *mut in3_sys::bytes_t {
-        let key = ffi::CStr::from_ptr(key).to_str().unwrap();
-        let val = Vec::<u8>::new();
-        let client = cptr as *mut in3_sys::in3_t;
-        let c = Client::get_internal(client);
-        let val: Option<Vec<u8>> = match &mut (*c).storage_get {
-            None => { None }
-            Some(get) => { Some((*get)(key)) }
-        };
-        match val {
-            Some(val) => in3_sys::b_new(val.as_ptr(), val.len()),
-            None => std::ptr::null_mut()
-        }
-    }
-
-    unsafe extern fn in3_rust_storage_set(cptr: *mut libc::c_void, key: *const libc::c_char, value: *mut in3_sys::bytes_t) {
-        let key = ffi::CStr::from_ptr(key).to_str().unwrap();
-        // let val = Vec::<u8>::new();
-        // in3_sys::b_new(val.as_ptr(), val.len())
-    }
-
-    unsafe extern fn in3_rust_storage_clear(cptr: *mut libc::c_void) {}
 
     extern fn in3_rust_transport(client: *mut in3_sys::in3_t, request: *mut in3_sys::in3_request_t) -> in3_sys::in3_ret_t::Type {
         // internally calls the rust transport impl, i.e. Client.transport
@@ -231,15 +239,7 @@ impl Client {
         Ok(())
     }
 
-    pub fn send(&self, ctx: &mut Ctx) -> In3Result<()> {
-        unsafe {
-            let ret = in3_sys::in3_send_ctx(ctx.ptr);
-            match ret {
-                in3_sys::in3_ret_t::IN3_OK => Ok(()),
-                _ => Err(ret.into()),
-            }
-        }
-    }
+    
 
     pub fn rpc(&mut self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
