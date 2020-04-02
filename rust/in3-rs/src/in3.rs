@@ -111,9 +111,9 @@ impl Client {
         self.transport = Some(transport);
     }
 
-    pub fn set_storage<T>(&mut self, get: Box<dyn FnMut(&str) -> Vec<u8>>,
-                          set: Box<dyn FnMut(&str, &[u8])>,
-                          clear: Box<dyn FnMut()>) {
+    pub fn set_storage(&mut self, get: Box<dyn FnMut(&str) -> Vec<u8>>,
+                       set: Box<dyn FnMut(&str, &[u8])>,
+                       clear: Box<dyn FnMut()>) {
         self.storage_get = Some(get);
         self.storage_set = Some(set);
         self.storage_clear = Some(clear);
@@ -121,7 +121,6 @@ impl Client {
 
     unsafe extern fn in3_rust_storage_get(cptr: *mut libc::c_void, key: *const libc::c_char) -> *mut in3_sys::bytes_t {
         let key = ffi::CStr::from_ptr(key).to_str().unwrap();
-        let val = Vec::<u8>::new();
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
         let val: Option<Vec<u8>> = match &mut (*c).storage_get {
@@ -136,11 +135,23 @@ impl Client {
 
     unsafe extern fn in3_rust_storage_set(cptr: *mut libc::c_void, key: *const libc::c_char, value: *mut in3_sys::bytes_t) {
         let key = ffi::CStr::from_ptr(key).to_str().unwrap();
-        // let val = Vec::<u8>::new();
-        // in3_sys::b_new(val.as_ptr(), val.len())
+        let value = std::slice::from_raw_parts_mut((*value).data, (*value).len);
+        let client = cptr as *mut in3_sys::in3_t;
+        let c = (*client).internal as *mut Client;
+        match &mut (*c).storage_set {
+            None => { None }
+            Some(set) => { Some((*set)(key, value)) }
+        };
     }
 
-    unsafe extern fn in3_rust_storage_clear(cptr: *mut libc::c_void) {}
+    unsafe extern fn in3_rust_storage_clear(cptr: *mut libc::c_void) {
+        let client = cptr as *mut in3_sys::in3_t;
+        let c = (*client).internal as *mut Client;
+        match &mut (*c).storage_clear {
+            None => { None }
+            Some(clear) => { Some((*clear)()) }
+        };
+    }
 
     extern fn in3_rust_transport(client: *mut in3_sys::in3_t, request: *mut in3_sys::in3_request_t) -> in3_sys::in3_ret_t::Type {
         // internally calls the rust transport impl, i.e. Client.transport
