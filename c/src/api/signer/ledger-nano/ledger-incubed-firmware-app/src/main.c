@@ -40,10 +40,11 @@ static void ui_approval(void);
 #define P1_LAST 0x80
 #define P1_MORE 0x00
 
-// private key in flash. const and N_ variable name are mandatory here
-static const cx_ecfp_private_key_t N_privateKey;
-// initialization marker in flash. const and N_ variable name are mandatory here
-static const unsigned char N_initialized;
+static const unsigned int path[5]= {44|0x80000000, 60|0x80000000, 0|0x80000000, 0, 0};
+unsigned char private_key_data[32];
+
+cx_ecfp_public_key_t public_key;
+cx_ecfp_private_key_t private_key;
 
 static char lineBuffer[50];
 static cx_sha256_t hash;
@@ -337,7 +338,7 @@ io_seproxyhal_touch_approve(const bagl_element_t *e) {
         // Hash is finalized, send back the signature
         unsigned char result[32];
         cx_hash(&hash.header, CX_LAST, G_io_apdu_buffer, 0, result);
-        tx = cx_ecdsa_sign((void*) &N_privateKey, CX_RND_RFC6979 | CX_LAST,
+        tx = cx_ecdsa_sign((void*) private_key_data, CX_RND_RFC6979 | CX_LAST,
                            CX_SHA256, result, sizeof(result), G_io_apdu_buffer, NULL);
         G_io_apdu_buffer[0] &= 0xF0; // discard the parity information
         hashTainted = 1;
@@ -446,13 +447,13 @@ static void sample_main(void) {
                 } break;
 
                 case INS_GET_PUBLIC_KEY: {
-                    cx_ecfp_public_key_t publicKey;
-                    cx_ecfp_private_key_t privateKey;
-                    os_memmove(&privateKey, &N_privateKey,
-                               sizeof(cx_ecfp_private_key_t));
-                    cx_ecfp_generate_pair(CX_CURVE_256K1, &publicKey,
-                                          &privateKey, 1);
-                    os_memmove(G_io_apdu_buffer, publicKey.W, 65);
+                    os_perso_derive_node_bip32(CX_CURVE_256K1, path, 5, private_key_data, NULL);
+                  
+                    cx_ecdsa_init_private_key(CX_CURVE_256K1, private_key_data, 32, &private_key);
+					
+					cx_ecfp_generate_pair(CX_CURVE_256K1, &public_key, &private_key,1);
+
+                    os_memmove(G_io_apdu_buffer, public_key.W, 65);
                     tx = 65;
                     THROW(0x9000);
                 } break;
@@ -628,17 +629,17 @@ __attribute__((section(".boot"))) int main(void) {
             io_seproxyhal_init();
 
             // Create the private key if not initialized
-            if (N_initialized != 0x01) {
-                unsigned char canary;
-                cx_ecfp_private_key_t privateKey;
-                cx_ecfp_public_key_t publicKey;
-                cx_ecfp_generate_pair(CX_CURVE_256K1, &publicKey, &privateKey,
-                                      0);
-                nvm_write((void*) &N_privateKey, &privateKey,
-                          sizeof(privateKey));
-                canary = 0x01;
-                nvm_write((void*) &N_initialized, &canary, sizeof(canary));
-            }
+            // if (N_initialized != 0x01) {
+                // unsigned char canary;
+                // cx_ecfp_private_key_t privateKey;
+                // cx_ecfp_public_key_t publicKey;
+                // cx_ecfp_generate_pair(CX_CURVE_256K1, &publicKey, &privateKey,
+                //                       0);
+                // nvm_write((void*) &N_privateKey, &privateKey,
+                //           sizeof(privateKey));
+                // canary = 0x01;
+                // nvm_write((void*) &N_initialized, &canary, sizeof(canary));
+            // }
 
 #ifdef LISTEN_BLE
             if (os_seph_features() &
