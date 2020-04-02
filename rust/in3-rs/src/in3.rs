@@ -85,15 +85,23 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(chain_id: chain::ChainId) -> Client {
+    pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
-            let mut c = Client {
+            let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: None,
                 storage_get: None,
                 storage_set: None,
                 storage_clear: None,
-            };
+            });
+            let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
+            (*c.ptr).internal = c_ptr;
+            (*c.ptr).transport = Some(Client::in3_rust_transport);
+            (*c.ptr).cache = in3_sys::in3_create_storage_handler(Some(Client::in3_rust_storage_get),
+                                                                 Some(Client::in3_rust_storage_set),
+                                                                 Some(Client::in3_rust_storage_clear),
+                                                                 c.ptr as *mut libc::c_void);
+
             c.set_transport(Box::new(crate::transport::transport_http));
             c
         }
@@ -101,14 +109,6 @@ impl Client {
 
     pub fn set_transport(&mut self, transport: Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>) {
         self.transport = Some(transport);
-        unsafe {
-            (*self.ptr).transport = Some(Client::in3_rust_transport);
-            (*self.ptr).cache = in3_sys::in3_create_storage_handler(Some(Client::in3_rust_storage_get),
-                                                                    Some(Client::in3_rust_storage_set),
-                                                                    Some(Client::in3_rust_storage_clear),
-                                                                    self.ptr as *mut libc::c_void);
-            self.update_internal();
-        }
     }
 
     pub fn set_storage<T>(&mut self, get: Box<dyn FnMut(&str) -> Vec<u8>>,
@@ -117,19 +117,13 @@ impl Client {
         self.storage_get = Some(get);
         self.storage_set = Some(set);
         self.storage_clear = Some(clear);
-        unsafe {
-            (*(*self.ptr).cache).get_item = Some(Client::in3_rust_storage_get);
-            (*(*self.ptr).cache).set_item = Some(Client::in3_rust_storage_set);
-            (*(*self.ptr).cache).clear = Some(Client::in3_rust_storage_clear);
-            self.update_internal();
-        }
     }
 
     unsafe extern fn in3_rust_storage_get(cptr: *mut libc::c_void, key: *const libc::c_char) -> *mut in3_sys::bytes_t {
         let key = ffi::CStr::from_ptr(key).to_str().unwrap();
         let val = Vec::<u8>::new();
         let client = cptr as *mut in3_sys::in3_t;
-        let c = Client::get_internal(client);
+        let c = (*client).internal as *mut Client;
         let val: Option<Vec<u8>> = match &mut (*c).storage_get {
             None => { None }
             Some(get) => { Some((*get)(key)) }
@@ -160,7 +154,7 @@ impl Client {
                 urls.push(url);
             }
 
-            let c = Client::get_internal(client);
+            let c = (*client).internal as *mut Client;
             let responses: Vec<Result<String, String>> = match &mut (*c).transport {
                 None => { panic!("Missing transport!") }
                 Some(transport) => { (*transport)(payload, &urls) }
@@ -187,15 +181,6 @@ impl Client {
         }
 
         in3_sys::in3_ret_t::IN3_OK
-    }
-
-    unsafe fn get_internal(ptr: *mut in3_sys::in3_t) -> *mut Client {
-        (*ptr).internal as *mut Client
-    }
-
-    unsafe fn update_internal(&mut self) {
-        let c_ptr: *mut ffi::c_void = self as *mut _ as *mut ffi::c_void;
-        (*self.ptr).internal = c_ptr;
     }
 
     // in3 client config
