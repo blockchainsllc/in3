@@ -128,14 +128,14 @@ impl Client {
             Some(get) => { Some((*get)(key)) }
         };
         match val {
-            Some(val) => in3_sys::b_new(val.as_ptr(), val.len()),
+            Some(val) => in3_sys::b_new(val.as_ptr(), val.len() as u32),
             None => std::ptr::null_mut()
         }
     }
 
     unsafe extern fn in3_rust_storage_set(cptr: *mut libc::c_void, key: *const libc::c_char, value: *mut in3_sys::bytes_t) {
         let key = ffi::CStr::from_ptr(key).to_str().unwrap();
-        let value = std::slice::from_raw_parts_mut((*value).data, (*value).len);
+        let value = std::slice::from_raw_parts_mut((*value).data, (*value).len as usize);
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
         match &mut (*c).storage_set {
