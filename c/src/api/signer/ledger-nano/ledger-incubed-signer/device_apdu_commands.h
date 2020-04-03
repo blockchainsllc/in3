@@ -42,18 +42,21 @@
 #ifndef in3_ledger_signer_h__
 #define in3_ledger_signer_h__
 
+#define HID_CMD_MAX_LEN 64
+
 #define cla 0x80
 #define INS_GET_PUBLIC_KEY 0x04
 #define INS_SIGN 0x02
 
+#define TAG 0x05
 
 
 
-void wrap_apdu()
-{}
+int int_to_bytes(uint16_t x, uint8_t* buf);
 
-void unwrap_apdu()
-{}
+void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t o_wrapped_hid_cmd);
+
+void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t o_apdu_res);
 
 
 

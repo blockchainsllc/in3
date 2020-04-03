@@ -43,7 +43,7 @@
 #ifndef in3_ledger_signer_h__
 #define in3_ledger_signer_h__
 
-#include "../../../../../include/in3/client.h"
+#include "../../core/client/client.h"
 #define LEDGER_NANOS_VID 0x2C97
 #define LEDGER_NANOS_PID 0x1001
 
