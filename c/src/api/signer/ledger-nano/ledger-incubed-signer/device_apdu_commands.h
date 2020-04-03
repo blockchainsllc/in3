@@ -54,6 +54,8 @@
 
 int int_to_bytes(uint16_t x, uint8_t* buf);
 
+uint16_t bytes_to_int(uint8_t* buf);
+
 void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t o_wrapped_hid_cmd);
 
 void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t o_apdu_res);
