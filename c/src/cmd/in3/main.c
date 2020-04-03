@@ -613,13 +613,6 @@ int main(int argc, char* argv[]) {
   int       p  = 1, i;
   bytes32_t pk;
 
-  // use the storagehandler to cache data in .in3
-  in3_storage_handler_t storage_handler;
-  storage_handler.get_item = storage_get_item;
-  storage_handler.set_item = storage_set_item;
-  storage_handler.clear    = storage_clear;
-  storage_handler.cptr     = NULL;
-
   // we want to verify all
   in3_register_eth_full();
 #ifdef IPFS
@@ -635,7 +628,6 @@ int main(int argc, char* argv[]) {
   in3_t* c                         = in3_for_chain(0);
   c->transport                     = debug_transport;
   c->request_count                 = 1;
-  c->cache                         = &storage_handler;
   bool            out_response     = false;
   bool            run_test_request = false;
   bool            force_hex        = false;
@@ -655,6 +647,10 @@ int main(int argc, char* argv[]) {
   char*           port             = NULL;
   char*           sig_type         = "raw";
   bool            to_eth           = false;
+
+  // use the storagehandler to cache data in .in3
+  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
+
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
@@ -665,9 +661,6 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
       c->cache->clear(c->cache->cptr);
-
-  // read data from cache
-  in3_cache_init(c);
 
   // check env
   if (getenv("IN3_PK")) {

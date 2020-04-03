@@ -213,7 +213,8 @@ in3_signer_t* in3_create_signer(
   return signer;
 }
 
-in3_storage_handler_t* in3_create_storage_handler(
+in3_storage_handler_t* in3_set_storage_handler(
+    in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
@@ -224,5 +225,7 @@ in3_storage_handler_t* in3_create_storage_handler(
   handler->get_item              = get_item;
   handler->set_item              = set_item;
   handler->clear                 = clear;
+  c->cache                       = handler;
+  in3_cache_init(c);
   return handler;
 }

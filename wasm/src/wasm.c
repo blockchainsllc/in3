@@ -218,12 +218,8 @@ char* EMSCRIPTEN_KEEPALIVE base64Encode(uint8_t* input, int len) {
 }
 #endif
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
-  in3_t* c           = in3_for_chain(chain);
-  c->cache           = malloc(sizeof(in3_storage_handler_t));
-  c->cache->get_item = storage_get_item;
-  c->cache->set_item = storage_set_item;
-
-  in3_cache_init(c);
+  in3_t* c = in3_for_chain(chain);
+  in3_set_storage(c, storage_get_item, storage_set_item, NULL, NULL);
   in3_set_error(NULL);
   return c;
 }

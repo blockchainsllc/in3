@@ -118,11 +118,8 @@ static void cache_set_item(void* cptr, const char* key, bytes_t* value) {
 }
 
 void static setup_test_cache(in3_t* c) {
-  cache_t* cache     = calloc(1, sizeof(cache_t));
-  c->cache           = _malloc(sizeof(in3_storage_handler_t));
-  c->cache->cptr     = cache;
-  c->cache->get_item = cache_get_item;
-  c->cache->set_item = cache_set_item;
+  cache_t* cache = calloc(1, sizeof(cache_t));
+  in3_set_storage_handler(c, cache_get_item, cache_set_item, NULL, cache);
 }
 
 static void test_cache() {

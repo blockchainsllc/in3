@@ -116,7 +116,6 @@ impl Client {
         self.storage_get = Some(get);
         self.storage_set = Some(set);
         self.storage_clear = Some(clear);
-        unsafe { in3_sys::in3_cache_init(self.ptr); }
     }
 
     unsafe extern fn in3_rust_storage_get(cptr: *mut libc::c_void, key: *const libc::c_char) -> *mut in3_sys::bytes_t {

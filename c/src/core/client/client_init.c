@@ -420,6 +420,7 @@ void in3_free(in3_t* a) {
     _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->signer) _free(a->signer);
+  if (a->cache) _free(a->cache);
   if (a->chains) _free(a->chains);
 
   if (a->filters) {
