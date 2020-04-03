@@ -79,6 +79,9 @@
 #include "../../api/ipfs/ipfs_api.h"
 #include "../../verifier/ipfs/ipfs.h"
 #endif
+#ifdef PAY_ETH
+#include "../../pay/eth/pay_eth.h"
+#endif
 
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
@@ -629,6 +632,10 @@ int main(int argc, char* argv[]) {
   in3_register_btc();
 #endif
   in3_register_eth_api();
+
+#ifdef PAY_ETH
+  in3_register_pay_eth();
+#endif
   in3_log_set_level(LOG_INFO);
 
   // create the client
