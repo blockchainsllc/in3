@@ -903,7 +903,7 @@ int main(int argc, char* argv[]) {
       in3_node_t*        node        = chain->nodelist + i;
       in3_node_weight_t* weight      = chain->weights + i;
       uint64_t           blacklisted = weight->blacklisted_until > now ? weight->blacklisted_until : 0;
-      uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity);
+      uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity, now);
       char *             tr = NULL, *warning = NULL;
       if (ctx) {
         tr = _malloc(300);
@@ -915,6 +915,9 @@ int main(int argc, char* argv[]) {
             sprintf((warning = tr), "#%i ( out of sync : %i blocks behind latest )", b, block - b);
           else if (strncmp(node->url, "https://", 8))
             sprintf((warning = tr), "#%i (missing https, which is required in a browser )", b);
+          else if (!IS_APPROX(d_get_intk(ctx->responses[0], K_RESULT), d_get_intk(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK), 1))
+            sprintf((warning = tr), "#%i ( current block mismatch: %i blocks apart )", b,
+                    d_get_intk(ctx->responses[0], K_RESULT) - d_get_intk(d_get(ctx->responses[0], K_IN3), K_CURRENT_BLOCK));
           else
             sprintf(tr, "#%i", b);
         } else if (!strlen(node->url) || !node->props)
