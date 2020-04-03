@@ -139,8 +139,8 @@ static void test_cache() {
   in3_cache_init(c);
   TEST_ASSERT_EQUAL_INT32(2, chain->nodelist_length);
 
-  // now we update the node (from testfiles)
-  TEST_ASSERT_EQUAL(0, update_nodes(c, chain));
+  // now we update the node (from testfiles)r
+  update_nodes(c, chain);
 
   // the nodeList should have 5 nodes now
   TEST_ASSERT_EQUAL_INT32(7, chain->nodelist_length);
