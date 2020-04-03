@@ -609,9 +609,9 @@ char* in3_configure(in3_t* c, const char* config) {
       c->node_limit = (uint16_t) d_int(token);
     } else if (token->key == key("pay")) {
       EXPECT_TOK_OBJ(token);
+#ifdef PAY
       char* type = d_get_string(token, "type");
       if (!type) type = "eth";
-#ifdef PAY
       pay_configure_t* p = find_payment(type);
       EXPECT_TOK(token, p, "the payment type was not registered");
       char* err = p->configure(c, token);
