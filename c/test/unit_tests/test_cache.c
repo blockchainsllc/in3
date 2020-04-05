@@ -288,7 +288,7 @@ static void test_whitelist_cache() {
 
   in3_t* c2    = in3_for_chain(0);
   c2->chain_id = c->chain_id;
-  c2->cache    = c->cache;
+  in3_set_storage_handler(c2, cache_get_item, cache_set_item, NULL, c->cache->cptr);
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, wlc);
   TEST_ASSERT_EQUAL(IN3_OK, in3_cache_update_whitelist(c2, in3_find_chain(c2, 0x8)));
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c2, 0x8)->whitelist->contract, wlc, 20);
