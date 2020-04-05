@@ -77,7 +77,7 @@ static char* to_hex_string(uint8_t* data, int l) {
 */
 // --------------- storage -------------------
 // clang-format off
-EM_JS(char*, in3_cache_get, (char* key), {
+EM_JS(char*, in3_cache_get, (const char* key), {
   var val = Module.in3_cache.get(UTF8ToString(key));
   if (val) {
     var len = (val.length << 2) + 1;
@@ -88,7 +88,7 @@ EM_JS(char*, in3_cache_get, (char* key), {
   return 0;
 })
 
-EM_JS(void, in3_cache_set, (char* key, char* val), {
+EM_JS(void, in3_cache_set, (const char* key, char* val), {
   Module.in3_cache.set(UTF8ToString(key),UTF8ToString(val));
 })
 
@@ -97,14 +97,14 @@ char* EMSCRIPTEN_KEEPALIVE  in3_version() {
 }
 // clang-format on
 
-bytes_t* storage_get_item(void* cptr, char* key) {
+bytes_t* storage_get_item(void* cptr, const char* key) {
   UNUSED_VAR(cptr);
   char*    val = in3_cache_get(key);
   bytes_t* res = val ? hex_to_new_bytes(val, strlen(val)) : NULL;
   return res;
 }
 
-void storage_set_item(void* cptr, char* key, bytes_t* content) {
+void storage_set_item(void* cptr, const char* key, bytes_t* content) {
   UNUSED_VAR(cptr);
   char buffer[content->len * 2 + 1];
   bytes_to_hex(content->data, content->len, buffer);
@@ -219,7 +219,7 @@ char* EMSCRIPTEN_KEEPALIVE base64Encode(uint8_t* input, int len) {
 #endif
 in3_t* EMSCRIPTEN_KEEPALIVE in3_create(chain_id_t chain) {
   in3_t* c = in3_for_chain(chain);
-  in3_set_storage(c, storage_get_item, storage_set_item, NULL, NULL);
+  in3_set_storage_handler(c, storage_get_item, storage_set_item, NULL, NULL);
   in3_set_error(NULL);
   return c;
 }
