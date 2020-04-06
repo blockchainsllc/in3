@@ -43,6 +43,21 @@ impl Ctx {
                 last_waiting = (*self.ptr).required;
                 p = self.ptr;
                 match ctx_ret {
+                    in3_sys::in3_ret_t::IN3_EIGNORE => {
+                        while p != std::ptr::null_mut() {
+                            let p_req = (*p).required;
+                            if  p_req  != std::ptr::null_mut() && (*p_req).verification_state == in3_sys::in3_ret_t::IN3_EIGNORE {
+                                last_waiting = p;
+                            }
+                            p = (*last_waiting).required;
+                        }
+                        if last_waiting == std::ptr::null_mut() {
+                            break Err("Cound not find the last waiting context");
+                        }
+                        else{
+                            in3_sys::ctx_handle_failable(last_waiting);
+                        }
+                    }
                     in3_sys::in3_ret_t::IN3_WAITING => {
                         while p != std::ptr::null_mut() {
                             let state = in3_sys::in3_ctx_state(p);
@@ -52,49 +67,52 @@ impl Ctx {
                             }
                             p = (*last_waiting).required;
                         }
-                        if last_waiting != std::ptr::null_mut() {
-
-                            let req_type = (*last_waiting).type_;
-                            match req_type {
-                                in3_sys::ctx_type::CT_SIGN => {
-                                    println!("TODO CT_SIGN");
-                                    break Ok("TODO");
-                                },
-                                in3_sys::ctx_type::CT_RPC => {
-                                    let req = in3_sys::in3_create_request(last_waiting);
-                                    let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
-                                    println!("{}, {}", payload, self.config.to_str().unwrap());
-                                    let in3_transport = (*(*self.ptr).client).transport.unwrap();
-                                    in3_transport((*self.ptr).client, req);
-                                    let result = (*(*req).results.offset(0)).result;
-                                    let len = result.len;
-                                    let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                                    println!("{}", data);
-                                    if len != 0 {
-                                        break Ok(data);
-                                    }
-                                    else{
-                                        let error = (*(*req).results.offset(0)).error;
-                                        let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
-                                        break Err(err);
-                                    }
-                                    //let len = (*result).len;
-                                    
-                                }
-                            }
-                        }
-                        else {
-                            // break Err("Cound not find the last waiting context");
-                            break Ok("Success");
+                        if last_waiting == std::ptr::null_mut() {
+                            break Err("Cound not find the last waiting context");
                         }
                         
                     },
                     in3_sys::in3_ret_t::IN3_OK => {
+                        let result = (*(*self.ptr).response_context).c;
+                        let data = ffi::CStr::from_ptr(result).to_str().unwrap();
+                        println!("{}", data);
+                        break Ok(data);
                         
                     },
                     _ => {
                         break Err("EIGNORE");
                     },
+                }
+
+                if last_waiting != std::ptr::null_mut() {
+
+                    let req_type = (*last_waiting).type_;
+                    match req_type {
+                        in3_sys::ctx_type::CT_SIGN => {
+                            println!("TODO CT_SIGN");
+                            break Ok("TODO");
+                        },
+                        in3_sys::ctx_type::CT_RPC => {
+                            let req = in3_sys::in3_create_request(last_waiting);
+                            let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
+                            println!("{}, {}", payload, self.config.to_str().unwrap());
+                            let in3_transport = (*(*self.ptr).client).transport.unwrap();
+                            in3_transport((*self.ptr).client, req);
+                            let result = (*(*req).results.offset(0)).result;
+                            let len = result.len;
+                            let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+                            println!("{}", data);
+                            if len != 0 {
+                                break Ok(data);
+                            }
+                            else{
+                                let error = (*(*req).results.offset(0)).error;
+                                let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
+                                break Err(err);
+                            }
+                            
+                        }
+                    }
                 }
             };
             let ret_str:String = ret.unwrap().to_owned();
@@ -140,6 +158,13 @@ pub struct Client {
 }
 
 impl Client {
+
+    pub async fn send_request(&mut self, config_str: &'static str)-> In3Result<String>{
+        let mut ctx = Ctx::new(self, config_str);
+        let _res = ctx.execute().await;
+        _res
+    }
+
     pub fn new(chain_id: chain::ChainId, custom_transport:bool) -> Client {
         unsafe {
             let mut c = Client {
@@ -151,12 +176,6 @@ impl Client {
             }
             c
         }
-    }
-
-    pub async fn send_request(&mut self, config_str: &'static str)-> In3Result<String>{
-        let mut ctx = Ctx::new(self, config_str);
-        let _res = ctx.execute().await;
-        _res
     }
 
     pub fn send(&self, ctx: &mut Ctx) -> In3Result<()> {
@@ -274,14 +293,14 @@ mod tests {
 
     #[test]
     fn test_in3_config() {
-        let mut in3 = Client::new(chain::MAINNET);
+        let mut in3 = Client::new(chain::MAINNET,false);
         let c = in3.configure(r#"{"autoUpdateList":false}"#);
         assert_eq!(c.is_err(), false);
     }
 
     #[test]
     fn test_in3_create_request() {
-        let mut in3 = Client::new(chain::MAINNET);
+        let mut in3 = Client::new(chain::MAINNET,false);
         let mut ctx = Ctx::new(&mut in3, r#"{"method":"eth_blockNumber","params":[]}"#);
         let _request = Request::new(&mut ctx);
         let _ = ctx.execute();

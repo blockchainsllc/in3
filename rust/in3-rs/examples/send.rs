@@ -37,6 +37,7 @@ fn main() {
     //rpc_call();
     let future = send_request();
     task::block_on(future);
+    // add tasks and run on executor. 
     //send_request();
 }
 
