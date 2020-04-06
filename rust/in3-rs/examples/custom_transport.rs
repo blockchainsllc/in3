@@ -12,6 +12,6 @@ fn main() {
     }));
     match c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#) {
         Ok(res) => println!("{}", res),
-        Err(err) => println!("{}", err)
+        Err(err) => println!("{}", err),
     }
 }

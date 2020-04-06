@@ -52,7 +52,6 @@ enum LinkType {
     Static,
 }
 
-
 /// Search for header in search paths
 fn find_in3_header(header_search_paths: &Vec<PathBuf>, name: &str) -> Option<PathBuf> {
     for search_path in header_search_paths.iter() {
@@ -70,17 +69,14 @@ fn env_var(var: &str) -> String {
 }
 
 /// Create bindings using bindgen
-fn write_bindgen_bindings(
-    header_search_paths: &Vec<PathBuf>,
-    out_bindings_path: PathBuf,
-) {
+fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path: PathBuf) {
     let pregenerated_bindgen_header: PathBuf = [
         env_var("CARGO_MANIFEST_DIR"),
         "pre_generated".into(),
         BINDINGS_FILE.into(),
     ]
-        .iter()
-        .collect();
+    .iter()
+    .collect();
     let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Stable_1_19)
         .size_t_is_usize(true)
@@ -111,28 +107,26 @@ fn write_bindgen_bindings(
     bindings
         .write_to_file(&out_bindings_path)
         .expect("Unable to write bindings");
-    //Copy binding to other path 
-    copy(out_bindings_path, pregenerated_bindgen_header)
-        .expect("Unable to update in3 bindings");
+    //Copy binding to other path
+    copy(out_bindings_path, pregenerated_bindgen_header).expect("Unable to update in3 bindings");
 }
 
 fn main() {
-
     // C header search paths
     let mut header_search_paths: Vec<PathBuf> = Vec::new();
 
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
     println!("cargo:rustc-link-lib=static=in3");
-    //TODO: add options to use in3 curl 
+    //TODO: add options to use in3 curl
     println!("cargo:rustc-link-lib=static=transport_curl");
     println!("cargo:rustc-link-lib=curl");
-    println!("cargo:rustc-link-search={}/../../build/lib", env_var("CARGO_MANIFEST_DIR"));
+    println!(
+        "cargo:rustc-link-search={}/../../build/lib",
+        env_var("CARGO_MANIFEST_DIR")
+    );
 
     let out_bindings_path = PathBuf::from(env_var("OUT_DIR")).join(BINDINGS_FILE);
 
     // Only run bindgen if we are *not* using the bundled in3 bindings
-    write_bindgen_bindings(
-        &header_search_paths,
-        out_bindings_path,
-    );
+    write_bindgen_bindings(&header_search_paths, out_bindings_path);
 }

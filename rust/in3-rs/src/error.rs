@@ -79,7 +79,11 @@ impl Error {
         match *self {
             CustomError(msg) => msg,
             UnknownIn3Error => "Unknown error",
-            _ => unsafe { ffi::CStr::from_ptr(in3_sys::in3_errmsg(self.into())).to_str().unwrap() }
+            _ => unsafe {
+                ffi::CStr::from_ptr(in3_sys::in3_errmsg(self.into()))
+                    .to_str()
+                    .unwrap()
+            },
         }
     }
 }
