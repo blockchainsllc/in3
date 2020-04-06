@@ -1,0 +1,60 @@
+site_name: "Incubed Client for Python"
+
+# This tells pydocmd which pages to generate from which Python modules,
+# functions and classes. At the first level is the page name, below that
+# is a tree of Python member names (modules, classes, etc.) that should be
+# documented. Higher indentation leads to smaller header size.
+# (+ to include members)
+# (++ to include members, and their members)
+generate:
+  - libin3.md:
+    - in3.libin3:
+      - in3.libin3.runtime.In3Runtime+
+      - in3.libin3.lib_loader+
+  - eth.md:
+    - in3.eth:
+      - in3.eth.api.EthereumApi+
+      - in3.eth.account.EthAccountApi+
+      - in3.eth.model+
+  - in3.md:
+    - in3:
+      - in3.client.Client+
+      - in3.model.ClientConfig
+      - in3.model.NodeList
+      - in3.model.In3Node
+
+# MkDocs pages configuration. The `<<` operator is sugar added by pydocmd
+# that allows you to use an external Markdown file (eg. your project's README)
+# in the documentation. The path must be relative to current working directory.
+pages:
+  - Home: index.md << ../README.md
+  - Examples: examples.md << 2_examples.md
+  - Internal Components:
+      - Client: in3.md
+      - Ethereum API: eth.md
+      - Libin3 Runtime: libin3.md
+
+# These options all show off their default values. You don't have to add
+# them to your configuration if you're fine with the default.
+docs_dir: sources
+gens_dir: _build/pydocmd # This will end up as the MkDocs 'docs_dir'
+site_dir: _build/site
+theme: readthedocs
+loader: pydocmd.loader.PythonLoader
+#preprocessor: pydocmd.preprocessors.simple.Preprocessor
+preprocessor: pydocmd.preprocessors.google.Preprocessor
+
+# Whether to output headers as markdown or HTML.  Used to workaround
+# https://github.com/NiklasRosenstein/pydoc-markdown/issues/11.  The default is
+# to generate HTML with unique and meaningful id tags, which can't be done with
+# markdown.
+#
+# Note: if using the simple generator mode, this will default to 'markdown'
+# instead of 'html'.
+headers: markdown
+
+# Additional search path for your Python module. If you use Pydocmd from a
+# subdirectory of your project (eg. docs/), you may want to add the parent
+# directory here.
+additional_search_paths:
+  - ..
