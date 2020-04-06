@@ -136,7 +136,7 @@ metrics:
     - echo "wasm_min_size `stat -c %s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
     - echo "wasm_js_size `stat -c %s wasm_build/bin/in3.js` " >> metrics.txt
     - echo "asmjs_js_size `stat -c %s asmjs_build/bin/in3.js` " >> metrics.txt
-    - echo "java_size `stat -c %s java_build/lib/in3.jar` " > metrics.txt
+    - echo "java_size `stat -c %s java_build/lib/in3.jar` " >> metrics.txt
     - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
     - echo "reported metrics"; cat metrics.txt
   artifacts:
