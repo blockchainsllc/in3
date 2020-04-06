@@ -140,7 +140,7 @@ metrics:
     - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
     - echo "reported metrics"; cat metrics.txt
   artifacts:
-    expose_as: metrics.txt
+    expose_as: metrics
     paths:
       - metrics.txt
     reports:
