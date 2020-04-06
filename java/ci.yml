@@ -1,0 +1,100 @@
+java:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: bindings
+  needs:
+    - mac_os
+    - win_jni
+    - gcc8
+    - arm_jni
+  tags:
+    - short-jobs
+  script:
+    - mkdir java_build
+    - cd java_build
+    - mkdir -p ../java/src/in3/native/
+    - cp ../mac_jni/libin3_jni.dylib ../java/src/in3/native/
+    - cp ../win_jni/lib/libin3_jni.so ../java/src/in3/native/in3_jni.dll
+    - cp ../x64_jni/libin3_jni.so ../java/src/in3/native/
+    - cp ../arm_jni_build/lib/libin3_jni.so ../java/src/in3/native/libin3_jni_arm.so
+    - cmake -DIN3_LIB=false -DJAVA_MULTI_LIBS=true -DCMAKE_BUILD_TYPE=Release -DJAVA=true -DBUILD_DOC=true ..
+    - make in3j
+  artifacts:
+    paths:
+      - java/src/in3/native/
+      - java_build/lib
+
+test_android:
+  image: cangol/android-gradle
+  stage: java
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - git clone https://github.com/slockit/in3-example-android.git
+    - cd in3-example-android/app
+    - cp -r ../../java/src/in3 src/main/java/
+    - mv ../../c ../../java in3-c/
+    - cd ..
+    - ./gradlew build
+  artifacts:
+    paths:
+      - in3-example-android/app/build/outputs/apk
+
+java_linux:
+  image: docker.slock.it/build-images/cmake:gcc8
+  stage: java
+  needs:
+    - java
+  script:
+    - mv java_build build
+    - cd java
+    - ./gradlew test
+  tags:
+    - short-jobs
+  artifacts:
+    paths:
+      - java/build/reports/jacoco/test
+    reports:
+      junit: java/build/test-results/test/TEST-*.xml
+
+java_arm:
+  image: armv7/armhf-java8
+  needs:
+    - java
+  stage: java
+  script:
+    - mv java_build build
+    - cd java
+    - ./gradlew test
+  tags:
+    - arm
+  artifacts:
+    reports:
+      junit: java/build/test-results/test/TEST-*.xml
+
+java_macos:
+  stage: java
+  allow_failure: true
+  needs:
+    - java
+  script:
+    - mv java_build build
+    - cd java; cp test/build_test.gradle build.gradle
+    - ./gradlew test
+  tags:
+    - mac-mini-runner
+
+java_win:
+  stage: java
+  allow_failure: true
+  needs:
+    - java
+  script:
+    - mv java_build build
+    - cd java; cp test/build_test.gradle build.gradle
+    - ./gradlew test
+  tags:
+    - windows
+#  artifacts:
+#    reports:
+#      junit: java/build/test-results/test/TEST-*.xml

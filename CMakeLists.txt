@@ -196,4 +196,3 @@ IF (WASM)
     add_subdirectory(wasm/src)
 ENDIF (WASM)
 
-add_subdirectory(python/docs)
