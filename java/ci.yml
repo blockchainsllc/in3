@@ -43,6 +43,7 @@ test_android:
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: java
+  coverage: '/java:\s+(\d+.\d+\%)/'
   needs:
     - java
   script:

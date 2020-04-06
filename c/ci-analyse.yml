@@ -1,10 +1,10 @@
 coverage:
   stage: analysis
   image: silkeh/clang:dev
+  coverage: '/TOTAL.*\s+(\d+.\d+\%)\s+/'
+  needs: []
   tags:
     - short-jobs
-  needs:
-    - java_linux
   script:
     - mkdir cov_build; cd cov_build
     - cmake -DIN3API=true -DIN3_LIB=false -DCMD=false -DUSE_CURL=false -DTEST=true -DCODE_COVERAGE=true -DUSE_SEGGER_RTT=false -DTRANSPORTS=false -DCMAKE_BUILD_TYPE=Debug ..
@@ -12,8 +12,6 @@ coverage:
     - ../scripts/lcov_report.sh | xargs llvm-cov report
     - ../scripts/lcov_report.sh | xargs llvm-cov show -show-line-counts-or-regions -output-dir=ccov/all-merged -format=html
     - ../scripts/lcov_report.sh | xargs llvm-cov export  -format=lcov  > ccov/all-merged/lcov.info
-    - mkdir jcov
-    - cp -r ../java/build/reports/jacoco/test cov_build
   artifacts:
     paths:
       - cov_build/ccov/all-merged
@@ -135,9 +133,12 @@ metrics:
     - echo "wasm_min_size `stat -c %s wasm_build/bin/in3w_min.wasm` " >> metrics.txt
     - echo "wasm_js_size `stat -c %s wasm_build/bin/in3.js` " >> metrics.txt
     - echo "asmjs_js_size `stat -c %s asmjs_build/bin/in3.js` " >> metrics.txt
-    - echo "java_size `stat -c %s java_build/lib/in3.jar` " > metrics.txt
+    - echo "java_size `stat -c %s java_build/lib/in3.jar` " >> metrics.txt
     - echo "gcc8_size `stat -c %s x64_build/bin/in3` " >> metrics.txt
     - echo "reported metrics"; cat metrics.txt
   artifacts:
+    expose_as: metrics
+    paths:
+      - metrics.txt
     reports:
       metrics: metrics.txt
