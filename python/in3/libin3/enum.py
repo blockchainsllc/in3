@@ -79,43 +79,39 @@ class In3ProofLevel(SimpleEnum):
 
 
 class Chain(SimpleEnum):
+    """
+    Default chain values and consensus finality threshold
+    """
     MAINNET = dict(
-        registry="0x2736D225f85740f42D17987100dc8d58e9e16252",
         chain_id="0x1",
         alias="mainnet",
-        status="https://libs.slock.it?n=mainnet",
-        node_list="https://libs.slock.it/mainnet/nd-3")
+        finality=10)
 
     KOVAN = dict(
-        registry="0x27a37a1210df14f7e058393d026e2fb53b7cf8c1",
         chain_id="0x2a",
         alias="kovan",
-        status="https://libs.slock.it?n=kovan",
-        node_list="https://libs.slock.it/kovan/nd-3")
+        finality=80)
 
     EVAN = dict(
-        registry="0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e",
         chain_id="0x4b1",
         alias="evan",
-        status="https://libs.slock.it?n=evan",
-        node_list="https://libs.slock.it/evan/nd-3")
+        finality=80)
 
     GOERLI = dict(
-        registry="0x85613723dB1Bc29f332A37EeF10b61F8a4225c7e",
         chain_id="0x5",
-        alias="goerli",
-        status="https://libs.slock.it?n=goerli",
-        node_list="https://libs.slock.it/goerli/nd-3")
+        finality=80,
+        alias="goerli")
 
     IPFS = dict(
-        registry="0xf0fb87f4757c77ea3416afe87f36acaa0496c7e9",
         chain_id="0x7d0",
         alias="ipfs",
-        status="https://libs.slock.it?n=ipfs",
-        node_list="https://libs.slock.it/ipfs/nd-3")
+        finality=0)
 
     def __str__(self):
         return self.value['alias']
 
     def __hex__(self):
         return self.value['chain_id']
+
+    def __int__(self):
+        return self.value['finality']

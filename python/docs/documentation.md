@@ -108,7 +108,7 @@ import in3
 if __name__ == '__main__':
 
     print('\nEthereum Goerli Test Network')
-    goerli_cfg = in3.ClientConfig(chainId=str(in3.Chain.GOERLI), signatureCount=3, timeout=10000)
+    goerli_cfg = in3.ClientConfig(chain_id=str(in3.Chain.GOERLI), node_signatures=3, request_timeout=10000)
     client = in3.Client(goerli_cfg)
     node_list = client.node_list()
     print('\nIncubed Registry:')

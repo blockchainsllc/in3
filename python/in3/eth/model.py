@@ -4,7 +4,7 @@ import json
 
 class DataTransferObject:
     """
-    Map marshalling objects transferred to and from a remote facade, in this case, libin3 rpc api.
+    Maps marshalling objects transferred to, and from a remote facade, in this case, libin3 rpc api.
     For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
 
@@ -15,7 +15,6 @@ class DataTransferObject:
         for i in aux:
             if aux[i] is None:
                 continue
-
             arr = i.split("_")
             r = ""
             index_aux = 0

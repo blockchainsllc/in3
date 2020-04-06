@@ -5,7 +5,7 @@ import in3
 class EthereumTest(unittest.TestCase):
 
     def setUp(self):
-        conf = in3.model.ClientConfig(signatureCount=1, chainId=str(in3.Chain.MAINNET))
+        conf = in3.model.ClientConfig(node_signatures=1, chain_id=str(in3.Chain.MAINNET))
         self.client = in3.Client(in3_config=conf)
 
     def test_ethereum_sha3(self):

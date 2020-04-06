@@ -5,7 +5,7 @@ from in3.libin3.enum import In3Methods
 
 class EthObjectFactory:
     """
-    Deserialize and instantiate objects from rpc responses
+    Deserialize and instantiate marshalled objects from rpc responses
     For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
 
@@ -84,15 +84,13 @@ class EthObjectFactory:
     def checksum_address(self, address: str, add_chain_id: bool = True) -> str:
         return self._runtime.call(In3Methods.CHECKSUM_ADDRESS, address, add_chain_id)
 
-    @staticmethod
-    def get_hash(hash_str: str):
+    def get_hash(self, hash_str: str):
         if not hash_str.startswith('0x'):
             raise HashFormatException("Ethereum hashes start with 0x")
-        if len(hash_str.encode('utf-8')) != 64:
+        if len(hash_str[2:].encode('utf-8')) != 64:
             raise HashFormatException("Hash size is not of an Ethereum hash.")
         return hash_str
 
-    # TODO: Check if checksum address is working properly
     def get_address(self, address: str):
         if not address.startswith("0x"):
             raise EthAddressFormatException("Ethereum addresses start with 0x")

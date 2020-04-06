@@ -66,45 +66,62 @@ class ClientConfig(DataTransferObject):
     and want to run a local integrity check, just to be on the safe side.
 
     Args:
-        chainId (str): (optional) - servers to filter for the given chain. The chain-id based on EIP-155. example: 0x1
-        replaceLatestBlock (int): (optional) - if specified, the blocknumber latest will be replaced by blockNumber- specified value example: 6
-        signatureCount (int): (optional) - number of signatures requested example: 2
-        finality (int): (optional) - the number in percent needed in order reach finality (% of signature of the validators) example: 50
-        minDeposit (int): - min stake of the server. Only nodes owning at least this amount will be chosen.
-        proof :'none'|'standard'|'full' (optional) - if true the nodes should send a proof of the response
-        autoUpdateList (bool): (optional) - if true the nodelist will be automatically updated if the lastBlock is newer
-        timeout (int): specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. example: 100000
-        key (str): (optional) - the client key to sign requests example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-        includeCode (bool): (optional) - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
-        maxAttempts (int): (optional) - max number of attempts in case a response is rejected example: 10
-        keepIn3 (bool): (optional) - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.
-        maxBlockCache (int): (optional) - number of number of blocks cached in memory example: 100
-        maxCodeCache (int): (optional) - number of max bytes used to cache the code in memory example: 100000
-        nodeLimit (int): (optional) - the limit of nodes to store in the client. example: 150
-        requestCount (int): - Useful to be higher than 1 when using signatureCount <= 1. Then the client check for consensus in answers.
+        chain_id (str): (optional) - 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
+        chain_finality_threshold (int): (optional) - Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
+        latest_block_stall (int): (optional) - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
+        account_priavate_key (str): (optional) - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+        node_signatures (int): (optional) - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
+        node_signature_consensus (int): - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
+        node_min_deposit (int): - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
+        node_list_auto_update (bool): (optional) - If true the nodelist will be automatically updated. False may compromise data security.
+        node_limit (int): (optional) - Limit nodes stored in the client. example: 150 nodes
+        request_timeout (int): Milliseconds before a request times out. example: 100000 ms
+        request_retries (int): (optional) - Maximum times the client will retry to contact a certain node. example: 10 retries
+        response_proof_level (str): (optional) - 'none'|'standard'|'full' Full gets the whole block Patricia-Merkle-Tree, Standard only verifies the specific tree branch concerning the request, None only verifies the root hashes, like a light-client does.
+        response_includes_code (bool): (optional) - If true, every request with the address field will include the data, if existent, that is stored in that wallet/smart-contract. If false, only the code digest is included.
+        response_keep_proof (bool): (optional) - If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
+        cached_blocks (int): (optional) - Maximum blocks kept in memory. example: 100 last requested blocks
+        cached_code_bytes (int): (optional) - Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
     """
 
-    def __init__(self, chainId: str = str(Chain.MAINNET), key: str = None, replaceLatestBlock: int = 8,
-                 signatureCount: int = 3, finality: int = 70, minDeposit: int = 10000000000000000,
-                 proof: In3ProofLevel = In3ProofLevel.STANDARD, autoUpdateList: bool = True, timeout: int = 5000,
-                 includeCode: bool = False, keepIn3: bool = False, maxAttempts: int = None, maxBlockCache: int = None,
-                 maxCodeCache: int = None, nodeLimit: int = None, requestCount: int = 1):
-        self.autoUpdateList: bool = autoUpdateList
-        self.chainId: str = chainId
-        self.finality: int = finality
-        self.includeCode: bool = includeCode
-        self.keepIn3: bool = keepIn3
-        self.key: str = key
-        self.timeout: int = timeout
-        self.maxAttempts: int = maxAttempts
-        self.maxBlockCache: int = maxBlockCache
-        self.maxCodeCache: int = maxCodeCache
-        self.minDeposit: int = minDeposit
-        self.nodeLimit: int = nodeLimit
-        self.proof: In3ProofLevel = proof
-        self.replaceLatestBlock: int = replaceLatestBlock
-        self.requestCount: int = requestCount
-        self.signatureCount: int = signatureCount
+    def __init__(self,
+                 chain_id: str = str(Chain.MAINNET),
+                 chain_finality_threshold: int = int(Chain.MAINNET),
+                 account_priavate_key: str = None,
+                 latest_block_stall: int = 8,
+                 node_signatures: int = 3,
+                 node_signature_consensus: int = 1,
+                 node_min_deposit: int = 10000000000000000,
+                 node_list_auto_update: bool = True,
+                 node_limit: int = None,
+                 request_timeout: int = 5000,
+                 request_retries: int = 0,
+                 response_proof_level: In3ProofLevel = In3ProofLevel.STANDARD,
+                 response_includes_code: bool = False,
+                 response_keep_proof: bool = False,
+                 cached_blocks: int = 1,
+                 cached_code_bytes: int = 1000000):
+        self.chainId: str = chain_id
+        self.finality: int = chain_finality_threshold
+        self.key: str = account_priavate_key
+        self.replaceLatestBlock: int = latest_block_stall
+        self.signatureCount: int = node_signatures
+        self.requestCount: int = node_signature_consensus
+        self.minDeposit: int = node_min_deposit
+        self.autoUpdateList: bool = node_list_auto_update
+        self.nodeLimit: int = node_limit
+        self.timeout: int = request_timeout
+        self.maxAttempts: int = request_retries
+        self.proof: In3ProofLevel = response_proof_level
+        self.includeCode: bool = response_includes_code
+        self.keepIn3: bool = response_keep_proof
+        self.maxBlockCache: int = cached_blocks
+        self.maxCodeCache: int = cached_code_bytes
+
+    def to_dict(self) -> dict:
+        return {
+
+        }
 
 
 class TransactionReceipt(DataTransferObject):

@@ -23,7 +23,7 @@ class Client:
             chain = next((item for item in Chain if item.value['alias'] == in3_config), False)
             if not chain:
                 raise ValueError('Chain name not supported. Try mainnet, goerli or kovan')
-            self.config = ClientConfig(chainId=str(chain))
+            self.config = ClientConfig(chain_id=str(chain))
         else:
             self.config = ClientConfig()
         self._runtime = In3Runtime(self.config.timeout)

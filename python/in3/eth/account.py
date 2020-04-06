@@ -26,6 +26,7 @@ class EthAccountApi:
         # in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst)
         #           eth_sign(ctx,                   SIGN_EC_RAW,         *data,           bytes(NULL, 0),   sig))
         #   SIGN_EC_RAW  = 0, /**< sign the data directly */ SIGN_EC_HASH = 1, /**< hash and sign the data */
+        address = self._factory.get_address(address)
         signature = bytearray()
         if isinstance(data, str):
             self._factory.get_hash(data)
@@ -56,6 +57,7 @@ class EthAccountApi:
         Returns:
             tx_hash: Transaction hash, used to get the receipt and check if the transaction was mined.
         """
+        assert isinstance(transaction, RawTransaction)
         return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction)
 
     # TODO: Create Receipt domain object
