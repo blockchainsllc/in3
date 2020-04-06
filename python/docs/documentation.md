@@ -290,23 +290,24 @@ Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-m
 
 ### ClientConfig
 ```python
-ClientConfig(self,
-chainId: str = 'mainnet',
-key: str = None,
-replaceLatestBlock: int = 8,
-signatureCount: int = 3,
-finality: int = 70,
-minDeposit: int = 10000000000000000,
-proof: In3ProofLevel = <In3ProofLevel.STANDARD: 'standard'>,
-autoUpdateList: bool = True,
-timeout: int = 5000,
-includeCode: bool = False,
-keepIn3: bool = False,
-maxAttempts: int = None,
-maxBlockCache: int = None,
-maxCodeCache: int = None,
-nodeLimit: int = None,
-requestCount: int = 1)
+ClientConfig(
+self,
+chain_id: str = 'mainnet',
+chain_finality_threshold: int = 10,
+account_private_key: str = None,
+latest_block_stall: int = 10,
+node_signatures: int = 3,
+node_signature_consensus: int = 1,
+node_min_deposit: int = 10000000000000000,
+node_list_auto_update: bool = True,
+node_limit: int = None,
+request_timeout: int = 5000,
+request_retries: int = 0,
+response_proof_level: In3ProofLevel = <In3ProofLevel.STANDARD: 'standard'>,
+response_includes_code: bool = False,
+response_keep_proof: bool = False,
+cached_blocks: int = 1,
+cached_code_bytes: 100 = 101____)
 ```
 
 In3 Client Configuration class.
@@ -325,22 +326,22 @@ and want to run a local integrity check, just to be on the safe side.
 
 **Arguments**:
 
-- `chainId` _str_ - (optional) - servers to filter for the given chain. The chain-id based on EIP-155. example: 0x1
-- `replaceLatestBlock` _int_ - (optional) - if specified, the blocknumber latest will be replaced by blockNumber- specified value example: 6
-- `signatureCount` _int_ - (optional) - number of signatures requested example: 2
-- `finality` _int_ - (optional) - the number in percent needed in order reach finality (% of signature of the validators) example: 50
-- `minDeposit` _int_ - - min stake of the server. Only nodes owning at least this amount will be chosen.
-  proof :'none'|'standard'|'full' (optional) - if true the nodes should send a proof of the response
-- `autoUpdateList` _bool_ - (optional) - if true the nodelist will be automatically updated if the lastBlock is newer
-- `timeout` _int_ - specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. example: 100000
-- `key` _str_ - (optional) - the client key to sign requests example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-- `includeCode` _bool_ - (optional) - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
-- `maxAttempts` _int_ - (optional) - max number of attempts in case a response is rejected example: 10
-- `keepIn3` _bool_ - (optional) - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.
-- `maxBlockCache` _int_ - (optional) - number of number of blocks cached in memory example: 100
-- `maxCodeCache` _int_ - (optional) - number of max bytes used to cache the code in memory example: 100000
-- `nodeLimit` _int_ - (optional) - the limit of nodes to store in the client. example: 150
-- `requestCount` _int_ - - Useful to be higher than 1 when using signatureCount <= 1. Then the client check for consensus in answers.
+- `chain_id` _str_ - (optional) - 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
+- `chain_finality_threshold` _int_ - (optional) - Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
+- `latest_block_stall` _int_ - (optional) - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
+- `account_private_key` _str_ - (optional) - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+- `node_signatures` _int_ - (optional) - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
+- `node_signature_consensus` _int_ - - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
+- `node_min_deposit` _int_ - - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
+- `node_list_auto_update` _bool_ - (optional) - If true the nodelist will be automatically updated. False may compromise data security.
+- `node_limit` _int_ - (optional) - Limit nodes stored in the client. example: 150 nodes
+- `request_timeout` _int_ - Milliseconds before a request times out. example: 100000 ms
+- `request_retries` _int_ - (optional) - Maximum times the client will retry to contact a certain node. example: 10 retries
+- `response_proof_level` _str_ - (optional) - 'none'|'standard'|'full' Full gets the whole block Patricia-Merkle-Tree, Standard only verifies the specific tree branch concerning the request, None only verifies the root hashes, like a light-client does.
+- `response_includes_code` _bool_ - (optional) - If true, every request with the address field will include the data, if existent, that is stored in that wallet/smart-contract. If false, only the code digest is included.
+- `response_keep_proof` _bool_ - (optional) - If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
+- `cached_blocks` _int_ - (optional) - Maximum blocks kept in memory. example: 100 last requested blocks
+- `cached_code_bytes` _int_ - (optional) - Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
   
 
 ### NodeList
@@ -675,7 +676,7 @@ See [EIP55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md).
 DataTransferObject()
 ```
 
-Map marshalling objects transferred to and from a remote facade, in this case, libin3 rpc api.
+Maps marshalling objects transferred to, and from a remote facade, in this case, libin3 rpc api.
 For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
 
 

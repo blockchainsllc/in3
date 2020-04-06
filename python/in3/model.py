@@ -69,7 +69,7 @@ class ClientConfig(DataTransferObject):
         chain_id (str): (optional) - 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
         chain_finality_threshold (int): (optional) - Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
         latest_block_stall (int): (optional) - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
-        account_priavate_key (str): (optional) - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+        account_private_key (str): (optional) - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
         node_signatures (int): (optional) - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
         node_signature_consensus (int): - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
         node_min_deposit (int): - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
@@ -87,8 +87,8 @@ class ClientConfig(DataTransferObject):
     def __init__(self,
                  chain_id: str = str(Chain.MAINNET),
                  chain_finality_threshold: int = int(Chain.MAINNET),
-                 account_priavate_key: str = None,
-                 latest_block_stall: int = 8,
+                 account_private_key: str = None,
+                 latest_block_stall: int = 10,
                  node_signatures: int = 3,
                  node_signature_consensus: int = 1,
                  node_min_deposit: int = 10000000000000000,
@@ -103,7 +103,7 @@ class ClientConfig(DataTransferObject):
                  cached_code_bytes: int = 1000000):
         self.chainId: str = chain_id
         self.finality: int = chain_finality_threshold
-        self.key: str = account_priavate_key
+        self.key: str = account_private_key
         self.replaceLatestBlock: int = latest_block_stall
         self.signatureCount: int = node_signatures
         self.requestCount: int = node_signature_consensus
