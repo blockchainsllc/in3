@@ -1,7 +1,7 @@
 coverage:
   stage: analysis
   image: silkeh/clang:dev
-  coverage: '/TOTAL.*\s+(\d+.\d+\%)\s+/'
+  coverage: '/TOTAL.*\s+(\d+.\d+\%)\s*$/'
   needs: []
   tags:
     - short-jobs
