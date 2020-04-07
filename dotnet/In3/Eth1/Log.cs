@@ -11,7 +11,7 @@ namespace In3.Eth1
         [JsonPropertyName("transactionIndex"), JsonConverter(typeof(IntFromHexConverter))] public int TransactionIndex { get; set; }
         [JsonPropertyName("transactionHash")] public string TransactionHash { get; set; }
         [JsonPropertyName("blockHash")] public string BlockHash { get; set; }
-        [JsonPropertyName("blockNumber"), JsonConverter(typeof(CustomBigIntegerFromHexConverter))] public long BlockNumber { get; set; }
+        [JsonPropertyName("blockNumber"), JsonConverter(typeof(BigIntegerFromHexConverter))] public BigInteger BlockNumber { get; set; }
         [JsonPropertyName("address")] public string Address { get; set; }
         [JsonPropertyName("topics")] public string[] Topics { get; set; }
         [JsonPropertyName("data")] public string Data { get; set; }

@@ -13,5 +13,7 @@ namespace In3.Eth1
         public long? GasPrice { get; set; }
         public string Function { get; set; }
         public object[] Params { get; set; }
+
+        public bool IsFunctionInvocation() => string.IsNullOrEmpty(Function);
     }
 }
