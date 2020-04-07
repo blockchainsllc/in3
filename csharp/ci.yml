@@ -1,0 +1,16 @@
+dotnet:
+  image: docker.slock.it/build-images/dotnet-core-sdk:3.1
+  stage: dotnet
+  needs:
+    - mac_os
+    - win_jni
+    - gcc8
+    - arm_jni
+  tags:
+    - short-jobs
+  script:
+    - cd csharp
+    - dotnet build
+  artifacts:
+    paths:
+      - csharp
