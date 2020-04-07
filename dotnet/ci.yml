@@ -9,8 +9,8 @@ dotnet:
   tags:
     - short-jobs
   script:
-    - cd csharp
+    - cd dotnet
     - dotnet build
   artifacts:
     paths:
-      - csharp
+      - dotnet

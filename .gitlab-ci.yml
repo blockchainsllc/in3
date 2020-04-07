@@ -22,7 +22,7 @@ include:
   - local: "/wasm/ci.yml"
   - local: "/java/ci.yml"
   - local: "/python/ci.yml"
-  - local: "/csharp/ci.yml"
+  - local: "/dotnet/ci.yml"
 ##### local_docker_deploy_and_vulnerability_analysis #####
 
 ##### analyse #####
