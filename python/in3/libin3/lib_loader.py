@@ -172,7 +172,7 @@ def _multi_platform_selector():
         # Then add it to libin3/shared folder
         return Path(path.parent, "libin3", "shared",  "libin3d.{}".format(extension))
     else:
-        return Path(path.parent, "libin3", "shared", "libin3.{}".format(extension))
+        return str(Path(path.parent, "libin3", "shared", "libin3.{}".format(extension)))
 
 
 # =================== LIBIN3 SHARED LIBRARY MAPPING ===================
