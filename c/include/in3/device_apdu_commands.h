@@ -39,21 +39,29 @@
  * 
  * */
 
-#ifndef in3_ledger_signer_h__
-#define in3_ledger_signer_h__
-
-#define cla 0x80
-#define INS_GET_PUBLIC_KEY 0x04
-#define INS_SIGN 0x02
+#ifndef in3_device_apdu_h__
+#define in3_device_apdu_h__
 
 
+#include "client.h"
+#define HID_CMD_MAX_LEN 64
 
+const uint8_t CLA = 0x80;
+const uint8_t INS_GET_PUBLIC_KEY = 0x04;
+const uint8_t INS_SIGN = 0x02;
+const uint8_t P1_MORE = 0x01;
+const uint8_t P1_FINAL = 0X00;
+const uint8_t P2_MORE = 0x01;
+const uint8_t P2_FINAL = 0X00;
+const uint8_t TAG = 0x05;
 
-void wrap_apdu()
-{}
+int int_to_bytes(uint16_t x, uint8_t* buf);
 
-void unwrap_apdu()
-{}
+uint16_t bytes_to_int(uint8_t* buf);
+
+void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd);
+
+void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t* o_apdu_res);
 
 
 
