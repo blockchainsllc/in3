@@ -51,10 +51,10 @@ class In3ClientKovanTest(In3ClientTest):
         self.in3client = in3.Client('kovan')
 
     def test_configure(self):
-        client = in3.Client(in3.ClientConfig(chain_id=str(in3.model.Chain.KOVAN)))
+        client = in3.Client('kovan')
         self.assertIsNotNone(client)
-        client = in3.Client(str(in3.model.Chain.KOVAN))
-        self.assertIsNotNone(client)
+        # client = in3.Client(str(in3.model.Chain.KOVAN))
+        # self.assertIsNotNone(client)
 
 
 class In3ClientGoerliTest(In3ClientTest):
@@ -63,10 +63,10 @@ class In3ClientGoerliTest(In3ClientTest):
         self.in3client = in3.Client('goerli')
 
     def test_configure(self):
-        client = in3.Client(in3.ClientConfig(chain_id=str(in3.model.Chain.GOERLI)))
+        client = in3.Client('goerli')
         self.assertIsNotNone(client)
-        client = in3.Client(str(in3.model.Chain.GOERLI))
-        self.assertIsNotNone(client)
+        # client = in3.Client(str(in3.model.Chain.GOERLI))
+        # self.assertIsNotNone(client)
 
 
 if __name__ == '__main__':

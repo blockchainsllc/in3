@@ -76,4 +76,3 @@ class In3ProofLevel(SimpleEnum):
     NONE = "none"
     STANDARD = "standard"
     FULL = "full"
-

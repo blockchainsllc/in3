@@ -207,5 +207,6 @@ class EthereumTest(unittest.TestCase):
     #
     #     in3.client.send_transaction(size + transaction_signature + appended)
 
+
 if __name__ == '__main__':
     unittest.main()
