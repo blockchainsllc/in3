@@ -1,6 +1,6 @@
 from in3.eth.account import EthAccountApi
 from in3.eth.factory import EthObjectFactory
-from in3.eth.model import Transaction
+from in3.eth.model import Transaction, RawTransaction
 from in3.libin3.runtime import In3Runtime
 from in3.libin3.enum import EthMethods, BlockAt
 
@@ -142,3 +142,18 @@ class EthereumApi:
         """
         serialized: dict = self._runtime.call(EthMethods.TRANSACTION_BY_HASH, self.factory.get_hash(tx_hash))
         return self.factory.get_transaction(serialized)
+
+    def eth_call(self, transaction: RawTransaction, block_number: int or str = 'latest') -> int or str:
+        """
+        Calls a smart-contract method that does not store the computation. Will be executed locally by Incubed's EVM.
+        curl localhost:8545 -X POST --data '{"jsonrpc":"2.0", "method":"eth_call", "params":[{"from": "eth.accounts[0]", "to": "0x65da172d668fbaeb1f60e206204c2327400665fd", "data": "0x6ffa1caa0000000000000000000000000000000000000000000000000000000000000005"}, "latest"], "id":1}'
+        Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
+        Args:
+            transaction (RawTransaction):
+            block_number (int or str):  Desired block number integer or 'latest', 'earliest', 'pending'.
+        Returns:
+            method_returned_value: A hexadecimal. For decoding use in3.abi_decode.
+        """
+        # different than eth_call
+        # eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
+        return self._runtime.call(EthMethods.CALL, transaction.serialize(), block_number)

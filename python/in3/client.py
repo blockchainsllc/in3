@@ -72,21 +72,6 @@ class Client:
         # TODO: Smart-Contract Api
         return self._runtime.call(In3Methods.ABI_DECODE, fn_return_types, encoded_values)
 
-    def call(self, transaction: RawTransaction, block_number: int or str) -> int or str:
-        """
-        Calls a smart-contract method that does not store the computation. Will be executed locally by Incubed's EVM.
-        curl localhost:8545 -X POST --data '{"jsonrpc":"2.0", "method":"eth_call", "params":[{"from": "eth.accounts[0]", "to": "0x65da172d668fbaeb1f60e206204c2327400665fd", "data": "0x6ffa1caa0000000000000000000000000000000000000000000000000000000000000005"}, "latest"], "id":1}'
-        Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
-        Args:
-            transaction (RawTransaction):
-            block_number (int or str):  Desired block number integer or 'latest', 'earliest', 'pending'.
-        Returns:
-            method_returned_value: A hexadecimal. For decoding use in3.abi_decode.
-        """
-        # different than eth_call
-        # eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
-        return self._runtime.call(In3Methods.CALL, transaction, block_number)
-
     # TODO add eth_set_pk_signer
     # TODO add sign_tx
 

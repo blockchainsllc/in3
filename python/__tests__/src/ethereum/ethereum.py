@@ -94,7 +94,7 @@ class EthereumTest(TestCase):
     def test_call(self):
         _from = Address("0x9E52Ee6Acd6E7F55e860844d487556f8Cbe2BAEE")
         transaction = Transaction(_from=_from)
-        rpc = self.eth.call(transaction=transaction)
+        rpc = self.eth.eth_call(transaction=transaction)
         print(rpc)
 
     #TODO: don't work

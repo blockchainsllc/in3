@@ -1,7 +1,7 @@
 from in3.exception import IN3BaseException, EthAddressFormatException, HashFormatException, \
     NumberFormatException, PrivateKeyNotFoundException, ClientException
 import in3.eth.model as eth
-from in3.model import ClientConfig
+from in3.model import ClientConfig, NodeList
 from in3.client import Client
 
 __name__ = 'in3'

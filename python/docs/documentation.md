@@ -270,25 +270,6 @@ Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3
 - `decoded_return_values` _tuple_ - "0x1234567890123456789012345678901234567890", "0x05"
   
 
-#### call
-```python
-Client.call(transaction: RawTransaction, block_number: int)
-```
-
-Calls a smart-contract method that does not store the computation. Will be executed locally by Incubed's EVM.
-curl localhost:8545 -X POST --data '{"jsonrpc":"2.0", "method":"eth_call", "params":[{"from": "eth.accounts[0]", "to": "0x65da172d668fbaeb1f60e206204c2327400665fd", "data": "0x6ffa1caa0000000000000000000000000000000000000000000000000000000000000005"}, "latest"], "id":1}'
-Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
-
-**Arguments**:
-
-  transaction (RawTransaction):
-- `block_number` _int or str_ - Desired block number integer or 'latest', 'earliest', 'pending'.
-
-**Returns**:
-
-- `method_returned_value` - A hexadecimal. For decoding use in3.abi_decode.
-  
-
 ### ClientConfig
 ```python
 ClientConfig(self,
@@ -302,7 +283,7 @@ node_min_deposit: int = 10000000000000000,
 node_list_auto_update: bool = True,
 node_limit: int = None,
 request_timeout: int = 5000,
-request_retries: int = 5,
+request_retries: int = 7,
 response_proof_level: str = 'standard',
 response_includes_code: bool = False,
 response_keep_proof: bool = False,
@@ -475,8 +456,7 @@ The storage is essentially a key/value store. Use get_code to get the smart-cont
 
 #### get_code
 ```python
-EthereumApi.get_code(address: str,
-at_block: int = <BlockAt.LATEST: 'latest'>)
+EthereumApi.get_code(address: str, at_block: int = 'latest')
 ```
 
 Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the function will return '0x'.
@@ -493,8 +473,8 @@ Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the fu
 
 #### get_transaction_count
 ```python
-EthereumApi.get_transaction_count(
-address: str, at_block: int = <BlockAt.LATEST: 'latest'>)
+EthereumApi.get_transaction_count(address: str,
+at_block: int = 'latest')
 ```
 
 Number of transactions mined from this address. Used to set transaction nonce.
@@ -564,6 +544,26 @@ Every transaction hash is unique for the whole chain. Collision could in theory 
 - `transaction` - Desired transaction, if exists.
   
 
+#### eth_call
+```python
+EthereumApi.eth_call(transaction: RawTransaction,
+block_number: int = 'latest')
+```
+
+Calls a smart-contract method that does not store the computation. Will be executed locally by Incubed's EVM.
+curl localhost:8545 -X POST --data '{"jsonrpc":"2.0", "method":"eth_call", "params":[{"from": "eth.accounts[0]", "to": "0x65da172d668fbaeb1f60e206204c2327400665fd", "data": "0x6ffa1caa0000000000000000000000000000000000000000000000000000000000000005"}, "latest"], "id":1}'
+Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
+
+**Arguments**:
+
+  transaction (RawTransaction):
+- `block_number` _int or str_ - Desired block number integer or 'latest', 'earliest', 'pending'.
+
+**Returns**:
+
+- `method_returned_value` - A hexadecimal. For decoding use in3.abi_decode.
+  
+
 ### EthAccountApi
 ```python
 EthAccountApi(self, runtime: In3Runtime, factory: EthObjectFactory)
@@ -599,6 +599,23 @@ Transactions change the state of an account, just the balance, or additionally, 
 Every transaction has a cost, gas, paid in Wei. The transaction gas is calculated over estimated gas times the
 gas cost, plus an additional miner fee, if the sender wants to be sure that the transaction will be mined in the
 latest block.
+
+**Arguments**:
+
+- `transaction` - All information needed to perform a transaction. Minimum is from, to and value.
+  Client will add the other required fields, gas and chaindId.
+
+**Returns**:
+
+- `tx_hash` - Transaction hash, used to get the receipt and check if the transaction was mined.
+  
+
+#### send_raw_transaction
+```python
+EthAccountApi.send_raw_transaction(transaction: RawTransaction)
+```
+
+Sends a signed and encoded transaction.
 
 **Arguments**:
 
@@ -707,8 +724,8 @@ signature: str)
 RawTransaction(self,
 From: str,
 to: str,
-gas: int,
 nonce: int,
+gas: int = None,
 value: int = None,
 data: str = None,
 gasPrice: int = None,

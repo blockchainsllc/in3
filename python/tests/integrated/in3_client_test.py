@@ -1,6 +1,5 @@
 import unittest
 import in3
-import in3.model
 
 
 class In3ClientTest(unittest.TestCase):
@@ -9,18 +8,18 @@ class In3ClientTest(unittest.TestCase):
         self.in3client = in3.Client()
 
     def test_configure(self):
-        client = in3.Client(in3.ClientConfig())
+        client = in3.Client()
         self.assertIsNotNone(client)
-        client = in3.Client(in3.ClientConfig(chain_id=str(in3.model.Chain.MAINNET)))
+        client = in3.Client(in3.model.ClientConfig())
         self.assertIsNotNone(client)
-        client = in3.Client(str(in3.model.Chain.MAINNET))
-        self.assertIsNotNone(client)
+        # client = in3.Client(in3.ClientConfig(**in3.model.MAINNET.__dict__))
+        # self.assertIsNotNone(client)
         client = in3.Client('mainnet')
         self.assertIsNotNone(client)
 
     def test_node_list(self):
         nl = self.in3client.node_list()
-        self.assertIsInstance(nl, in3.NodeList)
+        self.assertIsInstance(nl, in3.model.NodeList)
 
     # def test_abi_encode(self):
     #     # TODO: Check abi encode mock data

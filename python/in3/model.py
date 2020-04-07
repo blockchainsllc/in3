@@ -92,7 +92,7 @@ class ClientConfig(DataTransferObject):
                  node_list_auto_update: bool = True,
                  node_limit: int = None,
                  request_timeout: int = 5000,
-                 request_retries: int = 5,
+                 request_retries: int = 7,
                  response_proof_level: str = str(In3ProofLevel.STANDARD),
                  response_includes_code: bool = False,
                  response_keep_proof: bool = False,

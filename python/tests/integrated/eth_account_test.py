@@ -37,6 +37,11 @@ class UtilsTestCase(unittest.TestCase):
         gas = self.client.eth.account.estimate_gas(transaction)
         self.assertGreater(gas, 1000)
 
+    def test_get_tx_receipt(self):
+        tx_hash = '0x738e8878228901ad8143cfcf908abb2d2044c83231a398731841be41970a79ce'
+        result = self.client.eth.account.get_transaction_receipt(tx_hash)
+        self.assertIsInstance(result, in3.eth.TransactionReceipt)
+
     # def test_sign(self):
     #     # TODO: Check sign mock data
     #     result = self.client.eth.account.sign('', '')
@@ -48,11 +53,6 @@ class UtilsTestCase(unittest.TestCase):
     #     result = self.client.eth.account.send_transaction(tx)
     #     self.assertEqual(result, "asd")
     #
-    # def test_get_tx_receipt(self):
-    #     # TODO: test_get_tx_receipt
-    #     tx_hash = '0x738e8878228901ad8143cfcf908abb2d2044c83231a398731841be41970a79ce'
-    #     result = self.client.eth.account.get_transaction_receipt(tx_hash)
-    #     self.assertIsInstance(result, in3.eth.TransactionReceipt)
     #
     # def test_send_raw_transaction(self):
     #     # TODO: test_send_raw_transaction
