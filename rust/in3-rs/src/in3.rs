@@ -164,6 +164,7 @@ impl Client {
         _res
     }
 
+    #[cfg(feature = "blocking")]
     pub fn send(&self, ctx: &mut Ctx) -> In3Result<()> {
         unsafe {
             let ret = in3_sys::in3_send_ctx(ctx.ptr);
@@ -306,6 +307,7 @@ impl Client {
         Ok(())
     }
 
+    #[cfg(feature = "blocking")]
     pub fn rpc(&mut self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;

@@ -15,5 +15,5 @@ cat <<EOF >../c/include/in3.rs.h
 #include "in3/in3_init.h"
 #include "in3/in3_curl.h"
 EOF
-cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false .. && make -j8 && cd ../rust/ && cargo build --examples --tests
+cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false .. && make -j8 && cd ../rust/ && cargo build --examples --tests --features=blocking
 cd ../scripts
