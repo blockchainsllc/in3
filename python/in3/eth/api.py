@@ -1,8 +1,8 @@
 from in3.eth.account import EthAccountApi
 from in3.eth.factory import EthObjectFactory
-from in3.eth.model import Transaction, Block
+from in3.eth.model import Transaction
 from in3.libin3.runtime import In3Runtime
-from in3.libin3.enum import EthMethods, BlockStatus
+from in3.libin3.enum import EthMethods, BlockAt
 
 
 class EthereumApi:
@@ -43,7 +43,7 @@ class EthereumApi:
         """
         return self.factory.get_integer(self._runtime.call(EthMethods.BLOCK_NUMBER))
 
-    def get_balance(self, address: str, at_block: int or str = str(BlockStatus.LATEST)) -> int:
+    def get_balance(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
         """
         Returns the balance of the account of given address.
         Args:
@@ -57,7 +57,7 @@ class EthereumApi:
             at_block = hex(at_block)
         return self.factory.get_integer(self._runtime.call(EthMethods.BALANCE, account.address, at_block))
 
-    def get_storage_at(self, address: str, position: int = 0, at_block: int or str = BlockStatus.LATEST) -> str:
+    def get_storage_at(self, address: str, position: int = 0, at_block: int or str = str(BlockAt.LATEST)) -> str:
         """
         Stored value in designed position at a given address. Storage can be used to store a smart contract state, constructor or just any data.
         Each contract consists of a EVM bytecode handling the execution and a storage to save the state of the contract.
@@ -70,9 +70,9 @@ class EthereumApi:
             storage_at (str): Stored value in designed position. Use decode('hex') to see ascii format of the hex data.
         """
         account = self.factory.get_account(address)
-        return self._runtime.call(EthMethods.STORAGE_AT, account.address, position, at_block)
+        return self._runtime.call(EthMethods.STORAGE_AT, account.address, hex(position), at_block)
 
-    def get_code(self, address: str, at_block: int or str = BlockStatus.LATEST) -> str:
+    def get_code(self, address: str, at_block: int or str = BlockAt.LATEST) -> str:
         """
         Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the function will return '0x'.
         Args:
@@ -84,7 +84,7 @@ class EthereumApi:
         account = self.factory.get_account(address)
         return self._runtime.call(EthMethods.CODE, account.address, at_block)
 
-    def get_transaction_count(self, address: str, at_block: int or str = BlockStatus.LATEST) -> int:
+    def get_transaction_count(self, address: str, at_block: int or str = BlockAt.LATEST) -> int:
         """
         Number of transactions mined from this address. Used to set transaction nonce.
         Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1).
@@ -98,7 +98,7 @@ class EthereumApi:
         account = self.factory.get_account(address)
         return self._runtime.call(EthMethods.TRANSACTION_COUNT, account.address, at_block)
 
-    def get_block_by_hash(self, block_hash: str, get_full_block: bool = False) -> Block:
+    def get_block_by_hash(self, block_hash: str, get_full_block: bool = False) -> BlockAt:
         """
         Blocks can be identified by root hash of the block merkle tree (this), or sequential number in which it was mined (get_block_by_number).
         Args:
@@ -110,7 +110,7 @@ class EthereumApi:
         serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_HASH, self.factory.get_hash(block_hash), get_full_block)
         return self.factory.get_block(serialized)
 
-    def get_block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> Block:
+    def get_block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> BlockAt:
         """
         Blocks can be identified by sequential number in which it was mined, or root hash of the block merkle tree (this) (get_block_by_hash).
         Args:
@@ -119,7 +119,7 @@ class EthereumApi:
         Returns:
             block (Block): Desired block, if exists.
         """
-        if isinstance(block_number, str) and not block_number.upper() in [e.value for e in BlockStatus]:
+        if isinstance(block_number, str) and not block_number.upper() in [e.value for e in BlockAt]:
             raise AssertionError('Block number must be an integer or \'latest\', \'earliest\', or \'pending\'')
         serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_NUMBER, block_number, get_full_block)
         return self.factory.get_block(serialized)

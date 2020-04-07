@@ -6,8 +6,7 @@ import in3.model
 class EthereumTest(unittest.TestCase):
 
     def setUp(self):
-        conf = in3.model.ClientConfig(node_signatures=1, chain_id=str(in3.model.Chain.MAINNET))
-        self.client = in3.Client(in3_config=conf)
+        self.client = in3.Client()
 
     def test_ethereum_sha3(self):
         digest = self.client.eth.keccak256('0x68656c6c6f20776f726c64')
@@ -18,21 +17,19 @@ class EthereumTest(unittest.TestCase):
 
     def test_block_number(self):
         result = self.client.eth.block_number()
-        self.assertGreater(result, 15344774)
+        self.assertGreater(result, 9825822)
 
     def test_get_balance(self):
-        result = self.client.eth.get_balance("0x16d4aBf4F640CBA3768A3B75F1bB060B0cC77194")
+        result = self.client.eth.get_balance("0x7076D6e69315e843fB5496504F4f65127F08e2D4")
         self.assertGreaterEqual(result, 0)
-        result = self.client.eth.get_balance("0x16d4aBf4F640CBA3768A3B75F1bB060B0cC77194", 15344774)
-        self.assertGreaterEqual(result, 0)
-        result = self.client.eth.get_balance("0x16d4aBf4F640CBA3768A3B75F1bB060B0cC77194", 'earliest')
-        self.assertGreaterEqual(result, 0)
+        result = self.client.eth.get_balance("0x7076D6e69315e843fB5496504F4f65127F08e2D4", 9825822)
+        self.assertGreaterEqual(result, 200021000000000000)
+        # result = self.client.eth.get_balance("0x7076D6e69315e843fB5496504F4f65127F08e2D4", 'earliest')
+        # self.assertGreaterEqual(result, 0)
 
     def test_get_storage_at(self):
-        rpc = self.client.eth.get_storage_at(
-            address=in3.eth.Address("0xaF91fF3c7E46D40684703F514783FA8880FF8C57", skip_validation=True), position=0,
-            at_block=in3.BlockStatus.LATEST)
-        self.assertEqual(rpc, '0x000000000000000000000000b31097ef4bd61b6aa1135c27cd475635298ac8ec')
+        storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0)
+        self.assertEqual(storage, '0xc6cde7c39eb2f0f0095f41570af89efc2c1ea828')
 
     def test_get_transaction_count(self):
         address = in3.eth.Address("0x9E52Ee6Acd6E7F55e860844d487556f8Cbe2BAEE")

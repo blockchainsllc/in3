@@ -66,7 +66,7 @@ class In3Methods(SimpleEnum):
     CONFIG = "in3_config"
 
 
-class BlockStatus(SimpleEnum):
+class BlockAt(SimpleEnum):
     EARLIEST = "earliest"
     LATEST = "latest"
     PENDING = "pending"
