@@ -389,6 +389,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider(JNIEnv* env, jobject o
 static JNIEnv* jni = NULL;
 
 static jobject get_storage_handler(void* cptr) {
+  if (!cptr) return NULL;
   jclass    cls = (*jni)->GetObjectClass(jni, (jobject) cptr);
   jmethodID mid = (*jni)->GetMethodID(jni, cls, "getStorageProvider", "()Lin3/utils/StorageProvider;");
   return (*jni)->CallObjectMethod(jni, (jobject) cptr, mid);
@@ -608,7 +609,8 @@ JNIEXPORT void JNICALL Java_in3_IN3_free(JNIEnv* env, jobject ob) {
   in3_free(in3);
 }
 
-in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
+in3_ret_t Java_in3_IN3_transport(in3_t* in3, in3_request_t* req) {
+  UNUSED_VAR(in3);
   uint64_t start = current_ms();
   //char** urls, int urls_len, char* payload, in3_response_t* res
   in3_ret_t success = IN3_OK;
