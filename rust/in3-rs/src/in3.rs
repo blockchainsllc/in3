@@ -174,7 +174,7 @@ impl Client {
         }
     }
 
-    pub fn new(chain_id: chain::ChainId, custom_transport: bool) -> Box<Client> {
+    pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
             let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
@@ -185,14 +185,12 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
-            (*c.ptr).transport = Some(Client::in3_rust_transport);
             (*c.ptr).cache = in3_sys::in3_set_storage_handler(c.ptr, Some(Client::in3_rust_storage_get),
-                                                                 Some(Client::in3_rust_storage_set),
-                                                                 Some(Client::in3_rust_storage_clear),
-                                                                 c.ptr as *mut libc::c_void);
-            if !custom_transport {
-                c.set_transport(Box::new(crate::transport::transport_http));
-            }            
+                                                              Some(Client::in3_rust_storage_set),
+                                                              Some(Client::in3_rust_storage_clear),
+                                                              c.ptr as *mut libc::c_void);
+            (*c.ptr).transport = Some(Client::in3_rust_transport);
+            c.set_transport(Box::new(crate::transport::transport_http));
             c
         }
     }
