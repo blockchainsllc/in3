@@ -1,15 +1,19 @@
-use crate::error::In3Result;
-use crate::error::*;
-use crate::in3::*;
-use serde_json::{Result, Value};
 use std::i64;
+
+use serde_json::{Result, Value};
 use serde_json::json;
+
+use crate::error::*;
+use crate::error::In3Result;
+use crate::in3::*;
+
 pub struct EthApi {
     client: Box<Client>,
 }
+
 impl EthApi {
-    pub fn new(config_str: &'static str) -> EthApi {
-        let mut client = Client::new(chain::MAINNET, false);
+    pub fn new(config_str: &str) -> EthApi {
+        let mut client = Client::new(chain::MAINNET);
         // let _ = client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let _ = client.configure(config_str);
         EthApi { client }
@@ -22,9 +26,8 @@ impl EthApi {
     }
 
     pub async fn block_number(self) -> i64 {
-        let response = self
-            .send(r#"{"method": "eth_blockNumber", "params": []}"#)
-            .await;
+        let response =
+            self.send(r#"{"method": "eth_blockNumber", "params": []}"#).await;
         let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
         let ret = v[0]["result"].as_str().unwrap();
         let without_prefix = ret.trim_start_matches("0x");
@@ -32,7 +35,7 @@ impl EthApi {
         blocknum.unwrap_or(-1)
     }
 
-    pub async fn getBalance(self, address:String) -> f64 {
+    pub async fn getBalance(self, address: String) -> f64 {
         let payload = json!({
             "method": "eth_getBalance",
             "params": [
@@ -42,16 +45,14 @@ impl EthApi {
         });
         let payload_str = payload.to_string().to_owned();
         let serialized = serde_json::to_string(&payload).unwrap();
-        let response = self
-        .send(&serialized)
-        .await; 
+        let response = self.send(&serialized).await;
         let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
         let ret = v[0]["result"].as_str().unwrap();
-        println!("{}",ret);
+        println!("{}", ret);
         let without_prefix = ret.trim_start_matches("0x");
         let balance_i = u64::from_str_radix(without_prefix, 16).unwrap();
         let balance = f64::from_bits(balance_i);
-        println!("{}",balance);
+        println!("{}", balance);
         balance
     }
 }
