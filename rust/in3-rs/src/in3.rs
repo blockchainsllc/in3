@@ -22,7 +22,7 @@ pub struct Ctx {
 }
 
 impl Ctx {
-    pub fn new(in3: &mut Client, config_str: &'static str) -> Ctx {
+    pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
@@ -155,7 +155,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn send_request(&mut self, config_str: &'static str) -> In3Result<String> {
+    pub async fn send_request(&mut self, config_str: &str) -> In3Result<String> {
         let mut ctx = Ctx::new(self, config_str);
         let _res = ctx.execute().await;
         _res
