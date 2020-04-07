@@ -9,8 +9,18 @@ dotnet:
   tags:
     - short-jobs
   script:
+    - mkdir Debug
     - cd dotnet
-    - dotnet build
+    - cp mac_build/lib/libin3.dylib dotnet/Debug/libin3.x64.dylib
+    - cp win_jni/lib/libin3.so dotnet/Debug/in3.x64.dll
+    - cp x64_build/lib/libin3.so dotnet/Debug/libin3.x64.so
+    - cp arm_jni_build/lib/libin3.so dotnet/Debug/libin3.arm7.so
+    - cp -r dotnet/Debug dotnet/Release
+    - dotnet build -c Debug
+    - dotnet build -c Release
+    - cp In3/bin/Debug/netcoreapp3.1/* Debug/
+    - cp In3/bin/Release/netcoreapp3.1/* Release/
   artifacts:
     paths:
-      - dotnet
+      - dotnet/Debug
+      - dotnet/Release
