@@ -502,20 +502,11 @@ struct in3_t_ {
  * // create new client
  * in3_t* client = in3_new();
  * 
- * // configure storage...
- * in3_storage_handler_t storage_handler;
- * storage_handler.get_item = storage_get_item;
- * storage_handler.set_item = storage_set_item;
- * storage_handler.clear = storage_clear;
- *
  * // configure transport
  * client->transport    = send_curl;
  *
  * // configure storage
- * client->cache = &storage_handler;
- * 
- * // init cache
- * in3_cache_init(client);
+ * in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
  * 
  * // ready to use ...
  * ```
@@ -540,20 +531,11 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * // create new client
  * in3_t* client = in3_for_chain(ETH_CHAIN_ID_MAINNET);
  * 
- * // configure storage...
- * in3_storage_handler_t storage_handler;
- * storage_handler.get_item = storage_get_item;
- * storage_handler.set_item = storage_set_item;
- * storage_handler.clear = storage_clear;
- *
  * // configure transport
  * client->transport    = send_curl;
  *
  * // configure storage
- * client->cache = &storage_handler;
- * 
- * // init cache
- * in3_cache_init(client);
+ * in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
  * 
  * // ready to use ...
  * ```
@@ -699,7 +681,8 @@ in3_signer_t* in3_create_signer(
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
-in3_storage_handler_t* in3_create_storage_handler(
+in3_storage_handler_t* in3_set_storage_handler(
+    in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/

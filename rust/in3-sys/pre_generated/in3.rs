@@ -11730,7 +11730,7 @@ pub struct bytes {
     #[doc = "< the byte-data"]
     pub data: *mut u8,
     #[doc = "< the length of the array ion bytes"]
-    pub len: usize,
+    pub len: u32,
 }
 #[test]
 fn bindgen_test_layout_bytes() {
@@ -11819,7 +11819,7 @@ impl Clone for bytes_builder_t {
     }
 }
 extern "C" {
-    pub fn b_new(data: *const u8, len: usize) -> *mut bytes_t;
+    pub fn b_new(data: *const u8, len: u32) -> *mut bytes_t;
 }
 extern "C" {
     pub fn b_print(a: *const bytes_t);
@@ -14857,20 +14857,11 @@ extern "C" {
     #[doc = " // create new client"]
     #[doc = " in3_t* client = in3_new();"]
     #[doc = ""]
-    #[doc = " // configure storage..."]
-    #[doc = " in3_storage_handler_t storage_handler;"]
-    #[doc = " storage_handler.get_item = storage_get_item;"]
-    #[doc = " storage_handler.set_item = storage_set_item;"]
-    #[doc = " storage_handler.clear = storage_clear;"]
-    #[doc = ""]
     #[doc = " // configure transport"]
     #[doc = " client->transport    = send_curl;"]
     #[doc = ""]
     #[doc = " // configure storage"]
-    #[doc = " client->cache = &storage_handler;"]
-    #[doc = ""]
-    #[doc = " // init cache"]
-    #[doc = " in3_cache_init(client);"]
+    #[doc = " in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);"]
     #[doc = ""]
     #[doc = " // ready to use ..."]
     #[doc = " ```"]
@@ -14997,7 +14988,8 @@ extern "C" {
 extern "C" {
     #[doc = " create a new storage handler-object to be set on the client."]
     #[doc = " the caller will need to free this pointer after usage."]
-    pub fn in3_create_storage_handler(
+    pub fn in3_set_storage_handler(
+        c: *mut in3_t,
         get_item: in3_storage_get_item,
         set_item: in3_storage_set_item,
         clear: in3_storage_clear,

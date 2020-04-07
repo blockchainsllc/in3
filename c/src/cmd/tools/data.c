@@ -301,7 +301,7 @@ int main(int argc, char* argv[]) {
         is_hex = c < ' ' || c > 0x7E || c == 0x5C || c == '"' || (is_hex && ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')));
         printf(is_hex ? "\\x%02x" : "%c", c);
       }
-      printf("\n len = %zu\n", bb->b.len);
+      printf("\n len = %u\n", bb->b.len);
     } else if (strcmp(format, "bin") == 0) {
       for (uint32_t i = 0; i < bb->b.len; i++)
         putchar(bb->b.data[i]);
