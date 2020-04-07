@@ -31,7 +31,7 @@ class Client:
         self._factory = In3ObjectFactory(self.eth.account.checksum_address, self.config.chainId)
 
     def _configure(self, in3_config: ClientConfig):
-        return self._runtime.call(In3Methods.CONFIG, in3_config.to_dict())
+        return self._runtime.call(In3Methods.CONFIG, in3_config.serialize())
 
     def node_list(self) -> NodeList:
         """

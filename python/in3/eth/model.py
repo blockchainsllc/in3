@@ -8,45 +8,15 @@ class DataTransferObject:
     For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
 
-    def to_dict(self) -> dict:
-        return {k: v for k, v in self.__dict__.items() if v is not None}
-        # aux = self.__dict__
-        # result = {}
-        # for i in aux:
-        #     if aux[i] is None:
-        #         continue
-        #     arr = i.split("_")
-        #     r = ""
-        #     index_aux = 0
-        #     for arr_aux in arr:
-        #         if arr_aux == '':
-        #             continue
-        #         r += arr_aux[index_aux].upper() + arr_aux[index_aux + 1:]
-        #     key = r[0].lower() + r[1:]
-        #
-        #     def get_val_from_object(_item) -> object:
-        #         if isinstance(_item, enum.Enum):
-        #             return _item.value
-        #         elif type(_item) == int:
-        #             return hex(int(_item))
-        #         elif isinstance(_item, Account):
-        #             return str(_item)
-        #         elif issubclass(_item.__class__, DataTransferObject):
-        #             return _item.to_dict()
-        #         return _item
-        #
-        #     if isinstance(aux[i], tuple):
-        #         value = []
-        #         for a in aux[i]:
-        #             value.append(get_val_from_object(a))
-        #     else:
-        #         value = get_val_from_object(aux[i])
-        #
-        #     result[key] = value
-        # return result
+    def _to_dict(self, int_to_hex: bool = False) -> dict:
+        dictionary = {k: v for k, v in self.__dict__.items() if v is not None}
+        if int_to_hex:
+            integers = {k: hex(v)for k, v in dictionary.items() if isinstance(v, int)}
+            dictionary.update(integers)
+        return dictionary
 
-    def serialize(self) -> str:
-        return json.dumps(self.to_dict(self))
+    def serialize(self) -> dict:
+        return self._to_dict()
 
 
 # TODO: from - String|Number: The address for the sending account. Uses the web3.eth.defaultAccount property, if not specified. Or an address or index of a local wallet in web3.eth.accounts.wallet.
@@ -102,7 +72,7 @@ class RawTransaction(DataTransferObject):
         signature (hex str): (optional) ECDSA of transaction, r, s and v concatenated. V is parity set by v = 27 + (r % 2).
     """
 
-    def __init__(self, From: str, to: str, gas: int, nonce: int, value: int = None, data: str = None,
+    def __init__(self, From: str, to: str, nonce: int, gas: int = None, value: int = None, data: str = None,
                  gasPrice: int = None, gasLimit: int = None, hash: str = None, signature: str = None):
         self.From = From
         self.gas = gas
@@ -114,6 +84,13 @@ class RawTransaction(DataTransferObject):
         self.to = to
         self.value = value
         self.signature = signature
+        super().__init__()
+
+    def serialize(self) -> dict:
+        dictionary = self._to_dict(int_to_hex=True)
+        del dictionary['From']
+        dictionary['from'] = self.From
+        return dictionary
 
 
 class Block(DataTransferObject):

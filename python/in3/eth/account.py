@@ -60,6 +60,18 @@ class EthAccountApi:
         assert isinstance(transaction, RawTransaction)
         return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction)
 
+    def send_raw_transaction(self, transaction: RawTransaction) -> str:
+        """
+        Sends a signed and encoded transaction.
+        Args:
+            transaction: All information needed to perform a transaction. Minimum is from, to and value.
+            Client will add the other required fields, gas and chaindId.
+        Returns:
+            tx_hash: Transaction hash, used to get the receipt and check if the transaction was mined.
+        """
+        assert isinstance(transaction, RawTransaction)
+        return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, transaction)
+
     # TODO: Create Receipt domain object
     def get_transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
         """
@@ -85,7 +97,8 @@ class EthAccountApi:
         Returns:
             gas (int): Calculated gas in Wei.
         """
-        return self._runtime.call(EthMethods.ESTIMATE_TRANSACTION, transaction)
+        gas = self._runtime.call(EthMethods.ESTIMATE_TRANSACTION, transaction.serialize())
+        return self._factory.get_integer(gas)
 
     def checksum_address(self, address: str, add_chain_id: bool = True) -> str:
         """
