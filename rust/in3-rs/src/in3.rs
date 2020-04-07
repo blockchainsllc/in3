@@ -332,14 +332,14 @@ mod tests {
 
     #[test]
     fn test_in3_config() {
-        let mut in3 = Client::new(chain::MAINNET, false);
+        let mut in3 = Client::new(chain::MAINNET);
         let c = in3.configure(r#"{"autoUpdateList":false}"#);
         assert_eq!(c.is_err(), false);
     }
 
     #[test]
     fn test_in3_create_request() {
-        let mut in3 = Client::new(chain::MAINNET, false);
+        let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method":"eth_blockNumber","params":[]}"#);
         let _request = Request::new(&mut ctx);
         let _ = ctx.execute();
