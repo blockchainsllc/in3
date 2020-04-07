@@ -1,7 +1,6 @@
 use crate::error::In3Result;
 use crate::error::*;
 use crate::in3::*;
-use async_std::task;
 use serde_json::{Result, Value};
 use std::i64;
 use serde_json::json;
@@ -59,6 +58,8 @@ impl EthApi {
 
 #[cfg(test)]
 mod tests {
+    use async_std::task;
+
     use super::*;
 
     #[test]
