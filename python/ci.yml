@@ -10,7 +10,7 @@ python:
     - short-jobs
   script:
     - cp mac_build/lib/libin3.dylib python/in3/libin3/shared/libin3.x64.dylib
-    - cp win_jni/lib/libin3.so python/in3/libin3/shared/in3.x64.dll
+    - cp win_jni/lib/libin3.so python/in3/libin3/shared/libin3.x64.dll
     - cp x64_build/lib/libin3.so python/in3/libin3/shared/libin3.x64.so
     - cp arm_jni_build/lib/libin3.so python/in3/libin3/shared/libin3.arm7.so
     - mv python python_multilib
