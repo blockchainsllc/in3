@@ -389,7 +389,7 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider(JNIEnv* env, jobject o
 static JNIEnv* jni = NULL;
 
 static jobject get_storage_handler(void* cptr) {
-  if (!cptr) return NULL;
+  if (!jni || !cptr) return NULL;
   jclass    cls = (*jni)->GetObjectClass(jni, (jobject) cptr);
   jmethodID mid = (*jni)->GetMethodID(jni, cls, "getStorageProvider", "()Lin3/utils/StorageProvider;");
   return (*jni)->CallObjectMethod(jni, (jobject) cptr, mid);
