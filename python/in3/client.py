@@ -1,7 +1,7 @@
 from in3.eth.factory import EthObjectFactory
 from in3.eth.model import RawTransaction
 from in3.libin3.runtime import In3Runtime
-from in3.libin3.enum import Chain, In3Methods
+from in3.libin3.enum import In3Methods
 from in3.eth.api import EthereumApi
 from in3.model import In3Node, NodeList, ClientConfig
 
@@ -20,10 +20,9 @@ class Client:
         if isinstance(in3_config, ClientConfig):
             self.config = in3_config
         elif isinstance(in3_config, str):
-            chain = next((item for item in Chain if item.value['alias'] == in3_config), False)
-            if not chain:
-                raise ValueError('Chain name not supported. Try mainnet, goerli or kovan')
-            self.config = ClientConfig(chain_id=str(chain))
+            if in3_config not in ['mainnet', 'kovan', 'goerli', 'evan', 'ipfs']:
+                raise ValueError('Chain name not supported. Try mainnet, kovan, goerli, evan, ipfs.')
+            self.config = ClientConfig(chain_id=in3_config)
         else:
             self.config = ClientConfig()
         self._runtime = In3Runtime(self.config.timeout)
@@ -99,7 +98,7 @@ class In3ObjectFactory(EthObjectFactory):
     def get_node_list(self, serialized: dict) -> NodeList:
         mapping = {
             "nodes": list,
-            "contract": self.get_address,
+            "contract": self.get_account,
             "registryId": str,
             "lastBlockNumber": int,
             "totalServers": int,
@@ -112,7 +111,7 @@ class In3ObjectFactory(EthObjectFactory):
     def get_in3node(self, serialized: dict) -> In3Node:
         mapping = {
             "url": str,
-            "address": self.get_address,
+            "address": self.get_account,
             "index": int,
             "deposit": self.get_integer,
             "props": str,

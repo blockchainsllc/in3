@@ -9,42 +9,41 @@ class DataTransferObject:
     """
 
     def to_dict(self) -> dict:
-        # TODO: Refactor
-        aux = self.__dict__
-        result = {}
-        for i in aux:
-            if aux[i] is None:
-                continue
-            arr = i.split("_")
-            r = ""
-            index_aux = 0
-            for arr_aux in arr:
-                if arr_aux == '':
-                    continue
-                r += arr_aux[index_aux].upper() + arr_aux[index_aux + 1:]
-            key = r[0].lower() + r[1:]
-
-            def get_val_from_object(_item) -> object:
-                if isinstance(_item, enum.Enum):
-                    return _item.value
-                # TODO: review or fix this policy
-                elif type(_item) == int:
-                    return hex(int(_item))
-                elif isinstance(_item, Account):
-                    return str(_item)
-                elif issubclass(_item.__class__, DataTransferObject):
-                    return _item.to_dict()
-                return _item
-
-            if isinstance(aux[i], tuple):
-                value = []
-                for a in aux[i]:
-                    value.append(get_val_from_object(a))
-            else:
-                value = get_val_from_object(aux[i])
-
-            result[key] = value
-        return result
+        return {k: v for k, v in self.__dict__.items() if v is not None}
+        # aux = self.__dict__
+        # result = {}
+        # for i in aux:
+        #     if aux[i] is None:
+        #         continue
+        #     arr = i.split("_")
+        #     r = ""
+        #     index_aux = 0
+        #     for arr_aux in arr:
+        #         if arr_aux == '':
+        #             continue
+        #         r += arr_aux[index_aux].upper() + arr_aux[index_aux + 1:]
+        #     key = r[0].lower() + r[1:]
+        #
+        #     def get_val_from_object(_item) -> object:
+        #         if isinstance(_item, enum.Enum):
+        #             return _item.value
+        #         elif type(_item) == int:
+        #             return hex(int(_item))
+        #         elif isinstance(_item, Account):
+        #             return str(_item)
+        #         elif issubclass(_item.__class__, DataTransferObject):
+        #             return _item.to_dict()
+        #         return _item
+        #
+        #     if isinstance(aux[i], tuple):
+        #         value = []
+        #         for a in aux[i]:
+        #             value.append(get_val_from_object(a))
+        #     else:
+        #         value = get_val_from_object(aux[i])
+        #
+        #     result[key] = value
+        # return result
 
     def serialize(self) -> str:
         return json.dumps(self.to_dict(self))
@@ -171,3 +170,58 @@ class Account:
 
     def __str__(self):
         return self.address
+
+
+class Log(DataTransferObject):
+    """
+    Transaction Log for events and data returned from smart-contract method calls.
+    """
+    def __init__(self, address: hex, blockHash: hex, blockNumber: int, data: hex, logIndex: int, removed: bool,
+                 topics: [hex], transactionHash: hex, transactionIndex: int, transactionLogIndex: int, Type: str):
+
+        self.address = address
+        self.blockHash = blockHash
+        self.blockNumber = blockNumber
+        self.data = data
+        self.logIndex = logIndex
+        self.removed = removed
+        self.topics = topics
+        self.transactionHash = transactionHash
+        self.transactionIndex = transactionIndex
+        self.transactionLogIndex = transactionLogIndex
+        self.Type = Type
+
+
+class TransactionReceipt(DataTransferObject):
+    """
+    Receipt from a mined transaction.
+    Args:
+        blockHash:
+        blockNumber:
+        cumulativeGasUsed: total amount of gas used by block
+        From:
+        gasUsed: amount of gas used by this specific transaction
+        logs:
+        logsBloom:
+        status: 1 if transaction succeeded, 0 otherwise.
+        transactionHash:
+        transactionIndex:
+        to: Account to which this transaction was sent. If the transaction was a contract creation this value is set to None.
+        contractAddress: Contract Account address created, f the transaction was a contract creation, or None otherwise.
+    """
+    def __init__(self, blockHash: hex, blockNumber: int, cumulativeGasUsed: int, From: Account, gasUsed: int,
+                 logsBloom: hex, status: int, transactionHash: hex, transactionIndex: int,
+                 logs: [Log] = None, to: Account = None, contractAddress: Account = None):
+
+        self.blockHash = blockHash
+        self.blockNumber = blockNumber
+        self.cumulativeGasUsed = cumulativeGasUsed
+        self.From = From
+        self.gasUsed = gasUsed
+        self.logsBloom = logsBloom
+        self.status = status
+        self.transactionHash = transactionHash
+        self.transactionIndex = transactionIndex
+        self.logs = logs
+        self.to = to
+        self.contractAddress = contractAddress

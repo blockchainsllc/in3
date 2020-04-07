@@ -103,12 +103,13 @@ source : [in3-c/python/examples/in3_config.py](https://github.com/slockit/in3-c/
 
 
 ```python
+import in3.model
 import in3
 
 if __name__ == '__main__':
 
     print('\nEthereum Goerli Test Network')
-    goerli_cfg = in3.ClientConfig(chain_id=str(in3.Chain.GOERLI), node_signatures=3, request_timeout=10000)
+    goerli_cfg = in3.ClientConfig(chain_id=str(in3.model.Chain.GOERLI), node_signatures=3, request_timeout=10000)
     client = in3.Client(goerli_cfg)
     node_list = client.node_list()
     print('\nIncubed Registry:')
@@ -331,11 +332,11 @@ and want to run a local integrity check, just to be on the safe side.
 - `latest_block_stall` _int_ - (optional) - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
 - `account_private_key` _str_ - (optional) - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
 - `node_signatures` _int_ - (optional) - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
-- `node_signature_consensus` _int_ - - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
-- `node_min_deposit` _int_ - - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
+- `node_signature_consensus` _int_ - (optional) - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
+- `node_min_deposit` _int_ - (optional) - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
 - `node_list_auto_update` _bool_ - (optional) - If true the nodelist will be automatically updated. False may compromise data security.
 - `node_limit` _int_ - (optional) - Limit nodes stored in the client. example: 150 nodes
-- `request_timeout` _int_ - Milliseconds before a request times out. example: 100000 ms
+- `request_timeout` _int_ - (optional) - Milliseconds before a request times out. example: 100000 ms
 - `request_retries` _int_ - (optional) - Maximum times the client will retry to contact a certain node. example: 10 retries
 - `response_proof_level` _str_ - (optional) - 'none'|'standard'|'full' Full gets the whole block Patricia-Merkle-Tree, Standard only verifies the specific tree branch concerning the request, None only verifies the root hashes, like a light-client does.
 - `response_includes_code` _bool_ - (optional) - If true, every request with the address field will include the data, if existent, that is stored in that wallet/smart-contract. If false, only the code digest is included.

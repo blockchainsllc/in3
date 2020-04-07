@@ -38,7 +38,6 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(result, "asd")
 
     def test_get_tx_receipt(self):
-        # TODO: Check send_tx mock data
         tx_hash = '0x738e8878228901ad8143cfcf908abb2d2044c83231a398731841be41970a79ce'
         result = self.client.eth.account.get_transaction_receipt(tx_hash)
-        self.assertEqual(result, "asd")
+        self.assertIsInstance(result, in3.eth.TransactionReceipt)

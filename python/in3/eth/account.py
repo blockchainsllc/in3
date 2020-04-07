@@ -1,7 +1,7 @@
 from in3.exception import ClientException
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.runtime import In3Runtime
-from in3.eth.model import RawTransaction
+from in3.eth.model import RawTransaction, TransactionReceipt
 from in3.libin3.enum import EthMethods
 
 
@@ -26,7 +26,7 @@ class EthAccountApi:
         # in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst)
         #           eth_sign(ctx,                   SIGN_EC_RAW,         *data,           bytes(NULL, 0),   sig))
         #   SIGN_EC_RAW  = 0, /**< sign the data directly */ SIGN_EC_HASH = 1, /**< hash and sign the data */
-        address = self._factory.get_address(address)
+        address = self._factory.get_account(address)
         signature = bytearray()
         if isinstance(data, str):
             self._factory.get_hash(data)
@@ -61,7 +61,7 @@ class EthAccountApi:
         return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction)
 
     # TODO: Create Receipt domain object
-    def get_transaction_receipt(self, tx_hash: str) -> dict:
+    def get_transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
         """
         After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to
         gather the receipt, once a miner has mined and it is part of an acknowledged block. Because how it is possible,
@@ -72,9 +72,10 @@ class EthAccountApi:
         Args:
             tx_hash: Transaction hash.
         Returns:
-            tx_receipt:
+            tx_receipt: The mined Transaction data including event logs.
         """
-        return self._runtime.call(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
+        tx_receipt = self._runtime.call(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
+        return self._factory.get_tx_receipt(tx_receipt)
 
     def estimate_gas(self, transaction: RawTransaction) -> int:
         """
@@ -96,4 +97,4 @@ class EthAccountApi:
         Returns:
             checksum_address: EIP-55 compliant, mixed-case address object.
         """
-        return self._factory.checksum_address(self._factory.get_address(address).address, add_chain_id)
+        return self._factory.checksum_address(self._factory.get_account(address).address, add_chain_id)

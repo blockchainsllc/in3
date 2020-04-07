@@ -52,7 +52,7 @@ class EthereumApi:
         Returns:
             balance (int): integer of the current balance in wei.
         """
-        account = self.factory.get_address(address)
+        account = self.factory.get_account(address)
         if isinstance(at_block, int):
             at_block = hex(at_block)
         return self.factory.get_integer(self._runtime.call(EthMethods.BALANCE, account.address, at_block))
@@ -69,7 +69,7 @@ class EthereumApi:
         Returns:
             storage_at (str): Stored value in designed position. Use decode('hex') to see ascii format of the hex data.
         """
-        account = self.factory.get_address(address)
+        account = self.factory.get_account(address)
         return self._runtime.call(EthMethods.STORAGE_AT, account.address, position, at_block)
 
     def get_code(self, address: str, at_block: int or str = BlockStatus.LATEST) -> str:
@@ -81,7 +81,7 @@ class EthereumApi:
         Returns:
             bytecode (str): Smart-Contract bytecode in hexadecimal.
         """
-        account = self.factory.get_address(address)
+        account = self.factory.get_account(address)
         return self._runtime.call(EthMethods.CODE, account.address, at_block)
 
     def get_transaction_count(self, address: str, at_block: int or str = BlockStatus.LATEST) -> int:
@@ -95,7 +95,7 @@ class EthereumApi:
         Returns:
             tx_count (int): Number of transactions mined from this address.
         """
-        account = self.factory.get_address(address)
+        account = self.factory.get_account(address)
         return self._runtime.call(EthMethods.TRANSACTION_COUNT, account.address, at_block)
 
     def get_block_by_hash(self, block_hash: str, get_full_block: bool = False) -> Block:

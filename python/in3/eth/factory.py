@@ -1,5 +1,5 @@
 from in3.exception import HashFormatException, EthAddressFormatException
-from in3.eth.model import Block, Transaction, Account
+from in3.eth.model import Block, Transaction, Account, Log, TransactionReceipt
 from in3.libin3.enum import In3Methods
 
 
@@ -37,7 +37,7 @@ class EthObjectFactory:
             "logsBloom": str,
             "transactionsRoot": str,
             "stateRoot": str,
-            "miner": self.get_address,
+            "miner": self.get_account,
             "difficulty": int,
             "totalDifficulty": int,
             "extraData": str,
@@ -61,16 +61,16 @@ class EthObjectFactory:
         obj["transactions"] = transactions
         return Block(**obj)
 
-    def get_transaction(self, serialized: dict):
+    def get_transaction(self, serialized: dict) -> Transaction:
         mapping = {
             "blockHash": self.get_hash,
-            "from": self.get_address,
+            "from": self.get_account,
             "gas": int,
             "gasPrice": int,
             "hash": self.get_hash,
             "input": str,
             "nonce": int,
-            "to": self.get_address,
+            "to": self.get_account,
             "transactionIndex": int,
             "value": int,
             "v": str,
@@ -78,20 +78,56 @@ class EthObjectFactory:
             "s": str
         }
         aux = self._deserialize(serialized, mapping)
-        aux["From"] = self.get_address(serialized["from"])
+        aux["From"] = self.get_account(serialized["from"])
         return Transaction(**aux)
 
-    def checksum_address(self, address: str, add_chain_id: bool = True) -> str:
+    def get_tx_receipt(self, serialized: dict) -> TransactionReceipt:
+        mapping = {
+            'blockHash': self.get_hash,
+            'blockNumber': self.get_integer,
+            'contractAddress': self.get_account if serialized['contractAddress'] else None,
+            'cumulativeGasUsed': self.get_integer,
+            'gasUsed': self.get_integer,
+            'logsBloom': str,
+            'status': self.get_integer,
+            'to': self.get_account if serialized['to'] else None,
+            'transactionHash': self.get_hash,
+            'transactionIndex': self.get_integer
+        }
+        obj = self._deserialize(serialized, mapping)
+        obj["From"] = self.get_account(serialized["from"])
+        if serialized["logs"] is not None and len(serialized["logs"]) > 0:
+            obj["logs"] = [self.get_log(log) for log in serialized["logs"]]
+        return TransactionReceipt(**obj)
+
+    def get_log(self, serialized: dict) -> Log:
+        mapping = {
+            'address': self.get_account,
+            'blockHash': self.get_integer,
+            'blockNumber': self.get_integer,
+            'data': str,
+            'logIndex': self.get_integer,
+            'removed': bool,
+            'transactionHash': self.get_hash,
+            'transactionIndex': self.get_integer,
+            'transactionLogIndex': self.get_integer,
+        }
+        aux = self._deserialize(serialized, mapping)
+        aux["topics"] = [self.get_hash(topic) for topic in serialized["topics"]]
+        aux["Type"] = serialized["type"]
+        return Log(**aux)
+
+    def checksum_address(self, address: str, add_chain_id: bool = True) -> hex:
         return self._runtime.call(In3Methods.CHECKSUM_ADDRESS, address, add_chain_id)
 
-    def get_hash(self, hash_str: str):
+    def get_hash(self, hash_str: str) -> hex:
         if not hash_str.startswith('0x'):
             raise HashFormatException("Ethereum hashes start with 0x")
         if len(hash_str[2:].encode('utf-8')) != 64:
             raise HashFormatException("Hash size is not of an Ethereum hash.")
         return hash_str
 
-    def get_address(self, address: str):
+    def get_account(self, address: str) -> Account:
         if not address.startswith("0x"):
             raise EthAddressFormatException("Ethereum addresses start with 0x")
         if len(address.encode("utf-8")) != 42:

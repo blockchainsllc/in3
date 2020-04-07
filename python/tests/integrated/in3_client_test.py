@@ -1,5 +1,6 @@
 import unittest
 import in3
+import in3.model
 
 
 class In3ClientTest(unittest.TestCase):
@@ -10,9 +11,9 @@ class In3ClientTest(unittest.TestCase):
     def test_configure(self):
         client = in3.Client(in3.ClientConfig())
         self.assertIsNotNone(client)
-        client = in3.Client(in3.ClientConfig(chain_id=str(in3.Chain.MAINNET)))
+        client = in3.Client(in3.ClientConfig(chain_id=str(in3.model.Chain.MAINNET)))
         self.assertIsNotNone(client)
-        client = in3.Client(str(in3.Chain.MAINNET))
+        client = in3.Client(str(in3.model.Chain.MAINNET))
         self.assertIsNotNone(client)
         client = in3.Client('mainnet')
         self.assertIsNotNone(client)
@@ -51,9 +52,9 @@ class In3ClientKovanTest(In3ClientTest):
         self.in3client = in3.Client('kovan')
 
     def test_configure(self):
-        client = in3.Client(in3.ClientConfig(chain_id=str(in3.Chain.KOVAN)))
+        client = in3.Client(in3.ClientConfig(chain_id=str(in3.model.Chain.KOVAN)))
         self.assertIsNotNone(client)
-        client = in3.Client(str(in3.Chain.KOVAN))
+        client = in3.Client(str(in3.model.Chain.KOVAN))
         self.assertIsNotNone(client)
 
 
@@ -63,9 +64,9 @@ class In3ClientGoerliTest(In3ClientTest):
         self.in3client = in3.Client('goerli')
 
     def test_configure(self):
-        client = in3.Client(in3.ClientConfig(chain_id=str(in3.Chain.GOERLI)))
+        client = in3.Client(in3.ClientConfig(chain_id=str(in3.model.Chain.GOERLI)))
         self.assertIsNotNone(client)
-        client = in3.Client(str(in3.Chain.GOERLI))
+        client = in3.Client(str(in3.model.Chain.GOERLI))
         self.assertIsNotNone(client)
 
 
