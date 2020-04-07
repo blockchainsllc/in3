@@ -190,7 +190,11 @@ impl Client {
                                                               Some(Client::in3_rust_storage_clear),
                                                               c.ptr as *mut libc::c_void);
             (*c.ptr).transport = Some(Client::in3_rust_transport);
-            c.set_transport(Box::new(crate::transport::transport_http));
+
+            #[cfg(feature = "blocking")] {
+                c.set_transport(Box::new(crate::transport::transport_http));
+            }
+
             c
         }
     }
