@@ -1,6 +1,6 @@
 dotnet:
   image: docker.slock.it/build-images/dotnet-core-sdk:3.1
-  stage: dotnet
+  stage: bindings
   needs:
     - mac_os
     - win_jni
