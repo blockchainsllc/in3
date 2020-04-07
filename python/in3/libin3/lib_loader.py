@@ -120,7 +120,7 @@ def _http_transport(in3_request: In3Request):
     return 0
 
 
-def _multi_platform_selector():
+def _multi_platform_selector() -> str:
     """
     Helper to define the path of installed shared libraries. In this case libin3.
     Returns:
@@ -170,7 +170,7 @@ def _multi_platform_selector():
         # Debug only available on mac.
         # If you need to it run on your system, run in3-core/scripts/build_debug.sh to get a build.
         # Then add it to libin3/shared folder
-        return Path(path.parent, "libin3", "shared",  "libin3d.{}".format(extension))
+        return str(Path(path.parent, "libin3", "shared",  "libin3d.{}".format(extension)))
     else:
         return str(Path(path.parent, "libin3", "shared", "libin3.{}".format(extension)))
 
