@@ -103,8 +103,8 @@ source : [in3-c/python/examples/in3_config.py](https://github.com/slockit/in3-c/
 
 
 ```python
-import in3.model
 import in3
+import in3.model
 
 if __name__ == '__main__':
 
@@ -291,58 +291,55 @@ Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-m
 
 ### ClientConfig
 ```python
-ClientConfig(
-self,
+ClientConfig(self,
 chain_id: str = 'mainnet',
-chain_finality_threshold: int = 10,
+chain_finality_threshold: int = None,
 account_private_key: str = None,
-latest_block_stall: int = 10,
-node_signatures: int = 3,
-node_signature_consensus: int = 1,
+latest_block_stall: int = None,
+node_signatures: int = None,
+node_signature_consensus: int = None,
 node_min_deposit: int = 10000000000000000,
 node_list_auto_update: bool = True,
 node_limit: int = None,
 request_timeout: int = 5000,
-request_retries: int = 0,
-response_proof_level: In3ProofLevel = <In3ProofLevel.STANDARD: 'standard'>,
+request_retries: int = 5,
+response_proof_level: str = 'standard',
 response_includes_code: bool = False,
 response_keep_proof: bool = False,
-cached_blocks: int = 1,
-cached_code_bytes: 100 = 101____)
+cached_blocks: int = None,
+cached_code_bytes: int = None)
 ```
 
-In3 Client Configuration class.
-Determines the behavior of client, which chain to connect to, verification policy, update cycle, minimum number of
-signatures collected on every request, and response timeout.
-Those are the settings that determine information security levels. Considering integrity is guaranteed by and
-confidentiality is not available on public blockchains, these settings will provide a balance between availability,
-and financial stake in case of repudiation. The "newer" the block is, or the closest to "latest", the higher are
-the chances it gets repudiated (a fork) by the chain, making lower the chances a node will sign on such information
-and thus reducing its availability. Up to a certain point, the older the block gets, the highest is its
-availability because of the close-to-zero repudiation risk. Blocks older than circa one year are stored in Archive
-Nodes, expensive computers, so, despite of the zero repudiation risk, there are not many nodes and they must search
-for the requested block in its database, lowering the availability as well. The verification policy enforces an
-extra step of security, that proves important in case you have only one response from an archive node
-and want to run a local integrity check, just to be on the safe side.
+Determines the behavior of the in3 client, which chain to connect to and how to manage information security policies.
+
+Considering integrity is guaranteed and confidentiality is not available on public blockchains, these settings will provide a balance between availability, and financial stake in case of repudiation.
+
+The newer the block is, higher are the chances it gets repudiated by a fork in the chain. In3 nodes will decide individually to sign on repudiable information, reducing the availability. If the application needs the very latest block, consider using a calculated value in `node_signature_consensus` and set `node_signatures` to zero. This setting is as secure as a light-client.
+
+The older the block gets, the highest is its availability because of the close-to-zero repudiation risk, but blocks older than circa one year are stored in Archive Nodes, expensive computers, so, despite of the low risk, there are not many nodes available with such information, and they must search for the requested block in its database, lowering the availability as well. If the application needs access to _old_ blocks, consider setting `request_timeout` and `request_retries` to accomodate the time the archive nodes take to fetch the inforamtion.
+
+The verification policy enforces an extra step of security, adding a financial stake in case of repudiation or false/broken proof. For high security application, consider setting a calculated value in `node_min_deposit` and request as much signatures as necessary in `node_signatures`. Setting `chain_finality_threshold` high will guarantee non-repudiability.
+
+**All args are Optional. Defaults connect to Ethereum main network with regular security levels.**
 
 **Arguments**:
 
-- `chain_id` _str_ - (optional) - 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
-- `chain_finality_threshold` _int_ - (optional) - Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
-- `latest_block_stall` _int_ - (optional) - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
-- `account_private_key` _str_ - (optional) - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-- `node_signatures` _int_ - (optional) - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
-- `node_signature_consensus` _int_ - (optional) - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
-- `node_min_deposit` _int_ - (optional) - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
-- `node_list_auto_update` _bool_ - (optional) - If true the nodelist will be automatically updated. False may compromise data security.
-- `node_limit` _int_ - (optional) - Limit nodes stored in the client. example: 150 nodes
-- `request_timeout` _int_ - (optional) - Milliseconds before a request times out. example: 100000 ms
-- `request_retries` _int_ - (optional) - Maximum times the client will retry to contact a certain node. example: 10 retries
-- `response_proof_level` _str_ - (optional) - 'none'|'standard'|'full' Full gets the whole block Patricia-Merkle-Tree, Standard only verifies the specific tree branch concerning the request, None only verifies the root hashes, like a light-client does.
-- `response_includes_code` _bool_ - (optional) - If true, every request with the address field will include the data, if existent, that is stored in that wallet/smart-contract. If false, only the code digest is included.
-- `response_keep_proof` _bool_ - (optional) - If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
-- `cached_blocks` _int_ - (optional) - Maximum blocks kept in memory. example: 100 last requested blocks
-- `cached_code_bytes` _int_ - (optional) - Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
+- `chain_id` _str_ - 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
+- `chain_finality_threshold` _int_ - Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
+- `latest_block_stall` _int_ - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
+- `account_private_key` _str_ - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+- `node_signatures` _int_ - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
+- `node_signature_consensus` _int_ - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
+- `node_min_deposit` _int_ - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
+- `node_list_auto_update` _bool_ - If true the nodelist will be automatically updated. False may compromise data security.
+- `node_limit` _int_ - Limit nodes stored in the client. example: 150 nodes
+- `request_timeout` _int_ - Milliseconds before a request times out. example: 100000 ms
+- `request_retries` _int_ - Maximum times the client will retry to contact a certain node. example: 10 retries
+- `response_proof_level` _str_ - 'none'|'standard'|'full' Full gets the whole block Patricia-Merkle-Tree, Standard only verifies the specific tree branch concerning the request, None only verifies the root hashes, like a light-client does.
+- `response_includes_code` _bool_ - If true, every request with the address field will include the data, if existent, that is stored in that wallet/smart-contract. If false, only the code digest is included.
+- `response_keep_proof` _bool_ - If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
+- `cached_blocks` _int_ - Maximum blocks kept in memory. example: 100 last requested blocks
+- `cached_code_bytes` _int_ - Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
   
 
 ### NodeList
@@ -384,7 +381,7 @@ indeed mined are in the correct chain fork.
 - `weight` _int_ - Score based on qualitative metadata to base which nodes to ask signatures from.
   
 
-## in3.eth
+## in3.eth.model
 
 
 ### EthereumApi
@@ -456,10 +453,9 @@ Returns the balance of the account of given address.
 
 #### get_storage_at
 ```python
-EthereumApi.get_storage_at(
-address: str,
+EthereumApi.get_storage_at(address: str,
 position: int = 0,
-at_block: int = <BlockStatus.LATEST: 'latest'>)
+at_block: int = 'latest')
 ```
 
 Stored value in designed position at a given address. Storage can be used to store a smart contract state, constructor or just any data.
@@ -480,7 +476,7 @@ The storage is essentially a key/value store. Use get_code to get the smart-cont
 #### get_code
 ```python
 EthereumApi.get_code(address: str,
-at_block: int = <BlockStatus.LATEST: 'latest'>)
+at_block: int = <BlockAt.LATEST: 'latest'>)
 ```
 
 Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the function will return '0x'.
@@ -498,7 +494,7 @@ Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the fu
 #### get_transaction_count
 ```python
 EthereumApi.get_transaction_count(
-address: str, at_block: int = <BlockStatus.LATEST: 'latest'>)
+address: str, at_block: int = <BlockAt.LATEST: 'latest'>)
 ```
 
 Number of transactions mined from this address. Used to set transaction nonce.
@@ -632,7 +628,7 @@ likely that the transaction will stay in the chain.
 
 **Returns**:
 
-  tx_receipt:
+- `tx_receipt` - The mined Transaction data including event logs.
   
 
 #### estimate_gas
@@ -755,6 +751,54 @@ Account(self, address: str, chain_id: str, secret: str = None)
 
 Ethereum address of a wallet or smart-contract
 
+
+#### Log
+```python
+Log(self, address: <built-in function hex>,
+blockHash: <built-in function hex>, blockNumber: int,
+data: <built-in function hex>, logIndex: int, removed: bool,
+topics: [<built-in function hex>],
+transactionHash: <built-in function hex>, transactionIndex: int,
+transactionLogIndex: int, Type: str)
+```
+
+Transaction Log for events and data returned from smart-contract method calls.
+
+
+#### TransactionReceipt
+```python
+TransactionReceipt(self,
+blockHash: <built-in function hex>,
+blockNumber: int,
+cumulativeGasUsed: int,
+From: Account,
+gasUsed: int,
+logsBloom: <built-in function hex>,
+status: int,
+transactionHash: <built-in function hex>,
+transactionIndex: int,
+logs: [<class 'in3.eth.model.Log'>] = None,
+to: Account = None,
+contractAddress: Account = None)
+```
+
+Receipt from a mined transaction.
+
+**Arguments**:
+
+  blockHash:
+  blockNumber:
+- `cumulativeGasUsed` - total amount of gas used by block
+  From:
+- `gasUsed` - amount of gas used by this specific transaction
+  logs:
+  logsBloom:
+- `status` - 1 if transaction succeeded, 0 otherwise.
+  transactionHash:
+  transactionIndex:
+- `to` - Account to which this transaction was sent. If the transaction was a contract creation this value is set to None.
+- `contractAddress` - Contract Account address created, f the transaction was a contract creation, or None otherwise.
+  
 
 ## in3.libin3
 
