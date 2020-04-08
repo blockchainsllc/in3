@@ -1,3 +1,4 @@
+from in3 import HashFormatException
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.runtime import In3Runtime
 from in3.libin3.enum import In3Methods
@@ -73,6 +74,10 @@ class Client:
         Returns:
             decoded_return_values (tuple):  "0x1234567890123456789012345678901234567890", "0x05"
         """
+        if not encoded_value.startswith('0x'):
+            raise AssertionError("Encoded values must start with 0x")
+        if len(encoded_value[2:]) <= 64:
+            raise AssertionError("Encoded values must be longer than 64 characters.")
         is_signature = re.match(r'.*(\(.+\))', fn_signature)
         _types = ["address", "string", "uint", "string", "bool", "bytes", "int"]
         contains_type = [_type for _type in _types if _type in fn_signature]
