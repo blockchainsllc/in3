@@ -28,17 +28,19 @@ void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd) {
 
   memset(cmd + index, 0x00, sizeof(cmd));
 
-  memcpy(cmd, CHANNEL, sizeof(CHANNEL));
-  index += sizeof(cmd);
+  memcpy(cmd + index, CHANNEL, sizeof(CHANNEL));
+  index += sizeof(CHANNEL);
 
   memcpy(cmd + index, &TAG, 1);
   index += 1;
 
   int_to_bytes(seq, data);
+  printf("data[0] %d data[1] %d\n", data[0],data[1]);
   memcpy(cmd + index, data, sizeof(data));
   index += sizeof(data);
 
   int_to_bytes(apdu_len, data);
+  printf("data[0] %d data[1] %d\n", data[0],data[1]);
   memcpy(cmd + index, data, sizeof(data));
   index += sizeof(data);
 
@@ -67,8 +69,8 @@ void unwrap_apdu(bytes_t i_wrapped_hid_cmd, bytes_t* o_apdu_res) {
 
 int int_to_bytes(uint16_t x, uint8_t* buf) {
 
-  buf[0] = (uint8_t)(x & 0xFF);
-  buf[1] = (uint8_t)((x >> 8) & 0xFF);
+  buf[1] = (uint8_t)(x & 0xFF);
+  buf[0] = (uint8_t)((x >> 8) & 0xFF);
   return 2;
 }
 
