@@ -93,6 +93,8 @@ typedef struct cache_s {
   bytes_t values[MAX_ENTRIES];
   char*   keys[MAX_ENTRIES];
 } cache_t;
+static cache_t cache;
+
 static bytes_t* cache_get_item(void* cptr, const char* key) {
   cache_t* cache = (cache_t*) cptr;
   for (int i = 0; i < MAX_ENTRIES && cache->keys[i]; i++) {
@@ -118,8 +120,8 @@ static void cache_set_item(void* cptr, const char* key, bytes_t* value) {
 }
 
 void static setup_test_cache(in3_t* c) {
-  cache_t* cache = calloc(1, sizeof(cache_t));
-  in3_set_storage_handler(c, cache_get_item, cache_set_item, NULL, cache);
+  memset(&cache, 0, sizeof(cache));
+  in3_set_storage_handler(c, cache_get_item, cache_set_item, NULL, &cache);
 }
 
 static void test_cache() {
