@@ -4,9 +4,9 @@ async fn http_async(
     url: &str,
     payload: &str,
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync + 'static>> {
-    let res: String = surf::post(url)
-        .set_header("Content-Type", "application/json")
+    let res = surf::post(url)
         .body_string(payload.to_string())
+        .set_header("content-type", "application/json")
         .recv_string()
         .await?;
     Ok(res.to_string())
