@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE
-// See scripts/build_rust.sh
+// See scripts/build_includeh.sh
 #include "../src/core/client/context_internal.h"
 #include "in3/bytes.h"
 #include "in3/client.h"
