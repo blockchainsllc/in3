@@ -107,7 +107,7 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
         .write_to_file(&out_bindings_path)
         .expect("Unable to write bindings");
     //Copy binding to other path
-    copy(out_bindings_path, pregenerated_bindgen_header).expect("Unable to update in3 bindings");
+    //copy(out_bindings_path, pregenerated_bindgen_header).expect("Unable to update in3 bindings");
 }
 
 fn main() {
