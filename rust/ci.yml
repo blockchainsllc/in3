@@ -1,0 +1,29 @@
+rust:
+  image: docker.slock.it/build-images/cmake:rust
+  stage: bindings
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - cd scripts
+    - ./build_rust.sh
+
+test_rust:
+  image: docker.slock.it/build-images/cmake:rust
+  stage: rust
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - cd ../rust/in3-rs
+    - cargo test --features=blocking --lib
+
+examples_rust:
+  image: docker.slock.it/build-images/cmake:rust
+  stage: rust
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - cd ../rust/in3-rs
+    - cargo build --examples --features=blocking

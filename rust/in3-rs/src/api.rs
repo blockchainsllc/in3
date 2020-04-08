@@ -14,14 +14,11 @@ pub struct EthApi {
 impl EthApi {
     pub fn new(config_str: &str) -> EthApi {
         let mut client = Client::new(chain::MAINNET);
-        // let _ = client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let _ = client.configure(config_str);
         EthApi { client }
     }
 
     async fn send(mut self, params: &str) -> In3Result<String> {
-        //let req = Option::from(params).unwrap_or(r#"{"method": "eth_blockNumber", "params": []}"#);
-        //let req = Option::from(params);
         self.client.send_request(params).await
     }
 
@@ -35,7 +32,7 @@ impl EthApi {
         blocknum.unwrap_or(-1)
     }
 
-    pub async fn getBalance(self, address: String) -> f64 {
+    pub async fn getBalance(self, address: String) -> String {
         let payload = json!({
             "method": "eth_getBalance",
             "params": [
@@ -43,17 +40,11 @@ impl EthApi {
                 "latest"
             ]
         });
-        let payload_str = payload.to_string().to_owned();
         let serialized = serde_json::to_string(&payload).unwrap();
         let response = self.send(&serialized).await;
         let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
-        let ret = v[0]["result"].as_str().unwrap();
-        println!("{}", ret);
-        let without_prefix = ret.trim_start_matches("0x");
-        let balance_i = u64::from_str_radix(without_prefix, 16).unwrap();
-        let balance = f64::from_bits(balance_i);
-        println!("{}", balance);
-        balance
+        let balance = v[0]["result"].as_str().unwrap();
+        balance.to_string()
     }
 }
 
@@ -78,6 +69,6 @@ mod tests {
         let num = task::block_on(
             api.getBalance("0xc94770007dda54cF92009BFF0dE90c06F603a09f".to_string()),
         );
-        assert!(num > 0.0, "Balance is not correct");
+        assert!(num != "", "Balance is not correct");
     }
 }

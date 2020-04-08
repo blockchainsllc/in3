@@ -12926,6 +12926,8 @@ pub mod in3_ret_t {
     pub const IN3_WAITING: Type = -16;
     #[doc = "< Ignorable error"]
     pub const IN3_EIGNORE: Type = -17;
+    #[doc = "< payment required"]
+    pub const IN3_EPAYMENT_REQUIRED: Type = -18;
 }
 extern "C" {
     #[doc = " converts a error code into a string."]
@@ -14232,6 +14234,118 @@ impl Clone for in3_signer {
     }
 }
 pub type in3_signer_t = in3_signer;
+#[doc = " payment prepearation function."]
+#[doc = ""]
+#[doc = " allows the payment to handle things before the request will be send."]
+pub type in3_pay_prepare = ::core::option::Option<
+    unsafe extern "C" fn(ctx: *mut libc::c_void, cptr: *mut libc::c_void) -> in3_ret_t::Type,
+>;
+#[doc = " called after receiving a parseable response with a in3-section."]
+#[doc = ""]
+pub type in3_pay_follow_up = ::core::option::Option<
+    unsafe extern "C" fn(
+        ctx: *mut libc::c_void,
+        node: *mut libc::c_void,
+        in3: *mut d_token_t,
+        error: *mut d_token_t,
+        cptr: *mut libc::c_void,
+    ) -> in3_ret_t::Type,
+>;
+#[doc = " free function for the custom pointer."]
+#[doc = ""]
+pub type in3_pay_free = ::core::option::Option<unsafe extern "C" fn(cptr: *mut libc::c_void)>;
+#[doc = " handles the request."]
+#[doc = ""]
+#[doc = " this function is called when the in3-section of payload of the request is built and allows the handler to add properties."]
+pub type in3_pay_handle_request = ::core::option::Option<
+    unsafe extern "C" fn(
+        ctx: *mut libc::c_void,
+        sb: *mut sb_t,
+        rc: *mut in3_request_config_t,
+        cptr: *mut libc::c_void,
+    ) -> in3_ret_t::Type,
+>;
+#[doc = " the payment handler."]
+#[doc = ""]
+#[doc = " if a payment handler is set it will be used when generating the request."]
+#[repr(C)]
+#[derive(Debug, Copy)]
+pub struct in3_pay {
+    pub prepare: in3_pay_prepare,
+    pub follow_up: in3_pay_follow_up,
+    pub handle_request: in3_pay_handle_request,
+    pub free: in3_pay_free,
+    pub cptr: *mut libc::c_void,
+}
+#[test]
+fn bindgen_test_layout_in3_pay() {
+    assert_eq!(
+        ::core::mem::size_of::<in3_pay>(),
+        40usize,
+        concat!("Size of: ", stringify!(in3_pay))
+    );
+    assert_eq!(
+        ::core::mem::align_of::<in3_pay>(),
+        8usize,
+        concat!("Alignment of ", stringify!(in3_pay))
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_pay>())).prepare as *const _ as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_pay),
+            "::",
+            stringify!(prepare)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_pay>())).follow_up as *const _ as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_pay),
+            "::",
+            stringify!(follow_up)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_pay>())).handle_request as *const _ as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_pay),
+            "::",
+            stringify!(handle_request)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_pay>())).free as *const _ as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_pay),
+            "::",
+            stringify!(free)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_pay>())).cptr as *const _ as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_pay),
+            "::",
+            stringify!(cptr)
+        )
+    );
+}
+impl Clone for in3_pay {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+pub type in3_pay_t = in3_pay;
 #[doc = " response-object."]
 #[doc = ""]
 #[doc = " if the error has a length>0 the response will be rejected"]
