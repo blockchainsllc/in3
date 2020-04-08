@@ -22,6 +22,7 @@ rust:
     paths:
       - build_rust/lib
       - rust/in3-sys/pre_generated
+      - rust/target
 
 test_rust:
   image: docker.slock.it/build-images/cmake:rust
