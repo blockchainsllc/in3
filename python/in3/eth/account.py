@@ -14,35 +14,22 @@ class EthAccountApi:
         self._runtime = runtime
         self._factory = factory
 
-    def sign(self, address: str, data: str or RawTransaction) -> str:
+    def sign(self, private_key: str, message: str) -> str:
         """
         Use ECDSA to sign a message.
         Args:
-            address (str): Ethereum address of the wallet that will sign the message.
-            data (str): Data to be signed, EITHER a hash string or a Transaction.
+            private_key (str): Must be either an address(20 byte) or an raw private key (32 byte)"}}'
+            address (str):
+            message (str): Data to be hashed and signed. Dont input hashed data unless you know what you are doing.
         Returns:
             signed_message (str): ECDSA calculated r, s, and parity v, concatenated. v = 27 + (r % 2)
         """
-        # in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst)
-        #           eth_sign(ctx,                   SIGN_EC_RAW,         *data,           bytes(NULL, 0),   sig))
-        #   SIGN_EC_RAW  = 0, /**< sign the data directly */ SIGN_EC_HASH = 1, /**< hash and sign the data */
-        address = self._factory.get_account(address)
-        signature = bytearray()
-        if isinstance(data, str):
-            self._factory.get_hash(data)
-            return_code = self._runtime.call(
-                EthMethods.SIGN, 0, address, data, signature)
-        elif isinstance(data, RawTransaction):
-            raise NotImplementedError
-            # TODO: This uses only the tx.data. Check with Shoaib. Should be a json of all filled in params
-            # TODO: Move to in3_signData
-            # return_code = self._runtime.call(EthMethods.SIGN, 1, address, data, None, signature)
-        else:
-            raise ValueError
-        if return_code and return_code == 65:
-            return str(signature)
-        else:
-            raise ClientException('Unknown error trying to sign the provided data.')
+        #   SIGN_EC_RAW  = 0, /**< sign the data directly
+        #   SIGN_EC_HASH = 1, /**< hash and sign the data */
+        signature_type = 'eth_sign'
+        # in3_ret_t in3_sign_data(data, pk, sig_type)
+        signature_dict = self._runtime.call(EthMethods.SIGN, message, private_key, signature_type)
+        return signature_dict['signature']
 
     def send_transaction(self, transaction: RawTransaction) -> str:
         """

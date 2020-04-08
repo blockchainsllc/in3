@@ -49,30 +49,29 @@ class EthereumTest(unittest.TestCase):
         code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4", block_number)
         self.assertIsInstance(code, str)
 
-    # def test_eth_call(self):
-    #     transaction = in3.eth.RawTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
-    #                                          to="0x7ceabea4AA352b10fBCa48e6E8015bC73687ABD4",
-    #                                          data="0xa9c70686",
-    #                                          nonce=5)
-    #     rpc = self.client.eth.call(transaction)
-    #     self.assertIsInstance(rpc, str)
+    def test_eth_call(self):
+        transaction = in3.eth.RawTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
+                                             to="0x7ceabea4AA352b10fBCa48e6E8015bC73687ABD4",
+                                             data="0xa9c70686",
+                                             nonce=5)
+        rpc = self.client.eth.call(transaction)
+        self.assertIsInstance(rpc, str)
 
-    # def test_get_block_by_number(self):
-    #     number = 16027463
-    #     rpc = self.client.eth.get_block_by_number(block_number=number)
-    #     self.assertEqual(rpc.number, 16027463)
-    #
-    # def test_get_transaction_by_hash(self):
-    #     hash_obj = in3.eth.Hash("0x5774bfec01b1fbc44d7b828bb77b789f7f2779b59e47b3c9f167a6e9946db2f1")
-    #     rpc = self.client.eth.get_transaction_by_hash(tx_hash=hash_obj)
-    #     self.assertEqual(rpc.From, "0x10f7fc1f91ba351f9c629c5947ad69bd03c05b96")
-    #
-    # def test_get_transaction_by_block_number_and_index(self):
-    #     block_number = 15385949
-    #     index = 0
-    #     result = self.client.eth.get_transaction_by_block_number_and_index(number=block_number, index=index)
-    #     self.assertIsNotNone(result.blockHash)
+    def test_get_block_by_number(self):
+        number = 16027463
+        rpc = self.client.eth.get_block_by_number(block_number=number)
+        self.assertEqual(rpc.number, 16027463)
+
+    def test_get_transaction_by_hash(self):
+        rpc = self.client.eth.get_transaction_by_hash("0x5774bfec01b1fbc44d7b828bb77b789f7f2779b59e47b3c9f167a6e9946db2f1")
+        self.assertEqual(rpc.From, "0x10f7fc1f91ba351f9c629c5947ad69bd03c05b96")
+
 # ++++++++++++++++++++++++++++++++++++++++++++
+#     def test_get_transaction_by_block_number_and_index(self):
+#         block_number = 15385949
+#         index = 0
+#         result = self.client.eth.get_transaction_by_block_number_and_index(number=block_number, index=index)
+#         self.assertIsNotNone(result.blockHash)
     #    # def test_get_block_by_hash(self):
     #     hash_obj = in3.eth.Hash("0x85cf1fedb76d721bddb4197735e77b31d40e8b4f2e4e30b44fa993141b0a85d6")
     #     rpc = self.client.eth.get_block_by_hash(hash_obj=hash_obj, get_full_block=False)

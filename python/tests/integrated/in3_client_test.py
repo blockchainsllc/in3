@@ -21,18 +21,18 @@ class In3ClientTest(unittest.TestCase):
         nl = self.in3client.node_list()
         self.assertIsInstance(nl, in3.model.NodeList)
 
-    # def test_abi_encode(self):
-    #     # TODO: Check abi encode mock data
-    #     param1 = ""
-    #     param2 = 123
-    #     encoded_evm_rpc = self.in3client.abi_encode("", param1, param2)
-    #     self.assertEqual(encoded_evm_rpc, "")
-    #
-    # def test_abi_decode(self):
-    #     # TODO: Check abi decode mock data
-    #     param1, param2 = self.in3client.abi_decode("", "")
-    #     self.assertEqual(param1, "")
-    #     self.assertEqual(param2, 123)
+    def test_abi_encode(self):
+        # TODO: Check abi encode mock data
+        param1 = "asd"
+        # param2 = 123
+        # encoded_evm_rpc = self.in3client.abi_encode("asd", param1, param2)
+        self.assertEqual(param1, "")
+
+    def test_abi_decode(self):
+        # TODO: Check abi decode mock data
+        # param1, param2 = self.in3client.abi_decode("", "")
+        # self.assertEqual(param1, "")
+        self.assertEqual(345, 123)
     #
     # def test_abi_encode2(self):
     #     encoded = self.client.eth.account.abi_encode("getBalance(address)", ["0x1234567890123456789012345678901234567890"])

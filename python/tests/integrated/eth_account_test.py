@@ -42,21 +42,23 @@ class UtilsTestCase(unittest.TestCase):
         result = self.client.eth.account.get_transaction_receipt(tx_hash)
         self.assertIsInstance(result, in3.eth.TransactionReceipt)
 
-    # def test_sign(self):
-    #     # TODO: Check sign mock data
-    #     result = self.client.eth.account.sign('', '')
-    #     self.assertEqual(result, "asd")
-    #
-    # def test_send_tx(self):
-    #     # TODO: Check send_tx mock data
-    #     tx = {}
-    #     result = self.client.eth.account.send_transaction(tx)
-    #     self.assertEqual(result, "asd")
-    #
-    #
-    # def test_send_raw_transaction(self):
-    #     # TODO: test_send_raw_transaction
-    #     # it will fail if we didn't update the nonce
-    #     data = "0xf8674184ee6b2800831e848094a87bfff94092281a435c243e6e10f9a7fc594d26830f42408078a06f7d65ea8a4d69c41f8c824afb2b2e6d2bc2622d9d906b0ea8d45b39f4853931a062ad406c693c629d8a4a1af29d21e672d11c577a5a220267562bb10612c8eab7"
-    #     rpc = self.client.eth.send_raw_transaction(data=data)
-    #     print(rpc)
+    def test_sign(self):
+        message = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        private_key = '0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8'
+        singature = self.client.eth.account.sign(private_key, message)
+        self.assertEqual(singature,
+                         "0xdd34194276b13f44d3f83401f87da6672dd8dc5905590b7ef44623f424af462f70ce23d37b4" +
+                         "ada4ff33f5645df62524402c4fb5cac5dca3bce60331f8d6bc5d41c")
+
+    def test_send_tx(self):
+        # TODO: Check send_tx mock data
+        tx = {}
+        result = self.client.eth.account.send_transaction(tx)
+        self.assertEqual(result, "asd")
+
+    def test_send_raw_transaction(self):
+        # TODO: test_send_raw_transaction
+        # it will fail if we didn't update the nonce
+        tx = {}
+        result = self.client.eth.account.send_raw_transaction(tx)
+        self.assertEqual(result, "asd")
