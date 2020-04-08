@@ -5,7 +5,9 @@ rust:
   tags:
     - short-jobs
   script:
-    - chmod 644 -R rust/pre_generated
+    - rm -rf rust/in3-sys/pre_generated
+    - mkdir -p rust/in3-sys/pre_generated
+    - chmod 644 -R rust/in3-sys/pre_generated
     - cd scripts
     - ./build_rust.sh
 
