@@ -17,5 +17,5 @@ cat <<EOF >../c/include/in3.rs.h
 #include "../src/third-party/crypto/ecdsa.h"
 EOF
 cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false .. && make -j8 && cd ../rust/ && \
-cargo clean && RUST_LOG=debug RUST_BACKTRACE=1 cargo build
+cargo clean && RUST_LOG=debug RUST_BACKTRACE=full cargo build
 cd ../scripts
