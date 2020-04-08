@@ -4,6 +4,7 @@ from in3.libin3.enum import In3Methods
 from in3.eth.api import EthereumApi
 from in3.model import In3Node, NodeList, ClientConfig
 
+import re
 
 class Client:
     """
@@ -54,22 +55,30 @@ class Client:
         Returns:
             encoded_fn_call (str): i.e. "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
         """
-        # TODO: Smart-Contract Api
+        is_signature = re.match(r'.*(\(.+\))', fn_signature)
+        _types = ["address", "string", "uint", "string", "bool", "bytes", "int"]
+        contains_type = [_type for _type in _types if _type in fn_signature]
+        if not is_signature or not contains_type:
+            raise AssertionError('Function signature is not valid. A valid example is balanceOf(address).')
         return self._runtime.call(In3Methods.ABI_ENCODE, fn_signature, fn_args)
 
-    def abi_decode(self, fn_return_types: str, encoded_values: str) -> tuple:
+    def abi_decode(self, fn_signature: str, encoded_value: str) -> tuple:
         """
         Smart-contract ABI decoder. Used to parse rpc responses from the EVM.
         Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html)
         Args:
-            fn_return_types: Function return types. e.g. `uint256`, `(address,string,uint256)` or `getBalance(address):uint256`.
+            fn_signature: Function signature. e.g. `(address,string,uint256)` or `getBalance(address):uint256`.
             In case of the latter, the function signature will be ignored and only the return types will be parsed.
-            encoded_values: Abi encoded values. Usually the string returned from a rpc to the EVM.
+            encoded_value: Abi encoded values. Usually the string returned from a rpc to the EVM.
         Returns:
             decoded_return_values (tuple):  "0x1234567890123456789012345678901234567890", "0x05"
         """
-        # TODO: Smart-Contract Api
-        return self._runtime.call(In3Methods.ABI_DECODE, fn_return_types, encoded_values)
+        is_signature = re.match(r'.*(\(.+\))', fn_signature)
+        _types = ["address", "string", "uint", "string", "bool", "bytes", "int"]
+        contains_type = [_type for _type in _types if _type in fn_signature]
+        if not is_signature or not contains_type:
+            raise AssertionError('Function signature is not valid. A valid example is balanceOf(address).')
+        return self._runtime.call(In3Methods.ABI_DECODE, fn_signature, encoded_value)
 
     # TODO add eth_set_pk_signer
     # TODO add sign_tx

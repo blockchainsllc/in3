@@ -22,27 +22,60 @@ class In3ClientTest(unittest.TestCase):
         self.assertIsInstance(nl, in3.model.NodeList)
 
     def test_abi_encode(self):
-        # TODO: Check abi encode mock data
-        param1 = "asd"
-        # param2 = 123
-        # encoded_evm_rpc = self.in3client.abi_encode("asd", param1, param2)
-        self.assertEqual(param1, "")
+        params = "(address,string)", "0x1234567890123456789012345678901234567890", "xyz"
+        encoded = self.in3client.abi_encode(*params)
+        expected = "0xdd06c847000000000000000000000000123456789012345678901234567890123456789000000000000000000000" + \
+                   "0000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000" + \
+                   "0000000000000378797a0000000000000000000000000000000000000000000000000000000000"
+        self.assertEqual(encoded, expected)
+        params = "getData(address,string,uint8,string)", "0x1234567890123456789012345678901234567890", \
+                 "xyz", "0xff", "abc"
+        expected = "0x597574130000000000000000000000001234567890123456789012345678901234567890000000000000000000000" + \
+                  "00000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000" + \
+                  "0000000000ff00000000000000000000000000000000000000000000000000000000000000c00000000000000000000" + \
+                  "00000000000000000000000000000000000000000000378797a00000000000000000000000000000000000000000000" + \
+                  "00000000000000000000000000000000000000000000000000000000000000000000000000000361626300000000000" + \
+                  "00000000000000000000000000000000000000000000000"
+        encoded = self.in3client.abi_encode(*params)
+        self.assertEqual(encoded, expected)
+        err0 = "address,string,uint8,string", "0x1234567890123456789012345678901234567890", "xyz", "0xff", "abc"
+        err1 = "()", "0x1234567890123456789012345678901234567890"
+        err2 = "(test)", "0x1234567890123456789012345678901234567890"
+        with self.assertRaises(AssertionError):
+            self.in3client.abi_encode(*err0)
+        with self.assertRaises(AssertionError):
+            self.in3client.abi_encode(*err1)
+        with self.assertRaises(AssertionError):
+            self.in3client.abi_encode(*err2)
 
     def test_abi_decode(self):
-        # TODO: Check abi decode mock data
-        # param1, param2 = self.in3client.abi_decode("", "")
-        # self.assertEqual(param1, "")
-        self.assertEqual(345, 123)
-    #
-    # def test_abi_encode2(self):
-    #     encoded = self.client.eth.account.abi_encode("getBalance(address)", ["0x1234567890123456789012345678901234567890"])
-    #     self.assertEqual("0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890", encoded)
-    #
-    # def test_abi_decode2(self):
-    #     decoded = self.client.eth.account.abi_decode("(address,uint256)", "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005")
-    #     add0, add1 = decoded
-    #     self.assertEqual(add0, "0x1234567890123456789012345678901234567890")
-    #     self.assertEqual(add1, "0x05")
+        err0 = "address,string,uint8,string", "0000000000000000000000001234567890123456789012345678901234567"
+        err1 = "()", "0000000000000000000000001234567890123456789012345678901234567"
+        err2 = "(test)", "0000000000000000000000001234567890123456789012345678901234567"
+        with self.assertRaises(AssertionError):
+            self.in3client.abi_decode(*err0)
+        with self.assertRaises(AssertionError):
+            self.in3client.abi_decode(*err1)
+        with self.assertRaises(AssertionError):
+            self.in3client.abi_decode(*err2)
+        # TODO: Find a way to fix it. from here on breaks
+        self.assertEqual(1, 0)
+        params = "(bytes)", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        expected = "000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000" + \
+                   "00000000000000000000000000000000020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" + \
+                   "ffffff"
+        decoded = self.in3client.abi_decode(*params)
+        self.assertEqual(decoded, expected)
+        params = "(address,string,uint8,string)", \
+                 "00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000" + \
+                 "00000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000" + \
+                 "ff00000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000" + \
+                 "0000000000000000000000000000000000378797a000000000000000000000000000000000000000000000000000000" + \
+                 "00000000000000000000000000000000000000000000000000000000000000000003616263000000000000000000000" + \
+                 "0000000000000000000000000000000000000"
+        expected = ["0x1234567890123456789012345678901234567890", "xyz", "0xff", "abc"]
+        decoded = self.in3client.abi_decode(*params)
+        self.assertEqual(decoded, expected)
 
 
 class In3ClientKovanTest(In3ClientTest):
