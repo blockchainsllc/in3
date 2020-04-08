@@ -20,7 +20,7 @@ test_rust:
     - short-jobs
   script:
     - cd rust/in3-rs
-    - cargo clean
+    - cargo build
     - cargo test --features=blocking --lib
 
 examples_rust:
@@ -32,5 +32,5 @@ examples_rust:
     - short-jobs
   script:
     - cd rust/in3-rs
-    - cargo clean
+    - cargo build
     - cargo build --examples --features=blocking
