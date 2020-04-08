@@ -46,7 +46,7 @@ option(ETH_BASIC "build basic eth verification.(all rpc-calls except eth_call)" 
 option(ETH_FULL "build full eth verification.(including eth_call)" ON)
 option(IPFS "build IPFS verification" ON)
 option(COLOR "Enable color codes for debug" ON)
-option(BTC "if true, the bitcoin verifiers will be build" OFF)
+option(BTC "if true, the bitcoin verifiers will be build" ON)
 option(IN3API "build the USN-API which offer better interfaces and additional functions on top of the pure verification" ON)
 option(USE_PRECOMPUTED_EC "if true the secp256k1 curve uses precompiled tables to boost performance. turning this off makes ecrecover slower, but saves about 37kb." ON)
 option(ERR_MSG "if set human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)" ON)
