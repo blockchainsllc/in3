@@ -269,6 +269,12 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
         sb_add_chars(sb, ",\"useBinary\":true");
       if (rc->verified_hashes_length)
         sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verified_hashes, rc->verified_hashes_length, true);
+#ifdef PAY
+      if (c->client->pay && c->client->pay->handle_request) {
+        in3_ret_t ret = c->client->pay->handle_request(c, sb, rc, c->client->pay->cptr);
+        if (ret != IN3_OK) return ret;
+      }
+#endif
       sb_add_range(sb, "}}", 0, 2);
     } else
       sb_add_char(sb, '}');
@@ -400,6 +406,30 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
+#ifdef PAY
+            // we update the payment info from the in3-section
+            if (ctx->client->pay && ctx->client->pay->follow_up) {
+              res = ctx->client->pay->follow_up(ctx, node, vc.proof, d_get(ctx->responses[i], K_ERROR), ctx->client->pay->cptr);
+              if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
+                // this means we need to retry with the same node
+                ctx->attempt++;
+                for (int i = 0; i < nodes_count; i++) {
+                  _free(ctx->raw_response[i].error.data);
+                  _free(ctx->raw_response[i].result.data);
+                }
+                _free(ctx->raw_response);
+                _free(ctx->responses);
+                json_free(ctx->response_context);
+
+                ctx->raw_response     = NULL;
+                ctx->response_context = NULL;
+                ctx->responses        = NULL;
+                return res;
+
+              } else if (res)
+                return ctx_set_error(ctx, "Error following up the payment data", (ctx->verification_state = res));
+            }
+#endif
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
@@ -719,6 +749,13 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i], chain)) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);
           }
+
+#ifdef PAY
+
+          // now we have the nodes, we can prepare the payment
+          if (ctx->client->pay && ctx->client->pay->prepare && (ret = ctx->client->pay->prepare(ctx, ctx->client->pay->cptr)) != IN3_OK) return ret;
+#endif
+
         } else
           // since we could not get the nodes, we either report it as error or wait.
           return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);
