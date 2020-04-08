@@ -4,8 +4,9 @@ async fn http_async(
     url: &str,
     payload: &str,
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync + 'static>> {
-    let res: String = surf::post(url)
+    let res = surf::post(url)
         .body_string(payload.to_string())
+        .set_header("content-type", "application/json")
         .recv_string()
         .await?;
     Ok(res.to_string())
@@ -25,8 +26,9 @@ pub(crate) async fn transport_http(payload: &str, urls: &[&str]) -> Vec<Result<S
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use async_std::task;
+
+    use super::*;
 
     #[test]
     fn test_transport_http_async() {

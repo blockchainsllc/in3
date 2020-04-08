@@ -1,6 +1,7 @@
 use std::ffi;
 
 use crate::error::In3Result;
+use crate::transport_async;
 
 pub mod chain {
     pub type ChainId = u32;
@@ -93,9 +94,35 @@ impl Ctx {
                         in3_sys::ctx_type::CT_RPC => {
                             let req = in3_sys::in3_create_request(last_waiting);
                             let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
-                            println!("{}, {}", payload, self.config.to_str().unwrap());
-                            let in3_transport = (*(*self.ptr).client).transport.unwrap();
-                            in3_transport((*self.ptr).client, req);
+                            let urls_len = (*req).urls_len;
+                            let mut urls = Vec::new();
+                            for i in 0..urls_len as usize {
+                                let url = ffi::CStr::from_ptr(*(*req).urls.add(i))
+                                    .to_str()
+                                    .unwrap();
+                                urls.push(url);
+                            }
+                            let responses = transport_async::transport_http(payload, &urls).await;
+                            let mut any_err = false;
+                            for (i, resp) in responses.iter().enumerate() {
+                                match resp {
+                                    Err(err) => {
+                                        any_err = true;
+                                        let err_str = ffi::CString::new(err.to_string()).unwrap();
+                                        in3_sys::sb_add_chars(
+                                            &mut (*(*req).results.add(i)).error,
+                                            err_str.as_ptr(),
+                                        );
+                                    }
+                                    Ok(res) => {
+                                        let res_str = ffi::CString::new(res.to_string()).unwrap();
+                                        in3_sys::sb_add_chars(
+                                            &mut (*(*req).results.add(i)).result,
+                                            res_str.as_ptr(),
+                                        );
+                                    }
+                                }
+                            }
                             let result = (*(*req).results.offset(0)).result;
                             let len = result.len;
                             let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();

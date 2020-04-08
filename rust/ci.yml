@@ -7,25 +7,23 @@ rust:
   script:
     - rm -rf rust/in3-sys/pre_generated
     - mkdir -p rust/in3-sys/pre_generated
-    - chmod 755 -R rust/in3-sys/pre_generated
-    - cd scripts
-    - ./build_rust.sh
-    - cd ..
+    - chmod -R 0755 rust/in3-sys/pre_generated
     - mkdir -p build_rust
     - cd build_rust
     - rm -rf *
     - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
-    - make -j8 
+    - make -j8
     - cd ../rust/
     - cargo clean
-    - RUST_LOG=debug RUST_BACKTRACE=1 cargo build
-    - cd in3-rs
-    - cargo test --features=blocking --lib
+    - export UPDATE_IN3_BINDINGS=1
+    - cargo build
+
   artifacts:
     paths:
-      - rust/target
       - build_rust/lib
       - rust/in3-sys/pre_generated
+      - rust/target
+
 test_rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
@@ -34,8 +32,10 @@ test_rust:
   tags:
     - short-jobs
   script:
+    - chmod -R 0755 rust/in3-sys/pre_generated
     - cd rust/in3-rs
-    - cargo test --features=blocking --lib
+    - unset UPDATE_IN3_BINDINGS
+    - cargo test --lib
 
 examples_rust:
   image: docker.slock.it/build-images/cmake:rust
@@ -45,5 +45,7 @@ examples_rust:
   tags:
     - short-jobs
   script:
+    - chmod -R 0755 rust/in3-sys/pre_generated
     - cd rust/in3-rs
+    - unset UPDATE_IN3_BINDINGS
     - cargo build --examples --features=blocking
