@@ -906,8 +906,12 @@ int main(int argc, char* argv[]) {
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity, now);
       char *             tr = NULL, *warning = NULL;
       if (ctx) {
-        tr = _malloc(300);
-        if (!ctx->error) {
+        tr = _malloc(1000);
+        if (!ctx->error && d_get(ctx->responses[0], K_ERROR)) {
+          d_token_t* msg = d_get(ctx->responses[0], K_ERROR);
+          if (d_type(msg) == T_OBJECT) msg = d_get(msg, K_MESSAGE);
+          sprintf((warning = tr), "%s", msg ? d_string(msg) : "Error-Response!");
+        } else if (!ctx->error) {
           b = d_get_intk(ctx->responses[0], K_RESULT);
           if (block < b) block = b;
 
