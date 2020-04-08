@@ -14,21 +14,19 @@ rust:
 test_rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
-  needs: []
+  needs:
+    - rust
   tags:
     - short-jobs
   script:
-    - rm -rf rust/in3-sys/pre_generated
-    - mkdir -p rust/in3-sys/pre_generated
-    - chmod 755 -R rust/in3-sys/pre_generated
     - cd rust/in3-rs
-    - cargo clean
     - RUST_LOG=debug RUST_BACKTRACE=full cargo test --features=blocking --lib
 
 examples_rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
-  needs: []
+  needs:
+    - rust
   tags:
     - short-jobs
   script:
@@ -36,5 +34,4 @@ examples_rust:
     - mkdir -p rust/in3-sys/pre_generated
     - chmod 755 -R rust/in3-sys/pre_generated
     - cd rust/in3-rs
-    - cargo clean
     - RUST_LOG=debug RUST_BACKTRACE=full cargo build --examples --features=blocking
