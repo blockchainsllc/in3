@@ -75,8 +75,8 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
         "pre_generated".into(),
         BINDINGS_FILE.into(),
     ]
-    .iter()
-    .collect();
+        .iter()
+        .collect();
     let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Stable_1_19)
         .size_t_is_usize(true)
@@ -123,8 +123,9 @@ fn main() {
         env_var("CARGO_MANIFEST_DIR")
     );
 
-    let out_bindings_path = PathBuf::from(env_var("OUT_DIR")).join(BINDINGS_FILE);
-
-    // Only run bindgen if we are *not* using the bundled in3 bindings
-    write_bindgen_bindings(&header_search_paths, out_bindings_path);
+    if env::var("UPDATE_IN3_BINDINGS").is_ok() {
+        let out_bindings_path = PathBuf::from(env_var("OUT_DIR")).join(BINDINGS_FILE);
+        // Only run bindgen if we are *not* using the bundled in3 bindings
+        write_bindgen_bindings(&header_search_paths, out_bindings_path);
+    }
 }
