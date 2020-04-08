@@ -21,6 +21,7 @@ test_rust:
   script:
     - chmod 755 -R rust/in3-sys/pre_generated
     - cd rust/in3-rs
+    - cargo clean
     - cargo test --features=blocking --lib
 
 examples_rust:
@@ -32,4 +33,5 @@ examples_rust:
     - short-jobs
   script:
     - cd rust/in3-rs
+    - cargo clean
     - cargo build --examples --features=blocking
