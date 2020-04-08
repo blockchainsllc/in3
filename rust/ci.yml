@@ -23,7 +23,7 @@ rust:
   artifacts:
     paths:
       - rust/target
-      - build/lib
+      - build_rust/lib
       - rust/in3-sys/pre_generated
 test_rust:
   image: docker.slock.it/build-images/cmake:rust

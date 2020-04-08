@@ -119,7 +119,7 @@ fn main() {
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
     println!("cargo:rustc-link-lib=static=in3");
     println!(
-        "cargo:rustc-link-search={}/../../build/lib",
+        "cargo:rustc-link-search={}/../../build_rust/lib",
         env_var("CARGO_MANIFEST_DIR")
     );
 
