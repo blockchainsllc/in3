@@ -16,9 +16,10 @@ rust:
     - rm -rf *
     - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
     - make -j8 
-    - cd ../rust/ 
+    - cd ../rust/
     - cargo clean
     - RUST_LOG=debug RUST_BACKTRACE=1 cargo build
+    - cd in3-rs
     - cargo test --features=blocking --lib
   artifacts:
     paths:
