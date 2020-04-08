@@ -5,7 +5,6 @@ rust:
   tags:
     - short-jobs
   script:
-    - chown dev:dev -R rust
     - chmod 644 -R rust/pre_generated
     - cd scripts
     - ./build_rust.sh
