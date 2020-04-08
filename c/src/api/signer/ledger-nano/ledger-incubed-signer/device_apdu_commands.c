@@ -81,6 +81,7 @@ void print_bytes(uint8_t* bytes, int len, char* args) {
   printf("Printing response of %s\n", args);
   int i = 0;
   for (i = 0; i < len; i++) {
-    printf("%02x ", bytes[len]);
+    printf("%02x ", bytes[i]);
   }
+  printf ("\n");
 }

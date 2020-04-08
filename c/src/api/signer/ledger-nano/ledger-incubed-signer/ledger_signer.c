@@ -121,27 +121,20 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key, hid_device* handle) {
   int       res = 0;
   in3_ret_t ret;
-  //res = hid_init();
-
   uint8_t  apdu[64];
   uint8_t  buf[2];
   int      index_counter = 0;
   uint16_t msg_len       = 0;
-  //handle                    = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
+
   bytes_t apdu_bytes;
   bytes_t final_apdu_command;
 
-  memcpy(apdu + index_counter, &CLA, 1);
-  index_counter += 1;
-  memcpy(apdu + index_counter, &INS_GET_PUBLIC_KEY, 1);
-  index_counter += 1;
-  memcpy(apdu + index_counter, &P1_FINAL, 1);
-  index_counter += 1;
-  memcpy(apdu + index_counter, &P2_FINAL, 1);
-  index_counter += 1;
-
-  memcpy(apdu + index_counter, &msg_len, sizeof(uint8_t));
-  index_counter += sizeof(uint8_t);
+  apdu[index_counter++] = CLA;
+  apdu[index_counter++] = INS_GET_PUBLIC_KEY ;
+  apdu[index_counter++] = P1_FINAL;
+  apdu[index_counter++] = P2_FINAL;
+  apdu[index_counter++] = msg_len;
+  
 
   apdu_bytes.data = malloc(index_counter);
   apdu_bytes.len  = index_counter;
