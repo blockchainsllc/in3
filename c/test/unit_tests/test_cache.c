@@ -120,7 +120,13 @@ static void cache_set_item(void* cptr, const char* key, bytes_t* value) {
 }
 
 void static setup_test_cache(in3_t* c) {
-  memset(&cache, 0, sizeof(cache));
+  if (!memiszero((uint8_t*) &cache, sizeof(cache))) {
+    for (int i = 0; i < MAX_ENTRIES; ++i) {
+      free(cache.keys[i]);
+      free(cache.values[i].data);
+    }
+    memset(&cache, 0, sizeof(cache));
+  }
   in3_set_storage_handler(c, cache_get_item, cache_set_item, NULL, &cache);
 }
 
