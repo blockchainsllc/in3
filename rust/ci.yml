@@ -5,6 +5,8 @@ rust:
   tags:
     - short-jobs
   script:
+    - chown dev:dev -R rust
+    - chmod 644 -R rust/pre_generated
     - cd scripts
     - ./build_rust.sh
 
@@ -15,7 +17,7 @@ test_rust:
   tags:
     - short-jobs
   script:
-    - cd ../rust/in3-rs
+    - cd rust/in3-rs
     - cargo test --features=blocking --lib
 
 examples_rust:
@@ -25,5 +27,5 @@ examples_rust:
   tags:
     - short-jobs
   script:
-    - cd ../rust/in3-rs
+    - cd rust/in3-rs
     - cargo build --examples --features=blocking
