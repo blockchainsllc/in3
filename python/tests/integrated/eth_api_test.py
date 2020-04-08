@@ -58,12 +58,15 @@ class EthereumTest(unittest.TestCase):
         self.assertIsInstance(rpc, str)
 
     def test_get_block_by_number(self):
+        # TODO
         number = 16027463
         rpc = self.client.eth.get_block_by_number(block_number=number)
         self.assertEqual(rpc.number, 16027463)
 
     def test_get_transaction_by_hash(self):
-        rpc = self.client.eth.get_transaction_by_hash("0x5774bfec01b1fbc44d7b828bb77b789f7f2779b59e47b3c9f167a6e9946db2f1")
+        # TODO
+        rpc = self.client.eth.get_transaction_by_hash(
+            "0x5774bfec01b1fbc44d7b828bb77b789f7f2779b59e47b3c9f167a6e9946db2f1")
         self.assertEqual(rpc.From, "0x10f7fc1f91ba351f9c629c5947ad69bd03c05b96")
 
 # ++++++++++++++++++++++++++++++++++++++++++++
