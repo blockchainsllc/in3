@@ -3,7 +3,7 @@ extern crate in3;
 use in3::prelude::*;
 
 fn main() {
-    let mut c = Client::new(chain::MAINNET);
+    let mut c = Client::new(chain::MAINNET, false);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     c.set_transport(Box::new(|_payload: &str, _urls: &[&str]| {
         let mut responses = vec![];

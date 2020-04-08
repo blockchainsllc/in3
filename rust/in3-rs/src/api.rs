@@ -2,9 +2,9 @@ use crate::error::In3Result;
 use crate::error::*;
 use crate::in3::*;
 use async_std::task;
+use serde_json::json;
 use serde_json::{Result, Value};
 use std::i64;
-use serde_json::json;
 pub struct EthApi {
     client: Box<Client>,
 }
@@ -33,7 +33,7 @@ impl EthApi {
         blocknum.unwrap_or(-1)
     }
 
-    pub async fn getBalance(self, address:String) -> f64 {
+    pub async fn getBalance(self, address: String) -> f64 {
         let payload = json!({
             "method": "eth_getBalance",
             "params": [
@@ -43,16 +43,14 @@ impl EthApi {
         });
         let payload_str = payload.to_string().to_owned();
         let serialized = serde_json::to_string(&payload).unwrap();
-        let response = self
-        .send(&serialized)
-        .await; 
+        let response = self.send(&serialized).await;
         let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
         let ret = v[0]["result"].as_str().unwrap();
-        println!("{}",ret);
+        println!("{}", ret);
         let without_prefix = ret.trim_start_matches("0x");
         let balance_i = u64::from_str_radix(without_prefix, 16).unwrap();
         let balance = f64::from_bits(balance_i);
-        println!("{}",balance);
+        println!("{}", balance);
         balance
     }
 }
@@ -73,7 +71,9 @@ mod tests {
     fn test_get_balance() {
         let api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         //execute the call to the api on task::block_on
-        let num = task::block_on(api.getBalance("0xc94770007dda54cF92009BFF0dE90c06F603a09f".to_string()));
+        let num = task::block_on(
+            api.getBalance("0xc94770007dda54cF92009BFF0dE90c06F603a09f".to_string()),
+        );
         assert!(num > 0.0, "Balance is not correct");
     }
 }
