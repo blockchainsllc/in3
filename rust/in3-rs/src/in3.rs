@@ -164,6 +164,7 @@ impl Client {
         _res
     }
 
+    #[cfg(feature = "blocking")]
     pub fn send(&self, ctx: &mut Ctx) -> In3Result<()> {
         unsafe {
             let ret = in3_sys::in3_send_ctx(ctx.ptr);
@@ -174,7 +175,7 @@ impl Client {
         }
     }
 
-    pub fn new(chain_id: chain::ChainId, custom_transport: bool) -> Box<Client> {
+    pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
             let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
@@ -185,17 +186,16 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
+            (*c.ptr).cache = in3_sys::in3_set_storage_handler(c.ptr, Some(Client::in3_rust_storage_get),
+                                                              Some(Client::in3_rust_storage_set),
+                                                              Some(Client::in3_rust_storage_clear),
+                                                              c.ptr as *mut libc::c_void);
             (*c.ptr).transport = Some(Client::in3_rust_transport);
-            (*c.ptr).cache = in3_sys::in3_set_storage_handler(
-                c.ptr,
-                Some(Client::in3_rust_storage_get),
-                Some(Client::in3_rust_storage_set),
-                Some(Client::in3_rust_storage_clear),
-                c.ptr as *mut libc::c_void,
-            );
-            if !custom_transport {
+
+            #[cfg(feature = "blocking")] {
                 c.set_transport(Box::new(crate::transport::transport_http));
             }
+
             c
         }
     }
@@ -323,6 +323,7 @@ impl Client {
         Ok(())
     }
 
+    #[cfg(feature = "blocking")]
     pub fn rpc(&mut self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
@@ -353,14 +354,14 @@ mod tests {
 
     #[test]
     fn test_in3_config() {
-        let mut in3 = Client::new(chain::MAINNET, false);
+        let mut in3 = Client::new(chain::MAINNET);
         let c = in3.configure(r#"{"autoUpdateList":false}"#);
         assert_eq!(c.is_err(), false);
     }
 
     #[test]
     fn test_in3_create_request() {
-        let mut in3 = Client::new(chain::MAINNET, false);
+        let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method":"eth_blockNumber","params":[]}"#);
         let _request = Request::new(&mut ctx);
         let _ = ctx.execute();

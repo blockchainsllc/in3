@@ -1,3 +1,5 @@
+// Make sure you build the in3 crate with blocking feature enabled to make this example work
+// cargo run --example eth_block_number --features=blocking
 extern crate in3;
 
 use in3::prelude::*;

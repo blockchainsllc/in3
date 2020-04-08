@@ -74,9 +74,8 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
         env_var("CARGO_MANIFEST_DIR"),
         "pre_generated".into(),
         BINDINGS_FILE.into(),
-    ]
-    .iter()
-    .collect();
+    ].iter().collect();
+    
     let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Stable_1_19)
         .size_t_is_usize(true)
@@ -117,9 +116,6 @@ fn main() {
 
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
     println!("cargo:rustc-link-lib=static=in3");
-    //TODO: add options to use in3 curl
-    println!("cargo:rustc-link-lib=static=transport_curl");
-    println!("cargo:rustc-link-lib=curl");
     println!(
         "cargo:rustc-link-search={}/../../build/lib",
         env_var("CARGO_MANIFEST_DIR")

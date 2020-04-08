@@ -1,16 +1,19 @@
-use crate::error::In3Result;
-use crate::error::*;
-use crate::in3::*;
-use async_std::task;
-use serde_json::json;
-use serde_json::{Result, Value};
 use std::i64;
+
+use serde_json::{Result, Value};
+use serde_json::json;
+
+use crate::error::*;
+use crate::error::In3Result;
+use crate::in3::*;
+
 pub struct EthApi {
     client: Box<Client>,
 }
+
 impl EthApi {
-    pub fn new(config_str: &'static str) -> EthApi {
-        let mut client = Client::new(chain::MAINNET, false);
+    pub fn new(config_str: &str) -> EthApi {
+        let mut client = Client::new(chain::MAINNET);
         // let _ = client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let _ = client.configure(config_str);
         EthApi { client }
@@ -23,9 +26,8 @@ impl EthApi {
     }
 
     pub async fn block_number(self) -> i64 {
-        let response = self
-            .send(r#"{"method": "eth_blockNumber", "params": []}"#)
-            .await;
+        let response =
+            self.send(r#"{"method": "eth_blockNumber", "params": []}"#).await;
         let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
         let ret = v[0]["result"].as_str().unwrap();
         let without_prefix = ret.trim_start_matches("0x");
@@ -57,6 +59,8 @@ impl EthApi {
 
 #[cfg(test)]
 mod tests {
+    use async_std::task;
+
     use super::*;
 
     #[test]

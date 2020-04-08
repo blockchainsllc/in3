@@ -7,7 +7,7 @@ use in3::prelude::*;
 const CACHE_PATH: &str = "cache";
 
 fn main() {
-    let mut c = Client::new(chain::MAINNET, false);
+    let mut c = Client::new(chain::MAINNET);
     fs::create_dir_all(CACHE_PATH).unwrap();
     c.set_storage(
         Box::new(|key| -> Vec<u8> {
