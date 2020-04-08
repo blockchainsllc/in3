@@ -1,8 +1,5 @@
 #!/bin/sh
-cd ..
-mkdir -p build
-cd build
-rm -rf *
+cd scripts
 cat <<EOF >../c/include/in3.rs.h
 // AUTO-GENERATED FILE
 // See scripts/build_rust.sh
@@ -16,6 +13,4 @@ cat <<EOF >../c/include/in3.rs.h
 #include "in3/in3_curl.h"
 #include "../src/third-party/crypto/ecdsa.h"
 EOF
-cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false .. && make -j8 && cd ../rust/ && \
-cargo clean && RUST_LOG=debug RUST_BACKTRACE=full cargo build
-cd ../scripts
+cd ..

@@ -8,9 +8,20 @@ rust:
     - rm -rf rust/in3-sys/pre_generated
     - mkdir -p rust/in3-sys/pre_generated
     - chmod 755 -R rust/in3-sys/pre_generated
-    - cd scripts
     - ./build_rust.sh
-
+    - mkdir -p build
+    - cd build
+    - rm -rf *
+    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
+    - make -j8 
+    - cd ../rust/ 
+    - cargo clean
+    - RUST_LOG=debug RUST_BACKTRACE=1 cargo build
+  artifacts:
+    paths:
+      - target
+      - build/lib
+      - rust/in3-sys/pre_generated
 test_rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
@@ -20,7 +31,6 @@ test_rust:
     - short-jobs
   script:
     - cd rust/in3-rs
-    - cargo build
     - cargo test --features=blocking --lib
 
 examples_rust:
@@ -32,5 +42,4 @@ examples_rust:
     - short-jobs
   script:
     - cd rust/in3-rs
-    - cargo build
     - cargo build --examples --features=blocking

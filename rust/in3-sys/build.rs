@@ -74,8 +74,9 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
         env_var("CARGO_MANIFEST_DIR"),
         "pre_generated".into(),
         BINDINGS_FILE.into(),
-    ].iter().collect();
-    
+    ]
+    .iter()
+    .collect();
     let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Stable_1_19)
         .size_t_is_usize(true)
@@ -103,6 +104,7 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
     let bindings = builder.generate().expect("Unable to generate bindings");
 
     // Write bindings to $OUT_DIR/bindings.rs
+    println!("{:?} {:?}", out_bindings_path, pregenerated_bindgen_header);
     bindings
         .write_to_file(&out_bindings_path)
         .expect("Unable to write bindings");
