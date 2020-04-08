@@ -8,8 +8,11 @@ rust:
     - rm -rf rust/in3-sys/pre_generated
     - mkdir -p rust/in3-sys/pre_generated
     - chmod 644 -R rust/in3-sys/pre_generated
-    - cd scripts
-    - ./build_rust.sh
+    - mkdir -p build_rust
+    - cd build_rust
+    - rm -rf *
+    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
+    - make -j8
   artifacts:
     paths:
       - build_rust/lib
@@ -21,7 +24,7 @@ test_rust:
   tags:
     - short-jobs
   script:
-    - cd ../rust/in3-rs
+    - cd rust/in3-rs
     - cargo test --lib
 
 examples_rust:
@@ -31,5 +34,5 @@ examples_rust:
   tags:
     - short-jobs
   script:
-    - cd ../rust/in3-rs
+    - cd rust/in3-rs
     - cargo build --examples --features=blocking
