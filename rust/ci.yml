@@ -8,6 +8,7 @@ rust:
     - rm -rf rust/in3-sys/pre_generated
     - mkdir -p rust/in3-sys/pre_generated
     - chmod 755 -R rust/in3-sys/pre_generated
+    - cd scripts
     - ./build_rust.sh
     - mkdir -p build
     - cd build

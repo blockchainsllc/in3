@@ -1,5 +1,4 @@
 #!/bin/sh
-cd scripts
 cat <<EOF >../c/include/in3.rs.h
 // AUTO-GENERATED FILE
 // See scripts/build_rust.sh
