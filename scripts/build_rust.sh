@@ -10,5 +10,4 @@ cat <<EOF >../c/include/in3.rs.h
 #include "in3/eth_api.h"
 #include "in3/in3_init.h"
 #include "in3/in3_curl.h"
-#include "../src/third-party/crypto/ecdsa.h"
 EOF
