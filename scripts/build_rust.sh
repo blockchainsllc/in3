@@ -1,4 +1,8 @@
 #!/bin/sh
+cd ..
+mkdir -p build_rust
+cd build_rust
+rm -rf *
 cat <<EOF >../c/include/in3.rs.h
 // AUTO-GENERATED FILE
 // See scripts/build_rust.sh
@@ -11,3 +15,5 @@ cat <<EOF >../c/include/in3.rs.h
 #include "in3/in3_init.h"
 #include "in3/in3_curl.h"
 EOF
+cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false .. && make -j8 && cd ../rust/ && cargo build
+cd ../scripts

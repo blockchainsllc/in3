@@ -7,43 +7,29 @@ rust:
   script:
     - rm -rf rust/in3-sys/pre_generated
     - mkdir -p rust/in3-sys/pre_generated
-    - chmod 755 -R rust/in3-sys/pre_generated
+    - chmod 644 -R rust/in3-sys/pre_generated
     - cd scripts
     - ./build_rust.sh
-    - cd ..
-    - mkdir -p build_rust
-    - cd build_rust
-    - rm -rf *
-    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
-    - make -j8 
-    - cd ../rust/
-    - cargo clean
-    - RUST_LOG=debug RUST_BACKTRACE=1 cargo build
-    - cd in3-rs
-    - cargo test --features=blocking --lib
   artifacts:
     paths:
-      - rust/target
       - build_rust/lib
-      - rust/in3-sys/pre_generated
+
 test_rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
-  needs:
-    - rust
+  needs: []
   tags:
     - short-jobs
   script:
-    - cd rust/in3-rs
-    - cargo test --features=blocking --lib
+    - cd ../rust/in3-rs
+    - cargo test --lib
 
 examples_rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
-  needs:
-    - rust
+  needs: []
   tags:
     - short-jobs
   script:
-    - cd rust/in3-rs
+    - cd ../rust/in3-rs
     - cargo build --examples --features=blocking
