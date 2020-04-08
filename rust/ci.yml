@@ -19,6 +19,7 @@ test_rust:
   tags:
     - short-jobs
   script:
+    - chmod 755 -R rust/in3-sys/pre_generated
     - cd rust/in3-rs
     - cargo test --features=blocking --lib
 
