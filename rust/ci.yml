@@ -31,7 +31,7 @@ test_rust:
   tags:
     - short-jobs
   script:
-    - chmod 644 -R rust/in3-sys/pre_generated
+    - chmod -R 0755 rust/in3-sys/pre_generated
     - cd rust/in3-rs
     - unset UPDATE_IN3_BINDINGS
     - cargo test --lib
@@ -44,7 +44,7 @@ examples_rust:
   tags:
     - short-jobs
   script:
-    - chmod 644 -R rust/in3-sys/pre_generated
+    - chmod -R 0755 rust/in3-sys/pre_generated
     - cd rust/in3-rs
     - unset UPDATE_IN3_BINDINGS
     - cargo build --examples --features=blocking
