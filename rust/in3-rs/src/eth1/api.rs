@@ -27,8 +27,11 @@ impl EthApi {
         EthApi { client }
     }
 
-    async fn send(&mut self, params: &str) -> In3Result<String> {
-        self.client.send_request(params).await
+    async fn send(&mut self, params: RpcRequest<'_>) -> In3Result<serde_json::Value> {
+        let req_str = serde_json::to_string(&params)?;
+        let resp_str = self.client.send_request(req_str.as_str()).await?;
+        let resp: serde_json::Value = serde_json::from_str(resp_str.as_str())?;
+        Ok(resp)
     }
 
     pub async fn block_number(&mut self) -> In3Result<U256> {
