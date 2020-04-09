@@ -339,7 +339,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   }
 
   chain->chain_id  = chain_id;
-  chain->contract  = b_new((char*) contract, 20);
+  chain->contract  = b_new(contract, 20);
   chain->type      = type;
   chain->version   = version;
   chain->whitelist = NULL;
@@ -380,7 +380,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
-    node->address  = b_new((char*) address, 20);
+    node->address  = b_new(address, 20);
     node->index    = chain->nodelist_length;
     node->capacity = 1;
     node->deposit  = 0;
@@ -452,6 +452,7 @@ void in3_free(in3_t* a) {
     _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->signer) _free(a->signer);
+  if (a->cache) _free(a->cache);
   if (a->chains) _free(a->chains);
 
   if (a->filters) {

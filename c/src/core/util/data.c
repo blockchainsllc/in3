@@ -601,12 +601,12 @@ void json_free(json_ctx_t* jp) {
   _free(jp);
 }
 
-json_ctx_t* parse_json(char* js) {
+json_ctx_t* parse_json(const char* js) {
   json_ctx_t* parser = _malloc(sizeof(json_ctx_t));                  // new parser
   if (!parser) return NULL;                                          // not enoug memory?
   parser->len       = 0;                                             // initial length
   parser->depth     = 0;                                             //  initial depth
-  parser->c         = js;                                            // the pointer to the string to parse
+  parser->c         = (char*) js;                                    // the pointer to the string to parse
   parser->allocated = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
   parser->result    = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
   if (!parser->result) {                                             // not enough memory?
@@ -618,7 +618,7 @@ json_ctx_t* parse_json(char* js) {
     json_free(parser);                                               // clean up
     return NULL;                                                     // and return null
   }                                                                  //
-  parser->c = js;                                                    // since this pointer changed during parsing, we set it back to the original string
+  parser->c = (char*) js;                                            // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 

@@ -527,6 +527,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   // prepare response-object
   in3_request_t* request = _malloc(sizeof(in3_request_t));
+  request->in3           = ctx->client;
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;

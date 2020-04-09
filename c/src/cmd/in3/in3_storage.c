@@ -73,13 +73,13 @@ static char* get_storage_dir() {
   return _HOME_DIR;
 }
 
-static char* create_path(char* key) {
+static char* create_path(const char* key) {
   char* path = _malloc(strlen(get_storage_dir()) + strlen(key) + 5);
   sprintf(path, "%s%s", get_storage_dir(), key);
   return path;
 }
 
-bytes_t* storage_get_item(void* cptr, char* key) {
+bytes_t* storage_get_item(void* cptr, const char* key) {
   UNUSED_VAR(cptr);
   char* path = create_path(key);
 
@@ -108,7 +108,7 @@ bytes_t* storage_get_item(void* cptr, char* key) {
   return NULL;
 }
 
-void storage_set_item(void* cptr, char* key, bytes_t* content) {
+void storage_set_item(void* cptr, const char* key, bytes_t* content) {
   UNUSED_VAR(cptr);
   char* path = create_path(key);
   FILE* file = fopen(path, "wb");

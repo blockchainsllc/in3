@@ -93,7 +93,9 @@ typedef struct cache_s {
   bytes_t values[MAX_ENTRIES];
   char*   keys[MAX_ENTRIES];
 } cache_t;
-static bytes_t* cache_get_item(void* cptr, char* key) {
+static cache_t cache;
+
+static bytes_t* cache_get_item(void* cptr, const char* key) {
   cache_t* cache = (cache_t*) cptr;
   for (int i = 0; i < MAX_ENTRIES && cache->keys[i]; i++) {
     if (strcmp(cache->keys[i], key) == 0)
@@ -101,7 +103,7 @@ static bytes_t* cache_get_item(void* cptr, char* key) {
   }
   return NULL;
 }
-static void cache_set_item(void* cptr, char* key, bytes_t* value) {
+static void cache_set_item(void* cptr, const char* key, bytes_t* value) {
   cache_t* cache = (cache_t*) cptr;
   int      i     = 0;
   while (i < MAX_ENTRIES && cache->keys[i]) {
@@ -118,11 +120,14 @@ static void cache_set_item(void* cptr, char* key, bytes_t* value) {
 }
 
 void static setup_test_cache(in3_t* c) {
-  cache_t* cache     = calloc(1, sizeof(cache_t));
-  c->cache           = _malloc(sizeof(in3_storage_handler_t));
-  c->cache->cptr     = cache;
-  c->cache->get_item = cache_get_item;
-  c->cache->set_item = cache_set_item;
+  if (!memiszero((uint8_t*) &cache, sizeof(cache))) {
+    for (int i = 0; i < MAX_ENTRIES; ++i) {
+      free(cache.keys[i]);
+      free(cache.values[i].data);
+    }
+    memset(&cache, 0, sizeof(cache));
+  }
+  in3_set_storage_handler(c, cache_get_item, cache_set_item, NULL, &cache);
 }
 
 static void test_cache() {
@@ -291,7 +296,7 @@ static void test_whitelist_cache() {
 
   in3_t* c2    = in3_for_chain(0);
   c2->chain_id = c->chain_id;
-  c2->cache    = c->cache;
+  in3_set_storage_handler(c2, cache_get_item, cache_set_item, NULL, c->cache->cptr);
   in3_client_register_chain(c2, 0x8, CHAIN_ETH, contract, registry_id, 2, wlc);
   TEST_ASSERT_EQUAL(IN3_OK, in3_cache_update_whitelist(c2, in3_find_chain(c2, 0x8)));
   TEST_ASSERT_EQUAL_MEMORY(in3_find_chain(c2, 0x8)->whitelist->contract, wlc, 20);

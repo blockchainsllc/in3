@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, char* req) {
+in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, const char* req) {
   // create a new context by parsing the request
   in3_ctx_t* ctx = ctx_new(c, req);
 
@@ -64,7 +64,7 @@ in3_ctx_t* in3_client_rpc_ctx_raw(in3_t* c, char* req) {
   return ctx; // return context and hope the calle will clean it.
 }
 
-in3_ctx_t* in3_client_rpc_ctx(in3_t* c, char* method, char* params) {
+in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) {
   // generate the rpc-request
   const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
   const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
@@ -131,12 +131,12 @@ clean:
   return res;
 }
 
-in3_ret_t in3_client_rpc(in3_t* c, char* method, char* params, char** result, char** error) {
+in3_ret_t in3_client_rpc(in3_t* c, const char* method, const char* params, char** result, char** error) {
   if (!error) return IN3_EINVAL;
   return ctx_rpc(in3_client_rpc_ctx(c, method, params), result, error);
 }
 
-in3_ret_t in3_client_rpc_raw(in3_t* c, char* request, char** result, char** error) {
+in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char** error) {
   if (!error) return IN3_EINVAL;
   return ctx_rpc(in3_client_rpc_ctx_raw(c, request), result, error);
 }
@@ -213,7 +213,8 @@ in3_signer_t* in3_create_signer(
   return signer;
 }
 
-in3_storage_handler_t* in3_create_storage_handler(
+in3_storage_handler_t* in3_set_storage_handler(
+    in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer setting a stored value for the given key.*/
@@ -224,5 +225,7 @@ in3_storage_handler_t* in3_create_storage_handler(
   handler->get_item              = get_item;
   handler->set_item              = set_item;
   handler->clear                 = clear;
+  c->cache                       = handler;
+  in3_cache_init(c);
   return handler;
 }

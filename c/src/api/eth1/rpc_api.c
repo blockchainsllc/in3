@@ -50,7 +50,7 @@
 #include <string.h>
 
 #define ETH_SIGN_PREFIX "\x19" \
-                        "Ethereum Signed Message:\n%i"
+                        "Ethereum Signed Message:\n%u"
 
 #define RESPONSE_START()                                                             \
   do {                                                                               \

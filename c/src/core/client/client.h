@@ -275,17 +275,17 @@ typedef struct in3_chain {
  * @returns the found result. if the key is found this function should return the values as bytes otherwise `NULL`.
  **/
 typedef bytes_t* (*in3_storage_get_item)(
-    void* cptr, /**< a custom pointer as set in the storage handler*/
-    char* key   /**< the key to search in the cache */
+    void*       cptr, /**< a custom pointer as set in the storage handler*/
+    const char* key   /**< the key to search in the cache */
 );
 
 /** 
  * storage handler function for writing to the cache.
  **/
 typedef void (*in3_storage_set_item)(
-    void*    cptr, /**< a custom pointer as set in the storage handler*/
-    char*    key,  /**< the key to store the value.*/
-    bytes_t* value /**< the value to store.*/
+    void*       cptr, /**< a custom pointer as set in the storage handler*/
+    const char* key,  /**< the key to store the value.*/
+    bytes_t*    value /**< the value to store.*/
 );
 
 /**
@@ -410,22 +410,26 @@ typedef struct in3_pay {
  * 
  * if the error has a length>0 the response will be rejected
  */
-typedef struct n3_response {
+typedef struct in3_response {
   sb_t error;  /**< a stringbuilder to add any errors! */
   sb_t result; /**< a stringbuilder to add the result */
 } in3_response_t;
+
+/* forward decl */
+typedef struct in3_t_ in3_t;
 
 /** request-object. 
  * 
  * represents a RPC-request
  */
-typedef struct n3_request {
+typedef struct in3_request {
   char*           payload;  /**< the payload to send */
   char**          urls;     /**< array of urls */
   int             urls_len; /**< number of urls */
   in3_response_t* results;  /**< the responses*/
   uint32_t        timeout;  /**< the timeout 0= no timeout*/
   uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
+  in3_t*          in3;      /**< pointer to associated IN3 instance */
 } in3_request_t;
 
 /** the transport function to be implemented by the transport provider.
@@ -471,7 +475,7 @@ typedef struct in3_filter_handler_t_ {
  * This struct holds the configuration and also point to internal resources such as filters or chain configs.
  * 
  */
-typedef struct in3_t_ {
+struct in3_t_ {
   /** number of seconds requests can be cached. */
   uint32_t cache_timeout;
 
@@ -545,7 +549,11 @@ typedef struct in3_t_ {
   /** used to identify the capabilities of the node. */
   in3_node_props_t node_props;
 
-} in3_t;
+#ifndef DEV_NO_INTRN_PTR
+  /** pointer to internal data */
+  void* internal;
+#endif
+};
 
 /** creates a new Incubes configuration and returns the pointer.
  * 
@@ -563,20 +571,11 @@ typedef struct in3_t_ {
  * // create new client
  * in3_t* client = in3_new();
  * 
- * // configure storage...
- * in3_storage_handler_t storage_handler;
- * storage_handler.get_item = storage_get_item;
- * storage_handler.set_item = storage_set_item;
- * storage_handler.clear = storage_clear;
- *
  * // configure transport
  * client->transport    = send_curl;
  *
  * // configure storage
- * client->cache = &storage_handler;
- * 
- * // init cache
- * in3_cache_init(client);
+ * in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
  * 
  * // ready to use ...
  * ```
@@ -601,20 +600,11 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * // create new client
  * in3_t* client = in3_for_chain(ETH_CHAIN_ID_MAINNET);
  * 
- * // configure storage...
- * in3_storage_handler_t storage_handler;
- * storage_handler.get_item = storage_get_item;
- * storage_handler.set_item = storage_set_item;
- * storage_handler.clear = storage_clear;
- *
  * // configure transport
  * client->transport    = send_curl;
  *
  * // configure storage
- * client->cache = &storage_handler;
- * 
- * // init cache
- * in3_cache_init(client);
+ * in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
  * 
  * // ready to use ...
  * ```
@@ -630,18 +620,18 @@ in3_t* in3_for_chain_default(
 
 /** sends a request and stores the result in the provided buffer */
 in3_ret_t in3_client_rpc(
-    in3_t* c,      /**< [in] the pointer to the incubed client config. */
-    char*  method, /**< [in] the name of the rpc-funcgtion to call. */
-    char*  params, /**< [in] docs for input parameter v. */
-    char** result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
-    char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
+    in3_t*      c,      /**< [in] the pointer to the incubed client config. */
+    const char* method, /**< [in] the name of the rpc-funcgtion to call. */
+    const char* params, /**< [in] docs for input parameter v. */
+    char**      result, /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
+    char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** sends a request and stores the result in the provided buffer */
 in3_ret_t in3_client_rpc_raw(
-    in3_t* c,       /**< [in] the pointer to the incubed client config. */
-    char*  request, /**< [in] the rpc request including method and params. */
-    char** result,  /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
-    char** error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
+    in3_t*      c,       /**< [in] the pointer to the incubed client config. */
+    const char* request, /**< [in] the rpc request including method and params. */
+    char**      result,  /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
+    char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
  * The resulting string must be free by the the caller of this function! 
@@ -760,7 +750,8 @@ in3_signer_t* in3_create_signer(
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
-in3_storage_handler_t* in3_create_storage_handler(
+in3_storage_handler_t* in3_set_storage_handler(
+    in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/
     in3_storage_set_item set_item, /**< function pointer setting a stored value for the given key.*/
     in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/

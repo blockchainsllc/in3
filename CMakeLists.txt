@@ -67,6 +67,7 @@ option(CODE_COVERAGE  "Builds targets with code coverage instrumentation. (Requi
 option(PAY_ETH  "support for direct Eth-Payment"  OFF)
 option(USE_SCRYPT "integrate scrypt into the build in order to allow decrypt_key for scrypt encoded keys." ON)
 option(USE_CURL "if true the curl transport will be built (with a dependency to libcurl)" ON)
+option(DEV_NO_INTRN_PTR "(*dev option*) if true the client will NOT include a void pointer (named internal) for use by devs)" ON)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -144,6 +145,11 @@ if(SEGGER_RTT)
     MESSAGE(STATUS "Enable segger RTT for logging")
     ADD_DEFINITIONS(-DSEGGER_RTT)
 endif(SEGGER_RTT)
+
+if (DEV_NO_INTRN_PTR)
+    MESSAGE(STATUS "Disable dev opt (internal ptr)")
+    ADD_DEFINITIONS(-DDEV_NO_INTRN_PTR)
+endif()
 
 # handle version
 if (TAG_VERSION)

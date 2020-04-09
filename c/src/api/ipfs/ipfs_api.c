@@ -41,7 +41,7 @@
 static bytes_t* b64_to_bytes(const char* b64) {
   size_t   l    = 0;
   uint8_t* data = base64_decode(b64, &l);
-  bytes_t* b    = b_new((char*) data, l);
+  bytes_t* b    = b_new(data, l);
   free(data);
   return b;
 }
