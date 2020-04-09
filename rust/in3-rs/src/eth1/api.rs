@@ -35,14 +35,13 @@ impl EthApi {
     }
 
     pub async fn block_number(&mut self) -> In3Result<U256> {
-        let resp = self.send(serde_json::to_string(&RpcRequest {
+        let resp = self.send(RpcRequest {
             method: "eth_blockNumber",
             params: json!([]),
-        }).unwrap().as_str()).await?;
-        let v: Value = serde_json::from_str(resp.as_str()).unwrap();
-        let mut res = v[0]["result"].as_str().unwrap().trim_start_matches("0x");
+        }).await?;
+        let mut res = resp[0]["result"].as_str().unwrap().trim_start_matches("0x");
         let mut u256 = U256([0; 32]);
-        hex::decode_to_slice(format!("{:0>64}", res), &mut u256.0).expect("Decoding failed");
+        hex::decode_to_slice(format!("{:0>64}", res), &mut u256.0)?;
         Ok(u256)
     }
 
