@@ -53,8 +53,7 @@
 #include "../../core/util/utils.h"
 #include "in3_http.h"
 
-in3_ret_t send_http(in3_t* c, in3_request_t* req) {
-  UNUSED_VAR(c);
+in3_ret_t send_http(in3_request_t* req) {
   if (!req->times) req->times = _malloc(sizeof(uint32_t) * req->urls_len);
   for (int n = 0; n < req->urls_len; n++) {
 

@@ -53,7 +53,7 @@
  * c->transport = send_curl;
  * ```
  */
-in3_ret_t send_curl(in3_t* c, in3_request_t* req);
+in3_ret_t send_curl(in3_request_t* req);
 
 /**
  * registers curl as a default transport.

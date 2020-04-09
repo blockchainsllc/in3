@@ -42,8 +42,8 @@ extern "C" {
 #include "../../src/core/client/client.h"
 void      add_response(char* request_method, char* request_params, char* result, char* error, char* in3);
 void      add_response_test(char* test);
-in3_ret_t test_transport(in3_t* c, in3_request_t* req);
-in3_ret_t mock_transport(in3_t* c, in3_request_t* req);
+in3_ret_t test_transport(in3_request_t* req);
+in3_ret_t mock_transport(in3_request_t* req);
 
 #ifdef __cplusplus
 }

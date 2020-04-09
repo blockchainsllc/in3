@@ -287,7 +287,6 @@ impl Client {
     }
 
     extern "C" fn in3_rust_transport(
-        client: *mut in3_sys::in3_t,
         request: *mut in3_sys::in3_request_t,
     ) -> in3_sys::in3_ret_t::Type {
         // internally calls the rust transport impl, i.e. Client.transport
@@ -303,7 +302,7 @@ impl Client {
                 urls.push(url);
             }
 
-            let c = (*client).internal as *mut Client;
+            let c = (*(*request).in3).internal as *mut Client;
             let responses: Vec<Result<String, String>> = match &mut (*c).transport {
                 None => panic!("Missing transport!"),
                 Some(transport) => (*transport)(payload, &urls),

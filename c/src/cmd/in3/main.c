@@ -534,7 +534,7 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 
 static bytes_t*  last_response;
 static bytes_t   in_response = {.data = NULL, .len = 0};
-static in3_ret_t debug_transport(in3_t* c, in3_request_t* req) {
+static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
     fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
@@ -545,9 +545,9 @@ static in3_ret_t debug_transport(in3_t* c, in3_request_t* req) {
     return 0;
   }
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(c, req);
+  in3_ret_t r = send_curl(req);
 #else
-  in3_ret_t r = send_http(c, req);
+  in3_ret_t r = send_http(req);
 #endif
   last_response = b_new((uint8_t*) req->results[0].result.data, req->results[0].result.len);
 #ifndef DEBUG
@@ -561,11 +561,11 @@ static in3_ret_t debug_transport(in3_t* c, in3_request_t* req) {
   return r;
 }
 static char*     test_name = NULL;
-static in3_ret_t test_transport(in3_t* c, in3_request_t* req) {
+static in3_ret_t test_transport(in3_request_t* req) {
 #ifdef USE_CURL
-  in3_ret_t r = send_curl(c, req);
+  in3_ret_t r = send_curl(req);
 #else
-  in3_ret_t r = send_http(c, req);
+  in3_ret_t r = send_http(req);
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;

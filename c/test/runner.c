@@ -173,7 +173,7 @@ static void prepare_response(int count, d_token_t* response_array, int as_bin, i
   _tmp_pos       = 0;
 }
 
-static int send_mock(in3_t* c, in3_request_t* req) {
+static int send_mock(in3_request_t* req) {
   int     i;
   bytes_t response;
   if (d_len(_tmp_responses) <= _tmp_pos) {

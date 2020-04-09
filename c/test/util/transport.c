@@ -94,7 +94,7 @@ void add_response_test(char* test) {
   sprintf(response_buffer->response, "%s", res.data);
 }
 
-in3_ret_t test_transport(in3_t* c, in3_request_t* req) {
+in3_ret_t test_transport(in3_request_t* req) {
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
   json_ctx_t* r = parse_json(req->payload);
   TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
@@ -118,7 +118,7 @@ in3_ret_t test_transport(in3_t* c, in3_request_t* req) {
   return IN3_OK;
 }
 
-in3_ret_t mock_transport(in3_t* c, in3_request_t* req) {
+in3_ret_t mock_transport(in3_request_t* req) {
   json_ctx_t* r       = parse_json(req->payload);
   d_token_t*  request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
   char*       method  = d_get_string(request, "method");

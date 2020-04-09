@@ -54,7 +54,7 @@
 #define REGISTRY_ID "0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea"
 #define WHITELIST_CONTRACT_ADDRS "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab"
 
-static in3_ret_t test_transport(in3_t* c, in3_request_t* req) {
+static in3_ret_t test_transport(in3_request_t* req) {
   char* buffer = NULL;
   long  length;
   FILE* f = fopen("../c/test/testdata/requests/in3_nodeList.json", "r");

@@ -410,29 +410,31 @@ typedef struct in3_pay {
  * 
  * if the error has a length>0 the response will be rejected
  */
-typedef struct n3_response {
+typedef struct in3_response {
   sb_t error;  /**< a stringbuilder to add any errors! */
   sb_t result; /**< a stringbuilder to add the result */
 } in3_response_t;
+
+/* forward decl */
+typedef struct in3_t_ in3_t;
 
 /** request-object. 
  * 
  * represents a RPC-request
  */
-typedef struct n3_request {
+typedef struct in3_request {
   char*           payload;  /**< the payload to send */
   char**          urls;     /**< array of urls */
   int             urls_len; /**< number of urls */
   in3_response_t* results;  /**< the responses*/
   uint32_t        timeout;  /**< the timeout 0= no timeout*/
   uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
+  in3_t*          in3;      /**< pointer to associated IN3 instance */
 } in3_request_t;
-
-typedef struct in3_t_ in3_t;
 
 /** the transport function to be implemented by the transport provider.
  */
-typedef in3_ret_t (*in3_transport_send)(in3_t* in3, in3_request_t* request);
+typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
 
 /**
  * Filter type used internally when managing filters.
