@@ -39,21 +39,20 @@
  * 
  * */
 
-
 #ifndef in3_ledger_signer_h__
 #define in3_ledger_signer_h__
 
-#include <hidapi.h>
 #include "../../../../core/client/client.h"
-
+#include <hidapi.h>
 
 #define LEDGER_NANOS_VID 0x2C97
 #define LEDGER_NANOS_PID 0x1001
 
 in3_ret_t is_ledger_device_connected();
-in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path,  bytes_t* o_public_key, hid_device* handle);
-in3_ret_t eth_get_address_from_path(bytes_t i_bip_path,  bytes_t o_address);
+in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key);
+in3_ret_t eth_get_address_from_path(bytes_t i_bip_path, bytes_t o_address);
 in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 in3_ret_t eth_ledger_set_signer(in3_t* in3);
-
+void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
+void read_hid_response(hid_device* handle, bytes_t* response);
 #endif

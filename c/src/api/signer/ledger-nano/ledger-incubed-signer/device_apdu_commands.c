@@ -51,7 +51,7 @@ void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd) {
   
   memcpy(o_wrapped_hid_cmd->data, cmd, HID_CMD_MAX_LEN);
 
-  print_bytes(o_wrapped_hid_cmd->data,o_wrapped_hid_cmd->len,"wrap_apdu");
+
 }
 
 void unwrap_apdu(bytes_t i_wrapped_hid_cmd, bytes_t* o_apdu_res) {

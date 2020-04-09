@@ -47,36 +47,37 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
   //UNUSED_VAR(account); // at least for now
   int       res = 0;
   in3_ret_t ret;
-  res = hid_init();
+
   hid_device* handle;
   uint8_t     apdu[64];
   uint8_t     buf[2];
   int         index_counter = 0;
   uint8_t     msg_len       = 32;
-  handle                    = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
+  uint8_t     bytes_read    = 0;
+  uint8_t     read_buf[255];
+
   bytes_t apdu_bytes;
   bytes_t final_apdu_command;
   bytes_t public_key;
   bytes_t bip_path;
+  bytes_t response;
 
+  ret                      = eth_ledger_get_public_key(bip_path, &public_key);
+  res                      = hid_init();
+  handle                   = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
   unsigned char cmd_file[] = {0x01, 0x01, 0x05, 0x00, 0x00, 0x00, 0x07, 0x80, 0x02, 0x00, 0x00, 0x02, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   int           cmd_size   = 64;
 
   if (NULL != handle) {
-    ret = eth_ledger_get_public_key(bip_path, &public_key, &handle);
+
+    hid_set_nonblocking(handle, 0);
+
     switch (type) {
       case SIGN_EC_RAW:
         res = hid_write(handle, cmd_file, cmd_size);
         ret = IN3_OK;
         break;
       case SIGN_EC_HASH:
-        // unsigned char cmd_file[] = {0x01,0x01,0x05,0x00,0x00,0x00,0x07,0x80,0x02,0x00,0x00,0x02
-        // 						,0x01,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-        // 						,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-        // 						,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-        // 						,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-        // 						,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-        // 						,0x00,0x00,0x00,0x00};
         memcpy(apdu + index_counter, &CLA, 1);
         index_counter += 1;
         memcpy(apdu + index_counter, &INS_SIGN, 1);
@@ -99,11 +100,24 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
         print_bytes(final_apdu_command.data, final_apdu_command.len, "eth_ledger_sign");
 
-        res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
-        ret = IN3_OK;
+        // res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
+        res = hid_write(handle, cmd_file, cmd_size);
+
+        printf("written to hid %d\n", res);
+
+        read_hid_response(handle, &response);
+        print_bytes(response.data, response.len, "eth_ledger_get_public_key : hid_read");
+
+        if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
+          ret              = IN3_OK;
+          extract_signture(response, dst);
+        } else {
+          ret = IN3_ENOTSUP;
+        }
 
         free(final_apdu_command.data);
         free(apdu_bytes.data);
+        ret = IN3_OK;
         break;
 
       default:
@@ -115,43 +129,61 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
   }
   hid_close(handle);
   res = hid_exit();
+  free(public_key.data);
   return ret;
 }
 
-in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key, hid_device* handle) {
+in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key) {
   int       res = 0;
   in3_ret_t ret;
-  uint8_t  apdu[64];
-  uint8_t  buf[2];
-  int      index_counter = 0;
-  uint16_t msg_len       = 0;
+  uint8_t   apdu[64];
+  uint8_t   buf[2];
+  int       index_counter = 0;
+  uint16_t  msg_len       = 0;
+  uint8_t   bytes_read    = 0;
 
-  bytes_t apdu_bytes;
-  bytes_t final_apdu_command;
+  bytes_t     apdu_bytes;
+  bytes_t     final_apdu_command;
+  bytes_t     response;
+  hid_device* handle;
 
-  apdu[index_counter++] = CLA;
-  apdu[index_counter++] = INS_GET_PUBLIC_KEY ;
-  apdu[index_counter++] = P1_FINAL;
-  apdu[index_counter++] = P2_FINAL;
-  apdu[index_counter++] = msg_len;
-  
+  res    = hid_init();
+  handle = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
+  if (NULL != handle) {
+    apdu[index_counter++] = CLA;
+    apdu[index_counter++] = INS_GET_PUBLIC_KEY;
+    apdu[index_counter++] = P1_FINAL;
+    apdu[index_counter++] = P2_FINAL;
+    apdu[index_counter++] = msg_len;
 
-  apdu_bytes.data = malloc(index_counter);
-  apdu_bytes.len  = index_counter;
-  memcpy(apdu_bytes.data, apdu, index_counter);
+    apdu_bytes.data = malloc(index_counter);
+    apdu_bytes.len  = index_counter;
+    memcpy(apdu_bytes.data, apdu, index_counter);
 
-  wrap_apdu(apdu_bytes, 0, &final_apdu_command);
+    wrap_apdu(apdu_bytes, 0, &final_apdu_command);
 
-  print_bytes(final_apdu_command.data, final_apdu_command.len, "eth_ledger_get_public_key");
+    res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
 
-  res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
-  ret = IN3_OK;
+    read_hid_response(handle, &response);
+    print_bytes(response.data, response.len, "eth_ledger_get_public_key : hid_read");
 
-  free(final_apdu_command.data);
-  free(apdu_bytes.data);
+    if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
+      ret              = IN3_OK;
+      o_public_key->len = response.len - 2;
+      o_public_key->data = malloc(response.len - 2);
+      memcpy(o_public_key->data, response.data, response.len - 2);
+    } else {
+      ret = IN3_ENOTSUP;
+    }
+    free(final_apdu_command.data);
+    free(apdu_bytes.data);
+    free(response.data);
 
-  //hid_close(handle);
-  // res = hid_exit();
+  } else {
+    ret = IN3_ENODEVICE;
+  }
+  hid_close(handle);
+  res = hid_exit();
   return ret;
 }
 
@@ -162,4 +194,47 @@ in3_ret_t eth_ledger_set_signer(in3_t* in3) {
   in3->signer->prepare_tx = NULL;
   in3->signer->wallet     = NULL;
   return IN3_OK;
+}
+
+void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
+
+  //ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s
+  // lr = 33 , ls = 32
+  memcpy(o_sig, i_raw_sig.data + 4, 33);
+  memcpy(o_sig + 33, i_raw_sig.data + 39, 32);
+}
+
+void read_hid_response(hid_device* handle, bytes_t* response) {
+  uint8_t read_chunk[64];
+  uint8_t read_buf[255];
+  int     index_counter         = 0;
+  int     bytes_to_read         = 0;
+  int     total_bytes_available = 0;
+  int     bytes_read            = 0;
+  do {
+    bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
+
+    if (bytes_read > 0) {
+      if (index_counter == 0) //first chunk read
+      {
+        total_bytes_available = read_chunk[6];
+        index_counter += (bytes_read - 7);
+
+        memcpy(read_buf, read_chunk + 7, bytes_read - 7);
+      } else {
+        memcpy(read_buf + index_counter, read_chunk + 5, total_bytes_available - index_counter);
+        index_counter += (bytes_read - 5);
+      }
+      bytes_to_read = total_bytes_available - index_counter;
+    }
+    if (bytes_to_read <= 0) {
+      break;
+    }
+
+  } while (bytes_read > 0);
+
+  response->len  = total_bytes_available;
+  response->data = malloc(total_bytes_available);
+  memcpy(response->data, read_buf, total_bytes_available);
+  printf("bytes to read %d total_bytes_available %d\n", bytes_to_read, total_bytes_available);
 }
