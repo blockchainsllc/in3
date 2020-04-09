@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-pub mod api;
+pub mod eth1;
 pub mod error;
 pub mod in3;
 
