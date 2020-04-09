@@ -1,6 +1,6 @@
 use core::fmt;
 use core::result;
-use std::ffi;
+use std::{ffi, convert};
 
 use in3_sys::in3_ret_t::*;
 
@@ -85,6 +85,18 @@ impl Error {
                     .unwrap()
             },
         }
+    }
+}
+
+impl convert::From<serde_json::error::Error> for Error {
+    fn from(_: serde_json::error::Error) -> Self {
+        Self::DataInvalid
+    }
+}
+
+impl convert::From<hex::FromHexError> for Error {
+    fn from(_: hex::FromHexError) -> Self {
+        Self::InvalidValue
     }
 }
 
