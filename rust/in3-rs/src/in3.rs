@@ -187,8 +187,7 @@ pub struct Client {
 impl Client {
     pub async fn send_request(&mut self, config_str: &str) -> In3Result<String> {
         let mut ctx = Ctx::new(self, config_str);
-        let _res = ctx.execute().await;
-        _res
+        ctx.execute().await
     }
 
     #[cfg(feature = "blocking")]
