@@ -1,11 +1,18 @@
 use std::i64;
 
+use serde::{Deserialize, Serialize};
 use serde_json::{Result, Value};
 use serde_json::json;
 
 use crate::error::*;
 use crate::error::In3Result;
 use crate::in3::*;
+
+#[derive(Serialize)]
+pub struct RpcRequest<'a> {
+    method: &'a str,
+    params: serde_json::Value,
+}
 
 pub struct EthApi {
     client: Box<Client>,
