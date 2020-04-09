@@ -1,11 +1,13 @@
+use std::convert::TryInto;
 use std::i64;
 
+use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use serde_json::{Result, Value};
 use serde_json::json;
 
 use crate::error::*;
-use crate::error::In3Result;
+use crate::eth1::U256;
 use crate::in3::*;
 
 #[derive(Serialize)]
@@ -29,14 +31,16 @@ impl EthApi {
         self.client.send_request(params).await
     }
 
-    pub async fn block_number(self) -> i64 {
-        let response =
-            self.send(r#"{"method": "eth_blockNumber", "params": []}"#).await;
-        let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
-        let ret = v[0]["result"].as_str().unwrap();
-        let without_prefix = ret.trim_start_matches("0x");
-        let blocknum = i64::from_str_radix(without_prefix, 16);
-        blocknum.unwrap_or(-1)
+    pub async fn block_number(&mut self) -> In3Result<U256> {
+        let resp = self.send(serde_json::to_string(&RpcRequest {
+            method: "eth_blockNumber",
+            params: json!([]),
+        }).unwrap().as_str()).await?;
+        let v: Value = serde_json::from_str(resp.as_str()).unwrap();
+        let mut res = v[0]["result"].as_str().unwrap().trim_start_matches("0x");
+        let mut u256 = U256([0; 32]);
+        hex::decode_to_slice(format!("{:0>64}", res), &mut u256.0).expect("Decoding failed");
+        Ok(u256)
     }
 
     pub async fn getBalance(&mut self, address: String) -> String {
