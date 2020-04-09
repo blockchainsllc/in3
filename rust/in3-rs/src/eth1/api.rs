@@ -25,7 +25,7 @@ impl EthApi {
         EthApi { client }
     }
 
-    async fn send(mut self, params: &str) -> In3Result<String> {
+    async fn send(&mut self, params: &str) -> In3Result<String> {
         self.client.send_request(params).await
     }
 
@@ -39,7 +39,7 @@ impl EthApi {
         blocknum.unwrap_or(-1)
     }
 
-    pub async fn getBalance(self, address: String) -> String {
+    pub async fn getBalance(&mut self, address: String) -> String {
         let payload = json!({
             "method": "eth_getBalance",
             "params": [
@@ -63,15 +63,15 @@ mod tests {
 
     #[test]
     fn test_block_number() {
-        let api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-        //execute the call to the api on task::block_on
-        let num = task::block_on(api.block_number());
+        let mut api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
+        println!("{:?}", num);
         assert!(num > 9000000, "Block number is not correct");
     }
 
     #[test]
     fn test_get_balance() {
-        let api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        let mut api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         //execute the call to the api on task::block_on
         let num = task::block_on(
             api.getBalance("0xc94770007dda54cF92009BFF0dE90c06F603a09f".to_string()),
