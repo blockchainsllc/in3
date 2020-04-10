@@ -13,9 +13,8 @@ static uint8_t CHANNEL[] = {0x01, 0x01};
 const uint8_t CLA                = 0x80;
 const uint8_t INS_GET_PUBLIC_KEY = 0x04;
 const uint8_t INS_SIGN           = 0x02;
-const uint8_t P1_MORE            = 0x01;
-const uint8_t P1_FINAL           = 0X00;
-const uint8_t P2_MORE            = 0x01;
+const uint8_t P1_MORE            = 0x00;
+const uint8_t P1_FINAL           = 0X80;
 const uint8_t P2_FINAL           = 0X00;
 const uint8_t TAG                = 0x05;
 

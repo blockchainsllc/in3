@@ -65,7 +65,7 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
   ret                      = eth_ledger_get_public_key(bip_path, &public_key);
   res                      = hid_init();
   handle                   = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
-  unsigned char cmd_file[] = {0x01, 0x01, 0x05, 0x00, 0x00, 0x00, 0x07, 0x80, 0x02, 0x00, 0x00, 0x02, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  unsigned char cmd_file[] = {0x01, 0x01, 0x05, 0x00, 0x00, 0x00, 0x07, 0x80, 0x02, 0x80, 0x00, 0x02, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   int           cmd_size   = 64;
 
   if (NULL != handle) {
@@ -98,19 +98,22 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
         wrap_apdu(apdu_bytes, 0, &final_apdu_command);
 
-        print_bytes(final_apdu_command.data, final_apdu_command.len, "eth_ledger_sign");
+        // print_bytes(final_apdu_command.data, final_apdu_command.len, "eth_ledger_sign");
 
-        // res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
-        res = hid_write(handle, cmd_file, cmd_size);
+        res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
+        // res = hid_write(handle, cmd_file, cmd_size);
 
         printf("written to hid %d\n", res);
 
         read_hid_response(handle, &response);
-        print_bytes(response.data, response.len, "eth_ledger_get_public_key : hid_read");
+        print_bytes(response.data, response.len, "eth_ledger_sign :raw signature");
 
         if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
           ret              = IN3_OK;
+          printf("success respons\n");
+          
           extract_signture(response, dst);
+          print_bytes(dst, 65, "eth_ledger_sign : signature");
         } else {
           ret = IN3_ENOTSUP;
         }
@@ -165,7 +168,7 @@ in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key) {
     res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
 
     read_hid_response(handle, &response);
-    print_bytes(response.data, response.len, "eth_ledger_get_public_key : hid_read");
+    // print_bytes(response.data, response.len, "eth_ledger_get_public_key : hid_read");
 
     if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
       ret              = IN3_OK;
@@ -199,9 +202,11 @@ in3_ret_t eth_ledger_set_signer(in3_t* in3) {
 void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
 
   //ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s
-  // lr = 33 , ls = 32
-  memcpy(o_sig, i_raw_sig.data + 4, 33);
-  memcpy(o_sig + 33, i_raw_sig.data + 39, 32);
+  int lr = i_raw_sig.data[3];
+  int ls = i_raw_sig.data[lr+5];
+  printf("lr %d, ls %d \n", lr,ls);
+  memcpy(o_sig, i_raw_sig.data + 4, lr);
+  memcpy(o_sig + lr, i_raw_sig.data + lr + 6, ls);
 }
 
 void read_hid_response(hid_device* handle, bytes_t* response) {
@@ -215,6 +220,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
     bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
 
     if (bytes_read > 0) {
+      // print_bytes(read_chunk, bytes_read, "hid_read");
       if (index_counter == 0) //first chunk read
       {
         total_bytes_available = read_chunk[6];
@@ -236,5 +242,5 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
   response->len  = total_bytes_available;
   response->data = malloc(total_bytes_available);
   memcpy(response->data, read_buf, total_bytes_available);
-  printf("bytes to read %d total_bytes_available %d\n", bytes_to_read, total_bytes_available);
+  // printf("bytes to read %d total_bytes_available %d\n", bytes_to_read, total_bytes_available);
 }

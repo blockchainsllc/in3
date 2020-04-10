@@ -51,7 +51,6 @@ extern const uint8_t INS_GET_PUBLIC_KEY ;
 extern const uint8_t INS_SIGN ;
 extern const uint8_t P1_MORE ;
 extern const uint8_t P1_FINAL ;
-extern const uint8_t P2_MORE ;
 extern const uint8_t P2_FINAL ;
 extern const uint8_t TAG ;
 
