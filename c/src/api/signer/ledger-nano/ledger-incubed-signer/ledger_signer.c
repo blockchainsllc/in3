@@ -263,11 +263,12 @@ int get_recid_from_pub_key(const ecdsa_curve *curve, uint8_t *pub_key, const uin
   {
     ret = ecdsa_recover_pub_from_sig(curve,p_key,sig,digest,i);
     if(ret ==0 )
-    {
+    { 
+       printf("ret 0 i %d\n",i);
       if(memcmp(pub_key,p_key,65) == 0)
       {
         recid = i;
-        printf("recid is %d\n",i)
+        printf("recid is %d\n",i);
         break;
       }
     }
