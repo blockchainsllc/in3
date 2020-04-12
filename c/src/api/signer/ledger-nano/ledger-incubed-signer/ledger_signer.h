@@ -43,6 +43,8 @@
 #define in3_ledger_signer_h__
 
 #include "../../../../core/client/client.h"
+#include "../../../../third-party/crypto/ecdsa.h"
+#include "../../../../third-party/crypto/secp256k1.h"
 #include <hidapi.h>
 
 #define LEDGER_NANOS_VID 0x2C97
@@ -55,4 +57,6 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 in3_ret_t eth_ledger_set_signer(in3_t* in3);
 void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
 void read_hid_response(hid_device* handle, bytes_t* response);
+int get_recid_from_pub_key(const ecdsa_curve *curve, uint8_t *pub_key, const uint8_t *sig, const uint8_t *digest);
+
 #endif
