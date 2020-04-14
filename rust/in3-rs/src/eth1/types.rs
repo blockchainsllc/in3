@@ -106,7 +106,7 @@ impl Serialize for BlockTransactions {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Transaction {
     pub block_hash: Option<Hash>,
@@ -125,19 +125,19 @@ pub struct Transaction {
     pub s: U256,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Block {
     pub number: Option<U256>,
     pub hash: Option<Hash>,
     pub parent_hash: Hash,
-    pub nonce: Option<u64>,
+    pub nonce: Option<U64>,
     pub sha3_uncles: Hash,
     // pub logs_bloom: Option<H2048>,
     pub transactions_root: Hash,
     pub state_root: Hash,
     pub receipts_root: Hash,
-    pub author: Address,
+    pub author: Option<Address>,
     pub miner: Address,
     pub difficulty: U256,
     pub total_difficulty: Option<U256>,
@@ -146,7 +146,7 @@ pub struct Block {
     pub gas_limit: U256,
     pub gas_used: U256,
     pub timestamp: U256,
-    pub seal_fields: Vec<Bytes>,
+    pub seal_fields: Option<Vec<Bytes>>,
     pub transactions: BlockTransactions,
     pub uncles: Vec<Hash>,
 }
