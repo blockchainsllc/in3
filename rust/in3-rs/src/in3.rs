@@ -76,7 +76,6 @@ impl Ctx {
                     in3_sys::in3_ret_t::IN3_OK => {
                         let result = (*(*self.ptr).response_context).c;
                         let data = ffi::CStr::from_ptr(result).to_str().unwrap();
-                        println!("{}", data);
                         break Ok(data);
                     }
                     _ => {
@@ -88,8 +87,7 @@ impl Ctx {
                     let req_type = (*last_waiting).type_;
                     match req_type {
                         in3_sys::ctx_type::CT_SIGN => {
-                            println!("TODO CT_SIGN");
-                            break Ok("TODO");
+                            unimplemented!();
                         }
                         in3_sys::ctx_type::CT_RPC => {
                             let req = in3_sys::in3_create_request(last_waiting);
@@ -126,7 +124,6 @@ impl Ctx {
                             let result = (*(*req).results.offset(0)).result;
                             let len = result.len;
                             let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                            println!("{}", data);
                             if len != 0 {
                                 break Ok(data);
                             } else {

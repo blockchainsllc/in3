@@ -20,5 +20,9 @@ fn main() -> error::In3Result<()> {
     let address: Address = serde_json::from_str(r#""0x0123456789012345678901234567890123456789""#)?;
     let balance: u64 = task::block_on(eth_api.get_balance(address, BlockNumber::Number((latest_blk_num - 10).into()))).unwrap().try_into().unwrap();
     println!("Balance of address {:?} is {:?} wei", address, balance);
+
+    // eth_getBlockByNumber
+    let block: eth1::Block = task::block_on(eth_api.get_block_by_number(BlockNumber::Latest, false)).unwrap();
+    println!("Block => {:?}", block);
     Ok(())
 }

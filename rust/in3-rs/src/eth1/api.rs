@@ -9,7 +9,8 @@ use serde_json::{Result, Value};
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::BlockNumber;
+use crate::eth1::{Block, BlockNumber, BlockTransactions, Hash, Transaction};
+use crate::eth1::BlockTransactions::{Full, Hashes};
 use crate::in3::*;
 
 #[derive(Serialize)]
@@ -52,20 +53,21 @@ impl Api {
         Ok(u256)
     }
 
-    // pub async fn getBalance(&mut self, address: String) -> String {
-    //     let payload = json!({
-    //         "method": "eth_getBalance",
-    //         "params": [
-    //             address,
-    //             "latest"
-    //         ]
-    //     });
-    //     let serialized = serde_json::to_string(&payload).unwrap();
-    //     let response = self.send(&serialized).await;
-    //     let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
-    //     let balance = v[0]["result"].as_str().unwrap();
-    //     balance.to_string()
-    // }
+    pub async fn get_block_by_number(&mut self, block: BlockNumber, include_tx: bool) -> In3Result<Block> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getBlockByNumber",
+            params: json!([block, include_tx]),
+        }).await?;
+        let mut block: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        if include_tx {
+            let txs: Vec<Transaction> = serde_json::from_str(resp[0]["result"]["transactions"].to_string().as_str())?;
+            block.transactions = Full(txs);
+        } else {
+            let txs: Vec<Hash> = serde_json::from_str(resp[0]["result"]["transactions"].to_string().as_str())?;
+            block.transactions = Hashes(txs);
+        }
+        Ok(block)
+    }
 }
 
 #[cfg(test)]
@@ -82,14 +84,4 @@ mod tests {
         println!("{:?}", num);
         assert!(num > 9000000, "Block number is not correct");
     }
-
-    // #[test]
-    // fn test_get_balance() {
-    //     let mut api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    //     //execute the call to the api on task::block_on
-    //     let num = task::block_on(
-    //         api.getBalance("0xc94770007dda54cF92009BFF0dE90c06F603a09f".to_string()),
-    //     );
-    //     assert!(num != "", "Balance is not correct");
-    // }
 }
