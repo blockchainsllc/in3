@@ -10,5 +10,6 @@ mod transport;
 mod transport_async;
 
 pub mod prelude {
+    pub use crate::error::*;
     pub use crate::in3::*;
 }

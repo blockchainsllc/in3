@@ -101,11 +101,9 @@ impl Ctx {
                                 urls.push(url);
                             }
                             let responses = transport_async::transport_http(payload, &urls).await;
-                            let mut any_err = false;
                             for (i, resp) in responses.iter().enumerate() {
                                 match resp {
                                     Err(err) => {
-                                        any_err = true;
                                         let err_str = ffi::CString::new(err.to_string()).unwrap();
                                         in3_sys::sb_add_chars(
                                             &mut (*(*req).results.add(i)).error,

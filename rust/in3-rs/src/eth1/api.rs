@@ -1,17 +1,10 @@
-use std::borrow::BorrowMut;
-use std::convert::TryInto;
-use std::i64;
-
-use ethereum_types::{Address, H256, U256};
-use hex::FromHex;
-use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
+use ethereum_types::{Address, U256};
+use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::{Block, BlockNumber, BlockTransactions, Hash, Transaction};
-use crate::eth1::BlockTransactions::{Full, Hashes};
-use crate::in3::*;
+use crate::eth1::{Block, BlockNumber};
+use crate::prelude::*;
 
 #[derive(Serialize)]
 struct RpcRequest<'a> {
@@ -58,7 +51,7 @@ impl Api {
             method: "eth_getBlockByNumber",
             params: json!([block, include_tx]),
         }).await?;
-        let mut block: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        let block: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
         Ok(block)
     }
 }
