@@ -3,9 +3,8 @@
 #include <in3/eth_api.h>  // functions for direct api-access
 #include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
 #include <in3/log.h>      // logging functions
-#include <in3/signer.h>   // default signer implementation
 #include <in3/utils.h>
-#include <in3/ledger_signer.h>
+#include <in3/ledger_signer.h> //to invoke ledger nano device for signing
 #include <stdio.h>
 
 
@@ -16,7 +15,8 @@ int main() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
 
-  // create a simple signer with this key
+  // setting ledger nano s to be the default signer for incubed client
+  // it will cause the transaction or any msg to be sent to ledger nanos device for siging 
   eth_ledger_set_signer(in3);
 
   // send tx using API

@@ -39,7 +39,7 @@ IF (IN3API)
 
     add_subdirectory(eth1)
     add_subdirectory(usn)
-    add_subdirectory(signer/ledger-nano/ledger-incubed-signer)
+    
 
     IF (IPFS)
         add_subdirectory(ipfs)

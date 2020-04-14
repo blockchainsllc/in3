@@ -31,38 +31,23 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#ifndef in3_ledger_signer_priv_h__
+#define in3_ledger_signer_priv_h__
 
-// @PUBLIC_HEADER
-/** @file
- * this file defines the incubed configuration struct and it registration.
- * 
- * 
- * */
+#include "../../../core/client/client.h"
+#include "../../../third-party/crypto/ecdsa.h"
+#include "../../../third-party/crypto/secp256k1.h"
+#include <hidapi.h>
 
-#ifndef in3_device_apdu_h__
-#define in3_device_apdu_h__
+#define LEDGER_NANOS_VID 0x2C97
+#define LEDGER_NANOS_PID 0x1001
 
-
-#include "../../../../core/client/client.h"
-#define HID_CMD_MAX_LEN 64
-
-extern const uint8_t CLA ;
-extern const uint8_t INS_GET_PUBLIC_KEY ;
-extern const uint8_t INS_SIGN ;
-extern const uint8_t P1_MORE ;
-extern const uint8_t P1_FINAL ;
-extern const uint8_t P2_FINAL ;
-extern const uint8_t TAG ;
-
-int int_to_bytes(uint16_t x, uint8_t* buf);
-
-uint16_t bytes_to_int(uint8_t* buf);
-
-void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd);
-
-void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t* o_apdu_res);
-
-void print_bytes(uint8_t* bytes, int len, char* args) ;
-
+void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
+void read_hid_response(hid_device* handle, bytes_t* response);
+int get_recid_from_pub_key(const ecdsa_curve *curve, uint8_t *pub_key, const uint8_t *sig, const uint8_t *digest);
+in3_ret_t is_ledger_device_connected();
+in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key);
+in3_ret_t eth_get_address_from_path(bytes_t i_bip_path, bytes_t o_address);
+in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
 #endif

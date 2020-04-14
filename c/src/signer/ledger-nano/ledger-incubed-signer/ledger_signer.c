@@ -4,7 +4,7 @@
 
 #include "device_apdu_commands.h"
 #include "ledger_signer.h"
-
+#include "ledger_signer_priv.h"
 #include <memory.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -110,7 +110,10 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
         printf("written to hid %d\n", res);
 
         read_hid_response(handle, &response);
-        print_bytes(response.data, response.len, "eth_ledger_sign :raw signature");
+
+        #ifdef DEBUG
+            print_bytes(response.data, response.len, "eth_ledger_sign :raw signature");
+        #endif
 
         if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
           ret              = IN3_OK;
@@ -119,7 +122,11 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
           extract_signture(response, dst);
           recid = get_recid_from_pub_key(&secp256k1, public_key.data, dst, hash);
           dst[64] = recid;
-          print_bytes(dst, 65, "eth_ledger_sign : signature");
+
+          #ifdef DEBUG
+              print_bytes(dst, 65, "eth_ledger_sign : signature");
+          #endif
+
         } else {
           ret = IN3_ENOTSUP;
         }

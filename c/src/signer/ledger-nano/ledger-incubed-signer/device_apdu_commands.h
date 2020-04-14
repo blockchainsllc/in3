@@ -32,12 +32,6 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * this file defines the incubed configuration struct and it registration.
- * 
- * 
- * */
 
 #ifndef in3_device_apdu_h__
 #define in3_device_apdu_h__
