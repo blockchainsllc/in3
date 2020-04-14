@@ -1,6 +1,6 @@
 use std::fmt;
 
-use ethereum_types::{Address, H256, U256, U64};
+use ethereum_types::{Address, Bloom, H256, U256, U64};
 use rustc_hex::{FromHex, ToHex};
 use serde::{Deserialize, Serialize, Serializer};
 use serde::de::{Error, Visitor};
@@ -124,7 +124,7 @@ pub struct Block {
     pub parent_hash: Hash,
     pub nonce: Option<U64>,
     pub sha3_uncles: Hash,
-    // pub logs_bloom: Option<H2048>,
+    pub logs_bloom: Option<Bloom>,
     pub transactions_root: Hash,
     pub state_root: Hash,
     pub receipts_root: Hash,
