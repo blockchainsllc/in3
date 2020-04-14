@@ -18,13 +18,11 @@ pub struct RpcRequest<'a> {
 }
 
 pub struct EthApi {
-    client: Box<Client>,
+    pub client: Box<Client>,
 }
 
 impl EthApi {
-    pub fn new(config_str: &str) -> EthApi {
-        let mut client = Client::new(chain::MAINNET);
-        let _ = client.configure(config_str);
+    pub fn new(client: Box<Client>) -> EthApi {
         EthApi { client }
     }
 
