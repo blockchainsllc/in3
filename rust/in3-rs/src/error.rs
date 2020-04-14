@@ -94,12 +94,6 @@ impl convert::From<serde_json::error::Error> for Error {
     }
 }
 
-impl convert::From<hex::FromHexError> for Error {
-    fn from(_: hex::FromHexError) -> Self {
-        Self::InvalidValue
-    }
-}
-
 impl convert::From<&'static str> for Error {
     fn from(err: &'static str) -> Self {
         Self::CustomError(err)
