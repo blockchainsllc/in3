@@ -3,6 +3,7 @@
 pub mod eth1;
 pub mod error;
 pub mod in3;
+pub mod types;
 
 #[cfg(feature = "blocking")]
 mod transport;
