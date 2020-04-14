@@ -30,11 +30,11 @@
             "program": "${workspaceFolder}/build/bin/in3",
             "cwd": "${workspaceFolder}",
             "args": [
-                "call",
-                "-to",
-                "0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f",
-                "nodes(uint256):(string,uint,uint64,uint192,uint64,address,bytes32)",
-                "0"
+                "-c",
+                "btc",
+                "getblock",
+                "000000000000000000103b2395f6cd94221b10d02eb9be5850303c0534307220",
+                "-debug"
             ]
         },
         {

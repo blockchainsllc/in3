@@ -1,0 +1,140 @@
+wasm:
+  image: docker.slock.it/build-images/cmake:clang10
+  needs: []
+  stage: bindings
+  tags:
+    - short-jobs
+  script:
+    - mkdir wasm_build_min
+    - cd wasm_build_min
+    - emconfigure cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - make -j8
+    - mkdir ../wasm_build
+    - cd ../wasm_build
+    - emconfigure cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - make -j8
+    - cp ../wasm_build_min/bin/*.wasm bin/in3w_min.wasm
+    - cp ../wasm_build_min/bin/*.wasm module/in3w_min.wasm
+
+  artifacts:
+    paths:
+      - wasm_build/module
+      - wasm_build/bin
+
+asmjs:
+  image: docker.slock.it/build-images/cmake:clang10
+  stage: bindings
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - mkdir asmjs_build
+    - cd asmjs_build
+    - emconfigure cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - make -j8
+
+  artifacts:
+    paths:
+      - asmjs_build/module
+      - asmjs_build/bin
+
+test_wasm:
+  image: docker.slock.it/build-images/node:10-alpine
+  needs:
+    - wasm
+  stage: wasm
+  tags:
+    - short-jobs
+  script:
+    - mv wasm_build build
+    - cd wasm/test
+    - sh /prepare.sh
+    - npm install
+    - npm run test_report
+  artifacts:
+    reports:
+      junit: wasm/test/mocha.xml
+
+test_asmjs:
+  image: docker.slock.it/build-images/node:10-alpine
+  needs:
+    - asmjs
+  stage: wasm
+  tags:
+    - short-jobs
+  script:
+    - mv asmjs_build build
+    - cd wasm/test
+    - sh /prepare.sh
+    - npm install
+    - npm test
+
+wasm-slockit-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: wasm
+  tags:
+    - short-jobs
+  only: # deploy only on  semantic versions tags
+    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
+  except:
+    - branches
+  needs:
+    - wasm
+  script:
+    - sh /prepare.sh
+    - cd wasm_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish
+
+wasm-public-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: wasm
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  except:
+    - branches
+  when: manual
+  needs:
+    - wasm
+  script:
+    - sh /prepare.sh
+    - cd wasm_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish --registry https://registry.npmjs.org
+
+asmjs-slockit-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: wasm
+  tags:
+    - short-jobs
+  only: # deploy only on  semantic versions tags
+    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
+  except:
+    - branches
+  needs:
+    - asmjs
+  script:
+    - sh /prepare.sh
+    - cd asmjs_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish
+
+asmjs-public-npm:
+  image: docker.slock.it/build-images/node:11-alpine
+  stage: wasm
+  tags:
+    - short-jobs
+  only:
+    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  except:
+    - branches
+  when: manual
+  needs:
+    - asmjs
+  script:
+    - sh /prepare.sh
+    - cd asmjs_build/module
+    - npm --no-git-tag-version --allow-same-version -f version $CI_COMMIT_TAG
+    - npm publish --registry https://registry.npmjs.org

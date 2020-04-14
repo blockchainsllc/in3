@@ -126,7 +126,7 @@ d_token_t* d_next(d_token_t* item);                                             
 void        d_serialize_binary(bytes_builder_t* bb, d_token_t* t); /**< write the token as binary data into the builder */
 json_ctx_t* parse_binary(const bytes_t* data);                     /**< parses the data and returns the context with the token, which needs to be freed after usage! */
 json_ctx_t* parse_binary_str(const char* data, int len);           /**< parses the data and returns the context with the token, which needs to be freed after usage! */
-json_ctx_t* parse_json(char* js);                                  /**< parses json-data, which needs to be freed after usage! */
+json_ctx_t* parse_json(const char* js);                            /**< parses json-data, which needs to be freed after usage! */
 void        json_free(json_ctx_t* parser_ctx);                     /**< frees the parse-context after usage */
 str_range_t d_to_json(const d_token_t* item);                      /**< returns the string for a object or array. This only works for json as string. For binary it will not work! */
 char*       d_create_json(d_token_t* item);                        /**< creates a json-string. It does not work for objects if the parsed data were binary!*/

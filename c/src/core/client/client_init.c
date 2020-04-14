@@ -48,6 +48,38 @@
 #endif
 #include <time.h>
 
+#ifdef PAY
+typedef struct payment {
+  d_key_t         name;
+  pay_configure   configure;
+  struct payment* next;
+
+} pay_configure_t;
+
+static pay_configure_t* payments = NULL;
+
+static pay_configure_t* find_payment(char* name) {
+  d_key_t k = key(name);
+  for (pay_configure_t* p = payments; p; p = p->next) {
+    if (k == p->name) return p;
+  }
+  return NULL;
+}
+
+void in3_register_payment(
+    char*         name,   /**< name of the payment-type */
+    pay_configure handler /**< pointer to the handler- */
+) {
+  if (find_payment(name)) return;
+  pay_configure_t* p = _malloc(sizeof(pay_configure_t));
+  p->configure       = handler;
+  p->name            = key(name);
+  p->next            = payments;
+  payments           = p;
+}
+
+#endif
+
 #define EXPECT(cond, exit) \
   do {                     \
     if (!(cond))           \
@@ -181,8 +213,8 @@ static void init_mainnet(in3_chain_t* chain) {
 }
 
 static void init_btc(in3_chain_t* chain) {
-  initChain(chain, 0xFF01, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
-  initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "http://localhost:8500");
+  initChain(chain, 0x99, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
+  initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.stage.slock.it/btc/nd-1");
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;
@@ -307,7 +339,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   }
 
   chain->chain_id  = chain_id;
-  chain->contract  = b_new((char*) contract, 20);
+  chain->contract  = b_new(contract, 20);
   chain->type      = type;
   chain->version   = version;
   chain->whitelist = NULL;
@@ -348,7 +380,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
-    node->address  = b_new((char*) address, 20);
+    node->address  = b_new(address, 20);
     node->index    = chain->nodelist_length;
     node->capacity = 1;
     node->deposit  = 0;
@@ -420,6 +452,7 @@ void in3_free(in3_t* a) {
     _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->signer) _free(a->signer);
+  if (a->cache) _free(a->cache);
   if (a->chains) _free(a->chains);
 
   if (a->filters) {
@@ -432,6 +465,18 @@ void in3_free(in3_t* a) {
     _free(a->filters);
   }
   if (a->key) _free(a->key);
+
+#ifdef PAY
+  if (a->pay) {
+    if (a->pay->cptr) {
+      if (a->pay->free)
+        a->pay->free(a->pay->cptr);
+      else
+        _free(a->pay->cptr);
+    }
+    _free(a->pay);
+  }
+#endif
   _free(a);
 }
 
@@ -563,6 +608,20 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("nodeLimit")) {
       EXPECT_TOK_U16(token);
       c->node_limit = (uint16_t) d_int(token);
+    } else if (token->key == key("pay")) {
+      EXPECT_TOK_OBJ(token);
+#ifdef PAY
+      char* type = d_get_string(token, "type");
+      if (!type) type = "eth";
+      pay_configure_t* p = find_payment(type);
+      EXPECT_TOK(token, p, "the payment type was not registered");
+      char* err = p->configure(c, token);
+      EXPECT_TOK(token, err == NULL, err);
+
+#else
+      EXPECT_TOK(token, false, "pay_eth is not supporterd. Please build with -DPAY_ETH");
+#endif
+
     } else if (token->key == key("proof")) {
       EXPECT_TOK_STR(token);
       EXPECT_TOK(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");

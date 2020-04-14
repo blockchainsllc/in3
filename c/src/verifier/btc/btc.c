@@ -72,7 +72,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   if (json) {
     d_token_t* tx       = d_get(vc->result, key("tx"));                                                                             // get transactions node
     int        tx_count = d_len(tx), i = 0;                                                                                         // and count its length
-    bytes32_t* tx_hashes = alloca(tx_count);                                                                                        // to reserve hashes-array
+    bytes32_t* tx_hashes = alloca(tx_count * sizeof(bytes32_t));                                                                    // to reserve hashes-array
     for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), i++)                                                        // iterate through all txs
       hex_to_bytes(d_string(iter.token), 64, tx_hashes[i], 32);                                                                     // and copy the hash into the array
     btc_merkle_create_root(tx_hashes, tx_count, tmp);                                                                               // calculate the merkle root
@@ -129,6 +129,12 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   if (!method) return vc_err(vc, "No Method in request defined!");
 
   if (strcmp(method, "getblock") == 0) {
+    d_token_t* block_hash = d_get_at(params, 0);
+    if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
+    hex_to_bytes(d_string(block_hash), 64, hash, 32);
+    return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1);
+  }
+  if (strcmp(method, "getblockheader") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);

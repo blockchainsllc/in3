@@ -1,0 +1,13 @@
+[package]
+name = "in3-sys"
+version = "0.1.0"
+authors = ["slock.it <in3@slock.it>"]
+description = "System bindings to the IN3 library"
+build = "build.rs"
+links = "in3"
+
+[dependencies]
+libc = { version = "0.2" }
+
+[build-dependencies]
+bindgen = "0.53.0"
