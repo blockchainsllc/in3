@@ -59,13 +59,6 @@ impl Api {
             params: json!([block, include_tx]),
         }).await?;
         let mut block: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
-        if include_tx {
-            let txs: Vec<Transaction> = serde_json::from_str(resp[0]["result"]["transactions"].to_string().as_str())?;
-            block.transactions = Full(txs);
-        } else {
-            let txs: Vec<Hash> = serde_json::from_str(resp[0]["result"]["transactions"].to_string().as_str())?;
-            block.transactions = Hashes(txs);
-        }
         Ok(block)
     }
 }
