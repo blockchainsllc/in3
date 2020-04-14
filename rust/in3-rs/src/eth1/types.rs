@@ -90,19 +90,16 @@ impl Serialize for BlockNumber {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum BlockTransactions {
+    Empty,
     Hashes(Vec<Hash>),
     Full(Vec<Transaction>),
 }
 
-impl Serialize for BlockTransactions {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer {
-        match *self {
-            BlockTransactions::Hashes(ref hashes) => hashes.serialize(serializer),
-            BlockTransactions::Full(ref ts) => ts.serialize(serializer)
-        }
+impl BlockTransactions {
+    fn empty() -> Self {
+        Self::Empty
     }
 }
 
@@ -147,6 +144,8 @@ pub struct Block {
     pub gas_used: U256,
     pub timestamp: U256,
     pub seal_fields: Option<Vec<Bytes>>,
+    #[serde(skip)]
+    #[serde(default = "BlockTransactions::empty")]
     pub transactions: BlockTransactions,
     pub uncles: Vec<Hash>,
 }
