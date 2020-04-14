@@ -1,13 +1,14 @@
+use std::borrow::BorrowMut;
 use std::convert::TryInto;
 use std::i64;
 
+use ethereum_types::{H256, U256};
 use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use serde_json::{Result, Value};
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::U256;
 use crate::in3::*;
 
 #[derive(Serialize)]
@@ -39,26 +40,24 @@ impl EthApi {
             method: "eth_blockNumber",
             params: json!([]),
         }).await?;
-        let mut res = resp[0]["result"].as_str().unwrap().trim_start_matches("0x");
-        let mut u256 = U256([0; 32]);
-        hex::decode_to_slice(format!("{:0>64}", res), &mut u256.0)?;
+        let u256: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
         Ok(u256)
     }
 
-    pub async fn getBalance(&mut self, address: String) -> String {
-        let payload = json!({
-            "method": "eth_getBalance",
-            "params": [
-                address,
-                "latest"
-            ]
-        });
-        let serialized = serde_json::to_string(&payload).unwrap();
-        let response = self.send(&serialized).await;
-        let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
-        let balance = v[0]["result"].as_str().unwrap();
-        balance.to_string()
-    }
+    // pub async fn getBalance(&mut self, address: String) -> String {
+    //     let payload = json!({
+    //         "method": "eth_getBalance",
+    //         "params": [
+    //             address,
+    //             "latest"
+    //         ]
+    //     });
+    //     let serialized = serde_json::to_string(&payload).unwrap();
+    //     let response = self.send(&serialized).await;
+    //     let v: Value = serde_json::from_str(&response.unwrap()).unwrap();
+    //     let balance = v[0]["result"].as_str().unwrap();
+    //     balance.to_string()
+    // }
 }
 
 #[cfg(test)]
@@ -75,13 +74,13 @@ mod tests {
         assert!(num > 9000000, "Block number is not correct");
     }
 
-    #[test]
-    fn test_get_balance() {
-        let mut api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-        //execute the call to the api on task::block_on
-        let num = task::block_on(
-            api.getBalance("0xc94770007dda54cF92009BFF0dE90c06F603a09f".to_string()),
-        );
-        assert!(num != "", "Balance is not correct");
-    }
+    // #[test]
+    // fn test_get_balance() {
+    //     let mut api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    //     //execute the call to the api on task::block_on
+    //     let num = task::block_on(
+    //         api.getBalance("0xc94770007dda54cF92009BFF0dE90c06F603a09f".to_string()),
+    //     );
+    //     assert!(num != "", "Balance is not correct");
+    // }
 }
