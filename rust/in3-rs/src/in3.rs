@@ -393,12 +393,6 @@ mod tests {
         let _request = Request::new(&mut ctx);
         let _ = ctx.execute();
     }
-
-
-    #[test]
-    fn test_in3() {
-        let api = In3Api::new(In3::box_new(Box::new(HttpTransport {}), Box::new(FsStorage { dir: "".to_string() })));
-    }
 }
 
 struct In3 {
@@ -411,21 +405,16 @@ unsafe impl Send for In3 {}
 
 #[async_trait]
 impl ClientTrait for In3 {
-    fn box_new(transport: Box<dyn Transport>, storage: Box<dyn Storage>) -> Box<In3> {
-        let ptr = unsafe { in3_sys::in3_for_chain_auto_init(0) };
-        Box::new(In3 { ptr, transport, storage })
-    }
-
-    // fn box_default() -> Box<In3> {
-    //     unimplemented!()
-    // }
-
     fn configure(&mut self, config: &str) -> Result<(), String> {
         unimplemented!()
     }
 
-    fn version(&self) -> String {
-        unimplemented!()
+    fn set_transport(&mut self, transport: Box<dyn Transport>) {
+        self.transport = transport;
+    }
+
+    fn set_storage(&mut self, storage: Box<dyn Storage>) {
+        self.storage = storage;
     }
 
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
