@@ -5,9 +5,11 @@
 #include "device_apdu_commands.h"
 #include "ledger_signer.h"
 #include "ledger_signer_priv.h"
+#include "../../../core/util/log.h"
 #include <memory.h>
 #include <stdbool.h>
 #include <stdlib.h>
+
 #define MAX_STR 255
 
 in3_ret_t is_ledger_device_connected() {
@@ -21,12 +23,14 @@ in3_ret_t is_ledger_device_connected() {
   handle = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
 
   if (NULL != handle) {
+    in3_log_info("device connected \n");
+    
     res = hid_get_manufacturer_string(handle, wstr, MAX_STR);
-    printf("Manufacturer String: %ls\n", wstr);
+    in3_log_debug("device manufacturer: %ls\n", wstr);
 
     hid_get_product_string(handle, wstr, MAX_STR);
-    printf("Product String: %ls\n", wstr);
-
+    in3_log_debug("product: %ls\n", wstr);
+       
     ret = IN3_OK;
   } else {
     ret = IN3_ENODEVICE;
@@ -102,12 +106,9 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
         wrap_apdu(apdu_bytes, 0, &final_apdu_command);
 
-        // print_bytes(final_apdu_command.data, final_apdu_command.len, "eth_ledger_sign");
-
         res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
-        // res = hid_write(handle, cmd_file, cmd_size);
 
-        printf("written to hid %d\n", res);
+        in3_log_debug("written to hid %d\n", res);
 
         read_hid_response(handle, &response);
 
@@ -117,8 +118,8 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
         if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
           ret              = IN3_OK;
-          printf("success respons\n");
           
+          in3_log_debug("apdu executed succesfully \n");
           extract_signture(response, dst);
           recid = get_recid_from_pub_key(&secp256k1, public_key.data, dst, hash);
           dst[64] = recid;
@@ -128,6 +129,7 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
           #endif
 
         } else {
+          in3_log_fatal("error in apdu execution \n");
           ret = IN3_ENOTSUP;
         }
 
@@ -141,6 +143,7 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
     }
 
   } else {
+    in3_log_fatal("no ledger device connected \n");
     ret = IN3_ENODEVICE;
   }
   hid_close(handle);
@@ -181,7 +184,7 @@ in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key) {
     res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
 
     read_hid_response(handle, &response);
-    // print_bytes(response.data, response.len, "eth_ledger_get_public_key : hid_read");
+   
 
     if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
       ret              = IN3_OK;
@@ -217,7 +220,9 @@ void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
   //ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s
   int lr = i_raw_sig.data[3];
   int ls = i_raw_sig.data[lr+5];
-  printf("lr %d, ls %d \n", lr,ls);
+
+  in3_log_debug("lr %d, ls %d \n", lr,ls);
+
   memcpy(o_sig, i_raw_sig.data + 4, lr);
   memcpy(o_sig + lr, i_raw_sig.data + lr + 6, ls);
 }
@@ -233,7 +238,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
     bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
 
     if (bytes_read > 0) {
-      // print_bytes(read_chunk, bytes_read, "hid_read");
+      
       if (index_counter == 0) //first chunk read
       {
         total_bytes_available = read_chunk[6];
@@ -255,7 +260,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
   response->len  = total_bytes_available;
   response->data = malloc(total_bytes_available);
   memcpy(response->data, read_buf, total_bytes_available);
-  // printf("bytes to read %d total_bytes_available %d\n", bytes_to_read, total_bytes_available);
+  
 }
 
 
@@ -271,11 +276,10 @@ int get_recid_from_pub_key(const ecdsa_curve *curve, uint8_t *pub_key, const uin
     ret = ecdsa_recover_pub_from_sig(curve,p_key,sig,digest,i);
     if(ret ==0 )
     { 
-       printf("ret 0 i %d\n",i);
       if(memcmp(pub_key,p_key,65) == 0)
       {
         recid = i;
-        printf("recid is %d\n",i);
+        in3_log_debug("recid is %d\n",i);
         break;
       }
     }

@@ -33,13 +33,13 @@ void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd) {
   memcpy(cmd + index, &TAG, 1);
   index += 1;
 
-  int_to_bytes(seq, data);
-  printf("data[0] %d data[1] %d\n", data[0],data[1]);
+  len_to_bytes(seq, data);
+  in3_log_debug("data[0] %d data[1] %d\n", data[0],data[1]);
   memcpy(cmd + index, data, sizeof(data));
   index += sizeof(data);
 
-  int_to_bytes(apdu_len, data);
-  printf("data[0] %d data[1] %d\n", data[0],data[1]);
+  len_to_bytes(apdu_len, data);
+  in3_log_debug("data[0] %d data[1] %d\n", data[0],data[1]);
   memcpy(cmd + index, data, sizeof(data));
   index += sizeof(data);
 
@@ -58,31 +58,33 @@ void unwrap_apdu(bytes_t i_wrapped_hid_cmd, bytes_t* o_apdu_res) {
   buf[0] = i_wrapped_hid_cmd.data[5];
   buf[1] = i_wrapped_hid_cmd.data[6];
 
-  int len = bytes_to_int(buf);
+  int len = bytes_to_len(buf);
 
   o_apdu_res->len  = len;
   o_apdu_res->data = malloc(len);
   memcpy(o_apdu_res->data, len, i_wrapped_hid_cmd.data + 7);
-  print_bytes(o_apdu_res->data,o_apdu_res->len,"unwrap_apdu");
+
 }
 
-int int_to_bytes(uint16_t x, uint8_t* buf) {
+int len_to_bytes(uint16_t x, uint8_t* buf) {
 
   buf[1] = (uint8_t)(x & 0xFF);
   buf[0] = (uint8_t)((x >> 8) & 0xFF);
   return 2;
 }
 
-uint16_t bytes_to_int(uint8_t* buf) {
+uint16_t bytes_to_len(uint8_t* buf) {
   uint16_t number = (buf[1] << 8) + buf[0];
   return number;
 }
 
 void print_bytes(uint8_t* bytes, int len, char* args) {
-  printf("Printing response of %s\n", args);
+  in3_log_debug("printing bytes %s ", args);
   int i = 0;
   for (i = 0; i < len; i++) {
-    printf("%02x ", bytes[i]);
+
+    in3_log_debug("%02x ", bytes[i]);
   }
-  printf ("\n");
+
+  in3_log_debug("\n");
 }
