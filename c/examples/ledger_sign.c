@@ -14,7 +14,7 @@ static void send_tx_api(in3_t* in3);
 int main() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-
+  in3_log_set_level(LOG_DEBUG);
   // setting ledger nano s to be the default signer for incubed client
   // it will cause the transaction or any msg to be sent to ledger nanos device for siging 
   eth_ledger_set_signer(in3);

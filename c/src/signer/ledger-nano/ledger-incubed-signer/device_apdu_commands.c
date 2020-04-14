@@ -7,6 +7,7 @@
 #include <memory.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include "../../../core/util/log.h"
 
 static uint8_t CHANNEL[] = {0x01, 0x01};
 
