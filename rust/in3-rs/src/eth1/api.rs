@@ -59,7 +59,7 @@ impl Api {
 #[cfg(test)]
 mod tests {
     use async_std::task;
-
+    use std::convert::TryInto;
     use super::*;
 
     #[test]
