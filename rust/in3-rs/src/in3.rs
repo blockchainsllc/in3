@@ -1,7 +1,12 @@
+use std::borrow::Borrow;
 use std::ffi;
 
+use async_trait::async_trait;
+
 use crate::error::In3Result;
+use crate::traits::{Api, Client as ClientTrait, Storage, Transport};
 use crate::transport_async;
+use crate::transport_async::HttpTransport;
 
 pub mod chain {
     pub type ChainId = u32;
@@ -370,6 +375,8 @@ impl Drop for Client {
 
 #[cfg(test)]
 mod tests {
+    use crate::transport_async::FsStorage;
+
     use super::*;
 
     #[test]
@@ -385,5 +392,57 @@ mod tests {
         let mut ctx = Ctx::new(&mut in3, r#"{"method":"eth_blockNumber","params":[]}"#);
         let _request = Request::new(&mut ctx);
         let _ = ctx.execute();
+    }
+
+
+    #[test]
+    fn test_in3() {
+        let api = In3Api::new(In3::box_new(Box::new(HttpTransport {}), Box::new(FsStorage { dir: "".to_string() })));
+    }
+}
+
+struct In3 {
+    ptr: *mut in3_sys::in3_t,
+    transport: Box<dyn Transport>,
+    storage: Box<dyn Storage>,
+}
+
+unsafe impl Send for In3 {}
+
+#[async_trait]
+impl ClientTrait for In3 {
+    fn box_new(transport: Box<dyn Transport>, storage: Box<dyn Storage>) -> Box<In3> {
+        let ptr = unsafe { in3_sys::in3_for_chain_auto_init(0) };
+        Box::new(In3 { ptr, transport, storage })
+    }
+
+    // fn box_default() -> Box<In3> {
+    //     unimplemented!()
+    // }
+
+    fn configure(&mut self, config: &str) -> Result<(), String> {
+        unimplemented!()
+    }
+
+    fn version(&self) -> String {
+        unimplemented!()
+    }
+
+    async fn rpc(&mut self, call: &str) -> In3Result<String> {
+        unimplemented!()
+    }
+}
+
+struct In3Api {
+    client: Box<dyn ClientTrait>
+}
+
+impl Api for In3Api {
+    fn new(client: Box<dyn ClientTrait>) -> Self {
+        In3Api { client }
+    }
+
+    fn client(&mut self) -> &mut Box<dyn ClientTrait> {
+        &mut self.client
     }
 }

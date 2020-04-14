@@ -1,5 +1,8 @@
 extern crate surf;
 
+use std::fs;
+use async_trait::async_trait;
+
 async fn http_async(
     url: &str,
     payload: &str,
@@ -22,6 +25,44 @@ pub(crate) async fn transport_http(payload: &str, urls: &[&str]) -> Vec<Result<S
         }
     }
     responses
+}
+
+pub struct HttpTransport;
+
+#[async_trait]
+impl crate::traits::Transport for HttpTransport {
+    async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
+        let mut responses = vec![];
+        for url in uris {
+            let res = http_async(url, request).await;
+            match res {
+                Err(_) => responses.push(Err("Transport error".to_string())),
+                Ok(res) => responses.push(Ok(res)),
+            }
+        }
+        responses
+    }
+}
+
+pub struct FsStorage {
+    pub dir: String
+}
+
+impl crate::traits::Storage for FsStorage {
+    fn get(&self, key: &str) -> Vec<u8> {
+        match fs::read(format!("{}/{}", self.dir, key)) {
+            Ok(value) => value,
+            Err(_) => vec![],
+        }
+    }
+
+    fn set(&mut self, key: &str, value: &[u8]) {
+        fs::write(format!("{}/{}", self.dir, key), value).expect("Unable to write file");
+    }
+
+    fn clear(&mut self) {
+        fs::remove_dir_all(format!("{}", self.dir)).unwrap();
+    }
 }
 
 #[cfg(test)]
