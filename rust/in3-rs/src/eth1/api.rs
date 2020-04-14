@@ -2,13 +2,14 @@ use std::borrow::BorrowMut;
 use std::convert::TryInto;
 use std::i64;
 
-use ethereum_types::{H256, U256};
+use ethereum_types::{Address, H256, U256};
 use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use serde_json::{Result, Value};
 use serde_json::json;
 
 use crate::error::*;
+use crate::eth1::BlockNumber;
 use crate::in3::*;
 
 #[derive(Serialize)]
@@ -37,6 +38,15 @@ impl Api {
         let resp = self.send(RpcRequest {
             method: "eth_blockNumber",
             params: json!([]),
+        }).await?;
+        let u256: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(u256)
+    }
+
+    pub async fn get_balance(&mut self, address: Address, block: BlockNumber) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getBalance",
+            params: json!([address, block]),
         }).await?;
         let u256: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
         Ok(u256)

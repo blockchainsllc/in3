@@ -5,11 +5,23 @@ use serde::{Deserialize, Serialize, Serializer};
 type Bytes = Vec<u8>;
 type Hash = H256;
 
-enum BlockNumber {
+pub enum BlockNumber {
     Number(U256),
     Earliest,
     Latest,
     Pending,
+}
+
+impl Serialize for BlockNumber {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer {
+        match *self {
+            BlockNumber::Number(ref number) => number.serialize(serializer),
+            BlockNumber::Earliest => "earliest".serialize(serializer),
+            BlockNumber::Latest => "latest".serialize(serializer),
+            BlockNumber::Pending => "pending".serialize(serializer),
+        }
+    }
 }
 
 #[derive(Debug)]
