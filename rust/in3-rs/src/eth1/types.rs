@@ -123,12 +123,6 @@ pub struct Transaction {
     pub v: U256,
     pub r: U256,
     pub s: U256,
-// pub creates: Option<Address>,
-// pub raw: Bytes,
-// pub public_key: Option<H512>,
-// pub chain_id: Option<u64>,
-// pub standard_v: U256,
-// pub condition: Option<TransactionCondition>,
 }
 
 #[derive(Debug, Serialize)]
