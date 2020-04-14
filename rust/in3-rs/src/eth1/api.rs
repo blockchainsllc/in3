@@ -14,7 +14,7 @@ use crate::eth1::BlockTransactions::{Full, Hashes};
 use crate::in3::*;
 
 #[derive(Serialize)]
-pub struct RpcRequest<'a> {
+struct RpcRequest<'a> {
     method: &'a str,
     params: serde_json::Value,
 }
