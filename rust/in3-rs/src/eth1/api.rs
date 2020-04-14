@@ -17,13 +17,13 @@ pub struct RpcRequest<'a> {
     params: serde_json::Value,
 }
 
-pub struct EthApi {
+pub struct Api {
     pub client: Box<Client>,
 }
 
-impl EthApi {
-    pub fn new(client: Box<Client>) -> EthApi {
-        EthApi { client }
+impl Api {
+    pub fn new(client: Box<Client>) -> Api {
+        Api { client }
     }
 
     async fn send(&mut self, params: RpcRequest<'_>) -> In3Result<serde_json::Value> {
@@ -66,7 +66,8 @@ mod tests {
 
     #[test]
     fn test_block_number() {
-        let mut api = EthApi::new(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        let mut api = Api::new(Client::new(chain::MAINNET));
+        api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
         println!("{:?}", num);
         assert!(num > 9000000, "Block number is not correct");
