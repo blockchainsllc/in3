@@ -11,5 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Runner.cs" />
+    <Compile Remove="Configuration\ChainConverter.cs" />
   </ItemGroup>
 </Project>

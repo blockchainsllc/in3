@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace In3.Utils
 {
     // HOW TO: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to
-    public class CustomIntFromHexConverter : JsonConverter<int>
+    internal class IntFromHexConverter : JsonConverter<int>
     {
             public override int Read(
                 ref Utf8JsonReader reader,

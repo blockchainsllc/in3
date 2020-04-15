@@ -66,7 +66,7 @@ namespace In3.Eth1
             }
             else
             {
-                return RpcHandler.From<TransactionHashBlock>(jsonResponse); 
+                return RpcHandler.From<TransactionHashBlock>(jsonResponse);
             }
         }
 
@@ -80,7 +80,7 @@ namespace In3.Eth1
             }
             else
             {
-                return RpcHandler.From<TransactionHashBlock>(jsonResponse); 
+                return RpcHandler.From<TransactionHashBlock>(jsonResponse);
             }
         }
 
