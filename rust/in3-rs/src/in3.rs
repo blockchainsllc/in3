@@ -253,8 +253,10 @@ impl Client {
         let key = ffi::CStr::from_ptr(key).to_str().unwrap();
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        let val: Vec<u8> = (*c).storage.get(key);
-        in3_sys::b_new(val.as_ptr(), val.len() as u32)
+        match (*c).storage.get(key) {
+            Some(val) => in3_sys::b_new(val.as_ptr(), val.len() as u32),
+            None => std::ptr::null_mut(),
+        }
     }
 
     unsafe extern "C" fn in3_rust_storage_set(

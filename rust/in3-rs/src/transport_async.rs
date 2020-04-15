@@ -36,7 +36,7 @@ impl crate::traits::Transport for HttpTransport {
 pub struct DummyStorage;
 
 impl crate::traits::Storage for DummyStorage {
-    fn get(&self, _key: &str) -> Vec<u8> { vec![] }
+    fn get(&self, _key: &str) -> Option<Vec<u8>> { None }
 
     fn set(&mut self, _key: &str, _value: &[u8]) {}
 
@@ -49,10 +49,10 @@ pub struct FsStorage {
 }
 
 impl crate::traits::Storage for FsStorage {
-    fn get(&self, key: &str) -> Vec<u8> {
+    fn get(&self, key: &str) -> Option<Vec<u8>> {
         match fs::read(format!("{}/{}", self.dir, key)) {
-            Ok(value) => value,
-            Err(_) => vec![],
+            Ok(value) => Some(value),
+            Err(_) => None,
         }
     }
 

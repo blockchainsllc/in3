@@ -9,7 +9,7 @@ pub trait Transport {
 }
 
 pub trait Storage {
-    fn get(&self, key: &str) -> Vec<u8>;
+    fn get(&self, key: &str) -> Option<Vec<u8>>;
     fn set(&mut self, key: &str, value: &[u8]);
     fn clear(&mut self);
 }
