@@ -21,6 +21,8 @@ pub trait Client {
     fn set_transport(&mut self, transport: Box<dyn Transport>);
     fn set_storage(&mut self, storage: Box<dyn Storage>);
     async fn rpc(&mut self, call: &str) -> error::In3Result<String>;
+    #[cfg(feature = "blocking")]
+    fn rpc_blocking(&mut self, call: &str) -> error::In3Result<String>;
 }
 
 pub trait Api {

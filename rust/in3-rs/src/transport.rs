@@ -2,8 +2,6 @@ extern crate surf;
 
 use async_trait::async_trait;
 
-use crate::traits::Transport;
-
 async fn http_async(
     url: &str,
     payload: &str,

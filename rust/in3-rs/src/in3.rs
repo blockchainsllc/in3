@@ -2,7 +2,7 @@ use std::ffi;
 
 use async_trait::async_trait;
 
-use crate::error::In3Result;
+use crate::error::{Error, In3Result};
 use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
 
@@ -230,6 +230,21 @@ impl ClientTrait for Client {
         let mut ctx = Ctx::new(self, call);
         ctx.execute().await
     }
+
+    #[cfg(feature = "blocking")]
+    fn rpc_blocking(&mut self, call: &str) -> In3Result<String> {
+        let mut null: *mut i8 = std::ptr::null_mut();
+        let res: *mut *mut i8 = &mut null;
+        let err: *mut *mut i8 = &mut null;
+        let req_str = ffi::CString::new(call).unwrap();
+        unsafe {
+            let ret = in3_sys::in3_client_rpc_raw(self.ptr, req_str.as_ptr(), res, err);
+            match ret {
+                in3_sys::in3_ret_t::IN3_OK => Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string()),
+                _ => Err(Error::CustomError(ffi::CStr::from_ptr(*err).to_str().unwrap().to_string()))
+            }
+        }
+    }
 }
 
 impl Client {
@@ -333,22 +348,6 @@ impl Client {
         }
 
         in3_sys::in3_ret_t::IN3_OK
-    }
-
-    #[cfg(feature = "blocking")]
-    pub fn rpc_blocking(&mut self, request: &str) -> Result<String, String> {
-        let mut null: *mut i8 = std::ptr::null_mut();
-        let res: *mut *mut i8 = &mut null;
-        let err: *mut *mut i8 = &mut null;
-        let req_str = ffi::CString::new(request).unwrap();
-        unsafe {
-            let ret = in3_sys::in3_client_rpc_raw(self.ptr, req_str.as_ptr(), res, err);
-            return if ret == in3_sys::in3_ret_t::IN3_OK {
-                Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
-            } else {
-                Err(ffi::CStr::from_ptr(*err).to_str().unwrap().to_string())
-            };
-        }
     }
 }
 
