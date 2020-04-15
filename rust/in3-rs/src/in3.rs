@@ -214,7 +214,16 @@ impl ClientTrait for Client {
     }
 
     fn set_storage(&mut self, storage: Box<dyn Storage>) {
+        let no_storage = self.storage.is_none();
         self.storage = Some(storage);
+        if no_storage {
+            unsafe {
+                (*self.ptr).cache = in3_sys::in3_set_storage_handler(self.ptr, Some(Client::in3_rust_storage_get),
+                                                                     Some(Client::in3_rust_storage_set),
+                                                                     Some(Client::in3_rust_storage_clear),
+                                                                     self.ptr as *mut libc::c_void);
+            }
+        }
     }
 
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
@@ -233,10 +242,6 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
-            (*c.ptr).cache = in3_sys::in3_set_storage_handler(c.ptr, Some(Client::in3_rust_storage_get),
-                                                              Some(Client::in3_rust_storage_set),
-                                                              Some(Client::in3_rust_storage_clear),
-                                                              c.ptr as *mut libc::c_void);
             #[cfg(feature = "blocking")] {
                 (*c.ptr).transport = Some(Client::in3_rust_transport);
             }
