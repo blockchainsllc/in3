@@ -117,7 +117,7 @@ mod tests {
         let errors = [
             Error::NoMemory,
             Error::UnknownIn3Error,
-            Error::CustomError("Custom error"),
+            Error::CustomError("Custom error".to_string()),
             Error::from(in3_ret_t::IN3_ECONFIG),
             Error::from(500 as in3_ret_t::Type),
         ];

@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use crate::error::In3Result;
 use crate::traits::{Client as ClientTrait, Storage, Transport};
-use crate::transport_async::HttpTransport;
+use crate::transport::HttpTransport;
 
 pub mod chain {
     pub type ChainId = u32;
@@ -237,7 +237,9 @@ impl Client {
                                                               Some(Client::in3_rust_storage_set),
                                                               Some(Client::in3_rust_storage_clear),
                                                               c.ptr as *mut libc::c_void);
-            (*c.ptr).transport = Some(Client::in3_rust_transport);
+            #[cfg(feature = "blocking")] {
+                (*c.ptr).transport = Some(Client::in3_rust_transport);
+            }
             c
         }
     }
@@ -279,6 +281,7 @@ impl Client {
         }
     }
 
+    #[cfg(feature = "blocking")]
     extern "C" fn in3_rust_transport(
         request: *mut in3_sys::in3_request_t,
     ) -> in3_sys::in3_ret_t::Type {

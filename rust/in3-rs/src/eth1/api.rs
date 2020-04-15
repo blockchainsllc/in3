@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn test_api() {
-        let mut api = Api::new(In3::new(chain::MAINNET));
+        let mut api = Api::new(Client::new(chain::MAINNET));
         api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
         println!("{:?}", num);
