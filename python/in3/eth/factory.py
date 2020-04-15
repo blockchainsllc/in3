@@ -29,24 +29,25 @@ class EthObjectFactory:
 
     def get_block(self, serialized: dict):
         mapping = {
-            "number": int,
+            "number": self.get_integer,
             "hash": self.get_hash,
             "parentHash": self.get_hash,
-            "nonce": int,
+            "nonce": self.get_integer,
             "sha3Uncles": str,
             "logsBloom": str,
-            "transactionsRoot": str,
-            "stateRoot": str,
-            "miner": self.get_account,
-            "difficulty": int,
-            "totalDifficulty": int,
+            "transactionsRoot": self.get_hash,
+            "stateRoot": self.get_hash,
+            "miner": str,
+            "author": str,
+            "difficulty": self.get_integer,
+            "totalDifficulty": self.get_integer,
             "extraData": str,
-            "size": int,
-            "gasLimit": int,
-            "gasUsed": int,
-            "timestamp": int,
+            "size": self.get_integer,
+            "gasLimit": self.get_integer,
+            "gasUsed": self.get_integer,
+            "timestamp": self.get_integer,
             # "transactions": [{...}, {...}],
-            "uncles": list
+            # "uncles": list
         }
         obj = self._deserialize(serialized, mapping)
         transactions = []
@@ -56,9 +57,19 @@ class EthObjectFactory:
                     aux = self.get_transaction(t)
                     transactions.append(aux)
                 else:
-                    # In case the user wants tx hashes only not full blocks
+                    # In case the user wants tx hashes only not full txs
                     transactions.append(self.get_hash(t))
         obj["transactions"] = transactions
+        uncles = []
+        if serialized["uncles"] is not None and len(serialized["uncles"]) > 0:
+            for t in serialized["uncles"]:
+                if type(t) is dict:
+                    aux = self.get_block(t)
+                    uncles.append(aux)
+                else:
+                    # In case the user wants block hashes only not full blocks
+                    uncles.append(self.get_hash(t))
+        obj["uncles"] = uncles
         return Block(**obj)
 
     def get_transaction(self, serialized: dict) -> Transaction:

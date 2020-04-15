@@ -18,7 +18,7 @@ class In3ClientTest(unittest.TestCase):
         self.assertIsNotNone(client)
 
     def test_node_list(self):
-        nl = self.in3client.node_list()
+        nl = self.in3client.get_node_list()
         self.assertIsInstance(nl, in3.model.NodeList)
 
     def test_abi_encode(self):

@@ -81,8 +81,10 @@ class In3Runtime:
         request = RPCRequest(str(fn_name), args=args)
         request_bytes = bytes(request)
         response_bytes = libin3_call(self.in3, rpc=request_bytes)
-        response_dict = json.loads(response_bytes.decode('utf8').replace('\n', ' '))
+        response_str = response_bytes.decode('utf8').replace('\n', ' ')
+        # TODO: Make sure all responses are json parsable
+        if 'error' in response_str:
+            raise ClientException(response_str)
+        response_dict = json.loads(response_str)
         response = RPCResponse(**response_dict)
-        if response.error is not None:
-            raise ClientException(response.error)
         return response.result

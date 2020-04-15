@@ -3,7 +3,7 @@ import in3.model
 
 print('\nEthereum Goerli Test Network')
 client = in3.Client('goerli')
-node_list = client.node_list()
+node_list = client.get_node_list()
 print('\nIncubed Registry:')
 print('\ttotal servers:', node_list.totalServers)
 print('\tlast updated in block:', node_list.lastBlockNumber)

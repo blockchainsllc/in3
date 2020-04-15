@@ -127,8 +127,8 @@ class EthereumApi:
             block (Block): Desired block, if exists.
         """
         if isinstance(block_number, str) and not block_number.upper() in [e.value for e in BlockAt]:
-            raise AssertionError('Block number must be an integer or \'latest\', \'earliest\', or \'pending\'')
-        serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_NUMBER, block_number, get_full_block)
+            raise AssertionError('Block number must be an integer.')
+        serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_NUMBER, hex(block_number), get_full_block)
         return self.factory.get_block(serialized)
 
     def get_transaction_by_hash(self, tx_hash: str) -> Transaction:

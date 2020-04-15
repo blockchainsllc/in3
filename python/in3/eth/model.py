@@ -72,8 +72,8 @@ class RawTransaction(DataTransferObject):
         signature (hex str): (optional) ECDSA of transaction, r, s and v concatenated. V is parity set by v = 27 + (r % 2).
     """
 
-    def __init__(self, From: str, to: str, nonce: int, gas: int = None, value: int = None, data: str = None,
-                 gasPrice: int = None, gasLimit: int = None, hash: str = None, signature: str = None):
+    def __init__(self, From: str = None, to: str = None, nonce: int = None, gas: int = None, value: int = None,
+                 data: str = None, gasPrice: int = None, gasLimit: int = None, hash: str = None, signature: str = None):
         self.From = From
         self.gas = gas
         self.gasPrice = gasPrice
@@ -88,8 +88,9 @@ class RawTransaction(DataTransferObject):
 
     def serialize(self) -> dict:
         dictionary = self._to_dict(int_to_hex=True)
-        del dictionary['From']
-        dictionary['from'] = self.From
+        if 'From' in dictionary:
+            del dictionary['From']
+            dictionary['from'] = self.From
         return dictionary
 
 
@@ -98,7 +99,7 @@ class Block(DataTransferObject):
     def __init__(self, number: int, hash: str, parentHash: str, nonce: int, sha3Uncles: list, logsBloom: str,
                  transactionsRoot: str, stateRoot: str, miner: str, difficulty: int, totalDifficulty: int,
                  extraData: str, size: int, gasLimit: int, gasUsed: int, timestamp: int, transactions: list,
-                 uncles: list):
+                 uncles: list, author: str):
 
         self.number = number
         self.hash = hash
@@ -118,6 +119,7 @@ class Block(DataTransferObject):
         self.timestamp = timestamp
         self.transactions = transactions
         self.uncles = uncles
+        self.author = author
 
 
 class Filter(DataTransferObject):

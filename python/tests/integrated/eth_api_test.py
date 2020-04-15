@@ -1,12 +1,12 @@
 import unittest
 import in3
-import in3.model
 
 
 class EthereumTest(unittest.TestCase):
 
     def setUp(self):
         self.client = in3.Client()
+        self.client.get_node_list()
 
     def test_ethereum_sha3(self):
         digest = self.client.eth.keccak256('0x68656c6c6f20776f726c64')
@@ -50,18 +50,19 @@ class EthereumTest(unittest.TestCase):
         self.assertIsInstance(code, str)
 
     def test_eth_call(self):
+        # TODO
         transaction = in3.eth.RawTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
                                              to="0x7ceabea4AA352b10fBCa48e6E8015bC73687ABD4",
                                              data="0xa9c70686",
                                              nonce=5)
-        rpc = self.client.eth.call(transaction)
+        rpc = self.client.eth.eth_call(transaction)
         self.assertIsInstance(rpc, str)
 
     def test_get_block_by_number(self):
-        # TODO
-        number = 16027463
-        rpc = self.client.eth.get_block_by_number(block_number=number)
-        self.assertEqual(rpc.number, 16027463)
+        block_number = self.client.eth.block_number() - 15
+        block = self.client.eth.get_block_by_number(block_number)
+        self.assertIsInstance(block, in3.eth.Block)
+        self.assertEqual(block_number, block.number)
 
     def test_get_transaction_by_hash(self):
         # TODO

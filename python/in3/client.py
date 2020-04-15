@@ -34,7 +34,7 @@ class Client:
     def _configure(self, in3_config: ClientConfig):
         return self._runtime.call(In3Methods.CONFIG, in3_config.serialize())
 
-    def node_list(self) -> NodeList:
+    def get_node_list(self) -> NodeList:
         """
         Gets the list of Incubed nodes registered in the selected chain registry contract.
         Returns:
@@ -87,6 +87,7 @@ class Client:
 
     # TODO add eth_set_pk_signer
     # TODO add sign_tx
+    # TODO add ens
 
 
 class In3ObjectFactory(EthObjectFactory):
