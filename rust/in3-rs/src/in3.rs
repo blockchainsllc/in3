@@ -22,6 +22,7 @@ pub mod chain {
 
 pub struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
+    #[allow(dead_code)]
     config: ffi::CString,
 }
 

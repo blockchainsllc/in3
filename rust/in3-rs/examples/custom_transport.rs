@@ -28,7 +28,7 @@ fn main() {
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     c.set_transport(Box::new(MockTransport {
-        responses: vec![("eth_blockNumber", r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd","in3":{"lastValidatorChange":0,"lastNodeList":9870994,"execTime":110,"rpcTime":110,"rpcCount":1,"currentBlock":9878221,"version":"2.1.0"}}]"#)]
+        responses: vec![("eth_blockNumber", r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#)]
     }));
     match c.rpc_blocking(r#"{"method": "eth_blockNumber", "params": []}"#) {
         Ok(res) => println!("{}", res),
