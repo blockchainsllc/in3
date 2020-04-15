@@ -5,6 +5,7 @@ use serde_json::json;
 use crate::error::*;
 use crate::eth1::{Block, BlockNumber};
 use crate::prelude::*;
+use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 
 #[derive(Serialize)]
 struct RpcRequest<'a> {
@@ -13,8 +14,19 @@ struct RpcRequest<'a> {
 }
 
 pub struct Api {
-    pub client: Box<Client>,
+    client: Box<dyn ClientTrait>
 }
+
+impl ApiTrait for Api {
+    fn new(client: Box<dyn ClientTrait>) -> Self {
+        Api { client }
+    }
+
+    fn client(&mut self) -> &mut Box<dyn ClientTrait> {
+        &mut self.client
+    }
+}
+
 
 impl Api {
     pub fn new(client: Box<Client>) -> Api {
@@ -23,7 +35,7 @@ impl Api {
 
     async fn send(&mut self, params: RpcRequest<'_>) -> In3Result<serde_json::Value> {
         let req_str = serde_json::to_string(&params)?;
-        let resp_str = self.client.send_request(req_str.as_str()).await?;
+        let resp_str = self.client.rpc(req_str.as_str()).await?;
         let resp: serde_json::Value = serde_json::from_str(resp_str.as_str())?;
         Ok(resp)
     }
@@ -58,13 +70,24 @@ impl Api {
 
 #[cfg(test)]
 mod tests {
-    use async_std::task;
     use std::convert::TryInto;
+
+    use async_std::task;
+
     use super::*;
 
     #[test]
     fn test_block_number() {
         let mut api = Api::new(Client::new(chain::MAINNET));
+        api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
+        println!("{:?}", num);
+        assert!(num > 9000000, "Block number is not correct");
+    }
+
+    #[test]
+    fn test_api() {
+        let mut api = Api::new(In3::new(chain::MAINNET));
         api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
         println!("{:?}", num);

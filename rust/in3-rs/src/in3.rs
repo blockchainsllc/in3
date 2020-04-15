@@ -200,6 +200,33 @@ pub struct Client {
     storage: Box<dyn Storage>,
 }
 
+#[async_trait(? Send)]
+impl ClientTrait for Client {
+    fn configure(&mut self, config: &str) -> Result<(), String> {
+        unsafe {
+            let config_c = ffi::CString::new(config).expect("CString::new failed");
+            let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
+            if err.as_ref().is_some() {
+                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
+            }
+        }
+        Ok(())
+    }
+
+    fn set_transport(&mut self, transport: Box<dyn Transport>) {
+        self.transport = transport;
+    }
+
+    fn set_storage(&mut self, storage: Box<dyn Storage>) {
+        self.storage = storage;
+    }
+
+    async fn rpc(&mut self, call: &str) -> In3Result<String> {
+        let mut ctx = Ctx::new(self, call);
+        ctx.execute().await
+    }
+}
+
 impl Client {
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
@@ -295,7 +322,7 @@ impl Client {
 
         in3_sys::in3_ret_t::IN3_OK
     }
-    
+
     #[cfg(feature = "blocking")]
     pub fn rpc_blocking(&mut self, request: &str) -> Result<String, String> {
         let mut null: *mut i8 = std::ptr::null_mut();
@@ -310,33 +337,6 @@ impl Client {
                 Err(ffi::CStr::from_ptr(*err).to_str().unwrap().to_string())
             };
         }
-    }
-}
-
-#[async_trait(? Send)]
-impl ClientTrait for Client {
-    fn configure(&mut self, config: &str) -> Result<(), String> {
-        unsafe {
-            let config_c = ffi::CString::new(config).expect("CString::new failed");
-            let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
-            if err.as_ref().is_some() {
-                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
-            }
-        }
-        Ok(())
-    }
-
-    fn set_transport(&mut self, transport: Box<dyn Transport>) {
-        self.transport = transport;
-    }
-
-    fn set_storage(&mut self, storage: Box<dyn Storage>) {
-        self.storage = storage;
-    }
-
-    async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, call);
-        ctx.execute().await
     }
 }
 

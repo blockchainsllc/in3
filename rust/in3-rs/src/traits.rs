@@ -14,7 +14,7 @@ pub trait Storage {
     fn clear(&mut self);
 }
 
-#[async_trait]
+#[async_trait(? Send)]
 pub trait Client {
     fn configure(&mut self, config: &str) -> Result<(), String>;
     fn set_transport(&mut self, transport: Box<dyn Transport>);
