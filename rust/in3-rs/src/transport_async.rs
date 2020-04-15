@@ -33,17 +33,6 @@ impl crate::traits::Transport for HttpTransport {
     }
 }
 
-pub struct DummyStorage;
-
-impl crate::traits::Storage for DummyStorage {
-    fn get(&self, _key: &str) -> Option<Vec<u8>> { None }
-
-    fn set(&mut self, _key: &str, _value: &[u8]) {}
-
-    fn clear(&mut self) {}
-}
-
-
 pub struct FsStorage {
     pub dir: String
 }

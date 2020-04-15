@@ -1,12 +1,10 @@
-use std::borrow::Borrow;
 use std::ffi;
 
 use async_trait::async_trait;
 
 use crate::error::In3Result;
 use crate::traits::{Client as ClientTrait, Storage, Transport};
-use crate::transport_async;
-use crate::transport_async::{DummyStorage, HttpTransport};
+use crate::transport_async::HttpTransport;
 
 pub mod chain {
     pub type ChainId = u32;
@@ -31,9 +29,7 @@ impl Ctx {
     pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_ctx_t;
-        unsafe {
-            ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
-        }
+        unsafe { ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr()); }
         Ctx { ptr, config }
     }
 
@@ -107,7 +103,7 @@ impl Ctx {
                             }
 
                             let responses: Vec<Result<String, String>> = {
-                                let mut transport = {
+                                let transport = {
                                     let c = (*(*last_waiting).client).internal as *mut Client;
                                     &mut (*c).transport
                                 };
@@ -197,7 +193,7 @@ impl Drop for Request {
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
     transport: Box<dyn Transport>,
-    storage: Box<dyn Storage>,
+    storage: Option<Box<dyn Storage>>,
 }
 
 #[async_trait(? Send)]
@@ -218,7 +214,7 @@ impl ClientTrait for Client {
     }
 
     fn set_storage(&mut self, storage: Box<dyn Storage>) {
-        self.storage = storage;
+        self.storage = Some(storage);
     }
 
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
@@ -233,7 +229,7 @@ impl Client {
             let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: Box::new(HttpTransport {}),
-                storage: Box::new(DummyStorage {}),
+                storage: None,
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
@@ -253,10 +249,12 @@ impl Client {
         let key = ffi::CStr::from_ptr(key).to_str().unwrap();
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        match (*c).storage.get(key) {
-            Some(val) => in3_sys::b_new(val.as_ptr(), val.len() as u32),
-            None => std::ptr::null_mut(),
+        if let Some(storage) = &(*c).storage {
+            if let Some(val) = storage.get(key) {
+                return in3_sys::b_new(val.as_ptr(), val.len() as u32);
+            }
         }
+        std::ptr::null_mut()
     }
 
     unsafe extern "C" fn in3_rust_storage_set(
@@ -268,13 +266,17 @@ impl Client {
         let value = std::slice::from_raw_parts_mut((*value).data, (*value).len as usize);
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        (*c).storage.set(key, value);
+        if let Some(storage) = &mut (*c).storage {
+            storage.set(key, value);
+        }
     }
 
     unsafe extern "C" fn in3_rust_storage_clear(cptr: *mut libc::c_void) {
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        (*c).storage.clear();
+        if let Some(storage) = &mut (*c).storage {
+            storage.clear();
+        }
     }
 
     extern "C" fn in3_rust_transport(
@@ -352,8 +354,6 @@ impl Drop for Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::transport_async::FsStorage;
-
     use super::*;
 
     #[test]
