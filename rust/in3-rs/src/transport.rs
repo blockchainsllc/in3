@@ -1,8 +1,7 @@
 extern crate surf;
 
-use std::fs;
-
 use async_trait::async_trait;
+
 use crate::traits::Transport;
 
 async fn http_async(
@@ -47,26 +46,6 @@ impl crate::traits::Transport for HttpTransport {
     }
 }
 
-pub struct FsStorage {
-    pub dir: String
-}
-
-impl crate::traits::Storage for FsStorage {
-    fn get(&self, key: &str) -> Option<Vec<u8>> {
-        match fs::read(format!("{}/{}", self.dir, key)) {
-            Ok(value) => Some(value),
-            Err(_) => None,
-        }
-    }
-
-    fn set(&mut self, key: &str, value: &[u8]) {
-        fs::write(format!("{}/{}", self.dir, key), value).expect("Unable to write file");
-    }
-
-    fn clear(&mut self) {
-        fs::remove_dir_all(format!("{}", self.dir)).unwrap();
-    }
-}
 
 #[cfg(test)]
 mod tests {

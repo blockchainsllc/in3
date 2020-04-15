@@ -1,4 +1,5 @@
 use std::fmt;
+
 use rustc_hex::{FromHex, ToHex};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, Visitor};

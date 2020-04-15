@@ -9,5 +9,7 @@ mod transport;
 pub mod prelude {
     pub use crate::error::*;
     pub use crate::in3::*;
+    pub use crate::traits::{Storage, Transport};
     pub use crate::traits::Api as ApiTrait;
+    pub use crate::traits::Client as ClientTrait;
 }
