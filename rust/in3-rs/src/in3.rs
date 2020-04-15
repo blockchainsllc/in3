@@ -105,7 +105,14 @@ impl Ctx {
                                     .unwrap();
                                 urls.push(url);
                             }
-                            let responses = transport_async::transport_http(payload, &urls).await;
+
+                            let responses: Vec<Result<String, String>> = {
+                                let mut transport = {
+                                    let c = (*(*last_waiting).client).internal as *mut Client;
+                                    &mut (*c).transport
+                                };
+                                transport.fetch(payload, &urls).await
+                            };
                             for (i, resp) in responses.iter().enumerate() {
                                 match resp {
                                     Err(err) => {
