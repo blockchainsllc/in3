@@ -59,7 +59,6 @@ class EthAccountApi:
         assert isinstance(transaction, RawTransaction)
         return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, transaction)
 
-    # TODO: Create Receipt domain object
     def get_transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
         """
         After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to

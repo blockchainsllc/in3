@@ -133,11 +133,11 @@ def _multi_platform_selector() -> str:
         raise OSError('Not available on this platform ({}, {}, {}).'.format(
             system, processor, machine))
 
-    # TODO: Similar behavior could be achieved with regex expressions if we known them better.
-
+    # Fail over
     if not processor:
         processor = 'i386'
 
+    # Similar behavior could be achieved with regex expressions if we known them better.
     extension = None
     if processor == 'i386' or 'Intel' in processor:
         # AMD64 x86_64 64bit ...
