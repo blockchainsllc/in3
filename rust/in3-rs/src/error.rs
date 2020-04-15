@@ -6,7 +6,7 @@ use in3_sys::in3_ret_t::*;
 
 macro_rules! in3_error_def {
     ( $( $( #[$attr:meta] )* => $rust_variant:ident = $cs_variant:ident; )* ) => {
-        #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+        #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 
         pub enum Error {
             $(
@@ -17,7 +17,7 @@ macro_rules! in3_error_def {
             )*
 
             UnknownIn3Error,
-            CustomError(&'static str),
+            CustomError(String),
         }
 
         impl From<in3_sys::in3_ret_t::Type> for Error {
@@ -76,8 +76,8 @@ impl fmt::Display for Error {
 impl Error {
     fn description(&self) -> &str {
         use self::Error::*;
-        match *self {
-            CustomError(msg) => msg,
+        match self {
+            CustomError(ref msg) => msg,
             UnknownIn3Error => "Unknown error",
             _ => unsafe {
                 ffi::CStr::from_ptr(in3_sys::in3_errmsg(self.into()))
@@ -94,8 +94,14 @@ impl convert::From<serde_json::error::Error> for Error {
     }
 }
 
-impl convert::From<&'static str> for Error {
-    fn from(err: &'static str) -> Self {
+impl convert::From<&str> for Error {
+    fn from(err: &str) -> Self {
+        err.to_string().into()
+    }
+}
+
+impl convert::From<String> for Error {
+    fn from(err: String) -> Self {
         Self::CustomError(err)
     }
 }
