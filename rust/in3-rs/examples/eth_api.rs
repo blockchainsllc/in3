@@ -9,7 +9,7 @@ use in3::prelude::*;
 fn main() -> In3Result<()> {
     // configure client and API
     let mut eth_api = eth1::Api::new(Client::new(chain::MAINNET));
-    eth_api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
+    eth_api.client().configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
 
     // eth_blockNumber
     let latest_blk_num: u64 = task::block_on(eth_api.block_number())?.try_into().unwrap();
