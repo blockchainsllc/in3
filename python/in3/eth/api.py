@@ -1,6 +1,6 @@
 from in3.eth.account import EthAccountApi
 from in3.eth.factory import EthObjectFactory
-from in3.eth.model import Transaction, RawTransaction
+from in3.eth.model import Transaction, RawTransaction, Block
 from in3.libin3.runtime import In3Runtime
 from in3.libin3.enum import EthMethods, BlockAt
 
@@ -117,7 +117,7 @@ class EthereumApi:
         serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_HASH, self.factory.get_hash(block_hash), get_full_block)
         return self.factory.get_block(serialized)
 
-    def get_block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> BlockAt:
+    def get_block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> Block:
         """
         Blocks can be identified by sequential number in which it was mined, or root hash of the block merkle tree (this) (get_block_by_hash).
         Args:

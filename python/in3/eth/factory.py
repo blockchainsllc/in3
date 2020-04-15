@@ -75,18 +75,23 @@ class EthObjectFactory:
     def get_transaction(self, serialized: dict) -> Transaction:
         mapping = {
             "blockHash": self.get_hash,
-            "from": self.get_account,
-            "gas": int,
-            "gasPrice": int,
+            # "from": self.get_account,
+            "gas": self.get_integer,
+            "gasPrice": self.get_integer,
             "hash": self.get_hash,
             "input": str,
-            "nonce": int,
+            "nonce": self.get_integer,
             "to": self.get_account,
-            "transactionIndex": int,
-            "value": int,
-            "v": str,
-            "r": str,
-            "s": str
+            "transactionIndex": self.get_integer,
+            "value": self.get_integer,
+            "raw": str,
+            "standardV": self.get_integer,
+            "publicKey": str,
+            "creates": str,
+            "chainId": self.get_integer,
+            "v": self.get_integer,
+            "r": self.get_integer,
+            "s": self.get_integer
         }
         aux = self._deserialize(serialized, mapping)
         aux["From"] = self.get_account(serialized["from"])

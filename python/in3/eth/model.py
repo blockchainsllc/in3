@@ -11,7 +11,7 @@ class DataTransferObject:
     def _to_dict(self, int_to_hex: bool = False) -> dict:
         dictionary = {k: v for k, v in self.__dict__.items() if v is not None}
         if int_to_hex:
-            integers = {k: hex(v)for k, v in dictionary.items() if isinstance(v, int)}
+            integers = {k: hex(v) for k, v in dictionary.items() if isinstance(v, int)}
             dictionary.update(integers)
         return dictionary
 
@@ -34,26 +34,32 @@ class Transaction(DataTransferObject):
         nonce (int): Number of transactions mined from this address. Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1). It exists to mitigate replay attacks. This allows to overwrite your own pending transactions by sending a new one with the same nonce. Use in3.eth.account.get_transaction_count to get the latest value.
         hash (hex str): Keccak of the transaction bytes, not part of the transaction. Also known as receipt, because this field is filled after the transaction is sent, by eth_sendTransaction
         blockHash (hex str): Block hash that this transaction was mined in. null when its pending.
-        blockNumber (int): Block number that this transaction was mined in. null when its pending.
+        blockHash (int): Block number that this transaction was mined in. null when its pending.
         transactionIndex (int): Integer of the transactions index position in the block. null when its pending.
         signature (hex str): ECDSA of transaction.data, calculated r, s and v concatenated. V is parity set by v = 27 + (r % 2).
     """
 
-    def __init__(self, From: str, to: str, gas: int, gasPrice: int, hash: str, data: str, nonce: int, gasLimit: int,
-                 blockNumber: int, transactionIndex: int, blockHash: str, value: int, signature: str):
+    def __init__(self, From: str, to: str, gas: int, gasPrice: int, hash: str, nonce: int, transactionIndex: int,
+                 blockHash: str, value: int, input: str, publicKey: str, standardV: int, raw: str, creates: str,
+                 chainId: int, r: int, s: int, v: int):
         self.blockHash = blockHash
-        self.blockNumber = blockNumber
-        self.gasLimit = gasLimit
         self.From = From
         self.gas = gas
         self.gasPrice = gasPrice
         self.hash = hash
-        self.data = data
         self.nonce = nonce
         self.to = to
         self.transactionIndex = transactionIndex
         self.value = value
-        self.signature = signature
+        self.input = input
+        self.publicKey = publicKey
+        self.raw = raw
+        self.standardV = standardV
+        self.creates = creates
+        self.chainId = chainId
+        self.r = r
+        self.s = s
+        self.v = v
 
 
 class RawTransaction(DataTransferObject):
@@ -100,7 +106,6 @@ class Block(DataTransferObject):
                  transactionsRoot: str, stateRoot: str, miner: str, difficulty: int, totalDifficulty: int,
                  extraData: str, size: int, gasLimit: int, gasUsed: int, timestamp: int, transactions: list,
                  uncles: list, author: str):
-
         self.number = number
         self.hash = hash
         self.parentHash = parentHash
@@ -155,9 +160,9 @@ class Log(DataTransferObject):
     """
     Transaction Log for events and data returned from smart-contract method calls.
     """
+
     def __init__(self, address: hex, blockHash: hex, blockNumber: int, data: hex, logIndex: int, removed: bool,
                  topics: [hex], transactionHash: hex, transactionIndex: int, transactionLogIndex: int, Type: str):
-
         self.address = address
         self.blockHash = blockHash
         self.blockNumber = blockNumber
@@ -188,10 +193,10 @@ class TransactionReceipt(DataTransferObject):
         to: Account to which this transaction was sent. If the transaction was a contract creation this value is set to None.
         contractAddress: Contract Account address created, f the transaction was a contract creation, or None otherwise.
     """
+
     def __init__(self, blockHash: hex, blockNumber: int, cumulativeGasUsed: int, From: Account, gasUsed: int,
                  logsBloom: hex, status: int, transactionHash: hex, transactionIndex: int,
                  logs: [Log] = None, to: Account = None, contractAddress: Account = None):
-
         self.blockHash = blockHash
         self.blockNumber = blockNumber
         self.cumulativeGasUsed = cumulativeGasUsed
