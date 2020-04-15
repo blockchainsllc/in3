@@ -6,7 +6,7 @@ use crate::error;
 pub trait Transport {
     async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
     #[cfg(feature = "blocking")]
-    fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>>;
+    fn fetch_blocking(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
 }
 
 pub trait Storage {
