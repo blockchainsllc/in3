@@ -149,6 +149,17 @@ impl Ctx {
             Ok(ret_str)
         }
     }
+
+    #[cfg(feature = "blocking")]
+    pub fn send(&mut self) -> In3Result<()> {
+        unsafe {
+            let ret = in3_sys::in3_send_ctx(self.ptr);
+            match ret {
+                in3_sys::in3_ret_t::IN3_OK => Ok(()),
+                _ => Err(ret.into()),
+            }
+        }
+    }
 }
 
 impl Drop for Ctx {
@@ -192,22 +203,6 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn send_request(&mut self, config_str: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, config_str);
-        ctx.execute().await
-    }
-
-    #[cfg(feature = "blocking")]
-    pub fn send(&self, ctx: &mut Ctx) -> In3Result<()> {
-        unsafe {
-            let ret = in3_sys::in3_send_ctx(ctx.ptr);
-            match ret {
-                in3_sys::in3_ret_t::IN3_OK => Ok(()),
-                _ => Err(ret.into()),
-            }
-        }
-    }
-
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
             let mut c = Box::new(Client {
