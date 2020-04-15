@@ -2,6 +2,9 @@ use std::ffi;
 
 use crate::error::In3Result;
 use crate::transport_async;
+use std::{fmt::Write, num::ParseIntError};
+// use in3_sys::HasherType;
+// use in3_sys::HasherType;
 
 pub mod chain {
     pub type ChainId = u32;
@@ -32,6 +35,22 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
+    // pub fn ec_sign(&mut self, sig_type: bool, data:*const u8, len: u32 ) -> i32 {
+    //     let message = in3_sys::b_new(data, len);
+    //     let account :* mut bytes_t = in3_sys::b_new(std::ptr::null_mut(), 0);
+    //     let dst: *mut u8 = libc::malloc(65) as *mut u8;
+    //     let raw = in3_sys::d_signature_type_t::SIGN_EC_RAW;
+    //     let hash = in3_sys::d_signature_type_t::SIGN_EC_HASH;
+    //     let type_ = if sig_type {raw} else {hash};
+    //     let ctx_= &(*self.ptr); 
+    //     let mut_ref: &mut *mut in3_ctx = &mut self.ptr;
+    //     let raw_ptr: *mut *mut in3_ctx = mut_ref as *mut *mut _;
+    //     let void_cast: *mut *mut c_void = raw_ptr as *mut *mut c_void;
+    //     let error: libc::c_int = in3_sys::eth_sign(void_cast, type_ , *message, *account, dst);
+    //     error as i32
+    // }
+    
+    
     pub async fn execute(&mut self) -> In3Result<String> {
         unsafe {
             let mut ctx_ret;
@@ -90,6 +109,7 @@ impl Ctx {
                         in3_sys::ctx_type::CT_SIGN => {
                             println!("TODO CT_SIGN");
                             break Ok("TODO");
+
                         }
                         in3_sys::ctx_type::CT_RPC => {
                             let req = in3_sys::in3_create_request(last_waiting);
@@ -377,6 +397,52 @@ impl Drop for Client {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+//     in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+//   bytes32_t pk;
+//   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
+//   eth_set_pk_signer(c, pk);
+//   uint8_t    sig[65]  = {0};
+//   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+//   char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+//   bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
+//   use std::{fmt::Write, num::ParseIntError};
+
+    pub fn ec_sign(type_: u8, pk: *const u8, data:*const u8, len: u32) -> *mut u8 {
+        unsafe {
+            let dst  = libc::malloc(65) as *mut u8;
+            let pby = dst.offset(64) as *mut u8;
+            let curve = in3_sys::secp256k1;
+            let error: libc::c_int = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
+            // let value = String::from_raw_parts(dst, len as usize, 200 as usize);
+            // let signed_msg = ffi::CString::new(dst).unwrap();
+            // let c_str= ffi::CStr::from_ptr(dst);
+            // let str_slice: &str = signed_msg.to_str().unwrap();
+            // let str_buf: String = str_slice.to_owned();
+            dst
+        }
+        
+    }
+
+    pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+            .collect()
+    }
+    //cargo test test_sign -- --color always --nocapture
+    #[test]
+    fn test_sign() {
+        let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
+        let mut pk: *mut u8 = pk_.as_mut_ptr();
+        let data_ = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        let data= data_.as_ptr();
+        println!("{:?} {:?}",data, pk);
+        let signa = ec_sign(1, pk,  data, 64);
+        println!("{:?}", signa);
+        assert!(""=="");
+    }
+
 
     #[test]
     fn test_in3_config() {
