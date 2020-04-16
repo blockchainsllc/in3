@@ -21,4 +21,4 @@ cx_curve_t curve_code_to_curve( uint8_t curve_code);
 
 int generate_hash(unsigned char *data,int data_len, unsigned char* out_hash);
 
-uint32_t read_bip32_path(uint32_t bytes, uint32_t *bip32_path, const uint8_t *buf);
+uint32_t read_bip32_path(uint32_t bytes,  const uint8_t *buf, uint32_t *bip32_path);

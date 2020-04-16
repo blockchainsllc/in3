@@ -66,22 +66,22 @@ void main_loop(void) {
 
                                       
 
-                                        if(G_io_apdu_buffer[5] != TAG_ARG1) {
+                                        if(G_io_apdu_buffer[4] != TAG_ARG1) {
                                                 THROW(EXC_WRONG_PARAM);
                                         }
 
-                                        int path_length = G_io_apdu_buffer[6];
+                                        int path_length = G_io_apdu_buffer[5];
                                         unsigned char bip32_path [path_length];
-                                        memcpy(bip32_path,G_io_apdu_buffer+7,path_length);
+                                        memcpy(bip32_path,G_io_apdu_buffer+6,path_length);
 
                                         publicKey = public_key_at_given_path(curve_id, bip32_path,path_length);
                                        
                                        
-                                        if(G_io_apdu_buffer[7+path_length] != TAG_ARG2) {
+                                        if(G_io_apdu_buffer[6+path_length] != TAG_ARG2) {
                                                 THROW(EXC_WRONG_PARAM);
                                         }
 
-                                        int hash_len = G_io_apdu_buffer[8+path_length];
+                                        int hash_len = G_io_apdu_buffer[7+path_length];
                                         PRINTF(" hash length %d ",hash_len);
                                         if(hash_len != HASH_LEN) {
                                                 THROW(EXC_WRONG_PARAM);

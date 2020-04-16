@@ -20,13 +20,13 @@ cx_ecfp_public_key_t public_key_at_given_path(cx_curve_t curve_id, unsigned char
 								cx_ecfp_public_key_t public_key;
 								cx_ecfp_private_key_t private_key;
 								unsigned char private_key_data[32];
-								path_len_bip = read_bip32_path(path_len,path,loc);
-								PRINTF("bip path length :%d",path_len_bip);
-								os_perso_derive_node_bip32(curve_id, path, path_len_bip, private_key_data, NULL);
-								PRINTF("bip path length :os_perso_derive_node_bip32");
-								cx_ecdsa_init_private_key(curve_id, private_key_data, 32, &private_key);
-								PRINTF("bip path length :cx_ecdsa_init_private_key");
-								cx_ecfp_generate_pair(curve_id, &public_key, &private_key,1);
+								path_len_bip = read_bip32_path(path_len,loc,path);
+								
+								os_perso_derive_node_bip32(CX_CURVE_256K1, path, path_len_bip, private_key_data, NULL);
+								
+								cx_ecdsa_init_private_key(CX_CURVE_256K1, private_key_data, 32, &private_key);
+								
+								cx_ecfp_generate_pair(CX_CURVE_256K1, &public_key, &private_key,1);
 
 								PRINTF("public_key_at_given_path:exit");
 								return public_key;
@@ -36,10 +36,10 @@ cx_ecfp_public_key_t public_key_at_given_path(cx_curve_t curve_id, unsigned char
 cx_ecfp_private_key_t private_key_at_given_path(cx_curve_t curve_id, unsigned char* loc, int path_len){
 								cx_ecfp_public_key_t public_key;
 								unsigned char private_key_data[32];
-								path_len_bip = read_bip32_path(path_len,path,loc);
-								os_perso_derive_node_bip32(curve_id, path, path_len_bip, private_key_data, NULL);
-								cx_ecdsa_init_private_key(curve_id, private_key_data, 32, &private_key);
-								cx_ecfp_generate_pair(curve_id, &public_key, &private_key,1);
+								path_len_bip = read_bip32_path(path_len,loc,path);
+								os_perso_derive_node_bip32(CX_CURVE_256K1, path, path_len_bip, private_key_data, NULL);
+								cx_ecdsa_init_private_key(CX_CURVE_256K1, private_key_data, 32, &private_key);
+								cx_ecfp_generate_pair(CX_CURVE_256K1, &public_key, &private_key,1);
 								return private_key;
 }
 
@@ -63,6 +63,7 @@ io_seproxyhal_touch_approve(const bagl_element_t *e) {
 										sizeof(result), G_io_apdu_buffer, NULL);
 
 										G_io_apdu_buffer[0] &= 0xF0; // discard the parity information
+                                        
 
 								}
 								G_io_apdu_buffer[tx++] = 0x90;
@@ -149,7 +150,7 @@ int generate_hash(unsigned char *data,int data_len, unsigned char* out_hash){
 }
 
 
-uint32_t read_bip32_path(uint32_t bytes, uint32_t *bip32_path, const uint8_t *buf) {
+uint32_t read_bip32_path(uint32_t bytes,  const uint8_t *buf, uint32_t *bip32_path) {
 								uint32_t path_length = bytes;
 								PRINTF(" bytes %d  path_length %d ",bytes,path_length);
 

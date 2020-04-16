@@ -15,8 +15,7 @@ extern WIDE nvram_data N_data_real;
 
 
 extern nvram_data new_data;
-extern nvram_log new_log;
-extern nvram_uuid new_uuid;
+
 
 #define N_data (*(WIDE nvram_data*)PIC(&N_data_real))
 
