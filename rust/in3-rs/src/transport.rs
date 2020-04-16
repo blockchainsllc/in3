@@ -1,5 +1,7 @@
 extern crate surf;
 
+use std::error::Error;
+
 use async_trait::async_trait;
 
 async fn http_async(
@@ -11,7 +13,7 @@ async fn http_async(
         .set_header("content-type", "application/json")
         .recv_string()
         .await?;
-    Ok(res.to_string())
+    Ok(res)
 }
 
 pub struct HttpTransport;
@@ -23,7 +25,7 @@ impl crate::traits::Transport for HttpTransport {
         for url in uris {
             let res = http_async(url, request).await;
             match res {
-                Err(_) => responses.push(Err("Transport error".to_string())),
+                Err(err) => responses.push(Err(format!("Transport error: {:?}", err))),
                 Ok(res) => responses.push(Ok(res)),
             }
         }

@@ -17,6 +17,7 @@ macro_rules! in3_error_def {
             )*
 
             UnknownIn3Error,
+            TryAgain,
             CustomError(String),
         }
 
