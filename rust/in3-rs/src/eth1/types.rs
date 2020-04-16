@@ -75,3 +75,20 @@ pub struct Block {
     pub transactions: BlockTransactions,
     pub uncles: Vec<Hash>,
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Log {
+    pub address: Address,
+    pub block_hash: Option<Hash>,
+    pub block_number: Option<U256>,
+    pub data: Bytes,
+    pub log_index: Option<U256>,
+    pub removed: bool,
+    pub topics: Vec<Hash>,
+    pub transaction_hash: Option<Hash>,
+    pub transaction_index: Option<U256>,
+    pub transaction_log_index: Option<U256>,
+    #[serde(rename = "type")]
+    pub log_type: String,
+}

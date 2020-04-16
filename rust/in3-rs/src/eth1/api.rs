@@ -3,7 +3,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::{Block, BlockNumber, Hash};
+use crate::eth1::{Block, BlockNumber, Hash, Log};
 use crate::prelude::*;
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -55,6 +55,15 @@ impl Api {
         Ok(res)
     }
 
+    pub async fn get_balance(&mut self, address: Address, block: BlockNumber) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getBalance",
+            params: json!([address, block]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
     pub async fn block_number(&mut self) -> In3Result<U256> {
         let resp = self.send(RpcRequest {
             method: "eth_blockNumber",
@@ -73,21 +82,30 @@ impl Api {
         Ok(res)
     }
 
-    pub async fn get_balance(&mut self, address: Address, block: BlockNumber) -> In3Result<U256> {
-        let resp = self.send(RpcRequest {
-            method: "eth_getBalance",
-            params: json!([address, block]),
-        }).await?;
-        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
-        Ok(res)
-    }
-
     pub async fn get_block_by_number(&mut self, block: BlockNumber, include_tx: bool) -> In3Result<Block> {
         let resp = self.send(RpcRequest {
             method: "eth_getBlockByNumber",
             params: json!([block, include_tx]),
         }).await?;
         let res: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_block_by_hash(&mut self, hash: Hash, include_tx: bool) -> In3Result<Block> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getBlockByHash",
+            params: json!([hash, include_tx]),
+        }).await?;
+        let res: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_logs(&mut self, filter_options: serde_json::Value) -> In3Result<Vec<Log>> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getLogs",
+            params: json!([filter_options]),
+        }).await?;
+        let res: Vec<Log> = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
         Ok(res)
     }
 }
