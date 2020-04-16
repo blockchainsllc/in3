@@ -3,9 +3,10 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::{Block, BlockNumber};
+use crate::eth1::{Block, BlockNumber, Hash};
 use crate::prelude::*;
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
+use crate::types::Bytes;
 
 #[derive(Serialize)]
 struct RpcRequest<'a> {
@@ -29,10 +30,6 @@ impl ApiTrait for Api {
 
 
 impl Api {
-    pub fn new(client: Box<Client>) -> Api {
-        Api { client }
-    }
-
     async fn send(&mut self, params: RpcRequest<'_>) -> In3Result<serde_json::Value> {
         let req_str = serde_json::to_string(&params)?;
         let resp_str = self.client.rpc(req_str.as_str()).await?;
@@ -40,13 +37,40 @@ impl Api {
         Ok(resp)
     }
 
+    pub async fn get_storage_at(&mut self, address: Address, key: U256, block: BlockNumber) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getStorageAt",
+            params: json!([address, key, block]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_code(&mut self, address: Address, block: BlockNumber) -> In3Result<Bytes> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getCode",
+            params: json!([address, block]),
+        }).await?;
+        let res: Bytes = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
     pub async fn block_number(&mut self) -> In3Result<U256> {
         let resp = self.send(RpcRequest {
             method: "eth_blockNumber",
             params: json!([]),
         }).await?;
-        let u256: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
-        Ok(u256)
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn gas_price(&mut self) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_gasPrice",
+            params: json!([]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
     }
 
     pub async fn get_balance(&mut self, address: Address, block: BlockNumber) -> In3Result<U256> {
@@ -54,8 +78,8 @@ impl Api {
             method: "eth_getBalance",
             params: json!([address, block]),
         }).await?;
-        let u256: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
-        Ok(u256)
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
     }
 
     pub async fn get_block_by_number(&mut self, block: BlockNumber, include_tx: bool) -> In3Result<Block> {
@@ -63,8 +87,8 @@ impl Api {
             method: "eth_getBlockByNumber",
             params: json!([block, include_tx]),
         }).await?;
-        let block: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
-        Ok(block)
+        let res: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
     }
 }
 
