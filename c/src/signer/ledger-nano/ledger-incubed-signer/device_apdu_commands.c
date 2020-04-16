@@ -2,12 +2,12 @@
 #include <windows.h>
 #endif
 
+#include "../../../core/util/log.h"
 #include "device_apdu_commands.h"
 #include <hidapi.h>
 #include <memory.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "../../../core/util/log.h"
 
 static uint8_t CHANNEL[] = {0x01, 0x01};
 
@@ -35,12 +35,12 @@ void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd) {
   index += 1;
 
   len_to_bytes(seq, data);
-  in3_log_debug("data[0] %d data[1] %d\n", data[0],data[1]);
+  in3_log_debug("data[0] %d data[1] %d\n", data[0], data[1]);
   memcpy(cmd + index, data, sizeof(data));
   index += sizeof(data);
 
   len_to_bytes(apdu_len, data);
-  in3_log_debug("data[0] %d data[1] %d\n", data[0],data[1]);
+  in3_log_debug("data[0] %d data[1] %d\n", data[0], data[1]);
   memcpy(cmd + index, data, sizeof(data));
   index += sizeof(data);
 
@@ -48,10 +48,8 @@ void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd) {
 
   o_wrapped_hid_cmd->len  = HID_CMD_MAX_LEN;
   o_wrapped_hid_cmd->data = malloc(HID_CMD_MAX_LEN);
-  
+
   memcpy(o_wrapped_hid_cmd->data, cmd, HID_CMD_MAX_LEN);
-
-
 }
 
 void unwrap_apdu(bytes_t i_wrapped_hid_cmd, bytes_t* o_apdu_res) {
@@ -64,7 +62,6 @@ void unwrap_apdu(bytes_t i_wrapped_hid_cmd, bytes_t* o_apdu_res) {
   o_apdu_res->len  = len;
   o_apdu_res->data = malloc(len);
   memcpy(o_apdu_res->data, len, i_wrapped_hid_cmd.data + 7);
-
 }
 
 int len_to_bytes(uint16_t x, uint8_t* buf) {
@@ -80,12 +77,12 @@ uint16_t bytes_to_len(uint8_t* buf) {
 }
 
 void print_bytes(uint8_t* bytes, int len, char* args) {
-  in3_log_debug("printing bytes %s ", args);
+  printf("printing bytes %s \n", args);
   int i = 0;
   for (i = 0; i < len; i++) {
 
-    in3_log_debug("%02x ", bytes[i]);
+    printf("%02x ", bytes[i]);
   }
 
-  in3_log_debug("\n");
+  printf("\n\n");
 }

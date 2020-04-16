@@ -1,23 +1,22 @@
 
-#include <in3/client.h>   // the core client
-#include <in3/eth_api.h>  // functions for direct api-access
-#include <in3/in3_init.h> // if included the verifier will automaticly be initialized.
-#include <in3/log.h>      // logging functions
-#include <in3/utils.h>
+#include <in3/client.h>        // the core client
+#include <in3/eth_api.h>       // functions for direct api-access
+#include <in3/in3_init.h>      // if included the verifier will automaticly be initialized.
 #include <in3/ledger_signer.h> //to invoke ledger nano device for signing
+#include <in3/log.h>           // logging functions
+#include <in3/utils.h>
 #include <stdio.h>
-
-
 
 static void send_tx_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  uint8_t bip_path[5] = {44, 60, 0, 0, 0};
+  in3_t*  in3         = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   in3_log_set_level(LOG_DEBUG);
   // setting ledger nano s to be the default signer for incubed client
-  // it will cause the transaction or any msg to be sent to ledger nanos device for siging 
-  eth_ledger_set_signer(in3);
+  // it will cause the transaction or any msg to be sent to ledger nanos device for siging
+  eth_ledger_set_signer(in3, bip_path);
 
   // send tx using API
   send_tx_api(in3);
@@ -25,7 +24,6 @@ int main() {
   // cleanup client after usage
   in3_free(in3);
 }
-
 
 void send_tx_api(in3_t* in3) {
   // prepare parameters

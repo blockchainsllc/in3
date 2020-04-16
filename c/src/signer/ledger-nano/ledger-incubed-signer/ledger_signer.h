@@ -44,6 +44,6 @@
 
 #include "../../../core/client/client.h"
 
-in3_ret_t eth_ledger_set_signer(in3_t* in3);
+in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path);
 
 #endif

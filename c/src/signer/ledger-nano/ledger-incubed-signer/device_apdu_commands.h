@@ -32,21 +32,20 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-
 #ifndef in3_device_apdu_h__
 #define in3_device_apdu_h__
 
-
 #include "../../../core/client/client.h"
 #define HID_CMD_MAX_LEN 64
+#define DEBUG 1
 
-extern const uint8_t CLA ;
-extern const uint8_t INS_GET_PUBLIC_KEY ;
-extern const uint8_t INS_SIGN ;
-extern const uint8_t P1_MORE ;
-extern const uint8_t P1_FINAL ;
-extern const uint8_t P2_FINAL ;
-extern const uint8_t TAG ;
+extern const uint8_t CLA;
+extern const uint8_t INS_GET_PUBLIC_KEY;
+extern const uint8_t INS_SIGN;
+extern const uint8_t P1_MORE;
+extern const uint8_t P1_FINAL;
+extern const uint8_t P2_FINAL;
+extern const uint8_t TAG;
 
 int len_to_bytes(uint16_t x, uint8_t* buf);
 
@@ -56,7 +55,6 @@ void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd);
 
 void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t* o_apdu_res);
 
-void print_bytes(uint8_t* bytes, int len, char* args) ;
-
+void print_bytes(uint8_t* bytes, int len, char* args);
 
 #endif

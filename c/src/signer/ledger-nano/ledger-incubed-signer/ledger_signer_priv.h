@@ -42,9 +42,16 @@
 #define LEDGER_NANOS_VID 0x2C97
 #define LEDGER_NANOS_PID 0x1001
 
+typedef enum CURVE_CODE_ {
+  IDM_ED        = 0,
+  IDM_SECP256K1 = 1,
+  IDM_SECP256R1 = 2,
+  IDM_NO_CURVE  = 255,
+} CURVE_CODE;
+
 void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
-void read_hid_response(hid_device* handle, bytes_t* response);
-int get_recid_from_pub_key(const ecdsa_curve *curve, uint8_t *pub_key, const uint8_t *sig, const uint8_t *digest);
+void      read_hid_response(hid_device* handle, bytes_t* response);
+int       get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);
 in3_ret_t is_ledger_device_connected();
 in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key);
 in3_ret_t eth_get_address_from_path(bytes_t i_bip_path, bytes_t o_address);
