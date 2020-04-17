@@ -3,7 +3,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::{Block, BlockNumber, FilterChanges, Hash, Log, OutgoingTransaction, Transaction, TransactionReceipt};
+use crate::eth1::{Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction, Transaction, TransactionReceipt};
 use crate::prelude::*;
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -184,9 +184,26 @@ impl Api {
         Ok(res)
     }
 
-    // TODO: eth_call
+    pub async fn call(&mut self, transaction: CallTransaction, block: BlockNumber) -> In3Result<Bytes> {
+        if transaction.to.is_none() {
+            return Err(Error::InvalidValue);
+        }
+        let resp = self.send(RpcRequest {
+            method: "eth_call",
+            params: json!([transaction, block]),
+        }).await?;
+        let res: Bytes = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
 
-    // TODO: eth_estimate
+    pub async fn estimate_gas(&mut self, transaction: CallTransaction, block: BlockNumber) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_estimateGas",
+            params: json!([transaction, block]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
 
     pub async fn get_transaction_by_hash(&mut self, hash: Hash) -> In3Result<Transaction> {
         let resp = self.send(RpcRequest {

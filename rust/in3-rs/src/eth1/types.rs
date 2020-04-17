@@ -100,6 +100,7 @@ pub enum FilterChanges {
     BlockHashes(Vec<Hash>),
 }
 
+// Transaction used as i/p type for eth_sendTransaction
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OutgoingTransaction {
@@ -110,6 +111,19 @@ pub struct OutgoingTransaction {
     pub value: Option<U256>,
     pub data: Option<Bytes>,
     pub nonce: Option<U256>,
+}
+
+// Transaction used as i/p type for eth_call & eth_estimateGas
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CallTransaction {
+    pub from: Option<Address>,
+    // `to` is optional only for eth_estimateGas
+    pub to: Option<Address>,
+    pub gas: Option<U256>,
+    pub gas_price: Option<U256>,
+    pub value: Option<U256>,
+    pub data: Option<Bytes>,
 }
 
 #[derive(Debug, Serialize)]
