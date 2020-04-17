@@ -486,18 +486,6 @@ mod tests {
 
     //cargo test test_sign -- --color always --nocapture
     #[test]
-    fn test_sign() {
-        let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
-        let mut pk: *mut u8 = pk_.as_mut_ptr();
-        let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
-        let data= data_.as_ptr();
-        println!("{:?} {:?}",data, pk);
-        let signa = ec_sign(1, pk,  data, 65);
-        println!("{:?}", signa);
-        assert!(""=="");
-    }
-
-    #[test]
     fn test_sign_hexc() {
         let mut pk_ = hex::decode("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").expect("-");
         let mut pk: *mut u8 = pk_.as_mut_ptr();
@@ -506,19 +494,6 @@ mod tests {
         let signa = in3::ec_sign(1, pk,  data, 65);
         assert!(""=="");
     }
-
-    #[test]
-    fn test_sign_bytesc() {
-        let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
-        let mut pk: *mut u8 = pk_.as_mut_ptr();
-        let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
-        let data= data_.as_ptr();
-        println!("{:?} {:?}",data, pk);
-        let signa = ec_sign(1, pk,  data, 64);
-        println!("{:?}", signa);
-        assert!(""=="");
-    }
-
 
     #[test]
     fn test_in3_config() {
