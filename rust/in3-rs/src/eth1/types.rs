@@ -100,3 +100,28 @@ pub enum FilterChanges {
     BlockHashes(Vec<Hash>),
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OutgoingTransaction {
+    pub from: Address,
+    pub to: Address,
+    pub gas: Option<U256>,
+    pub gas_price: Option<U256>,
+    pub value: Option<U256>,
+    pub data: Option<Bytes>,
+    pub nonce: Option<U256>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionReceipt {
+    pub transaction_hash: Option<H256>,
+    pub transaction_index: Option<U256>,
+    pub block_hash: Option<H256>,
+    pub block_number: Option<U256>,
+    pub cumulative_gas_used: U256,
+    pub gas_used: Option<U256>,
+    pub contract_address: Option<Address>,
+    pub logs: Vec<Log>,
+    pub status: Option<bool>,
+}
