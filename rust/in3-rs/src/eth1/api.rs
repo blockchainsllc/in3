@@ -3,7 +3,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::{Block, BlockNumber, FilterChanges, Hash, Log, Transaction};
+use crate::eth1::{Block, BlockNumber, FilterChanges, Hash, Log, OutgoingTransaction, Transaction, TransactionReceipt};
 use crate::prelude::*;
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -251,18 +251,32 @@ impl Api {
         Ok(res)
     }
 
-    // TODO: eth_sendTransaction
+    pub async fn send_transaction(&mut self, transaction: OutgoingTransaction) -> In3Result<Hash> {
+        let resp = self.send(RpcRequest {
+            method: "eth_sendTransaction",
+            params: json!([transaction]),
+        }).await?;
+        let res: Hash = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
 
-    pub async fn send_raw_transaction(&mut self, data: Bytes) -> In3Result<Bytes> {
+    pub async fn send_raw_transaction(&mut self, data: Bytes) -> In3Result<Hash> {
         let resp = self.send(RpcRequest {
             method: "eth_sendRawTransaction",
             params: json!([data]),
         }).await?;
-        let res: Bytes = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        let res: Hash = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
         Ok(res)
     }
 
-    // TODO: eth_getTransactionReceipt
+    pub async fn get_transaction_receipt(&mut self, transaction_hash: Hash) -> In3Result<TransactionReceipt> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getTransactionReceipt",
+            params: json!([transaction_hash]),
+        }).await?;
+        let res: TransactionReceipt = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
 }
 
 #[cfg(test)]
