@@ -92,3 +92,11 @@ pub struct Log {
     #[serde(rename = "type")]
     pub log_type: String,
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum FilterChanges {
+    Logs(Vec<Log>),
+    BlockHashes(Vec<Hash>),
+}
+
