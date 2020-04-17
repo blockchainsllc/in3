@@ -1,11 +1,13 @@
 use std::ffi;
-
+extern crate hex;
+use hex::FromHex;
 use crate::error::In3Result;
 use crate::transport_async;
 use std::{fmt::Write, num::ParseIntError};
 // use in3_sys::HasherType;
 // use in3_sys::HasherType;
-
+use ffi::{CString, CStr};
+use libc::{c_char, puts, strlen};
 pub mod chain {
     pub type ChainId = u32;
 
@@ -384,6 +386,52 @@ impl Client {
             };
         }
     }
+    pub fn eth_sign(&mut self, type_: u8, pk: *const u8, data:*const u8, len: u32) -> *mut u8 {
+        unsafe {
+            let dst  = libc::malloc(65) as *mut u8;
+            let pby = *dst.offset(64) as *mut u8;
+            // let pby = dst.offset(64) as *mut u8;
+            let curve = in3_sys::secp256k1;
+            let error: libc::c_int = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
+            let mut value = std::slice::from_raw_parts_mut(dst, 65 as usize);
+            println!("\n{:?}", value);
+            for byte in value {
+                print!("{:x}", byte);
+            }
+            dst
+        }
+        
+    }
+    pub fn hex_to_bytes(&mut self, data: &str) -> *mut u8{
+        unsafe {
+            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+            let c_data: *const c_char = c_str_data.as_ptr();
+            let mut out:*mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
+            let len:i32 = -1;
+            in3_sys::hex_to_bytes(c_data, len, out, 32);
+            let data_ = std::slice::from_raw_parts_mut(out, 32 as usize);
+            for byte in data_ {
+                print!("{:x}", byte);
+            }
+            println!("\n");
+            out
+        }
+    }
+    pub fn new_bytes(&mut self, data: &str) -> *mut u8{
+        unsafe {
+        let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+        let data_ptr= c_str_data.as_ptr();
+        let len= strlen(data_ptr) as i32;
+        let data = in3_sys::hex_to_new_bytes(data_ptr, len);
+        let data_ = (*data).data;
+        let out = std::slice::from_raw_parts_mut(data_, 32 as usize);
+        for byte in out {
+            print!("{:x}", byte);
+        }
+        println!("\n");
+        data_
+        }
+    }
 }
 
 impl Drop for Client {
@@ -397,45 +445,73 @@ impl Drop for Client {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-//     in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-//   bytes32_t pk;
-//   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
-//   eth_set_pk_signer(c, pk);
-//   uint8_t    sig[65]  = {0};
-//   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-//   char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-//   bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
-//   use std::{fmt::Write, num::ParseIntError};
+    
 
     pub fn ec_sign(type_: u8, pk: *const u8, data:*const u8, len: u32) -> *mut u8 {
         unsafe {
             let dst  = libc::malloc(65) as *mut u8;
+            let mut value = std::slice::from_raw_parts_mut(dst, len as usize);
             let pby = dst.offset(64) as *mut u8;
+            println!("{:?}", value);
+            for byte in value {
+                print!("{:x}", byte);
+            }
             let curve = in3_sys::secp256k1;
             let error: libc::c_int = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
-            // let value = String::from_raw_parts(dst, len as usize, 200 as usize);
-            // let signed_msg = ffi::CString::new(dst).unwrap();
-            // let c_str= ffi::CStr::from_ptr(dst);
-            // let str_slice: &str = signed_msg.to_str().unwrap();
-            // let str_buf: String = str_slice.to_owned();
+            value = std::slice::from_raw_parts_mut(dst, len as usize);
+            println!("\n{:?}", value);
+            for byte in value {
+                print!("{:x}", byte);
+            }
             dst
         }
         
     }
 
-    pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
-        (0..s.len())
-            .step_by(2)
-            .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
-            .collect()
+    pub fn ec_sign_digest(type_: u8, pk: *const u8, data:*const u8, len: u32) -> *mut u8 {
+        unsafe {
+            
+            let dst  = libc::malloc(65) as *mut u8;
+            let pby = dst.offset(64) as *mut u8;
+            let curve = in3_sys::secp256k1;
+            let error: libc::c_int = in3_sys::ecdsa_sign_digest(&curve, pk, data, dst, pby, None);
+            let value = std::slice::from_raw_parts_mut(dst, len as usize);
+            for byte in value {
+                print!("{:x}", byte);
+            }
+            dst
+        }
+        
     }
+
     //cargo test test_sign -- --color always --nocapture
     #[test]
     fn test_sign() {
         let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
         let mut pk: *mut u8 = pk_.as_mut_ptr();
-        let data_ = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
+        let data= data_.as_ptr();
+        println!("{:?} {:?}",data, pk);
+        let signa = ec_sign(1, pk,  data, 65);
+        println!("{:?}", signa);
+        assert!(""=="");
+    }
+
+    #[test]
+    fn test_sign_hexc() {
+        let mut pk_ = hex::decode("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").expect("-");
+        let mut pk: *mut u8 = pk_.as_mut_ptr();
+        let data_ = hex::decode("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
+        let mut data= data_.as_ptr();
+        let signa = in3::ec_sign(1, pk,  data, 65);
+        assert!(""=="");
+    }
+
+    #[test]
+    fn test_sign_bytesc() {
+        let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
+        let mut pk: *mut u8 = pk_.as_mut_ptr();
+        let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
         let data= data_.as_ptr();
         println!("{:?} {:?}",data, pk);
         let signa = ec_sign(1, pk,  data, 64);

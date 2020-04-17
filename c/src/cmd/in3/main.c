@@ -962,8 +962,11 @@ int main(int argc, char* argv[]) {
     uint8_t   sig[65];
     in3_ctx_t ctx;
     ctx.client = c;
+
+    print_hex(data->data, data->len);
     c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
-    sig[64] += 27;
+    // sig[64] += 27;
+    printf("\n\n\n");
     print_hex(sig, 65);
     return 0;
   } else if (strcmp(method, "chainspec") == 0) {

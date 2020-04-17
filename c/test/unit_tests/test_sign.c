@@ -42,6 +42,7 @@
 #include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/nodelist.h"
+#include "../../src/core/util/bytes.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
@@ -84,16 +85,27 @@ static void test_sign_sans_signer_and_from() {
   ctx_free(ctx);
 }
 
+// let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
+// let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
 static void test_signer() {
   in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
   eth_set_pk_signer(c, pk);
-  uint8_t    sig[65]  = {0};
+  uint8_t* sig = malloc(65);
+  // uint8_t    sig[66]  = {0};
   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
   bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
-  TEST_ASSERT_EQUAL(65, eth_sign(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
+  ba_print((const uint8_t*) &pk, 32);
+  printf("\n");
+  b_print(data);
+  printf("\n");
+  bytes_t acc = bytes(NULL, 0);
+  eth_sign(ctx, SIGN_EC_HASH, *data, acc, sig);
+  ba_print(sig, 64);
+  printf("\n\n");
+  in3_log_debug("\n");
   TEST_ASSERT_FALSE(memiszero(sig, 65));
   b_free(data);
   in3_free(c);
@@ -143,12 +155,13 @@ static void test_signer_prepare_tx() {
  * Main
  */
 int main() {
-  in3_log_set_quiet(true);
+  in3_log_set_quiet(false);
+  in3_log_set_level(LOG_TRACE);
   in3_register_eth_basic();
   TESTS_BEGIN();
-  RUN_TEST(test_sign);
-  RUN_TEST(test_sign_sans_signer_and_from);
+  // RUN_TEST(test_sign);
+  // RUN_TEST(test_sign_sans_signer_and_from);
   RUN_TEST(test_signer);
-  RUN_TEST(test_signer_prepare_tx);
+  // RUN_TEST(test_signer_prepare_tx);
   return TESTS_END();
 }
