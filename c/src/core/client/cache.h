@@ -51,7 +51,7 @@
  * 
  * This function is usually called internally to fill the weights 
  * and nodelist from the the cache.
- * If you call `in3_cache_init` there is no need to call this explicitly.
+ * If you call `in3_set_storage_handler` there is no need to call this explicitly.
  */
 in3_ret_t in3_cache_update_nodelist(
     in3_t*       c, /**< the incubed client */
@@ -72,7 +72,7 @@ in3_ret_t in3_cache_store_nodelist(
  *
  * This function is usually called internally to fill the weights
  * and whitelist from the the cache.
- * If you call `in3_cache_init` there is no need to call this explicitly.
+ * If you call `in3_set_storage_handler` there is no need to call this explicitly.
  */
 in3_ret_t in3_cache_update_whitelist(
     in3_t*       c, /**< the incubed client */

@@ -549,7 +549,7 @@ static in3_ret_t debug_transport(in3_request_t* req) {
 #else
   in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new(req->results[0].result.data, req->results[0].result.len);
+  last_response = b_new((uint8_t*) req->results[0].result.data, req->results[0].result.len);
 #ifndef DEBUG
   if (debug_mode) {
     if (req->results[0].result.len)
@@ -616,13 +616,6 @@ int main(int argc, char* argv[]) {
   int       p  = 1, i;
   bytes32_t pk;
 
-  // use the storagehandler to cache data in .in3
-  in3_storage_handler_t storage_handler;
-  storage_handler.get_item = storage_get_item;
-  storage_handler.set_item = storage_set_item;
-  storage_handler.clear    = storage_clear;
-  storage_handler.cptr     = NULL;
-
   // we want to verify all
   in3_register_eth_full();
 #ifdef IPFS
@@ -642,7 +635,6 @@ int main(int argc, char* argv[]) {
   in3_t* c                         = in3_for_chain(0);
   c->transport                     = debug_transport;
   c->request_count                 = 1;
-  c->cache                         = &storage_handler;
   bool            out_response     = false;
   bool            run_test_request = false;
   bool            force_hex        = false;
@@ -662,6 +654,10 @@ int main(int argc, char* argv[]) {
   char*           port             = NULL;
   char*           sig_type         = "raw";
   bool            to_eth           = false;
+
+  // use the storagehandler to cache data in .in3
+  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
+
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
@@ -672,9 +668,6 @@ int main(int argc, char* argv[]) {
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
       c->cache->clear(c->cache->cptr);
-
-  // read data from cache
-  in3_cache_init(c);
 
   // check env
   if (getenv("IN3_PK")) {
@@ -789,7 +782,7 @@ int main(int argc, char* argv[]) {
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
       else if (strcmp(method, "sign") == 0 && !data)
-        data = b_new(argv[i], strlen(argv[i]));
+        data = b_new((uint8_t*) argv[i], strlen(argv[i]));
       else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
@@ -906,8 +899,12 @@ int main(int argc, char* argv[]) {
       uint32_t           calc_weight = in3_node_calculate_weight(weight, node->capacity, now);
       char *             tr = NULL, *warning = NULL;
       if (ctx) {
-        tr = _malloc(300);
-        if (!ctx->error) {
+        tr = _malloc(1000);
+        if (!ctx->error && d_get(ctx->responses[0], K_ERROR)) {
+          d_token_t* msg = d_get(ctx->responses[0], K_ERROR);
+          if (d_type(msg) == T_OBJECT) msg = d_get(msg, K_MESSAGE);
+          sprintf((warning = tr), "%s", msg ? d_string(msg) : "Error-Response!");
+        } else if (!ctx->error) {
           b = d_get_intk(ctx->responses[0], K_RESULT);
           if (block < b) block = b;
 
@@ -954,10 +951,10 @@ int main(int argc, char* argv[]) {
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(data->len + 30);
       int   l   = sprintf(tmp, "\x19"
-                           "Ethereum Signed Message:\n%i",
+                           "Ethereum Signed Message:\n%u",
                       data->len);
       memcpy(tmp + l, data->data, data->len);
-      data     = b_new(tmp, l + data->len);
+      data     = b_new((uint8_t*) tmp, l + data->len);
       sig_type = "raw";
     }
 
@@ -1045,10 +1042,10 @@ int main(int argc, char* argv[]) {
     if (strcmp(sig_type, "eth_sign") == 0) {
       char* tmp = alloca(msg.len + 30);
       int   l   = sprintf(tmp, "\x19"
-                           "Ethereum Signed Message:\n%i",
+                           "Ethereum Signed Message:\n%u",
                       msg.len);
       memcpy(tmp + l, msg.data, msg.len);
-      msg = *b_new(tmp, l + msg.len);
+      msg = *b_new((uint8_t*) tmp, l + msg.len);
     }
     if (strcmp(sig_type, "hash") == 0) {
       if (msg.len != 32) die("The message hash must be 32 byte");

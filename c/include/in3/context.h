@@ -147,8 +147,8 @@ typedef enum state {
  *  *Important*: the req_data will not be cloned but used during the execution. The caller of the this function is also responsible for freeing this string afterwards.
  */
 in3_ctx_t* ctx_new(
-    in3_t* client,  /**< [in] the client-config. */
-    char*  req_data /**< [in] the rpc-request as json string. */
+    in3_t*      client,  /**< [in] the client-config. */
+    const char* req_data /**< [in] the rpc-request as json string. */
 );
 /**
  * sends a previously created context to nodes and verifies it.
@@ -357,8 +357,8 @@ in3_ret_t ctx_get_error(
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
 in3_ctx_t* in3_client_rpc_ctx_raw(
-    in3_t* c,      /**< [in] the client config. */
-    char*  request /**< [in] rpc request. */
+    in3_t*      c,      /**< [in] the client config. */
+    const char* request /**< [in] rpc request. */
 );
 
 /**
@@ -367,9 +367,9 @@ in3_ctx_t* in3_client_rpc_ctx_raw(
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
 in3_ctx_t* in3_client_rpc_ctx(
-    in3_t* c,      /**< [in] the clientt config. */
-    char*  method, /**< [in] rpc method. */
-    char*  params  /**< [in] params as string. */
+    in3_t*      c,      /**< [in] the clientt config. */
+    const char* method, /**< [in] rpc method. */
+    const char* params  /**< [in] params as string. */
 );
 
 #endif
