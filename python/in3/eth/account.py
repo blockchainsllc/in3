@@ -45,7 +45,7 @@ class EthAccountApi:
             tx_hash: Transaction hash, used to get the receipt and check if the transaction was mined.
         """
         assert isinstance(transaction, RawTransaction)
-        return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction)
+        return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction.serialize())
 
     def send_raw_transaction(self, transaction: RawTransaction) -> str:
         """

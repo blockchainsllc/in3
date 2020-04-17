@@ -69,7 +69,7 @@ class RawTransaction(DataTransferObject):
         From (hex str): Address of the sender account.
         to (hex str): Address of the receiver account. Left undefined for a contract creation transaction.
         gas (int): Gas for the transaction miners and execution in wei. Will get multiplied by `gasPrice`. Use in3.eth.account.estimate_gas to get a calculated value. Set too low and the transaction will run out of gas.
-        value (int): (optional) Value transferred in wei. The endowment for a contract creation transaction.
+        value (str): (optional) Value transferred in wei. The endowment for a contract creation transaction.
         data (hex str): (optional) Either a ABI byte string containing the data of the function call on a contract, or in the case of a contract-creation transaction the initialisation code.
         gasPrice (int): (optional) Price of gas in wei, defaults to in3.eth.gasPrice. Also know as `tx fee price`. Set your gas price too low and your transaction may get stuck. Set too high on your own loss.
         gasLimit (int); (optional) Maximum gas paid for this transaction. Set by the client using this rationale if left empty: gasLimit = G(transaction) + G(txdatanonzero) × dataByteLength. Minimum is 21000.
@@ -78,7 +78,7 @@ class RawTransaction(DataTransferObject):
         signature (hex str): (optional) ECDSA of transaction, r, s and v concatenated. V is parity set by v = 27 + (r % 2).
     """
 
-    def __init__(self, From: str = None, to: str = None, nonce: int = None, gas: int = None, value: int = None,
+    def __init__(self, From: str = None, to: str = None, nonce: int = None, gas: int = None, value: str = None,
                  data: str = None, gasPrice: int = None, gasLimit: int = None, hash: str = None, signature: str = None):
         self.From = From
         self.gas = gas

@@ -5,7 +5,10 @@ import in3
 class UtilsTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.client = in3.Client('goerli')
+        # SK to 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
+        sk = "0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F"
+        config = in3.ClientConfig(chain_id='goerli', account_private_key=sk)
+        self.client = in3.Client(config)
 
     def test_checksum_address(self):
         missing_0x_address = '1fe2e9bf29AA1938859aF64C413361227d04059A'
@@ -52,11 +55,18 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_send_tx(self):
         # TODO: Check send_tx mock data
-        tx = {}
+        # Money transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
+        tx = in3.eth.RawTransaction(From="0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308",
+                                    to="0x6FA33809667A99A805b610C49EE2042863b1bb83",
+                                    value="0.0005")
         result = self.client.eth.account.send_transaction(tx)
         self.assertEqual(result, "asd")
 
     def test_send_raw_transaction(self):
+        # Money transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
+        tx = in3.eth.RawTransaction(From="0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308",
+                                    to="0x6FA33809667A99A805b610C49EE2042863b1bb83",
+                                    value="0.0005")
         # TODO: test_send_raw_transaction
         # it will fail if we didn't update the nonce
         tx = {}
