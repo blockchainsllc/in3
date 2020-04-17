@@ -3,7 +3,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::{Block, BlockNumber, Hash, Log};
+use crate::eth1::{Block, BlockNumber, FilterChanges, Hash, Log, Transaction};
 use crate::prelude::*;
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -27,7 +27,6 @@ impl ApiTrait for Api {
         &mut self.client
     }
 }
-
 
 impl Api {
     async fn send(&mut self, params: RpcRequest<'_>) -> In3Result<serde_json::Value> {
@@ -108,6 +107,162 @@ impl Api {
         let res: Vec<Log> = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
         Ok(res)
     }
+
+    pub async fn new_filter(&mut self, filter_options: serde_json::Value) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_newFilter",
+            params: json!([filter_options]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn new_block_filter(&mut self) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_newBlockFilter",
+            params: json!([]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn new_pending_transaction_filter(&mut self) -> In3Result<U256> {
+        unimplemented!()
+    }
+
+    pub async fn uninstall_filter(&mut self, filter_id: U256) -> In3Result<bool> {
+        let resp = self.send(RpcRequest {
+            method: "eth_uninstallFilter",
+            params: json!([filter_id]),
+        }).await?;
+        let res: bool = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_filter_changes(&mut self, filter_id: U256) -> In3Result<FilterChanges> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getFilterChanges",
+            params: json!([filter_id]),
+        }).await?;
+        let res: FilterChanges = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_filter_logs(&mut self, filter_id: U256) -> In3Result<Vec<Log>> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getFilterLogs",
+            params: json!([filter_id]),
+        }).await?;
+        let res: Vec<Log> = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn chain_id(&mut self) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_chainId",
+            params: json!([]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_block_transaction_count_by_hash(&mut self, hash: Hash) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getBlockTransactionCountByHash",
+            params: json!([hash]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_block_transaction_count_by_number(&mut self, block: BlockNumber) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getBlockTransactionCountByNumber",
+            params: json!([block]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    // TODO: eth_call
+
+    // TODO: eth_estimate
+
+    pub async fn get_transaction_by_hash(&mut self, hash: Hash) -> In3Result<Transaction> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getTransactionByHash",
+            params: json!([hash]),
+        }).await?;
+        let res: Transaction = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_transaction_by_block_hash_and_index(&mut self, hash: Hash, index: U256) -> In3Result<Transaction> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getTransactionByBlockHashAndIndex",
+            params: json!([hash, index]),
+        }).await?;
+        let res: Transaction = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_transaction_by_block_number_and_index(&mut self, block: BlockNumber, index: U256) -> In3Result<Transaction> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getTransactionByBlockNumberAndIndex",
+            params: json!([block, index]),
+        }).await?;
+        let res: Transaction = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_transaction_count(&mut self, block: BlockNumber) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getTransactionCount",
+            params: json!([block]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_uncle_by_block_number_and_index(&mut self, block: BlockNumber, index: U256) -> In3Result<Block> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getUncleByBlockNumberAndIndex",
+            params: json!([block, index]),
+        }).await?;
+        let res: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_uncle_count_by_block_hash(&mut self, hash: Hash) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getUncleCountByBlockHash",
+            params: json!([hash]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    pub async fn get_uncle_count_by_block_number(&mut self, block: BlockNumber) -> In3Result<U256> {
+        let resp = self.send(RpcRequest {
+            method: "eth_getUncleCountByBlockNumber",
+            params: json!([block]),
+        }).await?;
+        let res: U256 = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    // TODO: eth_sendTransaction
+
+    pub async fn send_raw_transaction(&mut self, data: Bytes) -> In3Result<Bytes> {
+        let resp = self.send(RpcRequest {
+            method: "eth_sendRawTransaction",
+            params: json!([data]),
+        }).await?;
+        let res: Bytes = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
+    // TODO: eth_getTransactionReceipt
 }
 
 #[cfg(test)]

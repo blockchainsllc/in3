@@ -51,5 +51,6 @@ fn main() -> In3Result<()> {
     "topics": ["0xa61b5dec2abee862ab0841952bfbc161b99ad8c14738afa8ed8d5c522cd03946"]
     })))?;
     println!("Logs => {:?}", logs);
+
     Ok(())
 }
