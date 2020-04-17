@@ -46,7 +46,7 @@ option(ETH_BASIC "build basic eth verification.(all rpc-calls except eth_call)" 
 option(ETH_FULL "build full eth verification.(including eth_call)" ON)
 option(IPFS "build IPFS verification" ON)
 option(COLOR "Enable color codes for debug" ON)
-option(BTC "if true, the bitcoin verifiers will be build" OFF)
+option(BTC "if true, the bitcoin verifiers will be build" ON)
 option(IN3API "build the USN-API which offer better interfaces and additional functions on top of the pure verification" ON)
 option(USE_PRECOMPUTED_EC "if true the secp256k1 curve uses precompiled tables to boost performance. turning this off makes ecrecover slower, but saves about 37kb." ON)
 option(ERR_MSG "if set human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)" ON)
@@ -67,6 +67,7 @@ option(CODE_COVERAGE  "Builds targets with code coverage instrumentation. (Requi
 option(PAY_ETH  "support for direct Eth-Payment"  OFF)
 option(USE_SCRYPT "integrate scrypt into the build in order to allow decrypt_key for scrypt encoded keys." ON)
 option(USE_CURL "if true the curl transport will be built (with a dependency to libcurl)" ON)
+option(DEV_NO_INTRN_PTR "(*dev option*) if true the client will NOT include a void pointer (named internal) for use by devs)" ON)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -144,6 +145,11 @@ if(SEGGER_RTT)
     MESSAGE(STATUS "Enable segger RTT for logging")
     ADD_DEFINITIONS(-DSEGGER_RTT)
 endif(SEGGER_RTT)
+
+if (DEV_NO_INTRN_PTR)
+    MESSAGE(STATUS "Disable dev opt (internal ptr)")
+    ADD_DEFINITIONS(-DDEV_NO_INTRN_PTR)
+endif()
 
 # handle version
 if (TAG_VERSION)

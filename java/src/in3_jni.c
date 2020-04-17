@@ -389,12 +389,13 @@ JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider(JNIEnv* env, jobject o
 static JNIEnv* jni = NULL;
 
 static jobject get_storage_handler(void* cptr) {
+  if (!jni || !cptr) return NULL;
   jclass    cls = (*jni)->GetObjectClass(jni, (jobject) cptr);
   jmethodID mid = (*jni)->GetMethodID(jni, cls, "getStorageProvider", "()Lin3/utils/StorageProvider;");
   return (*jni)->CallObjectMethod(jni, (jobject) cptr, mid);
 }
 
-bytes_t* storage_get_item(void* cptr, char* key) {
+bytes_t* storage_get_item(void* cptr, const char* key) {
   jobject handler = get_storage_handler(cptr);
   if (!handler) return NULL;
 
@@ -412,7 +413,7 @@ bytes_t* storage_get_item(void* cptr, char* key) {
   return res;
 }
 
-void storage_set_item(void* cptr, char* key, bytes_t* content) {
+void storage_set_item(void* cptr, const char* key, bytes_t* content) {
   jobject handler = get_storage_handler(cptr);
   if (!handler) return;
 
@@ -980,12 +981,8 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain)
   in3_t* in3 = in3_for_chain(jchain);
   in3_register_eth_api();
   in3_log_set_level(LOG_DEBUG);
+  in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
   in3->transport          = Java_in3_IN3_transport;
-  in3->cache              = _malloc(sizeof(in3_storage_handler_t));
-  in3->cache->cptr        = (*env)->NewGlobalRef(env, ob);
-  in3->cache->get_item    = storage_get_item;
-  in3->cache->set_item    = storage_set_item;
-  in3->cache->clear       = storage_clear;
   in3->signer             = _malloc(sizeof(in3_signer_t));
   in3->signer->sign       = jsign;
   in3->signer->prepare_tx = NULL;

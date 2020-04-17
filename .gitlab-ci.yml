@@ -6,7 +6,9 @@ stages:
   - build
   - bindings
   - wasm
+  - rust
   - python
+  - dotnet
   - java
   - test
   - analysis
@@ -21,6 +23,8 @@ include:
   - local: "/wasm/ci.yml"
   - local: "/java/ci.yml"
   - local: "/python/ci.yml"
+  - local: "/dotnet/ci.yml"
+  - local: "/rust/ci.yml"
 ##### local_docker_deploy_and_vulnerability_analysis #####
 
 ##### analyse #####

@@ -69,11 +69,11 @@ typedef struct bytes {
 
 /** a byte-buffer to attach byte-functions. */
 typedef struct {
-  uint32_t bsize; /**< size of the currently allocated bytes */
-  bytes_t  b;     /**< the bytes struct */
+  size_t  bsize; /**< size of the currently allocated bytes */
+  bytes_t b;     /**< the bytes struct */
 } bytes_builder_t;
 
-bytes_t* b_new(const char* data, int len);                    /**< allocates a new byte array with 0 filled */
+bytes_t* b_new(const uint8_t* data, uint32_t len);            /**< allocates a new byte array with 0 filled */
 void     b_print(const bytes_t* a);                           /**< prints a the bytes as hex to stdout */
 void     ba_print(const uint8_t* a, size_t l);                /**< prints a the bytes as hex to stdout */
 int      b_cmp(const bytes_t* a, const bytes_t* b);           /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/

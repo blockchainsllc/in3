@@ -341,6 +341,9 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
 
+  // for now we do not support it yet
+  if (chain->chain_id == ETH_CHAIN_ID_BTC) return;
+
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
     // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
     return;
@@ -462,7 +465,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     }
 
     // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-    if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
+    if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3))
       check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
@@ -524,6 +527,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   // prepare response-object
   in3_request_t* request = _malloc(sizeof(in3_request_t));
+  request->in3           = ctx->client;
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;

@@ -50,7 +50,7 @@
 #include <string.h>
 
 #define ETH_SIGN_PREFIX "\x19" \
-                        "Ethereum Signed Message:\n%i"
+                        "Ethereum Signed Message:\n%u"
 
 #define RESPONSE_START()                                                             \
   do {                                                                               \
@@ -179,6 +179,14 @@ static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** 
   RESPONSE_START();
   sb_add_chars(&response[0]->result, "true");
   RESPONSE_END();
+  return IN3_OK;
+}
+static in3_ret_t in3_getConfig(in3_ctx_t* ctx, in3_response_t** response) {
+  char* ret = in3_get_config(ctx->client);
+  RESPONSE_START();
+  sb_add_chars(&response[0]->result, ret);
+  RESPONSE_END();
+  _free(ret);
   return IN3_OK;
 }
 
@@ -342,6 +350,7 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (strcmp(method, "in3_ens") == 0) return in3_ens(ctx, params, response);
   if (strcmp(method, "web3_sha3") == 0) return in3_sha3(ctx, params, response);
   if (strcmp(method, "in3_config") == 0) return in3_config(ctx, params, response);
+  if (strcmp(method, "in3_getConfig") == 0) return in3_getConfig(ctx, response);
   if (strcmp(method, "in3_pk2address") == 0) return in3_pk2address(ctx, params, response);
   if (strcmp(method, "in3_pk2public") == 0) return in3_pk2address(ctx, params, response);
   if (strcmp(method, "in3_ecrecover") == 0) return in3_ecrecover(ctx, params, response);
@@ -362,6 +371,7 @@ static int verify(in3_vctx_t* v) {
       strcmp(method, "web3_sha3") == 0 ||
       strcmp(method, "in3_ens") == 0 ||
       strcmp(method, "in3_config") == 0 ||
+      strcmp(method, "in3_getConfig") == 0 ||
       strcmp(method, "in3_pk2address") == 0 ||
       strcmp(method, "in3_ecrecover") == 0 ||
       strcmp(method, "in3_signData") == 0 ||
