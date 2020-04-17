@@ -15,7 +15,6 @@ cx_ecfp_private_key_t private_key;
 cx_ecfp_public_key_t public_key_at_given_path(cx_curve_t curve_id, unsigned char* loc, int path_len) {
   PRINTF("public_key_at_given_path:enter");
   cx_ecfp_public_key_t  public_key;
-  cx_ecfp_private_key_t private_key;
   unsigned char         private_key_data[32];
   path_len_bip = read_bip32_path(path_len, loc, path);
 
@@ -31,12 +30,12 @@ cx_ecfp_public_key_t public_key_at_given_path(cx_curve_t curve_id, unsigned char
 
 //function to get private key at the given path
 cx_ecfp_private_key_t private_key_at_given_path(cx_curve_t curve_id, unsigned char* loc, int path_len) {
-  cx_ecfp_public_key_t public_key;
+
   unsigned char        private_key_data[32];
   path_len_bip = read_bip32_path(path_len, loc, path);
   os_perso_derive_node_bip32(CX_CURVE_256K1, path, path_len_bip, private_key_data, NULL);
   cx_ecdsa_init_private_key(CX_CURVE_256K1, private_key_data, 32, &private_key);
-  cx_ecfp_generate_pair(CX_CURVE_256K1, &public_key, &private_key, 1);
+  //cx_ecfp_generate_pair(CX_CURVE_256K1, &public_key, &private_key, 1);
   return private_key;
 }
 
@@ -131,17 +130,6 @@ cx_curve_t curve_code_to_curve(uint8_t curve_code) {
   return curves[curve_code];
 }
 
-int generate_hash(unsigned char* data, int data_len, unsigned char* out_hash) {
-  PRINTF("generate_hash:enter");
-  PRINTF("generate_hash: data len %d %d %d\n", data_len, data[0], data[data_len - 1]);
-  PRINTF("generate_hash: hash  %u  hash.header %u out_hash %u\n", hash, hash.header, out_hash);
-  cx_sha256_init(&hash);
-  cx_hash(&hash.header, 0, data, data_len, NULL);
-  int size = cx_hash(&hash.header, CX_LAST, data, 0, out_hash);
-  PRINTF("\ngenerate_hash: out_hash %d %d \n", out_hash[0], out_hash[HASH_LEN - 1]);
-  PRINTF("generate_hash:exit");
-  return size;
-}
 
 uint32_t read_bip32_path(uint32_t bytes, const uint8_t* buf, uint32_t* bip32_path) {
   uint32_t path_length = bytes;
