@@ -84,6 +84,8 @@ class In3Runtime:
         response_str = response_bytes.decode('utf8').replace('\n', ' ')
         # TODO: Make sure all responses are json parsable
         if 'error' in response_str:
+            with open('error.log', 'a+') as log_file:
+                log_file.write(response_str)
             raise ClientException(response_str)
         response_dict = json.loads(response_str)
         response = RPCResponse(**response_dict)

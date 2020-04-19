@@ -51,7 +51,7 @@ class EthereumTest(unittest.TestCase):
 
     def test_eth_call(self):
         # TODO
-        transaction = in3.eth.RawTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
+        transaction = in3.eth.NewTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
                                              to="0x7ceabea4AA352b10fBCa48e6E8015bC73687ABD4",
                                              data="0xa9c70686",
                                              nonce=5)
@@ -179,7 +179,6 @@ class EthereumTest(unittest.TestCase):
     # #     result = self.client.eth.get_filter_logs(filter_id=filter_id)
     # #     print(result)
     #
-    # # TODO: Fix
     # # in3.model.exception.In3RequestException: {'code': -32600, 'message': 'eth_getLogs : params[0].fromBlock (a quantity hex number) should match pattern "^0x(0|[a-fA-F1-9]+[a-fA-F0-9]*)$"'}
     # def test_get_logs(self):
     #     filter_obj = in3.eth.Filter(fromBlock=16095389, toBlock=in3.BlockStatus.LATEST)

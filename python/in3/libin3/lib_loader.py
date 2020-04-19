@@ -200,6 +200,7 @@ libin3.in3_set_default_transport(transport_fn)
 # register transport and verifiers (needed only once)
 libin3.in3_register_eth_full()
 libin3.in3_register_eth_api()
+# TODO: in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
 # enable logging
 if DEBUG:
     # map logging functions

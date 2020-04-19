@@ -5,9 +5,9 @@ import in3
 class UtilsTestCase(unittest.TestCase):
 
     def setUp(self):
-        # SK to 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
-        sk = "0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F"
-        config = in3.ClientConfig(chain_id='goerli', account_private_key=sk)
+        # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
+        self.sk = "0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F"
+        config = in3.ClientConfig(chain_id='goerli', account_private_key=self.sk)
         self.client = in3.Client(config)
 
     def test_checksum_address(self):
@@ -30,7 +30,7 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(address_false, self.client.eth.account.checksum_address(address_true, False))
 
     def test_estimate_gas(self):
-        transaction = in3.eth.RawTransaction(
+        transaction = in3.eth.NewTransaction(
             From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
             to="0xF5FEb05CA1b451d60b343f5Ee12df2Cc4ce2691B",
             nonce=5,
@@ -56,19 +56,26 @@ class UtilsTestCase(unittest.TestCase):
     def test_send_tx(self):
         # TODO: Check send_tx mock data
         # Money transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
-        tx = in3.eth.RawTransaction(From="0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308",
-                                    to="0x6FA33809667A99A805b610C49EE2042863b1bb83",
-                                    value="0.0005")
+        # 1000000000000000000 == 1 ETH
+        sender = "0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308"
+        receiver = "0x6FA33809667A99A805b610C49EE2042863b1bb83"
+        tx = in3.eth.NewTransaction(From=sender,
+                                    to=receiver,
+                                    value=290000000000000)
         result = self.client.eth.account.send_transaction(tx)
         self.assertEqual(result, "asd")
 
     def test_send_raw_transaction(self):
-        # Money transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
-        tx = in3.eth.RawTransaction(From="0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308",
-                                    to="0x6FA33809667A99A805b610C49EE2042863b1bb83",
-                                    value="0.0005")
+        # Test ETH transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
         # TODO: test_send_raw_transaction
-        # it will fail if we didn't update the nonce
-        tx = {}
+        sender = "0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308"
+        receiver = "0x6FA33809667A99A805b610C49EE2042863b1bb83"
+        tx = in3.eth.NewTransaction(From=sender,
+                                    to=receiver,
+                                    value=290000000000000,
+                                    gasLimit=21000,
+                                    gasPrice=self.client.eth.gas_price(),
+                                    nonce=self.client.eth.get_transaction_count(sender))
+        tx.signature = self.client.eth.account.sign(self.sk, self.client.rlp_encode_meu_ovo(tx))
         result = self.client.eth.account.send_raw_transaction(tx)
         self.assertEqual(result, "asd")
