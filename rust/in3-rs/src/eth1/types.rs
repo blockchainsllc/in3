@@ -101,15 +101,20 @@ pub enum FilterChanges {
 }
 
 // Transaction used as i/p type for eth_sendTransaction
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct OutgoingTransaction {
     pub from: Address,
     pub to: Address,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gas: Option<U256>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gas_price: Option<U256>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<U256>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Bytes>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub nonce: Option<U256>,
 }
 
