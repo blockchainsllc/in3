@@ -245,17 +245,19 @@ in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path) {
 void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
 
   //ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s
-  int lr = i_raw_sig.data[3];
-  int ls = i_raw_sig.data[lr + 5];
-
-  in3_log_debug("lr %d, ls %d \n", lr, ls);
+  int lr     = i_raw_sig.data[3];
+  int ls     = i_raw_sig.data[lr + 5];
+  int offset = 0;
+  printf("lr %d, ls %d \n", lr, ls);
   if (lr > 0x20) {
-    memcpy(o_sig, i_raw_sig.data + 5, lr - 1);
+    memcpy(o_sig + offset, i_raw_sig.data + 5, lr - 1);
+    offset = lr - 1;
   } else {
     memcpy(o_sig, i_raw_sig.data + 4, lr);
+    offset = lr;
   }
 
-  memcpy(o_sig + lr, i_raw_sig.data + lr + 6, ls);
+  memcpy(o_sig + offset, i_raw_sig.data + lr + 6, ls);
 }
 
 void read_hid_response(hid_device* handle, bytes_t* response) {
@@ -299,12 +301,15 @@ int get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uin
   uint8_t p_key[65];
   int     ret   = 0;
   int     recid = -1;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 255; i++) {
     ret = ecdsa_recover_pub_from_sig(curve, p_key, sig, digest, i);
     if (ret == 0) {
+#ifdef DEBUG
+      print_bytes(p_key, 65, "recover recid :public key");
+#endif
       if (memcmp(pub_key, p_key, 65) == 0) {
         recid = i;
-        in3_log_debug("recid is %d\n", i);
+        printf("recid is %d\n", i);
         break;
       }
     }
