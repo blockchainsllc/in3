@@ -1,15 +1,18 @@
-use async_std::task;
 use serde_json::{json, Value};
+
+use async_trait::async_trait;
 
 use crate::prelude::*;
 use crate::types::Bytes;
 
+#[async_trait(? Send)]
 pub trait Encode {
-    fn encode(&mut self, fn_sig: &str, params: Value) -> In3Result<Bytes>;
+    async fn encode(&mut self, fn_sig: &str, params: Value) -> In3Result<Bytes>;
 }
 
+#[async_trait(? Send)]
 pub trait Decode {
-    fn decode(&mut self, fn_sig: &str, data: Bytes) -> In3Result<Value>;
+    async fn decode(&mut self, fn_sig: &str, data: Bytes) -> In3Result<Value>;
 }
 
 pub struct In3EthAbi {
@@ -22,32 +25,25 @@ impl In3EthAbi {
     }
 }
 
+#[async_trait(? Send)]
 impl Encode for In3EthAbi {
-    fn encode(&mut self, fn_sig: &str, params: Value) -> In3Result<Bytes> {
-        let resp_str = task::block_on(
-            self.in3.rpc(
-                serde_json::to_string(&json!({
+    async fn encode(&mut self, fn_sig: &str, params: Value) -> In3Result<Bytes> {
+        let resp_str = self.in3.rpc(
+            serde_json::to_string(&json!({
                     "method": "in3_abiEncode",
                     "params": [fn_sig, params]
                 })).unwrap().as_str()
-            ),
-        )?;
+        ).await?;
         let resp: Value = serde_json::from_str(resp_str.as_str())?;
         let res: Bytes = serde_json::from_str(resp["result"].to_string().as_str())?;
         Ok(res)
     }
 }
 
+#[async_trait(? Send)]
 impl Decode for In3EthAbi {
-    fn decode(&mut self, fn_sig: &str, data: Bytes) -> In3Result<Value> {
-        let resp_str = task::block_on(
-            self.in3.rpc(
-                serde_json::to_string(&json!({
-                    "method": "in3_abiDecode",
-                    "params": [fn_sig, data]
-                })).unwrap().as_str()
-            ),
-        )?;
+    async fn decode(&mut self, fn_sig: &str, data: Bytes) -> In3Result<Value> {
+        let resp_str = self.in3.rpc(serde_json::to_string(&json!({"method": "in3_abiDecode", "params": [fn_sig, data]})).unwrap().as_str()).await?;
         let resp: Value = serde_json::from_str(resp_str.as_str())?;
         Ok(resp["result"].clone())
     }
