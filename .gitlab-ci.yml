@@ -16,7 +16,7 @@ stages:
   - release
 
 include:
-  - template: Code-Quality.gitlab-ci.yml
+  - local: "code-quality.gitlab-ci.yml"
   - local: "/c/ci.yml"
   - local: "/c/ci-analyse.yml"
   - local: "/c/ci-deploy.yml"
