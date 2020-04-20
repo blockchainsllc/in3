@@ -5,9 +5,11 @@ use crate::error::In3Result;
 use crate::transport_async;
 use std::{fmt::Write, num::ParseIntError};
 // use in3_sys::HasherType;
-// use in3_sys::HasherType;
+use in3_sys::d_signature_type_t;
 use ffi::{CString, CStr};
 use libc::{c_char, puts, strlen};
+
+
 pub mod chain {
     pub type ChainId = u32;
 
@@ -51,6 +53,56 @@ impl Ctx {
     //     let error: libc::c_int = in3_sys::eth_sign(void_cast, type_ , *message, *account, dst);
     //     error as i32
     // }
+
+    // pub fn sign(&mut self, type_: u8, data:*const u8, len: u32) -> *mut u8 {
+    pub fn in3_rust_signer(&mut self, type_: u8, data:*const u8, len: u32) -> CString {
+        unsafe {
+            let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
+            let dst  = libc::malloc(65) as *mut u8;
+            let pby = *dst.offset(64) as *mut u8;
+            // let pby = dst.offset(64) as *mut u8;
+            let curve = in3_sys::secp256k1;
+            // let type_sys = type_ as in3_sys::d_signature_type_t;
+            let mut error: libc::c_int = 0;
+            let enm_type: in3_sys::d_signature_type_t = match type_ {
+                0 => d_signature_type_t::SIGN_EC_RAW,
+                1 => d_signature_type_t::SIGN_EC_HASH,
+                _ => panic!("Unknown value: {}", type_),
+            };
+            match enm_type {
+               in3_sys::d_signature_type_t::SIGN_EC_RAW => {
+                    error = in3_sys::ecdsa_sign_digest(&curve, pk, data, dst, pby, None);
+               }
+               in3_sys::d_signature_type_t::SIGN_EC_HASH => {
+                    error = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
+               }
+            }
+            let mut value = std::slice::from_raw_parts_mut(dst, 65 as usize);
+            // let str_sign = CStr::from_ptr(dst);
+            let str_sign = CString::from_vec_unchecked(value.to_vec());
+            println!("\n{:?}", str_sign);
+            // for byte in value {
+            //     print!("{:x}", byte);
+            // }
+            str_sign
+            
+        }
+    }
+    // pub fn sign_de(&mut self){
+    //     let req = in3_sys::in3_create_request(last_waiting);
+    //     let data = (*req).payload as *mut u8;
+    //     let res_str = self.sign(0, data, 32);
+    //     in3_sys::sb_add_chars(
+    //         &mut (*(*req).results.add(0)).result,
+    //         res_str.into_raw(),
+    //     );
+    //     let result = (*(*req).results.offset(0)).result;
+    //     let len = result.len;
+    //     let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+    //     println!("DATA -- > {}", data); 
+    //     // println!("TODO CT_SIGN");
+    // }
+    
     
     
     pub async fn execute(&mut self) -> In3Result<String> {
@@ -109,8 +161,19 @@ impl Ctx {
                     let req_type = (*last_waiting).type_;
                     match req_type {
                         in3_sys::ctx_type::CT_SIGN => {
-                            println!("TODO CT_SIGN");
-                            break Ok("TODO");
+                            let req = in3_sys::in3_create_request(last_waiting);
+                            let data = (*req).payload as *mut u8;
+                            let res_str = self.sign(0, data, 32);
+                            in3_sys::sb_add_chars(
+                                &mut (*(*req).results.add(0)).result,
+                                res_str.into_raw(),
+                            );
+                            let result = (*(*req).results.offset(0)).result;
+                            let len = result.len;
+                            let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+                            println!("DATA -- > {}", data); 
+                            // println!("TODO CT_SIGN");
+                            break Ok(data);
 
                         }
                         in3_sys::ctx_type::CT_RPC => {
@@ -148,7 +211,7 @@ impl Ctx {
                             let result = (*(*req).results.offset(0)).result;
                             let len = result.len;
                             let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                            println!("{}", data);
+                            println!("RPC ----> {}", data);
                             if len != 0 {
                                 break Ok(data);
                             } else {
@@ -204,6 +267,7 @@ pub struct Client {
     storage_get: Option<Box<dyn FnMut(&str) -> Vec<u8>>>,
     storage_set: Option<Box<dyn FnMut(&str, &[u8])>>,
     storage_clear: Option<Box<dyn FnMut()>>,
+    signer: Option<Box<dyn FnMut(u8, &[u8], u32) -> Vec<u8>>>,
 }
 
 impl Client {
@@ -239,7 +303,14 @@ impl Client {
                                                               Some(Client::in3_rust_storage_set),
                                                               Some(Client::in3_rust_storage_clear),
                                                               c.ptr as *mut libc::c_void);
+            
             (*c.ptr).transport = Some(Client::in3_rust_transport);
+            // std::ptr::null_mut()
+            (*(*c.ptr)).signer = in3_sys::in3_create_signer(Some(Client::in3_rust_signer), None, None);
+            // in3->signer             = _malloc(sizeof(in3_signer_t));
+            // in3->signer->sign       = eth_sign;
+            // in3->signer->prepare_tx = NULL;
+            // in3->signer->wallet     = pk;
 
             #[cfg(feature = "blocking")] {
                 c.set_transport(Box::new(crate::transport::transport_http));
@@ -247,6 +318,13 @@ impl Client {
 
             c
         }
+    }
+
+    pub fn set_signer(
+        &mut self,
+        transport: Box<dyn FnMut(&str, &[&str]) -> Vec<Result<String, String>>>,
+    ) {
+        self.signer = Some(transport);
     }
 
     pub fn set_transport(
@@ -392,16 +470,41 @@ impl Client {
             let pby = *dst.offset(64) as *mut u8;
             // let pby = dst.offset(64) as *mut u8;
             let curve = in3_sys::secp256k1;
-            let error: libc::c_int = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
-            let mut value = std::slice::from_raw_parts_mut(dst, 65 as usize);
-            println!("\n{:?}", value);
-            for byte in value {
-                print!("{:x}", byte);
+            // let type_sys = type_ as in3_sys::d_signature_type_t;
+            let mut error: libc::c_int = 0;
+            let enm_type: in3_sys::d_signature_type_t = match type_ {
+                0 => d_signature_type_t::SIGN_EC_RAW,
+                1 => d_signature_type_t::SIGN_EC_HASH,
+                _ => panic!("Unknown value: {}", type_),
+            };
+            match enm_type{
+               in3_sys::d_signature_type_t::SIGN_EC_RAW => {
+                    error = in3_sys::ecdsa_sign_digest(&curve, pk, data, dst, pby, None);
+               }
+               in3_sys::d_signature_type_t::SIGN_EC_HASH => {
+                    error = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
+               }
             }
+            let mut value = std::slice::from_raw_parts_mut(dst, 65 as usize);
+            // let str_sign:String = String::from_utf8(value.to_vec()).unwrap();
+            // println!("\n{:?}", str_sign);
+            println!("\n");
+            for byte in value {
+                print!("{:02x}", byte);
+            }
+            println!("\n");
             dst
         }
         
     }
+
+    pub fn set_pk_signer(&mut self, data: &str) {
+        unsafe {
+            let pk_ = self.hex_to_bytes(data);
+            in3_sys::eth_set_pk_signer(self.ptr, pk_);
+        }
+    }
+
     pub fn hex_to_bytes(&mut self, data: &str) -> *mut u8{
         unsafe {
             let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
@@ -417,7 +520,7 @@ impl Client {
             out
         }
     }
-    pub fn new_bytes(&mut self, data: &str) -> *mut u8{
+    pub fn new_bytes(&mut self, data: &str) -> *mut u8 {
         unsafe {
         let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
         let data_ptr= c_str_data.as_ptr();
