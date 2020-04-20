@@ -64,7 +64,6 @@ class ClientConfig(DataTransferObject):
     **All args are Optional. Defaults connect to Ethereum main network with regular security levels.**
 
     Args:
-        chain_id (str): 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
         chain_finality_threshold (int):  Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
         latest_block_stall (int): Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
         account_private_key (str): Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
@@ -82,23 +81,21 @@ class ClientConfig(DataTransferObject):
         cached_code_bytes (int): Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
     """
     def __init__(self,
-                 chain_id: str = 'mainnet',
                  chain_finality_threshold: int = None,
                  account_private_key: str = None,
                  latest_block_stall: int = None,
                  node_signatures: int = None,
                  node_signature_consensus: int = None,
-                 node_min_deposit: int = 10000000000000000,
-                 node_list_auto_update: bool = True,
+                 node_min_deposit: int = None,
+                 node_list_auto_update: bool = None,
                  node_limit: int = None,
-                 request_timeout: int = 7000,
-                 request_retries: int = 7,
-                 response_proof_level: str = str(In3ProofLevel.STANDARD),
-                 response_includes_code: bool = False,
-                 response_keep_proof: bool = False,
+                 request_timeout: int = None,
+                 request_retries: int = None,
+                 response_proof_level: str = None,
+                 response_includes_code: bool = None,
+                 response_keep_proof: bool = None,
                  cached_blocks: int = None,
                  cached_code_bytes: int = None):
-        self.chainId: str = chain_id
         self.finality: int = chain_finality_threshold
         self.key: str = account_private_key
         self.replaceLatestBlock: int = latest_block_stall
@@ -120,50 +117,55 @@ class ChainConfig:
     """
     Default in3 client configuration for each chain see #clientConfig for details.
     """
-    def __init__(self, chain_id: str, chain_id_alias: str, chain_finality_threshold: int, latest_block_stall: int,
-                 node_signatures: int, node_signature_consensus: int = None):
-        self.chain_id: str = chain_id
+    def __init__(self, chain_id: int, chain_id_alias: str, client_config: ClientConfig):
+        self.chain_id: int = chain_id
         self.chain_id_alias: str = chain_id_alias
-        self.chain_finality_threshold: int = chain_finality_threshold
-        self.latest_block_stall: int = latest_block_stall
-        self.node_signatures: int = node_signatures
-        self.node_signature_consensus: int = node_signature_consensus
+        self.client_config: ClientConfig = client_config
 
 
-MAINNET = ChainConfig(
-    chain_id="0x1",
-    chain_id_alias="mainnet",
-    chain_finality_threshold=10,
-    latest_block_stall=10,
-    node_signatures=2)
-
-KOVAN = ChainConfig(
-    chain_id="0x2a",
-    chain_id_alias="kovan",
-    chain_finality_threshold=1,
-    latest_block_stall=6,
-    node_signatures=1,
-    node_signature_consensus=3)
-
-EVAN = ChainConfig(
-    chain_id="0x4b1",
-    chain_id_alias="evan",
-    chain_finality_threshold=1,
-    latest_block_stall=6,
-    node_signatures=0,
-    node_signature_consensus=5)
-
-GOERLI = ChainConfig(
-    chain_id="0x5",
-    chain_id_alias="goerli",
-    chain_finality_threshold=1,
-    latest_block_stall=6,
-    node_signatures=2)
-
-IPFS = ChainConfig(
-    chain_id="0x7d0",
-    chain_id_alias="ipfs",
-    chain_finality_threshold=1,
-    latest_block_stall=5,
-    node_signatures=1,
-    node_signature_consensus=1)
+chain_configs = {
+    "mainnet": ChainConfig(
+        chain_id=int(0x1),
+        chain_id_alias="mainnet",
+        client_config= ClientConfig(
+            chain_finality_threshold=10,
+            latest_block_stall=10,
+            node_signatures=2)
+    ),
+    "kovan": ChainConfig(
+        chain_id=int(0x2a),
+        chain_id_alias="kovan",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=6,
+            node_signatures=1,
+            node_signature_consensus=3)
+    ),
+    "evan": ChainConfig(
+        chain_id=int(0x4b1),
+        chain_id_alias="evan",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=6,
+            node_signatures=0,
+            node_signature_consensus=5)
+    ),
+    "goerli": ChainConfig(
+        chain_id=int(0x5),
+        chain_id_alias="goerli",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=6,
+            node_signatures=2)
+    ),
+    "ipfs": ChainConfig(
+        chain_id=int(0x7d0),
+        chain_id_alias="ipfs",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=5,
+            node_signatures=1,
+            node_signature_consensus=1
+        )
+    ),
+}

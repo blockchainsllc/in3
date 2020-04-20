@@ -22,33 +22,15 @@ class RPCRequest:
             self.fn_args = ''.encode('utf8')
 
 
-class RPCResponse:
-    # TODO: Verify need
-    """
-    RPC response from libin3.
-    Args:
-        id: Message id
-        jsonrpc: Version of the json-rpc api
-        result: Function returned value(s)
-        error: (Optional) Filled in case of error
-    """
-
-    def __init__(self, id: str, jsonrpc: str, result: str = None, error: str = None):
-        self.id = id
-        self.jsonrpc = jsonrpc
-        self.result = result
-        self.error = error
-
-
 class In3Runtime:
     """
     Instantiate libin3 and frees it when garbage collected.
     Args:
-        timeout (int): Time for http request connection and content timeout in milliseconds
+        chain_id (str): 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
     """
 
-    def __init__(self, timeout: int):
-        self.in3 = libin3_new(timeout)
+    def __init__(self, chain_id: int):
+        self.in3 = libin3_new(chain_id)
 
     def __del__(self):
         libin3_free(self.in3)
@@ -63,7 +45,7 @@ class In3Runtime:
         Returns:
             fn_return (str): String of values returned by the function, if any.
         """
-
+        # TODO: Returned value enum
         """
         typedef enum {
           /* On success positive values (impl. defined) upto INT_MAX maybe returned */
@@ -94,8 +76,6 @@ class In3Runtime:
             with open('error.log', 'a+') as log_file:
                 log_file.write(error)
             raise ClientException(error)
-        # response_dict = json.loads(result)
-        # response = RPCResponse(**response_dict)
         return json.loads(response)
 
     def set_signer(self, private_key: str):

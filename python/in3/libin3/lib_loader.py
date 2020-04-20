@@ -11,6 +11,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 +----------------+     primitive or Object       +----------+     ctype object      +------------+  in3_req_add_response  +------------------+
 ```
 """
+import json
 from pathlib import Path
 
 import math
@@ -19,7 +20,6 @@ import platform
 import requests
 
 DEBUG: bool = False
-TIMEOUT = 5000
 
 
 class In3Request(c.Structure):
@@ -39,20 +39,31 @@ class In3Request(c.Structure):
                 ("urls_len", c.c_int),
                 ("results", c.c_void_p),
                 ("timeout", c.c_uint32),
-                ("times", c.POINTER(c.c_uint32))]
+                ("times", c.c_uint32)]
 
 
-def libin3_new(timeout: int):
+def libin3_new(chain_id: int) -> int:
     """
     RPC to free libin3 objects in memory.
     Args:
-        timeout (int): Time in milliseconds for http requests to fail due to timeout
+        chain_id (int): Chain id as integer
     Returns:
          instance (int): Memory address of the shared library instance, return value from libin3_new
     """
-    global TIMEOUT
-    TIMEOUT = float(timeout * math.pow(10, -3))
-    return libin3.in3_new()
+    assert isinstance(chain_id, int)
+    # define this function as default transport for in3 requests from client to server and back
+    libin3.in3_set_default_transport(_http_transport)
+    # register transport and verifiers (needed only once)
+    libin3.in3_register_eth_full()
+    # libin3.in3_register_ipfs();
+    libin3.in3_register_eth_api()
+    # TODO: in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
+    # enable logging
+    if DEBUG:
+        # set logger level to TRACE
+        libin3.in3_log_set_quiet_(False)
+        libin3.in3_log_set_level_(0)
+    return libin3.in3_for_chain_auto_init(chain_id)
 
 
 def libin3_free(instance: int):
@@ -82,16 +93,15 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
 
 
 def libin3_set_pk(instance, private_key: str):
-    libin3.eth_set_pk_signer(instance, private_key);
+    libin3.eth_set_pk_signer(instance, private_key.encode('utf8'))
 
 
 def _transport_report_success(in3_request: In3Request, i: int, response: requests.Response):
-    libin3.in3_req_add_response(
-        in3_request.results, i, False, response.content, -1)
+    libin3.in3_req_add_response(in3_request.results, i, False, response.content, len(response.content))
 
 
 def _transport_report_failure(in3_request: In3Request, i: int, err: Exception):
-    libin3.in3_req_add_response(in3_request.results, i, True, str(err), -1)
+    libin3.in3_req_add_response(in3_request.results, i, True, str(err).encode('utf8'), len(str(err)))
 
 
 @c.CFUNCTYPE(c.c_int, c.POINTER(In3Request))
@@ -111,11 +121,15 @@ def _http_transport(in3_request: In3Request):
                 'url': c.string_at(in3_request.urls[i]),
                 'data': c.string_at(in3_request.payload),
                 'headers': {'Content-type': 'application/json'},
-                'timeout': TIMEOUT
+                'timeout': in3_request.timeout
             }
             response = requests.post(**rpc_request)
             response.raise_for_status()
-            _transport_report_success(in3_request, i, response)
+            if 'error' in response.text:
+                response_dict = json.loads(response.text)
+                _transport_report_failure(in3_request, i, Exception(response_dict[0]['error']))
+            else:
+                _transport_report_success(in3_request, i, response)
         except requests.exceptions.RequestException as err:
             _transport_report_failure(in3_request, i, err)
         except requests.exceptions.SSLError as err:
@@ -182,14 +196,14 @@ def _multi_platform_selector() -> str:
 
 # =================== LIBIN3 SHARED LIBRARY MAPPING ===================
 libin3 = c.cdll.LoadLibrary(_multi_platform_selector())
-# map free
-libin3._free_.argtypes = c.c_void_p,
-libin3._free_.restype = None
 # map new in3
-libin3.in3_new.argtypes = []
-libin3.in3_new.restype = c.c_void_p
+libin3.in3_for_chain_auto_init.argtypes = [c.c_int]
+libin3.in3_for_chain_auto_init.restype = c.c_void_p
 # map free in3
 libin3.in3_free.argtypes = c.c_void_p,
+libin3.in3_free.restype = None
+# map set pk signer
+libin3.eth_set_pk_signer.argtypes = [c.c_void_p, c.c_char_p]
 libin3.in3_free.restype = None
 # map transport request function
 libin3.in3_client_exec_req.argtypes = [c.c_void_p, c.c_char_p]
@@ -199,21 +213,10 @@ libin3.in3_client_rpc.argtypes = [c.c_void_p, c.c_char_p, c.c_char_p,
                                   c.POINTER(c.c_char_p)]
 libin3.in3_client_rpc.restype = c.c_int
 # map transport function for response
-libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_void_p, c.c_int]
+libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int]
 libin3.in3_req_add_response.restype = None
-# define this function as default transport for in3 requests from client to server and back
-libin3.in3_set_default_transport(_http_transport)
-# register transport and verifiers (needed only once)
-libin3.in3_register_eth_full()
-libin3.in3_register_eth_api()
-# TODO: in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
-# enable logging
-if DEBUG:
-    # map logging functions
-    libin3.in3_log_set_quiet_.argtypes = c.c_bool,
-    libin3.in3_log_set_quiet_.restype = None
-    libin3.in3_log_set_level_.argtypes = c.c_int,
-    libin3.in3_log_set_level_.restype = None
-    # set logger level to TRACE
-    libin3.in3_log_set_quiet_(False)
-    libin3.in3_log_set_level_(0)
+# map logging functions
+libin3.in3_log_set_quiet_.argtypes = c.c_bool,
+libin3.in3_log_set_quiet_.restype = None
+libin3.in3_log_set_level_.argtypes = c.c_int,
+libin3.in3_log_set_level_.restype = None

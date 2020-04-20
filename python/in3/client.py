@@ -2,7 +2,7 @@ from in3.eth.factory import EthObjectFactory
 from in3.libin3.runtime import In3Runtime
 from in3.libin3.enum import In3Methods
 from in3.eth.api import EthereumApi
-from in3.model import In3Node, NodeList, ClientConfig
+from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_configs
 
 import re
 
@@ -16,24 +16,26 @@ class Client:
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
     """
 
-    def __init__(self, in3_config: ClientConfig or str = None):
-        super().__init__()
+    def __init__(self, chain: str or ChainConfig, in3_config: ClientConfig = None):
         if isinstance(in3_config, ClientConfig):
             self.config = in3_config
-        elif isinstance(in3_config, str):
-            if in3_config not in ['mainnet', 'kovan', 'goerli', 'evan', 'ipfs']:
-                raise ValueError('Chain name not supported. Try mainnet, kovan, goerli, evan, ipfs.')
-            self.config = ClientConfig(chain_id=in3_config)
-        else:
-            self.config = ClientConfig()
-        self._runtime = In3Runtime(self.config.timeout)
-        self._configure(in3_config=self.config)
-        self.eth = EthereumApi(runtime=self._runtime, chain_id=self.config.chainId)
-        self._factory = In3ObjectFactory(self.eth.account.checksum_address, self.config.chainId)
+        if isinstance(chain, ChainConfig):
+            pass
+            # TODO: Enable
+            # self.config = chain.client_config
+        elif chain not in ['mainnet', 'kovan', 'goerli', 'evan', 'ipfs']:
+            raise ValueError('Chain name not supported. Try mainnet, kovan, goerli, evan, ipfs.')
+        self._runtime = In3Runtime(chain_configs[chain].chain_id)
+        if self.config:
+            self._configure(in3_config=self.config)
+        self.eth = EthereumApi(runtime=self._runtime, chain_id=chain_configs[chain].chain_id)
+        self._factory = In3ObjectFactory(self.eth.account.checksum_address, chain_configs[chain].chain_id)
 
     def _configure(self, in3_config: ClientConfig) -> bool:
         fn_args = str([in3_config.serialize()]).replace('\'', '')
-        return self._runtime.call(In3Methods.CONFIG, fn_args, formatted=True)
+        self._runtime.call(In3Methods.CONFIG, fn_args, formatted=True)
+        if in3_config.key:
+            self._runtime.set_signer(in3_config.key)
 
     def get_node_list(self) -> NodeList:
         """
