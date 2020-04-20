@@ -1,8 +1,8 @@
 dockerhub-deploy:
   stage: deploy
   needs: []
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   tags:
@@ -58,8 +58,8 @@ release_mac_and_wasm:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
@@ -110,8 +110,8 @@ release_x64:
     - asmjs
     - java
     - python
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
@@ -143,8 +143,8 @@ release_x86:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
@@ -184,8 +184,8 @@ release_arm7:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
@@ -225,8 +225,8 @@ release_win:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
@@ -270,8 +270,8 @@ release_maven:
   image: docker.slock.it/build-images/maven-deployment-image:latest
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
@@ -286,9 +286,8 @@ pages:
   stage: deploy
   tags:
     - arm
-  only:
-    refs:
-      - develop
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
   needs:
     - arm7
     - readthedocs
@@ -355,8 +354,8 @@ debian_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
 
@@ -366,8 +365,8 @@ debian_package_deploy_disco:
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
 
@@ -415,8 +414,8 @@ debian_dev_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
 
@@ -426,8 +425,8 @@ debian__dev_package_deploy_disco:
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
 
@@ -436,8 +435,8 @@ brew_release:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
@@ -463,8 +462,8 @@ github_body_release:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   except:
     - branches
   when: manual
