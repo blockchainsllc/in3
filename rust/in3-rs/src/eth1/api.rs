@@ -185,9 +185,7 @@ impl Api {
     }
 
     pub async fn call(&mut self, transaction: CallTransaction, block: BlockNumber) -> In3Result<Bytes> {
-        if transaction.to.is_none() {
-            return Err(Error::InvalidValue);
-        }
+        assert!(transaction.to.is_some());
         let resp = self.send(RpcRequest {
             method: "eth_call",
             params: json!([transaction, block]),
