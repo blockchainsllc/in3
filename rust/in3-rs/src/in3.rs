@@ -79,7 +79,7 @@ impl Ctx {
                     let data = ffi::CStr::from_ptr(result).to_str().unwrap();
                     return Ok(data.into());
                 }
-                err  => {
+                err => {
                     return Err(err.into());
                 }
             }

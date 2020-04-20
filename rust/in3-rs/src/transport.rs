@@ -4,6 +4,8 @@ use std::error::Error;
 
 use async_trait::async_trait;
 
+use crate::traits::Transport;
+
 async fn http_async(
     url: &str,
     payload: &str,
@@ -19,7 +21,7 @@ async fn http_async(
 pub struct HttpTransport;
 
 #[async_trait]
-impl crate::traits::Transport for HttpTransport {
+impl Transport for HttpTransport {
     async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
@@ -45,7 +47,6 @@ impl crate::traits::Transport for HttpTransport {
         responses
     }
 }
-
 
 #[cfg(test)]
 mod tests {
