@@ -101,7 +101,7 @@ pub enum FilterChanges {
 }
 
 // Transaction used as i/p type for eth_sendTransaction
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OutgoingTransaction {
     pub from: Address,
@@ -126,7 +126,7 @@ pub struct CallTransaction {
     pub data: Option<Bytes>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionReceipt {
     pub transaction_hash: Option<H256>,
