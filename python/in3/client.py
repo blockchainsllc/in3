@@ -31,8 +31,9 @@ class Client:
         self.eth = EthereumApi(runtime=self._runtime, chain_id=self.config.chainId)
         self._factory = In3ObjectFactory(self.eth.account.checksum_address, self.config.chainId)
 
-    def _configure(self, in3_config: ClientConfig):
-        return self._runtime.call(In3Methods.CONFIG, in3_config.serialize())
+    def _configure(self, in3_config: ClientConfig) -> bool:
+        fn_args = str([in3_config.serialize()]).replace('\'', '')
+        return self._runtime.call(In3Methods.CONFIG, fn_args, formatted=True)
 
     def get_node_list(self) -> NodeList:
         """
@@ -88,6 +89,7 @@ class Client:
     # TODO add eth_set_pk_signer
     # TODO add sign_tx
     # TODO add ens
+    # TODO add getConfig
 
 
 class In3ObjectFactory(EthObjectFactory):

@@ -1,6 +1,7 @@
 from in3.exception import HashFormatException, EthAddressFormatException
 from in3.eth.model import Block, Transaction, Account, Log, TransactionReceipt
 from in3.libin3.enum import In3Methods
+from in3.libin3.runtime import In3Runtime
 
 
 class EthObjectFactory:
@@ -9,7 +10,7 @@ class EthObjectFactory:
     For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
 
-    def __init__(self, runtime, chain_id: str):
+    def __init__(self, runtime: In3Runtime, chain_id: str):
         self._runtime = runtime
         self._chain_id = chain_id
 
@@ -150,4 +151,4 @@ class EthObjectFactory:
             raise EthAddressFormatException("The string don't have the size of an Ethereum address.")
         # if self.checksum_address(address, True) != address:
         #     raise EthAddressFormatException("The string checksum is invalid for an Ethereum address.")
-        return Account(address, self._chain_id)
+        return Account(address.replace('\'', '"'), self._chain_id)

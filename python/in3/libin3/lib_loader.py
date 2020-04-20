@@ -4,19 +4,17 @@ Load libin3 shared library for the current system, map function signatures, map 
 Example of RPC to In3-Core library, In3 Network and back.
 ```
 +----------------+                               +----------+                       +------------+                        +------------------+
-|                | in3.client.eth.block_number() |          |  in3_client_exec_req  |            |  In3 Network Request   |                  |e
+|                | in3.client.eth.block_number() |          |     in3_client_rpc    |            |  In3 Network Request   |                  |e
 |     python     +------------------------------>+  python  +----------------------->   libin3   +------------------------>     python       |
 |   application  |                               |   in3    |                       |  in3-core  |                        |  http_transport  |
 |                <-------------------------------+          <-----------------------+            <------------------------+                  |
 +----------------+     primitive or Object       +----------+     ctype object      +------------+  in3_req_add_response  +------------------+
 ```
 """
-from ctypes import POINTER, CFUNCTYPE
-from ctypes import c_char, c_int, c_void_p, c_uint32, c_char_p, c_bool
-from ctypes import Structure, string_at, cast, cdll
 from pathlib import Path
 
 import math
+import ctypes as c
 import platform
 import requests
 
@@ -24,7 +22,7 @@ DEBUG: bool = False
 TIMEOUT = 5000
 
 
-class In3Request(Structure):
+class In3Request(c.Structure):
     """
     Request sent by the libin3 to the In3 Network, transported over the _http_transport function
     Based on in3/client/.h in3_request_t struct
@@ -36,12 +34,12 @@ class In3Request(Structure):
         timeout (int): the timeout 0= no timeout
         times (int): measured times (in ms) which will be used for ajusting the weights
     """
-    _fields_ = [("payload", POINTER(c_char)),
-                ("urls", POINTER(POINTER(c_char))),
-                ("urls_len", c_int),
-                ("results", c_void_p),
-                ("timeout", c_uint32),
-                ("times", POINTER(c_uint32))]
+    _fields_ = [("payload", c.POINTER(c.c_char)),
+                ("urls", c.POINTER(c.POINTER(c.c_char))),
+                ("urls_len", c.c_int),
+                ("results", c.c_void_p),
+                ("timeout", c.c_uint32),
+                ("times", c.POINTER(c.c_uint32))]
 
 
 def libin3_new(timeout: int):
@@ -66,19 +64,25 @@ def libin3_free(instance: int):
     libin3.in3_free(instance)
 
 
-def libin3_call(instance: int, rpc: bytes):
+def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     """
     Make Remote Procedure Call to an arbitrary method of a libin3 instance
     Args:
         instance (int): Memory address of the shared library instance, return value from libin3_new
-        rpc (bytes): Serialized function call, a ethreum api json string.
+        fn_name (bytes): Name of function that will be called in libin3
+        fn_args: (bytes) Serialized list of arguments, matching the parameters order of this function. i.e. ['0x123']
     Returns:
-        returned_value (object): The returned function value(s)
+        result (int): Function execution status.
     """
-    ptr_res = libin3.in3_client_exec_req(instance, rpc)
-    result = cast(ptr_res, c_char_p).value
-    libin3._free_(ptr_res)
-    return result
+    response = c.c_char_p()
+    error = c.c_char_p()
+    result = libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
+    libin3._free_(result)
+    return result, response.value, error.value
+
+
+def libin3_set_pk(instance, private_key: str):
+    libin3.eth_set_pk_signer(instance, private_key);
 
 
 def _transport_report_success(in3_request: In3Request, i: int, response: requests.Response):
@@ -90,6 +94,7 @@ def _transport_report_failure(in3_request: In3Request, i: int, err: Exception):
     libin3.in3_req_add_response(in3_request.results, i, True, str(err), -1)
 
 
+@c.CFUNCTYPE(c.c_int, c.POINTER(In3Request))
 def _http_transport(in3_request: In3Request):
     """
     Transports each request coming from libin3 to the in3 network and and reports the answer back
@@ -103,8 +108,8 @@ def _http_transport(in3_request: In3Request):
     for i in range(0, in3_request.urls_len):
         try:
             rpc_request = {
-                'url': string_at(in3_request.urls[i]),
-                'data': string_at(in3_request.payload),
+                'url': c.string_at(in3_request.urls[i]),
+                'data': c.string_at(in3_request.payload),
                 'headers': {'Content-type': 'application/json'},
                 'timeout': TIMEOUT
             }
@@ -176,27 +181,28 @@ def _multi_platform_selector() -> str:
 
 
 # =================== LIBIN3 SHARED LIBRARY MAPPING ===================
-libin3 = cdll.LoadLibrary(_multi_platform_selector())
+libin3 = c.cdll.LoadLibrary(_multi_platform_selector())
 # map free
-libin3._free_.argtypes = c_void_p,
+libin3._free_.argtypes = c.c_void_p,
 libin3._free_.restype = None
 # map new in3
 libin3.in3_new.argtypes = []
-libin3.in3_new.restype = c_void_p
+libin3.in3_new.restype = c.c_void_p
 # map free in3
-libin3.in3_free.argtypes = c_void_p,
+libin3.in3_free.argtypes = c.c_void_p,
 libin3.in3_free.restype = None
 # map transport request function
-libin3.in3_client_exec_req.argtypes = [c_void_p, c_char_p]
-libin3.in3_client_exec_req.restype = c_void_p
+libin3.in3_client_exec_req.argtypes = [c.c_void_p, c.c_char_p]
+libin3.in3_client_exec_req.restype = c.c_void_p
+libin3.in3_client_rpc.argtypes = [c.c_void_p, c.c_char_p, c.c_char_p,
+                                  c.POINTER(c.c_char_p),
+                                  c.POINTER(c.c_char_p)]
+libin3.in3_client_rpc.restype = c.c_int
 # map transport function for response
-libin3.in3_req_add_response.argtypes = [
-    c_void_p, c_int, c_bool, c_void_p, c_int]
+libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_void_p, c.c_int]
 libin3.in3_req_add_response.restype = None
-# create a transport function pointer
-transport_fn = CFUNCTYPE(c_int, POINTER(In3Request))(_http_transport)
 # define this function as default transport for in3 requests from client to server and back
-libin3.in3_set_default_transport(transport_fn)
+libin3.in3_set_default_transport(_http_transport)
 # register transport and verifiers (needed only once)
 libin3.in3_register_eth_full()
 libin3.in3_register_eth_api()
@@ -204,9 +210,9 @@ libin3.in3_register_eth_api()
 # enable logging
 if DEBUG:
     # map logging functions
-    libin3.in3_log_set_quiet_.argtypes = c_bool,
+    libin3.in3_log_set_quiet_.argtypes = c.c_bool,
     libin3.in3_log_set_quiet_.restype = None
-    libin3.in3_log_set_level_.argtypes = c_int,
+    libin3.in3_log_set_level_.argtypes = c.c_int,
     libin3.in3_log_set_level_.restype = None
     # set logger level to TRACE
     libin3.in3_log_set_quiet_(False)

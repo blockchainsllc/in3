@@ -89,7 +89,7 @@ class ClientConfig(DataTransferObject):
                  node_signatures: int = None,
                  node_signature_consensus: int = None,
                  node_min_deposit: int = 10000000000000000,
-                 node_list_auto_update: bool = False,
+                 node_list_auto_update: bool = True,
                  node_limit: int = None,
                  request_timeout: int = 7000,
                  request_retries: int = 7,
