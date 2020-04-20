@@ -76,8 +76,6 @@ wasm-slockit-npm:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/'
-  except:
-    - branches
   needs:
     - wasm
   script:
@@ -93,8 +91,6 @@ wasm-public-npm:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  except:
-    - branches
   when: manual
   needs:
     - wasm
@@ -111,8 +107,6 @@ asmjs-slockit-npm:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/'
-  except:
-    - branches
   needs:
     - asmjs
   script:
@@ -128,8 +122,6 @@ asmjs-public-npm:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  except:
-    - branches
   when: manual
   needs:
     - asmjs
