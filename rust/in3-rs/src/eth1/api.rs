@@ -325,23 +325,4 @@ mod tests {
         println!("{:?}", num);
         assert!(num > 9000000, "Block number is not correct");
     }
-
-    #[test]
-    fn test_eth_call() {
-        let mut api = Api::new(Client::new(chain::MAINNET));
-        // api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-        let contract: Address =
-            serde_json::from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap();
-        let mut abi = abi::In3EthAbi::new();
-        let params = abi.encode("totalServers():uint256", json!([])).unwrap();
-        let txn = CallTransaction {
-            to: Some(contract),
-            data: Some(params),
-            ..Default::default()
-        };
-        let output: Bytes = task::block_on(api.call(txn, BlockNumber::Latest)).unwrap().try_into().unwrap();
-        let output = abi.decode("uint256", output).unwrap();
-        let total_servers: U256 = serde_json::from_value(output).unwrap();
-        println!("{:?}", total_servers);
-    }
 }

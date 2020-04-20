@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use async_std::task;
 use ethereum_types::{Address, U256};
 
-use in3::eth1::{Api, Block, BlockNumber, Hash, Log};
+use in3::eth1::*;
 use in3::prelude::*;
 use in3::types::Bytes;
 
@@ -51,6 +51,21 @@ fn main() -> In3Result<()> {
     "topics": ["0xa61b5dec2abee862ab0841952bfbc161b99ad8c14738afa8ed8d5c522cd03946"]
     })))?;
     println!("Logs => {:?}", logs);
+
+    // eth_call
+    let contract: Address =
+        serde_json::from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap();
+    let mut abi = abi::In3EthAbi::new();
+    let params = task::block_on(abi.encode("totalServers():uint256", serde_json::json!([]))).unwrap();
+    let txn = CallTransaction {
+        to: Some(contract),
+        data: Some(params),
+        ..Default::default()
+    };
+    let output: Bytes = task::block_on(eth_api.call(txn, BlockNumber::Latest)).unwrap().try_into().unwrap();
+    let output = task::block_on(abi.decode("uint256", output)).unwrap();
+    let total_servers: U256 = serde_json::from_value(output).unwrap();
+    println!("{:?}", total_servers);
 
     Ok(())
 }
