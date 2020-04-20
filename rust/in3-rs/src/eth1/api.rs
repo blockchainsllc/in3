@@ -3,7 +3,10 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
-use crate::eth1::{Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction, Transaction, TransactionReceipt};
+use crate::eth1::{
+    Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
+    Transaction, TransactionReceipt,
+};
 use crate::prelude::*;
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -300,6 +303,9 @@ mod tests {
 
     use async_std::task;
 
+    use crate::eth1::abi;
+    use crate::eth1::abi::Encode;
+
     use super::*;
 
     #[test]
@@ -318,5 +324,22 @@ mod tests {
         let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
         println!("{:?}", num);
         assert!(num > 9000000, "Block number is not correct");
+    }
+
+    #[test]
+    fn test_eth_call() {
+        let mut api = Api::new(Client::new(chain::MAINNET));
+        // api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        let contract: Address =
+            serde_json::from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap();
+        let mut encoder = abi::In3AbiEncoder { in3: api.client() };
+        let params = encoder.encode("servers(uint256):(string,address,uint,uint,uint,address)", json!([U256::from(1u64)])).unwrap();
+        let txn = CallTransaction {
+            to: Some(contract),
+            data: Some(params),
+            ..Default::default()
+        };
+        let output: Bytes = task::block_on(api.call(txn, BlockNumber::Latest)).unwrap().try_into().unwrap();
+        println!("{:?}", output);
     }
 }
