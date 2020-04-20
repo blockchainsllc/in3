@@ -304,7 +304,7 @@ mod tests {
     use async_std::task;
 
     use crate::eth1::abi;
-    use crate::eth1::abi::Encode;
+    use crate::eth1::abi::{Decode, Encode};
 
     use super::*;
 
@@ -332,14 +332,16 @@ mod tests {
         // api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let contract: Address =
             serde_json::from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap();
-        let mut encoder = abi::In3AbiEncoder { in3: api.client() };
-        let params = encoder.encode("servers(uint256):(string,address,uint,uint,uint,address)", json!([U256::from(1u64)])).unwrap();
+        let mut abi = abi::In3EthAbi::new();
+        let params = abi.encode("totalServers():uint256", json!([])).unwrap();
         let txn = CallTransaction {
             to: Some(contract),
             data: Some(params),
             ..Default::default()
         };
         let output: Bytes = task::block_on(api.call(txn, BlockNumber::Latest)).unwrap().try_into().unwrap();
-        println!("{:?}", output);
+        let output = abi.decode("uint256", output).unwrap();
+        let total_servers: U256 = serde_json::from_value(output).unwrap();
+        println!("{:?}", total_servers);
     }
 }
