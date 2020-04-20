@@ -6,6 +6,7 @@
 #define INS_SIGN 0x02
 #define INS_GET_PUBLIC_KEY 0x04
 
+
 #define TAG_ARG1 0X01
 #define TAG_ARG2 0X02
 
