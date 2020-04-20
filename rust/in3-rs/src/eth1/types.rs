@@ -114,15 +114,21 @@ pub struct OutgoingTransaction {
 }
 
 // Transaction used as i/p type for eth_call & eth_estimateGas
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CallTransaction {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub from: Option<Address>,
     // `to` is optional only for eth_estimateGas
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub to: Option<Address>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gas: Option<U256>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gas_price: Option<U256>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<U256>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Bytes>,
 }
 
