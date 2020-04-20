@@ -1,33 +1,36 @@
 #include "menu.h"
 
+#include "operations.h"
 #include "ui.h"
 
 unsigned int  current_text_pos; // parsing cursor in the text to display
 unsigned int  text_y;
 enum UI_STATE uiState;
-char          lineBuffer[50];
+char          lineBuffer[100];
 
 unsigned char display_text_part() {
   PRINTF("display_text_part: enter\n");
   unsigned int i;
 
-  WIDE char* text = (char*) G_io_apdu_buffer + 5;
-  PRINTF("display_text_part: text pointer %d %d\n", G_io_apdu_buffer[4], current_text_pos);
-  if (text[current_text_pos] == '\0') {
-    PRINTF("display_text_part: returning null\n");
-    return 0;
-  }
-  i = 0;
-  while ((text[current_text_pos] != 0) && (text[current_text_pos] != '\n') &&
-         (i < MAX_CHARS_PER_LINE)) {
-    PRINTF("display_text_part: counter %d \n", current_text_pos);
-    lineBuffer[i++] = text[current_text_pos];
-    current_text_pos++;
-  }
-  if (text[current_text_pos] == '\n') {
-    current_text_pos++;
-  }
-  lineBuffer[i] = '\0';
+  // WIDE char* text = (char*) G_io_apdu_buffer + 5;
+  // PRINTF("display_text_part: text pointer %d %d\n", G_io_apdu_buffer[4], current_text_pos);
+  // if (text[current_text_pos] == '\0') {
+  //   PRINTF("display_text_part: returning null\n");
+  //   return 0;
+  // }
+  // i = 0;
+  // while ((text[current_text_pos] != 0) && (text[current_text_pos] != '\n') &&
+  //        (i < MAX_CHARS_PER_LINE)) {
+  //   PRINTF("display_text_part: counter %d \n", current_text_pos);
+  //   lineBuffer[i++] = text[current_text_pos];
+  //   current_text_pos++;
+  // }
+  // if (text[current_text_pos] == '\n') {
+  //   current_text_pos++;
+  // }
+  tohex(msg_hash, HASH_LEN, lineBuffer, sizeof(lineBuffer));
+  current_text_pos             = HASH_LEN * 2;
+  lineBuffer[current_text_pos] = NULL;
 #ifdef TARGET_BLUE
   os_memset(bagl_ui_text, 0, sizeof(bagl_ui_text));
   bagl_ui_text[0].component.type   = BAGL_LABEL;
@@ -44,7 +47,7 @@ unsigned char display_text_part() {
 #endif
 
   PRINTF("display_text_part:exit");
-  return 1;
+  return 0;
 }
 
 void ui_idle(void) {

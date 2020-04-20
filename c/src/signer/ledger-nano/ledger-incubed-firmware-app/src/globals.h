@@ -36,4 +36,4 @@ enum UI_STATE { UI_IDLE, UI_TEXT, UI_APPROVAL };
 
 extern enum UI_STATE uiState;
 
-extern char lineBuffer[50];
+extern char lineBuffer[100];

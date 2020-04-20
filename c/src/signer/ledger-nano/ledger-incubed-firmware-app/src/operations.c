@@ -159,3 +159,20 @@ uint32_t read_bip32_path(uint32_t bytes, const uint8_t* buf, uint32_t* bip32_pat
 
   return path_length;
 }
+
+void tohex(unsigned char* in, size_t insz, char* out, size_t outsz) {
+  unsigned char* pin  = in;
+  const char*    hex  = "0123456789ABCDEF";
+  char*          pout = out;
+  for (; pin < in + insz; pout += 3, pin++) {
+    pout[0] = hex[(*pin >> 4) & 0xF];
+    pout[1] = hex[*pin & 0xF];
+
+    if (pout + 2 - out > outsz) {
+      /* Better to truncate output string than overflow buffer */
+      /* it would be still better to either return a status */
+      /* or ensure the target buffer is large enough and it never happen */
+      break;
+    }
+  }
+}
