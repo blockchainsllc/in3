@@ -305,7 +305,7 @@ int get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uin
   uint8_t p_key[65];
   int     ret   = 0;
   int     recid = -1;
-  for (i = 0; i < 255; i++) {
+  for (i = 0; i < 4; i++) {
     ret = ecdsa_recover_pub_from_sig(curve, p_key, sig, digest, i);
     if (ret == 0) {
       if (memcmp(pub_key, p_key, 65) == 0) {
