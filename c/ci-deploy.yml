@@ -3,9 +3,9 @@ dockerhub-deploy:
   needs: []
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   tags:
     - short-jobs
-  when: manual
   services:
     - docker:dind
   image: docker.slock.it/build-images/deployment
@@ -58,7 +58,7 @@ release_mac_and_wasm:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   needs:
     - mac_os
     - gcc8
@@ -108,7 +108,7 @@ release_x64:
     - python
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x64
@@ -139,7 +139,7 @@ release_x86:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   needs:
     - gcc8
     - gcc8-x86
@@ -178,7 +178,7 @@ release_arm7:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   needs:
     - gcc8
     - arm7
@@ -217,7 +217,7 @@ release_win:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   needs:
     - gcc8
     - win_mingw
@@ -260,7 +260,7 @@ release_maven:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   needs:
     - java
   script:
@@ -310,7 +310,6 @@ pages:
     - java_linux
     - java_macos
     - readthedocs
-  when: manual
   script:
     - mv scripts/debian .
     - mv debian/changelog-in3 debian/changelog
@@ -342,6 +341,7 @@ debian_package_deploy_bionic:
     VERSION: $CI_COMMIT_TAG
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 debian_package_deploy_disco:
   extends:
@@ -351,6 +351,7 @@ debian_package_deploy_disco:
     VERSION: $CI_COMMIT_TAG
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 .debian_package_deploy_template_in3_dev:
   image: docker.slock.it/build-images/cmake:gcc8-with-debian-deps
@@ -366,7 +367,6 @@ debian_package_deploy_disco:
     - java_linux
     - java_macos
     - readthedocs
-  when: manual
   script:
     - mv scripts/debian .
     - mv debian/changelog-dev debian/changelog
@@ -398,6 +398,7 @@ debian_dev_package_deploy_bionic:
     VERSION: $CI_COMMIT_TAG
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 debian__dev_package_deploy_disco:
   extends:
@@ -407,6 +408,7 @@ debian__dev_package_deploy_disco:
     VERSION: $CI_COMMIT_TAG
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 brew_release:
   stage: release
@@ -415,7 +417,7 @@ brew_release:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   needs:
     - mac_os
     - release_mac_and_wasm
@@ -440,7 +442,7 @@ github_body_release:
     - short-jobs
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-  when: manual
+      when: manual
   needs:
     - release_mac_and_wasm
     - release_x64
