@@ -122,7 +122,20 @@ impl Ctx {
                 let req_type = (*last_waiting).type_;
                 match req_type {
                     in3_sys::ctx_type::CT_SIGN => {
-                        unimplemented!();
+                        // unimplemented!();
+                        let req = in3_sys::in3_create_request(last_waiting);
+                        let data = (*req).payload as *mut u8;
+                        let res_str = self.sign(0, data, 32);
+                        in3_sys::sb_add_chars(
+                            &mut (*(*req).results.add(0)).result,
+                            res_str.into_raw(),
+                        );
+                        let result = (*(*req).results.offset(0)).result;
+                        let len = result.len;
+                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+                        println!("DATA -- > {}", data); 
+                        // println!("TODO CT_SIGN");
+                        break Ok(data);
                     }
                     in3_sys::ctx_type::CT_RPC => {
                         let req = in3_sys::in3_create_request(last_waiting);
