@@ -1,5 +1,6 @@
 #include "in3_init.h"
 #include "../api/eth1/eth_api.h"
+#include "../pay/eth/pay_eth.h"
 #include "../transport/curl/in3_curl.h"
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
@@ -27,6 +28,9 @@ static void init_verifier() {
 #endif
 #ifdef BTC
   in3_register_btc();
+#endif
+#ifdef PAY_ETH
+  in3_register_pay_eth();
 #endif
 }
 

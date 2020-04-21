@@ -48,6 +48,38 @@
 #endif
 #include <time.h>
 
+#ifdef PAY
+typedef struct payment {
+  d_key_t         name;
+  pay_configure   configure;
+  struct payment* next;
+
+} pay_configure_t;
+
+static pay_configure_t* payments = NULL;
+
+static pay_configure_t* find_payment(char* name) {
+  d_key_t k = key(name);
+  for (pay_configure_t* p = payments; p; p = p->next) {
+    if (k == p->name) return p;
+  }
+  return NULL;
+}
+
+void in3_register_payment(
+    char*         name,   /**< name of the payment-type */
+    pay_configure handler /**< pointer to the handler- */
+) {
+  if (find_payment(name)) return;
+  pay_configure_t* p = _malloc(sizeof(pay_configure_t));
+  p->configure       = handler;
+  p->name            = key(name);
+  p->next            = payments;
+  payments           = p;
+}
+
+#endif
+
 #define EXPECT(cond, exit) \
   do {                     \
     if (!(cond))           \
@@ -181,8 +213,8 @@ static void init_mainnet(in3_chain_t* chain) {
 }
 
 static void init_btc(in3_chain_t* chain) {
-  initChain(chain, 0xFF01, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
-  initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "http://localhost:8500");
+  initChain(chain, 0x99, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
+  initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.stage.slock.it/btc/nd-1");
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;
@@ -307,7 +339,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
   }
 
   chain->chain_id  = chain_id;
-  chain->contract  = b_new((char*) contract, 20);
+  chain->contract  = b_new(contract, 20);
   chain->type      = type;
   chain->version   = version;
   chain->whitelist = NULL;
@@ -348,7 +380,7 @@ in3_ret_t in3_client_add_node(in3_t* c, chain_id_t chain_id, char* url, in3_node
                          : _calloc(chain->nodelist_length + 1, sizeof(in3_node_weight_t));
     if (!chain->nodelist || !chain->weights) return IN3_ENOMEM;
     node           = chain->nodelist + chain->nodelist_length;
-    node->address  = b_new((char*) address, 20);
+    node->address  = b_new(address, 20);
     node->index    = chain->nodelist_length;
     node->capacity = 1;
     node->deposit  = 0;
@@ -420,6 +452,7 @@ void in3_free(in3_t* a) {
     _free(a->chains[i].nodelist_upd8_params);
   }
   if (a->signer) _free(a->signer);
+  if (a->cache) _free(a->cache);
   if (a->chains) _free(a->chains);
 
   if (a->filters) {
@@ -432,6 +465,18 @@ void in3_free(in3_t* a) {
     _free(a->filters);
   }
   if (a->key) _free(a->key);
+
+#ifdef PAY
+  if (a->pay) {
+    if (a->pay->cptr) {
+      if (a->pay->free)
+        a->pay->free(a->pay->cptr);
+      else
+        _free(a->pay->cptr);
+    }
+    _free(a->pay);
+  }
+#endif
   _free(a);
 }
 
@@ -485,6 +530,101 @@ static inline bool is_hex_str(const char* str) {
   if (str[0] == '0' && str[1] == 'x')
     str += 2;
   return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
+}
+
+static void add_prop(sb_t* sb, char prefix, const char* property) {
+  sb_add_char(sb, prefix);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, property);
+  sb_add_chars(sb, "\":");
+}
+static void add_bool(sb_t* sb, char prefix, const char* property, bool value) {
+  add_prop(sb, prefix, property);
+  sb_add_chars(sb, value ? "true" : "false");
+}
+static void add_string(sb_t* sb, char prefix, const char* property, const char* value) {
+  add_prop(sb, prefix, property);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, value);
+  sb_add_char(sb, '"');
+}
+
+static void add_uint(sb_t* sb, char prefix, const char* property, uint64_t value) {
+  add_prop(sb, prefix, property);
+  char tmp[16];
+  sprintf(tmp, "%u", (uint32_t) value);
+  sb_add_chars(sb, tmp);
+}
+
+static void add_hex(sb_t* sb, char prefix, const char* property, bytes_t value) {
+  add_prop(sb, prefix, property);
+  sb_add_bytes(sb, NULL, &value, 1, false);
+}
+
+char* in3_get_config(in3_t* c) {
+  sb_t*        sb    = sb_new("");
+  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+  add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
+  add_uint(sb, ',', "chainId", c->chain_id);
+  add_uint(sb, ',', "signatureCount", c->signature_count);
+  add_uint(sb, ',', "finality", c->finality);
+  add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
+  add_uint(sb, ',', "maxAttempts", c->max_attempts);
+  add_bool(sb, ',', "keepIn3", c->flags & FLAGS_KEEP_IN3);
+  add_bool(sb, ',', "stats", c->flags & FLAGS_STATS);
+  add_bool(sb, ',', "useBinary", c->flags & FLAGS_BINARY);
+  add_bool(sb, ',', "useHttp", c->flags & FLAGS_HTTP);
+  add_uint(sb, ',', "maxBlockCache", c->max_block_cache);
+  add_uint(sb, ',', "maxCodeCache", c->max_code_cache);
+  add_uint(sb, ',', "maxVerifiedHashes", c->max_verified_hashes);
+  add_uint(sb, ',', "timeout", c->timeout);
+  add_uint(sb, ',', "minDeposit", c->min_deposit);
+  add_uint(sb, ',', "nodeProps", c->node_props);
+  add_uint(sb, ',', "nodeLimit", c->node_limit);
+  add_string(sb, ',', "proof", (c->proof == PROOF_NONE) ? "none" : (c->proof == PROOF_STANDARD ? "standard" : "full"));
+  if (c->key)
+    add_hex(sb, ',', "key", bytes(c->key, 32));
+  if (c->replace_latest_block)
+    add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
+  add_uint(sb, ',', "requestCount", c->request_count);
+  if (c->chain_id == ETH_CHAIN_ID_LOCAL)
+    add_string(sb, ',', "rpc", chain->nodelist->url);
+
+  sb_add_chars(sb, ",\"nodes\":{");
+  for (int i = 0; i < c->chains_length; i++) {
+    chain = c->chains + i;
+    if (i) sb_add_char(sb, ',');
+    sb_add_char(sb, '"');
+    sb_add_hexuint(sb, chain->chain_id);
+    sb_add_chars(sb, "\":");
+    add_hex(sb, '{', "contract", *chain->contract);
+    if (chain->whitelist)
+      add_hex(sb, ',', "whiteListContract", bytes(chain->whitelist->contract, 20));
+    add_hex(sb, ',', "registryId", bytes(chain->registry_id, 32));
+    add_bool(sb, ',', "needsUpdate", chain->nodelist_upd8_params != NULL);
+    add_uint(sb, ',', "avgBlockTime", chain->avg_block_time);
+    sb_add_chars(sb, ",\"nodeList\":[");
+    for (int j = 0; j < chain->nodelist_length; j++) {
+      if ((chain->nodelist[j].attrs & ATTR_BOOT_NODE) == 0) continue;
+      if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
+      add_string(sb, '{', "url", chain->nodelist[j].url);
+      add_uint(sb, ',', "props", chain->nodelist[j].props);
+      add_hex(sb, ',', "address", *(chain->nodelist[j].address));
+      sb_add_char(sb, '}');
+    }
+    if (sb->data[sb->len - 1] == '[') {
+      sb->len -= 13;
+      sb_add_char(sb, '}');
+    } else
+      sb_add_chars(sb, "]}");
+  }
+  sb_add_chars(sb, "}}");
+
+  // TODO pay
+
+  char* r = sb->data;
+  _free(sb);
+  return r;
 }
 
 char* in3_configure(in3_t* c, const char* config) {
@@ -563,6 +703,20 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("nodeLimit")) {
       EXPECT_TOK_U16(token);
       c->node_limit = (uint16_t) d_int(token);
+    } else if (token->key == key("pay")) {
+      EXPECT_TOK_OBJ(token);
+#ifdef PAY
+      char* type = d_get_string(token, "type");
+      if (!type) type = "eth";
+      pay_configure_t* p = find_payment(type);
+      EXPECT_TOK(token, p, "the payment type was not registered");
+      char* err = p->configure(c, token);
+      EXPECT_TOK(token, err == NULL, err);
+
+#else
+      EXPECT_TOK(token, false, "pay_eth is not supporterd. Please build with -DPAY_ETH");
+#endif
+
     } else if (token->key == key("proof")) {
       EXPECT_TOK_STR(token);
       EXPECT_TOK(token, !strcmp(d_string(token), "full") || !strcmp(d_string(token), "standard") || !strcmp(d_string(token), "none"), "expected values - full/standard/none");

@@ -360,7 +360,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
 
   d_serialize_binary(bb, response);
 
-  printf(" ( heap: %zu json: %lu bin: %i) ", max_heap, res_size.len, bb->b.len);
+  printf(" ( heap: %zu json: %lu bin: %u) ", max_heap, res_size.len, bb->b.len);
   bb_free(bb);
   return fail;
 }

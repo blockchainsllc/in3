@@ -51,6 +51,7 @@
 #include <time.h>
 
 #define WAIT_TIME_CAP 3600
+#define BLACKLISTTIME 24 * 3600
 
 static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
@@ -268,6 +269,12 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
         sb_add_chars(sb, ",\"useBinary\":true");
       if (rc->verified_hashes_length)
         sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verified_hashes, rc->verified_hashes_length, true);
+#ifdef PAY
+      if (c->client->pay && c->client->pay->handle_request) {
+        in3_ret_t ret = c->client->pay->handle_request(c, sb, rc, c->client->pay->cptr);
+        if (ret != IN3_OK) return ret;
+      }
+#endif
       sb_add_range(sb, "}}", 0, 2);
     } else
       sb_add_char(sb, '}');
@@ -313,7 +320,7 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
 static void blacklist_node(node_match_t* node_weight) {
   if (node_weight && node_weight->weight) {
     // blacklist the node
-    node_weight->weight->blacklisted_until = in3_time(NULL) + 3600;
+    node_weight->weight->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
     in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
@@ -333,6 +340,9 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
 
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
+
+  // for now we do not support it yet
+  if (chain->chain_id == ETH_CHAIN_ID_BTC) return;
 
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
     // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
@@ -386,8 +396,8 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
       if (ctx->responses) _free(ctx->responses);
       if (ctx->response_context) json_free(ctx->response_context);
 
-      // parse the result
-      in3_ret_t res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len);
+      if (node && node->weight) node->weight->blacklisted_until = 0;                            // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
+      in3_ret_t res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len); // parse the result
       if (res < 0)
         blacklist_node(node);
       else {
@@ -399,6 +409,30 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
+#ifdef PAY
+            // we update the payment info from the in3-section
+            if (ctx->client->pay && ctx->client->pay->follow_up) {
+              res = ctx->client->pay->follow_up(ctx, node, vc.proof, d_get(ctx->responses[i], K_ERROR), ctx->client->pay->cptr);
+              if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
+                // this means we need to retry with the same node
+                ctx->attempt++;
+                for (int i = 0; i < nodes_count; i++) {
+                  _free(ctx->raw_response[i].error.data);
+                  _free(ctx->raw_response[i].result.data);
+                }
+                _free(ctx->raw_response);
+                _free(ctx->responses);
+                json_free(ctx->response_context);
+
+                ctx->raw_response     = NULL;
+                ctx->response_context = NULL;
+                ctx->responses        = NULL;
+                return res;
+
+              } else if (res)
+                return ctx_set_error(ctx, "Error following up the payment data", (ctx->verification_state = res));
+            }
+#endif
             vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
             vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
             vc.proof                 = d_get(vc.proof, K_PROOF);
@@ -431,7 +465,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     }
 
     // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-    if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
+    if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3))
       check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
@@ -493,6 +527,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   // prepare response-object
   in3_request_t* request = _malloc(sizeof(in3_request_t));
+  request->in3           = ctx->client;
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;
@@ -548,7 +583,7 @@ in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
   in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
 
   if (nodelist_not_first_upd8(chain))
-    blacklist_node_addr(chain, chain->nodelist_upd8_params->node, 3600);
+    blacklist_node_addr(chain, chain->nodelist_upd8_params->node, BLACKLISTTIME);
   _free(chain->nodelist_upd8_params);
   chain->nodelist_upd8_params = NULL;
 
@@ -718,6 +753,13 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
             if ((ret = configure_request(ctx, ctx->requests_configs + i, ctx->requests[i], chain)) < 0)
               return ctx_set_error(ctx, "error configuring the config for request", ret);
           }
+
+#ifdef PAY
+
+          // now we have the nodes, we can prepare the payment
+          if (ctx->client->pay && ctx->client->pay->prepare && (ret = ctx->client->pay->prepare(ctx, ctx->client->pay->cptr)) != IN3_OK) return ret;
+#endif
+
         } else
           // since we could not get the nodes, we either report it as error or wait.
           return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);

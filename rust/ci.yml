@@ -1,0 +1,51 @@
+rust:
+  image: docker.slock.it/build-images/cmake:rust
+  stage: bindings
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - rm -rf rust/in3-sys/pre_generated
+    - mkdir -p rust/in3-sys/pre_generated
+    - chmod -R 0755 rust/in3-sys/pre_generated
+    - mkdir -p build_rust
+    - cd build_rust
+    - rm -rf *
+    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
+    - make -j8
+    - cd ../rust/
+    - cargo clean
+    - export UPDATE_IN3_BINDINGS=1
+    - cargo build
+
+  artifacts:
+    paths:
+      - build_rust/lib
+      - rust/in3-sys/pre_generated
+      - rust/target
+
+test_rust:
+  image: docker.slock.it/build-images/cmake:rust
+  stage: rust
+  needs:
+    - rust
+  tags:
+    - short-jobs
+  script:
+    - chmod -R 0755 rust/in3-sys/pre_generated
+    - cd rust/in3-rs
+    - unset UPDATE_IN3_BINDINGS
+    - cargo test --lib
+
+examples_rust:
+  image: docker.slock.it/build-images/cmake:rust
+  stage: rust
+  needs:
+    - rust
+  tags:
+    - short-jobs
+  script:
+    - chmod -R 0755 rust/in3-sys/pre_generated
+    - cd rust/in3-rs
+    - unset UPDATE_IN3_BINDINGS
+    - cargo build --examples --features=blocking

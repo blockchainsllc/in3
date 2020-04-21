@@ -505,7 +505,6 @@ static void test_configure_validation() {
  */
 int main() {
   _free(in3_create_signer(NULL, NULL, NULL));
-  _free(in3_create_storage_handler(NULL, NULL, NULL, NULL));
 
   in3_log_set_quiet(true);
   in3_register_eth_basic();

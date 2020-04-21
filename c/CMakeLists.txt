@@ -40,6 +40,7 @@ add_subdirectory(src/third-party)
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
+add_subdirectory(src/pay)
 add_subdirectory(src/api)
 IF (ETH_FULL)
     add_subdirectory(src/cmd)
@@ -94,6 +95,10 @@ if (IN3_LIB)
             $<TARGET_OBJECTS:usn_api_o>
             $<TARGET_OBJECTS:api_utils_o>
         )
+    endif()
+
+    if (PAY_ETH)
+       set(IN3_LIBS ${IN3_LIBS}  $<TARGET_OBJECTS:pay_eth_o>)
     endif()
 
     if (USE_SCRYPT)
