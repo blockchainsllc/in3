@@ -1,3 +1,13 @@
+###########################################################
+# General CI rules:
+#           * Create one CI.yml file per language/purpose
+#           * Include said CI.yml file below
+#           * We use rules in this CI, which means you cannot use only/except
+#           * The workflow rules define when the CI gets triggered, job rules are used to define when jobs get triggered
+#           * Do not commit any keys/ethereum addresses/private keys/etc directly, use environment variables or other methods
+#           * Thank you for reading this far! Get yourself a chocolate as a treat.
+###########################################################
+
 variables:
   COMMIT_IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
@@ -9,6 +19,7 @@ workflow:
       when: never
     - when: always
 
+# defines all the stages in the CI, this includes all stages defined inside the included yml files
 stages:
   - build
   - bindings
@@ -22,6 +33,7 @@ stages:
   - deploy
   - release
 
+# all the CI files to include and run, they are imported before the CI is started
 include:
   - local: "code-quality.gitlab-ci.yml"
   - local: "/c/ci.yml"
@@ -32,8 +44,3 @@ include:
   - local: "/python/ci.yml"
   - local: "/dotnet/ci.yml"
   - local: "/rust/ci.yml"
-##### local_docker_deploy_and_vulnerability_analysis #####
-
-##### analyse #####
-
-##### deploy #####
