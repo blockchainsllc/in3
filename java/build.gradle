@@ -10,11 +10,11 @@
     Need to change this because its generating garbage in the build directory... consider on using a custom nonjava pipeline
     it is also kind of schizophrenic to have a standalone build system for running tests
 */
-// plugins {
-//     id 'java'
-//     id 'jacoco'
-//     id 'com.github.ksoichiro.console.reporter' version '0.6.2'
-// }
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.github.ksoichiro.console.reporter' version '0.6.2'
+}
 
 def jarSourceFolder = "../build/lib/in3.jar"
 def jarOutputFolder = "./target"
