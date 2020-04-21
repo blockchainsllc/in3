@@ -36,7 +36,7 @@ impl Ctx {
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
         loop {
-            let mut ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
+            let ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
             let mut last_waiting: *mut in3_sys::in3_ctx_t;
             let mut p: *mut in3_sys::in3_ctx_t;
             last_waiting = (*self.ptr).required;
@@ -103,7 +103,7 @@ impl Ctx {
                         }
 
                         let responses: Vec<Result<String, String>> = {
-                            let mut transport = {
+                            let transport = {
                                 let c = (*(*last_waiting).client).internal as *mut Client;
                                 &mut (*c).transport
                             };
@@ -129,7 +129,6 @@ impl Ctx {
                         }
                         let result = (*(*req).results.offset(0)).result;
                         let len = result.len;
-                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                         if len != 0 {
                             return Err(Error::TryAgain);
                         } else {
