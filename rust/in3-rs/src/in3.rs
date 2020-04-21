@@ -34,6 +34,40 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
+    pub fn sign(&mut self, type_: u8, data:*const u8, len: u32) -> CString {
+        unsafe {
+            let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
+            let dst  = libc::malloc(65) as *mut u8;
+            let pby = *dst.offset(64) as *mut u8;
+            // let pby = dst.offset(64) as *mut u8;
+            let curve = in3_sys::secp256k1;
+            // let type_sys = type_ as in3_sys::d_signature_type_t;
+            let mut error: libc::c_int = 0;
+            let enm_type: in3_sys::d_signature_type_t = match type_ {
+                0 => d_signature_type_t::SIGN_EC_RAW,
+                1 => d_signature_type_t::SIGN_EC_HASH,
+                _ => panic!("Unknown value: {}", type_),
+            };
+            match enm_type {
+               in3_sys::d_signature_type_t::SIGN_EC_RAW => {
+                    error = in3_sys::ecdsa_sign_digest(&curve, pk, data, dst, pby, None);
+               }
+               in3_sys::d_signature_type_t::SIGN_EC_HASH => {
+                    error = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
+               }
+            }
+            let mut value = std::slice::from_raw_parts_mut(dst, 65 as usize);
+            // let str_sign = CStr::from_ptr(dst);
+            let str_sign = CString::from_vec_unchecked(value.to_vec());
+            println!("\n{:?}", str_sign);
+            // for byte in value {
+            //     print!("{:x}", byte);
+            // }
+            str_sign
+            
+        }
+    }
+
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
         loop {
             let mut ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
@@ -247,6 +281,42 @@ impl ClientTrait for Client {
             }
         }
     }
+    pub fn hex_to_bytes(&mut self, data: &str) -> *mut u8{
+        unsafe {
+            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+            let c_data: *const c_char = c_str_data.as_ptr();
+            let mut out:*mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
+            let len:i32 = -1;
+            in3_sys::hex_to_bytes(c_data, len, out, 32);
+            let data_ = std::slice::from_raw_parts_mut(out, 32 as usize);
+            for byte in data_ {
+                print!("{:x}", byte);
+            }
+            println!("\n");
+            out
+        }
+    }
+    pub fn new_bytes(&mut self, data: &str) -> *mut u8 {
+        unsafe {
+        let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+        let data_ptr= c_str_data.as_ptr();
+        let len= strlen(data_ptr) as i32;
+        let data = in3_sys::hex_to_new_bytes(data_ptr, len);
+        let data_ = (*data).data;
+        let out = std::slice::from_raw_parts_mut(data_, 32 as usize);
+        for byte in out {
+            print!("{:x}", byte);
+        }
+        println!("\n");
+        data_
+        }
+    }
+    pub fn set_pk_signer(&mut self, data: &str) {
+        unsafe {
+            let pk_ = self.hex_to_bytes(data);
+            in3_sys::eth_set_pk_signer(self.ptr, pk_);
+        }
+    }
 }
 
 impl Client {
@@ -265,7 +335,6 @@ impl Client {
             c
         }
     }
-
     unsafe extern "C" fn in3_rust_storage_get(
         cptr: *mut libc::c_void,
         key: *const libc::c_char,
