@@ -31,7 +31,7 @@ test_android:
     - short-jobs
   rules:
     - changes:
-        - java/*
+        - java/**/*
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if:  '$CI_COMMIT_REF_NAME == "master"'
     - if:  '$CI_COMMIT_REF_NAME == "develop"'
@@ -51,7 +51,7 @@ java_linux:
   stage: java
   rules:
     - changes:
-        - java/*
+        - java/**/*
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if:  '$CI_COMMIT_REF_NAME == "master"'
     - if:  '$CI_COMMIT_REF_NAME == "develop"'
@@ -74,7 +74,7 @@ java_arm:
   image: armv7/armhf-java8
   rules:
     - changes:
-        - java/*
+        - java/**/*
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if:  '$CI_COMMIT_REF_NAME == "master"'
     - if:  '$CI_COMMIT_REF_NAME == "develop"'
@@ -96,7 +96,7 @@ java_macos:
   allow_failure: true
   rules:
     - changes:
-        - java/*
+        - java/**/*
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if:  '$CI_COMMIT_REF_NAME == "master"'
     - if:  '$CI_COMMIT_REF_NAME == "develop"'
@@ -114,7 +114,7 @@ java_win:
   allow_failure: true
   rules:
     - changes:
-        - java/*
+        - java/**/*
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if:  '$CI_COMMIT_REF_NAME == "master"'
     - if:  '$CI_COMMIT_REF_NAME == "develop"'

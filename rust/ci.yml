@@ -29,7 +29,7 @@ test_rust:
   stage: rust
   rules:
     - changes:
-        - rust/*
+        - rust/**/*
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
@@ -48,7 +48,7 @@ examples_rust:
   stage: rust
   rules:
     - changes:
-        - rust/*
+        - rust/**/*
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
