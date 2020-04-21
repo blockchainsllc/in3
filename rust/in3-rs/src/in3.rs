@@ -1,7 +1,10 @@
 use std::ffi;
-use std::ffi::{CString, CStr};
+// use std::ffi::{CString, CStr};
 use async_trait::async_trait;
-
+use in3_sys::d_signature_type_t;
+use ffi::{CString, CStr};
+use libc::{c_char, puts, strlen};
+// use std::mem;
 use crate::error::{Error, In3Result};
 use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
@@ -34,9 +37,14 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub fn sign(&mut self, type_: u8, data:*const u8, len: u32) -> CString {
-        unsafe {
+    pub unsafe fn sign(&mut self, type_: u8, data:*const u8, len: u32) -> CString {
             let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
+            let mut val = std::slice::from_raw_parts_mut(pk, 32 as usize);
+            // println!("\n");
+            // for byte in val {
+            //     print!("{:02x}", byte);
+            // }
+            // println!("\n");
             let dst  = libc::malloc(65) as *mut u8;
             let pby = *dst.offset(64) as *mut u8;
             // let pby = dst.offset(64) as *mut u8;
@@ -64,12 +72,9 @@ impl Ctx {
             //     print!("{:x}", byte);
             // }
             str_sign
-            
-        }
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
-        loop {
             let mut ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
             let mut last_waiting: *mut in3_sys::in3_ctx_t;
             let mut p: *mut in3_sys::in3_ctx_t;
@@ -98,7 +103,7 @@ impl Ctx {
                         let state = in3_sys::in3_ctx_state(p);
                         let res = (*p).raw_response;
                         if res == std::ptr::null_mut()
-                            && state == in3_sys::state::CTX_WAITING_FOR_RESPONSE
+                            && state == in3_sys::state::CTX_WAITING_FOR_REQUIRED_CTX
                         {
                             last_waiting = p;
                         }
@@ -125,17 +130,18 @@ impl Ctx {
                         // unimplemented!();
                         let req = in3_sys::in3_create_request(last_waiting);
                         let data = (*req).payload as *mut u8;
-                        let res_str = self.sign(0, data, 32);
+                        let len = strlen((*req).payload) as u32;
+                        let res_str = self.sign(0, data, len);
                         in3_sys::sb_add_chars(
                             &mut (*(*req).results.add(0)).result,
                             res_str.into_raw(),
                         );
                         let result = (*(*req).results.offset(0)).result;
-                        let len = result.len;
-                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                        println!("DATA -- > {}", data); 
+                        // let len = result.len;
+                        // let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+                        // println!("DATA -- > {}", data); 
                         // println!("TODO CT_SIGN");
-                        return Ok(data.to_string());
+                        return Ok("{}".to_string());
                     }
                     in3_sys::ctx_type::CT_RPC => {
                         let req = in3_sys::in3_create_request(last_waiting);
@@ -178,7 +184,8 @@ impl Ctx {
                         let len = result.len;
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                         if len != 0 {
-                            return Err(Error::TryAgain);
+                            // return Err(Error::T);
+                            return Ok(data.to_string());
                         } else {
                             let error = (*(*req).results.offset(0)).error;
                             let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
@@ -187,7 +194,7 @@ impl Ctx {
                     }
                 }
             }
-        };
+            return Err(Error::TryAgain); 
     }
 
     #[cfg(feature = "blocking")]
@@ -274,6 +281,7 @@ impl ClientTrait for Client {
         let mut ctx = Ctx::new(self, call);
         loop {
             let res = unsafe { ctx.execute().await };
+            println!("-----> {:?}", res);
             if res != Err(Error::TryAgain) {
                 return res;
             }
