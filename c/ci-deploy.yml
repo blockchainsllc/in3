@@ -1,13 +1,11 @@
 dockerhub-deploy:
   stage: deploy
   needs: []
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   tags:
     - short-jobs
-  when: manual
   services:
     - docker:dind
   image: docker.slock.it/build-images/deployment
@@ -58,11 +56,9 @@ release_mac_and_wasm:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - mac_os
     - gcc8
@@ -110,11 +106,9 @@ release_x64:
     - asmjs
     - java
     - python
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x64
@@ -143,11 +137,9 @@ release_x86:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - gcc8
     - gcc8-x86
@@ -184,11 +176,9 @@ release_arm7:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - gcc8
     - arm7
@@ -225,11 +215,9 @@ release_win:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - gcc8
     - win_mingw
@@ -270,11 +258,9 @@ release_maven:
   image: docker.slock.it/build-images/maven-deployment-image:latest
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - java
   script:
@@ -286,9 +272,8 @@ pages:
   stage: deploy
   tags:
     - arm
-  only:
-    refs:
-      - develop
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
   needs:
     - arm7
     - readthedocs
@@ -325,7 +310,6 @@ pages:
     - java_linux
     - java_macos
     - readthedocs
-  when: manual
   script:
     - mv scripts/debian .
     - mv debian/changelog-in3 debian/changelog
@@ -355,10 +339,9 @@ debian_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 debian_package_deploy_disco:
   extends:
@@ -366,10 +349,9 @@ debian_package_deploy_disco:
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 .debian_package_deploy_template_in3_dev:
   image: docker.slock.it/build-images/cmake:gcc8-with-debian-deps
@@ -385,7 +367,6 @@ debian_package_deploy_disco:
     - java_linux
     - java_macos
     - readthedocs
-  when: manual
   script:
     - mv scripts/debian .
     - mv debian/changelog-dev debian/changelog
@@ -415,10 +396,9 @@ debian_dev_package_deploy_bionic:
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 debian__dev_package_deploy_disco:
   extends:
@@ -426,21 +406,18 @@ debian__dev_package_deploy_disco:
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
 
 brew_release:
   stage: release
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - mac_os
     - release_mac_and_wasm
@@ -463,11 +440,9 @@ github_body_release:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - release_mac_and_wasm
     - release_x64
