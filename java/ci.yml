@@ -35,7 +35,8 @@ test_android:
       when: always
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
       when: always
-    - when: never
+    - if: $CI_MERGE_REQUEST_ID
+      when: never
   script:
     - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android/app
