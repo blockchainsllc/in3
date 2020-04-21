@@ -7,7 +7,6 @@ use crate::eth1::{
     Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
     Transaction, TransactionReceipt,
 };
-use crate::prelude::*;
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
@@ -303,26 +302,25 @@ mod tests {
 
     use async_std::task;
 
-    use crate::eth1::abi;
-    use crate::eth1::abi::{Decode, Encode};
+    use crate::prelude::*;
 
     use super::*;
 
     #[test]
-    fn test_block_number() {
+    fn test_block_number() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::MAINNET));
-        api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
         let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
         println!("{:?}", num);
-        assert!(num > 9000000, "Block number is not correct");
+        Ok(assert!(num > 9000000, "Block number is not correct"))
     }
 
     #[test]
-    fn test_api() {
+    fn test_api() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::MAINNET));
-        api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
         let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
         println!("{:?}", num);
-        assert!(num > 9000000, "Block number is not correct");
+        Ok(assert!(num > 9000000, "Block number is not correct"))
     }
 }

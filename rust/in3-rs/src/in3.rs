@@ -156,7 +156,7 @@ impl Ctx {
                         }
 
                         let responses: Vec<Result<String, String>> = {
-                            let mut transport = {
+                            let transport = {
                                 let c = (*(*last_waiting).client).internal as *mut Client;
                                 &mut (*c).transport
                             };
@@ -182,10 +182,9 @@ impl Ctx {
                         }
                         let result = (*(*req).results.offset(0)).result;
                         let len = result.len;
-                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                         if len != 0 {
-                            // return Err(Error::T);
-                            return Ok(data.to_string());
+                            return Err(Error::TryAgain);
+                            // return Ok(data.to_string());
                         } else {
                             let error = (*(*req).results.offset(0)).error;
                             let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();

@@ -51,18 +51,16 @@ impl Decode for In3EthAbi {
 
 #[cfg(test)]
 mod tests {
+    use async_std::task;
     use ethereum_types::Address;
-
-    use crate::eth1::api::Api;
 
     use super::*;
 
     #[test]
     fn test_abi_encode() {
-        let mut api = Api::new(Client::new(chain::MAINNET));
         let mut encoder = In3EthAbi::new();
         let address: Address = serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
-        let params = encoder.encode("getBalance(address)", json!([address])).unwrap();
+        let params = task::block_on(encoder.encode("getBalance(address)", json!([address]))).unwrap();
         let expected: Bytes = serde_json::from_str(r#""0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890""#).unwrap();
         assert_eq!(params, expected);
     }
