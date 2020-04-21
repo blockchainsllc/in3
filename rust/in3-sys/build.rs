@@ -97,9 +97,9 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
 
     // Whitelist cs_.* functions and types
     let pattern = String::from(".*");
-    builder = builder
-        .whitelist_function(&pattern)
-        .whitelist_type(&pattern);
+    // builder = builder
+    //     .whitelist_function(&pattern)
+    //     .whitelist_type(&pattern);
 
     let bindings = builder.generate().expect("Unable to generate bindings");
 

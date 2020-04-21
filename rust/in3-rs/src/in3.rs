@@ -1,5 +1,5 @@
 use std::ffi;
-
+use std::ffi::{CString, CStr};
 use async_trait::async_trait;
 
 use crate::error::{Error, In3Result};
@@ -44,8 +44,8 @@ impl Ctx {
             // let type_sys = type_ as in3_sys::d_signature_type_t;
             let mut error: libc::c_int = 0;
             let enm_type: in3_sys::d_signature_type_t = match type_ {
-                0 => d_signature_type_t::SIGN_EC_RAW,
-                1 => d_signature_type_t::SIGN_EC_HASH,
+                0 => in3_sys::d_signature_type_t::SIGN_EC_RAW,
+                1 => in3_sys::d_signature_type_t::SIGN_EC_HASH,
                 _ => panic!("Unknown value: {}", type_),
             };
             match enm_type {
@@ -135,7 +135,7 @@ impl Ctx {
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                         println!("DATA -- > {}", data); 
                         // println!("TODO CT_SIGN");
-                        break Ok(data);
+                        return Ok(data.to_string());
                     }
                     in3_sys::ctx_type::CT_RPC => {
                         let req = in3_sys::in3_create_request(last_waiting);
@@ -294,7 +294,7 @@ impl ClientTrait for Client {
             }
         }
     }
-    pub fn hex_to_bytes(&mut self, data: &str) -> *mut u8{
+    fn hex_to_bytes(&mut self, data: &str) -> *mut u8{
         unsafe {
             let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
             let c_data: *const c_char = c_str_data.as_ptr();
@@ -309,7 +309,7 @@ impl ClientTrait for Client {
             out
         }
     }
-    pub fn new_bytes(&mut self, data: &str) -> *mut u8 {
+    fn new_bytes(&mut self, data: &str) -> *mut u8 {
         unsafe {
         let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
         let data_ptr= c_str_data.as_ptr();
@@ -324,7 +324,7 @@ impl ClientTrait for Client {
         data_
         }
     }
-    pub fn set_pk_signer(&mut self, data: &str) {
+    fn set_pk_signer(&mut self, data: &str) {
         unsafe {
             let pk_ = self.hex_to_bytes(data);
             in3_sys::eth_set_pk_signer(self.ptr, pk_);
