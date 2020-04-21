@@ -1,7 +1,4 @@
-package in3;
 
-import in3.config.ChainConfiguration;
-import in3.config.ClientConfiguration;
 
 public class IN3MockBuilder {
   private IN3  client;
