@@ -26,8 +26,8 @@ class Client:
         self._runtime = In3Runtime(chain_configs[chain].chain_id)
         if self.config:
             self._configure(in3_config=self.config)
-        self.eth = EthereumApi(runtime=self._runtime, chain_id=chain_configs[chain].chain_id)
-        self._factory = In3ObjectFactory(self.eth.account.checksum_address, chain_configs[chain].chain_id)
+        self.eth = EthereumApi(runtime=self._runtime)
+        self._factory = In3ObjectFactory(self.eth.account.checksum_address)
 
     def _configure(self, in3_config: ClientConfig) -> bool:
         fn_args = str([in3_config.serialize()]).replace('\'', '')

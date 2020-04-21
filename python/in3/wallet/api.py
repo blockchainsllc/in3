@@ -43,7 +43,7 @@ class WalletApi:
             return None
         return self._accounts[name]
 
-    def remove(self, name: str) -> bool:
+    def delete(self, name: str) -> bool:
         """
         Deletes an account in case it exists.
         Args:

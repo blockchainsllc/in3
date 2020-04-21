@@ -26,7 +26,7 @@ class In3Runtime:
     """
     Instantiate libin3 and frees it when garbage collected.
     Args:
-        chain_id (str): Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. i.e: 0x1 for mainNet
+        chain_id (int): Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. i.e: 0x1 for mainNet
     """
 
     def __init__(self, chain_id: int):
@@ -41,13 +41,15 @@ class In3Runtime:
         Make a remote procedure call to a function in libin3
         Args:
             fn_name (str or Enum): Name of the function to be called
-            *fn_args: Arguments matching the parameters order of this function
+            fn_args (tuple): Arguments matching the parameters order of this function
             formatted (bool): True if args must be sent as-is to RPC endpoint
         Returns:
             fn_return (str): String of values returned by the function, if any.
         """
         # TODO: Returned value enum
+        # TODO: Add docs
         """
+        ```
         typedef enum {
           /* On success positive values (impl. defined) upto INT_MAX maybe returned */
           IN3_OK                = 0,   /**< Success */
@@ -70,6 +72,7 @@ class In3Runtime:
           IN3_EIGNORE           = -17, /**< Ignorable error */
           IN3_EPAYMENT_REQUIRED = -18, /**< payment required */
         } in3_ret_t;
+        ```
         """
         request = RPCRequest(fn_name, fn_args, formatted)
         result, response, error = libin3_call(self.in3, request.fn_name, request.fn_args)
@@ -79,10 +82,10 @@ class In3Runtime:
             raise ClientException(error)
         return json.loads(response)
 
-    def set_account_sk(self, private_key: str) -> int:
+    def set_signer_account(self, secret: str) -> int:
         """
-        Load private key to Ethereum sign transactions.
+        Load an account secret to sign Ethereum transactions with `eth_sendTransaction` and `eth_call`.
         Args:
-            private_key: SK number in hexadecimal. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+            secret: SK number in hexadecimal. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
         """
-        return libin3_set_pk(self.in3, private_key)
+        return libin3_set_pk(self.in3, secret)

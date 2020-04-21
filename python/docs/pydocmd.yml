@@ -9,7 +9,7 @@ site_name: "Incubed Client for Python"
 generate:
   - libin3.md:
     - in3.libin3:
-      - in3.libin3.runtime.In3Runtime+
+      - in3.libin3.runtime.In3Runtime
       - in3.libin3.lib_loader+
   - eth.md:
     - in3.eth:
@@ -22,6 +22,7 @@ generate:
       - in3.model.ClientConfig
       - in3.model.NodeList
       - in3.model.In3Node
+      - in3.wallet.api.WalletApi+
 
 # MkDocs pages configuration. The `<<` operator is sugar added by pydocmd
 # that allows you to use an external Markdown file (eg. your project's README)

@@ -205,7 +205,7 @@ python example.py
 
 ### Client
 ```python
-Client(self, in3_config: ClientConfig = None)
+Client(self, chain: str, in3_config: ClientConfig = None)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -217,7 +217,7 @@ Once with the latest list at hand, the client can request any other on-chain inf
 - `in3_config` _ClientConfig or str_ - (optional) Configuration for the client. If not provided, default is loaded.
   
 
-#### node_list
+#### get_node_list
 ```python
 Client.get_node_list()
 ```
@@ -272,20 +272,19 @@ Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3
 ### ClientConfig
 ```python
 ClientConfig(self,
-chain_id: str = 'mainnet',
 chain_finality_threshold: int = None,
-account_private_key: str = None,
+account_secret: str = None,
 latest_block_stall: int = None,
 node_signatures: int = None,
 node_signature_consensus: int = None,
-node_min_deposit: int = 10000000000000000,
-node_list_auto_update: bool = True,
+node_min_deposit: int = None,
+node_list_auto_update: bool = None,
 node_limit: int = None,
-request_timeout: int = 5000,
-request_retries: int = 7,
-response_proof_level: str = 'standard',
-response_includes_code: bool = False,
-response_keep_proof: bool = False,
+request_timeout: int = None,
+request_retries: int = None,
+response_proof_level: str = None,
+response_includes_code: bool = None,
+response_keep_proof: bool = None,
 cached_blocks: int = None,
 cached_code_bytes: int = None)
 ```
@@ -304,10 +303,9 @@ The verification policy enforces an extra step of security, adding a financial s
 
 **Arguments**:
 
-- `chain_id` _str_ - 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
 - `chain_finality_threshold` _int_ - Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
 - `latest_block_stall` _int_ - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
-- `account_private_key` _str_ - Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+- `account_secret` _str_ - Account SK to sign all in3 requests. (Experimental use `set_account_sk`) example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
 - `node_signatures` _int_ - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
 - `node_signature_consensus` _int_ - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
 - `node_min_deposit` _int_ - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
@@ -361,12 +359,102 @@ indeed mined are in the correct chain fork.
 - `weight` _int_ - Score based on qualitative metadata to base which nodes to ask signatures from.
   
 
+### WalletApi
+```python
+WalletApi(self, runtime: In3Runtime)
+```
+
+Ethereum accounts holder and manager.
+
+
+#### new_account
+```python
+WalletApi.new_account(name: str, qrng=False)
+```
+
+Creates a new Ethereum account and saves it in the wallet.
+
+**Arguments**:
+
+- `name` _str_ - Account identifier to use with `get`. i.e. get('my_wallet`)
+- `qrng` _bool_ - True uses a quantum random number generator api for generating the private key.
+
+**Returns**:
+
+- `account` _Account_ - Newly created Ethereum account.
+  
+
+#### get
+```python
+WalletApi.get(name: str)
+```
+
+Returns account in case it exists. Doesnt fail for easier handling w/out try catch. i.e: if get('my_wallet'): do
+
+**Arguments**:
+
+- `name` _str_ - Account identifier to use with `get`. i.e. get('my_wallet`)
+
+**Returns**:
+
+- `account` _Account_ - Selected Ethereum account.
+  
+
+#### delete
+```python
+WalletApi.delete(name: str)
+```
+
+Deletes an account in case it exists.
+
+**Arguments**:
+
+- `name` _str_ - Account identifier.
+
+**Returns**:
+
+- `success` _bool_ - True if account exists and was deleted.
+  
+
+#### recover_account
+```python
+WalletApi.recover_account(name: str, secret: <built-in function hex>)
+```
+
+Recovers an account from a secret.
+
+**Arguments**:
+
+- `name` _str_ - Account identifier to use with `get`. i.e. get('my_wallet`)
+- `secret` _hex_ - Account private key in hexadecimal string
+
+**Returns**:
+
+- `account` _Account_ - Recovered Ethereum account.
+  
+
+#### parse_mnemonics
+```python
+WalletApi.parse_mnemonics(mnemonics: str)
+```
+
+Recovers an account secret from mnemonics phrase
+
+**Arguments**:
+
+- `mnemonics` _str_ - BIP39 mnemonics phrase.
+
+**Returns**:
+
+- `secret` _hex_ - Account secret. Use `recover_account` to create a new account with this secret.
+  
+
 ## in3.eth.model
 
 
 ### EthereumApi
 ```python
-EthereumApi(self, runtime: In3Runtime, chain_id: str)
+EthereumApi(self, runtime: In3Runtime)
 ```
 
 Module based on Ethereum's api and web3.js
@@ -545,7 +633,7 @@ Every transaction hash is unique for the whole chain. Collision could in theory 
 
 #### eth_call
 ```python
-EthereumApi.eth_call(transaction: RawTransaction,
+EthereumApi.eth_call(transaction: NewTransaction,
 block_number: int = 'latest')
 ```
 
@@ -555,7 +643,7 @@ Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-m
 
 **Arguments**:
 
-  transaction (RawTransaction):
+  transaction (NewTransaction):
 - `block_number` _int or str_ - Desired block number integer or 'latest', 'earliest', 'pending'.
 
 **Returns**:
@@ -581,7 +669,6 @@ Use ECDSA to sign a message.
 **Arguments**:
 
 - `private_key` _str_ - Must be either an address(20 byte) or an raw private key (32 byte)"}}'
-  address (str):
 - `message` _str_ - Data to be hashed and signed. Dont input hashed data unless you know what you are doing.
 
 **Returns**:
@@ -591,7 +678,7 @@ Use ECDSA to sign a message.
 
 #### send_transaction
 ```python
-EthAccountApi.send_transaction(transaction: RawTransaction)
+EthAccountApi.send_transaction(transaction: NewTransaction)
 ```
 
 Signs and sends the assigned transaction. Requires the 'key' value to be set in ClientConfig.
@@ -612,7 +699,7 @@ latest block.
 
 #### send_raw_transaction
 ```python
-EthAccountApi.send_raw_transaction(transaction: RawTransaction)
+EthAccountApi.send_raw_transaction(transaction: NewTransaction)
 ```
 
 Sends a signed and encoded transaction.
@@ -650,7 +737,7 @@ likely that the transaction will stay in the chain.
 
 #### estimate_gas
 ```python
-EthAccountApi.estimate_gas(transaction: RawTransaction)
+EthAccountApi.estimate_gas(transaction: NewTransaction)
 ```
 
 Gas estimation for transaction. Used to fill transaction.gas field. Check RawTransaction docs for more on gas.
@@ -697,9 +784,10 @@ For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCa
 #### Transaction
 ```python
 Transaction(self, From: str, to: str, gas: int, gasPrice: int, hash: str,
-data: str, nonce: int, gasLimit: int, blockNumber: int,
-transactionIndex: int, blockHash: str, value: int,
-signature: str)
+nonce: int, transactionIndex: int, blockHash: str,
+value: int, input: str, publicKey: str, standardV: int,
+raw: str, creates: str, chainId: int, r: int, s: int,
+v: int)
 ```
 
 **Arguments**:
@@ -714,18 +802,17 @@ signature: str)
 - `nonce` _int_ - Number of transactions mined from this address. Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1). It exists to mitigate replay attacks. This allows to overwrite your own pending transactions by sending a new one with the same nonce. Use in3.eth.account.get_transaction_count to get the latest value.
 - `hash` _hex str_ - Keccak of the transaction bytes, not part of the transaction. Also known as receipt, because this field is filled after the transaction is sent, by eth_sendTransaction
 - `blockHash` _hex str_ - Block hash that this transaction was mined in. null when its pending.
-- `blockNumber` _int_ - Block number that this transaction was mined in. null when its pending.
+- `blockHash` _int_ - Block number that this transaction was mined in. null when its pending.
 - `transactionIndex` _int_ - Integer of the transactions index position in the block. null when its pending.
 - `signature` _hex str_ - ECDSA of transaction.data, calculated r, s and v concatenated. V is parity set by v = 27 + (r % 2).
   
 
-#### RawTransaction
+#### NewTransaction
 ```python
-RawTransaction(self,
-From: str,
-to: str,
-nonce: int,
-gas: int = None,
+NewTransaction(self,
+From: str = None,
+to: str = None,
+nonce: int = None,
 value: int = None,
 data: str = None,
 gasPrice: int = None,
@@ -740,7 +827,6 @@ Unsent transaction. Use to send a new transaction.
 
 - `From` _hex str_ - Address of the sender account.
 - `to` _hex str_ - Address of the receiver account. Left undefined for a contract creation transaction.
-- `gas` _int_ - Gas for the transaction miners and execution in wei. Will get multiplied by `gasPrice`. Use in3.eth.account.estimate_gas to get a calculated value. Set too low and the transaction will run out of gas.
 - `value` _int_ - (optional) Value transferred in wei. The endowment for a contract creation transaction.
 - `data` _hex str_ - (optional) Either a ABI byte string containing the data of the function call on a contract, or in the case of a contract-creation transaction the initialisation code.
 - `gasPrice` _int_ - (optional) Price of gas in wei, defaults to in3.eth.gasPrice. Also know as `tx fee price`. Set your gas price too low and your transaction may get stuck. Set too high on your own loss.
@@ -822,31 +908,14 @@ Receipt from a mined transaction.
 
 ### In3Runtime
 ```python
-In3Runtime(self, timeout: int)
+In3Runtime(self, chain_id: int)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
 
 **Arguments**:
 
-- `timeout` _int_ - Time for http request connection and content timeout in milliseconds
-  
-
-#### call
-```python
-In3Runtime.call(fn_name: str, *args)
-```
-
-Make a remote procedure call to a function in libin3
-
-**Arguments**:
-
-- `fn_name` _str or Enum_ - Name of the function to be called
-- `*args` - Arguments matching the parameters order of this function
-
-**Returns**:
-
-- `fn_return` _str_ - String of values returned by the function, if any.
+- `chain_id` _int_ - Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. i.e: 0x1 for mainNet
   
 
 ### in3.libin3.lib_loader
@@ -856,7 +925,7 @@ Load libin3 shared library for the current system, map function signatures, map 
 Example of RPC to In3-Core library, In3 Network and back.
 ```
 +----------------+                               +----------+                       +------------+                        +------------------+
-|                | in3.client.eth.block_number() |          |  in3_client_exec_req  |            |  In3 Network Request   |                  |e
+|                | in3.client.eth.block_number() |          |     in3_client_rpc    |            |  In3 Network Request   |                  |e
 |     python     +------------------------------>+  python  +----------------------->   libin3   +------------------------>     python       |
 |   application  |                               |   in3    |                       |  in3-core  |                        |  http_transport  |
 |                <-------------------------------+          <-----------------------+            <------------------------+                  |
@@ -884,14 +953,14 @@ Based on in3/client/.h in3_request_t struct
 
 #### libin3_new
 ```python
-libin3_new(timeout: int)
+libin3_new(chain_id: int)
 ```
 
 RPC to free libin3 objects in memory.
 
 **Arguments**:
 
-- `timeout` _int_ - Time in milliseconds for http requests to fail due to timeout
+- `chain_id` _int_ - Chain id as integer
 
 **Returns**:
 
@@ -912,7 +981,7 @@ RPC to free libin3 objects in memory.
 
 #### libin3_call
 ```python
-libin3_call(instance: int, rpc: bytes)
+libin3_call(instance: int, fn_name: bytes, fn_args: bytes)
 ```
 
 Make Remote Procedure Call to an arbitrary method of a libin3 instance
@@ -920,9 +989,10 @@ Make Remote Procedure Call to an arbitrary method of a libin3 instance
 **Arguments**:
 
 - `instance` _int_ - Memory address of the shared library instance, return value from libin3_new
-- `rpc` _bytes_ - Serialized function call, a ethreum api json string.
+- `fn_name` _bytes_ - Name of function that will be called in libin3
+- `fn_args` - (bytes) Serialized list of arguments, matching the parameters order of this function. i.e. ['0x123']
 
 **Returns**:
 
-- `returned_value` _object_ - The returned function value(s)
+- `result` _int_ - Function execution status.
   

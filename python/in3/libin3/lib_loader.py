@@ -14,7 +14,6 @@ Example of RPC to In3-Core library, In3 Network and back.
 import json
 from pathlib import Path
 
-import math
 import ctypes as c
 import platform
 import requests
