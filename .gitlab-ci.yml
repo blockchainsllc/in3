@@ -3,9 +3,10 @@ variables:
   RELEASE_IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
 
 workflow:
-  - if: $CI_MERGE_REQUEST_IID
-    when: never
-  - when: always
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+      when: never
+    - when: always
 
 stages:
   - build
