@@ -1,3 +1,11 @@
+.only_python:
+  rules:
+    - changes:
+        - python/**/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
 python:
   image: python
   stage: bindings
@@ -25,6 +33,7 @@ python:
 python_arm:
   allow_failure: true
   image: python
+  extends: .only_python
   needs:
     - python
   stage: python
@@ -39,6 +48,7 @@ python_arm:
     - arm
 
 python_win:
+  extends: .only_python
   allow_failure: true
   needs:
     - python
@@ -54,6 +64,7 @@ python_win:
     - windows
 
 python_macos:
+  extends: .only_python
   allow_failure: true
   needs:
     - python
@@ -69,6 +80,7 @@ python_macos:
     - mac-mini-runner
 
 python_linux:
+  extends: .only_python
   needs:
     - python
   allow_failure: true
@@ -89,10 +101,8 @@ release_pip:
   image: docker.slock.it/build-images/python-dev-image:latest
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
   needs:
     - mac_os
     - python

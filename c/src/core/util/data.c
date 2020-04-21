@@ -307,7 +307,8 @@ bool d_eq(const d_token_t* a, const d_token_t* b) {
     }
     return true;
   }
-  return (a->data && b->data)
+  if (d_type(a) == T_STRING) return strcmp((char*) a->data, (char*) b->data) == 0;
+  return (a->data && b->data && d_type(a) == T_BYTES)
              ? b_cmp(d_bytes(a), d_bytes(b))
              : a->data == NULL && b->data == NULL;
 }

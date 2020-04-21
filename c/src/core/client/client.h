@@ -717,6 +717,15 @@ char* in3_configure(
 );
 
 /**
+ * gets the current config as json.
+ * 
+ * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
+ */
+char* in3_get_config(
+    in3_t* c /**< the incubed client */
+);
+
+/**
  * defines a default transport which is used when creating a new client.
  */
 void in3_set_default_transport(
