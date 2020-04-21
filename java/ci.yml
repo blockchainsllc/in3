@@ -1,3 +1,11 @@
+.only_java:
+  rules:
+    - changes:
+        - java/**/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
 java:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: bindings
@@ -29,12 +37,7 @@ test_android:
   needs: []
   tags:
     - short-jobs
-  rules:
-    - changes:
-        - java/**/*
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
-    - if:  '$CI_COMMIT_REF_NAME == "master"'
-    - if:  '$CI_COMMIT_REF_NAME == "develop"'
+  extends: .only_java
   script:
     - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android/app
@@ -49,12 +52,7 @@ test_android:
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: java
-  rules:
-    - changes:
-        - java/**/*
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
-    - if:  '$CI_COMMIT_REF_NAME == "master"'
-    - if:  '$CI_COMMIT_REF_NAME == "develop"'
+  extends: .only_java
   coverage: '/java:\s+(\d+.\d+\%)/'
   needs:
     - java
@@ -72,12 +70,7 @@ java_linux:
 
 java_arm:
   image: armv7/armhf-java8
-  rules:
-    - changes:
-        - java/**/*
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
-    - if:  '$CI_COMMIT_REF_NAME == "master"'
-    - if:  '$CI_COMMIT_REF_NAME == "develop"'
+  extends: .only_java
   needs:
     - java
   stage: java
@@ -94,12 +87,7 @@ java_arm:
 java_macos:
   stage: java
   allow_failure: true
-  rules:
-    - changes:
-        - java/**/*
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
-    - if:  '$CI_COMMIT_REF_NAME == "master"'
-    - if:  '$CI_COMMIT_REF_NAME == "develop"'
+  extends: .only_java
   needs:
     - java
   script:
@@ -112,12 +100,7 @@ java_macos:
 java_win:
   stage: java
   allow_failure: true
-  rules:
-    - changes:
-        - java/**/*
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
-    - if:  '$CI_COMMIT_REF_NAME == "master"'
-    - if:  '$CI_COMMIT_REF_NAME == "develop"'
+  extends: .only_java
   needs:
     - java
   script:
