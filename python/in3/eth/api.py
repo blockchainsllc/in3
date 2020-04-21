@@ -10,9 +10,9 @@ class EthereumApi:
     Module based on Ethereum's api and web3.js
     """
 
-    def __init__(self, runtime: In3Runtime, chain_id: str):
+    def __init__(self, runtime: In3Runtime):
         self._runtime = runtime
-        self.factory = EthObjectFactory(runtime, chain_id)
+        self.factory = EthObjectFactory(runtime)
         self.account = EthAccountApi(runtime, self.factory)
 
     def keccak256(self, message: str) -> str:

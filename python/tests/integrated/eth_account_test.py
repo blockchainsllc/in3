@@ -7,7 +7,7 @@ class UtilsTestCase(unittest.TestCase):
     def setUp(self):
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
         self.sk = "0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F"
-        config = in3.ClientConfig(account_private_key=self.sk)
+        config = in3.ClientConfig(account_secret=self.sk)
         self.client = in3.Client('goerli', config)
 
     def test_checksum_address(self):

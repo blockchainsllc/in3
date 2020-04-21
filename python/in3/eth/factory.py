@@ -10,9 +10,8 @@ class EthObjectFactory:
     For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
 
-    def __init__(self, runtime: In3Runtime, chain_id: str):
+    def __init__(self, runtime: In3Runtime):
         self._runtime = runtime
-        self._chain_id = chain_id
 
     def _deserialize(self, obj_dict: dict, mapping: dict) -> dict:
         result = {}
@@ -144,11 +143,11 @@ class EthObjectFactory:
             raise HashFormatException("Hash size is not of an Ethereum hash.")
         return hash_str
 
-    def get_account(self, address: str) -> Account:
+    def get_account(self, address: str, secret: str = None) -> Account:
         if not address.startswith("0x"):
             raise EthAddressFormatException("Ethereum addresses start with 0x")
         if len(address.encode("utf-8")) != 42:
             raise EthAddressFormatException("The string don't have the size of an Ethereum address.")
         # if self.checksum_address(address, True) != address:
         #     raise EthAddressFormatException("The string checksum is invalid for an Ethereum address.")
-        return Account(address.replace('\'', '"'), self._chain_id)
+        return Account(address.replace('\'', '"'), self._runtime.chain_id, secret)

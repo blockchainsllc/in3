@@ -20,9 +20,7 @@ class Client:
         if isinstance(in3_config, ClientConfig):
             self.config = in3_config
         if isinstance(chain, ChainConfig):
-            pass
-            # TODO: Enable
-            # self.config = chain.client_config
+            self.config = chain.client_config
         elif chain not in ['mainnet', 'kovan', 'goerli', 'evan', 'ipfs']:
             raise ValueError('Chain name not supported. Try mainnet, kovan, goerli, evan, ipfs.')
         self._runtime = In3Runtime(chain_configs[chain].chain_id)
@@ -33,9 +31,7 @@ class Client:
 
     def _configure(self, in3_config: ClientConfig) -> bool:
         fn_args = str([in3_config.serialize()]).replace('\'', '')
-        self._runtime.call(In3Methods.CONFIG, fn_args, formatted=True)
-        if in3_config.key:
-            self._runtime.set_signer(in3_config.key)
+        return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
     def get_node_list(self) -> NodeList:
         """
@@ -87,6 +83,9 @@ class Client:
         if not is_signature or not contains_type:
             raise AssertionError('Function signature is not valid. A valid example is balanceOf(address).')
         return self._runtime.call(In3Methods.ABI_DECODE, fn_signature, encoded_value)
+
+    def get_config(self) -> ClientConfig:
+        return
 
     # TODO add eth_set_pk_signer
     # TODO add sign_tx

@@ -26,11 +26,12 @@ class In3Runtime:
     """
     Instantiate libin3 and frees it when garbage collected.
     Args:
-        chain_id (str): 'main'|'goerli'|'kovan' Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. example: 0x1 for mainNet
+        chain_id (str): Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. i.e: 0x1 for mainNet
     """
 
     def __init__(self, chain_id: int):
         self.in3 = libin3_new(chain_id)
+        self.chain_id = chain_id
 
     def __del__(self):
         libin3_free(self.in3)
@@ -78,5 +79,10 @@ class In3Runtime:
             raise ClientException(error)
         return json.loads(response)
 
-    def set_signer(self, private_key: str):
-        libin3_set_pk(self.in3, private_key)
+    def set_account_sk(self, private_key: str) -> int:
+        """
+        Load private key to Ethereum sign transactions.
+        Args:
+            private_key: SK number in hexadecimal. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+        """
+        return libin3_set_pk(self.in3, private_key)

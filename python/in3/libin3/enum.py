@@ -64,7 +64,8 @@ class In3Methods(SimpleEnum):
     ECRECOVER = "ecrecover"
     CREATE_KEY = "createkey"
     KEY = "KEY"
-    CONFIG = "in3_config"
+    CONFIGURE = "in3_config"
+    GET_CONFIG = "in3_getConfig"
 
 
 class BlockAt(SimpleEnum):

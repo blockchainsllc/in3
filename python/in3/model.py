@@ -1,5 +1,6 @@
+import warnings
+
 from in3.eth.model import DataTransferObject, Account
-from in3.libin3.enum import In3ProofLevel
 
 
 class In3Node(DataTransferObject):
@@ -66,7 +67,7 @@ class ClientConfig(DataTransferObject):
     Args:
         chain_finality_threshold (int):  Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
         latest_block_stall (int): Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
-        account_private_key (str): Account SK to sign requests. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+        account_secret (str): Account SK to sign all in3 requests. (Experimental use `set_account_sk`) example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
         node_signatures (int): Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
         node_signature_consensus (int): Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
         node_min_deposit (int): Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
@@ -82,7 +83,7 @@ class ClientConfig(DataTransferObject):
     """
     def __init__(self,
                  chain_finality_threshold: int = None,
-                 account_private_key: str = None,
+                 account_secret: str = None,
                  latest_block_stall: int = None,
                  node_signatures: int = None,
                  node_signature_consensus: int = None,
@@ -97,7 +98,7 @@ class ClientConfig(DataTransferObject):
                  cached_blocks: int = None,
                  cached_code_bytes: int = None):
         self.finality: int = chain_finality_threshold
-        self.key: str = account_private_key
+        self.key: str = account_secret
         self.replaceLatestBlock: int = latest_block_stall
         self.signatureCount: int = node_signatures
         self.requestCount: int = node_signature_consensus
@@ -111,6 +112,8 @@ class ClientConfig(DataTransferObject):
         self.keepIn3: bool = response_keep_proof
         self.maxBlockCache: int = cached_blocks
         self.maxCodeCache: int = cached_code_bytes
+        if self.key:
+            warnings.warn('In3 Config: `account_secret` may cause instability.', DeprecationWarning)
 
 
 class ChainConfig:
