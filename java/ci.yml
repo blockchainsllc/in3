@@ -49,6 +49,12 @@ test_android:
 java_linux:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: java
+  rules:
+    - changes:
+        - /java/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if:  '$CI_COMMIT_REF_NAME == "master"'
+    - if:  '$CI_COMMIT_REF_NAME == "develop"'
   coverage: '/java:\s+(\d+.\d+\%)/'
   needs:
     - java
@@ -66,6 +72,12 @@ java_linux:
 
 java_arm:
   image: armv7/armhf-java8
+  rules:
+    - changes:
+        - /java/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if:  '$CI_COMMIT_REF_NAME == "master"'
+    - if:  '$CI_COMMIT_REF_NAME == "develop"'
   needs:
     - java
   stage: java
@@ -82,6 +94,12 @@ java_arm:
 java_macos:
   stage: java
   allow_failure: true
+  rules:
+    - changes:
+        - /java/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if:  '$CI_COMMIT_REF_NAME == "master"'
+    - if:  '$CI_COMMIT_REF_NAME == "develop"'
   needs:
     - java
   script:
@@ -94,6 +112,12 @@ java_macos:
 java_win:
   stage: java
   allow_failure: true
+  rules:
+    - changes:
+        - /java/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if:  '$CI_COMMIT_REF_NAME == "master"'
+    - if:  '$CI_COMMIT_REF_NAME == "develop"'
   needs:
     - java
   script:
