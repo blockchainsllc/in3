@@ -1,7 +1,7 @@
 from in3.exception import ClientException
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.runtime import In3Runtime
-from in3.eth.model import NewTransaction, TransactionReceipt
+from in3.eth.model import NewTransaction, TransactionReceipt, Account
 from in3.libin3.enum import EthMethods
 
 
@@ -30,65 +30,36 @@ class EthAccountApi:
         signature_dict = self._runtime.call(EthMethods.SIGN, message, private_key, signature_type)
         return signature_dict['signature']
 
-    def send_transaction(self, transaction: NewTransaction) -> str:
+    def send_transaction(self, sender: Account, transaction: NewTransaction) -> hex:
         """
-        Signs and sends the assigned transaction. Requires the 'key' value to be set in ClientConfig.
+        Signs and sends the assigned transaction. Requires `account.secret` value set.
         Transactions change the state of an account, just the balance, or additionally, the storage and the code.
         Every transaction has a cost, gas, paid in Wei. The transaction gas is calculated over estimated gas times the
         gas cost, plus an additional miner fee, if the sender wants to be sure that the transaction will be mined in the
         latest block.
         Args:
-            transaction: All information needed to perform a transaction. Minimum is from, to and value.
-            Client will add the other required fields, gas and chaindId.
+            sender (Account): Sender Ethereum account. Senders generally pay the gas costs, so they must have enough balance to pay gas + amount sent, if any.
+            transaction (NewTransaction): All information needed to perform a transaction. Minimum is to and value. Client will add the other required fields, gas and chaindId.
         Returns:
-            tx_hash: Transaction hash, used to get the receipt and check if the transaction was mined.
+            tx_hash (hex): Transaction hash, used to get the receipt and check if the transaction was mined.
         """
         assert isinstance(transaction, NewTransaction)
-        # SIGN_EC_RAW  = 0, /**< sign the data directly
-        # int ecdsa_sign(const ecdsa_curve *curve, HasherType hasher_sign, const uint8_t *priv_key, const uint8_t *msg,
-        # uint32_t msg_len, uint8_t *sig, uint8_t *pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
-        # SIGN_EC_HASH = 1, /**< hash and sign the data */
-        # int ecdsa_sign_digest(const ecdsa_curve *curve, const uint8_t *priv_key, const uint8_t *digest, uint8_t *sig,
-        # uint8_t *pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
-        # in3_ret_t in3_sign_data(data, pk, sig_type)
-        """
-        private_key = '0x'
-        signature_type = 'raw'
-        signature_dict = self._runtime.call(EthMethods.SIGN, transaction.serialize(), private_key, signature_type)
-        transaction.data = signature_dict['signature']
-        """
-        """
-          public String getData() {
-            String result = data == null || data.length() < 2 ? "0x" : data;
-            if (function != null) {
-              String fnData = abiEncode(function, JSON.toJson(params));
-              if (fnData != null && fnData.length() > 2 && fnData.startsWith("0x"))
-                result += fnData.substring(2 + (result.length() > 2 ? 8 : 0));
-            }
-            return result;
-          }
-        """
-        """
-        bytes_t* eth_sendTransaction(in3_t* in3, address_t from, address_t to, OPTIONAL_T(uint64_t) gas, OPTIONAL_T(uint64_t) gas_price, OPTIONAL_T(uint256_t) value, OPTIONAL_T(bytes_t) data, OPTIONAL_T(uint64_t) nonce); /**< Creates new message call transaction or a contract creation. Returns (32 Bytes) - the transaction hash, or the zero hash if the transaction is not yet available. Free result after use with b_free(). */
-        bytes_t* eth_sendRawTransaction(in3_t* in3, bytes_t data); /**< Creates new message call transaction or a contract creation for signed transactions. Returns (32 Bytes) - the transaction hash, or the zero hash if the transaction is not yet available. Free after use with b_free(). */
-        """
-        """
-        SIGN_DATA_NO_LEN=${NOUNCE}${GAS_PRICE}${GAS_LIMIT}${TO}${VALUE}${CODE}${EIP_155}
-        LEN IS 2 BYTES
-        DATA IS {LEN[0]}{LEN[1]}{SIGN_DATA_NO_LEN}
-        THEN KECCAK($SIGN_DATA_NO_LEN)
-        BOOM!
-        """
+        assert isinstance(sender, Account)
+        if not sender.secret or len(sender.secret) < 66:
+            raise AssertionError('To send a transaction, the sender\'s secret must be known by the application. \
+            To send a pre-signed transaction use `send_raw_transaction` instead.')
+        transaction.to = sender.address
+        self._runtime.set_signer_account(sender.secret)
         return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction.serialize())
 
-    def send_raw_transaction(self, transaction: NewTransaction) -> str:
+    def send_raw_transaction(self, transaction: NewTransaction) -> hex:
         """
         Sends a signed and encoded transaction.
         Args:
             transaction: All information needed to perform a transaction. Minimum is from, to and value.
             Client will add the other required fields, gas and chaindId.
         Returns:
-            tx_hash: Transaction hash, used to get the receipt and check if the transaction was mined.
+            tx_hash (hex): Transaction hash, used to get the receipt and check if the transaction was mined.
         """
         """
             public void sendRawTransaction() {
@@ -100,6 +71,13 @@ class EthAccountApi:
         
             // expect multiple calls here too
             Assertions.assertEquals("0xd55a8b0cf4896ffbbb10b125bf20d89c8006f42cc327a9859c59ac54e439b388", hash);
+        """
+        """
+        SIGN_DATA_NO_LEN=${NOUNCE}${GAS_PRICE}${GAS_LIMIT}${TO}${VALUE}${CODE}${EIP_155}
+        LEN IS 2 BYTES
+        DATA IS {LEN[0]}{LEN[1]}{SIGN_DATA_NO_LEN}
+        THEN KECCAK($SIGN_DATA_NO_LEN)
+        BOOM!
         """
         assert isinstance(transaction, NewTransaction)
         return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, transaction)

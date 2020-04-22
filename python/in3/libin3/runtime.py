@@ -41,7 +41,7 @@ class In3Runtime:
         Make a remote procedure call to a function in libin3
         Args:
             fn_name (str or Enum): Name of the function to be called
-            fn_args (tuple): Arguments matching the parameters order of this function
+            fn_args: Arguments matching the parameters order of this function
             formatted (bool): True if args must be sent as-is to RPC endpoint
         Returns:
             fn_return (str): String of values returned by the function, if any.

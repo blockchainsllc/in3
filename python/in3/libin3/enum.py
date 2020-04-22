@@ -50,22 +50,20 @@ class EthMethods(SimpleEnum):
 
 
 class In3Methods(SimpleEnum):
-    CHECKSUM_ADDRESS = "in3_checksumAddress"
+    CALL = "call"
     SEND = "send"
     SIGN = "sign"
-    CALL = "call"
-    IN3_NODE_LIST = "in3_nodeList"
+    CONFIGURE = "in3_config"
+    ECRECOVER = "in3_ecrecover"
     IN3_SIGN = "in3_sign"
     IN3_STATS = "in3_stats"
     ABI_ENCODE = "in3_abiEncode"
     ABI_DECODE = "in3_abiDecode"
-    PK_2_ADDRESS = "pk2address"
-    PK_2_PUBLIC = "pk2public"
-    ECRECOVER = "ecrecover"
-    CREATE_KEY = "createkey"
-    KEY = "KEY"
-    CONFIGURE = "in3_config"
     GET_CONFIG = "in3_getConfig"
+    PK_2_PUBLIC = "in3_pk2address"
+    PK_2_ADDRESS = "in3_pk2address"
+    IN3_NODE_LIST = "in3_nodeList"
+    CHECKSUM_ADDRESS = "in3_checksumAddress"
 
 
 class BlockAt(SimpleEnum):

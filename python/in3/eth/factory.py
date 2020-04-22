@@ -133,10 +133,10 @@ class EthObjectFactory:
         aux["Type"] = serialized["type"]
         return Log(**aux)
 
-    def checksum_address(self, address: str, add_chain_id: bool = True) -> hex:
+    def checksum_address(self, address: str, add_chain_id: bool = True) -> str:
         return self._runtime.call(In3Methods.CHECKSUM_ADDRESS, address, add_chain_id)
 
-    def get_hash(self, hash_str: str) -> hex:
+    def get_hash(self, hash_str: str) -> str:
         if not hash_str.startswith('0x'):
             raise HashFormatException("Ethereum hashes start with 0x")
         if len(hash_str[2:].encode('utf-8')) != 64:

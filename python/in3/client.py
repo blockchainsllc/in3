@@ -6,6 +6,8 @@ from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_config
 
 import re
 
+from in3.wallet.api import WalletApi
+
 
 class Client:
     """
@@ -16,17 +18,20 @@ class Client:
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
     """
 
-    def __init__(self, chain: str or ChainConfig, in3_config: ClientConfig = None):
-        if isinstance(in3_config, ClientConfig):
-            self.config = in3_config
+    def __init__(self, chain: str or ChainConfig = 'mainnet', in3_config: ClientConfig = None):
+        config = in3_config
         if isinstance(chain, ChainConfig):
-            self.config = chain.client_config
-        elif chain not in ['mainnet', 'kovan', 'goerli', 'evan', 'ipfs']:
-            raise ValueError('Chain name not supported. Try mainnet, kovan, goerli, evan, ipfs.')
-        self._runtime = In3Runtime(chain_configs[chain].chain_id)
-        if self.config:
-            self._configure(in3_config=self.config)
-        self.eth = EthereumApi(runtime=self._runtime)
+            config = chain.client_config
+        elif not isinstance(chain, str) or chain not in ['mainnet', 'kovan', 'goerli']:
+            raise ValueError('Chain name not supported. Try mainnet, kovan, goerli.')
+        runtime = In3Runtime(chain_configs[chain].chain_id)
+        self._runtime = runtime
+        if config:
+            # TODO: Chain_configs
+            self._configure(config)
+        # TODO: getConfig
+        self.eth = EthereumApi(runtime)
+        self.wallet = WalletApi(runtime)
         self._factory = In3ObjectFactory(self.eth.account.checksum_address)
 
     def _configure(self, in3_config: ClientConfig) -> bool:
@@ -55,11 +60,7 @@ class Client:
         Returns:
             encoded_fn_call (str): i.e. "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
         """
-        is_signature = re.match(r'.*(\(.+\))', fn_signature)
-        _types = ["address", "string", "uint", "string", "bool", "bytes", "int"]
-        contains_type = [_type for _type in _types if _type in fn_signature]
-        if not is_signature or not contains_type:
-            raise AssertionError('Function signature is not valid. A valid example is balanceOf(address).')
+        self._check_fn_signature(fn_signature)
         return self._runtime.call(In3Methods.ABI_ENCODE, fn_signature, fn_args)
 
     def abi_decode(self, fn_signature: str, encoded_value: str) -> tuple:
@@ -77,20 +78,23 @@ class Client:
             raise AssertionError("Encoded values must start with 0x")
         if len(encoded_value[2:]) <= 64:
             raise AssertionError("Encoded values must be longer than 64 characters.")
+        self._check_fn_signature(fn_signature)
+        return self._runtime.call(In3Methods.ABI_DECODE, fn_signature, encoded_value)
+
+    @staticmethod
+    def _check_fn_signature(fn_signature):
         is_signature = re.match(r'.*(\(.+\))', fn_signature)
         _types = ["address", "string", "uint", "string", "bool", "bytes", "int"]
         contains_type = [_type for _type in _types if _type in fn_signature]
         if not is_signature or not contains_type:
             raise AssertionError('Function signature is not valid. A valid example is balanceOf(address).')
-        return self._runtime.call(In3Methods.ABI_DECODE, fn_signature, encoded_value)
 
     def get_config(self) -> ClientConfig:
-        return
+        # TODO
+        raise NotImplementedError
 
-    # TODO add eth_set_pk_signer
     # TODO add sign_tx
     # TODO add ens
-    # TODO add getConfig
 
 
 class In3ObjectFactory(EthObjectFactory):

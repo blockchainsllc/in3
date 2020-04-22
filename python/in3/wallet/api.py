@@ -56,24 +56,24 @@ class WalletApi:
         del self._accounts[name]
         return True
 
-    def recover_account(self, name: str, secret: hex) -> Account:
+    def recover_account(self, name: str, secret: str) -> Account:
         """
         Recovers an account from a secret.
         Args:
             name (str): Account identifier to use with `get`. i.e. get('my_wallet`)
-            secret (hex): Account private key in hexadecimal string
+            secret (str): Account private key in hexadecimal string
         Returns:
             account (Account): Recovered Ethereum account.
         """
         return self._create_account(name, secret)
 
-    def parse_mnemonics(self, mnemonics: str) -> hex:
+    def parse_mnemonics(self, mnemonics: str) -> str:
         """
         Recovers an account secret from mnemonics phrase
         Args:
             mnemonics (str): BIP39 mnemonics phrase.
         Returns:
-            secret (hex): Account secret. Use `recover_account` to create a new account with this secret.
+            secret (str): Account secret. Use `recover_account` to create a new account with this secret.
         """
         raise NotImplementedError
 

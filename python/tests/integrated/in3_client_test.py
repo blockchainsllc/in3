@@ -10,11 +10,7 @@ class In3ClientTest(unittest.TestCase):
     def test_configure(self):
         client = in3.Client()
         self.assertIsNotNone(client)
-        client = in3.Client(in3.model.ClientConfig())
-        self.assertIsNotNone(client)
-        # client = in3.Client(in3.ClientConfig(**in3.model.MAINNET.__dict__))
-        # self.assertIsNotNone(client)
-        client = in3.Client('mainnet')
+        client = in3.Client(in3_config=in3.model.ClientConfig())
         self.assertIsNotNone(client)
 
     def test_node_list(self):
@@ -92,8 +88,8 @@ class In3ClientKovanTest(In3ClientTest):
     def test_configure(self):
         client = in3.Client('kovan')
         self.assertIsNotNone(client)
-        # client = in3.Client(str(in3.model.Chain.KOVAN))
-        # self.assertIsNotNone(client)
+        client = in3.Client('kovan', in3.model.ClientConfig())
+        self.assertIsNotNone(client)
 
 
 class In3ClientGoerliTest(In3ClientTest):
@@ -104,8 +100,8 @@ class In3ClientGoerliTest(In3ClientTest):
     def test_configure(self):
         client = in3.Client('goerli')
         self.assertIsNotNone(client)
-        # client = in3.Client(str(in3.model.Chain.GOERLI))
-        # self.assertIsNotNone(client)
+        client = in3.Client('goerli', in3.model.ClientConfig())
+        self.assertIsNotNone(client)
 
 
 if __name__ == '__main__':

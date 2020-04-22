@@ -87,7 +87,7 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     response = c.c_char_p()
     error = c.c_char_p()
     result = libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
-    libin3._free_(result)
+    libin3.in3_free(result)
     return result, response.value, error.value
 
 
@@ -100,7 +100,8 @@ def _transport_report_success(in3_request: In3Request, i: int, response: request
 
 
 def _transport_report_failure(in3_request: In3Request, i: int, err: Exception):
-    libin3.in3_req_add_response(in3_request.results, i, True, str(err).encode('utf8'), len(str(err)))
+    err_bytes = str(err).encode('utf8')
+    libin3.in3_req_add_response(in3_request.results, i, True, err_bytes, len(str(err)))
 
 
 @c.CFUNCTYPE(c.c_int, c.POINTER(In3Request))
