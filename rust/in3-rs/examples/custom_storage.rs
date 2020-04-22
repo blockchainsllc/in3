@@ -2,6 +2,8 @@ extern crate in3;
 
 use std::fs;
 
+use async_std::task;
+
 use in3::prelude::*;
 
 struct FsStorage<'a> {
@@ -38,8 +40,8 @@ impl Storage for FsStorage<'_> {
 fn main() {
     let mut c = Client::new(chain::MAINNET);
     c.set_storage(Box::new(FsStorage::new("cache")));
-    match c.rpc_blocking(r#"{"method": "eth_blockNumber", "params": []}"#) {
+    match task::block_on(c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#)) {
         Ok(res) => println!("{}", res),
-        Err(err) => println!("{}", err),
+        Err(err) => println!("Failed with error: {}", err),
     }
 }

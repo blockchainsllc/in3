@@ -1,5 +1,7 @@
 extern crate in3;
 
+use async_std::task;
+
 use async_trait::async_trait;
 use in3::prelude::*;
 
@@ -9,12 +11,7 @@ struct MockTransport<'a> {
 
 #[async_trait]
 impl Transport for MockTransport<'_> {
-    async fn fetch(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
-        unimplemented!()
-    }
-
-    #[cfg(feature = "blocking")]
-    fn fetch_blocking(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+    async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = self.responses.pop();
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
         match response {
@@ -27,6 +24,11 @@ impl Transport for MockTransport<'_> {
             ))],
         }
     }
+
+    #[cfg(feature = "blocking")]
+    fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+        unimplemented!()
+    }
 }
 
 fn main() {
@@ -38,8 +40,8 @@ fn main() {
             r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
         )],
     }));
-    match c.rpc_blocking(r#"{"method": "eth_blockNumber", "params": []}"#) {
+    match task::block_on(c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#)) {
         Ok(res) => println!("{}", res),
-        Err(err) => println!("{}", err),
+        Err(err) => println!("Failed with error: {}", err),
     }
 }

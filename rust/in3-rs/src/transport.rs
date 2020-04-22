@@ -48,30 +48,3 @@ impl Transport for HttpTransport {
         responses
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use async_std::task;
-
-    use super::*;
-
-    #[test]
-    fn test_transport_http_async() {
-        let mut transport = HttpTransport {};
-        let res = task::block_on(transport.fetch(
-            r#"{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"in3":{"verification":"proof","version": "2.1.0"}}"#,
-            &["https://in3-v2.slock.it/mainnet/nd-3"],
-        ));
-        println!("----- >{:?}", res);
-    }
-
-    #[test]
-    fn test_transport_http_blocking() {
-        let mut transport = HttpTransport {};
-        let res = transport.fetch_blocking(
-            r#"{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"in3":{"verification":"proof","version": "2.1.0"}}"#,
-            &["https://in3-v2.slock.it/mainnet/nd-3"],
-        );
-        println!("----- >{:?}", res);
-    }
-}

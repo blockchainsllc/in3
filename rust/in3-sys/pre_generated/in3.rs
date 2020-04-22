@@ -15601,6 +15601,12 @@ extern "C" {
     pub fn in3_configure(c: *mut in3_t, config: *const libc::c_char) -> *mut libc::c_char;
 }
 extern "C" {
+    #[doc = " gets the current config as json."]
+    #[doc = ""]
+    #[doc = " For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config"]
+    pub fn in3_get_config(c: *mut in3_t) -> *mut libc::c_char;
+}
+extern "C" {
     #[doc = " defines a default transport which is used when creating a new client."]
     pub fn in3_set_default_transport(transport: in3_transport_send);
 }

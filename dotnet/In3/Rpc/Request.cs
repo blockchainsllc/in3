@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace In3.Rpc
 {
-    public class In3Rpc
+    public class Request
     {
         [JsonPropertyName("method")] public string Method { get; set; }
         [JsonPropertyName("params")] public object[] Params { get; set; }
