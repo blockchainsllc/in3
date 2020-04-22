@@ -32,7 +32,7 @@ class Client:
         # TODO: getConfig
         self.eth = EthereumApi(runtime)
         self.wallet = WalletApi(runtime)
-        self._factory = In3ObjectFactory(self.eth.account.checksum_address)
+        self._factory = In3ObjectFactory(runtime)
 
     def _configure(self, in3_config: ClientConfig) -> bool:
         fn_args = str([in3_config.serialize()]).replace('\'', '')

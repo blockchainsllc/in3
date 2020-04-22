@@ -1,4 +1,3 @@
-import enum
 import json
 
 
@@ -142,7 +141,7 @@ class Account:
     Ethereum address of a wallet or smart-contract
     """
 
-    def __init__(self, address: str, chain_id: str, secret: str = None):
+    def __init__(self, address: str, chain_id: int, secret: str = None):
         self.address = address
         self.chain_id = chain_id
         self.secret = secret

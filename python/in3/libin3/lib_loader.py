@@ -74,6 +74,21 @@ def libin3_free(instance: int):
     libin3.in3_free(instance)
 
 
+def libin3_exec(instance: int, rpc: bytes):
+    """
+    Make Remote Procedure Call to an arbitrary method of a libin3 instance
+    Args:
+        instance (int): Memory address of the shared library instance, return value from libin3_new
+        rpc (bytes): Serialized function call, a ethreum api json string.
+    Returns:
+        returned_value (object): The returned function value(s)
+    """
+    ptr_res = libin3.in3_client_exec_req(instance, rpc)
+    result = c.cast(ptr_res, c.c_char_p).value
+    libin3._free_(ptr_res)
+    return result
+
+
 def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     """
     Make Remote Procedure Call to an arbitrary method of a libin3 instance
@@ -87,7 +102,6 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     response = c.c_char_p()
     error = c.c_char_p()
     result = libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
-    libin3.in3_free(result)
     return result, response.value, error.value
 
 
@@ -202,9 +216,11 @@ libin3.in3_for_chain_auto_init.restype = c.c_void_p
 # map free in3
 libin3.in3_free.argtypes = c.c_void_p,
 libin3.in3_free.restype = None
+libin3._free_.argtypes = c.c_void_p,
+libin3._free_.restype = None
 # map set pk signer
 libin3.eth_set_pk_signer.argtypes = [c.c_void_p, c.c_char_p]
-libin3.in3_free.restype = None
+libin3.eth_set_pk_signer.restype = None
 # map transport request function
 libin3.in3_client_exec_req.argtypes = [c.c_void_p, c.c_char_p]
 libin3.in3_client_exec_req.restype = c.c_void_p

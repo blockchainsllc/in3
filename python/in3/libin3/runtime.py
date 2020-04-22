@@ -2,10 +2,62 @@ import json
 
 from enum import Enum
 from in3.exception import ClientException
-from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_set_pk
+from in3.libin3.enum import RPCCode
+from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_exec, libin3_set_pk
 
 
-class RPCRequest:
+class RPCExecRequest:
+    """
+    RPC request to libin3
+    Args:
+        fn_name: Name of function that will be called in libin3
+        args: Arguments matching the parameters order of this function
+        _id: (optional) Message id
+        rpc_version: (optional) Version of the json-rpc api
+    """
+
+    def __init__(self, fn_name: str, args: tuple = (), verification: str = "proof", _id: int = 1,
+                 rpc_version: str = "2.0"):
+        self.id = _id
+        self.rpc_version = rpc_version
+        self.libin3_function = fn_name
+        self.args = args
+        self.in3_headers = {
+            "verification": verification,
+            "version": "2.1.0"
+        }
+
+    def __bytes__(self):
+        """
+        [{"id":1,"jsonrpc":"2.0","method":"in3_nodeList","params":[],"in3":{"verification":"proof","version": "2.1.0"}}]
+        """
+        return json.dumps({
+            "id": self.id,
+            "jsonrpc": self.rpc_version,
+            "method": self.libin3_function,
+            "params": [arg for arg in self.args],
+            "in3": self.in3_headers
+        }).encode('utf8')
+
+
+class RPCResponse:
+    """
+    RPC response from libin3.
+    Args:
+        id: Message id
+        jsonrpc: Version of the json-rpc api
+        result: Function returned value(s)
+        error: (Optional) Filled in case of error
+    """
+
+    def __init__(self, id: str, jsonrpc: str, result: str = None, error: str = None):
+        self.id = id
+        self.jsonrpc = jsonrpc
+        self.result = result
+        self.error = error
+
+
+class RPCCallRequest:
     """
     RPC request to libin3
     Args:
@@ -46,37 +98,11 @@ class In3Runtime:
         Returns:
             fn_return (str): String of values returned by the function, if any.
         """
-        # TODO: Returned value enum
         # TODO: Add docs
-        """
-        ```
-        typedef enum {
-          /* On success positive values (impl. defined) upto INT_MAX maybe returned */
-          IN3_OK                = 0,   /**< Success */
-          IN3_EUNKNOWN          = -1,  /**< Unknown error - usually accompanied with specific error msg */
-          IN3_ENOMEM            = -2,  /**< No memory */
-          IN3_ENOTSUP           = -3,  /**< Not supported */
-          IN3_EINVAL            = -4,  /**< Invalid value */
-          IN3_EFIND             = -5,  /**< Not found */
-          IN3_ECONFIG           = -6,  /**< Invalid config */
-          IN3_ELIMIT            = -7,  /**< Limit reached */
-          IN3_EVERS             = -8,  /**< Version mismatch */
-          IN3_EINVALDT          = -9,  /**< Data invalid, eg. invalid/incomplete JSON */
-          IN3_EPASS             = -10, /**< Wrong password */
-          IN3_ERPC              = -11, /**< RPC error (i.e. in3_ctx_t::error set) */
-          IN3_ERPCNRES          = -12, /**< RPC no response */
-          IN3_EUSNURL           = -13, /**< USN URL parse error */
-          IN3_ETRANS            = -14, /**< Transport error */
-          IN3_ERANGE            = -15, /**< Not in range */
-          IN3_WAITING           = -16, /**< the process can not be finished since we are waiting for responses */
-          IN3_EIGNORE           = -17, /**< Ignorable error */
-          IN3_EPAYMENT_REQUIRED = -18, /**< payment required */
-        } in3_ret_t;
-        ```
-        """
-        request = RPCRequest(fn_name, fn_args, formatted)
+        request = RPCCallRequest(fn_name, fn_args, formatted)
         result, response, error = libin3_call(self.in3, request.fn_name, request.fn_args)
-        if result < 0 or error:
+        in3_code = RPCCode(result)
+        if not in3_code == RPCCode.IN3_OK or error:
             with open('error.log', 'a+') as log_file:
                 log_file.write(error)
             raise ClientException(error)
@@ -89,3 +115,25 @@ class In3Runtime:
             secret: SK number in hexadecimal. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
         """
         return libin3_set_pk(self.in3, secret)
+
+    def execute(self, fn_name: str or Enum, *args) -> str or dict:
+        """
+        Make a remote procedure call to a function in libin3
+        Args:
+            fn_name (str or Enum): Name of the function to be called
+            *args: Arguments matching the parameters order of this function
+        Returns:
+            fn_return (str): String of values returned by the function, if any.
+        """
+        request = RPCExecRequest(str(fn_name), args=args)
+        request_bytes = bytes(request)
+        response_bytes = libin3_exec(self.in3, rpc=request_bytes)
+        response_str = response_bytes.decode('utf8').replace('\n', ' ')
+        # TODO: Make sure all responses are json parsable
+        if 'error' in response_str:
+            with open('error.log', 'a+') as log_file:
+                log_file.write(response_str)
+            raise ClientException(response_str)
+        response_dict = json.loads(response_str)
+        response = RPCResponse(**response_dict)
+        return response.result
