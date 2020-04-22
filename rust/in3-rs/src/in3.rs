@@ -8,7 +8,8 @@ use libc::{c_char, puts, strlen};
 use crate::error::{Error, In3Result};
 use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
-
+use std::{slice, str};  
+use std::fmt::Write;
 pub mod chain {
     pub type ChainId = u32;
 
@@ -37,7 +38,7 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn sign(&mut self, type_: u8, data:*const u8, len: u32) -> CString {
+    pub unsafe fn sign(&mut self, type_: u8, data:*const u8, len: u32) -> String {
             let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
             let mut val = std::slice::from_raw_parts_mut(pk, 32 as usize);
             // println!("\n");
@@ -45,7 +46,7 @@ impl Ctx {
             //     print!("{:02x}", byte);
             // }
             // println!("\n");
-            let dst  = libc::malloc(65) as *mut u8;
+            let dst: *mut u8  = libc::malloc(65) as *mut u8;
             let pby = *dst.offset(64) as *mut u8;
             // let pby = dst.offset(64) as *mut u8;
             let curve = in3_sys::secp256k1;
@@ -64,14 +65,17 @@ impl Ctx {
                     error = in3_sys::ecdsa_sign(&curve, in3_sys::HasherType::HASHER_SHA3K, pk, data, len, dst, pby, None);
                }
             }
+            
             let mut value = std::slice::from_raw_parts_mut(dst, 65 as usize);
-            // let str_sign = CStr::from_ptr(dst);
-            let str_sign = CString::from_vec_unchecked(value.to_vec());
-            println!("\n{:?}", str_sign);
-            // for byte in value {
-            //     print!("{:x}", byte);
-            // }
-            str_sign
+            // the only way to return a valid rust string from signature pointer
+            let mut sign_str = "".to_string();
+            for byte in value {
+                let mut tmp = "".to_string();
+                write!(&mut tmp, "{:02x}", byte).unwrap();
+                sign_str.push_str(tmp.as_str());
+            }
+            // println!("{}",sign_str);
+            sign_str
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
@@ -103,7 +107,7 @@ impl Ctx {
                         let state = in3_sys::in3_ctx_state(p);
                         let res = (*p).raw_response;
                         if res == std::ptr::null_mut()
-                            && state == in3_sys::state::CTX_WAITING_FOR_REQUIRED_CTX
+                            && state == in3_sys::state::CTX_WAITING_FOR_RESPONSE
                         {
                             last_waiting = p;
                         }
@@ -127,21 +131,21 @@ impl Ctx {
                 let req_type = (*last_waiting).type_;
                 match req_type {
                     in3_sys::ctx_type::CT_SIGN => {
-                        // unimplemented!();
                         let req = in3_sys::in3_create_request(last_waiting);
                         let data = (*req).payload as *mut u8;
                         let len = strlen((*req).payload) as u32;
-                        let res_str = self.sign(0, data, len);
+                        let res_str:String = self.sign(1, data, len);
+                        let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
+                        let c_data: *const c_char = c_str_data.as_ptr();
                         in3_sys::sb_add_chars(
                             &mut (*(*req).results.add(0)).result,
-                            res_str.into_raw(),
+                            c_data,
                         );
                         let result = (*(*req).results.offset(0)).result;
-                        // let len = result.len;
-                        // let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+                        let len = result.len;
+                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                         // println!("DATA -- > {}", data); 
-                        // println!("TODO CT_SIGN");
-                        return Ok("{}".to_string());
+                        return Ok(data.to_string());
                     }
                     in3_sys::ctx_type::CT_RPC => {
                         let req = in3_sys::in3_create_request(last_waiting);

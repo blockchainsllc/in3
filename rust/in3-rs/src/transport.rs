@@ -23,7 +23,10 @@ impl Transport for HttpTransport {
     async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
+            println!("{:?} {:?}", url, request);
+
             let res = http_async(url, request).await;
+            println!("{:?}",res);
             match res {
                 Err(err) => responses.push(Err(format!("Transport error: {:?}", err))),
                 Ok(res) => responses.push(Ok(res)),
