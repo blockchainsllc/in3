@@ -26,7 +26,7 @@ impl Transport for HttpTransport {
             println!("{:?} {:?}", url, request);
 
             let res = http_async(url, request).await;
-            println!("{:?}",res);
+            println!("{:?}", res);
             match res {
                 Err(err) => responses.push(Err(format!("Transport error: {:?}", err))),
                 Ok(res) => responses.push(Ok(res)),

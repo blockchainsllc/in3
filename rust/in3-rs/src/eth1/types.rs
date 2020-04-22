@@ -14,7 +14,9 @@ pub enum BlockNumber {
 
 impl Serialize for BlockNumber {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer {
+    where
+        S: Serializer,
+    {
         match *self {
             BlockNumber::Number(ref number) => number.serialize(serializer),
             BlockNumber::Earliest => "earliest".serialize(serializer),
