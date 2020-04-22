@@ -30,7 +30,7 @@ class EthAccountApi:
         signature_dict = self._runtime.call(EthMethods.SIGN, message, private_key, signature_type)
         return signature_dict['signature']
 
-    def send_transaction(self, sender: Account, transaction: NewTransaction) -> hex:
+    def send_transaction(self, sender: Account, transaction: NewTransaction) -> str:
         """
         Signs and sends the assigned transaction. Requires `account.secret` value set.
         Transactions change the state of an account, just the balance, or additionally, the storage and the code.
@@ -52,7 +52,7 @@ class EthAccountApi:
         self._runtime.set_signer_account(sender.secret)
         return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction.serialize())
 
-    def send_raw_transaction(self, transaction: NewTransaction) -> hex:
+    def send_raw_transaction(self, transaction: NewTransaction) -> str:
         """
         Sends a signed and encoded transaction.
         Args:

@@ -55,6 +55,7 @@ class In3Methods(SimpleEnum):
     SIGN = "sign"
     CONFIGURE = "in3_config"
     ECRECOVER = "in3_ecrecover"
+    ENSRESOLVE = "in3_ens"
     IN3_SIGN = "in3_sign"
     IN3_STATS = "in3_stats"
     ABI_ENCODE = "in3_abiEncode"

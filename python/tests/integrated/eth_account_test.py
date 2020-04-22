@@ -51,7 +51,6 @@ class UtilsTestCase(unittest.TestCase):
                          "ada4ff33f5645df62524402c4fb5cac5dca3bce60331f8d6bc5d41c")
 
     def test_send_tx(self):
-        # TODO: Check send_tx mock data
         # Money transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
         # 1000000000000000000 == 1 ETH
 
@@ -59,13 +58,14 @@ class UtilsTestCase(unittest.TestCase):
         # self.sk = "0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F"
         secret = hex(0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F)
         sender = self.client.wallet.recover_account('sender', secret)
+        sender_balance = self.client.eth.get_balance(sender.address)
         receiver = hex(0x6FA33809667A99A805b610C49EE2042863b1bb83)
-        tx = in3.eth.NewTransaction(to=receiver, value=290000000000000)
+        receiver_balance = self.client.eth.get_balance(receiver)
+        tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         result = self.client.eth.account.send_transaction(sender, tx)
         self.assertEqual(result, "asd")
 
     def test_send_raw_transaction(self):
-        # Test ETH transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
         # TODO: test_send_raw_transaction
         sender = "0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308"
         receiver = "0x6FA33809667A99A805b610C49EE2042863b1bb83"

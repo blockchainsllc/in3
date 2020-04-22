@@ -6,7 +6,6 @@ class EthereumTest(unittest.TestCase):
 
     def setUp(self):
         self.client = in3.Client()
-        self.client.get_node_list()
 
     def test_ethereum_sha3(self):
         digest = self.client.eth.keccak256('0x68656c6c6f20776f726c64')

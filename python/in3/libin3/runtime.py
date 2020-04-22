@@ -40,7 +40,7 @@ class RPCExecRequest:
         }).encode('utf8')
 
 
-class RPCResponse:
+class RPCExecResponse:
     """
     RPC response from libin3.
     Args:
@@ -104,8 +104,8 @@ class In3Runtime:
         in3_code = RPCCode(result)
         if not in3_code == RPCCode.IN3_OK or error:
             with open('error.log', 'a+') as log_file:
-                log_file.write(error)
-            raise ClientException(error)
+                log_file.write(str(error))
+            raise ClientException(str(error))
         return json.loads(response)
 
     def set_signer_account(self, secret: str) -> int:
@@ -129,11 +129,10 @@ class In3Runtime:
         request_bytes = bytes(request)
         response_bytes = libin3_exec(self.in3, rpc=request_bytes)
         response_str = response_bytes.decode('utf8').replace('\n', ' ')
-        # TODO: Make sure all responses are json parsable
         if 'error' in response_str:
             with open('error.log', 'a+') as log_file:
                 log_file.write(response_str)
             raise ClientException(response_str)
         response_dict = json.loads(response_str)
-        response = RPCResponse(**response_dict)
+        response = RPCExecResponse(**response_dict)
         return response.result

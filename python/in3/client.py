@@ -44,7 +44,7 @@ class Client:
         Returns:
             node_list (NodeList): List of registered in3 nodes and metadata.
         """
-        node_list_dict = self._runtime.call(In3Methods.IN3_NODE_LIST)
+        node_list_dict = self._runtime.execute(In3Methods.IN3_NODE_LIST)
         return self._factory.get_node_list(node_list_dict)
 
     def abi_encode(self, fn_signature: str, *fn_args) -> str:
@@ -93,8 +93,11 @@ class Client:
         # TODO
         raise NotImplementedError
 
-    # TODO add sign_tx
-    # TODO add ens
+    def ens_resolve(self) -> ClientConfig:
+        # TODO
+        # TODO: Add handlers to Account
+        # TODO: Add serialization from ans
+        raise NotImplementedError
 
 
 class In3ObjectFactory(EthObjectFactory):
