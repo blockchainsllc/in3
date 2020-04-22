@@ -144,7 +144,7 @@ impl Ctx {
                         let result = (*(*req).results.offset(0)).result;
                         let len = result.len;
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                        // println!("DATA -- > {}", data); 
+                        println!("DATA -- > {}", data); 
                         return Ok(data.to_string());
                     }
                     in3_sys::ctx_type::CT_RPC => {
