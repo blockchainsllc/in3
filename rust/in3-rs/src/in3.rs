@@ -193,8 +193,8 @@ impl Ctx {
                     let result = (*(*req).results.offset(0)).result;
                     let len = result.len;
                     if len != 0 {
-                        println!("DATA -- > {}", data);
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
+                        println!("DATA -- > {}", data);
                         return Ok(data.to_string());
                     } else {
                         let error = (*(*req).results.offset(0)).error;
