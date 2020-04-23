@@ -49,4 +49,9 @@
  */
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
 
+/**
+ * simply signer with one private key as hex.
+ */
+uint8_t* eth_set_pk_signer_hex(in3_t* in3, char* key);
+
 #endif
