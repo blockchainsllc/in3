@@ -30,6 +30,7 @@ fn sign_sha() {
         let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
         let data = in3.new_bytes("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
         let c_data = data as *const c_char;
+        println!("{:?}", strlen(c_data));
         in3.set_pk_signer("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
         let signa = ctx.sign(0, c_data);
         println!("SHA {:?}",signa);
@@ -46,6 +47,7 @@ fn sign_sha() {
         // let c_str_data = CString::new(src_str).unwrap(); // from a &str, creates a new allocation
         // let c_data: *const c_char = c_str_data.as_ptr();
         let c_data = data as *const c_char;
+        println!("{:?}", strlen(c_data));
         let signa = ctx.sign(1, c_data);
         println!(" RAW > {:?}",signa);
      }

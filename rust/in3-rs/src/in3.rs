@@ -52,9 +52,10 @@ impl Ctx {
 
     pub unsafe fn sign(&mut self, type_: u8, data: *const c_char) -> String {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        let len = strlen(data) as u32;
+        // let len = strlen(data) as u32;
+        let len = 32;
         let data_ = data as *mut u8;
-        self.debug_pointer(data_, len);
+        // self.debug_pointer(data_, len);
         // self.debug_pointer(pk, 65);
         let dst: *mut u8 = libc::malloc(65) as *mut u8;
         // let pby = *dst.offset(64) as *mut u8;
