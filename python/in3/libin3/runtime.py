@@ -1,6 +1,8 @@
+import ctypes as c
 import json
 
 from enum import Enum
+
 from in3.exception import ClientException
 from in3.libin3.enum import RPCCode
 from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_exec, libin3_set_pk
@@ -81,8 +83,8 @@ class In3Runtime:
         chain_id (int): Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. i.e: 0x1 for mainNet
     """
 
-    def __init__(self, chain_id: int):
-        self.in3 = libin3_new(chain_id)
+    def __init__(self, chain_id: int, transport: c.CFUNCTYPE):
+        self.in3 = libin3_new(chain_id, transport)
         self.chain_id = chain_id
 
     def __del__(self):

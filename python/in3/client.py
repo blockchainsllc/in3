@@ -5,6 +5,7 @@ from in3.eth.factory import EthObjectFactory
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
 from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_configs
+from in3.transport import http_transport
 from in3.wallet.api import WalletApi
 
 
@@ -17,23 +18,28 @@ class Client:
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
     """
 
-    def __init__(self, chain: str or ChainConfig = 'mainnet', in3_config: ClientConfig = None):
+    def __init__(self, chain: str or ChainConfig = 'mainnet',
+                 in3_config: ClientConfig = None, transport=http_transport):
+
         config = in3_config
         if isinstance(chain, ChainConfig):
             config = chain.client_config
         elif not isinstance(chain, str) or chain not in ['mainnet', 'kovan', 'goerli']:
             raise ValueError('Chain name not supported. Try mainnet, kovan, goerli.')
-        runtime = In3Runtime(chain_configs[chain].chain_id)
-        self._runtime = runtime
+
+        self._runtime = In3Runtime(chain_configs[chain].chain_id, transport)
         if config:
             # TODO: Chain_configs
             self._configure(config)
         # TODO: getConfig
-        self.eth = EthereumApi(runtime)
-        self.wallet = WalletApi(runtime)
-        self._factory = In3ObjectFactory(runtime)
+        self.eth = EthereumApi(self._runtime)
+        self.wallet = WalletApi(self._runtime)
+        self._factory = In3ObjectFactory(self._runtime)
 
     def _configure(self, in3_config: ClientConfig) -> bool:
+        """
+        Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
+        """
         fn_args = str([in3_config.serialize()]).replace('\'', '')
         return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
