@@ -105,8 +105,6 @@ class In3Runtime:
         result, response, error = libin3_call(self.in3, request.fn_name, request.fn_args)
         in3_code = RPCCode(result)
         if not in3_code == RPCCode.IN3_OK or error:
-            with open('error.log', 'a+') as log_file:
-                log_file.write(str(error))
             raise ClientException(str(error))
         return json.loads(response)
 
