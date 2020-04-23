@@ -40,17 +40,25 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn sign(&mut self, type_: u8, data: *const u8, len: u32) -> String {
+    pub unsafe fn debug_pointer(&mut self, data: *mut u8, len: u32){
+        let mut val = std::slice::from_raw_parts_mut(data, 32 as usize);
+        println!("{:?}",len);
+        print!("data -> ");
+        for byte in val {
+            print!("{:02x}", byte);
+        }
+        println!(" \n");
+    }
+
+    pub unsafe fn sign(&mut self, type_: u8, data: *const c_char) -> String {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        let mut val = std::slice::from_raw_parts_mut(pk, 32 as usize);
-        // println!("\n");
-        // for byte in val {
-        //     print!("{:02x}", byte);
-        // }
-        // println!("\n");
+        let len = strlen(data) as u32;
+        let data_ = data as *mut u8;
+        self.debug_pointer(data_, len);
+        // self.debug_pointer(pk, 65);
         let dst: *mut u8 = libc::malloc(65) as *mut u8;
-        let pby = *dst.offset(64) as *mut u8;
-        // let pby = dst.offset(64) as *mut u8;
+        // let pby = *dst.offset(64) as *mut u8;
+        let pby = dst.offset(64) as *mut u8;
         let curve = in3_sys::secp256k1;
         // let type_sys = type_ as in3_sys::d_signature_type_t;
         let mut error: libc::c_int = 0;
@@ -61,14 +69,14 @@ impl Ctx {
         };
         match enm_type {
             in3_sys::d_signature_type_t::SIGN_EC_RAW => {
-                error = in3_sys::ecdsa_sign_digest(&curve, pk, data, dst, pby, None);
+                error = in3_sys::ecdsa_sign_digest(&curve, pk, data_, dst, pby, None);
             }
             in3_sys::d_signature_type_t::SIGN_EC_HASH => {
                 error = in3_sys::ecdsa_sign(
                     &curve,
                     in3_sys::HasherType::HASHER_SHA3K,
                     pk,
-                    data,
+                    data_,
                     len,
                     dst,
                     pby,
@@ -143,9 +151,9 @@ impl Ctx {
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
                     let req = in3_sys::in3_create_request(last_waiting);
-                    let data = (*req).payload as *mut u8;
-                    let len = strlen((*req).payload) as u32;
-                    let res_str: String = self.sign(1, data, len);
+                    let data = (*req).payload;
+                    // let len = strlen((*req).payload) as u32;
+                    let res_str: String = self.sign(1, data);
                     let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
                     let c_data: *const c_char = c_str_data.as_ptr();
                     in3_sys::sb_add_chars(&mut (*(*req).results.add(0)).result, c_data);

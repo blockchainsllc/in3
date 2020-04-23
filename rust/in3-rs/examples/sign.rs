@@ -3,6 +3,7 @@ use async_std::task;
 use in3::prelude::*;
 use std::{fmt::Write, num::ParseIntError};
 use std::ffi::{CStr, CString};
+use libc::{c_char, puts, strlen};
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
     (0..s.len())
         .step_by(2)
@@ -27,11 +28,11 @@ fn sign_sha() {
      unsafe {
         let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
-        let c_string = CString::new("foo").expect("CString::new failed");
-        let data = c_string.into_raw() as *mut u8;
+        let data = in3.new_bytes("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+        let c_data = data as *const c_char;
         in3.set_pk_signer("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-        let signa = ctx.sign(1, data, 32);
-        println!("{:?}",signa);
+        let signa = ctx.sign(0, c_data);
+        println!("SHA {:?}",signa);
      }
 }
 
@@ -40,10 +41,13 @@ fn sign_sha() {
         let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
         in3.set_pk_signer("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-        let c_string = CString::new("foo").expect("CString::new failed");
-        let data = c_string.into_raw() as *mut u8;
-        let signa = ctx.sign(0, data, 32);
-        println!("{:?}",signa);
+        let src_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        let data = in3.new_bytes(src_str);
+        // let c_str_data = CString::new(src_str).unwrap(); // from a &str, creates a new allocation
+        // let c_data: *const c_char = c_str_data.as_ptr();
+        let c_data = data as *const c_char;
+        let signa = ctx.sign(1, c_data);
+        println!(" RAW > {:?}",signa);
      }
 }
 
@@ -57,7 +61,7 @@ fn sign_execute() {
     // let request = r#"{"method":"eth_sendTransaction", "params":[{"from": "0xb60e8dd61c5d32be8058bb8eb970870f07233155", "to":"0x45d45e6ff99e6c34a235d263965910298985fcfe", "value":"0xff" }]}"#;
     // let request = r#"{"method": "eth_blockNumber", "params": []}"#;
 
-    let request = r#"{"method":"eth_sendTransaction", "params":[{ "gas": "0x76c0","nonce": "0x15","gasPrice": "0x9184e72a000","from": "0xb60e8dd61c5d32be8058bb8eb970870f07233155", "to":"0x45d45e6ff99e6c34a235d263965910298985fcfe", "value":"0xff" }]}"#;
+        let request = r#"{"method":"eth_sendTransaction", "params":[{ "gas": "0x76c0","nonce": "0x15","gasPrice": "0x9184e72a000","from": "0xb60e8dd61c5d32be8058bb8eb970870f07233155", "to":"0x45d45e6ff99e6c34a235d263965910298985fcfe", "value":"0xff" }]}"#;
     // let request = r#"{"method":"eth_sendRawTransaction","params":["0xf86580850306dc4200830186a09445d45e6ff99e6c34a235d263965910298985fcfe808026a081406926bb6b08a2af307272c91ede1f1a35983183eefc1116061c0b03ad25b7a02d844da68d4f4ac8751918c09e3a00248bd572ebd1c12e651edc293b39bc34af"]}"#;
     match task::block_on(c.rpc(request)) {
         Ok(res) => println!("{}", res),
@@ -67,6 +71,6 @@ fn sign_execute() {
 
 fn main() {
     sign_sha();
-    // sign_raw();
-    // sign_execute();
+    sign_raw();
+    sign_execute();
 }
