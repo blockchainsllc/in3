@@ -40,7 +40,7 @@ RUN cd /in3/ && rm -rf build;
 RUN cd /in3/ && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DIN3_SERVER=true -DUSE_CURL=false .. && make in3
 
 
-FROM alpine:3.11.6
+FROM alpine:edge
 COPY --from=build /in3/build/bin/in3 /bin/in3
 EXPOSE 8545
 ENTRYPOINT ["/bin/in3"]
