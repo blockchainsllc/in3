@@ -4,6 +4,7 @@
   tags:
     - short-jobs
   script:
+    - sudo apt-get install libudev-dev libusb-1.0-0-dev libfox-1.6-dev
     - mkdir $BUILD
     - cd $BUILD
     - cmake $CONAN_OPTS -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=Release ..
