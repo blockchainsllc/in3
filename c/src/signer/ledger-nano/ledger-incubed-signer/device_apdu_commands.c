@@ -77,12 +77,12 @@ uint16_t bytes_to_len(uint8_t* buf) {
 }
 
 void print_bytes(uint8_t* bytes, int len, char* args) {
-  printf("printing bytes %s \n", args);
+  in3_log_debug("printing bytes %s \n", args);
   int i = 0;
   for (i = 0; i < len; i++) {
 
-    printf("%02x ", bytes[i]);
+    in3_log_debug("%02x ", bytes[i]);
   }
 
-  printf("\n\n");
+  in3_log_debug("\n\n");
 }
