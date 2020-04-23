@@ -112,9 +112,9 @@ class In3Runtime:
         """
         Load an account secret to sign Ethereum transactions with `eth_sendTransaction` and `eth_call`.
         Args:
-            secret: SK number in hexadecimal. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+            secret: SK 256 bit number. example: int(0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7, 16)
         """
-        return libin3_set_pk(self.in3, secret)
+        return libin3_set_pk(self.in3, hex(secret).encode('utf8'))
 
     def execute(self, fn_name: str or Enum, *args) -> str or dict:
         """

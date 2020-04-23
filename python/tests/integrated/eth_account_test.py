@@ -51,30 +51,20 @@ class UtilsTestCase(unittest.TestCase):
                          "ada4ff33f5645df62524402c4fb5cac5dca3bce60331f8d6bc5d41c")
 
     def test_send_tx(self):
-        # Money transfer from 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308 to 0x6FA33809667A99A805b610C49EE2042863b1bb83
         # 1000000000000000000 == 1 ETH
-
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
-        # self.sk = "0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F"
         secret = hex(0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F)
         sender = self.client.wallet.recover_account('sender', secret)
         # sender_balance = self.client.eth.get_balance(sender.address)
         receiver = hex(0x6FA33809667A99A805b610C49EE2042863b1bb83)
         # receiver_balance = self.client.eth.get_balance(receiver)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
-        result = self.client.eth.account.send_transaction(sender, tx)
-        self.assertEqual(result, "asd")
+        tx_hash = self.client.eth.account.send_transaction(sender, tx)
+        self.assertEqual(tx_hash, '0xe25bc84c719130ec49f40426b5aaeb922213d22c75cf3253aa6b3cdcfca85839')
 
     def test_send_raw_transaction(self):
-        # TODO: test_send_raw_transaction
-        sender = "0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308"
-        receiver = "0x6FA33809667A99A805b610C49EE2042863b1bb83"
-        tx = in3.eth.NewTransaction(From=sender,
-                                    to=receiver,
-                                    value=290000000000000,
-                                    gasLimit=21000,
-                                    gasPrice=self.client.eth.gas_price(),
-                                    nonce=self.client.eth.get_transaction_count(sender))
-        tx.signature = self.client.eth.account.sign(self.sk, self.client.rlp_encode_meu_ovo(tx))
-        result = self.client.eth.account.send_raw_transaction(tx)
-        self.assertEqual(result, "asd")
+        raw_tx = "0xf8670384b2d05e00825208946fa33809667a99a805b610c49ee2042863b1bb83845741bf83802da07c943a2d48f3ec" + \
+                 "5ecadbd776564c23a238915f7ccbf195bf2c3e8d4041d6ac98a02afc1ae8a45a65e42cbe2c86275b0624c4971dc02d53" + \
+                 "a5b77598ccedcc436af8"
+        tx_hash = self.client.eth.account.send_raw_transaction(raw_tx)
+        self.assertEqual(tx_hash, "0xe25bc84c719130ec49f40426b5aaeb922213d22c75cf3253aa6b3cdcfca85839")

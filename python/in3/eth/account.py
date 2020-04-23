@@ -52,35 +52,16 @@ class EthAccountApi:
         self._runtime.set_signer_account(sender.secret)
         return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction.serialize())
 
-    def send_raw_transaction(self, transaction: NewTransaction) -> str:
+    def send_raw_transaction(self, signed_transaction: str) -> str:
         """
         Sends a signed and encoded transaction.
         Args:
-            transaction: All information needed to perform a transaction. Minimum is from, to and value.
+            signed_transaction: Signed keccak hash of the serialized transaction
             Client will add the other required fields, gas and chaindId.
         Returns:
             tx_hash (hex): Transaction hash, used to get the receipt and check if the transaction was mined.
         """
-        """
-            public void sendRawTransaction() {
-            String[][] mockedResponses = {{"eth_sendRawTransaction", "eth_sendRawTransaction_1.json"}};
-        
-            IN3    in3            = builder.constructClient(mockedResponses);
-            String rawTransaction = "0xf8671b8477359400825208943940256b93c4be0b1d5931a6a036608c25706b0c8405f5e100802da0278d2c010a59688fc12a55563d81239b1dc7e3d9c6a535b34600329b0c640ad8a03894daf8d7c25b56caec71b695c5f6b1b6fd903ecfa441b2c4e15fd1c72c54a9";
-            String hash           = in3.getEth1API().sendRawTransaction(rawTransaction);
-        
-            // expect multiple calls here too
-            Assertions.assertEquals("0xd55a8b0cf4896ffbbb10b125bf20d89c8006f42cc327a9859c59ac54e439b388", hash);
-        """
-        """
-        SIGN_DATA_NO_LEN=${NOUNCE}${GAS_PRICE}${GAS_LIMIT}${TO}${VALUE}${CODE}${EIP_155}
-        LEN IS 2 BYTES
-        DATA IS {LEN[0]}{LEN[1]}{SIGN_DATA_NO_LEN}
-        THEN KECCAK($SIGN_DATA_NO_LEN)
-        BOOM!
-        """
-        assert isinstance(transaction, NewTransaction)
-        return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, transaction)
+        return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, signed_transaction)
 
     def get_transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
         """
