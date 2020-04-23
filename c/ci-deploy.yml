@@ -289,7 +289,7 @@ pages:
     - cp -r cov_build/ccov/all-merged public/coverage
     - cp -r report/* public/code_analysis
     - cp -r doc/build public/rtd
-    - cp -r vulnerability_analysis.json public/vulnerability_analysis.json
+    - cp -r vulnerability_analysis.json public/vulnerability_analysis.json || true
     - cp -r java/build/reports/jacoco/test/html    public/coverage_java
     - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li></ul></body></html>" > public/index.html
   artifacts:
