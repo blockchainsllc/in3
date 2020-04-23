@@ -60,6 +60,7 @@
 #include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
+#include "../../signer/ledger-nano/ledger-incubed-signer/ledger_signer.h"
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -615,6 +616,7 @@ int main(int argc, char* argv[]) {
   params[1]    = 0;
   int       p  = 1, i;
   bytes32_t pk;
+  uint8_t   bip32[5];
 
   // we want to verify all
   in3_register_eth_full();
@@ -686,6 +688,11 @@ int main(int argc, char* argv[]) {
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
+    } else if (strcmp(argv[i], "-bip") == 0) {
+      if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
+        hex_to_bytes(argv[++i], -1, bip32, 5);
+        eth_ledger_set_signer(c, bip32);
+      }
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
     else if (strcmp(argv[i], "-ccache") == 0) // NOOP - should have been handled earlier
@@ -781,9 +788,9 @@ int main(int argc, char* argv[]) {
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
-      else if (strcmp(method, "sign") == 0 && !data)
+      else if ((strcmp(method, "sign") == 0 || strcmp(method, "sign_ledgernano") == 0) && !data)
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
+      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0 || strcmp(method, "send_ledgernano") == 0))
         sig = argv[i];
       else {
         // otherwise we add it to the params
@@ -792,7 +799,7 @@ int main(int argc, char* argv[]) {
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,
-                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
+                       (argv[i][0] == '0{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
                        strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
@@ -944,7 +951,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
-  } else if (strcmp(method, "sign") == 0) {
+  } else if (strcmp(method, "sign") == 0 || strcmp(method, "sign_ledgernano") == 0) {
     if (!data) die("no data given");
     if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
       data = hex_to_new_bytes((char*) data->data + 2, data->len - 2);
@@ -958,7 +965,7 @@ int main(int argc, char* argv[]) {
       sig_type = "raw";
     }
 
-    if (!c->signer) die("No private key given");
+    if (!c->signer) die("No private key/bip32 path given");
     uint8_t   sig[65];
     in3_ctx_t ctx;
     ctx.client = c;
