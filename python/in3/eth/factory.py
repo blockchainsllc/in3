@@ -143,7 +143,7 @@ class EthObjectFactory:
             raise HashFormatException("Hash size is not of an Ethereum hash.")
         return hash_str
 
-    def get_account(self, address: str, secret: str = None) -> Account:
+    def get_account(self, address: str, secret: int = None) -> Account:
         if not address.startswith("0x"):
             raise EthAddressFormatException("Ethereum addresses start with 0x")
         if len(address.encode("utf-8")) != 42:

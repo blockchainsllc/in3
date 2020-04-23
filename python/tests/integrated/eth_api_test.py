@@ -2,6 +2,15 @@ import unittest
 import in3
 
 
+class EthereumGoerliTest(unittest.TestCase):
+
+    def setUp(self):
+        self.client = in3.Client('goerli')
+
+    def test_eth_gasPrice(self):
+        self.assertGreater(self.client.eth.gas_price(), 1000000)
+
+
 class EthereumTest(unittest.TestCase):
 
     def setUp(self):

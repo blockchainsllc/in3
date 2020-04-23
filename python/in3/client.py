@@ -1,11 +1,10 @@
-from in3.eth.factory import EthObjectFactory
-from in3.libin3.runtime import In3Runtime
-from in3.libin3.enum import In3Methods
-from in3.eth.api import EthereumApi
-from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_configs
-
 import re
 
+from in3.eth.api import EthereumApi
+from in3.eth.factory import EthObjectFactory
+from in3.libin3.enum import In3Methods
+from in3.libin3.runtime import In3Runtime
+from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_configs
 from in3.wallet.api import WalletApi
 
 
@@ -44,7 +43,7 @@ class Client:
         Returns:
             node_list (NodeList): List of registered in3 nodes and metadata.
         """
-        node_list_dict = self._runtime.execute(In3Methods.IN3_NODE_LIST)
+        node_list_dict = self._runtime.call(In3Methods.IN3_NODE_LIST)
         return self._factory.get_node_list(node_list_dict)
 
     def abi_encode(self, fn_signature: str, *fn_args) -> str:

@@ -71,7 +71,7 @@ class RPCCallRequest:
         elif fn_args and not formatted:
             self.fn_args = json.dumps(list(fn_args)).replace('\'', '').encode('utf8')
         else:
-            self.fn_args = ''.encode('utf8')
+            self.fn_args = '[]'.encode('utf8')
 
 
 class In3Runtime:
@@ -108,7 +108,7 @@ class In3Runtime:
             raise ClientException(str(error))
         return json.loads(response)
 
-    def set_signer_account(self, secret: str) -> int:
+    def set_signer_account(self, secret: int) -> int:
         """
         Load an account secret to sign Ethereum transactions with `eth_sendTransaction` and `eth_call`.
         Args:

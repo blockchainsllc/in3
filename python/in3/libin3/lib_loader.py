@@ -105,8 +105,8 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     return result, response.value, error.value
 
 
-def libin3_set_pk(instance, private_key: str):
-    libin3.eth_set_pk_signer(instance, private_key.encode('utf8'))
+def libin3_set_pk(instance, private_key: int):
+    libin3.eth_set_pk_signer(instance, private_key)
 
 
 def _transport_report_success(in3_request: In3Request, i: int, response: requests.Response):
@@ -219,7 +219,7 @@ libin3.in3_free.restype = None
 libin3._free_.argtypes = c.c_void_p,
 libin3._free_.restype = None
 # map set pk signer
-libin3.eth_set_pk_signer.argtypes = [c.c_void_p, c.c_char_p]
+libin3.eth_set_pk_signer.argtypes = [c.c_void_p, c.c_uint8]
 libin3.eth_set_pk_signer.restype = None
 # map transport request function
 libin3.in3_client_exec_req.argtypes = [c.c_void_p, c.c_char_p]
