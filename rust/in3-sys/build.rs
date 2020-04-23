@@ -77,7 +77,7 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
     ]
         .iter()
         .collect();
-    let mut builder = bindgen::Builder::default()
+    let builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Stable_1_19)
         .size_t_is_usize(true)
         .use_core()
@@ -95,11 +95,6 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
         .constified_enum_module("in3_ret_t")
         .rustified_enum(".*");
 
-    // Whitelist cs_.* functions and types
-    let pattern = String::from(".*");
-    // builder = builder
-    //     .whitelist_function(&pattern)
-    //     .whitelist_type(&pattern);
 
     let bindings = builder.generate().expect("Unable to generate bindings");
 

@@ -1,9 +1,8 @@
 extern crate in3;
 use async_std::task;
 use in3::prelude::*;
-use std::{fmt::Write, num::ParseIntError};
-use std::ffi::{CStr, CString};
-use libc::{c_char, puts, strlen};
+use std::{num::ParseIntError};
+use libc::{c_char};
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
     (0..s.len())
         .step_by(2)
@@ -13,12 +12,12 @@ pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
 
 fn decode_test(){
     let mut in3 = Client::new(chain::MAINNET);
-    let pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
-    let pk_rust = pk_.as_ptr();
-    let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
-    let data_rust = data_.as_ptr();
-    let pk_c = in3.hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-    let data_c = in3.new_bytes("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+    let _pk = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
+    let _pk_rust = _pk.as_ptr();
+    let _data = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
+    let _data_rust = _data.as_ptr();
+    let _pk_c = in3.hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
+    let _data_c = in3.new_bytes("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
     //TODO: maybe assert this byte by byte
     // assert!(pk_c, pk_);
     // assert!(data_c, data_);
@@ -34,7 +33,7 @@ fn sign_sha() {
         // let c_data = data as *const c_char;
         // println!("{:?}--->", data_.len());
         in3.set_pk_signer("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-        let signa = ctx.sign(0, c_data, data_.len());
+        let signa = ctx.sign(Signature::Raw, c_data, data_.len());
         println!("SHA {:?}",signa);
      }
 }
@@ -53,7 +52,7 @@ fn sign_sha() {
         let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
         let c_data = data_.as_ptr() as *const c_char;
         // println!("{:?}", data_.len());
-        let signa = ctx.sign(1, c_data, data_.len());
+        let signa = ctx.sign(Signature::Hash, c_data, data_.len());
         println!(" RAW > {:?}",signa);
      }
 }
