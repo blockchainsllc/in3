@@ -1,12 +1,12 @@
 use core::fmt;
 use core::result;
-use std::ffi;
+use std::{convert, ffi};
 
 use in3_sys::in3_ret_t::*;
 
 macro_rules! in3_error_def {
     ( $( $( #[$attr:meta] )* => $rust_variant:ident = $cs_variant:ident; )* ) => {
-        #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+        #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 
         pub enum Error {
             $(
@@ -17,7 +17,8 @@ macro_rules! in3_error_def {
             )*
 
             UnknownIn3Error,
-            CustomError(&'static str),
+            TryAgain,
+            CustomError(String),
         }
 
         impl From<in3_sys::in3_ret_t::Type> for Error {
@@ -76,8 +77,8 @@ impl fmt::Display for Error {
 impl Error {
     fn description(&self) -> &str {
         use self::Error::*;
-        match *self {
-            CustomError(msg) => msg,
+        match self {
+            CustomError(ref msg) => msg,
             UnknownIn3Error => "Unknown error",
             _ => unsafe {
                 ffi::CStr::from_ptr(in3_sys::in3_errmsg(self.into()))
@@ -85,6 +86,24 @@ impl Error {
                     .unwrap()
             },
         }
+    }
+}
+
+impl convert::From<serde_json::error::Error> for Error {
+    fn from(_: serde_json::error::Error) -> Self {
+        Self::DataInvalid
+    }
+}
+
+impl convert::From<&str> for Error {
+    fn from(err: &str) -> Self {
+        err.to_string().into()
+    }
+}
+
+impl convert::From<String> for Error {
+    fn from(err: String) -> Self {
+        Self::CustomError(err)
     }
 }
 
@@ -99,7 +118,7 @@ mod tests {
         let errors = [
             Error::NoMemory,
             Error::UnknownIn3Error,
-            Error::CustomError("Custom error"),
+            Error::CustomError("Custom error".to_string()),
             Error::from(in3_ret_t::IN3_ECONFIG),
             Error::from(500 as in3_ret_t::Type),
         ];

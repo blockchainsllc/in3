@@ -64,10 +64,10 @@ valgrind:
     - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f; done
 
 code_quality:
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
   stage: analysis
   needs: []
   tags:
@@ -102,7 +102,12 @@ cpd:
     - cpd --minimum-tokens 150 --language python --files python
 
 vulnerabilities:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
   stage: analysis
+  allow_failure: true
   needs:
     - docker
   tags:
