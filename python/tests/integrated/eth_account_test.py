@@ -58,9 +58,9 @@ class UtilsTestCase(unittest.TestCase):
         # self.sk = "0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F"
         secret = hex(0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F)
         sender = self.client.wallet.recover_account('sender', secret)
-        sender_balance = self.client.eth.get_balance(sender.address)
+        # sender_balance = self.client.eth.get_balance(sender.address)
         receiver = hex(0x6FA33809667A99A805b610C49EE2042863b1bb83)
-        receiver_balance = self.client.eth.get_balance(receiver)
+        # receiver_balance = self.client.eth.get_balance(receiver)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         result = self.client.eth.account.send_transaction(sender, tx)
         self.assertEqual(result, "asd")
