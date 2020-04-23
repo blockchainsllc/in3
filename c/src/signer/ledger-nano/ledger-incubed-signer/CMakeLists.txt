@@ -31,7 +31,7 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-cmake_minimum_required(VERSION 3.15)
+#cmake_minimum_required(VERSION 3.15)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 set(HIDAPI_DIR ${CMAKE_CURRENT_SOURCE_DIR})
