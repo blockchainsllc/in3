@@ -100,7 +100,6 @@ class In3Runtime:
         Returns:
             fn_return (str): String of values returned by the function, if any.
         """
-        # TODO: Add docs
         request = RPCCallRequest(fn_name, fn_args, formatted)
         result, response, error = libin3_call(self.in3, request.fn_name, request.fn_args)
         in3_code = RPCCode(result)
@@ -130,8 +129,6 @@ class In3Runtime:
         response_bytes = libin3_exec(self.in3, rpc=request_bytes)
         response_str = response_bytes.decode('utf8').replace('\n', ' ')
         if 'error' in response_str:
-            with open('error.log', 'a+') as log_file:
-                log_file.write(response_str)
             raise ClientException(response_str)
         response_dict = json.loads(response_str)
         response = RPCExecResponse(**response_dict)

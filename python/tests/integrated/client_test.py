@@ -1,6 +1,7 @@
 import unittest
 import in3
-from tests.transport import mock_transport, mock_config
+from tests.transport import mock_transport
+from tests.config_mock import mock_config
 
 
 class In3ClientTest(unittest.TestCase):

@@ -76,7 +76,7 @@ class EthAccountApi:
         Returns:
             tx_receipt: The mined Transaction data including event logs.
         """
-        tx_receipt = self._runtime.call(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
+        tx_receipt = self._runtime.execute(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
         return self._factory.get_tx_receipt(tx_receipt)
 
     def estimate_gas(self, transaction: NewTransaction) -> int:

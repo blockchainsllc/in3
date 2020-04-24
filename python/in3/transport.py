@@ -1,5 +1,4 @@
 import ctypes as c
-import json
 
 import requests
 
@@ -30,9 +29,8 @@ def _transport_report_success(in3_request: In3Request, i: int, response: request
     libin3.in3_req_add_response(in3_request.results, i, False, response.content, len(response.content))
 
 
-def _transport_report_failure(in3_request: In3Request, i: int, err: Exception):
-    err_bytes = str(err).encode('utf8')
-    libin3.in3_req_add_response(in3_request.results, i, True, err_bytes, len(str(err)))
+def _transport_report_failure(in3_request: In3Request, i: int, msg: bytes):
+    libin3.in3_req_add_response(in3_request.results, i, True, msg, len(msg))
 
 
 @c.CFUNCTYPE(c.c_int, c.POINTER(In3Request))
@@ -57,14 +55,13 @@ def http_transport(in3_request: In3Request):
             response = requests.post(**http_request)
             response.raise_for_status()
             if 'error' in response.text:
-                response_dict = json.loads(response.text)
-                _transport_report_failure(in3_request, i, Exception(response_dict[0]['error']))
+                _transport_report_failure(in3_request, i, response.content)
             else:
                 _transport_report_success(in3_request, i, response)
         except requests.exceptions.RequestException as err:
-            _transport_report_failure(in3_request, i, err)
+            _transport_report_failure(in3_request, i, str(err).encode('utf8'))
         except requests.exceptions.SSLError as err:
-            _transport_report_failure(in3_request, i, err)
+            _transport_report_failure(in3_request, i, str(err).encode('utf8'))
         except Exception as err:
-            _transport_report_failure(in3_request, i, err)
+            _transport_report_failure(in3_request, i, str(err).encode('utf8'))
     return 0
