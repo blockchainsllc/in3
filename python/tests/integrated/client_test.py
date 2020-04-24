@@ -85,7 +85,8 @@ class In3ClientTest(unittest.TestCase):
 class In3ClientKovanTest(In3ClientTest):
 
     def setUp(self):
-        self.in3client = in3.Client('kovan')
+        # self.in3client = in3.Client('kovan', in3_config=mock_client_config)
+        self.in3client = in3.Client('kovan', in3_config=mock_client_config, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client('kovan')
@@ -97,7 +98,8 @@ class In3ClientKovanTest(In3ClientTest):
 class In3ClientGoerliTest(In3ClientTest):
 
     def setUp(self):
-        self.in3client = in3.Client('goerli')
+        # self.in3client = in3.Client('goerli', in3_config=mock_client_config)
+        self.in3client = in3.Client('goerli', in3_config=mock_client_config, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client('goerli')
