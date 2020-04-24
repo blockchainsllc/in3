@@ -34,7 +34,7 @@ def libin3_new(chain_id: int, transport: c.CFUNCTYPE, debug=False) -> int:
     libin3.in3_set_default_transport(transport)
     # register transport and verifiers (needed only once)
     libin3.in3_register_eth_full()
-    # libin3.in3_register_ipfs();
+    # TODO: IPFS libin3.in3_register_ipfs();
     libin3.in3_register_eth_api()
     # TODO: in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
     # enable logging
@@ -144,6 +144,8 @@ def _map_function_signatures():
     # map new in3
     libin3.in3_for_chain_auto_init.argtypes = [c.c_int]
     libin3.in3_for_chain_auto_init.restype = c.c_void_p
+    libin3.in3_for_chain_default.argtypes = [c.c_int]
+    libin3.in3_for_chain_default.restype = c.c_void_p
     # map free in3
     libin3.in3_free.argtypes = c.c_void_p,
     libin3.in3_free.restype = None

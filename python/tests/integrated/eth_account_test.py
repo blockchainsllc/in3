@@ -1,11 +1,15 @@
 import unittest
 import in3
+from tests.transport import mock_transport, mock_config
 
 
 class UtilsTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.client = in3.Client('goerli')
+        self.client = in3.Client('goerli', in3_config=mock_config)
+        config = self.client.get_config()
+        # self.client = in3.Client('goerli', in3_config=mock_client_config, transport=mock_transport)
+        pass
 
     def test_checksum_address(self):
         missing_0x_address = '1fe2e9bf29AA1938859aF64C413361227d04059A'

@@ -94,9 +94,17 @@ class Client:
         if not is_signature or not contains_type:
             raise AssertionError('Function signature is not valid. A valid example is balanceOf(address).')
 
-    def get_config(self) -> ClientConfig:
-        # TODO
-        raise NotImplementedError
+    def get_config(self) -> dict:
+        # TODO: Marshalling
+        return self._runtime.call(In3Methods.GET_CONFIG)
+
+    def raw_configure(self, cfg_dict: dict) -> bool:
+        """
+        Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
+        """
+        import json
+        fn_args = str([json.dumps(cfg_dict)]).replace('\'', '')
+        return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
     def ens_resolve(self) -> ClientConfig:
         # TODO
