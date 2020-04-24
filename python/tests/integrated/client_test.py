@@ -1,21 +1,19 @@
 import unittest
 import in3
+from tests.transport import mock_transport, mock_client_config
 
 
 class In3ClientTest(unittest.TestCase):
 
     def setUp(self):
-        self.in3client = in3.Client()
+        # self.in3client = in3.Client(in3_config=mock_client_config)
+        self.in3client = in3.Client(in3_config=mock_client_config, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client()
         self.assertIsInstance(client, in3.Client)
         client = in3.Client(in3_config=in3.model.ClientConfig())
         self.assertIsInstance(client, in3.Client)
-
-    def test_node_list(self):
-        nl = self.in3client.get_node_list()
-        self.assertIsInstance(nl, in3.model.NodeList)
 
     def test_abi_encode(self):
         params = "(address,string)", "0x1234567890123456789012345678901234567890", "xyz"
@@ -78,6 +76,10 @@ class In3ClientTest(unittest.TestCase):
         expected = ["0x1234567890123456789012345678901234567890", "xyz", "0xff", "abc"]
         decoded = self.in3client.abi_decode(*params)
         self.assertEqual(decoded, expected)
+
+    def test_node_list(self):
+        nl = self.in3client.get_node_list()
+        self.assertIsInstance(nl, in3.model.NodeList)
 
 
 class In3ClientKovanTest(In3ClientTest):

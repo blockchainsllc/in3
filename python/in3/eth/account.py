@@ -27,7 +27,7 @@ class EthAccountApi:
         #   SIGN_EC_HASH = 1, /**< hash and sign the data */
         signature_type = 'eth_sign'
         # in3_ret_t in3_sign_data(data, pk, sig_type)
-        signature_dict = self._runtime.execute(EthMethods.SIGN, message, private_key, signature_type)
+        signature_dict = self._runtime.call(EthMethods.SIGN, message, private_key, signature_type)
         return signature_dict['signature']
 
     def send_transaction(self, sender: Account, transaction: NewTransaction) -> str:
