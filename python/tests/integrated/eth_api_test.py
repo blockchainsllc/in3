@@ -22,6 +22,7 @@ class EthereumTest(unittest.TestCase):
         self.assertGreater(result, 1000)
 
     def test_get_storage_at(self):
+        # TODO
         storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0)
         self.assertIsInstance(storage, str)
         block_number = self.client.eth.block_number() - 15
@@ -33,6 +34,7 @@ class EthereumTest(unittest.TestCase):
         self.assertGreater(rpc, 0)
 
     def test_get_code(self):
+        # TODO
         code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4")
         self.assertIsInstance(code, str)
         block_number = self.client.eth.block_number() - 15
@@ -67,6 +69,8 @@ class EthereumGoerliTest(EthereumTest):
         # self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
 
     def test_get_storage_at(self):
+
+        # TODO
         storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0)
         self.assertIsInstance(storage, str)
         block_number = self.client.eth.block_number() - 15
@@ -74,6 +78,8 @@ class EthereumGoerliTest(EthereumTest):
         self.assertIsInstance(storage, str)
 
     def test_get_code(self):
+
+        # TODO
         code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4")
         self.assertIsInstance(code, str)
         block_number = self.client.eth.block_number() - 15
@@ -85,6 +91,8 @@ class EthereumGoerliTest(EthereumTest):
         self.assertGreaterEqual(rpc, 0)
 
     def test_get_block_by_number(self):
+
+        # TODO
         block_number = self.client.eth.block_number() - 15
         block = self.client.eth.get_block_by_number(block_number)
         self.assertIsInstance(block, in3.eth.Block)
@@ -96,6 +104,15 @@ class EthereumGoerliTest(EthereumTest):
         self.assertIsInstance(tx, in3.eth.Transaction)
         self.assertEqual(tx_hash, tx.hash)
 
+    def test_eth_call(self):
+        # TODO
+        transaction = in3.eth.NewTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
+                                             to="0x7ceabea4AA352b10fBCa48e6E8015bC73687ABD4",
+                                             data="0xa9c70686",
+                                             nonce=5)
+        rpc = self.client.eth.eth_call(transaction)
+        self.assertIsInstance(rpc, str)
+
 
 class EthereumKovanTest(EthereumTest):
 
@@ -104,6 +121,8 @@ class EthereumKovanTest(EthereumTest):
         # self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
 
     def test_get_storage_at(self):
+
+        # TODO
         storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0)
         self.assertIsInstance(storage, str)
         block_number = self.client.eth.block_number() - 15
@@ -111,6 +130,8 @@ class EthereumKovanTest(EthereumTest):
         self.assertIsInstance(storage, str)
 
     def test_get_code(self):
+
+        # TODO
         code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4")
         self.assertIsInstance(code, str)
         block_number = self.client.eth.block_number() - 15
@@ -122,6 +143,8 @@ class EthereumKovanTest(EthereumTest):
         self.assertGreaterEqual(rpc, 0)
 
     def test_get_block_by_number(self):
+
+        # TODO
         block_number = self.client.eth.block_number() - 15
         block = self.client.eth.get_block_by_number(block_number)
         self.assertIsInstance(block, in3.eth.Block)
@@ -132,6 +155,15 @@ class EthereumKovanTest(EthereumTest):
         tx = self.client.eth.get_transaction_by_hash(tx_hash)
         self.assertIsInstance(tx, in3.eth.Transaction)
         self.assertEqual(tx_hash, tx.hash)
+
+    def test_eth_call(self):
+        # TODO
+        transaction = in3.eth.NewTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
+                                             to="0x7ceabea4AA352b10fBCa48e6E8015bC73687ABD4",
+                                             data="0xa9c70686",
+                                             nonce=5)
+        rpc = self.client.eth.eth_call(transaction)
+        self.assertIsInstance(rpc, str)
 
 
 if __name__ == '__main__':
