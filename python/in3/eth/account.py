@@ -101,11 +101,11 @@ class EthAccountApi:
         Returns:
             tx_count (int): Number of transactions mined from this address.
         """
-        account = self.factory.get_account(address)
+        account = self._factory.get_account(address)
         if isinstance(at_block, int):
             at_block = hex(at_block)
         tx_count = self._runtime.call(EthMethods.TRANSACTION_COUNT, account.address, at_block)
-        return self.factory.get_integer(tx_count)
+        return self._factory.get_integer(tx_count)
 
     def checksum_address(self, address: str, add_chain_id: bool = True) -> str:
         """

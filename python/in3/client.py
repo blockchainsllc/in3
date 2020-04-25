@@ -106,11 +106,22 @@ class Client:
         fn_args = str([json.dumps(cfg_dict)]).replace('\'', '')
         return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
-    def ens_resolve(self) -> ClientConfig:
-        # TODO
+    def ens_resolve(self, domain_name: str, domain_type: str, registry: str = None) -> ClientConfig:
+        """
+        Resolves ENS domain name to Ethereum address.
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            domain_type: 'hash'|'addr'|'owner'|'resolver'
+            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+        Returns:
+            address (str): Ethereum address corresponding to domain name.
+        """
         # TODO: Add handlers to Account
-        # TODO: Add serialization from ans
-        raise NotImplementedError
+        # TODO: Add serialization in account factory
+        """
+          "currently only 'hash','addr','owner' or 'resolver' are allowed as type
+        """
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, domain_type, registry)
 
 
 class In3ObjectFactory(EthObjectFactory):

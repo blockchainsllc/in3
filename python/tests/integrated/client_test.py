@@ -4,11 +4,11 @@ from tests.transport import mock_transport
 from tests.config_mock import mock_config
 
 
-class In3ClientTest(unittest.TestCase):
+class MainNetClientTest(unittest.TestCase):
 
     def setUp(self):
-        # self.client = in3.Client(in3_config=mock_client_config)
-        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        self.client = in3.Client(in3_config=mock_config)
+        # self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
     def test_configure(self):
         client = in3.Client()
@@ -80,11 +80,15 @@ class In3ClientTest(unittest.TestCase):
         self.assertEqual(decoded, expected)
 
     def test_node_list(self):
-        nl = self.client.get_node_list()
-        self.assertIsInstance(nl, in3.model.NodeList)
+        node_list = self.client.get_node_list()
+        self.assertIsInstance(node_list, in3.model.NodeList)
+
+    def test_ens_resolve(self):
+        address = self.client.ens_resolve('depraz.eth', 'addr', '0x226159d592E2b063810a10Ebf6dcbADA94Ed68b8')
+        self.assertIsInstance(address, in3.model.NodeList)
 
 
-class In3ClientKovanTest(In3ClientTest):
+class KovanClientTest(MainNetClientTest):
 
     def setUp(self):
         # self.client = in3.Client('kovan', in3_config=mock_client_config)
@@ -97,7 +101,7 @@ class In3ClientKovanTest(In3ClientTest):
         self.assertIsInstance(client, in3.Client)
 
 
-class In3ClientGoerliTest(In3ClientTest):
+class GoerliClientTest(MainNetClientTest):
 
     def setUp(self):
         # self.client = in3.Client('goerli', in3_config=mock_client_config)

@@ -49,7 +49,7 @@ class EthAccountGoerliTestCase(unittest.TestCase):
         self.assertGreater(gas, 1000)
 
     def test_get_transaction_count(self):
-        rpc = self.client.eth.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
+        rpc = self.client.eth.account.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
         self.assertGreaterEqual(rpc, 0)
 
     def test_get_balance(self):
@@ -86,7 +86,7 @@ class EthAccountKovanTestCase(EthAccountGoerliTestCase):
         self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
 
     def test_get_transaction_count(self):
-        rpc = self.client.eth.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
+        rpc = self.client.eth.account.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
         self.assertGreaterEqual(rpc, 0)
 
     def test_send_tx(self):
@@ -119,7 +119,7 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
         self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
     def test_get_transaction_count(self):
-        rpc = self.client.eth.get_transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')
+        rpc = self.client.account.eth.get_transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')
         self.assertGreater(rpc, 0)
 
     def test_send_tx(self):
