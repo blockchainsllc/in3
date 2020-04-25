@@ -48,6 +48,10 @@ class EthAccountGoerliTestCase(unittest.TestCase):
         gas = self.client.eth.account.estimate_gas(transaction)
         self.assertGreater(gas, 1000)
 
+    def test_get_transaction_count(self):
+        rpc = self.client.eth.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
+        self.assertGreaterEqual(rpc, 0)
+
     def test_get_balance(self):
         result = self.client.eth.get_balance('0x6FA33809667A99A805b610C49EE2042863b1bb83')
         self.assertGreaterEqual(result, 0)
@@ -81,6 +85,10 @@ class EthAccountKovanTestCase(EthAccountGoerliTestCase):
         # self.client = in3.Client('kovan', in3_config=mock_config)
         self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
 
+    def test_get_transaction_count(self):
+        rpc = self.client.eth.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
+        self.assertGreaterEqual(rpc, 0)
+
     def test_send_tx(self):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
@@ -110,6 +118,10 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
         # self.client = in3.Client(in3_config=mock_config)
         self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
+    def test_get_transaction_count(self):
+        rpc = self.client.eth.get_transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')
+        self.assertGreater(rpc, 0)
+
     def test_send_tx(self):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
@@ -118,17 +130,18 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
         receiver = hex(0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         tx_hash = self.client.eth.account.send_transaction(sender, tx)
-        self.assertEqual(tx_hash, '0xf1fe98a8a0582f9488953f8d1eae1564e56a1952d3208320ba52bfec3fd6de7a')
+        self.assertEqual(tx_hash, '0xb13b9d38642216af2545f1b9f882413bcdef13bec21def57c699d3a967d763bc')
 
     def test_send_raw_transaction(self):
+        # 0xf868098502540be400825208940b56ae81586d2728ceaf7c00a6020c5d63f02308845741bf838026a070af62c714808c7607ebe2cc756f20bed9790e5f5f20b192a83f689157a44bd0a0768a5d94766f1645e652dbef3826eed94074b5481a453ad12aa52ae6f8e42606
         raw_tx = "0xf86808850165a0bc00825208940b56ae81586d2728ceaf7c00a6020c5d63f02308845741bf838025a0e810532f18eb" + \
                  "3d97f21907b2e35e8432a554c2a7892bfa38f5556931996127a9a073b5e4711fb99294d38511ea811c9e8f157312369f" + \
                  "e3a326932e32de87b77536"
         tx_hash = self.client.eth.account.send_raw_transaction(raw_tx)
-        self.assertEqual(tx_hash, "0xf1fe98a8a0582f9488953f8d1eae1564e56a1952d3208320ba52bfec3fd6de7a")
+        self.assertEqual(tx_hash, "0xb13b9d38642216af2545f1b9f882413bcdef13bec21def57c699d3a967d763bc")
 
     def test_get_tx_receipt(self):
         # TODO
-        tx_hash = '0xf1fe98a8a0582f9488953f8d1eae1564e56a1952d3208320ba52bfec3fd6de7a'
+        tx_hash = '0xae25a4b673bd87f40ea147a5506cb2ffb38e32ec1efc372c6730a5ba50668ae3'
         result = self.client.eth.account.get_transaction_receipt(tx_hash)
         self.assertIsInstance(result, in3.eth.TransactionReceipt)

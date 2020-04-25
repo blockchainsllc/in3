@@ -88,23 +88,6 @@ class EthereumApi:
             at_block = hex(at_block)
         return self._runtime.call(EthMethods.CODE, account.address, at_block)
 
-    def get_transaction_count(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
-        """
-        Number of transactions mined from this address. Used to set transaction nonce.
-        Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1).
-        It exists to mitigate replay attacks.
-        Args:
-            address (str): Ethereum account address
-            at_block (int):  Block number
-        Returns:
-            tx_count (int): Number of transactions mined from this address.
-        """
-        account = self.factory.get_account(address)
-        if isinstance(at_block, int):
-            at_block = hex(at_block)
-        tx_count = self._runtime.call(EthMethods.TRANSACTION_COUNT, account.address, at_block)
-        return self.factory.get_integer(tx_count)
-
     def get_block_by_hash(self, block_hash: str, get_full_block: bool = False) -> BlockAt:
         """
         Blocks can be identified by root hash of the block merkle tree (this), or sequential number in which it was mined (get_block_by_number).
@@ -145,8 +128,7 @@ class EthereumApi:
 
     def eth_call(self, transaction: NewTransaction, block_number: int or str = 'latest') -> int or str:
         """
-        Calls a smart-contract method that does not store the computation. Will be executed locally by Incubed's EVM.
-        curl localhost:8545 -X POST --data '{"jsonrpc":"2.0", "method":"eth_call", "params":[{"from": "eth.accounts[0]", "to": "0x65da172d668fbaeb1f60e206204c2327400665fd", "data": "0x6ffa1caa0000000000000000000000000000000000000000000000000000000000000005"}, "latest"], "id":1}'
+        Calls a smart-contract method. Will be executed locally by Incubed's EVM or signed and sent over to save the state changes.
         Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
         Args:
             transaction (NewTransaction):

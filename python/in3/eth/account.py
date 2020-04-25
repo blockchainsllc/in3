@@ -2,7 +2,7 @@ from in3.exception import ClientException
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.runtime import In3Runtime
 from in3.eth.model import NewTransaction, TransactionReceipt, Account
-from in3.libin3.enum import EthMethods
+from in3.libin3.enum import EthMethods, BlockAt
 
 
 class EthAccountApi:
@@ -89,6 +89,23 @@ class EthAccountApi:
         """
         gas = self._runtime.call(EthMethods.ESTIMATE_TRANSACTION, transaction.serialize())
         return self._factory.get_integer(gas)
+
+    def get_transaction_count(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
+        """
+        Number of transactions mined from this address. Used to set transaction nonce.
+        Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1).
+        It exists to mitigate replay attacks.
+        Args:
+            address (str): Ethereum account address
+            at_block (int):  Block number
+        Returns:
+            tx_count (int): Number of transactions mined from this address.
+        """
+        account = self.factory.get_account(address)
+        if isinstance(at_block, int):
+            at_block = hex(at_block)
+        tx_count = self._runtime.call(EthMethods.TRANSACTION_COUNT, account.address, at_block)
+        return self.factory.get_integer(tx_count)
 
     def checksum_address(self, address: str, add_chain_id: bool = True) -> str:
         """
