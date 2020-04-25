@@ -119,7 +119,7 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
         self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
     def test_get_transaction_count(self):
-        rpc = self.client.account.eth.get_transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')
+        rpc = self.client.eth.account.get_transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')
         self.assertGreater(rpc, 0)
 
     def test_send_tx(self):
@@ -133,15 +133,13 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
         self.assertEqual(tx_hash, '0xb13b9d38642216af2545f1b9f882413bcdef13bec21def57c699d3a967d763bc')
 
     def test_send_raw_transaction(self):
-        # 0xf868098502540be400825208940b56ae81586d2728ceaf7c00a6020c5d63f02308845741bf838026a070af62c714808c7607ebe2cc756f20bed9790e5f5f20b192a83f689157a44bd0a0768a5d94766f1645e652dbef3826eed94074b5481a453ad12aa52ae6f8e42606
-        raw_tx = "0xf86808850165a0bc00825208940b56ae81586d2728ceaf7c00a6020c5d63f02308845741bf838025a0e810532f18eb" + \
-                 "3d97f21907b2e35e8432a554c2a7892bfa38f5556931996127a9a073b5e4711fb99294d38511ea811c9e8f157312369f" + \
-                 "e3a326932e32de87b77536"
+        raw_tx = "0xf868098502540be400825208940b56ae81586d2728ceaf7c00a6020c5d63f02308845741bf838026a070af62c71480" + \
+                 "8c7607ebe2cc756f20bed9790e5f5f20b192a83f689157a44bd0a0768a5d94766f1645e652dbef3826eed94074b5481a" + \
+                 "453ad12aa52ae6f8e42606"
         tx_hash = self.client.eth.account.send_raw_transaction(raw_tx)
         self.assertEqual(tx_hash, "0xb13b9d38642216af2545f1b9f882413bcdef13bec21def57c699d3a967d763bc")
 
     def test_get_tx_receipt(self):
-        # TODO
-        tx_hash = '0xae25a4b673bd87f40ea147a5506cb2ffb38e32ec1efc372c6730a5ba50668ae3'
+        tx_hash = '0xb13b9d38642216af2545f1b9f882413bcdef13bec21def57c699d3a967d763bc'
         result = self.client.eth.account.get_transaction_receipt(tx_hash)
         self.assertIsInstance(result, in3.eth.TransactionReceipt)

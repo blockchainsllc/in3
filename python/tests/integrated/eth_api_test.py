@@ -7,8 +7,8 @@ from tests.transport import mock_transport
 class EthereumTest(unittest.TestCase):
 
     def setUp(self):
-        self.client = in3.Client(in3_config=mock_config)
-        # self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
+        # self.client = in3.Client(in3_config=mock_config)
+        self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
     def test_ethereum_sha3(self):
         digest = self.client.eth.keccak256('0x68656c6c6f20776f726c64')
@@ -26,36 +26,27 @@ class EthereumTest(unittest.TestCase):
         self.assertIsInstance(block, in3.eth.Block)
 
     def test_get_transaction_by_hash(self):
-        # TODO
         tx_hash = '0xae25a4b673bd87f40ea147a5506cb2ffb38e32ec1efc372c6730a5ba50668ae3'
         tx = self.client.eth.get_transaction_by_hash(tx_hash)
         self.assertIsInstance(tx, in3.eth.Transaction)
         self.assertEqual(tx_hash, tx.hash)
 
     def test_eth_call(self):
-        # TODO
-        transaction = in3.eth.NewTransaction(From="0x132D2A325b8d588cFB9C1188daDdD4d00193E028",
-                                             to="0x7ceabea4AA352b10fBCa48e6E8015bC73687ABD4",
-                                             data="0xa9c70686",
-                                             nonce=5)
-        rpc = self.client.eth.eth_call(transaction)
-        self.assertIsInstance(rpc, str)
+        tx = {
+            "to": hex(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e),
+            "data": hex(0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e)
+        }
+        transaction = in3.eth.NewTransaction(**tx)
+        address = self.client.eth.eth_call(transaction)
+        self.assertEqual(address, '0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
     def test_get_storage_at(self):
-        # TODO
-        storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0)
-        self.assertIsInstance(storage, str)
-        block_number = self.client.eth.block_number() - 15
-        storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0, block_number)
-        self.assertIsInstance(storage, str)
+        storage = self.client.eth.get_storage_at("0x3589d05a1ec4Af9f65b0E5554e645707775Ee43C", 1)
+        self.assertEqual(storage, '0x000000000000000000000000000000000000000000000000000000647261676f')
 
     def test_get_code(self):
-        # TODO
-        code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4")
-        self.assertIsInstance(code, str)
-        block_number = self.client.eth.block_number() - 15
-        code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4", block_number)
-        self.assertIsInstance(code, str)
+        code = self.client.eth.get_code("0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e")
+        self.assertEqual(len(code), 10694)
 
 
 class EthereumGoerliTest(EthereumTest):
@@ -84,7 +75,6 @@ class EthereumGoerliTest(EthereumTest):
         self.assertIsInstance(rpc, str)
 
     def test_get_storage_at(self):
-
         # TODO
         storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0)
         self.assertIsInstance(storage, str)
@@ -93,7 +83,6 @@ class EthereumGoerliTest(EthereumTest):
         self.assertIsInstance(storage, str)
 
     def test_get_code(self):
-
         # TODO
         code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4")
         self.assertIsInstance(code, str)
@@ -130,7 +119,6 @@ class EthereumKovanTest(EthereumTest):
         self.assertIsInstance(rpc, str)
 
     def test_get_storage_at(self):
-
         # TODO
         storage = self.client.eth.get_storage_at("0xdAC17F958D2ee523a2206206994597C13D831ec7", 0)
         self.assertIsInstance(storage, str)
@@ -139,7 +127,6 @@ class EthereumKovanTest(EthereumTest):
         self.assertIsInstance(storage, str)
 
     def test_get_code(self):
-
         # TODO
         code = self.client.eth.get_code("0x7076D6e69315e843fB5496504F4f65127F08e2D4")
         self.assertIsInstance(code, str)
