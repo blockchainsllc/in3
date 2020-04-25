@@ -126,7 +126,7 @@ def _multi_platform_selector(prefix: str) -> str:
             if system == 'Windows':
                 fail()
             elif system == "Linux":
-                suffix = "x32.so"
+                suffix = "x86.so"
             elif system == 'Darwin':
                 fail()
         elif 'armv' in machine:
