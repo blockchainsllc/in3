@@ -13,7 +13,6 @@ class MainNetClientTest(unittest.TestCase):
     def test_configure(self):
         client = in3.Client()
         self.assertIsInstance(client, in3.Client)
-        config = client.get_config()
         client = in3.Client(in3_config=in3.model.ClientConfig())
         self.assertIsInstance(client, in3.Client)
 
@@ -92,7 +91,7 @@ class MainNetClientTest(unittest.TestCase):
 class KovanClientTest(MainNetClientTest):
 
     def setUp(self):
-        # self.client = in3.Client('kovan', in3_config=mock_client_config)
+        # self.client = in3.Client('kovan', in3_config=mock_config)
         self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
 
     def test_configure(self):
@@ -102,16 +101,14 @@ class KovanClientTest(MainNetClientTest):
         self.assertIsInstance(client, in3.Client)
 
     def test_ens_resolve(self):
+        # Not supported by app.ens.domains!
         return
-        # Other calls like `addr` require more than one eth_call, being more complex to mock the tests. Suffice for now.
-        address = self.client.ens_resolve('depraz.eth', 'owner')
-        self.assertEqual(address, '0x0b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
 
 class GoerliClientTest(MainNetClientTest):
 
     def setUp(self):
-        # self.client = in3.Client('goerli', in3_config=mock_client_config)
+        # self.client = in3.Client('goerli', in3_config=mock_config)
         self.client = in3.Client('goerli', in3_config=mock_config, transport=mock_transport)
 
     def test_configure(self):
@@ -121,9 +118,8 @@ class GoerliClientTest(MainNetClientTest):
         self.assertIsInstance(client, in3.Client)
 
     def test_ens_resolve(self):
-        return
         # Other calls like `addr` require more than one eth_call, being more complex to mock the tests. Suffice for now.
-        address = self.client.ens_resolve('depraz.eth', 'owner')
+        address = self.client.ens_resolve('depraz.eth', 'owner', '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e')
         self.assertEqual(address, '0x0b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
 

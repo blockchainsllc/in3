@@ -1,8 +1,8 @@
 from in3.eth.account import EthAccountApi
 from in3.eth.factory import EthObjectFactory
 from in3.eth.model import Transaction, NewTransaction, Block
-from in3.libin3.runtime import In3Runtime
 from in3.libin3.enum import EthMethods, BlockAt
+from in3.libin3.runtime import In3Runtime
 
 
 class EthereumApi:
@@ -97,7 +97,8 @@ class EthereumApi:
         Returns:
             block (Block): Desired block, if exists.
         """
-        serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_HASH, self.factory.get_hash(block_hash), get_full_block)
+        serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_HASH, self.factory.get_hash(block_hash),
+                                              get_full_block)
         return self.factory.get_block(serialized)
 
     def get_block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> Block:

@@ -82,6 +82,7 @@ class ClientConfig(DataTransferObject):
         cached_code_bytes (int): Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
         in3_registry (dict): In3 Registry Smart Contract configuration data
     """
+
     def __init__(self,
                  chain_finality_threshold: int = None,
                  account_secret: str = None,
@@ -123,6 +124,7 @@ class ChainConfig:
     """
     Default in3 client configuration for each chain see #clientConfig for details.
     """
+
     def __init__(self, chain_id: int, chain_id_alias: str, client_config: ClientConfig):
         self.chain_id: int = chain_id
         self.chain_id_alias: str = chain_id_alias
@@ -133,7 +135,7 @@ chain_configs = {
     "mainnet": ChainConfig(
         chain_id=int(0x1),
         chain_id_alias="mainnet",
-        client_config= ClientConfig(
+        client_config=ClientConfig(
             chain_finality_threshold=10,
             latest_block_stall=10,
             node_signatures=2)

@@ -105,7 +105,6 @@ source : [in3-c/python/examples/in3_config.py](https://github.com/slockit/in3-c/
 
 ```python
 import in3
-import in3.model
 
 print('\nEthereum Goerli Test Network')
 client = in3.Client('goerli')
@@ -205,7 +204,10 @@ python example.py
 
 ### Client
 ```python
-Client(self, chain: str, in3_config: ClientConfig = None)
+Client(self,
+chain: str = 'mainnet',
+in3_config: ClientConfig = None,
+transport=<CFunctionType object at 0x105a94530>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -269,6 +271,34 @@ Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3
 - `decoded_return_values` _tuple_ - "0x1234567890123456789012345678901234567890", "0x05"
   
 
+#### raw_configure
+```python
+Client.raw_configure(cfg_dict: dict)
+```
+
+Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
+
+
+#### ens_resolve
+```python
+Client.ens_resolve(domain_name: str,
+domain_type: str,
+registry: str = None)
+```
+
+Resolves ENS domain name to Ethereum address.
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+- `domain_type` - 'hash'|'addr'|'owner'|'resolver'
+- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+
+**Returns**:
+
+- `address` _str_ - Ethereum address corresponding to domain name.
+  
+
 ### ClientConfig
 ```python
 ClientConfig(self,
@@ -286,7 +316,8 @@ response_proof_level: str = None,
 response_includes_code: bool = None,
 response_keep_proof: bool = None,
 cached_blocks: int = None,
-cached_code_bytes: int = None)
+cached_code_bytes: int = None,
+in3_registry: dict = None)
 ```
 
 Determines the behavior of the in3 client, which chain to connect to and how to manage information security policies.
@@ -318,6 +349,7 @@ The verification policy enforces an extra step of security, adding a financial s
 - `response_keep_proof` _bool_ - If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
 - `cached_blocks` _int_ - Maximum blocks kept in memory. example: 100 last requested blocks
 - `cached_code_bytes` _int_ - Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
+- `in3_registry` _dict_ - In3 Registry Smart Contract configuration data
   
 
 ### NodeList
@@ -418,7 +450,7 @@ Deletes an account in case it exists.
 
 #### recover_account
 ```python
-WalletApi.recover_account(name: str, secret: <built-in function hex>)
+WalletApi.recover_account(name: str, secret: str)
 ```
 
 Recovers an account from a secret.
@@ -426,7 +458,7 @@ Recovers an account from a secret.
 **Arguments**:
 
 - `name` _str_ - Account identifier to use with `get`. i.e. get('my_wallet`)
-- `secret` _hex_ - Account private key in hexadecimal string
+- `secret` _str_ - Account private key in hexadecimal string
 
 **Returns**:
 
@@ -446,7 +478,7 @@ Recovers an account secret from mnemonics phrase
 
 **Returns**:
 
-- `secret` _hex_ - Account secret. Use `recover_account` to create a new account with this secret.
+- `secret` _str_ - Account secret. Use `recover_account` to create a new account with this secret.
   
 
 ## in3.eth.model
@@ -558,26 +590,6 @@ Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the fu
 - `bytecode` _str_ - Smart-Contract bytecode in hexadecimal.
   
 
-#### get_transaction_count
-```python
-EthereumApi.get_transaction_count(address: str,
-at_block: int = 'latest')
-```
-
-Number of transactions mined from this address. Used to set transaction nonce.
-Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1).
-It exists to mitigate replay attacks.
-
-**Arguments**:
-
-- `address` _str_ - Ethereum account address
-- `at_block` _int_ - Block number
-
-**Returns**:
-
-- `tx_count` _int_ - Number of transactions mined from this address.
-  
-
 #### get_block_by_hash
 ```python
 EthereumApi.get_block_by_hash(block_hash: str,
@@ -637,8 +649,7 @@ EthereumApi.eth_call(transaction: NewTransaction,
 block_number: int = 'latest')
 ```
 
-Calls a smart-contract method that does not store the computation. Will be executed locally by Incubed's EVM.
-curl localhost:8545 -X POST --data '{"jsonrpc":"2.0", "method":"eth_call", "params":[{"from": "eth.accounts[0]", "to": "0x65da172d668fbaeb1f60e206204c2327400665fd", "data": "0x6ffa1caa0000000000000000000000000000000000000000000000000000000000000005"}, "latest"], "id":1}'
+Calls a smart-contract method. Will be executed locally by Incubed's EVM or signed and sent over to save the state changes.
 Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
 
 **Arguments**:
@@ -678,10 +689,11 @@ Use ECDSA to sign a message.
 
 #### send_transaction
 ```python
-EthAccountApi.send_transaction(transaction: NewTransaction)
+EthAccountApi.send_transaction(sender: Account,
+transaction: NewTransaction)
 ```
 
-Signs and sends the assigned transaction. Requires the 'key' value to be set in ClientConfig.
+Signs and sends the assigned transaction. Requires `account.secret` value set.
 Transactions change the state of an account, just the balance, or additionally, the storage and the code.
 Every transaction has a cost, gas, paid in Wei. The transaction gas is calculated over estimated gas times the
 gas cost, plus an additional miner fee, if the sender wants to be sure that the transaction will be mined in the
@@ -689,29 +701,29 @@ latest block.
 
 **Arguments**:
 
-- `transaction` - All information needed to perform a transaction. Minimum is from, to and value.
-  Client will add the other required fields, gas and chaindId.
+- `sender` _Account_ - Sender Ethereum account. Senders generally pay the gas costs, so they must have enough balance to pay gas + amount sent, if any.
+- `transaction` _NewTransaction_ - All information needed to perform a transaction. Minimum is to and value. Client will add the other required fields, gas and chaindId.
 
 **Returns**:
 
-- `tx_hash` - Transaction hash, used to get the receipt and check if the transaction was mined.
+- `tx_hash` _hex_ - Transaction hash, used to get the receipt and check if the transaction was mined.
   
 
 #### send_raw_transaction
 ```python
-EthAccountApi.send_raw_transaction(transaction: NewTransaction)
+EthAccountApi.send_raw_transaction(signed_transaction: str)
 ```
 
 Sends a signed and encoded transaction.
 
 **Arguments**:
 
-- `transaction` - All information needed to perform a transaction. Minimum is from, to and value.
+- `signed_transaction` - Signed keccak hash of the serialized transaction
   Client will add the other required fields, gas and chaindId.
 
 **Returns**:
 
-- `tx_hash` - Transaction hash, used to get the receipt and check if the transaction was mined.
+- `tx_hash` _hex_ - Transaction hash, used to get the receipt and check if the transaction was mined.
   
 
 #### get_transaction_receipt
@@ -749,6 +761,26 @@ Gas estimation for transaction. Used to fill transaction.gas field. Check RawTra
 **Returns**:
 
 - `gas` _int_ - Calculated gas in Wei.
+  
+
+#### get_transaction_count
+```python
+EthAccountApi.get_transaction_count(address: str,
+at_block: int = 'latest')
+```
+
+Number of transactions mined from this address. Used to set transaction nonce.
+Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1).
+It exists to mitigate replay attacks.
+
+**Arguments**:
+
+- `address` _str_ - Ethereum account address
+- `at_block` _int_ - Block number
+
+**Returns**:
+
+- `tx_count` _int_ - Number of transactions mined from this address.
   
 
 #### checksum_address
@@ -849,7 +881,7 @@ transaction to the designed address, and has a word listed on topics.
 
 #### Account
 ```python
-Account(self, address: str, chain_id: str, secret: str = None)
+Account(self, address: str, chain_id: int, secret: int = None)
 ```
 
 Ethereum address of a wallet or smart-contract
@@ -908,7 +940,8 @@ Receipt from a mined transaction.
 
 ### In3Runtime
 ```python
-In3Runtime(self, chain_id: int)
+In3Runtime(self, chain_id: int,
+transport: <function CFUNCTYPE at 0x10523a7a0>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -933,38 +966,24 @@ Example of RPC to In3-Core library, In3 Network and back.
 ```
 
 
-#### In3Request
-```python
-In3Request()
-```
-
-Request sent by the libin3 to the In3 Network, transported over the _http_transport function
-Based on in3/client/.h in3_request_t struct
-
-**Attributes**:
-
-- `payload` _str_ - the payload to send
-- `urls` _[str]_ - array of urls
-- `urls_len` _int_ - number of urls
-- `results` _str_ - the responses
-- `timeout` _int_ - the timeout 0= no timeout
-- `times` _int_ - measured times (in ms) which will be used for ajusting the weights
-  
-
 #### libin3_new
 ```python
-libin3_new(chain_id: int)
+libin3_new(chain_id: int,
+transport: <function CFUNCTYPE at 0x10523a7a0>,
+debug=False)
 ```
 
-RPC to free libin3 objects in memory.
+Instantiate new In3 Client instance.
 
 **Arguments**:
 
 - `chain_id` _int_ - Chain id as integer
+- `transport` - Transport function for the in3 network requests
+- `debug` - Turn on debugger logging
 
 **Returns**:
 
-- `instance` _int_ - Memory address of the shared library instance, return value from libin3_new
+- `instance` _int_ - Memory address of the client instance, return value from libin3_new
   
 
 #### libin3_free
@@ -972,11 +991,28 @@ RPC to free libin3 objects in memory.
 libin3_free(instance: int)
 ```
 
-RPC to free libin3 objects in memory.
+Free In3 Client objects from memory.
 
 **Arguments**:
 
-- `instance` _int_ - Memory address of the shared library instance, return value from libin3_new
+- `instance` _int_ - Memory address of the client instance, return value from libin3_new
+  
+
+#### libin3_exec
+```python
+libin3_exec(instance: int, rpc: bytes)
+```
+
+Make Remote Procedure Call mapped methods in the client.
+
+**Arguments**:
+
+- `instance` _int_ - Memory address of the client instance, return value from libin3_new
+- `rpc` _bytes_ - Serialized function call, a json string.
+
+**Returns**:
+
+- `returned_value` _object_ - The returned function value(s)
   
 
 #### libin3_call
@@ -988,11 +1024,32 @@ Make Remote Procedure Call to an arbitrary method of a libin3 instance
 
 **Arguments**:
 
-- `instance` _int_ - Memory address of the shared library instance, return value from libin3_new
-- `fn_name` _bytes_ - Name of function that will be called in libin3
+- `instance` _int_ - Memory address of the client instance, return value from libin3_new
+- `fn_name` _bytes_ - Name of function that will be called in the client rpc.
 - `fn_args` - (bytes) Serialized list of arguments, matching the parameters order of this function. i.e. ['0x123']
 
 **Returns**:
 
 - `result` _int_ - Function execution status.
   
+
+#### libin3_set_pk
+```python
+libin3_set_pk(instance: int, private_key: bytes)
+```
+
+Register the signer module in the In3 Client instance, with selected private key loaded in memory.
+
+**Arguments**:
+
+- `instance` _int_ - Memory address of the client instance, return value from libin3_new
+- `private_key` - 256 bit number.
+  
+
+#### init
+```python
+init()
+```
+
+Loads library depending on host system.
+

@@ -107,6 +107,7 @@ def _multi_platform_selector(prefix: str) -> str:
     def fail():
         raise OSError('Not available on this platform ({}, {}, {}).'.format(
             system, processor, machine))
+
     # Fail over
     if not processor:
         processor = 'i386'

@@ -1,6 +1,5 @@
 import ctypes as c
 import json
-
 from enum import Enum
 
 from in3.exception import ClientException
@@ -66,6 +65,7 @@ class RPCCallRequest:
         fn_name: Name of function that will be called in libin3
         fn_args: Arguments matching the parameters order of this function
     """
+
     def __init__(self, fn_name: str or Enum, fn_args: tuple = None, formatted: bool = False):
         self.fn_name = str(fn_name).encode('utf8')
         if fn_args and formatted:

@@ -1,8 +1,7 @@
-from in3.exception import ClientException
 from in3.eth.factory import EthObjectFactory
-from in3.libin3.runtime import In3Runtime
 from in3.eth.model import NewTransaction, TransactionReceipt, Account
 from in3.libin3.enum import EthMethods, BlockAt
+from in3.libin3.runtime import In3Runtime
 
 
 class EthAccountApi:
