@@ -8,6 +8,7 @@ use crate::error::{Error, In3Result};
 use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
 use std::fmt::Write;
+// use crate::types::Signature;
 use std::{str};
 pub mod chain {
     pub type ChainId = u32;

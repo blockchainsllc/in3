@@ -18056,6 +18056,10 @@ extern "C" {
     #[doc = " since the pk pointting to the 32 byte private key is not cloned, please make sure, you manage memory allocation correctly!"]
     pub fn eth_set_pk_signer(in3: *mut in3_t, pk: *mut u8) -> in3_ret_t::Type;
 }
+extern "C" {
+    #[doc = " simply signer with one private key as hex."]
+    pub fn eth_set_pk_signer_hex(in3: *mut in3_t, key: *mut libc::c_char) -> *mut u8;
+}
 #[doc = " a 32 byte long integer used to store ethereum-numbers."]
 #[doc = ""]
 #[doc = " use the as_long() or as_double() to convert this to a useable number."]

@@ -5,15 +5,15 @@ use serde_json::json;
 use crate::error::*;
 use crate::eth1::{
     Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
-    Transaction, TransactionReceipt,
+    Transaction, TransactionReceipt
 };
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
 #[derive(Serialize)]
-struct RpcRequest<'a> {
-    method: &'a str,
-    params: serde_json::Value,
+pub struct RpcRequest<'a> {
+    pub method: &'a str,
+    pub params: serde_json::Value,
 }
 
 pub struct Api {
