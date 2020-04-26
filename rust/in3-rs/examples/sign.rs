@@ -99,42 +99,13 @@ fn sign_execute_api() {
         }));
     
     let mut abi = abi::In3EthAbi::new();
-    // let mut params =
-    //     task::block_on(abi.encode("test(address,string)", serde_json::json!(["0x1234567890123456789012345678901234567890", "xyz"]))).unwrap();
-    // println!(" PARAMS : {:?}", params);
-
-    let params =
-        task::block_on(abi.encode("setData(uint256,string)", serde_json::json!([123, "testdata"]))).unwrap();
-    // println!(" PARAMS : {:?}", params);
-    let mut c = Client::new(chain::MAINNET);
-    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
-    let tx = json!({
-        "from": "0x3fEfF9E04aCD51062467C494b057923F771C9423",
-        "to": "0x1234567890123456789012345678901234567890",
-        "data": "0x18562dae000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000087465737464617461000000000000000000000000000000000000000000000000"
-    });
-    let rpc_req = RpcRequest {
-        method: "eth_sendTransaction",
-        params: tx,
-    };
-    
-    c.set_transport(Box::new(MockTransport {
-        responses: responses
-    })); 
-    let req_str = serde_json::to_string(&rpc_req).unwrap();
-    println!("--- REQUEST :{:?}", req_str);
-    match task::block_on(c.rpc(&req_str)){
-        Ok(res) => println!("--- > {:?}, {:?}\n\n", req_str, res),
-        Err(err) => println!("Failed with error: {}\n\n", err),
-    }
+    let mut params =
+        task::block_on(abi.encode("test(address,string)", serde_json::json!(["0x1234567890123456789012345678901234567890", "xyz"]))).unwrap();
+    println!(" PARAMS : {:?}", params);
     let to: Address =
         serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
     let from: Address =
         serde_json::from_str(r#""0x3fEfF9E04aCD51062467C494b057923F771C9423""#).unwrap();
-    // let from:  =
-    //     serde_json::from_str(r#""0x18562dae000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000087465737464617461000000000000000000000000000000000000000000000000""#).unwrap();
-
     let txn = OutgoingTransaction {
         to: to,
         from: from,
@@ -149,32 +120,17 @@ fn sign_execute_api() {
 
 
 fn sign_execute_rpc() {
-    let mut eth_api = Api::new(Client::new(chain::MAINNET));
+    
+    let mut c = Client::new(chain::MAINNET);
+    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     let responses = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"# ),
     ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#),
     ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#),
     ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#)
     ]; 
-    eth_api
-        .client()
-        .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    eth_api
-        .client().set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
-    eth_api
-        .client().set_transport(Box::new(MockTransport {
-            responses: responses
-        }));
-    
-    let mut abi = abi::In3EthAbi::new();
-    // let mut params =
-    //     task::block_on(abi.encode("test(address,string)", serde_json::json!(["0x1234567890123456789012345678901234567890", "xyz"]))).unwrap();
-    // println!(" PARAMS : {:?}", params);
-
-    let params =
-        task::block_on(abi.encode("setData(uint256,string)", serde_json::json!([123, "testdata"]))).unwrap();
-    // println!(" PARAMS : {:?}", params);
-    let mut c = Client::new(chain::MAINNET);
-    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    c.set_transport(Box::new(MockTransport {
+        responses: responses
+    })); 
     c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
     let tx = json!({
         "from": "0x3fEfF9E04aCD51062467C494b057923F771C9423",
@@ -185,33 +141,12 @@ fn sign_execute_rpc() {
         method: "eth_sendTransaction",
         params: tx,
     };
-    
-    c.set_transport(Box::new(MockTransport {
-        responses: responses
-    })); 
     let req_str = serde_json::to_string(&rpc_req).unwrap();
     println!("--- REQUEST :{:?}", req_str);
     match task::block_on(c.rpc(&req_str)){
         Ok(res) => println!("--- > {:?}, {:?}\n\n", req_str, res),
         Err(err) => println!("Failed with error: {}\n\n", err),
     }
-    let to: Address =
-        serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
-    let from: Address =
-        serde_json::from_str(r#""0x3fEfF9E04aCD51062467C494b057923F771C9423""#).unwrap();
-    // let from:  =
-    //     serde_json::from_str(r#""0x18562dae000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000087465737464617461000000000000000000000000000000000000000000000000""#).unwrap();
-
-    let txn = OutgoingTransaction {
-        to: to,
-        from: from,
-        data: Some(params),
-        ..Default::default()
-    };
-    
-    let hash: Hash = task::block_on(eth_api.send_transaction(txn))
-        .unwrap();
-    println!("Hash => {:?}", hash);
 }
 
 // fn sign_execute_2() {
@@ -256,5 +191,6 @@ fn sign_execute_rpc() {
 fn main() {
     // sign_hash();
     // sign_raw();
-    sign_execute();
+    sign_execute_api()();
+    // sign_execute_rpc()();
 }
