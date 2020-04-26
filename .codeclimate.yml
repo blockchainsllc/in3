@@ -18,6 +18,9 @@ plugins:
   fixme:
     enabled: true
 checks:
+  argument-count:
+    config:
+      threshold: 7
   file-lines:
     config:
       threshold: 400
@@ -26,10 +29,13 @@ checks:
       threshold: 25
   method-lines:
     config:
-      threshold: 50
+      threshold: 70
   return-statements:
     config:
       threshold: 10
+  method-count:
+    config:
+      threshold: 40
 exclude_patterns:
   - config/
   - db/
