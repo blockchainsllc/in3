@@ -9,6 +9,8 @@ use async_trait::async_trait;
 use serde_json::json;
 use ethereum_types::{Address, U256};
 use libc::{c_char};
+use std::str;
+use std::collections::HashMap;
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
     (0..s.len())
         .step_by(2)
@@ -17,19 +19,28 @@ pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
 }
 
 struct MockTransport<'a> {
-    responses: Vec<(&'a str, &'a str)>,
+    responses: HashMap<&'a str, &'a str>,
 }
 
 #[async_trait]
 impl Transport for MockTransport<'_> {
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
-        let response = self.responses.pop();
-        let request: serde_json::Value = serde_json::from_str(request).unwrap();
-        let test= response.unwrap();
-        println!("{:?},{:?}",test.0, test..1);
-        match response {
-            Some(response) if response.0 == request[0]["method"] => {
-                vec![Ok(response.1.to_string())]
+        let request: serde_json::Value = serde_json::from_str(request).unwrap();  
+        let method_ = request.get(0).unwrap().get("method").unwrap().to_string();
+        let method = serde_json::from_str::<String>(&method_).unwrap();  
+
+        let response = self.responses.get::<str>(&method.to_string());
+        println!("{:?}, {:?} ",method, response);
+        // let test= response.unwrap();
+        // vec![Ok(String::from("{}"))]
+        println!("{:?}",response);
+        match  response {
+            Some(response) => {
+                // let res_: serde_json::Value= serde_json::from_str(&response).unwrap(); 
+                // let result_ =  res_.get(0).unwrap().get("result").unwrap().to_string(); 
+                // let result = serde_json::from_str::<String>(&result_).unwrap();
+                println!("{:?}",response.to_string());
+                vec![Ok(response.to_string())]
             }
             _ => vec![Err(format!(
                 "Found wrong/no response while expecting response for {}",
@@ -85,11 +96,11 @@ fn sign_raw() {
 
 fn sign_execute_api() {
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
-    let res = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),
-    ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,)
-    ]; 
+    let mut responses = HashMap::new();
+    responses.insert(r#""eth_gasPrice"#,r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
+    responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
     eth_api
         .client()
         .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
@@ -97,7 +108,7 @@ fn sign_execute_api() {
         .client().set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
     eth_api
         .client().set_transport(Box::new(MockTransport {
-            responses: res,
+            responses: responses,
         }));
     
     let mut abi = abi::In3EthAbi::new();
@@ -125,13 +136,13 @@ fn sign_execute_rpc() {
     
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    let res = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),
-    ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,)
-    ]; 
+    let mut responses = HashMap::new();
+    responses.insert(r#""eth_gasPrice"#,r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
+    responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
     c.set_transport(Box::new(MockTransport {
-        responses: res,
+        responses: responses,
     })); 
     c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
     let tx = json!({
@@ -193,6 +204,6 @@ fn sign_execute_rpc() {
 fn main() {
     // sign_hash();
     // sign_raw();
-    sign_execute_api();
-    // sign_execute_rpc();
+    // sign_execute_api();
+    sign_execute_rpc();
 }
