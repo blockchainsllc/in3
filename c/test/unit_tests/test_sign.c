@@ -45,6 +45,9 @@
 #include "../../src/core/util/bytes.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
+#include "../../src/core/util/mem.h"
+#include "../../src/third-party/crypto/ecdsa.h"
+#include "../../src/third-party/crypto/secp256k1.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../../src/verifier/eth1/basic/signer-priv.h"
 #include "../../src/verifier/eth1/basic/signer.h"
@@ -78,6 +81,22 @@ static void test_sign() {
   ctx_free(ctx);
 }
 
+static void to_checksum_addr(uint8_t* address, chain_id_t chain, char* result) {
+  in3_ret_t res = to_checksum(address, 0, result);
+}
+
+static uint8_t* private_to_address() {
+  uint8_t* dst = malloc(20);
+  uint8_t  public_key[65], sdata[32];
+  int8_t*  pk           = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
+  bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
+  ecdsa_get_public_key65(&secp256k1, pk, public_key);
+  // hash it and return the last 20 bytes as address
+  sha3_to(&pubkey_bytes, sdata);
+  memcpy(dst, sdata + 12, 20);
+  return dst;
+}
+
 static void test_sign_sans_signer_and_from() {
   in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
@@ -88,7 +107,11 @@ static void test_sign_sans_signer_and_from() {
 // let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
 // let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
 static void test_signer() {
-  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  char     ret_checksum[43];
+  in3_t*   c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  uint8_t* dst = private_to_address();
+  to_checksum_addr(dst, ETH_CHAIN_ID_MAINNET, ret_checksum);
+  printf("\n\n\n %s \n\n\n", ret_checksum);
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
   eth_set_pk_signer(c, pk);
