@@ -17,7 +17,7 @@ fn main() -> In3Result<()> {
     // eth_getStorageAt
     let address: Address = serde_json::from_str(r#""0x0123456789012345678901234567890123456789""#)?;
     let key: U256 = 0u64.into();
-    let storage: u64 = task::block_on(eth_api.get_storage_at(address, key, BlockNumber::Latest))?
+    let storage: u64 = task::block_on( eth_api.get_storage_at(address, key, BlockNumber::Latest))?
         .try_into()
         .unwrap();
     println!("Storage value is {:?}", storage);
