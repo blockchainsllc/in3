@@ -6,6 +6,7 @@ class DataTransferObject:
     Maps marshalling objects transferred to, and from a remote facade, in this case, libin3 rpc api.
     For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
+
     def _to_dict(self, int_to_hex: bool = False) -> dict:
         dictionary = {k: v for k, v in self.__dict__.items() if v is not None}
         if int_to_hex:

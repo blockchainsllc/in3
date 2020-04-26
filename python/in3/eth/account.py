@@ -1,8 +1,7 @@
-from in3.exception import ClientException
 from in3.eth.factory import EthObjectFactory
-from in3.libin3.runtime import In3Runtime
 from in3.eth.model import NewTransaction, TransactionReceipt, Account
-from in3.libin3.enum import EthMethods
+from in3.libin3.enum import EthMethods, BlockAt
+from in3.libin3.runtime import In3Runtime
 
 
 class EthAccountApi:
@@ -27,7 +26,7 @@ class EthAccountApi:
         #   SIGN_EC_HASH = 1, /**< hash and sign the data */
         signature_type = 'eth_sign'
         # in3_ret_t in3_sign_data(data, pk, sig_type)
-        signature_dict = self._runtime.execute(EthMethods.SIGN, message, private_key, signature_type)
+        signature_dict = self._runtime.call(EthMethods.SIGN, message, private_key, signature_type)
         return signature_dict['signature']
 
     def send_transaction(self, sender: Account, transaction: NewTransaction) -> str:
@@ -52,35 +51,16 @@ class EthAccountApi:
         self._runtime.set_signer_account(sender.secret)
         return self._runtime.call(EthMethods.SEND_TRANSACTION, transaction.serialize())
 
-    def send_raw_transaction(self, transaction: NewTransaction) -> str:
+    def send_raw_transaction(self, signed_transaction: str) -> str:
         """
         Sends a signed and encoded transaction.
         Args:
-            transaction: All information needed to perform a transaction. Minimum is from, to and value.
+            signed_transaction: Signed keccak hash of the serialized transaction
             Client will add the other required fields, gas and chaindId.
         Returns:
             tx_hash (hex): Transaction hash, used to get the receipt and check if the transaction was mined.
         """
-        """
-            public void sendRawTransaction() {
-            String[][] mockedResponses = {{"eth_sendRawTransaction", "eth_sendRawTransaction_1.json"}};
-        
-            IN3    in3            = builder.constructClient(mockedResponses);
-            String rawTransaction = "0xf8671b8477359400825208943940256b93c4be0b1d5931a6a036608c25706b0c8405f5e100802da0278d2c010a59688fc12a55563d81239b1dc7e3d9c6a535b34600329b0c640ad8a03894daf8d7c25b56caec71b695c5f6b1b6fd903ecfa441b2c4e15fd1c72c54a9";
-            String hash           = in3.getEth1API().sendRawTransaction(rawTransaction);
-        
-            // expect multiple calls here too
-            Assertions.assertEquals("0xd55a8b0cf4896ffbbb10b125bf20d89c8006f42cc327a9859c59ac54e439b388", hash);
-        """
-        """
-        SIGN_DATA_NO_LEN=${NOUNCE}${GAS_PRICE}${GAS_LIMIT}${TO}${VALUE}${CODE}${EIP_155}
-        LEN IS 2 BYTES
-        DATA IS {LEN[0]}{LEN[1]}{SIGN_DATA_NO_LEN}
-        THEN KECCAK($SIGN_DATA_NO_LEN)
-        BOOM!
-        """
-        assert isinstance(transaction, NewTransaction)
-        return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, transaction)
+        return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, signed_transaction)
 
     def get_transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
         """
@@ -95,7 +75,7 @@ class EthAccountApi:
         Returns:
             tx_receipt: The mined Transaction data including event logs.
         """
-        tx_receipt = self._runtime.call(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
+        tx_receipt = self._runtime.execute(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
         return self._factory.get_tx_receipt(tx_receipt)
 
     def estimate_gas(self, transaction: NewTransaction) -> int:
@@ -108,6 +88,23 @@ class EthAccountApi:
         """
         gas = self._runtime.call(EthMethods.ESTIMATE_TRANSACTION, transaction.serialize())
         return self._factory.get_integer(gas)
+
+    def get_transaction_count(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
+        """
+        Number of transactions mined from this address. Used to set transaction nonce.
+        Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1).
+        It exists to mitigate replay attacks.
+        Args:
+            address (str): Ethereum account address
+            at_block (int):  Block number
+        Returns:
+            tx_count (int): Number of transactions mined from this address.
+        """
+        account = self._factory.get_account(address)
+        if isinstance(at_block, int):
+            at_block = hex(at_block)
+        tx_count = self._runtime.call(EthMethods.TRANSACTION_COUNT, account.address, at_block)
+        return self._factory.get_integer(tx_count)
 
     def checksum_address(self, address: str, add_chain_id: bool = True) -> str:
         """

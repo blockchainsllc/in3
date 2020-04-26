@@ -1,6 +1,7 @@
+import ctypes as c
 import json
-
 from enum import Enum
+
 from in3.exception import ClientException
 from in3.libin3.enum import RPCCode
 from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_exec, libin3_set_pk
@@ -64,6 +65,7 @@ class RPCCallRequest:
         fn_name: Name of function that will be called in libin3
         fn_args: Arguments matching the parameters order of this function
     """
+
     def __init__(self, fn_name: str or Enum, fn_args: tuple = None, formatted: bool = False):
         self.fn_name = str(fn_name).encode('utf8')
         if fn_args and formatted:
@@ -81,8 +83,8 @@ class In3Runtime:
         chain_id (int): Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. i.e: 0x1 for mainNet
     """
 
-    def __init__(self, chain_id: int):
-        self.in3 = libin3_new(chain_id)
+    def __init__(self, chain_id: int, transport: c.CFUNCTYPE):
+        self.in3 = libin3_new(chain_id, transport)
         self.chain_id = chain_id
 
     def __del__(self):
@@ -98,13 +100,10 @@ class In3Runtime:
         Returns:
             fn_return (str): String of values returned by the function, if any.
         """
-        # TODO: Add docs
         request = RPCCallRequest(fn_name, fn_args, formatted)
         result, response, error = libin3_call(self.in3, request.fn_name, request.fn_args)
         in3_code = RPCCode(result)
         if not in3_code == RPCCode.IN3_OK or error:
-            with open('error.log', 'a+') as log_file:
-                log_file.write(str(error))
             raise ClientException(str(error))
         return json.loads(response)
 
@@ -112,9 +111,9 @@ class In3Runtime:
         """
         Load an account secret to sign Ethereum transactions with `eth_sendTransaction` and `eth_call`.
         Args:
-            secret: SK number in hexadecimal. example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+            secret: SK 256 bit number. example: int(0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7, 16)
         """
-        return libin3_set_pk(self.in3, secret)
+        return libin3_set_pk(self.in3, hex(secret).encode('utf8'))
 
     def execute(self, fn_name: str or Enum, *args) -> str or dict:
         """
@@ -130,8 +129,6 @@ class In3Runtime:
         response_bytes = libin3_exec(self.in3, rpc=request_bytes)
         response_str = response_bytes.decode('utf8').replace('\n', ' ')
         if 'error' in response_str:
-            with open('error.log', 'a+') as log_file:
-                log_file.write(response_str)
             raise ClientException(response_str)
         response_dict = json.loads(response_str)
         response = RPCExecResponse(**response_dict)

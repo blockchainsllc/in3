@@ -53,7 +53,6 @@ source : [in3-c/python/examples/in3_config.py](https://github.com/slockit/in3-c/
 
 ```python
 import in3
-import in3.model
 
 print('\nEthereum Goerli Test Network')
 client = in3.Client('goerli')

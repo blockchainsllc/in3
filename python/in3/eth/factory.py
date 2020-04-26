@@ -1,5 +1,5 @@
-from in3.exception import HashFormatException, EthAddressFormatException
 from in3.eth.model import Block, Transaction, Account, Log, TransactionReceipt
+from in3.exception import HashFormatException, EthAddressFormatException
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
 
@@ -148,6 +148,6 @@ class EthObjectFactory:
             raise EthAddressFormatException("Ethereum addresses start with 0x")
         if len(address.encode("utf-8")) != 42:
             raise EthAddressFormatException("The string don't have the size of an Ethereum address.")
-        # if self.checksum_address(address, True) != address:
-        #     raise EthAddressFormatException("The string checksum is invalid for an Ethereum address.")
+        if self.checksum_address(address, False) != address:
+            address = self.checksum_address(address, False)
         return Account(address.replace('\'', '"'), self._runtime.chain_id, secret)

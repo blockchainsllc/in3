@@ -80,7 +80,9 @@ class ClientConfig(DataTransferObject):
         response_keep_proof (bool): If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
         cached_blocks (int): Maximum blocks kept in memory. example: 100 last requested blocks
         cached_code_bytes (int): Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
+        in3_registry (dict): In3 Registry Smart Contract configuration data
     """
+
     def __init__(self,
                  chain_finality_threshold: int = None,
                  account_secret: str = None,
@@ -96,7 +98,8 @@ class ClientConfig(DataTransferObject):
                  response_includes_code: bool = None,
                  response_keep_proof: bool = None,
                  cached_blocks: int = None,
-                 cached_code_bytes: int = None):
+                 cached_code_bytes: int = None,
+                 in3_registry: dict = None):
         self.finality: int = chain_finality_threshold
         self.key: str = account_secret
         self.replaceLatestBlock: int = latest_block_stall
@@ -112,6 +115,7 @@ class ClientConfig(DataTransferObject):
         self.keepIn3: bool = response_keep_proof
         self.maxBlockCache: int = cached_blocks
         self.maxCodeCache: int = cached_code_bytes
+        self.nodes: dict = in3_registry
         if self.key:
             warnings.warn('In3 Config: `account_secret` may cause instability.', DeprecationWarning)
 
@@ -120,6 +124,7 @@ class ChainConfig:
     """
     Default in3 client configuration for each chain see #clientConfig for details.
     """
+
     def __init__(self, chain_id: int, chain_id_alias: str, client_config: ClientConfig):
         self.chain_id: int = chain_id
         self.chain_id_alias: str = chain_id_alias
@@ -130,7 +135,7 @@ chain_configs = {
     "mainnet": ChainConfig(
         chain_id=int(0x1),
         chain_id_alias="mainnet",
-        client_config= ClientConfig(
+        client_config=ClientConfig(
             chain_finality_threshold=10,
             latest_block_stall=10,
             node_signatures=2)
