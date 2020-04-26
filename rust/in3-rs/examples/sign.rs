@@ -112,9 +112,9 @@ fn sign_execute_api() {
         }));
     
     let mut abi = abi::In3EthAbi::new();
-    let mut params =
-        task::block_on(abi.encode("test(address,string)", serde_json::json!(["0x1234567890123456789012345678901234567890", "xyz"]))).unwrap();
-    println!(" PARAMS : {:?}", params);
+    let params =
+        task::block_on(abi.encode("setData(uint256,string)", serde_json::json!([123, "testdata"]))).unwrap();
+    println!("{:?}", params);
     let to: Address =
         serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
     let from: Address =
@@ -162,48 +162,9 @@ fn sign_execute_rpc() {
     }
 }
 
-// fn sign_execute_2() {
-//     let tx = json!({
-//         "from": "0x3fEfF9E04aCD51062467C494b057923F771C9423",
-//         "to": "0x1234567890123456789012345678901234567890",
-//         "data": params
-//     });
-
-//     let mut abi = abi::In3EthAbi::new();
-//     let params =
-//         task::block_on(abi.encode("setData(uint256,string)", serde_json::json!([123, "testdata"]))).unwrap();
-//     println!("{:?}", params);
-//     let mut c = Client::new(chain::MAINNET);
-//     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-//     // c.set_pk_signer("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-//     c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
-//     // let address = "0x3fEfF9E04aCD51062467C494b057923F771C9423";
-//     // let request = r#"{"method":"eth_sendTransaction", 
-//     // "params":[{ "gas": "0x76c0","nonce": "0x15","gasPrice": "0x9184e72a000",
-//     // "from": "0x3fEfF9E04aCD51062467C494b057923F771C9423", 
-//     // "to":"0x1234567890123456789012345678901234567890", 
-//     // "data": params
-//     // "value":"0x0" }]}"#;
-//     let rpc_req = RpcRequest {
-//         method: "eth_sendTransaction",
-//         params: json!([filter_id]),
-//     }
-//     let responses = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"# ),
-//     ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#),
-//     ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#),
-//     ("eth_sendRawTransaction", "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38")]; 
-//     c.set_transport(Box::new(MockTransport {
-//         responses: responses
-//     })); 
-//     match task::block_on(c.send(request)) {
-//         Ok(res) => println!("--- > {}, {}", request, res),
-//         Err(err) => println!("Failed with error: {}", err),
-//     }
-// }
-
 fn main() {
     // sign_hash();
     // sign_raw();
-    // sign_execute_api();
+    sign_execute_api();
     sign_execute_rpc();
 }
