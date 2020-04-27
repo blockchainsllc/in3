@@ -117,7 +117,7 @@ fn main() {
     let mut header_search_paths: Vec<PathBuf> = Vec::new();
 
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
-    println!("cargo:rustc-link-lib=static=in3");
+    println!("cargo:rustc-link-lib=dylib=in3_{}", env_var("TARGET"));
     println!(
         "cargo:rustc-link-search={}/../../build_rust/lib",
         env_var("CARGO_MANIFEST_DIR")
