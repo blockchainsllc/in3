@@ -1,17 +1,59 @@
+import random
+
 from in3.eth.factory import EthObjectFactory
 from in3.eth.model import NewTransaction, TransactionReceipt, Account
-from in3.libin3.enum import EthMethods, BlockAt
+from in3.libin3.enum import EthMethods, BlockAt, In3Methods
 from in3.libin3.runtime import In3Runtime
 
 
 class EthAccountApi:
     """
-    Manages wallets and smart-contracts
+    Manages accounts and smart-contracts
     """
 
     def __init__(self, runtime: In3Runtime, factory: EthObjectFactory):
         self._runtime = runtime
         self._factory = factory
+
+    def _create_account(self, secret: str) -> Account:
+        if not secret.startswith('0x') or not len(secret) == 66:
+            TypeError('Secret must be a 256 bit hexadecimal.')
+        address = self._runtime.call(In3Methods.PK_2_ADDRESS, secret)
+        account = self._factory.get_account(address, int(secret, 16))
+        return account
+
+    def new_account(self, qrng=False) -> Account:
+        """
+        Creates a new Ethereum account and saves it in the wallet.
+        Args:
+            qrng (bool): True uses a Quantum Random Number Generator api for generating the private key.
+        Returns:
+            account (Account): Newly created Ethereum account.
+        """
+        if qrng:
+            raise NotImplementedError
+        secret = hex(random.getrandbits(256))
+        return self._create_account(secret)
+
+    def recover_account(self, secret: str) -> Account:
+        """
+        Recovers an account from a secret.
+        Args:
+            secret (str): Account private key in hexadecimal string
+        Returns:
+            account (Account): Recovered Ethereum account.
+        """
+        return self._create_account(secret)
+
+    def parse_mnemonics(self, mnemonics: str) -> str:
+        """
+        Recovers an account secret from mnemonics phrase
+        Args:
+            mnemonics (str): BIP39 mnemonics phrase.
+        Returns:
+            secret (str): Account secret. Use `recover_account` to create a new account with this secret.
+        """
+        raise NotImplementedError
 
     def sign(self, private_key: str, message: str) -> str:
         """
@@ -28,6 +70,20 @@ class EthAccountApi:
         # in3_ret_t in3_sign_data(data, pk, sig_type)
         signature_dict = self._runtime.call(EthMethods.SIGN, message, private_key, signature_type)
         return signature_dict['signature']
+
+    def get_balance(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
+        """
+        Returns the balance of the account of given address.
+        Args:
+            address (str): address to check for balance
+            at_block (int or str):  block number IN3BlockNumber  or EnumBlockStatus
+        Returns:
+            balance (int): integer of the current balance in wei.
+        """
+        account = self._factory.get_account(address)
+        if isinstance(at_block, int):
+            at_block = hex(at_block)
+        return self._factory.get_integer(self._runtime.call(EthMethods.BALANCE, account.address, at_block))
 
     def send_transaction(self, sender: Account, transaction: NewTransaction) -> str:
         """

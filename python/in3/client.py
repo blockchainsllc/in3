@@ -6,7 +6,6 @@ from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
 from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_configs
 from in3.transport import http_transport
-from in3.wallet.api import WalletApi
 
 
 class Client:
@@ -33,7 +32,6 @@ class Client:
             self._configure(config)
         # TODO: getConfig
         self.eth = EthereumApi(self._runtime)
-        self.wallet = WalletApi(self._runtime)
         self._factory = In3ObjectFactory(self._runtime)
 
     def _configure(self, in3_config: ClientConfig) -> bool:
@@ -51,48 +49,6 @@ class Client:
         """
         node_list_dict = self._runtime.call(In3Methods.IN3_NODE_LIST)
         return self._factory.get_node_list(node_list_dict)
-
-    def abi_encode(self, fn_signature: str, *fn_args) -> str:
-        """
-        Smart-contract ABI encoder. Used to serialize a rpc to the EVM.
-        Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html)
-        Note: Parameters refers to the list of variables in a method declaration.
-        Arguments are the actual values that are passed in when the method is invoked.
-        When you invoke a method, the arguments used must match the declaration's parameters in type and order.
-        Args:
-            fn_signature (str): Function name, with parameters. i.e. `getBalance(uint256):uint256`, can contain the return types but will be ignored.
-            fn_args (tuple): Function parameters, in the same order as in passed on to method_name.
-        Returns:
-            encoded_fn_call (str): i.e. "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
-        """
-        self._check_fn_signature(fn_signature)
-        return self._runtime.call(In3Methods.ABI_ENCODE, fn_signature, fn_args)
-
-    def abi_decode(self, fn_signature: str, encoded_value: str) -> tuple:
-        """
-        Smart-contract ABI decoder. Used to parse rpc responses from the EVM.
-        Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html)
-        Args:
-            fn_signature: Function signature. e.g. `(address,string,uint256)` or `getBalance(address):uint256`.
-            In case of the latter, the function signature will be ignored and only the return types will be parsed.
-            encoded_value: Abi encoded values. Usually the string returned from a rpc to the EVM.
-        Returns:
-            decoded_return_values (tuple):  "0x1234567890123456789012345678901234567890", "0x05"
-        """
-        if not encoded_value.startswith('0x'):
-            raise AssertionError("Encoded values must start with 0x")
-        if len(encoded_value[2:]) <= 64:
-            raise AssertionError("Encoded values must be longer than 64 characters.")
-        self._check_fn_signature(fn_signature)
-        return self._runtime.call(In3Methods.ABI_DECODE, fn_signature, encoded_value)
-
-    @staticmethod
-    def _check_fn_signature(fn_signature):
-        is_signature = re.match(r'.*(\(.+\))', fn_signature)
-        _types = ["address", "string", "uint", "string", "bool", "bytes", "int"]
-        contains_type = [_type for _type in _types if _type in fn_signature]
-        if not is_signature or not contains_type:
-            raise AssertionError('Function signature is not valid. A valid example is balanceOf(address).')
 
     def get_config(self) -> dict:
         # TODO: Marshalling

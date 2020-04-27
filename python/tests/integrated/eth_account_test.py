@@ -53,14 +53,14 @@ class EthAccountGoerliTestCase(unittest.TestCase):
         self.assertGreaterEqual(rpc, 0)
 
     def test_get_balance(self):
-        result = self.client.eth.get_balance('0x6FA33809667A99A805b610C49EE2042863b1bb83')
+        result = self.client.eth.account.get_balance('0x6FA33809667A99A805b610C49EE2042863b1bb83')
         self.assertGreaterEqual(result, 0)
 
     def test_send_tx(self):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
         secret = hex(0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F)
-        sender = self.client.wallet.recover_account('sender', secret)
+        sender = self.client.eth.account.recover_account(secret)
         receiver = hex(0x6FA33809667A99A805b610C49EE2042863b1bb83)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         tx_hash = self.client.eth.account.send_transaction(sender, tx)
@@ -93,7 +93,7 @@ class EthAccountKovanTestCase(EthAccountGoerliTestCase):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
         secret = hex(0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F)
-        sender = self.client.wallet.recover_account('sender', secret)
+        sender = self.client.eth.account.recover_account(secret)
         receiver = hex(0x6FA33809667A99A805b610C49EE2042863b1bb83)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         tx_hash = self.client.eth.account.send_transaction(sender, tx)
@@ -126,7 +126,7 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
         secret = hex(0xAC6D6BF94AD0AC65869EF6A0A47A9F2A201956D4AF3FFBE9DFE679399DACD3D9)
-        sender = self.client.wallet.recover_account('sender', secret)
+        sender = self.client.eth.account.recover_account(secret)
         receiver = hex(0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         tx_hash = self.client.eth.account.send_transaction(sender, tx)
