@@ -109,6 +109,7 @@ void show_help(char* name) {
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
+-bip32         the bip32 path which is to be used for signing in hardware wallet \n\
 -st, -sigtype  the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw \n\
 -pwd           password to unlock the key \n\
 -value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
@@ -685,10 +686,11 @@ int main(int argc, char* argv[]) {
     if (strcmp(argv[i], "-pk") == 0) { // private key?
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, pk, 32);
+
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
-    } else if (strcmp(argv[i], "-bip") == 0) {
+    } else if (strcmp(argv[i], "-bip32") == 0) {
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, bip32, 5);
         eth_ledger_set_signer(c, bip32);
@@ -788,9 +790,9 @@ int main(int argc, char* argv[]) {
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
-      else if ((strcmp(method, "sign") == 0 || strcmp(method, "sign_ledgernano") == 0) && !data)
+      else if (strcmp(method, "sign") == 0 && !data)
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0 || strcmp(method, "send_ledgernano") == 0))
+      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
         // otherwise we add it to the params
@@ -951,7 +953,7 @@ int main(int argc, char* argv[]) {
   } else if (strcmp(method, "send") == 0) {
     prepare_tx(sig, resolve(c, to), params, NULL, gas_limit, value, data);
     method = "eth_sendTransaction";
-  } else if (strcmp(method, "sign") == 0 || strcmp(method, "sign_ledgernano") == 0) {
+  } else if (strcmp(method, "sign") == 0) {
     if (!data) die("no data given");
     if (data->len > 2 && data->data[0] == '0' && data->data[1] == 'x')
       data = hex_to_new_bytes((char*) data->data + 2, data->len - 2);

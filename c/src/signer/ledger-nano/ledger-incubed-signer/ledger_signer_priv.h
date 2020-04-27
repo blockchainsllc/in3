@@ -53,8 +53,7 @@ void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
 void      read_hid_response(hid_device* handle, bytes_t* response);
 int       get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);
 in3_ret_t is_ledger_device_connected();
-in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key);
+
 in3_ret_t eth_get_address_from_path(bytes_t i_bip_path, bytes_t o_address);
-in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
 #endif

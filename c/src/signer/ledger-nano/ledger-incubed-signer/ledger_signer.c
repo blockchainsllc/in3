@@ -52,8 +52,8 @@ in3_ret_t eth_get_address_from_path(bytes_t i_bip_path, bytes_t o_address) {
 in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   //UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
-  uint8_t  bip_path_len   = 5;
-  uint8_t  bip_data[5];
+
+  uint8_t bip_data[5];
 
   int       res = 0;
   in3_ret_t ret;
@@ -71,16 +71,12 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
   bool    is_hashed = false;
   bytes_t apdu_bytes;
   bytes_t final_apdu_command;
-  bytes_t public_key;
+  uint8_t public_key[65];
   bytes_t response;
-  bytes_t bip_path;
 
-  memcpy(bip_data, bip_path_bytes, bip_path_len);
+  memcpy(bip_data, bip_path_bytes, sizeof(bip_data));
 
-  bip_path.data = bip_path_bytes;
-  bip_path.len  = bip_path_len;
-
-  ret          = eth_ledger_get_public_key(bip_path, &public_key);
+  ret          = eth_ledger_get_public_key(bip_data, public_key);
   res          = hid_init();
   handle       = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
   int cmd_size = 64;
@@ -104,9 +100,9 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
         apdu[index_counter++] = IDM_SECP256K1;
 
         apdu[index_counter++] = 0x01; //1st arg tag
-        apdu[index_counter++] = bip_path_len;
-        memcpy(apdu + index_counter, &bip_data, bip_path_len);
-        index_counter += bip_path_len;
+        apdu[index_counter++] = sizeof(bip_data);
+        memcpy(apdu + index_counter, &bip_data, sizeof(bip_data));
+        index_counter += sizeof(bip_data);
 
         apdu[index_counter++] = 0x02; //2nd arg tag
         apdu[index_counter++] = msg_len;
@@ -138,7 +134,7 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
           in3_log_debug("apdu executed succesfully \n");
           extract_signture(response, dst);
-          recid   = get_recid_from_pub_key(&secp256k1, public_key.data, dst, hash);
+          recid   = get_recid_from_pub_key(&secp256k1, public_key, dst, hash);
           dst[64] = recid;
 
 #ifdef DEBUG
@@ -165,11 +161,10 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
   }
   hid_close(handle);
   res = hid_exit();
-  free(public_key.data);
   return 65;
 }
 
-in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key) {
+in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) {
   int       res = 0;
   in3_ret_t ret;
   uint8_t   apdu[64];
@@ -191,9 +186,9 @@ in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key) {
     apdu[index_counter++] = P1_FINAL;
     apdu[index_counter++] = IDM_SECP256K1;
 
-    apdu[index_counter++] = i_bip_path.len;
-    memcpy(apdu + index_counter, i_bip_path.data, i_bip_path.len);
-    index_counter += i_bip_path.len;
+    apdu[index_counter++] = 5;
+    memcpy(apdu + index_counter, i_bip_path, 5);
+    index_counter += 5;
 
     apdu_bytes.data = malloc(index_counter);
     apdu_bytes.len  = index_counter;
@@ -214,10 +209,8 @@ in3_ret_t eth_ledger_get_public_key(bytes_t i_bip_path, bytes_t* o_public_key) {
 #endif
 
     if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
-      ret                = IN3_OK;
-      o_public_key->len  = response.len - 2;
-      o_public_key->data = malloc(response.len - 2);
-      memcpy(o_public_key->data, response.data, response.len - 2);
+      ret = IN3_OK;
+      memcpy(o_public_key, response.data, response.len - 2);
     } else {
       ret = IN3_ENOTSUP;
     }

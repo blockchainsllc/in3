@@ -38,6 +38,7 @@
 #include "../../../core/client/client.h"
 #define HID_CMD_MAX_LEN 64
 
+#define DEBUG 1
 extern const uint8_t CLA;
 extern const uint8_t INS_GET_PUBLIC_KEY;
 extern const uint8_t INS_SIGN;
