@@ -91,6 +91,7 @@ impl Ctx {
                 }
             }
         }
+        *dst.offset(64) += 27;
 
         let value = std::slice::from_raw_parts_mut(dst, 65 as usize);
         // the only way to return a valid rust string from signature pointer
@@ -105,6 +106,7 @@ impl Ctx {
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
+        // in3_sys::in3_create_request(self.ptr);
         let ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
         let mut last_waiting: *mut in3_sys::in3_ctx_t;
         let mut p: *mut in3_sys::in3_ctx_t;
@@ -158,6 +160,9 @@ impl Ctx {
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
                     let req = in3_sys::in3_create_request(last_waiting);
+                    // let in3size = core::mem::size_of::<in3_sys::in3_response_t>();
+                    // (*self.ptr).raw_response = libc::malloc(in3size);
+
                     let data = (*req).payload;
                     let slice = CStr::from_ptr(data);
                     // let len = strlen((*req).payload) as u32;

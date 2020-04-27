@@ -18,6 +18,48 @@ pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
         .collect()
 }
 
+struct MockTransport2<'a> {
+    responses: Vec<(&'a str, &'a str)>,
+}
+
+#[async_trait]
+impl Transport for MockTransport2<'_> {
+    async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+        // let response = self.responses.pop();
+        let mut ret = vec![Err(format!(
+            "Found wrong/no response while expecting response for {}",
+            request
+        ))];
+        let request: serde_json::Value = serde_json::from_str(request).unwrap();
+        println!("{:?}", request);
+        for response in &self.responses {
+        while ! self.responses.is_empty(){
+            let response = self.responses.pop();
+            // let response = resp.unwrap();
+            println!("{:?}", request[0]["method"]);
+            
+            match response {
+                    Some(response) if response.0 == request[0]["method"] => {
+                    println!("--------- > {:?}",response.1.to_string());
+                    ret = vec![Ok(response.1.to_string())];
+                }
+                _ => {
+                    println!("continue");
+                },
+            }
+
+        }
+        ret
+        
+        
+    }
+
+    #[cfg(feature = "blocking")]
+    fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+        unimplemented!()
+    }
+}
+
 struct MockTransport<'a> {
     responses: HashMap<&'a str, &'a str>,
 }
@@ -93,21 +135,41 @@ fn sign_raw() {
      }
 }
 
+fn sign() {
+    unsafe {
+       let mut in3 = Client::new(chain::MAINNET);
+       let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
+       in3.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
+       let data_ = decode_hex("9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465").unwrap();
+       let c_data = data_.as_ptr() as *const c_char;
+       // println!("{:?}", data_.len());
+       let signa = ctx.sign(Signature::Hash, c_data, data_.len());
+       println!(" RAW > {:?}",signa);
+       assert_eq!(signa, "349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c");
+       
+    }
+}
+
 
 fn sign_execute_api() {
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
-    let mut responses = HashMap::new();
-    responses.insert(r#""eth_gasPrice"#,r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
-    responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
-    responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
-    responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
+    // let mut responses = HashMap::new();
+    // responses.insert(r#""eth_gasPrice"#,r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    // responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
+    // responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    // responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
+    let responses = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
+    ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),
+    ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
+    ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,)
+    ];
     eth_api
         .client()
         .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     eth_api
         .client().set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
     eth_api
-        .client().set_transport(Box::new(MockTransport {
+        .client().set_transport(Box::new(MockTransport2 {
             responses: responses,
         }));
     
@@ -136,12 +198,18 @@ fn sign_execute_rpc() {
     
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    let mut responses = HashMap::new();
-    responses.insert(r#""eth_gasPrice"#,r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
-    responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
-    responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
-    responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
-    c.set_transport(Box::new(MockTransport {
+    // let mut responses = HashMap::new();
+    // responses.insert(r#""eth_gasPrice"#,r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    // responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
+    // responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
+    // responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
+
+    let responses = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
+    ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),
+    ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
+    ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,)
+    ];
+    c.set_transport(Box::new(MockTransport2 {
         responses: responses,
     })); 
     c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
@@ -162,9 +230,27 @@ fn sign_execute_rpc() {
     }
 }
 
+fn test_transport() {
+    let mut c = Client::new(chain::MAINNET);
+    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    c.set_transport(Box::new(MockTransport2 {
+        responses: vec![(
+            "eth_blockNumber",
+            r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
+        )],
+    }));
+    match task::block_on(c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#)) {
+        Ok(res) => println!("{}", res),
+        Err(err) => println!("Failed with error: {}", err),
+    }
+}
+
+
 fn main() {
     // sign_hash();
     // sign_raw();
     sign_execute_api();
-    sign_execute_rpc();
+    // sign_execute_rpc();
+    // test_transport();
+    // sign();
 }

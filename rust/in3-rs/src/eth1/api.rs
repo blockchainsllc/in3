@@ -358,6 +358,7 @@ impl Api {
             })
             .await?;
         let res: Hash = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        println!(" current response {:?}", res);
         Ok(res)
     }
 
