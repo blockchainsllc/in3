@@ -7,11 +7,11 @@ wasm:
   script:
     - mkdir wasm_build_min
     - cd wasm_build_min
-    - emconfigure cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
     - mkdir ../wasm_build
     - cd ../wasm_build
-    - emconfigure cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
     - cp ../wasm_build_min/bin/*.wasm bin/in3w_min.wasm
     - cp ../wasm_build_min/bin/*.wasm module/in3w_min.wasm
