@@ -27,7 +27,7 @@ impl Transport for MockTransport2<'_> {
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = self.responses.pop();
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
-        println!("\n\n URL:{:?} Req: \n{:?}\n", url, request);
+        println!("\n\n Req: \n{:?}\n",  request);
         // println!("{:?}", request[0]["method"]);
         
         match response {
@@ -229,7 +229,7 @@ fn sign_execute_arpc() {
     };
     let req_str = serde_json::to_string(&rpc_req).unwrap();
     match task::block_on(c.rpc(&req_str)){
-        Ok(res) => println!("--- > {:?}, {:?}\n\n", req_str, res),
+        Ok(res) => println!("FINAL RPC RESPONSE > {:?}, {:?}\n\n", req_str, res),
         Err(err) => println!("Failed with error: {}\n\n", err),
     }
     

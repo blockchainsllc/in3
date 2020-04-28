@@ -106,13 +106,10 @@ impl Ctx {
 
     
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
-        // in3_sys::in3_create_request(self.ptr);
-        let ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
-        let mut last_waiting: *mut in3_sys::in3_ctx_t;
+        let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
-        last_waiting = (*self.ptr).required;
         p = self.ptr;
-        match ctx_ret {
+        match in3_sys::in3_ctx_execute(self.ptr) {
             in3_sys::in3_ret_t::IN3_EIGNORE => {
                 while p != std::ptr::null_mut() {
                     let p_req = (*p).required;
@@ -132,18 +129,12 @@ impl Ctx {
             }
             in3_sys::in3_ret_t::IN3_WAITING => {
                 while p != std::ptr::null_mut() {
-                    let state = in3_sys::in3_ctx_state(p);
-                    let res = (*p).raw_response;
-                    if res == std::ptr::null_mut()
-                        && state == in3_sys::state::CTX_WAITING_FOR_RESPONSE
+                    if (*p).raw_response == std::ptr::null_mut()
+                        && in3_sys::in3_ctx_state(p) == in3_sys::state::CTX_WAITING_FOR_RESPONSE
                     {
                         last_waiting = p;
                     }
-                    
-                    p = (*last_waiting).required;
-                    if state == in3_sys::state::CTX_SUCCESS{
-                        break;
-                    }
+                    p = (*p).required;
                 }
                 if last_waiting == std::ptr::null_mut() {
                     return Err("Cound not find the last waiting context".into());
@@ -160,10 +151,11 @@ impl Ctx {
         }
 
         if last_waiting != std::ptr::null_mut() {
+            let req = in3_sys::in3_create_request(last_waiting);
             let req_type = (*last_waiting).type_;
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
-                    let req = in3_sys::in3_create_request(last_waiting);
+                    
                     // let in3size = core::mem::size_of::<in3_sys::in3_response_t>();
                     // (*self.ptr).raw_response = libc::malloc(in3size);
 
@@ -179,11 +171,11 @@ impl Ctx {
                     let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                     println!("DATA Signed -- > {}", data);
                     // in3_sys::request_free(req, self.ptr, false);
-                    //return Ok(data.to_string());
+                    // return Ok(data.to_string());
+                    return Err(Error::TryAgain);
                     
                 }
                 in3_sys::ctx_type::CT_RPC => {
-                    let req = in3_sys::in3_create_request(last_waiting);
                     let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
                     let urls_len = (*req).urls_len;
                     let mut urls = Vec::new();
@@ -222,7 +214,7 @@ impl Ctx {
                     if len != 0 {
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                     // println!("DATA -- > {}", data);
-                    // return Err(Error::TryAgain);
+                    return Err(Error::TryAgain);
                     // return Ok(data.to_string());
                     } else {
                         let error = (*(*req).results.offset(0)).error;
@@ -247,46 +239,20 @@ impl Ctx {
     }
 }
 
-impl Drop for Ctx {
-    fn drop(&mut self) {
-        unsafe {
-            in3_sys::ctx_free(self.ptr);
-        }
-    }
-}
+#[async_trait(? Send)]
+impl ClientTrait for Client {
 
-pub struct Request {
-    ptr: *mut in3_sys::in3_request_t,
-    ctx_ptr: *const in3_sys::in3_ctx_t,
-}
-
-impl Request {
-    pub fn new(ctx: &mut Ctx) -> Request {
-        unsafe {
-            Request {
-                ptr: in3_sys::in3_create_request(ctx.ptr),
-                ctx_ptr: ctx.ptr,
+    async fn rpc(&mut self, call: &str) -> In3Result<String> {
+        let mut ctx = Ctx::new(self, call);
+        loop {
+            let res = unsafe { ctx.execute().await };
+            println!("EXECUTE returned  {:?}", res);
+            if res != Err(Error::TryAgain) {
+                return res;
             }
         }
     }
-}
 
-impl Drop for Request {
-    fn drop(&mut self) {
-        unsafe {
-            in3_sys::request_free(self.ptr, self.ctx_ptr, false);
-        }
-    }
-}
-
-pub struct Client {
-    ptr: *mut in3_sys::in3_t,
-    transport: Box<dyn Transport>,
-    storage: Option<Box<dyn Storage>>,
-}
-
-#[async_trait(? Send)]
-impl ClientTrait for Client {
     fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
@@ -314,17 +280,6 @@ impl ClientTrait for Client {
                     Some(Client::in3_rust_storage_clear),
                     self.ptr as *mut libc::c_void,
                 );
-            }
-        }
-    }
-
-    async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, call);
-        loop {
-            let res = unsafe { ctx.execute().await };
-            println!("-----> {:?}", res);
-            if res != Err(Error::TryAgain) {
-                return res;
             }
         }
     }
@@ -383,6 +338,44 @@ impl ClientTrait for Client {
             in3_sys::eth_set_pk_signer(self.ptr, pk_);
         }
     }
+}
+
+impl Drop for Ctx {
+    fn drop(&mut self) {
+        unsafe {
+            in3_sys::ctx_free(self.ptr);
+        }
+    }
+}
+
+pub struct Request {
+    ptr: *mut in3_sys::in3_request_t,
+    ctx_ptr: *const in3_sys::in3_ctx_t,
+}
+
+impl Request {
+    pub fn new(ctx: &mut Ctx) -> Request {
+        unsafe {
+            Request {
+                ptr: in3_sys::in3_create_request(ctx.ptr),
+                ctx_ptr: ctx.ptr,
+            }
+        }
+    }
+}
+
+impl Drop for Request {
+    fn drop(&mut self) {
+        unsafe {
+            in3_sys::request_free(self.ptr, self.ctx_ptr, false);
+        }
+    }
+}
+
+pub struct Client {
+    ptr: *mut in3_sys::in3_t,
+    transport: Box<dyn Transport>,
+    storage: Option<Box<dyn Storage>>,
 }
 
 impl Client {
