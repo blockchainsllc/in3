@@ -1,5 +1,5 @@
 wasm:
-  image: docker.slock.it/build-images/cmake:clang10
+  image: docker.slock.it/build-images/cmake:clang11
   needs: []
   stage: bindings
   tags:
@@ -22,7 +22,7 @@ wasm:
       - wasm_build/bin
 
 asmjs:
-  image: docker.slock.it/build-images/cmake:clang10
+  image: docker.slock.it/build-images/cmake:clang11
   stage: bindings
   needs: []
   tags:

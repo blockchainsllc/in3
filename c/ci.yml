@@ -87,8 +87,8 @@ clang50:
   image: docker.slock.it/build-images/cmake:clang50
   extends: .conanbuild
 
-clang10:
-  image: docker.slock.it/build-images/cmake:clang10
+clang11:
+  image: docker.slock.it/build-images/cmake:clang11
   extends: .conanbuild
 
 mac_os:
