@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 // fixme: This is only for the sake of demo. Do NOT store private keys as plaintext.
-#define ETH_PRIVATE_KEY "0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
+#define ETH_PRIVATE_KEY "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
 
 static void send_tx_rpc(in3_t* in3);
 static void send_tx_api(in3_t* in3);
@@ -26,7 +26,7 @@ int main() {
   eth_set_pk_signer(in3, pk);
 
   // send tx using raw RPC call
-  send_tx_rpc(in3);
+  // send_tx_rpc(in3);
 
   // send tx using API
   send_tx_api(in3);
@@ -63,13 +63,13 @@ void send_tx_rpc(in3_t* in3) {
 void send_tx_api(in3_t* in3) {
   // prepare parameters
   address_t to, from;
-  hex_to_bytes("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
-  hex_to_bytes("0xd46e8dd67c5d32be8058bb8eb970870f07244567", -1, to, 20);
+  hex_to_bytes("0x3fEfF9E04aCD51062467C494b057923F771C9423", -1, from, 20);
+  hex_to_bytes("0x1234567890123456789012345678901234567890", -1, to, 20);
 
-  bytes_t* data = hex_to_new_bytes("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", 82);
+  bytes_t* data = hex_to_new_bytes("18562dae000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000087465737464617461000000000000000000000000000000000000000000000000", 264);
 
   // send the tx
-  bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_UNDEFINED(uint64_t));
+  bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_VALUE(uint64_t, 0x0));
 
   // if the result is null there was an error and we can get the latest error message from eth_last_error()
   if (!tx_hash)

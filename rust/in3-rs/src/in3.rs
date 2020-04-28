@@ -104,7 +104,6 @@ impl Ctx {
         sign_str
     }
 
-    
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
         let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
@@ -155,25 +154,20 @@ impl Ctx {
             let req_type = (*last_waiting).type_;
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
-                    
-                    // let in3size = core::mem::size_of::<in3_sys::in3_response_t>();
-                    // (*self.ptr).raw_response = libc::malloc(in3size);
-
                     let data = (*req).payload;
                     let slice = CStr::from_ptr(data);
-                    // let len = strlen((*req).payload) as u32;
                     let res_str: String =
                         self.sign(Signature::Hash, data, slice.to_str().unwrap().len());
                     let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
                     let c_data: *const c_char = c_str_data.as_ptr();
-                    in3_sys::sb_add_chars(&mut (*(*req).results.add(0)).result, c_data);
-                    let result = (*(*req).results.offset(0)).result;
-                    let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                    println!("DATA Signed -- > {}", data);
-                    // in3_sys::request_free(req, self.ptr, false);
-                    // return Ok(data.to_string());
-                    return Err(Error::TryAgain);
-                    
+                    in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
+                    in3_sys::sb_add_range(
+                        &mut (*(*last_waiting).raw_response.offset(0)).result,
+                        c_data,
+                        0,
+                        65,
+                    );
+                    let data = ffi::CStr::from_ptr(c_data).to_str().unwrap();
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
@@ -213,8 +207,8 @@ impl Ctx {
                     let len = result.len;
                     if len != 0 {
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                    // println!("DATA -- > {}", data);
-                    return Err(Error::TryAgain);
+                        // println!("DATA -- > {}", data);
+                        return Err(Error::TryAgain);
                     // return Ok(data.to_string());
                     } else {
                         let error = (*(*req).results.offset(0)).error;
@@ -241,7 +235,6 @@ impl Ctx {
 
 #[async_trait(? Send)]
 impl ClientTrait for Client {
-
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
         let mut ctx = Ctx::new(self, call);
         loop {
