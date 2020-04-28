@@ -68,6 +68,7 @@ option(PAY_ETH  "support for direct Eth-Payment"  OFF)
 option(USE_SCRYPT "integrate scrypt into the build in order to allow decrypt_key for scrypt encoded keys." ON)
 option(USE_CURL "if true the curl transport will be built (with a dependency to libcurl)" ON)
 option(DEV_NO_INTRN_PTR "(*dev option*) if true the client will NOT include a void pointer (named internal) for use by devs)" ON)
+option(HIDAPI "Includes the HidAPI needed for ledger support" ON)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)

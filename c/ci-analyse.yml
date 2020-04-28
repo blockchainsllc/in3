@@ -18,7 +18,7 @@ coverage:
 
 clangcheck:
   stage: analysis
-  image: docker.slock.it/build-images/cmake:clang10
+  image: docker.slock.it/build-images/cmake:clang11
   needs: []
   allow_failure: false
   tags:
@@ -83,7 +83,7 @@ code_quality:
 format:
   stage: analysis
   needs: []
-  image: docker.slock.it/build-images/cmake:clang10
+  image: docker.slock.it/build-images/cmake:clang11
   tags:
     - short-jobs
   script:
