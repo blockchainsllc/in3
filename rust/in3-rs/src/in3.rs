@@ -47,11 +47,11 @@ impl Ctx {
     }
 
     pub unsafe fn debug_pointer(&mut self, data: *mut u8, len: usize) {
-        let val = std::slice::from_raw_parts_mut(data, 32 as usize);
+        let val = std::slice::from_raw_parts_mut(data, len);
         println!("{:?}", len);
-        print!("data -> ");
+        print!("data Signature -> ");
         for byte in val {
-            print!("{:02x}", byte);
+            print!("{:x}", byte);
         }
         println!(" \n");
     }
@@ -61,8 +61,8 @@ impl Ctx {
         // let len = strlen(data) as u32;
         // let len = 32;
         let data_ = data as *mut u8;
-        // self.debug_pointer(data_, len);
-        // self.debug_pointer(pk, 65);
+        self.debug_pointer(data_, len);
+        self.debug_pointer(pk, 65);
         let dst: *mut u8 = libc::malloc(65) as *mut u8;
         // let pby = *dst.offset(64) as *mut u8;
         let pby = dst.offset(64) as *mut u8;
@@ -90,7 +90,8 @@ impl Ctx {
                 }
             }
         }
-        *dst.offset(64) += 27;
+         *dst.offset(64) += 27;
+         self.debug_pointer(dst, 65);
 
         let value = std::slice::from_raw_parts_mut(dst, 65 as usize);
         // the only way to return a valid rust string from signature pointer
@@ -100,7 +101,7 @@ impl Ctx {
             write!(&mut tmp, "{:02x}", byte).unwrap();
             sign_str.push_str(tmp.as_str());
         }
-        // println!("{}",sign_str);
+         println!(" signature {}",sign_str);
         sign_str
     }
 
@@ -154,10 +155,24 @@ impl Ctx {
             let req_type = (*last_waiting).type_;
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
-                    let data = (*req).payload;
-                    let slice = CStr::from_ptr(data);
+                    //  let item_ = (*((*last_waiting).requests.offset(0))).data;
+                     let ite_ = (*last_waiting).requests.offset(0);
+                    //  let item_ = (*(*((*last_waiting).requests.offset(0)))).data as *mut u8;
+                     let item_ = (*(*ite_)).data as *const c_char;
+                    //  let len = (*(*ite_)).len;
+                     let slice = CStr::from_ptr(item_).to_str().unwrap();
+                    //  println!("string returned: {}", slice);
+                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
+                    //  println!("{:?}", request["params"].to_string());
+                     let data_str = request["params"].to_string();
+                     let len = data_str.len();
+                     let data_ = CString::new(data_str).unwrap();
+                     
+                    //  let data = request["params"].to_string().as_ptr();
+                     let data: *const c_char = data_.into_raw();
+                    
                     let res_str: String =
-                        self.sign(Signature::Hash, data, slice.to_str().unwrap().len());
+                        self.sign(Signature::Hash, data, len as usize);
                     let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
                     let c_data: *const c_char = c_str_data.as_ptr();
                     in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
@@ -167,9 +182,10 @@ impl Ctx {
                         0,
                         65,
                     );
-                    let data = ffi::CStr::from_ptr(c_data).to_str().unwrap();
+                    // let data = ffi::CStr::from_ptr(c_data).to_str().unwrap();
                 }
                 in3_sys::ctx_type::CT_RPC => {
+                    let req = in3_sys::in3_create_request(last_waiting);
                     let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
                     let urls_len = (*req).urls_len;
                     let mut urls = Vec::new();
@@ -299,6 +315,7 @@ impl ClientTrait for Client {
         unsafe {
             let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
             let c_data: *const c_char = c_str_data.as_ptr();
+            //TODO: please correct strlen
             let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
             let len: i32 = -1;
             in3_sys::hex_to_bytes(c_data, len, out, 32);
