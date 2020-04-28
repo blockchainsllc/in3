@@ -25,38 +25,46 @@ struct MockTransport2<'a> {
 #[async_trait]
 impl Transport for MockTransport2<'_> {
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
-        // let response = self.responses.pop();
-        let mut ret = vec![Err(format!(
-            "Found wrong/no response while expecting response for {}",
-            request
-        ))];
+        let response = self.responses.pop();
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
-        println!("{:?}", request);
-        for response in &self.responses {
-        while ! self.responses.is_empty(){
-            let response = self.responses.pop();
-            // let response = resp.unwrap();
-            println!("{:?}", request[0]["method"]);
-            
-            match response {
-                    Some(response) if response.0 == request[0]["method"] => {
-                    println!("--------- > {:?}",response.1.to_string());
-                    ret = vec![Ok(response.1.to_string())];
-                }
-                _ => {
-                    println!("continue");
-                },
+        println!("\n\nReq: \n{:?}\n", request);
+        // println!("{:?}", request[0]["method"]);
+        
+        match response {
+                Some(response) if response.0 == request[0]["method"] => {
+                println!("\n\nmethod {:?}, response > {:?}\n\n",request[0]["method"] , response.1.to_string());
+                vec![Ok(response.1.to_string())]
             }
-
+            _ => {
+                vec![Err(format!(
+                    "Found wrong/no response while expecting response for {}",
+                    request
+                ))]
+            },
         }
-        ret
         
         
     }
 
     #[cfg(feature = "blocking")]
     fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
-        unimplemented!()
+        let response = self.responses.pop();
+        let request: serde_json::Value = serde_json::from_str(_request).unwrap();
+        println!("{:?}", request);
+        println!("{:?}", request[0]["method"]);
+        
+        match response {
+                Some(response) if response.0 == request[0]["method"] => {
+                println!("--------- > {:?}",response.1.to_string());
+                vec![Ok(response.1.to_string())]
+            }
+            _ => {
+                vec![Err(format!(
+                    "Found wrong/no response while expecting response for {}",
+                    request
+                ))]
+            },
+        }
     }
 }
 
@@ -158,14 +166,15 @@ fn sign_execute_api() {
     // responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
     // responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
     // responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
-    let responses = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),
+    let responses = vec![
+        ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,),
+        ("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
+        ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),    
     ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,)
     ];
     eth_api
         .client()
-        .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+        .configure(r#"{"proof":"none", "autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
     eth_api
         .client().set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
     eth_api
@@ -194,39 +203,64 @@ fn sign_execute_api() {
 }
 
 
-fn sign_execute_rpc() {
+fn sign_execute_arpc() {
     
     let mut c = Client::new(chain::MAINNET);
-    let _ = c.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-    // let mut responses = HashMap::new();
-    // responses.insert(r#""eth_gasPrice"#,r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
-    // responses.insert(r#""eth_estimateGas"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#);
-    // responses.insert(r#"eth_getTransactionCount"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#);
-    // responses.insert(r#""eth_sendRawTransaction"#, r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#);
-
-    let responses = vec![("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),
+    let _ = c.configure(r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    let responses = vec![
+        ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,),
+        ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),    
+        ("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
     ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
-    ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,)
     ];
+    
     c.set_transport(Box::new(MockTransport2 {
         responses: responses,
     })); 
     c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
-    let tx = json!({
+    let tx = json!([{
         "from": "0x3fEfF9E04aCD51062467C494b057923F771C9423",
         "to": "0x1234567890123456789012345678901234567890",
         "data": "0x18562dae000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000087465737464617461000000000000000000000000000000000000000000000000"
-    });
+    }]);
     let rpc_req = RpcRequest {
         method: "eth_sendTransaction",
         params: tx,
     };
     let req_str = serde_json::to_string(&rpc_req).unwrap();
-    println!("--- REQUEST :{:?}", req_str);
     match task::block_on(c.rpc(&req_str)){
         Ok(res) => println!("--- > {:?}, {:?}\n\n", req_str, res),
         Err(err) => println!("Failed with error: {}\n\n", err),
+    }
+    
+}
+fn sign_execute_rpc() {
+    
+    let mut c = Client::new(chain::MAINNET);
+    let _ = c.configure(r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+    let responses = vec![
+        ("eth_sendRawTransaction", r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,),
+        ("eth_estimateGas", r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,),    
+        ("eth_gasPrice",r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
+    ("eth_getTransactionCount", r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,),
+    ];
+    c.set_transport(Box::new(MockTransport2 {
+        responses: responses,
+    })); 
+    c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
+    let tx = json!([{
+        "from": "0x3fEfF9E04aCD51062467C494b057923F771C9423",
+        "to": "0x1234567890123456789012345678901234567890",
+        "data": "0x18562dae000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000087465737464617461000000000000000000000000000000000000000000000000"
+    }]);
+    let rpc_req = RpcRequest {
+        method: "eth_sendTransaction",
+        params: tx,
+    };
+    let req_str = serde_json::to_string(&rpc_req).unwrap();
+    match c.rpc_blocking(&req_str) {
+        Ok(res) => println!("{}", res),
+        Err(err) => println!("Failed with error: {}", err),
     }
 }
 
@@ -239,7 +273,7 @@ fn test_transport() {
             r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
         )],
     }));
-    match task::block_on(c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#)) {
+    match c.rpc_blocking(r#"{"method": "eth_blockNumber", "params": []}"#) {
         Ok(res) => println!("{}", res),
         Err(err) => println!("Failed with error: {}", err),
     }
@@ -249,8 +283,9 @@ fn test_transport() {
 fn main() {
     // sign_hash();
     // sign_raw();
-    sign_execute_api();
-    // sign_execute_rpc();
+    // sign_execute_api();
+    sign_execute_arpc();
+    sign_execute_rpc();
     // test_transport();
     // sign();
 }

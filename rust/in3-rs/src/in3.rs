@@ -9,7 +9,7 @@ use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
 use std::fmt::Write;
 // use crate::types::Signature;
-use std::{str};
+use std::str;
 pub mod chain {
     pub type ChainId = u32;
 
@@ -46,9 +46,9 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn debug_pointer(&mut self, data: *mut u8, len: usize){
+    pub unsafe fn debug_pointer(&mut self, data: *mut u8, len: usize) {
         let val = std::slice::from_raw_parts_mut(data, 32 as usize);
-        println!("{:?}",len);
+        println!("{:?}", len);
         print!("data -> ");
         for byte in val {
             print!("{:02x}", byte);
@@ -56,18 +56,17 @@ impl Ctx {
         println!(" \n");
     }
 
-    pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char,len: usize) -> String {
+    pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char, len: usize) -> String {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
         // let len = strlen(data) as u32;
         // let len = 32;
         let data_ = data as *mut u8;
-        self.debug_pointer(data_, len);
+        // self.debug_pointer(data_, len);
         // self.debug_pointer(pk, 65);
         let dst: *mut u8 = libc::malloc(65) as *mut u8;
         // let pby = *dst.offset(64) as *mut u8;
         let pby = dst.offset(64) as *mut u8;
         let curve = in3_sys::secp256k1;
-        
         match type_ {
             Signature::Raw => {
                 let error = in3_sys::ecdsa_sign_digest(&curve, pk, data_, dst, pby, None);
@@ -105,6 +104,7 @@ impl Ctx {
         sign_str
     }
 
+    
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
         // in3_sys::in3_create_request(self.ptr);
         let ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
@@ -139,7 +139,11 @@ impl Ctx {
                     {
                         last_waiting = p;
                     }
+                    
                     p = (*last_waiting).required;
+                    if state == in3_sys::state::CTX_SUCCESS{
+                        break;
+                    }
                 }
                 if last_waiting == std::ptr::null_mut() {
                     return Err("Cound not find the last waiting context".into());
@@ -166,14 +170,17 @@ impl Ctx {
                     let data = (*req).payload;
                     let slice = CStr::from_ptr(data);
                     // let len = strlen((*req).payload) as u32;
-                    let res_str: String = self.sign(Signature::Hash, data, slice.to_str().unwrap().len());
+                    let res_str: String =
+                        self.sign(Signature::Hash, data, slice.to_str().unwrap().len());
                     let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
                     let c_data: *const c_char = c_str_data.as_ptr();
                     in3_sys::sb_add_chars(&mut (*(*req).results.add(0)).result, c_data);
                     let result = (*(*req).results.offset(0)).result;
                     let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                    // println!("DATA -- > {}", data);
-                    return Ok(data.to_string());
+                    println!("DATA Signed -- > {}", data);
+                    // in3_sys::request_free(req, self.ptr, false);
+                    //return Ok(data.to_string());
+                    
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let req = in3_sys::in3_create_request(last_waiting);
@@ -214,8 +221,9 @@ impl Ctx {
                     let len = result.len;
                     if len != 0 {
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                        // println!("DATA -- > {}", data);
-                        return Ok(data.to_string());
+                    // println!("DATA -- > {}", data);
+                    // return Err(Error::TryAgain);
+                    // return Ok(data.to_string());
                     } else {
                         let error = (*(*req).results.offset(0)).error;
                         let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
