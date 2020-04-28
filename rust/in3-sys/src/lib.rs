@@ -23,6 +23,6 @@
 extern crate libc;
 
 // Bindings should be copied here
-include!(concat!(env!("OUT_DIR"), "/in3.rs"));
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/pre_generated/in3.rs"));
 
 include!(concat!(env!("CARGO_MANIFEST_DIR"), "/common.rs"));
