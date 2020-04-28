@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace In3.Utils
 {
-    public class CustomBigIntegerFromHexConverter : JsonConverter<BigInteger>
+    internal class CustomBigIntegerFromHexConverter : JsonConverter<BigInteger>
     {
         public override BigInteger Read(
             ref Utf8JsonReader reader,
