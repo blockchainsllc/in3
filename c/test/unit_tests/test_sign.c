@@ -103,8 +103,22 @@ static uint8_t* private_to_address() {
   memcpy(dst, sdata + 12, 20);
   return dst;
 }
-static void send_tx_api(in3_t* in3) {
-  // prepare parameters
+
+static void test_sign_tx() {
+  // create new incubed client
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
+  in3->transport = test_transport;
+  add_response("eth_sendRawTransaction", "[]",
+               "\"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38\"", NULL, NULL);
+
+  // convert the hexstring to bytes
+  bytes32_t pk;
+  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
+
+  // create a simple signer with this key
+  eth_set_pk_signer(in3, pk);
+
   address_t to, from;
   hex_to_bytes("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
   hex_to_bytes("0xd46e8dd67c5d32be8058bb8eb970870f07244567", -1, to, 20);
@@ -123,25 +137,6 @@ static void send_tx_api(in3_t* in3) {
     b_free(tx_hash);
   }
   b_free(data);
-}
-
-static void test_sign_tx() {
-  // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
-
-  // convert the hexstring to bytes
-  bytes32_t pk;
-  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
-
-  // create a simple signer with this key
-  eth_set_pk_signer(in3, pk);
-
-  // send tx using raw RPC call
-  // send_tx_rpc(in3);
-
-  // send tx using API
-  send_tx_api(in3);
 
   // cleanup client after usage
   in3_free(in3);
@@ -157,7 +152,7 @@ static void test_sign_sans_signer_and_from() {
 
 // let mut pk_ = decode_hex("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8").unwrap();
 // let data_ = decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
-static void test_signer() {
+static void test_signer_noparams() {
   char     ret_checksum[43];
   in3_t*   c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   uint8_t* dst = private_to_address();
@@ -177,7 +172,34 @@ static void test_signer() {
   printf("\n");
   bytes_t acc = bytes(NULL, 0);
   eth_sign(ctx, SIGN_EC_HASH, *data, acc, sig);
-  ba_print(sig, 64);
+  ba_print(sig, 65);
+  printf("\n\n");
+  in3_log_debug("\n");
+  TEST_ASSERT_FALSE(memiszero(sig, 65));
+  b_free(data);
+  in3_free(c);
+}
+static void test_signer() {
+  char     ret_checksum[43];
+  in3_t*   c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  uint8_t* dst = private_to_address();
+  to_checksum_addr(dst, ETH_CHAIN_ID_MAINNET, ret_checksum);
+  printf("\n\n\n %s \n\n\n", ret_checksum);
+  bytes32_t pk;
+  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
+  eth_set_pk_signer(c, pk);
+  uint8_t* sig = malloc(65);
+  // uint8_t    sig[66]  = {0};
+  in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  char*      data_str = "f852808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675018080";
+  bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
+  ba_print((const uint8_t*) &pk, 32);
+  printf("\n");
+  b_print(data);
+  printf("\n");
+  bytes_t acc = bytes(NULL, 0);
+  eth_sign(ctx, SIGN_EC_HASH, *data, acc, sig);
+  ba_print(sig, 65);
   printf("\n\n");
   in3_log_debug("\n");
   TEST_ASSERT_FALSE(memiszero(sig, 65));

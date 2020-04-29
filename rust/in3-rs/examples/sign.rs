@@ -1,6 +1,7 @@
 extern crate in3;
 // extern crate abi;
 use async_std::task;
+use std::ffi;
 use async_trait::async_trait;
 use ethereum_types::{Address, U256};
 use in3::eth1::api::RpcRequest;
@@ -11,6 +12,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::str;
+use ffi::{CStr, CString};
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
     (0..s.len())
         .step_by(2)
@@ -111,7 +113,7 @@ fn decode_test() {
     let _data_rust = _data.as_ptr();
     let _pk_c =
         in3.hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-    let _data_c = in3.new_bytes("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+    let _data_c = in3.new_bytes("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 32);
     //TODO: maybe assert this byte by byte
     // assert!(pk_c, pk_);
     // assert!(data_c, data_);
@@ -148,12 +150,31 @@ fn sign() {
     unsafe {
         let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
-        in3.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
+        in3.set_pk_signer("0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
         let data_ =
-            decode_hex("9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465").unwrap();
+            decode_hex("f852808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675018080").unwrap();
         let c_data = data_.as_ptr() as *const c_char;
         // println!("{:?}", data_.len());
-        let signa = ctx.sign(Signature::Raw, c_data, data_.len());
+        let signa = ctx.sign(Signature::Hash, c_data, data_.len());
+        println!(" RAW > {:?}", signa);
+        // assert_eq!(signa, "349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c");
+    }
+}
+
+fn sign_params() {
+    unsafe {
+        let mut in3 = Client::new(chain::MAINNET);
+        let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
+        // in3.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
+        in3.set_pk_signer("0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
+        // let data_: String = "852808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567501808".to_string();
+        // let c_str_data = CString::new(data_.as_str()).unwrap(); // from a &str, creates a new allocation
+        // let c_data: *const c_char = c_str_data.as_ptr();
+        let hash = "f852808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675018080".to_string();
+        let data_ = in3.new_bytes(&hash, 84);
+        let c_data = data_ as *const c_char;
+        // println!("{:?}", data_.len());
+        let signa = ctx.sign(Signature::Hash, c_data, 168);
         println!(" RAW > {:?}", signa);
         // assert_eq!(signa, "349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c");
     }
@@ -237,7 +258,7 @@ fn sign_execute_arpc() {
     c.set_transport(Box::new(MockTransport2 {
         responses: responses,
     }));
-    c.set_pk_signer("8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
+    c.set_pk_signer("0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
     let tx = json!([{
         "from": "0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377",
         "to": "0xd46e8dd67c5d32be8058bb8eb970870f07244567",
@@ -329,11 +350,12 @@ fn test_transport() {
 }
 
 fn main() {
-    // sign_hash();
+    //  sign_hash();
     // sign_raw();
     // sign_execute_api();
+    // sign_params();
     sign_execute_arpc();
     // sign_execute_rpc();
     // test_transport();
-    // sign();
+    sign();
 }

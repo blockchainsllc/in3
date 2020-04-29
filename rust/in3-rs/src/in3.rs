@@ -7,7 +7,9 @@ use libc::{c_char, strlen};
 use crate::error::{Error, In3Result};
 use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
+use serde_json::json;
 use std::fmt::Write;
+use std::num::ParseIntError;
 // use crate::types::Signature;
 use std::str;
 pub mod chain {
@@ -61,8 +63,8 @@ impl Ctx {
         // let len = strlen(data) as u32;
         // let len = 32;
         let data_ = data as *mut u8;
-        self.debug_pointer(data_, len);
-        self.debug_pointer(pk, 65);
+        // self.debug_pointer(data_, len);
+        // self.debug_pointer(pk, 65);
         let dst: *mut u8 = libc::malloc(65) as *mut u8;
         // let pby = *dst.offset(64) as *mut u8;
         let pby = dst.offset(64) as *mut u8;
@@ -90,10 +92,10 @@ impl Ctx {
                 }
             }
         }
-         *dst.offset(64) += 27;
-         self.debug_pointer(dst, 65);
+        *dst.offset(64) += 27;
+        //  self.debug_pointer(dst, 65);
 
-        let value = std::slice::from_raw_parts_mut(dst, 65 as usize);
+        let value = std::slice::from_raw_parts_mut(dst, 64 as usize);
         // the only way to return a valid rust string from signature pointer
         let mut sign_str = "".to_string();
         for byte in value {
@@ -101,8 +103,14 @@ impl Ctx {
             write!(&mut tmp, "{:02x}", byte).unwrap();
             sign_str.push_str(tmp.as_str());
         }
-         println!(" signature {}",sign_str);
+        println!(" signature {}", sign_str);
         sign_str
+    }
+    pub fn decode_hex(&mut self, s: &str) -> Result<Vec<u8>, ParseIntError> {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+            .collect()
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
@@ -155,24 +163,16 @@ impl Ctx {
             let req_type = (*last_waiting).type_;
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
-                    //  let item_ = (*((*last_waiting).requests.offset(0))).data;
-                     let ite_ = (*last_waiting).requests.offset(0);
-                    //  let item_ = (*(*((*last_waiting).requests.offset(0)))).data as *mut u8;
-                     let item_ = (*(*ite_)).data as *const c_char;
-                    //  let len = (*(*ite_)).len;
-                     let slice = CStr::from_ptr(item_).to_str().unwrap();
-                    //  println!("string returned: {}", slice);
-                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
-                    //  println!("{:?}", request["params"].to_string());
-                     let data_str = request["params"].to_string();
-                     let len = data_str.len();
-                     let data_ = CString::new(data_str).unwrap();
-                     
-                    //  let data = request["params"].to_string().as_ptr();
-                     let data: *const c_char = data_.into_raw();
-                    
-                    let res_str: String =
-                        self.sign(Signature::Hash, data, len as usize);
+                    let ite_ = (*last_waiting).requests.offset(0);
+                    let item_ = (*(*ite_)).data as *const c_char;
+                    let slice = CStr::from_ptr(item_).to_str().unwrap();
+                    let request: serde_json::Value = serde_json::from_str(slice).unwrap();
+                    let data_str = &request["params"][0].as_str().unwrap()[2..];
+                    println!("{:?}", data_str);
+                    let data_hex = self.decode_hex(data_str).unwrap();
+                    let c_data = data_hex.as_ptr() as *const c_char;
+
+                    let res_str: String = self.sign(Signature::Hash, c_data, data_hex.len());
                     let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
                     let c_data: *const c_char = c_str_data.as_ptr();
                     in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
@@ -327,18 +327,18 @@ impl ClientTrait for Client {
             out
         }
     }
-    fn new_bytes(&mut self, data: &str) -> *mut u8 {
+    fn new_bytes(&mut self, data: &str, len: usize) -> *mut u8 {
         unsafe {
             let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
             let data_ptr = c_str_data.as_ptr();
-            let len = strlen(data_ptr) as i32;
-            let data = in3_sys::hex_to_new_bytes(data_ptr, len);
+            // let len = strlen(data_ptr) as i32;
+            let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
             let data_ = (*data).data;
-            let out = std::slice::from_raw_parts_mut(data_, 32 as usize);
+            let out = std::slice::from_raw_parts_mut(data_, len);
             for byte in out {
                 print!("{:x}", byte);
             }
-            println!("\n");
+            println!("\n   data out was \n");
             data_
         }
     }

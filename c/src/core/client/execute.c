@@ -646,13 +646,18 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             const bytes_t from   = d_to_bytes(d_get_at(params, 1));
             if (!data.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
             if (!from.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
-
+            printf("DATA TO SIGN >\n");
+            b_print(&data);
+            printf(" END\n");
             ctx->raw_response = _malloc(sizeof(in3_response_t));
             sb_init(&ctx->raw_response[0].error);
             sb_init(&ctx->raw_response[0].result);
-            in3_log_trace("... request to sign ");
+            in3_log_trace("... request to sign \n");
             uint8_t sig[65];
             res = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
+            printf("\nSIGNATURE \n");
+            ba_print(sig, 64);
+            printf("\nEND\n");
             if (res < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, res);
             sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
             break;
