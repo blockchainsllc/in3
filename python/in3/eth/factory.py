@@ -1,4 +1,8 @@
-from in3.eth.model import Block, Transaction, Account, Log, TransactionReceipt
+"""
+Ethereum Domain Object Factory
+For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
+"""
+from in3.eth.model import Block, Transaction, Log, TransactionReceipt, Account
 from in3.exception import HashFormatException, EthAddressFormatException
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
@@ -7,7 +11,6 @@ from in3.libin3.runtime import In3Runtime
 class EthObjectFactory:
     """
     Deserialize and instantiate marshalled objects from rpc responses
-    For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
 
     def __init__(self, runtime: In3Runtime):

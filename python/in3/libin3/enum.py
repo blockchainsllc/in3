@@ -1,18 +1,22 @@
+"""
+Maps libin3 names, types and other definitions
+"""
 import enum
-
-"""
-libin3 definitions
-"""
 
 
 @enum.unique
 class SimpleEnum(enum.Enum):
-
+    """
+    Abstract stringify enum class
+    """
     def __str__(self):
         return self.value
 
 
 class EthMethods(SimpleEnum):
+    """
+    Ethereum API methods
+    """
     KECCAK = "web3_sha3"
     ACCOUNTS = "eth_accounts"
     BALANCE = "eth_getBalance"
@@ -50,55 +54,63 @@ class EthMethods(SimpleEnum):
 
 
 class In3Methods(SimpleEnum):
-    CALL = "call"
-    SEND = "send"
-    SIGN = "sign"
+    """
+    Incubed API methods
+    """
     CONFIGURE = "in3_config"
     ECRECOVER = "in3_ecrecover"
     ENSRESOLVE = "in3_ens"
-    IN3_SIGN = "in3_sign"
-    IN3_STATS = "in3_stats"
+    SIGN = "in3_sign"
+    NODE_STATS = "in3_stats"
     ABI_ENCODE = "in3_abiEncode"
     ABI_DECODE = "in3_abiDecode"
     GET_CONFIG = "in3_getConfig"
     PK_2_PUBLIC = "in3_pk2address"
     PK_2_ADDRESS = "in3_pk2address"
-    IN3_NODE_LIST = "in3_nodeList"
+    NODE_LIST = "in3_nodeList"
     CHECKSUM_ADDRESS = "in3_checksumAddress"
 
 
 class RPCCode(enum.Enum):
     """
-    /* On success positive values (impl. defined) upto INT_MAX maybe returned */
+    Codes returned from libin3 RPC.
+    On success positive values (impl. defined) upto INT_MAX maybe returned
     """
-    IN3_OK = 0  # Success */
-    IN3_EUNKNOWN = -1  # Unknown error - usually accompanied with specific error msg */
-    IN3_ENOMEM = -2  # No memory */
-    IN3_ENOTSUP = -3  # Not supported */
-    IN3_EINVAL = -4  # Invalid value */
-    IN3_EFIND = -5  # Not found */
-    IN3_ECONFIG = -6  # Invalid config */
-    IN3_ELIMIT = -7  # Limit reached */
-    IN3_EVERS = -8  # Version mismatch */
-    IN3_EINVALDT = -9  # Data invalid, eg. invalid/incomplete JSON */
-    IN3_EPASS = -10  # Wrong password */
-    IN3_ERPC = -11  # RPC error (i.e. in3_ctx_t::error set) */
-    IN3_ERPCNRES = -12  # RPC no response */
-    IN3_EUSNURL = -13  # USN URL parse error */
-    IN3_ETRANS = -14  # Transport error */
-    IN3_ERANGE = -15  # Not in range */
-    IN3_WAITING = -16  # the process can not be finished since we are waiting for responses */
-    IN3_EIGNORE = -17  # Ignorable error */
-    IN3_EPAYMENT_REQUIRED = -18  # payment required */
+    IN3_OK = 0  # Success
+    IN3_EUNKNOWN = -1  # Unknown error - usually accompanied with specific error msg
+    IN3_ENOMEM = -2  # No memory
+    IN3_ENOTSUP = -3  # Not supported
+    IN3_EINVAL = -4  # Invalid value
+    IN3_EFIND = -5  # Not found
+    IN3_ECONFIG = -6  # Invalid config
+    IN3_ELIMIT = -7  # Limit reached
+    IN3_EVERS = -8  # Version mismatch
+    IN3_EINVALDT = -9  # Data invalid, eg. invalid/incomplete JSON
+    IN3_EPASS = -10  # Wrong password
+    IN3_ERPC = -11  # RPC error (i.e. in3_ctx_t::error set)
+    IN3_ERPCNRES = -12  # RPC no response
+    IN3_EUSNURL = -13  # USN URL parse error
+    IN3_ETRANS = -14  # Transport error
+    IN3_ERANGE = -15  # Not in range
+    IN3_WAITING = -16  # the process can not be finished since we are waiting for responses
+    IN3_EIGNORE = -17  # Ignorable error
+    IN3_EPAYMENT_REQUIRED = -18  # payment required
 
 
 class BlockAt(SimpleEnum):
+    """
+    Alias for Ethereum blocks
+    """
     EARLIEST = "earliest"
     LATEST = "latest"
     PENDING = "pending"
 
 
 class In3ProofLevel(SimpleEnum):
+    """
+    Alias for verification levels.
+    Verification is done by calculating Ethereum Trie states requested by the Incubed network ans signed as proofs of a certain state.
+    """
     NONE = "none"
     STANDARD = "standard"
     FULL = "full"

@@ -6,6 +6,31 @@ from in3.libin3.enum import EthMethods, BlockAt, In3Methods
 from in3.libin3.runtime import In3Runtime
 
 
+class SmartContract:
+    """
+    Ethereum account containing smart-contract code.
+    Args:
+        address: Account address. Derived from public key.
+        chain_id: ID of the chain the account is used in.
+        abi: Contract methods ABI, used to call them via RPC. Parsed from json string.
+        code: EVM Bytecode for contract execution. Important for STANDARD and FULL verification.
+        secret: Account private key. A 256 bit number.
+        domain: ENS Domain name. ie. niceguy.eth
+    """
+
+    def __init__(self, address: str, chain_id: int, abi: dict, code: str = None, secret: int = None,
+                 domain: str = None):
+        self.address = address
+        self.chain_id = chain_id
+        self.abi = abi
+        self.code = code
+        self.secret = secret
+        self.domain = domain
+
+    def __str__(self):
+        return self.address
+
+
 class EthContractApi:
     """
     Manages smart-contract data and transactions

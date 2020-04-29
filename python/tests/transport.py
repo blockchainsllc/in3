@@ -1,3 +1,8 @@
+"""
+Test transport function for `in3.client.Client`.
+
+Collect mocked responses from `network_mock.py`.
+"""
 import ctypes as c
 import json
 

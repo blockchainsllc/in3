@@ -1,0 +1,3 @@
+"""
+Ethereum API module
+"""

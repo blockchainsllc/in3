@@ -1,7 +1,11 @@
+"""
+Integrated tests for `in3.eth.contract` module.
+"""
 import unittest
+
 import in3
-from tests.transport import mock_transport
 from tests.config_mock import mock_config
+from tests.transport import mock_transport
 
 
 class MainNetContractTest(unittest.TestCase):
@@ -12,8 +16,8 @@ class MainNetContractTest(unittest.TestCase):
 
     def test_eth_call(self):
         tx = {
-            "to": hex(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e),
-            "data": hex(0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e)
+            "to": '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+            "data": '0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e'
         }
         transaction = in3.eth.NewTransaction(**tx)
         address = self.client.eth.contract.eth_call(transaction)
@@ -98,8 +102,8 @@ class GoerliContractTest(MainNetContractTest):
 
     def test_eth_call(self):
         tx = {
-            "to": hex(0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e),
-            "data": hex(0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e)
+            "to": '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e',
+            "data": '0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e'
         }
         transaction = in3.eth.NewTransaction(**tx)
         address = self.client.eth.contract.eth_call(transaction)

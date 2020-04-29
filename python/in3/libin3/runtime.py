@@ -1,3 +1,6 @@
+"""
+Encapsulates low-level rpc calls into a comprehensive runtime.
+"""
 import ctypes as c
 import json
 from enum import Enum

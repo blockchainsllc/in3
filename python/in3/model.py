@@ -1,3 +1,6 @@
+"""
+MVC Pattern Model domain classes for the Incubed client module
+"""
 import warnings
 
 from in3.eth.model import DataTransferObject, Account

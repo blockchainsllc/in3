@@ -1,3 +1,7 @@
+"""
+Configuration for `in3.client.Client`. Enables mocked in3 network responses to be valid.
+Disable node list updates, and collect signed responses from both boot nodes.
+"""
 from in3 import ClientConfig
 
 _registry = {
@@ -17,6 +21,7 @@ _registry = {
         'needsUpdate': False,
         'avgBlockTime': 6},
 }
+
 mock_config = ClientConfig(node_list_auto_update=False,
                            node_signature_consensus=2,
                            node_signatures=2,

@@ -1,7 +1,11 @@
+"""
+Integrated tests for `in3.eth.account` module.
+"""
 import unittest
+
 import in3
-from tests.transport import mock_transport
 from tests.config_mock import mock_config
+from tests.transport import mock_transport
 
 
 class EthAccountGoerliTestCase(unittest.TestCase):

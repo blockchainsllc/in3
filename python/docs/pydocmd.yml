@@ -14,25 +14,31 @@ generate:
   - eth.md:
     - in3.eth:
       - in3.eth.api.EthereumApi+
-      - in3.eth.account.EthAccountApi+
       - in3.eth.model+
+  - account.md:
+    - in3.eth.account:
+      - in3.eth.account.EthAccountApi+
+  - contract.md:
+    - in3.eth.contract:
+      - in3.eth.contract.EthContractApi+
   - in3.md:
     - in3:
       - in3.client.Client+
       - in3.model.ClientConfig
-      - in3.model.NodeList
       - in3.model.In3Node
-      - in3.wallet.api.WalletApi+
+      - in3.model.NodeList
 
 # MkDocs pages configuration. The `<<` operator is sugar added by pydocmd
 # that allows you to use an external Markdown file (eg. your project's README)
 # in the documentation. The path must be relative to current working directory.
 pages:
   - Home: index.md << ../README.md
-  - Examples: examples.md << 2_examples.md
+  - Examples: examples.md << compiled_examples.md
   - Internal Components:
       - Client: in3.md
       - Ethereum API: eth.md
+      - Ethereum Account API: account.md
+      - Ethereum Smart-Contract API: contract.md
       - Libin3 Runtime: libin3.md
 
 # These options all show off their default values. You don't have to add

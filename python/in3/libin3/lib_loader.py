@@ -1,5 +1,5 @@
 """
-Load libin3 shared library for the current system, map function signatures, map and set transport functions.
+Load libin3 shared library for the current system, map function ABI, sets in3 network transport functions.
 
 Example of RPC to In3-Core library, In3 Network and back.
 ```

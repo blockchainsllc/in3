@@ -1,3 +1,7 @@
+"""
+Ethereum Domain Model
+MVC Pattern
+"""
 import json
 
 
@@ -137,20 +141,6 @@ class Filter(DataTransferObject):
         self.blockhash = blockhash
 
 
-class Account:
-    """
-    Ethereum address of a wallet or smart-contract
-    """
-
-    def __init__(self, address: str, chain_id: int, secret: int = None):
-        self.address = address
-        self.chain_id = chain_id
-        self.secret = secret
-
-    def __str__(self):
-        return self.address
-
-
 class Log(DataTransferObject):
     """
     Transaction Log for events and data returned from smart-contract method calls.
@@ -189,9 +179,9 @@ class TransactionReceipt(DataTransferObject):
         contractAddress: Contract Account address created, f the transaction was a contract creation, or None otherwise.
     """
 
-    def __init__(self, blockHash: hex, blockNumber: int, cumulativeGasUsed: int, From: Account, gasUsed: int,
+    def __init__(self, blockHash: hex, blockNumber: int, cumulativeGasUsed: int, From: str, gasUsed: int,
                  logsBloom: hex, status: int, transactionHash: hex, transactionIndex: int,
-                 logs: [Log] = None, to: Account = None, contractAddress: Account = None):
+                 logs: [Log] = None, to: str = None, contractAddress: str = None):
         self.blockHash = blockHash
         self.blockNumber = blockNumber
         self.cumulativeGasUsed = cumulativeGasUsed
@@ -204,3 +194,23 @@ class TransactionReceipt(DataTransferObject):
         self.logs = logs
         self.to = to
         self.contractAddress = contractAddress
+
+
+class Account:
+    """
+    An Ethereum account.
+    Args:
+        address: Account address. Derived from public key.
+        chain_id: ID of the chain the account is used in.
+        secret: Account private key. A 256 bit number.
+        domain: ENS Domain name. ie. niceguy.eth
+    """
+
+    def __init__(self, address: str, chain_id: int, secret: int = None, domain: str = None):
+        self.address = address
+        self.chain_id = chain_id
+        self.secret = secret
+        self.domain = domain
+
+    def __str__(self):
+        return self.address

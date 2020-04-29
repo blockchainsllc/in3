@@ -1,5 +1,3 @@
-import re
-
 from in3.eth.api import EthereumApi
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.enum import In3Methods
@@ -47,7 +45,7 @@ class Client:
         Returns:
             node_list (NodeList): List of registered in3 nodes and metadata.
         """
-        node_list_dict = self._runtime.call(In3Methods.IN3_NODE_LIST)
+        node_list_dict = self._runtime.call(In3Methods.NODE_LIST)
         return self._factory.get_node_list(node_list_dict)
 
     def get_config(self) -> dict:
