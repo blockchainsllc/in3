@@ -1,18 +1,19 @@
 extern crate in3;
 // extern crate abi;
 use async_std::task;
-use std::ffi;
 use async_trait::async_trait;
 use ethereum_types::{Address, U256};
+use ffi::{CStr, CString};
 use in3::eth1::api::RpcRequest;
 use in3::eth1::*;
 use in3::prelude::*;
 use libc::c_char;
+use rustc_hex::{FromHex, ToHex};
 use serde_json::json;
 use std::collections::HashMap;
+use std::ffi;
 use std::num::ParseIntError;
 use std::str;
-use ffi::{CStr, CString};
 pub fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
     (0..s.len())
         .step_by(2)
@@ -113,7 +114,10 @@ fn decode_test() {
     let _data_rust = _data.as_ptr();
     let _pk_c =
         in3.hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-    let _data_c = in3.new_bytes("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 32);
+    let _data_c = in3.new_bytes(
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        32,
+    );
     //TODO: maybe assert this byte by byte
     // assert!(pk_c, pk_);
     // assert!(data_c, data_);
@@ -137,8 +141,9 @@ fn sign_hash() {
         let mut in3 = Client::new(chain::MAINNET);
         let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
         in3.set_pk_signer("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8");
-        let data_ =
-            decode_hex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap();
+        let data_ = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            .from_hex()
+            .unwrap();
         let c_data = data_.as_ptr() as *const c_char;
         // println!("{:?}", data_.len());
         let signa = ctx.sign(Signature::Hash, c_data, data_.len());
@@ -278,8 +283,7 @@ fn sign_execute_arpc() {
         Err(err) => println!("Failed with error: {}\n\n", err),
     }
 }
-fn 
-sign_execute_rpc() {
+fn sign_execute_rpc() {
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(
         r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,

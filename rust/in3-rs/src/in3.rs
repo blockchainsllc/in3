@@ -7,6 +7,7 @@ use libc::{c_char, strlen};
 use crate::error::{Error, In3Result};
 use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
+use rustc_hex::{FromHex, ToHex};
 use serde_json::json;
 use std::fmt::Write;
 use std::num::ParseIntError;
@@ -176,7 +177,9 @@ impl Ctx {
                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
                     let data_str = &request["params"][0].as_str().unwrap()[2..];
                     println!("{:?}", data_str);
-                    let data_hex = self.decode_hex(data_str).unwrap();
+                    // let data_hex = data_str.as_bytes().to_hex();
+                    let data_hex = data_str.from_hex().unwrap();
+                    // let data_hex = self.decode_hex(data_str).unwrap();
                     let c_data = data_hex.as_ptr() as *const c_char;
 
                     let res_str: *const c_char = self.sign(Signature::Hash, c_data, data_hex.len());
