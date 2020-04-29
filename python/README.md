@@ -12,16 +12,18 @@ This library is based on the [C version of Incubed](http://github.com/slockit/in
 pip install in3
 ```
 
-### In3 Client Standalone
+### In3 Client API
 
 ```python
 import in3
 
 in3_client = in3.Client()
+# Sends a request to the Incubed Network, that in turn will collect proofs from the Ethereum client, 
+# attest and sign the response, then send back to the client, that will verify signatures and proofs. 
 block_number = in3_client.eth.block_number()
 print(block_number) # Mainnet's block number
 
-in3_client  # incubed network functions 
+in3_client  # incubed network api 
 in3_client.eth  # ethereum api
 in3_client.account  # ethereum account api
 in3_client.contract  # ethereum smart-contract api
