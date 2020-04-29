@@ -58,7 +58,12 @@ impl Ctx {
         println!(" \n");
     }
 
-    pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char, len: usize) -> String {
+    pub unsafe fn sign(
+        &mut self,
+        type_: Signature,
+        data: *const c_char,
+        len: usize,
+    ) -> *const c_char {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
         // let len = strlen(data) as u32;
         // let len = 32;
@@ -95,16 +100,18 @@ impl Ctx {
         *dst.offset(64) += 27;
         //  self.debug_pointer(dst, 65);
 
-        let value = std::slice::from_raw_parts_mut(dst, 64 as usize);
-        // the only way to return a valid rust string from signature pointer
-        let mut sign_str = "".to_string();
-        for byte in value {
-            let mut tmp = "".to_string();
-            write!(&mut tmp, "{:02x}", byte).unwrap();
-            sign_str.push_str(tmp.as_str());
-        }
-        println!(" signature {}", sign_str);
-        sign_str
+        // let value = std::slice::from_raw_parts_mut(dst, 64 as usize);
+        // // the only way to return a valid rust string from signature pointer
+        // let mut sign_str = "".to_string();
+        // for byte in value {
+        //     let mut tmp = "".to_string();
+        //     write!(&mut tmp, "{:02x}", byte).unwrap();
+        //     sign_str.push_str(tmp.as_str());
+        // }
+        // println!(" signature {}", sign_str);
+        // sign_str
+        let sign_ptr = dst as *const c_char;
+        sign_ptr
     }
     pub fn decode_hex(&mut self, s: &str) -> Result<Vec<u8>, ParseIntError> {
         (0..s.len())
@@ -172,13 +179,13 @@ impl Ctx {
                     let data_hex = self.decode_hex(data_str).unwrap();
                     let c_data = data_hex.as_ptr() as *const c_char;
 
-                    let res_str: String = self.sign(Signature::Hash, c_data, data_hex.len());
-                    let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
-                    let c_data: *const c_char = c_str_data.as_ptr();
+                    let res_str: *const c_char = self.sign(Signature::Hash, c_data, data_hex.len());
+                    // let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
+                    // let c_data: *const c_char = c_str_data.as_ptr();
                     in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
                     in3_sys::sb_add_range(
                         &mut (*(*last_waiting).raw_response.offset(0)).result,
-                        c_data,
+                        res_str,
                         0,
                         65,
                     );
