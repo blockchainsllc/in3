@@ -5,7 +5,7 @@ use async_std::task;
 use async_trait::async_trait;
 use in3::prelude::*;
 
-use crate::transport::MockTransport;
+use in3::transport::MockTransport;
 
 fn main() {
     let mut c = Client::new(chain::MAINNET);

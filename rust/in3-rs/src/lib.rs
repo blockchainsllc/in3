@@ -5,7 +5,7 @@ pub mod signer;
 pub mod traits;
 pub mod types;
 
-mod transport;
+pub mod transport;
 
 pub mod prelude {
     pub use crate::error::*;
