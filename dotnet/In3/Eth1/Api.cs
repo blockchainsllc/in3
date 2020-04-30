@@ -132,13 +132,13 @@ namespace In3.Eth1
         public long GetBlockTransactionCountByHash(string blockHash)
         {
             string jsonResponse = in3.SendRpc(EthGetBlockTransactionCountByHash, new object[] { blockHash });
-            return RpcHandler.From<long>(jsonResponse);
+            return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
         public long GetBlockTransactionCountByNumber(BigInteger block)
         {
             string jsonResponse = in3.SendRpc(EthGetBlockTransactionCountByNumber, new object[] { BlockParameter.AsString(block) });
-            return RpcHandler.From<long>(jsonResponse);
+            return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
         public Transaction GetTransactionByBlockHashAndIndex(String blockHash, int index)
@@ -164,7 +164,7 @@ namespace In3.Eth1
         public long GetTransactionCount(string address, BigInteger block)
         {
             string jsonResponse = in3.SendRpc(EthGetTransactionCount, new object[] { address, BlockParameter.AsString(block) });
-            return (long)TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
         public string SendRawTransaction(string data)
@@ -182,13 +182,13 @@ namespace In3.Eth1
         public long GetUncleCountByBlockHash(string blockHash)
         {
             string jsonResponse = in3.SendRpc(EthGetUncleCountByBlockHash, new object[] { blockHash });
-            return RpcHandler.From<long>(jsonResponse);
+            return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
         public long GetUncleCountByBlockNumber(BigInteger block)
         {
             string jsonResponse = in3.SendRpc(EthGetUncleCountByBlockNumber, new object[] { BlockParameter.AsString(block) });
-            return RpcHandler.From<long>(jsonResponse);
+            return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
         public long NewBlockFilter()
@@ -206,7 +206,14 @@ namespace In3.Eth1
         public object Call(TransactionRequest request, BigInteger block)
         {
             string jsonResponse = in3.SendRpc(EthCall, new object[] { MapTransactionToRpc(request), BlockParameter.AsString(block) });
-            return RpcHandler.From<object>(jsonResponse);
+            if (request.IsFunctionInvocation())
+            {
+                return RpcHandler.From<object>(jsonResponse);                
+            }
+            else
+            {
+                return AbiDecode(request.Function, RpcHandler.From<string>(jsonResponse));
+            }
         }
 
         public long EstimateGas(TransactionRequest request, BigInteger block)
@@ -218,7 +225,7 @@ namespace In3.Eth1
         public long NewLogFilter(LogFilter filter)
         {
             string jsonResponse = in3.SendRpc(EthNewFilter, new object[] { filter.ToRPc() });
-            return (long)TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return Convert.ToInt64(RpcHandler.From<string>(jsonResponse), 16);
         }
 
         public Log[] GetFilterChangesFromLogs(long id)
@@ -245,7 +252,7 @@ namespace In3.Eth1
             return RpcHandler.From<TransactionReceipt>(jsonResponse);
         }
 
-        public TransactionReceipt SendTransaction(TransactionRequest tx)
+        public string SendTransaction(TransactionRequest tx)
         {
             if (in3.Signer == null)
                 throw new SystemException("No Signer set. This is needed in order to sign transaction.");
@@ -255,21 +262,15 @@ namespace In3.Eth1
                 throw new SystemException("The from address is not supported by the signer");
             tx = in3.Signer.PrepareTransaction(tx);
 
-            JsonSerializerOptions options = new JsonSerializerOptions
-            {
-                IgnoreNullValues = true
-            };
-
-            string requestJson = JsonSerializer.Serialize(MapTransactionToRpc(tx), options);
-            string jsonResponse = in3.SendRpc(EthSendTransaction, new object[] { requestJson });
-            return RpcHandler.From<TransactionReceipt>(jsonResponse);
+            string jsonResponse = in3.SendRpc(EthSendTransaction, new object[] { MapTransactionToRpc(tx) });
+            return RpcHandler.From<string>(jsonResponse);
         }
 
         public Block GetUncleByBlockNumberAndIndex(BigInteger block, int pos)
         {
             string jsonResponse = in3.SendRpc(EthGetUncleByBlockNumberAndIndex,
                 new object[] { BlockParameter.AsString(block), TypesMatcher.BigIntToPrefixedHex(pos) });
-            return RpcHandler.From<Block>(jsonResponse);
+            return RpcHandler.From<TransactionBlock>(jsonResponse);
         }
 
         public string ENS(string name, ENSParameter? type = null)

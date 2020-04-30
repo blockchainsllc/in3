@@ -5,7 +5,7 @@ using In3.Configuration;
 
 namespace csharp.Utils
 {
-    public class ProofConverter : JsonConverter<Proof>
+    internal class ProofConverter : JsonConverter<Proof>
     {
         public override Proof Read(
             ref Utf8JsonReader reader,

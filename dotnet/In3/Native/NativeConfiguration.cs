@@ -11,17 +11,30 @@ namespace In3.Native
     {
         public static ClientConfiguration Read(IntPtr client)
         {
-            string jsonConfig = in3_get_config(client);
+            IntPtr jsonPointer = in3_get_config(client);
+            string jsonConfig = Marshal.PtrToStringUTF8(jsonPointer);
+            Marshal.FreeHGlobal(jsonPointer);
+                
             ClientConfiguration clientConf = JsonSerializer.Deserialize<ClientConfiguration>(jsonConfig);
+            clientConf.MarkSynced();
             return clientConf;
         }
 
         internal static string SetConfig(IntPtr client, string val)
         {
-            return in3_configure(client, val);
+            IntPtr jsonPointer = in3_configure(client, val);
+            if (jsonPointer != IntPtr.Zero)
+            {
+                string error = Marshal.PtrToStringUTF8(jsonPointer);
+                Marshal.FreeHGlobal(jsonPointer);
+                return error;
+            }
+
+            return null;
         }
 
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern string in3_get_config(IntPtr client);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern string in3_configure(IntPtr client, string val);
+        // Why this is an IntPtr and not a string: https://stackoverflow.com/questions/7322503/pinvoke-how-to-free-a-mallocd-string
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_get_config(IntPtr client);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_configure(IntPtr client, string val);
     }
 }

@@ -7,9 +7,9 @@ namespace In3.Native
     {
         private NativeWrapper Wrapper;
 
-        private static in3_storage_get_item GetItemDel { get; set; }
-        private static in3_storage_set_item SetItemDel { get; set; }
-        private static in3_storage_clear ClearDel { get; set; }
+        private in3_storage_get_item GetItemDel { get; set; }
+        private in3_storage_set_item SetItemDel { get; set; }
+        private in3_storage_clear ClearDel { get; set; }
 
         private delegate byte[] in3_storage_get_item(IntPtr cptr, string key);
         private delegate void in3_storage_set_item(IntPtr cptr, string key, byte[] content);
@@ -30,14 +30,19 @@ namespace In3.Native
 
         public void RegisterNativeHandler()
         {
-            GetItemDel = GetItem;
-            SetItemDel = SetItem;
-            ClearDel = Clear;
+            in3_storage_get_item getItemDel = new in3_storage_get_item(GetItem);
+            GCHandle giCol = GCHandle.Alloc(getItemDel);
+
+            in3_storage_set_item setItemDel = new in3_storage_set_item(SetItem);
+            GCHandle siCol = GCHandle.Alloc(setItemDel);
+
+            in3_storage_clear clearDel = new in3_storage_clear(Clear);
+            GCHandle cCol = GCHandle.Alloc(clearDel);
 
             in3_storage_handler_t storageHandler;
-            storageHandler.get_item = GetItemDel;
-            storageHandler.set_item = SetItemDel;
-            storageHandler.clear = ClearDel;
+            storageHandler.get_item = getItemDel;
+            storageHandler.set_item = setItemDel;
+            storageHandler.clear = clearDel;
             storageHandler.cptr = Wrapper.NativeClientPointer;
 
             IntPtr myStructPtr = Marshal.AllocHGlobal(Marshal.SizeOf<in3_storage_handler_t>()); // Allocate unmanaged memory for the struct

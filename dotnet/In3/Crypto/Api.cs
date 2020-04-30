@@ -22,7 +22,7 @@ namespace In3.Crypto
 
         public SignedData SignData(string msg, string key, SignatureType? sigType = null)
         {
-            string jsonResponse = in3.SendRpc(CryptoSignData, new object[] { msg, key, sigType.Value });
+            string jsonResponse = in3.SendRpc(CryptoSignData, new object[] { msg, key, sigType?.Value });
             return RpcHandler.From<SignedData>(jsonResponse);
         }
     }

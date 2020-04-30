@@ -21,12 +21,12 @@ namespace In3
         private IN3(Chain chainId)
         {
             // Starting to get convoluted. Need to think of a better way.
-            Native = new NativeWrapper(this, chainId);
-            Eth1 = new Eth1.Api(this);
-            Crypto = new Crypto.Api(this);
             Transport = new DefaultTransport();
             Storage = new InMemoryStorage();
             Signer = new SimpleWallet(this);
+            Native = new NativeWrapper(this, chainId);
+            Eth1 = new Eth1.Api(this);
+            Crypto = new Crypto.Api(this);
             Configuration = Native.ReadConfiguration();
         }
         private IN3() { }
@@ -44,5 +44,7 @@ namespace In3
             }
             return Native.Send(RpcHandler.To(method, args, in3));
         }
+
+        ~IN3() => Native?.Free();
     }
 }
