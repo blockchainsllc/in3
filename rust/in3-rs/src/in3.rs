@@ -7,8 +7,15 @@ use libc::{c_char, strlen};
 use crate::error::{Error, In3Result};
 use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
+use rustc_hex::{FromHex, ToHex};
+use serde_json::json;
+// use signer::*;
+use crate::signer;
+use crate::signer::SignatureType;
 use std::fmt::Write;
-use std::{str};
+use std::num::ParseIntError;
+// use crate::types::Signature;
+use std::str;
 pub mod chain {
     pub type ChainId = u32;
 
@@ -29,12 +36,6 @@ pub struct Ctx {
     config: ffi::CString,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum Signature {
-    Raw = 0,
-    Hash = 1,
-}
-
 impl Ctx {
     pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
@@ -45,71 +46,21 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn debug_pointer(&mut self, data: *mut u8, len: usize){
-        let val = std::slice::from_raw_parts_mut(data, 32 as usize);
-        println!("{:?}",len);
-        print!("data -> ");
-        for byte in val {
-            print!("{:02x}", byte);
-        }
-        println!(" \n");
-    }
-
-    pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char,len: usize) -> String {
+    pub unsafe fn sign(
+        &mut self,
+        type_: SignatureType,
+        data: *const c_char,
+        len: usize,
+    ) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        // let len = strlen(data) as u32;
-        // let len = 32;
-        let data_ = data as *mut u8;
-        self.debug_pointer(data_, len);
-        // self.debug_pointer(pk, 65);
-        let dst: *mut u8 = libc::malloc(65) as *mut u8;
-        // let pby = *dst.offset(64) as *mut u8;
-        let pby = dst.offset(64) as *mut u8;
-        let curve = in3_sys::secp256k1;
-        
-        match type_ {
-            Signature::Raw => {
-                let error = in3_sys::ecdsa_sign_digest(&curve, pk, data_, dst, pby, None);
-                if error < 0 {
-                    panic!("Sign error{:?}", error);
-                }
-            }
-            Signature::Hash => {
-                let error = in3_sys::ecdsa_sign(
-                    &curve,
-                    in3_sys::HasherType::HASHER_SHA3K,
-                    pk,
-                    data_,
-                    len as u32,
-                    dst,
-                    pby,
-                    None,
-                );
-                if error < 0 {
-                    panic!("Sign error{:?}", error);
-                }
-            }
-        }
-
-        let value = std::slice::from_raw_parts_mut(dst, 65 as usize);
-        // the only way to return a valid rust string from signature pointer
-        let mut sign_str = "".to_string();
-        for byte in value {
-            let mut tmp = "".to_string();
-            write!(&mut tmp, "{:02x}", byte).unwrap();
-            sign_str.push_str(tmp.as_str());
-        }
-        // println!("{}",sign_str);
-        sign_str
+        signer::sign(pk, type_, data, len)
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
-        let ctx_ret = in3_sys::in3_ctx_execute(self.ptr);
-        let mut last_waiting: *mut in3_sys::in3_ctx_t;
+        let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
-        last_waiting = (*self.ptr).required;
         p = self.ptr;
-        match ctx_ret {
+        match in3_sys::in3_ctx_execute(self.ptr) {
             in3_sys::in3_ret_t::IN3_EIGNORE => {
                 while p != std::ptr::null_mut() {
                     let p_req = (*p).required;
@@ -129,14 +80,12 @@ impl Ctx {
             }
             in3_sys::in3_ret_t::IN3_WAITING => {
                 while p != std::ptr::null_mut() {
-                    let state = in3_sys::in3_ctx_state(p);
-                    let res = (*p).raw_response;
-                    if res == std::ptr::null_mut()
-                        && state == in3_sys::state::CTX_WAITING_FOR_RESPONSE
+                    if (*p).raw_response == std::ptr::null_mut()
+                        && in3_sys::in3_ctx_state(p) == in3_sys::state::CTX_WAITING_FOR_RESPONSE
                     {
                         last_waiting = p;
                     }
-                    p = (*last_waiting).required;
+                    p = (*p).required;
                 }
                 if last_waiting == std::ptr::null_mut() {
                     return Err("Cound not find the last waiting context".into());
@@ -153,21 +102,26 @@ impl Ctx {
         }
 
         if last_waiting != std::ptr::null_mut() {
+            let req = in3_sys::in3_create_request(last_waiting);
             let req_type = (*last_waiting).type_;
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
-                    let req = in3_sys::in3_create_request(last_waiting);
-                    let data = (*req).payload;
-                    let slice = CStr::from_ptr(data);
-                    // let len = strlen((*req).payload) as u32;
-                    let res_str: String = self.sign(Signature::Hash, data, slice.to_str().unwrap().len());
-                    let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
-                    let c_data: *const c_char = c_str_data.as_ptr();
-                    in3_sys::sb_add_chars(&mut (*(*req).results.add(0)).result, c_data);
-                    let result = (*(*req).results.offset(0)).result;
-                    let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                    // println!("DATA -- > {}", data);
-                    return Ok(data.to_string());
+                    let ite_ = (*last_waiting).requests.offset(0);
+                    let item_ = (*(*ite_)).data as *const c_char;
+                    let slice = CStr::from_ptr(item_).to_str().unwrap();
+                    let request: serde_json::Value = serde_json::from_str(slice).unwrap();
+                    let data_str = &request["params"][0].as_str().unwrap()[2..];
+                    let data_hex = data_str.from_hex().unwrap();
+                    let c_data = data_hex.as_ptr() as *const c_char;
+                    let data_sig: *mut u8 = self.sign(SignatureType::Hash, c_data, data_hex.len());
+                    let res_str = data_sig as *const c_char;
+                    in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
+                    in3_sys::sb_add_range(
+                        &mut (*(*last_waiting).raw_response.offset(0)).result,
+                        res_str,
+                        0,
+                        65,
+                    );
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let req = in3_sys::in3_create_request(last_waiting);
@@ -208,8 +162,7 @@ impl Ctx {
                     let len = result.len;
                     if len != 0 {
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                        // println!("DATA -- > {}", data);
-                        return Ok(data.to_string());
+                        return Err(Error::TryAgain);
                     } else {
                         let error = (*(*req).results.offset(0)).error;
                         let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
@@ -229,6 +182,95 @@ impl Ctx {
                 in3_sys::in3_ret_t::IN3_OK => Ok(()),
                 _ => Err(ret.into()),
             }
+        }
+    }
+}
+
+#[async_trait(? Send)]
+impl ClientTrait for Client {
+    async fn rpc(&mut self, call: &str) -> In3Result<String> {
+        let mut ctx = Ctx::new(self, call);
+        loop {
+            let res = unsafe { ctx.execute().await };
+            if res != Err(Error::TryAgain) {
+                return res;
+            }
+        }
+    }
+
+    fn configure(&mut self, config: &str) -> Result<(), String> {
+        unsafe {
+            let config_c = ffi::CString::new(config).expect("CString::new failed");
+            let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
+            if err.as_ref().is_some() {
+                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
+            }
+        }
+        Ok(())
+    }
+
+    fn set_transport(&mut self, transport: Box<dyn Transport>) {
+        self.transport = transport;
+    }
+
+    fn set_storage(&mut self, storage: Box<dyn Storage>) {
+        let no_storage = self.storage.is_none();
+        self.storage = Some(storage);
+        if no_storage {
+            unsafe {
+                (*self.ptr).cache = in3_sys::in3_set_storage_handler(
+                    self.ptr,
+                    Some(Client::in3_rust_storage_get),
+                    Some(Client::in3_rust_storage_set),
+                    Some(Client::in3_rust_storage_clear),
+                    self.ptr as *mut libc::c_void,
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "blocking")]
+    fn rpc_blocking(&mut self, call: &str) -> In3Result<String> {
+        let mut null: *mut i8 = std::ptr::null_mut();
+        let res: *mut *mut i8 = &mut null;
+        let err: *mut *mut i8 = &mut null;
+        let req_str = ffi::CString::new(call).unwrap();
+        unsafe {
+            let ret = in3_sys::in3_client_rpc_raw(self.ptr, req_str.as_ptr(), res, err);
+            match ret {
+                in3_sys::in3_ret_t::IN3_OK => {
+                    Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
+                }
+                _ => Err(Error::CustomError(
+                    ffi::CStr::from_ptr(*err).to_str().unwrap().to_string(),
+                )),
+            }
+        }
+    }
+    fn hex_to_bytes(&mut self, data: &str) -> *mut u8 {
+        unsafe {
+            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+            let c_data: *const c_char = c_str_data.as_ptr();
+            let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
+            let len: i32 = -1;
+            in3_sys::hex_to_bytes(c_data, len, out, 32);
+            out
+        }
+    }
+    fn new_bytes(&mut self, data: &str, len: usize) -> *mut u8 {
+        unsafe {
+            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+            let data_ptr = c_str_data.as_ptr();
+            let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
+            let data_ = (*data).data;
+            let out = std::slice::from_raw_parts_mut(data_, len);
+            data_
+        }
+    }
+    fn set_pk_signer(&mut self, data: &str) {
+        unsafe {
+            let pk_ = self.hex_to_bytes(data);
+            in3_sys::eth_set_pk_signer(self.ptr, pk_);
         }
     }
 }
@@ -269,106 +311,6 @@ pub struct Client {
     ptr: *mut in3_sys::in3_t,
     transport: Box<dyn Transport>,
     storage: Option<Box<dyn Storage>>,
-}
-
-#[async_trait(? Send)]
-impl ClientTrait for Client {
-    fn configure(&mut self, config: &str) -> Result<(), String> {
-        unsafe {
-            let config_c = ffi::CString::new(config).expect("CString::new failed");
-            let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
-            if err.as_ref().is_some() {
-                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
-            }
-        }
-        Ok(())
-    }
-
-    fn set_transport(&mut self, transport: Box<dyn Transport>) {
-        self.transport = transport;
-    }
-
-    fn set_storage(&mut self, storage: Box<dyn Storage>) {
-        let no_storage = self.storage.is_none();
-        self.storage = Some(storage);
-        if no_storage {
-            unsafe {
-                (*self.ptr).cache = in3_sys::in3_set_storage_handler(
-                    self.ptr,
-                    Some(Client::in3_rust_storage_get),
-                    Some(Client::in3_rust_storage_set),
-                    Some(Client::in3_rust_storage_clear),
-                    self.ptr as *mut libc::c_void,
-                );
-            }
-        }
-    }
-
-    async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, call);
-        loop {
-            let res = unsafe { ctx.execute().await };
-            println!("-----> {:?}", res);
-            if res != Err(Error::TryAgain) {
-                return res;
-            }
-        }
-    }
-
-    #[cfg(feature = "blocking")]
-    fn rpc_blocking(&mut self, call: &str) -> In3Result<String> {
-        let mut null: *mut i8 = std::ptr::null_mut();
-        let res: *mut *mut i8 = &mut null;
-        let err: *mut *mut i8 = &mut null;
-        let req_str = ffi::CString::new(call).unwrap();
-        unsafe {
-            let ret = in3_sys::in3_client_rpc_raw(self.ptr, req_str.as_ptr(), res, err);
-            match ret {
-                in3_sys::in3_ret_t::IN3_OK => {
-                    Ok(ffi::CStr::from_ptr(*res).to_str().unwrap().to_string())
-                }
-                _ => Err(Error::CustomError(
-                    ffi::CStr::from_ptr(*err).to_str().unwrap().to_string(),
-                )),
-            }
-        }
-    }
-    fn hex_to_bytes(&mut self, data: &str) -> *mut u8 {
-        unsafe {
-            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
-            let c_data: *const c_char = c_str_data.as_ptr();
-            let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
-            let len: i32 = -1;
-            in3_sys::hex_to_bytes(c_data, len, out, 32);
-            let data_ = std::slice::from_raw_parts_mut(out, 32 as usize);
-            for byte in data_ {
-                print!("{:x}", byte);
-            }
-            println!("\n");
-            out
-        }
-    }
-    fn new_bytes(&mut self, data: &str) -> *mut u8 {
-        unsafe {
-            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
-            let data_ptr = c_str_data.as_ptr();
-            let len = strlen(data_ptr) as i32;
-            let data = in3_sys::hex_to_new_bytes(data_ptr, len);
-            let data_ = (*data).data;
-            let out = std::slice::from_raw_parts_mut(data_, 32 as usize);
-            for byte in out {
-                print!("{:x}", byte);
-            }
-            println!("\n");
-            data_
-        }
-    }
-    fn set_pk_signer(&mut self, data: &str) {
-        unsafe {
-            let pk_ = self.hex_to_bytes(data);
-            in3_sys::eth_set_pk_signer(self.ptr, pk_);
-        }
-    }
 }
 
 impl Client {
@@ -487,63 +429,6 @@ impl Drop for Client {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    pub fn ec_sign(type_: u8, pk: *const u8, data: *const u8, len: u32) -> *mut u8 {
-        unsafe {
-            let dst = libc::malloc(65) as *mut u8;
-            let mut value = std::slice::from_raw_parts_mut(dst, len as usize);
-            let pby = dst.offset(64) as *mut u8;
-            println!("{:?}", value);
-            for byte in value {
-                print!("{:x}", byte);
-            }
-            let curve = in3_sys::secp256k1;
-            let error: libc::c_int = in3_sys::ecdsa_sign(
-                &curve,
-                in3_sys::HasherType::HASHER_SHA3K,
-                pk,
-                data,
-                len,
-                dst,
-                pby,
-                None,
-            );
-            value = std::slice::from_raw_parts_mut(dst, len as usize);
-            println!("\n{:?}", value);
-            for byte in value {
-                print!("{:x}", byte);
-            }
-            dst
-        }
-    }
-
-    pub fn ec_sign_digest(type_: u8, pk: *const u8, data: *const u8, len: u32) -> *mut u8 {
-        unsafe {
-            let dst = libc::malloc(65) as *mut u8;
-            let pby = dst.offset(64) as *mut u8;
-            let curve = in3_sys::secp256k1;
-            let error: libc::c_int = in3_sys::ecdsa_sign_digest(&curve, pk, data, dst, pby, None);
-            let value = std::slice::from_raw_parts_mut(dst, len as usize);
-            for byte in value {
-                print!("{:x}", byte);
-            }
-            dst
-        }
-    }
-
-    //cargo test test_sign -- --color always --nocapture
-    #[test]
-    fn test_sign_hexc() {
-        let mut pk_ =
-            hex::decode("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8")
-                .expect("-");
-        let mut pk: *mut u8 = pk_.as_mut_ptr();
-        let data_ = hex::decode("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
-            .unwrap();
-        let mut data = data_.as_ptr();
-        let signa = in3::ec_sign(1, pk, data, 65);
-        assert!("" == "");
-    }
 
     #[test]
     fn test_in3_config() {

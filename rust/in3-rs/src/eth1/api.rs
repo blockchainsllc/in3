@@ -11,9 +11,9 @@ use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
 #[derive(Serialize)]
-struct RpcRequest<'a> {
-    method: &'a str,
-    params: serde_json::Value,
+pub struct RpcRequest<'a> {
+    pub method: &'a str,
+    pub params: serde_json::Value,
 }
 
 pub struct Api {
@@ -400,7 +400,7 @@ mod tests {
     use super::*;
 
     struct MockTransport<'a> {
-        responses: Vec<(&'a str, &'a str)>
+        responses: Vec<(&'a str, &'a str)>,
     }
 
     #[async_trait]
@@ -409,13 +409,22 @@ mod tests {
             let response = self.responses.pop();
             let request: serde_json::Value = serde_json::from_str(request).unwrap();
             match response {
-                Some(response) if response.0 == request[0]["method"] => vec![Ok(response.1.to_string())],
-                _ => vec![Err(format!("Found wrong/no response while expecting response for {}", request))]
+                Some(response) if response.0 == request[0]["method"] => {
+                    vec![Ok(response.1.to_string())]
+                }
+                _ => vec![Err(format!(
+                    "Found wrong/no response while expecting response for {}",
+                    request
+                ))],
             }
         }
 
         #[cfg(feature = "blocking")]
-        fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+        fn fetch_blocking(
+            &mut self,
+            _request: &str,
+            _uris: &[&str],
+        ) -> Vec<Result<String, String>> {
             unimplemented!()
         }
     }
@@ -423,11 +432,18 @@ mod tests {
     #[test]
     fn test_block_number() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::MAINNET));
-        api.client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
+        api.client
+            .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
-            responses: vec![("eth_blockNumber", r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#)]
+            responses: vec![(
+                "eth_blockNumber",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
+            )],
         }));
-        let num: u64 = task::block_on(api.block_number()).unwrap().try_into().unwrap();
+        let num: u64 = task::block_on(api.block_number())
+            .unwrap()
+            .try_into()
+            .unwrap();
         Ok(assert_eq!(num, 0x96bacd))
     }
 }
