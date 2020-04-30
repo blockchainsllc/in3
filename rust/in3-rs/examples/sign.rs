@@ -1,21 +1,22 @@
 // extern crate abi;
 // extern crate in3;
 use async_std::task;
+use async_trait::async_trait;
 use ethereum_types::{Address, U256};
 use ffi::{CStr, CString};
 use in3::eth1::api::RpcRequest;
 use in3::eth1::*;
+use in3::prelude::*;
+use in3::signer;
+use in3::signer::SignatureType;
 use libc::c_char;
 use rustc_hex::{FromHex, ToHex};
 use serde_json::json;
 use std::collections::HashMap;
 use std::ffi;
+use std::fmt::Write;
 use std::num::ParseIntError;
 use std::str;
-
-use async_trait::async_trait;
-use in3::prelude::*;
-use std::fmt::Write;
 // use crate::transport::MockTransport;
 
 unsafe fn signature_hex_string(data: *mut u8) -> String {
@@ -33,24 +34,22 @@ unsafe fn signature_hex_string(data: *mut u8) -> String {
 fn sign() {
     unsafe {
         //Private key
-        let pk = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
+        let pk = "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
         //Message to sign
         let msg = "9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465";
         //Config in3 api client
-        let mut in3 = Client::new(chain::MAINNET);
-        // Context config
-        let mut ctx = Ctx::new(&mut in3, r#"{"method": "eth_blockNumber", "params": []}"#);
-        // Set client private key
-        in3.set_pk_signer(pk);
-        // decode Hex
+        // decode Hex msg
         let msg_hex = msg.from_hex().unwrap();
         let raw_msg_ptr = msg_hex.as_ptr() as *const c_char;
+        // pk to raw ptr
+        let pk_hex = pk.from_hex().unwrap();
+        let raw_pk = pk_hex.as_ptr() as *mut u8;
         //Sign the message raw
-        let signature_raw = ctx.sign(Signature::Raw, raw_msg_ptr, msg_hex.len());
+        let signature_raw = signer::sign(raw_pk, SignatureType::Raw, raw_msg_ptr, msg_hex.len());
         let sig_raw_expected = "f596af3336ac65b01ff4b9c632bc8af8043f8c11ae4de626c74d834412cb5a234783c14807e20a9e665b3118dec54838bd78488307d9175dd1ff13eeb67e05941c";
         assert_eq!(signature_hex_string(signature_raw), sig_raw_expected);
         // Hash and sign the msg
-        let signature_hash = ctx.sign(Signature::Hash, raw_msg_ptr, msg_hex.len());
+        let signature_hash = signer::sign(raw_pk, SignatureType::Hash, raw_msg_ptr, msg_hex.len());
         let sig_hash_expected = "349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c";
         assert_eq!(signature_hex_string(signature_hash), sig_hash_expected);
     }

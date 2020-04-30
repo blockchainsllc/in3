@@ -9,6 +9,9 @@ use crate::traits::{Client as ClientTrait, Storage, Transport};
 use crate::transport::HttpTransport;
 use rustc_hex::{FromHex, ToHex};
 use serde_json::json;
+// use signer::*;
+use crate::signer;
+use crate::signer::SignatureType;
 use std::fmt::Write;
 use std::num::ParseIntError;
 // use crate::types::Signature;
@@ -33,12 +36,6 @@ pub struct Ctx {
     config: ffi::CString,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum Signature {
-    Raw = 0,
-    Hash = 1,
-}
-
 impl Ctx {
     pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
@@ -49,73 +46,53 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn debug_pointer(&mut self, data: *mut u8, len: usize) {
-        let val = std::slice::from_raw_parts_mut(data, len);
-        println!("{:?}", len);
-        print!("data Signature -> ");
-        for byte in val {
-            print!("{:x}", byte);
-        }
-        println!(" \n");
-    }
-
-    pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char, len: usize) -> *mut u8 {
+    pub unsafe fn sign(
+        &mut self,
+        type_: SignatureType,
+        data: *const c_char,
+        len: usize,
+    ) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        // let len = strlen(data) as u32;
-        // let len = 32;
-        let data_ = data as *mut u8;
-        // self.debug_pointer(data_, len);
-        // self.debug_pointer(pk, 65);
-        let dst: *mut u8 = libc::malloc(65) as *mut u8;
-        // let pby = *dst.offset(64) as *mut u8;
-        let pby = dst.offset(64) as *mut u8;
-        let curve = in3_sys::secp256k1;
-        match type_ {
-            Signature::Raw => {
-                let error = in3_sys::ecdsa_sign_digest(&curve, pk, data_, dst, pby, None);
-                if error < 0 {
-                    panic!("Sign error{:?}", error);
-                }
-            }
-            Signature::Hash => {
-                let error = in3_sys::ecdsa_sign(
-                    &curve,
-                    in3_sys::HasherType::HASHER_SHA3K,
-                    pk,
-                    data_,
-                    len as u32,
-                    dst,
-                    pby,
-                    None,
-                );
-                if error < 0 {
-                    panic!("Sign error{:?}", error);
-                }
-            }
-        }
-        *dst.offset(64) += 27;
-        //  self.debug_pointer(dst, 65);
-
-        // let value = std::slice::from_raw_parts_mut(dst, 64 as usize);
-        // // the only way to return a valid rust string from signature pointer
-        // let mut sign_str = "".to_string();
-        // for byte in value {
-        //     let mut tmp = "".to_string();
-        //     write!(&mut tmp, "{:02x}", byte).unwrap();
-        //     sign_str.push_str(tmp.as_str());
-        // }
-        // println!(" signature {}", sign_str);
-        // sign_str
-        // let sign_ptr = dst as *const c_char;
-        dst
-    }
-    pub fn decode_hex(&mut self, s: &str) -> Result<Vec<u8>, ParseIntError> {
-        (0..s.len())
-            .step_by(2)
-            .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
-            .collect()
+        signer::sign(pk, type_, data, len)
     }
 
+    // pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char, len: usize) -> *mut u8 {
+    //     let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
+    //     // let len = strlen(data) as u32;
+    //     // let len = 32;
+    //     let data_ = data as *mut u8;
+    //     // self.debug_pointer(data_, len);
+    //     // self.debug_pointer(pk, 65);
+    //     let dst: *mut u8 = libc::malloc(65) as *mut u8;
+    //     // let pby = *dst.offset(64) as *mut u8;
+    //     let pby = dst.offset(64) as *mut u8;
+    //     let curve = in3_sys::secp256k1;
+    //     match type_ {
+    //         Signature::Raw => {
+    //             let error = in3_sys::ecdsa_sign_digest(&curve, pk, data_, dst, pby, None);
+    //             if error < 0 {
+    //                 panic!("Sign error{:?}", error);
+    //             }
+    //         }
+    //         Signature::Hash => {
+    //             let error = in3_sys::ecdsa_sign(
+    //                 &curve,
+    //                 in3_sys::HasherType::HASHER_SHA3K,
+    //                 pk,
+    //                 data_,
+    //                 len as u32,
+    //                 dst,
+    //                 pby,
+    //                 None,
+    //             );
+    //             if error < 0 {
+    //                 panic!("Sign error{:?}", error);
+    //             }
+    //         }
+    //     }
+    //     *dst.offset(64) += 27;
+    //     dst
+    // }
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
         let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
@@ -177,7 +154,7 @@ impl Ctx {
                     // let data_hex = self.decode_hex(data_str).unwrap();
                     let c_data = data_hex.as_ptr() as *const c_char;
 
-                    let data_sig: *mut u8 = self.sign(Signature::Hash, c_data, data_hex.len());
+                    let data_sig: *mut u8 = self.sign(SignatureType::Hash, c_data, data_hex.len());
                     let res_str = data_sig as *const c_char;
                     // let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
                     // let c_data: *const c_char = c_str_data.as_ptr();
@@ -510,63 +487,6 @@ impl Drop for Client {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    pub fn ec_sign(type_: u8, pk: *const u8, data: *const u8, len: u32) -> *mut u8 {
-        unsafe {
-            let dst = libc::malloc(65) as *mut u8;
-            let mut value = std::slice::from_raw_parts_mut(dst, len as usize);
-            let pby = dst.offset(64) as *mut u8;
-            println!("{:?}", value);
-            for byte in value {
-                print!("{:x}", byte);
-            }
-            let curve = in3_sys::secp256k1;
-            let error: libc::c_int = in3_sys::ecdsa_sign(
-                &curve,
-                in3_sys::HasherType::HASHER_SHA3K,
-                pk,
-                data,
-                len,
-                dst,
-                pby,
-                None,
-            );
-            value = std::slice::from_raw_parts_mut(dst, len as usize);
-            println!("\n{:?}", value);
-            for byte in value {
-                print!("{:x}", byte);
-            }
-            dst
-        }
-    }
-
-    pub fn ec_sign_digest(type_: u8, pk: *const u8, data: *const u8, len: u32) -> *mut u8 {
-        unsafe {
-            let dst = libc::malloc(65) as *mut u8;
-            let pby = dst.offset(64) as *mut u8;
-            let curve = in3_sys::secp256k1;
-            let error: libc::c_int = in3_sys::ecdsa_sign_digest(&curve, pk, data, dst, pby, None);
-            let value = std::slice::from_raw_parts_mut(dst, len as usize);
-            for byte in value {
-                print!("{:x}", byte);
-            }
-            dst
-        }
-    }
-
-    //cargo test test_sign -- --color always --nocapture
-    #[test]
-    fn test_sign_hexc() {
-        let mut pk_ =
-            hex::decode("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8")
-                .expect("-");
-        let mut pk: *mut u8 = pk_.as_mut_ptr();
-        let data_ = hex::decode("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
-            .unwrap();
-        let mut data = data_.as_ptr();
-        let signa = in3::ec_sign(1, pk, data, 65);
-        assert!("" == "");
-    }
 
     #[test]
     fn test_in3_config() {
