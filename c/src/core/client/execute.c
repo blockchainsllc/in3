@@ -657,7 +657,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
             break;
           } else
-            return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+            return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
         }
       }
     }

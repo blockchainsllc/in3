@@ -14,18 +14,21 @@ python:
     - win_jni
     - gcc8
     - arm_jni
+    - gcc8-x86
   tags:
     - short-jobs
   script:
     - cp mac_build/lib/libin3.dylib python/in3/libin3/shared/libin3.x64.dylib
-    - cp win_jni/lib/libin3.so python/in3/libin3/shared/in3.x64.dll
+    - cp win_jni/lib/libin3.so python/in3/libin3/shared/libin3.x64.dll
     - cp x64_build/lib/libin3.so python/in3/libin3/shared/libin3.x64.so
+    - cp x86_build/lib/libin3.so python/in3/libin3/shared/libin3.x86.so
     - cp arm_jni_build/lib/libin3.so python/in3/libin3/shared/libin3.arm7.so
-    - mv python python_multilib
-    - cd python_multilib
+    - cd python
     - pip3 install -r requirements.txt
     - ./generate_docs.sh
     - rm -rf docs/_build docs/build_examples.md_
+    - cd ..
+    - mv python python_multilib
   artifacts:
     paths:
       - python_multilib

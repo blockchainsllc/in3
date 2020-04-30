@@ -7,6 +7,22 @@ namespace In3.Utils
     public class TypesMatcher
     {
         private static readonly char[] charsToTrim = new char[] { '0' };
+
+        public static string BytesToHexString(byte[] input, int len)
+        {
+            char[] result = new char[len * 2];
+            char[] hex = "0123456789abcdef".ToCharArray();
+            
+            int i = 0, j = 0;
+            while (j < len) {
+                result[i++] = hex[(input[j] >> 4) & 0xF];
+                result[i++] = hex[input[j] & 0xF];
+                j++;
+            }
+
+            string zeroSufixedString = new string(result);
+            return $"0x{zeroSufixedString}";
+        }
         public static BigInteger HexStringToBigint(string source)
         {
             if (String.IsNullOrWhiteSpace(source)) return BigInteger.Zero;

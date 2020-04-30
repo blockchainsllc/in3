@@ -1,128 +1,103 @@
 """
-Load libin3 shared library for the current system, map function signatures, map and set transport functions.
+Load libin3 shared library for the current system, map function ABI, sets in3 network transport functions.
 
 Example of RPC to In3-Core library, In3 Network and back.
 ```
 +----------------+                               +----------+                       +------------+                        +------------------+
-|                | in3.client.eth.block_number() |          |  in3_client_exec_req  |            |  In3 Network Request   |                  |e
+|                | in3.client.eth.block_number() |          |     in3_client_rpc    |            |  In3 Network Request   |                  |e
 |     python     +------------------------------>+  python  +----------------------->   libin3   +------------------------>     python       |
 |   application  |                               |   in3    |                       |  in3-core  |                        |  http_transport  |
 |                <-------------------------------+          <-----------------------+            <------------------------+                  |
 +----------------+     primitive or Object       +----------+     ctype object      +------------+  in3_req_add_response  +------------------+
 ```
 """
-from ctypes import POINTER, CFUNCTYPE
-from ctypes import c_char, c_int, c_void_p, c_uint32, c_char_p, c_bool
-from ctypes import Structure, string_at, cast, cdll
+import ctypes as c
+import platform
+
 from pathlib import Path
 
-import math
-import platform
-import requests
 
-DEBUG: bool = False
-TIMEOUT = 5000
-
-
-class In3Request(Structure):
+def libin3_new(chain_id: int, transport: c.CFUNCTYPE, debug=False) -> int:
     """
-    Request sent by the libin3 to the In3 Network, transported over the _http_transport function
-    Based on in3/client/.h in3_request_t struct
-    Attributes:
-        payload (str): the payload to send
-        urls ([str]): array of urls
-        urls_len (int): number of urls
-        results (str): the responses
-        timeout (int): the timeout 0= no timeout
-        times (int): measured times (in ms) which will be used for ajusting the weights
-    """
-    _fields_ = [("payload", POINTER(c_char)),
-                ("urls", POINTER(POINTER(c_char))),
-                ("urls_len", c_int),
-                ("results", c_void_p),
-                ("timeout", c_uint32),
-                ("times", POINTER(c_uint32))]
-
-
-def libin3_new(timeout: int):
-    """
-    RPC to free libin3 objects in memory.
+    Instantiate new In3 Client instance.
     Args:
-        timeout (int): Time in milliseconds for http requests to fail due to timeout
+        chain_id (int): Chain id as integer
+        transport: Transport function for the in3 network requests
+        debug: Turn on debugger logging
     Returns:
-         instance (int): Memory address of the shared library instance, return value from libin3_new
+         instance (int): Memory address of the client instance, return value from libin3_new
     """
-    global TIMEOUT
-    TIMEOUT = float(timeout * math.pow(10, -3))
-    return libin3.in3_new()
+    assert isinstance(chain_id, int)
+    global libin3
+    _map_function_signatures()
+    # define this function as the transport for in3 requests from client to server and back
+    libin3.in3_set_default_transport(transport)
+    # register transport and verifiers (needed only once)
+    libin3.in3_register_eth_full()
+    # TODO: IPFS libin3.in3_register_ipfs();
+    libin3.in3_register_eth_api()
+    # TODO: in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
+    # enable logging
+    if debug:
+        # set logger level to TRACE
+        libin3.in3_log_set_quiet_(False)
+        libin3.in3_log_set_level_(0)
+    return libin3.in3_for_chain_auto_init(chain_id)
 
 
 def libin3_free(instance: int):
     """
-    RPC to free libin3 objects in memory.
+    Free In3 Client objects from memory.
     Args:
-        instance (int): Memory address of the shared library instance, return value from libin3_new
+        instance (int): Memory address of the client instance, return value from libin3_new
     """
     libin3.in3_free(instance)
 
 
-def libin3_call(instance: int, rpc: bytes):
+def libin3_exec(instance: int, rpc: bytes):
     """
-    Make Remote Procedure Call to an arbitrary method of a libin3 instance
+    Make Remote Procedure Call mapped methods in the client.
     Args:
-        instance (int): Memory address of the shared library instance, return value from libin3_new
-        rpc (bytes): Serialized function call, a ethreum api json string.
+        instance (int): Memory address of the client instance, return value from libin3_new
+        rpc (bytes): Serialized function call, a json string.
     Returns:
         returned_value (object): The returned function value(s)
     """
     ptr_res = libin3.in3_client_exec_req(instance, rpc)
-    result = cast(ptr_res, c_char_p).value
+    result = c.cast(ptr_res, c.c_char_p).value
     libin3._free_(ptr_res)
     return result
 
 
-def _transport_report_success(in3_request: In3Request, i: int, response: requests.Response):
-    libin3.in3_req_add_response(
-        in3_request.results, i, False, response.content, -1)
-
-
-def _transport_report_failure(in3_request: In3Request, i: int, err: Exception):
-    libin3.in3_req_add_response(in3_request.results, i, True, str(err), -1)
-
-
-def _http_transport(in3_request: In3Request):
+def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     """
-    Transports each request coming from libin3 to the in3 network and and reports the answer back
+    Make Remote Procedure Call to an arbitrary method of a libin3 instance
     Args:
-        in3_request (In3Request): request sent by the In3 Client Core to the In3 Network
+        instance (int): Memory address of the client instance, return value from libin3_new
+        fn_name (bytes): Name of function that will be called in the client rpc.
+        fn_args: (bytes) Serialized list of arguments, matching the parameters order of this function. i.e. ['0x123']
     Returns:
-        exit_status (int): Always zero for signaling libin3 the function executed OK.
+        result (int): Function execution status.
     """
-    in3_request = in3_request.contents
-
-    for i in range(0, in3_request.urls_len):
-        try:
-            rpc_request = {
-                'url': string_at(in3_request.urls[i]),
-                'data': string_at(in3_request.payload),
-                'headers': {'Content-type': 'application/json'},
-                'timeout': TIMEOUT
-            }
-            response = requests.post(**rpc_request)
-            response.raise_for_status()
-            _transport_report_success(in3_request, i, response)
-        except requests.exceptions.RequestException as err:
-            _transport_report_failure(in3_request, i, err)
-        except requests.exceptions.SSLError as err:
-            _transport_report_failure(in3_request, i, err)
-        except Exception as err:
-            _transport_report_failure(in3_request, i, err)
-    return 0
+    response = c.c_char_p()
+    error = c.c_char_p()
+    result = libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
+    return result, response.value, error.value
 
 
-def _multi_platform_selector():
+def libin3_set_pk(instance: int, private_key: bytes):
     """
-    Helper to define the path of installed shared libraries. In this case libin3.
+    Register the signer module in the In3 Client instance, with selected private key loaded in memory.
+    Args:
+        instance (int): Memory address of the client instance, return value from libin3_new
+        private_key: 256 bit number.
+    """
+    libin3.eth_set_pk_signer_hex(instance, private_key)
+
+
+def _multi_platform_selector(prefix: str) -> str:
+    """
+    Helper to define the path of installed shared libraries.
     Returns:
         libin3_file_path (pathlib.Path): Path to the correct library, compiled to the current platform.
     """
@@ -133,80 +108,75 @@ def _multi_platform_selector():
         raise OSError('Not available on this platform ({}, {}, {}).'.format(
             system, processor, machine))
 
-    # TODO: Similar behavior could be achieved with regex expressions if we known them better.
-
+    # Fail over
     if not processor:
         processor = 'i386'
-
-    extension = None
+    # Similar behavior could be achieved with regex expressions if we known them better.
+    suffix = None
     if processor == 'i386' or 'Intel' in processor:
         # AMD64 x86_64 64bit ...
         if '64' in machine:
             if system == 'Windows':
-                extension = "x64.dll"
+                suffix = "x64.dll"
             elif system == "Linux":
-                extension = "x64.so"
+                suffix = "x64.so"
             elif system == 'Darwin':
-                extension = "x64.dylib"
+                suffix = "x64.dylib"
         elif '32' in machine or '86' in machine:
             if system == 'Windows':
                 fail()
             elif system == "Linux":
-                extension = "x32.so"
+                suffix = "x86.so"
             elif system == 'Darwin':
                 fail()
         elif 'armv' in machine:
-            extension = 'arm7.so'
+            suffix = 'arm7.so'
     elif 'ARM' in processor:
         if machine == 'ARM7':
-            extension = 'arm7.so'
-
-    if not extension:
+            suffix = 'arm7.so'
+    if not suffix:
         fail()
-
-    if system == 'Windows':
-        return Path(path.parent, "libin3", "shared", "in3.{}".format(extension))
-    elif DEBUG:
-        # Debug only available on mac.
-        # If you need to it run on your system, run in3-core/scripts/build_debug.sh to get a build.
-        # Then add it to libin3/shared folder
-        return Path(path.parent, "libin3", "shared",  "libin3d.{}".format(extension))
-    else:
-        return Path(path.parent, "libin3", "shared", "libin3.{}".format(extension))
+    return str(Path(path.parent, "libin3", "shared", "{}.{}".format(prefix, suffix)))
 
 
-# =================== LIBIN3 SHARED LIBRARY MAPPING ===================
-libin3 = cdll.LoadLibrary(_multi_platform_selector())
-# map free
-libin3._free_.argtypes = c_void_p,
-libin3._free_.restype = None
-# map new in3
-libin3.in3_new.argtypes = []
-libin3.in3_new.restype = c_void_p
-# map free in3
-libin3.in3_free.argtypes = c_void_p,
-libin3.in3_free.restype = None
-# map transport request function
-libin3.in3_client_exec_req.argtypes = [c_void_p, c_char_p]
-libin3.in3_client_exec_req.restype = c_void_p
-# map transport function for response
-libin3.in3_req_add_response.argtypes = [
-    c_void_p, c_int, c_bool, c_void_p, c_int]
-libin3.in3_req_add_response.restype = None
-# create a transport function pointer
-transport_fn = CFUNCTYPE(c_int, POINTER(In3Request))(_http_transport)
-# define this function as default transport for in3 requests from client to server and back
-libin3.in3_set_default_transport(transport_fn)
-# register transport and verifiers (needed only once)
-libin3.in3_register_eth_full()
-libin3.in3_register_eth_api()
-# enable logging
-if DEBUG:
+def _map_function_signatures():
+    # =================== LIBIN3 SHARED LIBRARY MAPPING ===================
+    global libin3
+    # map new in3
+    libin3.in3_for_chain_auto_init.argtypes = [c.c_int]
+    libin3.in3_for_chain_auto_init.restype = c.c_void_p
+    libin3.in3_for_chain_default.argtypes = [c.c_int]
+    libin3.in3_for_chain_default.restype = c.c_void_p
+    # map free in3
+    libin3.in3_free.argtypes = c.c_void_p,
+    libin3.in3_free.restype = None
+    libin3._free_.argtypes = c.c_void_p,
+    libin3._free_.restype = None
+    # map set pk signer
+    libin3.eth_set_pk_signer_hex.argtypes = [c.c_void_p, c.c_char_p]
+    libin3.eth_set_pk_signer_hex.restype = None
+    # map transport request function
+    libin3.in3_client_exec_req.argtypes = [c.c_void_p, c.c_char_p]
+    libin3.in3_client_exec_req.restype = c.c_void_p
+    libin3.in3_client_rpc.argtypes = [c.c_void_p, c.c_char_p, c.c_char_p,
+                                      c.POINTER(c.c_char_p),
+                                      c.POINTER(c.c_char_p)]
+    libin3.in3_client_rpc.restype = c.c_int
+    # map transport function for response
+    libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int]
+    libin3.in3_req_add_response.restype = None
     # map logging functions
-    libin3.in3_log_set_quiet_.argtypes = c_bool,
+    libin3.in3_log_set_quiet_.argtypes = c.c_bool,
     libin3.in3_log_set_quiet_.restype = None
-    libin3.in3_log_set_level_.argtypes = c_int,
+    libin3.in3_log_set_level_.argtypes = c.c_int,
     libin3.in3_log_set_level_.restype = None
-    # set logger level to TRACE
-    libin3.in3_log_set_quiet_(False)
-    libin3.in3_log_set_level_(0)
+
+
+def init():
+    """
+    Loads library depending on host system.
+    """
+    return c.cdll.LoadLibrary(_multi_platform_selector('libin3'))
+
+
+libin3 = init()
