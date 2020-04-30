@@ -373,7 +373,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x10bdf4600>)
+transport=<CFunctionType object at 0x1069c9600>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -517,7 +517,7 @@ network/registry id, and last block number in the selected chain.
 - `totalServers` _int_ - Total servers number (for integrity?)
   
 
-
+## in3.eth.model
 
 Ethereum Domain Model
 MVC Pattern
@@ -626,7 +626,7 @@ Every transaction hash is unique for the whole chain. Collision could in theory 
 - `transaction` - Desired transaction, if exists.
   
 
-#
+### Ethereum Objects
 
 Ethereum Domain Model
 MVC Pattern
@@ -1102,7 +1102,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x10b5c6560>)
+transport: <function CFUNCTYPE at 0x10619b560>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1130,7 +1130,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10b5c6560>,
+transport: <function CFUNCTYPE at 0x10619b560>,
 debug=False)
 ```
 

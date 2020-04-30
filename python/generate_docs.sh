@@ -15,7 +15,7 @@ sed 's/### in3$//g' >> ../../documentation.md
 
 sed 's/# /## /' eth.md |
 sed 's/## in3.eth$//g' |
-sed 's/## in3.eth.model$//g' >> ../../documentation.md
+sed 's/### in3.eth.model$/### Ethereum Objects/g' >> ../../documentation.md
 
 sed 's/# /## /' account.md |
 sed 's/## in3.eth.account$//g' >> ../../documentation.md
