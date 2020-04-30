@@ -41,7 +41,7 @@ ExternalProject_Add(
         lib-hidapi
         SOURCE_DIR ${HIDAPI_DIR}/hidapi
         DOWNLOAD_COMMAND ""
-        CONFIGURE_COMMAND cd ${HIDAPI_DIR} && ./bootstrap && ./configure --srcdir=${HIDAPI_DIR} --prefix=${HIDAPI_BIN}
-        BUILD_COMMAND cd ${HIDAPI_DIR} && make
+        CONFIGURE_COMMAND cd ${HIDAPI_DIR} && ./bootstrap && ./configure --srcdir=${HIDAPI_DIR} --prefix=${CMAKE_BINARY_DIR}
+        BUILD_COMMAND cd ${HIDAPI_DIR} && make && make install
         INSTALL_COMMAND cd ${HIDAPI_DIR} && make install
 )

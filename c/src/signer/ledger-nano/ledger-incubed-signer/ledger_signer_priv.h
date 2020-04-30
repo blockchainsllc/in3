@@ -37,7 +37,7 @@
 #include "../../../core/client/client.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
-#include <hidapi.h>
+#include "../../../third-party/hidapi/hidapi/hidapi.h"
 
 #define LEDGER_NANOS_VID 0x2C97
 #define LEDGER_NANOS_PID 0x1001

@@ -3,8 +3,8 @@
 #endif
 
 #include "../../../core/util/log.h"
+#include "../../../third-party/hidapi/hidapi/hidapi.h"
 #include "device_apdu_commands.h"
-#include <hidapi.h>
 #include <memory.h>
 #include <stdbool.h>
 #include <stdlib.h>
