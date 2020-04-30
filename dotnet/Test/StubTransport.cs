@@ -11,7 +11,7 @@ namespace Test
     public class StubTransport : Transport
     {
         private Dictionary<string, string> Responses { get; }
-        private const string ResponsesDir = "Responses"; 
+        private const string ResponsesDir = "Responses";
 
         public StubTransport()
         {
