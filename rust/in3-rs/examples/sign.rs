@@ -56,12 +56,12 @@ fn sign() {
     }
 }
 
-fn sign_execute_api() {
+fn sign_tx_api() {
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
     let responses = vec![
         (
             "eth_estimateGas",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,
+            r#"[{"jsonrpc":"2.0","id":1,"result":"0x96c0"}]"#,
         ),
         (
             "eth_sendRawTransaction",
@@ -69,7 +69,7 @@ fn sign_execute_api() {
         ),
         (
             "eth_gasPrice",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,
+            r#"[{"jsonrpc":"2.0","id":1,"result":"0x9184e72a000"}]"#,
         ),
         (
             "eth_getTransactionCount",
@@ -107,7 +107,7 @@ fn sign_execute_api() {
     println!("Hash => {:?}", hash);
 }
 
-fn sign_execute_arpc() {
+fn sign_tx_rpc() {
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(
         r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
@@ -149,68 +149,9 @@ fn sign_execute_arpc() {
         Err(err) => println!("Failed with error: {}\n\n", err),
     }
 }
-fn sign_execute_rpc() {
-    let mut c = Client::new(chain::MAINNET);
-    let _ = c.configure(
-        r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
-    );
-    let responses = vec![
-        (
-            "eth_sendRawTransaction",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,
-        ),
-        // (
-        //     "eth_estimateGas",
-        //     r#"[{"jsonrpc":"2.0","id":1,"result":"0x1e8480"}]"#,
-        // ),
-        // (
-        //     "eth_gasPrice",
-        //     r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,
-        // ),
-        // (
-        //     "eth_getTransactionCount",
-        //     r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,
-        // ),
-    ];
-    c.set_transport(Box::new(MockTransport {
-        responses: responses,
-    }));
-    c.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
-    let tx = json!([{
-        "from": "0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377",
-        "to": "0xd46e8dd67c5d32be8058bb8eb970870f07244567",
-        "gas": "0x96c0",
-        "gasPrice": "0x9184e72a000",
-        "value": "0x9184e72a",
-        "nonce": "0x0",
-        "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"
-    }]);
-    // let tx = json!([{
-    //     "from": "0x3fEfF9E04aCD51062467C494b057923F771C9423",
-    //     "to": "0x1234567890123456789012345678901234567890",
-    //     "gas": "0x96c0",
-    //     "gasPrice": "0x9184e72a000",
-    //     "value": "0x9184e72a",
-    //     "data": "0x18562dae000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000087465737464617461000000000000000000000000000000000000000000000000"
-    // }]);
-    let rpc_req = RpcRequest {
-        method: "eth_sendTransaction",
-        params: tx,
-    };
-    let req_str = serde_json::to_string(&rpc_req).unwrap();
-    match c.rpc_blocking(&req_str) {
-        Ok(res) => println!("{}", res),
-        Err(err) => println!("Failed with error: {}", err),
-    }
-}
 
 fn main() {
-    //  sign_hash();
-    // sign_raw();
-    // sign_execute_api();
-    // sign_params();
-    sign_execute_arpc();
-    // sign_execute_rpc();
-    // test_transport();
-    // sign();
+    sign_tx_api();
+    sign_tx_rpc();
+    sign();
 }
