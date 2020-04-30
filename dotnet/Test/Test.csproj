@@ -18,6 +18,7 @@
 
     <ItemGroup>
       <Compile Remove="Eth1\TransactionRequestTest.cs" />
+      <Compile Remove="Ipfs\Encoding.cs" />
     </ItemGroup>
 
     <ItemGroup>

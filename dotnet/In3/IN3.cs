@@ -16,6 +16,7 @@ namespace In3
         public Storage.Storage Storage { get; set; }
         public Signer Signer { get; set; }
         public Crypto.Api Crypto { get; set; }
+        public Ipfs.Api Ipfs { get; set; }
         public ClientConfiguration Configuration { get; }
 
         private IN3(Chain chainId)
@@ -27,6 +28,7 @@ namespace In3
             Native = new NativeWrapper(this, chainId);
             Eth1 = new Eth1.Api(this);
             Crypto = new Crypto.Api(this);
+            Ipfs = new Ipfs.Api(this);
             Configuration = Native.ReadConfiguration();
         }
         private IN3() { }
