@@ -102,12 +102,6 @@ pub enum FilterChanges {
     BlockHashes(Vec<Hash>),
 }
 
-// #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-// pub enum Signature {
-//     Raw = 0,
-//     Hash = 1,
-// }
-
 // Transaction used as i/p type for eth_sendTransaction
 #[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
