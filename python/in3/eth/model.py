@@ -1,7 +1,3 @@
-"""
-Ethereum Domain Model
-MVC Pattern
-"""
 import json
 
 

@@ -373,7 +373,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x1069c9600>)
+transport=<CFunctionType object at 0x10d8bd600>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -515,263 +515,6 @@ network/registry id, and last block number in the selected chain.
 - `registryId` _str_ - uuid of this incubed network. one chain could contain more than one incubed networks.
 - `lastBlockNumber` _int_ - last block signed by the network
 - `totalServers` _int_ - Total servers number (for integrity?)
-  
-
-## in3.eth.model
-
-Ethereum Domain Model
-MVC Pattern
-
-
-### EthereumApi
-```python
-EthereumApi(self, runtime: In3Runtime)
-```
-
-Module based on Ethereum's api and web3.js
-
-
-#### keccak256
-```python
-EthereumApi.keccak256(message: str)
-```
-
-Keccak-256 digest of the given data. Compatible with Ethereum but not with SHA3-256.
-
-**Arguments**:
-
-- `message` _str_ - Message to be hashed.
-
-**Returns**:
-
-- `digest` _str_ - The message digest.
-  
-
-#### gas_price
-```python
-EthereumApi.gas_price()
-```
-
-The current gas price in Wei (1 ETH equals 1000000000000000000 Wei ).
-
-**Returns**:
-
-- `price` _int_ - minimum gas value for the transaction to be mined
-  
-
-#### block_number
-```python
-EthereumApi.block_number()
-```
-
-Returns the number of the most recent block the in3 network can collect signatures to verify.
-Can be changed by Client.Config.replaceLatestBlock.
-If you need the very latest block, change Client.Config.signatureCount to zero.
-
-**Returns**:
-
-  block_number (int) : Number of the most recent block
-  
-
-#### get_block_by_hash
-```python
-EthereumApi.get_block_by_hash(block_hash: str,
-get_full_block: bool = False)
-```
-
-Blocks can be identified by root hash of the block merkle tree (this), or sequential number in which it was mined (get_block_by_number).
-
-**Arguments**:
-
-- `block_hash` _str_ - Desired block hash
-- `get_full_block` _bool_ - If true, returns the full transaction objects, otherwise only its hashes.
-
-**Returns**:
-
-- `block` _Block_ - Desired block, if exists.
-  
-
-#### get_block_by_number
-```python
-EthereumApi.get_block_by_number(block_number: [<class 'int'>],
-get_full_block: bool = False)
-```
-
-Blocks can be identified by sequential number in which it was mined, or root hash of the block merkle tree (this) (get_block_by_hash).
-
-**Arguments**:
-
-- `block_number` _int or str_ - Desired block number integer or 'latest', 'earliest', 'pending'.
-- `get_full_block` _bool_ - If true, returns the full transaction objects, otherwise only its hashes.
-
-**Returns**:
-
-- `block` _Block_ - Desired block, if exists.
-  
-
-#### get_transaction_by_hash
-```python
-EthereumApi.get_transaction_by_hash(tx_hash: str)
-```
-
-Transactions can be identified by root hash of the transaction merkle tree (this) or by its position in the block transactions merkle tree.
-Every transaction hash is unique for the whole chain. Collision could in theory happen, chances are 67148E-63%.
-
-**Arguments**:
-
-- `tx_hash` - Transaction hash.
-
-**Returns**:
-
-- `transaction` - Desired transaction, if exists.
-  
-
-### Ethereum Objects
-
-Ethereum Domain Model
-MVC Pattern
-
-
-#### DataTransferObject
-```python
-DataTransferObject()
-```
-
-Maps marshalling objects transferred to, and from a remote facade, in this case, libin3 rpc api.
-For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
-
-
-#### Transaction
-```python
-Transaction(self, From: str, to: str, gas: int, gasPrice: int, hash: str,
-nonce: int, transactionIndex: int, blockHash: str,
-value: int, input: str, publicKey: str, standardV: int,
-raw: str, creates: str, chainId: int, r: int, s: int,
-v: int)
-```
-
-**Arguments**:
-
-- `From` _hex str_ - Address of the sender account.
-- `to` _hex str_ - Address of the receiver account. Left undefined for a contract creation transaction.
-- `gas` _int_ - Gas for the transaction miners and execution in wei. Will get multiplied by `gasPrice`. Use in3.eth.account.estimate_gas to get a calculated value. Set too low and the transaction will run out of gas.
-- `value` _int_ - Value transferred in wei. The endowment for a contract creation transaction.
-- `data` _hex str_ - Either a ABI byte string containing the data of the function call on a contract, or in the case of a contract-creation transaction the initialisation code.
-- `gasPrice` _int_ - Price of gas in wei, defaults to in3.eth.gasPrice. Also know as `tx fee price`. Set your gas price too low and your transaction may get stuck. Set too high on your own loss.
-  gasLimit (int); Maximum gas paid for this transaction. Set by the client using this rationale if left empty: gasLimit = G(transaction) + G(txdatanonzero) × dataByteLength. Minimum is 21000.
-- `nonce` _int_ - Number of transactions mined from this address. Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1). It exists to mitigate replay attacks. This allows to overwrite your own pending transactions by sending a new one with the same nonce. Use in3.eth.account.get_transaction_count to get the latest value.
-- `hash` _hex str_ - Keccak of the transaction bytes, not part of the transaction. Also known as receipt, because this field is filled after the transaction is sent, by eth_sendTransaction
-- `blockHash` _hex str_ - Block hash that this transaction was mined in. null when its pending.
-- `blockHash` _int_ - Block number that this transaction was mined in. null when its pending.
-- `transactionIndex` _int_ - Integer of the transactions index position in the block. null when its pending.
-- `signature` _hex str_ - ECDSA of transaction.data, calculated r, s and v concatenated. V is parity set by v = 27 + (r % 2).
-  
-
-#### NewTransaction
-```python
-NewTransaction(self,
-From: str = None,
-to: str = None,
-nonce: int = None,
-value: int = None,
-data: str = None,
-gasPrice: int = None,
-gasLimit: int = None,
-hash: str = None,
-signature: str = None)
-```
-
-Unsent transaction. Use to send a new transaction.
-
-**Arguments**:
-
-- `From` _hex str_ - Address of the sender account.
-- `to` _hex str_ - Address of the receiver account. Left undefined for a contract creation transaction.
-- `value` _int_ - (optional) Value transferred in wei. The endowment for a contract creation transaction.
-- `data` _hex str_ - (optional) Either a ABI byte string containing the data of the function call on a contract, or in the case of a contract-creation transaction the initialisation code.
-- `gasPrice` _int_ - (optional) Price of gas in wei, defaults to in3.eth.gasPrice. Also know as `tx fee price`. Set your gas price too low and your transaction may get stuck. Set too high on your own loss.
-  gasLimit (int); (optional) Maximum gas paid for this transaction. Set by the client using this rationale if left empty: gasLimit = G(transaction) + G(txdatanonzero) × dataByteLength. Minimum is 21000.
-- `nonce` _int_ - (optional) Number of transactions mined from this address. Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1). It exists to mitigate replay attacks. This allows to overwrite your own pending transactions by sending a new one with the same nonce. Use in3.eth.account.get_transaction_count to get the latest value.
-- `hash` _hex str_ - (optional) Keccak of the transaction bytes, not part of the transaction. Also known as receipt, because this field is filled after the transaction is sent.
-- `signature` _hex str_ - (optional) ECDSA of transaction, r, s and v concatenated. V is parity set by v = 27 + (r % 2).
-  
-
-#### Filter
-```python
-Filter(self, fromBlock: int, toBlock: int, address: str, topics: list,
-blockhash: str)
-```
-
-Filters are event catchers running on the Ethereum Client. Incubed has a client-side implementation.
-An event will be stored in case it is within to and from blocks, or in the block of blockhash, contains a
-transaction to the designed address, and has a word listed on topics.
-
-
-#### Log
-```python
-Log(self, address: <built-in function hex>,
-blockHash: <built-in function hex>, blockNumber: int,
-data: <built-in function hex>, logIndex: int, removed: bool,
-topics: [<built-in function hex>],
-transactionHash: <built-in function hex>, transactionIndex: int,
-transactionLogIndex: int, Type: str)
-```
-
-Transaction Log for events and data returned from smart-contract method calls.
-
-
-#### TransactionReceipt
-```python
-TransactionReceipt(self,
-blockHash: <built-in function hex>,
-blockNumber: int,
-cumulativeGasUsed: int,
-From: str,
-gasUsed: int,
-logsBloom: <built-in function hex>,
-status: int,
-transactionHash: <built-in function hex>,
-transactionIndex: int,
-logs: [<class 'in3.eth.model.Log'>] = None,
-to: str = None,
-contractAddress: str = None)
-```
-
-Receipt from a mined transaction.
-
-**Arguments**:
-
-  blockHash:
-  blockNumber:
-- `cumulativeGasUsed` - total amount of gas used by block
-  From:
-- `gasUsed` - amount of gas used by this specific transaction
-  logs:
-  logsBloom:
-- `status` - 1 if transaction succeeded, 0 otherwise.
-  transactionHash:
-  transactionIndex:
-- `to` - Account to which this transaction was sent. If the transaction was a contract creation this value is set to None.
-- `contractAddress` - Contract Account address created, f the transaction was a contract creation, or None otherwise.
-  
-
-#### Account
-```python
-Account(self,
-address: str,
-chain_id: int,
-secret: int = None,
-domain: str = None)
-```
-
-An Ethereum account.
-
-**Arguments**:
-
-- `address` - Account address. Derived from public key.
-- `chain_id` - ID of the chain the account is used in.
-- `secret` - Account private key. A 256 bit number.
-- `domain` - ENS Domain name. ie. niceguy.eth
   
 
 
@@ -1090,7 +833,258 @@ Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3
 - `decoded_return_values` _tuple_ - "0x1234567890123456789012345678901234567890", "0x05"
   
 
-### Library Runtime
+
+
+
+### EthereumApi
+```python
+EthereumApi(self, runtime: In3Runtime)
+```
+
+Module based on Ethereum's api and web3.js
+
+
+#### keccak256
+```python
+EthereumApi.keccak256(message: str)
+```
+
+Keccak-256 digest of the given data. Compatible with Ethereum but not with SHA3-256.
+
+**Arguments**:
+
+- `message` _str_ - Message to be hashed.
+
+**Returns**:
+
+- `digest` _str_ - The message digest.
+  
+
+#### gas_price
+```python
+EthereumApi.gas_price()
+```
+
+The current gas price in Wei (1 ETH equals 1000000000000000000 Wei ).
+
+**Returns**:
+
+- `price` _int_ - minimum gas value for the transaction to be mined
+  
+
+#### block_number
+```python
+EthereumApi.block_number()
+```
+
+Returns the number of the most recent block the in3 network can collect signatures to verify.
+Can be changed by Client.Config.replaceLatestBlock.
+If you need the very latest block, change Client.Config.signatureCount to zero.
+
+**Returns**:
+
+  block_number (int) : Number of the most recent block
+  
+
+#### get_block_by_hash
+```python
+EthereumApi.get_block_by_hash(block_hash: str,
+get_full_block: bool = False)
+```
+
+Blocks can be identified by root hash of the block merkle tree (this), or sequential number in which it was mined (get_block_by_number).
+
+**Arguments**:
+
+- `block_hash` _str_ - Desired block hash
+- `get_full_block` _bool_ - If true, returns the full transaction objects, otherwise only its hashes.
+
+**Returns**:
+
+- `block` _Block_ - Desired block, if exists.
+  
+
+#### get_block_by_number
+```python
+EthereumApi.get_block_by_number(block_number: [<class 'int'>],
+get_full_block: bool = False)
+```
+
+Blocks can be identified by sequential number in which it was mined, or root hash of the block merkle tree (this) (get_block_by_hash).
+
+**Arguments**:
+
+- `block_number` _int or str_ - Desired block number integer or 'latest', 'earliest', 'pending'.
+- `get_full_block` _bool_ - If true, returns the full transaction objects, otherwise only its hashes.
+
+**Returns**:
+
+- `block` _Block_ - Desired block, if exists.
+  
+
+#### get_transaction_by_hash
+```python
+EthereumApi.get_transaction_by_hash(tx_hash: str)
+```
+
+Transactions can be identified by root hash of the transaction merkle tree (this) or by its position in the block transactions merkle tree.
+Every transaction hash is unique for the whole chain. Collision could in theory happen, chances are 67148E-63%.
+
+**Arguments**:
+
+- `tx_hash` - Transaction hash.
+
+**Returns**:
+
+- `transaction` - Desired transaction, if exists.
+  
+
+### Ethereum Objects
+
+
+#### DataTransferObject
+```python
+DataTransferObject()
+```
+
+Maps marshalling objects transferred to, and from a remote facade, in this case, libin3 rpc api.
+For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
+
+
+#### Transaction
+```python
+Transaction(self, From: str, to: str, gas: int, gasPrice: int, hash: str,
+nonce: int, transactionIndex: int, blockHash: str,
+value: int, input: str, publicKey: str, standardV: int,
+raw: str, creates: str, chainId: int, r: int, s: int,
+v: int)
+```
+
+**Arguments**:
+
+- `From` _hex str_ - Address of the sender account.
+- `to` _hex str_ - Address of the receiver account. Left undefined for a contract creation transaction.
+- `gas` _int_ - Gas for the transaction miners and execution in wei. Will get multiplied by `gasPrice`. Use in3.eth.account.estimate_gas to get a calculated value. Set too low and the transaction will run out of gas.
+- `value` _int_ - Value transferred in wei. The endowment for a contract creation transaction.
+- `data` _hex str_ - Either a ABI byte string containing the data of the function call on a contract, or in the case of a contract-creation transaction the initialisation code.
+- `gasPrice` _int_ - Price of gas in wei, defaults to in3.eth.gasPrice. Also know as `tx fee price`. Set your gas price too low and your transaction may get stuck. Set too high on your own loss.
+  gasLimit (int); Maximum gas paid for this transaction. Set by the client using this rationale if left empty: gasLimit = G(transaction) + G(txdatanonzero) × dataByteLength. Minimum is 21000.
+- `nonce` _int_ - Number of transactions mined from this address. Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1). It exists to mitigate replay attacks. This allows to overwrite your own pending transactions by sending a new one with the same nonce. Use in3.eth.account.get_transaction_count to get the latest value.
+- `hash` _hex str_ - Keccak of the transaction bytes, not part of the transaction. Also known as receipt, because this field is filled after the transaction is sent, by eth_sendTransaction
+- `blockHash` _hex str_ - Block hash that this transaction was mined in. null when its pending.
+- `blockHash` _int_ - Block number that this transaction was mined in. null when its pending.
+- `transactionIndex` _int_ - Integer of the transactions index position in the block. null when its pending.
+- `signature` _hex str_ - ECDSA of transaction.data, calculated r, s and v concatenated. V is parity set by v = 27 + (r % 2).
+  
+
+#### NewTransaction
+```python
+NewTransaction(self,
+From: str = None,
+to: str = None,
+nonce: int = None,
+value: int = None,
+data: str = None,
+gasPrice: int = None,
+gasLimit: int = None,
+hash: str = None,
+signature: str = None)
+```
+
+Unsent transaction. Use to send a new transaction.
+
+**Arguments**:
+
+- `From` _hex str_ - Address of the sender account.
+- `to` _hex str_ - Address of the receiver account. Left undefined for a contract creation transaction.
+- `value` _int_ - (optional) Value transferred in wei. The endowment for a contract creation transaction.
+- `data` _hex str_ - (optional) Either a ABI byte string containing the data of the function call on a contract, or in the case of a contract-creation transaction the initialisation code.
+- `gasPrice` _int_ - (optional) Price of gas in wei, defaults to in3.eth.gasPrice. Also know as `tx fee price`. Set your gas price too low and your transaction may get stuck. Set too high on your own loss.
+  gasLimit (int); (optional) Maximum gas paid for this transaction. Set by the client using this rationale if left empty: gasLimit = G(transaction) + G(txdatanonzero) × dataByteLength. Minimum is 21000.
+- `nonce` _int_ - (optional) Number of transactions mined from this address. Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1). It exists to mitigate replay attacks. This allows to overwrite your own pending transactions by sending a new one with the same nonce. Use in3.eth.account.get_transaction_count to get the latest value.
+- `hash` _hex str_ - (optional) Keccak of the transaction bytes, not part of the transaction. Also known as receipt, because this field is filled after the transaction is sent.
+- `signature` _hex str_ - (optional) ECDSA of transaction, r, s and v concatenated. V is parity set by v = 27 + (r % 2).
+  
+
+#### Filter
+```python
+Filter(self, fromBlock: int, toBlock: int, address: str, topics: list,
+blockhash: str)
+```
+
+Filters are event catchers running on the Ethereum Client. Incubed has a client-side implementation.
+An event will be stored in case it is within to and from blocks, or in the block of blockhash, contains a
+transaction to the designed address, and has a word listed on topics.
+
+
+#### Log
+```python
+Log(self, address: <built-in function hex>,
+blockHash: <built-in function hex>, blockNumber: int,
+data: <built-in function hex>, logIndex: int, removed: bool,
+topics: [<built-in function hex>],
+transactionHash: <built-in function hex>, transactionIndex: int,
+transactionLogIndex: int, Type: str)
+```
+
+Transaction Log for events and data returned from smart-contract method calls.
+
+
+#### TransactionReceipt
+```python
+TransactionReceipt(self,
+blockHash: <built-in function hex>,
+blockNumber: int,
+cumulativeGasUsed: int,
+From: str,
+gasUsed: int,
+logsBloom: <built-in function hex>,
+status: int,
+transactionHash: <built-in function hex>,
+transactionIndex: int,
+logs: [<class 'in3.eth.model.Log'>] = None,
+to: str = None,
+contractAddress: str = None)
+```
+
+Receipt from a mined transaction.
+
+**Arguments**:
+
+  blockHash:
+  blockNumber:
+- `cumulativeGasUsed` - total amount of gas used by block
+  From:
+- `gasUsed` - amount of gas used by this specific transaction
+  logs:
+  logsBloom:
+- `status` - 1 if transaction succeeded, 0 otherwise.
+  transactionHash:
+  transactionIndex:
+- `to` - Account to which this transaction was sent. If the transaction was a contract creation this value is set to None.
+- `contractAddress` - Contract Account address created, f the transaction was a contract creation, or None otherwise.
+  
+
+#### Account
+```python
+Account(self,
+address: str,
+chain_id: int,
+secret: int = None,
+domain: str = None)
+```
+
+An Ethereum account.
+
+**Arguments**:
+
+- `address` - Account address. Derived from public key.
+- `chain_id` - ID of the chain the account is used in.
+- `secret` - Account private key. A 256 bit number.
+- `domain` - ENS Domain name. ie. niceguy.eth
+  
+
+## Library Runtime
 
 Shared Library Runtime module
 
@@ -1102,7 +1096,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x10619b560>)
+transport: <function CFUNCTYPE at 0x10d08e560>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1112,7 +1106,7 @@ Instantiate libin3 and frees it when garbage collected.
 - `chain_id` _int_ - Chain-id based on EIP-155. If None provided, will connect to the Ethereum network. i.e: 0x1 for mainNet
   
 
-
+### Library Loader
 
 Load libin3 shared library for the current system, map function ABI, sets in3 network transport functions.
 
@@ -1130,7 +1124,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10619b560>,
+transport: <function CFUNCTYPE at 0x10d08e560>,
 debug=False)
 ```
 
