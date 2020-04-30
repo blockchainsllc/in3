@@ -59,12 +59,7 @@ impl Ctx {
         println!(" \n");
     }
 
-    pub unsafe fn sign(
-        &mut self,
-        type_: Signature,
-        data: *const c_char,
-        len: usize,
-    ) -> *const c_char {
+    pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char, len: usize) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
         // let len = strlen(data) as u32;
         // let len = 32;
@@ -111,8 +106,8 @@ impl Ctx {
         // }
         // println!(" signature {}", sign_str);
         // sign_str
-        let sign_ptr = dst as *const c_char;
-        sign_ptr
+        // let sign_ptr = dst as *const c_char;
+        dst
     }
     pub fn decode_hex(&mut self, s: &str) -> Result<Vec<u8>, ParseIntError> {
         (0..s.len())
@@ -182,7 +177,8 @@ impl Ctx {
                     // let data_hex = self.decode_hex(data_str).unwrap();
                     let c_data = data_hex.as_ptr() as *const c_char;
 
-                    let res_str: *const c_char = self.sign(Signature::Hash, c_data, data_hex.len());
+                    let data_sig: *mut u8 = self.sign(Signature::Hash, c_data, data_hex.len());
+                    let res_str = data_sig as *const c_char;
                     // let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
                     // let c_data: *const c_char = c_str_data.as_ptr();
                     in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);

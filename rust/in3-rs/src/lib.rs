@@ -12,4 +12,5 @@ pub mod prelude {
     pub use crate::traits::Api as ApiTrait;
     pub use crate::traits::Client as ClientTrait;
     pub use crate::traits::{Storage, Transport};
+    pub use crate::transport::{HttpTransport, MockTransport};
 }
