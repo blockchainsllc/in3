@@ -5,7 +5,7 @@ namespace In3.Native
 {
     internal class NativeStorageHandler
     {
-        private DefaultNativeWrapper wrapper;
+        private NativeWrapper Wrapper;
 
         private static in3_storage_get_item GetItemDel { get; set; }
         private static in3_storage_set_item SetItemDel { get; set; }
@@ -23,9 +23,9 @@ namespace In3.Native
             public IntPtr cptr;
         }
 
-        public NativeStorageHandler(DefaultNativeWrapper wrapper)
+        public NativeStorageHandler(NativeWrapper wrapper)
         {
-            this.wrapper = wrapper;
+            Wrapper = wrapper;
         }
 
         public void RegisterNativeHandler()
@@ -38,7 +38,7 @@ namespace In3.Native
             storageHandler.get_item = GetItemDel;
             storageHandler.set_item = SetItemDel;
             storageHandler.clear = ClearDel;
-            storageHandler.cptr = wrapper.Ptr;
+            storageHandler.cptr = Wrapper.NativeClientPointer;
 
             IntPtr myStructPtr = Marshal.AllocHGlobal(Marshal.SizeOf<in3_storage_handler_t>()); // Allocate unmanaged memory for the struct
             Marshal.StructureToPtr(storageHandler, myStructPtr, false);
@@ -47,17 +47,17 @@ namespace In3.Native
 
         private byte[] GetItem(IntPtr ignored, string key)
         {
-            return wrapper.client.Storage.GetItem(key);
+            return Wrapper.Client.Storage.GetItem(key);
         }
 
         private void SetItem(IntPtr ignored, string key, [MarshalAs(UnmanagedType.LPArray)] byte[] content)
         {
-            wrapper.client.Storage.SetItem(key, content);
+            Wrapper.Client.Storage.SetItem(key, content);
         }
 
         private bool Clear(IntPtr ignored)
         {
-            return wrapper.client.Storage.Clear();
+            return Wrapper.Client.Storage.Clear();
         }
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_set_default_storage(IntPtr cacheStorage);

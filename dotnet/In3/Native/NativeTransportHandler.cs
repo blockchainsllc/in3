@@ -6,7 +6,7 @@ namespace In3.Native
     internal class NativeTransportHandler
     {
         private static TransportHandler TransportDel { get; set; }
-        private DefaultNativeWrapper wrapper { get; set; }
+        private NativeWrapper Wrapper { get; set; }
 
         // structs
         enum ErrorCode : int
@@ -28,9 +28,9 @@ namespace In3.Native
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Ansi)] private delegate int TransportHandler(ref in3_request_t ptr1);
 
-        public NativeTransportHandler(DefaultNativeWrapper wrapper)
+        public NativeTransportHandler(NativeWrapper wrapper)
         {
-            this.wrapper = wrapper;
+            Wrapper = wrapper;
         }
 
         public void RegisterNativeHandler()
@@ -47,7 +47,7 @@ namespace In3.Native
             {
                 try
                 {
-                    string result = wrapper.client.Transport.Handle(urls[i], req.payload);
+                    string result = Wrapper.Client.Transport.Handle(urls[i], req.payload);
                     in3_req_add_response(req.results, i, false, result, result.Length);
                 }
                 catch (Exception ex)

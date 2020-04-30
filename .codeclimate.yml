@@ -17,13 +17,32 @@ plugins:
     enabled: true
   fixme:
     enabled: true
+checks:
+  argument-count:
+    config:
+      threshold: 7
+  file-lines:
+    config:
+      threshold: 400
+  method-complexity:
+    config:
+      threshold: 25
+  method-lines:
+    config:
+      threshold: 70
+  return-statements:
+    config:
+      threshold: 10
+  method-count:
+    config:
+      threshold: 40
 exclude_patterns:
   - config/
   - db/
   - dist/
   - features/
   - "**/node_modules/"
-  - script/
+  - scripts/
   - "**/spec/"
   - "**/test/"
   - "**/tests/"

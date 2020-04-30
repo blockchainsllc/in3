@@ -10,7 +10,7 @@ namespace In3.Utils
         public static T From<T>(string json)
         {
             var serializeOptions = new JsonSerializerOptions();
-            serializeOptions.Converters.Add(new CustomIntFromHexConverter());
+            serializeOptions.Converters.Add(new IntFromHexConverter());
             serializeOptions.Converters.Add(new CustomLongFromHexConverter());
             serializeOptions.Converters.Add(new CustomBigIntegerFromHexConverter());
             Response<T> response = JsonSerializer.Deserialize<Response<T>>(json);
