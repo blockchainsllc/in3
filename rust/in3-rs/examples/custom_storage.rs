@@ -7,7 +7,7 @@ use async_std::task;
 use in3::prelude::*;
 
 struct FsStorage<'a> {
-    dir: &'a str
+    dir: &'a str,
 }
 
 impl FsStorage<'_> {

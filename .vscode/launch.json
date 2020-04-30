@@ -90,6 +90,20 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "run tx example",
+            "program": "${workspaceFolder}/c/examples/send_transaction",
+            "cwd": "${workspaceFolder}/c/examples"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "run sign test",
+            "program": "${workspaceFolder}/build/test/test_sign",
+            "cwd": "${workspaceFolder}/build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "run abi test",
             "program": "${workspaceFolder}/build/test/test_cache",
             "cwd": "${workspaceFolder}/build"
