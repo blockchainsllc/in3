@@ -78,13 +78,13 @@ class EthObjectFactory:
     def get_transaction(self, serialized: dict) -> Transaction:
         mapping = {
             "blockHash": self.get_hash,
-            # "from": self.get_account,
+            # "from": self.get_address,
             "gas": self.get_integer,
             "gasPrice": self.get_integer,
             "hash": self.get_hash,
             "input": str,
             "nonce": self.get_integer,
-            "to": self.get_account,
+            "to": self.get_address,
             "transactionIndex": self.get_integer,
             "value": self.get_integer,
             "raw": str,
@@ -97,31 +97,31 @@ class EthObjectFactory:
             "s": self.get_integer
         }
         aux = self._deserialize(serialized, mapping)
-        aux["From"] = self.get_account(serialized["from"])
+        aux["From"] = self.get_address(serialized["from"])
         return Transaction(**aux)
 
     def get_tx_receipt(self, serialized: dict) -> TransactionReceipt:
         mapping = {
             'blockHash': self.get_hash,
             'blockNumber': self.get_integer,
-            'contractAddress': self.get_account if serialized['contractAddress'] else None,
+            'contractAddress': self.get_address if serialized['contractAddress'] else None,
             'cumulativeGasUsed': self.get_integer,
             'gasUsed': self.get_integer,
             'logsBloom': str,
             'status': self.get_integer,
-            'to': self.get_account if serialized['to'] else None,
+            'to': self.get_address if serialized['to'] else None,
             'transactionHash': self.get_hash,
             'transactionIndex': self.get_integer
         }
         obj = self._deserialize(serialized, mapping)
-        obj["From"] = self.get_account(serialized["from"])
+        obj["From"] = self.get_address(serialized["from"])
         if serialized["logs"] is not None and len(serialized["logs"]) > 0:
             obj["logs"] = [self.get_log(log) for log in serialized["logs"]]
         return TransactionReceipt(**obj)
 
     def get_log(self, serialized: dict) -> Log:
         mapping = {
-            'address': self.get_account,
+            'address': self.get_address,
             'blockHash': self.get_integer,
             'blockNumber': self.get_integer,
             'data': str,
@@ -146,11 +146,14 @@ class EthObjectFactory:
             raise HashFormatException("Hash size is not of an Ethereum hash.")
         return hash_str
 
-    def get_account(self, address: str, secret: int = None) -> Account:
+    def get_address(self, address: str) -> str:
         if not address.startswith("0x"):
             raise EthAddressFormatException("Ethereum addresses start with 0x")
         if len(address.encode("utf-8")) != 42:
             raise EthAddressFormatException("The string don't have the size of an Ethereum address.")
         if self.checksum_address(address, False) != address:
             address = self.checksum_address(address, False)
-        return Account(address.replace('\'', '"'), self._runtime.chain_id, secret)
+        return address.replace('\'', '"')
+
+    def get_account(self, address: str, secret: int = None) -> Account:
+        return Account(self.get_address(address), self._runtime.chain_id, secret)

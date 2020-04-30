@@ -9,6 +9,7 @@ class SimpleEnum(enum.Enum):
     """
     Abstract stringify enum class
     """
+
     def __str__(self):
         return self.value
 

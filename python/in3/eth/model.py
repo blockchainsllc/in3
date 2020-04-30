@@ -11,15 +11,15 @@ class DataTransferObject:
     For more on design-patterns see [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
     """
 
-    def _to_dict(self, int_to_hex: bool = False) -> dict:
+    def to_dict(self, int_to_hex: bool = False) -> dict:
         dictionary = {k: v for k, v in self.__dict__.items() if v is not None}
         if int_to_hex:
             integers = {k: hex(v) for k, v in dictionary.items() if isinstance(v, int)}
             dictionary.update(integers)
         return dictionary
 
-    def serialize(self) -> dict:
-        return json.dumps(self._to_dict())
+    def serialize(self) -> str:
+        return json.dumps(self.to_dict())
 
 
 class Transaction(DataTransferObject):
@@ -92,7 +92,7 @@ class NewTransaction(DataTransferObject):
         super().__init__()
 
     def serialize(self) -> dict:
-        dictionary = self._to_dict(int_to_hex=True)
+        dictionary = self.to_dict(int_to_hex=True)
         if 'From' in dictionary:
             del dictionary['From']
             dictionary['from'] = self.From

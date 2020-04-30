@@ -1,3 +1,6 @@
+"""
+Shows Incubed Network Nodes Stats
+"""
 import in3
 
 print('\nEthereum Goerli Test Network')
@@ -16,7 +19,7 @@ for node in node_list.nodes:
     print('\tregistered in block:', node.registerTime)
     print('\n')
 
-# Results Example
+# Produces
 """
 Ethereum Goerli Test Network
 

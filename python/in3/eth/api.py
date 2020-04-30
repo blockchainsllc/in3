@@ -67,7 +67,7 @@ class EthereumApi:
         Returns:
             block (Block): Desired block, if exists.
         """
-        if isinstance(block_number, str) and not block_number.upper() in [e.value for e in BlockAt]:
+        if isinstance(block_number, str) and not block_number.upper() in [str(e) for e in BlockAt]:
             raise AssertionError('Block number must be an integer.')
         serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_NUMBER, hex(block_number), get_full_block)
         return self._factory.get_block(serialized)

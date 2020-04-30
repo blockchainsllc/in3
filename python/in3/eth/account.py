@@ -2,6 +2,7 @@ import random
 
 from in3.eth.factory import EthObjectFactory
 from in3.eth.model import NewTransaction, TransactionReceipt, Account
+from in3.exception import PrivateKeyNotFoundException
 from in3.libin3.enum import EthMethods, BlockAt, In3Methods
 from in3.libin3.runtime import In3Runtime
 
@@ -43,6 +44,8 @@ class EthAccountApi:
         Returns:
             account (Account): Recovered Ethereum account.
         """
+        if not secret or not len(secret) == 66:
+            raise PrivateKeyNotFoundException('Please provide account secret.')
         return self._create_account(secret)
 
     def parse_mnemonics(self, mnemonics: str) -> str:

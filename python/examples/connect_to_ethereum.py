@@ -1,3 +1,6 @@
+"""
+Connects to Ethereum and fetches attested information from each chain.
+"""
 import in3
 
 
@@ -19,7 +22,7 @@ latest_block = client.eth.block_number()
 gas_price = client.eth.gas_price()
 print('Latest BN: {}\nGas Price: {} Wei'.format(latest_block, gas_price))
 
-# Results Example
+# Produces
 """
 Ethereum Main Network
 Latest BN: 9801135
