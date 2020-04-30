@@ -79,9 +79,15 @@ gcc8-x86:
     CONAN_OPTS: "-DJAVA=true"
     BUILD: "x86_build"
 
+# Note:
+# Following job builds IN3 without CURL using an older compiler
+# (required for Rust cross compilation)
 gcc5:
   image: docker.slock.it/build-images/cmake:gcc5
   extends: .conanbuild
+  variables:
+    CONAN_OPTS: "-DUSE_CURL=false"
+    BUILD: "gcc5_rust"
 
 clang50:
   image: docker.slock.it/build-images/cmake:clang50
