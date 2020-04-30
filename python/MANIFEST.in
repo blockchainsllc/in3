@@ -1,2 +1,2 @@
 include readme.md
-include in3/bind/slibs/*
+include in3/libin3/shared/*

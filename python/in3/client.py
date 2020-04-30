@@ -1,9 +1,9 @@
-from in3.eth.factory import EthObjectFactory
-from in3.eth.model import RawTransaction
-from in3.libin3.runtime import In3Runtime
-from in3.libin3.enum import Chain, In3Methods
 from in3.eth.api import EthereumApi
-from in3.model import In3Node, NodeList, ClientConfig
+from in3.eth.factory import EthObjectFactory
+from in3.libin3.enum import In3Methods
+from in3.libin3.runtime import In3Runtime
+from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_configs
+from in3.transport import http_transport
 
 
 class Client:
@@ -15,81 +15,67 @@ class Client:
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
     """
 
-    def __init__(self, in3_config: ClientConfig or str = None):
-        super().__init__()
-        if isinstance(in3_config, ClientConfig):
-            self.config = in3_config
-        elif isinstance(in3_config, str):
-            chain = next((item for item in Chain if item.value['alias'] == in3_config), False)
-            if not chain:
-                raise ValueError('Chain name not supported. Try mainnet, goerli or kovan')
-            self.config = ClientConfig(chainId=str(chain))
-        else:
-            self.config = ClientConfig()
-        self._runtime = In3Runtime(self.config.timeout)
-        self._configure(in3_config=self.config)
-        self.eth = EthereumApi(runtime=self._runtime, chain_id=self.config.chainId)
-        self._factory = In3ObjectFactory(self.eth.account.checksum_address, self.config.chainId)
+    def __init__(self, chain: str or ChainConfig = 'mainnet',
+                 in3_config: ClientConfig = None, transport=http_transport):
 
-    def _configure(self, in3_config: ClientConfig):
-        return self._runtime.call(In3Methods.CONFIG, in3_config.to_dict())
+        config = in3_config
+        if isinstance(chain, ChainConfig):
+            config = chain.client_config
+        elif not isinstance(chain, str) or chain not in ['mainnet', 'kovan', 'goerli']:
+            raise ValueError('Chain name not supported. Try mainnet, kovan, goerli.')
 
-    def node_list(self) -> NodeList:
+        self._runtime = In3Runtime(chain_configs[chain].chain_id, transport)
+        if config:
+            # TODO: Chain_configs
+            self._configure(config)
+        # TODO: getConfig
+        self.eth = EthereumApi(self._runtime)
+        self._factory = In3ObjectFactory(self._runtime)
+
+    def _configure(self, in3_config: ClientConfig) -> bool:
+        """
+        Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
+        """
+        fn_args = str([in3_config.serialize()]).replace('\'', '')
+        return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
+
+    def get_node_list(self) -> NodeList:
         """
         Gets the list of Incubed nodes registered in the selected chain registry contract.
         Returns:
             node_list (NodeList): List of registered in3 nodes and metadata.
         """
-        node_list_dict = self._runtime.call(In3Methods.IN3_NODE_LIST)
+        node_list_dict = self._runtime.call(In3Methods.NODE_LIST)
         return self._factory.get_node_list(node_list_dict)
 
-    def abi_encode(self, fn_signature: str, *fn_args) -> str:
-        """
-        Smart-contract ABI encoder. Used to serialize a rpc to the EVM.
-        Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html)
-        Note: Parameters refers to the list of variables in a method declaration.
-        Arguments are the actual values that are passed in when the method is invoked.
-        When you invoke a method, the arguments used must match the declaration's parameters in type and order.
-        Args:
-            fn_signature (str): Function name, with parameters. i.e. `getBalance(uint256):uint256`, can contain the return types but will be ignored.
-            fn_args (tuple): Function parameters, in the same order as in passed on to method_name.
-        Returns:
-            encoded_fn_call (str): i.e. "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
-        """
-        # TODO: Smart-Contract Api
-        return self._runtime.call(In3Methods.ABI_ENCODE, fn_signature, fn_args)
+    def get_config(self) -> dict:
+        # TODO: Marshalling
+        return self._runtime.call(In3Methods.GET_CONFIG)
 
-    def abi_decode(self, fn_return_types: str, encoded_values: str) -> tuple:
+    def raw_configure(self, cfg_dict: dict) -> bool:
         """
-        Smart-contract ABI decoder. Used to parse rpc responses from the EVM.
-        Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html)
-        Args:
-            fn_return_types: Function return types. e.g. `uint256`, `(address,string,uint256)` or `getBalance(address):uint256`.
-            In case of the latter, the function signature will be ignored and only the return types will be parsed.
-            encoded_values: Abi encoded values. Usually the string returned from a rpc to the EVM.
-        Returns:
-            decoded_return_values (tuple):  "0x1234567890123456789012345678901234567890", "0x05"
+        Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
         """
-        # TODO: Smart-Contract Api
-        return self._runtime.call(In3Methods.ABI_DECODE, fn_return_types, encoded_values)
+        import json
+        fn_args = str([json.dumps(cfg_dict)]).replace('\'', '')
+        return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
-    def call(self, transaction: RawTransaction, block_number: int or str) -> int or str:
+    def ens_resolve(self, domain_name: str, domain_type: str, registry: str = None) -> ClientConfig:
         """
-        Calls a smart-contract method that does not store the computation. Will be executed locally by Incubed's EVM.
-        curl localhost:8545 -X POST --data '{"jsonrpc":"2.0", "method":"eth_call", "params":[{"from": "eth.accounts[0]", "to": "0x65da172d668fbaeb1f60e206204c2327400665fd", "data": "0x6ffa1caa0000000000000000000000000000000000000000000000000000000000000005"}, "latest"], "id":1}'
-        Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
+        Resolves ENS domain name to Ethereum address.
         Args:
-            transaction (RawTransaction):
-            block_number (int or str):  Desired block number integer or 'latest', 'earliest', 'pending'.
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            domain_type: 'hash'|'addr'|'owner'|'resolver'
+            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
         Returns:
-            method_returned_value: A hexadecimal. For decoding use in3.abi_decode.
+            address (str): Ethereum address corresponding to domain name.
         """
-        # different than eth_call
-        # eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
-        return self._runtime.call(In3Methods.CALL, transaction, block_number)
-
-    # TODO add eth_set_pk_signer
-    # TODO add sign_tx
+        # TODO: Add handlers to Account
+        # TODO: Add serialization in account factory
+        """
+          "currently only 'hash','addr','owner' or 'resolver' are allowed as type
+        """
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, domain_type, registry)
 
 
 class In3ObjectFactory(EthObjectFactory):
@@ -99,7 +85,7 @@ class In3ObjectFactory(EthObjectFactory):
     def get_node_list(self, serialized: dict) -> NodeList:
         mapping = {
             "nodes": list,
-            "contract": self.get_address,
+            "contract": self.get_account,
             "registryId": str,
             "lastBlockNumber": int,
             "totalServers": int,
@@ -112,7 +98,7 @@ class In3ObjectFactory(EthObjectFactory):
     def get_in3node(self, serialized: dict) -> In3Node:
         mapping = {
             "url": str,
-            "address": self.get_address,
+            "address": self.get_account,
             "index": int,
             "deposit": self.get_integer,
             "props": str,

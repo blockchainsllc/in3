@@ -1,4 +1,14 @@
+# Examples
 
+
+-  [connect_to_ethereum](./connect_to_ethereum.py)
+   
+-  [incubed_network](./incubed_network.py)
+   
+-  [resolve_eth_names](./resolve_eth_names.py)
+   
+-  [send_transaction](./send_transaction.py)
+   
 ### Running the examples
 
 To run an example, you need to install in3 first:
