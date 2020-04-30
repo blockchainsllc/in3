@@ -17,7 +17,6 @@ static void send_tx_api(in3_t* in3);
 int main() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
 
   // convert the hexstring to bytes
   bytes32_t pk;
@@ -27,7 +26,7 @@ int main() {
   eth_set_pk_signer(in3, pk);
 
   // send tx using raw RPC call
-  // send_tx_rpc(in3);
+  send_tx_rpc(in3);
 
   // send tx using API
   send_tx_api(in3);
@@ -70,7 +69,7 @@ void send_tx_api(in3_t* in3) {
   bytes_t* data = hex_to_new_bytes("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", 82);
 
   // send the tx
-  bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_VALUE(uint64_t, 0x0));
+  bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_UNDEFINED(uint64_t));
 
   // if the result is null there was an error and we can get the latest error message from eth_last_error()
   if (!tx_hash)
