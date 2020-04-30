@@ -56,43 +56,6 @@ impl Ctx {
         signer::sign(pk, type_, data, len)
     }
 
-    // pub unsafe fn sign(&mut self, type_: Signature, data: *const c_char, len: usize) -> *mut u8 {
-    //     let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-    //     // let len = strlen(data) as u32;
-    //     // let len = 32;
-    //     let data_ = data as *mut u8;
-    //     // self.debug_pointer(data_, len);
-    //     // self.debug_pointer(pk, 65);
-    //     let dst: *mut u8 = libc::malloc(65) as *mut u8;
-    //     // let pby = *dst.offset(64) as *mut u8;
-    //     let pby = dst.offset(64) as *mut u8;
-    //     let curve = in3_sys::secp256k1;
-    //     match type_ {
-    //         Signature::Raw => {
-    //             let error = in3_sys::ecdsa_sign_digest(&curve, pk, data_, dst, pby, None);
-    //             if error < 0 {
-    //                 panic!("Sign error{:?}", error);
-    //             }
-    //         }
-    //         Signature::Hash => {
-    //             let error = in3_sys::ecdsa_sign(
-    //                 &curve,
-    //                 in3_sys::HasherType::HASHER_SHA3K,
-    //                 pk,
-    //                 data_,
-    //                 len as u32,
-    //                 dst,
-    //                 pby,
-    //                 None,
-    //             );
-    //             if error < 0 {
-    //                 panic!("Sign error{:?}", error);
-    //             }
-    //         }
-    //     }
-    //     *dst.offset(64) += 27;
-    //     dst
-    // }
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
         let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
@@ -148,16 +111,10 @@ impl Ctx {
                     let slice = CStr::from_ptr(item_).to_str().unwrap();
                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
                     let data_str = &request["params"][0].as_str().unwrap()[2..];
-                    println!("{:?}", data_str);
-                    // let data_hex = data_str.as_bytes().to_hex();
                     let data_hex = data_str.from_hex().unwrap();
-                    // let data_hex = self.decode_hex(data_str).unwrap();
                     let c_data = data_hex.as_ptr() as *const c_char;
-
                     let data_sig: *mut u8 = self.sign(SignatureType::Hash, c_data, data_hex.len());
                     let res_str = data_sig as *const c_char;
-                    // let c_str_data = CString::new(res_str.as_str()).unwrap(); // from a &str, creates a new allocation
-                    // let c_data: *const c_char = c_str_data.as_ptr();
                     in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
                     in3_sys::sb_add_range(
                         &mut (*(*last_waiting).raw_response.offset(0)).result,
@@ -165,7 +122,6 @@ impl Ctx {
                         0,
                         65,
                     );
-                    // let data = ffi::CStr::from_ptr(c_data).to_str().unwrap();
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let req = in3_sys::in3_create_request(last_waiting);
@@ -206,9 +162,7 @@ impl Ctx {
                     let len = result.len;
                     if len != 0 {
                         let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                        // println!("DATA -- > {}", data);
                         return Err(Error::TryAgain);
-                    // return Ok(data.to_string());
                     } else {
                         let error = (*(*req).results.offset(0)).error;
                         let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
@@ -238,7 +192,6 @@ impl ClientTrait for Client {
         let mut ctx = Ctx::new(self, call);
         loop {
             let res = unsafe { ctx.execute().await };
-            println!("EXECUTE returned  {:?}", res);
             if res != Err(Error::TryAgain) {
                 return res;
             }
@@ -298,15 +251,9 @@ impl ClientTrait for Client {
         unsafe {
             let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
             let c_data: *const c_char = c_str_data.as_ptr();
-            //TODO: please correct strlen
             let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
             let len: i32 = -1;
             in3_sys::hex_to_bytes(c_data, len, out, 32);
-            let data_ = std::slice::from_raw_parts_mut(out, 32 as usize);
-            for byte in data_ {
-                print!("{:x}", byte);
-            }
-            println!("\n");
             out
         }
     }
@@ -314,14 +261,9 @@ impl ClientTrait for Client {
         unsafe {
             let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
             let data_ptr = c_str_data.as_ptr();
-            // let len = strlen(data_ptr) as i32;
             let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
             let data_ = (*data).data;
             let out = std::slice::from_raw_parts_mut(data_, len);
-            for byte in out {
-                print!("{:x}", byte);
-            }
-            println!("\n   data out was \n");
             data_
         }
     }

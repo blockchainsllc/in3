@@ -37,7 +37,6 @@ fn sign() {
         let pk = "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
         //Message to sign
         let msg = "9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465";
-        //Config in3 api client
         // decode Hex msg
         let msg_hex = msg.from_hex().unwrap();
         let raw_msg_ptr = msg_hex.as_ptr() as *const c_char;
@@ -56,6 +55,7 @@ fn sign() {
 }
 
 fn sign_tx_api() {
+    //Config in3 api client
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
     let responses = vec![
         (
@@ -107,6 +107,7 @@ fn sign_tx_api() {
 }
 
 fn sign_tx_rpc() {
+    //Config in3 api client
     let mut c = Client::new(chain::MAINNET);
     let _ = c.configure(
         r#"{"proof":"none","autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
@@ -144,7 +145,7 @@ fn sign_tx_rpc() {
     };
     let req_str = serde_json::to_string(&rpc_req).unwrap();
     match task::block_on(c.rpc(&req_str)) {
-        Ok(res) => println!("FINAL RPC RESPONSE > {:?}, {:?}\n\n", req_str, res),
+        Ok(res) => println!("RESPONSE > {:?}, {:?}\n\n", req_str, res),
         Err(err) => println!("Failed with error: {}\n\n", err),
     }
 }
