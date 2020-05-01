@@ -80,6 +80,7 @@ rust_multiarch:
       && cargo install --path . --force
   script:
     - cd rust/
+    - mkdir -p target/native
     - cp ../arm_jni_build/lib/libin3.a target/native/libin3_armv7-unknown-linux-gnueabihf.a
     - cp ../win_jni/lib/libin3.a target/native/libin3_x86_64-pc-windows-gnu.a
     - cp ../gcc_legacy/lib/libin3.a target/native/libin3_x86_64-unknown-linux-gnu.a
