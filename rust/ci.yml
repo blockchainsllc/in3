@@ -80,6 +80,7 @@ rust_multiarch:
     - cd cross-master/
     - cargo build
     - cargo install --path . --force
+    - cd ..
   script:
     - cd rust/
     - mkdir -p target/native
