@@ -75,9 +75,11 @@ rust_multiarch:
     - short-jobs
   before_script:
     - sudo apt-get update && sudo apt-get install -y --no-install-recommends docker.io
-    - wget https://github.com/rust-embedded/cross/archive/master.zip \
-      && unzip master.zip && cd cross-master/ && cargo build \
-      && cargo install --path . --force
+    - wget https://github.com/rust-embedded/cross/archive/master.zip
+    - unzip master.zip
+    - cd cross-master/
+    - cargo build
+    - cargo install --path . --force
   script:
     - cd rust/
     - mkdir -p target/native
