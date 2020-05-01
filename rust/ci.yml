@@ -74,7 +74,7 @@ rust_multiarch:
   tags:
     - short-jobs
   before_script:
-    - sudo apt-get update && sudo apt-get install -y --no-install-recommends docker.io
+    - sudo apt-get update && sudo apt-get install -y --no-install-recommends docker.io unzip
     - wget https://github.com/rust-embedded/cross/archive/master.zip
     - unzip master.zip
     - cd cross-master/
