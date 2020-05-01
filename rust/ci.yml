@@ -63,7 +63,7 @@ examples_rust:
     - cargo build --examples --features=blocking
 
 # TODO: don't build cross from master once release >v0.2.0 is out
-rust_cross:
+rust_multiarch:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
   extends: .only_rust
