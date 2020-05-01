@@ -21,6 +21,8 @@ rust:
     - rm -rf *
     - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
     - make -j8
+    - mkdir -p ../rust/target/native
+    - cp lib/libin3.a ../rust/target/native/libin3_x86_64-unknown-linux-gnu.a
     - cd ../rust/
     - cargo clean
     - export UPDATE_IN3_BINDINGS=1
