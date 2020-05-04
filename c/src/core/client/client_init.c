@@ -532,6 +532,101 @@ static inline bool is_hex_str(const char* str) {
   return str[strspn(str, "0123456789abcdefABCDEF")] == 0;
 }
 
+static void add_prop(sb_t* sb, char prefix, const char* property) {
+  sb_add_char(sb, prefix);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, property);
+  sb_add_chars(sb, "\":");
+}
+static void add_bool(sb_t* sb, char prefix, const char* property, bool value) {
+  add_prop(sb, prefix, property);
+  sb_add_chars(sb, value ? "true" : "false");
+}
+static void add_string(sb_t* sb, char prefix, const char* property, const char* value) {
+  add_prop(sb, prefix, property);
+  sb_add_char(sb, '"');
+  sb_add_chars(sb, value);
+  sb_add_char(sb, '"');
+}
+
+static void add_uint(sb_t* sb, char prefix, const char* property, uint64_t value) {
+  add_prop(sb, prefix, property);
+  char tmp[16];
+  sprintf(tmp, "%u", (uint32_t) value);
+  sb_add_chars(sb, tmp);
+}
+
+static void add_hex(sb_t* sb, char prefix, const char* property, bytes_t value) {
+  add_prop(sb, prefix, property);
+  sb_add_bytes(sb, NULL, &value, 1, false);
+}
+
+char* in3_get_config(in3_t* c) {
+  sb_t*        sb    = sb_new("");
+  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+  add_bool(sb, '{', "autoUpdateList", c->flags & FLAGS_AUTO_UPDATE_LIST);
+  add_uint(sb, ',', "chainId", c->chain_id);
+  add_uint(sb, ',', "signatureCount", c->signature_count);
+  add_uint(sb, ',', "finality", c->finality);
+  add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
+  add_uint(sb, ',', "maxAttempts", c->max_attempts);
+  add_bool(sb, ',', "keepIn3", c->flags & FLAGS_KEEP_IN3);
+  add_bool(sb, ',', "stats", c->flags & FLAGS_STATS);
+  add_bool(sb, ',', "useBinary", c->flags & FLAGS_BINARY);
+  add_bool(sb, ',', "useHttp", c->flags & FLAGS_HTTP);
+  add_uint(sb, ',', "maxBlockCache", c->max_block_cache);
+  add_uint(sb, ',', "maxCodeCache", c->max_code_cache);
+  add_uint(sb, ',', "maxVerifiedHashes", c->max_verified_hashes);
+  add_uint(sb, ',', "timeout", c->timeout);
+  add_uint(sb, ',', "minDeposit", c->min_deposit);
+  add_uint(sb, ',', "nodeProps", c->node_props);
+  add_uint(sb, ',', "nodeLimit", c->node_limit);
+  add_string(sb, ',', "proof", (c->proof == PROOF_NONE) ? "none" : (c->proof == PROOF_STANDARD ? "standard" : "full"));
+  if (c->key)
+    add_hex(sb, ',', "key", bytes(c->key, 32));
+  if (c->replace_latest_block)
+    add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
+  add_uint(sb, ',', "requestCount", c->request_count);
+  if (c->chain_id == ETH_CHAIN_ID_LOCAL)
+    add_string(sb, ',', "rpc", chain->nodelist->url);
+
+  sb_add_chars(sb, ",\"nodes\":{");
+  for (int i = 0; i < c->chains_length; i++) {
+    chain = c->chains + i;
+    if (i) sb_add_char(sb, ',');
+    sb_add_char(sb, '"');
+    sb_add_hexuint(sb, chain->chain_id);
+    sb_add_chars(sb, "\":");
+    add_hex(sb, '{', "contract", *chain->contract);
+    if (chain->whitelist)
+      add_hex(sb, ',', "whiteListContract", bytes(chain->whitelist->contract, 20));
+    add_hex(sb, ',', "registryId", bytes(chain->registry_id, 32));
+    add_bool(sb, ',', "needsUpdate", chain->nodelist_upd8_params != NULL);
+    add_uint(sb, ',', "avgBlockTime", chain->avg_block_time);
+    sb_add_chars(sb, ",\"nodeList\":[");
+    for (int j = 0; j < chain->nodelist_length; j++) {
+      if ((chain->nodelist[j].attrs & ATTR_BOOT_NODE) == 0) continue;
+      if (sb->data[sb->len - 1] != '[') sb_add_char(sb, ',');
+      add_string(sb, '{', "url", chain->nodelist[j].url);
+      add_uint(sb, ',', "props", chain->nodelist[j].props);
+      add_hex(sb, ',', "address", *(chain->nodelist[j].address));
+      sb_add_char(sb, '}');
+    }
+    if (sb->data[sb->len - 1] == '[') {
+      sb->len -= 13;
+      sb_add_char(sb, '}');
+    } else
+      sb_add_chars(sb, "]}");
+  }
+  sb_add_chars(sb, "}}");
+
+  // TODO pay
+
+  char* r = sb->data;
+  _free(sb);
+  return r;
+}
+
 char* in3_configure(in3_t* c, const char* config) {
   d_track_keynames(1);
   d_clear_keynames();

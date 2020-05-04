@@ -122,6 +122,20 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   return IN3_OK;
 }
 
+/** sets the signer and a pk to the client*/
+uint8_t* eth_set_pk_signer_hex(in3_t* in3, char* key) {
+  if (key[0] == '0' && key[1] == 'x') key += 2;
+  if (strlen(key) != 64) return NULL;
+  uint8_t* key_bytes = _malloc(32);
+  hex_to_bytes(key, 64, key_bytes, 32);
+  in3_ret_t res = eth_set_pk_signer(in3, key_bytes);
+  if (res) {
+    _free(key_bytes);
+    return NULL;
+  }
+  return key_bytes;
+}
+
 bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
   address_t   from;
   bytes_t     tmp;

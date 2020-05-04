@@ -74,10 +74,8 @@ wasm-slockit-npm:
   stage: wasm
   tags:
     - short-jobs
-  only: # deploy only on  semantic versions tags
-    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/'
   needs:
     - wasm
   script:
@@ -91,11 +89,9 @@ wasm-public-npm:
   stage: wasm
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - wasm
   script:
@@ -109,10 +105,8 @@ asmjs-slockit-npm:
   stage: wasm
   tags:
     - short-jobs
-  only: # deploy only on  semantic versions tags
-    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/'
   needs:
     - asmjs
   script:
@@ -126,11 +120,9 @@ asmjs-public-npm:
   stage: wasm
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
   needs:
     - asmjs
   script:

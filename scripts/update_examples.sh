@@ -58,7 +58,7 @@ cd ../../scripts
 
 # PYTHON
 
-DOC="../../python/docs/2_examples.md"
+DOC="../../python/docs/compiled_examples.md"
 README="README.md"
 
 cd ../python/examples

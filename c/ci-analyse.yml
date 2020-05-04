@@ -26,8 +26,8 @@ clangcheck:
   script:
     - mkdir _build
     - cd _build
-    - scan-build-10 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
-    - scan-build-10 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make
+    - scan-build-11 cmake -DTAG_VERSION=$CI_COMMIT_TAG -DCMAKE_BUILD_TYPE=DEBUG -DIN3_SERVER=true ..
+    - scan-build-11 --status-bugs --exclude ../c/src/third-party --force-analyze-debug-code -o ../report make
   artifacts:
     paths:
       - report
@@ -64,10 +64,10 @@ valgrind:
     - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f; done
 
 code_quality:
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
   stage: analysis
   needs: []
   tags:
@@ -87,7 +87,7 @@ format:
   tags:
     - short-jobs
   script:
-    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-10 -i
+    - find c/src/core/ c/src/cmd/ c/src/api/ c/src/verifier/ c/src/transport/ java \( -name "*.c" -o -name "*.h" -o -name "*.java" \) | xargs clang-format-11 -i
     - git diff --patch --exit-code
 
 cpd:
@@ -102,7 +102,12 @@ cpd:
     - cpd --minimum-tokens 150 --language python --files python
 
 vulnerabilities:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
   stage: analysis
+  allow_failure: true
   needs:
     - docker
   tags:

@@ -465,7 +465,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     }
 
     // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-    if (!is_blacklisted(node) && d_get(ctx->responses[0], K_IN3))
+    if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3))
       check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
@@ -657,7 +657,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
             break;
           } else
-            return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+            return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
         }
       }
     }
