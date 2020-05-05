@@ -14,7 +14,7 @@ License = environ.get("license", "AGPL")
 description = environ.get("description", "Incubed client and provider for web3. Based on in3-c runtime.")
 keywords = environ.get("keywords", "in3,c,arm,x86,x64,macos,windows,linux,blockchain,ethereum,bitcoin,ipfs").split(",")
 readme = (pathlib.Path(__file__).parent / "README.md").read_text()
-name = environ.get("name", "in3")
+name = environ.get("name", "in3-test")
 author = environ.get("author", "github.com/slockit/in3-c")
 author_email = environ.get("author_email", "products@slock.it")
 setuptools.setup(
@@ -29,6 +29,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["docs", "tests"]),
     install_requires=['requests==2.23.0'],
     keywords=keywords,
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
