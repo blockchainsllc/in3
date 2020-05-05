@@ -17,7 +17,7 @@ description = environ.get(
 keywords = environ.get(
     "keywords", "in3,c,arm,x86,x64,macos,windows,linux,blockchain,ethereum,bitcoin,ipfs").split(",")
 readme = (pathlib.Path(__file__).parent / "README.md").read_text()
-name = environ.get("name", "in3-test")
+name = environ.get("name", "in3")
 author = environ.get("author", "github.com/slockit/in3-c")
 author_email = environ.get("author_email", "products@slock.it")
 setuptools.setup(
