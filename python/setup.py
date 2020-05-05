@@ -8,6 +8,12 @@ https://pypi.org/
 https://pypi.org/classifiers/
 """
 
+
+class BinaryDistribution(setuptools.Distribution):
+    def has_ext_modules(foo):
+        return True
+
+
 version = environ.get("version", "2.3.1")
 url = environ.get("url", "https://github.com/slockit/in3-c")
 License = environ.get("license", "AGPL")
