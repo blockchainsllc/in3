@@ -8,12 +8,15 @@ use serde_json::json;
 use std::ffi;
 use std::str;
 
+use secp256k1::{sign, Message, SecretKey};
+use secp256k1_test::Secp256k1;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SignatureType {
     Raw = 0,
     Hash = 1,
 }
-pub unsafe fn sign(pk: *mut u8, type_: SignatureType, data: *const c_char, len: usize) -> *mut u8 {
+pub unsafe fn signc(pk: *mut u8, type_: SignatureType, data: *const c_char, len: usize) -> *mut u8 {
     let data_ = data as *mut u8;
     let dst: *mut u8 = libc::malloc(65) as *mut u8;
     let pby = dst.offset(64) as *mut u8;

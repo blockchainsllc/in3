@@ -5,7 +5,7 @@ use ffi::{CStr, CString};
 use libc::{c_char, strlen};
 // use std::mem;
 use crate::error::{Error, In3Result};
-use crate::traits::{Client as ClientTrait, Storage, Transport};
+use crate::traits::{Client as ClientTrait, Storage, Transport, Signer};
 use crate::transport::HttpTransport;
 use rustc_hex::{FromHex, ToHex};
 use serde_json::json;
@@ -309,6 +309,7 @@ impl Drop for Request {
 
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
+    signer: Box<dyn Signer>,
     transport: Box<dyn Transport>,
     storage: Option<Box<dyn Storage>>,
 }
