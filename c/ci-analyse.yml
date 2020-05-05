@@ -1,7 +1,16 @@
+.only_full:
+  rules:
+    - changes:
+        - c/**/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
 coverage:
   stage: analysis
   image: silkeh/clang:dev
   coverage: '/TOTAL.*\s+(\d+.\d+\%)\s*$/'
+  extends: .only_full
   needs: []
   tags:
     - short-jobs
@@ -20,6 +29,7 @@ clangcheck:
   stage: analysis
   image: docker.slock.it/build-images/cmake:clang11
   needs: []
+  extends: .only_full
   allow_failure: false
   tags:
     - short-jobs
@@ -35,6 +45,7 @@ clangcheck:
 cppcheck:
   stage: analysis
   image: docker.slock.it/build-images/cmake:gcc-x86-static-analysis
+  extends: .only_full
   allow_failure: true
   needs: []
   tags:
@@ -49,6 +60,7 @@ cppcheck:
 valgrind:
   stage: analysis
   image: docker.slock.it/build-images/cmake:valgrind
+  extends: .only_full
   #  allow_failure: true
   needs: []
   tags:
@@ -107,6 +119,7 @@ vulnerabilities:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
   stage: analysis
+  extends: .only_full
   allow_failure: true
   needs:
     - docker
