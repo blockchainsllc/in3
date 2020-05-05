@@ -1,3 +1,11 @@
+.only_full:
+  rules:
+    - changes:
+        - c/**/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
 coverage:
   stage: analysis
   image: silkeh/clang:dev
@@ -107,6 +115,7 @@ vulnerabilities:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
   stage: analysis
+  extends: .only_full
   allow_failure: true
   needs:
     - docker
