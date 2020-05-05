@@ -36,15 +36,16 @@ include(ExternalProject)
 set(HIDAPI_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(HIDAPI_BIN ${CMAKE_CURRENT_BINARY_DIR})
 
+MESSAGE(STATUS "variable values hidapi ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${CMAKE_BINARY_DIR} $(HIDAPI_BIN)")
 
 ExternalProject_Add(
         lib-hidapi
         SOURCE_DIR ${HIDAPI_DIR}/hidapi
         DOWNLOAD_COMMAND ""
         CONFIGURE_COMMAND cd ${HIDAPI_DIR} && ./bootstrap && ./configure --srcdir=${HIDAPI_DIR} --prefix=${CMAKE_BINARY_DIR}
-        BUILD_COMMAND cd ${HIDAPI_DIR} && make && make install
+        BUILD_COMMAND cd ${HIDAPI_DIR} && make 
         INSTALL_COMMAND cd ${HIDAPI_DIR} && make install
 )
 
-add_library(hidapi SHARED IMPORTED)
-set_target_properties(hidapi PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libhidapi${CMAKE_SHARED_LIBRARY_SUFFIX})
+#add_library(hidapi SHARED IMPORTED)
+#set_target_properties(hidapi PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libhidapi${CMAKE_SHARED_LIBRARY_SUFFIX})

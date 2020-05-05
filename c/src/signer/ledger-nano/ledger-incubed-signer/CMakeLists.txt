@@ -33,14 +33,16 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+endif()
 
-set(HIDAPI_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(HIDAPI_BIN ${CMAKE_CURRENT_BINARY_DIR})
-set(CMAKE_VERBOSE_MAKEFILE ON)
+
 
 add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c)
 target_compile_definitions(ledger_signer_o PRIVATE -D_POSIX_C_SOURCE=199309L)
 add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
 
 add_dependencies(ledger_signer lib-hidapi)
+MESSAGE(STATUS "variable values ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${CMAKE_BINARY_DIR} $(HIDAPI_BIN)")
 target_link_libraries(ledger_signer ${CMAKE_BINARY_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
