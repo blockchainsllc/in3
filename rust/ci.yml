@@ -67,6 +67,8 @@ rust_multiarch:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
   extends: .only_rust
+  services:
+    - docker:dind
   needs:
     - win_jni
     - gcc_legacy
