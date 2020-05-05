@@ -9,11 +9,6 @@ https://pypi.org/classifiers/
 """
 
 
-class BinaryDistribution(setuptools.Distribution):
-    def has_ext_modules(foo):
-        return True
-
-
 version = environ.get("version", "2.3.1")
 url = environ.get("url", "https://github.com/slockit/in3-c")
 License = environ.get("license", "AGPL")
@@ -36,7 +31,7 @@ setuptools.setup(
     url=url,
     packages=setuptools.find_packages(exclude=["docs", "tests"]),
     package_data={
-        'in3': ['libin3/shared/libin3libin3.arm7.so', 'libin3/shared/libin3.x64.dll', 'libin3/shared/libin3.x64.dylib', 'libin3/shared/libin3.x64.so', 'libin3/shared/libin3.x86.so']
+        '': ['*.so', '*.dll', '*.dylib']
     },
     install_requires=['requests==2.23.0'],
     keywords=keywords,
@@ -48,6 +43,5 @@ setuptools.setup(
         "Intended Audience :: Science/Research",
         "Environment :: Console",
         "Development Status :: 4 - Beta"
-    ],
-    distclass=BinaryDistribution
+    ]
 )
