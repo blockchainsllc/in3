@@ -121,6 +121,3 @@ release_pip:
     - cd python
     - cp $pypirc ~/.pypirc
     - ./publish.sh
-#  artifacts:
-#    paths:
-#      - in3-pip
