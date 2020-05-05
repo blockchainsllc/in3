@@ -22,7 +22,6 @@ author = environ.get("author", "github.com/slockit/in3-c")
 author_email = environ.get("author_email", "products@slock.it")
 setuptools.setup(
     name=name,
-    include_package_data=True,
     version=version,
     author=author,
     author_email=author_email,
