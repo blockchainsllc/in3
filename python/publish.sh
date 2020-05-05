@@ -2,7 +2,7 @@
 
 rm -rf dist
 cp ../LICENSE ../LICENSE.AGPL ./
-python3 setup.py sdist
+python3 setup.py bdist_wheel
 rm LICENSE LICENSE.AGPL
 
 twine upload --verbose --repository-url https://upload.pypi.org/legacy/ -u __token__ -p "$PIP_TOKEN" dist/*
