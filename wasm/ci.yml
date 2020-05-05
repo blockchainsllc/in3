@@ -71,7 +71,7 @@ test_asmjs:
 
 wasm-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
   rules:
@@ -86,12 +86,10 @@ wasm-slockit-npm:
 
 wasm-public-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - wasm
   script:
@@ -102,7 +100,7 @@ wasm-public-npm:
 
 asmjs-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
   rules:
@@ -117,12 +115,10 @@ asmjs-slockit-npm:
 
 asmjs-public-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - asmjs
   script:

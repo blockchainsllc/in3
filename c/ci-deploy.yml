@@ -1,9 +1,7 @@
 dockerhub-deploy:
   stage: deploy
   needs: []
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   tags:
     - short-jobs
   services:
@@ -56,9 +54,7 @@ release_mac_and_wasm:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - mac_os
     - gcc8
@@ -106,9 +102,7 @@ release_x64:
     - asmjs
     - java
     - python
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x64
@@ -137,9 +131,7 @@ release_x86:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - gcc8
     - gcc8-x86
@@ -176,9 +168,7 @@ release_arm7:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - gcc8
     - arm7
@@ -215,9 +205,7 @@ release_win:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - gcc8
     - win_mingw
@@ -252,21 +240,6 @@ release_win:
   artifacts:
     paths:
       - in3-win
-
-release_maven:
-  stage: deploy
-  image: docker.slock.it/build-images/maven-deployment-image:latest
-  tags:
-    - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
-  needs:
-    - java
-  script:
-    - touch settings.xml
-    - echo $MAVEN_SETTINGS > settings.xml
-    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.slock  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/slockit/in3-c
 
 pages:
   stage: deploy
@@ -336,22 +309,18 @@ pages:
 debian_package_deploy_bionic:
   extends:
     - .debian_package_deploy_template_in3
+    - .only_deploy
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
 
 debian_package_deploy_disco:
   extends:
     - .debian_package_deploy_template_in3
+    - .only_deploy
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
 
 .debian_package_deploy_template_in3_dev:
   image: docker.slock.it/build-images/cmake:gcc8-with-debian-deps
@@ -393,31 +362,25 @@ debian_package_deploy_disco:
 debian_dev_package_deploy_bionic:
   extends:
     - .debian_package_deploy_template_in3_dev
+    - .only_deploy
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
 
 debian__dev_package_deploy_disco:
   extends:
     - .debian_package_deploy_template_in3_dev
+    - .only_deploy
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
 
 brew_release:
   stage: release
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - mac_os
     - release_mac_and_wasm
@@ -440,9 +403,7 @@ github_body_release:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - release_mac_and_wasm
     - release_x64
