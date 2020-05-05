@@ -9,7 +9,7 @@ https://pypi.org/classifiers/
 """
 
 
-version = environ.get("version", "2.3.1")
+version = "2.3.2rc10"
 url = environ.get("url", "https://github.com/slockit/in3-c")
 License = environ.get("license", "AGPL")
 description = environ.get(
@@ -22,6 +22,7 @@ author = environ.get("author", "github.com/slockit/in3-c")
 author_email = environ.get("author_email", "products@slock.it")
 setuptools.setup(
     name=name,
+    include_package_data=True,
     version=version,
     author=author,
     author_email=author_email,
@@ -30,9 +31,6 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url=url,
     packages=setuptools.find_packages(exclude=["docs", "tests"]),
-    package_data={
-        '': ['*.so', '*.dll', '*.dylib']
-    },
     install_requires=['requests==2.23.0'],
     keywords=keywords,
     classifiers=[
