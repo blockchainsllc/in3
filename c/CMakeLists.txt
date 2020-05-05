@@ -47,7 +47,7 @@ IF (ETH_FULL)
     add_subdirectory(src/cmd)
 endif()
 add_subdirectory(docs)
-
+link_directories(${CMAKE_BINARY_DIR}/lib/)
 
 
 # create the library
@@ -112,6 +112,7 @@ if (IN3_LIB)
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
+    
     target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
 
     # install

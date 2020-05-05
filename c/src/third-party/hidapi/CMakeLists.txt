@@ -45,3 +45,6 @@ ExternalProject_Add(
         BUILD_COMMAND cd ${HIDAPI_DIR} && make && make install
         INSTALL_COMMAND cd ${HIDAPI_DIR} && make install
 )
+
+add_library(hidapi SHARED IMPORTED)
+set_target_properties(hidapi PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libhidapi${CMAKE_SHARED_LIBRARY_SUFFIX})
