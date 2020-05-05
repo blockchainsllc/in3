@@ -23,6 +23,9 @@ pub trait Client {
     async fn rpc(&mut self, call: &str) -> error::In3Result<String>;
     #[cfg(feature = "blocking")]
     fn rpc_blocking(&mut self, call: &str) -> error::In3Result<String>;
+    fn hex_to_bytes(&mut self, data: &str) -> *mut u8;
+    fn new_bytes(&mut self, data: &str, len:usize) -> *mut u8;
+    fn set_pk_signer(&mut self, data: &str);
 }
 
 pub trait Api {

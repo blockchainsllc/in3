@@ -5,16 +5,16 @@ using System.Text.Json.Serialization;
 namespace In3.Utils
 {
     // HOW TO: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to
-    public class CustomLongFromHexConverter : JsonConverter<long>
+    internal class IntFromHexConverter : JsonConverter<int>
     {
-        public override long Read(
+        public override int Read(
             ref Utf8JsonReader reader,
             Type typeToConvert,
-            JsonSerializerOptions options) => (long) TypesMatcher.HexStringToBigint(reader.GetString());
+            JsonSerializerOptions options) => (int) TypesMatcher.HexStringToBigint(reader.GetString());
 
         public override void Write(
             Utf8JsonWriter writer,
-            long intVal,
+            int intVal,
             JsonSerializerOptions options) =>
             writer.WriteStringValue(TypesMatcher.BigIntToPrefixedHex(intVal));
     }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using In3.Configuration;
 using In3.Crypto;
 using In3.Transport;
 using In3.Storage;
@@ -15,16 +16,20 @@ namespace In3
         public Storage.Storage Storage { get; set; }
         public Signer Signer { get; set; }
         public Crypto.Api Crypto { get; set; }
+        public Ipfs.Api Ipfs { get; set; }
+        public ClientConfiguration Configuration { get; }
 
         private IN3(Chain chainId)
         {
             // Starting to get convoluted. Need to think of a better way.
-            Native = new DefaultNativeWrapper(this, chainId);
-            Eth1 = new Eth1.Api(this);
-            Crypto = new Crypto.Api(this);
             Transport = new DefaultTransport();
             Storage = new InMemoryStorage();
             Signer = new SimpleWallet(this);
+            Native = new NativeWrapper(this, chainId);
+            Eth1 = new Eth1.Api(this);
+            Crypto = new Crypto.Api(this);
+            Ipfs = new Ipfs.Api(this);
+            Configuration = Native.ReadConfiguration();
         }
         private IN3() { }
 
@@ -35,7 +40,13 @@ namespace In3
 
         public string SendRpc(string method, object[] args, Dictionary<string, object> in3 = null)
         {
+            if (Configuration.HasChanged())
+            {
+                Native.ApplyConfiguration(Configuration);
+            }
             return Native.Send(RpcHandler.To(method, args, in3));
         }
+
+        ~IN3() => Native?.Free();
     }
 }
