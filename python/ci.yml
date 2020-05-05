@@ -92,7 +92,6 @@ python_linux:
   extends: .only_python
   needs:
     - python
-  allow_failure: true
   image: python
   stage: python
   script:
