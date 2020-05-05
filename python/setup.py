@@ -11,8 +11,10 @@ https://pypi.org/classifiers/
 version = environ.get("version", "2.3.1")
 url = environ.get("url", "https://github.com/slockit/in3-c")
 License = environ.get("license", "AGPL")
-description = environ.get("description", "Incubed client and provider for web3. Based on in3-c runtime.")
-keywords = environ.get("keywords", "in3,c,arm,x86,x64,macos,windows,linux,blockchain,ethereum,bitcoin,ipfs").split(",")
+description = environ.get(
+    "description", "Incubed client and provider for web3. Based on in3-c runtime.")
+keywords = environ.get(
+    "keywords", "in3,c,arm,x86,x64,macos,windows,linux,blockchain,ethereum,bitcoin,ipfs").split(",")
 readme = (pathlib.Path(__file__).parent / "README.md").read_text()
 name = environ.get("name", "in3")
 author = environ.get("author", "github.com/slockit/in3-c")
@@ -27,6 +29,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url=url,
     packages=setuptools.find_packages(exclude=["docs", "tests"]),
+    package_data={
+        'in3': ['libin3/shared/libin3libin3.arm7.so', 'libin3/shared/libin3.x64.dll', 'libin3/shared/libin3.x64.dylib', 'libin3/shared/libin3.x64.so', 'libin3/shared/libin3.x86.so']
+    },
     install_requires=['requests==2.23.0'],
     keywords=keywords,
     classifiers=[
@@ -38,4 +43,5 @@ setuptools.setup(
         "Environment :: Console",
         "Development Status :: 4 - Beta"
     ],
+    distclass=BinaryDistribution
 )
