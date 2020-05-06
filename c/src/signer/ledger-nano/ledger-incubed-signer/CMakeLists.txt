@@ -33,25 +33,27 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
+
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 endif()
-
-
 
 add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c)
 target_compile_definitions(ledger_signer_o PRIVATE -D_POSIX_C_SOURCE=199309L)
 add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
 
-add_dependencies(ledger_signer lib-hidapi)
-MESSAGE(STATUS "variable values ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${CMAKE_BINARY_DIR} ${HIDAPI_BIN}")
 
 if(APPLE)
    target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
 elseif(LINUX)
    target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhidapi-hidraw${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
 elseif(WIN32)
-   target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
+  # not building for windows currently
+  # target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
 else()
    target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhidapi-hidraw${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
+endif()
+
+if(NOT WIN32)
+   add_dependencies(ledger_signer lib-hidapi)
 endif()

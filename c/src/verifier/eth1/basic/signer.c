@@ -35,7 +35,11 @@
 #include "../../../core/client/client.h"
 #include "../../../core/client/keys.h"
 #include "../../../core/util/mem.h"
+
+#if !defined(_WIN32) && !defined(WIN32)
 #include "../../../signer/ledger-nano/ledger-incubed-signer/ledger_signer.h"
+#endif
+
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/nano/serialize.h"
@@ -159,8 +163,11 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // Note: This works because the signer->wallet points to the pk in the current signer implementation
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
-
+#if !defined(_WIN32) && !defined(WIN32)
       if (!ctx->client->signer || (ctx->client->signer->sign != eth_sign && ctx->client->signer->sign != eth_ledger_sign)) {
+#elif
+      if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
+#endif
         if (new_json) json_free(new_json);
         ctx_set_error(ctx, "you need to specify the from-address in the tx!", IN3_EINVAL);
         return bytes(NULL, 0);
@@ -168,6 +175,8 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
 
       uint8_t public_key[65], sdata[32];
       bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
+
+#if !defined(_WIN32) && !defined(WIN32)
       if (ctx->client->signer->sign == eth_ledger_sign) {
         uint8_t bip32[32];
         memcpy(bip32, ctx->client->signer->wallet, 5);
@@ -176,6 +185,9 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       } else {
         ecdsa_get_public_key65(&secp256k1, ctx->client->signer->wallet, public_key);
       }
+#elif
+      ecdsa_get_public_key65(&secp256k1, ctx->client->signer->wallet, public_key);
+#endif
       sha3_to(&pubkey_bytes, sdata);
       memcpy(from, sdata + 12, 20);
     } else

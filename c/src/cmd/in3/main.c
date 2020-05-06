@@ -60,7 +60,11 @@
 #include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
+
+#if !defined(_WIN32) && !defined(WIN32)
 #include "../../signer/ledger-nano/ledger-incubed-signer/ledger_signer.h"
+#endif
+
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -691,10 +695,12 @@ int main(int argc, char* argv[]) {
       } else
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-bip32") == 0) {
+#if !defined(_WIN32) && !defined(WIN32)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, bip32, 5);
         eth_ledger_set_signer(c, bip32);
       }
+#endif
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
     else if (strcmp(argv[i], "-ccache") == 0) // NOOP - should have been handled earlier

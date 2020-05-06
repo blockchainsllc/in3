@@ -106,14 +106,20 @@ if (IN3_LIB)
        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
     endif()
     
- 
+
+
     # create the libraries
     add_library(in3_bundle STATIC ${IN3_LIBS} )
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
     
-    target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+    if(HIDAPI AND NOT WIN32)
+       target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+    else()
+       target_link_libraries(in3_lib ${IN3_TRANSPORT}) 
+    endif()
+    
 
     # install
     INSTALL(TARGETS in3_bundle
