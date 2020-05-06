@@ -32,7 +32,7 @@ Default-Value: `-DASMJS=OFF`
 
   if true, the bitcoin verifiers will be build
 
-Default-Value: `-DBTC=OFF`
+Default-Value: `-DBTC=ON`
 
 
 #### BUILD_DOC
@@ -61,6 +61,13 @@ Default-Value: `-DCODE_COVERAGE=OFF`
   Enable color codes for debug
 
 Default-Value: `-DCOLOR=ON`
+
+
+#### DEV_NO_INTRN_PTR
+
+  (*dev option*) if true the client will NOT include a void pointer (named internal) for use by devs)
+
+Default-Value: `-DDEV_NO_INTRN_PTR=ON`
 
 
 #### ERR_MSG
@@ -145,6 +152,13 @@ Default-Value: `-DIPFS=ON`
   build the java-binding (shared-lib and jar-file)
 
 Default-Value: `-DJAVA=OFF`
+
+
+#### PAY_ETH
+
+  support for direct Eth-Payment
+
+Default-Value: `-DPAY_ETH=OFF`
 
 
 #### PKG_CONFIG_EXECUTABLE
