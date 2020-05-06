@@ -4,15 +4,13 @@ use crate::error;
 
 #[async_trait]
 pub trait Transport {
-    async fn sign(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
+    async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
     #[cfg(feature = "blocking")]
     fn fetch_blocking(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
 }
 
 pub trait Signer {
-    async fn sign(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
-    #[cfg(feature = "blocking")]
-    fn fetch_blocking(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
+    fn sign(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
 }
 
 

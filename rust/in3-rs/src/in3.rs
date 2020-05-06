@@ -309,7 +309,6 @@ impl Drop for Request {
 
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
-    signer: Box<dyn Signer>,
     transport: Box<dyn Transport>,
     storage: Option<Box<dyn Storage>>,
 }
