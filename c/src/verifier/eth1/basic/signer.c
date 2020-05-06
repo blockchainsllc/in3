@@ -165,7 +165,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // Also, other wallet implementations may differ - hence the check.
 #if !defined(_WIN32) && !defined(WIN32)
       if (!ctx->client->signer || (ctx->client->signer->sign != eth_sign && ctx->client->signer->sign != eth_ledger_sign)) {
-#elif
+#else
       if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
 #endif
         if (new_json) json_free(new_json);
@@ -185,7 +185,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       } else {
         ecdsa_get_public_key65(&secp256k1, ctx->client->signer->wallet, public_key);
       }
-#elif
+#else
       ecdsa_get_public_key65(&secp256k1, ctx->client->signer->wallet, public_key);
 #endif
       sha3_to(&pubkey_bytes, sdata);
