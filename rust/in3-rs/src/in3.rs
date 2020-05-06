@@ -1,22 +1,18 @@
-use std::ffi;
-// use std::ffi::{CString, CStr};
-use async_trait::async_trait;
 use ffi::{CStr, CString};
 use std::convert::TryInto;
+use std::ffi;
+use std::str;
+
 use libc::{c_char, strlen};
-// use std::mem;
+use rustc_hex::{FromHex};
+use async_trait::async_trait;
+
 use crate::error::{Error, In3Result};
-use crate::traits::{Client as ClientTrait, Storage, Transport};
-use crate::transport::HttpTransport;
-use rustc_hex::{FromHex, ToHex};
-use serde_json::json;
-// use signer::*;
 use crate::signer;
 use crate::signer::SignatureType;
-use std::fmt::Write;
-use std::num::ParseIntError;
-// use crate::types::Signature;
-use std::str;
+use crate::traits::{Client as ClientTrait, Storage, Transport};
+use crate::transport::HttpTransport;
+
 pub mod chain {
     pub type ChainId = u32;
 
@@ -103,7 +99,6 @@ impl Ctx {
         }
 
         if last_waiting != std::ptr::null_mut() {
-            let req = in3_sys::in3_create_request(last_waiting);
             let req_type = (*last_waiting).type_;
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
@@ -156,7 +151,6 @@ impl Ctx {
                     let result = (*(*req).results.offset(0)).result;
                     let len = result.len;
                     if len != 0 {
-                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
                         return Err(Error::TryAgain);
                     } else {
                         let error = (*(*req).results.offset(0)).error;
@@ -258,7 +252,6 @@ impl ClientTrait for Client {
             let data_ptr = c_str_data.as_ptr();
             let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
             let data_ = (*data).data;
-            let out = std::slice::from_raw_parts_mut(data_, len);
             data_
         }
     }
@@ -318,8 +311,7 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
-            #[cfg(feature = "blocking")]
-            {
+            #[cfg(feature = "blocking")] {
                 (*c.ptr).transport = Some(Client::in3_rust_transport);
             }
             c
