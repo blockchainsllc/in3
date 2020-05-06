@@ -649,7 +649,7 @@ void in3_req_add_response(
     in3_response_t* res,      /**< [in] the response-pointer */
     int             index,    /**< [in] the index of the url, since this request could go out to many urls */
     bool            is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    void*           data,     /**<  the data or the the string*/
+    const char*     data,     /**<  the data or the the string*/
     int             data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
@@ -750,25 +750,6 @@ void in3_set_default_signer(
  * the caller will need to free this pointer after usage.
  */
 in3_signer_t* in3_create_signer(
-    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
-    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-    void*          wallet      /**<custom object whill will be passed to functions */
-);
-
-/**
- * set the transport handler on the client.
- */
-void in3_set_transport(
-    in3_t* c,   /**< the incubed client */
-    void*  cptr /**< custom pointer which will will be passed to functions */
-);
-
-/**
- * set the signer on the client.
- * the caller will need to free this pointer after usage.
- */
-in3_signer_t* in3_set_signer(
-    in3_t*         c,          /**< the incubed client */
     in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
     in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
     void*          wallet      /**<custom object whill will be passed to functions */
