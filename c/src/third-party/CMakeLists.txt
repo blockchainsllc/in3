@@ -48,6 +48,6 @@ if (IPFS)
   add_subdirectory( libb64 )
 endif()
 
-if (HIDAPI)
+if (HIDAPI AND NOT WIN32)
   add_subdirectory( hidapi )
 endif()
