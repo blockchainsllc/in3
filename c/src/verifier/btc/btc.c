@@ -50,6 +50,65 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
   return ret;
 }
 
+in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* block_hash) {
+  bytes_t    data, merkle_data, header;
+  bytes32_t  hash;
+  d_token_t* t;
+
+  if (json) {
+
+    // check txid
+    t = d_get(vc->result, key("txid"));
+    if (!t || d_type(t) != T_STRING || d_len(t) != 64) return vc_err(vc, "missing or invalid txid");
+    hex_to_bytes(d_string(t), 64, hash, 32);
+    if (memcmp(hash, tx_hash, 32)) return vc_err(vc, "wrong txid");
+
+    // check hash
+    d_token_t* t2 = d_get(vc->result, key("hash"));
+    if (!t2 || !d_eq(t, t2)) return vc_err(vc, "missing or invalid hash");
+
+    t = d_get(vc->result, key("hex"));
+    if (!t || d_type(t) != T_STRING) return vc_err(vc, "missing hex");
+
+    data.len  = (d_len(t) + 1) >> 1;
+    data.data = alloca(data.len);
+    hex_to_bytes(d_string(t), d_len(t), data.data, data.len);
+
+    if (block_hash) {
+      t = d_get(vc->result, key("blockhash"));
+      if (!t || d_type(t) != T_STRING || d_len(t) != 64) return vc_err(vc, "missing blockhash");
+      hex_to_bytes(d_string(t), d_len(t), hash, 32);
+      if (memcmp(hash, block_hash, 32)) return vc_err(vc, "invalid blockhash");
+    }
+    // TODO check the vin and vout
+
+  } else {
+    if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
+    data.len  = (d_len(vc->result) + 1) >> 1;
+    data.data = alloca(data.len);
+    hex_to_bytes(d_string(vc->result), d_len(vc->result), data.data, data.len);
+  }
+  btc_hash(data, hash);
+  if (memcmp(hash, tx_hash, 32)) return vc_err(vc, "invalid hex");
+
+  // get the header
+  t = d_get(vc->proof, K_BLOCK);
+  if (!t || d_type(t) != T_BYTES || d_len(t) != 80) return vc_err(vc, "missing or invalid blockheader!");
+  header = d_to_bytes(t);
+
+  // now check the merkle proof
+  t = d_get(vc->proof, K_MERKLE_PROOF);
+  if (!t || d_type(t) != T_BYTES) return vc_err(vc, "missing merkle proof!");
+  merkle_data = d_to_bytes(t);
+
+  t = d_get(vc->proof, K_TX_INDEX);
+  if (!t || d_type(t) != T_INTEGER) return vc_err(vc, "missing txIndex");
+
+  if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_hash)) return vc_err(vc, "merkleProof failed!");
+
+  return IN3_OK;
+}
+
 /**
  * check a block
  */
@@ -139,6 +198,15 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1);
+  }
+  if (strcmp(method, "getrawtransaction") == 0) {
+    d_token_t* tx_hash    = d_get_at(params, 0);
+    bool       json       = d_len(params) < 2 ? true : d_get_int_at(params, 1);
+    d_token_t* block_hash = d_get_at(params, 2);
+    if (!tx_hash || d_type(tx_hash) != T_STRING || d_len(tx_hash) != 64) return vc_err(vc, "Invalid tx_hash");
+    bytes32_t tx_hash_bytes;
+    hex_to_bytes(d_string(tx_hash), 64, tx_hash_bytes, 32);
+    return btc_verify_tx(vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
   return vc_err(vc, "Unsupported method");
 }

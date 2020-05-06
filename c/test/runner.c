@@ -40,6 +40,7 @@
 #include "../src/core/client/context.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
+#include "../src/verifier/btc/btc.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include "../src/verifier/ipfs/ipfs.h"
 #include <stdio.h>
@@ -452,6 +453,7 @@ int main(int argc, char* argv[]) {
   in3_register_eth_full();
   in3_register_eth_api();
   in3_register_ipfs();
+  in3_register_btc();
 
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
