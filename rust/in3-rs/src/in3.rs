@@ -2,6 +2,7 @@ use std::ffi;
 // use std::ffi::{CString, CStr};
 use async_trait::async_trait;
 use ffi::{CStr, CString};
+use std::convert::TryInto;
 use libc::{c_char, strlen};
 // use std::mem;
 use crate::error::{Error, In3Result};
@@ -144,17 +145,11 @@ impl Ctx {
                         match resp {
                             Err(err) => {
                                 let err_str = ffi::CString::new(err.to_string()).unwrap();
-                                in3_sys::sb_add_chars(
-                                    &mut (*(*req).results.add(i)).error,
-                                    err_str.as_ptr(),
-                                );
+                                in3_sys::in3_req_add_response((*req).results, i.try_into().unwrap(), true, err_str.as_ptr(), -1i32);
                             }
                             Ok(res) => {
                                 let res_str = ffi::CString::new(res.to_string()).unwrap();
-                                in3_sys::sb_add_chars(
-                                    &mut (*(*req).results.add(i)).result,
-                                    res_str.as_ptr(),
-                                );
+                                in3_sys::in3_req_add_response((*req).results, i.try_into().unwrap(), false, res_str.as_ptr(), -1i32);
                             }
                         }
                     }
