@@ -119,6 +119,11 @@ if(IPFS)
     set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
 endif()
 
+if(BTC)
+    ADD_DEFINITIONS(-DBTC)
+    set(IN3_VERIFIER ${IN3_VERIFIER} btc)
+endif()
+
 if(COLOR AND NOT (MSVC OR MSYS OR MINGW))
    ADD_DEFINITIONS(-DLOG_USE_COLOR)
 endif()
