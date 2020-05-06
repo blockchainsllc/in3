@@ -28,6 +28,8 @@ class EthereumTest(unittest.TestCase):
     def test_get_block_by_number(self):
         block = self.client.eth.get_block_by_number(9937218)
         self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.get_block_by_number('latest')
+        self.assertIsInstance(block, in3.eth.Block)
 
     def test_get_transaction_by_hash(self):
         tx_hash = '0xae25a4b673bd87f40ea147a5506cb2ffb38e32ec1efc372c6730a5ba50668ae3'
@@ -45,6 +47,8 @@ class EthereumGoerliTest(EthereumTest):
     def test_get_block_by_number(self):
         block = self.client.eth.get_block_by_number(2581719)
         self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.get_block_by_number('latest')
+        self.assertIsInstance(block, in3.eth.Block)
 
     def test_get_transaction_by_hash(self):
         tx_hash = '0x4456152b5f25509a9f6a4117205700f3b480cd837c855602bce6088a10c2fddd'
@@ -61,6 +65,8 @@ class EthereumKovanTest(EthereumTest):
 
     def test_get_block_by_number(self):
         block = self.client.eth.get_block_by_number(18135233)
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.get_block_by_number('latest')
         self.assertIsInstance(block, in3.eth.Block)
 
     def test_get_transaction_by_hash(self):
