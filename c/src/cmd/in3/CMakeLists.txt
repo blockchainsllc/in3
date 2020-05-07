@@ -61,10 +61,10 @@ endif()
 add_executable(in3 main.c in3_storage.c)
 target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
 
-if(HIDAPI AND NOT WIN32)
-  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API} ledger_signer  -lm)
-elseif()
-  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API}  -lm)
+if( WIN32 OR MSVC OR MSYS OR MINGW )
+  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API}   -lm)
+elseif(HIDAPI)
+  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API} ledger_signer -lm)
 endif()
 
 install(TARGETS in3

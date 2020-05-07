@@ -114,10 +114,10 @@ if (IN3_LIB)
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
     
-    if(HIDAPI AND NOT WIN32)
+    if(WIN32 OR MSVC OR MSYS OR MINGW)
+       target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
+    elseif(HIDAPI)
        target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
-    else()
-       target_link_libraries(in3_lib ${IN3_TRANSPORT}) 
     endif()
     
 

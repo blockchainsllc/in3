@@ -49,8 +49,8 @@ add_library(eth_basic_o OBJECT
 # add dependency
 add_library(eth_basic STATIC $<TARGET_OBJECTS:eth_basic_o>)
 
-if(HIDAPI AND NOT WIN32)
-   target_link_libraries(eth_basic eth_nano ledger_signer)
-elseif()
+if(WIN32 OR MSVC OR MSYS OR MINGW)
+   target_link_libraries(eth_basic eth_nano )
+elseif(HIDAPI)
    target_link_libraries(eth_basic eth_nano ledger_signer)
 endif()
