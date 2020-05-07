@@ -4,7 +4,7 @@ Integrated tests for `in3` module. Doesnt test submodules.
 import unittest
 
 import in3
-from tests.config_mock import mock_config
+from tests.mock.config import mock_config
 from tests.transport import mock_transport
 
 
@@ -26,8 +26,18 @@ class MainNetClientTest(unittest.TestCase):
 
     def test_ens_resolve(self):
         # Other calls like `addr` require more than one eth_call, being more complex to mock the tests. Suffice for now.
+        with self.assertRaises(AssertionError):
+            self.client.ens_resolve('depraz.eth', '')
+        with self.assertRaises(AssertionError):
+            self.client.ens_resolve('depraz.eth', 'asd')
+        with self.assertRaises(AssertionError):
+            self.client.ens_resolve('depraz.eth', 'addrowner')
         address = self.client.ens_resolve('depraz.eth', 'owner')
         self.assertEqual(address, '0x0b56ae81586d2728ceaf7c00a6020c5d63f02308')
+
+    def test_ens_namehash(self):
+        foo_name = self.client.ens_namehash('foo.eth')
+        self.assertEqual(foo_name, '0xde9b09fd7c5f901e23a3f19fecc54828e9c848539801e86591bd9801b019f84f')
 
 
 class KovanClientTest(MainNetClientTest):

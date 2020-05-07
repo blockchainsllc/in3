@@ -60,7 +60,7 @@ class Client:
         fn_args = str([json.dumps(cfg_dict)]).replace('\'', '')
         return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
-    def ens_resolve(self, domain_name: str, domain_type: str, registry: str = None) -> ClientConfig:
+    def ens_resolve(self, domain_name: str, domain_type: str = 'addr', registry: str = None) -> str:
         """
         Resolves ENS domain name to Ethereum address.
         Args:
@@ -75,7 +75,19 @@ class Client:
         """
           "currently only 'hash','addr','owner' or 'resolver' are allowed as type
         """
+        if domain_type not in ['hash', 'addr', 'owner', 'resolver']:
+            raise AssertionError('Domain type must be one of the following: hash, addr, owner, resolver')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, domain_type, registry)
+
+    def ens_namehash(self, domain_name: str) -> str:
+        """
+        Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-137.md#name-syntax)
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+        Returns:
+            node (str): Formatted string referred as `node` in ENS documentation
+        """
+        return self.ens_resolve(domain_name, 'hash')
 
 
 class In3ObjectFactory(EthObjectFactory):

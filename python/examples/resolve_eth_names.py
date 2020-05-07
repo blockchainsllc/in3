@@ -20,14 +20,6 @@ print('\nEthereum Name Service')
 chain = 'goerli'
 client = in3.Client(chain)
 address = client.ens_resolve(domain, 'addr', ens_address)
-# Same can be achieved by making an eth_call to the ENS smart-contract
-tx = {
-    "to": ens_address,
-    "data": '0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e'
-}
-transaction = in3.eth.NewTransaction(**tx)
-owner = client.eth.contract.eth_call(transaction)
-_print()
 
 # Instantiate In3 Client for Mainnet
 chain = 'mainnet'

@@ -220,14 +220,6 @@ print('\nEthereum Name Service')
 chain = 'goerli'
 client = in3.Client(chain)
 address = client.ens_resolve(domain, 'addr', ens_address)
-# Same can be achieved by making an eth_call to the ENS smart-contract
-tx = {
-    "to": ens_address,
-    "data": '0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e'
-}
-transaction = in3.eth.NewTransaction(**tx)
-owner = client.eth.contract.eth_call(transaction)
-_print()
 
 # Instantiate In3 Client for Mainnet
 chain = 'mainnet'
@@ -344,6 +336,56 @@ Mined on block 2615346 used 21000 GWei.
 
 ```
 
+### smart_contract
+
+source : [in3-c/python/examples/smart_contract.py](https://github.com/slockit/in3-c/blob/master/python/examples/smart_contract.py)
+
+
+
+```python
+"""
+Manually calling ENS smart-contract
+![UML Sequence Diagram of how Ethereum Name Service ENS resolves a name.](https://lh5.googleusercontent.com/_OPPzaxTxKggx9HuxloeWtK8ggEfIIBKRCEA6BKMwZdzAfUpIY6cz7NK5CFmiuw7TwknbhFNVRCJsswHLqkxUEJ5KdRzpeNbyg8_H9d2RZdG28kgipT64JyPZUP--bAizozaDcxCq34)
+"""
+import in3
+
+
+client = in3.Client('goerli')
+domain_name = client.ens_namehash('depraz.eth')
+ens_registry_address = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
+ens_resolver_abi = 'resolver(bytes32):address'
+
+# Find resolver contract for ens name
+resolver_tx = {
+    "to": ens_registry_address,
+    "data": client.eth.contract.abi_encode(ens_resolver_abi, domain_name)
+}
+encoded_resolver_address = client.eth.contract.eth_call(in3.eth.NewTransaction(**resolver_tx))
+resolver_address = client.eth.contract.abi_decode(ens_resolver_abi, encoded_resolver_address)
+
+# Resolve name
+ens_addr_abi = 'addr(bytes32):address'
+name_tx = {
+    "to": resolver_address,
+    "data": client.eth.contract.abi_encode(ens_addr_abi, domain_name)
+}
+encoded_domain_address = client.eth.contract.eth_call(in3.eth.NewTransaction(**name_tx))
+domain_address = client.eth.contract.abi_decode(ens_addr_abi, encoded_domain_address)
+
+print('END domain:\n{}\nResolved by:\n{}\nTo address:\n{}'.format(domain_name, resolver_address, domain_address))
+
+# Produces
+"""
+END domain:
+0x4a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e
+Resolved by:
+0x4b1488b7a6b320d2d721406204abc3eeaa9ad329
+To address:
+0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
+"""
+
+```
+
 
 ### Running the examples
 
@@ -373,7 +415,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x10f613600>)
+transport=<CFunctionType object at 0x1094036d0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -408,7 +450,7 @@ Send RPC to change client configuration. Don't use outside the constructor, migh
 #### ens_resolve
 ```python
 Client.ens_resolve(domain_name: str,
-domain_type: str,
+domain_type: str = 'addr',
 registry: str = None)
 ```
 
@@ -423,6 +465,22 @@ Resolves ENS domain name to Ethereum address.
 **Returns**:
 
 - `address` _str_ - Ethereum address corresponding to domain name.
+  
+
+#### ens_namehash
+```python
+Client.ens_namehash(domain_name: str)
+```
+
+Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-137.md#name-syntax)
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+
+**Returns**:
+
+- `node` _str_ - Formatted string referred as `node` in ENS documentation
   
 
 ### ClientConfig
@@ -1096,7 +1154,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x10ede4560>)
+transport: <function CFUNCTYPE at 0x108bda5f0>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1124,7 +1182,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10ede4560>,
+transport: <function CFUNCTYPE at 0x108bda5f0>,
 debug=False)
 ```
 

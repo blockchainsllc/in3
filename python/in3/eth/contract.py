@@ -1,12 +1,12 @@
 import re
 
 from in3.eth.factory import EthObjectFactory
-from in3.eth.model import NewTransaction
+from in3.eth.model import NewTransaction, DataTransferObject
 from in3.libin3.enum import EthMethods, BlockAt, In3Methods
 from in3.libin3.runtime import In3Runtime
 
 
-class SmartContract:
+class SmartContract(DataTransferObject):
     """
     Ethereum account containing smart-contract code.
     Args:
@@ -114,7 +114,7 @@ class EthContractApi:
         """
         if not encoded_value.startswith('0x'):
             raise AssertionError("Encoded values must start with 0x")
-        if len(encoded_value[2:]) <= 64:
+        if len(encoded_value[2:]) < 64:
             raise AssertionError("Encoded values must be longer than 64 characters.")
         self._check_fn_signature(fn_signature)
         return self._runtime.call(In3Methods.ABI_DECODE, fn_signature, encoded_value)

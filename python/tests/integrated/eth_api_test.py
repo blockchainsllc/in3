@@ -4,7 +4,7 @@ Integrated tests for `in3.eth` module.
 import unittest
 
 import in3
-from tests.config_mock import mock_config
+from tests.mock.config import mock_config
 from tests.transport import mock_transport
 
 
