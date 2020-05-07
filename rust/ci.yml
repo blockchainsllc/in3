@@ -84,6 +84,7 @@ rust_multiarch:
 #    - cargo install --path . --force
 #    - cd ..
   script:
+    - docker ps -a
     - cd rust/
     - mkdir -p target/native
     - cp ../arm_jni_build/lib/libin3.a target/native/libin3_armv7-unknown-linux-gnueabihf.a
