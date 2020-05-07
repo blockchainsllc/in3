@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+static inline uint32_t btc_epoch(uint32_t block_number) {
+  return block_number / 2016;
+}
+
 // check if 2 byte arrays are equal where one is a bytes while the other one is a hex string (without 0x)
 static bool equals_hex(bytes_t data, char* hex) {
   uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                              // calc len of bytes from hex
@@ -24,35 +28,148 @@ static in3_ret_t btc_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   return IN3_OK;
 }
 
+static uint8_t* skip_vin(uint8_t* p, uint32_t len) {
+  for (uint32_t i = 0; i < len; i++) {
+    p += 36;                      // skip prev tx(32) and txout(4)
+    uint64_t tmp;                 //
+    p += decode_var_int(p, &tmp); // script length
+    p += tmp + 4;                 // script bytes + sequence ( 4)
+  }
+  return p;
+}
+
+static uint8_t* skip_vout(uint8_t* p, uint32_t len) {
+  for (uint32_t i = 0; i < len; i++) {
+    p += 8;                       // skip  value (8)
+    uint64_t tmp;                 //
+    p += decode_var_int(p, &tmp); // script length
+    p += tmp;                     // script bytes
+  }
+  return p;
+}
+
+static inline bool is_witness(bytes_t tx) {
+  return tx.data[4] == 0 && tx.data[5] == 1;
+}
+
+static in3_ret_t btc_txid(in3_vctx_t* vc, bytes_t tx, bytes32_t txid) {
+  uint8_t* start = tx.data + 4 + (is_witness(tx) ? 2 : 0);
+  uint64_t tmp;
+  uint8_t* p = start + decode_var_int(start, &tmp);
+  p          = skip_vin(p, (uint32_t) tmp);
+  p          = p + decode_var_int(p, &tmp);
+  p          = skip_vout(p, (uint32_t) tmp);
+
+  /*
+* 
+01000000 // version
+03 // l vin
+8c091a64ddbc99f81f3fd4b2fbb5bfafa68e87d9f0a90df89ac69bf9e5f6740a000000006a4730440220481f2b3a49b202e26c73ac1b7bce022e4a74aff08473228ccf362f6043639efe02201d573e65394228ae30cfdc67b0456a5fb02af4fdbf29c2771c8a5dcfee4b2c9b012103a6ab31dcae7d90085809b58fbac506631a57dc34ed942e74ef116e0800254874ffffffff44509eb1e52041a66e8e7191f77c460ae326e12e3d158a9c13c3dfd4825e9c86000000006b483045022100ae5bd019a63aed404b743c9ebcc77fbaa657e481f745e4e47abc7cd2a0c77b5402204cdfd79646e50590386e1cb7334aaf9338016d2f3657fefa1bf3a23a0e3454e7012103427d40830bb4648442f9a4d901ea42a7bbdb8af39e9596e1a91d3b34e8f3255dffffffffff8efa7372998c2e6bd363c0046b3dbc2983ef5be12a4ac908e48a1b9ad2038a010000006a47304402200bf7c5c7caec478bf6d7e9c5127c71505034302056d12848749bbe9d57664ef3022056f564fdb4da99cde5c856211c93a820f9222af0292039a8e3dd9d429c172f320121027f3061a928f1780afceb18813215febbec05bd4b186feff66fd32128520045daffffffff02a3440000000000001976a91453196749b85367db9443ef9a5aec25cf0bdceedf88ac14f90d000000000017a9148bb2b4b848d0b6336cc64ea57ae989630f447cba8700000000
+* 
+*/
+
+  bytes_t tdata;
+  tdata.len  = p - start + 8;
+  tdata.data = alloca(tdata.len);
+
+  memcpy(tdata.data, tx.data, 4);                              // nVersion
+  memcpy(tdata.data + 4, start, p - start);                    // txins/txouts
+  memcpy(tdata.data + tdata.len - 4, tx.data + tx.len - 4, 4); //lockTime
+
+  btc_hash(tdata, txid);
+  return IN3_OK;
+}
+
+static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
+  bytes_t   header       = d_to_bytes(d_get(vc->proof, K_BLOCK));
+  bytes_t   merkle_proof = d_to_bytes(d_get(vc->proof, key("cbtxmerkleProof")));
+  bytes_t   tx           = d_to_bytes(d_get(vc->proof, key("cbtx")));
+  bytes32_t tx_hash;
+
+  if (header.len != 80) return vc_err(vc, "invalid blockheader");
+  if (!merkle_proof.len) return vc_err(vc, "missing merkle proof");
+  if (!tx.len) return vc_err(vc, "missing coinbase tx");
+
+  // verify merkle proof
+  if (btc_txid(vc, tx, tx_hash)) return vc_err(vc, "invalid txid!");
+  if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_proof, 0, tx_hash)) return vc_err(vc, "merkleProof failed!");
+
+  if (tx.data[6] != 1) return vc_err(vc, "vin count needs to be 1 for coinbase tx");
+
+  uint64_t       sig_len;
+  const uint8_t* sig = tx.data + 7 + 36 + decode_var_int(tx.data + 7 + 36, &sig_len);
+  *dst_block_number  = ((uint32_t) sig[1]) | (((uint32_t) sig[1]) << 8) | (((uint32_t) sig[2]) << 16);
+
+  // 01000000 // Version
+  // 0001     // Flag
+  // 01       // VARINT
+  /*
+0000000000000000000000000000000000000000000000000000000000000000 // pre tx
+ffffffff // txout index
+5f // VARINT length
+033e890904e2888d5e2f706f6f6c696e2e636f6d2ffabe6d6d96439d07cae2a0d0d7b459d69d6e8fbe84a28f9be160edb3c33279ebfbc7af8d010000000000000066e1bb5b9e64b5779c4872da7ee8ba921008d1689900a204000000000000ffffffff0491e3894a0000000017a91454705dd010ab50c03543a543cda327a60d9bf7af870000000000000000266a24b9e11b6ddd3fec243f225bbee268c09f1a616a2c6e5196a1e8977d59b32daf8ae52767570000000000000000266a24aa21a9edb1979b2b4464d1ef79257852017413a72a9cd2fa9048fa86052d1121f59d536c00000000000000002b6a2952534b424c4f434b3aa7a3b7405613557aba7780a86227466b8fa451f82f0cdce821aafe2400222c9901200000000000000000000000000000000000000000000000000000000000000000539da2fc
+
+*/
+
+  return IN3_OK;
+}
+
 /**
  * verify proof of work of the blockheader
  */
-static in3_ret_t btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash) {
-  bytes32_t target;
-  btc_target(bytes(block_header, 80), target); // check target
-  btc_hash(bytes(block_header, 80), dst_hash); // check blockhash
-  return (memcmp(target, dst_hash, 32) < 0) ? vc_err(vc, "Invalid proof of work. the hash is greater than the target") : IN3_OK;
+static in3_ret_t
+btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, bytes32_t dst_target, uint32_t* block_number, bytes32_t expected_target) {
+  in3_ret_t ret = IN3_OK;
+  btc_target(bytes(block_header, 80), dst_target); // check target
+  btc_hash(bytes(block_header, 80), dst_hash);     // check blockhash
+  if (memcmp(dst_target, dst_hash, 32) < 0) return vc_err(vc, "Invalid proof of work. the hash is greater than the target");
+  if (expected_target)
+    return memcmp(dst_target, expected_target, 32) == 0 ? IN3_OK : vc_err(vc, "Invalid target");
+
+  if ((ret = btc_block_number(vc, block_number))) return ret;
+
+  return ret;
+}
+
+static in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target) {
+  bytes32_t tmp;
+  memcpy(tmp, old_target, 32);
+  for (int i = 0; i < 31; i++) tmp[i] = tmp[i] << 2 || tmp[i + 1] >> 6; // multiply by 4
+  if (memcmp(tmp, new_target, 32) < 0) return vc_err(vc, "new target is more than 4 times the old target");
+  memcpy(tmp, old_target, 32);
+  for (int i = 1; i < 32; i++) tmp[i] = tmp[i] >> 2 || tmp[i - 1] << 6; // divide by 4
+  if (memcmp(tmp, new_target, 32) > 0) return vc_err(vc, "new target is less than one 4th of the old target");
+  return IN3_OK;
 }
 
 /**
  * verify the finality block.
  */
-in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality, bytes_t final_blocks) {
-  bytes32_t parent_hash, tmp;
+in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality, bytes_t final_blocks, bytes32_t expected_target, uint64_t block_nr) {
+  if (!finality) return IN3_OK;
+  bytes32_t parent_hash, tmp, target;
+  memcpy(target, expected_target, 32);
   in3_ret_t ret = IN3_OK;
-  memcpy(parent_hash, block_hash, 32);                                                          // we start with the current block hash as parent
-  for (int i = 0, p = 0; i < finality; i++, p += 80) {                                          // go through all requested finality blocks
-    if (p + 80 > (int) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders"); //  the bytes need to be long enough
-    rev_copy(tmp, btc_block_get(bytes(final_blocks.data + p, 80), BTC_B_PARENT_HASH).data);     // copy the parent hash of the block inito tmp
-    if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block"); // check parent hash
-    if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash))) return ret;          // check the headers proof of work and set the new parent hash
+  memcpy(parent_hash, block_hash, 32);                                                                    // we start with the current block hash as parent
+  block_nr++;                                                                                             // we start with the next block_nr
+  for (int i = 0, p = 0; i < finality; i++, p += 80, block_nr++) {                                        // go through all requested finality blocks
+    if ((block_nr) % 2016 == 0) {                                                                         // if we reached a epcoch limit
+      i = 0;                                                                                              // we need all finality-headers again startting with the DAP-break.
+      btc_target(bytes(final_blocks.data + p, 80), tmp);                                                  // read the new target from the new blockheader
+      if ((ret = btc_new_target_check(vc, target, tmp))) return ret;                                      // check if the new target is within the allowed range (*/4)
+      memcpy(target, tmp, 32);                                                                            // now we use the new target
+    }                                                                                                     //
+    if (p + 80 > (int) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders");           //  the bytes need to be long enough
+    rev_copy(tmp, btc_block_get(bytes(final_blocks.data + p, 80), BTC_B_PARENT_HASH).data);               // copy the parent hash of the block inito tmp
+    if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block");           // check parent hash
+    if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash, tmp, NULL, target))) return ret; // check the headers proof of work and set the new parent hash
   }
   return ret;
 }
 
 in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* block_hash) {
   bytes_t    data, merkle_data, header;
-  bytes32_t  hash, expected_block_hash;
+  bytes32_t  hash, expected_block_hash, block_target, hash2;
   d_token_t* t;
   bool       in_active_chain = true;
 
@@ -60,15 +177,13 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
 
   if (json) {
 
+    //TODO add witness support, since the txid will not be the same as the hash for a witness transaction
+
     // check txid
     t = d_get(vc->result, key("txid"));
     if (!t || d_type(t) != T_STRING || d_len(t) != 64) return vc_err(vc, "missing or invalid txid");
     hex_to_bytes(d_string(t), 64, hash, 32);
     if (memcmp(hash, tx_hash, 32)) return vc_err(vc, "wrong txid");
-
-    // check hash
-    d_token_t* t2 = d_get(vc->result, key("hash"));
-    if (!t2 || !d_eq(t, t2)) return vc_err(vc, "missing or invalid hash");
 
     // check hex
     t = d_get(vc->result, key("hex"));
@@ -76,6 +191,13 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
     data.len  = (d_len(t) + 1) >> 1;
     data.data = alloca(data.len);
     hex_to_bytes(d_string(t), d_len(t), data.data, data.len);
+
+    // check hash
+    t = d_get(vc->result, key("hash"));
+    btc_hash(data, hash2);
+    if (!t || d_type(t) != T_STRING || d_len(t) != 64) return vc_err(vc, "missing or invalid hash");
+    hex_to_bytes(d_string(t), 64, hash, 32);
+    if (memcmp(hash, hash2, 32)) return vc_err(vc, "wrong hash");
 
     // check blockhash
     t = d_get(vc->result, key("blockhash"));
@@ -102,7 +224,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
   }
 
   // hash and check transaction hash
-  btc_hash(data, hash);
+  if (btc_txid(vc, data, hash)) return vc_err(vc, "invalid txdata");
   if (memcmp(hash, tx_hash, 32)) return vc_err(vc, "invalid hex");
 
   // get the header
@@ -123,15 +245,16 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
   if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_hash)) return vc_err(vc, "merkleProof failed!");
 
   // now verify the blockheader
-  in3_ret_t valid_header = btc_verify_header(vc, header.data, hash);
+  uint32_t  block_number;
+  in3_ret_t valid_header = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL);
   if (valid_header == IN3_WAITING) return valid_header;
-
   if (in_active_chain != (valid_header == IN3_OK)) return vc_err(vc, "active_chain check failed!");
 
   // make sure we have the expected blockhash
   if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
 
-  return IN3_OK;
+  // check finality
+  return in_active_chain ? btc_check_finality(vc, hash, vc->config->finality, d_to_bytes(d_get(vc->proof, key("final"))), block_target, block_number) : IN3_OK;
 }
 
 /**
@@ -139,15 +262,16 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
  */
 in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   uint8_t   block_header[80];
-  bytes32_t tmp, tmp2;
+  bytes32_t tmp, tmp2, block_target;
   in3_ret_t ret = IN3_OK;
+  uint32_t  block_number;
   if (json)
     btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
   else                                                         //
     hex_to_bytes(d_string(vc->result), 160, block_header, 80); // or use the first 80 byte of the block
 
   // verify the proof of work
-  if ((ret = btc_verify_header(vc, block_header, tmp))) return ret;
+  if ((ret = btc_verify_header(vc, block_header, tmp, block_target, &block_number, NULL))) return ret;
 
   // check blockhash
   if (memcmp(tmp, block_hash, 32)) return vc_err(vc, "Invalid blockhash");
@@ -189,7 +313,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
 
   // check finality blocks
   if (vc->ctx->requests_configs->finality)
-    return btc_check_finality(vc, block_hash, vc->ctx->requests_configs->finality, d_to_bytes(d_get(vc->proof, key("final"))));
+    return btc_check_finality(vc, block_hash, vc->ctx->requests_configs->finality, d_to_bytes(d_get(vc->proof, key("final"))), block_target, block_number);
 
   return IN3_OK;
 }
