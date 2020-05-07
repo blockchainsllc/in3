@@ -211,7 +211,6 @@ def _print():
 
 
 # Find ENS for the desired chain or the address of your own ENS resolver. https://docs.ens.domains/ens-deployments
-ens_address = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'  # Available at Mainnet, Ropsten, Rinkeby and Goerli.
 domain = 'depraz.eth'
 
 print('\nEthereum Name Service')
@@ -219,21 +218,21 @@ print('\nEthereum Name Service')
 # Instantiate In3 Client for Goerli
 chain = 'goerli'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr', ens_address)
+address = client.ens_resolve(domain, 'addr')
 
 # Instantiate In3 Client for Mainnet
 chain = 'mainnet'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr', ens_address)
-owner = client.ens_resolve(domain, 'owner', ens_address)
+address = client.ens_resolve(domain, 'addr')
+owner = client.ens_resolve(domain, 'owner')
 _print()
 
 # Instantiate In3 Client for Kovan
 chain = 'kovan'
 client = in3.Client(chain)
 try:
-    address = client.ens_resolve(domain, 'addr', ens_address)
-    owner = client.ens_resolve(domain, 'owner', ens_address)
+    address = client.ens_resolve(domain, 'addr')
+    owner = client.ens_resolve(domain, 'owner')
     _print()
 except in3.ClientException:
     print('\nENS is not available on Kovan.')
@@ -243,11 +242,8 @@ except in3.ClientException:
 """
 Ethereum Name Service
 
-Address for deprazz.eth @ goerli: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
-Owner for deprazz.eth @ goerli: 0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308
-
-Address for deprazz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
-Owner for deprazz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
+Address for depraz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
+Owner for depraz.eth @ mainnet: 0x6fa33809667a99a805b610c49ee2042863b1bb83
 
 ENS is not available on Kovan.
 """
@@ -415,7 +411,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x1094036d0>)
+transport=<CFunctionType object at 0x10af886d0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -1154,7 +1150,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x108bda5f0>)
+transport: <function CFUNCTYPE at 0x10a75f5f0>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1182,7 +1178,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x108bda5f0>,
+transport: <function CFUNCTYPE at 0x10a75f5f0>,
 debug=False)
 ```
 
