@@ -11,7 +11,6 @@ def _print():
 
 
 # Find ENS for the desired chain or the address of your own ENS resolver. https://docs.ens.domains/ens-deployments
-ens_address = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'  # Available at Mainnet, Ropsten, Rinkeby and Goerli.
 domain = 'depraz.eth'
 
 print('\nEthereum Name Service')
@@ -19,21 +18,21 @@ print('\nEthereum Name Service')
 # Instantiate In3 Client for Goerli
 chain = 'goerli'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr', ens_address)
+address = client.ens_resolve(domain, 'addr')
 
 # Instantiate In3 Client for Mainnet
 chain = 'mainnet'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr', ens_address)
-owner = client.ens_resolve(domain, 'owner', ens_address)
+address = client.ens_resolve(domain, 'addr')
+owner = client.ens_resolve(domain, 'owner')
 _print()
 
 # Instantiate In3 Client for Kovan
 chain = 'kovan'
 client = in3.Client(chain)
 try:
-    address = client.ens_resolve(domain, 'addr', ens_address)
-    owner = client.ens_resolve(domain, 'owner', ens_address)
+    address = client.ens_resolve(domain, 'addr')
+    owner = client.ens_resolve(domain, 'owner')
     _print()
 except in3.ClientException:
     print('\nENS is not available on Kovan.')
