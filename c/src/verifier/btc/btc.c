@@ -37,7 +37,7 @@ static in3_ret_t btc_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
 static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
   bytes_t     header       = d_to_bytes(d_get(vc->proof, K_BLOCK));
-  bytes_t     merkle_proof = d_to_bytes(d_get(vc->proof, key("cbtxmerkleProof")));
+  bytes_t     merkle_proof = d_to_bytes(d_get(vc->proof, key("cbtxMerkleProof")));
   bytes_t     tx           = d_to_bytes(d_get(vc->proof, key("cbtx")));
   bytes32_t   tx_hash;
   btc_tx_t    tx_data;
@@ -227,8 +227,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
       if (!equals_hex(tx_out.script, hex)) return vc_err(vc, "invalid vout.hex");
     }
 
-  
-  } else {
+    } else {
 
     // here we expect the raw serialized transaction
     if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
