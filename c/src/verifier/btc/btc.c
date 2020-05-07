@@ -7,10 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static inline uint32_t btc_epoch(uint32_t block_number) {
-  return block_number / 2016;
-}
-
 // check if 2 byte arrays are equal where one is a bytes while the other one is a hex string (without 0x)
 static bool equals_hex(bytes_t data, char* hex) {
   uint32_t sl = hex ? strlen(hex) : 0, bl = sl >> 1;                                                              // calc len of bytes from hex
@@ -53,6 +49,7 @@ static inline bool is_witness(bytes_t tx) {
 }
 
 static in3_ret_t btc_txid(in3_vctx_t* vc, bytes_t tx, bytes32_t txid) {
+  if (tx.len < 6) return vc_err(vc, "invalid tx");
   uint8_t* start = tx.data + 4 + (is_witness(tx) ? 2 : 0);
   uint64_t tmp;
   uint8_t* p = start + decode_var_int(start, &tmp);
@@ -134,10 +131,10 @@ btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, byt
 static in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target) {
   bytes32_t tmp;
   memcpy(tmp, old_target, 32);
-  for (int i = 0; i < 31; i++) tmp[i] = tmp[i] << 2 || tmp[i + 1] >> 6; // multiply by 4
+  for (int i = 0; i < 31; i++) tmp[i] = (tmp[i] << 2) | (tmp[i + 1] >> 6); // multiply by 4
   if (memcmp(tmp, new_target, 32) < 0) return vc_err(vc, "new target is more than 4 times the old target");
   memcpy(tmp, old_target, 32);
-  for (int i = 1; i < 32; i++) tmp[i] = tmp[i] >> 2 || tmp[i - 1] << 6; // divide by 4
+  for (int i = 1; i < 32; i++) tmp[i] = (tmp[i] >> 2) | (tmp[i - 1] << 6); // divide by 4
   if (memcmp(tmp, new_target, 32) > 0) return vc_err(vc, "new target is less than one 4th of the old target");
   return IN3_OK;
 }
