@@ -91,7 +91,6 @@ if (IN3_LIB)
 
     if (BTC) 
         set(IN3_LIBS ${IN3_LIBS} 
-          $<TARGET_OBJECTS:tommath_o> 
           $<TARGET_OBJECTS:btc_o>
         )
     endif()

@@ -54,13 +54,18 @@ if (process.argv.find(_ => _.indexOf('mocha') >= 0)) {
     })
 }
 
-const ignoreFuxxProps = ['id', 'error', 'code', 'weight', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
+const ignoreFuxxProps = ['id', 'error', 'code', 'weight', 'confirmations', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
+const ignoreVoutProps = ['value', 'reqSigs']
 
 
 async function runFuzzTests(filter, test, allResults, c, ob, prefix = '') {
     if (!ob) return c
-    for (const k of Object.keys(ob).filter(_ => _ && ignoreFuxxProps.indexOf(_) < 0 && (prefix.indexOf('proof.transactions') < 0 || ignoreTxProps.indexOf(_) < 0))) {
+    for (const k of Object.keys(ob).filter(_ => _
+        && ignoreFuxxProps.indexOf(_) < 0
+        && (prefix.indexOf('proof.transactions') < 0 || ignoreTxProps.indexOf(_) < 0)
+        && (prefix.indexOf('result.vout') < 0 || ignoreVoutProps.indexOf(_) < 0)
+    )) {
         if (k === 'txIndex' && test.response[0].result === null)
             continue
         const val = ob[k]
