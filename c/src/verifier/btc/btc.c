@@ -52,8 +52,9 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
 
 in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* block_hash) {
   bytes_t    data, merkle_data, header;
-  bytes32_t  hash;
+  bytes32_t  hash, expected_block_hash;
   d_token_t* t;
+  bool       in_active_chain = true;
 
   if (json) {
 
@@ -67,27 +68,38 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
     d_token_t* t2 = d_get(vc->result, key("hash"));
     if (!t2 || !d_eq(t, t2)) return vc_err(vc, "missing or invalid hash");
 
+    // check hex
     t = d_get(vc->result, key("hex"));
     if (!t || d_type(t) != T_STRING) return vc_err(vc, "missing hex");
-
     data.len  = (d_len(t) + 1) >> 1;
     data.data = alloca(data.len);
     hex_to_bytes(d_string(t), d_len(t), data.data, data.len);
 
+    // check blockhash
+    t = d_get(vc->result, key("blockhash"));
+    if (!t || d_type(t) != T_STRING || d_len(t) != 64) return vc_err(vc, "missing blockhash");
+    hex_to_bytes(d_string(t), d_len(t), expected_block_hash, 32);
     if (block_hash) {
-      t = d_get(vc->result, key("blockhash"));
-      if (!t || d_type(t) != T_STRING || d_len(t) != 64) return vc_err(vc, "missing blockhash");
-      hex_to_bytes(d_string(t), d_len(t), hash, 32);
-      if (memcmp(hash, block_hash, 32)) return vc_err(vc, "invalid blockhash");
+      if (memcmp(expected_block_hash, block_hash, 32)) return vc_err(vc, "invalid blockhash");
+      in_active_chain = d_get_intk(vc->result, key("in_active_chain"));
     }
+
+    // check size
+    if (d_get_intk(vc->result, key("size")) != (int32_t) data.len) return vc_err(vc, "invalid size");
+
     // TODO check the vin and vout
+    // https://bitcoin.org/en/developer-reference#getrawtransaction
 
   } else {
+
+    // here we expect the raw serialized transaction
     if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
     data.len  = (d_len(vc->result) + 1) >> 1;
     data.data = alloca(data.len);
     hex_to_bytes(d_string(vc->result), d_len(vc->result), data.data, data.len);
   }
+
+  // hash and check transaction hash
   btc_hash(data, hash);
   if (memcmp(hash, tx_hash, 32)) return vc_err(vc, "invalid hex");
 
@@ -101,10 +113,20 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
   if (!t || d_type(t) != T_BYTES) return vc_err(vc, "missing merkle proof!");
   merkle_data = d_to_bytes(t);
 
+  // check the transactionIndex
   t = d_get(vc->proof, K_TX_INDEX);
   if (!t || d_type(t) != T_INTEGER) return vc_err(vc, "missing txIndex");
 
+  // verify merkle proof
   if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_hash)) return vc_err(vc, "merkleProof failed!");
+
+  // now verify the blockheader
+  in3_ret_t valid_header = btc_verify_header(vc, header.data, hash);
+  if (valid_header == IN3_WAITING) return valid_header;
+
+  if (in_active_chain != (valid_header != IN3_OK)) return vc_err(vc, "active_chain check failed!");
+
+  if (memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
 
   return IN3_OK;
 }

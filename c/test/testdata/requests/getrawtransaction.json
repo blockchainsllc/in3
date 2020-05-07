@@ -2,6 +2,7 @@
   {
     "descr": "getrawtransaction",
     "chainId": "0x99",
+    "fuzzer": true,
     "request": {
       "id": 1,
       "jsonrpc": "2.0",
