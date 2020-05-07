@@ -35,7 +35,6 @@
 /** @file 
  * simple commandline-util sending in3-requests.
  * */
-
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
 #include "../../core/util/bitset.h"
@@ -61,7 +60,7 @@
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
 
-#if !defined(_WIN32) && !defined(WIN32)
+#if !defined(_WIN32) && !defined(WIN32) && defined(HIDAPI)
 #include "../../signer/ledger-nano/ledger-incubed-signer/ledger_signer.h"
 #endif
 
@@ -695,7 +694,7 @@ int main(int argc, char* argv[]) {
       } else
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-bip32") == 0) {
-#if !defined(_WIN32) && !defined(WIN32)
+#if !defined(_WIN32) && !defined(WIN32) && defined(HIDAPI)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, bip32, 5);
         eth_ledger_set_signer(c, bip32);

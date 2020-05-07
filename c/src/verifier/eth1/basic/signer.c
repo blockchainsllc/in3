@@ -36,7 +36,7 @@
 #include "../../../core/client/keys.h"
 #include "../../../core/util/mem.h"
 
-#if !defined(_WIN32) && !defined(WIN32)
+#if !defined(_WIN32) && !defined(WIN32) && defined(HIDAPI)
 #include "../../../signer/ledger-nano/ledger-incubed-signer/ledger_signer.h"
 #endif
 
@@ -163,7 +163,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // Note: This works because the signer->wallet points to the pk in the current signer implementation
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
-#if !defined(_WIN32) && !defined(WIN32)
+#if !defined(_WIN32) && !defined(WIN32) && defined(HIDAPI)
       if (!ctx->client->signer || (ctx->client->signer->sign != eth_sign && ctx->client->signer->sign != eth_ledger_sign)) {
 #else
       if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
@@ -176,7 +176,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       uint8_t public_key[65], sdata[32];
       bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
 
-#if !defined(_WIN32) && !defined(WIN32)
+#if !defined(_WIN32) && !defined(WIN32) && defined(HIDAPI)
       if (ctx->client->signer->sign == eth_ledger_sign) {
         uint8_t bip32[32];
         memcpy(bip32, ctx->client->signer->wallet, 5);
