@@ -56,6 +56,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
   d_token_t* t;
   bool       in_active_chain = true;
 
+  if (block_hash) memcpy(expected_block_hash, block_hash, 32);
+
   if (json) {
 
     // check txid
@@ -124,9 +126,10 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
   in3_ret_t valid_header = btc_verify_header(vc, header.data, hash);
   if (valid_header == IN3_WAITING) return valid_header;
 
-  if (in_active_chain != (valid_header != IN3_OK)) return vc_err(vc, "active_chain check failed!");
+  if (in_active_chain != (valid_header == IN3_OK)) return vc_err(vc, "active_chain check failed!");
 
-  if (memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
+  // make sure we have the expected blockhash
+  if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
 
   return IN3_OK;
 }
