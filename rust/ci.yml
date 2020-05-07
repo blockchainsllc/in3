@@ -73,7 +73,6 @@ rust_multiarch:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
-    CROSS_DOCKER_IN_DOCKER: true
   needs:
     - win_jni
     - gcc_legacy
@@ -89,6 +88,7 @@ rust_multiarch:
 #    - cargo install --path . --force
 #    - cd ..
   script:
+    - export CROSS_DOCKER_IN_DOCKER=true
     - docker ps -a
     - cd rust/
     - mkdir -p target/native
