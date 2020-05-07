@@ -40,7 +40,11 @@ add_subdirectory(src/third-party)
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
-add_subdirectory(src/signer/ledger-nano/ledger-incubed-signer)
+
+if (HIDAPI AND (NOT (WIN32 OR MSVC OR MSYS OR MINGW)))
+  add_subdirectory(src/signer/ledger-nano/ledger-incubed-signer)
+endif()
+
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
 IF (ETH_FULL)
