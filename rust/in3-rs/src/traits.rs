@@ -10,9 +10,8 @@ pub trait Transport {
 }
 
 pub trait Signer {
-    fn sign(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>>;
+    fn sign(&mut self, msg: &str) -> Result<String, String>;
 }
-
 
 pub trait Storage {
     fn get(&self, key: &str) -> Option<Vec<u8>>;
@@ -24,12 +23,13 @@ pub trait Storage {
 pub trait Client {
     fn configure(&mut self, config: &str) -> Result<(), String>;
     fn set_transport(&mut self, transport: Box<dyn Transport>);
+    fn set_signer(&mut self, signer: Box<dyn Signer>);
     fn set_storage(&mut self, storage: Box<dyn Storage>);
     async fn rpc(&mut self, call: &str) -> error::In3Result<String>;
     #[cfg(feature = "blocking")]
     fn rpc_blocking(&mut self, call: &str) -> error::In3Result<String>;
     fn hex_to_bytes(&mut self, data: &str) -> *mut u8;
-    fn new_bytes(&mut self, data: &str, len:usize) -> *mut u8;
+    fn new_bytes(&mut self, data: &str, len: usize) -> *mut u8;
     fn set_pk_signer(&mut self, data: &str);
 }
 

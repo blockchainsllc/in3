@@ -5,7 +5,8 @@ use ffi::{CStr, CString};
 use libc::{c_char, strlen};
 // use std::mem;
 use crate::error::{Error, In3Result};
-use crate::traits::{Client as ClientTrait, Storage, Transport, Signer};
+use crate::signer::SignerRust;
+use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
 use rustc_hex::{FromHex, ToHex};
 use serde_json::json;
@@ -34,26 +35,43 @@ pub struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
     #[allow(dead_code)]
     config: ffi::CString,
+    signer: Box<dyn Signer>,
 }
 
 impl Ctx {
-    pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
+    pub fn new(in3: &mut Client, config_str: &str, signer: Box<dyn Signer>) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
             ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
         }
-        Ctx { ptr, config }
+        Ctx {
+            ptr,
+            config,
+            signer,
+        }
+    }
+    fn set_signer(&mut self, signer: Box<dyn Signer>) {
+        self.signer = signer;
     }
 
-    pub unsafe fn sign(
+    pub unsafe fn signc(
         &mut self,
         type_: SignatureType,
         data: *const c_char,
         len: usize,
     ) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        signer::sign(pk, type_, data, len)
+        signer::signc(pk, type_, data, len)
+    }
+
+    pub unsafe fn sign(&mut self, msg: &str) -> *const c_char {
+        let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
+        // if self.signer.is_some() {
+        let sig = self.signer.sign(msg).unwrap();
+        let c_sig = CString::new(sig).expect("");
+        c_sig.as_ptr()
+        // }
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
@@ -111,10 +129,15 @@ impl Ctx {
                     let slice = CStr::from_ptr(item_).to_str().unwrap();
                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
                     let data_str = &request["params"][0].as_str().unwrap()[2..];
-                    let data_hex = data_str.from_hex().unwrap();
-                    let c_data = data_hex.as_ptr() as *const c_char;
-                    let data_sig: *mut u8 = self.sign(SignatureType::Hash, c_data, data_hex.len());
-                    let res_str = data_sig as *const c_char;
+                    // let sig = self.client.signer.sign(data_str).unwrap();
+                    // let c_sig = CString::new(sig).expect("");
+                    let res_str = self.sign(data_str);
+
+                    // let data_hex = data_str.from_hex().unwrap();
+                    // let c_data = data_hex.as_ptr() as *const c_char;
+                    // let data_sig: *mut u8 = self.sign(SignatureType::Hash, c_data, data_hex.len());
+
+                    // let res_str = data_sig as *const c_char;
                     in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
                     in3_sys::sb_add_range(
                         &mut (*(*last_waiting).raw_response.offset(0)).result,
@@ -189,7 +212,13 @@ impl Ctx {
 #[async_trait(? Send)]
 impl ClientTrait for Client {
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, call);
+        let mut ctx = Ctx::new(
+            self,
+            call,
+            Box::new(SignerRust {
+                pk: "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6",
+            }),
+        );
         loop {
             let res = unsafe { ctx.execute().await };
             if res != Err(Error::TryAgain) {
@@ -211,6 +240,10 @@ impl ClientTrait for Client {
 
     fn set_transport(&mut self, transport: Box<dyn Transport>) {
         self.transport = transport;
+    }
+
+    fn set_signer(&mut self, signer: Box<dyn Signer>) {
+        self.signer = Some(signer);
     }
 
     fn set_storage(&mut self, storage: Box<dyn Storage>) {
@@ -310,6 +343,7 @@ impl Drop for Request {
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
     transport: Box<dyn Transport>,
+    signer: Option<Box<dyn Signer>>,
     storage: Option<Box<dyn Storage>>,
 }
 
@@ -319,6 +353,7 @@ impl Client {
             let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: Box::new(HttpTransport {}),
+                signer: None,
                 storage: None,
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
