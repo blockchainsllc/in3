@@ -87,6 +87,7 @@ rust_multiarch:
 #    - cargo install --path . --force
 #    - cd ..
   script:
+    - export DOCKER_HOST='tcp://docker:2375'
     - docker ps -a
     - cd rust/
     - mkdir -p target/native
