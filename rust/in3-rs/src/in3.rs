@@ -35,24 +35,16 @@ pub struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
     #[allow(dead_code)]
     config: ffi::CString,
-    signer: Box<dyn Signer>,
 }
 
 impl Ctx {
-    pub fn new(in3: &mut Client, config_str: &str, signer: Box<dyn Signer>) -> Ctx {
+    pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
             ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
         }
-        Ctx {
-            ptr,
-            config,
-            signer,
-        }
-    }
-    fn set_signer(&mut self, signer: Box<dyn Signer>) {
-        self.signer = signer;
+        Ctx { ptr, config }
     }
 
     pub unsafe fn signc(
@@ -66,12 +58,16 @@ impl Ctx {
     }
 
     pub unsafe fn sign(&mut self, msg: &str) -> *const c_char {
-        let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        // if self.signer.is_some() {
-        let sig = self.signer.sign(msg).unwrap();
-        let c_sig = CString::new(sig).expect("");
-        c_sig.as_ptr()
-        // }
+        let cptr = (*self.ptr).client;
+        let client = cptr as *mut in3_sys::in3_t;
+        let c = (*client).internal as *mut Client;
+        if let Some(signer) = &mut (*c).signer {
+            if let Some(val) = signer.sign(msg) {
+                let c_sig = CString::new(val).expect("");
+                return c_sig.as_ptr();
+            }
+        }
+        std::ptr::null_mut()
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
@@ -212,13 +208,7 @@ impl Ctx {
 #[async_trait(? Send)]
 impl ClientTrait for Client {
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(
-            self,
-            call,
-            Box::new(SignerRust {
-                pk: "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6",
-            }),
-        );
+        let mut ctx = Ctx::new(self, call);
         loop {
             let res = unsafe { ctx.execute().await };
             if res != Err(Error::TryAgain) {

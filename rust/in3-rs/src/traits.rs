@@ -10,7 +10,7 @@ pub trait Transport {
 }
 
 pub trait Signer {
-    fn sign(&mut self, msg: &str) -> Result<String, String>;
+    fn sign(&mut self, msg: &str) -> Option<String>;
 }
 
 pub trait Storage {

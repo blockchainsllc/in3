@@ -91,6 +91,24 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
   return ctx_add_required(parent, ctx_new(parent->client, req));
 }
 
+/**  in3 utiliy to sign the given data with give private key */
+in3_ret_t sign(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst) {
+  switch (type) {
+    case SIGN_EC_RAW:
+      if (ecdsa_sign_digest(&secp256k1, pk, message.data, dst, dst + 64, NULL) < 0)
+        return IN3_EUNKNOWN;
+      break;
+    case SIGN_EC_HASH:
+      if (ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message.data, message.len, dst, dst + 64, NULL) < 0)
+        return IN3_EUNKNOWN;
+      break;
+
+    default:
+      return IN3_ENOTSUP;
+  }
+  return 65;
+}
+
 /** signs the given data */
 in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   UNUSED_VAR(account); // at least for now

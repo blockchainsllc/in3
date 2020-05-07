@@ -65,7 +65,7 @@ pub struct SignerRust<'a> {
 }
 
 impl Signer for SignerRust<'_> {
-    fn sign(&mut self, msg: &str) -> Result<String, String> {
+    fn sign(&mut self, msg: &str) -> Option<String> {
         let msg_hex = msg.from_hex().unwrap();
         let pk_hex = self.pk.from_hex().unwrap();
         let mut hasher = Keccak256Full::new();
@@ -82,7 +82,7 @@ impl Signer for SignerRust<'_> {
         let (signature, _) = sign(&message, &seckey);
         let signature_arr = signature.serialize();
         let sign_str = signature_hex_string(signature_arr);
-        Ok(sign_str)
+        Some(sign_str)
     }
 }
 
