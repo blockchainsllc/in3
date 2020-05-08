@@ -136,6 +136,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
 
   // define the expected blockhash
   if (block_hash) memcpy(expected_block_hash, block_hash, 32);
+  memset(block_target, 0, 32);
 
   // get the header
   t = d_get(vc->proof, K_BLOCK);

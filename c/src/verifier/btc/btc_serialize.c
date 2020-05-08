@@ -31,6 +31,7 @@ bytes_t btc_block_get(bytes_t block, btc_block_field field) {
     case BTC_B_BITS: return bytes(block.data + 72, 4);
     case BTC_B_NONCE: return bytes(block.data + 76, 4);
     case BTC_B_HEADER: return bytes(block.data, 80);
+    default: return bytes(NULL, 0);
   }
 }
 void btc_hash(bytes_t data, bytes32_t dst) {
