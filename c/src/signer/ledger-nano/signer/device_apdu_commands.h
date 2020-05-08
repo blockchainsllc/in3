@@ -38,7 +38,6 @@
 #include "../../../core/client/client.h"
 #define HID_CMD_MAX_LEN 64
 
-#define DEBUG 1
 extern const uint8_t CLA;
 extern const uint8_t INS_GET_PUBLIC_KEY;
 extern const uint8_t INS_SIGN;
@@ -54,7 +53,5 @@ uint16_t bytes_to_len(uint8_t* buf);
 void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd);
 
 void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t* o_apdu_res);
-
-void print_bytes(uint8_t* bytes, int len, char* args);
 
 #endif

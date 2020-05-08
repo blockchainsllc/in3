@@ -41,8 +41,8 @@ add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
 
-if (HIDAPI AND (NOT (WIN32 OR MSVC OR MSYS OR MINGW)))
-  add_subdirectory(src/signer/ledger-nano/ledger-incubed-signer)
+if( LEDGER_NANO AND HIDAPI )
+  add_subdirectory(src/signer/ledger-nano/signer)
 endif()
 
 add_subdirectory(src/pay)
@@ -118,11 +118,10 @@ if (IN3_LIB)
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
     
-    if( (WIN32 OR MSVC OR MSYS OR MINGW) OR NOT HIDAPI )
-       target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
-    elseif(HIDAPI)
-       add_definitions(-DHIDAPI)
+    if( LEDGER_NANO AND HIDAPI )
        target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+    else()
+       target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
     endif()
     
 

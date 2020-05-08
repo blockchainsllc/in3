@@ -75,14 +75,3 @@ uint16_t bytes_to_len(uint8_t* buf) {
   uint16_t number = (buf[1] << 8) + buf[0];
   return number;
 }
-
-void print_bytes(uint8_t* bytes, int len, char* args) {
-  in3_log_debug("printing bytes %s \n", args);
-  int i = 0;
-  for (i = 0; i < len; i++) {
-
-    in3_log_debug("%02x ", bytes[i]);
-  }
-
-  in3_log_debug("\n\n");
-}

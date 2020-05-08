@@ -3,6 +3,7 @@
 #endif
 
 #include "../../../core/client/context.h"
+#include "../../../core/util/bytes.h"
 #include "../../../core/util/log.h"
 #include "device_apdu_commands.h"
 #include "ledger_signer.h"
@@ -116,7 +117,8 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
         wrap_apdu(apdu_bytes, 0, &final_apdu_command);
 
 #ifdef DEBUG
-        print_bytes(final_apdu_command.data, final_apdu_command.len, "eth_ledger_sign :wraping");
+        in3_log_debug("apdu commnd sent to device\n");
+        ba_print(final_apdu_command.data, final_apdu_command.len);
 #endif
 
         res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
@@ -126,7 +128,8 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
         read_hid_response(handle, &response);
 
 #ifdef DEBUG
-        print_bytes(response.data, response.len, "eth_ledger_sign :raw signature");
+        in3_log_debug("response received from device\n");
+        ba_print(response.data, response.len);
 #endif
 
         if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
@@ -138,7 +141,8 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
           dst[64] = recid;
 
 #ifdef DEBUG
-          print_bytes(dst, 65, "eth_ledger_sign : signature");
+          in3_log_debug("printing signature returned by device with recid value\n");
+          ba_print(dst, 65);
 #endif
 
         } else {
@@ -197,7 +201,8 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
     wrap_apdu(apdu_bytes, 0, &final_apdu_command);
 
 #ifdef DEBUG
-    print_bytes(final_apdu_command.data, final_apdu_command.len, "eth_ledger_get_public_key :wraping");
+    in3_log_debug("apdu command sent to device\n");
+    ba_print(final_apdu_command.data, final_apdu_command.len");
 #endif
 
     res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
@@ -205,7 +210,8 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
     read_hid_response(handle, &response);
 
 #ifdef DEBUG
-    print_bytes(response.data, response.len, "eth_ledger_get_public_key :response hid");
+    in3_log_debug("response received from device\n");
+    ba_print(response.data, response.len);
 #endif
 
     if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
@@ -304,7 +310,8 @@ int get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uin
       if (memcmp(pub_key, p_key, 65) == 0) {
         recid = i;
 #ifdef DEBUG
-        print_bytes(p_key, 65, "get_recid_from_pub_key :keys matched");
+        in3_log_debug("public key matched with recid value\n");
+        ba_print(p_key, 65, "get_recid_from_pub_key :keys matched");
 #endif
         break;
       }

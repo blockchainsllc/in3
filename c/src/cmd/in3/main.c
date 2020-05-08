@@ -60,8 +60,8 @@
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
 
-#if !defined(_WIN32) && !defined(WIN32) && defined(HIDAPI)
-#include "../../signer/ledger-nano/ledger-incubed-signer/ledger_signer.h"
+#if defined(LEDGER_NANO)
+#include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
 #include "../../verifier/eth1/basic/signer.h"
@@ -694,11 +694,13 @@ int main(int argc, char* argv[]) {
       } else
         pk_file = argv[++i];
     } else if (strcmp(argv[i], "-bip32") == 0) {
-#if !defined(_WIN32) && !defined(WIN32) && defined(HIDAPI)
+#if defined(LEDGER_NANO)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, bip32, 5);
         eth_ledger_set_signer(c, bip32);
       }
+#else
+      die("bip32 option not supported currently ");
 #endif
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
@@ -806,7 +808,7 @@ int main(int argc, char* argv[]) {
           p += sprintf(params + p, "\"0x%x\"", atoi(argv[i]));
         else
           p += sprintf(params + p,
-                       (argv[i][0] == '0{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
+                       (argv[i][0] == '{' || argv[i][0] == '[' || strcmp(argv[i], "true") == 0 || strcmp(argv[i], "false") == 0 || (*argv[i] >= '0' && *argv[i] <= '9' && strlen(argv[i]) < 16 && *(argv[i] + 1) != 'x'))
                            ? "%s"
                            : "\"%s\"",
                        strcmp(method, "in3_ens") ? resolve(c, argv[i]) : argv[i]);
