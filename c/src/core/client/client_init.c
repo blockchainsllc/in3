@@ -40,6 +40,7 @@
 #include "cache.h"
 #include "client.h"
 #include "nodelist.h"
+#include "verifier.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -849,6 +850,11 @@ char* in3_configure(in3_t* c, const char* config) {
 #endif
             }
           } else {
+
+            // try to delegate the call to the verifier.
+            const in3_verifier_t* verifier = in3_get_verifier(chain->type);
+            if (verifier && verifier->set_confg && verifier->set_confg(c, cp.token, chain) == IN3_OK) continue;
+
             EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }
