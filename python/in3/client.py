@@ -62,7 +62,7 @@ class Client:
         """
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'hash')
 
-    def ens_resolve(self, domain_name: str, registry: str = None) -> str:
+    def ens_address(self, domain_name: str, registry: str = None) -> str:
         """
         Resolves ENS domain name to what account that domain points to.
         Args:
@@ -77,7 +77,7 @@ class Client:
             registry = self._factory.get_address(registry)
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'addr', registry)
 
-    def ens_resolve_owner(self, domain_name: str, registry: str = None) -> str:
+    def ens_owner(self, domain_name: str, registry: str = None) -> str:
         """
         Resolves ENS domain name to Ethereum address of domain owner.
         Args:
@@ -90,7 +90,7 @@ class Client:
             registry = self._factory.get_address(registry)
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'owner', registry)
 
-    def ens_resolve_resolver(self, domain_name: str, registry: str = None) -> str:
+    def ens_resolver(self, domain_name: str, registry: str = None) -> str:
         """
         Resolves ENS domain name to Smart-contract address of the resolver registered for that domain.
         Args:

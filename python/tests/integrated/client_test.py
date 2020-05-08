@@ -27,8 +27,8 @@ class MainNetClientTest(unittest.TestCase):
     def test_ens_resolve(self):
         # Other calls like `addr` require more than one eth_call, being more complex to mock the tests. Suffice for now.
         with self.assertRaises(in3.EthAddressFormatException):
-            self.client.ens_resolve_owner('depraz.eth', 'asd')
-        address = self.client.ens_resolve_owner('depraz.eth')
+            self.client.ens_owner('depraz.eth', 'asd')
+        address = self.client.ens_owner('depraz.eth')
         self.assertEqual(address, '0x0b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
     def test_ens_namehash(self):
@@ -67,7 +67,7 @@ class GoerliClientTest(MainNetClientTest):
 
     def test_ens_resolve(self):
         # Other calls like `addr` require more than one eth_call, being more complex to mock the tests. Suffice for now.
-        address = self.client.ens_resolve_owner('depraz.eth')
+        address = self.client.ens_owner('depraz.eth')
         self.assertEqual(address, '0x0b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
 

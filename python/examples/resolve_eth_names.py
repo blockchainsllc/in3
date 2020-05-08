@@ -18,21 +18,21 @@ print('\nEthereum Name Service')
 # Instantiate In3 Client for Goerli
 chain = 'goerli'
 client = in3.Client(chain)
-address = client.ens_resolve(domain)
+address = client.ens_address(domain)
 
 # Instantiate In3 Client for Mainnet
 chain = 'mainnet'
 client = in3.Client(chain)
-address = client.ens_resolve(domain)
-owner = client.ens_resolve_owner(domain)
+address = client.ens_address(domain)
+owner = client.ens_owner(domain)
 _print()
 
 # Instantiate In3 Client for Kovan
 chain = 'kovan'
 client = in3.Client(chain)
 try:
-    address = client.ens_resolve(domain)
-    owner = client.ens_resolve_owner(domain)
+    address = client.ens_address(domain)
+    owner = client.ens_owner(domain)
     _print()
 except in3.ClientException:
     print('\nENS is not available on Kovan.')
