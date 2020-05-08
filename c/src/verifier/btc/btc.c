@@ -269,7 +269,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_id)) return vc_err(vc, "merkleProof failed!");
 
   // now verify the blockheader
-  uint32_t  block_number;
+  uint32_t  block_number = 0;
   in3_ret_t valid_header = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL);
   if (valid_header == IN3_WAITING) return valid_header;
   if (in_active_chain != (valid_header == IN3_OK)) return vc_err(vc, "active_chain check failed!");
@@ -287,8 +287,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
 in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   uint8_t   block_header[80];
   bytes32_t tmp, tmp2, block_target;
-  in3_ret_t ret = IN3_OK;
-  uint32_t  block_number;
+  in3_ret_t ret          = IN3_OK;
+  uint32_t  block_number = 0;
   if (json)
     btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
   else                                                         //
