@@ -13,6 +13,9 @@ in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t n
   if (memcmp(tmp, new_target, 32) > 0) return vc_err(vc, "new target is less than one 4th of the old target");
   return IN3_OK;
 }
+static void set_cachekey(chain_id_t id, char* buffer) {
+  sprintf(buffer, "btc_target_%d", (uint32_t) id);
+}
 
 // format:  <2 bytes big endias HEX DAP NR> <4 bytes bits>
 #define BTC_TARGETS "0135413b1417" \
@@ -21,14 +24,24 @@ in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t n
 btc_target_conf_t* btc_get_conf(in3_t* c, in3_chain_t* chain) {
   btc_target_conf_t* tc = (btc_target_conf_t*) chain->conf;
   if (tc == NULL) {
-    tc                             = _malloc(sizeof(btc_target_conf_t));
-    chain->conf                    = tc;
-    tc->max_daps                   = 5;
-    tc->max_diff                   = 5;
-    const char*        btc_targets = BTC_TARGETS;
-    const unsigned int len         = strlen(btc_targets);
-    tc->data                       = bytes(_malloc(len >> 1), len >> 1);
-    hex_to_bytes(btc_targets, len, tc->data.data, tc->data.len);
+    char cache_key[50];
+    set_cachekey(c->chain_id, cache_key);
+
+    tc              = _malloc(sizeof(btc_target_conf_t));
+    chain->conf     = tc;
+    tc->max_daps    = 5;
+    tc->max_diff    = 5;
+    bytes_t* cached = c->cache ? c->cache->get_item(c->cache->cptr, cache_key) : NULL;
+
+    if (cached) {
+      tc->data = *cached;
+      _free(cached);
+    } else {
+      const char*        btc_targets = BTC_TARGETS;
+      const unsigned int len         = strlen(btc_targets);
+      tc->data                       = bytes(_malloc(len >> 1), len >> 1);
+      hex_to_bytes(btc_targets, len, tc->data.data, tc->data.len);
+    }
   }
   return tc;
 }
@@ -46,6 +59,7 @@ in3_ret_t btc_vc_set_config(in3_t* c, d_token_t* conf, in3_chain_t* chain) {
 }
 
 void btc_vc_free(in3_t* c, in3_chain_t* chain) {
+  UNUSED_VAR(c);
   if (chain->conf) {
     btc_target_conf_t* tc = (btc_target_conf_t*) chain->conf;
     if (tc->data.data) _free(tc->data.data);
@@ -56,10 +70,6 @@ void btc_vc_free(in3_t* c, in3_chain_t* chain) {
 
 btc_target_conf_t* btc_get_config(in3_vctx_t* vc) {
   return btc_get_conf(vc->ctx->client, vc->chain);
-}
-
-static void set_cachekey(chain_id_t id, char* buffer) {
-  sprintf(buffer, "btc_target_%d", (uint32_t) id);
 }
 
 void btc_set_target(in3_vctx_t* vc, uint32_t dap, uint8_t* difficulty) {
@@ -122,6 +132,6 @@ in3_ret_t btc_get_verified_target(in3_vctx_t* vc, uint32_t block_number, uint8_t
 
   if (conf->max_daps <= dist) {
     // the distance is within the allowed range
-    }
+  }
   return IN3_EFIND;
 }
