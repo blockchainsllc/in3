@@ -16,7 +16,7 @@ resolver_tx = {
     "data": client.eth.contract.encode(ens_resolver_abi, domain_name)
 }
 tx = in3.eth.NewTransaction(**resolver_tx)
-encoded_resolver_addr = client.eth.contract.eth_call(tx)
+encoded_resolver_addr = client.eth.contract.call(tx)
 resolver_address = client.eth.contract.decode(ens_resolver_abi, encoded_resolver_addr)
 
 # Resolve name
@@ -25,7 +25,7 @@ name_tx = {
     "to": resolver_address,
     "data": client.eth.contract.encode(ens_addr_abi, domain_name)
 }
-encoded_domain_address = client.eth.contract.eth_call(in3.eth.NewTransaction(**name_tx))
+encoded_domain_address = client.eth.contract.call(in3.eth.NewTransaction(**name_tx))
 domain_address = client.eth.contract.decode(ens_addr_abi, encoded_domain_address)
 
 print('END domain:\n{}\nResolved by:\n{}\nTo address:\n{}'.format(domain_name, resolver_address, domain_address))

@@ -40,7 +40,7 @@ class EthContractApi:
         self._runtime = runtime
         self._factory = factory
 
-    def eth_call(self, transaction: NewTransaction, block_number: int or str = 'latest') -> int or str:
+    def call(self, transaction: NewTransaction, block_number: int or str = 'latest') -> int or str:
         """
         Calls a smart-contract method. Will be executed locally by Incubed's EVM or signed and sent over to save the state changes.
         Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.

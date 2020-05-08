@@ -357,7 +357,7 @@ resolver_tx = {
     "data": client.eth.contract.encode(ens_resolver_abi, domain_name)
 }
 tx = in3.eth.NewTransaction(**resolver_tx)
-encoded_resolver_addr = client.eth.contract.eth_call(tx)
+encoded_resolver_addr = client.eth.contract.call(tx)
 resolver_address = client.eth.contract.decode(ens_resolver_abi, encoded_resolver_addr)
 
 # Resolve name
@@ -366,7 +366,7 @@ name_tx = {
     "to": resolver_address,
     "data": client.eth.contract.encode(ens_addr_abi, domain_name)
 }
-encoded_domain_address = client.eth.contract.eth_call(in3.eth.NewTransaction(**name_tx))
+encoded_domain_address = client.eth.contract.call(in3.eth.NewTransaction(**name_tx))
 domain_address = client.eth.contract.decode(ens_addr_abi, encoded_domain_address)
 
 print('END domain:\n{}\nResolved by:\n{}\nTo address:\n{}'.format(domain_name, resolver_address, domain_address))
@@ -412,7 +412,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x106f7a7a0>)
+transport=<CFunctionType object at 0x10bfb27a0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -791,9 +791,9 @@ EthContractApi(self, runtime: In3Runtime, factory: EthObjectFactory)
 Manages smart-contract data and transactions
 
 
-#### eth_call
+#### call
 ```python
-EthContractApi.eth_call(transaction: NewTransaction,
+EthContractApi.call(transaction: NewTransaction,
 block_number: int = 'latest')
 ```
 
@@ -1172,7 +1172,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x106759680>)
+transport: <function CFUNCTYPE at 0x10b791680>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1200,7 +1200,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x106759680>,
+transport: <function CFUNCTYPE at 0x10b791680>,
 debug=False)
 ```
 

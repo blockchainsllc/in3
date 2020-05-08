@@ -20,7 +20,7 @@ class MainNetContractTest(unittest.TestCase):
             "data": '0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e'
         }
         transaction = in3.eth.NewTransaction(**tx)
-        address = self.client.eth.contract.eth_call(transaction)
+        address = self.client.eth.contract.call(transaction)
         self.assertEqual(address, '0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
     def test_get_storage_at(self):
@@ -106,7 +106,7 @@ class GoerliContractTest(MainNetContractTest):
             "data": '0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e'
         }
         transaction = in3.eth.NewTransaction(**tx)
-        address = self.client.eth.contract.eth_call(transaction)
+        address = self.client.eth.contract.call(transaction)
         self.assertEqual(address, '0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308')
 
     def test_get_storage_at(self):
