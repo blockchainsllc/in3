@@ -88,7 +88,7 @@ rust_multiarch:
 #    - cargo install --path . --force
 #    - cd ..
   script:
-    - export CROSS_DOCKER_IN_DOCKER=true
+    - export CROSS_DOCKER_IN_DOCKER=false
     - export RUST_BACKTRACE=1
     - docker ps -a
     - cd rust/
