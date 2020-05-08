@@ -13,20 +13,20 @@ ens_resolver_abi = 'resolver(bytes32):address'
 # Find resolver contract for ens name
 resolver_tx = {
     "to": ens_registry_addr,
-    "data": client.eth.contract.abi_encode(ens_resolver_abi, domain_name)
+    "data": client.eth.contract.encode(ens_resolver_abi, domain_name)
 }
 tx = in3.eth.NewTransaction(**resolver_tx)
 encoded_resolver_addr = client.eth.contract.eth_call(tx)
-resolver_address = client.eth.contract.abi_decode(ens_resolver_abi, encoded_resolver_addr)
+resolver_address = client.eth.contract.decode(ens_resolver_abi, encoded_resolver_addr)
 
 # Resolve name
 ens_addr_abi = 'addr(bytes32):address'
 name_tx = {
     "to": resolver_address,
-    "data": client.eth.contract.abi_encode(ens_addr_abi, domain_name)
+    "data": client.eth.contract.encode(ens_addr_abi, domain_name)
 }
 encoded_domain_address = client.eth.contract.eth_call(in3.eth.NewTransaction(**name_tx))
-domain_address = client.eth.contract.abi_decode(ens_addr_abi, encoded_domain_address)
+domain_address = client.eth.contract.decode(ens_addr_abi, encoded_domain_address)
 
 print('END domain:\n{}\nResolved by:\n{}\nTo address:\n{}'.format(domain_name, resolver_address, domain_address))
 

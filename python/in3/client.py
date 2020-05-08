@@ -39,7 +39,7 @@ class Client:
         fn_args = str([in3_config.serialize()]).replace('\'', '')
         return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
-    def get_node_list(self) -> NodeList:
+    def refresh_node_list(self) -> NodeList:
         """
         Gets the list of Incubed nodes registered in the selected chain registry contract.
         Returns:
@@ -48,7 +48,7 @@ class Client:
         node_list_dict = self._runtime.call(In3Methods.NODE_LIST)
         return self._factory.get_node_list(node_list_dict)
 
-    def get_config(self) -> dict:
+    def config(self) -> dict:
         # TODO: Marshalling
         return self._runtime.call(In3Methods.GET_CONFIG)
 

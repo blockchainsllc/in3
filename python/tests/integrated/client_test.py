@@ -21,7 +21,7 @@ class MainNetClientTest(unittest.TestCase):
         self.assertIsInstance(client, in3.Client)
 
     def test_node_list(self):
-        node_list = self.client.get_node_list()
+        node_list = self.client.refresh_node_list()
         self.assertIsInstance(node_list, in3.model.NodeList)
 
     def test_ens_resolve(self):

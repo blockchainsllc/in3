@@ -1,7 +1,7 @@
 from in3.eth.account import EthAccountApi
 from in3.eth.contract import EthContractApi
 from in3.eth.factory import EthObjectFactory
-from in3.eth.model import Transaction, Block
+from in3.eth.model import Transaction, Block, TransactionReceipt
 from in3.libin3.enum import EthMethods, BlockAt
 from in3.libin3.runtime import In3Runtime
 
@@ -45,7 +45,7 @@ class EthereumApi:
         """
         return self._factory.get_integer(self._runtime.call(EthMethods.BLOCK_NUMBER))
 
-    def get_block_by_hash(self, block_hash: str, get_full_block: bool = False) -> BlockAt:
+    def block_by_hash(self, block_hash: str, get_full_block: bool = False) -> BlockAt:
         """
         Blocks can be identified by root hash of the block merkle tree (this), or sequential number in which it was mined (get_block_by_number).
         Args:
@@ -58,7 +58,7 @@ class EthereumApi:
                                               get_full_block)
         return self._factory.get_block(serialized)
 
-    def get_block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> Block:
+    def block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> Block:
         """
         Blocks can be identified by sequential number in which it was mined, or root hash of the block merkle tree (this) (get_block_by_hash).
         Args:
@@ -73,7 +73,7 @@ class EthereumApi:
         serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_NUMBER, block_number_str, get_full_block)
         return self._factory.get_block(serialized)
 
-    def get_transaction_by_hash(self, tx_hash: str) -> Transaction:
+    def transaction_by_hash(self, tx_hash: str) -> Transaction:
         """
         Transactions can be identified by root hash of the transaction merkle tree (this) or by its position in the block transactions merkle tree.
         Every transaction hash is unique for the whole chain. Collision could in theory happen, chances are 67148E-63%.
@@ -84,3 +84,19 @@ class EthereumApi:
         """
         serialized: dict = self._runtime.call(EthMethods.TRANSACTION_BY_HASH, self._factory.get_hash(tx_hash))
         return self._factory.get_transaction(serialized)
+
+    def transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
+        """
+        After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to
+        gather the receipt, once a miner has mined and it is part of an acknowledged block. Because how it is possible,
+        in distributed systems, that data is asymmetric in different parts of the system, the transaction is only "final"
+        once a certain number of blocks was mined after it, and still it can be possible that the transaction is discarded
+        after some time. But, in general terms, it is accepted that after 6 to 8 blocks from latest, that it is very
+        likely that the transaction will stay in the chain.
+        Args:
+            tx_hash: Transaction hash.
+        Returns:
+            tx_receipt: The mined Transaction data including event logs.
+        """
+        tx_receipt = self._runtime.execute(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
+        return self._factory.get_tx_receipt(tx_receipt)
