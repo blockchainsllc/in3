@@ -60,25 +60,6 @@ class Client:
         fn_args = str([json.dumps(cfg_dict)]).replace('\'', '')
         return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
-    def ens_resolve(self, domain_name: str, domain_type: str = 'addr', registry: str = None) -> str:
-        """
-        Resolves ENS domain name to Ethereum address.
-        Args:
-            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
-            domain_type: 'hash'|'addr'|'owner'|'resolver'
-            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
-        Returns:
-            address (str): Ethereum address corresponding to domain name.
-        """
-        # TODO: Add handlers to Account
-        # TODO: Add serialization in account factory
-        """
-          "currently only 'hash','addr','owner' or 'resolver' are allowed as type
-        """
-        if domain_type not in ['hash', 'addr', 'owner', 'resolver']:
-            raise AssertionError('Domain type must be one of the following: hash, addr, owner, resolver')
-        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, domain_type, registry)
-
     def ens_namehash(self, domain_name: str) -> str:
         """
         Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-137.md#name-syntax)
@@ -87,7 +68,48 @@ class Client:
         Returns:
             node (str): Formatted string referred as `node` in ENS documentation
         """
-        return self.ens_resolve(domain_name, 'hash')
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'hash')
+
+    def ens_resolve(self, domain_name: str, registry: str = None) -> str:
+        """
+        Resolves ENS domain name to what account that domain points to.
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+        Returns:
+            address (str): Ethereum address corresponding to what account that domain points to.
+        """
+        # TODO: Add handlers to Account
+        # TODO: Add serialization in account factory
+        if registry:
+            registry = self._factory.get_address(registry)
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'addr', registry)
+
+    def ens_resolve_owner(self, domain_name: str, registry: str = None) -> str:
+        """
+        Resolves ENS domain name to Ethereum address of domain owner.
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+        Returns:
+            owner_address (str): Ethereum address corresponding to domain owner.
+        """
+        if registry:
+            registry = self._factory.get_address(registry)
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'owner', registry)
+
+    def ens_resolve_resolver(self, domain_name: str, registry: str = None) -> str:
+        """
+        Resolves ENS domain name to Smart-contract address of the resolver registered for that domain.
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+        Returns:
+            resolver_contract_address (str): Smart-contract address of the resolver registered for that domain.
+        """
+        if registry:
+            registry = self._factory.get_address(registry)
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'resolver', registry)
 
 
 class In3ObjectFactory(EthObjectFactory):

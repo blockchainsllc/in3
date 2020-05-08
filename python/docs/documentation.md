@@ -218,21 +218,21 @@ print('\nEthereum Name Service')
 # Instantiate In3 Client for Goerli
 chain = 'goerli'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr')
+address = client.ens_resolve(domain)
 
 # Instantiate In3 Client for Mainnet
 chain = 'mainnet'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr')
-owner = client.ens_resolve(domain, 'owner')
+address = client.ens_resolve(domain)
+owner = client.ens_resolve_owner(domain)
 _print()
 
 # Instantiate In3 Client for Kovan
 chain = 'kovan'
 client = in3.Client(chain)
 try:
-    address = client.ens_resolve(domain, 'addr')
-    owner = client.ens_resolve(domain, 'owner')
+    address = client.ens_resolve(domain)
+    owner = client.ens_resolve_owner(domain)
     _print()
 except in3.ClientException:
     print('\nENS is not available on Kovan.')
@@ -348,16 +348,17 @@ import in3
 
 client = in3.Client('goerli')
 domain_name = client.ens_namehash('depraz.eth')
-ens_registry_address = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
+ens_registry_addr = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
 ens_resolver_abi = 'resolver(bytes32):address'
 
 # Find resolver contract for ens name
 resolver_tx = {
-    "to": ens_registry_address,
+    "to": ens_registry_addr,
     "data": client.eth.contract.abi_encode(ens_resolver_abi, domain_name)
 }
-encoded_resolver_address = client.eth.contract.eth_call(in3.eth.NewTransaction(**resolver_tx))
-resolver_address = client.eth.contract.abi_decode(ens_resolver_abi, encoded_resolver_address)
+tx = in3.eth.NewTransaction(**resolver_tx)
+encoded_resolver_addr = client.eth.contract.eth_call(tx)
+resolver_address = client.eth.contract.abi_decode(ens_resolver_abi, encoded_resolver_addr)
 
 # Resolve name
 ens_addr_abi = 'addr(bytes32):address'
@@ -411,7 +412,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x10af886d0>)
+transport=<CFunctionType object at 0x10330e600>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -443,26 +444,6 @@ Client.raw_configure(cfg_dict: dict)
 Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
 
 
-#### ens_resolve
-```python
-Client.ens_resolve(domain_name: str,
-domain_type: str = 'addr',
-registry: str = None)
-```
-
-Resolves ENS domain name to Ethereum address.
-
-**Arguments**:
-
-- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
-- `domain_type` - 'hash'|'addr'|'owner'|'resolver'
-- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
-
-**Returns**:
-
-- `address` _str_ - Ethereum address corresponding to domain name.
-  
-
 #### ens_namehash
 ```python
 Client.ens_namehash(domain_name: str)
@@ -477,6 +458,57 @@ Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS
 **Returns**:
 
 - `node` _str_ - Formatted string referred as `node` in ENS documentation
+  
+
+#### ens_resolve
+```python
+Client.ens_resolve(domain_name: str, registry: str = None)
+```
+
+Resolves ENS domain name to what account that domain points to.
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+
+**Returns**:
+
+- `address` _str_ - Ethereum address corresponding to what account that domain points to.
+  
+
+#### ens_resolve_owner
+```python
+Client.ens_resolve_owner(domain_name: str, registry: str = None)
+```
+
+Resolves ENS domain name to Ethereum address of domain owner.
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+
+**Returns**:
+
+- `owner_address` _str_ - Ethereum address corresponding to domain owner.
+  
+
+#### ens_resolve_resolver
+```python
+Client.ens_resolve_resolver(domain_name: str, registry: str = None)
+```
+
+Resolves ENS domain name to Smart-contract address of the resolver registered for that domain.
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+
+**Returns**:
+
+- `resolver_contract_address` _str_ - Smart-contract address of the resolver registered for that domain.
   
 
 ### ClientConfig
@@ -1150,7 +1182,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x10a75f5f0>)
+transport: <function CFUNCTYPE at 0x1029db710>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1178,7 +1210,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10a75f5f0>,
+transport: <function CFUNCTYPE at 0x1029db710>,
 debug=False)
 ```
 
