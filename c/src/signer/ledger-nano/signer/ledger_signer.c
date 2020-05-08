@@ -200,11 +200,6 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
 
     wrap_apdu(apdu_bytes, 0, &final_apdu_command);
 
-#ifdef DEBUG
-    in3_log_debug("apdu command sent to device\n");
-    ba_print(final_apdu_command.data, final_apdu_command.len");
-#endif
-
     res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
 
     read_hid_response(handle, &response);
