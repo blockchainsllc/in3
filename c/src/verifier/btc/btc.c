@@ -35,11 +35,12 @@ static in3_ret_t btc_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   return IN3_OK;
 }
 
+// extract the blocknumber from the proof based on BIP 34
 static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
   bytes_t     header       = d_to_bytes(d_get(vc->proof, K_BLOCK));
   bytes_t     merkle_proof = d_to_bytes(d_get(vc->proof, key("cbtxMerkleProof")));
   bytes_t     tx           = d_to_bytes(d_get(vc->proof, key("cbtx")));
-  bytes32_t   tx_hash;
+  bytes32_t   tx_id;
   btc_tx_t    tx_data;
   btc_tx_in_t tx_in;
 
@@ -49,13 +50,14 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
 
   // create txid
   if (btc_parse_tx(tx, &tx_data)) return vc_err(vc, "invalid coinbase tx");
-  if (btc_tx_id(&tx_data, tx_hash)) return vc_err(vc, "invalid txid!");
+  if (btc_tx_id(&tx_data, tx_id)) return vc_err(vc, "invalid txid!");
 
   // verify merkle proof
-  if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_proof, 0, tx_hash)) return vc_err(vc, "merkleProof failed!");
+  if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_proof, 0, tx_id)) return vc_err(vc, "merkleProof failed!");
 
+  // the coinbase tx has only one input
   if (tx_data.input_count != 1) return vc_err(vc, "vin count needs to be 1 for coinbase tx");
-  if (btc_parse_tx_in(tx_data.input.data, &tx_in) == NULL) return vc_err(vc, "invalid coinbase signature");
+  if (btc_parse_tx_in(tx_data.input.data, &tx_in) == NULL || *tx_in.script.data != 3) return vc_err(vc, "invalid coinbase signature");
 
   *dst_block_number = ((uint32_t) tx_in.script.data[1]) | (((uint32_t) tx_in.script.data[2]) << 8) | (((uint32_t) tx_in.script.data[3]) << 16);
 
@@ -76,9 +78,19 @@ btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, byt
 
   if ((ret = btc_block_number(vc, block_number))) return ret;
 
+  // TODO now get the target from cache and check if this matches the used target
+
   return ret;
 }
 
+/**
+ * @brief  checks if the target is within a range
+ * @note   
+ * @param  vc: 
+ * @param  old_target: 
+ * @param  new_target: 
+ * @retval 
+ */
 static in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target) {
   bytes32_t tmp;
   memcpy(tmp, old_target, 32);
@@ -115,7 +127,7 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
   return ret;
 }
 
-in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* block_hash) {
+in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* block_hash) {
   bytes_t    data, merkle_data, header, tmp;
   bytes32_t  hash, expected_block_hash, block_target, hash2;
   d_token_t *t, *list;
@@ -136,7 +148,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
     t = d_get(vc->result, key("txid"));
     if (!t || d_type(t) != T_STRING || d_len(t) != 64) return vc_err(vc, "missing or invalid txid");
     hex_to_bytes(d_string(t), 64, hash, 32);
-    if (memcmp(hash, tx_hash, 32)) return vc_err(vc, "wrong txid");
+    if (memcmp(hash, tx_id, 32)) return vc_err(vc, "wrong txid");
 
     // check hex
     t = d_get(vc->result, key("hex"));
@@ -227,7 +239,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
       if (!equals_hex(tx_out.script, hex)) return vc_err(vc, "invalid vout.hex");
     }
 
-    } else {
+  } else {
 
     // here we expect the raw serialized transaction
     if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
@@ -241,7 +253,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
 
   // hash and check transaction hash
   if (btc_tx_id(&tx_data, hash)) return vc_err(vc, "invalid txdata");
-  if (memcmp(hash, tx_hash, 32)) return vc_err(vc, "invalid txid");
+  if (memcmp(hash, tx_id, 32)) return vc_err(vc, "invalid txid");
 
   // now check the merkle proof
   t = d_get(vc->proof, K_MERKLE_PROOF);
@@ -253,7 +265,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_hash, bool json, uint8_t* bl
   if (!t || d_type(t) != T_INTEGER) return vc_err(vc, "missing txIndex");
 
   // verify merkle proof
-  if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_hash)) return vc_err(vc, "merkleProof failed!");
+  if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_id)) return vc_err(vc, "merkleProof failed!");
 
   // now verify the blockheader
   uint32_t  block_number;
@@ -360,12 +372,12 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
     return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1);
   }
   if (strcmp(method, "getrawtransaction") == 0) {
-    d_token_t* tx_hash    = d_get_at(params, 0);
+    d_token_t* tx_id      = d_get_at(params, 0);
     bool       json       = d_len(params) < 2 ? true : d_get_int_at(params, 1);
     d_token_t* block_hash = d_get_at(params, 2);
-    if (!tx_hash || d_type(tx_hash) != T_STRING || d_len(tx_hash) != 64) return vc_err(vc, "Invalid tx_hash");
+    if (!tx_id || d_type(tx_id) != T_STRING || d_len(tx_id) != 64) return vc_err(vc, "Invalid tx_id");
     bytes32_t tx_hash_bytes;
-    hex_to_bytes(d_string(tx_hash), 64, tx_hash_bytes, 32);
+    hex_to_bytes(d_string(tx_id), 64, tx_hash_bytes, 32);
     return btc_verify_tx(vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
   return vc_err(vc, "Unsupported method");
@@ -399,55 +411,4 @@ static void print(char* prefix, bytes_t data, char* type) {
   print_hex(prefix, data.data, data.len);
 }
 
-int main() {
-
-  char* block_hex = BLOCK_B;
-
-  uint8_t block_data[strlen(block_hex) / 2];
-  bytes_t block = bytes(block_data, strlen(block_hex) / 2);
-  hex_to_bytes(block_hex, -1, block.data, block.len);
-
-  print("version    = ", btc_block_get(block, BTC_B_VERSION), "hex");
-  print("parent_hash= ", btc_block_get(block, BTC_B_PARENT_HASH), "hash");
-  print("merkle_root= ", btc_block_get(block, BTC_B_MERKLE_ROOT), "hash");
-  print("timestamp  = ", btc_block_get(block, BTC_B_TIMESTAMP), "int");
-  print("bits       = ", btc_block_get(block, BTC_B_BITS), "hex");
-  print("nonce      = ", btc_block_get(block, BTC_B_NONCE), "hex");
-
-  bytes32_t hash;
-  btc_hash(btc_block_get(block, BTC_B_HEADER), hash);
-  print_hex("hash       = ", hash, 32);
-  print("header     = ", btc_block_get(block, BTC_B_HEADER), "hex");
-
-  btc_target(block, hash);
-  print("target     = ", bytes(hash, 32), "hash");
-
-  int tx_count = btc_get_transaction_count(block);
-  printf("tx_cnt     = %i\n", tx_count);
-  bytes_t transactions[tx_count];
-  btc_get_transactions(block, transactions);
-
-  bytes32_t tx_hashes[tx_count];
-
-  // now calculate the transactionhashes
-  for (int i = 0; i < tx_count; i++) {
-    btc_hash(transactions[i], tx_hashes[i]);
-    printf(" %i : ", i);
-    print("", bytes(tx_hashes[i], 32), "hex");
-  }
-
-  bytes32_t root;
-  btc_merkle_create_root(tx_hashes, tx_count, root);
-  print("root = ", bytes(root, 32), "hex");
-
-  int proof_index = 3;
-
-  bytes_t* proof = btc_merkle_create_proof(tx_hashes, tx_count, proof_index);
-  print("proof= ", *proof, "hex");
-  int verified = btc_merkle_verify_proof(root, *proof, proof_index, tx_hashes[proof_index]);
-
-  printf("VERIFIED : %i\n", verified);
-
-  //  print("rest \n", bytes(block.data + 80, block.len - 80), "hex");
-}
 */
