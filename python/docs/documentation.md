@@ -412,7 +412,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x10330e600>)
+transport=<CFunctionType object at 0x10a0dd7a0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -435,14 +435,6 @@ Gets the list of Incubed nodes registered in the selected chain registry contrac
 
 - `node_list` _NodeList_ - List of registered in3 nodes and metadata.
   
-
-#### raw_configure
-```python
-Client.raw_configure(cfg_dict: dict)
-```
-
-Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
-
 
 #### ens_namehash
 ```python
@@ -1182,7 +1174,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x1029db710>)
+transport: <function CFUNCTYPE at 0x1098bb680>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1210,7 +1202,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x1029db710>,
+transport: <function CFUNCTYPE at 0x1098bb680>,
 debug=False)
 ```
 

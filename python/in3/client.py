@@ -52,14 +52,6 @@ class Client:
         # TODO: Marshalling
         return self._runtime.call(In3Methods.GET_CONFIG)
 
-    def raw_configure(self, cfg_dict: dict) -> bool:
-        """
-        Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
-        """
-        import json
-        fn_args = str([json.dumps(cfg_dict)]).replace('\'', '')
-        return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
-
     def ens_namehash(self, domain_name: str) -> str:
         """
         Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-137.md#name-syntax)
