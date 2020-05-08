@@ -90,6 +90,7 @@ rust_multiarch:
   script:
     - export CROSS_DOCKER_IN_DOCKER=false
     - export RUST_BACKTRACE=1
+    - export
     - docker ps -a
     - cd rust/
     - mkdir -p target/native
