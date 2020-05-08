@@ -4,6 +4,7 @@
 #include "../../core/util/utils.h"
 #include "btc_merkle.h"
 #include "btc_serialize.h"
+#include "btc_target.h"
 #include "btc_types.h"
 #include <stdlib.h>
 #include <string.h>
@@ -70,36 +71,19 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
 static in3_ret_t
 btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, bytes32_t dst_target, uint32_t* block_number, bytes32_t expected_target) {
   in3_ret_t ret = IN3_OK;
-  btc_target(bytes(block_header, 80), dst_target); // check target
-  btc_hash(bytes(block_header, 80), dst_hash);     // check blockhash
+  bytes32_t verified_target;
+  btc_target_from_block(bytes(block_header, 80), dst_target); // check target
+  btc_hash(bytes(block_header, 80), dst_hash);                // check blockhash
   if (memcmp(dst_target, dst_hash, 32) < 0) return vc_err(vc, "Invalid proof of work. the hash is greater than the target");
   if (expected_target)
     return memcmp(dst_target, expected_target, 32) == 0 ? IN3_OK : vc_err(vc, "Invalid target");
 
-  if ((ret = btc_block_number(vc, block_number))) return ret;
+  if ((ret = btc_block_number(vc, block_number))) return ret;                          // get the blocknumber from proof (BIP-34)
+  if ((ret = btc_get_verified_target(vc, *block_number, verified_target))) return ret; // get a verified target based on existing ones
 
-  // TODO now get the target from cache and check if this matches the used target
+  if (memcmp(verified_target, dst_target, 32)) return vc_err(vc, "header target does not match the verified target");
 
   return ret;
-}
-
-/**
- * @brief  checks if the target is within a range
- * @note   
- * @param  vc: 
- * @param  old_target: 
- * @param  new_target: 
- * @retval 
- */
-static in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target) {
-  bytes32_t tmp;
-  memcpy(tmp, old_target, 32);
-  for (int i = 0; i < 31; i++) tmp[i] = (tmp[i] << 2) | (tmp[i + 1] >> 6); // multiply by 4
-  if (memcmp(tmp, new_target, 32) < 0) return vc_err(vc, "new target is more than 4 times the old target");
-  memcpy(tmp, old_target, 32);
-  for (int i = 1; i < 32; i++) tmp[i] = (tmp[i] >> 2) | (tmp[i - 1] << 6); // divide by 4
-  if (memcmp(tmp, new_target, 32) > 0) return vc_err(vc, "new target is less than one 4th of the old target");
-  return IN3_OK;
 }
 
 /**
@@ -115,7 +99,7 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
   for (int i = 0, p = 0; i < finality; i++, p += 80, block_nr++) {                                        // go through all requested finality blocks
     if ((block_nr) % 2016 == 0) {                                                                         // if we reached a epcoch limit
       i = 0;                                                                                              // we need all finality-headers again startting with the DAP-break.
-      btc_target(bytes(final_blocks.data + p, 80), tmp);                                                  // read the new target from the new blockheader
+      btc_target_from_block(bytes(final_blocks.data + p, 80), tmp);                                       // read the new target from the new blockheader
       if ((ret = btc_new_target_check(vc, target, tmp))) return ret;                                      // check if the new target is within the allowed range (*/4)
       memcpy(target, tmp, 32);                                                                            // now we use the new target
     }                                                                                                     //
@@ -311,7 +295,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
     rev_copy(tmp2, tmp);                                                                                                            // we need to turn it into little endian be cause ini the header it is store as le.
     if (memcmp(tmp2, btc_block_get(bytes(block_header, 80), BTC_B_MERKLE_ROOT).data, 32)) return vc_err(vc, "Invalid Merkle root"); // compare the hash
                                                                                                                                     //
-    btc_target(bytes(block_header, 80), tmp2);                                                                                      // get current target
+    btc_target_from_block(bytes(block_header, 80), tmp2);                                                                           // get current target
     uint64_t difficulty = 0xFFFF000000000000L / bytes_to_long(tmp2 + 4, 8);                                                         // and calc the difficulty
     if (difficulty >> 2 != d_get_long(vc->result, "difficulty") >> 2) return vc_err(vc, "Wrong difficulty");                        // which must match the one in the json
     if (!equals_hex(bytes(block_hash, 32), d_get_string(vc->result, "hash"))) return vc_err(vc, "Wrong blockhash in json");         // check the requested hash
@@ -389,8 +373,11 @@ void in3_register_btc() {
   v->type           = CHAIN_BTC;
   v->pre_handle     = btc_handle_intern;
   v->verify         = in3_verify_btc;
+  v->set_confg      = btc_vc_set_config;
+  v->free_chain     = btc_vc_free;
   in3_register_verifier(v);
 }
+
 /*
 static void print_hex(char* prefix, uint8_t* data, int len) {
   printf("%s0x", prefix);

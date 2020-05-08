@@ -6,6 +6,7 @@ add_library(btc_o OBJECT
         btc_merkle.c
         btc_types.c
         btc_serialize.c
+        btc_target.c
         btc.c
 )
 

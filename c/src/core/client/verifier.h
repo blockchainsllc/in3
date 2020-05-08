@@ -86,7 +86,7 @@ typedef in3_ret_t (*in3_vc_set_config)(in3_t* c, d_token_t* conf, in3_chain_t* c
 /**
  * Function which is called before the chain-instance is freed. Here the verifier should clean up resources.
  */
-typedef in3_ret_t (*in3_vc_free)(in3_t* c, in3_chain_t* chain);
+typedef void (*in3_vc_free)(in3_t* c, in3_chain_t* chain);
 
 /**
  * a Verifier.

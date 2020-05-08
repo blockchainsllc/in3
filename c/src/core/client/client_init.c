@@ -151,6 +151,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+  chain->conf                 = NULL;
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
   chain->last_block           = 0;
@@ -321,6 +322,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
+    chain->conf                 = NULL;
     chain->nodelist             = NULL;
     chain->nodelist_length      = 0;
     chain->weights              = NULL;
@@ -446,6 +448,11 @@ void in3_free(in3_t* a) {
   if (!a) return;
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    if (a->chains[i].conf) {
+      in3_verifier_t* verifier = in3_get_verifier(a->chains[i].type);
+      if (verifier && verifier->free_chain)
+        verifier->free_chain(a, a->chains + i);
+    }
     if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
