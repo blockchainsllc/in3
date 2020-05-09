@@ -70,20 +70,13 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
  */
 static in3_ret_t
 btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, bytes32_t dst_target, uint32_t* block_number, bytes32_t expected_target) {
-  in3_ret_t ret = IN3_OK;
-  bytes32_t verified_target;
   btc_target_from_block(bytes(block_header, 80), dst_target); // check target
   btc_hash(bytes(block_header, 80), dst_hash);                // check blockhash
   if (memcmp(dst_target, dst_hash, 32) < 0) return vc_err(vc, "Invalid proof of work. the hash is greater than the target");
-  if (expected_target)
-    return memcmp(dst_target, expected_target, 32) == 0 ? IN3_OK : vc_err(vc, "Invalid target");
+  if (expected_target && memcmp(dst_target, expected_target, 32)) return vc_err(vc, "Invalid target");
+  if (btc_block_number(vc, block_number)) return vc_err(vc, "could not get the block number"); // get the blocknumber from proof (BIP-34)
 
-  if ((ret = btc_block_number(vc, block_number))) return ret;                          // get the blocknumber from proof (BIP-34)
-  if ((ret = btc_get_verified_target(vc, *block_number, verified_target))) return ret; // get a verified target based on existing ones
-
-  if (memcmp(verified_target, dst_target, 32)) return vc_err(vc, "header target does not match the verified target");
-
-  return ret;
+  return IN3_OK;
 }
 
 /**
@@ -108,6 +101,7 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
     if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block");           // check parent hash
     if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash, tmp, NULL, target))) return ret; // check the headers proof of work and set the new parent hash
   }
+
   return ret;
 }
 
@@ -253,16 +247,19 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_id)) return vc_err(vc, "merkleProof failed!");
 
   // now verify the blockheader
-  uint32_t  block_number = 0;
-  in3_ret_t valid_header = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL);
-  if (valid_header == IN3_WAITING) return valid_header;
-  if (in_active_chain != (valid_header == IN3_OK)) return vc_err(vc, "active_chain check failed!");
+  uint32_t  block_number     = 0;
+  bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
+  in3_ret_t ret;
+  if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL))) return ret;
+  if (in_active_chain) {
+    if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+    if ((ret = btc_check_target(vc, block_number, block_target, finality_headers))) return ret;
+  }
 
   // make sure we have the expected blockhash
   if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
 
-  // check finality
-  return in_active_chain ? btc_check_finality(vc, hash, vc->config->finality, d_to_bytes(d_get(vc->proof, key("final"))), block_target, block_number) : IN3_OK;
+  return IN3_OK;
 }
 
 /**

@@ -1,5 +1,6 @@
 #include "btc_target.h"
 #include "../../core/client/cache.h"
+#include "../../core/client/keys.h"
 #include "../../core/util/mem.h"
 #include "btc_serialize.h"
 
@@ -116,7 +117,25 @@ uint32_t btc_get_closest_target(in3_vctx_t* vc, uint32_t dap, uint8_t* target) {
   return found;
 }
 
-in3_ret_t btc_get_verified_target(in3_vctx_t* vc, uint32_t block_number, uint8_t* target) {
+static void mul_target(uint32_t percent, bytes32_t target) {
+  uint8_t* p = target + 28;
+  for (int i = 31; i >= 0; i--) {
+    if (!target[i]) {
+      p = target + i - 3;
+      break;
+    }
+  }
+  uint32_t val = bytes_to_int(p, 4);
+  val += (percent * val) / 100;
+  int_to_bytes(val, p);
+}
+
+static uint8_t* get_difficulty(bytes_t header) {
+  return btc_block_get(header, BTC_B_BITS).data;
+}
+
+in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final) {
+
   bytes32_t verified_target;
   memset(verified_target, 0, 32);
   btc_target_conf_t* conf        = btc_get_config(vc);
@@ -125,13 +144,21 @@ in3_ret_t btc_get_verified_target(in3_vctx_t* vc, uint32_t block_number, uint8_t
   uint32_t           dist        = current_dap > found_dap ? current_dap - found_dap : found_dap - current_dap;
 
   if (!found_dap) return vc_err(vc, "could not find any verified target!");
-  if (dist == 0) {
-    memcpy(target, verified_target, 32);
-    return IN3_OK;
+  if (dist == 0) // found it, all is fine.
+    return (memcmp(verified_target, block_target, 32) == 0) ? IN3_OK : vc_err(vc, "header target does not match the verified target");
+
+  else if (conf->max_daps >= dist) {
+    bytes32_t tmp;                                                                                   // the distance is within the allowed range
+    memcpy(tmp, verified_target, 32);                                                                // so we take the verified target
+    mul_target(conf->max_diff, tmp);                                                                 // and add the allowed percent
+    if (memcmp(tmp, block_target, 32) > 0) {                                                         //and check if claimed target is below that limit, because lower means more work put it.
+      btc_set_target(vc, current_dap, get_difficulty(d_to_bytes(d_get(vc->proof, K_BLOCK))));        // ok, we can accept the current block target as the target for this dap.
+      if (btc_get_dap(block_number + final.len / 80) == current_dap + 1)                             // the finality header crossed the dap-limit,
+        btc_set_target(vc, current_dap + 1, get_difficulty(bytes(final.data + final.len - 80, 80))); // so we can also accept the new target from the finality headers
+      return IN3_OK;                                                                                 // all is fine ...
+    }
   }
 
-  if (conf->max_daps <= dist) {
-    // the distance is within the allowed range
-  }
-  return IN3_EFIND;
+  // // TODO ok we need more proof now, since either the distance is too big or the difference.
+  return vc_err(vc, "sorry, bit we need more proof, wait until we have implemented it...");
 }
