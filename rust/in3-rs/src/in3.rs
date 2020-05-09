@@ -4,7 +4,8 @@ use std::ffi;
 use std::str;
 
 use libc::{c_char, strlen};
-use rustc_hex::{FromHex};
+use rustc_hex::FromHex;
+
 use async_trait::async_trait;
 
 use crate::error::{Error, In3Result};
@@ -148,15 +149,14 @@ impl Ctx {
                             }
                         }
                     }
-                    let result = (*(*req).results.offset(0)).result;
-                    let len = result.len;
-                    if len != 0 {
-                        return Err(Error::TryAgain);
-                    } else {
+                    let res = (*(*req).results.offset(0));
+                    let mut err = Error::TryAgain;
+                    if res.result.len == 0 {
                         let error = (*(*req).results.offset(0)).error;
-                        let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
-                        return Err(err.into());
+                        err = ffi::CStr::from_ptr(error.data).to_str().unwrap().into();
                     }
+                    in3_sys::request_free(req, last_waiting, false);
+                    return Err(err.into());
                 }
             }
         }
