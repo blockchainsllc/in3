@@ -97,13 +97,13 @@ in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality,
   memcpy(parent_hash, block_hash, 32);                                                                    // we start with the current block hash as parent
   block_nr++;                                                                                             // we start with the next block_nr
   for (int i = 0, p = 0; i < finality; i++, p += 80, block_nr++) {                                        // go through all requested finality blocks
+    if (p + 80 > (int) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders");           //  the bytes need to be long enough
     if ((block_nr) % 2016 == 0) {                                                                         // if we reached a epcoch limit
       i = 0;                                                                                              // we need all finality-headers again startting with the DAP-break.
       btc_target_from_block(bytes(final_blocks.data + p, 80), tmp);                                       // read the new target from the new blockheader
       if ((ret = btc_new_target_check(vc, target, tmp))) return ret;                                      // check if the new target is within the allowed range (*/4)
       memcpy(target, tmp, 32);                                                                            // now we use the new target
     }                                                                                                     //
-    if (p + 80 > (int) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders");           //  the bytes need to be long enough
     rev_copy(tmp, btc_block_get(bytes(final_blocks.data + p, 80), BTC_B_PARENT_HASH).data);               // copy the parent hash of the block inito tmp
     if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block");           // check parent hash
     if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash, tmp, NULL, target))) return ret; // check the headers proof of work and set the new parent hash
@@ -363,6 +363,7 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
     if (!tx_id || d_type(tx_id) != T_STRING || d_len(tx_id) != 64) return vc_err(vc, "Invalid tx_id");
     bytes32_t tx_hash_bytes;
     hex_to_bytes(d_string(tx_id), 64, tx_hash_bytes, 32);
+    if (block_hash) hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_tx(vc, tx_hash_bytes, json, block_hash ? hash : NULL);
   }
   return vc_err(vc, "Unsupported method");
