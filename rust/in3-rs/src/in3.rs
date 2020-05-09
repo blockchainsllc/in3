@@ -149,7 +149,7 @@ impl Ctx {
                             }
                         }
                     }
-                    let res = (*(*req).results.offset(0));
+                    let res = *(*req).results.offset(0);
                     let mut err = Error::TryAgain;
                     if res.result.len == 0 {
                         let error = (*(*req).results.offset(0)).error;
@@ -177,16 +177,6 @@ impl Ctx {
 
 #[async_trait(? Send)]
 impl ClientTrait for Client {
-    async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, call);
-        loop {
-            let res = unsafe { ctx.execute().await };
-            if res != Err(Error::TryAgain) {
-                return res;
-            }
-        }
-    }
-
     fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
@@ -214,6 +204,16 @@ impl ClientTrait for Client {
                     Some(Client::in3_rust_storage_clear),
                     self.ptr as *mut libc::c_void,
                 );
+            }
+        }
+    }
+
+    async fn rpc(&mut self, call: &str) -> In3Result<String> {
+        let mut ctx = Ctx::new(self, call);
+        loop {
+            let res = unsafe { ctx.execute().await };
+            if res != Err(Error::TryAgain) {
+                return res;
             }
         }
     }
