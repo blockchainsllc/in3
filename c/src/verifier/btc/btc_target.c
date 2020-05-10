@@ -1,5 +1,6 @@
 #include "btc_target.h"
 #include "../../core/client/cache.h"
+#include "../../core/client/context_internal.h"
 #include "../../core/client/keys.h"
 #include "../../core/util/mem.h"
 #include "btc_serialize.h"
@@ -19,6 +20,7 @@ static void set_cachekey(chain_id_t id, char* buffer) {
 }
 
 // format:  <2 bytes big endias HEX DAP NR> <4 bytes bits>
+// TODO add targets for all daps every 6 months
 #define BTC_TARGETS "0135413b1417" \
                     "0138397a1117"
 
@@ -30,8 +32,9 @@ btc_target_conf_t* btc_get_conf(in3_t* c, in3_chain_t* chain) {
 
     tc              = _malloc(sizeof(btc_target_conf_t));
     chain->conf     = tc;
-    tc->max_daps    = 5;
+    tc->max_daps    = 10;
     tc->max_diff    = 5;
+    tc->dap_limit   = 20;
     bytes_t* cached = c->cache ? c->cache->get_item(c->cache->cptr, cache_key) : NULL;
 
     if (cached) {
@@ -136,6 +139,21 @@ static uint8_t* get_difficulty(bytes_t header) {
 
 in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final) {
 
+  // is there a required ctx, which we need to clean up?
+  in3_ctx_t* ctx = ctx_find_required(vc->ctx, "in3_proofTarget");                                                  // do we have an existing required proofTarget-request?
+  if (ctx)                                                                                                         // yes, we do!
+    switch (in3_ctx_state(ctx)) {                                                                                  // but what is the state?
+      case CTX_ERROR:                                                                                              // there was an error,
+        return ctx_set_error(vc->ctx, "Error verifying the target", ctx_set_error(vc->ctx, ctx->error, IN3_ERPC)); // so we report it!
+      case CTX_WAITING_FOR_REQUIRED_CTX:                                                                           // if we are waiting
+      case CTX_WAITING_FOR_RESPONSE:                                                                               // for an response
+        return IN3_WAITING;                                                                                        // we keep on waiting.
+      case CTX_SUCCESS:                                                                                            // if it was successful,
+        if (ctx_remove_required(vc->ctx, ctx)) return vc_err(vc, "could not clean up proofTarget-request!");       //  we remove it,
+        break;                                                                                                     // since gthe verification already added the verified targets.
+    }
+
+  // let's see if we can find a verifiied target.
   bytes32_t verified_target;
   memset(verified_target, 0, 32);
   btc_target_conf_t* conf        = btc_get_config(vc);
@@ -147,11 +165,11 @@ in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t bloc
   if (dist == 0) // found it, all is fine.
     return (memcmp(verified_target, block_target, 32) == 0) ? IN3_OK : vc_err(vc, "header target does not match the verified target");
 
-  else if (conf->max_daps >= dist) {
+  else if (dist <= conf->max_daps) {
     bytes32_t tmp;                                                                                   // the distance is within the allowed range
     memcpy(tmp, verified_target, 32);                                                                // so we take the verified target
     mul_target(conf->max_diff, tmp);                                                                 // and add the allowed percent
-    if (memcmp(tmp, block_target, 32) > 0) {                                                         //and check if claimed target is below that limit, because lower means more work put it.
+    if (memcmp(tmp, block_target, 32) > 0) {                                                         // and check if claimed target is below that limit, because lower means more work put it.
       btc_set_target(vc, current_dap, get_difficulty(d_to_bytes(d_get(vc->proof, K_BLOCK))));        // ok, we can accept the current block target as the target for this dap.
       if (btc_get_dap(block_number + final.len / 80) == current_dap + 1)                             // the finality header crossed the dap-limit,
         btc_set_target(vc, current_dap + 1, get_difficulty(bytes(final.data + final.len - 80, 80))); // so we can also accept the new target from the finality headers
@@ -159,6 +177,8 @@ in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t bloc
     }
   }
 
-  // // TODO ok we need more proof now, since either the distance is too big or the difference.
-  return vc_err(vc, "sorry, bit we need more proof, wait until we have implemented it...");
+  // we need more proof, so we create a request
+  char* req = _malloc(300);
+  sprintf(req, "{\"method\":\"in3_proofTarget\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, conf->max_diff, conf->max_daps, conf->dap_limit);
+  return ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
 }

@@ -12,9 +12,10 @@ static inline uint32_t btc_get_dap(uint32_t block_number) {
 }
 
 typedef struct btc_target_conf {
-  bytes_t  data;
-  uint32_t max_daps;
-  uint32_t max_diff;
+  bytes_t       data;
+  uint_fast16_t max_daps;
+  uint_fast16_t max_diff;
+  uint_fast16_t dap_limit;
 } btc_target_conf_t;
 
 /**

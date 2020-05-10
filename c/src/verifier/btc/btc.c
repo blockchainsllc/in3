@@ -37,10 +37,10 @@ static in3_ret_t btc_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 }
 
 // extract the blocknumber from the proof based on BIP 34
-static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
-  bytes_t     header       = d_to_bytes(d_get(vc->proof, K_BLOCK));
-  bytes_t     merkle_proof = d_to_bytes(d_get(vc->proof, key("cbtxMerkleProof")));
-  bytes_t     tx           = d_to_bytes(d_get(vc->proof, key("cbtx")));
+static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_token_t* proof) {
+  bytes_t     header       = d_to_bytes(d_get(proof, K_BLOCK));
+  bytes_t     merkle_proof = d_to_bytes(d_get(proof, key("cbtxMerkleProof")));
+  bytes_t     tx           = d_to_bytes(d_get(proof, key("cbtx")));
   bytes32_t   tx_id;
   btc_tx_t    tx_data;
   btc_tx_in_t tx_in;
@@ -69,40 +69,41 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number) {
  * verify proof of work of the blockheader
  */
 static in3_ret_t
-btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, bytes32_t dst_target, uint32_t* block_number, bytes32_t expected_target) {
-  btc_target_from_block(bytes(block_header, 80), dst_target); // check target
-  btc_hash(bytes(block_header, 80), dst_hash);                // check blockhash
-  if (memcmp(dst_target, dst_hash, 32) < 0) return vc_err(vc, "Invalid proof of work. the hash is greater than the target");
-  if (expected_target && memcmp(dst_target, expected_target, 32)) return vc_err(vc, "Invalid target");
-  if (btc_block_number(vc, block_number)) return vc_err(vc, "could not get the block number"); // get the blocknumber from proof (BIP-34)
-
-  return IN3_OK;
+btc_verify_header(in3_vctx_t* vc, uint8_t* block_header, bytes32_t dst_hash, bytes32_t dst_target, uint32_t* block_number, bytes32_t expected_target, d_token_t* proof) {
+  btc_target_from_block(bytes(block_header, 80), dst_target);                                                                  // get the target
+  btc_hash(bytes(block_header, 80), dst_hash);                                                                                 // calculate blockhash
+  if (memcmp(dst_target, dst_hash, 32) < 0) return vc_err(vc, "Invalid proof of work. the hash is greater than the target");   // make sure the hash < limit
+  if (expected_target && memcmp(dst_target, expected_target, 32)) return vc_err(vc, "Invalid target");                         // if expect a target we  check it
+  if (block_number && proof && btc_block_number(vc, block_number, proof)) return vc_err(vc, "could not get the block number"); // get the blocknumber from proof (BIP-34)
+  return IN3_OK;                                                                                                               // all is fine
 }
 
 /**
  * verify the finality block.
  */
 in3_ret_t btc_check_finality(in3_vctx_t* vc, bytes32_t block_hash, int finality, bytes_t final_blocks, bytes32_t expected_target, uint64_t block_nr) {
-  if (!finality) return IN3_OK;
+  if (!finality) return final_blocks.len == 0 ? IN3_OK : vc_err(vc, "gort finalily headers even though they were not expected");
   bytes32_t parent_hash, tmp, target;
-  memcpy(target, expected_target, 32);
   in3_ret_t ret = IN3_OK;
-  memcpy(parent_hash, block_hash, 32);                                                                    // we start with the current block hash as parent
-  block_nr++;                                                                                             // we start with the next block_nr
-  for (int i = 0, p = 0; i < finality; i++, p += 80, block_nr++) {                                        // go through all requested finality blocks
-    if (p + 80 > (int) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders");           //  the bytes need to be long enough
-    if ((block_nr) % 2016 == 0) {                                                                         // if we reached a epcoch limit
-      i = 0;                                                                                              // we need all finality-headers again startting with the DAP-break.
-      btc_target_from_block(bytes(final_blocks.data + p, 80), tmp);                                       // read the new target from the new blockheader
-      if ((ret = btc_new_target_check(vc, target, tmp))) return ret;                                      // check if the new target is within the allowed range (*/4)
-      memcpy(target, tmp, 32);                                                                            // now we use the new target
-    }                                                                                                     //
-    rev_copy(tmp, btc_block_get(bytes(final_blocks.data + p, 80), BTC_B_PARENT_HASH).data);               // copy the parent hash of the block inito tmp
-    if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block");           // check parent hash
-    if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash, tmp, NULL, target))) return ret; // check the headers proof of work and set the new parent hash
+  uint32_t  p   = 0;
+  block_nr++;                                                                                                   // we start with the next block_nr
+                                                                                                                //
+  memcpy(target, expected_target, 32);                                                                          // we start with the expected target, but know it may change if cross the dap
+  memcpy(parent_hash, block_hash, 32);                                                                          // we start with the current block hash as parent
+  for (int i = 0; i < finality; i++, p += 80, block_nr++) {                                                     // go through all requested finality blocks
+    if (p + 80 > (uint32_t) final_blocks.len) return vc_err(vc, "Not enough finality blockheaders");            //  the bytes need to be long enough
+    if ((block_nr) % 2016 == 0) {                                                                               // if we reached a epcoch limit
+      i = 0;                                                                                                    // we need all finality-headers again startting with the DAP-break.
+      btc_target_from_block(bytes(final_blocks.data + p, 80), tmp);                                             // read the new target from the new blockheader
+      if ((ret = btc_new_target_check(vc, target, tmp))) return ret;                                            // check if the new target is within the allowed range (*/4)
+      memcpy(target, tmp, 32);                                                                                  // now we use the new target
+    }                                                                                                           //
+    rev_copy(tmp, btc_block_get(bytes(final_blocks.data + p, 80), BTC_B_PARENT_HASH).data);                     // copy the parent hash of the block inito tmp
+    if (memcmp(tmp, parent_hash, 32)) return vc_err(vc, "wrong parent_hash in finality block");                 // check parent hash
+    if ((ret = btc_verify_header(vc, final_blocks.data + p, parent_hash, tmp, NULL, target, NULL))) return ret; // check the headers proof of work and set the new parent hash
   }
 
-  return ret;
+  return final_blocks.len == p ? IN3_OK : vc_err(vc, "too many final headers");
 }
 
 in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* block_hash) {
@@ -246,18 +247,16 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   // verify merkle proof
   if (!btc_merkle_verify_proof(btc_block_get(header, BTC_B_MERKLE_ROOT).data, merkle_data, d_int(t), tx_id)) return vc_err(vc, "merkleProof failed!");
 
-  // now verify the blockheader
+  // now verify the blockheader including finality and target
   uint32_t  block_number     = 0;
   bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
   in3_ret_t ret;
-  if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL))) return ret;
-  if (in_active_chain) {
-    if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
-    if ((ret = btc_check_target(vc, block_number, block_target, finality_headers))) return ret;
-  }
 
-  // make sure we have the expected blockhash
+  if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, vc->proof))) return ret;
   if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
+  if (!in_active_chain) return IN3_OK;
+  if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+  if ((ret = btc_check_target(vc, block_number, block_target, finality_headers))) return ret;
 
   return IN3_OK;
 }
@@ -276,7 +275,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
     hex_to_bytes(d_string(vc->result), 160, block_header, 80); // or use the first 80 byte of the block
 
   // verify the proof of work
-  if ((ret = btc_verify_header(vc, block_header, tmp, block_target, &block_number, NULL))) return ret;
+  if ((ret = btc_verify_header(vc, block_header, tmp, block_target, &block_number, NULL, vc->proof))) return ret;
 
   // check blockhash
   if (memcmp(tmp, block_hash, 32)) return vc_err(vc, "Invalid blockhash");
@@ -323,9 +322,29 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, bool json) {
   return IN3_OK;
 }
 
-//in3_ret_t in3_verify_transaction(in3_vctx_t* vc, bytes32_t transaction_hash, bool json) {
-//TODO
-//}
+in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
+  if (d_len(params) != 5) return vc_err(vc, "must have 5 params!");
+  bytes32_t          hash, block_target;
+  in3_ret_t          ret          = IN3_OK;
+  btc_target_conf_t* conf         = btc_get_config(vc);
+  uint32_t           block_number = 0;
+  if (conf->max_diff != (uint_fast16_t) d_get_int_at(params, 2)) return vc_err(vc, "invalid max_diff");
+  if (conf->max_daps != (uint_fast16_t) d_get_int_at(params, 3)) return vc_err(vc, "invalid max_daps");
+  if (conf->dap_limit != (uint_fast16_t) d_get_int_at(params, 4)) return vc_err(vc, "invalid dap_limit");
+
+  for (d_iterator_t iter = d_iter(vc->result); iter.left; d_iter_next(&iter)) {
+    if (d_type(iter.token) != T_OBJECT) return vc_err(vc, "invalid type for proof");
+    bytes_t header           = d_to_bytes(d_get(iter.token, K_BLOCK));
+    bytes_t finality_headers = d_to_bytes(d_get(iter.token, key("final")));
+    if (header.len != 80) return vc_err(vc, "invalid header");
+
+    if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, iter.token))) return ret;
+    if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+    if ((ret = btc_check_target(vc, block_number, block_target, finality_headers))) return ret;
+  }
+
+  return IN3_OK;
+}
 
 in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   char*      method = d_get_stringk(vc->request, K_METHOD);
@@ -352,6 +371,9 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1);
+  }
+  if (strcmp(method, "in3_proofTarget") == 0) {
+    return btc_verify_target_proof(vc, params);
   }
   if (strcmp(method, "getrawtransaction") == 0) {
     d_token_t* tx_id      = d_get_at(params, 0);
