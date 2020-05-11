@@ -81,7 +81,7 @@ rust_darwin:
     - export RUST_BACKTRACE=1
     - cd rust/
     - mkdir -p target/native
-    - cp ../mac_jni/lib/libin3.a target/native/libin3_x86_64-apple-darwin.a
+    - cp ../mac_build/lib/libin3.a target/native/libin3_x86_64-apple-darwin.a
     - export UPDATE_IN3_BINDINGS=1
     - cargo run --example custom_transport --release --jobs 8
   needs:
