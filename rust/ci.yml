@@ -48,9 +48,9 @@ rust:
     - mkdir -p ../rust/target/native
     - cp ../build_rust/lib/libin3.a target/native/libin3_x86_64-unknown-linux-gnu.a
     - export UPDATE_IN3_BINDINGS=1
-    - cargo build
-    - cargo test
-    - cd in3-rs && cargo build --examples --features=blocking
+    - cargo build --jobs 8
+    - cargo test --jobs 8
+    - cd in3-rs && cargo build --examples --features=blocking --jobs 8
 
 rust_linux:
   extends: .rust_multiarch
