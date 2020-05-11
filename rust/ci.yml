@@ -6,6 +6,31 @@
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
 
+.rust_multiarch:
+  image: docker.slock.it/build-images/cmake:rust
+  stage: rust
+  extends: .only_rust
+  tags:
+    - short-jobs
+  services:
+    - docker:18.09-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+    TARGET: ""
+    BUILD_DIR: ""
+  script:
+    - export CROSS_DOCKER_IN_DOCKER=false
+    - export RUST_BACKTRACE=1
+    - export OPENSSL_DIR=/usr/lib/ssl
+    - docker ps -a
+    - cd rust/
+    - mkdir -p target/native
+    - cp ../$BUILD_DIR/lib/libin3.a target/native/libin3_$TARGET.a
+    - export UPDATE_IN3_BINDINGS=1
+    - cross run --example custom_transport --target $TARGET --release --jobs 8
+
 rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: bindings
@@ -13,9 +38,6 @@ rust:
   tags:
     - short-jobs
   script:
-    - rm -rf rust/in3-sys/pre_generated
-    - mkdir -p rust/in3-sys/pre_generated
-    - chmod -R 0755 rust/in3-sys/pre_generated
     - mkdir -p build_rust
     - cd build_rust
     - rm -rf *
@@ -30,34 +52,26 @@ rust:
     - cargo test
     - cd in3-rs && cargo build --examples --features=blocking
 
-rust_multiarch:
-  image: docker.slock.it/build-images/cmake:rust
-  stage: rust
-  extends: .only_rust
-  services:
-    - docker:18.09-dind
+rust_linux:
+  extends: .rust_multiarch
   variables:
-    DOCKER_HOST: tcp://docker:2375/
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
+    TARGET: "x86_64-unknown-linux-gnu"
+    BUILD: "gcc_legacy"
+  needs:
+    - gcc_legacy
+
+rust_win:
+  extends: .rust_multiarch
+  variables:
+    TARGET: "x86_64-pc-windows-gnu"
+    BUILD: "win_jni"
   needs:
     - win_jni
-    - gcc_legacy
+
+rust_arm7:
+  extends: .rust_multiarch
+  variables:
+    TARGET: "armv7-unknown-linux-gnueabihf"
+    BUILD: "arm_jni_build"
+  needs:
     - arm_jni
-    - rust
-  tags:
-    - short-jobs
-  script:
-    - export CROSS_DOCKER_IN_DOCKER=false
-    - export RUST_BACKTRACE=1
-    - export OPENSSL_DIR=/usr/lib/ssl
-    - docker ps -a
-    - cd rust/
-    - mkdir -p target/native
-    - cp ../arm_jni_build/lib/libin3.a target/native/libin3_armv7-unknown-linux-gnueabihf.a
-    - cp ../win_jni/lib/libin3.a target/native/libin3_x86_64-pc-windows-gnu.a
-    - cp ../gcc_legacy/lib/libin3.a target/native/libin3_x86_64-unknown-linux-gnu.a
-    - export UPDATE_IN3_BINDINGS=1
-    - cross run --example custom_transport --target x86_64-unknown-linux-gnu --release --jobs 8
-    - cross run --example custom_transport --target x86_64-pc-windows-gnu --release --jobs 8
-    - cross run --example custom_transport --target armv7-unknown-linux-gnueabihf --release --jobs 8
