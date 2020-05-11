@@ -74,3 +74,17 @@ rust_arm7:
     BUILD_DIR: "arm_jni_build"
   needs:
     - arm_jni
+
+rust_darwin:
+  stage: build
+  script:
+    - export RUST_BACKTRACE=1
+    - cd rust/
+    - mkdir -p target/native
+    - cp ../mac_jni/lib/libin3.a target/native/libin3_x86_64-apple-darwin.a
+    - export UPDATE_IN3_BINDINGS=1
+    - cargo run --example custom_transport --release --jobs 8
+  needs:
+    - mac_os
+  tags:
+    - mac-mini-runner
