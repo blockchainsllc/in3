@@ -412,7 +412,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x10bfb27a0>)
+transport=<CFunctionType object at 0x101a917a0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -1172,7 +1172,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x10b791680>)
+transport: <function CFUNCTYPE at 0x101270680>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1200,7 +1200,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10b791680>,
+transport: <function CFUNCTYPE at 0x101270680>,
 debug=False)
 ```
 
