@@ -78,7 +78,7 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
         .iter()
         .collect();
     let builder = bindgen::Builder::default()
-        .rust_target(bindgen::RustTarget::Stable_1_19)
+        .rust_target(bindgen::RustTarget::Stable_1_28)
         .size_t_is_usize(true)
         .use_core()
         .ctypes_prefix("libc")
