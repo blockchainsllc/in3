@@ -56,7 +56,7 @@ rust_linux:
   extends: .rust_multiarch
   variables:
     TARGET: "x86_64-unknown-linux-gnu"
-    BUILD: "gcc_legacy"
+    BUILD_DIR: "gcc_legacy"
   needs:
     - gcc_legacy
 
@@ -64,7 +64,7 @@ rust_win:
   extends: .rust_multiarch
   variables:
     TARGET: "x86_64-pc-windows-gnu"
-    BUILD: "win_jni"
+    BUILD_DIR: "win_jni"
   needs:
     - win_jni
 
@@ -72,6 +72,6 @@ rust_arm7:
   extends: .rust_multiarch
   variables:
     TARGET: "armv7-unknown-linux-gnueabihf"
-    BUILD: "arm_jni_build"
+    BUILD_DIR: "arm_jni_build"
   needs:
     - arm_jni
