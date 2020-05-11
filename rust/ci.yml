@@ -45,6 +45,7 @@ rust_multiarch:
     - win_jni
     - gcc_legacy
     - arm_jni
+    - rust
   tags:
     - short-jobs
 #  before_script:
