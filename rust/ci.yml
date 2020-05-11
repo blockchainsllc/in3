@@ -26,8 +26,9 @@ rust:
     - mkdir -p ../rust/target/native
     - cp ../build_rust/lib/libin3.a target/native/libin3_x86_64-unknown-linux-gnu.a
     - export UPDATE_IN3_BINDINGS=1
-    - cargo build --examples --features=blocking
-    - cargo test --lib
+    - cargo build
+    - cargo test
+    - cd in3-rs && cargo build --examples --features=blocking
 
 # TODO: don't build cross from master once release >v0.2.0 is out
 rust_multiarch:
