@@ -9,6 +9,8 @@
    
 -  [send_transaction](./send_transaction.py)
    
+-  [smart_contract](./smart_contract.py)
+   
 ### Running the examples
 
 To run an example, you need to install in3 first:

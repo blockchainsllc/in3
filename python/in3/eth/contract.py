@@ -1,12 +1,12 @@
 import re
 
 from in3.eth.factory import EthObjectFactory
-from in3.eth.model import NewTransaction
+from in3.eth.model import NewTransaction, DataTransferObject
 from in3.libin3.enum import EthMethods, BlockAt, In3Methods
 from in3.libin3.runtime import In3Runtime
 
 
-class SmartContract:
+class SmartContract(DataTransferObject):
     """
     Ethereum account containing smart-contract code.
     Args:
@@ -40,7 +40,7 @@ class EthContractApi:
         self._runtime = runtime
         self._factory = factory
 
-    def eth_call(self, transaction: NewTransaction, block_number: int or str = 'latest') -> int or str:
+    def call(self, transaction: NewTransaction, block_number: int or str = 'latest') -> int or str:
         """
         Calls a smart-contract method. Will be executed locally by Incubed's EVM or signed and sent over to save the state changes.
         Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-method-using-the-eth-call-json-rpc-api for more.
@@ -54,7 +54,7 @@ class EthContractApi:
         # eth_call_fn(c, contract, BLKNUM_LATEST(), "servers(uint256):(string,address,uint,uint,uint,address)", to_uint256(i));
         return self._runtime.call(EthMethods.CALL, transaction.serialize(), block_number)
 
-    def get_storage_at(self, address: str, position: int = 0, at_block: int or str = str(BlockAt.LATEST)) -> str:
+    def storage_at(self, address: str, position: int = 0, at_block: int or str = str(BlockAt.LATEST)) -> str:
         """
         Stored value in designed position at a given address. Storage can be used to store a smart contract state, constructor or just any data.
         Each contract consists of a EVM bytecode handling the execution and a storage to save the state of the contract.
@@ -71,7 +71,7 @@ class EthContractApi:
             at_block = hex(at_block)
         return self._runtime.call(EthMethods.STORAGE_AT, account.address, hex(position), at_block)
 
-    def get_code(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> str:
+    def code(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> str:
         """
         Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the function will return '0x'.
         Args:
@@ -85,7 +85,7 @@ class EthContractApi:
             at_block = hex(at_block)
         return self._runtime.call(EthMethods.CODE, account.address, at_block)
 
-    def abi_encode(self, fn_signature: str, *fn_args) -> str:
+    def encode(self, fn_signature: str, *fn_args) -> str:
         """
         Smart-contract ABI encoder. Used to serialize a rpc to the EVM.
         Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html)
@@ -101,7 +101,7 @@ class EthContractApi:
         self._check_fn_signature(fn_signature)
         return self._runtime.call(In3Methods.ABI_ENCODE, fn_signature, fn_args)
 
-    def abi_decode(self, fn_signature: str, encoded_value: str) -> tuple:
+    def decode(self, fn_signature: str, encoded_value: str) -> tuple:
         """
         Smart-contract ABI decoder. Used to parse rpc responses from the EVM.
         Based on the [Solidity specification.](https://solidity.readthedocs.io/en/v0.5.3/abi-spec.html)
@@ -114,7 +114,7 @@ class EthContractApi:
         """
         if not encoded_value.startswith('0x'):
             raise AssertionError("Encoded values must start with 0x")
-        if len(encoded_value[2:]) <= 64:
+        if len(encoded_value[2:]) < 64:
             raise AssertionError("Encoded values must be longer than 64 characters.")
         self._check_fn_signature(fn_signature)
         return self._runtime.call(In3Methods.ABI_DECODE, fn_signature, encoded_value)
