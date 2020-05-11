@@ -50,7 +50,6 @@ rust:
     - export UPDATE_IN3_BINDINGS=1
     - cargo build --jobs 8
     - cargo test --jobs 8
-    - cd in3-rs && cargo build --examples --features=blocking --jobs 8
 
 rust_linux:
   extends: .rust_multiarch
