@@ -97,7 +97,7 @@ rust_multiarch:
     - cp ../arm_jni_build/lib/libin3.a target/native/libin3_armv7-unknown-linux-gnueabihf.a
     - cp ../win_jni/lib/libin3.a target/native/libin3_x86_64-pc-windows-gnu.a
     - cp ../gcc_legacy/lib/libin3.a target/native/libin3_x86_64-unknown-linux-gnu.a
-    - unset UPDATE_IN3_BINDINGS
+    - export UPDATE_IN3_BINDINGS=1
     - cross run --example custom_transport --target x86_64-unknown-linux-gnu --release --jobs 8
     - cross run --example custom_transport --target x86_64-pc-windows-gnu --release --jobs 8
     - cross run --example custom_transport --target armv7-unknown-linux-gnueabihf --release --jobs 8
