@@ -6,7 +6,7 @@
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
 
-rust:
+rust_tests:
   image: docker.slock.it/build-images/cmake:rust
   stage: bindings
   needs: []
@@ -26,41 +26,8 @@ rust:
     - mkdir -p ../rust/target/native
     - cp ../build_rust/lib/libin3.a target/native/libin3_x86_64-unknown-linux-gnu.a
     - export UPDATE_IN3_BINDINGS=1
-    - cargo build
-
-  artifacts:
-    paths:
-      - build_rust/lib
-      - rust/in3-sys/pre_generated
-      - rust/target
-
-test_rust:
-  image: docker.slock.it/build-images/cmake:rust
-  stage: rust
-  extends: .only_rust
-  needs:
-    - rust
-  tags:
-    - short-jobs
-  script:
-    - chmod -R 0755 rust/in3-sys/pre_generated
-    - cd rust/in3-rs
-    - unset UPDATE_IN3_BINDINGS
-    - cargo test --lib
-
-examples_rust:
-  image: docker.slock.it/build-images/cmake:rust
-  stage: rust
-  extends: .only_rust
-  needs:
-    - rust
-  tags:
-    - short-jobs
-  script:
-    - chmod -R 0755 rust/in3-sys/pre_generated
-    - cd rust/in3-rs
-    - unset UPDATE_IN3_BINDINGS
     - cargo build --examples --features=blocking
+    - cargo test --lib
 
 # TODO: don't build cross from master once release >v0.2.0 is out
 rust_multiarch:
