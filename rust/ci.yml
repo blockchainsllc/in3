@@ -6,7 +6,7 @@
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
 
-rust_tests:
+rust:
   image: docker.slock.it/build-images/cmake:rust
   stage: bindings
   needs: []
