@@ -31,7 +31,7 @@ done <include/in3/.dirs
 rm include/in3/.dirs
 
 # create rust binding header
-cat <<EOF >../c/include/in3.rs.h
+cat <<EOF >../rust/in3-sys/pre_generated/in3.rs.h
 // AUTO-GENERATED FILE
 // See scripts/build_includeh.sh
 #include "../src/core/client/context_internal.h"
