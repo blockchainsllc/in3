@@ -30,7 +30,6 @@ rust:
     - cargo test
     - cd in3-rs && cargo build --examples --features=blocking
 
-# TODO: don't build cross from master once release >v0.2.0 is out
 rust_multiarch:
   image: docker.slock.it/build-images/cmake:rust
   stage: rust
@@ -48,14 +47,6 @@ rust_multiarch:
     - rust
   tags:
     - short-jobs
-#  before_script:
-#    - sudo apt-get update && sudo apt-get install -y --no-install-recommends docker.io unzip
-#    - wget https://github.com/rust-embedded/cross/archive/master.zip
-#    - unzip master.zip
-#    - cd cross-master/
-#    - cargo build
-#    - cargo install --path . --force
-#    - cd ..
   script:
     - export CROSS_DOCKER_IN_DOCKER=false
     - export RUST_BACKTRACE=1
