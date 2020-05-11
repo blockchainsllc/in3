@@ -76,7 +76,7 @@ rust_arm7:
     - arm_jni
 
 rust_darwin:
-  stage: build
+  stage: rust
   script:
     - export RUST_BACKTRACE=1
     - cd rust/
