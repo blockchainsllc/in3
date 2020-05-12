@@ -125,15 +125,7 @@ impl Ctx {
                     let slice = CStr::from_ptr(item_).to_str().unwrap();
                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
                     let data_str = &request["params"][0].as_str().unwrap()[2..];
-                    // let sig = self.client.signer.sign(data_str).unwrap();
-                    // let c_sig = CString::new(sig).expect("");
                     let res_str = self.sign(data_str);
-
-                    // let data_hex = data_str.from_hex().unwrap();
-                    // let c_data = data_hex.as_ptr() as *const c_char;
-                    // let data_sig: *mut u8 = self.sign(SignatureType::Hash, c_data, data_hex.len());
-
-                    // let res_str = data_sig as *const c_char;
                     in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
                     in3_sys::sb_add_range(
                         &mut (*(*last_waiting).raw_response.offset(0)).result,

@@ -129,7 +129,7 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
 
   in3_ret_t  res = IN3_OK;
   int        i;
-  d_token_t *transactions, *t, *t2, *tx_hashs, *txh = NULL;
+  d_token_t *transactions, *t, *t2, *tx_hashs = NULL, *txh = NULL;
   bytes_t    tmp, *bhash;
   uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
   bhash              = d_get_byteskl(vc->result, K_HASH, 32);
