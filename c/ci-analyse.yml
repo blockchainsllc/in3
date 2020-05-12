@@ -57,6 +57,20 @@ cppcheck:
     - cd ..
     - cppcheck  --project=_build/compile_commands.json -i/builds/in3/c/in3-core/c/test/unity -i/builds/in3/c/in3-core/c/src/third-party
 
+gcc10check:
+  stage: analysis
+  image: docker.slock.it/build-images/cmake:gcc10
+  extends: .only_full
+  allow_failure: true
+  needs: []
+  tags:
+    - short-jobs
+  script:
+    - mkdir _build
+    - cd _build
+    - cmake -DGCC_ANALYZER ..
+    - make
+
 valgrind:
   stage: analysis
   image: docker.slock.it/build-images/cmake:valgrind

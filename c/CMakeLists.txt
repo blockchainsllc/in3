@@ -32,11 +32,18 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 #  build modules
 add_subdirectory(src/third-party)
+
+
+if (GCC_ANALYZER) 
+  add_compile_options(-fanalyzer -Werror)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer -Werror")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
+endif()
+  
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
