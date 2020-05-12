@@ -31,26 +31,6 @@
     - export UPDATE_IN3_BINDINGS=1
     - cross run --example custom_transport --target $TARGET --release --jobs 8
 
-rust:
-  image: docker.slock.it/build-images/cmake:rust
-  stage: bindings
-  needs: []
-  tags:
-    - short-jobs
-  script:
-    - mkdir -p build_rust
-    - cd build_rust
-    - rm -rf *
-    - cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false ..
-    - make -j8
-    - cd ../rust/
-    - cargo clean
-    - mkdir -p ../rust/target/native
-    - cp ../build_rust/lib/libin3.a target/native/libin3_x86_64-unknown-linux-gnu.a
-    - export UPDATE_IN3_BINDINGS=1
-    - cargo build --jobs 8
-    - cargo test --jobs 8
-
 rust_linux:
   extends: .rust_multiarch
   variables:
@@ -75,14 +55,15 @@ rust_arm7:
   needs:
     - arm_jni
 
-rust_darwin:
-  stage: rust
+rust:
+  stage: bindings
   script:
     - export RUST_BACKTRACE=1
     - cd rust/
     - mkdir -p target/native
     - cp ../mac_build/lib/libin3.a target/native/libin3_x86_64-apple-darwin.a
     - export UPDATE_IN3_BINDINGS=1
+    - cargo test --jobs 8
     - cargo run --example custom_transport --release --jobs 8
   needs:
     - mac_os
