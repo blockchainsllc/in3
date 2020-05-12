@@ -6,6 +6,12 @@
     - if: '$CI_COMMIT_REF_NAME == "master"'
     - if: '$CI_COMMIT_REF_NAME == "develop"'
 
+# This template should be used for jobs to run during deployment only
+.only_deploy:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
+
 java:
   image: docker.slock.it/build-images/cmake:gcc8
   stage: bindings
@@ -112,3 +118,16 @@ java_win:
 #  artifacts:
 #    reports:
 #      junit: java/build/test-results/test/TEST-*.xml
+
+release_maven:
+  stage: deploy
+  image: docker.slock.it/build-images/maven-deployment-image:latest
+  tags:
+    - short-jobs
+  extends: .only_deploy
+  needs:
+    - java
+  script:
+    - touch settings.xml
+    - echo $MAVEN_SETTINGS > settings.xml
+    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.slock  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/slockit/in3-c

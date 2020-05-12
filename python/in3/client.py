@@ -39,7 +39,7 @@ class Client:
         fn_args = str([in3_config.serialize()]).replace('\'', '')
         return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
 
-    def get_node_list(self) -> NodeList:
+    def refresh_node_list(self) -> NodeList:
         """
         Gets the list of Incubed nodes registered in the selected chain registry contract.
         Returns:
@@ -48,34 +48,60 @@ class Client:
         node_list_dict = self._runtime.call(In3Methods.NODE_LIST)
         return self._factory.get_node_list(node_list_dict)
 
-    def get_config(self) -> dict:
+    def config(self) -> dict:
         # TODO: Marshalling
         return self._runtime.call(In3Methods.GET_CONFIG)
 
-    def raw_configure(self, cfg_dict: dict) -> bool:
+    def ens_namehash(self, domain_name: str) -> str:
         """
-        Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
-        """
-        import json
-        fn_args = str([json.dumps(cfg_dict)]).replace('\'', '')
-        return self._runtime.call(In3Methods.CONFIGURE, fn_args, formatted=True)
-
-    def ens_resolve(self, domain_name: str, domain_type: str, registry: str = None) -> ClientConfig:
-        """
-        Resolves ENS domain name to Ethereum address.
+        Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-137.md#name-syntax)
         Args:
             domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
-            domain_type: 'hash'|'addr'|'owner'|'resolver'
+        Returns:
+            node (str): Formatted string referred as `node` in ENS documentation
+        """
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'hash')
+
+    def ens_address(self, domain_name: str, registry: str = None) -> str:
+        """
+        Resolves ENS domain name to what account that domain points to.
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
             registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
         Returns:
-            address (str): Ethereum address corresponding to domain name.
+            address (str): Ethereum address corresponding to what account that domain points to.
         """
         # TODO: Add handlers to Account
         # TODO: Add serialization in account factory
+        if registry:
+            registry = self._factory.get_address(registry)
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'addr', registry)
+
+    def ens_owner(self, domain_name: str, registry: str = None) -> str:
         """
-          "currently only 'hash','addr','owner' or 'resolver' are allowed as type
+        Resolves ENS domain name to Ethereum address of domain owner.
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+        Returns:
+            owner_address (str): Ethereum address corresponding to domain owner.
         """
-        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, domain_type, registry)
+        if registry:
+            registry = self._factory.get_address(registry)
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'owner', registry)
+
+    def ens_resolver(self, domain_name: str, registry: str = None) -> str:
+        """
+        Resolves ENS domain name to Smart-contract address of the resolver registered for that domain.
+        Args:
+            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+        Returns:
+            resolver_contract_address (str): Smart-contract address of the resolver registered for that domain.
+        """
+        if registry:
+            registry = self._factory.get_address(registry)
+        return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'resolver', registry)
 
 
 class In3ObjectFactory(EthObjectFactory):

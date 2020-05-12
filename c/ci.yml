@@ -1,3 +1,11 @@
+.only_full:
+  rules:
+    - changes:
+        - c/**/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
 .conanbuild:
   stage: build
   needs: []
@@ -42,7 +50,9 @@ gcc8:
 
 win_mingw:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
-  extends: .conanbuild
+  extends:
+    - .conanbuild
+    - .only_full
   variables:
     CONAN_OPTS: "-DLIBCURL_LINKTYPE=static -DJAVA=false"
     BUILD: "win_build"
@@ -81,15 +91,21 @@ gcc8-x86:
 
 gcc5:
   image: docker.slock.it/build-images/cmake:gcc5
-  extends: .conanbuild
+  extends:
+    - .conanbuild
+    - .only_full
 
 clang50:
   image: docker.slock.it/build-images/cmake:clang50
-  extends: .conanbuild
+  extends:
+    - .conanbuild
+    - .only_full
 
 clang11:
   image: docker.slock.it/build-images/cmake:clang11
-  extends: .conanbuild
+  extends:
+    - .conanbuild
+    - .only_full
 
 mac_os:
   needs: []
@@ -118,6 +134,7 @@ mac_os:
 docker:
   stage: bindings
   needs: []
+  extends: .only_full
   tags:
     - short-jobs
   services:
@@ -157,6 +174,7 @@ test_qemu:
   image: docker.io/zephyrprojectrtos/zephyr-build:v0.12
   stage: test
   needs: []
+  extends: .only_full
   script:
     - west init -m https://github.com/zephyrproject-rtos/zephyr --mr v2.0.0
     - export ZEPHYR_BASE=/builds/in3/c/in3-core

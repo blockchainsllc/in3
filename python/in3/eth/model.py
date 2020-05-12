@@ -192,7 +192,7 @@ class TransactionReceipt(DataTransferObject):
         self.contractAddress = contractAddress
 
 
-class Account:
+class Account(DataTransferObject):
     """
     An Ethereum account.
     Args:
