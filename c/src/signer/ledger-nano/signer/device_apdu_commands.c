@@ -3,7 +3,6 @@
 #endif
 
 #include "../../../core/util/log.h"
-#include "../../../third-party/hidapi/hidapi/hidapi.h"
 #include "device_apdu_commands.h"
 #include <memory.h>
 #include <stdbool.h>
@@ -74,4 +73,39 @@ int len_to_bytes(uint16_t x, uint8_t* buf) {
 uint16_t bytes_to_len(uint8_t* buf) {
   uint16_t number = (buf[1] << 8) + buf[0];
   return number;
+}
+
+void read_hid_response(hid_device* handle, bytes_t* response) {
+  uint8_t read_chunk[64];
+  uint8_t read_buf[255];
+  int     index_counter         = 0;
+  int     bytes_to_read         = 0;
+  int     total_bytes_available = 0;
+  int     bytes_read            = 0;
+  do {
+    bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
+
+    if (bytes_read > 0) {
+
+      if (index_counter == 0) //first chunk read
+      {
+        total_bytes_available = read_chunk[6];
+        index_counter += (bytes_read - 7);
+
+        memcpy(read_buf, read_chunk + 7, bytes_read - 7);
+      } else {
+        memcpy(read_buf + index_counter, read_chunk + 5, total_bytes_available - index_counter);
+        index_counter += (bytes_read - 5);
+      }
+      bytes_to_read = total_bytes_available - index_counter;
+    }
+    if (bytes_to_read <= 0) {
+      break;
+    }
+
+  } while (bytes_read > 0);
+
+  response->len  = total_bytes_available;
+  response->data = malloc(total_bytes_available);
+  memcpy(response->data, read_buf, total_bytes_available);
 }

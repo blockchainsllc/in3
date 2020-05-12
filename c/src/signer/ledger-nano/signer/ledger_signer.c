@@ -45,11 +45,6 @@ in3_ret_t is_ledger_device_connected() {
   return ret;
 }
 
-in3_ret_t eth_get_address_from_path(bytes_t i_bip_path, bytes_t o_address) {
-  //not implemented currently
-  return IN3_EUNKNOWN;
-}
-
 in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   //UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
@@ -256,41 +251,6 @@ void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
   } else {
     memcpy(o_sig + offset, i_raw_sig.data + lr + 6, ls);
   }
-}
-
-void read_hid_response(hid_device* handle, bytes_t* response) {
-  uint8_t read_chunk[64];
-  uint8_t read_buf[255];
-  int     index_counter         = 0;
-  int     bytes_to_read         = 0;
-  int     total_bytes_available = 0;
-  int     bytes_read            = 0;
-  do {
-    bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
-
-    if (bytes_read > 0) {
-
-      if (index_counter == 0) //first chunk read
-      {
-        total_bytes_available = read_chunk[6];
-        index_counter += (bytes_read - 7);
-
-        memcpy(read_buf, read_chunk + 7, bytes_read - 7);
-      } else {
-        memcpy(read_buf + index_counter, read_chunk + 5, total_bytes_available - index_counter);
-        index_counter += (bytes_read - 5);
-      }
-      bytes_to_read = total_bytes_available - index_counter;
-    }
-    if (bytes_to_read <= 0) {
-      break;
-    }
-
-  } while (bytes_read > 0);
-
-  response->len  = total_bytes_available;
-  response->data = malloc(total_bytes_available);
-  memcpy(response->data, read_buf, total_bytes_available);
 }
 
 int get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest) {
