@@ -69,6 +69,7 @@ typedef enum {
   IN3_WAITING           = -16, /**< the process can not be finished since we are waiting for responses */
   IN3_EIGNORE           = -17, /**< Ignorable error */
   IN3_EPAYMENT_REQUIRED = -18, /**< payment required */
+  IN3_ENODEVICE         = -19, /**< harware wallet device not connected */
 } in3_ret_t;
 
 /** Optional type similar to C++ std::optional

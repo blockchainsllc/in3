@@ -23,7 +23,7 @@ class EthAccountApi:
         account = self._factory.get_account(address, int(secret, 16))
         return account
 
-    def new_account(self, qrng=False) -> Account:
+    def create(self, qrng=False) -> Account:
         """
         Creates a new Ethereum account and saves it in the wallet.
         Args:
@@ -36,7 +36,7 @@ class EthAccountApi:
         secret = hex(random.getrandbits(256))
         return self._create_account(secret)
 
-    def recover_account(self, secret: str) -> Account:
+    def recover(self, secret: str) -> Account:
         """
         Recovers an account from a secret.
         Args:
@@ -74,7 +74,7 @@ class EthAccountApi:
         signature_dict = self._runtime.call(EthMethods.SIGN, message, private_key, signature_type)
         return signature_dict['signature']
 
-    def get_balance(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
+    def balance(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
         """
         Returns the balance of the account of given address.
         Args:
@@ -121,22 +121,6 @@ class EthAccountApi:
         """
         return self._runtime.call(EthMethods.SEND_RAW_TRANSACTION, signed_transaction)
 
-    def get_transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
-        """
-        After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to
-        gather the receipt, once a miner has mined and it is part of an acknowledged block. Because how it is possible,
-        in distributed systems, that data is asymmetric in different parts of the system, the transaction is only "final"
-        once a certain number of blocks was mined after it, and still it can be possible that the transaction is discarded
-        after some time. But, in general terms, it is accepted that after 6 to 8 blocks from latest, that it is very
-        likely that the transaction will stay in the chain.
-        Args:
-            tx_hash: Transaction hash.
-        Returns:
-            tx_receipt: The mined Transaction data including event logs.
-        """
-        tx_receipt = self._runtime.execute(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
-        return self._factory.get_tx_receipt(tx_receipt)
-
     def estimate_gas(self, transaction: NewTransaction) -> int:
         """
         Gas estimation for transaction. Used to fill transaction.gas field. Check RawTransaction docs for more on gas.
@@ -148,7 +132,7 @@ class EthAccountApi:
         gas = self._runtime.call(EthMethods.ESTIMATE_TRANSACTION, transaction.serialize())
         return self._factory.get_integer(gas)
 
-    def get_transaction_count(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
+    def transaction_count(self, address: str, at_block: int or str = str(BlockAt.LATEST)) -> int:
         """
         Number of transactions mined from this address. Used to set transaction nonce.
         Nonce is a value that will make a transaction fail in case it is different from (transaction count + 1).

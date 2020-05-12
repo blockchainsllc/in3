@@ -24,7 +24,7 @@ etherscan_link_mask = 'https://{}{}etherscan.io/tx/{}'
 
 print('Ethereum Transaction using Incubed\n')
 try:
-    sender = client.eth.account.recover_account(sender_secret)
+    sender = client.eth.account.recover(sender_secret)
     tx = in3.eth.NewTransaction(to=receiver, value=value_in_wei)
     print('Sending {} Wei from {} to {}.\n'.format(tx.value, sender.address, tx.to))
     tx_hash = client.eth.account.send_transaction(sender, tx)
@@ -33,7 +33,7 @@ try:
     print(etherscan_link_mask.format(chain, add_dot_if_chain, tx_hash))
     print('\nWaiting {} seconds for confirmation.\n'.format(confirmation_wait_time_in_seconds))
     time.sleep(confirmation_wait_time_in_seconds)
-    receipt: in3.eth.TransactionReceipt = client.eth.account.get_transaction_receipt(tx_hash)
+    receipt: in3.eth.TransactionReceipt = client.eth.transaction_receipt(tx_hash)
     print('Transaction was sent successfully!')
     print(json.dumps(receipt.to_dict(), indent=4, sort_keys=True))
     print('\nMined on block {} used {} GWei.'.format(receipt.blockNumber, receipt.gasUsed))

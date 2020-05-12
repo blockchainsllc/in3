@@ -9,7 +9,7 @@ https://pypi.org/classifiers/
 """
 
 
-version = "2.3.2rc10"
+version = environ.get("version", "2.3.0")
 url = environ.get("url", "https://github.com/slockit/in3-c")
 License = environ.get("license", "AGPL")
 description = environ.get(

@@ -60,7 +60,12 @@ endif()
 
 add_executable(in3 main.c in3_storage.c)
 target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
-target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API} -lm)
+
+if( LEDGER_NANO AND HIDAPI)
+  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API} ledger_signer  -lm)
+else()
+  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API}  -lm)
+endif()
 
 install(TARGETS in3
         DESTINATION /usr/local/bin/
