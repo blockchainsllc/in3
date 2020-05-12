@@ -112,7 +112,7 @@ void show_help(char* name) {
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
--bip32         the bip32 path which is to be used for signing in hardware wallet \n\
+-path          the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000 \n\
 -st, -sigtype  the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw \n\
 -pwd           password to unlock the key \n\
 -value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
@@ -620,7 +620,7 @@ int main(int argc, char* argv[]) {
   params[1]    = 0;
   int       p  = 1, i;
   bytes32_t pk;
-  uint8_t   bip32[5];
+  uint8_t   path[5];
 
   // we want to verify all
   in3_register_eth_full();
@@ -693,14 +693,14 @@ int main(int argc, char* argv[]) {
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
-    } else if (strcmp(argv[i], "-bip32") == 0) {
+    } else if (strcmp(argv[i], "-path") == 0) {
 #if defined(LEDGER_NANO)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
-        hex_to_bytes(argv[++i], -1, bip32, 5);
-        eth_ledger_set_signer(c, bip32);
+        hex_to_bytes(argv[++i], -1, path, 5);
+        eth_ledger_set_signer(c, path);
       }
 #else
-      die("bip32 option not supported currently ");
+      die("path option not supported currently ");
 #endif
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
@@ -974,7 +974,7 @@ int main(int argc, char* argv[]) {
       sig_type = "raw";
     }
 
-    if (!c->signer) die("No private key/bip32 path given");
+    if (!c->signer) die("No private key/path given");
     uint8_t   sig[65];
     in3_ctx_t ctx;
     ctx.client = c;

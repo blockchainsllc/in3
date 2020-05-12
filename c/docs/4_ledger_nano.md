@@ -1,11 +1,12 @@
 # Integration of ledger nano s with incubed 
  1. Setup development environment for ledger nano s
- 2. Build and install ledger nano Signer app into Ledger nano s usb device 
- 3. Install libusb hidlib 
+ 2. Build and install ledger nano Signer app into Ledger nano s usb device  
+ 3. Build incubed source with ledger nano module
  4. Start using ledger nano s device with Incubed 
 
+Note: Steps 1-2 are required to setup ledger nano device development environment to compile and install incubed application on your Ledger nano device. 
 # Setup development environment for ledger nano s
- Setting up dev environment for Ledger nano s is one time activity and Signer application will be available to install directly from Ledger Manager in future. Ledger applications need linux System (recommended is Ubuntu) to build the binary to be installed on Ledger nano devices
+ Setting up dev environment for Ledger nano s is one time activity and Signer application will be available to install directly from Ledger Manager in future. Ledger nano applications need linux System (recommended is Ubuntu) to build the binary to be installed on Ledger nano devices
   
 ## Download Toolchains and Nanos ledger SDK (As per latest Ubuntu LTS)
 
@@ -67,19 +68,30 @@ $ sudo apt-get install libc6-dev:i386
 ===================================================================
 
 # Build and install ledger nano Signer app into Ledger nano s usb device 
-Once the setup is done,  go to ledger-incubed-firmware-app folder and run:-
+Once the setup is done, connect your ledger nano device go to  c/src/signer/ledger-nano/firmware/ folder and run:-
 
 $ make</br>
 $ make load
 
 ===================================================================
 
-# Install libusb hidlib 
-HIDAPI library is required to interact with ledger nano s device over usb , it is available for multiple platforms and can be cross compiled easily 
+# Build incubed source with ledger nano module
+To build incubed source with ledger nano:-
+1. Open root CMakeLists file and find LEDGER_NANO option
+2. Turn LEDGER_NANO option ON which is by default OFF
+3. Build incubed source 
+    cd build
+    cmake  .. && make
 
-Ref: https://github.com/libusb/hidapi
 ===================================================================
 
 # Start using ledger nano s device with Incubed 
 
-Open the application on your ledger nano s usb device and make signing requests from incubed
+Open the application on your ledger nano s usb device and make signing requests from incubed. 
+
+Following is the sample command to sendTransaction:- 
+
+./in3 send -to 0xd46e8dd67c5d32be8058bb8eb970870f07244567  -gas 0x96c0  -value 0x9184e72a  -path 0x2c3c000000 -debug
+
+-path points to specific public/private key pair inside HD wallet derivation path . For Ethereum the default 
+ path is m/44'/60'/0'/0 , which we can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000
