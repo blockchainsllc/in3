@@ -620,7 +620,9 @@ int main(int argc, char* argv[]) {
   params[1]    = 0;
   int       p  = 1, i;
   bytes32_t pk;
-  uint8_t   bip32[5];
+#ifdef LEDGER_NANO
+  uint8_t bip32[5];
+#endif
 
   // we want to verify all
   in3_register_eth_full();

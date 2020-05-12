@@ -88,7 +88,7 @@ void in3_register_payment(
 
 #define EXPECT_CFG(cond, err) EXPECT(cond, { \
   res = malloc(strlen(err) + 1);             \
-  strcpy(res, err);                          \
+  if (res) strcpy(res, err);                 \
   goto cleanup;                              \
 })
 #define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
@@ -587,7 +587,7 @@ char* in3_get_config(in3_t* c) {
   if (c->replace_latest_block)
     add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
   add_uint(sb, ',', "requestCount", c->request_count);
-  if (c->chain_id == ETH_CHAIN_ID_LOCAL)
+  if (c->chain_id == ETH_CHAIN_ID_LOCAL && chain)
     add_string(sb, ',', "rpc", chain->nodelist->url);
 
   sb_add_chars(sb, ",\"nodes\":{");
@@ -683,6 +683,7 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
       in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      EXPECT_CFG(chain, "chain not found");
       if (c->max_verified_hashes < d_long(token)) {
         chain->verified_hashes = _realloc(chain->verified_hashes,
                                           sizeof(in3_verified_hash_t) * d_long(token),
