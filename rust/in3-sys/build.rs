@@ -110,8 +110,9 @@ fn write_bindgen_bindings(header_search_paths: &Vec<PathBuf>, out_bindings_path:
 fn main() {
     // C header search paths
     let mut header_search_paths: Vec<PathBuf> = Vec::new();
-
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
+    header_search_paths.push(["../c", "include"].iter().collect());
+
     println!("cargo:rustc-link-lib=static=in3_{}", env_var("TARGET"));
     println!(
         "cargo:rustc-link-search={}/../target/native",
