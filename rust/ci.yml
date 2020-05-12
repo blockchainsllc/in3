@@ -24,7 +24,6 @@
     - export CROSS_DOCKER_IN_DOCKER=false
     - export RUST_BACKTRACE=1
     - export OPENSSL_DIR=/usr/lib/ssl
-    - docker ps -a
     - cd rust/
     - mkdir -p target/native
     - cp ../$BUILD_DIR/lib/libin3.a target/native/libin3_$TARGET.a
@@ -65,6 +64,7 @@ rust:
     - export UPDATE_IN3_BINDINGS=1
     - cargo test
     - cargo run --example custom_transport --release
+    - exit 0
   needs:
     - mac_os
   tags:
