@@ -17,7 +17,7 @@ namespace In3.Native
             IN3_ERPC = -11
         }
 
-        [StructLayout(LayoutKind.Sequential)] private ref struct in3_request_t
+        [StructLayout(LayoutKind.Sequential)] private struct in3_request_t
         {
             [MarshalAs(UnmanagedType.LPStr)] public string payload;
             // This esoteric thing came from here: https://docs.microsoft.com/en-us/dotnet/framework/interop/default-marshaling-for-arrays
@@ -28,7 +28,7 @@ namespace In3.Native
             public IntPtr times;
         }
 
-        [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Ansi)] private delegate int TransportHandler(ref in3_request_t ptr1);
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Ansi)] private delegate int TransportHandler(IntPtr ptr1);
 
         public NativeTransportHandler(NativeWrapper wrapper)
         {
@@ -58,8 +58,9 @@ namespace In3.Native
             TransportGcHandle.Free();
         }
 
-        private int HandleRequest(ref in3_request_t req)
+        private int HandleRequest(IntPtr reqPtr)
         {
+            in3_request_t req = Marshal.PtrToStructure<in3_request_t>(reqPtr);
             ErrorCode err = ErrorCode.IN3_OK;
             string[] urls = NativeUtils.GetAllStrings(req.urls, req.urls_len);
             for (int i = 0; i < req.urls_len; i++)
