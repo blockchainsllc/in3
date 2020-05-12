@@ -25,6 +25,7 @@
     - export RUST_BACKTRACE=1
     - export OPENSSL_DIR=/usr/lib/ssl
     - cd rust/
+    - mkdir -p c/ && cp -r ../c/include ../c/src c/
     - mkdir -p target/native
     - cp ../$BUILD_DIR/lib/libin3.a target/native/libin3_$TARGET.a
     - export UPDATE_IN3_BINDINGS=1
