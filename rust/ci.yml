@@ -63,8 +63,8 @@ rust:
     - mkdir -p target/native
     - cp ../mac_build/lib/libin3.a target/native/libin3_x86_64-apple-darwin.a
     - export UPDATE_IN3_BINDINGS=1
-    - cargo test --jobs 8
-    - cargo run --example custom_transport --release --jobs 8
+    - cargo test
+    - cargo run --example custom_transport --release
   needs:
     - mac_os
   tags:
