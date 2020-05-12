@@ -9,6 +9,7 @@ namespace ConsoleTest
         static void Main(string[] args)
         {
             IN3 in3 = IN3.ForChain(Chain.Mainnet);
+            in3.Configuration.UseHttp = true;
             BigInteger result = in3.Eth1.BlockNumber();
             Console.Out.Write(result);
         }

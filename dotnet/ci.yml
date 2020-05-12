@@ -28,12 +28,15 @@ dotnet:
     - cp arm_jni_build/lib/libin3.so dotnet/In3/runtimes/linux-arm64/native/libin3.so
     - cd dotnet
     - mkdir Release
+    - dotnet add In3 package Vsxmd -v 1.4.5
     - dotnet build -c Release
+    - tail -n +5 In3/bin/Release/IN3.md >> docs/api-dotnet.md
     - cp -r In3/bin/Release/* Release/
   artifacts:
     paths:
       - dotnet/Release
       - dotnet/In3/runtimes/
+      - dotnet/docs
 
 .dotnet_test:
   stage: dotnet

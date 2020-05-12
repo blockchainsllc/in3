@@ -38,6 +38,7 @@ readthedocs:
   needs:
     - gcc8
     - python
+    - dotnet
   extends: .only_full
   tags:
     - short-jobs
@@ -50,6 +51,7 @@ readthedocs:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cp python_multilib/docs/documentation.md doc/docs/api-python.md
+    - cp dotnet/docs/api-dotnet.md doc/docs/
     - cd generator
     - npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
