@@ -1,3 +1,17 @@
+.only_python:
+  rules:
+    - changes:
+        - python/**/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
+# This template should be used for jobs to run during deployment only
+.only_deploy:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
+
 python:
   image: python
   stage: bindings
@@ -6,18 +20,21 @@ python:
     - win_jni
     - gcc8
     - arm_jni
+    - gcc8-x86
   tags:
     - short-jobs
   script:
     - cp mac_build/lib/libin3.dylib python/in3/libin3/shared/libin3.x64.dylib
-    - cp win_jni/lib/libin3.so python/in3/libin3/shared/in3.x64.dll
+    - cp win_jni/lib/libin3.so python/in3/libin3/shared/libin3.x64.dll
     - cp x64_build/lib/libin3.so python/in3/libin3/shared/libin3.x64.so
+    - cp x86_build/lib/libin3.so python/in3/libin3/shared/libin3.x86.so
     - cp arm_jni_build/lib/libin3.so python/in3/libin3/shared/libin3.arm7.so
-    - mv python python_multilib
-    - cd python_multilib
+    - cd python
     - pip3 install -r requirements.txt
     - ./generate_docs.sh
     - rm -rf docs/_build docs/build_examples.md_
+    - cd ..
+    - mv python python_multilib
   artifacts:
     paths:
       - python_multilib
@@ -25,6 +42,7 @@ python:
 python_arm:
   allow_failure: true
   image: python
+  extends: .only_python
   needs:
     - python
   stage: python
@@ -39,6 +57,7 @@ python_arm:
     - arm
 
 python_win:
+  extends: .only_python
   allow_failure: true
   needs:
     - python
@@ -54,6 +73,7 @@ python_win:
     - windows
 
 python_macos:
+  extends: .only_python
   allow_failure: true
   needs:
     - python
@@ -69,9 +89,9 @@ python_macos:
     - mac-mini-runner
 
 python_linux:
+  extends: .only_python
   needs:
     - python
-  allow_failure: true
   image: python
   stage: python
   script:
@@ -89,10 +109,7 @@ release_pip:
   image: docker.slock.it/build-images/python-dev-image:latest
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  extends: .only_deploy
   needs:
     - mac_os
     - python
@@ -100,9 +117,7 @@ release_pip:
     - cp python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
     - export version=${CI_COMMIT_TAG}
     - export download_url=https://github.com/slockit/in3-c/releases/download/${CI_COMMIT_TAG}/in3_${CI_COMMIT_TAG}_mac.tar.gz
+    - sed -i "s/version = environ.*/version = \"$version\"/" python/setup.py
     - cd python
     - cp $pypirc ~/.pypirc
     - ./publish.sh
-  artifacts:
-    paths:
-      - in3-pip

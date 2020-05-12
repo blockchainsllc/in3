@@ -1,0 +1,170 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JUnitTestLogger" Version="1.1.0" />
+        <PackageReference Include="nunit" Version="3.12.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
+    </ItemGroup>
+
+    <Import Project="..\In3\In3.targets" />
+
+    <ItemGroup>
+      <ProjectReference Include="..\In3\In3.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Eth1\TransactionRequestTest.cs" />
+      <Compile Remove="Ipfs\Encoding.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Resources\config.properties" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Responses/eth_blockNumber_1.json" />
+      <Content Include="Responses/eth_blockNumber_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_blockNumber_2.json" />
+      <Content Include="Responses/eth_blockNumber_2.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_blockNumber_3.json" />
+      <Content Include="Responses/eth_blockNumber_3.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_blockNumber_4.json" />
+      <Content Include="Responses/eth_blockNumber_4.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_blockNumber.json" />
+      <Content Include="Responses/eth_blockNumber.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_call_1.json" />
+      <Content Include="Responses/eth_call_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_call_2.json" />
+      <Content Include="Responses/eth_call_2.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_estimateGas.json" />
+      <Content Include="Responses/eth_estimateGas.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_gasPrice.json" />
+      <Content Include="Responses/eth_gasPrice.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getBalance.json" />
+      <Content Include="Responses/eth_getBalance.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getBlockByHash.json" />
+      <Content Include="Responses/eth_getBlockByHash.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getBlockByNumber_1.json" />
+      <Content Include="Responses/eth_getBlockByNumber_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getBlockByNumber.json" />
+      <Content Include="Responses/eth_getBlockByNumber.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getBlockTransactionCountByHash.json" />
+      <Content Include="Responses/eth_getBlockTransactionCountByHash.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getBlockTransactionCountByNumber.json" />
+      <Content Include="Responses/eth_getBlockTransactionCountByNumber.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getCode.json" />
+      <Content Include="Responses/eth_getCode.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getGasPrice.json" />
+      <Content Include="Responses/eth_getGasPrice.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getLogs_1.json" />
+      <Content Include="Responses/eth_getLogs_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getLogs.json" />
+      <Content Include="Responses/eth_getLogs.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getStorageAt.json" />
+      <Content Include="Responses/eth_getStorageAt.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getTransactionByBlockHashAndIndex.json" />
+      <Content Include="Responses/eth_getTransactionByBlockHashAndIndex.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getTransactionByBlockNumberAndIndex.json" />
+      <Content Include="Responses/eth_getTransactionByBlockNumberAndIndex.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getTransactionByHash.json" />
+      <Content Include="Responses/eth_getTransactionByHash.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getTransactionCount.json" />
+      <Content Include="Responses/eth_getTransactionCount.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getTransactionReceipt.json" />
+      <Content Include="Responses/eth_getTransactionReceipt.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getUncleByBlockNumberAndIndex.json" />
+      <Content Include="Responses/eth_getUncleByBlockNumberAndIndex.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getUncleCountByBlockHash.json" />
+      <Content Include="Responses/eth_getUncleCountByBlockHash.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_getUncleCountByBlockNumber.json" />
+      <Content Include="Responses/eth_getUncleCountByBlockNumber.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_sendRawTransaction_1.json" />
+      <Content Include="Responses/eth_sendRawTransaction_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/eth_sendRawTransaction.json" />
+      <Content Include="Responses/eth_sendRawTransaction.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/in3_nodeList.json" />
+      <Content Include="Responses/in3_nodeList.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/in3_sign.json" />
+      <Content Include="Responses/in3_sign.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/ipfs_get.json" />
+      <Content Include="Responses/ipfs_get.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/ipfs_put.json" />
+      <Content Include="Responses/ipfs_put.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+</Project>

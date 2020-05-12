@@ -576,7 +576,7 @@ static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
 }
 
 in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
-  ctx_remove_required(ctx, ctx->required);
+  in3_ret_t res = IN3_OK;
 
   // blacklist node that gave us an error response for nodelist (if not first update)
   // and clear nodelist params
@@ -587,11 +587,16 @@ in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
   _free(chain->nodelist_upd8_params);
   chain->nodelist_upd8_params = NULL;
 
-  // if first update return error otherwise return IN3_OK, this is because first update is
-  // always from a boot node which is presumed to be trusted
-  if (nodelist_first_upd8(chain))
-    return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
-  return IN3_OK;
+  if (ctx->required) {
+    // if first update return error otherwise return IN3_OK, this is because first update is
+    // always from a boot node which is presumed to be trusted
+    if (nodelist_first_upd8(chain))
+      res = ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", IN3_ERPC);
+
+    if (res == IN3_OK) res = ctx_remove_required(ctx, ctx->required);
+  }
+
+  return res;
 }
 
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
@@ -657,7 +662,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
             break;
           } else
-            return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+            return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
         }
       }
     }

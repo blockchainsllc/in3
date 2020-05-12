@@ -1,5 +1,11 @@
+# This template should be used for jobs to run during deployment only
+.only_deploy:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
+
 wasm:
-  image: docker.slock.it/build-images/cmake:clang10
+  image: docker.slock.it/build-images/cmake:clang11
   needs: []
   stage: bindings
   tags:
@@ -7,11 +13,11 @@ wasm:
   script:
     - mkdir wasm_build_min
     - cd wasm_build_min
-    - emconfigure cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
     - mkdir ../wasm_build
     - cd ../wasm_build
-    - emconfigure cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
     - cp ../wasm_build_min/bin/*.wasm bin/in3w_min.wasm
     - cp ../wasm_build_min/bin/*.wasm module/in3w_min.wasm
@@ -22,7 +28,7 @@ wasm:
       - wasm_build/bin
 
 asmjs:
-  image: docker.slock.it/build-images/cmake:clang10
+  image: docker.slock.it/build-images/cmake:clang11
   stage: bindings
   needs: []
   tags:
@@ -30,7 +36,7 @@ asmjs:
   script:
     - mkdir asmjs_build
     - cd asmjs_build
-    - emconfigure cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
 
   artifacts:
@@ -71,13 +77,11 @@ test_asmjs:
 
 wasm-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  only: # deploy only on  semantic versions tags
-    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/'
   needs:
     - wasm
   script:
@@ -88,14 +92,10 @@ wasm-slockit-npm:
 
 wasm-public-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - wasm
   script:
@@ -106,13 +106,11 @@ wasm-public-npm:
 
 asmjs-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  only: # deploy only on  semantic versions tags
-    - /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/
-  except:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]*\.[0-9]*\.[0-9]*-?.*$/'
   needs:
     - asmjs
   script:
@@ -123,14 +121,10 @@ asmjs-slockit-npm:
 
 asmjs-public-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - asmjs
   script:

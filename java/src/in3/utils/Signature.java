@@ -30,6 +30,7 @@ public class Signature {
   public String getMessage() {
     return data.getString(MESSAGE);
   }
+
   /*
    * returns the hash of the message
    */

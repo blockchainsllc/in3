@@ -3,10 +3,12 @@ using System.Runtime.InteropServices;
 
 namespace In3.Native
 {
-    internal class NativeTransportHandler
+    internal class NativeTransportHandler : NativeHandler
     {
-        private static TransportHandler TransportDel { get; set; }
-        private DefaultNativeWrapper wrapper { get; set; }
+        private NativeWrapper Wrapper { get; set; }
+        
+        private GCHandle TransportGcHandle { get; set; }
+        private IntPtr TransportPtr { get; set; }
 
         // structs
         enum ErrorCode : int
@@ -15,7 +17,7 @@ namespace In3.Native
             IN3_ERPC = -11
         }
 
-        [StructLayout(LayoutKind.Sequential)] private ref struct in3_request_t
+        [StructLayout(LayoutKind.Sequential)] private struct in3_request_t
         {
             [MarshalAs(UnmanagedType.LPStr)] public string payload;
             // This esoteric thing came from here: https://docs.microsoft.com/en-us/dotnet/framework/interop/default-marshaling-for-arrays
@@ -26,28 +28,46 @@ namespace In3.Native
             public IntPtr times;
         }
 
-        [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Ansi)] private delegate int TransportHandler(ref in3_request_t ptr1);
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Ansi)] private delegate int TransportHandler(IntPtr ptr1);
 
-        public NativeTransportHandler(DefaultNativeWrapper wrapper)
+        public NativeTransportHandler(NativeWrapper wrapper)
         {
-            this.wrapper = wrapper;
+            Wrapper = wrapper;
         }
 
         public void RegisterNativeHandler()
         {
-            TransportDel = HandleRequest;
-            in3_set_default_transport(TransportDel);
+            /*
+             * The code bellow is a combionation of three solutions:
+             * https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/367eeye0(v=vs.110)?redirectedfrom=MSDN
+             * https://docs.microsoft.com/en-us/previous-versions/dotnet/netframework-4.0/44ey4b32(v=vs.100)
+             * https://docs.microsoft.com/en-us/dotnet/framework/interop/marshaling-a-delegate-as-a-callback-method
+             * The same logic SHOULD be applied to any function pointer stored in a struct (aka whose lifecycle goes beyond the higher order function invocation). In this context they are: transport, storage and signer.
+             */
+            unsafe
+            {
+                TransportHandler transportHandler = HandleRequest;
+                TransportGcHandle = GCHandle.Alloc(transportHandler);
+                IntPtr transportFunctionPtr = Marshal.GetFunctionPointerForDelegate(transportHandler);
+                in3_set_transport(Wrapper.NativeClientPointer, transportFunctionPtr.ToPointer());
+            }
         }
 
-        private int HandleRequest(ref in3_request_t req)
+        public void UnregisterNativeHandler()
         {
+            TransportGcHandle.Free();
+        }
+
+        private int HandleRequest(IntPtr reqPtr)
+        {
+            in3_request_t req = Marshal.PtrToStructure<in3_request_t>(reqPtr);
             ErrorCode err = ErrorCode.IN3_OK;
-            string[] urls = GetAllStrings(req.urls, req.urls_len);
+            string[] urls = NativeUtils.GetAllStrings(req.urls, req.urls_len);
             for (int i = 0; i < req.urls_len; i++)
             {
                 try
                 {
-                    string result = wrapper.client.Transport.Handle(urls[i], req.payload);
+                    string result = Wrapper.Client.Transport.Handle(urls[i], req.payload);
                     in3_req_add_response(req.results, i, false, result, result.Length);
                 }
                 catch (Exception ex)
@@ -59,19 +79,8 @@ namespace In3.Native
             return (int) err;
         }
 
-        // Heavily inspired by: https://stackoverflow.com/questions/1498931/marshalling-array-of-strings-to-char-in-c-sharp
-        private string[] GetAllStrings(IntPtr ptr, int size) {
-            string[] list = new string[size];
-            for ( int i = 0; i < size; i++ ) {
-                var strPtr = (IntPtr)Marshal.PtrToStructure(ptr, typeof(IntPtr));
-                list[i] = Marshal.PtrToStringUTF8(strPtr);
-                ptr = new IntPtr(ptr.ToInt64()+IntPtr.Size);
-            }
-            return list;
-        }
-
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_req_add_response(IntPtr res, int index, bool is_error, string data, int data_len);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_set_default_transport(TransportHandler transport);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern unsafe void in3_set_transport(IntPtr client, void* transport);
 
     }
 }

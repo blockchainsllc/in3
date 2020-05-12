@@ -1,13 +1,23 @@
+# This template should be used for jobs to run during deployment only
+.only_deploy:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
+
+.only_full:
+  rules:
+    - changes:
+        - c/**/*
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+-(alpha|beta|rc)\.[0-9]+$/'
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
+
 dockerhub-deploy:
   stage: deploy
   needs: []
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
+  extends: .only_deploy
   tags:
     - short-jobs
-  when: manual
   services:
     - docker:dind
   image: docker.slock.it/build-images/deployment
@@ -28,6 +38,7 @@ readthedocs:
   needs:
     - gcc8
     - python
+  extends: .only_full
   tags:
     - short-jobs
   allow_failure: true
@@ -58,11 +69,7 @@ release_mac_and_wasm:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - mac_os
     - gcc8
@@ -82,7 +89,7 @@ release_mac_and_wasm:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_mac.tar.gz in3-mac-wasm/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_mac.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -110,11 +117,7 @@ release_x64:
     - asmjs
     - java
     - python
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - mkdir in3-x64
@@ -126,7 +129,7 @@ release_x64:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x64.tar.gz in3-x64/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x64.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_mac.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -143,11 +146,7 @@ release_x86:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - gcc8
     - gcc8-x86
@@ -167,7 +166,7 @@ release_x86:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_x86.tar.gz in3-x86/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_x86.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_x86.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -184,11 +183,7 @@ release_arm7:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - gcc8
     - arm7
@@ -208,7 +203,7 @@ release_arm7:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_arm7.tar.gz in3-arm7/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_arm7.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_arm7.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -225,11 +220,7 @@ release_win:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - gcc8
     - win_mingw
@@ -253,7 +244,7 @@ release_win:
     - cp -r ../wasm_build/module wasm/release-wasm
     - cp -r ../asmjs_build/module wasm/release-asmjs
     - cp ../java_build/lib/in3.jar lib/in3.jar
-    - cp python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
+    - cp ../python_multilib/in3/libin3/shared/* python/in3/libin3/shared/
     - cd ..
     - tar -zcv  --exclude=*cmake* -f in3_${CI_COMMIT_TAG}_windows.tar.gz in3-win/
     - IPFS_RESPONSE=$(curl -X POST https://api.pinata.cloud/pinning/pinFileToIPFS -H 'Content-Type:multipart/form-data' -H 'pinata_api_key:'"$PINATA_API_KEY" -H 'pinata_secret_api_key:'"$PINATA_SECRET_API_KEY" -F file=@in3_${CI_COMMIT_TAG}_windows.tar.gz -F 'pinataMetadata={"name":"in3_'${CI_COMMIT_TAG}'_windows.tar.gz","keyValues":{"version":"${CI_COMMIT_TAG}"}}' -F 'pinataOptions={"cidVersion":0}')
@@ -265,30 +256,12 @@ release_win:
     paths:
       - in3-win
 
-release_maven:
-  stage: deploy
-  image: docker.slock.it/build-images/maven-deployment-image:latest
-  tags:
-    - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
-  needs:
-    - java
-  script:
-    - touch settings.xml
-    - echo $MAVEN_SETTINGS > settings.xml
-    - mvn -s settings.xml deploy:deploy-file -DgroupId=it.slock  -DartifactId=in3 -Dversion=$CI_COMMIT_TAG  -Dpackaging=jar -Dfile=java_build/lib/in3.jar  -DrepositoryId=github -Durl=https://maven.pkg.github.com/slockit/in3-c
-
 pages:
   stage: deploy
   tags:
     - arm
-  only:
-    refs:
-      - develop
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "develop"'
   needs:
     - arm7
     - readthedocs
@@ -304,7 +277,7 @@ pages:
     - cp -r cov_build/ccov/all-merged public/coverage
     - cp -r report/* public/code_analysis
     - cp -r doc/build public/rtd
-    - cp -r vulnerability_analysis.json public/vulnerability_analysis.json
+    - cp -r vulnerability_analysis.json public/vulnerability_analysis.json || true
     - cp -r java/build/reports/jacoco/test/html    public/coverage_java
     - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li></ul></body></html>" > public/index.html
   artifacts:
@@ -325,7 +298,6 @@ pages:
     - java_linux
     - java_macos
     - readthedocs
-  when: manual
   script:
     - mv scripts/debian .
     - mv debian/changelog-in3 debian/changelog
@@ -352,24 +324,18 @@ pages:
 debian_package_deploy_bionic:
   extends:
     - .debian_package_deploy_template_in3
+    - .only_deploy
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
 
 debian_package_deploy_disco:
   extends:
     - .debian_package_deploy_template_in3
+    - .only_deploy
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
 
 .debian_package_deploy_template_in3_dev:
   image: docker.slock.it/build-images/cmake:gcc8-with-debian-deps
@@ -385,7 +351,6 @@ debian_package_deploy_disco:
     - java_linux
     - java_macos
     - readthedocs
-  when: manual
   script:
     - mv scripts/debian .
     - mv debian/changelog-dev debian/changelog
@@ -412,35 +377,25 @@ debian_package_deploy_disco:
 debian_dev_package_deploy_bionic:
   extends:
     - .debian_package_deploy_template_in3_dev
+    - .only_deploy
   variables:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
 
 debian__dev_package_deploy_disco:
   extends:
     - .debian_package_deploy_template_in3_dev
+    - .only_deploy
   variables:
     DISTRO: "disco"
     VERSION: $CI_COMMIT_TAG
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
 
 brew_release:
   stage: release
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - mac_os
     - release_mac_and_wasm
@@ -463,11 +418,7 @@ github_body_release:
   image: docker.slock.it/build-images/deployment
   tags:
     - short-jobs
-  only:
-    - /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/
-  except:
-    - branches
-  when: manual
+  extends: .only_deploy
   needs:
     - release_mac_and_wasm
     - release_x64

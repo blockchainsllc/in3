@@ -1,5 +1,9 @@
+"""
+MVC Pattern Model domain classes for the Incubed client module
+"""
+import warnings
+
 from in3.eth.model import DataTransferObject, Account
-from in3.libin3.enum import In3ProofLevel, Chain
 
 
 class In3Node(DataTransferObject):
@@ -51,112 +55,128 @@ class NodeList(DataTransferObject):
 
 class ClientConfig(DataTransferObject):
     """
-    In3 Client Configuration class.
-    Determines the behavior of client, which chain to connect to, verification policy, update cycle, minimum number of
-    signatures collected on every request, and response timeout.
-    Those are the settings that determine information security levels. Considering integrity is guaranteed by and
-    confidentiality is not available on public blockchains, these settings will provide a balance between availability,
-    and financial stake in case of repudiation. The "newer" the block is, or the closest to "latest", the higher are
-    the chances it gets repudiated (a fork) by the chain, making lower the chances a node will sign on such information
-    and thus reducing its availability. Up to a certain point, the older the block gets, the highest is its
-    availability because of the close-to-zero repudiation risk. Blocks older than circa one year are stored in Archive
-    Nodes, expensive computers, so, despite of the zero repudiation risk, there are not many nodes and they must search
-    for the requested block in its database, lowering the availability as well. The verification policy enforces an
-    extra step of security, that proves important in case you have only one response from an archive node
-    and want to run a local integrity check, just to be on the safe side.
+    Determines the behavior of the in3 client, which chain to connect to and how to manage information security policies.
+
+    Considering integrity is guaranteed and confidentiality is not available on public blockchains, these settings will provide a balance between availability, and financial stake in case of repudiation.
+
+    The newer the block is, higher are the chances it gets repudiated by a fork in the chain. In3 nodes will decide individually to sign on repudiable information, reducing the availability. If the application needs the very latest block, consider using a calculated value in `node_signature_consensus` and set `node_signatures` to zero. This setting is as secure as a light-client.
+
+    The older the block gets, the highest is its availability because of the close-to-zero repudiation risk, but blocks older than circa one year are stored in Archive Nodes, expensive computers, so, despite of the low risk, there are not many nodes available with such information, and they must search for the requested block in its database, lowering the availability as well. If the application needs access to _old_ blocks, consider setting `request_timeout` and `request_retries` to accomodate the time the archive nodes take to fetch the inforamtion.
+
+    The verification policy enforces an extra step of security, adding a financial stake in case of repudiation or false/broken proof. For high security application, consider setting a calculated value in `node_min_deposit` and request as much signatures as necessary in `node_signatures`. Setting `chain_finality_threshold` high will guarantee non-repudiability.
+
+    **All args are Optional. Defaults connect to Ethereum main network with regular security levels.**
 
     Args:
-        chainId (str): (optional) - servers to filter for the given chain. The chain-id based on EIP-155. example: 0x1
-        replaceLatestBlock (int): (optional) - if specified, the blocknumber latest will be replaced by blockNumber- specified value example: 6
-        signatureCount (int): (optional) - number of signatures requested example: 2
-        finality (int): (optional) - the number in percent needed in order reach finality (% of signature of the validators) example: 50
-        minDeposit (int): - min stake of the server. Only nodes owning at least this amount will be chosen.
-        proof :'none'|'standard'|'full' (optional) - if true the nodes should send a proof of the response
-        autoUpdateList (bool): (optional) - if true the nodelist will be automatically updated if the lastBlock is newer
-        timeout (int): specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection. example: 100000
-        key (str): (optional) - the client key to sign requests example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
-        includeCode (bool): (optional) - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards
-        maxAttempts (int): (optional) - max number of attempts in case a response is rejected example: 10
-        keepIn3 (bool): (optional) - if true, the in3-section of thr response will be kept. Otherwise it will be removed after validating the data. This is useful for debugging or if the proof should be used afterwards.
-        maxBlockCache (int): (optional) - number of number of blocks cached in memory example: 100
-        maxCodeCache (int): (optional) - number of max bytes used to cache the code in memory example: 100000
-        nodeLimit (int): (optional) - the limit of nodes to store in the client. example: 150
-        requestCount (int): - Useful to be higher than 1 when using signatureCount <= 1. Then the client check for consensus in answers.
+        chain_finality_threshold (int):  Behavior depends on the chain consensus algorithm: POA - percent of signers needed in order reach finality (% of the validators) i.e.: 60 %. POW - mined blocks on top of the requested, i.e. 8 blocks. Defaults are defined in enum.Chain.
+        latest_block_stall (int): Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
+        account_secret (str): Account SK to sign all in3 requests. (Experimental use `set_account_sk`) example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
+        node_signatures (int): Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
+        node_signature_consensus (int): Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
+        node_min_deposit (int): Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
+        node_list_auto_update (bool): If true the nodelist will be automatically updated. False may compromise data security.
+        node_limit (int): Limit nodes stored in the client. example: 150 nodes
+        request_timeout (int): Milliseconds before a request times out. example: 100000 ms
+        request_retries (int): Maximum times the client will retry to contact a certain node. example: 10 retries
+        response_proof_level (str): 'none'|'standard'|'full' Full gets the whole block Patricia-Merkle-Tree, Standard only verifies the specific tree branch concerning the request, None only verifies the root hashes, like a light-client does.
+        response_includes_code (bool): If true, every request with the address field will include the data, if existent, that is stored in that wallet/smart-contract. If false, only the code digest is included.
+        response_keep_proof (bool): If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
+        cached_blocks (int): Maximum blocks kept in memory. example: 100 last requested blocks
+        cached_code_bytes (int): Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
+        in3_registry (dict): In3 Registry Smart Contract configuration data
     """
 
-    def __init__(self, chainId: str = str(Chain.MAINNET), key: str = None, replaceLatestBlock: int = 8,
-                 signatureCount: int = 3, finality: int = 70, minDeposit: int = 10000000000000000,
-                 proof: In3ProofLevel = In3ProofLevel.STANDARD, autoUpdateList: bool = True, timeout: int = 5000,
-                 includeCode: bool = False, keepIn3: bool = False, maxAttempts: int = None, maxBlockCache: int = None,
-                 maxCodeCache: int = None, nodeLimit: int = None, requestCount: int = 1):
-        self.autoUpdateList: bool = autoUpdateList
-        self.chainId: str = chainId
-        self.finality: int = finality
-        self.includeCode: bool = includeCode
-        self.keepIn3: bool = keepIn3
-        self.key: str = key
-        self.timeout: int = timeout
-        self.maxAttempts: int = maxAttempts
-        self.maxBlockCache: int = maxBlockCache
-        self.maxCodeCache: int = maxCodeCache
-        self.minDeposit: int = minDeposit
-        self.nodeLimit: int = nodeLimit
-        self.proof: In3ProofLevel = proof
-        self.replaceLatestBlock: int = replaceLatestBlock
-        self.requestCount: int = requestCount
-        self.signatureCount: int = signatureCount
+    def __init__(self,
+                 chain_finality_threshold: int = None,
+                 account_secret: str = None,
+                 latest_block_stall: int = None,
+                 node_signatures: int = None,
+                 node_signature_consensus: int = None,
+                 node_min_deposit: int = None,
+                 node_list_auto_update: bool = None,
+                 node_limit: int = None,
+                 request_timeout: int = None,
+                 request_retries: int = None,
+                 response_proof_level: str = None,
+                 response_includes_code: bool = None,
+                 response_keep_proof: bool = None,
+                 cached_blocks: int = None,
+                 cached_code_bytes: int = None,
+                 in3_registry: dict = None):
+        self.finality: int = chain_finality_threshold
+        self.key: str = account_secret
+        self.replaceLatestBlock: int = latest_block_stall
+        self.signatureCount: int = node_signatures
+        self.requestCount: int = node_signature_consensus
+        self.minDeposit: int = node_min_deposit
+        self.autoUpdateList: bool = node_list_auto_update
+        self.nodeLimit: int = node_limit
+        self.timeout: int = request_timeout
+        self.maxAttempts: int = request_retries
+        self.proof: str = response_proof_level
+        self.includeCode: bool = response_includes_code
+        self.keepIn3: bool = response_keep_proof
+        self.maxBlockCache: int = cached_blocks
+        self.maxCodeCache: int = cached_code_bytes
+        self.nodes: dict = in3_registry
+        if self.key:
+            warnings.warn('In3 Config: `account_secret` may cause instability.', DeprecationWarning)
 
 
-class TransactionReceipt(DataTransferObject):
+class ChainConfig:
+    """
+    Default in3 client configuration for each chain see #clientConfig for details.
+    """
 
-    def __init__(self, transaction_hash: str, transaction_index: int, block_hash: str, block_number: int,
-                 _from: Account, to: Account, cumulative_gas_used: int, gas_used: int, contract_address: int,
-                 logs: list, logs_bloom: str):
-        """
-          bytes32_t  transaction_hash;    /**< the transaction hash */
-          int        transaction_index;   /**< the transaction index */
-          bytes32_t  block_hash;          /**< hash of ther containnig block */
-          uint64_t   block_number;        /**< number of the containing block */
-          uint64_t   cumulative_gas_used; /**< total amount of gas used by block */
-          uint64_t   gas_used;            /**< amount of gas used by this specific transaction */
-          bytes_t*   contract_address;    /**< contract address created (if the transaction was a contract creation) or NULL */
-          bool       status;              /**< 1 if transaction succeeded, 0 otherwise. */
-          eth_log_t* logs;                /**< array of log objects, which this transaction generated */
-        Args:
-            transaction_hash:
-            transaction_index:
-            block_hash:
-            block_number:
-            _from:
-            to:
-            cumulative_gas_used:
-            gas_used:
-            contract_address:
-            logs:
-            logs_bloom:
-        """
-        self.transaction_hash = transaction_hash
-        self.transaction_index = transaction_index
-        self.block_hash = block_hash
-        self.block_number = block_number
-        self._from = _from
-        self.to = to
-        self.cumulative_gas_used = cumulative_gas_used
-        self.gas_used = gas_used
-        self.contract_address = contract_address
-        self.logs = logs
-        self.logs_bloom = logs_bloom
+    def __init__(self, chain_id: int, chain_id_alias: str, client_config: ClientConfig):
+        self.chain_id: int = chain_id
+        self.chain_id_alias: str = chain_id_alias
+        self.client_config: ClientConfig = client_config
 
 
-class Logs(DataTransferObject):
-
-    def __init__(self, log_index: int, transaction_index: int, transaction_hash: str, block_hash: str,
-                 block_number: int, address: Account, data: str, topics: list):
-        self.log_index = log_index
-        self.transaction_index = transaction_index
-        self.transaction_hash = transaction_hash
-        self.block_hash = block_hash
-        self.block_number = block_number
-        self.address = address
-        self.data = data
-        self.topics = topics
+chain_configs = {
+    "mainnet": ChainConfig(
+        chain_id=int(0x1),
+        chain_id_alias="mainnet",
+        client_config=ClientConfig(
+            chain_finality_threshold=10,
+            latest_block_stall=10,
+            node_signatures=2)
+    ),
+    "kovan": ChainConfig(
+        chain_id=int(0x2a),
+        chain_id_alias="kovan",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=6,
+            node_signatures=1,
+            node_signature_consensus=3)
+    ),
+    "evan": ChainConfig(
+        chain_id=int(0x4b1),
+        chain_id_alias="evan",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=6,
+            node_signatures=0,
+            node_signature_consensus=5)
+    ),
+    "goerli": ChainConfig(
+        chain_id=int(0x5),
+        chain_id_alias="goerli",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=6,
+            node_signatures=2)
+    ),
+    "ipfs": ChainConfig(
+        chain_id=int(0x7d0),
+        chain_id_alias="ipfs",
+        client_config=ClientConfig(
+            chain_finality_threshold=1,
+            latest_block_stall=5,
+            node_signatures=1,
+            node_signature_consensus=1
+        )
+    ),
+}

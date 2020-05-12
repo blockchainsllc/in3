@@ -1,4 +1,3 @@
-
 class IN3BaseException(Exception):
     """ In3 Base Exception """
     pass
