@@ -121,7 +121,7 @@ import in3
 
 print('\nEthereum Goerli Test Network')
 client = in3.Client('goerli')
-node_list = client.get_node_list()
+node_list = client.refresh_node_list()
 print('\nIncubed Registry:')
 print('\ttotal servers:', node_list.totalServers)
 print('\tlast updated in block:', node_list.lastBlockNumber)
@@ -211,7 +211,6 @@ def _print():
 
 
 # Find ENS for the desired chain or the address of your own ENS resolver. https://docs.ens.domains/ens-deployments
-ens_address = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'  # Available at Mainnet, Ropsten, Rinkeby and Goerli.
 domain = 'depraz.eth'
 
 print('\nEthereum Name Service')
@@ -219,29 +218,21 @@ print('\nEthereum Name Service')
 # Instantiate In3 Client for Goerli
 chain = 'goerli'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr', ens_address)
-# Same can be achieved by making an eth_call to the ENS smart-contract
-tx = {
-    "to": ens_address,
-    "data": '0x02571be34a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e'
-}
-transaction = in3.eth.NewTransaction(**tx)
-owner = client.eth.contract.eth_call(transaction)
-_print()
+address = client.ens_address(domain)
 
 # Instantiate In3 Client for Mainnet
 chain = 'mainnet'
 client = in3.Client(chain)
-address = client.ens_resolve(domain, 'addr', ens_address)
-owner = client.ens_resolve(domain, 'owner', ens_address)
+address = client.ens_address(domain)
+owner = client.ens_owner(domain)
 _print()
 
 # Instantiate In3 Client for Kovan
 chain = 'kovan'
 client = in3.Client(chain)
 try:
-    address = client.ens_resolve(domain, 'addr', ens_address)
-    owner = client.ens_resolve(domain, 'owner', ens_address)
+    address = client.ens_address(domain)
+    owner = client.ens_owner(domain)
     _print()
 except in3.ClientException:
     print('\nENS is not available on Kovan.')
@@ -251,11 +242,8 @@ except in3.ClientException:
 """
 Ethereum Name Service
 
-Address for deprazz.eth @ goerli: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
-Owner for deprazz.eth @ goerli: 0x0000000000000000000000000b56ae81586d2728ceaf7c00a6020c5d63f02308
-
-Address for deprazz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
-Owner for deprazz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
+Address for depraz.eth @ mainnet: 0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
+Owner for depraz.eth @ mainnet: 0x6fa33809667a99a805b610c49ee2042863b1bb83
 
 ENS is not available on Kovan.
 """
@@ -295,7 +283,7 @@ etherscan_link_mask = 'https://{}{}etherscan.io/tx/{}'
 
 print('Ethereum Transaction using Incubed\n')
 try:
-    sender = client.eth.account.recover_account(sender_secret)
+    sender = client.eth.account.recover(sender_secret)
     tx = in3.eth.NewTransaction(to=receiver, value=value_in_wei)
     print('Sending {} Wei from {} to {}.\n'.format(tx.value, sender.address, tx.to))
     tx_hash = client.eth.account.send_transaction(sender, tx)
@@ -304,7 +292,7 @@ try:
     print(etherscan_link_mask.format(chain, add_dot_if_chain, tx_hash))
     print('\nWaiting {} seconds for confirmation.\n'.format(confirmation_wait_time_in_seconds))
     time.sleep(confirmation_wait_time_in_seconds)
-    receipt: in3.eth.TransactionReceipt = client.eth.account.get_transaction_receipt(tx_hash)
+    receipt: in3.eth.TransactionReceipt = client.eth.transaction_receipt(tx_hash)
     print('Transaction was sent successfully!')
     print(json.dumps(receipt.to_dict(), indent=4, sort_keys=True))
     print('\nMined on block {} used {} GWei.'.format(receipt.blockNumber, receipt.gasUsed))
@@ -344,6 +332,57 @@ Mined on block 2615346 used 21000 GWei.
 
 ```
 
+### smart_contract
+
+source : [in3-c/python/examples/smart_contract.py](https://github.com/slockit/in3-c/blob/master/python/examples/smart_contract.py)
+
+
+
+```python
+"""
+Manually calling ENS smart-contract
+![UML Sequence Diagram of how Ethereum Name Service ENS resolves a name.](https://lh5.googleusercontent.com/_OPPzaxTxKggx9HuxloeWtK8ggEfIIBKRCEA6BKMwZdzAfUpIY6cz7NK5CFmiuw7TwknbhFNVRCJsswHLqkxUEJ5KdRzpeNbyg8_H9d2RZdG28kgipT64JyPZUP--bAizozaDcxCq34)
+"""
+import in3
+
+
+client = in3.Client('goerli')
+domain_name = client.ens_namehash('depraz.eth')
+ens_registry_addr = '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e'
+ens_resolver_abi = 'resolver(bytes32):address'
+
+# Find resolver contract for ens name
+resolver_tx = {
+    "to": ens_registry_addr,
+    "data": client.eth.contract.encode(ens_resolver_abi, domain_name)
+}
+tx = in3.eth.NewTransaction(**resolver_tx)
+encoded_resolver_addr = client.eth.contract.call(tx)
+resolver_address = client.eth.contract.decode(ens_resolver_abi, encoded_resolver_addr)
+
+# Resolve name
+ens_addr_abi = 'addr(bytes32):address'
+name_tx = {
+    "to": resolver_address,
+    "data": client.eth.contract.encode(ens_addr_abi, domain_name)
+}
+encoded_domain_address = client.eth.contract.call(in3.eth.NewTransaction(**name_tx))
+domain_address = client.eth.contract.decode(ens_addr_abi, encoded_domain_address)
+
+print('END domain:\n{}\nResolved by:\n{}\nTo address:\n{}'.format(domain_name, resolver_address, domain_address))
+
+# Produces
+"""
+END domain:
+0x4a17491df266270a8801cee362535e520a5d95896a719e4a7d869fb22a93162e
+Resolved by:
+0x4b1488b7a6b320d2d721406204abc3eeaa9ad329
+To address:
+0x0b56ae81586d2728ceaf7c00a6020c5d63f02308
+"""
+
+```
+
 
 ### Running the examples
 
@@ -373,7 +412,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x10d8bd600>)
+transport=<CFunctionType object at 0x10bfb27a0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -385,9 +424,9 @@ Once with the latest list at hand, the client can request any other on-chain inf
 - `in3_config` _ClientConfig or str_ - (optional) Configuration for the client. If not provided, default is loaded.
   
 
-#### get_node_list
+#### refresh_node_list
 ```python
-Client.get_node_list()
+Client.refresh_node_list()
 ```
 
 Gets the list of Incubed nodes registered in the selected chain registry contract.
@@ -397,32 +436,71 @@ Gets the list of Incubed nodes registered in the selected chain registry contrac
 - `node_list` _NodeList_ - List of registered in3 nodes and metadata.
   
 
-#### raw_configure
+#### ens_namehash
 ```python
-Client.raw_configure(cfg_dict: dict)
+Client.ens_namehash(domain_name: str)
 ```
 
-Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
-
-
-#### ens_resolve
-```python
-Client.ens_resolve(domain_name: str,
-domain_type: str,
-registry: str = None)
-```
-
-Resolves ENS domain name to Ethereum address.
+Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-137.md#name-syntax)
 
 **Arguments**:
 
 - `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
-- `domain_type` - 'hash'|'addr'|'owner'|'resolver'
+
+**Returns**:
+
+- `node` _str_ - Formatted string referred as `node` in ENS documentation
+  
+
+#### ens_address
+```python
+Client.ens_address(domain_name: str, registry: str = None)
+```
+
+Resolves ENS domain name to what account that domain points to.
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
 - `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
 
 **Returns**:
 
-- `address` _str_ - Ethereum address corresponding to domain name.
+- `address` _str_ - Ethereum address corresponding to what account that domain points to.
+  
+
+#### ens_owner
+```python
+Client.ens_owner(domain_name: str, registry: str = None)
+```
+
+Resolves ENS domain name to Ethereum address of domain owner.
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+
+**Returns**:
+
+- `owner_address` _str_ - Ethereum address corresponding to domain owner.
+  
+
+#### ens_resolver
+```python
+Client.ens_resolver(domain_name: str, registry: str = None)
+```
+
+Resolves ENS domain name to Smart-contract address of the resolver registered for that domain.
+
+**Arguments**:
+
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+
+**Returns**:
+
+- `resolver_contract_address` _str_ - Smart-contract address of the resolver registered for that domain.
   
 
 ### ClientConfig
@@ -528,9 +606,9 @@ EthAccountApi(self, runtime: In3Runtime, factory: EthObjectFactory)
 Manages accounts and smart-contracts
 
 
-#### new_account
+#### create
 ```python
-EthAccountApi.new_account(qrng=False)
+EthAccountApi.create(qrng=False)
 ```
 
 Creates a new Ethereum account and saves it in the wallet.
@@ -544,9 +622,9 @@ Creates a new Ethereum account and saves it in the wallet.
 - `account` _Account_ - Newly created Ethereum account.
   
 
-#### recover_account
+#### recover
 ```python
-EthAccountApi.recover_account(secret: str)
+EthAccountApi.recover(secret: str)
 ```
 
 Recovers an account from a secret.
@@ -593,9 +671,9 @@ Use ECDSA to sign a message.
 - `signed_message` _str_ - ECDSA calculated r, s, and parity v, concatenated. v = 27 + (r % 2)
   
 
-#### get_balance
+#### balance
 ```python
-EthAccountApi.get_balance(address: str, at_block: int = 'latest')
+EthAccountApi.balance(address: str, at_block: int = 'latest')
 ```
 
 Returns the balance of the account of given address.
@@ -649,27 +727,6 @@ Sends a signed and encoded transaction.
 - `tx_hash` _hex_ - Transaction hash, used to get the receipt and check if the transaction was mined.
   
 
-#### get_transaction_receipt
-```python
-EthAccountApi.get_transaction_receipt(tx_hash: str)
-```
-
-After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to
-gather the receipt, once a miner has mined and it is part of an acknowledged block. Because how it is possible,
-in distributed systems, that data is asymmetric in different parts of the system, the transaction is only "final"
-once a certain number of blocks was mined after it, and still it can be possible that the transaction is discarded
-after some time. But, in general terms, it is accepted that after 6 to 8 blocks from latest, that it is very
-likely that the transaction will stay in the chain.
-
-**Arguments**:
-
-- `tx_hash` - Transaction hash.
-
-**Returns**:
-
-- `tx_receipt` - The mined Transaction data including event logs.
-  
-
 #### estimate_gas
 ```python
 EthAccountApi.estimate_gas(transaction: NewTransaction)
@@ -686,10 +743,9 @@ Gas estimation for transaction. Used to fill transaction.gas field. Check RawTra
 - `gas` _int_ - Calculated gas in Wei.
   
 
-#### get_transaction_count
+#### transaction_count
 ```python
-EthAccountApi.get_transaction_count(address: str,
-at_block: int = 'latest')
+EthAccountApi.transaction_count(address: str, at_block: int = 'latest')
 ```
 
 Number of transactions mined from this address. Used to set transaction nonce.
@@ -735,9 +791,9 @@ EthContractApi(self, runtime: In3Runtime, factory: EthObjectFactory)
 Manages smart-contract data and transactions
 
 
-#### eth_call
+#### call
 ```python
-EthContractApi.eth_call(transaction: NewTransaction,
+EthContractApi.call(transaction: NewTransaction,
 block_number: int = 'latest')
 ```
 
@@ -754,9 +810,9 @@ Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-m
 - `method_returned_value` - A hexadecimal. For decoding use in3.abi_decode.
   
 
-#### get_storage_at
+#### storage_at
 ```python
-EthContractApi.get_storage_at(address: str,
+EthContractApi.storage_at(address: str,
 position: int = 0,
 at_block: int = 'latest')
 ```
@@ -776,9 +832,9 @@ The storage is essentially a key/value store. Use get_code to get the smart-cont
 - `storage_at` _str_ - Stored value in designed position. Use decode('hex') to see ascii format of the hex data.
   
 
-#### get_code
+#### code
 ```python
-EthContractApi.get_code(address: str, at_block: int = 'latest')
+EthContractApi.code(address: str, at_block: int = 'latest')
 ```
 
 Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the function will return '0x'.
@@ -793,9 +849,9 @@ Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the fu
 - `bytecode` _str_ - Smart-Contract bytecode in hexadecimal.
   
 
-#### abi_encode
+#### encode
 ```python
-EthContractApi.abi_encode(fn_signature: str, *fn_args)
+EthContractApi.encode(fn_signature: str, *fn_args)
 ```
 
 Smart-contract ABI encoder. Used to serialize a rpc to the EVM.
@@ -814,9 +870,9 @@ When you invoke a method, the arguments used must match the declaration's parame
 - `encoded_fn_call` _str_ - i.e. "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
   
 
-#### abi_decode
+#### decode
 ```python
-EthContractApi.abi_decode(fn_signature: str, encoded_value: str)
+EthContractApi.decode(fn_signature: str, encoded_value: str)
 ```
 
 Smart-contract ABI decoder. Used to parse rpc responses from the EVM.
@@ -886,10 +942,9 @@ If you need the very latest block, change Client.Config.signatureCount to zero.
   block_number (int) : Number of the most recent block
   
 
-#### get_block_by_hash
+#### block_by_hash
 ```python
-EthereumApi.get_block_by_hash(block_hash: str,
-get_full_block: bool = False)
+EthereumApi.block_by_hash(block_hash: str, get_full_block: bool = False)
 ```
 
 Blocks can be identified by root hash of the block merkle tree (this), or sequential number in which it was mined (get_block_by_number).
@@ -904,9 +959,9 @@ Blocks can be identified by root hash of the block merkle tree (this), or sequen
 - `block` _Block_ - Desired block, if exists.
   
 
-#### get_block_by_number
+#### block_by_number
 ```python
-EthereumApi.get_block_by_number(block_number: [<class 'int'>],
+EthereumApi.block_by_number(block_number: [<class 'int'>],
 get_full_block: bool = False)
 ```
 
@@ -922,9 +977,9 @@ Blocks can be identified by sequential number in which it was mined, or root has
 - `block` _Block_ - Desired block, if exists.
   
 
-#### get_transaction_by_hash
+#### transaction_by_hash
 ```python
-EthereumApi.get_transaction_by_hash(tx_hash: str)
+EthereumApi.transaction_by_hash(tx_hash: str)
 ```
 
 Transactions can be identified by root hash of the transaction merkle tree (this) or by its position in the block transactions merkle tree.
@@ -937,6 +992,27 @@ Every transaction hash is unique for the whole chain. Collision could in theory 
 **Returns**:
 
 - `transaction` - Desired transaction, if exists.
+  
+
+#### transaction_receipt
+```python
+EthereumApi.transaction_receipt(tx_hash: str)
+```
+
+After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to
+gather the receipt, once a miner has mined and it is part of an acknowledged block. Because how it is possible,
+in distributed systems, that data is asymmetric in different parts of the system, the transaction is only "final"
+once a certain number of blocks was mined after it, and still it can be possible that the transaction is discarded
+after some time. But, in general terms, it is accepted that after 6 to 8 blocks from latest, that it is very
+likely that the transaction will stay in the chain.
+
+**Arguments**:
+
+- `tx_hash` - Transaction hash.
+
+**Returns**:
+
+- `tx_receipt` - The mined Transaction data including event logs.
   
 
 ### Ethereum Objects
@@ -1096,7 +1172,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x10d08e560>)
+transport: <function CFUNCTYPE at 0x10b791680>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1124,7 +1200,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10d08e560>,
+transport: <function CFUNCTYPE at 0x10b791680>,
 debug=False)
 ```
 

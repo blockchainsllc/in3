@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <In3TargetRuntimeRelativePath Condition=" '$(In3TargetRuntimeRelativePath)' == '' ">\..\</In3TargetRuntimeRelativePath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(Windows))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='X64'">
+    <None Include="$(MSBuildThisFileDirectory)\runtimes\win-x64\native\libin3.dll">
+      <Link>libin3.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(OSX))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='X64'">
+    <None Include="$(MSBuildThisFileDirectory)\runtimes\osx-x64\native\libin3.dylib">
+      <Link>libin3.dylib</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(Linux))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='X64'">
+    <None Include="$(MSBuildThisFileDirectory)\runtimes\linux-x64\native\libin3.so">
+      <Link>libin3.so</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(Linux))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='Arm'">
+    <None Include="$(MSBuildThisFileDirectory)\runtimes\linux-arm64\native\libin3.so">
+      <Link>libin3.so</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

@@ -25,7 +25,7 @@ namespace In3.Native
         public string Send(string jsonRpcRequest)
         {
             IntPtr res = in3_client_exec_req(NativeClientPointer, jsonRpcRequest);
-            string str = Marshal.PtrToStringAuto(res);
+            string str = Marshal.PtrToStringAnsi(res);
             NativeUtils._free_(res);
             return str;
         }
@@ -51,7 +51,7 @@ namespace In3.Native
             NativeHandlers.Clear();
             if (NativeClientPointer != IntPtr.Zero)
             {
-                in3_free(NativeClientPointer);   
+                in3_free(NativeClientPointer);
             }
         }
 
