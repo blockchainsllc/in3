@@ -21,7 +21,7 @@ static void set_cachekey(chain_id_t id, char* buffer) {
 
 // format:  <2 bytes big endias HEX DAP NR> <4 bytes bits>
 // TODO add targets for all daps every 6 months
-#define BTC_TARGETS "0135413b1417" \
+#define BTC_TARGETS "00fa8c577e17" \
                     "0138397a1117"
 
 btc_target_conf_t* btc_get_conf(in3_t* c, in3_chain_t* chain) {
@@ -32,7 +32,7 @@ btc_target_conf_t* btc_get_conf(in3_t* c, in3_chain_t* chain) {
 
     tc              = _malloc(sizeof(btc_target_conf_t));
     chain->conf     = tc;
-    tc->max_daps    = 10;
+    tc->max_daps    = 20;
     tc->max_diff    = 5;
     tc->dap_limit   = 20;
     bytes_t* cached = c->cache ? c->cache->get_item(c->cache->cptr, cache_key) : NULL;
@@ -123,7 +123,7 @@ uint32_t btc_get_closest_target(in3_vctx_t* vc, uint32_t dap, uint8_t* target) {
 static void mul_target(uint32_t percent, bytes32_t target) {
   uint8_t* p = target + 28;
   for (int i = 31; i >= 0; i--) {
-    if (!target[i]) {
+    if (target[i]) {
       p = target + i - 3;
       break;
     }
@@ -137,7 +137,7 @@ static uint8_t* get_difficulty(bytes_t header) {
   return btc_block_get(header, BTC_B_BITS).data;
 }
 
-in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final) {
+in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final, bytes_t header) {
 
   // is there a required ctx, which we need to clean up?
   in3_ctx_t* ctx = ctx_find_required(vc->ctx, "in3_proofTarget");                                                  // do we have an existing required proofTarget-request?
@@ -170,7 +170,7 @@ in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t bloc
     memcpy(tmp, verified_target, 32);                                                                // so we take the verified target
     mul_target(conf->max_diff, tmp);                                                                 // and add the allowed percent
     if (memcmp(tmp, block_target, 32) > 0) {                                                         // and check if claimed target is below that limit, because lower means more work put it.
-      btc_set_target(vc, current_dap, get_difficulty(d_to_bytes(d_get(vc->proof, K_BLOCK))));        // ok, we can accept the current block target as the target for this dap.
+      btc_set_target(vc, current_dap, get_difficulty(header));                                       // ok, we can accept the current block target as the target for this dap.
       if (btc_get_dap(block_number + final.len / 80) == current_dap + 1)                             // the finality header crossed the dap-limit,
         btc_set_target(vc, current_dap + 1, get_difficulty(bytes(final.data + final.len - 80, 80))); // so we can also accept the new target from the finality headers
       return IN3_OK;                                                                                 // all is fine ...

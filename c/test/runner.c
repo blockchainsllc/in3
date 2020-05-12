@@ -318,6 +318,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST;
   c->transport           = send_mock;
   c->cache               = NULL;
+  c->finality            = d_get_intkd(test, key("finality"), 0);
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
   for (j = 0; j < c->chains_length; j++) {

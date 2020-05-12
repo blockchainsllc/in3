@@ -40,6 +40,6 @@ void btc_vc_free(in3_t* c, in3_chain_t* chain);
 
 btc_target_conf_t* btc_get_config(in3_vctx_t* vc);
 
-in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final);
+in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t block_target, bytes_t final, bytes_t header);
 
 #endif

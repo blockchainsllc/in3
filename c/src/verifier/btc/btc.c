@@ -256,7 +256,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
   if (!in_active_chain) return IN3_OK;
   if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
-  if ((ret = btc_check_target(vc, block_number, block_target, finality_headers))) return ret;
+  if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
 
   return IN3_OK;
 }
@@ -330,7 +330,7 @@ in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
   uint32_t           block_number = 0;
   if (conf->max_diff != (uint_fast16_t) d_get_int_at(params, 2)) return vc_err(vc, "invalid max_diff");
   if (conf->max_daps != (uint_fast16_t) d_get_int_at(params, 3)) return vc_err(vc, "invalid max_daps");
-  if (conf->dap_limit != (uint_fast16_t) d_get_int_at(params, 4)) return vc_err(vc, "invalid dap_limit");
+  //  if (conf->dap_limit != (uint_fast16_t) d_get_int_at(params, 4)) return vc_err(vc, "invalid dap_limit");
 
   for (d_iterator_t iter = d_iter(vc->result); iter.left; d_iter_next(&iter)) {
     if (d_type(iter.token) != T_OBJECT) return vc_err(vc, "invalid type for proof");
@@ -340,7 +340,7 @@ in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
 
     if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, iter.token))) return ret;
     if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
-    if ((ret = btc_check_target(vc, block_number, block_target, finality_headers))) return ret;
+    if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
   }
 
   return IN3_OK;
