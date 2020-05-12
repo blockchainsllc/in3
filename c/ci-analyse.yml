@@ -68,7 +68,7 @@ gcc10check:
   script:
     - mkdir _build
     - cd _build
-    - cmake -DGCC_ANALYZER ..
+    - cmake -DGCC_ANALYZER=true ..
     - make
 
 valgrind:
