@@ -556,8 +556,10 @@ void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) 
   free_urls(req->urls, req->urls_len, ctx->client->flags & FLAGS_HTTP);
 
   if (req->times) {
-    for (int i = 0; i < req->urls_len; i++)
-      ctx->requests_configs->times[i] = req->times[i];
+    if (ctx->requests_configs->times) {
+      for (int i = 0; i < req->urls_len; i++)
+        ctx->requests_configs->times[i] = req->times[i];
+    }
     _free(req->times);
   }
 
