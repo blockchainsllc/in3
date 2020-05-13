@@ -383,7 +383,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     // handle times
     in3_request_config_t* req_conf = ctx->requests_configs;
-    if (req_conf->times && node && node->weight) {
+    if (req_conf->times && node && node->weight && req_conf->times[n]) {
       node->weight->response_count++;
       node->weight->total_response_time += req_conf->times[n];
       req_conf->times[n] = 0; // make sure we count the time only once
