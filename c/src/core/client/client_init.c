@@ -730,7 +730,7 @@ char* in3_configure(in3_t* c, const char* config) {
       in3_node_props_set(&c->node_props, NODE_PROP_MIN_BLOCK_HEIGHT, d_int(token));
     } else if (token->key == key("requestCount")) {
       EXPECT_TOK_U8(token);
-      c->request_count = (uint8_t) d_int(token);
+      c->request_count = (uint8_t) min(1, d_int(token)); // currently we don't support multiple parallel request.
     } else if (token->key == key("rpc")) {
       EXPECT_TOK_STR(token);
       c->proof           = PROOF_NONE;
