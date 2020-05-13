@@ -87,8 +87,6 @@ static void response_free(in3_ctx_t* ctx) {
         ctx->requests_configs->signers = NULL;
       }
     }
-    if (ctx->requests_configs->times)
-      _free(ctx->requests_configs->times);
   }
 }
 
@@ -101,7 +99,11 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
     json_free(ctx->request_context);
 
   if (ctx->requests) _free(ctx->requests);
-  if (ctx->requests_configs) _free(ctx->requests_configs);
+  if (ctx->requests_configs) {
+    if (ctx->requests_configs->times)
+      _free(ctx->requests_configs->times);
+    _free(ctx->requests_configs);
+  }
   if (ctx->cache) in3_cache_free(ctx->cache);
   if (ctx->required) free_ctx_intern(ctx->required, true);
 
