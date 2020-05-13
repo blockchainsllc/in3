@@ -4,8 +4,8 @@ Integrated tests for `in3.eth.contract` module.
 import unittest
 
 import in3
-from tests.mock.config import mock_config
-from tests.transport import mock_transport
+from tests.integrated.mock.config import mock_config
+from tests.integrated.mock.transport import mock_transport
 
 
 class MainNetContractTest(unittest.TestCase):
