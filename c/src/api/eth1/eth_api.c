@@ -543,8 +543,11 @@ uint64_t eth_estimate_fn(in3_t* in3, address_t contract, eth_blknum_t block, cha
   va_start(ap, fn_sig);
   uint64_t* response = eth_call_fn_intern(in3, contract, block, true, fn_sig, ap);
   va_end(ap);
-  uint64_t tmp = *response;
-  _free(response);
+  uint64_t tmp = response ? *response : 0;
+  if (response)
+    _free(response);
+  else
+    api_set_error(ENOMEM, "No response!");
   return tmp;
 }
 

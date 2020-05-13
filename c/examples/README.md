@@ -22,6 +22,8 @@
 -  [ipfs_put_get](./ipfs_put_get.c)
     using the IPFS module
 
+-  [ledger_sign](./ledger_sign.c)
+   
 -  [send_transaction](./send_transaction.c)
    sending a transaction including signing it with a private key
 

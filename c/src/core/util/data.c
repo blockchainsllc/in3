@@ -964,3 +964,7 @@ d_token_t* d_getl(d_token_t* item, uint16_t k, uint32_t minl) {
   d_get_byteskl(item, k, minl);
   return d_get(item, k);
 }
+
+d_iterator_t d_iter(d_token_t* parent) {
+  return (d_iterator_t){.left = d_len(parent), .token = parent + 1};
+} /**< creates a iterator for a object or array */

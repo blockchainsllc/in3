@@ -1,13 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Repository>https://github.com/slockit/in3-c</Repository>
     <RootNamespace>csharp</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Authors>slock.it</Authors>
+    <Owners>slock.it</Owners>
+    <Title>In3</Title>
+    <Description>Incubed client and provider for web3. Based on in3-c runtime.</Description>
+    <RuntimeIdentifiers>osx-x64;linux-x64;win-x64;linux-arm64</RuntimeIdentifiers>
+    <Version Condition="'$(version)' != ''">${version}</Version>
+    <RepositoryUrl>https://github.com/slockit/in3-c</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageId>Slockit.In3</PackageId>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageDocumentation>https://in3.readthedocs.io</PackageDocumentation>
+    <PackageProjectUrl>https://in3.readthedocs.io</PackageProjectUrl>
+    <PackageTags>In3;C;Arm;X86;X64;Macos;Windows;Linux;Blockchain;Ethereum;Bitcoin;Ipfs</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Text.Json, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
       <HintPath>..\..\..\..\..\..\..\usr\share\dotnet\packs\Microsoft.NETCore.App.Ref\3.1.0\ref\netcoreapp3.1\System.Text.Json.dll</HintPath>
     </Reference>
+    <!-- Heavily "inspired" by: https://github.com/CoreyKaylor/Lightning.NET/blob/master/src/LightningDB/LightningDB.csproj -->
+    <None Include="runtimes\**\*.*">
+      <Pack>true</Pack>
+      <PackagePath>runtimes</PackagePath>
+    </None>
+    <None Include="In3.targets">
+      <Pack>true</Pack>
+      <PackagePath>build</PackagePath>
+    </None>
   </ItemGroup>
 </Project>
