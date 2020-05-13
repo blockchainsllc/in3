@@ -64,6 +64,16 @@ win_jni:
     CONAN_OPTS: "-DUSE_CURL=false -DJAVA=true"
     BUILD: "win_jni"
 
+centos:
+  image: docker.slock.it/build-images/cmake:centos
+  extends:
+    - .conanbuild
+    - .only_full
+  tags:
+    - short-jobs
+  variables:
+    BUILD: "centos_build"
+
 arm7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
   extends: .conanbuild
