@@ -1089,7 +1089,7 @@ int main(int argc, char* argv[]) {
   // Update nodelist if a newer latest block was reported
   if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
-    in3_client_rpc(c, "eth_blockNumber", "", &r, &e);
+    in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
   }
 
   // if we need to wait
