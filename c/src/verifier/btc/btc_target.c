@@ -21,10 +21,70 @@ static void set_cachekey(chain_id_t id, char* buffer) {
 
 // format:  <2 bytes big endias HEX DAP NR> <4 bytes bits>
 // TODO add targets for all daps every 6 months
-#define BTC_TARGETS "00fa8c577e17" \
-                    "0138397a1117"
+#define BTC_TARGETS "000affff001d" \
+                    "000fffff001d" \
+                    "00145746651c" \
+                    "0019a7bc201c" \
+                    "001e64ba0e1c" \
+                    "00235a0c011c" \
+                    "0028ed66471b" \
+                    "002d56720e1b" \
+                    "0032cb04041b" \
+                    "0037cd2d011b" \
+                    "003cfa98001b" \
+                    "00418521131a" \
+                    "0046864a091a" \
+                    "004bcaf00d1a" \
+                    "0050d7690d1a" \
+                    "005587320b1a" \
+                    "005a5f8b0a1a" \
+                    "005fc93c081a" \
+                    "0064087e051a" \
+                    "006962fa041a" \
+                    "006e5c98041a" \
+                    "007394de011a" \
+                    "007815de001a" \
+                    "007d32875419" \
+                    "0082cab01619" \
+                    "008742120619" \
+                    "008c2cf50119" \
+                    "009199db0019" \
+                    "009642286918" \
+                    "009ba2ae3a18" \
+                    "00a093b81f18" \
+                    "00a5747b1b18" \
+                    "00aa87bb1818" \
+                    "00aff0171718" \
+                    "00b48e411618" \
+                    "00b9c14d1318" \
+                    "00be89b21018" \
+                    "00c31bb30918" \
+                    "00c8c3a40618" \
+                    "00cd36840518" \
+                    "00d228720518" \
+                    "00d7c4400418" \
+                    "00dc858b0318" \
+                    "00e1937e0218" \
+                    "00e63e1b0218" \
+                    "00eb308d0118" \
+                    "00f00b310118" \
+                    "00f54bce0018" \
+                    "00fa8c577e17" \
+                    "00ff494a5117" \
+                    "0104495a4117" \
+                    "01097b4f2f17" \
+                    "010e91c12517" \
+                    "0113f41e3717" \
+                    "0118505b2e17" \
+                    "011d38ff2917" \
+                    "01229b0d1f17" \
+                    "0127f5ab1717" \
+                    "012c3eb21517" \
+                    "0131ff321217" \
+                    "0136bc201317"
 
-btc_target_conf_t* btc_get_conf(in3_t* c, in3_chain_t* chain) {
+btc_target_conf_t*
+btc_get_conf(in3_t* c, in3_chain_t* chain) {
   btc_target_conf_t* tc = (btc_target_conf_t*) chain->conf;
   if (tc == NULL) {
     char cache_key[50];
@@ -33,7 +93,7 @@ btc_target_conf_t* btc_get_conf(in3_t* c, in3_chain_t* chain) {
     tc              = _malloc(sizeof(btc_target_conf_t));
     chain->conf     = tc;
     tc->max_daps    = 20;
-    tc->max_diff    = 5;
+    tc->max_diff    = 10;
     tc->dap_limit   = 20;
     bytes_t* cached = c->cache ? c->cache->get_item(c->cache->cptr, cache_key) : NULL;
 
