@@ -113,7 +113,7 @@ def _multi_platform_selector(prefix: str) -> str:
         processor = 'i386'
     # Similar behavior could be achieved with regex expressions if we known them better.
     suffix = None
-    if processor == 'i386' or 'Intel' in processor:
+    if processor == 'i386' or processor == 'x86_64' or 'Intel' in processor:
         # AMD64 x86_64 64bit ...
         if '64' in machine:
             if system == 'Windows':
