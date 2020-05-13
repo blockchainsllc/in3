@@ -95,25 +95,23 @@ def libin3_set_pk(instance: int, private_key: bytes):
     libin3.eth_set_pk_signer_hex(instance, private_key)
 
 
-def _multi_platform_selector(prefix: str) -> str:
+def _multi_platform_selector(prefix: str, path: str) -> str:
     """
     Helper to define the path of installed shared libraries.
     Returns:
         libin3_file_path (pathlib.Path): Path to the correct library, compiled to the current platform.
     """
-    path = Path(__file__).parent
     system, node, release, version, machine, processor = platform.uname()
 
     def fail():
-        raise OSError('Not available on this platform ({}, {}, {}).'.format(
-            system, processor, machine))
+        raise OSError('Not available on this platform ({}, {}, {}).'.format(system, processor, machine))
 
     # Fail over
     if not processor:
         processor = 'i386'
     # Similar behavior could be achieved with regex expressions if we known them better.
     suffix = None
-    if processor in ('i386', 'x86_64') or 'Intel' in processor:
+    if processor in ('i386', 'x86_64') or 'Intel' in processor or 'AMD' in processor:
         # AMD64 x86_64 64bit ...
         if '64' in machine:
             if system == 'Windows':
@@ -136,7 +134,7 @@ def _multi_platform_selector(prefix: str) -> str:
             suffix = 'arm7.so'
     if not suffix:
         fail()
-    return str(Path(path.parent, "libin3", "shared", "{}.{}".format(prefix, suffix)))
+    return str(Path(path, "{}.{}".format(prefix, suffix)))
 
 
 def _map_function_signatures():
@@ -172,11 +170,39 @@ def _map_function_signatures():
     libin3.in3_log_set_level_.restype = None
 
 
+def _fallback_loader(search_string: str):
+    """
+    Loader used when platform is not detected. Throws a warning.
+    Args:
+        search_string: Glob search string.
+    Returns:
+        library_instance: Pointer to library instance
+    """
+    import glob
+    import warnings
+
+    system, node, release, version, machine, processor = platform.uname()
+    lib_list = glob.glob(search_string)
+    for lib in lib_list:
+        try:
+            lib_instance = c.cdll.LoadLibrary(lib)
+            warning_msg = "Platform ({}, {}, {}) not detected. Fallback to {}".format(system, processor, machine, lib)
+            warnings.warn(warning_msg, RuntimeWarning)
+            return lib_instance
+        except Exception:
+            pass
+    raise OSError('Not available on this platform ({}, {}, {}).'.format(system, processor, machine))
+
+
 def init():
     """
     Loads library depending on host system.
     """
-    return c.cdll.LoadLibrary(_multi_platform_selector('libin3'))
+    path = Path(Path(__file__).parent, "shared")
+    try:
+        return c.cdll.LoadLibrary(_multi_platform_selector('libin3', path))
+    except OSError as e:
+        return _fallback_loader(str(path) + '/*')
 
 
 libin3 = init()
