@@ -38,6 +38,7 @@
 
 #if defined(LEDGER_NANO)
 #include "../../../signer/ledger-nano/signer/ledger_signer.h"
+#include "../../../signer/ledger-nano/signer/ledger_signer_priv.h"
 #endif
 
 #include "../../../third-party/crypto/ecdsa.h"

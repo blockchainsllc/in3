@@ -36,6 +36,8 @@
 #define in3_device_apdu_h__
 
 #include "../../../core/client/client.h"
+#include "../../../third-party/hidapi/hidapi/hidapi.h"
+
 #define HID_CMD_MAX_LEN 64
 
 extern const uint8_t CLA;
@@ -50,8 +52,9 @@ int len_to_bytes(uint16_t x, uint8_t* buf);
 
 uint16_t bytes_to_len(uint8_t* buf);
 
-void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd);
+void wrap_apdu(bytes_t apdu, uint16_t seq, bytes_t* wrapped_hid_cmd);
 
-void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t* o_apdu_res);
+void unwrap_apdu(bytes_t wrapped_hid_cmd, bytes_t* apdu_res);
 
+void read_hid_response(hid_device* handle, bytes_t* response);
 #endif
