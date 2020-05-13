@@ -199,10 +199,11 @@ def init():
     Loads library depending on host system.
     """
     path = Path(Path(__file__).parent, "shared")
-    try:
-        return c.cdll.LoadLibrary(_multi_platform_selector('libin3', path))
-    except OSError:
-        return _fallback_loader(str(path) + '/*')
+    return _fallback_loader(str(path) + '/*')
+    # try:
+    #     return c.cdll.LoadLibrary(_multi_platform_selector('libin3', path))
+    # except OSError:
+    #     return _fallback_loader(str(path) + '/*')
 
 
 libin3 = init()
