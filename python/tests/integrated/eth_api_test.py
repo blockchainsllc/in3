@@ -4,8 +4,8 @@ Integrated tests for `in3.eth` module.
 import unittest
 
 import in3
-from tests.mock.config import mock_config
-from tests.transport import mock_transport
+from tests.integrated.mock.config import mock_config
+from tests.integrated.mock.transport import mock_transport
 
 
 class EthereumTest(unittest.TestCase):
@@ -26,10 +26,28 @@ class EthereumTest(unittest.TestCase):
         self.assertGreater(result, 1000)
 
     def test_get_block_by_number(self):
+        with self.assertRaises(AssertionError):
+            self.client.eth.block_by_number(None)
+        with self.assertRaises(AssertionError):
+            self.client.eth.block_by_number(-1)
+        with self.assertRaises(AssertionError):
+            self.client.eth.block_by_number('asd')
         block = self.client.eth.block_by_number(9937218)
         self.assertIsInstance(block, in3.eth.Block)
         block = self.client.eth.block_by_number('latest')
         self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('pending')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('earliest')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('laTest')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('peNding')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('eaRliest')
+        self.assertIsInstance(block, in3.eth.Block)
+        # with self.assertRaises(in3.ClientException):
+        #     self.client.eth.block_by_number(9937219)
 
     def test_get_transaction_by_hash(self):
         tx_hash = '0xae25a4b673bd87f40ea147a5506cb2ffb38e32ec1efc372c6730a5ba50668ae3'
