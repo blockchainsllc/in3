@@ -107,7 +107,7 @@ static void test_in3_config() {
   TEST_ASSERT_EQUAL(PROOF_FULL, c->proof);
   TEST_ASSERT_EQUAL(95, c->node_limit);
   TEST_ASSERT_EQUAL(94, c->replace_latest_block);
-  //  TEST_ASSERT_EQUAL(93, c->request_count);
+  TEST_ASSERT_EQUAL(93, c->request_count);
   TEST_ASSERT_EQUAL(92, c->signature_count);
   TEST_ASSERT_EQUAL(FLAGS_KEEP_IN3, c->flags & FLAGS_KEEP_IN3);
 

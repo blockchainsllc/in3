@@ -116,7 +116,7 @@ typedef struct in3_request_config {
   in3_verification_t verification;           /**< Verification-type */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
-  uint32_t           time;                   /**< meassured time in ms for the request */
+  uint32_t*          times;                  /**< meassured times in ms for the request */
 
 } in3_request_config_t;
 
