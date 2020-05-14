@@ -16,7 +16,7 @@ import platform
 
 from pathlib import Path
 
-DEBUG = True
+DEBUG = False
 
 
 def libin3_new(chain_id: int, transport: c.CFUNCTYPE) -> int:
