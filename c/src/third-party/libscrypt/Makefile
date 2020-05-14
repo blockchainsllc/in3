@@ -56,3 +56,4 @@ install-osx: libscrypt.so.0
 
 install-static: libscrypt.a
 	$(INSTALL_DATA) -pm 0644 libscrypt.a $(DESTDIR)$(LIBDIR)
+

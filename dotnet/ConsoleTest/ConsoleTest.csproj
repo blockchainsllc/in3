@@ -9,4 +9,6 @@
       <ProjectReference Include="..\In3\In3.csproj" />
     </ItemGroup>
 
+    <Import Project="..\In3\In3.targets" />
+
 </Project>

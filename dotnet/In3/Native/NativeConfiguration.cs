@@ -13,8 +13,8 @@ namespace In3.Native
         {
             IntPtr jsonPointer = in3_get_config(client);
             string jsonConfig = Marshal.PtrToStringUTF8(jsonPointer);
-            Marshal.FreeHGlobal(jsonPointer);
-                
+            NativeUtils._free_(jsonPointer);
+
             ClientConfiguration clientConf = JsonSerializer.Deserialize<ClientConfiguration>(jsonConfig);
             clientConf.MarkSynced();
             return clientConf;
@@ -26,7 +26,7 @@ namespace In3.Native
             if (jsonPointer != IntPtr.Zero)
             {
                 string error = Marshal.PtrToStringUTF8(jsonPointer);
-                Marshal.FreeHGlobal(jsonPointer);
+                NativeUtils._free_(jsonPointer);
                 return error;
             }
 

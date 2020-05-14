@@ -75,7 +75,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     res = curl_multi_add_handle(cm, curl);
     if (res != CURLM_OK) {
       sb_add_chars(&r->error, "curl_multi_add_handle() failed:");
-      sb_add_chars(&r->error, (char*) curl_easy_strerror(res));
+      sb_add_chars(&r->error, (char*) curl_easy_strerror((CURLcode) res));
     }
   } else
     sb_add_chars(&r->error, "no curl:");
