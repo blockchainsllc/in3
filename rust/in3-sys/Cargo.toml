@@ -11,3 +11,4 @@ libc = { version = "0.2" }
 
 [build-dependencies]
 bindgen = "0.53.0"
+cc = "1.0"
