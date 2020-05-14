@@ -115,7 +115,7 @@ fn main() {
 
     println!("cargo:rustc-link-lib=static=in3_{}", env_var("TARGET"));
     println!(
-        "cargo:rustc-link-search={}/../target/native",
+        "cargo:rustc-link-search=native={}/../target/native",
         env_var("CARGO_MANIFEST_DIR")
     );
 
