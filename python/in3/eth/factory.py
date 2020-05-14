@@ -156,7 +156,7 @@ class EthObjectFactory:
         return hash_str
 
     def get_address(self, address: str) -> str:
-        if not address.startswith("0x"):
+        if not isinstance(address, str) or not address.startswith("0x"):
             raise EthAddressFormatException("Ethereum Addresses start with 0x.")
         if len(address.encode("utf-8")) != 42:
             raise EthAddressFormatException("Ethereum Address size string size incorrect.")
