@@ -22,6 +22,7 @@ fn signature_hex_string(data: [u8; 64]) -> String {
     sign_str
 }
 
+
 fn main() {
     //Config in3 api client
     let mut c = Client::new(chain::MAINNET);
@@ -45,6 +46,7 @@ fn main() {
     c.set_signer(Box::new(SignerRust {
         pk: "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f",
     }));
+
     // c.set_pk_signer("8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
     c.set_transport(Box::new(MockTransport {
         responses: responses,

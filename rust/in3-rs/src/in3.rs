@@ -63,11 +63,8 @@ impl Ctx {
             let c_sig = data_sig as *const c_char;
             return c_sig;
         } else if let Some(signer) = &mut (*c).signer {
-            if let Some(val) = signer.sign(msg) {
-                let c_sig = CString::new(val).expect("");
-                return c_sig.as_ptr();
-            } else {
-            }
+            let sig = signer.sign(msg);
+            return sig
         }
         std::ptr::null_mut()
     }

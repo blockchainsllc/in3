@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-
+use libc::c_char;
 use crate::error;
 
 #[async_trait]
@@ -10,7 +10,7 @@ pub trait Transport {
 }
 
 pub trait Signer {
-    fn sign(&mut self, msg: &str) -> Option<String>;
+    fn sign(&mut self, msg: &str) -> *const c_char;
 }
 
 pub trait Storage {

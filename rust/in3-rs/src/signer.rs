@@ -5,7 +5,7 @@ use rustc_hex::FromHex;
 use secp256k1::{sign, Message, SecretKey};
 use sha3::{Digest, Keccak256Full};
 use std::fmt::Write;
-
+use std::str;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SignatureType {
     Raw = 0,
@@ -38,7 +38,8 @@ pub struct SignerRust<'a> {
 }
 
 impl Signer for SignerRust<'_> {
-    fn sign(&mut self, msg: &str) -> Option<String> {
+    fn sign(&mut self, msg: &str) -> *const c_char {
+        // println!("{:?}",msg);
         let msg_hex = msg.from_hex().unwrap();
         let pk_hex = self.pk.from_hex().unwrap();
         let mut hasher = Keccak256Full::new();
@@ -53,10 +54,12 @@ impl Signer for SignerRust<'_> {
         let seckey = SecretKey::parse(&pk_slice).unwrap();
         let message = Message::parse(&msg_slice);
         let (signature, _) = sign(&message, &seckey);
-        let mut signature_arr = signature.serialize();
-        // signature_arr[63] += 27;
+        let signature_arr = signature.serialize();
+        let ret_s = signature_arr.as_ptr();
+        let ret_c_char = ret_s as *const c_char;
         let sign_str = signature_hex_string(signature_arr);
-        Some(sign_str)
+        println!("{:?}",sign_str);
+        ret_c_char
     }
 }
 
