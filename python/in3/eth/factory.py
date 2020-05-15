@@ -140,17 +140,26 @@ class EthObjectFactory:
         return self._runtime.call(In3Methods.CHECKSUM_ADDRESS, address, add_chain_id)
 
     def get_hash(self, hash_str: str) -> str:
+        if not hash_str or not isinstance(hash_str, str):
+            raise HashFormatException("Hash must be a string.")
         if not hash_str.startswith('0x'):
-            raise HashFormatException("Ethereum hashes start with 0x")
+            raise HashFormatException("Hash must start with 0x.")
         if len(hash_str[2:].encode('utf-8')) != 64:
             raise HashFormatException("Hash size is not of an Ethereum hash.")
         return hash_str
 
+    def get_hex(self, hash_str: str) -> str:
+        if not hash_str or not isinstance(hash_str, str):
+            raise AssertionError("Hexadecimal must be a string.")
+        if not hash_str.startswith('0x'):
+            raise AssertionError("Hexadecimal must start with 0x.")
+        return hash_str
+
     def get_address(self, address: str) -> str:
-        if not address.startswith("0x"):
-            raise EthAddressFormatException("Ethereum addresses start with 0x")
+        if not isinstance(address, str) or not address.startswith("0x"):
+            raise EthAddressFormatException("Ethereum Addresses start with 0x.")
         if len(address.encode("utf-8")) != 42:
-            raise EthAddressFormatException("The string don't have the size of an Ethereum address.")
+            raise EthAddressFormatException("Ethereum Address size string size incorrect.")
         if self.checksum_address(address, False) != address:
             address = self.checksum_address(address, False)
         return address.replace('\'', '"')

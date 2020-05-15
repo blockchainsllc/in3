@@ -102,7 +102,7 @@ typedef struct in3_ctx {
   /** references to the tokens representring the requests*/
   d_token_t** requests;
 
-  /** array of configs adjusted for each request. */
+  /**configs for a request. */
   in3_request_config_t* requests_configs;
 
   /* selected nodes to process the request, which are stored as linked list.*/
