@@ -112,14 +112,6 @@ fn main() {
 
     build_in3_cc();
 
-    println!("cargo:rustc-link-lib=static=in3_{}", env_var("TARGET"));
-
-    // fixme: find a way to get workspace dir through an env var so we can point to native libs
-    // until then workspace cargo commands (cargo build/run/etc.) will find libin3 in in3-sys/native
-    // and others (cargo publish) that run from inside rust/in3-sys will find libin3 in native/
-    println!("cargo:rustc-link-search=native=in3-sys/native");
-    println!("cargo:rustc-link-search=native=native");
-
     let pregenerated_bindgen_header: PathBuf = [
         env_var("CARGO_MANIFEST_DIR"),
         "pre_generated".into(),
