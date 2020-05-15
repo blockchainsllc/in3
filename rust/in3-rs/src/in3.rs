@@ -47,24 +47,29 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn signc(
-        &mut self,
-        type_: SignatureType,
-        data: *const c_char,
-        len: usize,
-    ) -> *mut u8 {
+    pub unsafe fn signc(&mut self, data: *const c_char, len: usize) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        signer::signc(pk, type_, data, len)
+        signer::signc(pk, data, len)
     }
 
     pub unsafe fn sign(&mut self, msg: &str) -> *const c_char {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        if let Some(signer) = &mut (*c).signer {
+        // let no_storage = &mut (*c).signer.is_none();
+        let signer = &mut (*c).signer;
+        let no_storage = signer.is_none();
+        if no_storage {
+            let data_hex = msg.from_hex().unwrap();
+            let c_data = data_hex.as_ptr() as *const c_char;
+            let data_sig: *mut u8 = self.signc(c_data, data_hex.len());
+            let c_sig = data_sig as *const c_char;
+            return c_sig;
+        } else if let Some(signer) = &mut (*c).signer {
             if let Some(val) = signer.sign(msg) {
                 let c_sig = CString::new(val).expect("");
                 return c_sig.as_ptr();
+            } else {
             }
         }
         std::ptr::null_mut()

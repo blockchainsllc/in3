@@ -96,21 +96,30 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
   return ctx_add_required(parent, ctx_new(parent->client, req));
 }
 
-/**  in3 utiliy to sign the given data with give private key */
+/**  in3 utiliy to sign the given data with give private key with option to hash data or not */
 in3_ret_t sign(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst) {
   switch (type) {
     case SIGN_EC_RAW:
-      if (ecdsa_sign_digest(&secp256k1, pk, message.data, dst, dst + 64, NULL) < 0)
-        return IN3_EUNKNOWN;
-      break;
+      return sign_raw(message.data, pk, dst);
     case SIGN_EC_HASH:
-      if (ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message.data, message.len, dst, dst + 64, NULL) < 0)
-        return IN3_EUNKNOWN;
-      break;
-
+      return sign_hash(message.data, message.len, pk, HASHER_SHA3K, dst);
     default:
       return IN3_ENOTSUP;
   }
+  return 65;
+}
+
+/** hash data with given hasher type and sign the given data with give private key*/
+in3_ret_t sign_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
+  if (hasher == hasher_sha3k && ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message, len, dst, dst + 64, NULL) < 0)
+    return IN3_EUNKNOWN;
+  return 65;
+}
+
+/**  sign the given data with give private key */
+in3_ret_t sign_raw(uint8_t* message, uint8_t* pk, uint8_t* dst) {
+  if (ecdsa_sign_digest(&secp256k1, pk, message, dst, dst + 64, NULL) < 0)
+    return IN3_EUNKNOWN;
   return 65;
 }
 

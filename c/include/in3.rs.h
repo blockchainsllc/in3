@@ -1,9 +1,6 @@
 // AUTO-GENERATED FILE
 // See scripts/build_includeh.sh
 #include "../src/core/client/context_internal.h"
-#include "../src/third-party/crypto/ecdsa.h"
-#include "../src/third-party/crypto/hasher.h"
-#include "../src/third-party/crypto/secp256k1.c"
 #include "../src/verifier/eth1/basic/signer-priv.h"
 #include "../src/verifier/eth1/basic/signer.h"
 #include "in3/bytes.h"

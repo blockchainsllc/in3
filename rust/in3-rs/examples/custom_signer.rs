@@ -48,7 +48,6 @@ fn main() {
     c.set_transport(Box::new(MockTransport {
         responses: responses,
     }));
-    c.set_pk_signer("0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
     let tx = json!([{
         "from": "0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377",
         "to": "0xd46e8dd67c5d32be8058bb8eb970870f07244567",

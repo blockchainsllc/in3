@@ -1,7 +1,5 @@
 use async_trait::async_trait;
 use ffi::{CStr, CString};
-use in3_sys::ecdsa_sign;
-use in3_sys::ecdsa_sign_digest;
 use libc::{c_char, strlen};
 use serde_json::json;
 use std::ffi;
@@ -18,33 +16,13 @@ pub enum SignatureType {
     Raw = 0,
     Hash = 1,
 }
-pub unsafe fn signc(pk: *mut u8, type_: SignatureType, data: *const c_char, len: usize) -> *mut u8 {
+pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     let data_ = data as *mut u8;
     let dst: *mut u8 = libc::malloc(65) as *mut u8;
     let pby = dst.offset(64) as *mut u8;
-    let curve = in3_sys::secp256k1;
-    match type_ {
-        SignatureType::Raw => {
-            let error = in3_sys::ecdsa_sign_digest(&curve, pk, data_, dst, pby, None);
-            if error < 0 {
-                panic!("Sign error{:?}", error);
-            }
-        }
-        SignatureType::Hash => {
-            let error = in3_sys::ecdsa_sign(
-                &curve,
-                in3_sys::HasherType::HASHER_SHA3K,
-                pk,
-                data_,
-                len as u32,
-                dst,
-                pby,
-                None,
-            );
-            if error < 0 {
-                panic!("Sign error{:?}", error);
-            }
-        }
+    let error = in3_sys::sign_hash(data_, len as u8, pk, in3_sys::hasher_t::hasher_sha3k, dst);
+    if error < 0 {
+        panic!("Sign error{:?}", error);
     }
     *dst.offset(64) += 27;
     dst
@@ -80,7 +58,8 @@ impl Signer for SignerRust<'_> {
         let seckey = SecretKey::parse(&pk_slice).unwrap();
         let message = Message::parse(&msg_slice);
         let (signature, _) = sign(&message, &seckey);
-        let signature_arr = signature.serialize();
+        let mut signature_arr = signature.serialize();
+        // signature_arr[63] += 27;
         let sign_str = signature_hex_string(signature_arr);
         Some(sign_str)
     }

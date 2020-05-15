@@ -34,11 +34,28 @@
 
 #ifndef in3_signer_priv_h__
 #define in3_signer_priv_h__
+typedef enum {
+  hasher_sha2,
+  hasher_sha2d,
+  hasher_sha2_ripemd,
+  hasher_sha3,
+  hasher_sha3k,
+  hasher_blake,
+  hasher_blaked,
+  hasher_blake_ripemd,
+  hasher_groestld_trunc, /* double groestl512 hasher truncated to 256 bits */
+  hasher_overwinter_prevouts,
+  hasher_overwinter_sequence,
+  hasher_overwinter_outputs,
+  hasher_overwinter_preimage,
+  hasher_sapling_preimage,
+} hasher_t;
 
 #include "../../../core/client/context_internal.h"
 
 in3_ret_t sign(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
-in3_ret_t eth_sign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 bytes_t   sign_tx(d_token_t* tx, in3_ctx_t* ctx);
-
+in3_ret_t sign_hash(uint8_t* message, uint8_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst);
+in3_ret_t sign_raw(uint8_t* message, uint8_t* pk, uint8_t* dst);
 #endif
