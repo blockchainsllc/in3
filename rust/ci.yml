@@ -65,7 +65,6 @@ rust:
     - export UPDATE_IN3_BINDINGS=1
     - cargo test
     - cargo run --example custom_transport --release
-  needs:
-    - mac_os
+  needs: []
   tags:
     - mac-mini-runner
