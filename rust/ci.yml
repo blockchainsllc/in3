@@ -27,7 +27,7 @@
     - apt-get update && apt-get install -y clang libclang-dev libc6-dev-i386
     - cd rust/
     - cp -r ../c/include ../c/src in3-sys/in3
-    - cp ../$BUILD_DIR/lib/libin3.a in3-sys/native/libin3_$TARGET.a
+#    - cp ../$BUILD_DIR/lib/libin3.a in3-sys/native/libin3_$TARGET.a
     - export UPDATE_IN3_BINDINGS=1
     - cross run --example custom_transport --target $TARGET --release --jobs 8
 
@@ -61,7 +61,7 @@ rust:
     - export RUST_BACKTRACE=1
     - cd rust/
     - cp -r ../c/include ../c/src in3-sys/in3
-    - cp ../mac_build/lib/libin3.a in3-sys/native/libin3_x86_64-apple-darwin.a
+#    - cp ../mac_build/lib/libin3.a in3-sys/native/libin3_x86_64-apple-darwin.a
     - export UPDATE_IN3_BINDINGS=1
     - cargo test
     - cargo run --example custom_transport --release
