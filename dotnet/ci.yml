@@ -9,7 +9,6 @@
 dotnet:
   image: docker.slock.it/build-images/dotnet-core-sdk:3.1
   stage: bindings
-  extends: .only_dotnet
   needs:
     - mac_os
     - win_jni
@@ -37,6 +36,7 @@ dotnet:
 
 .dotnet_test:
   stage: dotnet
+  extends: .only_dotnet
   needs:
     - dotnet
   script:

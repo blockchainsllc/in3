@@ -56,6 +56,6 @@ typedef enum {
 in3_ret_t sign(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
 in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 bytes_t   sign_tx(d_token_t* tx, in3_ctx_t* ctx);
-in3_ret_t sign_hash(uint8_t* message, uint8_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst);
+in3_ret_t sign_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst);
 in3_ret_t sign_raw(uint8_t* message, uint8_t* pk, uint8_t* dst);
 #endif

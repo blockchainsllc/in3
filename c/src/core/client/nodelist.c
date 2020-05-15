@@ -353,7 +353,7 @@ IN3_EXPORT_TEST bool in3_node_props_match(const in3_node_props_t np_config, cons
 }
 
 uint32_t in3_node_calculate_weight(in3_node_weight_t* n, uint32_t capa, uint64_t now) {
-  const uint32_t avg = n->response_count > 4
+  const uint32_t avg = (n->response_count > 4 && n->total_response_time)
                            ? (n->total_response_time / n->response_count)
                            : (10000 / (max(capa, 100) + 100));
   const uint32_t blacklist_factor = ((now - n->blacklisted_until) < BLACKLISTWEIGHT)

@@ -116,7 +116,7 @@ typedef struct in3_request_config {
   in3_verification_t verification;           /**< Verification-type */
   bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
   uint8_t            signers_length;         /**< number or addresses */
-  uint32_t           time;                   /**< meassured time in ms for the request */
+  uint32_t*          times;                  /**< meassured times in ms for the request */
 
 } in3_request_config_t;
 
@@ -649,7 +649,7 @@ void in3_req_add_response(
     in3_response_t* res,      /**< [in] the response-pointer */
     int             index,    /**< [in] the index of the url, since this request could go out to many urls */
     bool            is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    void*           data,     /**<  the data or the the string*/
+    const char*     data,     /**<  the data or the the string*/
     int             data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 

@@ -45,5 +45,7 @@
 #include "client.h"
 
 in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path);
+in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key);
+in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
 #endif

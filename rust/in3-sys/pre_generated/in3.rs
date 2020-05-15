@@ -13766,14 +13766,14 @@ pub struct in3_request_config {
     pub signers: *mut bytes_t,
     #[doc = "< number or addresses"]
     pub signers_length: u8,
-    #[doc = "< meassured time in ms for the request"]
-    pub time: u32,
+    #[doc = "< meassured times in ms for the request"]
+    pub times: *mut u32,
 }
 #[test]
 fn bindgen_test_layout_in3_request_config() {
     assert_eq!(
         ::core::mem::size_of::<in3_request_config>(),
-        48usize,
+        56usize,
         concat!("Size of: ", stringify!(in3_request_config))
     );
     assert_eq!(
@@ -13895,13 +13895,13 @@ fn bindgen_test_layout_in3_request_config() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::core::ptr::null::<in3_request_config>())).time as *const _ as usize },
-        44usize,
+        unsafe { &(*(::core::ptr::null::<in3_request_config>())).times as *const _ as usize },
+        48usize,
         concat!(
             "Offset of field: ",
             stringify!(in3_request_config),
             "::",
-            stringify!(time)
+            stringify!(times)
         )
     );
 }
@@ -15498,7 +15498,7 @@ extern "C" {
         res: *mut in3_response_t,
         index: libc::c_int,
         is_error: bool,
-        data: *mut libc::c_void,
+        data: *const libc::c_char,
         data_len: libc::c_int,
     );
 }
@@ -15707,7 +15707,7 @@ pub struct in3_ctx {
     pub responses: *mut *mut d_token_t,
     #[doc = " references to the tokens representring the requests"]
     pub requests: *mut *mut d_token_t,
-    #[doc = " array of configs adjusted for each request."]
+    #[doc = "configs for a request."]
     pub requests_configs: *mut in3_request_config_t,
     pub nodes: *mut node_match_t,
     #[doc = " optional cache-entries."]
@@ -16151,7 +16151,7 @@ extern "C" {
 extern "C" {
     pub fn sign_hash(
         message: *mut u8,
-        len: u8,
+        len: usize,
         pk: *mut u8,
         hasher: hasher_t,
         dst: *mut u8,

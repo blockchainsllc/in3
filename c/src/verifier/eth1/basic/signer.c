@@ -102,7 +102,7 @@ in3_ret_t sign(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* d
     case SIGN_EC_RAW:
       return sign_raw(message.data, pk, dst);
     case SIGN_EC_HASH:
-      return sign_hash(message.data, message.len, pk, HASHER_SHA3K, dst);
+      return sign_hash(message.data, message.len, pk, hasher_sha3k, dst);
     default:
       return IN3_ENOTSUP;
   }

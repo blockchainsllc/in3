@@ -1,9 +1,4 @@
-use async_trait::async_trait;
-use ffi::{CStr, CString};
-use libc::{c_char, strlen};
-use serde_json::json;
-use std::ffi;
-use std::str;
+use libc::c_char;
 
 use crate::traits::Signer;
 use rustc_hex::FromHex;
@@ -20,7 +15,7 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     let data_ = data as *mut u8;
     let dst: *mut u8 = libc::malloc(65) as *mut u8;
     let pby = dst.offset(64) as *mut u8;
-    let error = in3_sys::sign_hash(data_, len as u8, pk, in3_sys::hasher_t::hasher_sha3k, dst);
+    let error = in3_sys::sign_hash(data_, len, pk, in3_sys::hasher_t::hasher_sha3k, dst);
     if error < 0 {
         panic!("Sign error{:?}", error);
     }

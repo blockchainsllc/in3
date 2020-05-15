@@ -4,8 +4,8 @@ Integrated tests for `in3.eth` module.
 import unittest
 
 import in3
-from tests.mock.config import mock_config
-from tests.transport import mock_transport
+from tests.integrated.mock.config import mock_config
+from tests.integrated.mock.transport import mock_transport
 
 
 class EthereumTest(unittest.TestCase):
@@ -17,6 +17,17 @@ class EthereumTest(unittest.TestCase):
     def test_ethereum_sha3(self):
         digest = self.client.eth.keccak256('0x68656c6c6f20776f726c64')
         self.assertEqual(digest, '0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad')
+        digest = self.client.eth.keccak256('0x')
+        self.assertEqual(digest, '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470')
+        self.assertIsNotNone(self.client.eth.keccak256('0x--'))
+        self.assertIsNotNone(self.client.eth.keccak256('0x'))
+        self.assertIsNotNone(self.client.eth.keccak256('0xmixed message'))
+        self.assertIsNotNone(self.client.eth.keccak256('!@# 123 message 1234567890 !@#$%^&*()_+=-;'"[]{}`~"))
+        self.assertIsNotNone(self.client.eth.keccak256('•¶¥¥•¶¥•¶¶§®¶®∫ˆ¨˜˜˜≥≤µ˜˜√ç≈Ωåß∂ƒ©˙∆˚¬…æ«‘“πøˆ¨¥†®´´œ'))
+        self.assertIsNotNone(self.client.eth.keccak256(''))
+        self.assertIsNotNone(self.client.eth.keccak256(123))
+        self.assertIsNotNone(self.client.eth.keccak256(True))
+        self.assertIsNotNone(self.client.eth.keccak256(None))
 
     def test_eth_gasPrice(self):
         self.assertGreater(self.client.eth.gas_price(), 1000000)
@@ -29,6 +40,16 @@ class EthereumTest(unittest.TestCase):
         block = self.client.eth.block_by_number(9937218)
         self.assertIsInstance(block, in3.eth.Block)
         block = self.client.eth.block_by_number('latest')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('pending')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('earliest')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('laTest')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('peNding')
+        self.assertIsInstance(block, in3.eth.Block)
+        block = self.client.eth.block_by_number('eaRliest')
         self.assertIsInstance(block, in3.eth.Block)
 
     def test_get_transaction_by_hash(self):

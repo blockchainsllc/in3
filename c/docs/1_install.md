@@ -112,6 +112,13 @@ Default-Value: `-DEVM_GAS=ON`
 Default-Value: `-DFAST_MATH=OFF`
 
 
+#### GCC_ANALYZER
+
+  GCC10 static code analyses
+
+Default-Value: `-DGCC_ANALYZER=OFF`
+
+
 #### IN3API
 
   build the USN-API which offer better interfaces and additional functions on top of the pure verification
@@ -152,6 +159,13 @@ Default-Value: `-DIPFS=ON`
   build the java-binding (shared-lib and jar-file)
 
 Default-Value: `-DJAVA=OFF`
+
+
+#### LEDGER_NANO
+
+  include support for nano ledger
+
+Default-Value: `-DLEDGER_NANO=OFF`
 
 
 #### PAY_ETH
