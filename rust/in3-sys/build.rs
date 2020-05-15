@@ -23,6 +23,7 @@ fn build_in3_cc() {
             }
         }
     }
+
     let mut files = vec![];
     append_c_files_from_dir(&mut files, "in3/src/api".into());
     append_c_files_from_dir(&mut files, "in3/src/core".into());
@@ -48,6 +49,7 @@ fn build_in3_cc() {
         .define("EVM_GAS", None)
         // .define("USE_SCRYPT", None)
         .define("IN3_MATH_FAST", None)
+        .flag_if_supported("-std=c99")
         .flag_if_supported("-Wno-unused-function")
         .flag_if_supported("-Wno-unused-parameter")
         .flag_if_supported("-Wno-unknown-pragmas")
@@ -55,6 +57,12 @@ fn build_in3_cc() {
         .flag_if_supported("-Wno-return-type")
         .flag_if_supported("-Wno-implicit-fallthrough")
         .flag_if_supported("-Wno-missing-field-initializers")
+        .flag_if_supported("-Wall")
+        .flag_if_supported("-Wextra")
+        .flag_if_supported("-ffunction-sections")
+        .flag_if_supported("-fdata-sections")
+        // .flag_if_supported("-Wl,-dead_strip")
+        .flag_if_supported("-Wl,--gc-sections")
         .compile(format!("in3_{}", env_var("TARGET")).as_str());
 }
 
