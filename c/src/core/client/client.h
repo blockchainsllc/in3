@@ -49,8 +49,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
-/** the protocol version used when sending requests from the this client */
-#define IN3_PROTO_VER "2.1.0"
+
+#define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
 #define ETH_CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
 #define ETH_CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
