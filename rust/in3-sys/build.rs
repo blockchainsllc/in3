@@ -6,7 +6,7 @@ use std::vec::Vec;
 use bindgen;
 use cmake::Config;
 
-const IN3_DIR: &'static str = "in3";
+const IN3_DIR: &'static str = "in3-core";
 const BINDINGS_FILE: &'static str = "in3.rs";
 
 /// Search for header in search paths
@@ -62,9 +62,9 @@ fn write_bindgen_bindings(
 
 fn main() {
     let mut header_search_paths: Vec<PathBuf> = Vec::new();
-    header_search_paths.push([IN3_DIR, "include"].iter().collect());
+    header_search_paths.push([IN3_DIR, "c", "include"].iter().collect());
 
-    let dst = Config::new("in3-core")
+    let dst = Config::new(IN3_DIR)
         .profile("MinSizeRel")
         .define("USE_CURL", "OFF")
         .define("DEV_NO_INTRN_PTR", "OFF")
