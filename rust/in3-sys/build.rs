@@ -30,8 +30,8 @@ fn build_in3_cc() {
     append_c_files_from_dir(&mut files, "in3/src/third-party/crypto".into());
     append_c_files_from_dir(&mut files, "in3/src/third-party/libb64".into());
     // append_c_files_from_dir(&mut files, "in3/src/third-party/libscrypt".into());
-    // append_c_files_from_dir(&mut files, "in3/src/third-party/multihash".into());
-    // append_c_files_from_dir(&mut files, "in3/src/third-party/nanopb".into());
+    append_c_files_from_dir(&mut files, "in3/src/third-party/multihash".into());
+    append_c_files_from_dir(&mut files, "in3/src/third-party/nanopb".into());
     append_c_files_from_dir(&mut files, "in3/src/third-party/tommath".into());
 
     cc::Build::new()
