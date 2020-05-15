@@ -34,6 +34,9 @@ fn build_in3_cc() {
     append_c_files_from_dir(&mut files, "in3/src/third-party/nanopb".into());
     append_c_files_from_dir(&mut files, "in3/src/third-party/tommath".into());
 
+    // exclude files
+    files = files.into_iter().filter(|e| !e.ends_with("aestst.c")).collect();
+
     cc::Build::new()
         .files(files)
         .include(format!("{}/{}", IN3_DIR, "include"))
