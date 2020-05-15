@@ -1,70 +1,13 @@
-extern crate bindgen;
-extern crate core;
-
-use std::{env, fs};
+use std::env;
 use std::fs::copy;
 use std::path::PathBuf;
 use std::vec::Vec;
 
+use bindgen;
+use cmake::Config;
+
 const IN3_DIR: &'static str = "in3";
 const BINDINGS_FILE: &'static str = "in3.rs";
-
-/// Build in3 using the cc crate
-fn build_in3_cc() {
-    fn append_c_files_from_dir(files: &mut Vec<String>, path: String) {
-        let paths = fs::read_dir(path).unwrap();
-        for p in paths {
-            let p = p.unwrap();
-            let pathstr = p.path().display().to_string();
-            if p.file_type().unwrap().is_dir() {
-                append_c_files_from_dir(files, pathstr);
-            } else if p.file_name().into_string().unwrap().ends_with(".c") {
-                files.push(pathstr);
-            }
-        }
-    }
-
-    let mut files = vec![];
-    append_c_files_from_dir(&mut files, "in3/src/api".into());
-    append_c_files_from_dir(&mut files, "in3/src/core".into());
-    append_c_files_from_dir(&mut files, "in3/src/verifier".into());
-    append_c_files_from_dir(&mut files, "in3/src/third-party/crypto".into());
-    append_c_files_from_dir(&mut files, "in3/src/third-party/libb64".into());
-    // append_c_files_from_dir(&mut files, "in3/src/third-party/libscrypt".into());
-    append_c_files_from_dir(&mut files, "in3/src/third-party/multihash".into());
-    append_c_files_from_dir(&mut files, "in3/src/third-party/nanopb".into());
-    append_c_files_from_dir(&mut files, "in3/src/third-party/tommath".into());
-
-    // exclude files
-    files = files.into_iter().filter(|e| !e.ends_with("aestst.c")).collect();
-
-    cc::Build::new()
-        .files(files)
-        .include(format!("{}/{}", IN3_DIR, "include"))
-        .define("ETH_FULL", None)
-        .define("IPFS", None)
-        .define("ETH_API", None)
-        .define("USE_PRECOMPUTED_EC", None)
-        .define("ERR_MSG", None)
-        .define("EVM_GAS", None)
-        // .define("USE_SCRYPT", None)
-        .define("IN3_MATH_FAST", None)
-        .flag_if_supported("-std=c99")
-        .flag_if_supported("-Wno-unused-function")
-        .flag_if_supported("-Wno-unused-parameter")
-        .flag_if_supported("-Wno-unknown-pragmas")
-        .flag_if_supported("-Wno-sign-compare")
-        .flag_if_supported("-Wno-return-type")
-        .flag_if_supported("-Wno-implicit-fallthrough")
-        .flag_if_supported("-Wno-missing-field-initializers")
-        .flag_if_supported("-Wall")
-        .flag_if_supported("-Wextra")
-        .flag_if_supported("-ffunction-sections")
-        .flag_if_supported("-fdata-sections")
-        // .flag_if_supported("-Wl,-dead_strip")
-        .flag_if_supported("-Wl,--gc-sections")
-        .compile(format!("in3_{}", env_var("TARGET")).as_str());
-}
 
 /// Search for header in search paths
 fn find_in3_header(header_search_paths: &Vec<PathBuf>, name: &str) -> Option<PathBuf> {
@@ -121,7 +64,15 @@ fn main() {
     let mut header_search_paths: Vec<PathBuf> = Vec::new();
     header_search_paths.push([IN3_DIR, "include"].iter().collect());
 
-    build_in3_cc();
+    let dst = Config::new("in3-core")
+        .profile("MinSizeRel")
+        .define("USE_CURL", "OFF")
+        .define("DEV_NO_INTRN_PTR", "OFF")
+        .build_target("in3_bundle")
+        .build();
+
+    println!("cargo:rustc-link-search=native={}/build/lib", dst.display());
+    println!("cargo:rustc-link-lib=static=in3");
 
     let pregenerated_bindgen_header: PathBuf = [
         env_var("CARGO_MANIFEST_DIR"),
