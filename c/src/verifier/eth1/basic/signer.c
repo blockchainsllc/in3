@@ -129,14 +129,9 @@ in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t 
   uint8_t* pk = ((in3_ctx_t*) ctx)->client->signer->wallet;
   switch (type) {
     case SIGN_EC_RAW:
-      if (ecdsa_sign_digest(&secp256k1, pk, message.data, dst, dst + 64, NULL) < 0)
-        return IN3_EUNKNOWN;
-      break;
+      return sign_raw(message.data, pk, dst);
     case SIGN_EC_HASH:
-      if (ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message.data, message.len, dst, dst + 64, NULL) < 0)
-        return IN3_EUNKNOWN;
-      break;
-
+      return sign_hash(message.data, message.len, pk, hasher_sha3k, dst);
     default:
       return IN3_ENOTSUP;
   }
