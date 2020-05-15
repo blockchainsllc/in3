@@ -42,10 +42,10 @@ fn main() {
             r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,
         ),
     ];
-    // c.set_signer(Box::new(SignerRust {
-    //     pk: "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6",
-    // }));
-    c.set_pk_signer("889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
+    c.set_signer(Box::new(SignerRust {
+        pk: "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f",
+    }));
+    // c.set_pk_signer("8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
     c.set_transport(Box::new(MockTransport {
         responses: responses,
     }));
