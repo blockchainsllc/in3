@@ -54,7 +54,7 @@ if (process.argv.find(_ => _.indexOf('mocha') >= 0)) {
     })
 }
 
-const ignoreFuxxProps = ['id', 'error', 'code', 'weight', 'confirmations', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
+const ignoreFuxxProps = ['id', 'error', 'code', 'dap', 'weight', 'confirmations', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
 const ignoreVoutProps = ['value', 'reqSigs']
 
@@ -170,6 +170,7 @@ async function runSingleTest(test, c) {
         chainId: test.chainId || '0x1',
         autoUpdateList: false,
         maxAttempts: 1,
+        finality: test.finality || 0,
         signatureCount: test.signatures ? test.signatures.length : 0,
         nodes: {
             '0x1': {
