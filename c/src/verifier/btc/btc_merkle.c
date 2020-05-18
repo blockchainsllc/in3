@@ -47,11 +47,10 @@ bytes_t* btc_merkle_create_proof(bytes32_t* hashes, int hashes_len, int index) {
   return bb_move_to_bytes(bb);
 }
 
-int btc_merkle_verify_proof(bytes32_t root_hash, bytes_t proof, int index, bytes32_t start_hash) {
+int btc_merkle_verify_proof(bytes32_t target, bytes_t proof, int index, bytes32_t start_hash) {
   SHA256_CTX ctx; // we want to reuse the struct later
-  bytes32_t  hash, target;
+  bytes32_t  hash;
   rev_copy(hash, start_hash);
-  rev_copy(target, root_hash);
   uint8_t* p = proof.data;
   for (; proof.len; index = index >> 1, p += 32, proof.len -= 32) {
     if (memcmp(target, hash, 32) == 0) return 1;

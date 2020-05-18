@@ -121,6 +121,11 @@ if(IPFS)
     set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
 endif()
 
+if(BTC)
+    ADD_DEFINITIONS(-DBTC)
+    set(IN3_VERIFIER ${IN3_VERIFIER} btc)
+endif()
+
 if(LEDGER_NANO AND ( NOT (WIN32 OR MSVC OR MSYS OR MINGW )))
     add_definitions(-DLEDGER_NANO)
     set(HIDAPI true)
