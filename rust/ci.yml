@@ -24,7 +24,6 @@
     - export CROSS_DOCKER_IN_DOCKER=false
     - export RUST_BACKTRACE=1
     - export OPENSSL_DIR=/usr/lib/ssl
-    - apt-get update && apt-get install -y clang libclang-dev libc6-dev-i386
     - mkdir -p rust/in3-sys/in3-core/c
     - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
     - cp CMakeLists.txt rust/in3-sys/in3-core/
