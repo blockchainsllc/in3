@@ -53,7 +53,6 @@ impl Ctx {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        // let no_storage = &mut (*c).signer.is_none();
         let signer = &mut (*c).signer;
         let no_signer = signer.is_none();
         if no_signer {
@@ -64,7 +63,7 @@ impl Ctx {
             return c_sig;
         } else if let Some(signer) = &mut (*c).signer {
             let sig = signer.sign(msg);
-            return sig
+            return sig;
         }
         std::ptr::null_mut()
     }
@@ -125,12 +124,11 @@ impl Ctx {
                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
                     let data_str = &request["params"][0].as_str().unwrap()[2..];
                     let res_str = self.sign(data_str);
-                    let raw_response = (*last_waiting).raw_response.offset(0);
-                    in3_sys::sb_init(&mut (*raw_response).result);
-                    in3_sys::sb_add_range(
-                        &mut (*raw_response).result,
+                    in3_sys::in3_req_add_response(
+                        (*req).results,
+                        0.try_into().unwrap(),
+                        false,
                         res_str,
-                        0,
                         65,
                     );
                 }

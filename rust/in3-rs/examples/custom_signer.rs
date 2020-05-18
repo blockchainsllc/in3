@@ -11,6 +11,8 @@ use sha3::{Digest, Keccak256Full};
 use std::ffi::{CStr, CString};
 use std::fmt::Write;
 
+
+
 // Public key for debug secret key
 fn signature_hex_string(data: [u8; 64]) -> String {
     let mut sign_str = "".to_string();
@@ -43,10 +45,11 @@ fn main() {
             r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,
         ),
     ];
+    //Rust implementation of this can be found in signer.rs
     c.set_signer(Box::new(SignerRust {
         pk: "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f",
     }));
-
+    // Enable to change for c implementation of the signer
     // c.set_pk_signer("8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
     c.set_transport(Box::new(MockTransport {
         responses: responses,

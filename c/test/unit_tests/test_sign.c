@@ -140,7 +140,7 @@ static void test_sign_tx() {
 
   // cleanup client after usage
   in3_free(in3);
-  TEST_ASSERT_FALSE(false);
+  TEST_ASSERT_NOT_NULL(tx_hash);
 }
 
 static void test_sign_sans_signer_and_from() {
