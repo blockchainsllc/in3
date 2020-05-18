@@ -239,6 +239,6 @@ in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t bloc
 
   // we need more proof, so we create a request
   char* req = _malloc(300);
-  sprintf(req, "{\"method\":\"in3_proofTarget\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, conf->max_diff, conf->max_daps, conf->dap_limit);
+  sprintf(req, "{\"method\":\"in3_proofTarget\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[\"%d,%d,%d,%d,%d\"]}", current_dap, found_dap, (int) conf->max_diff, (int) conf->max_daps, (int) conf->dap_limit);
   return ctx_add_required(vc->ctx, ctx_new(vc->ctx->client, req));
 }
