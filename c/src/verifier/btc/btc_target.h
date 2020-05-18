@@ -34,7 +34,6 @@ typedef struct btc_target_conf {
  */
 in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target);
 
-
 /**
  *  sets a target in the cache
  */
