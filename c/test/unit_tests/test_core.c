@@ -72,6 +72,16 @@ void test_bytes() {
   // make sure it does not crash
   b_free(NULL);
 }
+
+void test_float_parser() {
+  TEST_ASSERT_EQUAL_INT64(1, parse_float_val("1.005", 0));
+  TEST_ASSERT_EQUAL_INT64(100, parse_float_val("1.005", 2));
+  TEST_ASSERT_EQUAL_INT64(0, parse_float_val("1.005", -2));
+  TEST_ASSERT_EQUAL_INT64(8, parse_float_val("800.9", -2));
+  TEST_ASSERT_EQUAL_INT64(1, parse_float_val("0.0012", 3));
+  TEST_ASSERT_EQUAL_INT64(10, parse_float_val("0.1e2", 0));
+}
+
 void test_debug() {
   msg_dump("test", (void*) "abc", 3);
   TEST_ASSERT_NOT_NULL(in3_errmsg(IN3_ECONFIG));
@@ -148,6 +158,7 @@ int main() {
   dbg_log("starting cor tests");
 
   TESTS_BEGIN();
+  RUN_TEST(test_float_parser);
   RUN_TEST(test_debug);
   RUN_TEST(test_c_to_long);
   RUN_TEST(test_bytes);

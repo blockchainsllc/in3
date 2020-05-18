@@ -217,6 +217,17 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
       // sig.hex
       char* hex = d_get_stringk(d_get(iter.token, key("scriptPubKey")), key("hex"));
       if (!equals_hex(tx_out.script, hex)) return vc_err(vc, "invalid vout.hex");
+      d_token_t* value = d_get(iter.token, K_VALUE);
+      if (!value) return vc_err(vc, "no value found!");
+
+      if (d_type(value) == T_STRING) {
+        if (parse_float_val(d_string(value), 8) != (int64_t) tx_out.value)
+          return vc_err(vc, "wrong value in txout found!");
+      } else if (d_type(value) == T_INTEGER || d_type(value) == T_BYTES) {
+        if (d_long(value) * 10e8 != tx_out.value)
+          return vc_err(vc, "wrong value in txout found!");
+      } else
+        return vc_err(vc, "wrong type of value!");
     }
 
   } else {

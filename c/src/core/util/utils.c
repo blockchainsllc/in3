@@ -350,3 +350,50 @@ void     in3_set_func_rand(rand_func fn) { in3_rand_fn = fn; }
 int      in3_rand(void* s) { return in3_rand_fn(s); }
 void     in3_set_func_srand(srand_func fn) { in3_srand_fn = fn; }
 void     in3_srand(unsigned int s) { return in3_srand_fn(s); }
+
+int64_t parse_float_val(const char* data, int32_t expo) {
+  bool    neg = false, exp_found = false, frac = false;
+  int64_t val   = 0;
+  int     major = 0;
+  for (const char* c = data; *c; c++) {
+    switch (*c) {
+      case '-':
+        neg = true;
+        break;
+      case '.':
+        frac = true;
+        break;
+      case 'e':
+      case 'E':
+        exp_found = true;
+        break;
+      default:
+        if (exp_found)
+          val = val * 10 + (*c - '0');
+        else if (!frac)
+          major++;
+        break;
+    }
+  }
+
+  if (exp_found)
+    expo += (int32_t)(neg ? (0 - val) : val);
+  neg = false;
+  val = 0;
+  expo += major;
+
+  for (const char* c = data; expo > 0 && *c; c++) {
+    if (*c == '-')
+      neg = true;
+    else if (*c == 'e' || *c == 'E')
+      break;
+    else if (*c != '.') {
+      val = val * 10 + (*c - '0');
+      expo--;
+    }
+  }
+
+  if (neg) val = 0 - val;
+  for (; expo > 0; expo--) val *= 10;
+  return val;
+}

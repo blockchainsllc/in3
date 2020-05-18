@@ -414,7 +414,6 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
           item->len  = T_STRING << 28 | (unsigned) i;
           memcpy(item->data, jp->c, i);
           item->data[i] = 0;
-          printf("parsed : [%s]\n", item->data);
           break;
 
         default:
