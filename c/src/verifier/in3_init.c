@@ -44,9 +44,7 @@ in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {
   if (!initialized) {
     initialized = true;
     init_verifier();
-#ifdef TRANSPORTS
     init_transport();
-#endif
   }
   return in3_for_chain_default(chain_id);
 }
