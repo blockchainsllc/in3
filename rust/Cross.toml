@@ -2,7 +2,6 @@
 passthrough = [
     "RUST_BACKTRACE",
     "UPDATE_IN3_BINDINGS",
-    "CI_JOB_TOKEN"
 ]
 
 [target.armv7-unknown-linux-gnueabihf]
