@@ -54,8 +54,9 @@
  * If you call `in3_set_storage_handler` there is no need to call this explicitly.
  */
 in3_ret_t in3_cache_update_nodelist(
-    in3_t*       c, /**< the incubed client */
-    in3_chain_t* chain /**< chain to configure */);
+    in3_t*       c,    /**< the incubed client */
+    in3_chain_t* chain /**< chain to configure */
+);
 
 /**
  * stores the nodelist to thes cache. 
@@ -64,8 +65,9 @@ in3_ret_t in3_cache_update_nodelist(
  * 
  */
 in3_ret_t in3_cache_store_nodelist(
-    in3_ctx_t*   ctx, /**< the current incubed context */
-    in3_chain_t* chain /**< the chain upating to cache */);
+    in3_ctx_t*   ctx,  /**< the current incubed context */
+    in3_chain_t* chain /**< the chain upating to cache */
+);
 
 /**
  * reads the whitelist from cache.
@@ -75,8 +77,9 @@ in3_ret_t in3_cache_store_nodelist(
  * If you call `in3_set_storage_handler` there is no need to call this explicitly.
  */
 in3_ret_t in3_cache_update_whitelist(
-    in3_t*       c, /**< the incubed client */
-    in3_chain_t* chain /**< chain to configure */);
+    in3_t*       c,    /**< the incubed client */
+    in3_chain_t* chain /**< chain to configure */
+);
 
 /**
  * stores the whitelist to thes cache.
@@ -85,7 +88,8 @@ in3_ret_t in3_cache_update_whitelist(
  *
  */
 in3_ret_t in3_cache_store_whitelist(
-    in3_ctx_t*   ctx, /**< the current incubed context */
-    in3_chain_t* chain /**< the chain upating to cache */);
+    in3_ctx_t*   ctx,  /**< the current incubed context */
+    in3_chain_t* chain /**< the chain upating to cache */
+);
 
 #endif

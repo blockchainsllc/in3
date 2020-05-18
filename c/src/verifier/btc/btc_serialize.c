@@ -67,7 +67,7 @@ uint64_t le_to_long(uint8_t* data) {
          (((uint64_t) data[3]) << 24) | (((uint64_t) data[2]) << 16) | (((uint64_t) data[1]) << 8) | data[0];
 }
 
-void btc_target(bytes_t block, bytes32_t target) {
+void btc_target_from_block(bytes_t block, bytes32_t target) {
   uint8_t *bits = btc_block_get(block, BTC_B_BITS).data, tmp[32];
   memset(tmp, 0, 32);
   memcpy(tmp + bits[3] - 3, bits, 3);

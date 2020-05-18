@@ -329,12 +329,12 @@ debian_package_deploy_bionic:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
 
-debian_package_deploy_disco:
+debian_package_deploy_focal:
   extends:
     - .debian_package_deploy_template_in3
     - .only_deploy
   variables:
-    DISTRO: "disco"
+    DISTRO: "focal"
     VERSION: $CI_COMMIT_TAG
 
 .debian_package_deploy_template_in3_dev:
@@ -382,12 +382,12 @@ debian_dev_package_deploy_bionic:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
 
-debian__dev_package_deploy_disco:
+debian__dev_package_deploy_focal:
   extends:
     - .debian_package_deploy_template_in3_dev
     - .only_deploy
   variables:
-    DISTRO: "disco"
+    DISTRO: "focal"
     VERSION: $CI_COMMIT_TAG
 
 brew_release:
