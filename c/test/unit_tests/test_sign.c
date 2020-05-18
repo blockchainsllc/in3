@@ -209,14 +209,14 @@ static void test_signer_prepare_tx() {
  * Main
  */
 int main() {
-  in3_log_set_quiet(false);
-  in3_log_set_level(LOG_TRACE);
+  in3_log_set_quiet(true);
+  in3_log_set_level(LOG_ERROR);
   in3_register_eth_full();
   TESTS_BEGIN();
   RUN_TEST(test_sign_tx);
-  // RUN_TEST(test_sign);
-  // RUN_TEST(test_sign_sans_signer_and_from);
-  // RUN_TEST(test_signer);
-  // RUN_TEST(test_signer_prepare_tx);
+  RUN_TEST(test_sign);
+  RUN_TEST(test_sign_sans_signer_and_from);
+  RUN_TEST(test_signer);
+  RUN_TEST(test_signer_prepare_tx);
   return TESTS_END();
 }
