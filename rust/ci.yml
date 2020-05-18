@@ -64,7 +64,6 @@ rust:
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
     - export UPDATE_IN3_BINDINGS=1
-    - cargo test
     - cargo run --example custom_transport --release
   needs: []
   tags:
