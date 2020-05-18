@@ -105,6 +105,11 @@ if (IN3_LIB)
         set(IN3_LIBS ${IN3_LIBS} 
           $<TARGET_OBJECTS:btc_o>
         )
+        if (IN3API) 
+            set(IN3_LIBS ${IN3_LIBS} 
+                $<TARGET_OBJECTS:btc_api_o>
+            )
+        endif()
     endif()
 
     if (IN3API) 
