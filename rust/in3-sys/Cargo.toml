@@ -1,8 +1,13 @@
 [package]
 name = "in3-sys"
-version = "0.1.0"
-authors = ["slock.it <in3@slock.it>"]
-description = "System bindings to the IN3 library"
+version = "0.0.1"
+authors = ["slock.it <products@slock.it>"]
+description = "High level bindings to the IN3 library"
+license = "AGPL OR Commercial license"
+homepage = "https://slock.it/incubed/"
+documentation = "https://in3.readthedocs.io"
+repository = "https://github.com/slockit/in3-c"
+readme = "README.md"
 edition = "2018"
 build = "build.rs"
 links = "in3"
