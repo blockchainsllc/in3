@@ -10,7 +10,6 @@ use async_trait::async_trait;
 
 use crate::error::{Error, In3Result};
 use crate::signer;
-use crate::signer::SignatureType;
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
 
@@ -151,7 +150,7 @@ impl Ctx {
                     for (i, resp) in responses.iter().enumerate() {
                         match resp {
                             Err(err) => {
-                                let mut err_str = ffi::CString::new(err.to_string()).unwrap();
+                                let err_str = ffi::CString::new(err.to_string()).unwrap();
                                 in3_sys::in3_req_add_response(
                                     (*req).results,
                                     i.try_into().unwrap(),
@@ -161,7 +160,7 @@ impl Ctx {
                                 );
                             }
                             Ok(res) => {
-                                let mut res_str = ffi::CString::new(res.to_string()).unwrap();
+                                let res_str = ffi::CString::new(res.to_string()).unwrap();
                                 in3_sys::in3_req_add_response(
                                     (*req).results,
                                     i.try_into().unwrap(),

@@ -1,28 +1,7 @@
 use async_std::task;
-use ethereum_types::{Address, U256};
 use in3::eth1::api::RpcRequest;
-use in3::eth1::*;
 use in3::prelude::*;
-use in3::prelude::*;
-use rustc_hex::FromHex;
-use secp256k1::{sign, Message, SecretKey};
 use serde_json::json;
-use sha3::{Digest, Keccak256Full};
-use std::ffi::{CStr, CString};
-use std::fmt::Write;
-
-
-
-// Public key for debug secret key
-fn signature_hex_string(data: [u8; 64]) -> String {
-    let mut sign_str = "".to_string();
-    for byte in &data[0..64] {
-        let mut tmp = "".to_string();
-        write!(&mut tmp, "{:02x}", byte).unwrap();
-        sign_str.push_str(tmp.as_str());
-    }
-    sign_str
-}
 
 
 fn main() {

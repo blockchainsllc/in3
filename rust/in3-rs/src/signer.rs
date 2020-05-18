@@ -14,7 +14,6 @@ pub enum SignatureType {
 pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     let data_ = data as *mut u8;
     let dst: *mut u8 = libc::malloc(65) as *mut u8;
-    let pby = dst.offset(64) as *mut u8;
     let error = in3_sys::sign_hash(data_, len, pk, in3_sys::hasher_t::hasher_sha3k, dst);
     if error < 0 {
         panic!("Sign error{:?}", error);
@@ -37,6 +36,35 @@ fn signature_hex_string(data: [u8; 64]) -> String {
     sign_str
 }
 
+pub struct SignerRust<'a> {
+    pub pk: &'a str,
+}
+
+impl Signer for SignerRust<'_> {
+    fn sign(&mut self, msg: &str) -> *const c_char {
+        // println!("{:?}",msg);
+        let msg_hex = msg.from_hex().unwrap();
+        let pk_hex = self.pk.from_hex().unwrap();
+        let mut hasher = Keccak256Full::new();
+        // write input message
+        hasher.input(msg_hex);
+        // read hash digest
+        let result = hasher.result();
+        let mut msg_slice: [u8; 32] = Default::default();
+        msg_slice.copy_from_slice(&result[0..32]);
+        let mut pk_slice: [u8; 32] = Default::default();
+        pk_slice.copy_from_slice(&pk_hex[0..32]);
+        let seckey = SecretKey::parse(&pk_slice).unwrap();
+        let message = Message::parse(&msg_slice);
+        let (signature, _) = sign(&message, &seckey);
+        let signature_arr = signature.serialize();
+        let ret_s = signature_arr.as_ptr();
+        let ret_c_char = ret_s as *const c_char;
+        let sign_str = signature_hex_string(signature_arr);
+        println!("{:?}",sign_str);
+        ret_c_char
+    }
+}
 
 #[cfg(test)]
 mod tests {
