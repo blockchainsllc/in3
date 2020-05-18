@@ -394,47 +394,46 @@ int parse_key(json_ctx_t* jp) {
 }
 
 int parse_number(json_ctx_t* jp, d_token_t* item) {
-  int     i      = 0;
-  int64_t i64Val = 0;
-  bool    neg    = false;
+  uint64_t value = 0; // the resulting value (if it is a integer)
+  jp->c--;            // we also need to include hte previous character!
 
-  if (jp->c[-1] == '-')
-    neg = true;
-  if (jp->c[-1] != '+' && jp->c[-1] != '-')
-    jp->c--;
-
-  for (; i < 20; i++) {
-    if (jp->c[i] >= '0' && jp->c[i] <= '9')
-      i64Val = i64Val * 10 + (jp->c[i] - '0');
+  for (int i = 0; i < 20; i++) {             // we are not accepting more than 20 characters, since a uint64 can hold up to 18446744073709552000 (which has 20 digits)
+    if (jp->c[i] >= '0' && jp->c[i] <= '9')  // as long as this is a digit
+      value = value * 10 + (jp->c[i] - '0'); // we handle it and add it to the value.
     else {
-      // if the value is a float (which we don't support yet), we keep on parsing, but ignoring the rest of the numbers
-      if (jp->c[i] == '.') {
-        i++;
-        while (jp->c[i] >= '0' && jp->c[i] <= '9') i++;
+      switch (jp->c[i]) { // we found a non digit character
+        case '.':
+        case '-':
+        case '+':
+        case 'e':
+        case 'E':
+          // this is still a number, but not a simple integer, so we find the end and add it as string
+          i++;
+          while ((jp->c[i] >= '0' && jp->c[i] <= '9') || jp->c[i] == 'E' || jp->c[i] == 'e' || jp->c[i] == '-') i++;
+          item->data = _malloc(i + 1);
+          item->len  = T_STRING << 28 | (unsigned) i;
+          memcpy(item->data, jp->c, i);
+          item->data[i] = 0;
+          printf("parsed : [%s]\n", item->data);
+          break;
+
+        default:
+          if ((value & 0xfffffffff0000000) == 0) // is it small ennough to store it in the length ?
+            item->len |= (uint32_t) value;       // 32-bit number / no 64-bit number
+          else {
+            // as it is a 64-bit number we have to change the type from T_INTEGER to T_BYTES and treat it accordingly
+            uint8_t tmp[8];
+            long_to_bytes(value, tmp);
+            uint8_t *p = tmp, len = 8;
+            optimize_len(p, len);
+            item->data = _malloc(len);
+            item->len  = T_BYTES << 28 | len;
+            memcpy(item->data, p, len);
+          }
+          break;
       }
 
       jp->c += i;
-
-      if (neg) {
-        char   tmp[22]; // max => -18446744073709551000
-        size_t l   = sprintf(tmp, "-%" PRIi64, i64Val);
-        item->len  = l | T_STRING << 28;
-        item->data = _malloc(l + 1);
-        memcpy(item->data, tmp, l);
-        item->data[l] = 0;
-      } else if ((i64Val & 0xfffffffff0000000) == 0)
-        item->len |= (int) i64Val;
-      // 32-bit number / no 64-bit number
-      else {
-        uint8_t tmp[8];
-        // as it is a 64-bit number we have to change the type from T_INTEGER to T_BYTES and treat it accordingly
-        long_to_bytes(i64Val, tmp);
-        uint8_t *p = tmp, len = 8;
-        optimize_len(p, len);
-        item->data = _malloc(len);
-        item->len  = T_BYTES << 28 | len;
-        memcpy(item->data, p, len);
-      }
       return 0;
     }
   }
