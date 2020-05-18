@@ -102,7 +102,7 @@ typedef struct in3_ctx {
   /** references to the tokens representring the requests*/
   d_token_t** requests;
 
-  /** array of configs adjusted for each request. */
+  /**configs for a request. */
   in3_request_config_t* requests_configs;
 
   /* selected nodes to process the request, which are stored as linked list.*/
@@ -160,7 +160,7 @@ in3_ret_t in3_send_ctx(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 /**
- * tries to execute the context, but stops whenever data are required.
+ * execute the context, but stops whenever data are required.
  * 
  * This function should be used in order to call data in a asyncronous way, 
  * since this function will not use the transport-function to actually send it. 
@@ -170,6 +170,47 @@ in3_ret_t in3_send_ctx(
  * - IN3_WAITING : provide the required data and then call in3_ctx_execute again.
  * - IN3_OK : success, we have a result.
  * - any other status = error
+ * 
+ * ```
+ * digraph G {
+ node[fontname="Helvetica",   shape=Box, color=lightblue, style=filled ]
+  edge[fontname="Helvetica",   style=solid,  fontsize=8 , color=grey]
+  rankdir = LR;
+  
+  RPC[label="RPC-Request"]
+  CTX[label="in3_ctx_t"]
+  
+  sign[label="sign data",color=lightgrey, style=""]
+  request[label="fetch data",color=lightgrey, style=""]
+  
+  exec[ label="in3_ctx_execute()",color=lightgrey, style="", shape=circle ]
+  free[label="ctx_free()",color=lightgrey, style=""]
+
+
+  RPC -> CTX [label="ctx_new()"]
+  CTX -> exec
+  
+  
+  exec -> error [label="IN3_..."]
+  exec -> response[label="IN3_OK"]
+  exec -> waiting[label="IN3_WAITING"]
+  
+  waiting -> sign[label=CT_SIGN]
+  waiting -> request[label=CT_RPC] 
+  
+  sign -> exec [label="in3_req_add_response()"]
+  request -> exec[label="in3_req_add_response()"]
+  
+  response -> free
+  error->free
+  
+
+ { rank = same; exec, sign, request }
+
+
+
+}
+ * ```
  * 
  * Here is a example how to use this function:
  * 
@@ -244,6 +285,10 @@ in3_ret_t in3_send_ctx(
   return ret;
 }
  * ```
+ * 
+ * 
+ * 
+ * 
  */
 in3_ret_t in3_ctx_execute(
     in3_ctx_t* ctx /**< [in] the request context. */

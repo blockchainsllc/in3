@@ -35,7 +35,6 @@
 /** @file 
  * simple commandline-util sending in3-requests.
  * */
-
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
 #include "../../core/util/bitset.h"
@@ -60,6 +59,11 @@
 #include "../../core/client/nodelist.h"
 #include "../../core/client/version.h"
 #include "../../core/util/colors.h"
+
+#if defined(LEDGER_NANO)
+#include "../../signer/ledger-nano/signer/ledger_signer.h"
+#endif
+
 #include "../../verifier/eth1/basic/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
@@ -108,6 +112,7 @@ void show_help(char* name) {
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
+-bip32         the bip32 path which is to be used for signing in hardware wallet \n\
 -st, -sigtype  the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw \n\
 -pwd           password to unlock the key \n\
 -value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
@@ -615,6 +620,9 @@ int main(int argc, char* argv[]) {
   params[1]    = 0;
   int       p  = 1, i;
   bytes32_t pk;
+#ifdef LEDGER_NANO
+  uint8_t bip32[5];
+#endif
 
   // we want to verify all
   in3_register_eth_full();
@@ -683,9 +691,19 @@ int main(int argc, char* argv[]) {
     if (strcmp(argv[i], "-pk") == 0) { // private key?
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, pk, 32);
+
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
+    } else if (strcmp(argv[i], "-bip32") == 0) {
+#if defined(LEDGER_NANO)
+      if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
+        hex_to_bytes(argv[++i], -1, bip32, 5);
+        eth_ledger_set_signer(c, bip32);
+      }
+#else
+      die("bip32 option not supported currently ");
+#endif
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
     else if (strcmp(argv[i], "-ccache") == 0) // NOOP - should have been handled earlier
@@ -958,7 +976,7 @@ int main(int argc, char* argv[]) {
       sig_type = "raw";
     }
 
-    if (!c->signer) die("No private key given");
+    if (!c->signer) die("No private key/bip32 path given");
     uint8_t   sig[65];
     in3_ctx_t ctx;
     ctx.client = c;
@@ -1071,7 +1089,7 @@ int main(int argc, char* argv[]) {
   // Update nodelist if a newer latest block was reported
   if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
-    in3_client_rpc(c, "eth_blockNumber", "", &r, &e);
+    in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
   }
 
   // if we need to wait

@@ -40,6 +40,7 @@
 #include "cache.h"
 #include "client.h"
 #include "nodelist.h"
+#include "verifier.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,7 +89,7 @@ void in3_register_payment(
 
 #define EXPECT_CFG(cond, err) EXPECT(cond, { \
   res = malloc(strlen(err) + 1);             \
-  strcpy(res, err);                          \
+  if (res) strcpy(res, err);                 \
   goto cleanup;                              \
 })
 #define EXPECT_CFG_NCP_ERR(cond, err) EXPECT(cond, { res = err; goto cleanup; })
@@ -150,6 +151,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+  chain->conf                 = NULL;
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
   chain->last_block           = 0;
@@ -320,6 +322,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
+    chain->conf                 = NULL;
     chain->nodelist             = NULL;
     chain->nodelist_length      = 0;
     chain->weights              = NULL;
@@ -445,6 +448,11 @@ void in3_free(in3_t* a) {
   if (!a) return;
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    if (a->chains[i].conf) {
+      in3_verifier_t* verifier = in3_get_verifier(a->chains[i].type);
+      if (verifier && verifier->free_chain)
+        verifier->free_chain(a, a->chains + i);
+    }
     if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
@@ -587,7 +595,7 @@ char* in3_get_config(in3_t* c) {
   if (c->replace_latest_block)
     add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
   add_uint(sb, ',', "requestCount", c->request_count);
-  if (c->chain_id == ETH_CHAIN_ID_LOCAL)
+  if (c->chain_id == ETH_CHAIN_ID_LOCAL && chain)
     add_string(sb, ',', "rpc", chain->nodelist->url);
 
   sb_add_chars(sb, ",\"nodes\":{");
@@ -683,6 +691,7 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("maxVerifiedHashes")) {
       EXPECT_TOK_U16(token);
       in3_chain_t* chain = in3_find_chain(c, c->chain_id);
+      EXPECT_CFG(chain, "chain not found");
       if (c->max_verified_hashes < d_long(token)) {
         chain->verified_hashes = _realloc(chain->verified_hashes,
                                           sizeof(in3_verified_hash_t) * d_long(token),
@@ -849,6 +858,11 @@ char* in3_configure(in3_t* c, const char* config) {
 #endif
             }
           } else {
+
+            // try to delegate the call to the verifier.
+            const in3_verifier_t* verifier = in3_get_verifier(chain->type);
+            if (verifier && verifier->set_confg && verifier->set_confg(c, cp.token, chain) == IN3_OK) continue;
+
             EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }

@@ -1,3 +1,9 @@
+# This template should be used for jobs to run during deployment only
+.only_deploy:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
+      when: manual
+
 wasm:
   image: docker.slock.it/build-images/cmake:clang11
   needs: []
@@ -7,7 +13,7 @@ wasm:
   script:
     - mkdir wasm_build_min
     - cd wasm_build_min
-    - emcmake cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DBTC=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
     - mkdir ../wasm_build
     - cd ../wasm_build
@@ -71,7 +77,7 @@ test_asmjs:
 
 wasm-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
   rules:
@@ -86,12 +92,10 @@ wasm-slockit-npm:
 
 wasm-public-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - wasm
   script:
@@ -102,7 +106,7 @@ wasm-public-npm:
 
 asmjs-slockit-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
   rules:
@@ -117,12 +121,10 @@ asmjs-slockit-npm:
 
 asmjs-public-npm:
   image: docker.slock.it/build-images/node:11-alpine
-  stage: wasm
+  stage: deploy
   tags:
     - short-jobs
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
-      when: manual
+  extends: .only_deploy
   needs:
     - asmjs
   script:

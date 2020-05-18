@@ -13,11 +13,14 @@ if [ ! -d /usr/local/include/in3 ]; then
   fi
 
   # set the library path to use the local
-  BUILDARGS="-L../../build/lib/ -I../../c/include"
+  BUILDARGS="-L../../build/lib/  -I../../c/include/ "
 fi
-
 # now build the examples build
 for f in *.c; 
-  do gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -lin3 -D_POSIX_C_SOURCE=199309L
+  do
+    if [ "$f" == ledger_sign.c ]; then # skipping ledger_sign compilation as it requires specific dependencies 
+      continue
+    fi
+    gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -lin3  -D_POSIX_C_SOURCE=199309L
 done
 

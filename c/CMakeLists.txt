@@ -32,21 +32,33 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 #  build modules
 add_subdirectory(src/third-party)
+
+
+if (GCC_ANALYZER) 
+  add_compile_options(-fanalyzer -Werror)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer -Werror")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
+endif()
+  
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
+
+if( LEDGER_NANO AND HIDAPI )
+  add_subdirectory(src/signer/ledger-nano/signer)
+endif()
+
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
 IF (ETH_FULL)
     add_subdirectory(src/cmd)
 endif()
 add_subdirectory(docs)
-
+link_directories(${CMAKE_BINARY_DIR}/lib/)
 
 
 # create the library
@@ -89,6 +101,12 @@ if (IN3_LIB)
         endif()
     endif()
 
+    if (BTC) 
+        set(IN3_LIBS ${IN3_LIBS} 
+          $<TARGET_OBJECTS:btc_o>
+        )
+    endif()
+
     if (IN3API) 
         set(IN3_LIBS ${IN3_LIBS} 
             $<TARGET_OBJECTS:eth_api_o>
@@ -104,13 +122,21 @@ if (IN3_LIB)
     if (USE_SCRYPT)
        set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
     endif()
+    
+
 
     # create the libraries
     add_library(in3_bundle STATIC ${IN3_LIBS} )
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-    target_link_libraries(in3_lib ${IN3_TRANSPORT})
+    
+    if( LEDGER_NANO AND HIDAPI )
+       target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+    else()
+       target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
+    endif()
+    
 
     # install
     INSTALL(TARGETS in3_bundle

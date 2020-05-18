@@ -4,8 +4,8 @@ Integrated tests for `in3.eth.account` module.
 import unittest
 
 import in3
-from tests.config_mock import mock_config
-from tests.transport import mock_transport
+from tests.integrated.mock.config import mock_config
+from tests.integrated.mock.transport import mock_transport
 
 
 class EthAccountGoerliTestCase(unittest.TestCase):
@@ -53,18 +53,18 @@ class EthAccountGoerliTestCase(unittest.TestCase):
         self.assertGreater(gas, 1000)
 
     def test_get_transaction_count(self):
-        rpc = self.client.eth.account.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
+        rpc = self.client.eth.account.transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
         self.assertGreaterEqual(rpc, 0)
 
     def test_get_balance(self):
-        result = self.client.eth.account.get_balance('0x6FA33809667A99A805b610C49EE2042863b1bb83')
+        result = self.client.eth.account.balance('0x6FA33809667A99A805b610C49EE2042863b1bb83')
         self.assertGreaterEqual(result, 0)
 
     def test_send_tx(self):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
         secret = hex(0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F)
-        sender = self.client.eth.account.recover_account(secret)
+        sender = self.client.eth.account.recover(secret)
         receiver = hex(0x6FA33809667A99A805b610C49EE2042863b1bb83)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         tx_hash = self.client.eth.account.send_transaction(sender, tx)
@@ -77,11 +77,6 @@ class EthAccountGoerliTestCase(unittest.TestCase):
         tx_hash = self.client.eth.account.send_raw_transaction(raw_tx)
         self.assertEqual(tx_hash, "0x4456152b5f25509a9f6a4117205700f3b480cd837c855602bce6088a10c2fddd")
 
-    def test_get_tx_receipt(self):
-        tx_hash = '0x4456152b5f25509a9f6a4117205700f3b480cd837c855602bce6088a10c2fddd'
-        result = self.client.eth.account.get_transaction_receipt(tx_hash)
-        self.assertIsInstance(result, in3.eth.TransactionReceipt)
-
 
 class EthAccountKovanTestCase(EthAccountGoerliTestCase):
 
@@ -90,14 +85,14 @@ class EthAccountKovanTestCase(EthAccountGoerliTestCase):
         self.client = in3.Client('kovan', in3_config=mock_config, transport=mock_transport)
 
     def test_get_transaction_count(self):
-        rpc = self.client.eth.account.get_transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
+        rpc = self.client.eth.account.transaction_count('0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308')
         self.assertGreaterEqual(rpc, 0)
 
     def test_send_tx(self):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
         secret = hex(0x9852782BEAD36C64161665586D33391ECEC1CCED7432A1D66FD326D38EA0171F)
-        sender = self.client.eth.account.recover_account(secret)
+        sender = self.client.eth.account.recover(secret)
         receiver = hex(0x6FA33809667A99A805b610C49EE2042863b1bb83)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         tx_hash = self.client.eth.account.send_transaction(sender, tx)
@@ -110,11 +105,6 @@ class EthAccountKovanTestCase(EthAccountGoerliTestCase):
         tx_hash = self.client.eth.account.send_raw_transaction(raw_tx)
         self.assertEqual(tx_hash, "0x561438bacbd058aca597dd8ebaafbf05df993c83c3224301f33d569c417d0db4")
 
-    def test_get_tx_receipt(self):
-        tx_hash = '0x561438bacbd058aca597dd8ebaafbf05df993c83c3224301f33d569c417d0db4'
-        result = self.client.eth.account.get_transaction_receipt(tx_hash)
-        self.assertIsInstance(result, in3.eth.TransactionReceipt)
-
 
 class EthAccountTestCase(EthAccountGoerliTestCase):
 
@@ -123,14 +113,14 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
         self.client = in3.Client(in3_config=mock_config, transport=mock_transport)
 
     def test_get_transaction_count(self):
-        rpc = self.client.eth.account.get_transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')
+        rpc = self.client.eth.account.transaction_count('0x6FA33809667A99A805b610C49EE2042863b1bb83')
         self.assertGreater(rpc, 0)
 
     def test_send_tx(self):
         # 1000000000000000000 == 1 ETH
         # SK to PK 0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308
         secret = hex(0xAC6D6BF94AD0AC65869EF6A0A47A9F2A201956D4AF3FFBE9DFE679399DACD3D9)
-        sender = self.client.eth.account.recover_account(secret)
+        sender = self.client.eth.account.recover(secret)
         receiver = hex(0x0b56Ae81586D2728Ceaf7C00A6020C5D63f02308)
         tx = in3.eth.NewTransaction(to=receiver, value=1463926659)
         tx_hash = self.client.eth.account.send_transaction(sender, tx)
@@ -142,8 +132,3 @@ class EthAccountTestCase(EthAccountGoerliTestCase):
                  "453ad12aa52ae6f8e42606"
         tx_hash = self.client.eth.account.send_raw_transaction(raw_tx)
         self.assertEqual(tx_hash, "0xb13b9d38642216af2545f1b9f882413bcdef13bec21def57c699d3a967d763bc")
-
-    def test_get_tx_receipt(self):
-        tx_hash = '0xb13b9d38642216af2545f1b9f882413bcdef13bec21def57c699d3a967d763bc'
-        result = self.client.eth.account.get_transaction_receipt(tx_hash)
-        self.assertIsInstance(result, in3.eth.TransactionReceipt)

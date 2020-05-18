@@ -1,21 +1,19 @@
-use std::ffi;
-// use std::ffi::{CString, CStr};
-use async_trait::async_trait;
 use ffi::{CStr, CString};
+use std::convert::TryInto;
+use std::ffi;
+use std::str;
+
 use libc::{c_char, strlen};
-// use std::mem;
+use rustc_hex::FromHex;
+
+use async_trait::async_trait;
+
 use crate::error::{Error, In3Result};
-use crate::traits::{Client as ClientTrait, Storage, Transport};
-use crate::transport::HttpTransport;
-use rustc_hex::{FromHex, ToHex};
-use serde_json::json;
-// use signer::*;
 use crate::signer;
 use crate::signer::SignatureType;
-use std::fmt::Write;
-use std::num::ParseIntError;
-// use crate::types::Signature;
-use std::str;
+use crate::traits::{Client as ClientTrait, Storage, Transport};
+use crate::transport::HttpTransport;
+
 pub mod chain {
     pub type ChainId = u32;
 
@@ -102,7 +100,6 @@ impl Ctx {
         }
 
         if last_waiting != std::ptr::null_mut() {
-            let req = in3_sys::in3_create_request(last_waiting);
             let req_type = (*last_waiting).type_;
             match req_type {
                 in3_sys::ctx_type::CT_SIGN => {
@@ -144,30 +141,22 @@ impl Ctx {
                         match resp {
                             Err(err) => {
                                 let err_str = ffi::CString::new(err.to_string()).unwrap();
-                                in3_sys::sb_add_chars(
-                                    &mut (*(*req).results.add(i)).error,
-                                    err_str.as_ptr(),
-                                );
+                                in3_sys::in3_req_add_response((*req).results, i.try_into().unwrap(), true, err_str.as_ptr(), -1i32);
                             }
                             Ok(res) => {
                                 let res_str = ffi::CString::new(res.to_string()).unwrap();
-                                in3_sys::sb_add_chars(
-                                    &mut (*(*req).results.add(i)).result,
-                                    res_str.as_ptr(),
-                                );
+                                in3_sys::in3_req_add_response((*req).results, i.try_into().unwrap(), false, res_str.as_ptr(), -1i32);
                             }
                         }
                     }
-                    let result = (*(*req).results.offset(0)).result;
-                    let len = result.len;
-                    if len != 0 {
-                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                        return Err(Error::TryAgain);
-                    } else {
+                    let res = *(*req).results.offset(0);
+                    let mut err = Error::TryAgain;
+                    if res.result.len == 0 {
                         let error = (*(*req).results.offset(0)).error;
-                        let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
-                        return Err(err.into());
+                        err = ffi::CStr::from_ptr(error.data).to_str().unwrap().into();
                     }
+                    in3_sys::request_free(req, last_waiting, false);
+                    return Err(err.into());
                 }
             }
         }
@@ -188,16 +177,6 @@ impl Ctx {
 
 #[async_trait(? Send)]
 impl ClientTrait for Client {
-    async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, call);
-        loop {
-            let res = unsafe { ctx.execute().await };
-            if res != Err(Error::TryAgain) {
-                return res;
-            }
-        }
-    }
-
     fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
@@ -225,6 +204,16 @@ impl ClientTrait for Client {
                     Some(Client::in3_rust_storage_clear),
                     self.ptr as *mut libc::c_void,
                 );
+            }
+        }
+    }
+
+    async fn rpc(&mut self, call: &str) -> In3Result<String> {
+        let mut ctx = Ctx::new(self, call);
+        loop {
+            let res = unsafe { ctx.execute().await };
+            if res != Err(Error::TryAgain) {
+                return res;
             }
         }
     }
@@ -263,7 +252,6 @@ impl ClientTrait for Client {
             let data_ptr = c_str_data.as_ptr();
             let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
             let data_ = (*data).data;
-            let out = std::slice::from_raw_parts_mut(data_, len);
             data_
         }
     }
@@ -323,8 +311,7 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
-            #[cfg(feature = "blocking")]
-            {
+            #[cfg(feature = "blocking")] {
                 (*c.ptr).transport = Some(Client::in3_rust_transport);
             }
             c

@@ -31,6 +31,7 @@ bytes_t btc_block_get(bytes_t block, btc_block_field field) {
     case BTC_B_BITS: return bytes(block.data + 72, 4);
     case BTC_B_NONCE: return bytes(block.data + 76, 4);
     case BTC_B_HEADER: return bytes(block.data, 80);
+    default: return bytes(NULL, 0);
   }
 }
 void btc_hash(bytes_t data, bytes32_t dst) {
@@ -66,7 +67,7 @@ uint64_t le_to_long(uint8_t* data) {
          (((uint64_t) data[3]) << 24) | (((uint64_t) data[2]) << 16) | (((uint64_t) data[1]) << 8) | data[0];
 }
 
-void btc_target(bytes_t block, bytes32_t target) {
+void btc_target_from_block(bytes_t block, bytes32_t target) {
   uint8_t *bits = btc_block_get(block, BTC_B_BITS).data, tmp[32];
   memset(tmp, 0, 32);
   memcpy(tmp + bits[3] - 3, bits, 3);
