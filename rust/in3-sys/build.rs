@@ -66,7 +66,8 @@ fn main() {
 
     let dst = Config::new(IN3_DIR)
         .profile("MinSizeRel")
-        .define("USE_CURL", "OFF")
+        .define("TRANSPORTS", "OFF")
+        .define("CMD", "OFF")
         .define("DEV_NO_INTRN_PTR", "OFF")
         .build_target("in3_bundle")
         .build();
