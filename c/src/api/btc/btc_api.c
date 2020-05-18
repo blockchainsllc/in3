@@ -46,22 +46,22 @@ static bytes_t* hex_to_data(char* hex) {
 }
 
 bytes_t* btc_get_transaction_bytes(in3_t* in3, bytes32_t txid) {
-  char hex[65];
   rpc_init;
-
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
   sb_add_chars(params, "\",false");
   rpc_exec("getrawtransaction", bytes_t*, hex_to_data(d_string(result)));
 }
 
-btc_transaction_t* btc_get_transactio(in3_t* in3, bytes32_t txid) {
-  char hex[65];
-  rpc_init;
+static btc_transaction_t* to_tx(d_token_t* t) {
+  return t == NULL ? NULL : NULL;
+}
 
+btc_transaction_t* btc_get_transactio(in3_t* in3, bytes32_t txid) {
+  rpc_init;
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
   sb_add_chars(params, "\",false");
-  //  rpc_exec("getrawtransaction", bytes_t*, hex_to_data(d_string(result)));
+  rpc_exec("getrawtransaction", btc_transaction_t*, to_tx(result));
   return NULL;
 }
