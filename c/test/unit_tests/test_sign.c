@@ -92,25 +92,13 @@ static void to_checksum_addr(uint8_t* address, chain_id_t chain, char* result) {
   in3_ret_t res = to_checksum(address, 0, result);
 }
 
-static uint8_t* private_to_address() {
-  uint8_t* dst = malloc(20);
-  uint8_t  public_key[65], sdata[32];
-  int8_t*  pk           = "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
-  bytes_t  pubkey_bytes = {.data = public_key + 1, .len = 64};
-  ecdsa_get_public_key65(&secp256k1, pk, public_key);
-  // hash it and return the last 20 bytes as address
-  sha3_to(&pubkey_bytes, sdata);
-  memcpy(dst, sdata + 12, 20);
-  return dst;
-}
-
-static void test_sign_tx() {
+static void test_tx() {
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
   in3->transport = test_transport;
-  add_response("eth_sendRawTransaction", "[]",
-               "\"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38\"", NULL, NULL);
+  add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
+               "\"0x309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f\"", NULL, NULL);
 
   // convert the hexstring to bytes
   bytes32_t pk;
@@ -127,20 +115,20 @@ static void test_sign_tx() {
 
   // send the tx
   bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_VALUE(uint64_t, 0x0));
-
   // if the result is null there was an error and we can get the latest error message from eth_last_error()
   if (!tx_hash)
     printf("error sending the tx : %s\n", eth_last_error());
   else {
     printf("Transaction hash: ");
-    b_print(tx_hash);
-    b_free(tx_hash);
   }
   b_free(data);
+  bytes_t* hash = hex_to_new_bytes("309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f", 64);
+
+  TEST_ASSERT_TRUE(b_cmp(tx_hash, hash));
+  b_free(tx_hash);
 
   // cleanup client after usage
   in3_free(in3);
-  TEST_ASSERT_NOT_NULL(tx_hash);
 }
 
 static void test_sign_sans_signer_and_from() {
@@ -209,11 +197,11 @@ static void test_signer_prepare_tx() {
  * Main
  */
 int main() {
-  in3_log_set_quiet(true);
-  in3_log_set_level(LOG_ERROR);
+  in3_log_set_quiet(false);
+  in3_log_set_level(LOG_TRACE);
   in3_register_eth_full();
   TESTS_BEGIN();
-  RUN_TEST(test_sign_tx);
+  RUN_TEST(test_tx);
   RUN_TEST(test_sign);
   RUN_TEST(test_sign_sans_signer_and_from);
   RUN_TEST(test_signer);
