@@ -7,10 +7,16 @@
 #include "../../core/util/error.h"
 #include <stdint.h>
 
+/**
+ * calculates the dap (Difficulty Adjustment Period) from the blocknumber
+ */
 static inline uint32_t btc_get_dap(uint32_t block_number) {
   return block_number / 2016;
 }
 
+/**
+ * the security- configuration which is stored within the chain_t - object.
+ */
 typedef struct btc_target_conf {
   bytes_t       data;
   uint_fast16_t max_daps;
@@ -28,6 +34,10 @@ typedef struct btc_target_conf {
  */
 in3_ret_t btc_new_target_check(in3_vctx_t* vc, bytes32_t old_target, bytes32_t new_target);
 
+
+/**
+ *  sets a target in the cache
+ */
 void btc_set_target(in3_vctx_t* vc, uint32_t dap, uint8_t* difficulty);
 
 uint32_t btc_get_closest_target(in3_vctx_t* vc, uint32_t dap, uint8_t* difficulty);
