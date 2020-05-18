@@ -35,6 +35,9 @@
 cmake_minimum_required(VERSION 3.5.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 
+# fixme: required for Rust bindings, remove later
+set(CMAKE_OSX_SYSROOT "PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk")
+
 # project name
 project(in3)
 
