@@ -81,6 +81,6 @@ typedef struct btc_transaction {
 } btc_transaction_t;
 
 bytes_t*           btc_get_transaction_bytes(in3_t* in3, bytes32_t txid);
-btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid);
+btc_transaction_t* btc_get_transaction_data(in3_t* in3, bytes32_t txid);
 
 #endif //IN3_BTC_API_H

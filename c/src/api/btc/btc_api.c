@@ -34,6 +34,7 @@
 
 #include "btc_api.h"
 #include "../../core/util/mem.h"
+#include "../../verifier/btc/btc_types.h"
 #include "../utils/api_utils_priv.h"
 
 static void add_btc_hex(sb_t* sb, bytes_t data) {
@@ -54,10 +55,61 @@ bytes_t* btc_get_transaction_bytes(in3_t* in3, bytes32_t txid) {
 }
 
 static btc_transaction_t* to_tx(d_token_t* t) {
-  return t == NULL ? NULL : NULL;
+  if (t == NULL || d_type(t) == T_NULL) return NULL;
+  btc_tx_t   txdata;
+  d_token_t* t_hex  = d_get(t, key("hex"));
+  d_token_t* t_vin  = d_get(t, key("vin"));
+  d_token_t* t_vout = d_get(t, key("vout"));
+  if (!t_hex || !t_vin || !t_vout) return NULL;
+  size_t             size = sizeof(btc_transaction_t) + d_len(t_vin) * sizeof(btc_transaction_in_t) + d_len(t_vout) * sizeof(btc_transaction_out_t) + d_len(t_hex) / 2;
+  btc_transaction_t* res  = _malloc(size);
+  res->in_active_chain    = !!d_get_intkd(t, key("in_active_chain"), 1);
+  res->vin                = ((void*) res) + sizeof(btc_transaction_t);
+  res->vout               = ((void*) res->vin) + d_len(t_vin) * sizeof(btc_transaction_in_t);
+  res->data               = bytes(((void*) res->vout) + d_len(t_vout) * sizeof(btc_transaction_out_t), d_len(t_hex) / 2);
+  res->vin_len            = d_len(t_vin),
+  res->vout_len           = d_len(t_vout);
+  res->size               = d_get_intk(t, key("size"));
+  res->vsize              = d_get_intk(t, key("vsize"));
+  res->weight             = d_get_intk(t, key("weight"));
+  res->version            = d_get_intk(t, key("version"));
+  res->locktime           = d_get_intk(t, key("locktime"));
+  res->time               = d_get_intk(t, key("time"));
+  res->blocktime          = d_get_intk(t, key("blocktime"));
+  res->confirmations      = d_get_intk(t, key("confirmations"));
+  hex_to_bytes(d_string(t_hex), -1, res->data.data, res->data.len);
+
+  btc_parse_tx(res->data, &txdata);
+  hex_to_bytes(d_get_stringk(t, key("txid")), -1, res->txid, 32);
+  hex_to_bytes(d_get_stringk(t, key("hash")), -1, res->hash, 32);
+  hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32);
+
+  uint8_t* p = txdata.input.data;
+  for (uint32_t i = 0; i < res->vin_len; i++) {
+    btc_tx_in_t vin;
+    p                       = btc_parse_tx_in(p, &vin);
+    btc_transaction_in_t* r = res->vin + i;
+    r->script               = vin.script;
+    r->sequence             = vin.sequence;
+    r->txinwitness          = bytes(NULL, 0);
+    r->vout                 = vin.prev_tx_index;
+    memcpy(r->txid, vin.prev_tx_hash, 32);
+  }
+
+  p = txdata.output.data;
+  for (uint32_t i = 0; i < res->vout_len; i++) {
+    btc_tx_out_t vout;
+    p                        = btc_parse_tx_out(p, &vout);
+    btc_transaction_out_t* r = res->vout + i;
+    r->n                     = i;
+    r->script_pubkey         = vout.script;
+    r->value                 = vout.value;
+  }
+
+  return res;
 }
 
-btc_transaction_t* btc_get_transactio(in3_t* in3, bytes32_t txid) {
+btc_transaction_t* btc_get_transaction_data(in3_t* in3, bytes32_t txid) {
   rpc_init;
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
