@@ -40,13 +40,13 @@
 
 #define HID_CMD_MAX_LEN 64
 
-extern const uint8_t CLA;
-extern const uint8_t INS_GET_PUBLIC_KEY;
-extern const uint8_t INS_SIGN;
-extern const uint8_t P1_MORE;
-extern const uint8_t P1_FINAL;
-extern const uint8_t P2_FINAL;
-extern const uint8_t TAG;
+extern uint8_t CLA;
+extern uint8_t INS_GET_PUBLIC_KEY;
+extern uint8_t INS_SIGN;
+extern uint8_t P1_MORE;
+extern uint8_t P1_FINAL;
+extern uint8_t P2_FINAL;
+extern uint8_t TAG;
 
 int len_to_bytes(uint16_t x, uint8_t* buf);
 

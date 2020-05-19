@@ -1,59 +1,15 @@
-#ifdef WIN32
-#include <windows.h>
-#endif
+#include "ethereum_apdu_client_priv.h"
 
-#include "../../../core/client/context.h"
-#include "../../../core/util/bytes.h"
-#include "../../../core/util/log.h"
-#include "device_apdu_commands.h"
-#include "ledger_signer.h"
-#include "ledger_signer_priv.h"
+CLA              = 0xE0;
+INS_SIGN_TX      = 0x04;
+INS_SIGN_MSG     = 0x08;
+INS_GET_PUB_ADDR = 0x02;
+P1_MORE          = 0x00;
+P1_FINAL         = 0X80;
+P2_FINAL         = 0X00;
+TAG              = 0x05;
 
-#include <memory.h>
-#include <stdbool.h>
-#include <stdlib.h>
-
-#define MAX_STR 255
-
-CLA                = 0x80;
-INS_GET_PUBLIC_KEY = 0x04;
-INS_SIGN           = 0x02;
-P1_MORE            = 0x00;
-P1_FINAL           = 0X80;
-P2_FINAL           = 0X00;
-TAG                = 0x05;
-
-in3_ret_t is_ledger_device_connected() {
-  int       res = 0;
-  in3_ret_t ret;
-  wchar_t   wstr[MAX_STR];
-
-  res = hid_init();
-  hid_device* handle;
-
-  handle = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
-
-  if (NULL != handle) {
-    in3_log_info("device connected \n");
-
-    res = hid_get_manufacturer_string(handle, wstr, MAX_STR);
-    in3_log_debug("device manufacturer: %ls\n", wstr);
-
-    hid_get_product_string(handle, wstr, MAX_STR);
-    in3_log_debug("product: %ls\n", wstr);
-
-    ret = IN3_OK;
-  } else {
-    ret = IN3_ENODEVICE;
-  }
-
-  hid_close(handle);
-  res = hid_exit();
-
-  return ret;
-}
-
-in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   //UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
 
@@ -177,7 +133,7 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
   return 65;
 }
 
-in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) {
+in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key, uint8_t* pub_addr) {
   int       res = 0;
   in3_ret_t ret;
   uint8_t   apdu[64];
@@ -234,98 +190,4 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
   hid_close(handle);
   res = hid_exit();
   return ret;
-}
-
-in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path) {
-  if (in3->signer) free(in3->signer);
-  in3->signer             = malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = eth_ledger_sign;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = bip_path;
-  return IN3_OK;
-}
-
-void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
-
-  //ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s
-  int lr     = i_raw_sig.data[3];
-  int ls     = i_raw_sig.data[lr + 5];
-  int offset = 0;
-  in3_log_debug("lr %d, ls %d \n", lr, ls);
-  if (lr > 0x20) {
-    memcpy(o_sig + offset, i_raw_sig.data + 5, lr - 1);
-    offset = lr - 1;
-  } else {
-    memcpy(o_sig, i_raw_sig.data + 4, lr);
-    offset = lr;
-  }
-
-  if (ls > 0x20) {
-    memcpy(o_sig + offset, i_raw_sig.data + lr + 7, ls - 1);
-  } else {
-    memcpy(o_sig + offset, i_raw_sig.data + lr + 6, ls);
-  }
-}
-
-int get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest) {
-
-  int     i = 0;
-  uint8_t p_key[65];
-  int     ret   = 0;
-  int     recid = -1;
-  for (i = 0; i < 4; i++) {
-    ret = ecdsa_recover_pub_from_sig(curve, p_key, sig, digest, i);
-    if (ret == 0) {
-      if (memcmp(pub_key, p_key, 65) == 0) {
-        recid = i;
-#ifdef DEBUG
-        in3_log_debug("public key matched with recid value\n");
-        ba_print(p_key, 65, "get_recid_from_pub_key :keys matched");
-#endif
-        break;
-      }
-    }
-  }
-  return recid;
-}
-
-int decode_txn_values(bytes_t message, TXN* txn) {
-  int     returnV = 0;
-  bytes_t tmp;
-  printf("parsing transaction\n");
-  if ((returnV = rlp_decode_in_list(&message, 0, &tmp)) == 1) {
-    txn->nonce.data = malloc(tmp.len);
-    memcpy(txn->nonce.data, tmp.data, tmp.len);
-    txn->nonce.len = tmp.len;
-  }
-
-  if ((returnV = rlp_decode_in_list(&message, 1, &tmp)) == 1) {
-    txn->gasprice.data = malloc(tmp.len);
-    memcpy(txn->gasprice.data, tmp.data, tmp.len);
-    txn->gasprice.len = tmp.len;
-  }
-
-  if ((returnV = rlp_decode_in_list(&message, 2, &tmp)) == 1) {
-    txn->startgas.data = malloc(tmp.len);
-    memcpy(txn->startgas.data, tmp.data, tmp.len);
-    txn->startgas.len = tmp.len;
-  }
-
-  if ((returnV = rlp_decode_in_list(&message, 3, &tmp)) == 1) {
-    txn->to.data = malloc(tmp.len);
-    memcpy(txn->to.data, tmp.data, tmp.len);
-    txn->to.len = tmp.len;
-  }
-
-  if ((returnV = rlp_decode_in_list(&message, 4, &tmp)) == 1) {
-    txn->value.data = malloc(tmp.len);
-    memcpy(txn->value.data, tmp.data, tmp.len);
-    txn->value.len = tmp.len;
-  }
-
-  if ((returnV = rlp_decode_in_list(&message, 4, &tmp)) == 1) {
-    txn->data.data = malloc(tmp.len);
-    memcpy(txn->data.data, tmp.data, tmp.len);
-    txn->data.len = tmp.len;
-  }
 }
