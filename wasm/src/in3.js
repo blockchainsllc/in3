@@ -162,6 +162,7 @@ class IN3 {
         this.ptr = 0;
         this.eth = new EthAPI(this)
         this.ipfs = new IpfsAPI(this)
+        this.btc = new BtcAPI(this)
     }
 
     /**
@@ -241,6 +242,7 @@ class IN3 {
                 case 'waiting': {
                     const req = state.request
                     function setResponse(msg, i, isError) {
+                        //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
                         in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
                     }
                     function freeRequest() {
@@ -261,6 +263,7 @@ class IN3 {
                             break;
 
                         case 'rpc':
+                            //                            console.log("req ", JSON.stringify(req, null, 2))
                             await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
                                 res => setResponse(res, i, false),
                                 err => setResponse(err.message || err, i, true)
