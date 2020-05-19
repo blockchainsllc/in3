@@ -14147,9 +14147,6 @@ impl Clone for in3_node_weight {
 pub type in3_node_weight_t = in3_node_weight;
 extern "C" {
     #[doc = " setter method for interacting with in3_node_props_t."]
-    #[doc = " @param[out] node_props"]
-    #[doc = " @param type"]
-    #[doc = " @param"]
     pub fn in3_node_props_set(
         node_props: *mut in3_node_props_t,
         type_: in3_node_props_type_t,
@@ -14228,7 +14225,7 @@ impl Clone for in3_whitelist {
     }
 }
 pub type in3_whitelist_t = in3_whitelist;
-#[doc = "represents a blockhash which was previously verified"]
+#[doc = " represents a blockhash which was previously verified"]
 #[repr(C)]
 #[derive(Debug, Copy)]
 pub struct in3_verified_hash {
@@ -14308,6 +14305,8 @@ pub struct in3_chain {
     pub whitelist: *mut in3_whitelist_t,
     #[doc = "< average block time (seconds) for this chain (calculated internally)"]
     pub avg_block_time: u16,
+    #[doc = "< this configuration will be set by the verifiers and allow to add special structs here."]
+    pub conf: *mut libc::c_void,
     pub nodelist_upd8_params: *mut in3_chain__bindgen_ty_1,
 }
 #[repr(C)]
@@ -14376,7 +14375,7 @@ impl Clone for in3_chain__bindgen_ty_1 {
 fn bindgen_test_layout_in3_chain() {
     assert_eq!(
         ::core::mem::size_of::<in3_chain>(),
-        128usize,
+        136usize,
         concat!("Size of: ", stringify!(in3_chain))
     );
     assert_eq!(
@@ -14515,8 +14514,18 @@ fn bindgen_test_layout_in3_chain() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::core::ptr::null::<in3_chain>())).nodelist_upd8_params as *const _ as usize },
+        unsafe { &(*(::core::ptr::null::<in3_chain>())).conf as *const _ as usize },
         120usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(in3_chain),
+            "::",
+            stringify!(conf)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(::core::ptr::null::<in3_chain>())).nodelist_upd8_params as *const _ as usize },
+        128usize,
         concat!(
             "Offset of field: ",
             stringify!(in3_chain),
@@ -14648,11 +14657,15 @@ pub type in3_prepare_tx = ::core::option::Option<
         new_tx: *mut *mut json_ctx_t,
     ) -> in3_ret_t::Type,
 >;
+#[doc = " definition of a signer holding funciton-pointers and data."]
 #[repr(C)]
 #[derive(Debug, Copy)]
 pub struct in3_signer {
+    #[doc = "< function pointer returning a stored value for the given key."]
     pub sign: in3_sign,
+    #[doc = "< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs."]
     pub prepare_tx: in3_prepare_tx,
+    #[doc = "< custom object whill will be passed to functions"]
     pub wallet: *mut libc::c_void,
 }
 #[test]
@@ -14711,7 +14724,6 @@ pub type in3_pay_prepare = ::core::option::Option<
     unsafe extern "C" fn(ctx: *mut libc::c_void, cptr: *mut libc::c_void) -> in3_ret_t::Type,
 >;
 #[doc = " called after receiving a parseable response with a in3-section."]
-#[doc = ""]
 pub type in3_pay_follow_up = ::core::option::Option<
     unsafe extern "C" fn(
         ctx: *mut libc::c_void,
@@ -14722,7 +14734,6 @@ pub type in3_pay_follow_up = ::core::option::Option<
     ) -> in3_ret_t::Type,
 >;
 #[doc = " free function for the custom pointer."]
-#[doc = ""]
 pub type in3_pay_free = ::core::option::Option<unsafe extern "C" fn(cptr: *mut libc::c_void)>;
 #[doc = " handles the request."]
 #[doc = ""]
@@ -14741,10 +14752,15 @@ pub type in3_pay_handle_request = ::core::option::Option<
 #[repr(C)]
 #[derive(Debug, Copy)]
 pub struct in3_pay {
+    #[doc = "< payment prepearation function."]
     pub prepare: in3_pay_prepare,
+    #[doc = "< payment function to be called after the request."]
     pub follow_up: in3_pay_follow_up,
+    #[doc = "< this function is called when the in3-section of payload of the request is built and allows the handler to add properties. ."]
     pub handle_request: in3_pay_handle_request,
+    #[doc = "< frees the custom pointer (cptr)."]
     pub free: in3_pay_free,
+    #[doc = "< custom object whill will be passed to functions"]
     pub cptr: *mut libc::c_void,
 }
 #[test]
@@ -14866,6 +14882,10 @@ impl Clone for in3_response {
     }
 }
 pub type in3_response_t = in3_response;
+#[doc = " Incubed Configuration."]
+#[doc = ""]
+#[doc = " This struct holds the configuration and also point to internal resources such as filters or chain configs."]
+#[doc = ""]
 pub type in3_t = in3_t_;
 #[doc = " request-object."]
 #[doc = ""]
@@ -14994,15 +15014,15 @@ pub enum in3_filter_type_t {
 #[repr(C)]
 #[derive(Debug, Copy)]
 pub struct in3_filter_t_ {
-    #[doc = " filter type: (event, block or pending)"]
+    #[doc = "< filter type: (event, block or pending)"]
     pub type_: in3_filter_type_t,
-    #[doc = " associated filter options"]
+    #[doc = "< associated filter options"]
     pub options: *mut libc::c_char,
-    #[doc = " block no. when filter was created OR eth_getFilterChanges was called"]
+    #[doc = "< block no. when filter was created OR eth_getFilterChanges was called"]
     pub last_block: u64,
-    #[doc = " if true the filter was not used previously"]
+    #[doc = "< if true the filter was not used previously"]
     pub is_first_usage: bool,
-    #[doc = " method to release owned resources"]
+    #[doc = "< method to release owned resources"]
     pub release: ::core::option::Option<unsafe extern "C" fn(f: *mut in3_filter_t_)>,
 }
 #[test]
@@ -15128,53 +15148,53 @@ pub type in3_filter_handler_t = in3_filter_handler_t_;
 #[repr(C)]
 #[derive(Debug, Copy)]
 pub struct in3_t_ {
-    #[doc = " number of seconds requests can be cached."]
+    #[doc = "< number of seconds requests can be cached."]
     pub cache_timeout: u32,
-    #[doc = " the limit of nodes to store in the client."]
+    #[doc = "< the limit of nodes to store in the client."]
     pub node_limit: u16,
-    #[doc = " the client key to sign requests (pointer to 32bytes private key seed)"]
+    #[doc = "< the client key to sign requests (pointer to 32bytes private key seed)"]
     pub key: *mut libc::c_void,
-    #[doc = " number of max bytes used to cache the code in memory"]
+    #[doc = "< number of max bytes used to cache the code in memory"]
     pub max_code_cache: u32,
-    #[doc = " number of number of blocks cached  in memory"]
+    #[doc = "< number of number of blocks cached  in memory"]
     pub max_block_cache: u32,
-    #[doc = " the type of proof used"]
+    #[doc = "< the type of proof used"]
     pub proof: in3_proof_t,
-    #[doc = " the number of request send when getting a first answer"]
+    #[doc = "< the number of request send when getting a first answer"]
     pub request_count: u8,
-    #[doc = " the number of signatures used to proof the blockhash."]
+    #[doc = "< the number of signatures used to proof the blockhash."]
     pub signature_count: u8,
-    #[doc = " min stake of the server. Only nodes owning at least this amount will be chosen."]
+    #[doc = "< min stake of the server. Only nodes owning at least this amount will be chosen."]
     pub min_deposit: u64,
-    #[doc = " if specified, the blocknumber *latest* will be replaced by blockNumber- specified value"]
+    #[doc = "< if specified, the blocknumber *latest* will be replaced by blockNumber- specified value"]
     pub replace_latest_block: u8,
-    #[doc = " the number of signatures in percent required for the request"]
+    #[doc = "< the number of signatures in percent required for the request"]
     pub finality: u16,
-    #[doc = " the max number of attempts before giving up"]
+    #[doc = "< the max number of attempts before giving up"]
     pub max_attempts: uint_fast16_t,
-    #[doc = " max number of verified hashes to cache"]
+    #[doc = "< max number of verified hashes to cache"]
     pub max_verified_hashes: uint_fast16_t,
-    #[doc = " specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection."]
+    #[doc = "< specifies the number of milliseconds before the request times out. increasing may be helpful if the device uses a slow connection."]
     pub timeout: u32,
-    #[doc = " servers to filter for the given chain. The chain-id based on EIP-155."]
+    #[doc = "< servers to filter for the given chain. The chain-id based on EIP-155."]
     pub chain_id: chain_id_t,
-    #[doc = " a cache handler offering 2 functions ( setItem(string,string), getItem(string) )"]
+    #[doc = "< a cache handler offering 2 functions ( setItem(string,string), getItem(string) )"]
     pub cache: *mut in3_storage_handler_t,
-    #[doc = " signer-struct managing a wallet"]
+    #[doc = "< signer-struct managing a wallet"]
     pub signer: *mut in3_signer_t,
-    #[doc = " the transporthandler sending requests"]
+    #[doc = "< the transporthandler sending requests"]
     pub transport: in3_transport_send,
-    #[doc = " a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines"]
+    #[doc = "< a bit mask with flags defining the behavior of the incubed client. See the FLAG...-defines"]
     pub flags: uint_fast8_t,
-    #[doc = " chain spec and nodeList definitions"]
+    #[doc = "< chain spec and nodeList definitions"]
     pub chains: *mut in3_chain_t,
-    #[doc = " number of configured chains"]
+    #[doc = "< number of configured chains"]
     pub chains_length: u16,
-    #[doc = " filter handler"]
+    #[doc = "< filter handler"]
     pub filters: *mut in3_filter_handler_t,
-    #[doc = " used to identify the capabilities of the node."]
+    #[doc = "< used to identify the capabilities of the node."]
     pub node_props: in3_node_props_t,
-    #[doc = " pointer to internal data"]
+    #[doc = "< pointer to internal data"]
     pub internal: *mut libc::c_void,
 }
 #[test]
@@ -15923,7 +15943,7 @@ extern "C" {
     pub fn in3_send_ctx(ctx: *mut in3_ctx_t) -> in3_ret_t::Type;
 }
 extern "C" {
-    #[doc = " tries to execute the context, but stops whenever data are required."]
+    #[doc = " execute the context, but stops whenever data are required."]
     #[doc = ""]
     #[doc = " This function should be used in order to call data in a asyncronous way,"]
     #[doc = " since this function will not use the transport-function to actually send it."]
@@ -15933,6 +15953,47 @@ extern "C" {
     #[doc = " - IN3_WAITING : provide the required data and then call in3_ctx_execute again."]
     #[doc = " - IN3_OK : success, we have a result."]
     #[doc = " - any other status = error"]
+    #[doc = ""]
+    #[doc = " ```"]
+    #[doc = " digraph G {"]
+    #[doc = "node[fontname=\"Helvetica\",   shape=Box, color=lightblue, style=filled ]"]
+    #[doc = "edge[fontname=\"Helvetica\",   style=solid,  fontsize=8 , color=grey]"]
+    #[doc = "rankdir = LR;"]
+    #[doc = ""]
+    #[doc = "RPC[label=\"RPC-Request\"]"]
+    #[doc = "CTX[label=\"in3_ctx_t\"]"]
+    #[doc = ""]
+    #[doc = "sign[label=\"sign data\",color=lightgrey, style=\"\"]"]
+    #[doc = "request[label=\"fetch data\",color=lightgrey, style=\"\"]"]
+    #[doc = ""]
+    #[doc = "exec[ label=\"in3_ctx_execute()\",color=lightgrey, style=\"\", shape=circle ]"]
+    #[doc = "free[label=\"ctx_free()\",color=lightgrey, style=\"\"]"]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = "RPC -> CTX [label=\"ctx_new()\"]"]
+    #[doc = "CTX -> exec"]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = "exec -> error [label=\"IN3_...\"]"]
+    #[doc = "exec -> response[label=\"IN3_OK\"]"]
+    #[doc = "exec -> waiting[label=\"IN3_WAITING\"]"]
+    #[doc = ""]
+    #[doc = "waiting -> sign[label=CT_SIGN]"]
+    #[doc = "waiting -> request[label=CT_RPC]"]
+    #[doc = ""]
+    #[doc = "sign -> exec [label=\"in3_req_add_response()\"]"]
+    #[doc = "request -> exec[label=\"in3_req_add_response()\"]"]
+    #[doc = ""]
+    #[doc = "response -> free"]
+    #[doc = "error->free"]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = "{ rank = same; exec, sign, request }"]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = "}"]
+    #[doc = " ```"]
     #[doc = ""]
     #[doc = " Here is a example how to use this function:"]
     #[doc = ""]
@@ -15983,6 +16044,10 @@ extern "C" {
     #[doc = "return ret;"]
     #[doc = "}"]
     #[doc = " ```"]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = ""]
     pub fn in3_ctx_execute(ctx: *mut in3_ctx_t) -> in3_ret_t::Type;
 }
 extern "C" {
@@ -16129,7 +16194,7 @@ pub enum hasher_t {
     hasher_sapling_preimage = 13,
 }
 extern "C" {
-    pub fn sign(
+    pub fn ec_sign_pk(
         type_: d_signature_type_t,
         message: bytes_t,
         pk: *mut u8,
@@ -16149,7 +16214,7 @@ extern "C" {
     pub fn sign_tx(tx: *mut d_token_t, ctx: *mut in3_ctx_t) -> bytes_t;
 }
 extern "C" {
-    pub fn sign_hash(
+    pub fn ec_sign_pk_hash(
         message: *mut u8,
         len: usize,
         pk: *mut u8,
@@ -16158,7 +16223,7 @@ extern "C" {
     ) -> in3_ret_t::Type;
 }
 extern "C" {
-    pub fn sign_raw(message: *mut u8, pk: *mut u8, dst: *mut u8) -> in3_ret_t::Type;
+    pub fn ec_sign_pk_raw(message: *mut u8, pk: *mut u8, dst: *mut u8) -> in3_ret_t::Type;
 }
 extern "C" {
     #[doc = " simply signer with one private key."]

@@ -53,11 +53,11 @@
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 
+#include "../../src/signer/pk-signer/signer-priv.h"
+#include "../../src/signer/pk-signer/signer.h"
 #include "../../src/third-party/crypto/ecdsa.h"
 #include "../../src/third-party/crypto/secp256k1.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
-#include "../../src/verifier/eth1/basic/signer-priv.h"
-#include "../../src/verifier/eth1/basic/signer.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
 #include <stdio.h>

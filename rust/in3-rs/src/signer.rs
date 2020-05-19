@@ -14,7 +14,7 @@ pub enum SignatureType {
 pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     let data_ = data as *mut u8;
     let dst: *mut u8 = libc::malloc(65) as *mut u8;
-    let error = in3_sys::sign_hash(data_, len, pk, in3_sys::hasher_t::hasher_sha3k, dst);
+    let error = in3_sys::ec_sign_pk_hash(data_, len, pk, in3_sys::hasher_t::hasher_sha3k, dst);
     if error < 0 {
         panic!("Sign error{:?}", error);
     }
@@ -42,7 +42,6 @@ pub struct SignerRust<'a> {
 
 impl Signer for SignerRust<'_> {
     fn sign(&mut self, msg: &str) -> *const c_char {
-        // println!("{:?}",msg);
         let msg_hex = msg.from_hex().unwrap();
         let pk_hex = self.pk.from_hex().unwrap();
         let mut hasher = Keccak256Full::new();
@@ -60,8 +59,6 @@ impl Signer for SignerRust<'_> {
         let signature_arr = signature.serialize();
         let ret_s = signature_arr.as_ptr();
         let ret_c_char = ret_s as *const c_char;
-        let sign_str = signature_hex_string(signature_arr);
-        println!("{:?}",sign_str);
         ret_c_char
     }
 }

@@ -64,7 +64,7 @@
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
-#include "../../verifier/eth1/basic/signer.h"
+#include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/chainspec.h"

@@ -47,6 +47,7 @@ endif()
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
+add_subdirectory(src/signer/pk-signer)
 
 if( LEDGER_NANO AND HIDAPI )
   add_subdirectory(src/signer/ledger-nano/signer)
@@ -66,6 +67,7 @@ if (IN3_LIB)
     set(IN3_LIBS
         $<TARGET_OBJECTS:core_o>
         $<TARGET_OBJECTS:init_o>
+        $<TARGET_OBJECTS:pk_signer_o>
         $<TARGET_OBJECTS:crypto_o>
     )
 
