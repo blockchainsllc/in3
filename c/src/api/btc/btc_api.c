@@ -113,7 +113,7 @@ btc_transaction_t* btc_get_transaction_data(in3_t* in3, bytes32_t txid) {
   rpc_init;
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
-  sb_add_chars(params, "\",false");
+  sb_add_chars(params, "\",true");
   rpc_exec("getrawtransaction", btc_transaction_t*, to_tx(result));
   return NULL;
 }
