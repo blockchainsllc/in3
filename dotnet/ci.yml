@@ -17,11 +17,13 @@ dotnet:
   tags:
     - short-jobs
   script:
+    - mkdir -p dotnet/In3/runtimes/linux-x86/native
     - mkdir -p dotnet/In3/runtimes/linux-x64/native
     - mkdir -p dotnet/In3/runtimes/linux-arm64/native
     - mkdir -p dotnet/In3/runtimes/osx-x64/native
     - mkdir -p dotnet/In3/runtimes/win-x64/native
     - cp mac_build/lib/libin3.dylib dotnet/In3/runtimes/osx-x64/native/libin3.dylib
+    - cp x64_build/lib/libin3.so dotnet/In3/runtimes/linux-x86/native/libin3.so
     - cp x64_build/lib/libin3.so dotnet/In3/runtimes/linux-x64/native/libin3.so
     - cp win_jni/lib/libin3_jni.so dotnet/In3/runtimes/win-x64/native/libin3.dll
     - cp arm_jni_build/lib/libin3.so dotnet/In3/runtimes/linux-arm64/native/libin3.so
