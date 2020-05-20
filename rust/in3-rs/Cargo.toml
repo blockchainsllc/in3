@@ -2,7 +2,7 @@
 name = "in3"
 version = "0.0.1"
 authors = ["slock.it <products@slock.it>"]
-description = "High level bindings to IN3 library"
+description = "High-level bindings to IN3 library"
 license = "AGPL OR Commercial license"
 homepage = "https://slock.it/incubed/"
 documentation = "https://in3.readthedocs.io"
