@@ -1,15 +1,20 @@
 [package]
 name = "in3"
-version = "0.1.0"
-authors = ["slock.it <in3@slock.it>"]
+version = "0.0.1"
+authors = ["slock.it <products@slock.it>"]
 description = "High level bindings to IN3 library"
+license = "AGPL OR Commercial license"
+homepage = "https://slock.it/incubed/"
+documentation = "https://in3.readthedocs.io"
+repository = "https://github.com/slockit/in3-c"
+readme = "README.md"
 edition = "2018"
 
 [features]
 blocking = ["async-std"]
 
 [dependencies]
-in3-sys = { path = "../in3-sys" }
+in3-sys = { path = "../in3-sys", version = "0.0.1" }
 libc = { version = "0.2", default-features = false }
 serde_json = "1.0"
 surf = "1.0.3"
