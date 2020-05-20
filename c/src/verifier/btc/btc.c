@@ -342,6 +342,8 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
       if (!equals_hex(bytes(hash, 32), d_get_stringk(vc->result, key("nextblockhash"))))
         return vc_err(vc, "Invalid nextblockhash");
     }
+
+    if (*block_header != d_get_intk(vc->request, key("version"))) return vc_err(vc, "Invalid version");
   }
 
   return IN3_OK;
