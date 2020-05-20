@@ -3,6 +3,7 @@
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/tommath/tommath.h"
+#include "btc_types.h"
 #include <string.h>
 
 static void rev_hex(char* hex, uint8_t* dst, int l) {
@@ -108,10 +109,24 @@ int btc_get_transactions(bytes_t block, bytes_t* dst) {
 
 bytes_t btc_get_transaction(uint8_t* data) {
   uint64_t len;
-  uint8_t* p = data + 4 + decode_var_int(data + 4, &len);
+  bool     witness = data[4] == 0 && data[5] == 1;
+  uint8_t* p       = data + (witness ? 6 : 4);
+  p += decode_var_int(p, &len);
   for (unsigned int i = 0; i < len; i++) p += btc_get_txinput(p).len;
+  int txin = witness ? (int) len : 0;
+
   p += decode_var_int(p, &len);
   for (unsigned int i = 0; i < len; i++) p += btc_get_txoutput(p).len;
+
+  // now read witnesses
+  for (int i = 0; i < txin; i++) {
+    p += decode_var_int(p, &len);
+    int n = (int) len;
+    for (int j = 0; j < n; j++) {
+      p += decode_var_int(p, &len);
+      p += len;
+    }
+  }
   return bytes(data, (p - data) + 4);
 }
 
