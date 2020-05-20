@@ -88,3 +88,5 @@ deploy-rust:
     - cargo login $CARGO_TOKEN
     - cd in3-sys/ && cargo publish --allow-dirty
     - cd ../in3-rs/ && cargo publish --allow-dirty
+  tags:
+    - mac-mini-runner
