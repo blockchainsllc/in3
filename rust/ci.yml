@@ -76,6 +76,7 @@ rust:
     - mac-mini-runner
 
 deploy-rust:
+  stage: deploy
   needs:
     - rust
   extends: .only_deploy
