@@ -26,7 +26,8 @@ dockerhub-deploy:
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - export IMAGE_TAG="slockit/in3:$IMAGE_VERSION"
-    - docker build -t $COMMIT_IMAGE_TAG .
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $COMMIT_IMAGE_TAG .
     - docker tag $COMMIT_IMAGE_TAG $IMAGE_TAG
     - docker push $IMAGE_TAG
     - docker tag $IMAGE_TAG slockit/in3:latest
