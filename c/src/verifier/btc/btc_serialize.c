@@ -103,11 +103,11 @@ int btc_get_transaction_count(bytes_t block) {
 int btc_get_transactions(bytes_t block, bytes_t* dst) {
   uint64_t count;
   uint8_t* p = block.data + 80 + decode_var_int(block.data + 80, &count);
-  for (unsigned int i = 0; i < count; i++) p += (dst[i] = btc_get_transaction(p)).len;
+  for (unsigned int i = 0; i < count; i++) p += (dst[i] = btc_get_transaction_end(p)).len;
   return count;
 }
 
-bytes_t btc_get_transaction(uint8_t* data) {
+bytes_t btc_get_transaction_end(uint8_t* data) {
   uint64_t len;
   bool     witness = data[4] == 0 && data[5] == 1;
   uint8_t* p       = data + (witness ? 6 : 4);

@@ -58,7 +58,7 @@ void test_btc_api_get_transaction() {
   bytes32_t txid;
   hex_to_bytes("83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1", -1, txid, 32);
 
-  btc_transaction_t* data = btc_get_transaction_data(in3, txid);
+  btc_transaction_t* data = btc_get_transaction(in3, txid);
   TEST_ASSERT_NOT_NULL(data);
   TEST_ASSERT_EQUAL_UINT32(1, data->version);
   TEST_ASSERT_EQUAL_UINT32(247, data->size);
@@ -79,7 +79,35 @@ void test_btc_api_get_transaction() {
   TEST_ASSERT_EQUAL_UINT32(1, data->vout[1].n);
   TEST_ASSERT_EQUAL_HEX_BYTES("a914d129842dbe1ee73e69d14d54a8a62784877fb83e87", data->vout->script_pubkey.data, data->vout->script_pubkey.len, "wrong vout-script");
   TEST_ASSERT_EQUAL_UINT64(11000000, data->vout->value);
+  free(data);
 
+  in3_free(in3);
+}
+
+void test_btc_api_get_blockheader() {
+  in3_t* in3 = in3_init_test();
+
+  bytes32_t hash;
+  hex_to_bytes("00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b", -1, hash, 32);
+
+  btc_blockheader_t* data = btc_get_blockheader(in3, hash);
+  TEST_ASSERT_NOT_NULL(data);
+  TEST_ASSERT_EQUAL_UINT32(536870912, data->version);
+  TEST_ASSERT_EQUAL_UINT32(15, data->confirmations);
+  TEST_ASSERT_EQUAL_UINT32(631076, data->height);
+  TEST_ASSERT_EQUAL_UINT32(1589991753, data->time);
+  TEST_ASSERT_EQUAL_UINT32(2921687714, data->nonce);
+  TEST_ASSERT_EQUAL_UINT32(2339, data->n_tx);
+
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b", data->hash, 32, "wrong hash");
+  TEST_ASSERT_EQUAL_HEX_BYTES("18f5756c66b14aa8bace933001b16d78bd89a16612468122442559ce9f296eb6", data->merkleroot, 32, "wrong merkleroot");
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000000000000000000000000000000000000000f9f574f8d39680a92ad1bdc", data->chainwork, 32, "wrong chainwork");
+  TEST_ASSERT_EQUAL_HEX_BYTES("000000000000000000061e12d6a29bd0175a6045dfffeafd950c0513f9b82c80", data->previous_hash, 32, "wrong previous hash");
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d", data->next_hash, 32, "wrong next hash");
+  TEST_ASSERT_EQUAL_HEX_BYTES("171297f6", data->bits, 4, "wrong bits");
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae", data->data, 80, "wrong data");
+
+  free(data);
   in3_free(in3);
 }
 
@@ -91,6 +119,7 @@ int main() {
   in3_log_set_quiet(true);
 
   TESTS_BEGIN();
+  RUN_TEST(test_btc_api_get_blockheader);
   RUN_TEST(test_btc_api_get_transaction);
   return TESTS_END();
 }

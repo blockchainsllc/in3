@@ -80,7 +80,25 @@ typedef struct btc_transaction {
   uint32_t               blocktime;
 } btc_transaction_t;
 
+typedef struct btc_blockheader {
+  bytes32_t hash;
+  uint32_t  confirmations;
+  uint32_t  height;
+  uint32_t  version;
+  bytes32_t merkleroot;
+  uint32_t  time;
+  uint32_t  nonce;
+  uint8_t   bits[4];
+  bytes32_t chainwork;
+  uint32_t  n_tx;
+  bytes32_t previous_hash;
+  bytes32_t next_hash;
+  uint8_t   data[80];
+} btc_blockheader_t;
+
 bytes_t*           btc_get_transaction_bytes(in3_t* in3, bytes32_t txid);
-btc_transaction_t* btc_get_transaction_data(in3_t* in3, bytes32_t txid);
+btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid);
+btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash);
+bytes_t*           btc_get_blockheader_bytes(in3_t* in3, bytes32_t blockhash);
 
 #endif //IN3_BTC_API_H

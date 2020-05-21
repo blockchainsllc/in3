@@ -1234,6 +1234,25 @@ export declare interface BtcTransaction {
     vout: BtcTransactionOutput[]
 
 }
+export interface BTCBlockHeader {
+    hash: string,
+    confirmations: number,
+    height: number,
+    version: number,
+    versionHex: string,
+    merkleroot: string,
+    time: string,
+    mediantime: string,
+    nonce: number,
+    bits: string,
+    difficulty: number, no
+    chainwork: string,
+    nTx: number,
+    previousblockhash: string,
+    nextblockhash: string
+}
+
+
 
 /**
  * API for handling BitCoin data
@@ -1244,4 +1263,10 @@ export declare interface BtcAPI<BufferType> {
 
     /** retrieves the serialized transaction (bytes) */
     getTransactionData(txid: Hash): Promise<BufferType>
+
+    /** retrieves the blockheader and returns the data as json. */
+    getBlockHeader(blockHash: Hash): Promise<BtcTransaction>
+
+    /** retrieves the serialized blockheader (bytes) */
+    getBlockHeaderData(blockHash: Hash): Promise<BufferType>
 }

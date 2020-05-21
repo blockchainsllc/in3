@@ -34,6 +34,7 @@
 
 #include "btc_api.h"
 #include "../../core/util/mem.h"
+#include "../../verifier/btc/btc_serialize.h"
 #include "../../verifier/btc/btc_types.h"
 #include "../utils/api_utils_priv.h"
 
@@ -108,12 +109,49 @@ static btc_transaction_t* to_tx(d_token_t* t) {
 
   return res;
 }
+static btc_blockheader_t* to_blockheader(d_token_t* t) {
+  if (t == NULL || d_type(t) == T_NULL) return NULL;
+  btc_blockheader_t* res = _malloc(sizeof(btc_blockheader_t));
+  hex_to_bytes(d_get_string(t, "hash"), 64, res->hash, 32);
+  hex_to_bytes(d_get_string(t, "merkleroot"), 64, res->merkleroot, 32);
+  hex_to_bytes(d_get_string(t, "bits"), 8, res->bits, 4);
+  hex_to_bytes(d_get_string(t, "chainwork"), 64, res->chainwork, 32);
+  hex_to_bytes(d_get_string(t, "previousblockhash"), 64, res->previous_hash, 32);
+  hex_to_bytes(d_get_string(t, "nextblockhash"), 64, res->next_hash, 32);
+  btc_serialize_block_header(t, res->data);
 
-btc_transaction_t* btc_get_transaction_data(in3_t* in3, bytes32_t txid) {
+  res->confirmations = d_get_int(t, "confirmations");
+  res->height        = d_get_int(t, "height");
+  res->version       = d_get_int(t, "version");
+  res->time          = d_get_int(t, "time");
+  res->nonce         = d_get_int(t, "nonce");
+  res->n_tx          = d_get_int(t, "nTx");
+
+  return res;
+}
+
+btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid) {
   rpc_init;
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
   sb_add_chars(params, "\",true");
   rpc_exec("getrawtransaction", btc_transaction_t*, to_tx(result));
   return NULL;
+}
+
+btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash) {
+  rpc_init;
+  sb_add_char(params, '\"');
+  add_btc_hex(params, bytes(blockhash, 32));
+  sb_add_chars(params, "\",true");
+  rpc_exec("getblockheader", btc_blockheader_t*, to_blockheader(result));
+  return NULL;
+}
+
+bytes_t* btc_get_blockheader_bytes(in3_t* in3, bytes32_t blockhash) {
+  rpc_init;
+  sb_add_char(params, '\"');
+  add_btc_hex(params, bytes(blockhash, 32));
+  sb_add_chars(params, "\",false");
+  rpc_exec("getblockheader", bytes_t*, hex_to_data(d_string(result)));
 }

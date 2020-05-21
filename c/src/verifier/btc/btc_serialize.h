@@ -30,7 +30,7 @@ void     btc_target_from_block(bytes_t block, bytes32_t target);
 uint32_t decode_var_int(uint8_t* p, uint64_t* val);
 int      btc_get_transaction_count(bytes_t block);
 int      btc_get_transactions(bytes_t block, bytes_t* dst);
-bytes_t  btc_get_transaction(uint8_t* data);
+bytes_t  btc_get_transaction_end(uint8_t* data);
 bytes_t  btc_get_txinput(uint8_t* data);
 bytes_t  btc_get_txoutput(uint8_t* data);
 
