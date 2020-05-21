@@ -242,8 +242,20 @@ class IN3 {
                 case 'waiting': {
                     const req = state.request
                     function setResponse(msg, i, isError) {
-                        //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
-                        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+                        if (msg.length > 5000) {
+                            // here we pass the string as pointer using malloc before
+                            const len = (msg.length << 2) + 1;
+                            const ptr = in3w.ccall('imalloc', 'number', ['number'], [len])
+                            if (!ptr)
+                                throw new Error('Could not allocate memory (' + len + ')')
+                            stringToUTF8(msg, ptr, len);
+                            in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'number'], [req.ctx, req.ptr, i, isError, ptr])
+                            in3w.ccall('ifree', 'void', ['number'], [ptr])
+
+                        }
+                        else
+                            in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+                        // console.log((isError ? 'ERROR ' : '') + ' response  :', msg.substr(0, 10))
                     }
                     function freeRequest() {
                         in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
