@@ -90,16 +90,16 @@ rust:
   tags:
     - mac-mini-runner
 
-deploy-sys:
+deploy_sys:
   extends: .deploy_crate
   variables:
     PKG_DIR: "in3-sys"
   needs:
     - rust
 
-deploy-in3:
+deploy_in3:
   extends: .deploy_crate
   variables:
     PKG_DIR: "in3-rs"
   needs:
-    - deploy-sys
+    - deploy_sys
