@@ -17,10 +17,11 @@
     paths:
       - .cache/pip
       - venv/
-  before_script:
-    - pip3 install virtualenv
-    - virtualenv venv
-    - source venv/bin/activate
+
+.cache_scipt_before: &cache_scipt_before
+- pip3 install virtualenv
+- virtualenv venv
+- source venv/bin/activate
 
 .cache_setup_with_only_python:
   extends: .only_python
@@ -28,10 +29,7 @@
     paths:
       - .cache/pip
       - venv/
-    before_script:
-      - pip3 install virtualenv
-      - virtualenv venv
-      - source venv/bin/activate
+
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -71,6 +69,8 @@ python_arm:
   needs:
     - python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
@@ -87,6 +87,8 @@ python_win:
   needs:
     - python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
@@ -103,6 +105,8 @@ python_macos:
   needs:
     - python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
@@ -119,6 +123,8 @@ python_linux:
     - python
   image: python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
