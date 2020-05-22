@@ -37,6 +37,21 @@
     - export UPDATE_IN3_BINDINGS=1
     - cross run --example custom_transport --target $TARGET --release --jobs 8
 
+.deploy_crate:
+  stage: deploy
+  #  extends: .only_deploy
+  script:
+    - mkdir -p rust/in3-sys/in3-core/c
+    - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
+    - cp CMakeLists.txt rust/in3-sys/in3-core/
+    - cd rust/
+    - cargo login $CARGO_TOKEN
+    - cd $PKG_DIR && cargo publish --allow-dirty
+  tags:
+    - mac-mini-runner
+  variables:
+    PKG_DIR: ""
+
 rust_linux:
   extends: .rust_multiarch
   variables:
@@ -75,18 +90,16 @@ rust:
   tags:
     - mac-mini-runner
 
-deploy-rust:
-  stage: deploy
+deploy-sys:
+  extends: .deploy_crate
+  variables:
+    PKG_DIR: "in3-sys"
   needs:
     - rust
-#  extends: .only_deploy
-  script:
-    - mkdir -p rust/in3-sys/in3-core/c
-    - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
-    - cp CMakeLists.txt rust/in3-sys/in3-core/
-    - cd rust/
-    - cargo login $CARGO_TOKEN
-    - cd in3-sys/ && cargo publish --allow-dirty
-    - cd ../in3-rs/ && cargo publish --allow-dirty
-  tags:
-    - mac-mini-runner
+
+deploy-in3:
+  extends: .deploy_crate
+  variables:
+    PKG_DIR: "in3-rs"
+  needs:
+    - deploy-sys
