@@ -14,6 +14,15 @@
 
 .cache_setup:
   cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip
+      - venv/
+
+.cache_setup_with_only_python:
+  extends: .only_python
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
     paths:
       - .cache/pip
       - venv/
@@ -23,16 +32,6 @@
 - virtualenv venv
 - source venv/bin/activate
 
-.cache_setup_with_only_python:
-  extends: .only_python
-  cache:
-    paths:
-      - .cache/pip
-      - venv/
-
-
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 python:
   image: python
@@ -82,13 +81,10 @@ python_arm:
     - arm
 
 python_win:
-  extends: .cache_setup_with_only_python
   allow_failure: true
   needs:
     - python
   stage: python
-  before_script:
-    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt

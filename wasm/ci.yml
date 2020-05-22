@@ -4,6 +4,13 @@
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
       when: manual
 
+.cache_setup:
+  # Caches per branch - per job
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .npm/
+
 wasm:
   image: docker.slock.it/build-images/cmake:clang11
   needs: []
@@ -21,7 +28,6 @@ wasm:
     - make -j8
     - cp ../wasm_build_min/bin/*.wasm bin/in3w_min.wasm
     - cp ../wasm_build_min/bin/*.wasm module/in3w_min.wasm
-
   artifacts:
     paths:
       - wasm_build/module
@@ -38,7 +44,6 @@ asmjs:
     - cd asmjs_build
     - emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
-
   artifacts:
     paths:
       - asmjs_build/module
@@ -51,6 +56,7 @@ test_wasm:
   stage: wasm
   tags:
     - short-jobs
+  extends: .cache_setup
   script:
     - mv wasm_build build
     - cd wasm/test
@@ -61,6 +67,7 @@ test_wasm:
     reports:
       junit: wasm/test/mocha.xml
 
+
 test_asmjs:
   image: docker.slock.it/build-images/node:10-alpine
   needs:
@@ -68,6 +75,7 @@ test_asmjs:
   stage: wasm
   tags:
     - short-jobs
+  extends: .cache_setup
   script:
     - mv asmjs_build build
     - cd wasm/test
