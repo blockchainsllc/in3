@@ -75,12 +75,13 @@ rust:
   tags:
     - mac-mini-runner
 
-deploy-rust:
+deploy_rust:
   stage: deploy
   needs:
     - rust
   extends: .only_deploy
   before_script:
+    - cargo install cargo-release
     - cargo login $CARGO_TOKEN
   script:
     - mkdir -p rust/in3-sys/in3-core/c
