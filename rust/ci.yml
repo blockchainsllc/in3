@@ -80,12 +80,13 @@ deploy-rust:
   needs:
     - rust
   extends: .only_deploy
+  before_script:
+    - cargo login $CARGO_TOKEN
   script:
     - mkdir -p rust/in3-sys/in3-core/c
     - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
-    - cargo login $CARGO_TOKEN
     - cd in3-sys/ && cargo publish --allow-dirty || true
     - cd ../in3-rs/ && cargo publish --allow-dirty
   tags:
