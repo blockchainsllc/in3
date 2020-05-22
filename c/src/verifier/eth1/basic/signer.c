@@ -37,6 +37,8 @@
 #include "../../../core/util/mem.h"
 
 #if defined(LEDGER_NANO)
+#include "../../../signer/ledger-nano/signer/ethereum_apdu_client.h"
+#include "../../../signer/ledger-nano/signer/ethereum_apdu_client_priv.h"
 #include "../../../signer/ledger-nano/signer/ledger_signer.h"
 #include "../../../signer/ledger-nano/signer/ledger_signer_priv.h"
 #endif
@@ -165,7 +167,7 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
 #if defined(LEDGER_NANO)
-      if (!ctx->client->signer || (ctx->client->signer->sign != eth_sign && ctx->client->signer->sign != eth_ledger_sign)) {
+      if (!ctx->client->signer || (ctx->client->signer->sign != eth_sign && ctx->client->signer->sign != eth_ledger_sign && ctx->client->signer->sign != eth_ledger_sign_txn)) {
 #else
       if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
 #endif
@@ -182,6 +184,12 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
         uint8_t bip32[32];
         memcpy(bip32, ctx->client->signer->wallet, 5);
         eth_ledger_get_public_key(bip32, public_key);
+
+      } else if (ctx->client->signer->sign == eth_ledger_sign_txn) {
+        uint8_t bip32[32];
+        memcpy(bip32, ctx->client->signer->wallet, 5);
+
+        eth_ledger_get_public_addr(bip32, public_key);
 
       } else {
         ecdsa_get_public_key65(&secp256k1, ctx->client->signer->wallet, public_key);

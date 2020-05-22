@@ -42,6 +42,9 @@
 
 extern uint8_t CLA;
 extern uint8_t INS_GET_PUBLIC_KEY;
+extern uint8_t INS_GET_PUB_ADDR;
+extern uint8_t INS_SIGN_MSG;
+extern uint8_t INS_SIGN_TX;
 extern uint8_t INS_SIGN;
 extern uint8_t P1_MORE;
 extern uint8_t P1_FINAL;

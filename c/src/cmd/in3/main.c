@@ -61,6 +61,7 @@
 #include "../../core/util/colors.h"
 
 #if defined(LEDGER_NANO)
+#include "../../signer/ledger-nano/signer/ethereum_apdu_client.h"
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
@@ -699,7 +700,7 @@ int main(int argc, char* argv[]) {
 #if defined(LEDGER_NANO)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
         hex_to_bytes(argv[++i], -1, path, 5);
-        eth_ledger_set_signer(c, path);
+        eth_ledger_set_signer_txn(c, path);
       }
 #else
       die("path option not supported currently ");

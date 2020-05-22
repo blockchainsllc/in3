@@ -36,7 +36,7 @@
 
 #include "../../../core/client/client.h"
 
-in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key, uint8_t* pub_addr);
+void      read_bip32_path(uint8_t path_length, const uint8_t* path, uint32_t* bip32_path);
 in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
-
+void      set_command_params_eth();
 #endif

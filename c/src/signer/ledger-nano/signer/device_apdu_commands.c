@@ -10,13 +10,16 @@
 
 static uint8_t CHANNEL[] = {0x01, 0x01};
 
-uint8_t CLA                = 0x80;
-uint8_t INS_GET_PUBLIC_KEY = 0x04;
-uint8_t INS_SIGN           = 0x02;
-uint8_t P1_MORE            = 0x00;
-uint8_t P1_FINAL           = 0X80;
-uint8_t P2_FINAL           = 0X00;
-uint8_t TAG                = 0x05;
+uint8_t CLA;
+uint8_t INS_GET_PUBLIC_KEY;
+uint8_t INS_GET_PUB_ADDR;
+uint8_t INS_SIGN_MSG;
+uint8_t INS_SIGN_TX;
+uint8_t INS_SIGN;
+uint8_t P1_MORE;
+uint8_t P1_FINAL;
+uint8_t P2_FINAL;
+uint8_t TAG;
 
 void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd) {
 
@@ -77,7 +80,7 @@ uint16_t bytes_to_len(uint8_t* buf) {
 
 void read_hid_response(hid_device* handle, bytes_t* response) {
   uint8_t read_chunk[64];
-  uint8_t read_buf[255];
+  uint8_t read_buf[512];
   int     index_counter         = 0;
   int     bytes_to_read         = 0;
   int     total_bytes_available = 0;

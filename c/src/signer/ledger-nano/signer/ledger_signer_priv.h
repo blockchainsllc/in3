@@ -37,32 +37,12 @@
 #include "../../../core/client/client.h"
 #include "../../../third-party/crypto/ecdsa.h"
 #include "../../../third-party/crypto/secp256k1.h"
+#include "types.h"
 
-#define LEDGER_NANOS_VID 0x2C97
-#define LEDGER_NANOS_PID 0x1001
-
-typedef enum CURVE_CODE_ {
-  IDM_ED        = 0,
-  IDM_SECP256K1 = 1,
-  IDM_SECP256R1 = 2,
-  IDM_NO_CURVE  = 255,
-} CURVE_CODE;
-
-typedef struct TXN_ {
-  bytes_t nonce;
-  bytes_t gasprice;
-  bytes_t startgas;
-  bytes_t to;
-  bytes_t value;
-  bytes_t data;
-  bytes_t v; //chain id
-  bytes_t r;
-  bytes_t s;
-} TXN;
-
-void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
-int       get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);
 in3_ret_t is_ledger_device_connected();
 in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+void      set_command_params();
+void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
+int       get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);
 
 #endif
