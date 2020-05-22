@@ -12,6 +12,30 @@
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
       when: manual
 
+.cache_setup:
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+  before_script:
+    - pip3 install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+
+.cache_setup_with_only_python:
+  extends: .only_python
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+    before_script:
+      - pip3 install virtualenv
+      - virtualenv venv
+      - source venv/bin/activate
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
 python:
   image: python
   stage: bindings
@@ -21,6 +45,7 @@ python:
     - gcc8
     - arm_jni
     - gcc8-x86
+  extends: .cache_setup
   tags:
     - short-jobs
   script:
@@ -42,7 +67,7 @@ python:
 python_arm:
   allow_failure: true
   image: python
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   needs:
     - python
   stage: python
@@ -57,7 +82,7 @@ python_arm:
     - arm
 
 python_win:
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   allow_failure: true
   needs:
     - python
@@ -73,7 +98,7 @@ python_win:
     - windows
 
 python_macos:
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   allow_failure: true
   needs:
     - python
@@ -89,7 +114,7 @@ python_macos:
     - mac-mini-runner
 
 python_linux:
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   needs:
     - python
   image: python
