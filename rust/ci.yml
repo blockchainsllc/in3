@@ -84,7 +84,7 @@ deploy-rust:
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
     - cargo login $CARGO_TOKEN
-    - cd in3-sys/ && cargo publish --allow-dirty
+    - cd in3-sys/ && cargo publish --allow-dirty || true
     - cd ../in3-rs/ && cargo publish --allow-dirty
   tags:
     - mac-mini-runner
