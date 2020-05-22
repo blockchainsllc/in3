@@ -77,6 +77,8 @@ rust:
 
 deploy-rust:
   stage: deploy
+  needs:
+    - rust
   #  extends: .only_deploy
   script:
     - mkdir -p rust/in3-sys/in3-core/c
