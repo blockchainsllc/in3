@@ -79,7 +79,7 @@ deploy_rust:
   stage: deploy
   needs:
     - rust
-#  extends: .only_deploy
+  extends: .only_deploy
   before_script:
     - cargo install cargo-release
     - cargo login $CARGO_TOKEN
