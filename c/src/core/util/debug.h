@@ -66,7 +66,7 @@ extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
 
 //#define assunme(var,expr)
 
-#ifdef ASSERTIONS
+#if defined(ASSERTIONS) || defined(DEBUG)
 #define _assert(exp) assert(exp)
 #else
 #define _assert(exp)
