@@ -43,10 +43,8 @@
 #include <string.h>
 
 #include "debug.h"
-// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
-#if UINTPTR_MAX == 0xFFFF
-#error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
-#endif
+
+verify(sizeof(void*) >= 4); // make sure the pointer is at least 32 bytes, since we use it to store T_INTEGERS.
 
 #ifndef IN3_DONT_HASH_KEYS
 static uint8_t __track_keys = 0;
@@ -368,7 +366,7 @@ NONULL_FOR((1))
 d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
-    _assert(jp->result == NULL);
+    _assert(jp->result != NULL);
     jp->allocated <<= 1;
   }
   d_token_t* n = jp->result + jp->len;
