@@ -42,9 +42,10 @@
 #include "../../../core/client/verifier.h"
 
 /** entry-function to execute the verification context. */
-in3_ret_t in3_verify_eth_nano(in3_vctx_t* v);
+NONULL in3_ret_t in3_verify_eth_nano(in3_vctx_t* v);
 
 /** verifies a blockheader. */
+NONULL_FOR((1, 2))
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash);
 
 /** 
@@ -54,17 +55,17 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
  * This is based on the signatiures in the request-config.
  * 
  */
-int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig);
+NONULL int eth_verify_signature(in3_vctx_t* vc, bytes_t* msg_hash, d_token_t* sig);
 
 /**
  *  returns the address of the signature if the msg_hash is correct
  */
-bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig);
+NONULL bytes_t* ecrecover_signature(bytes_t* msg_hash, d_token_t* sig);
 
 /**
  * verifies a transaction receipt.
  */
-in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
+NONULL in3_ret_t eth_verify_eth_getTransactionReceipt(in3_vctx_t* vc, bytes_t* tx_hash);
 
 /**
  * verifies the nodelist.

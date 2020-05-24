@@ -84,19 +84,19 @@ NONULL in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, 
  */
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain);
 // weights
-void in3_ctx_free_nodes(node_match_t* c);
-int  ctx_nodes_len(node_match_t* root);
-bool ctx_is_method(const in3_ctx_t* ctx, const char* method);
+NONULL void in3_ctx_free_nodes(node_match_t* c);
+int         ctx_nodes_len(node_match_t* root);
+NONULL bool ctx_is_method(const in3_ctx_t* ctx, const char* method);
 
-static inline bool nodelist_first_upd8(const in3_chain_t* chain) {
+NONULL static inline bool nodelist_first_upd8(const in3_chain_t* chain) {
   return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block == 0);
 }
 
-static inline bool nodelist_not_first_upd8(const in3_chain_t* chain) {
+NONULL static inline bool nodelist_not_first_upd8(const in3_chain_t* chain) {
   return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != 0);
 }
 
-static inline void blacklist_node_addr(const in3_chain_t* chain, const address_t node_addr, uint64_t secs_from_now) {
+NONULL static inline void blacklist_node_addr(const in3_chain_t* chain, const address_t node_addr, uint64_t secs_from_now) {
   for (int i = 0; i < chain->nodelist_length; ++i)
     if (!memcmp(chain->nodelist[i].address->data, node_addr, chain->nodelist[i].address->len))
       chain->weights[i].blacklisted_until = in3_time(NULL) + secs_from_now;

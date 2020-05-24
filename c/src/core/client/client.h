@@ -579,7 +579,7 @@ NONULL void in3_req_add_response(
 );
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
-NONNULL((1, 4))
+NONULL_FOR((1, 4))
 in3_ret_t in3_client_register_chain(
     in3_t*           client,      /**< [in] the pointer to the incubed client config. */
     chain_id_t       chain_id,    /**< [in] the chain id. */
@@ -675,7 +675,7 @@ void in3_set_default_signer(
  * create a new signer-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
-NONNULL((1))
+NONULL_FOR((1))
 in3_signer_t* in3_create_signer(
     in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
     in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
@@ -686,7 +686,7 @@ in3_signer_t* in3_create_signer(
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
-NONNULL((1, 2, 3, 4))
+NONULL_FOR((1, 2, 3, 4))
 in3_storage_handler_t* in3_set_storage_handler(
     in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/

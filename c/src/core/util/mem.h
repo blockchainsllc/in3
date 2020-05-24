@@ -54,7 +54,7 @@
 #define _NOINLINE_ __attribute__((noinline))
 #endif
 
-#define NONNULL(args) __attribute__((nonnull args))
+#define NONULL_FOR(args) __attribute__((nonnull args))
 #define NONULL __attribute__((nonnull))
 
 #ifndef UNUSED_VAR

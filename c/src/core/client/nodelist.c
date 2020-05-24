@@ -555,7 +555,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   }
 
   *nodes = first;
-  in3_ctx_free_nodes(found);
+  if (found) in3_ctx_free_nodes(found);
 
   // select them based on random
   return res;

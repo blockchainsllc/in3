@@ -149,7 +149,7 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
       conf->signers[i].data = w->node->address->data;
       w                     = w->next;
     }
-    in3_ctx_free_nodes(signer_nodes);
+    if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
 
     if (chain->verified_hashes) {
       conf->verified_hashes_length = ctx->client->max_verified_hashes;
