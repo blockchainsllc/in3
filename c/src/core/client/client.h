@@ -45,6 +45,7 @@
 #include "../util/bytes.h"
 #include "../util/data.h"
 #include "../util/error.h"
+#include "../util/mem.h"
 #include "../util/stringbuilder.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -201,9 +202,9 @@ typedef struct in3_node_weight {
 /**
  * setter method for interacting with in3_node_props_t.
  */
-void in3_node_props_set(in3_node_props_t*     node_props, /**< pointer to the properties to change */
-                        in3_node_props_type_t type,       /**< key or type of the property */
-                        uint8_t               value       /**< value to set */
+NONULL void in3_node_props_set(in3_node_props_t*     node_props, /**< pointer to the properties to change */
+                               in3_node_props_type_t type,       /**< key or type of the property */
+                               uint8_t               value       /**< value to set */
 );
 
 /**
@@ -543,7 +544,7 @@ in3_t* in3_for_chain_default(
 );
 
 /** sends a request and stores the result in the provided buffer */
-in3_ret_t in3_client_rpc(
+NONULL in3_ret_t in3_client_rpc(
     in3_t*      c,      /**< [in] the pointer to the incubed client config. */
     const char* method, /**< [in] the name of the rpc-funcgtion to call. */
     const char* params, /**< [in] docs for input parameter v. */
@@ -551,7 +552,7 @@ in3_ret_t in3_client_rpc(
     char**      error /**< [in] pointer to a string containg the error-message. (make sure you free it after use!) */);
 
 /** sends a request and stores the result in the provided buffer */
-in3_ret_t in3_client_rpc_raw(
+NONULL in3_ret_t in3_client_rpc_raw(
     in3_t*      c,       /**< [in] the pointer to the incubed client config. */
     const char* request, /**< [in] the rpc request including method and params. */
     char**      result,  /**< [in] pointer to string which will be set if the request was successfull. This will hold the result as json-rpc-string. (make sure you free this after use!) */
@@ -560,7 +561,7 @@ in3_ret_t in3_client_rpc_raw(
 /** executes a request and returns result as string. in case of an error, the error-property of the result will be set. 
  * The resulting string must be free by the the caller of this function! 
  */
-char* in3_client_exec_req(
+NONULL char* in3_client_exec_req(
     in3_t* c,  /**< [in] the pointer to the incubed client config. */
     char*  req /**< [in] the request as rpc. */
 );
@@ -569,7 +570,7 @@ char* in3_client_exec_req(
  * adds a response for a request-object.
  * This function should be used in the transport-function to set the response.
  */
-void in3_req_add_response(
+NONULL void in3_req_add_response(
     in3_response_t* res,      /**< [in] the response-pointer */
     int             index,    /**< [in] the index of the url, since this request could go out to many urls */
     bool            is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
@@ -578,6 +579,7 @@ void in3_req_add_response(
 );
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
+NONNULL((1, 4))
 in3_ret_t in3_client_register_chain(
     in3_t*           client,      /**< [in] the pointer to the incubed client config. */
     chain_id_t       chain_id,    /**< [in] the chain id. */
@@ -589,7 +591,7 @@ in3_ret_t in3_client_register_chain(
 );
 
 /** adds a node to a chain ore updates a existing node */
-in3_ret_t in3_client_add_node(
+NONULL in3_ret_t in3_client_add_node(
     in3_t*           client,   /**< [in] the pointer to the incubed client config. */
     chain_id_t       chain_id, /**< [in] the chain id. */
     char*            url,      /**< [in] url of the nodes. */
@@ -597,25 +599,25 @@ in3_ret_t in3_client_add_node(
     address_t        address);        /**< [in] public address of the signer. */
 
 /** removes a node from a nodelist */
-in3_ret_t in3_client_remove_node(
+NONULL in3_ret_t in3_client_remove_node(
     in3_t*     client,   /**< [in] the pointer to the incubed client config. */
     chain_id_t chain_id, /**< [in] the chain id. */
     address_t  address);  /**< [in] public address of the signer. */
 
 /** removes all nodes from the nodelist */
-in3_ret_t in3_client_clear_nodes(
+NONULL in3_ret_t in3_client_clear_nodes(
     in3_t*     client,    /**< [in] the pointer to the incubed client config. */
     chain_id_t chain_id); /**< [in] the chain id. */
 
 /** frees the references of the client */
-void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
+NONULL void in3_free(in3_t* a /**< [in] the pointer to the incubed client config to free. */);
 
 /**
  * inits the cache.
  *
  * this will try to read the nodelist from cache.
  */
-in3_ret_t in3_cache_init(
+NONULL in3_ret_t in3_cache_init(
     in3_t* c /**< the incubed client */
 );
 
@@ -624,7 +626,7 @@ in3_ret_t in3_cache_init(
  * 
  * My return NULL if not found.
  */
-in3_chain_t* in3_find_chain(
+NONULL in3_chain_t* in3_find_chain(
     in3_t*     c /**< the incubed client */,
     chain_id_t chain_id /**< chain_id */
 );
@@ -635,7 +637,7 @@ in3_chain_t* in3_find_chain(
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  * Returns NULL on success, and error string on failure (to be freed by caller) - in which case the client state is undefined
  */
-char* in3_configure(
+NONULL char* in3_configure(
     in3_t*      c,     /**< the incubed client */
     const char* config /**< JSON-string with the configuration to set. */
 );
@@ -645,7 +647,7 @@ char* in3_configure(
  * 
  * For details about the structure of ther config see https://in3.readthedocs.io/en/develop/api-ts.html#type-in3config
  */
-char* in3_get_config(
+NONULL char* in3_get_config(
     in3_t* c /**< the incubed client */
 );
 
@@ -673,6 +675,7 @@ void in3_set_default_signer(
  * create a new signer-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
+NONNULL((1))
 in3_signer_t* in3_create_signer(
     in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
     in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
@@ -683,6 +686,7 @@ in3_signer_t* in3_create_signer(
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
+NONNULL((1, 2, 3, 4))
 in3_storage_handler_t* in3_set_storage_handler(
     in3_t*               c,        /**< the incubed client */
     in3_storage_get_item get_item, /**< function pointer returning a stored value for the given key.*/

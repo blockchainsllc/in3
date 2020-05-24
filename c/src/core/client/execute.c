@@ -53,7 +53,7 @@
 #define WAIT_TIME_CAP 3600
 #define BLACKLISTTIME 24 * 3600
 
-static void response_free(in3_ctx_t* ctx) {
+NONULL static void response_free(in3_ctx_t* ctx) {
   if (ctx->nodes) {
     const int nodes_count = ctx_nodes_len(ctx->nodes);
     in3_ctx_free_nodes(ctx->nodes);
@@ -90,7 +90,7 @@ static void response_free(in3_ctx_t* ctx) {
   }
 }
 
-static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
+NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   // only for intern requests, we actually free the original request-string
   if (is_sub) _free(ctx->request_context->c);
   if (ctx->error) _free(ctx->error);
@@ -110,11 +110,11 @@ static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   _free(ctx);
 }
 
-static bool auto_ask_sig(const in3_ctx_t* ctx) {
+NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG));
 }
 
-static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
+NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
 
   const in3_t* c     = ctx->client;
   conf->chain_id     = c->chain_id;
@@ -170,6 +170,7 @@ static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d
 }
 
 static void free_urls(char** urls, int len, bool free_items) {
+  if (!urls) return;
   if (free_items) {
     for (int i = 0; i < len; i++) _free(urls[i]);
   }
@@ -181,7 +182,7 @@ static int add_bytes_to_hash(struct SHA3_CTX* msg_hash, void* data, int len) {
   return len;
 }
 
-static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
+NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
   switch (d_type(t)) {
     case T_ARRAY:
     case T_OBJECT:
@@ -198,12 +199,10 @@ static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
   }
 }
 
-static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
+NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
   static unsigned long rpc_id_counter = 1;
   char                 temp[100];
   struct SHA3_CTX*     msg_hash = c->client->key ? alloca(sizeof(struct SHA3_CTX)) : NULL;
-  //  sha3_Update(&ctx, data->data, data->len);
-  //  keccak_Final(&ctx, dst);
 
   sb_add_char(sb, '[');
 
@@ -284,7 +283,7 @@ static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
   sb_add_char(sb, ']');
   return IN3_OK;
 }
-static void update_nodelist_cache(in3_ctx_t* ctx) {
+NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
   if (!ctx->client->cache || ctx->client->chain_id == ETH_CHAIN_ID_LOCAL) return;
   chain_id_t chain_id = ctx->requests_configs->chain_id;
@@ -292,7 +291,7 @@ static void update_nodelist_cache(in3_ctx_t* ctx) {
   in3_cache_store_nodelist(ctx, in3_find_chain(ctx->client, chain_id));
 }
 
-static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
+NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
 
   d_track_keynames(1);
   ctx->response_context = (response_data[0] == '{' || response_data[0] == '[') ? parse_json(response_data) : parse_binary_str(response_data, len);
@@ -319,7 +318,7 @@ static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len
   return IN3_OK;
 }
 
-static void blacklist_node(node_match_t* node_weight) {
+NONULL static void blacklist_node(node_match_t* node_weight) {
   if (node_weight && node_weight->weight) {
     // blacklist the node
     node_weight->weight->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
@@ -480,7 +479,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   return IN3_EINVAL;
 }
 
-static char* convert_to_http_url(char* src_url) {
+NONULL static char* convert_to_http_url(char* src_url) {
   const int l = strlen(src_url);
   if (strncmp(src_url, "https://", 8) == 0) {
     char* url = _malloc(l);
@@ -493,7 +492,7 @@ static char* convert_to_http_url(char* src_url) {
     return _strdupn(src_url, l);
 }
 
-in3_request_t* in3_create_request(in3_ctx_t* ctx) {
+NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
 
   int       nodes_count = ctx_nodes_len(ctx->nodes);
   in3_ret_t res;
@@ -551,7 +550,7 @@ in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   return request;
 }
 
-void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) {
+NONULL void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) {
   // free resources
   free_urls(req->urls, req->urls_len, ctx->client->flags & FLAGS_HTTP);
 
@@ -575,11 +574,11 @@ void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) 
   _free(req);
 }
 
-static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
+NONULL static bool ctx_is_allowed_to_fail(in3_ctx_t* ctx) {
   return ctx_is_method(ctx, "in3_nodeList");
 }
 
-in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
+NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
   in3_ret_t res = IN3_OK;
 
   // blacklist node that gave us an error response for nodelist (if not first update)

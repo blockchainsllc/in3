@@ -40,6 +40,8 @@
 #ifndef IN3_EXPORT_TEST
 #define IN3_EXPORT_TEST static
 #endif
+#include "verify.h"
+#include <assert.h>
 
 #ifdef DEBUG
 #define dbg_log(msg, ...) __dbg_log(0, __FILE__, __func__, __LINE__, msg, ##__VA_ARGS__)
@@ -61,3 +63,11 @@ void __dbg_log(int raw, char* file, const char* func, int line, char* fmt, ...);
 
 /** dumps the given data as hex coded bytes to stdout */
 extern void msg_dump(const char* s, const unsigned char* data, unsigned len);
+
+//#define assunme(var,expr)
+
+#ifdef ASSERTIONS
+#define _assert(exp) assert(exp)
+#else
+#define _assert(exp)
+#endif

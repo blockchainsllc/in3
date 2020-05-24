@@ -46,6 +46,7 @@
  * */
 
 #include "bytes.h"
+#include "mem.h"
 #include "stringbuilder.h"
 #include <stdint.h>
 #include <stdio.h>

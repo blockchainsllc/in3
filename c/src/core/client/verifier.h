@@ -103,8 +103,8 @@ typedef struct verifier {
 } in3_verifier_t;
 
 /*! returns the verifier for the given chainType */
-in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
-void            in3_register_verifier(in3_verifier_t* verifier);
-in3_ret_t       vc_set_error(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */
+NONULL in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
+NONULL void            in3_register_verifier(in3_verifier_t* verifier);
+NONULL in3_ret_t       vc_set_error(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */
 
 #endif
