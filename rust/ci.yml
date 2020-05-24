@@ -41,6 +41,7 @@ rust_linux:
     - gcc_legacy
 
 rust_win:
+  allow_failure: true
   extends: .rust_multiarch
   variables:
     TARGET: "x86_64-pc-windows-gnu"
