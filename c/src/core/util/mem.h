@@ -53,9 +53,13 @@
 #else
 #define _NOINLINE_ __attribute__((noinline))
 #endif
-
+#if defined(__clang_analyzer__) || defined(GCC_ANALYZER)
 #define NONULL_FOR(args) __attribute__((nonnull args))
 #define NONULL __attribute__((nonnull))
+#else
+#define NONULL_FOR(args)
+#define NONULL
+#endif
 
 #ifndef UNUSED_VAR
 #define UNUSED_VAR(x) (void) (x)

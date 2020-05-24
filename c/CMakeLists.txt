@@ -39,6 +39,7 @@ add_subdirectory(src/third-party)
 
 
 if (GCC_ANALYZER) 
+  ADD_DEFINITIONS(-DGCC_ANALYZER=1)
   add_compile_options(-fanalyzer -Werror)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer -Werror")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
