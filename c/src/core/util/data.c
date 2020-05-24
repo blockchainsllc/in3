@@ -37,16 +37,14 @@
 #include "mem.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "verify.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "debug.h" // DEBUG !!!
+#include "debug.h"
 
-// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
-#if UINTPTR_MAX == 0xFFFF
-#error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
-#endif
+verify(sizeof(void*) >= 4); // make sure the pointer is at least 32 bytes, since we use it to store T_INTEGERS.
 
 #ifndef IN3_DONT_HASH_KEYS
 static uint8_t __track_keys = 0;
@@ -348,6 +346,7 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
+NONULL_FOR((1))
 char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {
@@ -363,9 +362,11 @@ char next_char(json_ctx_t* jp) {
   }
 }
 
+NONULL_FOR((1))
 d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
+    _assert(jp->result != NULL);
     jp->allocated <<= 1;
   }
   d_token_t* n = jp->result + jp->len;
@@ -377,6 +378,7 @@ d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int pare
   return n;
 }
 
+NONULL_FOR((1))
 int parse_key(json_ctx_t* jp) {
   const char* start = jp->c;
   int         r;
@@ -393,6 +395,7 @@ int parse_key(json_ctx_t* jp) {
   }
 }
 
+NONULL_FOR((1, 2))
 int parse_number(json_ctx_t* jp, d_token_t* item) {
   int     i      = 0;
   int64_t i64Val = 0;
@@ -441,6 +444,7 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
   return -2;
 }
 
+NONULL_FOR((1, 2))
 int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
@@ -492,6 +496,7 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
   }
 }
 
+NONULL_FOR((1))
 int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 

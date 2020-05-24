@@ -146,7 +146,7 @@ typedef enum state {
  * 
  *  *Important*: the req_data will not be cloned but used during the execution. The caller of the this function is also responsible for freeing this string afterwards.
  */
-in3_ctx_t* ctx_new(
+NONULL in3_ctx_t* ctx_new(
     in3_t*      client,  /**< [in] the client-config. */
     const char* req_data /**< [in] the rpc-request as json string. */
 );
@@ -156,7 +156,7 @@ in3_ctx_t* ctx_new(
  * The execution happens within the same thread, thich mean it will be blocked until the response ha beedn received and verified.
  * In order to handle calls asynchronously, you need to call the `in3_ctx_execute` function and provide the data as needed.
  */
-in3_ret_t in3_send_ctx(
+NONULL in3_ret_t in3_send_ctx(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 /**
@@ -290,14 +290,14 @@ in3_ret_t in3_send_ctx(
  * 
  * 
  */
-in3_ret_t in3_ctx_execute(
+NONULL in3_ret_t in3_ctx_execute(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 
 /**
  * returns the current state of the context.
  */
-in3_ctx_state_t in3_ctx_state(
+NONULL in3_ctx_state_t in3_ctx_state(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 
@@ -306,7 +306,7 @@ in3_ctx_state_t in3_ctx_state(
  * 
  * But this will not free the request string passed when creating the context!
  */
-void ctx_free(
+NONULL void ctx_free(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 /**
@@ -359,7 +359,7 @@ in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, bytes_t*
 }
  * ```
  */
-in3_ret_t ctx_add_required(
+NONULL in3_ret_t ctx_add_required(
     in3_ctx_t* parent, /**< [in] the current request context. */
     in3_ctx_t* ctx     /**< [in] the new request context to add. */
 );
@@ -368,7 +368,7 @@ in3_ret_t ctx_add_required(
  * 
  * This method is used internaly to find a previously added context.
  */
-in3_ctx_t* ctx_find_required(
+NONULL in3_ctx_t* ctx_find_required(
     const in3_ctx_t* parent, /**< [in] the current request context. */
     const char*      method  /**< [in] the method of the rpc-request. */
 );
@@ -376,14 +376,14 @@ in3_ctx_t* ctx_find_required(
  * removes a required context after usage.
  * removing will also call free_ctx to free resources.
  */
-in3_ret_t ctx_remove_required(
+NONULL in3_ret_t ctx_remove_required(
     in3_ctx_t* parent, /**< [in] the current request context. */
     in3_ctx_t* ctx     /**< [in] the request context to remove. */
 );
 /**
  * check if the response contains a error-property and reports this as error in the context.
  */
-in3_ret_t ctx_check_response_error(
+NONULL in3_ret_t ctx_check_response_error(
     in3_ctx_t* c, /**< [in] the current request context. */
     int        i  /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
@@ -391,7 +391,7 @@ in3_ret_t ctx_check_response_error(
 /**
  * determins the errorcode for the given request.
  */
-in3_ret_t ctx_get_error(
+NONULL in3_ret_t ctx_get_error(
     in3_ctx_t* ctx, /**< [in] the current request context. */
     int        id   /**< [in] the index of the request to check (if this is a batch-request, otherwise 0). */
 );
@@ -401,7 +401,7 @@ in3_ret_t ctx_get_error(
  * 
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
-in3_ctx_t* in3_client_rpc_ctx_raw(
+NONULL in3_ctx_t* in3_client_rpc_ctx_raw(
     in3_t*      c,      /**< [in] the client config. */
     const char* request /**< [in] rpc request. */
 );
@@ -411,7 +411,7 @@ in3_ctx_t* in3_client_rpc_ctx_raw(
  *
  * This context *MUST* be freed with ctx_free(ctx) after usage to release the resources.
 */
-in3_ctx_t* in3_client_rpc_ctx(
+NONULL in3_ctx_t* in3_client_rpc_ctx(
     in3_t*      c,      /**< [in] the clientt config. */
     const char* method, /**< [in] rpc method. */
     const char* params  /**< [in] params as string. */

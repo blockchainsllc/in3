@@ -37,6 +37,7 @@
 #include "../util/debug.h"
 #include "../util/log.h"
 #include "../util/mem.h"
+#include "../util/verify.h"
 #include "cache.h"
 #include "client.h"
 #include "nodelist.h"
