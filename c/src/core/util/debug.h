@@ -40,7 +40,6 @@
 #ifndef IN3_EXPORT_TEST
 #define IN3_EXPORT_TEST static
 #endif
-#include "verify.h"
 #include <assert.h>
 
 #ifdef DEBUG

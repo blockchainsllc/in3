@@ -34,17 +34,18 @@
 
 #include "data.h"
 #include "bytes.h"
+#include "debug.h"
 #include "mem.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "verify.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "debug.h"
-
-verify(sizeof(void*) >= 4); // make sure the pointer is at least 32 bytes, since we use it to store T_INTEGERS.
+// Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
+#if UINTPTR_MAX == 0xFFFF
+#error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
+#endif
 
 #ifndef IN3_DONT_HASH_KEYS
 static uint8_t __track_keys = 0;
