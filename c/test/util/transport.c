@@ -40,10 +40,8 @@ char*              read_json_response_buffer(char* path) {
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
     response_buffer = _malloc(length + 1);
-    if (response_buffer) {
-      fread(response_buffer, 1, length, f);
-      response_buffer[length] = 0;
-    }
+    fread(response_buffer, 1, length, f);
+    response_buffer[length] = 0;
     fclose(f);
     return response_buffer;
   } else {

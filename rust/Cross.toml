@@ -1,0 +1,14 @@
+[build.env]
+passthrough = [
+    "RUST_BACKTRACE",
+    "UPDATE_IN3_BINDINGS",
+]
+
+[target.armv7-unknown-linux-gnueabihf]
+image = "docker.slock.it/build-images/cmake:rust-armv7-unknown-linux-gnueabihf"
+
+[target.x86_64-unknown-linux-gnu]
+image = "docker.slock.it/build-images/cmake:rust-x86_64-unknown-linux-gnu"
+
+[target.x86_64-pc-windows-gnu]
+image = "docker.slock.it/build-images/cmake:rust-x86_64-pc-windows-gnu"

@@ -64,6 +64,16 @@ win_jni:
     CONAN_OPTS: "-DUSE_CURL=false -DJAVA=true"
     BUILD: "win_jni"
 
+centos:
+  image: docker.slock.it/build-images/cmake:centos
+  extends:
+    - .conanbuild
+    - .only_full
+  tags:
+    - short-jobs
+  variables:
+    BUILD: "centos_build"
+
 arm7:
   image: docker.slock.it/build-images/cmake:gcc8-armv7
   extends: .conanbuild
@@ -89,11 +99,18 @@ gcc8-x86:
     CONAN_OPTS: "-DJAVA=true"
     BUILD: "x86_build"
 
-gcc5:
-  image: docker.slock.it/build-images/cmake:gcc5
-  extends:
-    - .conanbuild
-    - .only_full
+# Note:
+# Following job builds IN3 without CURL using an older compiler
+# (required for Rust cross compilation)
+gcc_legacy:
+  image: gcc:4.9
+  extends: .conanbuild
+  before_script:
+    - curl -sSL https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz | tar -xzC /opt
+    - export PATH="/opt/cmake-3.6.1-Linux-x86_64/bin/:$PATH"
+  variables:
+    CONAN_OPTS: "-DUSE_CURL=false"
+    BUILD: "gcc_legacy"
 
 clang50:
   image: docker.slock.it/build-images/cmake:clang50

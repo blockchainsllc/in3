@@ -74,7 +74,7 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   }
 
   if (ctx->len)
-    ctx->requests_configs = _calloc(ctx->len, sizeof(in3_request_config_t));
+    ctx->requests_configs = _calloc(1, sizeof(in3_request_config_t));
 
   return ctx;
 }

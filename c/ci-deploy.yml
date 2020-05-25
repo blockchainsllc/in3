@@ -53,18 +53,23 @@ readthedocs:
     - cp python_multilib/docs/documentation.md doc/docs/api-python.md
     - cp dotnet/docs/api-dotnet.md doc/docs/
     - cd generator
-    - npm i && npm run build
+    - npm --cache .npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - chmod 777 bin/*
     - cd ../wasm/src
-    - npm i typedoc
+    - npm --cache .npm i typedoc
     - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json in3.d.ts
     - cat doc.json | ../../generator/bin/slockit-docu in3.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
     - cd ../../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:
       - doc/build
+  # Caches per branch - per job
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .npm/
 
 release_mac_and_wasm:
   stage: deploy
@@ -331,12 +336,12 @@ debian_package_deploy_bionic:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
 
-debian_package_deploy_disco:
+debian_package_deploy_focal:
   extends:
     - .debian_package_deploy_template_in3
     - .only_deploy
   variables:
-    DISTRO: "disco"
+    DISTRO: "focal"
     VERSION: $CI_COMMIT_TAG
 
 .debian_package_deploy_template_in3_dev:
@@ -384,12 +389,12 @@ debian_dev_package_deploy_bionic:
     DISTRO: "bionic"
     VERSION: $CI_COMMIT_TAG
 
-debian__dev_package_deploy_disco:
+debian__dev_package_deploy_focal:
   extends:
     - .debian_package_deploy_template_in3_dev
     - .only_deploy
   variables:
-    DISTRO: "disco"
+    DISTRO: "focal"
     VERSION: $CI_COMMIT_TAG
 
 brew_release:

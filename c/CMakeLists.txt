@@ -39,7 +39,8 @@ add_subdirectory(src/third-party)
 
 
 if (GCC_ANALYZER) 
-  add_compile_options(-fanalyzer -Werror)
+  ADD_DEFINITIONS(-DGCC_ANALYZER=1)
+  add_compile_options(-fanalyzer -Werror -Wno-nonnull-compare)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer -Werror")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
 endif()
@@ -99,6 +100,12 @@ if (IN3_LIB)
                 $<TARGET_OBJECTS:ipfs_api_o>
             )
         endif()
+    endif()
+
+    if (BTC) 
+        set(IN3_LIBS ${IN3_LIBS} 
+          $<TARGET_OBJECTS:btc_o>
+        )
     endif()
 
     if (IN3API) 

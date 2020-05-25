@@ -412,7 +412,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<CFunctionType object at 0x10bfb27a0>)
+transport=<CFunctionType object at 0x101a917a0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -424,9 +424,9 @@ Once with the latest list at hand, the client can request any other on-chain inf
 - `in3_config` _ClientConfig or str_ - (optional) Configuration for the client. If not provided, default is loaded.
   
 
-#### refresh_node_list
+#### get_node_list
 ```python
-Client.refresh_node_list()
+Client.get_node_list()
 ```
 
 Gets the list of Incubed nodes registered in the selected chain registry contract.
@@ -436,71 +436,32 @@ Gets the list of Incubed nodes registered in the selected chain registry contrac
 - `node_list` _NodeList_ - List of registered in3 nodes and metadata.
   
 
-#### ens_namehash
+#### raw_configure
 ```python
-Client.ens_namehash(domain_name: str)
+Client.raw_configure(cfg_dict: dict)
 ```
 
-Name format based on [EIP-137](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-137.md#name-syntax)
+Send RPC to change client configuration. Don't use outside the constructor, might cause instability.
+
+
+#### ens_resolve
+```python
+Client.ens_resolve(domain_name: str,
+domain_type: str,
+registry: str = None)
+```
+
+Resolves ENS domain name to Ethereum address.
 
 **Arguments**:
 
 - `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
-
-**Returns**:
-
-- `node` _str_ - Formatted string referred as `node` in ENS documentation
-  
-
-#### ens_address
-```python
-Client.ens_address(domain_name: str, registry: str = None)
-```
-
-Resolves ENS domain name to what account that domain points to.
-
-**Arguments**:
-
-- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
+- `domain_type` - 'hash'|'addr'|'owner'|'resolver'
 - `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
 
 **Returns**:
 
-- `address` _str_ - Ethereum address corresponding to what account that domain points to.
-  
-
-#### ens_owner
-```python
-Client.ens_owner(domain_name: str, registry: str = None)
-```
-
-Resolves ENS domain name to Ethereum address of domain owner.
-
-**Arguments**:
-
-- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
-- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
-
-**Returns**:
-
-- `owner_address` _str_ - Ethereum address corresponding to domain owner.
-  
-
-#### ens_resolver
-```python
-Client.ens_resolver(domain_name: str, registry: str = None)
-```
-
-Resolves ENS domain name to Smart-contract address of the resolver registered for that domain.
-
-**Arguments**:
-
-- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
-- `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
-
-**Returns**:
-
-- `resolver_contract_address` _str_ - Smart-contract address of the resolver registered for that domain.
+- `address` _str_ - Ethereum address corresponding to domain name.
   
 
 ### ClientConfig
@@ -606,9 +567,9 @@ EthAccountApi(self, runtime: In3Runtime, factory: EthObjectFactory)
 Manages accounts and smart-contracts
 
 
-#### create
+#### new_account
 ```python
-EthAccountApi.create(qrng=False)
+EthAccountApi.new_account(qrng=False)
 ```
 
 Creates a new Ethereum account and saves it in the wallet.
@@ -622,9 +583,9 @@ Creates a new Ethereum account and saves it in the wallet.
 - `account` _Account_ - Newly created Ethereum account.
   
 
-#### recover
+#### recover_account
 ```python
-EthAccountApi.recover(secret: str)
+EthAccountApi.recover_account(secret: str)
 ```
 
 Recovers an account from a secret.
@@ -671,9 +632,9 @@ Use ECDSA to sign a message.
 - `signed_message` _str_ - ECDSA calculated r, s, and parity v, concatenated. v = 27 + (r % 2)
   
 
-#### balance
+#### get_balance
 ```python
-EthAccountApi.balance(address: str, at_block: int = 'latest')
+EthAccountApi.get_balance(address: str, at_block: int = 'latest')
 ```
 
 Returns the balance of the account of given address.
@@ -727,6 +688,27 @@ Sends a signed and encoded transaction.
 - `tx_hash` _hex_ - Transaction hash, used to get the receipt and check if the transaction was mined.
   
 
+#### get_transaction_receipt
+```python
+EthAccountApi.get_transaction_receipt(tx_hash: str)
+```
+
+After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to
+gather the receipt, once a miner has mined and it is part of an acknowledged block. Because how it is possible,
+in distributed systems, that data is asymmetric in different parts of the system, the transaction is only "final"
+once a certain number of blocks was mined after it, and still it can be possible that the transaction is discarded
+after some time. But, in general terms, it is accepted that after 6 to 8 blocks from latest, that it is very
+likely that the transaction will stay in the chain.
+
+**Arguments**:
+
+- `tx_hash` - Transaction hash.
+
+**Returns**:
+
+- `tx_receipt` - The mined Transaction data including event logs.
+  
+
 #### estimate_gas
 ```python
 EthAccountApi.estimate_gas(transaction: NewTransaction)
@@ -743,9 +725,10 @@ Gas estimation for transaction. Used to fill transaction.gas field. Check RawTra
 - `gas` _int_ - Calculated gas in Wei.
   
 
-#### transaction_count
+#### get_transaction_count
 ```python
-EthAccountApi.transaction_count(address: str, at_block: int = 'latest')
+EthAccountApi.get_transaction_count(address: str,
+at_block: int = 'latest')
 ```
 
 Number of transactions mined from this address. Used to set transaction nonce.
@@ -791,9 +774,9 @@ EthContractApi(self, runtime: In3Runtime, factory: EthObjectFactory)
 Manages smart-contract data and transactions
 
 
-#### call
+#### eth_call
 ```python
-EthContractApi.call(transaction: NewTransaction,
+EthContractApi.eth_call(transaction: NewTransaction,
 block_number: int = 'latest')
 ```
 
@@ -810,9 +793,9 @@ Check https://ethereum.stackexchange.com/questions/3514/how-to-call-a-contract-m
 - `method_returned_value` - A hexadecimal. For decoding use in3.abi_decode.
   
 
-#### storage_at
+#### get_storage_at
 ```python
-EthContractApi.storage_at(address: str,
+EthContractApi.get_storage_at(address: str,
 position: int = 0,
 at_block: int = 'latest')
 ```
@@ -832,9 +815,9 @@ The storage is essentially a key/value store. Use get_code to get the smart-cont
 - `storage_at` _str_ - Stored value in designed position. Use decode('hex') to see ascii format of the hex data.
   
 
-#### code
+#### get_code
 ```python
-EthContractApi.code(address: str, at_block: int = 'latest')
+EthContractApi.get_code(address: str, at_block: int = 'latest')
 ```
 
 Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the function will return '0x'.
@@ -849,9 +832,9 @@ Smart-Contract bytecode in hexadecimal. If the account is a simple wallet the fu
 - `bytecode` _str_ - Smart-Contract bytecode in hexadecimal.
   
 
-#### encode
+#### abi_encode
 ```python
-EthContractApi.encode(fn_signature: str, *fn_args)
+EthContractApi.abi_encode(fn_signature: str, *fn_args)
 ```
 
 Smart-contract ABI encoder. Used to serialize a rpc to the EVM.
@@ -870,9 +853,9 @@ When you invoke a method, the arguments used must match the declaration's parame
 - `encoded_fn_call` _str_ - i.e. "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890"
   
 
-#### decode
+#### abi_decode
 ```python
-EthContractApi.decode(fn_signature: str, encoded_value: str)
+EthContractApi.abi_decode(fn_signature: str, encoded_value: str)
 ```
 
 Smart-contract ABI decoder. Used to parse rpc responses from the EVM.
@@ -942,9 +925,10 @@ If you need the very latest block, change Client.Config.signatureCount to zero.
   block_number (int) : Number of the most recent block
   
 
-#### block_by_hash
+#### get_block_by_hash
 ```python
-EthereumApi.block_by_hash(block_hash: str, get_full_block: bool = False)
+EthereumApi.get_block_by_hash(block_hash: str,
+get_full_block: bool = False)
 ```
 
 Blocks can be identified by root hash of the block merkle tree (this), or sequential number in which it was mined (get_block_by_number).
@@ -959,9 +943,9 @@ Blocks can be identified by root hash of the block merkle tree (this), or sequen
 - `block` _Block_ - Desired block, if exists.
   
 
-#### block_by_number
+#### get_block_by_number
 ```python
-EthereumApi.block_by_number(block_number: [<class 'int'>],
+EthereumApi.get_block_by_number(block_number: [<class 'int'>],
 get_full_block: bool = False)
 ```
 
@@ -977,9 +961,9 @@ Blocks can be identified by sequential number in which it was mined, or root has
 - `block` _Block_ - Desired block, if exists.
   
 
-#### transaction_by_hash
+#### get_transaction_by_hash
 ```python
-EthereumApi.transaction_by_hash(tx_hash: str)
+EthereumApi.get_transaction_by_hash(tx_hash: str)
 ```
 
 Transactions can be identified by root hash of the transaction merkle tree (this) or by its position in the block transactions merkle tree.
@@ -992,27 +976,6 @@ Every transaction hash is unique for the whole chain. Collision could in theory 
 **Returns**:
 
 - `transaction` - Desired transaction, if exists.
-  
-
-#### transaction_receipt
-```python
-EthereumApi.transaction_receipt(tx_hash: str)
-```
-
-After a transaction is received the by the client, it returns the transaction hash. With it, it is possible to
-gather the receipt, once a miner has mined and it is part of an acknowledged block. Because how it is possible,
-in distributed systems, that data is asymmetric in different parts of the system, the transaction is only "final"
-once a certain number of blocks was mined after it, and still it can be possible that the transaction is discarded
-after some time. But, in general terms, it is accepted that after 6 to 8 blocks from latest, that it is very
-likely that the transaction will stay in the chain.
-
-**Arguments**:
-
-- `tx_hash` - Transaction hash.
-
-**Returns**:
-
-- `tx_receipt` - The mined Transaction data including event logs.
   
 
 ### Ethereum Objects
@@ -1172,7 +1135,7 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 ### In3Runtime
 ```python
 In3Runtime(self, chain_id: int,
-transport: <function CFUNCTYPE at 0x10b791680>)
+transport: <function CFUNCTYPE at 0x101270680>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1200,7 +1163,7 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10b791680>,
+transport: <function CFUNCTYPE at 0x101270680>,
 debug=False)
 ```
 

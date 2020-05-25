@@ -1,8 +1,10 @@
+import re
+
 from in3.eth.api import EthereumApi
 from in3.eth.factory import EthObjectFactory
 from in3.libin3.enum import In3Methods
 from in3.libin3.runtime import In3Runtime
-from in3.model import In3Node, NodeList, ClientConfig, ChainConfig, chain_configs
+from in3.model import In3Node, NodeList, ClientConfig, chain_configs
 from in3.transport import http_transport
 
 
@@ -15,20 +17,16 @@ class Client:
         in3_config (ClientConfig or str): (optional) Configuration for the client. If not provided, default is loaded.
     """
 
-    def __init__(self, chain: str or ChainConfig = 'mainnet',
-                 in3_config: ClientConfig = None, transport=http_transport):
+    def __init__(self, chain: str = 'mainnet', in3_config: ClientConfig = None, transport=http_transport):
+        if not isinstance(chain, str) or chain.lower() not in ['mainnet', 'kovan', 'goerli']:
+            raise AssertionError('Client: Chain name not supported. Try mainnet, kovan, goerli.')
+        # TODO: Clear Chain-configs
+        if in3_config and not isinstance(in3_config, ClientConfig):
+            raise AssertionError('Client: Use in3.ClientConfig to create a new client configuration instance.')
 
-        config = in3_config
-        if isinstance(chain, ChainConfig):
-            config = chain.client_config
-        elif not isinstance(chain, str) or chain not in ['mainnet', 'kovan', 'goerli']:
-            raise ValueError('Chain name not supported. Try mainnet, kovan, goerli.')
-
-        self._runtime = In3Runtime(chain_configs[chain].chain_id, transport)
-        if config:
-            # TODO: Chain_configs
-            self._configure(config)
-        # TODO: getConfig
+        self._runtime = In3Runtime(chain_configs[chain.lower()].chain_id, transport)
+        if in3_config:
+            self._configure(in3_config)
         self.eth = EthereumApi(self._runtime)
         self._factory = In3ObjectFactory(self._runtime)
 
@@ -60,6 +58,8 @@ class Client:
         Returns:
             node (str): Formatted string referred as `node` in ENS documentation
         """
+        if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
+            raise AssertionError('Client: ENS domain name must end with .ens')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'hash')
 
     def ens_address(self, domain_name: str, registry: str = None) -> str:
@@ -75,32 +75,38 @@ class Client:
         # TODO: Add serialization in account factory
         if registry:
             registry = self._factory.get_address(registry)
+        if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
+            raise AssertionError('Client: ENS domain name must end with .ens')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'addr', registry)
 
     def ens_owner(self, domain_name: str, registry: str = None) -> str:
         """
         Resolves ENS domain name to Ethereum address of domain owner.
         Args:
-            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            domain_name: ENS supported domain. i.e mydomain.eth
             registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
         Returns:
             owner_address (str): Ethereum address corresponding to domain owner.
         """
         if registry:
             registry = self._factory.get_address(registry)
+        if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
+            raise AssertionError('Client: ENS domain name must end with .ens')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'owner', registry)
 
     def ens_resolver(self, domain_name: str, registry: str = None) -> str:
         """
         Resolves ENS domain name to Smart-contract address of the resolver registered for that domain.
         Args:
-            domain_name: ENS supported domain. mydomain.ens, mydomain.xyz, etc
+            domain_name: ENS supported domain. i.e mydomain.eth
             registry: ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
         Returns:
             resolver_contract_address (str): Smart-contract address of the resolver registered for that domain.
         """
         if registry:
             registry = self._factory.get_address(registry)
+        if not isinstance(domain_name, str) or not re.match(r'(\w+.eth$)', domain_name):
+            raise AssertionError('Client: ENS domain name must end with .ens')
         return self._runtime.call(In3Methods.ENSRESOLVE, domain_name, 'resolver', registry)
 
 

@@ -1,12 +1,4 @@
-use async_trait::async_trait;
-use ffi::{CStr, CString};
-use in3_sys::ecdsa_sign;
-use in3_sys::ecdsa_sign_digest;
-use libc::{c_char, strlen};
-use rustc_hex::{FromHex, ToHex};
-use serde_json::json;
-use std::ffi;
-use std::str;
+use libc::{c_char};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SignatureType {

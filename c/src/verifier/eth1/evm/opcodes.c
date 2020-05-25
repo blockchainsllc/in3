@@ -515,7 +515,6 @@ int op_return(evm_t* evm, uint8_t revert) {
 
   if (evm->return_data.data) _free(evm->return_data.data);
   evm->return_data.data = _malloc(len);
-  if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
   if (evm_mem_readi(evm, offset, evm->return_data.data, len) < 0) return EVM_ERROR_OUT_OF_GAS;
   evm->return_data.len = len;
   evm->state           = revert ? EVM_STATE_REVERTED : EVM_STATE_STOPPED;

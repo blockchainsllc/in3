@@ -194,8 +194,3 @@ int trie_verify_proof(bytes_t* rootHash, bytes_t* path, bytes_t** proof, bytes_t
   if (full_key) _free(full_key);
   return res;
 }
-
-void trie_free_proof(bytes_t** proof) {
-  for (bytes_t** p = proof; *p; p += 1) b_free(*p);
-  _free(proof);
-}

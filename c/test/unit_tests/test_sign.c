@@ -77,6 +77,29 @@ static void test_sign() {
   ctx_free(ctx);
 }
 
+static void test_sign_hex() {
+
+  in3_t* c     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->transport = test_transport;
+  c->proof     = PROOF_NONE;
+  c->flags     = FLAGS_STATS;
+
+  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
+
+  uint8_t* pk = eth_set_pk_signer_hex(c, "0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303");
+
+  add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
+               "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
+  add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
+  add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
+
+  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
+  TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
+  TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
+  free(pk);
+  ctx_free(ctx);
+}
+
 static void test_sign_sans_signer_and_from() {
   in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
@@ -147,6 +170,7 @@ int main() {
   in3_register_eth_basic();
   TESTS_BEGIN();
   RUN_TEST(test_sign);
+  RUN_TEST(test_sign_hex);
   RUN_TEST(test_sign_sans_signer_and_from);
   RUN_TEST(test_signer);
   RUN_TEST(test_signer_prepare_tx);

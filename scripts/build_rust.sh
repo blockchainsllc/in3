@@ -1,8 +1,9 @@
 #!/bin/sh
 cd ..
-rm -rf build_rust
-mkdir -p build_rust
-cd build_rust
+mkdir -p rust/in3-sys/in3-core
+mkdir -p rust/in3-sys/in3-core/c
+cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
+cp CMakeLists.txt rust/in3-sys/in3-core/
 export UPDATE_IN3_BINDINGS=1
-cmake -DCMAKE_BUILD_TYPE=MINSIZEREL -DDEV_NO_INTRN_PTR=OFF -DUSE_CURL=false .. && make -j8 && cd ../rust/ && cargo clean && cargo build
+cd rust && cargo clean && cargo build
 cd ../scripts
