@@ -125,6 +125,7 @@ void show_help(char* name) {
 -q             quit. no additional output. \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
 \n\
@@ -538,7 +539,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 }
 
 static bytes_t*  last_response;
-static bytes_t   in_response = {.data = NULL, .len = 0};
+static bytes_t   in_response      = {.data = NULL, .len = 0};
+static bool      only_show_raw_tx = false;
 static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
@@ -548,6 +550,12 @@ static in3_ret_t debug_transport(in3_request_t* req) {
     for (int i = 0; i < req->urls_len; i++)
       sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
     return 0;
+  }
+  if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
+    char* data         = str_find(req->payload, "0x");
+    *strchr(data, '"') = 0;
+    printf("%s\n", data);
+    exit(EXIT_SUCCESS);
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(req);
@@ -663,9 +671,6 @@ int main(int argc, char* argv[]) {
   char*           sig_type         = "raw";
   bool            to_eth           = false;
 
-  // use the storagehandler to cache data in .in3
-  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
-
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
@@ -675,7 +680,10 @@ int main(int argc, char* argv[]) {
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
-      c->cache->clear(c->cache->cptr);
+      storage_clear(NULL);
+
+  // use the storagehandler to cache data in .in3
+  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
 
   // check env
   if (getenv("IN3_PK")) {
@@ -747,6 +755,8 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-os") == 0)
+      only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)
       c->request_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-a") == 0)
