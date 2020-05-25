@@ -224,6 +224,42 @@ void in3_set_transport(
 }
 
 /**
+ * getter to retrieve the payload from a in3_request_t struct
+ */
+char* in3_get_request_payload(
+    in3_request_t* request /**< request struct */
+) {
+  return request->payload;
+}
+
+/**
+ * getter to retrieve the urls list from a in3_request_t struct
+ */
+char** in3_get_request_urls(
+    in3_request_t* request /**< request struct */
+) {
+  return request->urls;
+}
+
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+int in3_get_request_urls_len(
+    in3_request_t* request /**< request struct */
+) {
+  return request->urls_len;
+}
+
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+uint32_t in3_get_request_timeout(
+    in3_request_t* request /**< request struct */
+) {
+  return request->timeout;
+}
+
+/**
  * set the signer on the client.
  * the caller will need to free this pointer after usage.
  */

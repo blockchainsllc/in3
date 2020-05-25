@@ -10,12 +10,11 @@ namespace In3.Storage
         public InMemoryStorage()
         {
             cache = new Dictionary<string, byte[]>();
-        } 
+        }
 
         public byte[] GetItem(string key)
         {
-            if (cache.ContainsKey(key)) return cache[key];
-            return null;
+            return cache.ContainsKey(key) ? cache[key] : null;
         }
 
         public void SetItem(string key, byte[] content)

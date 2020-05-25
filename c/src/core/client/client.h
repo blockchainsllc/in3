@@ -570,11 +570,11 @@ char* in3_client_exec_req(
  * This function should be used in the transport-function to set the response.
  */
 void in3_req_add_response(
-    in3_response_t* res,      /**< [in] the response-pointer */
-    int             index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool            is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*     data,     /**<  the data or the the string*/
-    int             data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+    in3_request_t* req,      /**< [in] the request-pointer passed to the transport-function containing the payload and url */
+    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char*    data,     /**<  the data or the the string*/
+    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/
