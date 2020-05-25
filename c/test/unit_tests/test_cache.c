@@ -63,10 +63,8 @@ static in3_ret_t test_transport(in3_request_t* req) {
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
     buffer = _malloc(length + 1);
-    if (buffer) {
-      fread(buffer, 1, length, f);
-      buffer[length] = 0;
-    }
+    fread(buffer, 1, length, f);
+    buffer[length] = 0;
     fclose(f);
   } else {
     char cwd[PATH_MAX];

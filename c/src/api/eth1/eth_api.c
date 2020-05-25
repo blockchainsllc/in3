@@ -601,11 +601,7 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
     if (d_type(result) == T_NULL)
       api_set_error(EAGAIN, "Error getting the Receipt!");
     else {
-      eth_tx_receipt_t* txr = _malloc(sizeof(*txr));
-      if (!txr) {
-        api_set_error(ENOMEM, "Not enough memory");
-        return NULL;
-      }
+      eth_tx_receipt_t* txr    = _malloc(sizeof(*txr));
       txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);
       txr->block_number        = d_get_longk(result, K_BLOCK_NUMBER);
       txr->cumulative_gas_used = d_get_longk(result, K_CUMULATIVE_GAS_USED);

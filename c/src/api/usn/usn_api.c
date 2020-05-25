@@ -310,7 +310,6 @@ in3_ret_t usn_register_device(usn_device_conf_t* conf, char* url) {
     conf->devices = _malloc(sizeof(usn_device_t));
   else
     conf->devices = _realloc(conf->devices, sizeof(usn_device_t) * (conf->len_devices + 1), sizeof(usn_device_t) * conf->len_devices);
-  if (conf->devices == NULL) return IN3_ENOMEM;
   usn_device_t* device    = conf->devices + conf->len_devices;
   device->url             = url;
   device->num_bookings    = 0;
