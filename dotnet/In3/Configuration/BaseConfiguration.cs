@@ -1,32 +1,38 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleToAttribute("Test")]
 
 namespace In3.Configuration
 {
+    /// <summary>
+    /// Base class for all configuration classes.
+    /// </summary>
     public abstract class BaseConfiguration
     {
         // Consider using composite pattern
         private readonly Dictionary<string, object> _state;
         private bool _isDirty;
 
-        public BaseConfiguration()
+        internal BaseConfiguration()
         {
             _state = new Dictionary<string, object>();
         }
 
-        public abstract bool HasChanged();
+        internal abstract bool HasChanged();
 
-        protected object GetState(string key)
+        internal object GetState(string key)
         {
-            return _state.ContainsKey(key) ?_state[key] : null;
+            return _state.ContainsKey(key) ? _state[key] : null;
         }
 
-        protected void SetState(string key, object value)
+        internal void SetState(string key, object value)
         {
             MarkAsDirty(!_state.ContainsKey(key) || _state[key] != value);
             _state[key] = value;
         }
 
-        protected bool IsDirty()
+        internal bool IsDirty()
         {
             return _isDirty;
         }

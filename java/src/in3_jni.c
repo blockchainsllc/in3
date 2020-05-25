@@ -850,9 +850,6 @@ void in3_set_jclient_config(in3_t* c, jobject jclient) {
   jmethodID set_keep_in3_mid = (*jni)->GetMethodID(jni, jconfigclass, "setKeepIn3", "(Z)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_keep_in3_mid, (jboolean)(c->flags & FLAGS_KEEP_IN3) != 0);
 
-  jmethodID set_use_binary_mid = (*jni)->GetMethodID(jni, jconfigclass, "setUseBinary", "(Z)V");
-  (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_use_binary_mid, (jboolean)(c->flags & FLAGS_BINARY) != 0);
-
   jmethodID set_use_http_mid = (*jni)->GetMethodID(jni, jconfigclass, "setUseHttp", "(Z)V");
   (*jni)->CallVoidMethod(jni, jclientconfigurationobj, set_use_http_mid, (jboolean)(c->flags & FLAGS_HTTP) != 0);
 

@@ -19,7 +19,7 @@ namespace In3.Utils
             "undefined",
             "NaN"
         };
-        
+
         private static readonly string[] HexsFalsyValues = {
             "0x",
             "0x0",
