@@ -201,7 +201,6 @@ NONULL static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_
   // now update the addresses
   if (wl->addresses.data) _free(wl->addresses.data);
   wl->addresses = bytes(_malloc(len * 20), len * 20);
-  if (!wl->addresses.data) return IN3_ENOMEM;
 
   for (d_iterator_t iter = d_iter(nodes); iter.left; d_iter_next(&iter), i += 20)
     d_bytes_to(iter.token, wl->addresses.data + i, 20);
@@ -400,10 +399,6 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
 
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
-    if (!current) {
-      // TODO clean up memory
-      return NULL;
-    }
     if (!first) first = current;
     current->node   = node_def;
     current->weight = weight_def;

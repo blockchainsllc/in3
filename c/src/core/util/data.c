@@ -346,8 +346,7 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
-NONULL_FOR((1))
-char next_char(json_ctx_t* jp) {
+NONULL char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {
       case ' ':
@@ -362,8 +361,7 @@ char next_char(json_ctx_t* jp) {
   }
 }
 
-NONULL_FOR((1))
-d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
+RETURNS_NONULL NONULL d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
@@ -377,8 +375,7 @@ d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int pare
   return n;
 }
 
-NONULL_FOR((1))
-int parse_key(json_ctx_t* jp) {
+NONULL int parse_key(json_ctx_t* jp) {
   const char* start = jp->c;
   int         r;
   while (true) {
@@ -394,8 +391,7 @@ int parse_key(json_ctx_t* jp) {
   }
 }
 
-NONULL_FOR((1, 2))
-int parse_number(json_ctx_t* jp, d_token_t* item) {
+NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
   int     i      = 0;
   int64_t i64Val = 0;
   bool    neg    = false;
@@ -443,8 +439,7 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
   return -2;
 }
 
-NONULL_FOR((1, 2))
-int parse_string(json_ctx_t* jp, d_token_t* item) {
+NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
@@ -495,8 +490,7 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
   }
 }
 
-NONULL_FOR((1))
-int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
+NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
   if (jp->depth > DATA_DEPTH_MAX)
@@ -643,7 +637,6 @@ static int find_end(const char* str) {
 }
 
 char* d_create_json(d_token_t* item) {
-  if (item == NULL) return NULL;
   char*       dst = NULL;
   int         l   = d_len(item);
   str_range_t s;
