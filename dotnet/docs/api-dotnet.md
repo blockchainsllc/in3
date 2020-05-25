@@ -13,5 +13,3 @@ This library is based on the [C version of Incubed](http://github.com/slockit/in
 ```sh
 dotnet add package Slockit.In3
 ```
-
-## Index
