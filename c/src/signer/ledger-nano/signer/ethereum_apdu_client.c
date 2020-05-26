@@ -6,45 +6,48 @@
 #include "types.h"
 #include "utility.h"
 
+static uint8_t public_key[65];
+static int     is_public_key_assigned = false;
+
 in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   //UNUSED_VAR(account); // at least for now
-  printf("eth_ledger_sign_txn:enter\n");
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
-
+  printf("eth_ledger_sign_txn:enter\n");
   uint8_t bip_data[5];
 
   int       res = 0;
   in3_ret_t ret;
 
-  hid_device* handle;
-  uint8_t     apdu[64];
-  uint8_t     buf[2];
-  int         index_counter = 0;
-  uint8_t     bytes_read    = 0;
-  int         i             = 0;
+  uint8_t apdu[256];
+  uint8_t buf[2];
+  int     index_counter = 0;
+  uint8_t bytes_read    = 0;
+  int     i             = 0;
 
-  uint8_t msg_len = 32;
-  uint8_t hash[32];
-  uint8_t read_buf[255];
+  uint8_t  msg_len = 32;
+  uint8_t  hash[32];
+  uint8_t  read_buf[255];
+  uint8_t  bip32_len = 5;
+  uint32_t bip32[5];
 
   bool    is_hashed = false;
   bytes_t apdu_bytes;
-  bytes_t final_apdu_command;
-  uint8_t public_key[65];
-  bytes_t response;
+  // uint8_t public_key[65];
+  bytes_t     response;
+  hid_device* handle;
 
+  res    = hid_init();
+  handle = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
   memcpy(bip_data, bip_path_bytes, sizeof(bip_data));
   set_command_params_eth();
 
-  ret          = eth_ledger_get_public_addr(bip_data, public_key);
-  res          = hid_init();
-  handle       = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
+  //parse and convert bip into hardened form
+  read_bip32_path(5, bip_data, bip32);
+
   int cmd_size = 64;
   int recid    = 0;
 
   if (NULL != handle) {
-
-    hid_set_nonblocking(handle, 0);
 
     switch (type) {
       case SIGN_EC_RAW:
@@ -54,41 +57,33 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
         if (!is_hashed)
           hasher_Raw(HASHER_SHA3K, message.data, message.len, hash);
 
-        for (i = 0; i < message.len; i++) {
-          printf("%02x ", message.data[i]);
-        }
-        printf("\n");
+        apdu[index_counter++] = 0xe0;
+        apdu[index_counter++] = 0x04;
+        apdu[index_counter++] = 0x00;
+        apdu[index_counter++] = 0x00;
 
-        apdu[index_counter++] = CLA;
-        apdu[index_counter++] = INS_SIGN_TX;
-        apdu[index_counter++] = P1_FINAL;
-        apdu[index_counter++] = IDM_SECP256K1;
+        apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1 + message.len;
+        apdu[index_counter++] = bip32_len;
+        memcpy(apdu + index_counter, bip32, bip32_len * sizeof(uint32_t));
+        index_counter += bip32_len * sizeof(uint32_t);
 
-        apdu[index_counter++] = 0x01; //1st arg tag
-        apdu[index_counter++] = sizeof(bip_data);
-        memcpy(apdu + index_counter, &bip_data, sizeof(bip_data));
-        index_counter += sizeof(bip_data);
-
-        apdu[index_counter++] = 0x02; //2nd arg tag
-        apdu[index_counter++] = msg_len;
-        memcpy(apdu + index_counter, hash, msg_len);
-        index_counter += msg_len;
+        // apdu[index_counter++] = message.len; //2nd arg tag
+        memcpy(apdu + index_counter, message.data, message.len);
+        index_counter += message.len;
 
         apdu_bytes.data = malloc(index_counter);
         apdu_bytes.len  = index_counter;
         memcpy(apdu_bytes.data, apdu, index_counter);
 
-        wrap_apdu(apdu_bytes, 0, &final_apdu_command);
-
 #ifdef DEBUG
         in3_log_debug("apdu commnd sent to device\n");
         ba_print(final_apdu_command.data, final_apdu_command.len);
 #endif
+        // res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
+        // write_hid(handle, apdu_bytes.data, apdu_bytes.len);
 
-        res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
-
-        in3_log_debug("written to hid %d\n", res);
-
+        bytes_t* data = hex_to_new_bytes("e004000040058000002c8000003c800000000000000000000000ea098296c082520894d46e8dd67c5d32be8058bb8eb970870f07244567890caf6700370168000080808080", 138);
+        write_hid(handle, data->data, data->len);
         read_hid_response(handle, &response);
 
 #ifdef DEBUG
@@ -100,9 +95,10 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
           ret = IN3_OK;
 
           in3_log_debug("apdu executed succesfully \n");
-          extract_signture(response, dst);
-          recid   = get_recid_from_pub_key(&secp256k1, public_key, dst, hash);
-          dst[64] = recid;
+          for (i = 0; i < response.len; i++) {
+            printf("%02x ", response.data[i]);
+          }
+          printf("\n");
 
 #ifdef DEBUG
           in3_log_debug("printing signature returned by device with recid value\n");
@@ -114,7 +110,6 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
           ret = IN3_ENOTSUP;
         }
 
-        free(final_apdu_command.data);
         free(apdu_bytes.data);
         ret = IN3_OK;
         break;
@@ -127,14 +122,12 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
     in3_log_fatal("no ledger device connected \n");
     ret = IN3_ENODEVICE;
   }
-  hid_close(handle);
-  res = hid_exit();
+
   printf("eth_ledger_sign_txn:exit\n");
   return 65;
 }
 
 in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key) {
-  printf("eth_ledger_get_public_addr:enter\n");
   int           res = 0;
   in3_ret_t     ret;
   uint8_t       apdu[64];
@@ -149,17 +142,25 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
   bytes_t       final_apdu_command;
   bytes_t       response;
   hid_device*   handle;
+  printf("eth_ledger_get_public_addr:enter\n");
 
   res    = hid_init();
   handle = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
   if (NULL != handle) {
+
+    if (is_public_key_assigned) {
+      memcpy(o_public_key, public_key, 65);
+      hid_close(handle);
+      res = hid_exit();
+      return IN3_OK;
+    }
+
     //parse and convert bip into hardened form
-    printf("device handle fechted\n");
     read_bip32_path(5, i_bip_path, bip32);
 
-    apdu[index_counter++] = CLA;
-    apdu[index_counter++] = INS_GET_PUB_ADDR;
-    apdu[index_counter++] = P1_FINAL;
+    apdu[index_counter++] = 0xe0;
+    apdu[index_counter++] = 0x02;
+    apdu[index_counter++] = 0x01;
     apdu[index_counter++] = 0x00;
 
     apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1;
@@ -171,29 +172,22 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
     apdu_bytes.len  = index_counter;
     memcpy(apdu_bytes.data, apdu, index_counter);
 
-    printf("get pub key apdu cmd\n");
-    for (i = 0; i < apdu_bytes.len; i++) {
-      printf("%02x ", apdu_bytes.data[i]);
-    }
-    printf("\n");
+    // wrap_apdu(apdu_bytes.data, apdu_bytes.len, 0, &final_apdu_command);
 
-    wrap_apdu(apdu_bytes, 0, &final_apdu_command);
+    // for (i = 0; i < final_apdu_command.len; i++) {
+    //   printf("%02x ", final_apdu_command.data[i]);
+    // }
+    // printf("\n");
 
-    printf("get pub key final apdu cmd\n");
-    for (i = 0; i < final_apdu_command.len; i++) {
-      printf("%02x ", final_apdu_command.data[i]);
-    }
-    printf("\n");
+    // res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
+    write_hid(handle, apdu_bytes.data, apdu_bytes.len);
 
-    res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
+    // bytes_t* data = hex_to_new_bytes("0101050000001ae002010015058000002c8000003c80000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 128);
+
+    // write_hid(handle, data->data, data->len);
 
     read_hid_response(handle, &response);
 
-    printf("get pub key final apdu cmd\n");
-    for (i = 0; i < response.len; i++) {
-      printf("%02x ", response.data[i]);
-    }
-    printf("\n");
 #ifdef DEBUG
     in3_log_debug("response received from device\n");
     ba_print(response.data, response.len);
@@ -201,26 +195,24 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
 
     if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
       ret = IN3_OK;
-      memcpy(o_public_key, response.data + 1, 65);
-      printf("pub key final\n");
-      for (i = 0; i < 65; i++) {
-        printf("%02x ", o_public_key[i]);
-      }
-      printf("\n");
+      memcpy(public_key, response.data + 1, 65);
+      memcpy(o_public_key, public_key, 65);
+      is_public_key_assigned = true;
     } else {
       ret = IN3_ENOTSUP;
     }
-    free(final_apdu_command.data);
+    // free(final_apdu_command.data);
     free(apdu_bytes.data);
     free(response.data);
 
   } else {
-    printf("device handle not fechted\n");
+
     ret = IN3_ENODEVICE;
   }
   hid_close(handle);
   res = hid_exit();
   printf("eth_ledger_get_public_addr:exit\n");
+
   return ret;
 }
 

@@ -111,7 +111,7 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
         apdu_bytes.len  = index_counter;
         memcpy(apdu_bytes.data, apdu, index_counter);
 
-        wrap_apdu(apdu_bytes, 0, &final_apdu_command);
+        wrap_apdu(apdu_bytes.data, apdu_bytes.len, 0, &final_apdu_command);
 
 #ifdef DEBUG
         in3_log_debug("apdu commnd sent to device\n");
@@ -196,7 +196,7 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
     apdu_bytes.len  = index_counter;
     memcpy(apdu_bytes.data, apdu, index_counter);
 
-    wrap_apdu(apdu_bytes, 0, &final_apdu_command);
+    wrap_apdu(apdu_bytes.data, apdu_bytes.len, 0, &final_apdu_command);
 
     res = hid_write(handle, final_apdu_command.data, final_apdu_command.len);
 
