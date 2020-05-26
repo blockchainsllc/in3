@@ -1,4 +1,5 @@
 #include "transport.h"
+#include "../../src/signer/pk-signer/signer.h"
 #include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/nodelist.h"
@@ -6,7 +7,6 @@
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
-#include "../../src/verifier/eth1/basic/signer.h"
 #include "../test_utils.h"
 #include <stdio.h>
 #include <unistd.h>

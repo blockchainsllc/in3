@@ -88,4 +88,7 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
  */
 in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response);
 
+/** Signs transaction with the given context */
+bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx);
+
 #endif // in3_eth_basic_h__
