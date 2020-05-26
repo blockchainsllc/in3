@@ -170,7 +170,7 @@ static void test_signer() {
   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
   bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
-  TEST_ASSERT_EQUAL(65, eth_sign(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
+  TEST_ASSERT_EQUAL(65, eth_sign_pk_ctx(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
   TEST_ASSERT_FALSE(memiszero(sig, 65));
   b_free(data);
   in3_free(c);

@@ -184,9 +184,9 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       // (see eth_set_pk_signer()), and may change in the future.
       // Also, other wallet implementations may differ - hence the check.
 #if defined(LEDGER_NANO)
-      if (!ctx->client->signer || (ctx->client->signer->sign != eth_sign && ctx->client->signer->sign != eth_ledger_sign)) {
+      if (!ctx->client->signer || (ctx->client->signer->sign != eth_sign_pk_ctx && ctx->client->signer->sign != eth_ledger_sign)) {
 #else
-      if (!ctx->client->signer || ctx->client->signer->sign != eth_sign) {
+      if (!ctx->client->signer || ctx->client->signer->sign != eth_sign_pk_ctx) {
 #endif
         if (new_json) json_free(new_json);
         ctx_set_error(ctx, "you need to specify the from-address in the tx!", IN3_EINVAL);

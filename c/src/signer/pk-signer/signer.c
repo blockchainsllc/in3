@@ -73,7 +73,7 @@ in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst) {
 }
 
 /** signs the given data */
-in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t eth_sign_pk_ctx(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   UNUSED_VAR(account); // at least for now
   uint8_t* pk = ((in3_ctx_t*) ctx)->client->signer->wallet;
   switch (type) {
@@ -91,7 +91,7 @@ in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t 
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   if (in3->signer) _free(in3->signer);
   in3->signer             = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = eth_sign;
+  in3->signer->sign       = eth_sign_pk_ctx;
   in3->signer->prepare_tx = NULL;
   in3->signer->wallet     = pk;
   return IN3_OK;

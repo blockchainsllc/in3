@@ -40,8 +40,6 @@
 /** Sign message with given private key either raw or hashing the msg given as parameters*/
 in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
 /** Signs the given data */
-in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
-/** Signs transaction with the given context */
-bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx);
+in3_ret_t eth_sign_pk_ctx(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
 #endif
