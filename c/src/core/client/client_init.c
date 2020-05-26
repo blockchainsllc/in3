@@ -529,8 +529,7 @@ static chain_id_t chain_id(d_token_t* t) {
 
 static inline char* config_err(const char* keyname, const char* err) {
   char* s = _malloc(strlen(keyname) + strlen(err) + 4);
-  if (s)
-    sprintf(s, "%s: %s!", keyname, err);
+  sprintf(s, "%s: %s!", keyname, err);
   return s;
 }
 
@@ -748,10 +747,6 @@ char* in3_configure(in3_t* c, const char* config) {
       in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
       n->url = _malloc(d_len(token) + 1);
-      if (!n->url) {
-        res = config_err("in3_configure", "OOM");
-        goto cleanup;
-      }
       strcpy(n->url, d_string(token));
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;

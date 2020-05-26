@@ -6,7 +6,7 @@ namespace In3.Native
     internal class NativeTransportHandler : NativeHandler
     {
         private NativeWrapper Wrapper { get; set; }
-        
+
         private GCHandle TransportGcHandle { get; set; }
         private IntPtr TransportPtr { get; set; }
 
@@ -17,7 +17,8 @@ namespace In3.Native
             IN3_ERPC = -11
         }
 
-        [StructLayout(LayoutKind.Sequential)] private struct in3_request_t
+        [StructLayout(LayoutKind.Sequential)]
+        private struct in3_request_t
         {
             [MarshalAs(UnmanagedType.LPStr)] public string payload;
             // This esoteric thing came from here: https://docs.microsoft.com/en-us/dotnet/framework/interop/default-marshaling-for-arrays
@@ -76,7 +77,7 @@ namespace In3.Native
                     err = ErrorCode.IN3_ERPC;
                 }
             }
-            return (int) err;
+            return (int)err;
         }
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void in3_req_add_response(IntPtr res, int index, bool is_error, string data, int data_len);

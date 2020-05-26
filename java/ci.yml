@@ -44,6 +44,14 @@ test_android:
   tags:
     - short-jobs
   extends: .only_java
+  # Caches per branch - per job
+  before_script:
+    - export GRADLE_USER_HOME=`pwd`/.gradle
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .gradle/wrapper
+      - .gradle/caches
   script:
     - git clone https://github.com/slockit/in3-example-android.git
     - cd in3-example-android/app
@@ -62,6 +70,14 @@ java_linux:
   coverage: '/java:\s+(\d+.\d+\%)/'
   needs:
     - java
+  # Caches per branch - per job
+  before_script:
+    - export GRADLE_USER_HOME=`pwd`/.gradle
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .gradle/wrapper
+      - .gradle/caches
   script:
     - mv java_build build
     - cd java
@@ -79,6 +95,14 @@ java_arm:
   extends: .only_java
   needs:
     - java
+  # Caches per branch - per job
+  before_script:
+    - export GRADLE_USER_HOME=`pwd`/.gradle
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .gradle/wrapper
+      - .gradle/caches
   stage: java
   script:
     - mv java_build build
@@ -96,6 +120,14 @@ java_macos:
   extends: .only_java
   needs:
     - java
+  # Caches per branch - per job
+  before_script:
+    - export GRADLE_USER_HOME=`pwd`/.gradle
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .gradle/wrapper
+      - .gradle/caches
   script:
     - mv java_build build
     - cd java; cp test/build_test.gradle build.gradle

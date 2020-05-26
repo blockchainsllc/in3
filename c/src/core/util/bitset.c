@@ -107,7 +107,6 @@ in3_ret_t bs_modify(bitset_t* bs, size_t pos, bs_op_t op) {
 
 bitset_t* bs_new(size_t len) {
   bitset_t* bs = _malloc(sizeof(*bs));
-  if (bs == NULL) return NULL;
   if (len > BS_MAX) {
     bs->len    = ALIGN_UP8(len);
     bs->bits.p = _calloc(1, max(bs->len / 8, 1));
@@ -149,13 +148,8 @@ bool bs_isempty(bitset_t* bs) {
 
 bitset_t* bs_clone(bitset_t* bs) {
   bitset_t* nbs = _malloc(sizeof(*bs));
-  if (nbs == NULL) return NULL;
   if (IS_ON_HEAP(bs)) {
     nbs->bits.p = _malloc(bs->len / 8);
-    if (nbs->bits.p == NULL) {
-      _free(nbs);
-      return NULL;
-    }
     memcpy(nbs->bits.p, bs->bits.p, bs->len / 8);
   } else {
     nbs->bits.b = bs->bits.b;

@@ -37,6 +37,7 @@
  * util helper on byte arrays.
  * */
 
+#include "mem.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -73,39 +74,39 @@ typedef struct {
   bytes_t b;     /**< the bytes struct */
 } bytes_builder_t;
 
-bytes_t* b_new(const uint8_t* data, uint32_t len);            /**< allocates a new byte array with 0 filled */
-void     b_print(const bytes_t* a);                           /**< prints a the bytes as hex to stdout */
-void     ba_print(const uint8_t* a, size_t l);                /**< prints a the bytes as hex to stdout */
-int      b_cmp(const bytes_t* a, const bytes_t* b);           /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
-int      bytes_cmp(const bytes_t a, const bytes_t b);         /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
-void     b_free(bytes_t* a);                                  /**< frees the data */
-bytes_t* b_dup(const bytes_t* a);                             /**< clones a byte array*/
-uint8_t  b_read_byte(bytes_t* b, size_t* pos);                /**< reads a byte on the current position and updates the pos afterwards. */
-uint32_t b_read_int(bytes_t* b, size_t* pos);                 /**< reads a integer on the current position and updates the pos afterwards. */
-uint64_t b_read_long(bytes_t* b, size_t* pos);                /**< reads a long on the current position and updates the pos afterwards. */
-char*    b_new_chars(bytes_t* b, size_t* pos);                /**< creates a new string (needs to be freed) on the current position and updates the pos afterwards. */
-bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len); /**< reads bytes with a fixed length on the current position and updates the pos afterwards. */
+RETURNS_NONULL bytes_t* b_new(const uint8_t* data, uint32_t len);    /**< allocates a new byte array with 0 filled */
+NONULL void             b_print(const bytes_t* a);                   /**< prints a the bytes as hex to stdout */
+NONULL void             ba_print(const uint8_t* a, size_t l);        /**< prints a the bytes as hex to stdout */
+NONULL int              b_cmp(const bytes_t* a, const bytes_t* b);   /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+int                     bytes_cmp(const bytes_t a, const bytes_t b); /**< compares 2 byte arrays and returns 1 for equal and 0 for not equal*/
+void                    b_free(bytes_t* a);                          /**< frees the data */
+NONULL bytes_t* b_dup(const bytes_t* a);                             /**< clones a byte array*/
+NONULL uint8_t  b_read_byte(bytes_t* b, size_t* pos);                /**< reads a byte on the current position and updates the pos afterwards. */
+NONULL uint32_t b_read_int(bytes_t* b, size_t* pos);                 /**< reads a integer on the current position and updates the pos afterwards. */
+NONULL uint64_t b_read_long(bytes_t* b, size_t* pos);                /**< reads a long on the current position and updates the pos afterwards. */
+NONULL char*    b_new_chars(bytes_t* b, size_t* pos);                /**< creates a new string (needs to be freed) on the current position and updates the pos afterwards. */
+NONULL bytes_t* b_new_fixed_bytes(bytes_t* b, size_t* pos, int len); /**< reads bytes with a fixed length on the current position and updates the pos afterwards. */
 
-bytes_builder_t* bb_newl(size_t l);                                                                        /**< creates a new bytes_builder */
-void             bb_free(bytes_builder_t* bb);                                                             /**< frees a bytebuilder and its content. */
-int              bb_check_size(bytes_builder_t* bb, size_t len);                                           /**< internal helper to increase the buffer if needed */
-void             bb_write_chars(bytes_builder_t* bb, char* c, int len);                                    /**< writes a string to the builder. */
-void             bb_write_dyn_bytes(bytes_builder_t* bb, const bytes_t* src);                              /**< writes bytes to the builder with a prefixed length. */
-void             bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src);                            /**< writes fixed bytes to the builder. */
-void             bb_write_int(bytes_builder_t* bb, uint32_t val);                                          /**< writes a ineteger to the builder. */
-void             bb_write_long(bytes_builder_t* bb, uint64_t val);                                         /**< writes s long to the builder. */
-void             bb_write_long_be(bytes_builder_t* bb, uint64_t val, int len);                             /**< writes any integer value with the given length of bytes */
-void             bb_write_byte(bytes_builder_t* bb, uint8_t val);                                          /**< writes a single byte to the builder. */
-void             bb_write_raw_bytes(bytes_builder_t* bb, void* ptr, size_t len);                           /**< writes the bytes to the builder. */
-void             bb_clear(bytes_builder_t* bb);                                                            /**< resets the content of the builder. */
-void             bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, int data_len); /**< replaces or deletes a part of the content. */
-bytes_t*         bb_move_to_bytes(bytes_builder_t* bb);                                                    /**< frees the builder and moves the content in a newly created bytes struct (which needs to be freed later). */
-uint64_t         bb_read_long(bytes_builder_t* bb, size_t* i);                                             /**< reads a long from the builder */
-uint32_t         bb_read_int(bytes_builder_t* bb, size_t* i);                                              /**< reads a int from the builder */
+bytes_builder_t*      bb_newl(size_t l);                                                                        /**< creates a new bytes_builder */
+NONULL void           bb_free(bytes_builder_t* bb);                                                             /**< frees a bytebuilder and its content. */
+NONULL int            bb_check_size(bytes_builder_t* bb, size_t len);                                           /**< internal helper to increase the buffer if needed */
+NONULL void           bb_write_chars(bytes_builder_t* bb, char* c, int len);                                    /**< writes a string to the builder. */
+NONULL void           bb_write_dyn_bytes(bytes_builder_t* bb, const bytes_t* src);                              /**< writes bytes to the builder with a prefixed length. */
+NONULL void           bb_write_fixed_bytes(bytes_builder_t* bb, const bytes_t* src);                            /**< writes fixed bytes to the builder. */
+NONULL void           bb_write_int(bytes_builder_t* bb, uint32_t val);                                          /**< writes a ineteger to the builder. */
+NONULL void           bb_write_long(bytes_builder_t* bb, uint64_t val);                                         /**< writes s long to the builder. */
+NONULL void           bb_write_long_be(bytes_builder_t* bb, uint64_t val, int len);                             /**< writes any integer value with the given length of bytes */
+NONULL void           bb_write_byte(bytes_builder_t* bb, uint8_t val);                                          /**< writes a single byte to the builder. */
+NONULL void           bb_write_raw_bytes(bytes_builder_t* bb, void* ptr, size_t len);                           /**< writes the bytes to the builder. */
+NONULL void           bb_clear(bytes_builder_t* bb);                                                            /**< resets the content of the builder. */
+NONULL void           bb_replace(bytes_builder_t* bb, int offset, int delete_len, uint8_t* data, int data_len); /**< replaces or deletes a part of the content. */
+RETURNS_NONULL NONULL bytes_t* bb_move_to_bytes(bytes_builder_t* bb);                                           /**< frees the builder and moves the content in a newly created bytes struct (which needs to be freed later). */
+NONULL uint64_t                bb_read_long(bytes_builder_t* bb, size_t* i);                                    /**< reads a long from the builder */
+NONULL uint32_t                bb_read_int(bytes_builder_t* bb, size_t* i);                                     /**< reads a int from the builder */
 
-static inline bytes_t bytes(uint8_t* a, uint32_t len) { return (bytes_t){.data = a, .len = len}; } /**< converts the given bytes to a bytes struct */
-bytes_t               cloned_bytes(bytes_t data);                                                  /**< cloned the passed data*/
-static inline void    b_optimize_len(bytes_t* b) {                                                 /**< changed the data and len to remove leading 0-bytes */
+static inline bytes_t     bytes(uint8_t* a, uint32_t len) { return (bytes_t){.data = a, .len = len}; } /**< converts the given bytes to a bytes struct */
+bytes_t                   cloned_bytes(bytes_t data);                                                  /**< cloned the passed data*/
+NONULL static inline void b_optimize_len(bytes_t* b) {                                                 /**< changed the data and len to remove leading 0-bytes */
   while (b->len > 1 && *b->data == 0) {
     b->data++;
     b->len--;

@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "bytes.h"
+#include "debug.h"
 #include "log.h"
 #include "mem.h"
 #include "utils.h"
@@ -42,12 +43,12 @@
 
 bytes_t* b_new(const uint8_t* data, uint32_t len) {
   bytes_t* b = _calloc(1, sizeof(bytes_t));
-
-  b->len  = len;
-  b->data = _calloc(1, len);
-  if (data)
-    b->data = memcpy(b->data, data, len);
-
+  b->len     = len;
+  if (data) {
+    b->data = _malloc(len);
+    memcpy(b->data, data, len);
+  } else
+    b->data = _calloc(1, len);
   return b;
 }
 
@@ -102,8 +103,8 @@ bytes_t* b_dup(const bytes_t* a) {
   if (a == NULL) return NULL;
   bytes_t* out = _calloc(1, sizeof(bytes_t));
   out->data    = _calloc(1, a->len);
-  out->data    = memcpy(out->data, a->data, a->len);
   out->len     = a->len;
+  memcpy(out->data, a->data, a->len);
   return out;
 }
 bytes_t cloned_bytes(bytes_t data) {

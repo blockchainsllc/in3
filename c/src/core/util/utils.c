@@ -263,10 +263,6 @@ char* str_replace(char* orig, const char* rep, const char* with) {
   }
 
   tmp = result = _malloc(strlen(orig) + (len_with - len_rep) * count + 1);
-
-  if (!result)
-    return NULL;
-
   while (count--) {
     ins       = strstr(orig, rep);
     len_front = ins - orig;

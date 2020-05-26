@@ -21,6 +21,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(Linux))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='X86'">
+    <None Include="$(MSBuildThisFileDirectory)\runtimes\linux-x86\native\libin3.so">
+      <Link>libin3.so</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <ItemGroup Condition="'$([MSBuild]::IsOsPlatform(Linux))' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)'=='Arm'">
     <None Include="$(MSBuildThisFileDirectory)\runtimes\linux-arm64\native\libin3.so">
       <Link>libin3.so</Link>

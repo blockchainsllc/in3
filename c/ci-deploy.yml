@@ -26,7 +26,8 @@ dockerhub-deploy:
   script:
     - export IMAGE_VERSION=$(echo ${CI_COMMIT_TAG} | grep -E '\d+.*' -o)
     - export IMAGE_TAG="slockit/in3:$IMAGE_VERSION"
-    - docker build -t $COMMIT_IMAGE_TAG .
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $COMMIT_IMAGE_TAG .
     - docker tag $COMMIT_IMAGE_TAG $IMAGE_TAG
     - docker push $IMAGE_TAG
     - docker tag $IMAGE_TAG slockit/in3:latest
@@ -38,6 +39,7 @@ readthedocs:
   needs:
     - gcc8
     - python
+    - dotnet
   extends: .only_full
   tags:
     - short-jobs
@@ -50,19 +52,25 @@ readthedocs:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/in3/doc.git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@git.slock.it/tools/generator.git
     - cp python_multilib/docs/documentation.md doc/docs/api-python.md
+    - cp dotnet/docs/api-dotnet.md doc/docs/
     - cd generator
-    - npm i && npm run build
+    - npm --cache .npm i && npm run build
     - bin/slockit-doxygen ../x64_build/c/docs/doc_doxygen/xml "# API Reference C\n\n" >  ../doc/docs/api-c.md
     - bin/slockit-doxygen ../x64_build/java/docs/doc_doxygen/xml "# API Reference Java\n\n" java >  ../doc/docs/api-java.md
     - chmod 777 bin/*
     - cd ../wasm/src
-    - npm i typedoc
+    - npm --cache .npm i typedoc
     - node_modules/.bin/typedoc --includeDeclarations --ignoreCompilerErrors --readme none --target ES6 --mode 'modules' --excludeExternals --json doc.json in3.d.ts
     - cat doc.json | ../../generator/bin/slockit-docu in3.d slockit/in3-c/blob/master/wasm/src "$PRE_DOC" >  ../../doc/docs/api-wasm.md
     - cd ../../doc/docs && make html && make latexpdf && make text
   artifacts:
     paths:
       - doc/build
+  # Caches per branch - per job
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .npm/
 
 release_mac_and_wasm:
   stage: deploy

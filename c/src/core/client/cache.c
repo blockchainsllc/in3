@@ -209,8 +209,6 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
     wl->last_block         = b_read_long(data, &pos);
     uint32_t adress_length = b_read_int(data, &pos) * 20;
     wl->addresses          = bytes(_malloc(adress_length), adress_length);
-    if (!wl->addresses.data)
-      return IN3_ENOMEM;
     memcpy(wl->addresses.data, data->data + pos, adress_length);
     b_free(data);
   }
