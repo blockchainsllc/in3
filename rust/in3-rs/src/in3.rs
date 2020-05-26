@@ -123,13 +123,7 @@ impl Ctx {
                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
                     let data_str = &request["params"][0].as_str().unwrap()[2..];
                     let res_str = self.sign(data_str);
-                    in3_sys::in3_req_add_response(
-                        (*req).results,
-                        0.try_into().unwrap(),
-                        false,
-                        res_str,
-                        65,
-                    );
+                    in3_sys::in3_req_add_response(req, 0.try_into().unwrap(), false, res_str, 65);
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
@@ -152,7 +146,7 @@ impl Ctx {
                             Err(err) => {
                                 let err_str = ffi::CString::new(err.to_string()).unwrap();
                                 in3_sys::in3_req_add_response(
-                                    (*req).results,
+                                    req,
                                     i.try_into().unwrap(),
                                     true,
                                     err_str.as_ptr(),
@@ -162,7 +156,7 @@ impl Ctx {
                             Ok(res) => {
                                 let res_str = ffi::CString::new(res.to_string()).unwrap();
                                 in3_sys::in3_req_add_response(
-                                    (*req).results,
+                                    req,
                                     i.try_into().unwrap(),
                                     false,
                                     res_str.as_ptr(),
