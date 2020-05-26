@@ -69,7 +69,6 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
   const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
   const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
   char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
-  if (!req) return NULL;                                                                                // if we don't have the memory for a string, we stop here
   snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
 
   in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
@@ -143,7 +142,7 @@ in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char*
 
 static char* create_rpc_error(uint32_t id, int code, char* error) {
   char* res = _malloc(strlen(error) + 100);
-  if (res) sprintf(res, "{\"id\":%d,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", id, code, error);
+  sprintf(res, "{\"id\":%d,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", id, code, error);
   return res;
 }
 char* in3_client_exec_req(
@@ -189,7 +188,7 @@ char* in3_client_exec_req(
   }
   res         = _malloc(rr.len + 1);
   res[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
-  if (res) memcpy(res, rr.data, rr.len);
+  memcpy(res, rr.data, rr.len);
 
 clean:
 

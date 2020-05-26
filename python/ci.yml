@@ -12,6 +12,27 @@
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
       when: manual
 
+.cache_setup:
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip
+      - venv/
+
+.cache_setup_with_only_python:
+  extends: .only_python
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip
+      - venv/
+
+.cache_scipt_before: &cache_scipt_before
+- pip3 install virtualenv
+- virtualenv venv
+- source venv/bin/activate
+
+
 python:
   image: python
   stage: bindings
@@ -21,6 +42,7 @@ python:
     - gcc8
     - arm_jni
     - gcc8-x86
+  extends: .cache_setup
   tags:
     - short-jobs
   script:
@@ -42,10 +64,12 @@ python:
 python_arm:
   allow_failure: true
   image: python
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   needs:
     - python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
@@ -57,7 +81,6 @@ python_arm:
     - arm
 
 python_win:
-  extends: .only_python
   allow_failure: true
   needs:
     - python
@@ -73,11 +96,13 @@ python_win:
     - windows
 
 python_macos:
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   allow_failure: true
   needs:
     - python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
@@ -89,11 +114,13 @@ python_macos:
     - mac-mini-runner
 
 python_linux:
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   needs:
     - python
   image: python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
@@ -121,3 +148,6 @@ release_pip:
     - cd python
     - cp $pypirc ~/.pypirc
     - ./publish.sh
+
+
+

@@ -6,8 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Configuration Object for Incubed Client. It holds the state for the root 
- * of the configuration tree. Should be retrieved from the client instance as IN3#getConfig()
+ * Configuration Object for Incubed Client. It holds the state for the root of
+ * the configuration tree. Should be retrieved from the client instance as
+ * IN3#getConfig()
  */
 public class ClientConfiguration implements Configuration {
 
@@ -20,7 +21,6 @@ public class ClientConfiguration implements Configuration {
   private Integer finality;
   private Boolean includeCode;
   private Boolean keepIn3;
-  private Boolean useBinary;
   private Boolean useHttp;
   private Long    maxCodeCache;
   private Long    timeout;
@@ -37,7 +37,8 @@ public class ClientConfiguration implements Configuration {
   private HashMap<Long, ChainConfiguration> chainsConfig = new HashMap<Long, ChainConfiguration>();
 
   // Make the constructor private in order to ensure people use client.getConfig()
-  private ClientConfiguration() {}
+  private ClientConfiguration() {
+  }
 
   public Integer getRequestCount() {
     return requestCount;
@@ -53,9 +54,9 @@ public class ClientConfiguration implements Configuration {
   }
 
   /**
-     * activates the auto update.if true the nodelist will be automaticly updated if
-     * the lastBlock is newer
-     */
+   * activates the auto update.if true the nodelist will be automaticly updated if
+   * the lastBlock is newer
+   */
   public void setAutoUpdateList(boolean autoUpdateList) {
     this.autoUpdateList = autoUpdateList;
   }
@@ -91,7 +92,10 @@ public class ClientConfiguration implements Configuration {
     return stats;
   }
 
-  /** if true (default) the request will be counted as part of the regular stats, if not they are not shown as part of the dashboard. */
+  /**
+   * if true (default) the request will be counted as part of the regular stats,
+   * if not they are not shown as part of the dashboard.
+   */
   public void setStats(boolean stats) {
     this.stats = stats;
   }
@@ -123,15 +127,6 @@ public class ClientConfiguration implements Configuration {
     this.keepIn3 = keepIn3;
   }
 
-  public Boolean isUseBinary() {
-    return useBinary;
-  }
-
-  /* use binary payload instead of json */
-  public void setUseBinary(boolean useBinary) {
-    this.useBinary = useBinary;
-  }
-
   public Boolean isUseHttp() {
     return useHttp;
   }
@@ -155,9 +150,9 @@ public class ClientConfiguration implements Configuration {
   }
 
   /**
-     * specifies the number of milliseconds before the request times out. increasing
-     * may be helpful if the device uses a slow connection.
-     */
+   * specifies the number of milliseconds before the request times out. increasing
+   * may be helpful if the device uses a slow connection.
+   */
   public void setTimeout(long timeout) {
     this.timeout = timeout;
   }
@@ -167,9 +162,9 @@ public class ClientConfiguration implements Configuration {
   }
 
   /**
-     * sets min stake of the server. Only nodes owning at least this amount will be
-     * chosen.
-     */
+   * sets min stake of the server. Only nodes owning at least this amount will be
+   * chosen.
+   */
   public void setMinDeposit(long minDeposit) {
     this.minDeposit = minDeposit;
   }
@@ -205,7 +200,10 @@ public class ClientConfiguration implements Configuration {
     return rpc;
   }
 
-  /** setup an custom rpc source for requests by setting Chain to local and proof to none */
+  /**
+   * setup an custom rpc source for requests by setting Chain to local and proof
+   * to none
+   */
   public void setRpc(String rpc) {
     this.rpc = rpc;
   }
@@ -229,8 +227,9 @@ public class ClientConfiguration implements Configuration {
 
   protected void addChainConfiguration(ChainConfiguration configuration) {
     /*
-         * This is stored in a HashMap to ensure uniqueness between chains without changing NodeConfiguration equals or toHash methods
-         */
+     * This is stored in a HashMap to ensure uniqueness between chains without
+     * changing NodeConfiguration equals or toHash methods
+     */
     chainsConfig.put(configuration.getChain(), configuration);
   }
 
@@ -272,9 +271,6 @@ public class ClientConfiguration implements Configuration {
     }
     if (isStats() != null) {
       JSON.appendKey(sb, "stats", isStats());
-    }
-    if (isUseBinary() != null) {
-      JSON.appendKey(sb, "useBinary", isUseBinary());
     }
     if (isUseHttp() != null) {
       JSON.appendKey(sb, "useHttp", isUseHttp());

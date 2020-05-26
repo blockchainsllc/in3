@@ -1,6 +1,6 @@
 namespace In3.Rpc
 {
-    public class Id
+    internal class Id
     {
         private string _value;
 

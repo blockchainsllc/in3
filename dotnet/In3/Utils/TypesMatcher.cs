@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace In3.Utils
 {
-    public class TypesMatcher
+    internal class TypesMatcher
     {
         private static readonly char[] charsToTrim = new char[] { '0' };
 
@@ -12,9 +12,10 @@ namespace In3.Utils
         {
             char[] result = new char[len * 2];
             char[] hex = "0123456789abcdef".ToCharArray();
-            
+
             int i = 0, j = 0;
-            while (j < len) {
+            while (j < len)
+            {
                 result[i++] = hex[(input[j] >> 4) & 0xF];
                 result[i++] = hex[input[j] & 0xF];
                 j++;

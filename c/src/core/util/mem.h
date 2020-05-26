@@ -53,6 +53,15 @@
 #else
 #define _NOINLINE_ __attribute__((noinline))
 #endif
+#if defined(__clang_analyzer__) || defined(GCC_ANALYZER)
+#define NONULL_FOR(args) __attribute__((nonnull args))
+#define NONULL __attribute__((nonnull))
+#define RETURNS_NONULL __attribute__((returns_nonnull))
+#else
+#define NONULL_FOR(args)
+#define NONULL
+#define RETURNS_NONULL
+#endif
 
 #ifndef UNUSED_VAR
 #define UNUSED_VAR(x) (void) (x)
@@ -104,10 +113,10 @@ int    mem_stack_size();
 #define _free(p) _free_(p)
 #define _realloc(p, s, o) _realloc_(p, s, o, "F", "F", 0)
 #endif
-void* _malloc_(size_t size, char* file, const char* func, int line);
-void* _realloc_(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line);
-void* _calloc_(size_t n, size_t size, char* file, const char* func, int line);
-void  _free_(void* ptr);
+RETURNS_NONULL void* _malloc_(size_t size, char* file, const char* func, int line);
+RETURNS_NONULL void* _realloc_(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line);
+RETURNS_NONULL void* _calloc_(size_t n, size_t size, char* file, const char* func, int line);
+void                 _free_(void* ptr);
 #endif /* TEST */
 
 #endif /* __MEM_H__ */

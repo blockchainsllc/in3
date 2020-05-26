@@ -6,7 +6,7 @@ using In3.Utils;
 
 namespace csharp.Utils
 {
-    public class IdConverter : JsonConverter<Id>
+    internal class IdConverter : JsonConverter<Id>
     {
         public override Id Read(
             ref Utf8JsonReader reader,

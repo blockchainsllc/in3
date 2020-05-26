@@ -34,19 +34,17 @@
 
 #include "data.h"
 #include "bytes.h"
+#include "debug.h"
 #include "mem.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "verify.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "debug.h" // DEBUG !!!
-
 // Here we check the pointer-size, because pointers smaller than 32bit may result in a undefined behavior, when calling d_to_bytes() for a T_INTEGER
-#if UINTPTR_MAX == 0xFFFF
-#error since we store a uint32_t in a pointer, pointers need to be at least 32bit!
-#endif
+verify(sizeof(void*) >= 4);
 
 #ifndef IN3_DONT_HASH_KEYS
 static uint8_t __track_keys = 0;
@@ -348,7 +346,7 @@ d_token_t* d_next(d_token_t* item) {
   return item == NULL ? NULL : item + d_token_size(item);
 }
 
-char next_char(json_ctx_t* jp) {
+NONULL char next_char(json_ctx_t* jp) {
   while (true) {
     switch (*jp->c) {
       case ' ':
@@ -363,7 +361,7 @@ char next_char(json_ctx_t* jp) {
   }
 }
 
-d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
+RETURNS_NONULL NONULL d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int parent) {
   if (jp->len + 1 > jp->allocated) {
     jp->result = _realloc(jp->result, (jp->allocated << 1) * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
     jp->allocated <<= 1;
@@ -377,7 +375,7 @@ d_token_t* parsed_next_item(json_ctx_t* jp, d_type_t type, d_key_t key, int pare
   return n;
 }
 
-int parse_key(json_ctx_t* jp) {
+NONULL int parse_key(json_ctx_t* jp) {
   const char* start = jp->c;
   int         r;
   while (true) {
@@ -393,7 +391,7 @@ int parse_key(json_ctx_t* jp) {
   }
 }
 
-int parse_number(json_ctx_t* jp, d_token_t* item) {
+NONULL int parse_number(json_ctx_t* jp, d_token_t* item) {
   int     i      = 0;
   int64_t i64Val = 0;
   bool    neg    = false;
@@ -441,7 +439,7 @@ int parse_number(json_ctx_t* jp, d_token_t* item) {
   return -2;
 }
 
-int parse_string(json_ctx_t* jp, d_token_t* item) {
+NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
   char*  start = jp->c;
   size_t l, i;
   int    n;
@@ -492,7 +490,7 @@ int parse_string(json_ctx_t* jp, d_token_t* item) {
   }
 }
 
-int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
+NONULL int parse_object(json_ctx_t* jp, int parent, uint32_t key) {
   int res, p_index = jp->len;
 
   if (jp->depth > DATA_DEPTH_MAX)
@@ -603,23 +601,18 @@ void json_free(json_ctx_t* jp) {
 }
 
 json_ctx_t* parse_json(const char* js) {
-  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));                  // new parser
-  if (!parser) return NULL;                                          // not enoug memory?
-  parser->len       = 0;                                             // initial length
-  parser->depth     = 0;                                             //  initial depth
-  parser->c         = (char*) js;                                    // the pointer to the string to parse
-  parser->allocated = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
-  parser->result    = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
-  if (!parser->result) {                                             // not enough memory?
-    _free(parser);                                                   // also free the parse since it does not make sense to parse  now.
-    return NULL;                                                     // NULL means no memory
-  }                                                                  //
-  const int res = parse_object(parser, -1, 0);                       // now parse starting without parent (-1)
-  if (res < 0) {                                                     // error parsing?
-    json_free(parser);                                               // clean up
-    return NULL;                                                     // and return null
-  }                                                                  //
-  parser->c = (char*) js;                                            // since this pointer changed during parsing, we set it back to the original string
+  json_ctx_t* parser = _malloc(sizeof(json_ctx_t));                   // new parser
+  parser->len        = 0;                                             // initial length
+  parser->depth      = 0;                                             //  initial depth
+  parser->c          = (char*) js;                                    // the pointer to the string to parse
+  parser->allocated  = JSON_INIT_TOKENS;                              // keep track of how many tokens we allocated memory for
+  parser->result     = _malloc(sizeof(d_token_t) * JSON_INIT_TOKENS); // we allocate memory for the tokens and reallocate if needed.
+  const int res      = parse_object(parser, -1, 0);                   // now parse starting without parent (-1)
+  if (res < 0) {                                                      // error parsing?
+    json_free(parser);                                                // clean up
+    return NULL;                                                      // and return null
+  }                                                                   //
+  parser->c = (char*) js;                                             // since this pointer changed during parsing, we set it back to the original string
   return parser;
 }
 
@@ -644,7 +637,6 @@ static int find_end(const char* str) {
 }
 
 char* d_create_json(d_token_t* item) {
-  if (item == NULL) return NULL;
   char*       dst = NULL;
   int         l   = d_len(item);
   str_range_t s;
