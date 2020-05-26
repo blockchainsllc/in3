@@ -25,8 +25,7 @@ namespace In3.Storage
         /// <returns>The cached value as a <see langword="byte[]" />.</returns>
         public byte[] GetItem(string key)
         {
-            if (cache.ContainsKey(key)) return cache[key];
-            return null;
+            return cache.ContainsKey(key) ? cache[key] : null;
         }
 
         /// <summary>

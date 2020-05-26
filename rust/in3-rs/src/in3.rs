@@ -141,11 +141,11 @@ impl Ctx {
                         match resp {
                             Err(err) => {
                                 let err_str = ffi::CString::new(err.to_string()).unwrap();
-                                in3_sys::in3_req_add_response((*req).results, i.try_into().unwrap(), true, err_str.as_ptr(), -1i32);
+                                in3_sys::in3_req_add_response(req, i.try_into().unwrap(), true, err_str.as_ptr(), -1i32);
                             }
                             Ok(res) => {
                                 let res_str = ffi::CString::new(res.to_string()).unwrap();
-                                in3_sys::in3_req_add_response((*req).results, i.try_into().unwrap(), false, res_str.as_ptr(), -1i32);
+                                in3_sys::in3_req_add_response(req, i.try_into().unwrap(), false, res_str.as_ptr(), -1i32);
                             }
                         }
                     }
