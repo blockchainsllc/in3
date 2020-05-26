@@ -34,28 +34,14 @@
 
 #ifndef in3_signer_priv_h__
 #define in3_signer_priv_h__
-typedef enum {
-  hasher_sha2,
-  hasher_sha2d,
-  hasher_sha2_ripemd,
-  hasher_sha3,
-  hasher_sha3k,
-  hasher_blake,
-  hasher_blaked,
-  hasher_blake_ripemd,
-  hasher_groestld_trunc, /* double groestl512 hasher truncated to 256 bits */
-  hasher_overwinter_prevouts,
-  hasher_overwinter_sequence,
-  hasher_overwinter_outputs,
-  hasher_overwinter_preimage,
-  hasher_sapling_preimage,
-} hasher_t;
+#include "../../signer/pk-signer/signer.h"
 
 #include "../../core/client/context_internal.h"
-
+/** Sign message with given private key either raw or hashing the msg given as parameters*/
 in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
+/** Signs the given data */
 in3_ret_t eth_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
-bytes_t   sign_tx(d_token_t* tx, in3_ctx_t* ctx);
-in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst);
-in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst);
+/** Signs transaction with the given context */
+bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx);
+
 #endif
