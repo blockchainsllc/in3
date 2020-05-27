@@ -1,5 +1,7 @@
-use async_trait::async_trait;
 use libc::c_char;
+
+use async_trait::async_trait;
+
 use crate::error;
 
 #[async_trait]
