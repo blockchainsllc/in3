@@ -256,25 +256,7 @@ impl ClientTrait for Client {
             }
         }
     }
-    fn hex_to_bytes(&mut self, data: &str) -> *mut u8 {
-        unsafe {
-            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
-            let c_data: *const c_char = c_str_data.as_ptr();
-            let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
-            let len: i32 = -1;
-            in3_sys::hex_to_bytes(c_data, len, out, 32);
-            out
-        }
-    }
-    fn new_bytes(&mut self, data: &str, len: usize) -> *mut u8 {
-        unsafe {
-            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
-            let data_ptr = c_str_data.as_ptr();
-            let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
-            let data_ = (*data).data;
-            data_
-        }
-    }
+
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
             let pk_ = self.hex_to_bytes(data);
@@ -287,30 +269,6 @@ impl Drop for Ctx {
     fn drop(&mut self) {
         unsafe {
             in3_sys::ctx_free(self.ptr);
-        }
-    }
-}
-
-pub struct Request {
-    ptr: *mut in3_sys::in3_request_t,
-    ctx_ptr: *const in3_sys::in3_ctx_t,
-}
-
-impl Request {
-    pub fn new(ctx: &mut Ctx) -> Request {
-        unsafe {
-            Request {
-                ptr: in3_sys::in3_create_request(ctx.ptr),
-                ctx_ptr: ctx.ptr,
-            }
-        }
-    }
-}
-
-impl Drop for Request {
-    fn drop(&mut self) {
-        unsafe {
-            in3_sys::request_free(self.ptr, self.ctx_ptr, false);
         }
     }
 }
