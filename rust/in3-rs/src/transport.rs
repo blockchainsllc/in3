@@ -25,7 +25,7 @@ impl Transport for MockTransport<'_> {
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = self.responses.pop();
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
-        println!("{:?}", request.to_string());
+        // println!("{:?}", request.to_string());
 
         match response {
             Some(response) if response.0 == request[0]["method"] => {
@@ -51,10 +51,9 @@ impl Transport for HttpTransport {
     async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
-            println!("{:?} {:?}", url, request);
-
+            // println!("{:?} {:?}", url, request);
             let res = http_async(url, request).await;
-            println!("{:?}", res);
+            // println!("{:?}", res);
             match res {
                 Err(err) => responses.push(Err(format!("Transport error: {:?}", err))),
                 Ok(res) => responses.push(Ok(res)),
