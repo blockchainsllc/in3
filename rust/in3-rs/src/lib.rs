@@ -22,10 +22,16 @@ pub mod types;
 
 pub mod transport;
 
+/// Contains items that you probably want to always import
+///
+/// # Example
+///
+/// ```
+/// use in3::prelude::*;
+/// ```
 pub mod prelude {
     pub use crate::error::*;
     pub use crate::in3::*;
-    pub use crate::signer::SignerRust;
     pub use crate::signer::*;
     pub use crate::traits::Api as ApiTrait;
     pub use crate::traits::Client as ClientTrait;

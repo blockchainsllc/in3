@@ -226,6 +226,42 @@ pub struct Client {
 
 #[async_trait(? Send)]
 impl ClientTrait for Client {
+    /// Configures the IN3 client using a JSON str.
+    ///
+    /// # Example with supported options
+    /// ```
+    /// # use in3::prelude::*;
+    ///
+    /// let mut client = Client::new(chain::MAINNET);
+    /// assert!(client.configure(r#"{
+    /// 	"autoUpdateList": true,
+    /// 	"signatureCount": 0,
+    /// 	"finality": 0,
+    /// 	"includeCode": false,
+    /// 	"maxAttempts": 7,
+    /// 	"keepIn3": false,
+    /// 	"stats": true,
+    /// 	"useBinary": false,
+    /// 	"useHttp": false,
+    /// 	"maxBlockCache": 0,
+    /// 	"maxCodeCache": 0,
+    /// 	"maxVerifiedHashes": 5,
+    /// 	"timeout": 10000,
+    /// 	"minDeposit": 0,
+    /// 	"nodeProps": 0,
+    /// 	"nodeLimit": 0,
+    /// 	"proof": "standard",
+    /// 	"requestCount": 1,
+    /// 	"nodes": {
+    /// 		"0x2a": {
+    /// 			"contract": "0x4c396dcf50ac396e5fdea18163251699b5fcca25",
+    /// 			"registryId": "0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf",
+    /// 			"needsUpdate": true,
+    /// 			"avgBlockTime": 6
+    /// 		}
+    /// 	}
+    /// }"#).is_ok());
+    /// ```
     fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
@@ -237,14 +273,75 @@ impl ClientTrait for Client {
         Ok(())
     }
 
+    /// Sets custom transport.
+    ///
+    /// # Example
+    /// ```
+    /// # use in3::prelude::*;
+    /// use in3::transport::MockTransport;
+    ///
+    /// # let mut client = Client::new(chain::MAINNET);
+    /// client.set_transport(Box::new(MockTransport {
+    ///     responses: vec![(
+    ///         "eth_blockNumber",
+    ///         r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
+    ///     )],
+    /// }));
+    /// ```
     fn set_transport(&mut self, transport: Box<dyn Transport>) {
         self.transport = transport;
     }
 
+    /// Sets custom signer.
+    ///
+    /// # Example
+    /// ```
+    /// # use in3::prelude::*;
+    /// use in3::signer::SignerRust;
+    ///
+    /// # let mut client = Client::new(chain::MAINNET);
+    /// client.set_signer(Box::new(SignerRust {
+    ///     pk: "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f",
+    /// }));
+    /// ```
     fn set_signer(&mut self, signer: Box<dyn Signer>) {
         self.signer = Some(signer);
     }
 
+    /// Sets custom storage.
+    ///
+    /// # Example
+    /// ```
+    /// # use in3::prelude::*;
+    /// use std::collections::HashMap;
+    ///
+    /// struct MemStorage {
+    ///     buf: HashMap<String, Vec<u8>>
+    /// }
+    ///
+    /// impl Default for MemStorage {
+    ///     fn default() -> Self {
+    ///         MemStorage{buf: HashMap::new()}
+    ///     }
+    /// }
+    ///
+    /// impl Storage for MemStorage {
+    ///     fn get(&self,key: &str) -> Option<Vec<u8>> {
+    ///         Some(self.buf.get(key)?.clone())
+    ///     }
+    ///
+    ///     fn set(&mut self,key: &str,value: &[u8]) {
+    ///         self.buf.insert(key.to_string(), value.into());
+    ///     }
+    ///
+    ///     fn clear(&mut self) {
+    ///         self.buf.clear()
+    ///     }
+    /// }
+    ///
+    /// # let mut client = Client::new(chain::MAINNET);
+    /// client.set_storage(Box::new(MemStorage::default()));
+    /// ```
     fn set_storage(&mut self, storage: Box<dyn Storage>) {
         let no_storage = self.storage.is_none();
         self.storage = Some(storage);
@@ -299,6 +396,15 @@ impl ClientTrait for Client {
 }
 
 impl Client {
+    /// Constructs a new `Box<Client>` for specified chain Id.
+    /// Defaults to `HttpTransport` with no signer and storage.
+    ///
+    /// # Example
+    /// ```
+    /// use in3::prelude::*;
+    ///
+    /// let client = Client::new(chain::MAINNET);
+    /// ```
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
             let mut c = Box::new(Client {
@@ -309,13 +415,13 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
-            #[cfg(feature = "blocking")]
-            {
+            #[cfg(feature = "blocking")] {
                 (*c.ptr).transport = Some(Client::in3_rust_transport);
             }
             c
         }
     }
+
     unsafe extern "C" fn in3_rust_storage_get(
         cptr: *mut libc::c_void,
         key: *const libc::c_char,
