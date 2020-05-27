@@ -13,17 +13,27 @@ use crate::signer;
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
 
+/// Chain identifiers
 pub mod chain {
     pub type ChainId = u32;
 
+    /// Chain Id representing set of all supported chains
     pub const MULTICHAIN: u32 = 0x0;
+    /// Chain Id for mainnet
     pub const MAINNET: u32 = 0x01;
+    /// Chain Id for kovan
     pub const KOVAN: u32 = 0x2a;
+    /// Chain Id for tobalaba
     pub const TOBALABA: u32 = 0x44d;
+    /// Chain Id for goerli
     pub const GOERLI: u32 = 0x5;
+    /// Chain Id for evan
     pub const EVAN: u32 = 0x4b1;
+    /// Chain Id for IPFS
     pub const IPFS: u32 = 0x7d0;
+    /// Chain Id for bitcoin
     pub const BTC: u32 = 0x99;
+    /// Chain Id for local chains
     pub const LOCAL: u32 = 0xffff;
 }
 
