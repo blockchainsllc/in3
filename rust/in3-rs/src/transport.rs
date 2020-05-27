@@ -1,5 +1,4 @@
-extern crate surf;
-
+//! Transport trait implementations used by default or in tests.
 use async_trait::async_trait;
 
 use crate::traits::Transport;
@@ -16,12 +15,27 @@ async fn http_async(
     Ok(res)
 }
 
+
+/// Mock transport for use in tests.
+///
+/// Maintains a vector of request-response string slice tuples which are treated like a FIFO stack.
+/// This implementation gives IN3 the last pushed response on the stack if and only if the request
+/// method matches the first element of the last pop'd tuple entry. Otherwise an error string is
+/// returned.
+///
+/// See examples/custom_transport.rs for usage.
 pub struct MockTransport<'a> {
+    /// Vector of request-response string slice tuples.
     pub responses: Vec<(&'a str, &'a str)>,
 }
 
+/// Transport trait implementation for mocking in tests.
 #[async_trait]
 impl Transport for MockTransport<'_> {
+    /// Async fetch implementation
+    ///
+    /// Pops the responses vector and returns it if it's associated request matches the i/p.
+    /// Otherwise, returns an error string.
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = self.responses.pop();
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
@@ -44,10 +58,17 @@ impl Transport for MockTransport<'_> {
     }
 }
 
+
+/// HTTP transport
+///
+/// This is the default transport implementation for IN3.
 pub struct HttpTransport;
 
+/// Transport trait implementation for HTTP transport.
 #[async_trait]
 impl Transport for HttpTransport {
+    /// Fetches the responses from specified URLs over HTTP.
+    /// Errors are reported as strings.
     async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
