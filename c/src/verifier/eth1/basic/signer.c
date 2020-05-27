@@ -188,7 +188,6 @@ bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx) {
       } else if (ctx->client->signer->sign == eth_ledger_sign_txn) {
         uint8_t bip32[32];
         memcpy(bip32, ctx->client->signer->wallet, 5);
-        printf("retrieving addr\n");
         eth_ledger_get_public_addr(bip32, public_key);
 
       } else {

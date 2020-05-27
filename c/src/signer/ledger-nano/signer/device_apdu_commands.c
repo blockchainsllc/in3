@@ -5,6 +5,7 @@
 #include "../../../core/util/log.h"
 #include "device_apdu_commands.h"
 #include "types.h"
+#include "utility.h"
 #include <memory.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -26,14 +27,15 @@ void wrap_apdu(uint8_t* i_apdu, int len, uint16_t seq, bytes_t* o_wrapped_hid_cm
 
   uint16_t apdu_len = (uint16_t) len;
   uint8_t  data[2];
-  int      index   = 0;
-  int      cmd_len = 0;
+  int      index      = 0;
+  int      cmd_len    = 0;
+  int      header_len = 7;
 
-  if (len < 55) {
+  if (len < 64 - header_len) {
     cmd_len = 64;
-  } else if (len > 64 && len < 128) {
+  } else if (len > 64 - header_len && len < 128 - header_len) {
     cmd_len = 128;
-  } else if (len > 128 && len < 255) {
+  } else if (len > 128 - header_len && len < 255 - header_len) {
     cmd_len = 255;
   }
   uint8_t* cmd = malloc(cmd_len);
@@ -96,62 +98,48 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
   int     bytes_to_read         = 0;
   int     total_bytes_available = 0;
   int     bytes_read            = 0;
-  // ret          = eth_ledger_get_public_addr(bip_data, public_key);
+  int     i                     = 0;
+  uint8_t bug_header[]          = {0x01, 0x01, 0x05, 0x00, 0xbf, 0x00, 0x01, 0x04}; // known and open issue in ledger repo for mac
+                                                                                    // https://github.com/LedgerHQ/ledger-nano-s/issues/55
 
-  // int res = hid_init();
-  // handle  = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
   hid_set_nonblocking(handle, 0);
 
   do {
-    printf("reading bytes \n");
     bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
 
-    int i = 0;
-
+    if (memcmp(bug_header, read_chunk, sizeof(bug_header)) == 0) { //random bug header received, signing will have to be reattempted
+      total_bytes_available = 0;
+      index_counter         = 0;
+      break;
+    }
     if (bytes_read > 0) {
-      printf("bytes read %d\n", bytes_read);
       if (index_counter == 0) //first chunk read
       {
         total_bytes_available = read_chunk[6];
         index_counter += (bytes_read - 7);
-        // if (index_counter > total_bytes_available) {
-        //   index_counter         = 0;
-        //   total_bytes_available = 0;
-        //   continue;
-        // }
+
         memcpy(read_buf, read_chunk + 7, bytes_read - 7);
       } else {
         memcpy(read_buf + index_counter, read_chunk + 5, total_bytes_available - index_counter);
         index_counter += (bytes_read - 5);
       }
 
-      printf("bytes read %d\n", bytes_read);
-      for (i = 0; i < bytes_read; i++) {
-        printf("%02x ", read_chunk[i]);
-      }
-      printf("\n");
-
       bytes_to_read = total_bytes_available - index_counter;
     }
+
     if (bytes_to_read <= 0 && total_bytes_available > 1) {
-      printf("exiting loop %d %d %d \n", bytes_to_read, total_bytes_available, index_counter);
       break;
     }
 
   } while (bytes_read > 0);
 
-  printf("total bytes read %d\n", total_bytes_available);
   response->len  = total_bytes_available;
   response->data = malloc(total_bytes_available);
-  // hid_close(handle);
-  // hid_exit();
+
   memcpy(response->data, read_buf, total_bytes_available);
 }
 
 int write_hid(hid_device* handle, uint8_t* data, int len) {
-  // ret          = eth_ledger_get_public_addr(bip_data, public_key);
-  printf("write_hid:enter\n");
-
   bytes_t final_apdu_command;
   uint8_t chunk[64];
   int     res        = 0;
@@ -163,56 +151,39 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
   int     bufsize    = 0;
   uint8_t header[]   = {0x01, 0x01, 0x05};
   uint8_t seq_data[2];
-  uint8_t final_buffer[1000];
-  // printf("printing apud %d\n", len);
-  // for (i = 0; i < len; i++) {
-  //   printf("%02x ", data[i]);
-  // }
-  // printf("\n");
+  int     total_padding = 0;
 
   wrap_apdu(data, len, 0, &final_apdu_command);
-
-  totalBytes = final_apdu_command.len;
+  total_padding = final_apdu_command.len - (len + 7);
+  totalBytes    = final_apdu_command.len;
 
   if (totalBytes > 64) {
-    while (totalBytes > 0) {
+    while (totalBytes > total_padding) {
       if (seq == 0) { // first packet
-        memcpy(final_buffer, final_apdu_command.data, 64);
+        hid_write(handle, final_apdu_command.data, 64);
         bufsize += 64;
         totalBytes -= 64;
         sent += 64;
         seq++;
       } else {
         len_to_bytes(seq, seq_data);
+        memset(chunk, 0, 64);
         memcpy(chunk, header, sizeof(header));
         memcpy(chunk + sizeof(header), seq_data, sizeof(seq_data));
         tobesent = (totalBytes > (64 - (sizeof(header) + sizeof(seq_data)))) ? (64 - (sizeof(header) + sizeof(seq_data))) : totalBytes;
         memcpy(chunk + sizeof(header) + sizeof(seq_data), final_apdu_command.data + sent, tobesent);
         totalBytes -= tobesent;
         sent += tobesent;
-
-        memcpy(final_buffer + bufsize, chunk, 64);
+        seq++;
+        hid_write(handle, chunk, 64);
         bufsize += 64;
       }
     }
   } else {
-    memcpy(final_buffer, final_apdu_command.data, final_apdu_command.len);
+    hid_write(handle, final_apdu_command.data, final_apdu_command.len);
     bufsize += final_apdu_command.len;
   }
 
-  printf("final apdu\n");
-  for (i = 0; i < bufsize; i++) {
-    printf("%02x ", final_buffer[i]);
-  }
-  printf("\n");
-
-  res = hid_write(handle, final_buffer, bufsize);
-
-  // res = hid_write(handle, data, len);
-  printf("written to hid\n");
-
   free(final_apdu_command.data);
-
-  printf("write_hid:exit\n");
   return res;
 }
