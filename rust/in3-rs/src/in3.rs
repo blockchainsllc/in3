@@ -259,7 +259,7 @@ impl ClientTrait for Client {
 
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
-            let pk_ = self.hex_to_bytes(data);
+            let pk_ = Client::hex_to_bytes(data);
             in3_sys::eth_set_pk_signer(self.ptr, pk_);
         }
     }
@@ -383,6 +383,15 @@ impl Client {
         }
 
         in3_sys::in3_ret_t::IN3_OK
+    }
+
+    unsafe fn hex_to_bytes(data: &str) -> *mut u8 {
+        let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+        let c_data: *const c_char = c_str_data.as_ptr();
+        let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
+        let len: i32 = -1;
+        in3_sys::hex_to_bytes(c_data, len, out, 32);
+        out
     }
 }
 
