@@ -7,12 +7,6 @@ use sha3::{Digest, Keccak256Full};
 
 use crate::traits::Signer;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum SignatureType {
-    Raw = 0,
-    Hash = 1,
-}
-
 pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     let data_ = data as *mut u8;
     let dst: *mut u8 = libc::malloc(65) as *mut u8;
