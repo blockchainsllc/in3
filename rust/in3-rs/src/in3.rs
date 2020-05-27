@@ -37,6 +37,7 @@ pub mod chain {
     pub const LOCAL: u32 = 0xffff;
 }
 
+
 struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
     #[allow(dead_code)]
@@ -201,6 +202,13 @@ impl Ctx {
     }
 }
 
+impl Drop for Ctx {
+    fn drop(&mut self) {
+        unsafe {
+            in3_sys::ctx_free(self.ptr);
+        }
+    }
+}
 
 
 /// Client struct
@@ -286,14 +294,6 @@ impl ClientTrait for Client {
         unsafe {
             let pk_ = Client::hex_to_bytes(data);
             in3_sys::eth_set_pk_signer(self.ptr, pk_);
-        }
-    }
-}
-
-impl Drop for Ctx {
-    fn drop(&mut self) {
-        unsafe {
-            in3_sys::ctx_free(self.ptr);
         }
     }
 }
