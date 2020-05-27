@@ -1,3 +1,4 @@
+//! IN3 client implementation.
 use ffi::{CStr, CString};
 use std::convert::TryInto;
 use std::ffi;

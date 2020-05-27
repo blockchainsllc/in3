@@ -1,3 +1,4 @@
+//! Errors used throughout the library
 use core::fmt;
 use core::result;
 use std::{convert, ffi};
@@ -65,6 +66,7 @@ in3_error_def!(
     => IgnorableError = IN3_EIGNORE;
 );
 
+/// Generic Result type for IN3 errors.
 #[must_use]
 pub type In3Result<T> = result::Result<T, Error>;
 
