@@ -201,6 +201,21 @@ impl Ctx {
     }
 }
 
+
+
+/// Client struct
+pub struct Client {
+    /// Opaque handle to IN3 client
+    /// Stored as a pointer to ensure type is `!Send`/`!Sync`
+    ptr: *mut in3_sys::in3_t,
+    /// Transport implementation
+    transport: Box<dyn Transport>,
+    /// Signer implementation
+    signer: Option<Box<dyn Signer>>,
+    /// Storage implementation
+    storage: Option<Box<dyn Storage>>,
+}
+
 #[async_trait(? Send)]
 impl ClientTrait for Client {
     fn configure(&mut self, config: &str) -> Result<(), String> {
@@ -281,13 +296,6 @@ impl Drop for Ctx {
             in3_sys::ctx_free(self.ptr);
         }
     }
-}
-
-pub struct Client {
-    ptr: *mut in3_sys::in3_t,
-    transport: Box<dyn Transport>,
-    signer: Option<Box<dyn Signer>>,
-    storage: Option<Box<dyn Storage>>,
 }
 
 impl Client {
