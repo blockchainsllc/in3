@@ -34,7 +34,7 @@ struct Ctx {
 }
 
 impl Ctx {
-    pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
+    fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
@@ -43,12 +43,12 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn signc(&mut self, data: *const c_char, len: usize) -> *mut u8 {
+    unsafe fn signc(&mut self, data: *const c_char, len: usize) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
         signer::signc(pk, data, len)
     }
 
-    pub unsafe fn sign(&mut self, msg: &str) -> *const c_char {
+    unsafe fn sign(&mut self, msg: &str) -> *const c_char {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
@@ -67,7 +67,7 @@ impl Ctx {
         std::ptr::null_mut()
     }
 
-    pub async unsafe fn execute(&mut self) -> In3Result<String> {
+    async unsafe fn execute(&mut self) -> In3Result<String> {
         let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
         p = self.ptr;
@@ -180,7 +180,7 @@ impl Ctx {
     }
 
     #[cfg(feature = "blocking")]
-    pub fn send(&mut self) -> In3Result<()> {
+    fn send(&mut self) -> In3Result<()> {
         unsafe {
             let ret = in3_sys::in3_send_ctx(self.ptr);
             match ret {
