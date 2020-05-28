@@ -64,4 +64,8 @@ void unwrap_apdu(bytes_t wrapped_hid_cmd, bytes_t* apdu_res);
 void read_hid_response(hid_device* handle, bytes_t* response);
 
 int write_hid(hid_device* handle, uint8_t* data, int len);
+
+hid_device* open_device();
+
+void close_device(hid_device* handle);
 #endif

@@ -35,7 +35,8 @@
 #define in3_types_h__
 
 #define LEDGER_NANOS_VID 0x2C97
-#define LEDGER_NANOS_PID 0x1015
+// #define LEDGER_NANOS_PID 0x1015
+#define LEDGER_NANOS_PID 0x00
 
 typedef enum CURVE_CODE_ {
   IDM_ED        = 0,

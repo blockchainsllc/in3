@@ -13,17 +13,16 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   in3_log_debug("eth_ledger_sign_txn:enter\n");
   //UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
-
-  uint8_t bip_data[5];
+  uint8_t  bip_data[5];
 
   int       res = 0;
   in3_ret_t ret;
-
-  uint8_t apdu[256];
-  uint8_t buf[2];
-  int     index_counter = 0;
-  uint8_t bytes_read    = 0;
-  int     i             = 0;
+  uint8_t   apdu[256];
+  uint8_t   buf[2];
+  int       index_counter = 0;
+  uint8_t   bytes_read    = 0;
+  int       i             = 0;
+  uint8_t   pkey[65];
 
   uint8_t  msg_len = 32;
   uint8_t  hash[32];
@@ -31,14 +30,11 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   uint8_t  bip32_len = 5;
   uint32_t bip32[5];
 
-  bool    is_hashed = false;
-  bytes_t apdu_bytes;
-  // uint8_t public_key[65];
+  bool        is_hashed = false;
   bytes_t     response;
   hid_device* handle;
 
-  res    = hid_init();
-  handle = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
+  handle = open_device();
   memcpy(bip_data, bip_path_bytes, sizeof(bip_data));
   set_command_params_eth();
 
@@ -68,20 +64,15 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
         memcpy(apdu + index_counter, bip32, bip32_len * sizeof(uint32_t));
         index_counter += bip32_len * sizeof(uint32_t);
 
-        // apdu[index_counter++] = message.len; //2nd arg tag
         memcpy(apdu + index_counter, message.data, message.len);
         index_counter += message.len;
-
-        apdu_bytes.data = malloc(index_counter);
-        apdu_bytes.len  = index_counter;
-        memcpy(apdu_bytes.data, apdu, index_counter);
 
 #ifdef DEBUG
         in3_log_debug("apdu commnd sent to device\n");
         ba_print(final_apdu_command.data, final_apdu_command.len);
 #endif
 
-        write_hid(handle, apdu_bytes.data, apdu_bytes.len);
+        write_hid(handle, apdu, index_counter);
 
         read_hid_response(handle, &response);
 
@@ -95,23 +86,30 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
             ret = IN3_OK;
 
             memcpy(dst, response.data + 1, 64);
-            recid   = get_recid_from_pub_key(&secp256k1, public_key, dst, hash);
+            eth_ledger_get_public_addr(bip_data, pkey);
+            recid   = get_recid_from_pub_key(&secp256k1, pkey, dst, hash);
             dst[64] = recid;
             in3_log_debug("recid %d\n", recid);
 #ifdef DEBUG
             in3_log_debug("printing signature returned by device with recid value\n");
+
             ba_print(dst, 65);
 #endif
 
           } else {
             in3_log_fatal("error in apdu execution \n");
+            close_device(handle);
+            free(response.data);
             return IN3_EAPDU;
           }
         } else {
           in3_log_fatal("error in apdu execution \n");
+          close_device(handle);
+          free(response.data);
           return IN3_EAPDU;
         }
-        free(apdu_bytes.data);
+
+        close_device(handle);
         free(response.data);
         ret = IN3_OK;
         break;
@@ -142,19 +140,16 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
   const uint8_t bip32_len     = 5;
   uint32_t      bip32[5];
   int           i = 0;
-  bytes_t       apdu_bytes;
-  bytes_t       final_apdu_command;
-  bytes_t       response;
-  hid_device*   handle;
 
-  res    = hid_init();
-  handle = hid_open(LEDGER_NANOS_VID, LEDGER_NANOS_PID, NULL);
+  bytes_t     response;
+  hid_device* handle;
+
+  handle = open_device();
   if (NULL != handle) {
 
     if (is_public_key_assigned) {
       memcpy(o_public_key, public_key, 65);
-      hid_close(handle);
-      res = hid_exit();
+      close_device(handle);
       return IN3_OK;
     }
 
@@ -171,11 +166,7 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
     memcpy(apdu + index_counter, bip32, bip32_len * sizeof(uint32_t));
     index_counter += bip32_len * sizeof(uint32_t);
 
-    apdu_bytes.data = malloc(index_counter);
-    apdu_bytes.len  = index_counter;
-    memcpy(apdu_bytes.data, apdu, index_counter);
-
-    write_hid(handle, apdu_bytes.data, apdu_bytes.len);
+    write_hid(handle, apdu, index_counter);
 
     read_hid_response(handle, &response);
 
@@ -192,21 +183,24 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
         is_public_key_assigned = true;
       } else {
         in3_log_fatal("error in apdu execution \n");
+        free(response.data);
+        close_device(handle);
         return IN3_EAPDU;
       }
     } else {
       in3_log_fatal("error in apdu execution \n");
+      free(response.data);
+      close_device(handle);
       return IN3_EAPDU;
     }
-    // free(final_apdu_command.data);
-    free(apdu_bytes.data);
+
     free(response.data);
+    close_device(handle);
   } else {
 
-    ret = IN3_ENODEVICE;
+    return IN3_ENODEVICE;
   }
-  hid_close(handle);
-  res = hid_exit();
+
   in3_log_debug("eth_ledger_get_public_addr:exit\n");
 
   return ret;

@@ -187,3 +187,27 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
   free(final_apdu_command.data);
   return res;
 }
+
+hid_device* open_device() {
+  struct hid_device_info* device_info;
+  hid_device*             handle;
+  int                     res = hid_init();
+  if (res == 0) {
+    device_info = hid_enumerate(LEDGER_NANOS_VID, LEDGER_NANOS_PID);
+    if (device_info != NULL) {
+      handle = hid_open_path(device_info->path);
+    } else {
+      handle = NULL;
+    }
+    hid_free_enumeration(device_info);
+  } else {
+    handle = NULL;
+  }
+
+  return handle;
+}
+
+void close_device(hid_device* handle) {
+  hid_close(handle);
+  hid_exit();
+}
