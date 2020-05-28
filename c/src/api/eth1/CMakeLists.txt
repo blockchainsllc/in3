@@ -31,7 +31,9 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+if (ESP_IDF)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
+ENDIF (ESP_IDF)
 
 add_library(eth_api_o OBJECT eth_api.c abi.c key.c rpc_api.c ens.c)
 target_compile_definitions(eth_api_o PRIVATE -D_POSIX_C_SOURCE=199309L)

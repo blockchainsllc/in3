@@ -32,8 +32,10 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
+if(ESP_IDF)
+include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
+ENDIF()
 
 add_library(pk_signer_o OBJECT signer.c)
 add_library(pk_signer STATIC $<TARGET_OBJECTS:pk_signer_o>)
