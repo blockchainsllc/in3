@@ -1,5 +1,5 @@
 //! Ethereum JSON RPC client API. This implementation is more or less consistent with the
-//! [Ethereum JSON RPC wiki](https://github.com/ethereum/wiki/wiki/JSON-RPC)
+//! [Ethereum JSON RPC wiki](https://github.com/ethereum/wiki/wiki/JSON-RPC).
 use ethereum_types::{Address, U256};
 use serde::Serialize;
 use serde_json::json;

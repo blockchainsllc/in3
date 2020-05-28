@@ -1,4 +1,4 @@
-//! Errors used throughout the library
+//! Errors used throughout the library.
 use core::fmt;
 use core::result;
 use std::{convert, ffi};

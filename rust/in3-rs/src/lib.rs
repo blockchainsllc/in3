@@ -22,7 +22,7 @@ pub mod types;
 
 pub mod transport;
 
-/// Contains items that you probably want to always import
+/// Contains items that you probably want to always import.
 ///
 /// # Example
 ///
