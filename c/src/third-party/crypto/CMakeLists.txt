@@ -37,6 +37,7 @@ add_library(crypto_o OBJECT
         address.c
         bignum.c
         rand.c
+        hmac.c
         secp256k1.c
         memzero.c
         sha3.c
@@ -59,7 +60,6 @@ add_library(crypto_o OBJECT
         address.c
         bignum.c
         rand.c
-        hmac.c
         secp256k1.c
         memzero.c
         sha3.c
