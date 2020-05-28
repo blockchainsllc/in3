@@ -328,6 +328,21 @@ impl Api {
         Ok(res)
     }
 
+    pub async fn get_uncle_by_block_hash_and_index(
+        &mut self,
+        hash: Hash,
+        index: U256,
+    ) -> In3Result<Block> {
+        let resp = self
+            .send(RpcRequest {
+                method: "eth_getUncleByBlockHashAndIndex",
+                params: json!([hash, index]),
+            })
+            .await?;
+        let res: Block = serde_json::from_str(resp[0]["result"].to_string().as_str())?;
+        Ok(res)
+    }
+
     pub async fn get_uncle_count_by_block_hash(&mut self, hash: Hash) -> In3Result<U256> {
         let resp = self
             .send(RpcRequest {
