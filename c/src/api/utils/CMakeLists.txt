@@ -31,15 +31,5 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-
-
-IF (IN3API)
-    add_subdirectory(eth1)
-    add_subdirectory(usn)
-    add_subdirectory(utils)
-    
-    IF (IPFS)
-        add_subdirectory(ipfs)
-    ENDIF (IPFS)
-ENDIF (IN3API)
-
+add_library(api_utils_o OBJECT api_utils.c)
+add_library(api_utils STATIC $<TARGET_OBJECTS:api_utils_o>)
