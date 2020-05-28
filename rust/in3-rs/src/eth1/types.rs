@@ -39,7 +39,7 @@ impl Serialize for BlockNumber {
 pub enum BlockTransactions {
     /// A vector of hashes
     Hashes(Vec<Hash>),
-    /// A vector of `Transaction` objects
+    /// A vector of [`Transaction`](struct.Transaction.html) objects
     Full(Vec<Transaction>),
 }
 
@@ -154,17 +154,20 @@ pub struct Log {
     pub log_type: String,
 }
 
-/// Response of `eth_getFilterChanges`, `eth_getFilterLogs` & `eth_getLogs` API methods.
+/// Response of [`eth_getFilterChanges`](../api/struct.Api.html#method.get_filter_changes),
+/// [`eth_getFilterLogs`](../api/struct.Api.html#method.get_filter_logs) &
+/// [`eth_getLogs`](../api/struct.Api.html#method.get_logs) API methods.
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum FilterChanges {
-    /// A vector of `Log` objects
+    /// A vector of [`Log`](struct.Log.html) objects
     Logs(Vec<Log>),
-    /// A vector of `Hash`s
+    /// A vector of [`Hash`](type.Hash.html)s
     BlockHashes(Vec<Hash>),
 }
 
-/// Transaction type used as i/p for `eth_sendTransaction` API method.
+/// Transaction type used as i/p for
+/// [`eth_sendTransaction`](../api/struct.Api.html#method.send_transaction) API method.
 #[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct OutgoingTransaction {
@@ -189,14 +192,16 @@ pub struct OutgoingTransaction {
     pub nonce: Option<U256>,
 }
 
-/// Transaction type used as i/p for `eth_call` & `eth_estimateGas` API methods.
+/// Transaction type used as i/p for [`eth_call`](../api/struct.Api.html#method.call) &
+/// [`eth_estimateGas`](../api/struct.Api.html#method.estimate_gas) API methods.
 #[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CallTransaction {
     /// Address of sender
     #[serde(skip_serializing_if = "Option::is_none")]
     pub from: Option<Address>,
-    /// Address of receiver (optional only for `eth_estimateGas` API method)
+    /// Address of receiver (optional only for [`eth_estimateGas`](../api/struct.Api.html#method.estimate_gas)
+    /// API method)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub to: Option<Address>,
     /// Gas
@@ -231,7 +236,7 @@ pub struct TransactionReceipt {
     pub gas_used: Option<U256>,
     /// Contract address created, if the transaction was a contract creation
     pub contract_address: Option<Address>,
-    /// Vector of `Log` objects
+    /// Vector of [`Log`](struct.Log.html) objects
     pub logs: Vec<Log>,
     /// Bloom filter for the logs of the block
     pub logs_bloom: Bloom,
