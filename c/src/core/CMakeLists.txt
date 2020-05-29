@@ -31,7 +31,7 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (ESP_IDF)
+if (NOT ESP_IDF)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 ENDIF (ESP_IDF)
 # main incubed module defining the interfaces for transport, verifier and storage. 

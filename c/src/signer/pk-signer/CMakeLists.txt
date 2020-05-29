@@ -33,7 +33,7 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 
-if(ESP_IDF)
+if(NOT ESP_IDF)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 ENDIF()
 

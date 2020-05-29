@@ -113,7 +113,7 @@ if(IN3API)
     set(IN3_API eth_api)
 endif()
 
-if (ESP_IDF)
+if (NOT ESP_IDF)
     ADD_DEFINITIONS(-DESP_IDF)
 ENDIF (ESP_IDF)
 

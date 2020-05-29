@@ -31,7 +31,7 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-IF (ESP_IDF)
+if (ESP_IDF)
 add_library(crypto_o OBJECT
         ecdsa.c
         address.c
