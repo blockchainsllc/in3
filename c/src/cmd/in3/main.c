@@ -62,6 +62,7 @@
 
 #if defined(LEDGER_NANO)
 #include "../../signer/ledger-nano/signer/ethereum_apdu_client.h"
+#include "../../signer/ledger-nano/signer/ethereum_apdu_client_priv.h"
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
@@ -800,9 +801,10 @@ int main(int argc, char* argv[]) {
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
-      else if (strcmp(method, "sign") == 0 && !data)
+      else if (strcmp(method, "sign") == 0 && !data) {
+
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
+      } else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
         // otherwise we add it to the params
@@ -981,7 +983,23 @@ int main(int argc, char* argv[]) {
     uint8_t   sig[65];
     in3_ctx_t ctx;
     ctx.client = c;
+#if defined(LEDGER_NANO)
+    if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
+      char     prefix[] = "msg";
+      bytes_t* tmp_data = b_new((uint8_t*) NULL, data->len + strlen(prefix));
+
+      memcpy(tmp_data->data, prefix, strlen(prefix));
+      memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
+
+      c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *tmp_data, bytes(NULL, 0), sig);
+      b_free(tmp_data);
+    } else {
+      c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+    }
+#else
     c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+#endif
+
     sig[64] += 27;
     print_hex(sig, 65);
     return 0;

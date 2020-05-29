@@ -14,6 +14,7 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   //UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
   uint8_t  bip_data[5];
+  bool     is_msg = false;
 
   int       res = 0;
   in3_ret_t ret;
@@ -33,6 +34,7 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   bool        is_hashed = false;
   bytes_t     response;
   hid_device* handle;
+  char        prefix[] = "msg";
 
   handle = open_device();
   memcpy(bip_data, bip_path_bytes, sizeof(bip_data));
@@ -51,21 +53,48 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
         memcpy(hash, message.data, message.len);
         is_hashed = true;
       case SIGN_EC_HASH:
-        if (!is_hashed)
+        if (memcmp(prefix, message.data, strlen(prefix)) == 0) {
+          is_msg = true;
+        }
+
+        if (!is_hashed && is_msg == true)
+          hasher_Raw(HASHER_SHA3K, message.data + strlen(prefix), message.len - strlen(prefix), hash);
+        else {
           hasher_Raw(HASHER_SHA3K, message.data, message.len, hash);
+        }
 
         apdu[index_counter++] = 0xe0;
-        apdu[index_counter++] = 0x04;
+
+        if (is_msg == true) // different instruction bytes for message and transaction
+          apdu[index_counter++] = 0x08;
+        else
+          apdu[index_counter++] = 0x04;
+
         apdu[index_counter++] = 0x00;
         apdu[index_counter++] = 0x00;
 
-        apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1 + message.len;
+        if (is_msg == true) { // final apdu lenghts will be adjusted differenly for message and transaction`
+
+          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 5 + (message.len - strlen(prefix));
+        } else {
+          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1 + message.len;
+        }
+
         apdu[index_counter++] = bip32_len;
         memcpy(apdu + index_counter, bip32, bip32_len * sizeof(uint32_t));
         index_counter += bip32_len * sizeof(uint32_t);
 
-        memcpy(apdu + index_counter, message.data, message.len);
-        index_counter += message.len;
+        if (is_msg == true) {
+          apdu[index_counter++] = 0x00;
+          apdu[index_counter++] = 0x00;
+          apdu[index_counter++] = 0x00;
+          apdu[index_counter++] = message.len - strlen(prefix);
+          memcpy(apdu + index_counter, message.data + strlen(prefix), message.len - strlen(prefix));
+          index_counter += message.len - strlen(prefix);
+        } else {
+          memcpy(apdu + index_counter, message.data, message.len);
+          index_counter += message.len;
+        }
 
 #ifdef DEBUG
         in3_log_debug("apdu commnd sent to device\n");
@@ -87,8 +116,9 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
 
             memcpy(dst, response.data + 1, 64);
             eth_ledger_get_public_addr(bip_data, pkey);
-            recid   = get_recid_from_pub_key(&secp256k1, pkey, dst, hash);
-            dst[64] = recid;
+            recid                  = get_recid_from_pub_key(&secp256k1, pkey, dst, hash);
+            is_public_key_assigned = false;
+            dst[64]                = recid;
             in3_log_debug("recid %d\n", recid);
 #ifdef DEBUG
             in3_log_debug("printing signature returned by device with recid value\n");
