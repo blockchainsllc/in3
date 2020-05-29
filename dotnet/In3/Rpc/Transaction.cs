@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace In3.Rpc
 {
-    public class Transaction
+    internal class Transaction
     {
         [JsonPropertyName("to")] public string To { get; set; }
         [JsonPropertyName("from")] public string From { get; set; }

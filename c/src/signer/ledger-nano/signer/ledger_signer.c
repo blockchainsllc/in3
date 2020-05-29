@@ -57,13 +57,10 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
   hid_device* handle;
   uint8_t     apdu[64];
-  uint8_t     buf[2];
   int         index_counter = 0;
-  uint8_t     bytes_read    = 0;
+  int         msg_len       = 0;
 
-  uint8_t msg_len = 32;
   uint8_t hash[32];
-  uint8_t read_buf[255];
 
   bool    is_hashed = false;
   uint8_t public_key[65];
@@ -72,10 +69,9 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
   memcpy(bip_data, bip_path_bytes, sizeof(bip_data));
   set_command_params(); // setting apdu params for normal incubed signing app
 
-  ret          = eth_ledger_get_public_key(bip_data, public_key);
-  handle       = open_device();
-  int cmd_size = 64;
-  int recid    = 0;
+  ret       = eth_ledger_get_public_key(bip_data, public_key);
+  handle    = open_device();
+  int recid = 0;
 
   if (NULL != handle) {
 
@@ -148,7 +144,6 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
       default:
         return IN3_ENOTSUP;
     }
-
   } else {
     in3_log_fatal("no ledger device connected \n");
     return IN3_ENODEVICE;
@@ -161,10 +156,7 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
   int       res = 0;
   in3_ret_t ret;
   uint8_t   apdu[64];
-  uint8_t   buf[2];
   int       index_counter = 0;
-  uint16_t  msg_len       = 0;
-  uint8_t   bytes_read    = 0;
 
   bytes_t     response;
   hid_device* handle;

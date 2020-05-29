@@ -54,14 +54,14 @@
  * sb_add_chars(&request->results[0].error, my_error);
  * ```
  */
-in3_request_t* in3_create_request(
+NONULL in3_request_t* in3_create_request(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 
 /**
  * frees a previuosly allocated request.
  */
-void request_free(
+NONULL void request_free(
     in3_request_t*   req,          /**< [in] the request. */
     const in3_ctx_t* ctx,          /**< [in] the request context. */
     bool             response_free /**< [in] if true the responses will freed also, but usually this is done when the ctx is freed. */

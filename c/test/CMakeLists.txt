@@ -54,13 +54,13 @@ endif()
 
 # first we build the runners
 add_executable(runner runner.c)
-target_link_libraries(runner eth_full ipfs ${IN3_API})
+target_link_libraries(runner pk_signer eth_full btc ipfs ${IN3_API})
 
 add_executable(junit util/junit.c)
 target_link_libraries(junit eth_full)
 
 add_executable(vmrunner vm_runner.c test_evm.c test_trie.c test_rlp.c)
-target_link_libraries(vmrunner eth_full ${IN3_API})
+target_link_libraries(vmrunner eth_full pk_signer ${IN3_API})
 
 if(NOT TARGET tests)
   add_custom_target(tests)
@@ -71,7 +71,7 @@ file(GLOB files "unit_tests/*.c")
 foreach (file ${files})
      get_filename_component(testname "${file}" NAME_WE)
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
-     target_link_libraries("${testname}" core eth_full  ipfs ipfs_api ${IN3_API})
+     target_link_libraries("${testname}" core eth_full pk_signer ipfs ipfs_api ${IN3_API})
      add_test(
                 NAME "in3_${testname}"
                 COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
@@ -88,7 +88,7 @@ endforeach ()
 
 if(TRANSPORTS)
         add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
-        target_link_libraries(test_libcurl transport_curl eth_nano  ${IN3_API})
+        target_link_libraries(test_libcurl transport_curl eth_nano pk_signer ${IN3_API})
 endif()
 
 

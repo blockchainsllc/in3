@@ -59,8 +59,6 @@ uint16_t bytes_to_len(uint8_t* buf);
 
 void wrap_apdu(uint8_t* i_apdu, int len, uint16_t seq, bytes_t* wrapped_hid_cmd);
 
-void unwrap_apdu(bytes_t wrapped_hid_cmd, bytes_t* apdu_res);
-
 void read_hid_response(hid_device* handle, bytes_t* response);
 
 int write_hid(hid_device* handle, uint8_t* data, int len);

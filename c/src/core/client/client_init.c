@@ -40,6 +40,7 @@
 #include "cache.h"
 #include "client.h"
 #include "nodelist.h"
+#include "verifier.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -150,6 +151,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+  chain->conf                 = NULL;
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
   chain->last_block           = 0;
@@ -320,6 +322,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
+    chain->conf                 = NULL;
     chain->nodelist             = NULL;
     chain->nodelist_length      = 0;
     chain->weights              = NULL;
@@ -445,6 +448,11 @@ void in3_free(in3_t* a) {
   if (!a) return;
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    if (a->chains[i].conf) {
+      in3_verifier_t* verifier = in3_get_verifier(a->chains[i].type);
+      if (verifier && verifier->free_chain)
+        verifier->free_chain(a, a->chains + i);
+    }
     if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
@@ -521,8 +529,7 @@ static chain_id_t chain_id(d_token_t* t) {
 
 static inline char* config_err(const char* keyname, const char* err) {
   char* s = _malloc(strlen(keyname) + strlen(err) + 4);
-  if (s)
-    sprintf(s, "%s: %s!", keyname, err);
+  sprintf(s, "%s: %s!", keyname, err);
   return s;
 }
 
@@ -740,10 +747,6 @@ char* in3_configure(in3_t* c, const char* config) {
       in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
       n->url = _malloc(d_len(token) + 1);
-      if (!n->url) {
-        res = config_err("in3_configure", "OOM");
-        goto cleanup;
-      }
       strcpy(n->url, d_string(token));
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
@@ -850,6 +853,11 @@ char* in3_configure(in3_t* c, const char* config) {
 #endif
             }
           } else {
+
+            // try to delegate the call to the verifier.
+            const in3_verifier_t* verifier = in3_get_verifier(chain->type);
+            if (verifier && verifier->set_confg && verifier->set_confg(c, cp.token, chain) == IN3_OK) continue;
+
             EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }

@@ -67,18 +67,6 @@ void wrap_apdu(uint8_t* i_apdu, int len, uint16_t seq, bytes_t* o_wrapped_hid_cm
   free(cmd);
 }
 
-void unwrap_apdu(bytes_t i_wrapped_hid_cmd, bytes_t* o_apdu_res) {
-  uint8_t buf[2];
-  buf[0] = i_wrapped_hid_cmd.data[5];
-  buf[1] = i_wrapped_hid_cmd.data[6];
-
-  int len = bytes_to_len(buf);
-
-  o_apdu_res->len  = len;
-  o_apdu_res->data = malloc(len);
-  memcpy(o_apdu_res->data, len, i_wrapped_hid_cmd.data + 7);
-}
-
 int len_to_bytes(uint16_t x, uint8_t* buf) {
 
   buf[1] = (uint8_t)(x & 0xFF);
@@ -98,7 +86,6 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
   int     bytes_to_read         = 0;
   int     total_bytes_available = 0;
   int     bytes_read            = 0;
-  int     i                     = 0;
   uint8_t bug_header[]          = {0x01, 0x01, 0x05, 0x00, 0xbf, 0x00, 0x01, 0x04}; // known and open issue in ledger repo for mac
                                                                                     // https://github.com/LedgerHQ/ledger-nano-s/issues/55
 
@@ -143,7 +130,6 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
   bytes_t final_apdu_command;
   uint8_t chunk[64];
   int     res        = 0;
-  int     i          = 0;
   int     seq        = 0;
   int     totalBytes = 0;
   int     sent       = 0;
@@ -170,7 +156,7 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
         memset(chunk, 0, 64);
         memcpy(chunk, header, sizeof(header));
         memcpy(chunk + sizeof(header), seq_data, sizeof(seq_data));
-        tobesent = (totalBytes > (64 - (sizeof(header) + sizeof(seq_data)))) ? (64 - (sizeof(header) + sizeof(seq_data))) : totalBytes;
+        tobesent = (totalBytes > (int) (64 - (sizeof(header) + sizeof(seq_data)))) ? (64 - (sizeof(header) + sizeof(seq_data))) : totalBytes;
         memcpy(chunk + sizeof(header) + sizeof(seq_data), final_apdu_command.data + sent, tobesent);
         totalBytes -= tobesent;
         sent += tobesent;

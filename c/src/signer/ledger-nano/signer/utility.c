@@ -2,12 +2,6 @@
 #include "../../../core/util/log.h"
 #include "types.h"
 
-#ifdef _POSIX_C_SOURCE >= 199309L
-#include <time.h> // for nanosleep
-#else
-#include <unistd.h> // for usleep
-#endif
-
 void extract_signture(bytes_t i_raw_sig, uint8_t* o_sig) {
 
   //ECDSA signature encoded as TLV:  30 L 02 Lr r 02 Ls s

@@ -32,7 +32,7 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-cmake_minimum_required(VERSION 3.6.1)
+cmake_minimum_required(VERSION 3.5.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/scripts/cmake_modules/")
 
 # project name
@@ -69,7 +69,8 @@ option(PAY_ETH  "support for direct Eth-Payment"  OFF)
 option(USE_SCRYPT "integrate scrypt into the build in order to allow decrypt_key for scrypt encoded keys." ON)
 option(USE_CURL "if true the curl transport will be built (with a dependency to libcurl)" ON)
 option(DEV_NO_INTRN_PTR "(*dev option*) if true the client will NOT include a void pointer (named internal) for use by devs)" ON)
-option(LEDGER_NANO "include support for nano ledger" ON)
+option(LEDGER_NANO "include support for nano ledger" OFF)
+option(ASSERTIONS "includes assertions into the code, which help track errors but may cost time during runtime" OFF)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -119,6 +120,11 @@ endif()
 if(IPFS)
     ADD_DEFINITIONS(-DIPFS)
     set(IN3_VERIFIER ${IN3_VERIFIER} ipfs)
+endif()
+
+if(BTC)
+    ADD_DEFINITIONS(-DBTC)
+    set(IN3_VERIFIER ${IN3_VERIFIER} btc)
 endif()
 
 if(LEDGER_NANO AND ( NOT (WIN32 OR MSVC OR MSYS OR MINGW )))

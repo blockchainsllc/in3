@@ -1,21 +1,18 @@
-use std::ffi;
-// use std::ffi::{CString, CStr};
-use async_trait::async_trait;
 use ffi::{CStr, CString};
-use libc::{c_char, strlen};
-// use std::mem;
-use crate::error::{Error, In3Result};
-use crate::traits::{Client as ClientTrait, Storage, Transport};
-use crate::transport::HttpTransport;
-use rustc_hex::{FromHex, ToHex};
-use serde_json::json;
-// use signer::*;
-use crate::signer;
-use crate::signer::SignatureType;
-use std::fmt::Write;
-use std::num::ParseIntError;
-// use crate::types::Signature;
+use std::convert::TryInto;
+use std::ffi;
 use std::str;
+
+use libc::{c_char, strlen};
+use rustc_hex::FromHex;
+
+use async_trait::async_trait;
+
+use crate::error::{Error, In3Result};
+use crate::signer;
+use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
+use crate::transport::HttpTransport;
+
 pub mod chain {
     pub type ChainId = u32;
 
@@ -46,14 +43,28 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn sign(
-        &mut self,
-        type_: SignatureType,
-        data: *const c_char,
-        len: usize,
-    ) -> *mut u8 {
+    pub unsafe fn signc(&mut self, data: *const c_char, len: usize) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        signer::sign(pk, type_, data, len)
+        signer::signc(pk, data, len)
+    }
+
+    pub unsafe fn sign(&mut self, msg: &str) -> *const c_char {
+        let cptr = (*self.ptr).client;
+        let client = cptr as *mut in3_sys::in3_t;
+        let c = (*client).internal as *mut Client;
+        let signer = &mut (*c).signer;
+        let no_signer = signer.is_none();
+        if no_signer {
+            let data_hex = msg.from_hex().unwrap();
+            let c_data = data_hex.as_ptr() as *const c_char;
+            let data_sig: *mut u8 = self.signc(c_data, data_hex.len());
+            let c_sig = data_sig as *const c_char;
+            return c_sig;
+        } else if let Some(signer) = &mut (*c).signer {
+            let sig = signer.sign(msg);
+            return sig;
+        }
+        std::ptr::null_mut()
     }
 
     pub async unsafe fn execute(&mut self) -> In3Result<String> {
@@ -111,20 +122,10 @@ impl Ctx {
                     let slice = CStr::from_ptr(item_).to_str().unwrap();
                     let request: serde_json::Value = serde_json::from_str(slice).unwrap();
                     let data_str = &request["params"][0].as_str().unwrap()[2..];
-                    let data_hex = data_str.from_hex().unwrap();
-                    let c_data = data_hex.as_ptr() as *const c_char;
-                    let data_sig: *mut u8 = self.sign(SignatureType::Hash, c_data, data_hex.len());
-                    let res_str = data_sig as *const c_char;
-                    in3_sys::sb_init(&mut (*(*last_waiting).raw_response.offset(0)).result);
-                    in3_sys::sb_add_range(
-                        &mut (*(*last_waiting).raw_response.offset(0)).result,
-                        res_str,
-                        0,
-                        65,
-                    );
+                    let res_str = self.sign(data_str);
+                    in3_sys::in3_req_add_response(req, 0.try_into().unwrap(), false, res_str, 65);
                 }
                 in3_sys::ctx_type::CT_RPC => {
-                    let req = in3_sys::in3_create_request(last_waiting);
                     let payload = ffi::CStr::from_ptr((*req).payload).to_str().unwrap();
                     let urls_len = (*req).urls_len;
                     let mut urls = Vec::new();
@@ -144,30 +145,34 @@ impl Ctx {
                         match resp {
                             Err(err) => {
                                 let err_str = ffi::CString::new(err.to_string()).unwrap();
-                                in3_sys::sb_add_chars(
-                                    &mut (*(*req).results.add(i)).error,
+                                in3_sys::in3_req_add_response(
+                                    req,
+                                    i.try_into().unwrap(),
+                                    true,
                                     err_str.as_ptr(),
+                                    -1i32,
                                 );
                             }
                             Ok(res) => {
                                 let res_str = ffi::CString::new(res.to_string()).unwrap();
-                                in3_sys::sb_add_chars(
-                                    &mut (*(*req).results.add(i)).result,
+                                in3_sys::in3_req_add_response(
+                                    req,
+                                    i.try_into().unwrap(),
+                                    false,
                                     res_str.as_ptr(),
+                                    -1i32,
                                 );
                             }
                         }
                     }
-                    let result = (*(*req).results.offset(0)).result;
-                    let len = result.len;
-                    if len != 0 {
-                        let data = ffi::CStr::from_ptr(result.data).to_str().unwrap();
-                        return Err(Error::TryAgain);
-                    } else {
+                    let res = *(*req).results.offset(0);
+                    let mut err = Error::TryAgain;
+                    if res.result.len == 0 {
                         let error = (*(*req).results.offset(0)).error;
-                        let err = ffi::CStr::from_ptr(error.data).to_str().unwrap();
-                        return Err(err.into());
+                        err = ffi::CStr::from_ptr(error.data).to_str().unwrap().into();
                     }
+                    in3_sys::request_free(req, last_waiting, false);
+                    return Err(err.into());
                 }
             }
         }
@@ -188,16 +193,6 @@ impl Ctx {
 
 #[async_trait(? Send)]
 impl ClientTrait for Client {
-    async fn rpc(&mut self, call: &str) -> In3Result<String> {
-        let mut ctx = Ctx::new(self, call);
-        loop {
-            let res = unsafe { ctx.execute().await };
-            if res != Err(Error::TryAgain) {
-                return res;
-            }
-        }
-    }
-
     fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
@@ -213,6 +208,10 @@ impl ClientTrait for Client {
         self.transport = transport;
     }
 
+    fn set_signer(&mut self, signer: Box<dyn Signer>) {
+        self.signer = Some(signer);
+    }
+
     fn set_storage(&mut self, storage: Box<dyn Storage>) {
         let no_storage = self.storage.is_none();
         self.storage = Some(storage);
@@ -225,6 +224,16 @@ impl ClientTrait for Client {
                     Some(Client::in3_rust_storage_clear),
                     self.ptr as *mut libc::c_void,
                 );
+            }
+        }
+    }
+
+    async fn rpc(&mut self, call: &str) -> In3Result<String> {
+        let mut ctx = Ctx::new(self, call);
+        loop {
+            let res = unsafe { ctx.execute().await };
+            if res != Err(Error::TryAgain) {
+                return res;
             }
         }
     }
@@ -263,7 +272,6 @@ impl ClientTrait for Client {
             let data_ptr = c_str_data.as_ptr();
             let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
             let data_ = (*data).data;
-            let out = std::slice::from_raw_parts_mut(data_, len);
             data_
         }
     }
@@ -310,6 +318,7 @@ impl Drop for Request {
 pub struct Client {
     ptr: *mut in3_sys::in3_t,
     transport: Box<dyn Transport>,
+    signer: Option<Box<dyn Signer>>,
     storage: Option<Box<dyn Storage>>,
 }
 
@@ -319,6 +328,7 @@ impl Client {
             let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: Box::new(HttpTransport {}),
+                signer: None,
                 storage: None,
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;

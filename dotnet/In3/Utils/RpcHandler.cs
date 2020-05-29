@@ -5,9 +5,9 @@ using In3.Rpc;
 
 namespace In3.Utils
 {
-    public class RpcHandler
+    internal class RpcHandler
     {
-        internal static T From<T>(string json)
+        public static T From<T>(string json)
         {
             Response<T> response = JsonSerializer.Deserialize<Response<T>>(json);
             if (response.Error != null)

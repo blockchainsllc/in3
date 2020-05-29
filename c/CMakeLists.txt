@@ -39,7 +39,8 @@ add_subdirectory(src/third-party)
 
 
 if (GCC_ANALYZER) 
-  add_compile_options(-fanalyzer -Werror)
+  ADD_DEFINITIONS(-DGCC_ANALYZER=1)
+  add_compile_options(-fanalyzer -Werror -Wno-nonnull-compare)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer -Werror")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
 endif()
@@ -47,6 +48,7 @@ endif()
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
+add_subdirectory(src/signer/pk-signer)
 
 if( LEDGER_NANO AND HIDAPI )
   add_subdirectory(src/signer/ledger-nano/signer)
@@ -66,6 +68,7 @@ if (IN3_LIB)
     set(IN3_LIBS
         $<TARGET_OBJECTS:core_o>
         $<TARGET_OBJECTS:init_o>
+        $<TARGET_OBJECTS:pk_signer_o>
         $<TARGET_OBJECTS:crypto_o>
     )
 
@@ -99,6 +102,12 @@ if (IN3_LIB)
                 $<TARGET_OBJECTS:ipfs_api_o>
             )
         endif()
+    endif()
+
+    if (BTC) 
+        set(IN3_LIBS ${IN3_LIBS} 
+          $<TARGET_OBJECTS:btc_o>
+        )
     endif()
 
     if (IN3API) 

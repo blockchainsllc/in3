@@ -78,17 +78,36 @@ typedef in3_ret_t (*in3_verify)(in3_vctx_t* c);
  * This can be used to handle requests which don't need a node to response.
  */
 typedef in3_ret_t (*in3_pre_handle)(in3_ctx_t* ctx, in3_response_t** response);
+/**
+ * function which is called when the client is being configured. This allows the verifier to add a custom-config to the chain based on the configuration.
+ */
+typedef in3_ret_t (*in3_vc_set_config)(in3_t* c, d_token_t* conf, in3_chain_t* chain);
 
+/**
+ * Function which is called before the chain-instance is freed. Here the verifier should clean up resources.
+ */
+typedef void (*in3_vc_free)(in3_t* c, in3_chain_t* chain);
+
+/**
+ * a Verifier.
+ * 
+ * Verifiers are registered globaly, but for a specific chain_type. Depending on the chain_type the first verifier is picked.
+ */
 typedef struct verifier {
-  in3_verify       verify;
-  in3_pre_handle   pre_handle;
-  in3_chain_type_t type;
-  struct verifier* next;
+  in3_verify        verify;     /**< the verify-function is called by the core. The result is either IN3_OK, IN3_WAITING (if a subrequest was added) or an error code. */
+  in3_pre_handle    pre_handle; /**< called before sending the request and allows to manipulate or provide a raw_response to handle it internally. */
+  in3_vc_set_config set_confg;  /**< When configuring the client, each verifier will be passed a config-object. */
+  in3_vc_free       free_chain; /**< if this function is set, it will be called whenever a chain-instance is freed. */
+  in3_chain_type_t  type;       /**< type of the chain, which is used when find a matching verifier. */
+  struct verifier*  next;       /**< Since verifiers are organized in a linked list the next-pointer connects the registered verifiers. */
 } in3_verifier_t;
 
 /*! returns the verifier for the given chainType */
-in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
-void            in3_register_verifier(in3_verifier_t* verifier);
-in3_ret_t       vc_set_error(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */
+NONULL in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
+NONULL void            in3_register_verifier(in3_verifier_t* verifier);
+#ifdef ERR_MSG
+NONULL
+#endif
+in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */
 
 #endif

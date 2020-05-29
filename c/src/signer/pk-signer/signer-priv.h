@@ -32,26 +32,14 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-// @PUBLIC_HEADER
-/** @file
- * Ethereum Nano verification.
- * */
+#ifndef in3_signer_priv_h__
+#define in3_signer_priv_h__
+#include "../../signer/pk-signer/signer.h"
 
-#ifndef in3_signer_h__
-#define in3_signer_h__
-
-#include "../../../core/client/client.h"
-
-/**
- * simply signer with one private key.
- * 
- * since the pk pointting to the 32 byte private key is not cloned, please make sure, you manage memory allocation correctly!
- */
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
-
-/**
- * simply signer with one private key as hex.
- */
-uint8_t* eth_set_pk_signer_hex(in3_t* in3, char* key);
+#include "../../core/client/context_internal.h"
+/** Sign message with given private key either raw or hashing the msg given as parameters*/
+in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
+/** Signs the given data */
+in3_ret_t eth_sign_pk_ctx(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 
 #endif

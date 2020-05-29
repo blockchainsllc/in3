@@ -11,23 +11,17 @@ static int     is_public_key_assigned = false;
 
 in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   in3_log_debug("eth_ledger_sign_txn:enter\n");
-  //UNUSED_VAR(account); // at least for now
+  // UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
   uint8_t  bip_data[5];
   bool     is_msg = false;
 
-  int       res = 0;
   in3_ret_t ret;
   uint8_t   apdu[256];
-  uint8_t   buf[2];
   int       index_counter = 0;
-  uint8_t   bytes_read    = 0;
-  int       i             = 0;
   uint8_t   pkey[65];
 
-  uint8_t  msg_len = 32;
   uint8_t  hash[32];
-  uint8_t  read_buf[255];
   uint8_t  bip32_len = 5;
   uint32_t bip32[5];
 
@@ -43,8 +37,7 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   //parse and convert bip into hardened form
   read_bip32_path(5, bip_data, bip32);
 
-  int cmd_size = 64;
-  int recid    = 0;
+  int recid = 0;
 
   if (NULL != handle) {
 
@@ -54,7 +47,7 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
         is_hashed = true;
       case SIGN_EC_HASH:
         if (memcmp(prefix, message.data, strlen(prefix)) == 0) {
-          is_msg = true;
+          is_msg = true;
         }
 
         if (!is_hashed && is_msg == true)
@@ -116,9 +109,8 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
 
             memcpy(dst, response.data + 1, 64);
             eth_ledger_get_public_addr(bip_data, pkey);
-            recid                  = get_recid_from_pub_key(&secp256k1, pkey, dst, hash);
-            is_public_key_assigned = false;
-            dst[64]                = recid;
+            recid   = get_recid_from_pub_key(&secp256k1, pkey, dst, hash);
+            dst[64] = recid;
             in3_log_debug("recid %d\n", recid);
 #ifdef DEBUG
             in3_log_debug("printing signature returned by device with recid value\n");
@@ -160,16 +152,11 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
 in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key) {
   in3_log_debug("eth_ledger_get_public_addr:enter\n");
 
-  int           res = 0;
   in3_ret_t     ret;
   uint8_t       apdu[64];
-  uint8_t       buf[2];
   int           index_counter = 0;
-  uint16_t      msg_len       = 0;
-  uint8_t       bytes_read    = 0;
   const uint8_t bip32_len     = 5;
   uint32_t      bip32[5];
-  int           i = 0;
 
   bytes_t     response;
   hid_device* handle;
