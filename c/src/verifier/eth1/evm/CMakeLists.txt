@@ -33,7 +33,7 @@
 ###############################################################################
 if (NOT ESP_IDF)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-ENDIF (ESP_IDF)
+ENDIF()
 add_library(evm_o OBJECT
         evm.c
         opcodes.c

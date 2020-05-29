@@ -33,7 +33,7 @@
 ###############################################################################
 if (NOT ESP_IDF)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-ENDIF (ESP_IDF)
+ENDIF()
 # main incubed module defining the interfaces for transport, verifier and storage. 
 #
 # This module does not have any dependencies and cannot be used without additional modules providing verification and transport.

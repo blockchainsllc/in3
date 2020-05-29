@@ -33,7 +33,7 @@
 ###############################################################################
 if (NOT ESP_IDF)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-ENDIF (ESP_IDF)
+ENDIF()
 add_library(eth_full_o OBJECT
         eth_full.c
         )

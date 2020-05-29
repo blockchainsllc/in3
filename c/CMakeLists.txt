@@ -34,7 +34,7 @@
 
 if (NOT ESP_IDF)
 include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-ENDIF (ESP_IDF)
+ENDIF()
 #  build modules
 add_subdirectory(src/third-party)
 
