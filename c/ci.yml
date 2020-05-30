@@ -206,7 +206,7 @@ test_qemu_xtensaesp32:
   needs: []
   extends: .only_full
   script:
-    - . /opt/esp/idf/export.sh
+    - cp -avi scripts/qemu_xtensaesp32.sh /opt/qemu
     - cd c/test/qemu/esp32
     - idf.py build
     - ./make-flash-img.sh in3-espidf flash_image.bin
