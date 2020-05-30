@@ -206,13 +206,13 @@ test_qemu_xtensaesp32:
   needs: []
   extends: .only_full
   script:
-    - cp -avi scripts/qemu_xtensaesp32.sh /opt/qemu
+    - cp -avi scripts/qemu_xtensa.sh /opt/qemu
     - cd c/test/qemu/esp32
     - idf.py build
     - ./make-flash-img.sh in3-espidf flash_image.bin
     - cp -avi flash_image.bin /opt/qemu
     - cd /opt/qemu
-    - ./scripts/qemu_xtensaesp32.sh 2> /dev/null
+    - ./qemu_xtensa.sh 2> /dev/null
       
 
 examples_linux:
