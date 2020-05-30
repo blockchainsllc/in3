@@ -188,7 +188,7 @@ test_c:
       - mac_test_c.xml
       - mac_test_c.log
 
-test_qemu:
+test_qemu_cortexm3:
   image: docker.io/zephyrprojectrtos/zephyr-build:v0.12
   stage: test
   needs: []
@@ -198,7 +198,22 @@ test_qemu:
     - export ZEPHYR_BASE=/builds/in3/c/in3-core
     - source /builds/in3/c/in3-core/zephyr/zephyr-env.sh
     - west build -b qemu_cortex_m3 c/test/qemu
-    - ./scripts/qemu.sh 2> /dev/null
+    - ./scripts/qemucortexm3.sh 2> /dev/null
+
+test_qemu_xtensaesp32:
+  image: docker.slock.it/build-images/cmake:esp
+  stage: test
+  needs: []
+  extends: .only_full
+  script:
+    - . /opt/esp/idf/export.sh
+    - cd c/test/qemu/esp32
+    - idf.py build
+    - ./make-flash-img.sh in3-espidf flash_image.bin
+    - cp -avi flash_image.bin /opt/qemu
+    - cd /opt/qemu
+    - ./scripts/qemu_xtensaesp32.sh 2> /dev/null
+      
 
 examples_linux:
   image: docker.slock.it/build-images/cmake:gcc8

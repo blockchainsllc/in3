@@ -101,7 +101,6 @@ void init_in3(void)
     for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 }
 
-
 void eth_call(void)
 {
     init_in3();
@@ -116,12 +115,24 @@ void eth_call(void)
     else{
         // convert the response to a uint32_t,
         uint8_t access = d_int(response->result);
-        ESP_LOGI(TAG, "Access granted? : %d \n", access);
+        if (access > 0){
+          ESP_LOGI(TAG, "Access granted Success ? : %d \n", access);
+          exit(0);
+          
+        }
+        else{
+          ESP_LOGI(TAG, "Access granted Failed! ? : %d \n", access);
+          exit(1);
+        }
+        
 
         // clean up resources
         json_free(response);
     }
+    
 }
+
+ 
 
 /**
  * FreeRTOS Tasks
