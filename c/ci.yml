@@ -198,7 +198,7 @@ test_qemu_cortexm3:
     - export ZEPHYR_BASE=/builds/in3/c/in3-core
     - source /builds/in3/c/in3-core/zephyr/zephyr-env.sh
     - west build -b qemu_cortex_m3 c/test/qemu/zephyr-arm3
-    - ./scripts/qemucortexm3.sh
+    - ./scripts/qemu_cortexm3.sh
 
 test_qemu_xtensaesp32:
   image: docker.slock.it/build-images/cmake:esp
@@ -212,7 +212,7 @@ test_qemu_xtensaesp32:
     - ./make-flash-img.sh in3-espidf flash_image.bin
     - cp -avi flash_image.bin /opt/qemu
     - cd /opt/qemu
-    - ./qemu_xtensa.sh 2> /dev/null
+    - ./qemu_xtensa.sh
       
 
 examples_linux:
