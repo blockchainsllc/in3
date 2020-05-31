@@ -198,7 +198,7 @@ test_qemu_cortexm3:
     - export ZEPHYR_BASE=/builds/in3/c/in3-core
     - source /builds/in3/c/in3-core/zephyr/zephyr-env.sh
     - west build -b qemu_cortex_m3 c/test/qemu/zephyr-arm3
-    - ./scripts/qemucortexm3.sh 2> /dev/null
+    - ./scripts/qemucortexm3.sh
 
 test_qemu_xtensaesp32:
   image: docker.slock.it/build-images/cmake:esp
