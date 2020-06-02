@@ -9,8 +9,14 @@ use serde::export::Formatter;
 pub struct Bytes(pub Vec<u8>);
 
 impl From<Vec<u8>> for Bytes {
-    fn from(bytes: Vec<u8>) -> Bytes {
-        Bytes(bytes)
+    fn from(vec: Vec<u8>) -> Bytes {
+        Bytes(vec)
+    }
+}
+
+impl From<&[u8]> for Bytes {
+    fn from(slice: &[u8]) -> Bytes {
+        Bytes(slice.to_vec())
     }
 }
 
