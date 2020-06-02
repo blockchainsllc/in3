@@ -60,7 +60,7 @@
 
 typedef uint8_t address_t[20]; /**< pointer to a 20byte address */
 typedef uint8_t bytes32_t[32]; /**< pointer to a 32byte word */
-#ifdef ESP_IDF 
+#ifdef ESP_IDF
 typedef uint8_t wlen_t; /**< number of bytes within a word (min 1byte but usually a uint) */
 #else
 typedef uint_fast8_t wlen_t; /**< number of bytes within a word (min 1byte but usually a uint) */
