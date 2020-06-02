@@ -115,7 +115,7 @@ endif()
 
 if (ESP_IDF)
     ADD_DEFINITIONS(-DESP_IDF)
-ENDIF()
+endif()
 
 if(PAY_ETH)
   ADD_DEFINITIONS(-DPAY_ETH -DPAY)

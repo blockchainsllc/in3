@@ -31,27 +31,30 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-set(CRYPTO_SRC ecdsa.c
-address.c
-bignum.c
-rand.c
-secp256k1.c
-memzero.c
-sha3.c
-ripemd160.c
-base58.c
-hasher.c
-sha2.c
-blake256.c
-blake2b.c
-groestl.c
-pbkdf2.c
-aes/aes_modes.c
-aes/aescrypt.c
-aes/aeskey.c
-aes/aestab.c)
+set(CRYPTO_SRC 
+  ecdsa.c
+  address.c
+  bignum.c
+  rand.c
+  secp256k1.c
+  memzero.c
+  sha3.c
+  ripemd160.c
+  base58.c
+  hasher.c
+  sha2.c
+  blake256.c
+  blake2b.c
+  groestl.c
+  pbkdf2.c
+  aes/aes_modes.c
+  aes/aescrypt.c
+  aes/aeskey.c
+  aes/aestab.c)
+
 if (NOT ESP_IDF)
     set(CRYPTO_SRC ${CRYPTO_SRC} hmac.c)
-ENDIF()
+endif()
+
 add_library(crypto_o OBJECT ${CRYPTO_SRC})
 add_library(crypto STATIC $<TARGET_OBJECTS:crypto_o>)
