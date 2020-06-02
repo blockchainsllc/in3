@@ -3,7 +3,6 @@ use in3::eth1::api::RpcRequest;
 use in3::prelude::*;
 use serde_json::json;
 
-
 fn main() {
     //Config in3 api client
     let mut c = Client::new(chain::MAINNET);

@@ -1,6 +1,6 @@
+use crate::error;
 use async_trait::async_trait;
 use libc::c_char;
-use crate::error;
 
 #[async_trait]
 pub trait Transport {
