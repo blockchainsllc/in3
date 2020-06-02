@@ -58,10 +58,13 @@
 #define b_read(_b_, _i_, _vptr_) b_readl((_b_), (_i_), _vptr_, sizeof(*_vptr_))
 #define b_readl(_b_, _i_, _vptr_, _l_) memcpy(_vptr_, (_b_)->data + (_i_), (_l_))
 
-typedef uint8_t      address_t[20]; /**< pointer to a 20byte address */
-typedef uint8_t      bytes32_t[32]; /**< pointer to a 32byte word */
-typedef uint_fast8_t wlen_t;        /**< number of bytes within a word (min 1byte but usually a uint) */
-
+typedef uint8_t address_t[20]; /**< pointer to a 20byte address */
+typedef uint8_t bytes32_t[32]; /**< pointer to a 32byte word */
+#ifdef ESP_IDF
+typedef uint8_t wlen_t; /**< number of bytes within a word (min 1byte but usually a uint) */
+#else
+typedef uint_fast8_t wlen_t; /**< number of bytes within a word (min 1byte but usually a uint) */
+#endif
 /** a byte array */
 typedef struct bytes {
   uint8_t* data; /**< the byte-data  */

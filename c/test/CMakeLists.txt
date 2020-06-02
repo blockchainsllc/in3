@@ -34,8 +34,6 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
-#include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-
 include_directories(. ../src)
 
 # handle codecoverage

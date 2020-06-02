@@ -32,8 +32,6 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-include(${PROJECT_SOURCE_DIR}/c/compiler.cmake)
-
 IF (ASMJS)
   set(CMAKE_EXECUTABLE_SUFFIX ".js")
   set(EMC_PROPS "-O1 -s ALLOW_MEMORY_GROWTH=1  -s FINALIZE_ASM_JS=1 -s NODEJS_CATCH_REJECTION=0  -s SEPARATE_ASM=1 -s WASM=0 -s ASM_JS=1 -s EXPORT_NAME=in3w  -s FILESYSTEM=0 -s  'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\"]'")
