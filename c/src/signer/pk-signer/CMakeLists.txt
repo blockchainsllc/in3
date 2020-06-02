@@ -33,10 +33,6 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 
-if(NOT ESP_IDF)
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-ENDIF()
-
 add_library(pk_signer_o OBJECT signer.c)
 add_library(pk_signer STATIC $<TARGET_OBJECTS:pk_signer_o>)
 

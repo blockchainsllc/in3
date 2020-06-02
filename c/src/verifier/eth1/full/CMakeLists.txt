@@ -31,9 +31,6 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-if (NOT ESP_IDF)
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-ENDIF()
 add_library(eth_full_o OBJECT
         eth_full.c
         )

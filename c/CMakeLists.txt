@@ -32,9 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-if (NOT ESP_IDF)
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-ENDIF()
+
+include("compiler.cmake")
 #  build modules
 add_subdirectory(src/third-party)
 
