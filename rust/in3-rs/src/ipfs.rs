@@ -60,13 +60,13 @@ mod tests {
 
     #[test]
     fn test_ipfs_get() -> In3Result<()> {
-        let mut api = Api::new(Client::new(chain::MAINNET));
+        let mut api = Api::new(Client::new(chain::IPFS));
         api.client
-            .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
+            .configure(r#"{"autoUpdateList":false,"nodes":{"0x7d0":{"needsUpdate":false}}}}"#)?;
         api.client.set_transport(Box::new(MockTransport {
             responses: vec![(
                 "ipfs_get",
-                r#"[{"jsonrpc":"2.0","id":1,"result":"Lorem ipsum dolor sit amet"}]"#,
+                r#"[{"jsonrpc":"2.0","id":1,"result":"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ="}]"#,
             )],
         }));
         let data: Bytes = task::block_on(
