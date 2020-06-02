@@ -27,8 +27,8 @@ impl Api {
         let resp = rpc(self.client(), Request {
             method: "ipfs_put",
             params: json!([encode(content.0), "base64"]),
-        }).await?;
-        let res: Multihash = from_str(resp[0]["result"].to_string().as_str())?;
+        }).await?.first().unwrap().clone();
+        let res: Multihash = from_str(resp.into_result()?.to_string().as_str())?;
         Ok(res)
     }
 
@@ -36,8 +36,8 @@ impl Api {
         let resp = rpc(self.client(), Request {
             method: "ipfs_get",
             params: json!([hash, "base64"]),
-        }).await?;
-        let result: String = from_str(resp[0]["result"].to_string().as_str())?;
+        }).await?.first().unwrap().clone();
+        let result: String = from_str(resp.into_result()?.to_string().as_str())?;
         let res: Bytes = decode(result)?.into();
         Ok(res)
     }
