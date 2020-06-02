@@ -59,6 +59,23 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_ipfs_put() -> In3Result<()> {
+        let mut api = Api::new(Client::new(chain::IPFS));
+        api.client
+            .configure(r#"{"autoUpdateList":false,"nodes":{"0x7d0":{"needsUpdate":false}}}}"#)?;
+        api.client.set_transport(Box::new(MockTransport {
+            responses: vec![(
+                "ipfs_put",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"}]"#,
+            )],
+        }));
+        let hash = task::block_on(
+            api.put("Lorem ipsum dolor sit amet".as_bytes().into())
+        ).unwrap();
+        Ok(assert_eq!(hash, "QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"))
+    }
+
+    #[test]
     fn test_ipfs_get() -> In3Result<()> {
         let mut api = Api::new(Client::new(chain::IPFS));
         api.client
