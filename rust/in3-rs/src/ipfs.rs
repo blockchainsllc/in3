@@ -1,6 +1,7 @@
+use base64::{decode, DecodeError, encode};
 use serde_json::{from_str, json};
 
-use crate::error::In3Result;
+use crate::error::{Error, In3Result};
 use crate::json_rpc::{Request, rpc};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -25,7 +26,7 @@ impl Api {
     pub async fn put(&mut self, content: Bytes) -> In3Result<Multihash> {
         let resp = rpc(self.client(), Request {
             method: "ipfs_put",
-            params: json!([content]),
+            params: json!([encode(content.0), "base64"]),
         }).await?;
         let res: Multihash = from_str(resp[0]["result"].to_string().as_str())?;
         Ok(res)
@@ -34,12 +35,20 @@ impl Api {
     pub async fn get(&mut self, hash: Multihash) -> In3Result<Bytes> {
         let resp = rpc(self.client(), Request {
             method: "ipfs_get",
-            params: json!([hash]),
+            params: json!([hash, "base64"]),
         }).await?;
-        let res: Bytes = from_str(resp[0]["result"].to_string().as_str())?;
+        let result: String = from_str(resp[0]["result"].to_string().as_str())?;
+        let res: Bytes = decode(result)?.into();
         Ok(res)
     }
 }
+
+impl From<base64::DecodeError> for Error {
+    fn from(e: DecodeError) -> Self {
+        Error::CustomError(format!("Error decoding base64: {}", e))
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
