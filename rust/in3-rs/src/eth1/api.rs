@@ -1,5 +1,4 @@
 use ethereum_types::{Address, U256};
-use serde::Serialize;
 use serde_json::json;
 
 use crate::error::*;
@@ -7,14 +6,9 @@ use crate::eth1::{
     Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
     Transaction, TransactionReceipt,
 };
+use crate::json_rpc::{Request, rpc};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
-
-#[derive(Serialize)]
-pub struct RpcRequest<'a> {
-    pub method: &'a str,
-    pub params: serde_json::Value,
-}
 
 pub struct Api {
     client: Box<dyn ClientTrait>,
@@ -31,11 +25,8 @@ impl ApiTrait for Api {
 }
 
 impl Api {
-    async fn send(&mut self, params: RpcRequest<'_>) -> In3Result<serde_json::Value> {
-        let req_str = serde_json::to_string(&params)?;
-        let resp_str = self.client.rpc(req_str.as_str()).await?;
-        let resp: serde_json::Value = serde_json::from_str(resp_str.as_str())?;
-        Ok(resp)
+    async fn send(&mut self, params: Request<'_>) -> In3Result<serde_json::Value> {
+        rpc(self.client(), params).await
     }
 
     pub async fn get_storage_at(
@@ -45,7 +36,7 @@ impl Api {
         block: BlockNumber,
     ) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getStorageAt",
                 params: json!([address, key, block]),
             })
@@ -56,7 +47,7 @@ impl Api {
 
     pub async fn get_code(&mut self, address: Address, block: BlockNumber) -> In3Result<Bytes> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getCode",
                 params: json!([address, block]),
             })
@@ -67,7 +58,7 @@ impl Api {
 
     pub async fn get_balance(&mut self, address: Address, block: BlockNumber) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getBalance",
                 params: json!([address, block]),
             })
@@ -78,7 +69,7 @@ impl Api {
 
     pub async fn block_number(&mut self) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_blockNumber",
                 params: json!([]),
             })
@@ -89,7 +80,7 @@ impl Api {
 
     pub async fn gas_price(&mut self) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_gasPrice",
                 params: json!([]),
             })
@@ -104,7 +95,7 @@ impl Api {
         include_tx: bool,
     ) -> In3Result<Block> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getBlockByNumber",
                 params: json!([block, include_tx]),
             })
@@ -115,7 +106,7 @@ impl Api {
 
     pub async fn get_block_by_hash(&mut self, hash: Hash, include_tx: bool) -> In3Result<Block> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getBlockByHash",
                 params: json!([hash, include_tx]),
             })
@@ -126,7 +117,7 @@ impl Api {
 
     pub async fn get_logs(&mut self, filter_options: serde_json::Value) -> In3Result<Vec<Log>> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getLogs",
                 params: json!([filter_options]),
             })
@@ -137,7 +128,7 @@ impl Api {
 
     pub async fn new_filter(&mut self, filter_options: serde_json::Value) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_newFilter",
                 params: json!([filter_options]),
             })
@@ -148,7 +139,7 @@ impl Api {
 
     pub async fn new_block_filter(&mut self) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_newBlockFilter",
                 params: json!([]),
             })
@@ -163,7 +154,7 @@ impl Api {
 
     pub async fn uninstall_filter(&mut self, filter_id: U256) -> In3Result<bool> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_uninstallFilter",
                 params: json!([filter_id]),
             })
@@ -174,7 +165,7 @@ impl Api {
 
     pub async fn get_filter_changes(&mut self, filter_id: U256) -> In3Result<FilterChanges> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getFilterChanges",
                 params: json!([filter_id]),
             })
@@ -185,7 +176,7 @@ impl Api {
 
     pub async fn get_filter_logs(&mut self, filter_id: U256) -> In3Result<Vec<Log>> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getFilterLogs",
                 params: json!([filter_id]),
             })
@@ -196,7 +187,7 @@ impl Api {
 
     pub async fn chain_id(&mut self) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_chainId",
                 params: json!([]),
             })
@@ -207,7 +198,7 @@ impl Api {
 
     pub async fn get_block_transaction_count_by_hash(&mut self, hash: Hash) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getBlockTransactionCountByHash",
                 params: json!([hash]),
             })
@@ -221,7 +212,7 @@ impl Api {
         block: BlockNumber,
     ) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getBlockTransactionCountByNumber",
                 params: json!([block]),
             })
@@ -237,7 +228,7 @@ impl Api {
     ) -> In3Result<Bytes> {
         assert!(transaction.to.is_some());
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_call",
                 params: json!([transaction, block]),
             })
@@ -252,7 +243,7 @@ impl Api {
         block: BlockNumber,
     ) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_estimateGas",
                 params: json!([transaction, block]),
             })
@@ -263,7 +254,7 @@ impl Api {
 
     pub async fn get_transaction_by_hash(&mut self, hash: Hash) -> In3Result<Transaction> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getTransactionByHash",
                 params: json!([hash]),
             })
@@ -278,7 +269,7 @@ impl Api {
         index: U256,
     ) -> In3Result<Transaction> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getTransactionByBlockHashAndIndex",
                 params: json!([hash, index]),
             })
@@ -293,7 +284,7 @@ impl Api {
         index: U256,
     ) -> In3Result<Transaction> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getTransactionByBlockNumberAndIndex",
                 params: json!([block, index]),
             })
@@ -304,7 +295,7 @@ impl Api {
 
     pub async fn get_transaction_count(&mut self, block: BlockNumber) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getTransactionCount",
                 params: json!([block]),
             })
@@ -319,7 +310,7 @@ impl Api {
         index: U256,
     ) -> In3Result<Block> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getUncleByBlockNumberAndIndex",
                 params: json!([block, index]),
             })
@@ -330,7 +321,7 @@ impl Api {
 
     pub async fn get_uncle_count_by_block_hash(&mut self, hash: Hash) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getUncleCountByBlockHash",
                 params: json!([hash]),
             })
@@ -341,7 +332,7 @@ impl Api {
 
     pub async fn get_uncle_count_by_block_number(&mut self, block: BlockNumber) -> In3Result<U256> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getUncleCountByBlockNumber",
                 params: json!([block]),
             })
@@ -352,7 +343,7 @@ impl Api {
 
     pub async fn send_transaction(&mut self, transaction: OutgoingTransaction) -> In3Result<Hash> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_sendTransaction",
                 params: json!([transaction]),
             })
@@ -363,7 +354,7 @@ impl Api {
 
     pub async fn send_raw_transaction(&mut self, data: Bytes) -> In3Result<Hash> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_sendRawTransaction",
                 params: json!([data]),
             })
@@ -377,7 +368,7 @@ impl Api {
         transaction_hash: Hash,
     ) -> In3Result<TransactionReceipt> {
         let resp = self
-            .send(RpcRequest {
+            .send(Request {
                 method: "eth_getTransactionReceipt",
                 params: json!([transaction_hash]),
             })
