@@ -10,31 +10,27 @@ pub struct Request<'a> {
     pub params: Value,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize)]
 pub struct Response {
     pub result: Option<Value>,
     pub error: Option<Value>,
 }
 
-impl From<Response> for In3Result<Value> {
-    fn from(r: Response) -> Self {
-        if let Some(res) = r.result {
+impl Response {
+    pub fn to_result(&self) -> In3Result<&Value> {
+        if let Some(ref res) = self.result {
             Ok(res)
         } else {
-            Err(Error::CustomError(format!("{}", r.error.unwrap())))
+            Err(Error::CustomError(format!("{}", self.error.as_ref().unwrap())))
         }
     }
 }
 
-impl Response {
-    pub fn into_result(self) -> In3Result<Value> {
-        self.into()
-    }
-}
-
-pub async fn rpc(client: &mut Box<dyn Client>, params: Request<'_>) -> In3Result<Vec<Response>> {
-    let req_str = serde_json::to_string(&params)?;
+pub async fn rpc<T>(client: &mut Box<dyn Client>, request: Request<'_>) -> In3Result<T>
+    where T: serde::de::DeserializeOwned {
+    let req_str = serde_json::to_string(&request)?;
     let resp_str = client.rpc(req_str.as_str()).await?;
     let resp: Vec<Response> = serde_json::from_str(resp_str.as_str())?;
-    Ok(resp)
+    let resp = resp.first().unwrap();
+    Ok(serde_json::from_str(resp.to_result()?.to_string().as_str())?)
 }
