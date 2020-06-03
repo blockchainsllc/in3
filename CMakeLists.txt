@@ -70,6 +70,7 @@ option(USE_SCRYPT "integrate scrypt into the build in order to allow decrypt_key
 option(USE_CURL "if true the curl transport will be built (with a dependency to libcurl)" ON)
 option(DEV_NO_INTRN_PTR "(*dev option*) if true the client will NOT include a void pointer (named internal) for use by devs)" ON)
 option(LEDGER_NANO "include support for nano ledger" OFF)
+option(ESP_IDF "include support for ESP-IDF microcontroller framework" OFF)
 option(ASSERTIONS "includes assertions into the code, which help track errors but may cost time during runtime" OFF)
 
 if (USE_PRECOMPUTED_EC)
@@ -110,6 +111,10 @@ endif()
 if(IN3API)
     ADD_DEFINITIONS(-DETH_API)
     set(IN3_API eth_api)
+endif()
+
+if (ESP_IDF)
+    ADD_DEFINITIONS(-DESP_IDF)
 endif()
 
 if(PAY_ETH)

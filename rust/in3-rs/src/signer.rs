@@ -1,3 +1,4 @@
+//! Signer trait implementations.
 use std::str;
 
 use libc::c_char;
@@ -7,12 +8,13 @@ use sha3::{Digest, Keccak256Full};
 
 use crate::traits::Signer;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum SignatureType {
-    Raw = 0,
-    Hash = 1,
-}
-
+/// Sign data using specified private key using low-level FFI types.
+///
+/// # Panics
+/// This function does not report errors and panics instead.
+///
+/// # Safety
+/// Being a thin wrapper over in3_sys::ec_sign_pk_hash(), this method is unsafe.
 pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     let data_ = data as *mut u8;
     let dst: *mut u8 = libc::malloc(65) as *mut u8;
@@ -24,6 +26,7 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     dst
 }
 
+/// Signer implementation in pure and safe Rust.
 pub struct SignerRust<'a> {
     pub pk: &'a str,
 }

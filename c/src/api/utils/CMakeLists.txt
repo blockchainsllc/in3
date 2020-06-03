@@ -31,44 +31,5 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-
-IF (USE_CURL)
-    message("using curl for comandline")
-    set(LIBS ${LIBS} transport_curl)
-else()
-    message("using http for comandline")
-    set(LIBS ${LIBS} transport_http)
-ENDIF()
-
-IF (IN3_SERVER)
-    message("using server for comandline")
-    ADD_DEFINITIONS(-DIN3_SERVER)
-    set(LIBS ${LIBS} http_server)
-ENDIF()
-
-if (BTC)
-    ADD_DEFINITIONS(-DBTC)
-    set(LIBS ${LIBS} btc)
-endif()
-
-if (IPFS)
-    ADD_DEFINITIONS(-DIPFS)
-    set(LIBS ${LIBS} ipfs ipfs_api )
-endif()
-
-
-add_executable(in3 main.c in3_storage.c)
-target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
-
-if( LEDGER_NANO AND HIDAPI)
-  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API} ledger_signer  -lm)
-else()
-  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API}  -lm)
-endif()
-
-install(TARGETS in3
-        DESTINATION /usr/local/bin/
-        PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE)
+add_library(api_utils_o OBJECT api_utils.c)
+add_library(api_utils STATIC $<TARGET_OBJECTS:api_utils_o>)

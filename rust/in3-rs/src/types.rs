@@ -1,3 +1,4 @@
+//! Types common to all modules.
 use std::fmt;
 
 use rustc_hex::{FromHex, ToHex};
@@ -5,6 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, Visitor};
 use serde::export::Formatter;
 
+/// Newtype wrapper around vector of bytes
 #[derive(Debug, PartialEq, Eq, Default, Hash, Clone)]
 pub struct Bytes(pub Vec<u8>);
 
