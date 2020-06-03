@@ -46,59 +46,121 @@
 #include "../../core/util/bytes.h"
 #include "../../verifier/btc/btc_types.h"
 
+/** the tx in */
 typedef struct btc_transaction_in {
-  uint32_t  vout;
-  bytes32_t txid;
-  uint32_t  sequence;
-  bytes_t   script;
-  bytes_t   txinwitness;
+  uint32_t  vout;        /**< the tx index of the output */
+  bytes32_t txid;        /**< the tx id of the output */
+  uint32_t  sequence;    /**< the sequence */
+  bytes_t   script;      /**< the script */
+  bytes_t   txinwitness; /**< witnessdata (if used) */
 } btc_transaction_in_t;
 
+/** the tx out */
 typedef struct btc_transaction_out {
-  uint64_t value;
-  uint32_t n;
-  bytes_t  script_pubkey;
+  uint64_t value;         /**< the value of the tx */
+  uint32_t n;             /**< the index */
+  bytes_t  script_pubkey; /**< the script pubkey (or signature)*/
 } btc_transaction_out_t;
 
+/** a transaction */
 typedef struct btc_transaction {
-  bool                   in_active_chain;
-  bytes_t                data;
-  bytes32_t              txid;
-  bytes32_t              hash;
-  uint32_t               size;
-  uint32_t               vsize;
-  uint32_t               weight;
-  uint32_t               version;
-  uint32_t               locktime;
-  btc_transaction_in_t*  vin;
-  btc_transaction_out_t* vout;
-  uint32_t               vin_len;
-  uint32_t               vout_len;
-  bytes32_t              blockhash;
-  uint32_t               confirmations;
-  uint32_t               time;
-  uint32_t               blocktime;
+  bool                   in_active_chain; /**< true if it is part of the active chain */
+  bytes_t                data;            /**< the serialized transaction-data */
+  bytes32_t              txid;            /**< the transaction id */
+  bytes32_t              hash;            /**< the transaction hash */
+  uint32_t               size;            /**< raw size of the transaction */
+  uint32_t               vsize;           /**< virtual size of the transaction */
+  uint32_t               weight;          /**< weight of the tx */
+  uint32_t               version;         /**< used version  */
+  uint32_t               locktime;        /**< locktime */
+  btc_transaction_in_t*  vin;             /**< array of transaction inputs */
+  btc_transaction_out_t* vout;            /**< array of transaction outputs */
+  uint32_t               vin_len;         /**< number of tx inputs */
+  uint32_t               vout_len;        /**< number of tx outputs */
+  bytes32_t              blockhash;       /**< hash of block containing the tx */
+  uint32_t               confirmations;   /**< number of confirmations or blocks mined on top of the containing block*/
+  uint32_t               time;            /**< unix timestamp in seconds since 1970 */
+  uint32_t               blocktime;       /**< unix timestamp in seconds since 1970 */
 } btc_transaction_t;
 
+/** the blockheader */
 typedef struct btc_blockheader {
-  bytes32_t hash;
-  uint32_t  confirmations;
-  uint32_t  height;
-  uint32_t  version;
-  bytes32_t merkleroot;
-  uint32_t  time;
-  uint32_t  nonce;
-  uint8_t   bits[4];
-  bytes32_t chainwork;
-  uint32_t  n_tx;
-  bytes32_t previous_hash;
-  bytes32_t next_hash;
-  uint8_t   data[80];
+  bytes32_t hash;          /**< the hash of the blockheader */
+  uint32_t  confirmations; /**< number of confirmations or blocks mined on top of the containing block*/
+  uint32_t  height;        /**< block number */
+  uint32_t  version;       /**< used version  */
+  bytes32_t merkleroot;    /**< merkle root of the trie of all transactions in the block  */
+  uint32_t  time;          /**< unix timestamp in seconds since 1970 */
+  uint32_t  nonce;         /**< nonce-field of the block */
+  uint8_t   bits[4];       /**<bits (target) for the block */
+  bytes32_t chainwork;     /**<total amount of work since genesis */
+  uint32_t  n_tx;          /**< number iof transactions in the block */
+  bytes32_t previous_hash; /**< hash of the parent blockheader */
+  bytes32_t next_hash;     /**< hash of the next blockheader */
+  uint8_t   data[80];      /**< raw serialized header-bytes */
 } btc_blockheader_t;
 
-bytes_t*           btc_get_transaction_bytes(in3_t* in3, bytes32_t txid);
-btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid);
-btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash);
-bytes_t*           btc_get_blockheader_bytes(in3_t* in3, bytes32_t blockhash);
+/** a block with all transactions including their full data */
+typedef struct btc_block_txdata {
+  btc_blockheader_t  header; /**< the blockheader */
+  uint32_t           tx_len; /**< number of transactions */
+  btc_transaction_t* tx;     /**< array of transactiondata */
+} btc_block_txdata_t;
+
+/** a block with all transaction ids */
+typedef struct btc_block_txids {
+  btc_blockheader_t header; /**< the blockheader */
+  uint32_t          tx_len; /**< number of transactions */
+  bytes32_t*        tx;     /**< array of transaction ids */
+} btc_block_txids_t;
+
+/** 
+ * gets the transaction as raw bytes or null if it does not exist.
+ * You must free the result with b_free() after use!
+ */
+bytes_t* btc_get_transaction_bytes(in3_t*    in3,   /**< the in3-instance*/
+                                   bytes32_t txid); /**< the txid */
+
+/** 
+ * gets the transaction as struct or null if it does not exist.
+ * You must free the result with free() after use!
+ */
+btc_transaction_t* btc_get_transaction(in3_t*    in3,   /**< the in3-instance*/
+                                       bytes32_t txid); /**< the txid */
+
+/** 
+ * gets the blockheader as struct or null if it does not exist.
+ * You must free the result with free() after use!
+ */
+btc_blockheader_t* btc_get_blockheader(in3_t*    in3,        /**< the in3-instance*/
+                                       bytes32_t blockhash); /**< the block hash */
+
+/** 
+ * gets the blockheader as raw serialized data (80 bytes) or null if it does not exist.
+ * You must free the result with b_free() after use!
+ */
+bytes_t* btc_get_blockheader_bytes(in3_t*    in3,        /**< the in3-instance*/
+                                   bytes32_t blockhash); /**< the block hash */
+
+/** 
+ * gets the block as struct including all transaction data or null if it does not exist.
+ * You must free the result with free() after use!
+ */
+btc_block_txdata_t* btc_get_block_txdata(in3_t*    in3,        /**< the in3-instance*/
+                                         bytes32_t blockhash); /**< the block hash */
+
+/** 
+ * gets the block as struct including all transaction ids or null if it does not exist.
+ * You must free the result with free() after use!
+ */
+btc_block_txids_t* btc_get_block_txids(in3_t*    in3,        /**< the in3-instance*/
+                                       bytes32_t blockhash); /**< the block hash */
+
+/** 
+ * gets the block as raw serialized block bytes including all transactions or null if it does not exist.
+ * You must free the result with b_free() after use!
+ */
+bytes_t* btc_get_block_bytes(in3_t*    in3,        /**< the in3-instance*/
+                             bytes32_t blockhash); /**< the block hash */
 
 #endif //IN3_BTC_API_H
