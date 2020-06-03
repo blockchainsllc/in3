@@ -111,6 +111,37 @@ void test_btc_api_get_blockheader() {
   in3_free(in3);
 }
 
+void test_btc_api_get_block() {
+  in3_t* in3 = in3_init_test();
+
+  bytes32_t hash;
+  hex_to_bytes("00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b", -1, hash, 32);
+
+  btc_block_txids_t* block = btc_get_block_txids(in3, hash);
+  TEST_ASSERT_NOT_NULL(block);
+  btc_blockheader_t* data = &block->header;
+  TEST_ASSERT_NOT_NULL(data);
+  TEST_ASSERT_EQUAL_UINT32(536870912, data->version);
+  TEST_ASSERT_EQUAL_UINT32(15, data->confirmations);
+  TEST_ASSERT_EQUAL_UINT32(631076, data->height);
+  TEST_ASSERT_EQUAL_UINT32(1589991753, data->time);
+  TEST_ASSERT_EQUAL_UINT32(2921687714, data->nonce);
+  TEST_ASSERT_EQUAL_UINT32(2339, data->n_tx);
+
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b", data->hash, 32, "wrong hash");
+  TEST_ASSERT_EQUAL_HEX_BYTES("18f5756c66b14aa8bace933001b16d78bd89a16612468122442559ce9f296eb6", data->merkleroot, 32, "wrong merkleroot");
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000000000000000000000000000000000000000f9f574f8d39680a92ad1bdc", data->chainwork, 32, "wrong chainwork");
+  TEST_ASSERT_EQUAL_HEX_BYTES("000000000000000000061e12d6a29bd0175a6045dfffeafd950c0513f9b82c80", data->previous_hash, 32, "wrong previous hash");
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d", data->next_hash, 32, "wrong next hash");
+  TEST_ASSERT_EQUAL_HEX_BYTES("171297f6", data->bits, 4, "wrong bits");
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae", data->data, 80, "wrong data");
+
+  TEST_ASSERT_EQUAL_HEX_BYTES("ee14c60b365a068744496644c1b5643c4ecf27c6bdb2d9d7ad96df180f6aecc8", block->tx[1], 32, "wrong tx id");
+
+  free(data);
+  in3_free(in3);
+}
+
 /*
  * Main
  */
@@ -120,6 +151,7 @@ int main() {
 
   TESTS_BEGIN();
   RUN_TEST(test_btc_api_get_blockheader);
+  RUN_TEST(test_btc_api_get_block);
   RUN_TEST(test_btc_api_get_transaction);
   return TESTS_END();
 }

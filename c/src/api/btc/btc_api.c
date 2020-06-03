@@ -225,7 +225,7 @@ btc_block_txdata_t* btc_get_block_txdata(in3_t* in3, bytes32_t blockhash) {
   rpc_init;
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
-  sb_add_chars(params, "\",1");
+  sb_add_chars(params, "\",2");
   rpc_exec("getblock", btc_block_txdata_t*, to_block_txdata(result));
   return NULL;
 }
@@ -233,7 +233,7 @@ btc_block_txids_t* btc_get_block_txids(in3_t* in3, bytes32_t blockhash) {
   rpc_init;
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
-  sb_add_chars(params, "\",2");
+  sb_add_chars(params, "\",1");
   rpc_exec("getblock", btc_block_txids_t*, to_block_txids(result));
   return NULL;
 }
