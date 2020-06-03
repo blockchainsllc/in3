@@ -162,6 +162,7 @@ class IN3 {
         this.ptr = 0;
         this.eth = new EthAPI(this)
         this.ipfs = new IpfsAPI(this)
+        this.btc = new BtcAPI(this)
     }
 
     /**
@@ -241,7 +242,20 @@ class IN3 {
                 case 'waiting': {
                     const req = state.request
                     function setResponse(msg, i, isError) {
-                        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+                        if (msg.length > 5000) {
+                            // here we pass the string as pointer using malloc before
+                            const len = (msg.length << 2) + 1;
+                            const ptr = in3w.ccall('imalloc', 'number', ['number'], [len])
+                            if (!ptr)
+                                throw new Error('Could not allocate memory (' + len + ')')
+                            stringToUTF8(msg, ptr, len);
+                            in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'number'], [req.ctx, req.ptr, i, isError, ptr])
+                            in3w.ccall('ifree', 'void', ['number'], [ptr])
+
+                        }
+                        else
+                            in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+                        // console.log((isError ? 'ERROR ' : '') + ' response  :', msg.substr(0, 10))
                     }
                     function freeRequest() {
                         in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
@@ -261,6 +275,7 @@ class IN3 {
                             break;
 
                         case 'rpc':
+                            //                            console.log("req ", JSON.stringify(req, null, 2))
                             await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
                                 res => setResponse(res, i, false),
                                 err => setResponse(err.message || err, i, true)

@@ -34,6 +34,12 @@
 
 #ifndef IN3_TEST_UTILS_H
 #define IN3_TEST_UTILS_H
+#define TEST_ASSERT_EQUAL_HEX_BYTES(expected, actual, len, message) \
+  {                                                                 \
+    char tmp[len * 2 + 1];                                          \
+    bytes_to_hex(actual, len, tmp);                                 \
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, tmp, message);       \
+  }
 
 #include "unity/unity.h"
 #include <sys/time.h>

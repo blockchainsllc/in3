@@ -54,7 +54,7 @@ if (process.argv.find(_ => _.indexOf('mocha') >= 0)) {
     })
 }
 
-const ignoreFuxxProps = ['id', 'error', 'code', 'dap', 'weight', 'confirmations', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
+const ignoreFuxxProps = ['id', 'error', 'code', 'dap', 'weight', 'confirmations', 'version', 'proofHash', 'strippedsize', 'height', 'difficulty', 'nTx', 'mediantime', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
 const ignoreVoutProps = ['value', 'reqSigs']
 
@@ -160,7 +160,9 @@ async function runSingleTest(test, c) {
         test.response[res].id = data[0].id
         const r = test.response[res++]
         accounts = r.in3 && r.in3.proof && r.in3.proof.accounts
-        return Promise.resolve(JSON.stringify([r]))
+        const json = JSON.stringify([r])
+        //        console.log('RES:', json.substr(0, 20))
+        return Promise.resolve(json)
     })
     const client = new Client({
         requestCount: config.requestCount || 1,

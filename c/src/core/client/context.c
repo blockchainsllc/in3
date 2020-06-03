@@ -110,7 +110,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
       strcpy(dst, message);
     }
     ctx->error = dst;
-    in3_log_error("%s:", message);
+    //    in3_log_error("%s:", message);
   } else if (!ctx->error) {
     ctx->error    = _malloc(2);
     ctx->error[0] = 'E';

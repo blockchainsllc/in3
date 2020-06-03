@@ -31,20 +31,8 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
-
-IF (IN3API)
-    add_subdirectory(eth1)
-    add_subdirectory(usn)
-    add_subdirectory(utils)
-    
-    IF (IPFS)
-        add_subdirectory(ipfs)
-    ENDIF (IPFS)
-
-    IF (BTC)
-        add_subdirectory(btc)
-    ENDIF (BTC)
-
-ENDIF (IN3API)
-
+add_library(btc_api_o OBJECT btc_api.c)
+add_library(btc_api STATIC $<TARGET_OBJECTS:btc_api_o>)
+target_link_libraries(btc_api core api_utils)
