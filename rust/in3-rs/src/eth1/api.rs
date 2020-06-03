@@ -31,48 +31,38 @@ impl Api {
         key: U256,
         block: BlockNumber,
     ) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getStorageAt",
             params: json!([address, key, block]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_code(&mut self, address: Address, block: BlockNumber) -> In3Result<Bytes> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getCode",
             params: json!([address, block]),
-        }).await?.first().unwrap().clone();
-        let res: Bytes = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_balance(&mut self, address: Address, block: BlockNumber) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getBalance",
             params: json!([address, block]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn block_number(&mut self) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_blockNumber",
             params: json!([]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn gas_price(&mut self) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_gasPrice",
             params: json!([]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_block_by_number(
@@ -80,48 +70,38 @@ impl Api {
         block: BlockNumber,
         include_tx: bool,
     ) -> In3Result<Block> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getBlockByNumber",
             params: json!([block, include_tx]),
-        }).await?.first().unwrap().clone();
-        let res: Block = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_block_by_hash(&mut self, hash: Hash, include_tx: bool) -> In3Result<Block> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getBlockByHash",
             params: json!([hash, include_tx]),
-        }).await?.first().unwrap().clone();
-        let res: Block = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_logs(&mut self, filter_options: serde_json::Value) -> In3Result<Vec<Log>> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getLogs",
             params: json!([filter_options]),
-        }).await?.first().unwrap().clone();
-        let res: Vec<Log> = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn new_filter(&mut self, filter_options: serde_json::Value) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_newFilter",
             params: json!([filter_options]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn new_block_filter(&mut self) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_newBlockFilter",
             params: json!([]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn new_pending_transaction_filter(&mut self) -> In3Result<U256> {
@@ -129,60 +109,48 @@ impl Api {
     }
 
     pub async fn uninstall_filter(&mut self, filter_id: U256) -> In3Result<bool> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_uninstallFilter",
             params: json!([filter_id]),
-        }).await?.first().unwrap().clone();
-        let res: bool = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_filter_changes(&mut self, filter_id: U256) -> In3Result<FilterChanges> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getFilterChanges",
             params: json!([filter_id]),
-        }).await?.first().unwrap().clone();
-        let res: FilterChanges = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_filter_logs(&mut self, filter_id: U256) -> In3Result<Vec<Log>> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getFilterLogs",
             params: json!([filter_id]),
-        }).await?.first().unwrap().clone();
-        let res: Vec<Log> = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn chain_id(&mut self) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_chainId",
             params: json!([]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_block_transaction_count_by_hash(&mut self, hash: Hash) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getBlockTransactionCountByHash",
             params: json!([hash]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_block_transaction_count_by_number(
         &mut self,
         block: BlockNumber,
     ) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getBlockTransactionCountByNumber",
             params: json!([block]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn call(
@@ -191,12 +159,10 @@ impl Api {
         block: BlockNumber,
     ) -> In3Result<Bytes> {
         assert!(transaction.to.is_some());
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_call",
             params: json!([transaction, block]),
-        }).await?.first().unwrap().clone();
-        let res: Bytes = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn estimate_gas(
@@ -204,21 +170,17 @@ impl Api {
         transaction: CallTransaction,
         block: BlockNumber,
     ) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_estimateGas",
             params: json!([transaction, block]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_transaction_by_hash(&mut self, hash: Hash) -> In3Result<Transaction> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getTransactionByHash",
             params: json!([hash]),
-        }).await?.first().unwrap().clone();
-        let res: Transaction = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_transaction_by_block_hash_and_index(
@@ -226,12 +188,10 @@ impl Api {
         hash: Hash,
         index: U256,
     ) -> In3Result<Transaction> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getTransactionByBlockHashAndIndex",
             params: json!([hash, index]),
-        }).await?.first().unwrap().clone();
-        let res: Transaction = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_transaction_by_block_number_and_index(
@@ -239,21 +199,17 @@ impl Api {
         block: BlockNumber,
         index: U256,
     ) -> In3Result<Transaction> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getTransactionByBlockNumberAndIndex",
             params: json!([block, index]),
-        }).await?.first().unwrap().clone();
-        let res: Transaction = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_transaction_count(&mut self, block: BlockNumber) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getTransactionCount",
             params: json!([block]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_uncle_by_block_number_and_index(
@@ -261,60 +217,48 @@ impl Api {
         block: BlockNumber,
         index: U256,
     ) -> In3Result<Block> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getUncleByBlockNumberAndIndex",
             params: json!([block, index]),
-        }).await?.first().unwrap().clone();
-        let res: Block = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_uncle_count_by_block_hash(&mut self, hash: Hash) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getUncleCountByBlockHash",
             params: json!([hash]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_uncle_count_by_block_number(&mut self, block: BlockNumber) -> In3Result<U256> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getUncleCountByBlockNumber",
             params: json!([block]),
-        }).await?.first().unwrap().clone();
-        let res: U256 = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn send_transaction(&mut self, transaction: OutgoingTransaction) -> In3Result<Hash> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_sendTransaction",
             params: json!([transaction]),
-        }).await?.first().unwrap().clone();
-        let res: Hash = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn send_raw_transaction(&mut self, data: Bytes) -> In3Result<Hash> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_sendRawTransaction",
             params: json!([data]),
-        }).await?.first().unwrap().clone();
-        let res: Hash = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get_transaction_receipt(
         &mut self,
         transaction_hash: Hash,
     ) -> In3Result<TransactionReceipt> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "eth_getTransactionReceipt",
             params: json!([transaction_hash]),
-        }).await?.first().unwrap().clone();
-        let res: TransactionReceipt = serde_json::from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 }
 

@@ -1,5 +1,5 @@
 use base64::{decode, DecodeError, encode};
-use serde_json::{from_str, json};
+use serde_json::json;
 
 use crate::error::{Error, In3Result};
 use crate::json_rpc::{Request, rpc};
@@ -24,22 +24,17 @@ impl ApiTrait for Api {
 
 impl Api {
     pub async fn put(&mut self, content: Bytes) -> In3Result<Multihash> {
-        let resp = rpc(self.client(), Request {
+        rpc(self.client(), Request {
             method: "ipfs_put",
             params: json!([encode(content.0), "base64"]),
-        }).await?.first().unwrap().clone();
-        let res: Multihash = from_str(resp.into_result()?.to_string().as_str())?;
-        Ok(res)
+        }).await
     }
 
     pub async fn get(&mut self, hash: Multihash) -> In3Result<Bytes> {
-        let resp = rpc(self.client(), Request {
+        Ok(decode(rpc::<String>(self.client(), Request {
             method: "ipfs_get",
             params: json!([hash, "base64"]),
-        }).await?.first().unwrap().clone();
-        let result: String = from_str(resp.into_result()?.to_string().as_str())?;
-        let res: Bytes = decode(result)?.into();
-        Ok(res)
+        }).await?)?.into())
     }
 }
 
@@ -86,7 +81,7 @@ mod tests {
                 r#"[{"jsonrpc":"2.0","id":1,"result":"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ="}]"#,
             )],
         }));
-        let data: Bytes = task::block_on(
+        let data = task::block_on(
             api.get("QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8".to_string())
         ).unwrap();
         Ok(assert_eq!(data, "Lorem ipsum dolor sit amet".as_bytes().into()))
