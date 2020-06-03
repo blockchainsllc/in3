@@ -25,4 +25,23 @@ class BtcAPI {
       .then(result => this.client.util.toBuffer('0x' + result))
   }
 
+  getBlockWithTxData(blockhash) {
+    return this.client.sendRPC('getblock', [blockhash, 2])
+      .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
+  }
+
+  getBlockWithTxIds(blockhash) {
+    return this.client.sendRPC('getblock', [blockhash, 1])
+      .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
+  }
+
+  getBlockData(bllockhash) {
+    return this.client.sendRPC('getblock', [bllockhash, false])
+      .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
+      .then(result => this.client.util.toBuffer('0x' + result))
+  }
+
+
+
+
 }

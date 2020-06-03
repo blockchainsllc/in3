@@ -1234,24 +1234,45 @@ export declare interface BtcTransaction {
     vout: BtcTransactionOutput[]
 
 }
+/** a Block header */
 export interface BTCBlockHeader {
+    /** the hash of the blockheader */
     hash: string,
+    /** number of confirmations or blocks mined on top of the containing block*/
     confirmations: number,
+    /** block number */
     height: number,
+    /** used version  */
     version: number,
+    /**  version as hex */
     versionHex: string,
+    /** merkle root of the trie of all transactions in the block  */
     merkleroot: string,
+    /** unix timestamp in seconds since 1970 */
     time: string,
+    /** unix timestamp in seconds since 1970 */
     mediantime: string,
+    /** nonce-field of the block */
     nonce: number,
+    /** bits (target) for the block as hex*/
     bits: string,
-    difficulty: number, no
+    /** difficulty of the block */
+    difficulty: number,
+    /** total amount of work since genesis */
     chainwork: string,
+    /**  number of transactions in the block  */
     nTx: number,
+    /**  hash of the parent blockheader  */
     previousblockhash: string,
+    /**  hash of the next blockheader  */
     nextblockhash: string
 }
 
+/** a full Block including the transactions */
+export interface BTCBlock<T> extends BTCBlockHeader {
+    /** the transactions */
+    tx: T[]
+}
 
 
 /**
@@ -1265,8 +1286,17 @@ export declare interface BtcAPI<BufferType> {
     getTransactionData(txid: Hash): Promise<BufferType>
 
     /** retrieves the blockheader and returns the data as json. */
-    getBlockHeader(blockHash: Hash): Promise<BtcTransaction>
+    getBlockHeader(blockHash: Hash): Promise<BTCBlockHeader>
 
     /** retrieves the serialized blockheader (bytes) */
     getBlockHeaderData(blockHash: Hash): Promise<BufferType>
+
+    /** retrieves the block including all tx data as json. */
+    getBlockWithTxData(blockHash: Hash): Promise<BTCBlock<BtcTransaction>>
+
+    /** retrieves the block including all tx ids as json. */
+    getBlockWithTxIds(blockHash: Hash): Promise<BTCBlock<string>>
+
+    /** retrieves the serialized block (bytes) including all transactions */
+    getBlockData(blockHash: Hash): Promise<BufferType>
 }
