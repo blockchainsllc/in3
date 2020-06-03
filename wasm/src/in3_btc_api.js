@@ -8,7 +8,7 @@ class BtcAPI {
       .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
   }
 
-  getTransactionData(txid) {
+  getTransactionBytes(txid) {
     return this.client.sendRPC('getrawtransaction', [txid, false])
       .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
       .then(result => this.client.util.toBuffer('0x' + result))
@@ -19,7 +19,7 @@ class BtcAPI {
       .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
   }
 
-  getBlockHeaderData(bllockhash) {
+  getBlockHeaderBytes(bllockhash) {
     return this.client.sendRPC('getblockheader', [bllockhash, false])
       .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
       .then(result => this.client.util.toBuffer('0x' + result))
@@ -35,7 +35,7 @@ class BtcAPI {
       .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
   }
 
-  getBlockData(bllockhash) {
+  getBlockBytes(bllockhash) {
     return this.client.sendRPC('getblock', [bllockhash, false])
       .then(response => response || Promise.reject(new Error(response.error || 'txid not found')))
       .then(result => this.client.util.toBuffer('0x' + result))

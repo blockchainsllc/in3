@@ -1283,13 +1283,13 @@ export declare interface BtcAPI<BufferType> {
     getTransaction(txid: Hash): Promise<BtcTransaction>
 
     /** retrieves the serialized transaction (bytes) */
-    getTransactionData(txid: Hash): Promise<BufferType>
+    getTransactionBytes(txid: Hash): Promise<BufferType>
 
     /** retrieves the blockheader and returns the data as json. */
     getBlockHeader(blockHash: Hash): Promise<BTCBlockHeader>
 
     /** retrieves the serialized blockheader (bytes) */
-    getBlockHeaderData(blockHash: Hash): Promise<BufferType>
+    getBlockHeaderBytes(blockHash: Hash): Promise<BufferType>
 
     /** retrieves the block including all tx data as json. */
     getBlockWithTxData(blockHash: Hash): Promise<BTCBlock<BtcTransaction>>
@@ -1298,5 +1298,5 @@ export declare interface BtcAPI<BufferType> {
     getBlockWithTxIds(blockHash: Hash): Promise<BTCBlock<string>>
 
     /** retrieves the serialized block (bytes) including all transactions */
-    getBlockData(blockHash: Hash): Promise<BufferType>
+    getBlockBytes(blockHash: Hash): Promise<BufferType>
 }
