@@ -171,7 +171,7 @@ NONULL in3_ret_t in3_send_ctx(
  * - IN3_OK : success, we have a result.
  * - any other status = error
  * 
- * ```
+ * ```rust,ignore
  * digraph G {
  node[fontname="Helvetica",   shape=Box, color=lightblue, style=filled ]
   edge[fontname="Helvetica",   style=solid,  fontsize=8 , color=grey]
