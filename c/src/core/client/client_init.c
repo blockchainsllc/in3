@@ -215,14 +215,14 @@ static void init_mainnet(in3_chain_t* chain) {
 }
 
 static void init_btc(in3_chain_t* chain) {
-  initChain(chain, 0x99, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
-  initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.stage.slock.it/btc/nd-1");
+  initChain(chain, 0x99, "ed7bb275ca33c46ef3875a9c959c91553ca6acb8", "084ec5cd9274e7c05b827a0d417f92820eb249b9d4ae6e497e355620114a52dc", 1, 1, CHAIN_BTC, NULL);
+  initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3.stage.slock.it/btc/nd-1");
+  //initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "http://localhost:8500");
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;
   }
 }
-
 static void init_kovan(in3_chain_t* chain) {
 #ifdef IN3_STAGING
   // kovan

@@ -381,11 +381,17 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   // make sure we want to verify
   if (vc->config->verification == VERIFICATION_NEVER) return IN3_OK;
 
+  // do we support this request?
+  if (!method) return vc_err(vc, "No Method in request defined!");
+
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result || d_type(vc->result) == T_NULL) return IN3_OK;
 
-  // do we support this request?
-  if (!method) return vc_err(vc, "No Method in request defined!");
+  if (strcmp(method, "in3_nodeList") == 0) {
+    in3_verifier_t* eth_verifier = in3_get_verifier(CHAIN_ETH);
+    return eth_verifier ? eth_verifier->verify(vc)
+                        : vc_err(vc, "No Eth-Verifier found to check the nodelist!");
+  }
 
   if (strcmp(method, "getblock") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);
