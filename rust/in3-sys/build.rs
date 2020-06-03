@@ -51,7 +51,7 @@ fn write_bindgen_bindings(
         )
         .disable_name_namespacing()
         .prepend_enum_name(false)
-        .generate_comments(true)
+        .generate_comments(false)
         .impl_debug(true)
         .constified_enum_module("in3_ret_t")
         .rustified_enum(".*");
