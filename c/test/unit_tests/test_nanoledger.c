@@ -53,7 +53,9 @@
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 
-#include "../../src/signer/pk-signer/signer-priv.h"
+#include "../../src/signer/ledger-nano/signer/ethereum_apdu_client.h"
+#include "../../src/signer/ledger-nano/signer/ethereum_apdu_client_priv.h"
+
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/third-party/crypto/ecdsa.h"
 #include "../../src/third-party/crypto/secp256k1.h"
@@ -75,9 +77,7 @@ static void test_sign() {
 
   for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
 
-  bytes32_t pk;
-  hex_to_bytes("0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303", -1, pk, 32);
-  eth_set_pk_signer(c, pk);
+  eth_ledger_set_signer_txn(in3, bip_path);
 
   add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
                "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
@@ -102,12 +102,8 @@ static void test_tx() {
   add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
                "\"0x309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f\"", NULL, NULL);
 
-  // convert the hexstring to bytes
-  bytes32_t pk;
-  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
-
-  // create a simple signer with this key
-  eth_set_pk_signer(in3, pk);
+  // create a ledger nano signer
+  eth_ledger_set_signer_txn(in3, bip_path);
 
   address_t to, from;
   hex_to_bytes("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
@@ -133,45 +129,15 @@ static void test_tx() {
   in3_free(in3);
 }
 
-static void test_sign_hex() {
-
-  in3_t* c     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport = test_transport;
-  c->proof     = PROOF_NONE;
-  c->flags     = FLAGS_STATS;
-
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
-
-  uint8_t* pk = eth_set_pk_signer_hex(c, "0x34a314920b2ffb438967bcf423112603134a0cdef0ad0bf7ceb447067eced303");
-
-  add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
-               "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
-  add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
-  add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
-
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
-  TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
-  TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
-  free(pk);
-  ctx_free(ctx);
-}
-
-static void test_sign_sans_signer_and_from() {
-  in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
-  TEST_ASSERT_NOT_NULL(ctx->error);
-  ctx_free(ctx);
-}
-
 static void test_signer() {
-  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  bytes32_t pk;
-  hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
-  eth_set_pk_signer(c, pk);
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+
+  eth_ledger_set_signer_txn(in3, bip_path);
+
   uint8_t    sig[65]  = {0};
   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-  bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
+  char*      data_str = "msg0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
   TEST_ASSERT_EQUAL(65, eth_sign_pk_ctx(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
   TEST_ASSERT_FALSE(memiszero(sig, 65));
   b_free(data);
@@ -228,8 +194,7 @@ int main() {
   TESTS_BEGIN();
   RUN_TEST(test_tx);
   RUN_TEST(test_sign);
-  RUN_TEST(test_sign_hex);
-  RUN_TEST(test_sign_sans_signer_and_from);
+
   RUN_TEST(test_signer);
   RUN_TEST(test_signer_prepare_tx);
   return TESTS_END();
