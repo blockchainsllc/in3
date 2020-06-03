@@ -34,7 +34,7 @@ impl Response {
     }
 }
 
-/// Generic function that returns performs the specified JSON RPC call and returns the result
+/// Generic function that performs the specified JSON RPC call and returns the result
 /// deserialized as specified/inferred type
 ///
 /// # Arguments
