@@ -30,3 +30,4 @@ bin/
 target/
 .cproject
 rust/in3-sys/in3-core/*
+rust/Cargo.lock

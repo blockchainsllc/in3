@@ -47,12 +47,14 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
 }
 
 uint32_t btc_vsize(btc_tx_t* tx) {
-  return tx->output.len + tx->output.data - (tx->all.data + (tx->flag ? 6 : 4)) + 8;
+  uint32_t w = btc_weight(tx);
+  return w % 4 ? (w + 4) / 4 : w / 4;
 }
 
 uint32_t btc_weight(btc_tx_t* tx) {
-  uint32_t w = btc_vsize(tx) * 4;
-  if (tx->flag) w += 2 + tx->witnesses.len;
+  const uint32_t w = tx->witnesses.len
+                         ? (tx->all.len - tx->witnesses.len - 2) * 3 + tx->all.len
+                         : tx->all.len * 4;
   return w;
 }
 

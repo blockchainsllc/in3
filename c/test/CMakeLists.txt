@@ -34,8 +34,6 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
-#include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-
 include_directories(. ../src)
 
 # handle codecoverage
@@ -73,9 +71,9 @@ foreach (file ${files})
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
 
      if( LEDGER_NANO AND HIDAPI )
-       target_link_libraries("${testname}" core eth_full pk_signer ipfs ipfs_api ${IN3_API} ledger_signer)
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API})
      else()
-       target_link_libraries("${testname}" core eth_full pk_signer ipfs ipfs_api ${IN3_API})
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ${IN3_API})
      endif()
 
      add_test(

@@ -14,7 +14,7 @@ ADD_DEFINITIONS(-DZEPHYR_OS)
 ADD_DEFINITIONS(-DZEPHYR)
 ADD_DEFINITIONS(-DIN3_MATH_LITE)
 
-set(IN3_SRC ../..)
+set(IN3_SRC ../../..)
 set(IN3_DEPS 
 ${IN3_SRC}/src/core 
 ${IN3_SRC}/src/verifier/eth1/basic 

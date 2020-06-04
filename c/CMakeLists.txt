@@ -32,8 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
+include("compiler.cmake")
 #  build modules
 add_subdirectory(src/third-party)
 
@@ -108,6 +108,11 @@ if (IN3_LIB)
         set(IN3_LIBS ${IN3_LIBS} 
           $<TARGET_OBJECTS:btc_o>
         )
+        if (IN3API) 
+            set(IN3_LIBS ${IN3_LIBS} 
+                $<TARGET_OBJECTS:btc_api_o>
+            )
+        endif()
     endif()
 
     if (IN3API) 
