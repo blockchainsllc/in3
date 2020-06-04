@@ -127,6 +127,7 @@ const char* u64_to_str(uint64_t value, char* buffer, int buffer_len) {
 #endif
 
 int hex_to_bytes(const char* buf, int len, uint8_t* out, int outbuf_size) {
+  if (!buf && len) return -1;
   if (len == -1) {
     len = strlen(buf);
     if (len >= 2 && *buf == '0' && buf[1] == 'x') {
