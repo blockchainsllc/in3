@@ -110,10 +110,11 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
   EXPECT(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
 
   // handle vin
-  uint8_t* p = txdata.input.data;
+  uint8_t* p     = txdata.input.data;
+  uint8_t* limit = txdata.input.data + txdata.input.len;
   for (uint32_t i = 0; i < res->vin_len; i++) {
     btc_tx_in_t vin;
-    p = btc_parse_tx_in(p, &vin);
+    p = btc_parse_tx_in(p, &vin, limit);
     if (!p) return IN3_EINVAL;
 
     btc_transaction_in_t* r = res->vin + i;
@@ -125,11 +126,12 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
   }
 
   // handle vout
-  p = txdata.output.data;
+  p     = txdata.output.data;
+  limit = txdata.output.data + txdata.output.len;
   for (uint32_t i = 0; i < res->vout_len; i++) {
     btc_tx_out_t vout;
     p = btc_parse_tx_out(p, &vout);
-    if (!p) return IN3_EINVAL;
+    if (p > limit) return IN3_EINVAL;
 
     btc_transaction_out_t* r = res->vout + i;
     r->n                     = i;

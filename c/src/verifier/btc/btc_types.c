@@ -2,13 +2,14 @@
 #include "../../core/util/mem.h"
 #include "btc_serialize.h"
 
-uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst) {
+uint8_t* btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit) {
   uint64_t len;
   dst->prev_tx_hash  = data;
   dst->prev_tx_index = le_to_int(data + 32);
   dst->script.data   = data + 36 + decode_var_int(data + 36, &len);
   dst->script.len    = (uint32_t) len;
-  dst->sequence      = le_to_int(dst->script.data + dst->script.len);
+  if (dst->script.data + dst->script.len + 4 > limit) return NULL; // check limit
+  dst->sequence = le_to_int(dst->script.data + dst->script.len);
   return dst->script.data + dst->script.len + 4;
 }
 
@@ -27,18 +28,26 @@ in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst) {
   dst->all     = tx;
   dst->version = le_to_int(tx.data);
   dst->flag    = btc_is_witness(tx) ? 1 : 0;
+  uint8_t* end = tx.data + tx.len;
+  uint8_t* p   = tx.data + (dst->flag ? 6 : 4);
 
-  uint8_t* p = tx.data + (dst->flag ? 6 : 4);
   p += decode_var_int(p, &val);
+  if (p >= end) return IN3_EINVAL;
   dst->input_count = (uint32_t) val;
   dst->input.data  = p;
-  for (uint32_t i = 0; i < dst->input_count; i++) p = btc_parse_tx_in(p, &tx_in);
+  for (uint32_t i = 0; i < dst->input_count; i++) {
+    p = btc_parse_tx_in(p, &tx_in, end);
+    if (!p || p >= end) return IN3_EINVAL;
+  }
   dst->input.len = p - dst->input.data;
 
   p += decode_var_int(p, &val);
   dst->output_count = (uint32_t) val;
   dst->output.data  = p;
-  for (uint32_t i = 0; i < dst->output_count; i++) p = btc_parse_tx_out(p, &tx_out);
+  for (uint32_t i = 0; i < dst->output_count; i++) {
+    p = btc_parse_tx_out(p, &tx_out);
+    if (p > end) return IN3_EINVAL;
+  }
   dst->output.len = p - dst->output.data;
   dst->witnesses  = bytes(p, tx.data + tx.len - 4 - p);
   dst->lock_time  = le_to_int(tx.data + tx.len - 4);
