@@ -40,19 +40,23 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   int recid = 0;
 
   if (NULL != handle) {
-
+    in3_log_debug("device connected\n");
     switch (type) {
       case SIGN_EC_RAW:
+        in3_log_debug("received SIGN_EC_RAW\n");
         memcpy(hash, message.data, message.len);
         is_hashed = true;
       case SIGN_EC_HASH:
         if (memcmp(prefix, message.data, strlen(prefix)) == 0) {
+
           is_msg = true;
         }
 
-        if (!is_hashed && is_msg == true)
+        if (!is_hashed && is_msg == true) {
+          in3_log_debug("signing msg\n");
           hasher_Raw(HASHER_SHA3K, message.data + strlen(prefix), message.len - strlen(prefix), hash);
-        else {
+        } else {
+          in3_log_debug("signing txn\n");
           hasher_Raw(HASHER_SHA3K, message.data, message.len, hash);
         }
 
@@ -91,7 +95,7 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
 
 #ifdef DEBUG
         in3_log_debug("apdu commnd sent to device\n");
-        ba_print(final_apdu_command.data, final_apdu_command.len);
+        ba_print(apdu, index_counter);
 #endif
 
         write_hid(handle, apdu, index_counter);
@@ -111,10 +115,12 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
             eth_ledger_get_public_addr(bip_data, pkey);
             recid   = get_recid_from_pub_key(&secp256k1, pkey, dst, hash);
             dst[64] = recid;
-            in3_log_debug("recid %d\n", recid);
-#ifdef DEBUG
-            in3_log_debug("printing signature returned by device with recid value\n");
 
+#ifdef DEBUG
+            in3_log_debug("hash value\n");
+            ba_print(hash, 32);
+            in3_log_debug("recid %d\n", recid);
+            in3_log_debug("printing signature returned by device with recid value\n");
             ba_print(dst, 65);
 #endif
 

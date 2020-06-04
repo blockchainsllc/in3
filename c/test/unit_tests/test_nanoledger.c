@@ -53,8 +53,10 @@
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 
+#if defined(LEDGER_NANO)
 #include "../../src/signer/ledger-nano/signer/ethereum_apdu_client.h"
 #include "../../src/signer/ledger-nano/signer/ethereum_apdu_client_priv.h"
+#endif
 
 #include "../../src/signer/pk-signer/signer.h"
 #include "../../src/third-party/crypto/ecdsa.h"
@@ -65,51 +67,27 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#if defined(LEDGER_NANO)
 static uint8_t bip_path[5] = {44, 60, 0, 0, 0};
-
-static void test_sign() {
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport       = test_transport;
-  c->chain_id        = 0x1;
-  c->flags           = FLAGS_STATS;
-  c->proof           = PROOF_NONE;
-  c->signature_count = 0;
-
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
-
-  eth_ledger_set_signer_txn(in3, bip_path);
-
-  add_response("eth_sendRawTransaction", "[\"0xf8620182ffff8252089445d45e6ff99e6c34a235d263965910298985fcfe81ff8025a0a0973de4296ec3507fb718e2edcbd226504a9b01680e2c974212dc03cdd2ab4da016b3a55129723ebde5dca4f761c2b48d798ec7fb597ae7d8e3905f66fe03d93a\"]",
-               "\"0x812510201f48a86df62f08e4e6366a63cbcfba509897edcc5605917bc2bf002f\"", NULL, NULL);
-  add_response("eth_gasPrice", "[]", "\"0xffff\"", NULL, NULL);
-  add_response("eth_getTransactionCount", "[\"0xb91bd1b8624d7a0a13f1f6ccb1ae3f254d3888ba\",\"latest\"]", "\"0x1\"", NULL, NULL);
-
-  in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
-  TEST_ASSERT_EQUAL(IN3_OK, ctx_check_response_error(ctx, 0));
-  TEST_ASSERT_TRUE(ctx && ctx_get_error(ctx, 0) == IN3_OK);
-  ctx_free(ctx);
-}
-
-static void to_checksum_addr(uint8_t* address, chain_id_t chain, char* result) {
-  in3_ret_t res = to_checksum(address, 0, result);
-}
+#endif
 
 static void test_tx() {
+#if defined(LEDGER_NANO)
   // create new incubed client
   in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
   in3->transport = test_transport;
-  add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
-               "\"0x309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f\"", NULL, NULL);
+  add_response("eth_sendRawTransaction", "[\"0xf86b808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72a80820124a080f51ea2b39381d5c4f89b243649ef7b33878611b125145d96ac4459a6a089bba052fecd4b6151450f0887ccfa68120584cbf975414104d488c3e9dd71014a4a64\"]",
+               "\"0x67681e9ca0e2a186f97ec63cc6c738005e6fa28c7d800558758245bf75b3c354\"", NULL, NULL);
 
   // create a ledger nano signer
   eth_ledger_set_signer_txn(in3, bip_path);
 
   address_t to, from;
-  hex_to_bytes("0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377", -1, from, 20);
+  hex_to_bytes("0xC51fBbe0a68a7cA8d33f14a660126Da2A2FAF8bf", -1, from, 20);
   hex_to_bytes("0xd46e8dd67c5d32be8058bb8eb970870f07244567", -1, to, 20);
 
-  bytes_t* data = hex_to_new_bytes("d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675", 82);
+  bytes_t* data = hex_to_new_bytes("0x00", 0);
 
   // send the tx
   bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_VALUE(uint64_t, 0x0));
@@ -120,68 +98,31 @@ static void test_tx() {
     printf("Transaction hash: ");
   }
   b_free(data);
-  bytes_t* hash = hex_to_new_bytes("309f89063df0b28e40af95708edb72041d5715ed1e71701ed4ccb6433218088f", 64);
+  bytes_t* hash = hex_to_new_bytes("67681e9ca0e2a186f97ec63cc6c738005e6fa28c7d800558758245bf75b3c354", 64);
 
   TEST_ASSERT_TRUE(b_cmp(tx_hash, hash));
   b_free(tx_hash);
 
   // cleanup client after usage
   in3_free(in3);
+#endif
 }
 
 static void test_signer() {
+#if defined(LEDGER_NANO)
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-
-  eth_ledger_set_signer_txn(in3, bip_path);
+  eth_ledger_set_signer_txn(c, bip_path);
 
   uint8_t    sig[65]  = {0};
   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  char*      data_str = "msg0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  char*      data_str = "msgABCDEF"; // prefixing messages with msg to differentiate between transaction and message signing
+  bytes_t*   data     = b_new((uint8_t*) data_str, strlen(data_str));
 
-  TEST_ASSERT_EQUAL(65, eth_sign_pk_ctx(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
+  TEST_ASSERT_EQUAL(65, eth_ledger_sign_txn(ctx, SIGN_EC_HASH, *data, bytes(NULL, 0), sig));
   TEST_ASSERT_FALSE(memiszero(sig, 65));
   b_free(data);
   in3_free(c);
-}
-
-static in3_ret_t prep_tx(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx) {
-  *new_tx = parse_json("{\"from\": \"0xb60e8dd61c5d32be8058bb8eb970870f07233155\","
-                       "\"to\": \"0xd46e8dd67c5d32be8058bb8eb970870f07244567\","
-                       "\"gas\": \"0x76c0\","
-                       "\"nonce\": \"0x15\","
-                       "\"gasPrice\": \"0x9184e72a000\","
-                       "\"value\": \"0x9184e72a\","
-                       "\"data\": \"0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675\"}");
-  return d_get_int(old_tx, "success") != 0 ? IN3_OK : IN3_EUNKNOWN;
-}
-
-static void test_signer_prepare_tx() {
-  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  bytes32_t pk;
-  hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
-  eth_set_pk_signer(c, pk);
-
-  in3_ctx_t* ctx        = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  c->signer->prepare_tx = prep_tx;
-  json_ctx_t* jtx       = parse_json("{\"success\":false}");
-  bytes_t     raw_tx    = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_FALSE(raw_tx.data && raw_tx.len);
-  TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
-  json_free(jtx);
-  ctx_free(ctx);
-
-  ctx    = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  jtx    = parse_json("{\"success\":true}");
-  raw_tx = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_TRUE(ctx->type == CT_RPC && ctx->verification_state == IN3_WAITING && ctx->required);
-  TEST_ASSERT_EQUAL(IN3_OK, in3_send_ctx(ctx->required));
-  raw_tx = sign_tx(jtx->result, ctx);
-  TEST_ASSERT_NOT_NULL(raw_tx.data);
-  TEST_ASSERT_NOT_EQUAL(IN3_OK, ctx_get_error(ctx, 0));
-  _free(raw_tx.data);
-
-  json_free(jtx);
-  in3_free(c);
+#endif
 }
 
 /*
@@ -192,10 +133,9 @@ int main() {
   in3_log_set_level(LOG_ERROR);
   in3_register_eth_full();
   TESTS_BEGIN();
+#if defined(LEDGER_NANO)
   RUN_TEST(test_tx);
-  RUN_TEST(test_sign);
-
   RUN_TEST(test_signer);
-  RUN_TEST(test_signer_prepare_tx);
+#endif
   return TESTS_END();
 }

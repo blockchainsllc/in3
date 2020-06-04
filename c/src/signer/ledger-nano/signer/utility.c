@@ -38,7 +38,7 @@ int get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uin
         recid = i;
 #ifdef DEBUG
         in3_log_debug("public key matched with recid value\n");
-        ba_print(p_key, 65, "get_recid_from_pub_key :keys matched");
+        ba_print(p_key, 65);
 #endif
         break;
       }
