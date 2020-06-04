@@ -99,6 +99,7 @@ char* in3_errmsg(in3_ret_t err /**< the error code */) {
     case IN3_EIGNORE: return "ignoreable error";
     case IN3_EPAYMENT_REQUIRED: return "payment required";
     case IN3_ENODEVICE: return "no hardware wallet connected";
+    case IN3_EAPDU: return "error in usb communication protocol";
   }
   return NULL;
 #else

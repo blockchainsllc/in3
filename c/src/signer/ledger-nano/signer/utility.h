@@ -31,31 +31,14 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#ifndef in3_ledger_utility_h__
+#define in3_ledger_utility_h__
 
-// @PUBLIC_HEADER
-/** @file
- * this file defines the incubed configuration struct and it registration.
- * 
- * 
- * */
+#include "../../../core/client/client.h"
+#include "../../../third-party/crypto/ecdsa.h"
+#include "../../../third-party/crypto/secp256k1.h"
 
-#ifndef in3_ledger_signer_h__
-#define in3_ledger_signer_h__
-
-#include "client.h"
-
-/**
- * attaches ledger nano hardware wallet signer  with incubed .
- * 
- * bip32 path to be given to point the specific public/private key in HD tree for Ethereum!
- */
-in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path);
-
-/**
- * returns public key at the bip_path .
- * 
- * returns IN3_ENODEVICE error if ledger nano device is not connected 
- */
-in3_ret_t eth_ledger_get_public_key(uint8_t* bip_path, uint8_t* public_key);
-
+void     extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
+int      get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);
+uint32_t reverse_bytes(uint32_t bytes);
 #endif

@@ -46,8 +46,8 @@ add_library(eth_basic_o OBJECT
 # add dependency
 add_library(eth_basic STATIC $<TARGET_OBJECTS:eth_basic_o>)
 
-if( LEDGER_NANO AND HIDAPI)
-   target_link_libraries(eth_basic eth_nano ledger_signer)
+if( LEDGER_NANO )
+   target_link_libraries(eth_basic eth_nano pk_signer ledger_signer)
 else()
    target_link_libraries(eth_basic eth_nano pk_signer)
 endif()

@@ -44,8 +44,18 @@
 
 #include "../../../core/client/client.h"
 
+/**
+ * attaches ledger nano hardware wallet signer  with incubed .
+ * 
+ * bip32 path to be given to point the specific public/private key in HD tree for Ethereum!
+ */
 in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path);
-in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key);
-in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+
+/**
+ * returns public key at the bip_path .
+ * 
+ * returns IN3_ENODEVICE error if ledger nano device is not connected 
+ */
+in3_ret_t eth_ledger_get_public_key(uint8_t* bip_path, uint8_t* public_key);
 
 #endif

@@ -111,7 +111,7 @@ NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
-  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG));
+  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != ETH_CHAIN_ID_BTC);
 }
 
 NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
@@ -323,7 +323,7 @@ NONULL static void blacklist_node(node_match_t* node_weight) {
     // blacklist the node
     node_weight->weight->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
-    in3_log_info("Blacklisting node for empty response: %s\n", node_weight->node->url);
+    in3_log_debug("Blacklisting node for empty response: %s\n", node_weight->node->url);
   }
 }
 

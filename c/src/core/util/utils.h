@@ -262,4 +262,11 @@ typedef void (*srand_func)(unsigned int s);
 void in3_set_func_srand(srand_func fn);
 void in3_srand(unsigned int s);
 
+/**
+ * parses a float-string and returns the value as int
+ */
+int64_t parse_float_val(const char* data, /**< the data string*/
+                        int32_t     expo  /**< the exponent */
+);
+
 #endif
