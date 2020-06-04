@@ -7,7 +7,7 @@ use rustc_hex::FromHex;
 use serde_json::json;
 
 use in3::eth1::*;
-use in3::eth1::api::RpcRequest;
+use in3::json_rpc::Request;
 use in3::prelude::*;
 use in3::signer;
 
@@ -127,7 +127,7 @@ fn sign_tx_rpc() {
         "nonce": "0x0",
         "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"
     }]);
-    let rpc_req = RpcRequest {
+    let rpc_req = Request {
         method: "eth_sendTransaction",
         params: tx,
     };

@@ -26,7 +26,6 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     dst
 }
 
-
 /// Signer implementation in pure and safe Rust.
 pub struct SignerRust<'a> {
     pub pk: &'a str,
@@ -61,6 +60,20 @@ mod tests {
 
     use super::*;
 
+    fn signature_hex_string(data: [u8; 64]) -> String {
+        let mut sign_str = "".to_string();
+        for byte in &data[0..64] {
+            let mut tmp = "".to_string();
+            write!(&mut tmp, "{:02x}", byte).unwrap();
+            sign_str.push_str(tmp.as_str());
+        }
+        //Equivalent to recoverycode ethereum += 27
+        let mut tmp = "".to_string();
+        write!(&mut tmp, "{:02x}", 28).unwrap();
+        sign_str.push_str(tmp.as_str());
+        sign_str
+    }
+
     #[test]
     fn test_signature() {
         let msg = "9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465";
@@ -83,19 +96,5 @@ mod tests {
         let sign_str = signature_hex_string(signature_arr);
         println!(" signature {}", sign_str);
         assert_eq!(sign_str, "349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c");
-    }
-
-    fn signature_hex_string(data: [u8; 64]) -> String {
-        let mut sign_str = "".to_string();
-        for byte in &data[0..64] {
-            let mut tmp = "".to_string();
-            write!(&mut tmp, "{:02x}", byte).unwrap();
-            sign_str.push_str(tmp.as_str());
-        }
-        //Equivalent to recoverycode ethereum += 27
-        let mut tmp = "".to_string();
-        write!(&mut tmp, "{:02x}", 28).unwrap();
-        sign_str.push_str(tmp.as_str());
-        sign_str
     }
 }
