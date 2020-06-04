@@ -79,7 +79,7 @@ static size_t tx_data_size(d_token_t* t) {
 // write into transaction-struct from json-token
 static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
 
-  EXPECT(d_type(t), T_OBJECT)
+  EXPECT_EQ(d_type(t), T_OBJECT)
 
   btc_tx_t   txdata;
   d_token_t* t_hex  = d_get(t, key("hex"));
@@ -105,9 +105,9 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
   TRY(hex_to_bytes(d_string(t_hex), -1, res->data.data, res->data.len))
   TRY(btc_parse_tx(res->data, &txdata));
 
-  EXPECT(hex_to_bytes(d_get_stringk(t, key("txid")), -1, res->txid, 32), 32)
-  EXPECT(hex_to_bytes(d_get_stringk(t, key("hash")), -1, res->hash, 32), 32)
-  EXPECT(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("txid")), -1, res->txid, 32), 32)
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("hash")), -1, res->hash, 32), 32)
+  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
 
   // handle vin
   uint8_t* p     = txdata.input.data;
@@ -150,13 +150,13 @@ static btc_transaction_t* to_tx(d_token_t* t) {
 }
 
 static in3_ret_t fill_blockheader(d_token_t* t, btc_blockheader_t* res) {
-  EXPECT(d_type(t), T_OBJECT)
-  EXPECT(hex_to_bytes(d_get_string(t, "hash"), 64, res->hash, 32), 32);
-  EXPECT(hex_to_bytes(d_get_string(t, "merkleroot"), 64, res->merkleroot, 32), 32);
-  EXPECT(hex_to_bytes(d_get_string(t, "bits"), 8, res->bits, 4), 4);
-  EXPECT(hex_to_bytes(d_get_string(t, "chainwork"), 64, res->chainwork, 32), 32);
-  EXPECT(hex_to_bytes(d_get_string(t, "previousblockhash"), 64, res->previous_hash, 32), 32);
-  EXPECT(hex_to_bytes(d_get_string(t, "nextblockhash"), 64, res->next_hash, 32), 32);
+  EXPECT_EQ(d_type(t), T_OBJECT)
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, "hash"), 64, res->hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, "merkleroot"), 64, res->merkleroot, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, "bits"), 8, res->bits, 4), 4);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, "chainwork"), 64, res->chainwork, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, "previousblockhash"), 64, res->previous_hash, 32), 32);
+  EXPECT_EQ(hex_to_bytes(d_get_string(t, "nextblockhash"), 64, res->next_hash, 32), 32);
 
   TRY(btc_serialize_block_header(t, res->data))
 
