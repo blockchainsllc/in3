@@ -79,3 +79,28 @@ pub struct Block {
 }
 
 
+pub struct Api {
+    client: Box<dyn ClientTrait>,
+}
+
+
+impl ApiTrait for Api {
+    fn new(client: Box<dyn ClientTrait>) -> Self {
+        Api { client }
+    }
+
+    fn client(&mut self) -> &mut Box<dyn ClientTrait> {
+        &mut self.client
+    }
+}
+
+impl Api {
+    pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
+        let hash = json!(blockhash);
+        let hash_str = hash.as_str().unwrap();
+        rpc(self.client(), Request {
+            method: "getblockheader",
+            params: json!([hash_str.trim_start_matches("0x"), true]),
+        }).await
+    }
+}
