@@ -13,6 +13,7 @@
 //! The [`Client`](in3/struct.Client.html) struct is the main interface to the library.
 //!
 
+pub mod btc;
 pub mod error;
 pub mod eth1;
 pub mod in3;
