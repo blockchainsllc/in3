@@ -191,7 +191,7 @@ uint64_t current_ms();
  * executes the expression and expects value to equal val. 
  * if not it will return IN3_EINVAL
  */
-#define EXPECT(exp, val) \
+#define EXPECT_EQ(exp, val) \
   if ((exp) != val) return IN3_EINVAL;
 
 /**
