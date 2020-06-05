@@ -216,8 +216,8 @@ in3_signer_t* in3_create_signer(
  * set the transport handler on the client.
  */
 void in3_set_transport(
-    in3_t* c,   /**< the incubed client */
-    void*  cptr /**< custom pointer which will will be passed to functions */
+    in3_t*             c,   /**< the incubed client */
+    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
 ) {
   c->transport = cptr;
 }
