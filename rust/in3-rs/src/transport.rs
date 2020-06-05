@@ -3,6 +3,12 @@ extern crate surf;
 use async_trait::async_trait;
 
 use crate::traits::Transport;
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::fmt::Write;
+use std::path::{PathBuf, Path};
+use std::env;
 
 async fn http_async(
     url: &str,
@@ -15,6 +21,54 @@ async fn http_async(
         .await?;
     Ok(res)
 }
+
+fn read_mock<P: AsRef<Path>>(path: P) -> Result<serde_json::Value, Box<Error>> {
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    let u = serde_json::from_reader(reader)?;
+    Ok(u)
+}
+fn env_var(var: &str) -> String {
+    env::var(var).expect(&format!("Environment variable {} is not set", var))
+}
+
+fn prepare_file_path(data:String) -> String{
+    let mut relative_path = PathBuf::from(env_var("CARGO_MANIFEST_DIR"));
+    relative_path.push("../../c/test/testdata/mock/");
+    let mut full_path = relative_path.to_str().unwrap().to_string();
+    let tmp = format!("{}.json", data);
+    full_path.push_str(&tmp);
+    println!("{:?}", full_path);
+    full_path
+}
+
+fn read_json(data:String) -> String {
+    let full_path = prepare_file_path(data);
+    let value = read_mock(full_path).unwrap();
+    let response = value["response"].to_string();
+    response
+}
+
+pub struct MockJsonTransport<'a>{
+    pub responses: &'a str,
+}
+
+#[async_trait]
+impl Transport for MockJsonTransport<'_>  {
+
+    async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+        let response = read_json(String::from(self.responses));
+        let request: serde_json::Value = serde_json::from_str(request).unwrap();
+        println!("--------> {:?}, \n\n {:?}", request.to_string(), response);
+        vec![Ok(response)]
+    }
+
+    #[cfg(feature = "blocking")]
+    fn fetch_blocking(&mut self, _request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+        unimplemented!()
+    }
+}
+
 
 pub struct MockTransport<'a> {
     pub responses: Vec<(&'a str, &'a str)>,

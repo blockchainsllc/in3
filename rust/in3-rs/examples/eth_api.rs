@@ -7,7 +7,53 @@ use in3::eth1::*;
 use in3::prelude::*;
 use in3::types::Bytes;
 
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
+use std::fmt::Write;
+
+fn init_api<'a>(transport: Box<dyn Transport>, chain : chain::ChainId, config: &'a str)-> Api{
+    let mut client = Client::new(chain);
+    // let _ = client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
+     let _ = client.configure(config);
+    client.set_transport(transport);
+    let mut api = Api::new(client);
+    api
+}
+
+fn test_eth_api_get_filter_changes() -> In3Result<()> {
+    let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+    // let responses = vec![
+    //     ("eth_getLogs",
+    //     r#"[{"jsonrpc":"2.0","id":1,"result":""}]"#,
+    //     ),
+    //     ("eth_blockNumber",
+    //     r#"[{"jsonrpc":"2.0","id":1,"result":"0x84cf55"}]"#,
+    //     )
+    //     ];
+    // let transport:Box<dyn Transport> = Box::new(MockTransport {
+    //     responses: responses,
+    // });
+    let mut client = Client::new(chain::MAINNET);
+    let _ = client.configure(config);
+    let mut eth_api = Api::new(client);
+    let jopts = serde_json::json!([{
+        "fromBlock": "0x84cf51",
+        "address":"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455",
+        "topics": ["0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f"]
+        }]);
+    let fid = task::block_on(eth_api.new_filter(jopts))?;
+    // let ret:FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
+    // println!("{:?}", ret);
+    assert!(true);
+    Ok(())
+     
+}
 fn main() -> In3Result<()> {
+    test_eth_api_get_filter_changes()
+}
+fn examples() -> In3Result<()> {
     // configure client and API
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
     eth_api
