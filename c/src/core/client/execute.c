@@ -646,20 +646,23 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
         }
         case CT_SIGN: {
           if (ctx->client->signer) {
-            d_token_t*    params = d_get(ctx->requests[0], K_PARAMS);
-            const bytes_t data   = d_to_bytes(d_get_at(params, 0));
-            const bytes_t from   = d_to_bytes(d_get_at(params, 1));
-            if (!data.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
-            if (!from.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+            d_token_t*     params = d_get(ctx->requests[0], K_PARAMS);
+            in3_sign_ctx_t sign_ctx;
+            sign_ctx.message = d_to_bytes(d_get_at(params, 0));
+            sign_ctx.account = d_to_bytes(d_get_at(params, 1));
+            sign_ctx.type    = SIGN_EC_HASH;
+            sign_ctx.ctx     = ctx;
+            sign_ctx.wallet  = ctx->client->signer->wallet;
+            if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+            if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
             ctx->raw_response = _malloc(sizeof(in3_response_t));
             sb_init(&ctx->raw_response[0].error);
             sb_init(&ctx->raw_response[0].result);
             in3_log_trace("... request to sign ");
-            uint8_t sig[65];
-            res = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
+            res = ctx->client->signer->sign(&sign_ctx);
             if (res < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, res);
-            sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
+            sb_add_range(&ctx->raw_response->result, (char*) sign_ctx.signature, 0, 65);
             break;
           } else
             return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);

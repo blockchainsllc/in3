@@ -31,15 +31,16 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#include "../../core/client/client.h"
 
-#ifndef in3_signer_priv_h__
-#define in3_signer_priv_h__
-#include "../../core/client/context_internal.h"
-#include "../../signer/pk-signer/signer.h"
+typedef enum {
+  GNOSIS_SAFE
+} ms_type_t;
 
-/** Sign message with given private key either raw or hashing the msg given as parameters*/
-in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst);
-/** Signs the given data */
-in3_ret_t eth_sign_pk_ctx(in3_sign_ctx_t* ctx);
+typedef struct ms {
+  in3_signer_t* signer;
+  ms_type_t     type;
+  address_t     address;
+} multisig_t;
 
-#endif
+void add_gnosis_safe(in3_t* in3, address_t adr);

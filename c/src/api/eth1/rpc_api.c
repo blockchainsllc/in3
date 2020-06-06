@@ -265,22 +265,27 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     sig_type = "raw";
   }
 
-  uint8_t sig[65];
-  bytes_t sig_bytes = bytes(sig, 65);
-  if (pk->len == 20)
-    ctx->client->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, data, *pk, sig);
-  else if (!pk->data)
-    ctx->client->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, data, bytes(NULL, 0), sig);
-  else if (pk->len == 32) {
-    if (strcmp(sig_type, "hash") == 0)
-      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sig, sig + 64, NULL);
+  in3_sign_ctx_t sc;
+  sc.ctx     = ctx;
+  sc.message = data;
+  sc.account = *pk;
+  sc.wallet  = ctx->client->signer ? ctx->client->signer->wallet : NULL;
+  sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+
+  if (pk->len == 20 || pk->len == 0) {
+    TRY(ctx->client->signer->sign(&sc));
+  } else if (pk->len == 32) {
+    if (sc.type == SIGN_EC_RAW)
+      ecdsa_sign_digest(&secp256k1, pk->data, data.data, sc.signature, sc.signature + 64, NULL);
     else if (strcmp(sig_type, "raw") == 0)
-      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sig, sig + 64, NULL);
+      ecdsa_sign(&secp256k1, HASHER_SHA3K, pk->data, data.data, data.len, sc.signature, sc.signature + 64, NULL);
     else
       return ctx_set_error(ctx, "unsupported sigType", IN3_EINVAL);
   } else
     return ctx_set_error(ctx, "Invalid private key! Must be either an address(20 byte) or an raw private key (32 byte)", IN3_EINVAL);
-  sig[64] += 27;
+
+  bytes_t sig_bytes = bytes(sc.signature, 65);
+  sc.signature[64] += 27;
 
   RESPONSE_START();
   sb_add_char(&response[0]->result, '{');
@@ -295,14 +300,14 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     sb_add_bytes(&response[0]->result, "\"messageHash\":", &data, 1, false);
   sb_add_char(&response[0]->result, ',');
   sb_add_bytes(&response[0]->result, "\"signature\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sig, 32);
+  sig_bytes = bytes(sc.signature, 32);
   sb_add_char(&response[0]->result, ',');
   sb_add_bytes(&response[0]->result, "\"r\":", &sig_bytes, 1, false);
-  sig_bytes = bytes(sig + 32, 32);
+  sig_bytes = bytes(sc.signature + 32, 32);
   sb_add_char(&response[0]->result, ',');
   sb_add_bytes(&response[0]->result, "\"s\":", &sig_bytes, 1, false);
   char v[15];
-  sprintf(v, ",\"v\":%d}", (unsigned int) sig[64]);
+  sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature[64]);
   sb_add_chars(&response[0]->result, v);
   RESPONSE_END();
   return IN3_OK;
@@ -392,7 +397,7 @@ static in3_ret_t handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(ctx, response);
   if (strcmp(method, "in3_decryptKey") == 0) return in3_decryptKey(ctx, params, response);
   if (strcmp(method, "in3_prepareTx") == 0) return in3_prepareTx(ctx, params, response);
-  if (strcmp(method, "in3_signTx") == 0) return in3_prepareTx(ctx, params, response);
+  if (strcmp(method, "in3_signTx") == 0) return in3_signTx(ctx, params, response);
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
 }

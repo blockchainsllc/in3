@@ -32,55 +32,33 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "multisig.h"
 #include "../../core/client/client.h"
 #include "../../core/client/keys.h"
 #include "../../core/util/mem.h"
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/secp256k1.h"
+#include "../../verifier/eth1/nano/rlp.h"
 #include "../../verifier/eth1/nano/serialize.h"
-#include "signer-priv.h"
 
-/**  in3 utiliy to sign the given data with give private key with option to hash data or not */
-in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst) {
-  switch (type) {
-    case SIGN_EC_RAW:
-      return ec_sign_pk_raw(message.data, pk, dst);
-    case SIGN_EC_HASH:
-      return ec_sign_pk_hash(message.data, message.len, pk, hasher_sha3k, dst);
-    default:
-      return IN3_ENOTSUP;
-  }
+in3_ret_t gs_prepare_tx(void* ctx, bytes_t raw_tx, bytes_t* new_raw_tx) {
+  return IN3_OK;
+}
+in3_ret_t gs_sign_tx(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+
   return IN3_OK;
 }
 
-/** hash data with given hasher type and sign the given data with give private key*/
-in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
-  if (hasher == hasher_sha3k && ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message, len, dst, dst + 64, NULL) < 0)
-    return IN3_EUNKNOWN;
-  return IN3_OK;
+void add_gnosis_safe(in3_t* in3, address_t adr) {
+  multisig_t*   ms         = _malloc(sizeof(multisig_t));
+  in3_signer_t* signer     = _malloc(sizeof(in3_signer_t));
+  in3_signer_t* old_signer = in3->signer;
+  ms->signer               = old_signer;
+  signer->prepare_tx       = gs_prepare_tx;
+  signer->sign             = gs_sign_tx;
+  signer->wallet           = ms;
+  memcpy(signer->default_address, old_signer->default_address, 20);
 }
-
-/**  sign the given data with give private key */
-in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst) {
-  if (ecdsa_sign_digest(&secp256k1, pk, message, dst, dst + 64, NULL) < 0)
-    return IN3_EUNKNOWN;
-  return IN3_OK;
-}
-
-/** signs the given data */
-in3_ret_t eth_sign_pk_ctx(in3_sign_ctx_t* ctx) {
-  uint8_t* pk = ctx->wallet;
-  switch (ctx->type) {
-    case SIGN_EC_RAW:
-      return ec_sign_pk_raw(ctx->message.data, pk, ctx->signature);
-    case SIGN_EC_HASH:
-      return ec_sign_pk_hash(ctx->message.data, ctx->message.len, pk, hasher_sha3k, ctx->signature);
-    default:
-      return IN3_ENOTSUP;
-  }
-  return IN3_OK;
-}
-
 /** sets the signer and a pk to the client*/
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   if (in3->signer) _free(in3->signer);
@@ -97,18 +75,4 @@ in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
   sha3_to(&pubkey_bytes, sdata);
   memcpy(in3->signer->default_address, sdata + 12, 20);
   return IN3_OK;
-}
-
-/** sets the signer and a pk to the client*/
-uint8_t* eth_set_pk_signer_hex(in3_t* in3, char* key) {
-  if (key[0] == '0' && key[1] == 'x') key += 2;
-  if (strlen(key) != 64) return NULL;
-  uint8_t* key_bytes = _malloc(32);
-  hex_to_bytes(key, 64, key_bytes, 32);
-  in3_ret_t res = eth_set_pk_signer(in3, key_bytes);
-  if (res) {
-    _free(key_bytes);
-    return NULL;
-  }
-  return key_bytes;
 }

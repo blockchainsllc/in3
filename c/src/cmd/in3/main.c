@@ -990,9 +990,14 @@ int main(int argc, char* argv[]) {
     }
 
     if (!c->signer) die("No private key/path given");
-    uint8_t   sig[65];
     in3_ctx_t ctx;
     ctx.client = c;
+    in3_sign_ctx_t sc;
+    sc.ctx     = &ctx;
+    sc.wallet  = c->signer->wallet;
+    sc.account = bytes(NULL, 0);
+    sc.message = *data;
+    sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 #if defined(LEDGER_NANO)
     if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
       char     prefix[] = "msg";
@@ -1001,17 +1006,18 @@ int main(int argc, char* argv[]) {
       memcpy(tmp_data->data, prefix, strlen(prefix));
       memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
 
-      c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *tmp_data, bytes(NULL, 0), sig);
+      sc.message = *tmp_data;
+      c->signer->sign(&sc);
       b_free(tmp_data);
     } else {
-      c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+      c->signer->sign(&sc);
     }
 #else
-    c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+    c->signer->sign(&sc);
 #endif
 
-    sig[64] += 27;
-    print_hex(sig, 65);
+    sc.signature[64] += 27;
+    print_hex(sc.signature, 65);
     return 0;
   } else if (strcmp(method, "chainspec") == 0) {
     char* json;

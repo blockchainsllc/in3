@@ -275,6 +275,17 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   TRY(get_from_address(tx_params + 1, ctx, from));
   TRY(unsigned_tx.data ? IN3_OK : eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
 
+  // do we want to modify the transaction?
+  if (ctx->client->signer && ctx->client->signer->prepare_tx && !sig_ctx && unsigned_tx.data) {
+    bytes_t   new_tx = bytes(NULL, 0);
+    in3_ret_t res    = ctx->client->signer->prepare_tx(ctx, unsigned_tx, &new_tx);
+
+    if (res || new_tx.data) _free(unsigned_tx.data);
+    TRY(res)
+
+    if (new_tx.data) unsigned_tx = new_tx;
+  }
+
   TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (!sig_ctx && unsigned_tx.data) _free(unsigned_tx.data);)
 
