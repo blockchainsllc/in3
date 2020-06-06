@@ -104,6 +104,7 @@ struct BlockHeaderSerdeable {
     next_hash: Bytes,
 }
 
+
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum BlockTransactions {
@@ -111,7 +112,7 @@ pub enum BlockTransactions {
     Transactions(Vec<Transaction>),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct Block {
     header: BlockHeader,
     transactions: BlockTransactions,
@@ -137,10 +138,10 @@ impl Api {
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap();
-        rpc(self.client(), Request {
+        Ok(rpc::<BlockHeaderSerdeable>(self.client(), Request {
             method: "getblockheader",
             params: json!([hash_str.trim_start_matches("0x"), true]),
-        }).await
+        }).await?.into())
     }
 }
 
