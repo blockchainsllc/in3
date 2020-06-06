@@ -272,7 +272,7 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   sc.wallet  = ctx->client->signer ? ctx->client->signer->wallet : NULL;
   sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 
-  if (pk->len == 20 || pk->len == 0) {
+  if ((pk->len == 20 || pk->len == 0) && ctx->client->signer && ctx->client->signer->sign) {
     TRY(ctx->client->signer->sign(&sc));
   } else if (pk->len == 32) {
     if (sc.type == SIGN_EC_RAW)
