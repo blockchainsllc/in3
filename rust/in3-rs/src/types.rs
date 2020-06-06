@@ -45,14 +45,11 @@ impl<'a> Visitor<'a> for BytesVisitor {
     type Value = Bytes;
 
     fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-        write!(formatter, "a hex string prefixed with '0x'")
+        write!(formatter, "a hex string (optionally prefixed with '0x')")
     }
 
     fn visit_str<E>(self, value: &str) -> Result<Self::Value, E> where E: Error {
-        if value.starts_with("0x") {
-            Ok(FromHex::from_hex(&value[2..]).map_err(|e| Error::custom(format!("Invalid hex: {}", e)))?.into())
-        } else {
-            Err(Error::custom("invalid string"))
-        }
+        let start = if value.starts_with("0x") { 2 } else { 0 };
+        Ok(FromHex::from_hex(&value[start..]).map_err(|e| Error::custom(format!("Invalid hex: {}", e)))?.into())
     }
 }
