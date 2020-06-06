@@ -65,6 +65,26 @@ pub struct BlockHeader {
     data: Bytes,
 }
 
+
+#[derive(Debug, Deserialize)]
+struct BlockHeaderSerdeable {
+    hash: Bytes,
+    confirmations: u32,
+    height: u32,
+    version: u32,
+    merkleroot: Bytes,
+    time: u32,
+    nonce: u32,
+    bits: Bytes,
+    chainwork: Bytes,
+    #[serde(rename = "nTx")]
+    n_tx: u32,
+    #[serde(rename = "previousblockhash")]
+    previous_hash: Bytes,
+    #[serde(rename = "nextblockhash")]
+    next_hash: Bytes,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum BlockTransactions {
