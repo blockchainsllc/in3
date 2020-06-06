@@ -1,9 +1,9 @@
-/// checking the transaction data
+/// checking a Bitcoin transaction data
 
-#include <in3/btc_api.h>
-#include <in3/client.h> // the core client
-#include <in3/in3_init.h>
-#include <in3/utils.h>
+#include <in3/btc_api.h>  // we need the btc-api
+#include <in3/client.h>   // the core client
+#include <in3/in3_init.h> // this header will make sure we initialize the default verifiers and transports
+#include <in3/utils.h>    // helper functions
 #include <stdio.h>
 
 int main() {
@@ -17,14 +17,16 @@ int main() {
   // fetch and verify the transaction
   btc_transaction_t* tx = btc_get_transaction(in3, tx_id);
 
-  // if the result is null there was an error an we can get the latest error message from btc_last_error()
   if (!tx)
+    // if the result is null there was an error an we can get the latest error message from btc_last_error()
     printf("error getting the tx : %s\n", btc_last_error());
   else {
     // we loop through the tx outputs
     for (int i = 0; i < tx->vout_len; i++)
       // and prrint the values
       printf("Transaction vout #%d : value: %llu\n", i, tx->vout[i].value);
+
+    // don't forget the clean up!
     free(tx);
   }
 
