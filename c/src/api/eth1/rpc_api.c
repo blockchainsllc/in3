@@ -40,6 +40,7 @@
 #include "../../third-party/crypto/ecdsa.h"
 #include "../../third-party/crypto/rand.h"
 #include "../../third-party/crypto/secp256k1.h"
+#include "../../verifier/eth1/basic/eth_basic.h"
 #include "../../verifier/eth1/nano/rlp.h"
 #include "abi.h"
 #include "ens.h"
@@ -337,8 +338,41 @@ static in3_ret_t in3_decryptKey(in3_ctx_t* ctx, d_token_t* params, in3_response_
   RESPONSE_END();
   return IN3_OK;
 }
+static in3_ret_t in3_prepareTx(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  d_token_t* tx = d_get_at(params, 0);
+  bytes_t    dst;
+#if defined(ETH_BASIC) || defined(ETH_FULL)
+  TRY(eth_prepare_unsigned_tx(tx, ctx, &dst))
+#else
+  if (params || tx || ctx) return ctx_set_error(ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+#endif
+  RESPONSE_START();
+  sb_add_bytes(&response[0]->result, NULL, &dst, 1, false);
+  _free(dst.data);
+  RESPONSE_END();
+  return IN3_OK;
+}
 
-static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
+static in3_ret_t in3_signTx(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  bytes_t*  data   = d_get_bytes_at(params, 0);
+  bytes_t*  from_b = d_get_bytes_at(params, 1);
+  address_t from;
+  memset(from, 0, 20);
+  if (from_b && from_b->data && from_b->len == 20) memcpy(from, from_b->data, 20);
+  bytes_t dst;
+#if defined(ETH_BASIC) || defined(ETH_FULL)
+  TRY(eth_sign_raw_tx(*data, ctx, from, &dst))
+#else
+  if (data || ctx || from || params) return ctx_set_error(ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
+#endif
+  RESPONSE_START();
+  sb_add_bytes(&response[0]->result, NULL, &dst, 1, false);
+  _free(dst.data);
+  RESPONSE_END();
+  return IN3_OK;
+}
+
+static in3_ret_t handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* r      = ctx->requests[0];
   char*      method = d_get_stringk(r, K_METHOD);
@@ -357,6 +391,8 @@ static in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (strcmp(method, "in3_signData") == 0) return in3_sign_data(ctx, params, response);
   if (strcmp(method, "in3_cacheClear") == 0) return in3_cacheClear(ctx, response);
   if (strcmp(method, "in3_decryptKey") == 0) return in3_decryptKey(ctx, params, response);
+  if (strcmp(method, "in3_prepareTx") == 0) return in3_prepareTx(ctx, params, response);
+  if (strcmp(method, "in3_signTx") == 0) return in3_prepareTx(ctx, params, response);
 
   return parent_handle ? parent_handle(ctx, response) : IN3_OK;
 }
@@ -377,6 +413,8 @@ static int verify(in3_vctx_t* v) {
       strcmp(method, "in3_signData") == 0 ||
       strcmp(method, "in3_pk2public") == 0 ||
       strcmp(method, "in3_decryptKey") == 0 ||
+      strcmp(method, "in3_prepareTx") == 0 ||
+      strcmp(method, "in3_signTx") == 0 ||
       strcmp(method, "in3_cacheClear") == 0)
     return IN3_OK;
 
@@ -385,16 +423,16 @@ static int verify(in3_vctx_t* v) {
 
 void in3_register_eth_api() {
   in3_verifier_t* v = in3_get_verifier(CHAIN_ETH);
-  if (v && v->pre_handle == eth_handle_intern) return;
+  if (v && v->pre_handle == handle_intern) return;
   if (v) {
     parent_verify = v->verify;
     parent_handle = v->pre_handle;
     v->verify     = (in3_verify) verify;
-    v->pre_handle = eth_handle_intern;
+    v->pre_handle = handle_intern;
   } else {
     in3_verifier_t* v = _calloc(1, sizeof(in3_verifier_t));
     v->type           = CHAIN_ETH;
-    v->pre_handle     = eth_handle_intern;
+    v->pre_handle     = handle_intern;
     v->verify         = (in3_verify) verify;
     in3_register_verifier(v);
   }

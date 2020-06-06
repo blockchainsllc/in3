@@ -162,7 +162,7 @@ static uint64_t get_v(in3_ctx_t* ctx) {
 /**
  * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
-in3_ret_t prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
+in3_ret_t eth_prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
   address_t from;
 
   // read the values
@@ -191,7 +191,7 @@ in3_ret_t prepare_unsigned_tx(d_token_t* tx, in3_ctx_t* ctx, bytes_t* dst) {
 /**
  * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
  */
-in3_ret_t sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_t* dst) {
+in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_t* dst) {
   uint8_t sig[65];
 
   // get the signature from required
@@ -273,9 +273,9 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
     unsigned_tx = *d_get_bytes_at(d_get(sig_ctx->requests[0], K_PARAMS), 0);
 
   TRY(get_from_address(tx_params + 1, ctx, from));
-  TRY(unsigned_tx.data ? IN3_OK : prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
+  TRY(unsigned_tx.data ? IN3_OK : eth_prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
 
-  TRY_FINAL(sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
+  TRY_FINAL(eth_sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
             if (!sig_ctx && unsigned_tx.data) _free(unsigned_tx.data);)
 
   // build the RPC-request
