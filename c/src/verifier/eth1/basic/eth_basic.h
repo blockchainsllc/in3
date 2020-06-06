@@ -104,4 +104,11 @@ in3_ret_t sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction to si
                       address_t  from,   /**< the address of the account to sign with */
                       bytes_t*   dst     /**< the bytes to write the result to. */
 );
+
+/**
+ * expects a req-object for a transaction and converts it into a sendRawTransaction after signing.
+ */
+in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, /**< the current context */
+                                     d_token_t* req  /**< the request */
+);
 #endif // in3_eth_basic_h__
