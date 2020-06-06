@@ -275,9 +275,8 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   TRY(get_from_address(tx_params + 1, ctx, from));
   TRY(unsigned_tx.data ? IN3_OK : prepare_unsigned_tx(tx_params + 1, ctx, &unsigned_tx));
 
-  in3_ret_t res = sign_raw_tx(unsigned_tx, ctx, from, &signed_tx);
-  if (!sig_ctx && unsigned_tx.data) _free(unsigned_tx.data);
-  TRY(res)
+  TRY_FINAL(sign_raw_tx(unsigned_tx, ctx, from, &signed_tx),
+            if (!sig_ctx && unsigned_tx.data) _free(unsigned_tx.data);)
 
   // build the RPC-request
   sb_t* sb = sb_new("{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[");
