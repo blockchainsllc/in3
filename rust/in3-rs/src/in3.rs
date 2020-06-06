@@ -1,3 +1,4 @@
+//! IN3 client implementation.
 use ffi::{CStr, CString};
 use std::convert::TryInto;
 use std::ffi;
@@ -13,28 +14,39 @@ use crate::signer;
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
 
+/// Chain identifiers
 pub mod chain {
     pub type ChainId = u32;
 
+    /// Chain Id representing set of all supported chains
     pub const MULTICHAIN: u32 = 0x0;
+    /// Chain Id for mainnet
     pub const MAINNET: u32 = 0x01;
+    /// Chain Id for kovan
     pub const KOVAN: u32 = 0x2a;
+    /// Chain Id for tobalaba
     pub const TOBALABA: u32 = 0x44d;
+    /// Chain Id for goerli
     pub const GOERLI: u32 = 0x5;
+    /// Chain Id for evan
     pub const EVAN: u32 = 0x4b1;
+    /// Chain Id for IPFS
     pub const IPFS: u32 = 0x7d0;
+    /// Chain Id for bitcoin
     pub const BTC: u32 = 0x99;
+    /// Chain Id for local chains
     pub const LOCAL: u32 = 0xffff;
 }
 
-pub struct Ctx {
+
+struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
     #[allow(dead_code)]
     config: ffi::CString,
 }
 
 impl Ctx {
-    pub fn new(in3: &mut Client, config_str: &str) -> Ctx {
+    fn new(in3: &mut Client, config_str: &str) -> Ctx {
         let config = ffi::CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
@@ -43,12 +55,12 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    pub unsafe fn signc(&mut self, data: *const c_char, len: usize) -> *mut u8 {
+    unsafe fn signc(&mut self, data: *const c_char, len: usize) -> *mut u8 {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
         signer::signc(pk, data, len)
     }
 
-    pub unsafe fn sign(&mut self, msg: &str) -> *const c_char {
+    unsafe fn sign(&mut self, msg: &str) -> *const c_char {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
@@ -67,7 +79,7 @@ impl Ctx {
         std::ptr::null_mut()
     }
 
-    pub async unsafe fn execute(&mut self) -> In3Result<String> {
+    async unsafe fn execute(&mut self) -> In3Result<String> {
         let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
         p = self.ptr;
@@ -180,7 +192,7 @@ impl Ctx {
     }
 
     #[cfg(feature = "blocking")]
-    pub fn send(&mut self) -> In3Result<()> {
+    fn send(&mut self) -> In3Result<()> {
         unsafe {
             let ret = in3_sys::in3_send_ctx(self.ptr);
             match ret {
@@ -191,8 +203,66 @@ impl Ctx {
     }
 }
 
+impl Drop for Ctx {
+    fn drop(&mut self) {
+        unsafe {
+            in3_sys::ctx_free(self.ptr);
+        }
+    }
+}
+
+
+/// Client struct
+pub struct Client {
+    /// Opaque handle to IN3 client
+    /// Stored as a pointer to ensure type is `!Send`/`!Sync`
+    ptr: *mut in3_sys::in3_t,
+    /// Transport implementation
+    transport: Box<dyn Transport>,
+    /// Signer implementation
+    signer: Option<Box<dyn Signer>>,
+    /// Storage implementation
+    storage: Option<Box<dyn Storage>>,
+}
+
 #[async_trait(? Send)]
 impl ClientTrait for Client {
+    /// Configures the IN3 client using a JSON str.
+    ///
+    /// # Example with supported options
+    /// ```
+    /// # use in3::prelude::*;
+    ///
+    /// let mut client = Client::new(chain::MAINNET);
+    /// assert!(client.configure(r#"{
+    /// 	"autoUpdateList": true,
+    /// 	"signatureCount": 0,
+    /// 	"finality": 0,
+    /// 	"includeCode": false,
+    /// 	"maxAttempts": 7,
+    /// 	"keepIn3": false,
+    /// 	"stats": true,
+    /// 	"useBinary": false,
+    /// 	"useHttp": false,
+    /// 	"maxBlockCache": 0,
+    /// 	"maxCodeCache": 0,
+    /// 	"maxVerifiedHashes": 5,
+    /// 	"timeout": 10000,
+    /// 	"minDeposit": 0,
+    /// 	"nodeProps": 0,
+    /// 	"nodeLimit": 0,
+    /// 	"proof": "standard",
+    /// 	"requestCount": 1,
+    /// 	"nodes": {
+    /// 		"0x2a": {
+    /// 			"contract": "0x4c396dcf50ac396e5fdea18163251699b5fcca25",
+    /// 			"registryId": "0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf",
+    /// 			"needsUpdate": true,
+    /// 			"avgBlockTime": 6
+    /// 		}
+    /// 	}
+    /// }"#).is_ok());
+    /// ```
     fn configure(&mut self, config: &str) -> Result<(), String> {
         unsafe {
             let config_c = ffi::CString::new(config).expect("CString::new failed");
@@ -204,14 +274,75 @@ impl ClientTrait for Client {
         Ok(())
     }
 
+    /// Sets custom transport.
+    ///
+    /// # Example
+    /// ```
+    /// # use in3::prelude::*;
+    /// use in3::transport::MockTransport;
+    ///
+    /// # let mut client = Client::new(chain::MAINNET);
+    /// client.set_transport(Box::new(MockTransport {
+    ///     responses: vec![(
+    ///         "eth_blockNumber",
+    ///         r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
+    ///     )],
+    /// }));
+    /// ```
     fn set_transport(&mut self, transport: Box<dyn Transport>) {
         self.transport = transport;
     }
 
+    /// Sets custom signer.
+    ///
+    /// # Example
+    /// ```
+    /// # use in3::prelude::*;
+    /// use in3::signer::SignerRust;
+    ///
+    /// # let mut client = Client::new(chain::MAINNET);
+    /// client.set_signer(Box::new(SignerRust {
+    ///     pk: "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f",
+    /// }));
+    /// ```
     fn set_signer(&mut self, signer: Box<dyn Signer>) {
         self.signer = Some(signer);
     }
 
+    /// Sets custom storage.
+    ///
+    /// # Example
+    /// ```
+    /// # use in3::prelude::*;
+    /// use std::collections::HashMap;
+    ///
+    /// struct MemStorage {
+    ///     buf: HashMap<String, Vec<u8>>
+    /// }
+    ///
+    /// impl Default for MemStorage {
+    ///     fn default() -> Self {
+    ///         MemStorage{buf: HashMap::new()}
+    ///     }
+    /// }
+    ///
+    /// impl Storage for MemStorage {
+    ///     fn get(&self,key: &str) -> Option<Vec<u8>> {
+    ///         Some(self.buf.get(key)?.clone())
+    ///     }
+    ///
+    ///     fn set(&mut self,key: &str,value: &[u8]) {
+    ///         self.buf.insert(key.to_string(), value.into());
+    ///     }
+    ///
+    ///     fn clear(&mut self) {
+    ///         self.buf.clear()
+    ///     }
+    /// }
+    ///
+    /// # let mut client = Client::new(chain::MAINNET);
+    /// client.set_storage(Box::new(MemStorage::default()));
+    /// ```
     fn set_storage(&mut self, storage: Box<dyn Storage>) {
         let no_storage = self.storage.is_none();
         self.storage = Some(storage);
@@ -256,73 +387,25 @@ impl ClientTrait for Client {
             }
         }
     }
-    fn hex_to_bytes(&mut self, data: &str) -> *mut u8 {
-        unsafe {
-            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
-            let c_data: *const c_char = c_str_data.as_ptr();
-            let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
-            let len: i32 = -1;
-            in3_sys::hex_to_bytes(c_data, len, out, 32);
-            out
-        }
-    }
-    fn new_bytes(&mut self, data: &str, len: usize) -> *mut u8 {
-        unsafe {
-            let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
-            let data_ptr = c_str_data.as_ptr();
-            let data = in3_sys::hex_to_new_bytes(data_ptr, len as i32);
-            let data_ = (*data).data;
-            data_
-        }
-    }
+
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
-            let pk_ = self.hex_to_bytes(data);
+            let pk_ = Client::hex_to_bytes(data);
             in3_sys::eth_set_pk_signer(self.ptr, pk_);
         }
     }
 }
 
-impl Drop for Ctx {
-    fn drop(&mut self) {
-        unsafe {
-            in3_sys::ctx_free(self.ptr);
-        }
-    }
-}
-
-pub struct Request {
-    ptr: *mut in3_sys::in3_request_t,
-    ctx_ptr: *const in3_sys::in3_ctx_t,
-}
-
-impl Request {
-    pub fn new(ctx: &mut Ctx) -> Request {
-        unsafe {
-            Request {
-                ptr: in3_sys::in3_create_request(ctx.ptr),
-                ctx_ptr: ctx.ptr,
-            }
-        }
-    }
-}
-
-impl Drop for Request {
-    fn drop(&mut self) {
-        unsafe {
-            in3_sys::request_free(self.ptr, self.ctx_ptr, false);
-        }
-    }
-}
-
-pub struct Client {
-    ptr: *mut in3_sys::in3_t,
-    transport: Box<dyn Transport>,
-    signer: Option<Box<dyn Signer>>,
-    storage: Option<Box<dyn Storage>>,
-}
-
 impl Client {
+    /// Constructs a new `Box<Client>` for specified chain Id.
+    /// Defaults to `HttpTransport` with no signer and storage.
+    ///
+    /// # Example
+    /// ```
+    /// use in3::prelude::*;
+    ///
+    /// let client = Client::new(chain::MAINNET);
+    /// ```
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
             let mut c = Box::new(Client {
@@ -333,13 +416,13 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
-            #[cfg(feature = "blocking")]
-            {
+            #[cfg(feature = "blocking")] {
                 (*c.ptr).transport = Some(Client::in3_rust_transport);
             }
             c
         }
     }
+
     unsafe extern "C" fn in3_rust_storage_get(
         cptr: *mut libc::c_void,
         key: *const libc::c_char,
@@ -425,6 +508,15 @@ impl Client {
         }
 
         in3_sys::in3_ret_t::IN3_OK
+    }
+
+    unsafe fn hex_to_bytes(data: &str) -> *mut u8 {
+        let c_str_data = CString::new(data).unwrap(); // from a &str, creates a new allocation
+        let c_data: *const c_char = c_str_data.as_ptr();
+        let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
+        let len: i32 = -1;
+        in3_sys::hex_to_bytes(c_data, len, out, 32);
+        out
     }
 }
 

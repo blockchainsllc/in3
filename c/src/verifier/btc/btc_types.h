@@ -32,7 +32,7 @@ typedef struct btc_tx_out {
 
 in3_ret_t btc_parse_tx(bytes_t tx, btc_tx_t* dst);
 in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst);
-uint8_t*  btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst);
+uint8_t*  btc_parse_tx_in(uint8_t* data, btc_tx_in_t* dst, uint8_t* limit);
 uint8_t*  btc_parse_tx_out(uint8_t* data, btc_tx_out_t* dst);
 uint32_t  btc_vsize(btc_tx_t* tx);
 uint32_t  btc_weight(btc_tx_t* tx);

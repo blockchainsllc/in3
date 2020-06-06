@@ -70,6 +70,7 @@ typedef enum {
   IN3_EIGNORE           = -17, /**< Ignorable error */
   IN3_EPAYMENT_REQUIRED = -18, /**< payment required */
   IN3_ENODEVICE         = -19, /**< harware wallet device not connected */
+  IN3_EAPDU             = -20, /**< error in hardware wallet communication  */
 } in3_ret_t;
 
 /** Optional type similar to C++ std::optional

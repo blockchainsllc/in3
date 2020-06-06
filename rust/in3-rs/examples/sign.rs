@@ -6,11 +6,10 @@ use libc::c_char;
 use rustc_hex::FromHex;
 use serde_json::json;
 
-use in3::eth1::api::RpcRequest;
 use in3::eth1::*;
+use in3::json_rpc::Request;
 use in3::prelude::*;
 use in3::signer;
-use in3::signer::SignatureType;
 
 unsafe fn signature_hex_string(data: *mut u8) -> String {
     let value = std::slice::from_raw_parts_mut(data, 65 as usize);
@@ -78,7 +77,7 @@ fn sign_tx_api() {
         "setData(uint256,string)",
         serde_json::json!([123, "testdata"]),
     ))
-    .unwrap();
+        .unwrap();
     println!("{:?}", params);
     let to: Address =
         serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
@@ -128,7 +127,7 @@ fn sign_tx_rpc() {
         "nonce": "0x0",
         "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"
     }]);
-    let rpc_req = RpcRequest {
+    let rpc_req = Request {
         method: "eth_sendTransaction",
         params: tx,
     };

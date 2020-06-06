@@ -31,8 +31,6 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-
 # static lib
 add_library(ipfs_o OBJECT
         ipfs.c

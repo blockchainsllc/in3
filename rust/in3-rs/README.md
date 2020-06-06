@@ -1,5 +1,12 @@
 # in3-rs
-Rust bindings for the IN3 C library.
+Rust bindings for the Incubed C library.
+
+The Incubed client is a
+* Crypto-Economic
+* Non-syncronizing and stateless, but fully verifying
+* Minimal resource consuming
+
+blockchain client (Crypto-Economic Client, Minimal Verification Client, Ultra Light Client).
 
 
 **[API Documentation](https://docs.rs/in3-rs/)**

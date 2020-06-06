@@ -34,8 +34,6 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test)
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
-#include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-
 include_directories(. ../src)
 
 # handle codecoverage
@@ -71,7 +69,7 @@ file(GLOB files "unit_tests/*.c")
 foreach (file ${files})
      get_filename_component(testname "${file}" NAME_WE)
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
-     target_link_libraries("${testname}" core eth_full pk_signer ipfs ipfs_api ${IN3_API})
+     target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ${IN3_API})
      add_test(
                 NAME "in3_${testname}"
                 COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}

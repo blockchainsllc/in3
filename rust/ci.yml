@@ -72,6 +72,7 @@ rust:
     - cd rust/
     - export UPDATE_IN3_BINDINGS=1
     - cargo run --example custom_transport --release
+    - RUST_TEST_THREADS=1 cargo test
   needs: []
   tags:
     - mac-mini-runner
@@ -89,7 +90,7 @@ deploy_rust:
     - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
-    - cd in3-sys/ && cargo publish --allow-dirty || true
+    - cd in3-sys/ && cargo release "${CI_COMMIT_TAG:1}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN || true
     - cd ../in3-rs/ && cargo release "${CI_COMMIT_TAG:1}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN
   tags:
     - mac-mini-runner

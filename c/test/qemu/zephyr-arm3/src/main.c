@@ -98,9 +98,13 @@ void main() {
   hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, tx_hash, 32);
   // get the tx receipt by hash
   eth_tx_receipt_t* txr = eth_getTransactionReceipt(in3, tx_hash);
-  printk("status: %d ", txr->status);
-  printk("gas: %lld ", txr->gas_used);
-  printk("IN3 TEST PASSED !\n");
+  if (txr && txr->gas_used) {
+    printk("status: %d ", txr->status);
+    printk("gas: %lld ", txr->gas_used);
+    printk("IN3 TEST PASSED OK !\n");
+  } else {
+    printk("IN3 TEST FAILED !\n");
+  }
   eth_tx_receipt_free(txr);
   in3_free(in3);
   _exit_qemu();

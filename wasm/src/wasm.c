@@ -189,6 +189,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
 void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
   _free(ptr);
 }
+void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
+  return _malloc(size);
+}
 void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
   request_free(r, ctx, false);
 }

@@ -1,3 +1,9 @@
+//! The following environment variables affect the build:
+//!
+//! * `UPDATE_IN3_BINDINGS`: setting indicates that the pre-generated `in3.rs` should be
+//!   updated with the output bindgen
+//!
+
 use std::env;
 use std::fs::copy;
 use std::path::PathBuf;
@@ -25,6 +31,7 @@ fn env_var(var: &str) -> String {
     env::var(var).expect(&format!("Environment variable {} is not set", var))
 }
 
+/// Create bindings using bindgen
 fn write_bindgen_bindings(
     header_search_paths: &Vec<PathBuf>,
     update_pregenerated_bindings: bool,
@@ -44,7 +51,7 @@ fn write_bindgen_bindings(
         )
         .disable_name_namespacing()
         .prepend_enum_name(false)
-        .generate_comments(true)
+        .generate_comments(false)
         .impl_debug(true)
         .constified_enum_module("in3_ret_t")
         .rustified_enum(".*");
