@@ -11,7 +11,7 @@ static int     is_public_key_assigned = false;
 
 in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
   in3_log_debug("eth_ledger_sign_txn:enter\n");
-  // UNUSED_VAR(account); // at least for now
+  UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
   uint8_t  bip_data[5];
   bool     is_msg = false;
@@ -88,11 +88,6 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
           memcpy(apdu + index_counter, message.data, message.len);
           index_counter += message.len;
         }
-
-#ifdef DEBUG
-        in3_log_debug("apdu commnd sent to device\n");
-        ba_print(final_apdu_command.data, final_apdu_command.len);
-#endif
 
         write_hid(handle, apdu, index_counter);
 

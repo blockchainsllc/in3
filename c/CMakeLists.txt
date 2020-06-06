@@ -138,13 +138,12 @@ if (IN3_LIB)
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-    
     if( LEDGER_NANO AND HIDAPI )
-       target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+        target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
     else()
-       target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
+        target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
     endif()
-    
+ 
 
     # install
     INSTALL(TARGETS in3_bundle

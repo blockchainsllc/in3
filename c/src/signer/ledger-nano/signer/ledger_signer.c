@@ -47,7 +47,7 @@ in3_ret_t is_ledger_device_connected() {
 }
 
 in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
-  //UNUSED_VAR(account); // at least for now
+  UNUSED_VAR(account); // at least for now
   uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
 
   uint8_t bip_data[5];
@@ -99,11 +99,6 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
         apdu[index_counter++] = msg_len;
         memcpy(apdu + index_counter, hash, msg_len);
         index_counter += msg_len;
-
-#ifdef DEBUG
-        in3_log_debug("apdu commnd sent to device\n");
-        ba_print(final_apdu_command.data, final_apdu_command.len);
-#endif
 
         res = write_hid(handle, apdu, index_counter);
 
