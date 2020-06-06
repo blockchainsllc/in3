@@ -31,7 +31,6 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 add_library(btc_api_o OBJECT btc_api.c)
 add_library(btc_api STATIC $<TARGET_OBJECTS:btc_api_o>)
