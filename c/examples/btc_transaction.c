@@ -17,14 +17,14 @@ int main() {
   // fetch and verify the transaction
   btc_transaction_t* tx = btc_get_transaction(in3, tx_id);
 
-  // if the result is null there was an error an we can get the latest error message from eth_last_error()
+  // if the result is null there was an error an we can get the latest error message from btc_last_error()
   if (!tx)
-    printf("error getting the tx : %s\n", eth_last_error());
+    printf("error getting the tx : %s\n", btc_last_error());
   else {
     // we loop through the tx outputs
     for (int i = 0; i < tx->vout_len; i++)
       // and prrint the values
-      printf("Transaction vout #%d : value: %d\n", i, tx->vout[i].value);
+      printf("Transaction vout #%d : value: %llu\n", i, tx->vout[i].value);
     free(tx);
   }
 
