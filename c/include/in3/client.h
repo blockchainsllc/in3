@@ -337,9 +337,10 @@ typedef in3_ret_t (*in3_prepare_tx)(void* ctx, d_token_t* old_tx, json_ctx_t** n
  * definition of a signer holding funciton-pointers and data.
  */
 typedef struct in3_signer {
-  in3_sign       sign;       /**< function pointer returning a stored value for the given key.*/
-  in3_prepare_tx prepare_tx; /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
-  void*          wallet;     /**< custom object whill will be passed to functions */
+  in3_sign       sign;            /**< function pointer returning a stored value for the given key.*/
+  in3_prepare_tx prepare_tx;      /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+  void*          wallet;          /**< custom object whill will be passed to functions */
+  address_t      default_address; /**< the address in case no address is assigned*/
 } in3_signer_t;
 
 /** 
