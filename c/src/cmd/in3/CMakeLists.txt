@@ -51,7 +51,7 @@ if (BTC)
     set(LIBS ${LIBS} btc)
 endif()
 
-if (LEDGER_NANO)
+if (LEDGER_NANO AND HIDAPI)
     ADD_DEFINITIONS(-DLEDGER_NANO)
     set(IN3_API ${IN3_API} ledger_signer)
 endif()
