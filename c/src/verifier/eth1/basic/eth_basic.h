@@ -88,7 +88,20 @@ in3_ret_t eth_verify_eth_getLog(in3_vctx_t* vc, int l_logs);
  */
 in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response);
 
-/** Signs transaction with the given context */
-bytes_t sign_tx(d_token_t* tx, in3_ctx_t* ctx);
+/**
+ * prepares a transaction and writes the data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
+ */
+in3_ret_t prepare_unsigned_tx(d_token_t* tx,  /**< a json-token desribing the transaction */
+                              in3_ctx_t* ctx, /**< the current context */
+                              bytes_t*   dst  /**< the bytes to write the result to. */
+);
 
+/**
+ * signs a unsigned raw transaction and writes the raw data to the dst-bytes. In case of success, you MUST free only the data-pointer of the dst. 
+ */
+in3_ret_t sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction to sign */
+                      in3_ctx_t* ctx,    /**< the current context */
+                      address_t  from,   /**< the address of the account to sign with */
+                      bytes_t*   dst     /**< the bytes to write the result to. */
+);
 #endif // in3_eth_basic_h__
