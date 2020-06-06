@@ -1,4 +1,7 @@
 //! Bitcoin JSON RPC client API.
+use core::convert;
+use std::convert::TryInto;
+
 use ethereum_types::U256;
 use serde::Deserialize;
 use serde_json::json;
@@ -44,25 +47,41 @@ pub struct Transaction {
     blocktime: u32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct BlockHeader {
-    // hash: Hash,
+    hash: Hash,
     confirmations: u32,
     height: u32,
     version: u32,
-    // merkleroot: Hash,
+    merkleroot: Hash,
     time: u32,
     nonce: u32,
-    // bits: [u8; 4],
-    // chainwork: U256,
-    #[serde(rename = "nTx")]
+    bits: [u8; 4],
+    chainwork: U256,
     n_tx: u32,
-    // #[serde(rename = "previousblockhash")]
-    // previous_hash: Hash,
-    // #[serde(rename = "nextblockhash")]
-    // next_hash: Hash,
-    #[serde(skip)]
+    previous_hash: Hash,
+    next_hash: Hash,
     data: Bytes,
+}
+
+impl convert::From<BlockHeaderSerdeable> for BlockHeader {
+    fn from(header: BlockHeaderSerdeable) -> Self {
+        BlockHeader {
+            hash: Hash::from_slice(header.hash.0.as_slice()),
+            confirmations: header.confirmations,
+            height: header.height,
+            version: header.version,
+            merkleroot: Hash::from_slice(header.merkleroot.0.as_slice().into()),
+            time: header.time,
+            nonce: header.nonce,
+            bits: header.bits.0.as_slice().try_into().expect("incorrect bits len"),
+            chainwork: header.chainwork.0.as_slice().into(),
+            n_tx: header.n_tx,
+            previous_hash: Hash::from_slice(header.previous_hash.0.as_slice().into()),
+            next_hash: Hash::from_slice(header.next_hash.0.as_slice().into()),
+            data: vec![].into(),
+        }
+    }
 }
 
 
