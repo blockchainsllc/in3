@@ -34,7 +34,7 @@
 #include "../../core/client/client.h"
 
 typedef enum {
-  GNOSIS_SAFE
+  MS_GNOSIS_SAFE
 } ms_type_t;
 
 typedef struct ms {

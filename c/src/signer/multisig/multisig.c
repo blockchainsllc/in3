@@ -42,37 +42,28 @@
 #include "../../verifier/eth1/nano/serialize.h"
 
 in3_ret_t gs_prepare_tx(void* ctx, bytes_t raw_tx, bytes_t* new_raw_tx) {
-  return IN3_OK;
-}
-in3_ret_t gs_sign_tx(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
 
   return IN3_OK;
 }
+in3_ret_t delegate_sign(in3_sign_ctx_t* sc) {
+  multisig_t* ms = sc->wallet;
+  sc->wallet     = ms->signer->wallet;
+  in3_ret_t res  = ms->signer->sign(sc);
+  sc->wallet     = ms;
 
-void add_gnosis_safe(in3_t* in3, address_t adr) {
-  multisig_t*   ms         = _malloc(sizeof(multisig_t));
-  in3_signer_t* signer     = _malloc(sizeof(in3_signer_t));
-  in3_signer_t* old_signer = in3->signer;
-  ms->signer               = old_signer;
-  signer->prepare_tx       = gs_prepare_tx;
-  signer->sign             = gs_sign_tx;
-  signer->wallet           = ms;
+  return res;
+}
+
+in3_signer_t* create_gnosis_safe_signer(address_t adr, in3_signer_t* old_signer) {
+  multisig_t* ms = _malloc(sizeof(multisig_t));
+  ms->type       = MS_GNOSIS_SAFE;
+  ms->signer     = old_signer;
+  memcpy(ms->address, adr, 20);
+
+  in3_signer_t* signer = _malloc(sizeof(in3_signer_t));
+  signer->prepare_tx   = gs_prepare_tx;
+  signer->sign         = delegate_sign;
+  signer->wallet       = ms;
   memcpy(signer->default_address, old_signer->default_address, 20);
-}
-/** sets the signer and a pk to the client*/
-in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk) {
-  if (in3->signer) _free(in3->signer);
-  in3->signer             = _malloc(sizeof(in3_signer_t));
-  in3->signer->sign       = eth_sign_pk_ctx;
-  in3->signer->prepare_tx = NULL;
-  in3->signer->wallet     = pk;
-
-  // generate the address from the key
-  uint8_t public_key[65], sdata[32];
-  bytes_t pubkey_bytes = {.data = public_key + 1, .len = 64};
-
-  ecdsa_get_public_key65(&secp256k1, pk, public_key);
-  sha3_to(&pubkey_bytes, sdata);
-  memcpy(in3->signer->default_address, sdata + 12, 20);
-  return IN3_OK;
+  return signer;
 }
