@@ -22,47 +22,21 @@ fn init_api<'a>(transport: Box<dyn Transport>, chain : chain::ChainId, config: &
     api
 }
 
-fn test_eth_api_get_filter_changes() -> In3Result<()> {
+fn test_eth_api_chain_id() -> In3Result<()> {
     let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-    // let responses = vec![
-    //     ("eth_getLogs",
-    //     r#"[{"jsonrpc":"2.0","id":1,"result":""}]"#,
-    //     ),
-    //     ("eth_blockNumber",
-    //     r#"[{"jsonrpc":"2.0","id":1,"result":"0x84cf55"}]"#,
-    //     )
-    //     ];
-    // let transport:Box<dyn Transport> = Box::new(MockTransport {
-    //     responses: responses,
-    // });
-    let mut client = Client::new(chain::MAINNET);
-    let _ = client.configure(config);
-    let mut eth_api = Api::new(client);
-    let jopts = serde_json::json!({
-        "fromBlock": "0x10217725",
-        "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
-        });
-    
-    // let fid = task::block_on(eth_api.new_filter(jopts))?;
-    let fid:U256 = (0).into();
-    // let ret:FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
-    // println!("{:?}", ret);
-
-    // let logs: Vec<Log> = task::block_on(eth_api.get_logs(jopts))?;
-    // println!("{:?}", logs);
-
-    let logs: Vec<Log> = task::block_on(eth_api.get_logs(serde_json::json!({
-        "blockHash": "0x468f88ed8b40d940528552f093a11e4eb05991c787608139c931b0e9782ec5af",
-        "topics": ["0xa61b5dec2abee862ab0841952bfbc161b99ad8c14738afa8ed8d5c522cd03946"]
-        })))?;
-        println!("Logs => {:?}", logs);
-    assert!(true);
+    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
+        responses: "eth_chainId",
+    });
+    let mut eth_api = init_api(transport, chain::GOERLI, config);
+    let ret: U256 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
+    // assert_eq!(ret, (1).into());
     Ok(())
-     
 }
+
 fn main() -> In3Result<()> {
+    test_eth_api_chain_id()
     // test_eth_api_get_filter_changes()
-    examples()
+    // examples()
 }
 
 fn examples() -> In3Result<()> {

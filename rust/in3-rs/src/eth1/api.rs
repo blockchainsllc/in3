@@ -657,7 +657,7 @@ mod tests {
         let block: Block = task::block_on(
             eth_api.get_block_by_number(BlockNumber::Number((1692767).into()), true),
         )?;
-        println!("Block => {:?}", block,);
+        println!("Block => {:?}", block);
 
         let expected: U256 = (1692767).into();
         let blk: U256 = block.number.unwrap();
@@ -750,102 +750,75 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_eth_api_new_filter() -> In3Result<()> {
-    //     let responses = vec![(
-    //         "eth_blockNumber",
-    //         r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
-    //     )];
-    //     add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
-    //     json_ctx_t* jopt = parse_json("{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}");
-    //     size_t      fid  = eth_newFilter(in3, jopt);
-    //     test_eth_api_ASSERT_GREATER_THAN(0, fid);
-    // }
-
-    //     #[test]
-    //     fn test_eth_api_new_block_filter() -> In3Result<()> {
-    //         in3_t* in3 = init_in3(mock_transport, 0x5);
-    //   // we can add any mock json as we need trasnport but we are not calling any rpc endpoint
-    //   //get filter id for new block
-    //   size_t fid = eth_newBlockFilter(in3);
-    //   test_eth_api_ASSERT_TRUE(fid > 0);
-
-    //     }
-
-    // //     #[test]
-    // //     fn test_eth_api_filters() -> In3Result<()> {
-
-    // //     }
-
-    // //     #[test]
-    // let responses = vec![("eth_call",
-    //     r#"[{"jsonrpc":"2.0","id":1,"result":"0x00000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000784bfa9eb182c3a02dbeb5285e3dba92d717e07a000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002168747470733a2f2f696e332e736c6f636b2e69742f6d61696e6e65742f6e642d3100000000000000000000000000000000000000000000000000000000000000"}]"#
-    //     )];
-
-    // "{\"fromBlock\":\"0x84cf51\",\"address\":\"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455\",\"topics\":[\"0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f\"]}"
-    // let transport:Box<dyn Transport> = Box::new(MockTransport {
-    //     responses: responses,
-    // });
-    // / r#"[{"fromBlock":"0x84cf51","address":"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455","topics":["0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f"]}]"#
-
     #[test]
-    fn test_eth_api_get_filter_changes() -> In3Result<()> {
+    fn test_eth_api_new_filter() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let responses = vec![
-            ("eth_getLogs", r#"[{"jsonrpc":"2.0","id":1,"result":""}]"#),
             (
                 "eth_newFilter",
-                r#"{"jsonrpc":"2.0","result":"0x0","id":73}"#
-            ),
+                r#"{"jsonrpc":"2.0","result":"0x3","id":73}"#
+            )
         ];
         let transport: Box<dyn Transport> = Box::new(MockTransport {
             responses: responses,
         });
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let jopts = serde_json::json!({
-        "fromBlock": "0x10211823",
-        "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
+            "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
+            "blockHash":"0x40b6019185d6ee0112445fbe678438b6968bad2e6f24ae26c7bb75461428fd43"
         });
         let fid = task::block_on(eth_api.new_filter(jopts))?;
+        let expected: U256 = (3).into();
+        
+        println!("{:?}", fid);
+        assert_eq!(fid, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_eth_api_get_filter_changes() -> In3Result<()> {
+        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
+            responses: "eth_getFilterChanges",
+        });
+        let mut eth_api = init_api(transport, chain::MAINNET, config);
+        let jopts = serde_json::json!({
+            "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
+            "blockHash":"0x40b6019185d6ee0112445fbe678438b6968bad2e6f24ae26c7bb75461428fd43"
+        });
+        let fid: U256 = (3).into();
         let ret: FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
         println!("{:?}", ret);
         assert!(true);
         Ok(())
     }
 
-    // //     #[test]
-    // //     fn test_eth_api_get_filter_logs() -> In3Result<()> {
-    // //         test_eth_api_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, 1, NULL));
+    #[test]
+    fn test_eth_api_chain_id() -> In3Result<()> {
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
+            responses: "eth_chainId",
+        });
+        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let mut eth_api = init_api(transport, chain::MAINNET, config);
+        let ret: U256 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
+        assert_eq!(ret, (1).into());
+        Ok(())
+    }
 
-    // //   // Create filter options
-    // //   char b[30];
-    // //   sprintf(b, "{\"fromBlock\":\"0x1ca181\"}");
-    // //   json_ctx_t* jopt = parse_json(b);
-
-    // //   // Create new filter with options
-    // //   size_t fid = eth_newFilter(in3, jopt);
-
-    // //   // Get logs
-    // //   eth_log_t *logs = NULL, *l = NULL;
-    // //   test_eth_api_ASSERT_EQUAL(IN3_OK, eth_getFilterLogs(in3, fid, &logs));
-
-    // //   while (logs) {
-    // //     l    = logs;
-    // //     logs = logs->next;
-    // //     eth_log_free(l);
-    // //   }
-    // //   eth_uninstallFilter(in3, fid);
-    // //   json_free(jopt);
-
-    // //   // Test with non-existent filter id
-    // //   test_eth_api_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterLogs(in3, 1234, NULL));
-
-    // //   // Test with all filters uninstalled
-    // //   test_eth_api_ASSERT_EQUAL(IN3_EFIND, eth_getFilterLogs(in3, fid, NULL));
-    // //     }
-
-    //     #[test]
-    //     fn test_eth_api_chain_id() -> In3Result<()> {}
+    #[test]
+    fn test_eth_api_get_block_transaction_count_by_hash() -> In3Result<()> {
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
+            responses: "eth_getBlockTransactionCountByHash",
+        });
+        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let mut eth_api = init_api(transport, chain::GOERLI, config);
+        let hash: Hash = serde_json::from_str(
+            r#""0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d""#,
+        )?;
+        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_hash(hash))?.try_into().unwrap();
+        assert_eq!(ret, (2).into());
+        Ok(())
+    }
 
     //     #[test]
     //     fn test_eth_api_get_block_transaction_count_by_hash() -> In3Result<()> {}

@@ -56,6 +56,7 @@ pub struct MockJsonTransport<'a> {
 impl Transport for MockJsonTransport<'_> {
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = read_json(String::from(self.responses));
+        println!("--------> {:?}", response);
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
         println!("--------> {:?}, \n\n {:?}", request.to_string(), response);
         vec![Ok(response)]
