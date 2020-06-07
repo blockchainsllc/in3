@@ -963,6 +963,8 @@ int main(int argc, char* argv[]) {
         printf(COLORT_RED);
       else if (warning)
         printf(COLORT_YELLOW);
+      else if (!weight->response_count)
+        printf(COLORT_DARKGRAY);
       else
         printf(COLORT_GREEN);
       printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
