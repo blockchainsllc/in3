@@ -45,6 +45,7 @@ pub async fn rpc<T>(client: &mut Box<dyn Client>, request: Request<'_>) -> In3Re
     let req_str = serde_json::to_string(&request)?;
     println!("{:?}", req_str);
     let resp_str = client.rpc(req_str.as_str()).await?;
+    // let resp: Vec<Response> = serde_json::from_str(&resp_str.to_string())?;
     let resp: Vec<Response> = serde_json::from_str(resp_str.as_str())?;
     let resp = resp.first().unwrap();
     println!("{:?}", resp);
