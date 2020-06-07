@@ -7,39 +7,8 @@ use in3::eth1::*;
 use in3::prelude::*;
 use in3::types::Bytes;
 
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
-use std::fmt::Write;
-
-fn init_api<'a>(transport: Box<dyn Transport>, chain : chain::ChainId, config: &'a str)-> Api{
-    let mut client = Client::new(chain);
-    // let _ = client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
-     let _ = client.configure(config);
-    client.set_transport(transport);
-    let mut api = Api::new(client);
-    api
-}
-
-fn test_eth_api_chain_id() -> In3Result<()> {
-    let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-        responses: "eth_chainId",
-    });
-    let mut eth_api = init_api(transport, chain::GOERLI, config);
-    let ret: U256 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
-    // assert_eq!(ret, (1).into());
-    Ok(())
-}
 
 fn main() -> In3Result<()> {
-    test_eth_api_chain_id()
-    // test_eth_api_get_filter_changes()
-    // examples()
-}
-
-fn examples() -> In3Result<()> {
     // configure client and API
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
     eth_api

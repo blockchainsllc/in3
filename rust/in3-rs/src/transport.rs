@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use crate::traits::Transport;
 use std::env;
 use std::error::Error;
-use std::fmt::Write;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
@@ -21,7 +20,7 @@ async fn http_async(
     Ok(res)
 }
 
-fn read_mock<P: AsRef<Path>>(path: P) -> Result<serde_json::Value, Box<Error>> {
+fn read_mock<P: AsRef<Path>>(path: P) -> Result<serde_json::Value, Box<dyn Error>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let u = serde_json::from_reader(reader)?;
@@ -33,7 +32,7 @@ fn env_var(var: &str) -> String {
 
 fn prepare_file_path(data: String) -> String {
     let mut relative_path = PathBuf::from(env_var("CARGO_MANIFEST_DIR"));
-    relative_path.push("../../c/test/testdata/mock/");
+    relative_path.push("../c/test/testdata/mock/");
     let mut full_path = relative_path.to_str().unwrap().to_string();
     let tmp = format!("{}.json", data);
     full_path.push_str(&tmp);
@@ -56,9 +55,8 @@ pub struct MockJsonTransport<'a> {
 impl Transport for MockJsonTransport<'_> {
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = read_json(String::from(self.responses));
-        println!("--------> {:?}", response);
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
-        println!("--------> {:?}, \n\n {:?}", request.to_string(), response);
+        println!("REQUEST: {:?}", request.to_string());
         vec![Ok(response)]
     }
 
