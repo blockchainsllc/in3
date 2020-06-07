@@ -150,7 +150,8 @@ typedef enum {
   FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
   FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
   FLAGS_STATS            = 0x20, /**< nodes will keep track of the stats (default=true)  */
-  FLAGS_NODE_LIST_NO_SIG = 0x40  /**< nodelist update request will not automatically ask for signatures and proof */
+  FLAGS_NODE_LIST_NO_SIG = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
+  FLAGS_BOOT_WEIGHTS     = 0x80  /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
 } in3_flags_type_t;
 
 /**

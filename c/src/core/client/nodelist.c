@@ -117,6 +117,12 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
     n->address    = d_get_byteskl(node, K_ADDRESS, 20);
     BIT_CLEAR(n->attrs, ATTR_BOOT_NODE); // nodes are considered boot nodes only until first nodeList update succeeds
 
+    if ((ctx->client->flags & FLAGS_BOOT_WEIGHTS) && (t = d_get(node, K_PERFORMANCE))) {
+      weights[i].blacklisted_until   = d_get_longk(t, K_LAST_FAILED) + (24 * 3600);
+      weights[i].response_count      = d_get_intk(t, K_COUNT);
+      weights[i].total_response_time = d_get_intk(t, K_TOTAL);
+    }
+
     if (n->address)
       n->address = b_dup(n->address); // create a copy since the src will be freed.
     else {
@@ -270,7 +276,10 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t*
 
   // create request
   char* req = _malloc(350);
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]],\"in3\":%s}", c->node_limit, seed, sb_add_char(in3_sec, '}')->data);
+  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]%s],\"in3\":%s}",
+          c->node_limit, seed,
+          ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(chain)) ? ",true" : "",
+          sb_add_char(in3_sec, '}')->data);
   sb_free(in3_sec);
 
   // new client
