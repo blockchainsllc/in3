@@ -29,7 +29,10 @@ impl Response {
         if let Some(ref res) = self.result {
             Ok(res)
         } else {
-            Err(Error::CustomError(format!("{}", self.error.as_ref().unwrap())))
+            Err(Error::CustomError(format!(
+                "{}",
+                self.error.as_ref().unwrap()
+            )))
         }
     }
 }
@@ -41,10 +44,14 @@ impl Response {
 /// * `client` - reference to [`Client`](../in3/struct.Client.html) instance.
 /// * `request` - request to perform.
 pub async fn rpc<T>(client: &mut Box<dyn Client>, request: Request<'_>) -> In3Result<T>
-    where T: serde::de::DeserializeOwned {
+where
+    T: serde::de::DeserializeOwned,
+{
     let req_str = serde_json::to_string(&request)?;
     let resp_str = client.rpc(req_str.as_str()).await?;
     let resp: Vec<Response> = serde_json::from_str(resp_str.as_str())?;
     let resp = resp.first().unwrap();
-    Ok(serde_json::from_str(resp.to_result()?.to_string().as_str())?)
+    Ok(serde_json::from_str(
+        resp.to_result()?.to_string().as_str(),
+    )?)
 }

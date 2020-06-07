@@ -32,7 +32,7 @@ fn env_var(var: &str) -> String {
 
 fn prepare_file_path(data: String) -> String {
     let mut relative_path = PathBuf::from(env_var("CARGO_MANIFEST_DIR"));
-    relative_path.push("../c/test/testdata/mock/");
+    relative_path.push("../../c/test/testdata/mock/");
     let mut full_path = relative_path.to_str().unwrap().to_string();
     let tmp = format!("{}.json", data);
     full_path.push_str(&tmp);

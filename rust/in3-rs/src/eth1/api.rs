@@ -542,24 +542,13 @@ impl Api {
 
 #[cfg(test)]
 mod tests {
-    const MOCK_DATA: &str = "../c/test/testdata/mock/{:?}.json";
     use std::convert::TryInto;
 
     use async_std::task;
 
-    use async_trait::async_trait;
-
-    use serde::Serialize;
     use crate::eth1::*;
     use crate::types::Bytes;
-    use serde::Deserialize;
-    use serde_json::json;
-
-    use std::error::Error;
-    use std::fmt::Write;
-    use std::fs::File;
-    use std::io::BufReader;
-    use std::path::Path;
+    use rustc_hex::FromHex;
 
     use ethereum_types::{Address, U256};
 
@@ -569,10 +558,9 @@ mod tests {
 
     fn init_api<'a>(transport: Box<dyn Transport>, chain: chain::ChainId, config: &'a str) -> Api {
         let mut client = Client::new(chain);
-        // let _ = client.configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#);
         let _ = client.configure(config);
         client.set_transport(transport);
-        let mut api = Api::new(client);
+        let api = Api::new(client);
         api
     }
     #[test]
@@ -717,13 +705,6 @@ mod tests {
 
     #[test]
     fn test_eth_api_call() -> In3Result<()> {
-        let responses = vec![(
-            "eth_call",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0x00000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000784bfa9eb182c3a02dbeb5285e3dba92d717e07a000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002168747470733a2f2f696e332e736c6f636b2e69742f6d61696e6e65742f6e642d3100000000000000000000000000000000000000000000000000000000000000"}]"#,
-        )];
-        // let transport:Box<dyn Transport> = Box::new(MockTransport {
-        //     responses: responses,
-        // });
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
             responses: "eth_call",
         });
@@ -753,12 +734,10 @@ mod tests {
     #[test]
     fn test_eth_api_new_filter() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-        let responses = vec![
-            (
-                "eth_newFilter",
-                r#"{"jsonrpc":"2.0","result":"0x3","id":73}"#
-            )
-        ];
+        let responses = vec![(
+            "eth_newFilter",
+            r#"{"jsonrpc":"2.0","result":"0x3","id":73}"#,
+        )];
         let transport: Box<dyn Transport> = Box::new(MockTransport {
             responses: responses,
         });
@@ -769,7 +748,7 @@ mod tests {
         });
         let fid = task::block_on(eth_api.new_filter(jopts))?;
         let expected: U256 = (3).into();
-        
+
         println!("{:?}", fid);
         assert_eq!(fid, expected);
         Ok(())
@@ -782,10 +761,6 @@ mod tests {
             responses: "eth_getFilterChanges",
         });
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let jopts = serde_json::json!({
-            "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
-            "blockHash":"0x40b6019185d6ee0112445fbe678438b6968bad2e6f24ae26c7bb75461428fd43"
-        });
         let fid: U256 = (3).into();
         let ret: FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
         println!("{:?}", ret);
@@ -815,7 +790,9 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d""#,
         )?;
-        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_hash(hash))?.try_into().unwrap();
+        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_hash(hash))?
+            .try_into()
+            .unwrap();
         assert_eq!(ret, (2).into());
         Ok(())
     }
@@ -827,11 +804,10 @@ mod tests {
         });
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
-        let hash: Hash = serde_json::from_str(
-            r#""0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d""#,
-        )?;
         let number = BlockNumber::Number((1692767).into());
-        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_number(number))?.try_into().unwrap();
+        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_number(number))?
+            .try_into()
+            .unwrap();
         assert_eq!(ret, (6).into());
         Ok(())
     }
@@ -852,7 +828,9 @@ mod tests {
             data: Some(params),
             ..Default::default()
         };
-        let ret: U256 = task::block_on(eth_api.estimate_gas(txn, BlockNumber::Latest))?.try_into().unwrap();
+        let ret: U256 = task::block_on(eth_api.estimate_gas(txn, BlockNumber::Latest))?
+            .try_into()
+            .unwrap();
         assert_eq!(ret, (6).into());
         Ok(())
     }
@@ -867,7 +845,9 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164""#,
         )?;
-        let tx: Transaction = task::block_on(eth_api.get_transaction_by_hash(hash))?.try_into().unwrap();
+        let tx: Transaction = task::block_on(eth_api.get_transaction_by_hash(hash))?
+            .try_into()
+            .unwrap();
         let nonce = tx.nonce;
         let blk_number = tx.block_number.unwrap();
         let gas = tx.gas;
@@ -876,7 +856,6 @@ mod tests {
         assert_eq!(blk_number, (31).into());
         Ok(())
     }
-
 
     #[test]
     fn test_eth_api_get_transaction_by_block_hash_and_index() -> In3Result<()> {
@@ -888,7 +867,10 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4""#,
         )?;
-        let tx: Transaction = task::block_on(eth_api.get_transaction_by_block_hash_and_index(hash, (0).into()))?.try_into().unwrap();
+        let tx: Transaction =
+            task::block_on(eth_api.get_transaction_by_block_hash_and_index(hash, (0).into()))?
+                .try_into()
+                .unwrap();
         let nonce = tx.nonce;
         let blk_number = tx.block_number.unwrap();
         let gas = tx.gas;
@@ -905,11 +887,11 @@ mod tests {
         });
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
-        let hash: Hash = serde_json::from_str(
-            r#""0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4""#,
-        )?;
         let number = BlockNumber::Number((1723267).into());
-        let tx: Transaction = task::block_on(eth_api.get_transaction_by_block_number_and_index(number, (0).into()))?.try_into().unwrap();
+        let tx: Transaction =
+            task::block_on(eth_api.get_transaction_by_block_number_and_index(number, (0).into()))?
+                .try_into()
+                .unwrap();
         let nonce = tx.nonce;
         let blk_number = tx.block_number.unwrap();
         let gas = tx.gas;
@@ -926,11 +908,10 @@ mod tests {
         });
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
-        let hash: Hash = serde_json::from_str(
-            r#""0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4""#,
-        )?;
         let number = BlockNumber::Number((1723267).into());
-        let tx_count: U256 = task::block_on(eth_api.get_transaction_count(number))?.try_into().unwrap();
+        let tx_count: U256 = task::block_on(eth_api.get_transaction_count(number))?
+            .try_into()
+            .unwrap();
         assert!(tx_count > (0).into());
         Ok(())
     }
@@ -943,7 +924,10 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let number = BlockNumber::Number((56160).into());
-        let block: Block = task::block_on(eth_api.get_uncle_by_block_number_and_index(number, (0).into()))?.try_into().unwrap();
+        let block: Block =
+            task::block_on(eth_api.get_uncle_by_block_number_and_index(number, (0).into()))?
+                .try_into()
+                .unwrap();
         let blk: U256 = block.number.unwrap();
         assert!(blk > (0).into());
         Ok(())
@@ -956,11 +940,12 @@ mod tests {
         });
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
-        let number = BlockNumber::Number((56160).into());
         let hash: Hash = serde_json::from_str(
             r#""0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845""#,
         )?;
-        let count: U256 = task::block_on(eth_api.get_uncle_count_by_block_hash(hash))?.try_into().unwrap();
+        let count: U256 = task::block_on(eth_api.get_uncle_count_by_block_hash(hash))?
+            .try_into()
+            .unwrap();
         assert!(count > (0).into());
         Ok(())
     }
@@ -973,7 +958,9 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let number = BlockNumber::Number((56160).into());
-        let count: U256 = task::block_on(eth_api.get_uncle_count_by_block_number(number))?.try_into().unwrap();
+        let count: U256 = task::block_on(eth_api.get_uncle_count_by_block_number(number))?
+            .try_into()
+            .unwrap();
         assert!(count > (0).into());
         Ok(())
     }
@@ -981,27 +968,23 @@ mod tests {
     #[test]
     fn test_eth_api_send_transaction() -> In3Result<()> {
         let responses = vec![
-        (
-            "eth_estimateGas",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0x96c0"}]"#,
-        ),
-        (
-            "eth_sendRawTransaction",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,
-        ),
-        (
-            "eth_gasPrice",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0x9184e72a000"}]"#,
-        ),
-        (
-            "eth_getTransactionCount",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,
-        ),
+            (
+                "eth_estimateGas",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x96c0"}]"#,
+            ),
+            (
+                "eth_sendRawTransaction",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,
+            ),
+            (
+                "eth_gasPrice",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x9184e72a000"}]"#,
+            ),
+            (
+                "eth_getTransactionCount",
+                r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,
+            ),
         ];
-        let responses = vec![(
-            "eth_blockNumber",
-            r#"[{"jsonrpc":"2.0","id":1,"result":"0x96bacd"}]"#,
-        )];
         let transport: Box<dyn Transport> = Box::new(MockTransport {
             responses: responses,
         });
@@ -1035,12 +1018,10 @@ mod tests {
 
     #[test]
     fn test_eth_api_send_raw_transaction() -> In3Result<()> {
-        let responses = vec![
-        (
+        let responses = vec![(
             "eth_sendRawTransaction",
             r#"[{"jsonrpc":"2.0","id":1,"result":"0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"}]"#,
-        )
-        ];
+        )];
         let transport: Box<dyn Transport> = Box::new(MockTransport {
             responses: responses,
         });
@@ -1049,13 +1030,12 @@ mod tests {
         eth_api
             .client()
             .set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
-        
+
         let data = "f8da098609184e72a0008296c094f99dbd3cfc292b11f74deea9fa730825ee0b56f2849184e72ab87000ff86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affff2ea0936324cf235541114275bb72b5acfb5a5c1f6f6e7f426c94806ff4093539bfaaa010a7482378b19ee0930a77c14b18c5664b3aa6c3ebc7420954d81263625d6d6a";
-        let rawbytes:Bytes = FromHex::from_hex(&data[0..]).unwrap().into();
+        let rawbytes: Bytes = FromHex::from_hex(&data[0..]).unwrap().into();
 
         let hash: Hash = task::block_on(eth_api.send_raw_transaction(rawbytes)).unwrap();
         println!("Hash => {:?}", hash);
         Ok(())
     }
-
 }

@@ -38,7 +38,6 @@ pub mod chain {
     pub const LOCAL: u32 = 0xffff;
 }
 
-
 struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
     #[allow(dead_code)]
@@ -210,7 +209,6 @@ impl Drop for Ctx {
         }
     }
 }
-
 
 /// Client struct
 pub struct Client {
@@ -416,7 +414,8 @@ impl Client {
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
-            #[cfg(feature = "blocking")] {
+            #[cfg(feature = "blocking")]
+            {
                 (*c.ptr).transport = Some(Client::in3_rust_transport);
             }
             c

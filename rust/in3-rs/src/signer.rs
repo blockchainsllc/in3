@@ -3,7 +3,7 @@ use std::str;
 
 use libc::c_char;
 use rustc_hex::FromHex;
-use secp256k1::{Message, SecretKey, sign};
+use secp256k1::{sign, Message, SecretKey};
 use sha3::{Digest, Keccak256Full};
 
 use crate::traits::Signer;
