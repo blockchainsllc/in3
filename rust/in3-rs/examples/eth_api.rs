@@ -39,21 +39,32 @@ fn test_eth_api_get_filter_changes() -> In3Result<()> {
     let _ = client.configure(config);
     let mut eth_api = Api::new(client);
     let jopts = serde_json::json!({
-        "fromBlock": "0x10211823",
+        "fromBlock": "0x10217725",
         "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
         });
     
     // let fid = task::block_on(eth_api.new_filter(jopts))?;
     let fid:U256 = (0).into();
-    let ret:FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
-    println!("{:?}", ret);
+    // let ret:FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
+    // println!("{:?}", ret);
+
+    // let logs: Vec<Log> = task::block_on(eth_api.get_logs(jopts))?;
+    // println!("{:?}", logs);
+
+    let logs: Vec<Log> = task::block_on(eth_api.get_logs(serde_json::json!({
+        "blockHash": "0x468f88ed8b40d940528552f093a11e4eb05991c787608139c931b0e9782ec5af",
+        "topics": ["0xa61b5dec2abee862ab0841952bfbc161b99ad8c14738afa8ed8d5c522cd03946"]
+        })))?;
+        println!("Logs => {:?}", logs);
     assert!(true);
     Ok(())
      
 }
 fn main() -> In3Result<()> {
-    test_eth_api_get_filter_changes()
+    // test_eth_api_get_filter_changes()
+    examples()
 }
+
 fn examples() -> In3Result<()> {
     // configure client and API
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
