@@ -38,14 +38,15 @@ fn test_eth_api_get_filter_changes() -> In3Result<()> {
     let mut client = Client::new(chain::MAINNET);
     let _ = client.configure(config);
     let mut eth_api = Api::new(client);
-    let jopts = serde_json::json!([{
-        "fromBlock": "0x84cf51",
-        "address":"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455",
-        "topics": ["0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f"]
-        }]);
-    let fid = task::block_on(eth_api.new_filter(jopts))?;
-    // let ret:FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
-    // println!("{:?}", ret);
+    let jopts = serde_json::json!({
+        "fromBlock": "0x10211823",
+        "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
+        });
+    
+    // let fid = task::block_on(eth_api.new_filter(jopts))?;
+    let fid:U256 = (0).into();
+    let ret:FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
+    println!("{:?}", ret);
     assert!(true);
     Ok(())
      

@@ -804,8 +804,8 @@ mod tests {
         let responses = vec![
             ("eth_getLogs", r#"[{"jsonrpc":"2.0","id":1,"result":""}]"#),
             (
-                "eth_blockNumber",
-                r#"[{"jsonrpc":"2.0","id":1,"result":"0x84cf55"}]"#,
+                "eth_newFilter",
+                r#"{"jsonrpc":"2.0","result":"0x0","id":73}"#
             ),
         ];
         let transport: Box<dyn Transport> = Box::new(MockTransport {
@@ -813,9 +813,8 @@ mod tests {
         });
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let jopts = serde_json::json!({
-        "fromBlock": "0x84cf51",
-        "address":"0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455",
-        "topics": ["0xca6abbe9d7f11422cb6ca7629fbf6fe9efb1c621f71ce8f02b9f2a230097404f"]
+        "fromBlock": "0x10211823",
+        "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
         });
         let fid = task::block_on(eth_api.new_filter(jopts))?;
         let ret: FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
