@@ -53,8 +53,9 @@ where
     println!("RESPONSE: {:?}", resp_str.to_string());
     let resp: Vec<Response> = serde_json::from_str(resp_str.as_str())?;
     println!("RESPONSE: {:?}", resp);
-    let resp = resp.first().unwrap();
+    let resp_ = resp.first().unwrap();
+    // let parsed = resp_.to_result()?;
     Ok(serde_json::from_str(
-        resp.to_result()?.to_string().as_str(),
+        resp_.to_result()?.to_string().as_str(),
     )?)
 }

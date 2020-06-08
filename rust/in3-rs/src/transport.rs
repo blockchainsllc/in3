@@ -20,8 +20,6 @@ async fn http_async(
     Ok(res)
 }
 
-
-
 /// Mock transport for use in json based test.
 ///
 /// Read the contents of Mock response and request from a json file 
@@ -31,31 +29,36 @@ async fn http_async(
 pub struct MockJsonTransport<'a> {
     pub method: &'a str,
 }
-
+const MOCK_DIR: &'static str = "../../c/test/testdata/mock/";
+// const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
 impl MockJsonTransport<'_>{
-    pub fn read_mock<P: AsRef<Path>>(&mut self, path: P) -> Result<serde_json::Value, Box<dyn Error>> {
+    /// Read file from path
+    ///
+    /// Return serde:json Value or Error if file not found
+    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<serde_json::Value, Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         let u = serde_json::from_reader(reader)?;
         Ok(u)
     }
+    /// Helper for getting env vars
     pub fn env_var(&mut self, var: &str) -> String {
         env::var(var).expect(&format!("Environment variable {} is not set", var))
     }
-    
+    /// Get testdata path from in3c project
     pub fn prepare_file_path(&mut self, data: String) -> String {
         let mut relative_path = PathBuf::from(self.env_var("CARGO_MANIFEST_DIR"));
-        relative_path.push("../../c/test/testdata/mock/");
+        relative_path.push(MOCK_DIR);
         let mut full_path = relative_path.to_str().unwrap().to_string();
         let tmp = format!("{}.json", data);
         full_path.push_str(&tmp);
         println!("{:?}", full_path);
         full_path
     }
-    
+    /// Read and parse json from test data path
     pub fn read_json(&mut self, data: String) -> String {
         let full_path = self.prepare_file_path(data);
-        let value = self.read_mock(full_path).unwrap();
+        let value = self.read_file(full_path).unwrap();
         let response = value["response"].to_string();
         response
     }
@@ -63,13 +66,13 @@ impl MockJsonTransport<'_>{
 
 #[async_trait]
 impl Transport for MockJsonTransport<'_> {
-    
-   
-
-
-    async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
+    /// Async fetch implementation
+    ///
+    /// Read responses from json 
+    async fn fetch(&mut self, request_: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = self.read_json(String::from(self.method));
         // let request: serde_json::Value = serde_json::from_str(request).unwrap();
+        println!("{:?}", response);
         vec![Ok(response.to_string())]
     }
 
@@ -132,9 +135,9 @@ impl Transport for HttpTransport {
     async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
-            // println!("{:?} {:?}", url, request);
+            println!("{:?} {:?}", url, request);
             let res = http_async(url, request).await;
-            // println!("{:?}", res);
+            println!("{:?}", res);
             match res {
                 Err(err) => responses.push(Err(format!("Transport error: {:?}", err))),
                 Ok(res) => responses.push(Ok(res)),
@@ -147,7 +150,9 @@ impl Transport for HttpTransport {
     fn fetch_blocking(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
+            println!("{:?} {:?}", url, request);
             let res = async_std::task::block_on(http_async(url, request));
+            println!("{:?}", res);
             match res {
                 Err(_) => responses.push(Err("Transport error".to_string())),
                 Ok(res) => responses.push(Ok(res)),
@@ -159,17 +164,10 @@ impl Transport for HttpTransport {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryInto;
-
-    use async_std::task;
-
-    use crate::eth1::*;
-    use crate::types::Bytes;
-    use crate::json_rpc::*;
-    use rustc_hex::FromHex;
-
-    use ethereum_types::{Address, U256};
-
+    
+    
+    use crate::json_rpc::Response;
+    use ethereum_types::{U256};
     use crate::prelude::*;
 
     use super::*;
@@ -183,9 +181,19 @@ mod tests {
         let response = transport.read_json(method).to_string();
         let resp: Vec<Response> = serde_json::from_str(&response)?;
         let result = resp.first().unwrap();
-        let parsed = result.to_result()?;
-        println!("{:?}", parsed);
-        assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
+        // let parsed = result.to_result()?;
+        // println!("{}", parsed);
+        // let json_str:U256 = serde_json::from_str; TURBOFISH :) 
+        let json_str = serde_json::from_str::<U256>(
+            result.to_result()?.to_string().as_str(),
+        )?;
+        // let json_str:Value = serde_json::from_str(
+        //     parsed.to_string().as_str(),
+        // ).unwrap();
+        // let json_s = parsed.to_string().as_str();
+        // let json_str = serde_json::from_str(json_s)?;
+        println!("{:?}", json_str);
+        // assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
         Ok(())
     }
 
