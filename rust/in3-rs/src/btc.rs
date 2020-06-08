@@ -1,10 +1,11 @@
 //! Bitcoin JSON RPC client API.
 use core::convert;
 use std::convert::TryInto;
+use std::ffi::CString;
 
 use ethereum_types::U256;
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::error::In3Result;
 use crate::eth1::Hash;
@@ -121,7 +122,6 @@ pub struct Api {
     client: Box<dyn ClientTrait>,
 }
 
-
 impl ApiTrait for Api {
     fn new(client: Box<dyn ClientTrait>) -> Self {
         Api { client }
@@ -136,10 +136,21 @@ impl Api {
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap();
-        Ok(rpc::<BlockHeaderSerdeable>(self.client(), Request {
+        let header: Value = rpc(self.client(), Request {
             method: "getblockheader",
             params: json!([hash_str.trim_start_matches("0x"), true]),
-        }).await?.into())
+        }).await?;
+        let data = unsafe {
+            let mut data = [0u8; 80];
+            let js = CString::new(header.to_string()).expect("CString::new failed");
+            let j_data = in3_sys::parse_json(js.as_ptr());
+            let _ = in3_sys::btc_serialize_block_header((*j_data).result, data.as_mut_ptr());
+            in3_sys::json_free(j_data);
+            data
+        };
+        let mut header: BlockHeader = serde_json::from_str::<BlockHeaderSerdeable>(header.to_string().as_str())?.into();
+        header.data = data;
+        Ok(header)
     }
 }
 
