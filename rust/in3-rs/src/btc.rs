@@ -47,7 +47,6 @@ pub struct Transaction {
     blocktime: u32,
 }
 
-#[derive(Debug)]
 pub struct BlockHeader {
     hash: Hash,
     confirmations: u32,
@@ -85,7 +84,7 @@ impl convert::From<BlockHeaderSerdeable> for BlockHeader {
 }
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 struct BlockHeaderSerdeable {
     hash: Bytes,
     confirmations: u32,
@@ -105,14 +104,13 @@ struct BlockHeaderSerdeable {
 }
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(untagged)]
 pub enum BlockTransactions {
     Hashes(Vec<Hash>),
     Transactions(Vec<Transaction>),
 }
 
-#[derive(Debug)]
 pub struct Block {
     header: BlockHeader,
     transactions: BlockTransactions,
