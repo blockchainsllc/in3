@@ -548,6 +548,7 @@ mod tests {
 
     use crate::eth1::*;
     use crate::types::Bytes;
+    use crate::json_rpc::*;
     use rustc_hex::FromHex;
 
     use ethereum_types::{Address, U256};
@@ -564,6 +565,22 @@ mod tests {
         api
     }
     #[test]
+    fn test_json() -> In3Result<()> {
+        let mut transport =  MockJsonTransport{
+            method: "eth_getTransactionCount"
+        };
+        //Make use of static string literals conversion for mock transport.
+        let method = String::from(transport.method);
+        let response = transport.read_json(method).to_string();
+        let resp: Vec<Response> = serde_json::from_str(&response)?;
+        let result = resp.first().unwrap();
+        let parsed = result.to_result()?;
+        println!("{:?}", parsed);
+        assert_eq!(parsed.to_string(), String::from("0x9"));
+        Ok(())
+    }
+
+    #[test]
     fn test_eth_api_block_number() -> In3Result<()> {
         //Make use of static string literals conversion for mock transport.
         let responses = vec![(
@@ -573,7 +590,7 @@ mod tests {
         let transport: Box<dyn Transport> = Box::new(MockTransport {
             responses: responses,
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let num: u64 = task::block_on(eth_api.block_number())?.try_into().unwrap();
         println!("{:?}", num);
@@ -584,9 +601,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_storage_at() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getStorageAt",
+            method: "eth_getStorageAt",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
             serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
@@ -603,9 +620,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_code() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getCode",
+            method: "eth_getCode",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
             serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#)?;
@@ -620,9 +637,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_balance() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getBalance",
+            method: "eth_getBalance",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
             serde_json::from_str(r#""0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2""#)?;
@@ -638,9 +655,9 @@ mod tests {
     #[test]
     fn test_eth_api_block_by_number() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getBlockByNumber",
+            method: "eth_getBlockByNumber",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let block: Block = task::block_on(
             eth_api.get_block_by_number(BlockNumber::Number((1692767).into()), true),
@@ -657,9 +674,9 @@ mod tests {
     #[test]
     fn test_eth_api_gas_price() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_gasPrice",
+            method: "eth_gasPrice",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let gas_price: u64 = task::block_on(eth_api.gas_price())?.try_into().unwrap();
         println!("Gas price is {:?}", gas_price);
@@ -670,9 +687,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_block_by_hash() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getBlockByHash",
+            method: "eth_getBlockByHash",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         // eth_getBlockByHash
         let hash: Hash = serde_json::from_str(
@@ -690,9 +707,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_logs() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getLogs",
+            method: "eth_getLogs",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         // eth_getLogs
         let logs: Vec<Log> = task::block_on(eth_api.get_logs(serde_json::json!({
@@ -706,9 +723,9 @@ mod tests {
     #[test]
     fn test_eth_api_call() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_call",
+            method: "eth_call",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}},"verification":"none"}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}},"verification":"none"}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let contract: Address =
             serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
@@ -733,7 +750,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_new_filter() -> In3Result<()> {
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let responses = vec![(
             "eth_newFilter",
             r#"{"jsonrpc":"2.0","result":"0x3","id":73}"#,
@@ -756,9 +773,9 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_filter_changes() -> In3Result<()> {
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getFilterChanges",
+            method: "eth_getFilterChanges",
         });
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let fid: U256 = (3).into();
@@ -771,9 +788,9 @@ mod tests {
     #[test]
     fn test_eth_api_chain_id() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_chainId",
+            method: "eth_chainId",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let ret: U256 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
         assert_eq!(ret, (1).into());
@@ -783,9 +800,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_block_transaction_count_by_hash() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getBlockTransactionCountByHash",
+            method: "eth_getBlockTransactionCountByHash",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let hash: Hash = serde_json::from_str(
             r#""0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d""#,
@@ -800,9 +817,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_block_transaction_count_by_number() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getBlockTransactionCountByNumber",
+            method: "eth_getBlockTransactionCountByNumber",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let number = BlockNumber::Number((1692767).into());
         let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_number(number))?
@@ -815,9 +832,9 @@ mod tests {
     #[test]
     fn test_eth_api_estimate_gas() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_estimateGas",
+            method: "eth_estimateGas",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let contract: Address =
             serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
@@ -838,9 +855,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_transaction_by_hash() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getTransactionByHash",
+            method: "eth_getTransactionByHash",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let hash: Hash = serde_json::from_str(
             r#""0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164""#,
@@ -860,9 +877,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_transaction_by_block_hash_and_index() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getTransactionByBlockHashAndIndex",
+            method: "eth_getTransactionByBlockHashAndIndex",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let hash: Hash = serde_json::from_str(
             r#""0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4""#,
@@ -883,9 +900,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_transaction_by_block_number_and_index() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getTransactionByBlockNumberAndIndex",
+            method: "eth_getTransactionByBlockNumberAndIndex",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let number = BlockNumber::Number((1723267).into());
         let tx: Transaction =
@@ -904,9 +921,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_transaction_count() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getTransactionCount",
+            method: "eth_getTransactionCount",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let number = BlockNumber::Number((1723267).into());
         let tx_count: U256 = task::block_on(eth_api.get_transaction_count(number))?
@@ -919,9 +936,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_uncle_by_block_number_and_index() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getUncleCountByBlockHash",
+            method: "eth_getUncleCountByBlockHash",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let number = BlockNumber::Number((56160).into());
         let block: Block =
@@ -936,9 +953,10 @@ mod tests {
     #[test]
     fn test_eth_api_get_uncle_count_by_block_hash() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getUncleCountByBlockHash",
+            method: "eth_getUncleCountByBlockHash",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let hash: Hash = serde_json::from_str(
             r#""0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845""#,
@@ -953,9 +971,9 @@ mod tests {
     #[test]
     fn test_eth_api_get_uncle_count_by_block_number() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            responses: "eth_getUncleCountByBlockNumber",
+            method: "eth_getUncleCountByBlockNumber",
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         let number = BlockNumber::Number((56160).into());
         let count: U256 = task::block_on(eth_api.get_uncle_count_by_block_number(number))?
@@ -988,7 +1006,7 @@ mod tests {
         let transport: Box<dyn Transport> = Box::new(MockTransport {
             responses: responses,
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         eth_api
             .client()
@@ -1025,7 +1043,7 @@ mod tests {
         let transport: Box<dyn Transport> = Box::new(MockTransport {
             responses: responses,
         });
-        let config = r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+        let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::GOERLI, config);
         eth_api
             .client()

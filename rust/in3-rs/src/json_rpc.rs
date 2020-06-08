@@ -48,8 +48,11 @@ where
     T: serde::de::DeserializeOwned,
 {
     let req_str = serde_json::to_string(&request)?;
+    println!("REQUEST: {:?}", req_str);
     let resp_str = client.rpc(req_str.as_str()).await?;
+    println!("RESPONSE: {:?}", resp_str.to_string());
     let resp: Vec<Response> = serde_json::from_str(resp_str.as_str())?;
+    println!("RESPONSE: {:?}", resp);
     let resp = resp.first().unwrap();
     Ok(serde_json::from_str(
         resp.to_result()?.to_string().as_str(),

@@ -20,44 +20,57 @@ async fn http_async(
     Ok(res)
 }
 
-fn read_mock<P: AsRef<Path>>(path: P) -> Result<serde_json::Value, Box<dyn Error>> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let u = serde_json::from_reader(reader)?;
-    Ok(u)
-}
-fn env_var(var: &str) -> String {
-    env::var(var).expect(&format!("Environment variable {} is not set", var))
-}
 
-fn prepare_file_path(data: String) -> String {
-    let mut relative_path = PathBuf::from(env_var("CARGO_MANIFEST_DIR"));
-    relative_path.push("../../c/test/testdata/mock/");
-    let mut full_path = relative_path.to_str().unwrap().to_string();
-    let tmp = format!("{}.json", data);
-    full_path.push_str(&tmp);
-    println!("{:?}", full_path);
-    full_path
-}
 
-fn read_json(data: String) -> String {
-    let full_path = prepare_file_path(data);
-    let value = read_mock(full_path).unwrap();
-    let response = value["response"].to_string();
-    response
-}
+/// Mock transport for use in json based test.
+///
+/// Read the contents of Mock response and request from a json file 
+/// 
+/// See examples/custom_transport.rs for usage.
 
 pub struct MockJsonTransport<'a> {
-    pub responses: &'a str,
+    pub method: &'a str,
+}
+
+impl MockJsonTransport<'_>{
+    pub fn read_mock<P: AsRef<Path>>(&mut self, path: P) -> Result<serde_json::Value, Box<dyn Error>> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let u = serde_json::from_reader(reader)?;
+        Ok(u)
+    }
+    pub fn env_var(&mut self, var: &str) -> String {
+        env::var(var).expect(&format!("Environment variable {} is not set", var))
+    }
+    
+    pub fn prepare_file_path(&mut self, data: String) -> String {
+        let mut relative_path = PathBuf::from(self.env_var("CARGO_MANIFEST_DIR"));
+        relative_path.push("../../c/test/testdata/mock/");
+        let mut full_path = relative_path.to_str().unwrap().to_string();
+        let tmp = format!("{}.json", data);
+        full_path.push_str(&tmp);
+        println!("{:?}", full_path);
+        full_path
+    }
+    
+    pub fn read_json(&mut self, data: String) -> String {
+        let full_path = self.prepare_file_path(data);
+        let value = self.read_mock(full_path).unwrap();
+        let response = value["response"].to_string();
+        response
+    }
 }
 
 #[async_trait]
 impl Transport for MockJsonTransport<'_> {
+    
+   
+
+
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
-        let response = read_json(String::from(self.responses));
-        let request: serde_json::Value = serde_json::from_str(request).unwrap();
-        println!("REQUEST: {:?}", request.to_string());
-        vec![Ok(response)]
+        let response = self.read_json(String::from(self.method));
+        // let request: serde_json::Value = serde_json::from_str(request).unwrap();
+        vec![Ok(response.to_string())]
     }
 
     #[cfg(feature = "blocking")]
