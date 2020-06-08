@@ -200,8 +200,8 @@ mod tests {
         let resp: Vec<Response> = serde_json::from_str(&response)?;
         let result = resp.first().unwrap();
         let parsed = result.to_result()?;
-        println!("{:?}", parsed);
-        assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
+        println!("{:?}", parsed["number"]);
+        assert_eq!(parsed["number"], String::from("0x17a7a4"));
         Ok(())
     }
 }
