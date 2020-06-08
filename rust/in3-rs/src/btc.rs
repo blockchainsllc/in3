@@ -61,7 +61,7 @@ pub struct BlockHeader {
     n_tx: u32,
     previous_hash: Hash,
     next_hash: Hash,
-    data: Bytes,
+    data: [u8; 80],
 }
 
 impl convert::From<BlockHeaderSerdeable> for BlockHeader {
@@ -79,7 +79,7 @@ impl convert::From<BlockHeaderSerdeable> for BlockHeader {
             n_tx: header.n_tx,
             previous_hash: Hash::from_slice(header.previous_hash.0.as_slice().into()),
             next_hash: Hash::from_slice(header.next_hash.0.as_slice().into()),
-            data: vec![].into(),
+            data: [0; 80],
         }
     }
 }
