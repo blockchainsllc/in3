@@ -26,12 +26,10 @@ async fn http_async(
 /// 
 /// See examples/custom_transport.rs for usage.
 
-pub struct MockJsonTransport<'a> {
-    pub method: &'a str,
-}
+pub struct MockJsonTransport;
 const MOCK_DIR: &'static str = "../../c/test/testdata/mock/";
 // const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
-impl MockJsonTransport<'_>{
+impl MockJsonTransport{
     /// Read file from path
     ///
     /// Return serde:json Value or Error if file not found
@@ -57,6 +55,7 @@ impl MockJsonTransport<'_>{
     }
     /// Read and parse json from test data path
     pub fn read_json(&mut self, data: String) -> String {
+        println!("{}",data);
         let full_path = self.prepare_file_path(data);
         let value = self.read_file(full_path).unwrap();
         let response = value["response"].to_string();
@@ -65,14 +64,15 @@ impl MockJsonTransport<'_>{
 }
 
 #[async_trait]
-impl Transport for MockJsonTransport<'_> {
+impl Transport for MockJsonTransport {
     /// Async fetch implementation
     ///
     /// Read responses from json 
     async fn fetch(&mut self, request_: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
-        let response = self.read_json(String::from(self.method));
-        // let request: serde_json::Value = serde_json::from_str(request).unwrap();
-        println!("{:?}", response);
+        let request: serde_json::Value = serde_json::from_str(request_).unwrap();
+        let method_raw = serde_json::to_string(&request[0]["method"]).unwrap();
+        let method = &method_raw[1..method_raw.len()-1];
+        let response = self.read_json(String::from(method));
         vec![Ok(response.to_string())]
     }
 
@@ -173,11 +173,9 @@ mod tests {
     use super::*;
     #[test]
     fn test_json_tx_count() -> In3Result<()> {
-        let mut transport =  MockJsonTransport{
-            method: "eth_getTransactionCount"
-        };
+        let mut transport =  MockJsonTransport{};
         //Make use of static string literals conversion for mock transport.
-        let method = String::from(transport.method);
+        let method = String::from("eth_getTransactionCount");
         let response = transport.read_json(method).to_string();
         let resp: Vec<Response> = serde_json::from_str(&response)?;
         let result = resp.first().unwrap();
@@ -199,11 +197,9 @@ mod tests {
 
     #[test]
     fn test_json_blk_by_hash() -> In3Result<()> {
-        let mut transport =  MockJsonTransport{
-            method: "eth_getBlockByHash"
-        };
+        let mut transport =  MockJsonTransport{};
         //Make use of static string literals conversion for mock transport.
-        let method = String::from(transport.method);
+        let method = String::from("eth_getBlockByHash");
         let response = transport.read_json(method).to_string();
         let resp: Vec<Response> = serde_json::from_str(&response)?;
         let result = resp.first().unwrap();

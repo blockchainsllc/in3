@@ -585,9 +585,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_storage_at() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getStorageAt",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
@@ -604,9 +602,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_code() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getCode",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
@@ -621,9 +617,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_balance() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getBalance",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
@@ -639,9 +633,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_block_by_number() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getBlockByNumber",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let block: Block = task::block_on(
@@ -658,9 +650,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_gas_price() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_gasPrice",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let gas_price: u64 = task::block_on(eth_api.gas_price())?.try_into().unwrap();
@@ -671,9 +661,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_block_by_hash() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getBlockByHash",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         // eth_getBlockByHash
@@ -711,9 +699,7 @@ mod tests {
     //FIX: empty response
     #[test]
     fn test_eth_api_call() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_call",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}},"verification":"none"}"#;
         let mut client = Client::new(chain::MAINNET);
         let _ = client.configure(config);
@@ -765,9 +751,7 @@ mod tests {
     #[test]
     fn test_eth_api_get_filter_changes() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getFilterChanges",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let fid: U256 = (3).into();
         let ret: FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
@@ -778,9 +762,7 @@ mod tests {
     //FIX: DataInvalid
     #[test]
     fn test_eth_api_chain_id() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_chainId",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut client = Client::new(chain::MAINNET);
         let _ = client.configure(config);
@@ -793,9 +775,7 @@ mod tests {
     
     #[test]
     fn test_eth_api_get_block_transaction_count_by_hash() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getBlockTransactionCountByHash",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let hash: Hash = serde_json::from_str(
@@ -810,9 +790,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_block_transaction_count_by_number() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getBlockTransactionCountByNumber",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let number = BlockNumber::Number((1692767).into());
@@ -825,9 +803,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_estimate_gas() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_estimateGas",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let contract: Address =
@@ -848,9 +824,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_transaction_by_hash() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getTransactionByHash",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let hash: Hash = serde_json::from_str(
@@ -870,9 +844,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_transaction_by_block_hash_and_index() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getTransactionByBlockHashAndIndex",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let hash: Hash = serde_json::from_str(
@@ -893,9 +865,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_transaction_by_block_number_and_index() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getTransactionByBlockNumberAndIndex",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let number = BlockNumber::Number((1723267).into());
@@ -914,9 +884,7 @@ mod tests {
 
     #[test]
     fn test_eth_api_get_transaction_count() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getTransactionCount",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
@@ -930,9 +898,7 @@ mod tests {
     //FIX: empty response 
     #[test]
     fn test_eth_api_get_uncle_by_block_number_and_index() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getUncleByBlockNumberAndIndex",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         // let mut eth_api = init_api(transport, chain::MAINNET, config);
         let mut client = Client::new(chain::MAINNET);
@@ -950,9 +916,7 @@ mod tests {
     // FIx: empty response
     #[test]
     fn test_eth_api_get_uncle_count_by_block_hash() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getUncleCountByBlockHash",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET,config);
@@ -969,9 +933,7 @@ mod tests {
     // FIx: empty response
     #[test]
     fn test_eth_api_get_uncle_count_by_block_number() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-            method: "eth_getUncleCountByBlockNumber",
-        });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let number = BlockNumber::Number((56160).into());
