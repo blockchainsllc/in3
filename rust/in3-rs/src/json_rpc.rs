@@ -51,9 +51,10 @@ where
     println!("REQUEST: {:?}", req_str);
     let resp_str = client.rpc(req_str.as_str()).await?;
     println!("RESPONSE: {:?}", resp_str.to_string());
-    let resp: Vec<Response> = serde_json::from_str(resp_str.as_str())?;
-    println!("RESPONSE: {:?}", resp);
-    let resp_ = resp.first().unwrap();
+    // let resp: Vec<Response> = serde_json::from_str(resp_str.as_str())?;
+    let resp_: Response = serde_json::from_str(resp_str.as_str())?;
+    println!("RESPONSE_VECTOR: {:?}", resp_);
+    // let resp_ = resp.first().unwrap();
     // let parsed = resp_.to_result()?;
     Ok(serde_json::from_str(
         resp_.to_result()?.to_string().as_str(),

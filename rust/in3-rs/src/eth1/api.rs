@@ -764,12 +764,12 @@ mod tests {
     fn test_eth_api_chain_id() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-        let mut client = Client::new(chain::MAINNET);
-        let _ = client.configure(config);
-        let mut eth_api = Api::new(client);
-        // let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let ret: U256 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
-        assert_eq!(ret, (1).into());
+        // let mut client = Client::new(chain::MAINNET);
+        // let _ = client.configure(config);
+        // let mut eth_api = Api::new(client);
+        let mut eth_api = init_api(transport, chain::MAINNET, config);
+        let ret: u64 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
+        assert_eq!(ret, 1);
         Ok(())
     }
     

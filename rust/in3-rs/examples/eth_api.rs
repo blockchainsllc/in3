@@ -7,38 +7,48 @@ use in3::eth1::*;
 use in3::prelude::*;
 use in3::json_rpc::*;
 use in3::types::Bytes;
-use serde_json::Value;
-fn main2() -> In3Result<()> {
-    let mut transport =  MockJsonTransport{
-        method: "eth_getTransactionCount"
-    };
-    //Make use of static string literals conversion for mock transport.
-    let method = String::from(transport.method);
-    let response = transport.read_json(method).to_string();
-    let resp: Vec<Response> = serde_json::from_str(&response)?;
-    let result = resp.first().unwrap();
-    let parsed = result.to_result()?;
-    let json_str:Value = serde_json::from_str(
-        parsed.to_string().as_str(),
-    ).unwrap();
-    // let json_s = parsed.to_string().as_str();
-    // let json_str = serde_json::from_str(json_s)?;
-    println!("{:?}, {:?}", parsed, json_str);
-    // assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
+// use serde_json::Value;
+// fn main2() -> In3Result<()> {
+//     let mut transport =  MockJsonTransport{};
+//     //Make use of static string literals conversion for mock transport.
+//     let method = String::from(transport.method);
+//     let response = transport.read_json(method).to_string();
+//     let resp: Vec<Response> = serde_json::from_str(&response)?;
+//     let result = resp.first().unwrap();
+//     let parsed = result.to_result()?;
+//     let json_str:Value = serde_json::from_str(
+//         parsed.to_string().as_str(),
+//     ).unwrap();
+//     // let json_s = parsed.to_string().as_str();
+//     // let json_str = serde_json::from_str(json_s)?;
+//     println!("{:?}, {:?}", parsed, json_str);
+//     // assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
+//     Ok(())
+// }
+
+
+fn main() -> In3Result<()> {
+    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
+    let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+    let mut client = Client::new(chain::MAINNET);
+    let _ = client.configure(config);
+    // client.set_transport(transport);
+    let mut eth_api = Api::new(client);
+    // let mut eth_api = init_api(transport, chain::MAINNET, config);
+    let c_id = task::block_on(eth_api.chain_id());
+    println!("{:?}", c_id);
+    let ret: u64 = c_id?.try_into().unwrap();
     Ok(())
 }
 
 
-fn main() -> In3Result<()> {
-    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-        method: "eth_getUncleByBlockNumberAndIndex",
-    });
+fn main9() -> In3Result<()> {
+    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
+    let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
     let mut client = Client::new(chain::MAINNET);
+    let _ = client.configure(config);
     // client.set_transport(transport);
     let mut eth_api = Api::new(client);
-    eth_api
-        .client()
-        .configure(r#"{"autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#)?;
    
     // let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
     // let mut eth_api = init_api(transport, chain::MAINNET, config);
@@ -55,9 +65,7 @@ fn main() -> In3Result<()> {
 }
 
 fn main6() -> In3Result<()> {
-    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-        method: "eth_getUncleByBlockNumberAndIndex",
-    });
+    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
     let mut client = Client::new(chain::MAINNET);
     // client.set_transport(transport);
     let mut eth_api = Api::new(client);
