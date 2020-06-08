@@ -158,6 +158,7 @@ impl Api {
 #[cfg(test)]
 mod tests {
     use async_std::task;
+    use rustc_hex::FromHex;
 
     use crate::prelude::*;
 
@@ -209,6 +210,14 @@ mod tests {
         let header = task::block_on(
             api.get_blockheader(serde_json::from_str::<Hash>(r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#)?)
         ).unwrap();
-        Ok(assert_eq!(header.height, 631076))
+        assert_eq!(header.confirmations, 1979);
+        assert_eq!(header.height, 631076);
+        assert_eq!(header.version, 536870912);
+        assert_eq!(header.chainwork, serde_json::from_str::<U256>(r#""0x00000000000000000000000000000000000000000f9f574f8d39680a92ad1bdc""#)?);
+        assert_eq!(header.n_tx, 2339);
+        assert_eq!(header.next_hash, serde_json::from_str::<Hash>(r#""0x00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d""#)?);
+        // it is sufficient to verify data field as it contains all remaining fields serialized
+        assert_eq!(header.data.to_vec(), FromHex::from_hex("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae").unwrap());
+        Ok(())
     }
 }
