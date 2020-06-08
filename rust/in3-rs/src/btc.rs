@@ -152,6 +152,15 @@ impl Api {
         header.data = data;
         Ok(header)
     }
+
+    pub async fn get_transaction_bytes(&mut self, tx_id: Hash) -> In3Result<Bytes> {
+        let hash = json!(tx_id);
+        let hash_str = hash.as_str().unwrap();
+        rpc(self.client(), Request {
+            method: "getrawtransaction",
+            params: json!([hash_str.trim_start_matches("0x"), false]),
+        }).await
+    }
 }
 
 
@@ -218,6 +227,43 @@ mod tests {
         assert_eq!(header.next_hash, serde_json::from_str::<Hash>(r#""0x00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d""#)?);
         // it is sufficient to verify data field as it contains all remaining fields serialized
         assert_eq!(header.data.to_vec(), FromHex::from_hex("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae").unwrap());
+        Ok(())
+    }
+
+    #[test]
+    fn test_btc_get_transaction_bytes() -> In3Result<()> {
+        let mut api = Api::new(Client::new(chain::BTC));
+        api.client
+            .configure(r#"{"autoUpdateList":false,"nodes":{"0x99":{"needsUpdate":false}}}}"#)?;
+        api.client.set_transport(Box::new(MockTransport {
+            responses: vec![(
+                "getrawtransaction",
+                r#"[{
+                    "id": 1,
+                    "jsonrpc": "2.0",
+                    "result": "01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000",
+                    "in3": {
+                        "proof": {
+                            "block": "0x00000020d5e0dfa4c490770bfbc05ae1580fede609bb96526c6e0900000000000000000059dee7066dcb0e6cc5cc2f67318223711a3109e1ae40e1927274cbecdcc446614665c35e397a1117c9c59ca6",
+                            "txIndex": 2,
+                            "merkleProof": "0xf4936452dbc67e5e4d7f77bc2007124daa732fcdc657834febaba45e503af2c6ba50780c54289219f6116d4616dbc95edc2651d5007f404b4ec2e27fcbbe8507e0c0be5dc87a04d7bb4808db2d16012ca3a58b6bd7bfc3f2228dd7bb9c96903bc4a19f72c59ab1932d6e8b0e1d0028eedc4e06ef8776df8e9dc913e8014349bad47515c8a3bec6c4a8affa4c2685a52955c4ba9f60c59324252d44659eb46efb1c8572f8119f71f47a83e315cf0290c4277667cd949209d5559b5df80a81eda70aeef1ad99c6352d75ad78d61f5efe5580c26312cada1eecb1006d3e8c53ff9cc3247ceeb5e6d501588d3cd416f7b7d8314146cb923d9c2de8ed79673e7225604aba67715d01b1528fb41af89a3d86d3901c0c88a6b7f5aac4ea1261c8d6bd27dea5084622ce16f984404c8e3d986a26d8e66678be413971be11ba1ec0b14788e4d2f739558ac868f33094ba8b9039e9f237daa4c4c75be3e22c851f6157afa5d8bff222d3e8f4107a800e4c5457ca5dfcc7db003e81bd57226cb6a513657337",
+                            "cbtx": "0x010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff540375a0091b4d696e656420627920416e74506f6f6c33374e00510020e66931fafabe6d6d47270091cad6f755eca76a7e99ca8a188ded9acd9a77792a500f970861181d8c04000000000000002c60120009960400ffffffff0333c34a2c000000001976a91411dbe48cc6b617f9c6adaf4d9ed5f625b1c7cb5988ac0000000000000000266a24aa21a9ede80a44d4c35adf025f0b64410ec90738f75b29f0582e388132795a603f056d780000000000000000266a24b9e11b6db66f781caca1734d3713e4fc36f31d62e041911055808d2f00fe6feb7207b9c70120000000000000000000000000000000000000000000000000000000000000000000000000",
+                            "cbtxMerkleProof": "0xa5bafc1cc734e0ac3ae51c6e97f3baf69c379a7428f3493597501be74590ab67cbafa7b91b8f0a3c037cef13a587face342a6b054f5555bb98cf2ee055c97fb6e0c0be5dc87a04d7bb4808db2d16012ca3a58b6bd7bfc3f2228dd7bb9c96903bc4a19f72c59ab1932d6e8b0e1d0028eedc4e06ef8776df8e9dc913e8014349bad47515c8a3bec6c4a8affa4c2685a52955c4ba9f60c59324252d44659eb46efb1c8572f8119f71f47a83e315cf0290c4277667cd949209d5559b5df80a81eda70aeef1ad99c6352d75ad78d61f5efe5580c26312cada1eecb1006d3e8c53ff9cc3247ceeb5e6d501588d3cd416f7b7d8314146cb923d9c2de8ed79673e7225604aba67715d01b1528fb41af89a3d86d3901c0c88a6b7f5aac4ea1261c8d6bd27dea5084622ce16f984404c8e3d986a26d8e66678be413971be11ba1ec0b14788e4d2f739558ac868f33094ba8b9039e9f237daa4c4c75be3e22c851f6157afa5d8bff222d3e8f4107a800e4c5457ca5dfcc7db003e81bd57226cb6a513657337"
+                        },
+                        "lastNodeList": 2836487,
+                        "execTime": 867,
+                        "rpcTime": 183,
+                        "rpcCount": 1,
+                        "currentBlock": 2840357,
+                        "version": "2.1.0"
+                    }
+                }]"#,
+            )],
+        }));
+        let tx = task::block_on(
+            api.get_transaction_bytes(serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?)
+        ).unwrap();
+        assert_eq!(tx.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
         Ok(())
     }
 }
