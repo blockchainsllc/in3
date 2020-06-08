@@ -576,7 +576,7 @@ mod tests {
         let result = resp.first().unwrap();
         let parsed = result.to_result()?;
         println!("{:?}", parsed);
-        assert_eq!(parsed.to_string(), String::from("0x9"));
+        assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
         Ok(())
     }
 
