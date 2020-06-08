@@ -125,7 +125,7 @@
             "in3": {
                 "verification": "proof",
                 "version": "2.1.0",
-                "signers": [
+                "signerNodes": [
                     "0x45d45e6ff99e6c34a235d263965910298985fcfe",
                     "0x1fe2e9bf29aa1938859af64c413361227d04059a"
                 ]
