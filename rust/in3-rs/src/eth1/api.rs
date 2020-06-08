@@ -564,21 +564,6 @@ mod tests {
         let api = Api::new(client);
         api
     }
-    #[test]
-    fn test_json() -> In3Result<()> {
-        let mut transport =  MockJsonTransport{
-            method: "eth_getTransactionCount"
-        };
-        //Make use of static string literals conversion for mock transport.
-        let method = String::from(transport.method);
-        let response = transport.read_json(method).to_string();
-        let resp: Vec<Response> = serde_json::from_str(&response)?;
-        let result = resp.first().unwrap();
-        let parsed = result.to_result()?;
-        println!("{:?}", parsed);
-        assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
-        Ok(())
-    }
 
     #[test]
     fn test_eth_api_block_number() -> In3Result<()> {

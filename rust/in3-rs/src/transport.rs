@@ -156,3 +156,52 @@ impl Transport for HttpTransport {
         responses
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::convert::TryInto;
+
+    use async_std::task;
+
+    use crate::eth1::*;
+    use crate::types::Bytes;
+    use crate::json_rpc::*;
+    use rustc_hex::FromHex;
+
+    use ethereum_types::{Address, U256};
+
+    use crate::prelude::*;
+
+    use super::*;
+    #[test]
+    fn test_json_tx_count() -> In3Result<()> {
+        let mut transport =  MockJsonTransport{
+            method: "eth_getTransactionCount"
+        };
+        //Make use of static string literals conversion for mock transport.
+        let method = String::from(transport.method);
+        let response = transport.read_json(method).to_string();
+        let resp: Vec<Response> = serde_json::from_str(&response)?;
+        let result = resp.first().unwrap();
+        let parsed = result.to_result()?;
+        println!("{:?}", parsed);
+        assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
+        Ok(())
+    }
+
+    #[test]
+    fn test_json_blk_by_hash() -> In3Result<()> {
+        let mut transport =  MockJsonTransport{
+            method: "eth_getBlockByHash"
+        };
+        //Make use of static string literals conversion for mock transport.
+        let method = String::from(transport.method);
+        let response = transport.read_json(method).to_string();
+        let resp: Vec<Response> = serde_json::from_str(&response)?;
+        let result = resp.first().unwrap();
+        let parsed = result.to_result()?;
+        println!("{:?}", parsed);
+        assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
+        Ok(())
+    }
+}
