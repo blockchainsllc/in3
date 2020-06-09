@@ -170,4 +170,9 @@ bytes_t* btc_get_block_bytes(in3_t*    in3,      /**< the in3-instance*/
                              bytes32_t blockhash /**< the block hash */
 );
 
+btc_transaction_t*  btc_d_to_tx(d_token_t* t);
+btc_blockheader_t*  btc_d_to_blockheader(d_token_t* t);
+btc_block_txids_t*  btc_d_to_block_txids(d_token_t* t);
+btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t);
+
 #endif //IN3_BTC_API_H
