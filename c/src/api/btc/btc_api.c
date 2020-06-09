@@ -115,7 +115,7 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
   return IN3_OK;
 }
 
-static btc_transaction_t* to_tx(d_token_t* t) {
+btc_transaction_t* btc_d_to_tx(d_token_t* t) {
   if (t == NULL || d_type(t) == T_NULL) return NULL;
   btc_transaction_t* res = _malloc(size_tx(t));
   if (fill_tx(t, res, ((void*) res) + sizeof(btc_transaction_t))) {
@@ -145,14 +145,14 @@ static in3_ret_t fill_blockheader(d_token_t* t, btc_blockheader_t* res) {
   return IN3_OK;
 }
 
-static btc_blockheader_t* to_blockheader(d_token_t* t) {
+btc_blockheader_t* btc_d_to_blockheader(d_token_t* t) {
   if (t == NULL || d_type(t) == T_NULL) return NULL;
   btc_blockheader_t* res = _malloc(sizeof(btc_blockheader_t));
   fill_blockheader(t, res);
   return res;
 }
 
-static btc_block_txids_t* to_block_txids(d_token_t* t) {
+btc_block_txids_t* btc_d_to_block_txids(d_token_t* t) {
   if (t == NULL || d_type(t) == T_NULL) return NULL;
   d_token_t* tx = d_get(t, key("tx"));
   if (!tx) return NULL;
@@ -166,7 +166,7 @@ static btc_block_txids_t* to_block_txids(d_token_t* t) {
   return res;
 }
 
-static btc_block_txdata_t* to_block_txdata(d_token_t* t) {
+btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t) {
   if (t == NULL || d_type(t) == T_NULL) return NULL;
   d_token_t* tx = d_get(t, key("tx"));
   if (!tx) return NULL;
@@ -192,7 +192,7 @@ btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
   sb_add_chars(params, "\",true");
-  rpc_exec("getrawtransaction", btc_transaction_t*, to_tx(result));
+  rpc_exec("getrawtransaction", btc_transaction_t*, btc_d_to_tx(result));
   return NULL;
 }
 
@@ -201,7 +201,7 @@ btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",true");
-  rpc_exec("getblockheader", btc_blockheader_t*, to_blockheader(result));
+  rpc_exec("getblockheader", btc_blockheader_t*, btc_d_to_blockheader(result));
   return NULL;
 }
 
@@ -226,7 +226,7 @@ btc_block_txdata_t* btc_get_block_txdata(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",2");
-  rpc_exec("getblock", btc_block_txdata_t*, to_block_txdata(result));
+  rpc_exec("getblock", btc_block_txdata_t*, btc_d_to_block_txdata(result));
   return NULL;
 }
 btc_block_txids_t* btc_get_block_txids(in3_t* in3, bytes32_t blockhash) {
@@ -234,6 +234,6 @@ btc_block_txids_t* btc_get_block_txids(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",1");
-  rpc_exec("getblock", btc_block_txids_t*, to_block_txids(result));
+  rpc_exec("getblock", btc_block_txids_t*, btc_d_to_block_txids(result));
   return NULL;
 }
