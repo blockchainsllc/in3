@@ -48,6 +48,53 @@ pub struct Transaction {
     blocktime: u32,
 }
 
+impl From<*mut in3_sys::btc_transaction> for Transaction {
+    fn from(c_tx: *mut in3_sys::btc_transaction) -> Self {
+        unsafe {
+            let mut vin = vec![];
+            for i in 0..(*c_tx).vin_len {
+                let tx_in = (*c_tx).vin.offset(i as isize);
+                vin.push(TransactionInput {
+                    vout: (*tx_in).vout,
+                    txid: Hash::from_slice(&(*tx_in).txid),
+                    sequence: (*tx_in).sequence,
+                    script: (*tx_in).script.into(),
+                    txinwitness: (*tx_in).txinwitness.into(),
+                })
+            }
+
+            let mut vout = vec![];
+            for i in 0..(*c_tx).vout_len {
+                let tx_out = (*c_tx).vout.offset(i as isize);
+                vout.push(TransactionOutput {
+                    value: (*tx_out).value,
+                    n: (*tx_out).n,
+                    script_pubkey: (*tx_out).script_pubkey.into(),
+                })
+            }
+
+            // may panic!
+            Transaction {
+                in_active_chain: (*c_tx).in_active_chain,
+                data: (*c_tx).data.into(),
+                txid: Hash::from_slice(&(*c_tx).txid),
+                hash: Hash::from_slice(&(*c_tx).hash),
+                size: (*c_tx).size,
+                vsize: (*c_tx).vsize,
+                weight: (*c_tx).weight,
+                version: (*c_tx).version,
+                locktime: (*c_tx).locktime,
+                vin,
+                vout,
+                blockhash: Hash::from_slice(&(*c_tx).blockhash),
+                confirmations: (*c_tx).confirmations,
+                time: (*c_tx).time,
+                blocktime: (*c_tx).blocktime,
+            }
+        }
+    }
+}
+
 pub struct BlockHeader {
     hash: Hash,
     confirmations: u32,
@@ -168,54 +215,16 @@ impl Api {
             params: json!([hash_str.trim_start_matches("0x"), true]),
         }).await?;
 
-        unsafe {
+        let tx = unsafe {
             let js = CString::new(tx.to_string()).expect("CString::new failed");
             let j_data = in3_sys::parse_json(js.as_ptr());
             let c_tx = in3_sys::btc_d_to_tx((*j_data).result);
-
-            let mut vin = vec![];
-            for i in 0..(*c_tx).vin_len {
-                let tx_in = (*c_tx).vin.offset(i as isize);
-                vin.push(TransactionInput {
-                    vout: (*tx_in).vout,
-                    txid: Hash::from_slice(&(*tx_in).txid),
-                    sequence: (*tx_in).sequence,
-                    script: (*tx_in).script.into(),
-                    txinwitness: (*tx_in).txinwitness.into(),
-                })
-            }
-
-            let mut vout = vec![];
-            for i in 0..(*c_tx).vout_len {
-                let tx_out = (*c_tx).vout.offset(i as isize);
-                vout.push(TransactionOutput {
-                    value: (*tx_out).value,
-                    n: (*tx_out).n,
-                    script_pubkey: (*tx_out).script_pubkey.into(),
-                })
-            }
-
-            // may panic!
-            let tx = Transaction {
-                in_active_chain: (*c_tx).in_active_chain,
-                data: (*c_tx).data.into(),
-                txid: Hash::from_slice(&(*c_tx).txid),
-                hash: Hash::from_slice(&(*c_tx).hash),
-                size: (*c_tx).size,
-                vsize: (*c_tx).vsize,
-                weight: (*c_tx).weight,
-                version: (*c_tx).version,
-                locktime: (*c_tx).locktime,
-                vin,
-                vout,
-                blockhash: Hash::from_slice(&(*c_tx).blockhash),
-                confirmations: (*c_tx).confirmations,
-                time: (*c_tx).time,
-                blocktime: (*c_tx).blocktime,
-            };
+            let tx = c_tx.into();
             in3_sys::free(c_tx as *mut std::ffi::c_void);
-            Ok(tx)
-        }
+            in3_sys::json_free(j_data);
+            tx
+        };
+        Ok(tx)
     }
 }
 
