@@ -209,6 +209,24 @@ pub struct BlockTransactionIds {
     transactions: Vec<Hash>,
 }
 
+impl From<*const in3_sys::btc_block_txids> for BlockTransactionIds {
+    fn from(c_blk_ids: *const in3_sys::btc_block_txids) -> Self {
+        unsafe {
+            let mut txs: Vec<Hash> = vec![];
+            for i in 0..(*c_blk_ids).tx_len {
+                let tx = (*c_blk_ids).tx.offset(i as isize);
+                txs.push(Hash::from_slice(&*tx))
+            }
+
+            // may panic!
+            BlockTransactionIds {
+                header: (*c_blk_ids).header.into(),
+                transactions: txs,
+            }
+        }
+    }
+}
+
 
 pub struct Api {
     client: Box<dyn ClientTrait>,
@@ -286,17 +304,37 @@ impl Api {
     pub async fn get_block_transaction_data(&mut self, blockhash: Hash) -> In3Result<BlockTransactionData> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap();
-        let tx: Value = rpc(self.client(), Request {
+        let block: Value = rpc(self.client(), Request {
             method: "getblock",
             params: json!([hash_str.trim_start_matches("0x"), 2]),
         }).await?;
 
         let block_data = unsafe {
-            let js = CString::new(tx.to_string()).expect("CString::new failed");
+            let js = CString::new(block.to_string()).expect("CString::new failed");
             let j_data = in3_sys::parse_json(js.as_ptr());
             let c_blk_data = in3_sys::btc_d_to_block_txdata((*j_data).result);
             let block_data = (c_blk_data as *const in3_sys::btc_block_txdata).into();
             in3_sys::free(c_blk_data as *mut std::ffi::c_void);
+            in3_sys::json_free(j_data);
+            block_data
+        };
+        Ok(block_data)
+    }
+
+    pub async fn get_block_transaction_ids(&mut self, blockhash: Hash) -> In3Result<BlockTransactionIds> {
+        let hash = json!(blockhash);
+        let hash_str = hash.as_str().unwrap();
+        let block: Value = rpc(self.client(), Request {
+            method: "getblock",
+            params: json!([hash_str.trim_start_matches("0x"), 1]),
+        }).await?;
+
+        let block_data = unsafe {
+            let js = CString::new(block.to_string()).expect("CString::new failed");
+            let j_data = in3_sys::parse_json(js.as_ptr());
+            let c_blk_ids = in3_sys::btc_d_to_block_txids((*j_data).result);
+            let block_data = (c_blk_ids as *const in3_sys::btc_block_txids).into();
+            in3_sys::free(c_blk_ids as *mut std::ffi::c_void);
             in3_sys::json_free(j_data);
             block_data
         };
