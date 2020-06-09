@@ -624,6 +624,6 @@ int main() {
   // RUN_TEST(test_get_nonexistent_block);
   // RUN_TEST(test_wait_for_receipt);
   // RUN_TEST(test_send_tx);
-  // RUN_TEST(test_send_raw_tx);
+  RUN_TEST(test_send_raw_tx);
   return TESTS_END();
 }

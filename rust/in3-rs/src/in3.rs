@@ -152,7 +152,7 @@ impl Ctx {
                         };
                         transport.fetch(payload, &urls).await
                     };
-                    println!("{:?}", responses);
+                    // println!("{:?}", responses);
                     for (i, resp) in responses.iter().enumerate() {
                         match resp {
                             Err(err) => {

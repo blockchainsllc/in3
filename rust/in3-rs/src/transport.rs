@@ -50,15 +50,14 @@ impl MockJsonTransport{
         let mut full_path = relative_path.to_str().unwrap().to_string();
         let tmp = format!("{}.json", data);
         full_path.push_str(&tmp);
-        println!("{:?}", full_path);
+        // println!("{:?}", full_path);
         full_path
     }
     /// Read and parse json from test data path
     pub fn read_json(&mut self, data: String) -> String {
-        println!("{}",data);
         let full_path = self.prepare_file_path(data);
         let value = self.read_file(full_path).unwrap();
-        let response = value["response"][0].to_string();
+        let response = value["response"].to_string();
         response
     }
 }
@@ -70,7 +69,10 @@ impl Transport for MockJsonTransport {
     /// Read responses from json 
     async fn fetch(&mut self, request_: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let request: serde_json::Value = serde_json::from_str(request_).unwrap();
-        let method_ = request[0]["method"].as_str();
+        let mut method_ = request[0]["method"].as_str();
+        if method_.unwrap() == "eth_sendTransaction"{
+            method_= Some("eth_sendRawTransaction");         
+        }
         let response = self.read_json(String::from(method_.unwrap()));
         vec![Ok(response.to_string())]
     }
