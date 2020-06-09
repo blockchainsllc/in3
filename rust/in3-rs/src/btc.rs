@@ -111,6 +111,36 @@ pub struct BlockHeader {
     data: [u8; 80],
 }
 
+
+impl From<*const in3_sys::btc_blockheader> for BlockHeader {
+    fn from(c_header: *const in3_sys::btc_blockheader) -> Self {
+        unsafe {
+            // may panic!
+            BlockHeader {
+                hash: Hash::from_slice(&(*c_header).hash),
+                confirmations: (*c_header).confirmations,
+                height: (*c_header).height,
+                version: (*c_header).version,
+                merkleroot: Hash::from_slice(&(*c_header).merkleroot),
+                time: (*c_header).time,
+                nonce: (*c_header).time,
+                bits: (*c_header).bits.into(),
+                chainwork: (*c_header).chainwork.into(),
+                n_tx: (*c_header).n_tx,
+                previous_hash: Hash::from_slice(&(*c_header).previous_hash),
+                next_hash: Hash::from_slice(&(*c_header).next_hash),
+                data: (*c_header).data.into(),
+            }
+        }
+    }
+}
+
+impl From<in3_sys::btc_blockheader> for BlockHeader {
+    fn from(header: in3_sys::btc_blockheader) -> Self {
+        BlockHeader::from(&header as *const in3_sys::btc_blockheader)
+    }
+}
+
 impl convert::From<BlockHeaderSerdeable> for BlockHeader {
     fn from(header: BlockHeaderSerdeable) -> Self {
         BlockHeader {
@@ -151,15 +181,32 @@ struct BlockHeaderSerdeable {
     next_hash: Bytes,
 }
 
-
-pub enum BlockTransactions {
-    Hashes(Vec<Hash>),
-    Transactions(Vec<Transaction>),
+pub struct BlockTransactionData {
+    header: BlockHeader,
+    transactions: Vec<Transaction>,
 }
 
-pub struct Block {
+impl From<*const in3_sys::btc_block_txdata> for BlockTransactionData {
+    fn from(c_blk_data: *const in3_sys::btc_block_txdata) -> Self {
+        unsafe {
+            let mut txs: Vec<Transaction> = vec![];
+            for i in 0..(*c_blk_data).tx_len {
+                let tx = (*c_blk_data).tx.offset(i as isize) as *const in3_sys::btc_transaction;
+                txs.push(tx.into())
+            }
+
+            // may panic!
+            BlockTransactionData {
+                header: (*c_blk_data).header.into(),
+                transactions: txs,
+            }
+        }
+    }
+}
+
+pub struct BlockTransactionIds {
     header: BlockHeader,
-    transactions: BlockTransactions,
+    transactions: Vec<Hash>,
 }
 
 
@@ -234,6 +281,26 @@ impl Api {
             tx
         };
         Ok(tx)
+    }
+
+    pub async fn get_block_transaction_data(&mut self, blockhash: Hash) -> In3Result<BlockTransactionData> {
+        let hash = json!(blockhash);
+        let hash_str = hash.as_str().unwrap();
+        let tx: Value = rpc(self.client(), Request {
+            method: "getblock",
+            params: json!([hash_str.trim_start_matches("0x"), 2]),
+        }).await?;
+
+        let block_data = unsafe {
+            let js = CString::new(tx.to_string()).expect("CString::new failed");
+            let j_data = in3_sys::parse_json(js.as_ptr());
+            let c_blk_data = in3_sys::btc_d_to_block_txdata((*j_data).result);
+            let block_data = (c_blk_data as *const in3_sys::btc_block_txdata).into();
+            in3_sys::free(c_blk_data as *mut std::ffi::c_void);
+            in3_sys::json_free(j_data);
+            block_data
+        };
+        Ok(block_data)
     }
 }
 
