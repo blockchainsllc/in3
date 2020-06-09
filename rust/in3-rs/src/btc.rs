@@ -48,8 +48,8 @@ pub struct Transaction {
     blocktime: u32,
 }
 
-impl From<*mut in3_sys::btc_transaction> for Transaction {
-    fn from(c_tx: *mut in3_sys::btc_transaction) -> Self {
+impl From<*const in3_sys::btc_transaction> for Transaction {
+    fn from(c_tx: *const in3_sys::btc_transaction) -> Self {
         unsafe {
             let mut vin = vec![];
             for i in 0..(*c_tx).vin_len {
@@ -228,7 +228,7 @@ impl Api {
             let js = CString::new(tx.to_string()).expect("CString::new failed");
             let j_data = in3_sys::parse_json(js.as_ptr());
             let c_tx = in3_sys::btc_d_to_tx((*j_data).result);
-            let tx = c_tx.into();
+            let tx = (c_tx as *const in3_sys::btc_transaction).into();
             in3_sys::free(c_tx as *mut std::ffi::c_void);
             in3_sys::json_free(j_data);
             tx
