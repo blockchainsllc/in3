@@ -22,6 +22,13 @@ impl From<&[u8]> for Bytes {
     }
 }
 
+impl From<in3_sys::bytes> for Bytes {
+    fn from(bytes: in3_sys::bytes) -> Bytes {
+        let slice = unsafe { std::slice::from_raw_parts(bytes.data, bytes.len as usize) };
+        Bytes(slice.to_vec())
+    }
+}
+
 impl Serialize for Bytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
