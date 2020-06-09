@@ -13,42 +13,23 @@ use crate::json_rpc::{Request, rpc};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
+#[derive(Debug)]
 pub struct TransactionInput {
     vout: u32,
-    txid: U256,
+    txid: Hash,
     sequence: u32,
     script: Bytes,
     txinwitness: Bytes,
 }
 
-impl convert::From<TransactionInputSerdeable> for TransactionInput {
-    fn from(tx_ip: TransactionInputSerdeable) -> Self {
-        TransactionInput {
-            vout: tx_ip.vout,
-            txid: tx_ip.txid.0.as_slice().into(),
-            sequence: tx_ip.sequence,
-            script: tx_ip.script,
-            txinwitness: tx_ip.txinwitness,
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct TransactionInputSerdeable {
-    vout: u32,
-    txid: Bytes,
-    sequence: u32,
-    script: Bytes,
-    txinwitness: Bytes,
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct TransactionOutput {
     value: u64,
     n: u32,
     script_pubkey: Bytes,
 }
 
+#[derive(Debug)]
 pub struct Transaction {
     in_active_chain: bool,
     data: Bytes,
@@ -59,47 +40,9 @@ pub struct Transaction {
     weight: u32,
     version: u32,
     locktime: u32,
-    vin: Vec<TransactionInputSerdeable>,
+    vin: Vec<TransactionInput>,
     vout: Vec<TransactionOutput>,
     blockhash: Hash,
-    confirmations: u32,
-    time: u32,
-    blocktime: u32,
-}
-
-impl convert::From<TransactionSerdeable> for Transaction {
-    fn from(tx: TransactionSerdeable) -> Self {
-        Transaction {
-            in_active_chain: if tx.in_active_chain.is_some() { tx.in_active_chain.unwrap() } else { true },
-            blockhash: Hash::from_slice(tx.blockhash.0.as_slice()),
-            confirmations: tx.confirmations,
-            time: tx.time,
-            txid: Hash::from_slice(tx.txid.0.as_slice()),
-            hash: Hash::from_slice(tx.hash.0.as_slice()),
-            size: tx.size,
-            vsize: tx.vsize,
-            weight: tx.weight,
-            version: tx.version,
-            locktime: tx.locktime,
-            data: Bytes::default(),
-            vin: vec![],
-            vout: vec![],
-            blocktime: tx.blocktime,
-        }
-    }
-}
-
-#[derive(Deserialize)]
-pub struct TransactionSerdeable {
-    in_active_chain: Option<bool>,
-    txid: Bytes,
-    hash: Bytes,
-    size: u32,
-    vsize: u32,
-    weight: u32,
-    version: u32,
-    locktime: u32,
-    blockhash: Bytes,
     confirmations: u32,
     time: u32,
     blocktime: u32,
@@ -162,11 +105,9 @@ struct BlockHeaderSerdeable {
 }
 
 
-#[derive(Deserialize)]
-#[serde(untagged)]
 pub enum BlockTransactions {
     Hashes(Vec<Hash>),
-    Transactions(Vec<TransactionSerdeable>),
+    Transactions(Vec<Transaction>),
 }
 
 pub struct Block {
@@ -222,11 +163,59 @@ impl Api {
     pub async fn get_transaction(&mut self, tx_id: Hash) -> In3Result<Transaction> {
         let hash = json!(tx_id);
         let hash_str = hash.as_str().unwrap();
-        let tx = rpc::<TransactionSerdeable>(self.client(), Request {
+        let tx: Value = rpc(self.client(), Request {
             method: "getrawtransaction",
             params: json!([hash_str.trim_start_matches("0x"), true]),
-        }).await;
-        Ok(tx?.into())
+        }).await?;
+
+        unsafe {
+            let js = CString::new(tx.to_string()).expect("CString::new failed");
+            let j_data = in3_sys::parse_json(js.as_ptr());
+            let c_tx = in3_sys::btc_d_to_tx((*j_data).result);
+
+            let mut vin = vec![];
+            for i in 0..(*c_tx).vin_len {
+                let tx_in = (*c_tx).vin.offset(i as isize);
+                vin.push(TransactionInput {
+                    vout: (*tx_in).vout,
+                    txid: Hash::from_slice(&(*tx_in).txid),
+                    sequence: (*tx_in).sequence,
+                    script: (*tx_in).script.into(),
+                    txinwitness: (*tx_in).txinwitness.into(),
+                })
+            }
+
+            let mut vout = vec![];
+            for i in 0..(*c_tx).vout_len {
+                let tx_out = (*c_tx).vout.offset(i as isize);
+                vout.push(TransactionOutput {
+                    value: (*tx_out).value,
+                    n: (*tx_out).n,
+                    script_pubkey: (*tx_out).script_pubkey.into(),
+                })
+            }
+
+            // may panic!
+            let tx = Transaction {
+                in_active_chain: (*c_tx).in_active_chain,
+                data: (*c_tx).data.into(),
+                txid: Hash::from_slice(&(*c_tx).txid),
+                hash: Hash::from_slice(&(*c_tx).hash),
+                size: (*c_tx).size,
+                vsize: (*c_tx).vsize,
+                weight: (*c_tx).weight,
+                version: (*c_tx).version,
+                locktime: (*c_tx).locktime,
+                vin,
+                vout,
+                blockhash: Hash::from_slice(&(*c_tx).blockhash),
+                confirmations: (*c_tx).confirmations,
+                time: (*c_tx).time,
+                blocktime: (*c_tx).blocktime,
+            };
+            in3_sys::free(c_tx as *mut std::ffi::c_void);
+            Ok(tx)
+        }
     }
 }
 
@@ -411,8 +400,25 @@ mod tests {
         let tx = task::block_on(
             api.get_transaction(serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?)
         ).expect("invalid tx");
-        // assert_eq!(tx.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
+        assert_eq!(tx.version, 1);
+        assert_eq!(tx.size, 247);
+        assert_eq!(tx.vsize, 166);
+        assert_eq!(tx.weight, 661);
+        assert_eq!(tx.locktime, 0);
+        assert_eq!(tx.confirmations, 2890);
+        assert_eq!(tx.time, 1589863750);
+        assert_eq!(tx.blocktime, 1589863750);
         assert_eq!(tx.txid, serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?);
+        assert_eq!(tx.hash, serde_json::from_str::<Hash>(r#""0x4041e8162e2c1a9711b15fd2a2b0c7aae59fbc06a95667682f1271fab0393f69""#)?);
+        assert_eq!(tx.data.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
+        assert_eq!(tx.vin.len(), 1);
+        assert_eq!(tx.vin[0].script.0, FromHex::from_hex("16001430d71be06aa53fd845913f8613ed518d742d082a").unwrap());
+        assert_eq!(tx.vin[0].sequence, 4294967295);
+        assert_eq!(tx.vin[0].vout, 1);
+        assert_eq!(tx.vout.len(), 2);
+        assert_eq!(tx.vout[1].n, 1);
+        assert_eq!(tx.vout[0].script_pubkey.0, FromHex::from_hex("a914d129842dbe1ee73e69d14d54a8a62784877fb83e87").unwrap());
+        assert_eq!(tx.vout[0].value, 11000000);
         Ok(())
     }
 }
