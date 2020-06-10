@@ -10,39 +10,65 @@ use crate::json_rpc::{Request, rpc};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
+/// The transaction in type.
 #[derive(Debug)]
 pub struct TransactionInput {
-    ///
+    /// Transaction index of output
     pub vout: u32,
+    /// Transaction id of output
     pub txid: Hash,
+    /// Sequence
     pub sequence: u32,
+    /// Script
     pub script: Bytes,
+    /// Witnessdata (if used)
     pub txinwitness: Bytes,
 }
 
+
+/// The transaction out type.
 #[derive(Debug)]
 pub struct TransactionOutput {
+    /// Value of the transaction
     pub value: u64,
+    /// Index
     pub n: u32,
+    /// Script pubkey (or signature)
     pub script_pubkey: Bytes,
 }
 
+/// The transaction type.
 #[derive(Debug)]
 pub struct Transaction {
+    /// True if transaction is part of the active chain
     pub in_active_chain: bool,
+    /// Serialized transaction data
     pub data: Bytes,
+    /// Transaction id
     pub txid: Hash,
+    /// Transaction hash
     pub hash: Hash,
+    /// Raw size of transaction
     pub size: u32,
+    /// Virtual size of transaction
     pub vsize: u32,
+    /// Weight of transaction
     pub weight: u32,
+    /// Used version
     pub version: u32,
+    /// Locktime
     pub locktime: u32,
+    /// Vector of [`TransactionInput`](struct.TransactionInput.html) objects
     pub vin: Vec<TransactionInput>,
+    /// Vector of [`TransactionOutput`](struct.TransactionOutput.html) objects
     pub vout: Vec<TransactionOutput>,
+    /// Hash of block containing the transaction
     pub blockhash: Hash,
+    /// Number of confirmations or blocks mined on top of the containing block
     pub confirmations: u32,
+    /// Unix timestamp in seconds since 1970
     pub time: u32,
+    /// Unix timestamp in seconds since 1970
     pub blocktime: u32,
 }
 
@@ -71,7 +97,6 @@ impl From<*const in3_sys::btc_transaction> for Transaction {
                 })
             }
 
-            // may panic!
             Transaction {
                 in_active_chain: (*c_tx).in_active_chain,
                 data: (*c_tx).data.into(),
@@ -93,27 +118,40 @@ impl From<*const in3_sys::btc_transaction> for Transaction {
     }
 }
 
+/// The block header type.
 #[allow(dead_code)]
 pub struct BlockHeader {
+    /// Hash of blockheader
     pub hash: Hash,
+    /// Number of confirmations or blocks mined on top of the containing block
     pub confirmations: u32,
+    /// Block number
     pub height: u32,
+    /// Used version
     pub version: u32,
+    /// Merkle root of the trie of all transactions in the block
     pub merkleroot: Hash,
+    /// Unix timestamp in seconds since 1970
     pub time: u32,
+    /// nonce-field of the block
     pub nonce: u32,
+    /// bits (target) for the block
     pub bits: [u8; 4],
+    /// Total amount of work since genesis
     pub chainwork: U256,
+    /// Number of transactions in the block
     pub n_tx: u32,
+    /// Hash of parent blockheader
     pub previous_hash: Hash,
+    /// Hash of next blockheader
     pub next_hash: Hash,
+    /// Raw serialized header-bytes
     pub data: [u8; 80],
 }
 
 impl From<*const in3_sys::btc_blockheader> for BlockHeader {
     fn from(c_header: *const in3_sys::btc_blockheader) -> Self {
         unsafe {
-            // may panic!
             BlockHeader {
                 hash: Hash::from_slice(&(*c_header).hash),
                 confirmations: (*c_header).confirmations,
@@ -139,9 +177,12 @@ impl From<in3_sys::btc_blockheader> for BlockHeader {
     }
 }
 
+/// A block with all transactions including their full data.
 #[allow(dead_code)]
 pub struct BlockTransactionData {
+    /// The [`BlockHeader`](struct.BlockHeader.html) of this block
     pub header: BlockHeader,
+    /// Vector of [`Transaction`](struct.Transaction.html) objects
     pub transactions: Vec<Transaction>,
 }
 
@@ -154,7 +195,6 @@ impl From<*const in3_sys::btc_block_txdata> for BlockTransactionData {
                 txs.push(tx.into())
             }
 
-            // may panic!
             BlockTransactionData {
                 header: (*c_blk_data).header.into(),
                 transactions: txs,
@@ -163,9 +203,12 @@ impl From<*const in3_sys::btc_block_txdata> for BlockTransactionData {
     }
 }
 
+/// A block with all transaction ids.
 #[allow(dead_code)]
 pub struct BlockTransactionIds {
+    /// The [`BlockHeader`](struct.BlockHeader.html) of this block
     pub header: BlockHeader,
+    /// Vector of transaction ids
     pub transactions: Vec<Hash>,
 }
 
@@ -178,7 +221,6 @@ impl From<*const in3_sys::btc_block_txids> for BlockTransactionIds {
                 txs.push(Hash::from_slice(&*tx))
             }
 
-            // may panic!
             BlockTransactionIds {
                 header: (*c_blk_ids).header.into(),
                 transactions: txs,
@@ -188,21 +230,30 @@ impl From<*const in3_sys::btc_block_txids> for BlockTransactionIds {
 }
 
 
+/// Primary interface for the BTC JSON RPC API.
 pub struct Api {
     client: Box<dyn ClientTrait>,
 }
 
 impl ApiTrait for Api {
+    /// Creates an [`btc::Api`](../btc/struct.Api.html) instance by consuming a
+    /// [`Client`](../in3/struct.Client.html).
     fn new(client: Box<dyn ClientTrait>) -> Self {
         Api { client }
     }
 
+    /// Get a mutable reference to a [`btc::Api`](../btc/struct.Api.html)'s associated
+    /// [`Client`](../in3/struct.Client.html).
     fn client(&mut self) -> &mut Box<dyn ClientTrait> {
         &mut self.client
     }
 }
 
 impl Api {
+    /// Returns the blockheader for specified blockhash as bytes.
+    ///
+    /// # Arguments
+    /// * `blockhash` - block hash.
     pub async fn get_blockheader_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap();
@@ -212,6 +263,13 @@ impl Api {
         }).await
     }
 
+    /// Returns the blockheader for specified blockhash.
+    ///
+    /// # Arguments
+    /// * `blockhash` - block hash.
+    ///
+    /// # Panics
+    /// If response if not serializable to output type.
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap();
@@ -231,6 +289,10 @@ impl Api {
         Ok(header)
     }
 
+    /// Returns the transaction identified by specified transaction id as bytes.
+    ///
+    /// # Arguments
+    /// * `tx_id` - transaction id.
     pub async fn get_transaction_bytes(&mut self, tx_id: Hash) -> In3Result<Bytes> {
         let hash = json!(tx_id);
         let hash_str = hash.as_str().unwrap();
@@ -240,6 +302,13 @@ impl Api {
         }).await
     }
 
+    /// Returns the transaction identified by specified transaction id.
+    ///
+    /// # Arguments
+    /// * `tx_id` - transaction id.
+    ///
+    /// # Panics
+    /// If response if not serializable to output type.
     pub async fn get_transaction(&mut self, tx_id: Hash) -> In3Result<Transaction> {
         let hash = json!(tx_id);
         let hash_str = hash.as_str().unwrap();
@@ -260,6 +329,13 @@ impl Api {
         Ok(tx)
     }
 
+    /// Returns the block (including all transaction data) identified by specified transaction id.
+    ///
+    /// # Arguments
+    /// * `blockhash` - block hash.
+    ///
+    /// # Panics
+    /// If response if not serializable to output type.
     pub async fn get_block_transaction_data(&mut self, blockhash: Hash) -> In3Result<BlockTransactionData> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap();
@@ -280,6 +356,13 @@ impl Api {
         Ok(block_data)
     }
 
+    /// Returns the block (with all transaction ids) identified by specified transaction id.
+    ///
+    /// # Arguments
+    /// * `blockhash` - block hash.
+    ///
+    /// # Panics
+    /// If response if not serializable to output type.
     pub async fn get_block_transaction_ids(&mut self, blockhash: Hash) -> In3Result<BlockTransactionIds> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap();
