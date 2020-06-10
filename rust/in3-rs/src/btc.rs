@@ -12,37 +12,38 @@ use crate::types::Bytes;
 
 #[derive(Debug)]
 pub struct TransactionInput {
-    vout: u32,
-    txid: Hash,
-    sequence: u32,
-    script: Bytes,
-    txinwitness: Bytes,
+    ///
+    pub vout: u32,
+    pub txid: Hash,
+    pub sequence: u32,
+    pub script: Bytes,
+    pub txinwitness: Bytes,
 }
 
 #[derive(Debug)]
 pub struct TransactionOutput {
-    value: u64,
-    n: u32,
-    script_pubkey: Bytes,
+    pub value: u64,
+    pub n: u32,
+    pub script_pubkey: Bytes,
 }
 
 #[derive(Debug)]
 pub struct Transaction {
-    in_active_chain: bool,
-    data: Bytes,
-    txid: Hash,
-    hash: Hash,
-    size: u32,
-    vsize: u32,
-    weight: u32,
-    version: u32,
-    locktime: u32,
-    vin: Vec<TransactionInput>,
-    vout: Vec<TransactionOutput>,
-    blockhash: Hash,
-    confirmations: u32,
-    time: u32,
-    blocktime: u32,
+    pub in_active_chain: bool,
+    pub data: Bytes,
+    pub txid: Hash,
+    pub hash: Hash,
+    pub size: u32,
+    pub vsize: u32,
+    pub weight: u32,
+    pub version: u32,
+    pub locktime: u32,
+    pub vin: Vec<TransactionInput>,
+    pub vout: Vec<TransactionOutput>,
+    pub blockhash: Hash,
+    pub confirmations: u32,
+    pub time: u32,
+    pub blocktime: u32,
 }
 
 impl From<*const in3_sys::btc_transaction> for Transaction {
@@ -94,19 +95,19 @@ impl From<*const in3_sys::btc_transaction> for Transaction {
 
 #[allow(dead_code)]
 pub struct BlockHeader {
-    hash: Hash,
-    confirmations: u32,
-    height: u32,
-    version: u32,
-    merkleroot: Hash,
-    time: u32,
-    nonce: u32,
-    bits: [u8; 4],
-    chainwork: U256,
-    n_tx: u32,
-    previous_hash: Hash,
-    next_hash: Hash,
-    data: [u8; 80],
+    pub hash: Hash,
+    pub confirmations: u32,
+    pub height: u32,
+    pub version: u32,
+    pub merkleroot: Hash,
+    pub time: u32,
+    pub nonce: u32,
+    pub bits: [u8; 4],
+    pub chainwork: U256,
+    pub n_tx: u32,
+    pub previous_hash: Hash,
+    pub next_hash: Hash,
+    pub data: [u8; 80],
 }
 
 impl From<*const in3_sys::btc_blockheader> for BlockHeader {
@@ -140,8 +141,8 @@ impl From<in3_sys::btc_blockheader> for BlockHeader {
 
 #[allow(dead_code)]
 pub struct BlockTransactionData {
-    header: BlockHeader,
-    transactions: Vec<Transaction>,
+    pub header: BlockHeader,
+    pub transactions: Vec<Transaction>,
 }
 
 impl From<*const in3_sys::btc_block_txdata> for BlockTransactionData {
@@ -164,8 +165,8 @@ impl From<*const in3_sys::btc_block_txdata> for BlockTransactionData {
 
 #[allow(dead_code)]
 pub struct BlockTransactionIds {
-    header: BlockHeader,
-    transactions: Vec<Hash>,
+    pub header: BlockHeader,
+    pub transactions: Vec<Hash>,
 }
 
 impl From<*const in3_sys::btc_block_txids> for BlockTransactionIds {
