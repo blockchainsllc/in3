@@ -201,7 +201,7 @@ static void test_in3_client_rpc() {
   TEST_ASSERT_NOT_NULL(response);
   free(response);
 
-  free_in3(c);
+  in3_free(c);
 
   //  // Invalid JSON result
   //  add_response("eth_blockNumber", "[]", "\"\"0x84cf52\"", NULL, NULL);
