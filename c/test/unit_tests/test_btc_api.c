@@ -59,6 +59,7 @@ void test_btc_api_get_transaction() {
   bytes32_t txid;
   hex_to_bytes("83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1", -1, txid, 32);
 
+  // get it structured
   btc_transaction_t* data = btc_get_transaction(in3, txid);
   TEST_ASSERT_NOT_NULL_MESSAGE(data, api_last_error());
   TEST_ASSERT_EQUAL_UINT32(1, data->version);
@@ -82,6 +83,12 @@ void test_btc_api_get_transaction() {
   TEST_ASSERT_EQUAL_UINT64(11000000, data->vout->value);
   free(data);
 
+  // test bytes
+  bytes_t* bytes = btc_get_transaction_bytes(in3, txid);
+  TEST_ASSERT_NOT_NULL(bytes);
+  TEST_ASSERT_EQUAL_HEX_BYTES("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000", bytes->data, bytes->len, "wrong data");
+  b_free(bytes);
+
   in3_free(in3);
 }
 
@@ -91,6 +98,7 @@ void test_btc_api_get_blockheader() {
   bytes32_t hash;
   hex_to_bytes("00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b", -1, hash, 32);
 
+  // test structured data
   btc_blockheader_t* data = btc_get_blockheader(in3, hash);
 
   TEST_ASSERT_NOT_NULL(data);
@@ -110,6 +118,13 @@ void test_btc_api_get_blockheader() {
   TEST_ASSERT_EQUAL_HEX_BYTES("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae", data->data, 80, "wrong data");
 
   free(data);
+
+  // test bytes
+  bytes_t* bytes = btc_get_blockheader_bytes(in3, hash);
+  TEST_ASSERT_NOT_NULL(bytes);
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae", bytes->data, bytes->len, "wrong data");
+  b_free(bytes);
+
   in3_free(in3);
 }
 
@@ -141,6 +156,14 @@ void test_btc_api_get_block() {
   TEST_ASSERT_EQUAL_HEX_BYTES("ee14c60b365a068744496644c1b5643c4ecf27c6bdb2d9d7ad96df180f6aecc8", block->tx[1], 32, "wrong tx id");
 
   free(data);
+
+  // test bytes
+  bytes_t* bytes = btc_get_block_bytes(in3, hash);
+  TEST_ASSERT_NOT_NULL(bytes);
+  TEST_ASSERT_EQUAL_HEX_BYTES("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae", bytes->data, 80, "wrong data");
+  TEST_ASSERT_EQUAL(1460409, bytes->len);
+  b_free(bytes);
+
   in3_free(in3);
 }
 
