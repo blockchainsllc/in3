@@ -71,6 +71,7 @@ void test_bytes() {
   TEST_ASSERT_EQUAL_UINT8_ARRAY(data, clone.data, 32);
   // make sure it does not crash
   b_free(NULL);
+  _free(clone.data);
 }
 
 void test_float_parser() {
@@ -142,6 +143,7 @@ void test_json() {
   char* jdata = d_create_json(json->result);
   TEST_ASSERT_EQUAL_STRING("[true,null,{},\"0x616263\",\"abc\",\"0xa\"]", jdata);
   free(jdata);
+  json_free(json);
 }
 
 void test_parse_json() {
