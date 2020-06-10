@@ -140,8 +140,10 @@ static void test_in3_client_rpc() {
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
   c->max_attempts    = 1;
-  for (int i = 0; i < c->chains_length; i++)
+  for (int i = 0; i < c->chains_length; i++) {
+    _free(c->chains[i].nodelist_upd8_params);
     c->chains[i].nodelist_upd8_params = NULL;
+  }
 
   // Error response string
   add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
@@ -180,6 +182,8 @@ static void test_in3_client_rpc() {
   c->transport = NULL;
   TEST_ASSERT_EQUAL(IN3_ECONFIG, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
   c->transport = test_transport;
+  free(result);
+  free(error);
 
   // test in3_client_exec_req() with keep_in3 set to true
   // TODO: also test with use_binary set to true
@@ -196,6 +200,8 @@ static void test_in3_client_rpc() {
   response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
   TEST_ASSERT_NOT_NULL(response);
   free(response);
+
+  free_in3(c);
 
   //  // Invalid JSON result
   //  add_response("eth_blockNumber", "[]", "\"\"0x84cf52\"", NULL, NULL);

@@ -186,7 +186,7 @@ static void test_newchain() {
   c->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
   setup_test_cache(c);
 
-  in3_set_default_storage(c->cache);
+  in3_set_default_storage(c->cache); // the default cache will not be freed when freeing a in3-instance
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chains_length; i++) {
@@ -241,6 +241,8 @@ static void test_newchain() {
   TEST_ASSERT_EQUAL_INT32(6, chain2->nodelist_length);
   in3_client_clear_nodes(c2, c2->chain_id);
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
+
+  in3_set_default_storage(NULL);
   in3_free(c);
   c2->cache = NULL;
   in3_free(c2);
