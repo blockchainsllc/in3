@@ -111,7 +111,6 @@ pub struct BlockHeader {
     data: [u8; 80],
 }
 
-
 impl From<*const in3_sys::btc_blockheader> for BlockHeader {
     fn from(c_header: *const in3_sys::btc_blockheader) -> Self {
         unsafe {
@@ -139,46 +138,6 @@ impl From<in3_sys::btc_blockheader> for BlockHeader {
     fn from(header: in3_sys::btc_blockheader) -> Self {
         BlockHeader::from(&header as *const in3_sys::btc_blockheader)
     }
-}
-
-impl convert::From<BlockHeaderSerdeable> for BlockHeader {
-    fn from(header: BlockHeaderSerdeable) -> Self {
-        BlockHeader {
-            hash: Hash::from_slice(header.hash.0.as_slice()),
-            confirmations: header.confirmations,
-            height: header.height,
-            version: header.version,
-            merkleroot: Hash::from_slice(header.merkleroot.0.as_slice().into()),
-            time: header.time,
-            nonce: header.nonce,
-            bits: header.bits.0.as_slice().try_into().expect("incorrect bits len"),
-            chainwork: header.chainwork.0.as_slice().into(),
-            n_tx: header.n_tx,
-            previous_hash: Hash::from_slice(header.previous_hash.0.as_slice().into()),
-            next_hash: Hash::from_slice(header.next_hash.0.as_slice().into()),
-            data: [0; 80],
-        }
-    }
-}
-
-
-#[derive(Deserialize)]
-struct BlockHeaderSerdeable {
-    hash: Bytes,
-    confirmations: u32,
-    height: u32,
-    version: u32,
-    merkleroot: Bytes,
-    time: u32,
-    nonce: u32,
-    bits: Bytes,
-    chainwork: Bytes,
-    #[serde(rename = "nTx")]
-    n_tx: u32,
-    #[serde(rename = "previousblockhash")]
-    previous_hash: Bytes,
-    #[serde(rename = "nextblockhash")]
-    next_hash: Bytes,
 }
 
 pub struct BlockTransactionData {
@@ -259,16 +218,15 @@ impl Api {
             method: "getblockheader",
             params: json!([hash_str.trim_start_matches("0x"), true]),
         }).await?;
-        let data = unsafe {
-            let mut data = [0u8; 80];
+        let header = unsafe {
             let js = CString::new(header.to_string()).expect("CString::new failed");
             let j_data = in3_sys::parse_json(js.as_ptr());
-            let _ = in3_sys::btc_serialize_block_header((*j_data).result, data.as_mut_ptr());
+            let c_header = in3_sys::btc_d_to_blockheader((*j_data).result);
+            let header = (c_header as *const in3_sys::btc_blockheader).into();
+            in3_sys::free(c_header as *mut std::ffi::c_void);
             in3_sys::json_free(j_data);
-            data
+            header
         };
-        let mut header: BlockHeader = serde_json::from_str::<BlockHeaderSerdeable>(header.to_string().as_str())?.into();
-        header.data = data;
         Ok(header)
     }
 
