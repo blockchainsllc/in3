@@ -447,6 +447,7 @@ NONULL int parse_string(json_ctx_t* jp, d_token_t* item) {
       case 0: return -2;
       case '\'':
       case '"':
+        if (start[-1] != jp->c[-1]) continue;
         l = jp->c - start - 1;
         if (l > 1 && *start == '0' && start[1] == 'x' && *(start - 1) != '\'') {
           // this is a hex-value

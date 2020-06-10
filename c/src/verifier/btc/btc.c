@@ -57,7 +57,7 @@ static in3_ret_t btc_block_number(in3_vctx_t* vc, uint32_t* dst_block_number, d_
 
   // the coinbase tx has only one input
   if (tx_data.input_count != 1) return vc_err(vc, "vin count needs to be 1 for coinbase tx");
-  if (btc_parse_tx_in(tx_data.input.data, &tx_in) == NULL || *tx_in.script.data != 3) return vc_err(vc, "invalid coinbase signature");
+  if (btc_parse_tx_in(tx_data.input.data, &tx_in, tx_data.input.data + tx_data.input.len) == NULL || *tx_in.script.data != 3) return vc_err(vc, "invalid coinbase signature");
 
   *dst_block_number = ((uint32_t) tx_in.script.data[1]) | (((uint32_t) tx_in.script.data[2]) << 8) | (((uint32_t) tx_in.script.data[3]) << 16);
 
@@ -178,13 +178,15 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
     if (tmp.len == 4 && le_to_int(tmp.data) != (uint32_t) d_get_longk(vc->result, key("time"))) return vc_err(vc, "invalid time");
 
     // check vin
-    uint8_t*    p = tx_data.input.data;
+    uint8_t*    p   = tx_data.input.data;
+    uint8_t*    end = p + tx_data.input.len;
     btc_tx_in_t tx_in;
     list = d_get(vc->result, key("vin"));
     if (d_type(list) != T_ARRAY || d_len(list) != (int) tx_data.input_count) return vc_err(vc, "invalid vin");
 
     for (d_iterator_t iter = d_iter(list); iter.left; d_iter_next(&iter)) {
-      p = btc_parse_tx_in(p, &tx_in);
+      p = btc_parse_tx_in(p, &tx_in, end);
+      if (!p) return vc_err(vc, "invalid vin");
 
       // txid
       char* hex = d_get_stringk(iter.token, key("txid"));
@@ -201,7 +203,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
       if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
     }
 
-    p = tx_data.output.data;
+    p   = tx_data.output.data;
+    end = p + tx_data.output.len;
     btc_tx_out_t tx_out;
     int32_t      n = 0;
     list           = d_get(vc->result, key("vout"));
@@ -209,6 +212,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
 
     for (d_iterator_t iter = d_iter(list); iter.left; d_iter_next(&iter), n++) {
       p = btc_parse_tx_out(p, &tx_out);
+      if (p > end) return vc_err(vc, "invalid vout");
 
       // n
       if (d_get_intk(iter.token, key("n")) != n) return vc_err(vc, "invalid vout.n");

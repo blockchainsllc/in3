@@ -188,6 +188,13 @@ uint64_t current_ms();
   }
 
 /**
+ * executes the expression and expects value to equal val. 
+ * if not it will return IN3_EINVAL
+ */
+#define EXPECT_EQ(exp, val) \
+  if ((exp) != val) return IN3_EINVAL;
+
+/**
  * executes the expression and expects the return value to be a int indicating the error. 
  * the return value will be set to a existing variable (var).
  * if the return value is negative it will stop and return this value otherwise continue. 

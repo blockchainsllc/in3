@@ -44,7 +44,6 @@
 
 #include "../../core/client/client.h"
 #include "../../core/util/bytes.h"
-#include "../../verifier/btc/btc_types.h"
 
 /** the tx in */
 typedef struct btc_transaction_in {

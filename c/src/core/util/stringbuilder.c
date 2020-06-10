@@ -81,6 +81,31 @@ sb_t* sb_add_chars(sb_t* sb, const char* chars) {
   sb->data[sb->len] = 0;
   return sb;
 }
+
+sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars) {
+  int l       = strlen(chars);
+  int escapes = 0;
+  if (l == 0 || chars == NULL) return sb;
+  for (int i = 0; i < l; i++) {
+    if (chars[i] == '"') escapes++;
+  }
+  check_size(sb, l + escapes);
+  memcpy(sb->data + sb->len, chars, l);
+  if (escapes) {
+    escapes = 0;
+    for (int i = 0; i < l; i++) {
+      if (chars[i] == '"') {
+        sb->data[sb->len + i + escapes] = '\\';
+        memcpy(sb->data + sb->len + i + escapes + 1, chars + i, l - i);
+        escapes++;
+      }
+    }
+  }
+  sb->len += l + escapes;
+  sb->data[sb->len] = 0;
+  return sb;
+}
+
 sb_t* sb_add_char(sb_t* sb, char c) {
   check_size(sb, 1);
   sb->data[sb->len++] = c;
@@ -146,6 +171,16 @@ sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l) {
     case 8: l = sprintf(tmp, "0x%" PRIx64, (uint64_t) uint); break;
     default: return sb; /** Other types not supported */
   }
+  check_size(sb, l);
+  memcpy(sb->data + sb->len, tmp, l);
+  sb->len += l;
+  sb->data[sb->len] = 0;
+  return sb;
+}
+
+sb_t* sb_add_int(sb_t* sb, uint64_t val) {
+  char tmp[19]; // UINT64_MAX => 18446744073709551615 => 0xFFFFFFFFFFFFFFFF
+  int  l = sprintf(tmp, "%" PRId64, val);
   check_size(sb, l);
   memcpy(sb->data + sb->len, tmp, l);
   sb->len += l;

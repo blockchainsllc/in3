@@ -44,7 +44,6 @@
 
 #include "client.h"
 #include "bytes.h"
-#include "btc_types.h"
 
 /** the tx in */
 typedef struct btc_transaction_in {

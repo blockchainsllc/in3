@@ -40,6 +40,7 @@
 #endif
 
 #include "../../src/api/btc/btc_api.h"
+#include "../../src/api/utils/api_utils.h"
 #include "../../src/verifier/btc/btc.h"
 #include "../test_utils.h"
 #include "../util/transport.h"
@@ -59,7 +60,7 @@ void test_btc_api_get_transaction() {
   hex_to_bytes("83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1", -1, txid, 32);
 
   btc_transaction_t* data = btc_get_transaction(in3, txid);
-  TEST_ASSERT_NOT_NULL(data);
+  TEST_ASSERT_NOT_NULL_MESSAGE(data, api_last_error());
   TEST_ASSERT_EQUAL_UINT32(1, data->version);
   TEST_ASSERT_EQUAL_UINT32(247, data->size);
   TEST_ASSERT_EQUAL_UINT32(166, data->vsize);
@@ -91,6 +92,7 @@ void test_btc_api_get_blockheader() {
   hex_to_bytes("00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b", -1, hash, 32);
 
   btc_blockheader_t* data = btc_get_blockheader(in3, hash);
+
   TEST_ASSERT_NOT_NULL(data);
   TEST_ASSERT_EQUAL_UINT32(536870912, data->version);
   TEST_ASSERT_EQUAL_UINT32(15, data->confirmations);

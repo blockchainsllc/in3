@@ -683,6 +683,42 @@ in3_signer_t* in3_create_signer(
 );
 
 /**
+ * set the transport handler on the client.
+ */
+void in3_set_transport(
+    in3_t*             c,   /**< the incubed client */
+    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
+);
+
+/**
+ * getter to retrieve the payload from a in3_request_t struct
+ */
+char* in3_get_request_payload(
+    in3_request_t* request /**< request struct */
+);
+
+/**
+ * getter to retrieve the urls list from a in3_request_t struct
+ */
+char** in3_get_request_urls(
+    in3_request_t* request /**< request struct */
+);
+
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+int in3_get_request_urls_len(
+    in3_request_t* request /**< request struct */
+);
+
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+uint32_t in3_get_request_timeout(
+    in3_request_t* request /**< request struct */
+);
+
+/**
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.
  */
