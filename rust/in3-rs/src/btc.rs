@@ -1,10 +1,7 @@
 //! Bitcoin JSON RPC client API.
-use core::convert;
-use std::convert::TryInto;
 use std::ffi::CString;
 
 use ethereum_types::U256;
-use serde::Deserialize;
 use serde_json::{json, Value};
 
 use crate::error::In3Result;
@@ -95,6 +92,7 @@ impl From<*const in3_sys::btc_transaction> for Transaction {
     }
 }
 
+#[allow(dead_code)]
 pub struct BlockHeader {
     hash: Hash,
     confirmations: u32,
@@ -140,6 +138,7 @@ impl From<in3_sys::btc_blockheader> for BlockHeader {
     }
 }
 
+#[allow(dead_code)]
 pub struct BlockTransactionData {
     header: BlockHeader,
     transactions: Vec<Transaction>,
@@ -163,6 +162,7 @@ impl From<*const in3_sys::btc_block_txdata> for BlockTransactionData {
     }
 }
 
+#[allow(dead_code)]
 pub struct BlockTransactionIds {
     header: BlockHeader,
     transactions: Vec<Hash>,
