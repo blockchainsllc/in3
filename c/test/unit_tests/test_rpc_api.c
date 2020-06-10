@@ -274,7 +274,7 @@ static void test_in3_checksum_rpc() {
   TEST_ASSERT_EQUAL_STRING(ret_checksum, str_result);
   free(result);
   free(error);
-  _free(json);
+  json_free(json);
   in3_free(in3);
 }
 
