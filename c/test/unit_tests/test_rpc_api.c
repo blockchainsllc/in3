@@ -38,11 +38,11 @@
 #ifndef TEST
 #define DEBUG
 #endif
-
 #include "../../src/api/eth1/abi.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -51,6 +51,9 @@
 #include "../util/transport.h"
 #include <stdio.h>
 #include <unistd.h>
+#ifndef IN3_IMPORT_TEST
+#define IN3_IMPORT_TEST
+#endif
 
 #define err_string(msg) ("Error:" msg)
 
@@ -212,7 +215,7 @@ static void test_in3_client_rpc() {
   //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
 }
 
-IN3_IMPORT_TEST void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, json_ctx_t* spec);
+IN3_IMPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract);
 
 static void test_in3_client_chain() {
   // Leading zeros in registry id
@@ -221,6 +224,9 @@ static void test_in3_client_chain() {
   uint8_t reg_id[32];
   hex_to_bytes("0023d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", -1, reg_id, 32);
   TEST_ASSERT_EQUAL_MEMORY(chain.registry_id, reg_id, 32);
+  in3_nodelist_clear(&chain);
+  b_free(chain.contract);
+  _free(chain.nodelist_upd8_params);
 
   // Reregister chains with same chain id
   in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
@@ -268,6 +274,8 @@ static void test_in3_checksum_rpc() {
   TEST_ASSERT_EQUAL_STRING(ret_checksum, str_result);
   free(result);
   free(error);
+  _free(json);
+  in3_free(in3);
 }
 
 static void test_in3_client_context() {
