@@ -382,6 +382,19 @@ impl Api {
         };
         Ok(block_data)
     }
+
+    /// Returns the block for specified blockhash serialized as bytes.
+    ///
+    /// # Arguments
+    /// * `blockhash` - block hash.
+    pub async fn get_block_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
+        let hash = json!(blockhash);
+        let hash_str = hash.as_str().unwrap();
+        rpc(self.client(), Request {
+            method: "getblock",
+            params: json!([hash_str.trim_start_matches("0x"), false]),
+        }).await
+    }
 }
 
 
