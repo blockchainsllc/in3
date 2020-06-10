@@ -74,8 +74,10 @@ static void test_configure_request() {
   c->flags                = FLAGS_INCLUDE_CODE | FLAGS_BINARY | FLAGS_HTTP | FLAGS_AUTO_UPDATE_LIST;
   c->replace_latest_block = 6;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
-
+  for (int i = 0; i < c->chains_length; i++) {
+    _free(c->chains[i].nodelist_upd8_params);
+    c->chains[i].nodelist_upd8_params = NULL;
+  }
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
@@ -100,8 +102,10 @@ static void test_configure_signed_request() {
   in3_t* c = in3_for_chain(ETH_CHAIN_ID_LOCAL);
   TEST_ASSERT_NULL(in3_configure(c, "{\"key\":\"0x1234567890123456789012345678901234567890123456789012345678901234\"}"));
   c->flags = FLAGS_INCLUDE_CODE;
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
-
+  for (int i = 0; i < c->chains_length; i++) {
+    _free(c->chains[i].nodelist_upd8_params);
+    c->chains[i].nodelist_upd8_params = NULL;
+  }
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);

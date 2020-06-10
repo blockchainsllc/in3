@@ -106,6 +106,7 @@ static void test_prefix(void) {
   fread(log, sizeof(char), size, fp);
   TEST_ASSERT_EQUAL_STRING_LEN(log, prefix, strlen(prefix));
   fclose(fp);
+  _free(log);
 }
 
 /*
