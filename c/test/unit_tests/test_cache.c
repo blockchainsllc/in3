@@ -308,8 +308,6 @@ static void test_whitelist_cache() {
  * Main
  */
 int main() {
-  TEST_ASSERT_EQUAL(0, mem_stack_size());
-  memstack();
   in3_register_eth_nano();
   in3_log_set_udata_(NULL);
   in3_log_set_lock_(NULL);

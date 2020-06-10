@@ -116,39 +116,11 @@ void _free_(void* ptr) {
 
 #ifdef TEST
 
-typedef struct mem_p {
-  struct mem_p* next;
-  void*         ptr;
-  size_t        size;
-  int           ct;
-
-} mem_p_t;
-
-static mem_p_t* mem_tracker = NULL;
-static int      mem_count   = 0;
-static size_t   c_mem       = 0;
-static size_t   max_mem     = 0;
-static size_t   max_cnt     = 0;
-static int      track_count = -1;
+static int mem_count = 0;
 
 void* t_malloc(size_t size, char* file, const char* func, int line) {
-  void*    ptr = _malloc_(size, file, func, line);
-  mem_p_t* t   = _malloc_(sizeof(mem_p_t), file, func, line);
-  t->next      = mem_tracker;
-  t->ptr       = ptr;
-  t->size      = size;
-  t->ct        = ++mem_count;
-  t->next      = mem_tracker;
-  if (track_count == mem_count)
-    printf("Found allocated memory ( %zu bytes ) in %s : %s : %i\n", size, file, func, line);
-  mem_tracker = t;
-  c_mem += size;
-  if (max_mem < c_mem) {
-    max_mem = c_mem;
-    //    printf("new max allocated memory %zu bytes ( + %zu bytes ) in %s : %s : %i\n", c_mem, size, file, func, line);
-    max_cnt = mem_count;
-  }
-  return ptr;
+  mem_count++;
+  return _malloc_(size, file, func, line);
 }
 
 void* t_calloc(size_t n, size_t size, char* file, const char* func, int line) {
@@ -157,50 +129,13 @@ void* t_calloc(size_t n, size_t size, char* file, const char* func, int line) {
   return ptr;
 }
 
-int mem_stack_size() {
-  int      n = 0;
-  mem_p_t* t = mem_tracker;
-  while (t) {
-    n++;
-    t = t->next;
-  }
-  return n;
-}
-
-void memstack() {
-  printf("\n M-Stack ");
-  mem_p_t* t = mem_tracker;
-  while (t) {
-    printf("[%p %zu ] ", t->ptr, t->size);
-    t = t->next;
-  }
-  printf("\n");
-}
-
 void t_free(void* ptr, char* file, const char* func, int line) {
   UNUSED_VAR(file);
   UNUSED_VAR(func);
   UNUSED_VAR(line);
-  //  if (ptr == NULL)
-  //    printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
 
-  mem_p_t *t = mem_tracker, *prev = NULL;
-  while (t) {
-    if (ptr == t->ptr) {
-      c_mem -= t->size;
-      if (max_mem < c_mem) max_mem = c_mem;
-      _free_(ptr);
-      if (prev == NULL)
-        mem_tracker = t->next;
-      else
-        prev->next = t->next;
-
-      _free_(t);
-      return;
-    }
-    prev = t;
-    t    = t->next;
-  }
+  if (!ptr) return;
+  mem_count--;
 
   //  printf("freeing a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
   _free_(ptr);
@@ -209,49 +144,20 @@ void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* 
   if (ptr == NULL)
     printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
 
-  mem_p_t* t = mem_tracker;
-  while (t) {
-    if (ptr == t->ptr) {
-      c_mem += size - t->size;
-      if (max_mem < c_mem) {
-        max_mem = c_mem;
-        //        printf("            .... realloc %zu                        %s : %s : %i\n", c_mem, file, func, line);
-      }
-      t->ptr  = _realloc_(ptr, size, oldsize, file, func, line);
-      t->size = size;
-      return t->ptr;
-    }
-    t = t->next;
-  }
-  //printf("realloc a pointer which was not allocated anymore %s : %s : %i\n", file, func, line);
   return _realloc_(ptr, size, oldsize, file, func, line);
 }
 
 size_t mem_get_max_heap() {
-  return max_mem;
-}
-
-int mem_get_memleak_cnt() {
-  if (mem_tracker != NULL)
-    return mem_tracker->ct;
   return 0;
 }
 
+int mem_get_memleak_cnt() {
+  return mem_count;
+}
+
 void mem_reset(int cnt) {
-  track_count = cnt;
-  max_mem     = 0;
-  c_mem       = 0;
-  mem_count   = 0;
-  /*
-	mem_p_t* t = mem_tracker,*n;
-	while (t) {
-		_free_(t->ptr);
-		n=t;
-		t=t->next;
-		_free_(n);
-	}
-    */
-  mem_tracker = NULL;
+  UNUSED_VAR(cnt);
+  mem_count = 0;
 }
 
 #endif /* TEST */
