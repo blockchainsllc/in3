@@ -305,7 +305,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
       int        tx_count = d_len(tx), i = 0;                                                                                         // and count its length
       bytes32_t* tx_hashes = alloca(tx_count * sizeof(bytes32_t));                                                                    // to reserve hashes-array
       for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), i++)                                                        // iterate through all txs
-        hex_to_bytes(d_string(iter.token), 64, tx_hashes[i], 32);                                                                     // and copy the hash into the array
+        hex_to_bytes(verbose == 1 ? d_string(iter.token) : d_get_stringk(iter.token, key("txid")), 64, tx_hashes[i], 32);             // and copy the hash into the array
       btc_merkle_create_root(tx_hashes, tx_count, tmp);                                                                               // calculate the merkle root
       rev_copy(tmp2, tmp);                                                                                                            // we need to turn it into little endian be cause ini the header it is store as le.
       if (memcmp(tmp2, btc_block_get(bytes(block_header, 80), BTC_B_MERKLE_ROOT).data, 32)) return vc_err(vc, "Invalid Merkle root"); // compare the hash

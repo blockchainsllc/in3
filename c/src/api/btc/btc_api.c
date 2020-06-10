@@ -77,7 +77,7 @@ static size_t tx_data_size(d_token_t* t) {
 }
 
 // write into transaction-struct from json-token
-static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
+static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes32_t block_hash) {
 
   EXPECT_EQ(d_type(t), T_OBJECT)
 
@@ -107,7 +107,10 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
 
   EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("txid")), -1, res->txid, 32), 32)
   EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("hash")), -1, res->hash, 32), 32)
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
+  if (block_hash)
+    memcpy(res->blockhash, block_hash, 32);
+  else
+    EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
 
   // handle vin
   uint8_t* p     = txdata.input.data;
@@ -145,7 +148,7 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
 static btc_transaction_t* to_tx(d_token_t* t) {
   if (d_type(t) != T_OBJECT) RETURN_NULL_ERROR(IN3_EINVAL, "invalid json");
   void* res = _malloc(tx_data_size(t) + sizeof(btc_transaction_t));
-  TRY_OR_NULL(fill_tx(t, res, res + sizeof(btc_transaction_t)), "invalid transaction-data");
+  TRY_OR_NULL(fill_tx(t, res, res + sizeof(btc_transaction_t), NULL), "invalid transaction-data");
   return res;
 }
 
@@ -214,7 +217,7 @@ static btc_block_txdata_t* to_block_txdata(d_token_t* t) {
   res->tx_len            = d_len(tx);
   res->tx                = txp;
   for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), txp++) {
-    TRY_OR_NULL(fill_tx(iter.token, txp, p), "invalid txdata");
+    TRY_OR_NULL(fill_tx(iter.token, txp, p, res->header.hash), "invalid txdata");
     p += tx_data_size(iter.token);
   }
   return res;
