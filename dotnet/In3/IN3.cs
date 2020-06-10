@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using In3.Configuration;
 using In3.Crypto;
+using In3.Eth1;
 using In3.Transport;
 using In3.Storage;
 using In3.Native;
@@ -17,23 +18,27 @@ namespace In3
     {
         private NativeWrapper Native { get; }
 
-        /// <summary>Gets <see cref="Eth1.Api"/> object.</summary>
+        /// <summary>Gets <see cref="In3.Eth1.Api"/> object.</summary>
         public Eth1.Api Eth1 { get; }
 
-        /// <summary>Gets or sets <see cref="Transport.Transport"/> object. If not set <see cref="DefaultTransport"/> will be used.</summary>
+        /// <summary>Gets or sets <see cref="In3.Transport.Transport"/> object. If not set <see cref="DefaultTransport"/> will be used.</summary>
         public Transport.Transport Transport { get; set; }
 
 
-        /// <summary>Get or Sets <see cref="Storage.Storage"/> object. If not set <see cref="InMemoryStorage"/> will be used.</summary>
+        /// <summary>Get or Sets <see cref="In3.Storage.Storage"/> object. If not set <see cref="InMemoryStorage"/> will be used.</summary>
         public Storage.Storage Storage { get; set; }
 
         /// <summary>Get or Sets <see cref="Signer"/> object. If not set <see cref="SimpleWallet"/> will be used.</summary>
         public Signer Signer { get; set; }
+        
+        
+        /// <summary>Gets <see cref="In3.Btc.Api"/> object.</summary>
+        public Btc.Api Btc { get; }
 
-        /// <summary>Gets <see cref="Crypto.Api"/> object.</summary>
+        /// <summary>Gets <see cref="In3.Crypto.Api"/> object.</summary>
         public Crypto.Api Crypto { get; }
 
-        /// <summary>Gets <see cref="Ipfs.Api"/> object.</summary>
+        /// <summary>Gets <see cref="In3.Ipfs.Api"/> object.</summary>
         public Ipfs.Api Ipfs { get; }
 
         /// <summary>Gets <see cref="ClientConfiguration"/> object. Any changes in the object will be automaticaly applied to the client before each method invocation.</summary>
@@ -46,6 +51,7 @@ namespace In3
             Storage = new InMemoryStorage();
             Signer = new SimpleWallet(this);
             Native = new NativeWrapper(this, chainId);
+            Btc = new Btc.Api(this);
             Eth1 = new Eth1.Api(this);
             Crypto = new Crypto.Api(this);
             Ipfs = new Ipfs.Api(this);
