@@ -181,10 +181,12 @@ static void test_get_filter_changes() {
   bytes32_t blk_hash;
   hex_to_bytes("0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9", -1, blk_hash, 32);
   TEST_ASSERT_EQUAL_MEMORY(hashes, blk_hash, 32);
+  _free(hashes);
 
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   ret = eth_getFilterChanges(in3, bfid, &hashes, NULL);
   TEST_ASSERT_EQUAL(0, ret);
+  _free(hashes);
 
   // Test with non-existent filter id
   TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterChanges(in3, 1234, NULL, NULL));
