@@ -70,14 +70,18 @@ void add_response(char* request_method, char* request_params, char* result, char
   responses = n;
 }
 
-/* add response - request mock from json*/
-int add_response_test(char* test, char* needed_params) {
+static void clean_last_response() {
   if (response_buffer) {
     _free(response_buffer->request_method);
     _free(response_buffer->request_params);
+    _free(response_buffer->response);
     _free(response_buffer);
     response_buffer = NULL;
   }
+}
+/* add response - request mock from json*/
+int add_response_test(char* test, char* needed_params) {
+  clean_last_response();
   char path[270];
   sprintf(path, MOCK_PATH, test);
   char*       buffer = read_json_response_buffer(path);
@@ -113,6 +117,7 @@ int add_response_test(char* test, char* needed_params) {
   }
 
   json_free(mock);
+  _free(buffer);
   return params ? 0 : -1;
 }
 
@@ -179,5 +184,6 @@ in3_ret_t mock_transport(in3_request_t* req) {
   json_free(r);
 
   sb_add_chars(&req->results->result, response_buffer->response);
+  clean_last_response();
   return IN3_OK;
 }

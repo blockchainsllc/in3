@@ -141,8 +141,8 @@ void t_free(void* ptr, char* file, const char* func, int line) {
   _free_(ptr);
 }
 void* t_realloc(void* ptr, size_t size, size_t oldsize, char* file, const char* func, int line) {
-  if (ptr == NULL)
-    printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
+  //  if (ptr == NULL)
+  //    printf("trying to free a null-pointer in %s : %s : %i\n", file, func, line);
 
   return _realloc_(ptr, size, oldsize, file, func, line);
 }
