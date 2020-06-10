@@ -3,7 +3,6 @@
 #include "../src/core/client/context_internal.h"
 #include "../src/signer/pk-signer/signer-priv.h"
 #include "../src/signer/pk-signer/signer.h"
-#include "../src/verifier/btc/btc_serialize.h"
 #include "../src/api/btc/btc_api.h"
 #include "in3/bytes.h"
 #include "in3/client.h"
