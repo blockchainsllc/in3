@@ -377,6 +377,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
   if (res >= 0) {
     if (only_estimate) {
+      req_free(req);
       rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
     } else {
       rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));

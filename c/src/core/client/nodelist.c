@@ -328,19 +328,20 @@ NONULL void in3_ctx_free_nodes(node_match_t* node) {
 }
 
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
-  in3_ctx_t ctx;
-  memset(&ctx, 0, sizeof(ctx));
+  in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
+  ctx->client    = c;
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;
   }
 
-  in3_ret_t ret = update_nodelist(c, chain, &ctx);
-  if (ret == IN3_WAITING && ctx.required) {
-    ret = in3_send_ctx(ctx.required);
-    if (ret) return ret;
-    return update_nodelist(c, chain, &ctx);
+  in3_ret_t ret = update_nodelist(c, chain, ctx);
+  if (ret == IN3_WAITING && ctx->required) {
+    ret = in3_send_ctx(ctx->required);
+    if (!ret) ret = update_nodelist(c, chain, ctx);
   }
+
+  ctx_free(ctx);
   return ret;
 }
 
