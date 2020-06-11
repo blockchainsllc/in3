@@ -1,4 +1,4 @@
-//! IPFS  JSON RPC client API.
+//! IPFS JSON RPC client API.
 use base64::{decode, DecodeError, encode};
 use serde_json::json;
 

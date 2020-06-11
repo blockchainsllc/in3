@@ -44,6 +44,10 @@
 
 #include "client.h"
 #include "bytes.h"
+#include "api_utils.h"
+
+/**< The current error or null if all is ok */
+#define btc_last_error() api_last_error()
 
 /** the tx in */
 typedef struct btc_transaction_in {
@@ -168,5 +172,13 @@ btc_block_txids_t* btc_get_block_txids(in3_t*    in3,      /**< the in3-instance
 bytes_t* btc_get_block_bytes(in3_t*    in3,      /**< the in3-instance*/
                              bytes32_t blockhash /**< the block hash */
 );
+
+/**
+ * Deserialization helpers
+ */
+btc_transaction_t*  btc_d_to_tx(d_token_t* t);           /** Deserializes a `btc_transaction_t` type. You must free the result with free() after use! */
+btc_blockheader_t*  btc_d_to_blockheader(d_token_t* t);  /** Deserializes a `btc_blockheader_t` type. You must free the result with free() after use! */
+btc_block_txids_t*  btc_d_to_block_txids(d_token_t* t);  /** Deserializes a `btc_block_txids_t` type. You must free the result with free() after use! */
+btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t); /** Deserializes a `btc_block_txdata_t` type. You must free the result with free() after use! */
 
 #endif //IN3_BTC_API_H
