@@ -24,4 +24,9 @@ for f in build/test/test*; do
   docker run --rm -v $(pwd):$(pwd)  docker.slock.it/build-images/cmake:valgrind  /bin/bash -c "cd $(pwd)/build; valgrind $VALGRIND_OPTS --xtree-memory-file=$(pwd)/$f.kcg $(pwd)/$f"
 done
 
+for f in c/test/testdata/requests/*.json; do 
+  docker run --rm -v $(pwd):$(pwd)  docker.slock.it/build-images/cmake:valgrind  /bin/bash -c "cd $(pwd)/build; valgrind $VALGRIND_OPTS --xtree-memory-file=$(pwd)/build/$(basename $f).kcg test/runner $(pwd)/$f"
+done
+
+
 cd scripts
