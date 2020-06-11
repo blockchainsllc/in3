@@ -1,6 +1,6 @@
 #!/bin/sh
 #VALGRIND_OPTS="-v -q --track-origins=yes --read-var-info=yes --xtree-memory=full --num-callers=50 --error-exitcode=1 --leak-check=full --track-fds=yes --main-stacksize=800  --show-leak-kinds=definite --suppressions=suppress.valgrind"
-VALGRIND_OPTS="-v -q --track-origins=yes  --xtree-memory=full --num-callers=50 --error-exitcode=1 --leak-check=full --track-fds=yes --main-stacksize=5000  --show-leak-kinds=definite --suppressions=suppress.valgrind"
+VALGRIND_OPTS="-v -q --track-origins=yes  --xtree-memory=full --num-callers=50 --error-exitcode=1 --leak-check=full --track-fds=yes --main-stacksize=4000  --show-leak-kinds=definite --suppressions=suppress.valgrind"
 cd ..
 if [ ! -f build/suppress.valgrind ]; then
     rm -rf build/*

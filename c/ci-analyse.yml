@@ -80,7 +80,7 @@ valgrind:
   tags:
     - short-jobs
   variables:
-    VALGRIND_OPTS: "-v -q --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+    VALGRIND_OPTS: "-v -q --read-var-info=yes --num-callers=50  --main-stacksize=4000 --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
   script:
     - mkdir _build
     - cd _build
