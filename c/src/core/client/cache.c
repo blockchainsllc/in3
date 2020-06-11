@@ -100,6 +100,8 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 
   // clean up old
   in3_nodelist_clear(chain);
+  if (chain->contract) b_free(chain->contract);
+  if (chain->nodelist_upd8_params) _free(chain->nodelist_upd8_params);
 
   // fill data
   chain->contract             = b_new_fixed_bytes(b, &pos, 20);

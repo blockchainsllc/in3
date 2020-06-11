@@ -71,6 +71,7 @@ void test_bytes() {
   TEST_ASSERT_EQUAL_UINT8_ARRAY(data, clone.data, 32);
   // make sure it does not crash
   b_free(NULL);
+  _free(clone.data);
 }
 
 void test_float_parser() {
@@ -142,6 +143,21 @@ void test_json() {
   char* jdata = d_create_json(json->result);
   TEST_ASSERT_EQUAL_STRING("[true,null,{},\"0x616263\",\"abc\",\"0xa\"]", jdata);
   free(jdata);
+  json_free(json);
+}
+
+void test_parse_json() {
+  char*       data = "[{\"id\":0,\"jsonrpc\":\"2.0\",\"error\":{\"message\":\"VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\",\"code\":-32000,\"data\":{\"0x1f426a9536e776d61eccca7500db78b53a8296ee50977e50d6c76c44f8430571\":{\"error\":\"revert\",\"program_counter\":112,\"return\":\"0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000002711\",\"reason\":\"\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\"},\"stack\":\"c: VM Exception while processing transaction: revert \\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000'\\u0011\n    at Function.c.fromResults (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:2:157333)\n    at readyCall (/Users/simon/ws/custody/cutody-lib/node_modules/ganache-cli/build/ganache-core.node.cli.js:17:121221)\",\"name\":\"c\"}}}]";
+  json_ctx_t* d    = parse_json(data);
+  TEST_ASSERT_NOT_NULL(d);
+  json_free(d);
+}
+void test_sb() {
+  sb_t* sb = sb_new("a=\"");
+  TEST_ASSERT_EQUAL_STRING("a=\"", sb->data);
+  sb_add_escaped_chars(sb, ",x=\"123\"");
+  TEST_ASSERT_EQUAL_STRING("a=\",x=\\\"123\\\"", sb->data);
+  sb_free(sb);
 }
 
 static void test_utils() {
@@ -158,12 +174,14 @@ int main() {
   dbg_log("starting cor tests");
 
   TESTS_BEGIN();
+  RUN_TEST(test_parse_json);
   RUN_TEST(test_float_parser);
   RUN_TEST(test_debug);
   RUN_TEST(test_c_to_long);
   RUN_TEST(test_bytes);
   RUN_TEST(test_json);
   RUN_TEST(test_str_replace);
+  RUN_TEST(test_sb);
   RUN_TEST(test_utils);
   return TESTS_END();
 }

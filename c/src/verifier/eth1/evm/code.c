@@ -172,6 +172,7 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
 
     // we also store the length into the 4 bytes buffer, so we can reference it later on.
     int_to_bytes(code->len, (*target)->buffer);
+    if (must_free) _free(code);
     return IN3_OK;
   }
   return IN3_EFIND;
