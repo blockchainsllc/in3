@@ -28,10 +28,9 @@
       - venv/
 
 .cache_scipt_before: &cache_scipt_before
-- pip3 install virtualenv
-- virtualenv venv
-- source venv/bin/activate
-
+  - pip3 install virtualenv || echo "could not install virtualenv, hope it is already installed"
+  - virtualenv venv
+  - source venv/bin/activate
 
 python:
   image: python
@@ -148,6 +147,3 @@ release_pip:
     - cd python
     - cp $pypirc ~/.pypirc
     - ./publish.sh
-
-
-

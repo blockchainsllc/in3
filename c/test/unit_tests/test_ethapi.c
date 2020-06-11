@@ -66,7 +66,10 @@ in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {
   in3->request_count = 1; // number of requests to sendp
   in3->chain_id      = chain;
   in3->flags         = FLAGS_STATS | FLAGS_INCLUDE_CODE; // no autoupdate nodelist
-  for (int i = 0; i < in3->chains_length; i++) in3->chains[i].nodelist_upd8_params = NULL;
+  for (int i = 0; i < in3->chains_length; i++) {
+    _free(in3->chains[i].nodelist_upd8_params);
+    in3->chains[i].nodelist_upd8_params = NULL;
+  }
   return in3;
 }
 
@@ -181,10 +184,12 @@ static void test_get_filter_changes() {
   bytes32_t blk_hash;
   hex_to_bytes("0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9", -1, blk_hash, 32);
   TEST_ASSERT_EQUAL_MEMORY(hashes, blk_hash, 32);
+  _free(hashes);
 
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
   ret = eth_getFilterChanges(in3, bfid, &hashes, NULL);
   TEST_ASSERT_EQUAL(0, ret);
+  _free(hashes);
 
   // Test with non-existent filter id
   TEST_ASSERT_EQUAL(IN3_EINVAL, eth_getFilterChanges(in3, 1234, NULL, NULL));
@@ -421,6 +426,7 @@ static void test_eth_get_code(void) {
   bytes_t code = eth_getCode(in3, contract, BLKNUM_LATEST());
   //    clean up resources
   TEST_ASSERT_TRUE(code.len > 0);
+  _free(code.data);
   in3_free(in3);
 }
 
@@ -564,6 +570,7 @@ static void test_wait_for_receipt(void) {
   hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, blk_hash, 32);
   char* r = eth_wait_for_receipt(c, blk_hash);
   TEST_ASSERT_NOT_NULL(r);
+  _free(r);
   in3_free(c);
 
   c = init_in3(test_transport, ETH_CHAIN_ID_GOERLI);
@@ -580,6 +587,7 @@ static void test_send_raw_tx(void) {
   TEST_ASSERT_NOT_NULL(tx_hash);
   b_free(tx_hash);
   b_free(data);
+  in3_free(in3);
 }
 
 /*

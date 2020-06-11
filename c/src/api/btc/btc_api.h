@@ -44,6 +44,10 @@
 
 #include "../../core/client/client.h"
 #include "../../core/util/bytes.h"
+#include "../utils/api_utils.h"
+
+/**< The current error or null if all is ok */
+#define btc_last_error() api_last_error()
 
 /** the tx in */
 typedef struct btc_transaction_in {

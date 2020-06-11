@@ -1,0 +1,64 @@
+{
+    "request": [
+        {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "eth_getTransactionByBlockHashAndIndex",
+            "params": [
+                "0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4",
+                "0x0"
+            ],
+            "in3": {
+                "version": "2.1.0",
+                "chainId": "0x5",
+                "verification": "proof"
+            }
+        }
+    ],
+    "response": [
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+                "blockHash": "0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4",
+                "blockNumber": "0x1a4b83",
+                "chainId": "0x5",
+                "condition": null,
+                "creates": null,
+                "from": "0x0de496ae79194d5f5b18eb66987b504a0feb32f2",
+                "gas": "0x5208",
+                "gasPrice": "0x4a817c800",
+                "hash": "0x8a9107b8e2c00dbbf2898eb1dc6e4633c7a6fabce76ba6c484643cd49ddd7c03",
+                "input": "0x",
+                "nonce": "0x8",
+                "publicKey": "0x8de37f95a452b77925f74200470c41b2d53ec9c61431432e3059b53c14a6e67e2d141760b2d95a6f1ac574bcce72635a4b237dc3c74671e4e26d99fd0f8f501c",
+                "r": "0x89a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695ea",
+                "raw": "0xf86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affc",
+                "s": "0x4a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affc",
+                "standardV": "0x0",
+                "to": "0xf99dbd3cfc292b11f74deea9fa730825ee0b56f2",
+                "transactionIndex": "0x0",
+                "v": "0x2d",
+                "value": "0x16345785d8a0000"
+            },
+            "in3": {
+                "proof": {
+                    "type": "transactionProof",
+                    "block": "0xf9025ca0df0c25c3232eaceadc2f7fddd606ee98546d46073d91359a2b5a5f2fd8af43e6a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347940000000000000000000000000000000000000000a004d1a2a007648dac77c7773b5b3ba175c9b14195ded60963bae0e78c1e1d50e6a04dc9f73d8a2a14ec82bc15b3ab423631cf696075a2471d357ee5ebf587ff3489a0366623faf989e67611212be8b51382e113f71b97b0a2afe034ad4acfbb8147ddb901000000000000000000000000004000000000040800004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101000000000000000000000000000000080000000000000002831a4b83837a1200830102ac845dde9723b86144505020417574686f7269747900000000000000000000000000000000000000dd04974d9847259d06c8280ce73138f408aa33ca09b2c852546ce9d195214b77634dfa3206640436d7305673ac457945a960a37b3b48ba08b7625a40b9c4c18d00a00000000000000000000000000000000000000000000000000000000000000000880000000000000000",
+                    "merkleProof": [
+                        "0xf851a0c99182008ea09ebea8c69f56f7897b6675fdae074c245ee63bb3e8e3f657ebfc80808080808080a091114742a6178dfacb10e0a7a8805f9af81b6ce9e7b312defb5d405cf0a809408080808080808080",
+                        "0xf87130b86ef86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affc"
+                    ],
+                    "txIndex": 0,
+                    "signatures": []
+                },
+                "currentBlock": 1727626,
+                "lastValidatorChange": 0,
+                "lastNodeList": 1527136,
+                "execTime": 291,
+                "rpcTime": 284,
+                "rpcCount": 1
+            }
+        }
+    ]
+}
