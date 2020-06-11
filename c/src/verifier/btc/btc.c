@@ -133,7 +133,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
     t = d_get(vc->result, key("hex"));
     if (!t || d_type(t) != T_STRING) return vc_err(vc, "missing hex");
     data.len  = (d_len(t) + 1) >> 1;
-    data.data = alloca(data.len);
+    data.data = _malloc(data.len);
+    in3_cache_add_ptr(&vc->ctx->cache, data.data);
     hex_to_bytes(d_string(t), d_len(t), data.data, data.len);
 
     // parse tx
@@ -238,7 +239,8 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
     // here we expect the raw serialized transaction
     if (!vc->result || d_type(vc->result) != T_STRING) return vc_err(vc, "expected hex-data as result");
     data.len  = (d_len(vc->result) + 1) >> 1;
-    data.data = alloca(data.len);
+    data.data = _malloc(data.len);
+    in3_cache_add_ptr(&vc->ctx->cache, data.data);
     hex_to_bytes(d_string(vc->result), d_len(vc->result), data.data, data.len);
 
     // parse tx
@@ -303,10 +305,11 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
     if (verbose) {
       d_token_t* tx       = d_get(vc->result, key("tx"));                                                                             // get transactions node
       int        tx_count = d_len(tx), i = 0;                                                                                         // and count its length
-      bytes32_t* tx_hashes = alloca(tx_count * sizeof(bytes32_t));                                                                    // to reserve hashes-array
+      bytes32_t* tx_hashes = _malloc(tx_count * sizeof(bytes32_t));                                                                   // to reserve hashes-array
       for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), i++)                                                        // iterate through all txs
         hex_to_bytes(verbose == 1 ? d_string(iter.token) : d_get_stringk(iter.token, key("txid")), 64, tx_hashes[i], 32);             // and copy the hash into the array
       btc_merkle_create_root(tx_hashes, tx_count, tmp);                                                                               // calculate the merkle root
+      _free(tx_hashes);                                                                                                               // cleanup
       rev_copy(tmp2, tmp);                                                                                                            // we need to turn it into little endian be cause ini the header it is store as le.
       if (memcmp(tmp2, btc_block_get(bytes(block_header, 80), BTC_B_MERKLE_ROOT).data, 32)) return vc_err(vc, "Invalid Merkle root"); // compare the hash
                                                                                                                                       //
@@ -318,12 +321,12 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
 
     } else {
       char*    block_hex  = d_string(vc->result);
-      uint8_t* block_data = alloca(strlen(block_hex) / 2);
+      uint8_t* block_data = _malloc(strlen(block_hex) / 2);
       bytes_t  block      = bytes(block_data, strlen(block_hex) / 2);
       hex_to_bytes(block_hex, -1, block.data, block.len);
       int        tx_count     = btc_get_transaction_count(block);
-      bytes_t*   transactions = alloca(tx_count * sizeof(bytes_t));
-      bytes32_t* tx_hashes    = alloca(tx_count * sizeof(bytes32_t));
+      bytes_t*   transactions = _malloc(tx_count * sizeof(bytes_t));
+      bytes32_t* tx_hashes    = _malloc(tx_count * sizeof(bytes32_t));
       btc_get_transactions(block, transactions);
 
       // now calculate the transactionhashes
@@ -334,7 +337,11 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
       }
       btc_merkle_create_root(tx_hashes, tx_count, tmp);
       rev_copy(tmp2, tmp);
-      if (memcmp(tmp2, btc_block_get(block, BTC_B_MERKLE_ROOT).data, 32)) return vc_err(vc, "Invalid Merkle root");
+      in3_ret_t res = (memcmp(tmp2, btc_block_get(block, BTC_B_MERKLE_ROOT).data, 32)) ? vc_err(vc, "Invalid Merkle root") : IN3_OK;
+      _free(block_data);
+      _free(transactions);
+      _free(tx_hashes);
+      if (res) return res;
     }
   }
 

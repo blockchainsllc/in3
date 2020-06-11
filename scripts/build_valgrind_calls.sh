@@ -1,5 +1,5 @@
 #!/bin/sh
-VALGRIND_OPTS="-v -q --tool=callgrind --num-callers=50 --error-exitcode=1  --suppressions=suppress.valgrind"
+VALGRIND_OPTS="-v -q --tool=callgrind --dump-instr=yes --collect-jumps=yes --num-callers=50 --error-exitcode=1  --suppressions=suppress.valgrind"
 cd ..
 if [ ! -f build/suppress.valgrind ]; then
     rm -rf build/*
