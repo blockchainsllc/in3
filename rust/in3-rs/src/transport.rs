@@ -50,7 +50,6 @@ impl MockJsonTransport{
         let mut full_path = relative_path.to_str().unwrap().to_string();
         let tmp = format!("{}.json", data);
         full_path.push_str(&tmp);
-        // println!("{:?}", full_path);
         full_path
     }
     /// Read and parse json from test data path
@@ -180,19 +179,10 @@ mod tests {
         let response = transport.read_json(method).to_string();
         let resp: Vec<Response> = serde_json::from_str(&response)?;
         let result = resp.first().unwrap();
-        // let parsed = result.to_result()?;
-        // println!("{}", parsed);
-        // let json_str:U256 = serde_json::from_str; TURBOFISH :) 
         let json_str = serde_json::from_str::<U256>(
             result.to_result()?.to_string().as_str(),
         )?;
-        // let json_str:Value = serde_json::from_str(
-        //     parsed.to_string().as_str(),
-        // ).unwrap();
-        // let json_s = parsed.to_string().as_str();
-        // let json_str = serde_json::from_str(json_s)?;
         println!("{:?}", json_str);
-        // assert_eq!(parsed.to_string().as_str(), String::from("\"0x9\""));
         Ok(())
     }
 

@@ -22,7 +22,6 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     if error < 0 {
         panic!("Sign error{:?}", error);
     }
-    *dst.offset(64) += 27;
     dst
 }
 
