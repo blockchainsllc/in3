@@ -60,8 +60,9 @@
 
 // adds the data as hex to the string without the 0x-prefix
 static void add_btc_hex(sb_t* sb, bytes_t data) {
-  char* tmp = alloca(data.len * 2 + 1);
+  char* tmp = data.len > 500 ? _malloc(data.len * 2 + 1) : alloca(data.len * 2 + 1);
   sb_add_range(sb, tmp, 0, bytes_to_hex(data.data, data.len, tmp));
+  if (data.len > 500) _free(tmp);
 }
 
 // converts a hex string without a 0x-prefix to a new bytes_t-pointer, which needs to be freed.
