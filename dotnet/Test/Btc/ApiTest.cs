@@ -1,4 +1,3 @@
-using System;
 using In3;
 using In3.Btc;
 using NUnit.Framework;

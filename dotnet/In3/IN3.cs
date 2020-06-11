@@ -30,8 +30,7 @@ namespace In3
 
         /// <summary>Get or Sets <see cref="Signer"/> object. If not set <see cref="SimpleWallet"/> will be used.</summary>
         public Signer Signer { get; set; }
-        
-        
+
         /// <summary>Gets <see cref="In3.Btc.Api"/> object.</summary>
         public Btc.Api Btc { get; }
 

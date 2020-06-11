@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Text;
 using In3.Utils;
 
 namespace In3.Native
@@ -12,7 +11,9 @@ namespace In3.Native
         private GCHandle SignerGcHandle { get; set; }
         private IntPtr SignerPtr { get; set; }
 
-        [StructLayout(LayoutKind.Sequential)] private struct bytes_t {
+        [StructLayout(LayoutKind.Sequential)]
+        private struct bytes_t
+        {
             public IntPtr data;
             public int len;
         };
