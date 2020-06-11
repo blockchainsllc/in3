@@ -91,10 +91,7 @@ impl Transport for MockJsonTransport {
     /// Read responses from json
     async fn fetch(&mut self, request_: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let request: serde_json::Value = serde_json::from_str(request_).unwrap();
-        let mut method_ = request[0]["method"].as_str();
-        if method_.unwrap() == "eth_sendTransaction" {
-            method_ = Some("eth_sendRawTransaction");
-        }
+        let method_ = request[0]["method"].as_str();
         let response = self.read_json(String::from(method_.unwrap()));
         vec![Ok(response.to_string())]
     }
@@ -158,9 +155,9 @@ impl Transport for HttpTransport {
     async fn fetch(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
-            println!("{:?} {:?}", url, request);
+            // println!("{:?} {:?}", url, request);
             let res = http_async(url, request).await;
-            println!("{:?}", res);
+            // println!("{:?}", res);
             match res {
                 Err(err) => responses.push(Err(format!("Transport error: {:?}", err))),
                 Ok(res) => responses.push(Ok(res)),
@@ -173,9 +170,9 @@ impl Transport for HttpTransport {
     fn fetch_blocking(&mut self, request: &str, uris: &[&str]) -> Vec<Result<String, String>> {
         let mut responses = vec![];
         for url in uris {
-            println!("{:?} {:?}", url, request);
+            // println!("{:?} {:?}", url, request);
             let res = async_std::task::block_on(http_async(url, request));
-            println!("{:?}", res);
+            // println!("{:?}", res);
             match res {
                 Err(_) => responses.push(Err("Transport error".to_string())),
                 Ok(res) => responses.push(Ok(res)),
