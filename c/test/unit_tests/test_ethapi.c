@@ -298,23 +298,45 @@ static void test_get_tx_receipt(void) {
   in3_free(in3);
 }
 
-static void test_send_tx(void) {
-  in3_t* in3 = init_in3(mock_transport, 0x5);
-  // prepare parameters
-  address_t to, from;
-  hex_to_bytes("0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2", -1, from, 20);
-  hex_to_bytes("0xF99dbd3CFc292b11F74DeEa9fa730825Ee0b56f2", -1, to, 20);
+
+static void test_send_tx() {
+  // mock verified from etherscan tx 
+  // https://goerli.etherscan.io/tx/0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a
+  // create new incubed client
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x5\": {\"needsUpdate\":false}}}");
+  in3->transport = test_transport;
+  add_response("eth_sendRawTransaction", "[\"0xf86d01850ee6b28000830668a094930e62afa9ceb9889c2177c858dc28810cedbf5d881bc16d674ec80000002ea0f07f44cd0a600823c392bd9d8a7c32ae99bd04014c451df0ebf4050556fe461ea01dd0cf7597621659eace230b0f0d36017b4ef565e0dbda6f34b9e680326318d3\"]",
+               "\"0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a\"", NULL, NULL);
+
+  // convert the hexstring to bytes
   bytes32_t pk;
-  hex_to_bytes("0xDD6A4ADA615D13217F35711FAAB1CD119C2A5A6437D08B8DC4EACCF7DF0A2AC4", -1, pk, 32);
+  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
+
+  // create a simple signer with this key
   eth_set_pk_signer(in3, pk);
-  in3_set_default_signer(in3->signer);
-  bytes_t* data = hex_to_new_bytes("0xf86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affc", 223);
+
+  address_t to, from;
+  hex_to_bytes("0x25e10479a1AD17B895C45364a7D971e815F8867D", -1, from, 20);
+  hex_to_bytes("0x930e62afa9ceb9889c2177c858dc28810cedbf5d", -1, to, 20);
+
+  bytes_t* data = hex_to_new_bytes("00", 2);
 
   // send the tx
-  bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x96c0), OPTIONAL_T_VALUE(uint64_t, 0x9184e72a000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x9184e72a)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_UNDEFINED(uint64_t));
-  TEST_ASSERT_NOT_NULL(tx_hash);
-  b_free(tx_hash);
+  bytes_t* tx_hash = eth_sendTransaction(in3, from, to, OPTIONAL_T_VALUE(uint64_t, 0x668A0), OPTIONAL_T_VALUE(uint64_t, 0xee6b28000), OPTIONAL_T_VALUE(uint256_t, to_uint256(0x1bc16d674ec80000)), OPTIONAL_T_VALUE(bytes_t, *data), OPTIONAL_T_VALUE(uint64_t, 0x1));
+  // if the result is null there was an error and we can get the latest error message from eth_last_error()
+  if (!tx_hash)
+    printf("error sending the tx : %s\n", eth_last_error());
+  else {
+    printf("Transaction hash: ");
+  }
   b_free(data);
+  bytes_t* hash = hex_to_new_bytes("ee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a", 64);
+
+  TEST_ASSERT_TRUE(b_cmp(tx_hash, hash));
+  b_free(tx_hash);
+
+  // cleanup client after usage
   in3_free(in3);
 }
 

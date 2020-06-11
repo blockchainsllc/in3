@@ -873,39 +873,44 @@ mod tests {
     }
     
     #[test]
-    #[ignore]
     fn test_eth_api_send_transaction() -> In3Result<()> {
-        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
+        // mock verified from etherscan tx: https://goerli.etherscan.io/tx/0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a
+        let responses = vec![
+            (
+                "eth_sendRawTransaction",
+                r#"[{"jsonrpc":"2.0","result":"0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a","id":2,"in3":{"lastValidatorChange":0,"lastNodeList":2837876,"execTime":213,"rpcTime":213,"rpcCount":1,"currentBlock":2850136,"version":"2.1.0"}}]"#),
+        ];    
+        let transport: Box<dyn Transport> = Box::new(MockTransport {
+            responses: responses,
+        });
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x5":{"needsUpdate":false}}}}"#;
         let mut client = Client::new(chain::GOERLI);
         let _ = client.configure(config);
-        client.set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
+        client.set_pk_signer("dcb7b68bf23f6b29ffef8f316b0015bfd952385f26ae72befaf68cf0d0b6b1b6");
         client.set_transport(transport);
         let mut eth_api = Api::new(client);
-        let mut abi = abi::In3EthAbi::new();
-        let params = task::block_on(abi.encode(
-            "setData(uint256,string)",
-            serde_json::json!([123, "testdata"]),
-        ))
-        .unwrap();
-        println!("{:?}", params);
         let to: Address =
-            serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
+            serde_json::from_str(r#""0x930e62afa9ceb9889c2177c858dc28810cedbf5d""#).unwrap();
         let from: Address =
-            serde_json::from_str(r#""0x3fEfF9E04aCD51062467C494b057923F771C9423""#).unwrap();
-        let gas_price:U256 = U256::from("9184e72a000");
+            serde_json::from_str(r#""0x25e10479a1AD17B895C45364a7D971e815F8867D""#).unwrap();
+    
+        let data = "00";
+        let rawbytes: Bytes = FromHex::from_hex(&data).unwrap().into();
         let txn = OutgoingTransaction {
             to: to,
             from: from,
-            gas_price: Some(gas_price),
-            gas: Some(38592.into()),
-            data: Some(params),
-            nonce: Some(0.into()),
-            ..Default::default()
+            gas: Some((0x668A0).into()),
+            gas_price: Some((0xee6b28000i64).into()),
+            value: Some((0x1bc16d674ec80000i64).into()),
+            data: Some(rawbytes),
+            nonce: Some(0x1i64.into())
         };
-
+    
         let hash: Hash = task::block_on(eth_api.send_transaction(txn)).unwrap();
+        let expected_hash: Hash =
+            serde_json::from_str(r#""0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a""#).unwrap();
         println!("Hash => {:?}", hash);
+        assert_eq!(hash.to_string(), expected_hash.to_string());
         Ok(())
     }
     
