@@ -52,30 +52,27 @@ where
     let resp_str = client.rpc(req_str.as_str()).await?;
     // println!("RESPONSE: {:?}", resp_str.to_string());
     //Check for array in or object in the response.
-    let resp_: Vec<Response> = match serde_json::from_str(resp_str.as_str()){
-        Result::Ok(val) => {val},
+    let resp_: Vec<Response> = match serde_json::from_str(resp_str.as_str()) {
+        Result::Ok(val) => val,
         Result::Err(err) => {
             println!("parsing was unsuccessful for array: {:?}", err);
-            let response = Response{
+            let response = Response {
                 result: Some(serde_json::Value::Null),
-                error: Some(serde_json::Value::Null)
+                error: Some(serde_json::Value::Null),
             };
             vec![response]
-            
         }
     };
     //Check array is valid and try once again
-    if resp_[0].result == Some(serde_json::Value::Null){
+    if resp_[0].result == Some(serde_json::Value::Null) {
         let resp_single: Response = serde_json::from_str(resp_str.as_str()).unwrap();
         return Ok(serde_json::from_str(
             resp_single.to_result()?.to_string().as_str(),
-        )?)
-
-    }
-    else{
+        )?);
+    } else {
         let resp = resp_.first().unwrap();
         return Ok(serde_json::from_str(
             resp.to_result()?.to_string().as_str(),
-        )?)
+        )?);
     }
 }

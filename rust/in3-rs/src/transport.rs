@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use crate::traits::Transport;
 use std::env;
 use std::error::Error;
+use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
@@ -22,34 +23,56 @@ async fn http_async(
 
 /// Mock transport for use in json based test.
 ///
-/// Read the contents of Mock response and request from a json file 
-/// 
+/// Read the contents of Mock response and request from a json file
+///
 /// See examples/custom_transport.rs for usage.
 
 pub struct MockJsonTransport;
 const MOCK_DIR: &'static str = "../../c/test/testdata/mock/";
 // const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
-impl MockJsonTransport{
+impl MockJsonTransport {
     /// Read file from path
     ///
     /// Return serde:json Value or Error if file not found
-    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<serde_json::Value, Box<dyn Error>> {
+    pub fn read_file<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+    ) -> Result<serde_json::Value, Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         let u = serde_json::from_reader(reader)?;
         Ok(u)
+    }
+    fn find_json_file(&mut self, name: String) -> Option<String> {
+        let files = fs::read_dir(MOCK_DIR).unwrap();
+        let json_files = files
+            .filter_map(Result::ok)
+            .filter(|d| d.path().extension().unwrap() == "json");
+        for js in json_files {
+            let file_name = js
+                .path()
+                .file_name()
+                .unwrap()
+                .to_os_string()
+                .into_string()
+                .unwrap();
+            if file_name.starts_with(&name) {
+                return Some(file_name);
+            }
+        }
+        None
     }
     /// Helper for getting env vars
     pub fn env_var(&mut self, var: &str) -> String {
         env::var(var).expect(&format!("Environment variable {} is not set", var))
     }
     /// Get testdata path from in3c project
-    pub fn prepare_file_path(&mut self, data: String) -> String {
+    pub fn prepare_file_path(&mut self, name: String) -> String {
         let mut relative_path = PathBuf::from(self.env_var("CARGO_MANIFEST_DIR"));
         relative_path.push(MOCK_DIR);
         let mut full_path = relative_path.to_str().unwrap().to_string();
-        let tmp = format!("{}.json", data);
-        full_path.push_str(&tmp);
+        let data = self.find_json_file(name).unwrap();
+        full_path.push_str(&data);
         full_path
     }
     /// Read and parse json from test data path
@@ -65,12 +88,12 @@ impl MockJsonTransport{
 impl Transport for MockJsonTransport {
     /// Async fetch implementation
     ///
-    /// Read responses from json 
+    /// Read responses from json
     async fn fetch(&mut self, request_: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let request: serde_json::Value = serde_json::from_str(request_).unwrap();
         let mut method_ = request[0]["method"].as_str();
-        if method_.unwrap() == "eth_sendTransaction"{
-            method_= Some("eth_sendRawTransaction");         
+        if method_.unwrap() == "eth_sendTransaction" {
+            method_ = Some("eth_sendRawTransaction");
         }
         let response = self.read_json(String::from(method_.unwrap()));
         vec![Ok(response.to_string())]
@@ -164,31 +187,28 @@ impl Transport for HttpTransport {
 
 #[cfg(test)]
 mod tests {
-    
-    
+
     use crate::json_rpc::Response;
-    use ethereum_types::{U256};
     use crate::prelude::*;
+    use ethereum_types::U256;
 
     use super::*;
     #[test]
     fn test_json_tx_count() -> In3Result<()> {
-        let mut transport =  MockJsonTransport{};
+        let mut transport = MockJsonTransport {};
         //Make use of static string literals conversion for mock transport.
         let method = String::from("eth_getTransactionCount");
         let response = transport.read_json(method).to_string();
         let resp: Vec<Response> = serde_json::from_str(&response)?;
         let result = resp.first().unwrap();
-        let json_str = serde_json::from_str::<U256>(
-            result.to_result()?.to_string().as_str(),
-        )?;
+        let json_str = serde_json::from_str::<U256>(result.to_result()?.to_string().as_str())?;
         println!("{:?}", json_str);
         Ok(())
     }
 
     #[test]
     fn test_json_blk_by_hash() -> In3Result<()> {
-        let mut transport =  MockJsonTransport{};
+        let mut transport = MockJsonTransport {};
         //Make use of static string literals conversion for mock transport.
         let method = String::from("eth_getBlockByHash");
         let response = transport.read_json(method).to_string();

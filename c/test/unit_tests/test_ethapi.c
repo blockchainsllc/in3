@@ -316,7 +316,7 @@ static void test_send_tx() {
 
   // convert the hexstring to bytes
   bytes32_t pk;
-  hex_to_bytes(ETH_PRIVATE_KEY, -1, pk, 32);
+  hex_to_bytes("dcb7b68bf23f6b29ffef8f316b0015bfd952385f26ae72befaf68cf0d0b6b1b6", -1, pk, 32);
 
   // create a simple signer with this key
   eth_set_pk_signer(in3, pk);
