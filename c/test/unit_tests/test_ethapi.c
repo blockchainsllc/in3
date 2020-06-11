@@ -340,6 +340,7 @@ static void test_send_tx() {
 
   TEST_ASSERT_TRUE(b_cmp(tx_hash, hash));
   b_free(tx_hash);
+  b_free(hash);
 
   // cleanup client after usage
   in3_free(in3);
