@@ -70,5 +70,7 @@ sb_t* sb_add_range(sb_t* sb, const char* chars, int start, int len);            
 sb_t* sb_add_key_value(sb_t* sb, const char* key, const char* value, int value_len, bool as_string); /**< adds a value with an optional key. if as_string is true the value will be quoted. */
 sb_t* sb_add_bytes(sb_t* sb, const char* prefix, const bytes_t* bytes, int len, bool as_array);      /**< add bytes as 0x-prefixed hexcoded string (including an optional prefix), if len>1 is passed bytes maybe an array ( if as_array==true)  */
 sb_t* sb_add_hexuint_l(sb_t* sb, uintmax_t uint, size_t l);                                          /**< add a integer value as hexcoded, 0x-prefixed string*/
+sb_t* sb_add_escaped_chars(sb_t* sb, const char* chars);                                             /**< add chars but escapes all quotes */
+sb_t* sb_add_int(sb_t* sb, uint64_t val);                                                            /**< adds a numeric value to the stringbuilder */
 
 #endif
