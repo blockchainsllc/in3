@@ -134,14 +134,6 @@ int evm_stack_get_ref(evm_t* evm, uint8_t pos, uint8_t** dst) {
   return l;
 }
 
-int evm_stack_peek_ref(evm_t* evm, uint8_t** dst) {
-  if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
-  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1];
-  evm->stack.b.len -= l + 1;
-  evm->stack_size--;
-  *dst = evm->stack.b.data + evm->stack.b.len;
-  return l;
-}
 int evm_stack_pop_byte(evm_t* evm, uint8_t* dst) {
   if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
   uint8_t l = evm->stack.b.data[evm->stack.b.len - 1];
@@ -156,12 +148,6 @@ int evm_stack_pop_byte(evm_t* evm, uint8_t* dst) {
   *dst = evm->stack.b.data[evm->stack.b.len + l - 1];
   return l;
 }
-int evm_stack_peek_len(evm_t* evm) {
-  if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK;
-  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1], *p = evm->stack.b.data + evm->stack.b.len - l - 1;
-  optimize_len(p, l);
-  return l;
-}
 
 int32_t evm_stack_pop_int(evm_t* evm) {
   if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
@@ -172,36 +158,6 @@ int32_t evm_stack_pop_int(evm_t* evm) {
   return (l > 4 || (l == 4 && *p & 0xF0)) ? 0xFFFFFFF : bytes_to_int(p, l);
 }
 
-int evm_stack_pop_bn(evm_t* evm, bignum256* dst) {
-  if (evm->stack_size == 0) return EVM_ERROR_EMPTY_STACK; // stack empty
-  uint8_t l = evm->stack.b.data[evm->stack.b.len - 1];
-  evm->stack.b.len -= l + 1;
-  evm->stack_size--;
-  if (l == 32)
-    bn_read_be(evm->stack.b.data + evm->stack.b.len, dst);
-  else {
-    uint8_t t[32];
-    memmove(t + 32 - l, evm->stack.b.data + evm->stack.b.len, l);
-    memset(t, 0, 32 - l);
-    bn_read_be(t, dst);
-  }
-  return l;
-}
-
-int evm_stack_push_bn(evm_t* evm, bignum256* val) {
-  if (bb_check_size(&evm->stack, 33)) return EVM_ERROR_EMPTY_STACK;
-  uint8_t* buffer = evm->stack.b.data + evm->stack.b.len;
-  bn_write_be(val, buffer);
-  evm->stack.b.len += 33;
-  buffer[evm->stack.b.len - 1] = 32;
-  evm->stack_size++;
-  return 0;
-}
-/*
-I:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06ae28d285a71b5 | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | 
-P:79338654 267     3 63 : PUSH4      [ 364087e | 1 | 945304eb96065b2a98b57a48a06ae28d285a71b5 | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff | ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff |
-
-*/
 #define __code(n)                     \
   {                                   \
     in3_log_trace(COLOR_GREEN_S2, n); \
