@@ -80,17 +80,6 @@ else()
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=0)
 endif()
 
-if (USE_CURL AND NOT (JAVA OR WASM OR ASMJS))
-    ADD_DEFINITIONS(-DUSE_CURL)
-    set(IN3_TRANSPORT ${IN3_TRANSPORT} transport_curl)
-    if (CURL_BLOCKING)
-        ADD_DEFINITIONS(-DCURL_BLOCKING)
-    endif()
-else()
-   set(USE_CURL 0)
-endif()
-
-
 if (ERR_MSG)
   ADD_DEFINITIONS(-DERR_MSG)
 endif()
