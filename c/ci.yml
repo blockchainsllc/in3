@@ -61,7 +61,7 @@ win_jni:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
   extends: .conanbuild
   variables:
-    CONAN_OPTS: "-DTRANSPORTS=false -DJAVA=true"
+    CONAN_OPTS: "-DTRANSPORTS=true -DUSE_CURL=false -DJAVA=true"
     BUILD: "win_jni"
 
 centos:
