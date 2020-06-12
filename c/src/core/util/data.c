@@ -54,6 +54,7 @@ static uint8_t __track_keys = 1;
 
 // number of tokens to allocate memory for when parsing
 #define JSON_INIT_TOKENS 10
+#define JSON_MAX_ALLOWED_TOKENS 1000000
 
 /** internal type declared here to assist with key() optimization */
 typedef struct keyname {
@@ -730,69 +731,72 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
   return n;
 }
 
-static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p) {
-  uint16_t       key;
-  const d_type_t type = d[*p] >> 5; // first 3 bits define the type
+static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
+  if (*p >= max) return -3;                          // check limits
+  uint16_t       key;                                // represents the key or hash of the propertyname (use in objects only)
+  const d_type_t type = d[*p] >> 5;                  // first 3 bits define the type
+  uint32_t       len  = d[(*p)++] & 0x1F, i;         // the other 5 bits  (0-31) the length
+  uint32_t       l    = len > 27 ? len - 27 : 0, ll; // since len is max 31 we use the last 4 number for the number of bytes describing the length
+  if ((*p + l) > max) return -3;                     // check limits
 
-  // calculate len
-  uint32_t len = d[(*p)++] & 0x1F, i; // the other 5 bits  (0-31) the length
-  int      l   = len > 27 ? len - 27 : 0, ll;
   if (len == 28)
-    len = d[*p]; // 28 = 1 byte len
-  else if (len == 29)
-    len = d[*p] << 8 | d[*p + 1]; // 29 = 2 bytes length
-  else if (len == 30)
-    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2]; // 30 = 3 bytes length
-  else if (len == 31)
+    len = d[*p];                                                      // 28 = 1 byte len
+  else if (len == 29)                                                 //
+    len = d[*p] << 8 | d[*p + 1];                                     // 29 = 2 bytes length
+  else if (len == 30)                                                 //
+    len = d[*p] << 16 | d[*p + 1] << 8 | d[*p + 2];                   // 30 = 3 bytes length
+  else if (len == 31)                                                 //
     len = d[*p] << 24 | d[*p + 1] << 16 | d[*p + 2] << 8 | d[*p + 3]; // 31 = 4 bytes length
-  *p += l;
+  *p += l;                                                            // jump to the data
 
-  // special token giving the number of tokens, so we can allocate the exact number
-  if (type == T_NULL && len > 0) {
-    if (jp->allocated == 0) {
-      jp->result    = _malloc(sizeof(d_token_t) * len);
-      jp->allocated = len;
-    } else if (len > jp->allocated) {
-      jp->result    = _realloc(jp->result, len * sizeof(d_token_t), jp->allocated * sizeof(d_token_t));
+  if (type == T_NULL && len > 0) {                                                                      // special token giving the number of tokens, so we can allocate the exact number
+    if (len > JSON_MAX_ALLOWED_TOKENS) return -4;                                                       // security check so we are not allocating too much memory
+    if (jp->allocated == 0) {                                                                           // first time?
+      jp->result    = _malloc(sizeof(d_token_t) * len);                                                 // use malloc
+      jp->allocated = len;                                                                              //
+    } else if (len > jp->allocated) {                                                                   // otherwise
+      jp->result    = _realloc(jp->result, len * sizeof(d_token_t), jp->allocated * sizeof(d_token_t)); // realloc
       jp->allocated = len;
     }
     return 0;
   }
-  // special handling for references
-  if (type == T_BOOLEAN && len > 1) {
-    uint32_t idx = len - 2;
-    if (jp->len < idx) return -1;
-    // if not bytes or string, it's an error
-    if (d_type(jp->result + idx) >= T_ARRAY) return -1;
-    memcpy(next_item(jp, type, len), jp->result + idx, sizeof(d_token_t));
+
+  if (type == T_BOOLEAN && len > 1) {                                      // special handling for references
+    uint32_t idx = len - 2;                                                // -2 because the first 2 values are reserved for true and false
+    if (jp->len < idx) return -1;                                          // make sure the index exists
+    if (d_type(jp->result + idx) >= T_ARRAY) return -1;                    // it must be a bytes or string or it's an error
+    memcpy(next_item(jp, type, len), jp->result + idx, sizeof(d_token_t)); // copy data including pointers
     return 0;
   }
+
   d_token_t* t = next_item(jp, type, len);
   switch (type) {
     case T_ARRAY:
       for (i = 0; i < len; i++) {
         ll = jp->len;
-        if (read_token(jp, d, p)) return 1;
+        TRY(read_token(jp, d, p, max));
         jp->result[ll].key = i;
       }
       break;
     case T_OBJECT:
       for (i = 0; i < len; i++) {
+        if (*p + 2 >= max) return -3;
         key = d[(*p)] << 8 | d[*p + 1];
         *p += 2;
         ll = jp->len;
-        if (read_token(jp, d, p)) return 1;
+        TRY(read_token(jp, d, p, max));
         jp->result[ll].key = key;
       }
       break;
     case T_STRING:
       t->data = (uint8_t*) d + ((*p)++);
-      if (t->data[len] != 0) return 1;
+      if ((*p + len) > max || t->data[len] != 0) return -4; // must be null terminated
       *p += len;
       break;
     case T_BYTES:
       t->data = (uint8_t*) d + (*p);
       *p += len;
+      if (*p > max) return -3;
       break;
     default:
       break;
@@ -806,19 +810,25 @@ json_ctx_t* parse_binary_str(const char* data, int len) {
 }
 
 json_ctx_t* parse_binary(const bytes_t* data) {
-  size_t      p = 0, error = 0;
-  json_ctx_t* jp = _calloc(1, sizeof(json_ctx_t));
-  jp->c          = (char*) data->data;
+  size_t      p  = 0;                              // the current index within the data, which will be updated by read_token()
+  json_ctx_t* jp = _calloc(1, sizeof(json_ctx_t)); // the resulting ctx
+  jp->c          = (char*) data->data;             // data
+  int error      = 0;                              // keep track of errors, but currently we don't report them since we return the json_ctx;
 
+  // parse data
   while (!error && p < data->len)
-    error = read_token(jp, data->data, &p);
+    error = read_token(jp, data->data, &p, data->len);
 
   if (error) {
+    // in case of an error we simply return NULL
     _free(jp->result);
     _free(jp);
-    return NULL;
-  }
-  jp->allocated = 0;
+    jp = NULL;
+  } else
+    // we use the allocated as marker for binary.
+    // allocated == 0 means we don't need to free the bytes and strings in json_free()
+    jp->allocated = 0;
+
   return jp;
 }
 
