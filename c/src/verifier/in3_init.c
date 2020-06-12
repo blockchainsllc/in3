@@ -36,11 +36,13 @@ static void init_verifier() {
 }
 
 static void init_transport() {
+#ifdef TRANSPORTS
 #ifdef USE_CURL
   in3_register_curl();
 #else
   in3_register_http();
-#endif
+#endif /* USE_CURL */
+#endif /* TRANSPORTS */
 }
 
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {

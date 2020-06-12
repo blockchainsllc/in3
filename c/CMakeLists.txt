@@ -45,6 +45,7 @@ if (GCC_ANALYZER)
 endif()
 
 IF (TRANSPORTS)
+    ADD_DEFINITIONS(-DTRANSPORTS)
     if (USE_CURL)
         ADD_DEFINITIONS(-DUSE_CURL)
         set(IN3_TRANSPORT ${IN3_TRANSPORT} transport_curl)
