@@ -54,6 +54,7 @@ static uint8_t __track_keys = 1;
 
 // number of tokens to allocate memory for when parsing
 #define JSON_INIT_TOKENS 10
+#define JSON_MAX_ALLOWED_TOKENS 1000000
 
 /** internal type declared here to assist with key() optimization */
 typedef struct keyname {
@@ -730,13 +731,15 @@ static d_token_t* next_item(json_ctx_t* jp, d_type_t type, int len) {
   return n;
 }
 
-static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p) {
+static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p, size_t max) {
   uint16_t       key;
   const d_type_t type = d[*p] >> 5; // first 3 bits define the type
+  if (*p >= max) return -3;         // check limits
 
   // calculate len
   uint32_t len = d[(*p)++] & 0x1F, i; // the other 5 bits  (0-31) the length
-  int      l   = len > 27 ? len - 27 : 0, ll;
+  uint32_t l   = len > 27 ? len - 27 : 0, ll;
+  if ((*p + l) > max) return -3; // check limits
   if (len == 28)
     len = d[*p]; // 28 = 1 byte len
   else if (len == 29)
@@ -749,6 +752,7 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p) {
 
   // special token giving the number of tokens, so we can allocate the exact number
   if (type == T_NULL && len > 0) {
+    if (len > JSON_MAX_ALLOWED_TOKENS) return -4;
     if (jp->allocated == 0) {
       jp->result    = _malloc(sizeof(d_token_t) * len);
       jp->allocated = len;
@@ -767,32 +771,35 @@ static int read_token(json_ctx_t* jp, const uint8_t* d, size_t* p) {
     memcpy(next_item(jp, type, len), jp->result + idx, sizeof(d_token_t));
     return 0;
   }
+
   d_token_t* t = next_item(jp, type, len);
   switch (type) {
     case T_ARRAY:
       for (i = 0; i < len; i++) {
         ll = jp->len;
-        if (read_token(jp, d, p)) return 1;
+        TRY(read_token(jp, d, p, max));
         jp->result[ll].key = i;
       }
       break;
     case T_OBJECT:
       for (i = 0; i < len; i++) {
+        if (*p + 2 >= max) return -3;
         key = d[(*p)] << 8 | d[*p + 1];
         *p += 2;
         ll = jp->len;
-        if (read_token(jp, d, p)) return 1;
+        TRY(read_token(jp, d, p, max));
         jp->result[ll].key = key;
       }
       break;
     case T_STRING:
       t->data = (uint8_t*) d + ((*p)++);
-      if (t->data[len] != 0) return 1;
+      if ((*p + len) > max || t->data[len] != 0) return -4; // must be null terminated
       *p += len;
       break;
     case T_BYTES:
       t->data = (uint8_t*) d + (*p);
       *p += len;
+      if (*p > max) return -3;
       break;
     default:
       break;
@@ -811,7 +818,7 @@ json_ctx_t* parse_binary(const bytes_t* data) {
   jp->c          = (char*) data->data;
 
   while (!error && p < data->len)
-    error = read_token(jp, data->data, &p);
+    error = read_token(jp, data->data, &p, data->len);
 
   if (error) {
     _free(jp->result);
