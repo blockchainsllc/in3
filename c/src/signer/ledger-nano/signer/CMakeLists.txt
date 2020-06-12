@@ -49,6 +49,13 @@ if(APPLE)
     "-framework IOKit"
     "-framework AppKit"
     )
+
+elseif(WIN32 OR MSVC OR MSYS OR MINGW)
+   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/windows/hid.c)
+
+   target_compile_definitions(ledger_signer_o PRIVATE)
+   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
+   target_link_libraries(ledger_signer setupapi)
 elseif(LINUX)
    add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/linux/hid.c)
    
@@ -56,14 +63,8 @@ elseif(LINUX)
    add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
    
    target_link_libraries(ledger_signer
-    libudev
+    -ludev
     )
-elseif(WIN32)
-   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/windows/hid.c)
-
-   target_compile_definitions(ledger_signer_o PRIVATE)
-   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
-   
 else()
    
 endif()
