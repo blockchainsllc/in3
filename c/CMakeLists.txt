@@ -50,7 +50,7 @@ add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
 add_subdirectory(src/signer/pk-signer)
 
-if( LEDGER_NANO AND HIDAPI )
+if( LEDGER_NANO )
   add_subdirectory(src/signer/ledger-nano/signer)
 endif()
 
@@ -138,11 +138,13 @@ if (IN3_LIB)
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-    if( LEDGER_NANO AND HIDAPI )
+
+    if(LEDGER_NANO)
         target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
     else()
         target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
     endif()
+
  
 
     # install

@@ -37,36 +37,9 @@ if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 endif()
 
-
-if(APPLE)
-   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/mac/hid.c)
+add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c )
    
-   target_compile_definitions(ledger_signer_o PRIVATE)
-   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
-  
-   target_link_libraries(ledger_signer
-    "-framework CoreFoundation"
-    "-framework IOKit"
-    "-framework AppKit"
-    )
-
-elseif(WIN32 OR MSVC OR MSYS OR MINGW)
-   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/windows/hid.c)
-
-   target_compile_definitions(ledger_signer_o PRIVATE)
-   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
-   target_link_libraries(ledger_signer setupapi)
-elseif(LINUX)
-   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/linux/hid.c)
-   
-   target_compile_definitions(ledger_signer_o PRIVATE)
-   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
-   
-   target_link_libraries(ledger_signer
-    -ludev
-    )
-else()
-   
-endif()
-
+target_compile_definitions(ledger_signer_o PRIVATE)
+add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
+target_link_libraries(ledger_signer hidapi)
 

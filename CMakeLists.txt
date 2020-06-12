@@ -132,11 +132,8 @@ if(BTC)
     set(IN3_VERIFIER ${IN3_VERIFIER} btc)
 endif()
 
-if(LEDGER_NANO )
+if(LEDGER_NANO)
     add_definitions(-DLEDGER_NANO)
-    set(HIDAPI true)
-else()
-    set(HIDAPI false)
 endif()
 
 if(COLOR AND NOT (MSVC OR MSYS OR MINGW))

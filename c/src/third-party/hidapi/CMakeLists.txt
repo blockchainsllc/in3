@@ -31,45 +31,33 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
+#cmake_minimum_required(VERSION 3.15)
 
-IF (USE_CURL)
-    message("using curl for comandline")
-    set(LIBS ${LIBS} transport_curl)
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+endif()
+
+
+if(APPLE)
+   add_library(hidapi_o OBJECT  ./mac/hid.c) 
+   target_compile_definitions(hidapi_o PRIVATE)
+   add_library(hidapi STATIC $<TARGET_OBJECTS:hidapi_o>)
+   target_link_libraries(hidapi  "-framework CoreFoundation"  "-framework IOKit"  "-framework AppKit"  )
+
+elseif(WIN32 OR MSVC OR MSYS OR MINGW)
+   add_library(hidapi_o OBJECT ./windows/hid.c)
+   target_compile_definitions(hidapi_o PRIVATE)
+   add_library(hidapi STATIC $<TARGET_OBJECTS:hidapi_o>)
+   target_link_libraries(hidapi setupapi)
+
+elseif(LINUX)
+   add_library(hidapi_o OBJECT  ./linux/hid.c)
+   target_compile_definitions(hidapi_o PRIVATE)
+   add_library(hidapi STATIC $<TARGET_OBJECTS:hidapi_o>)
+   target_link_libraries(hidapi -ludev)
+
 else()
-    message("using http for comandline")
-    set(LIBS ${LIBS} transport_http)
-ENDIF()
-
-IF (IN3_SERVER)
-    message("using server for comandline")
-    ADD_DEFINITIONS(-DIN3_SERVER)
-    set(LIBS ${LIBS} http_server)
-ENDIF()
-
-if (BTC)
-    ADD_DEFINITIONS(-DBTC)
-    set(LIBS ${LIBS} btc)
-endif()
-
-if (LEDGER_NANO)
-    ADD_DEFINITIONS(-DLEDGER_NANO)
-    set(IN3_API ${IN3_API} ledger_signer)
-endif()
-
-if (IPFS)
-    ADD_DEFINITIONS(-DIPFS)
-    set(LIBS ${LIBS} ipfs ipfs_api )
+   
 endif()
 
 
-add_executable(in3 main.c in3_storage.c)
-target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
-
-target_link_libraries(in3 ${LIBS} pk_signer eth_full  ${IN3_API}  -lm)
-
-install(TARGETS in3
-        DESTINATION /usr/local/bin/
-        PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE)
