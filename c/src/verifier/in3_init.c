@@ -2,6 +2,7 @@
 #include "../api/eth1/eth_api.h"
 #include "../pay/eth/pay_eth.h"
 #include "../transport/curl/in3_curl.h"
+#include "../transport/http/in3_http.h"
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
@@ -37,6 +38,8 @@ static void init_verifier() {
 static void init_transport() {
 #ifdef USE_CURL
   in3_register_curl();
+#else
+  in3_register_http();
 #endif
 }
 
