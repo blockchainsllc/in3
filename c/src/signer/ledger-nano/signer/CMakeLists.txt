@@ -37,22 +37,35 @@ if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 endif()
 
-add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c)
-target_compile_definitions(ledger_signer_o PRIVATE -D_POSIX_C_SOURCE=199309L)
-add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
-
 
 if(APPLE)
-   target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
+   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/mac/hid.c)
+   
+   target_compile_definitions(ledger_signer_o PRIVATE)
+   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
+  
+   target_link_libraries(ledger_signer
+    "-framework CoreFoundation"
+    "-framework IOKit"
+    "-framework AppKit"
+    )
 elseif(LINUX)
-   target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhidapi-hidraw${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
+   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/linux/hid.c)
+   
+   target_compile_definitions(ledger_signer_o PRIVATE)
+   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
+   
+   target_link_libraries(ledger_signer
+    libudev
+    )
 elseif(WIN32)
-  # not building for windows currently
-  # target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
+   add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c ../../../third-party/hidapi/windows/hid.c)
+
+   target_compile_definitions(ledger_signer_o PRIVATE)
+   add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
+   
 else()
-   target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhidapi-hidraw${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
+   
 endif()
 
-if(NOT WIN32)
-   add_dependencies(ledger_signer lib-hidapi)
-endif()
+
