@@ -72,6 +72,7 @@ option(DEV_NO_INTRN_PTR "(*dev option*) if true the client will NOT include a vo
 option(LEDGER_NANO "include support for nano ledger" OFF)
 option(ESP_IDF "include support for ESP-IDF microcontroller framework" OFF)
 option(ASSERTIONS "includes assertions into the code, which help track errors but may cost time during runtime" OFF)
+OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
