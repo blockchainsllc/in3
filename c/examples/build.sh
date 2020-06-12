@@ -13,7 +13,7 @@ if [ ! -d /usr/local/include/in3 ]; then
   fi
 
   # set the library path to use the local
-  BUILDARGS="-L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a -lcurl -ltransport_curl"
+  BUILDARGS="-L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a -ltransport_curl -lcurl"
 else
   BUILDARGS="-lin3"
 fi
