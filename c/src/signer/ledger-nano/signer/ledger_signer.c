@@ -102,7 +102,7 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
 #ifdef DEBUG
         in3_log_debug("apdu commnd sent to device\n");
-        ba_print(final_apdu_command.data, final_apdu_command.len);
+        ba_print(apdu, index_counter);
 #endif
 
         res = write_hid(handle, apdu, index_counter);

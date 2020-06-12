@@ -36,7 +36,18 @@
 
 #include "../../../core/client/client.h"
 
-void      read_bip32_path(uint8_t path_length, const uint8_t* path, uint32_t* bip32_path);
+void read_bip32_path(uint8_t path_length, const uint8_t* path, uint32_t* bip32_path);
+/**
+ * Signs the message or transaction and copies the signature in output parameter
+ * 
+ * ctx : context
+ * type: Type of signature , only SIGN_EC_HASH is supported 
+ * message: data bytes to be signed, for message a prefix "msg" has to be added to differentiate it form rlp transaction
+ * account: this parameter has no use as of now
+ * dst : pointer to the buffer where output signature will be copied, it should be 65 bytes buffer
+ * 
+ * returns IN3_ENODEVICE error if ledger nano device is not connected 
+ */
 in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
 void      set_command_params_eth();
 #endif
