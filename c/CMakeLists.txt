@@ -168,7 +168,7 @@ if (IN3_LIB)
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE)
     INSTALL (
-        DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+        DIRECTORY ${CMAKE_SOURCE_DIR}/c/include/in3
         DESTINATION include
         FILES_MATCHING PATTERN "*.h*")
 
