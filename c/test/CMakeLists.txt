@@ -83,13 +83,6 @@ foreach (file ${files})
 endforeach ()
 
 
-
-if(TRANSPORTS)
-        add_executable(test_libcurl test_libcurl.c test_utils.h unity/unity.c)
-        target_link_libraries(test_libcurl transport_curl eth_nano pk_signer ${IN3_API})
-endif()
-
-
 # add evm-tests
 file(GLOB files "testdata/requests/*.json")
 foreach (file ${files})
