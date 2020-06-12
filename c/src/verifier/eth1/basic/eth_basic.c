@@ -386,7 +386,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     _free(sb);                                // and we only free the stringbuilder, but not the data itself.
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+    if (!tx_params || d_type(tx_params) != T_ARRAY || !d_len(tx_params) || d_type(tx_params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid type of params, expected object", IN3_EINVAL);
     else if (!filter_opt_valid(tx_params + 1))
       return ctx_set_error(ctx, "filter option parsing failed", IN3_EINVAL);
