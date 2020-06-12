@@ -1,7 +1,4 @@
 using System.Numerics;
-using In3.Rpc;
-using In3.Utils;
-
 namespace In3.Eth1
 {
     /// <summary>

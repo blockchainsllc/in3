@@ -1,4 +1,3 @@
-using System;
 using System.Numerics;
 using In3;
 using In3.Crypto;

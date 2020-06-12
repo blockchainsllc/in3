@@ -57,5 +57,18 @@ namespace In3.Utils
             if (integerString.StartsWith("0x") || integerString.StartsWith("-0x")) return integerString;
             return BigIntToPrefixedHex(BigInteger.Parse(integerString));
         }
+
+        public static byte[] HexStringToByteArray(string hexString)
+        {
+            if (String.IsNullOrEmpty(hexString)) return new byte[] {};
+
+            byte[] a = new byte[hexString.Length/2];
+            for (int i = 0, h = 0; h < hexString.Length; i++, h += 2)
+            {
+                a[i] = (byte) Int32.Parse(hexString.Substring(h, 2), System.Globalization.NumberStyles.HexNumber);
+            }
+
+            return a;
+        }
     }
 }

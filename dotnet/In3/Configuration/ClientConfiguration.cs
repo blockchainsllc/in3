@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SystemTextJsonSamples;
-using csharp.Utils;
+using In3.Utils;
 
 namespace In3.Configuration
 {
@@ -204,9 +203,9 @@ namespace In3.Configuration
         /// Setup an custom rpc source for requests by setting chain to <see cref="Chain.Local" /> and proof to <see cref="Proof.None" />.
         /// </summary>
         [JsonPropertyName("rpc")]
-        public string? Rpc
+        public string Rpc
         {
-            get => (string?)GetState("rpc");
+            get => (string)GetState("rpc");
             set => SetState("rpc", value);
         }
 
