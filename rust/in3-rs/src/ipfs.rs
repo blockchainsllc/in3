@@ -3,7 +3,7 @@ use base64::{decode, DecodeError, encode};
 use serde_json::json;
 
 use crate::error::{Error, In3Result};
-use crate::json_rpc::{Request, rpc};
+use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
@@ -35,10 +35,14 @@ impl Api {
     /// # Arguments
     /// * `content` - content to store on IPFS.
     pub async fn put(&mut self, content: Bytes) -> In3Result<Multihash> {
-        rpc(self.client(), Request {
-            method: "ipfs_put",
-            params: json!([encode(content.0), "base64"]),
-        }).await
+        rpc(
+            self.client(),
+            Request {
+                method: "ipfs_put",
+                params: json!([encode(content.0), "base64"]),
+            },
+        )
+        .await
     }
 
     /// Returns the IPFS content associated with specified multihash.
@@ -46,10 +50,17 @@ impl Api {
     /// # Arguments
     /// * `hash` - multihash of content to be retrieved.
     pub async fn get(&mut self, hash: Multihash) -> In3Result<Bytes> {
-        Ok(decode(rpc::<String>(self.client(), Request {
-            method: "ipfs_get",
-            params: json!([hash, "base64"]),
-        }).await?)?.into())
+        Ok(decode(
+            rpc::<String>(
+                self.client(),
+                Request {
+                    method: "ipfs_get",
+                    params: json!([hash, "base64"]),
+                },
+            )
+            .await?,
+        )?
+        .into())
     }
 }
 
@@ -58,7 +69,6 @@ impl From<base64::DecodeError> for Error {
         Error::CustomError(format!("Error decoding base64: {}", e))
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -79,10 +89,11 @@ mod tests {
                 r#"[{"jsonrpc":"2.0","id":1,"result":"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"}]"#,
             )],
         }));
-        let hash = task::block_on(
-            api.put("Lorem ipsum dolor sit amet".as_bytes().into())
-        ).unwrap();
-        Ok(assert_eq!(hash, "QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"))
+        let hash = task::block_on(api.put("Lorem ipsum dolor sit amet".as_bytes().into())).unwrap();
+        Ok(assert_eq!(
+            hash,
+            "QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"
+        ))
     }
 
     #[test]
@@ -96,9 +107,12 @@ mod tests {
                 r#"[{"jsonrpc":"2.0","id":1,"result":"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ="}]"#,
             )],
         }));
-        let data = task::block_on(
-            api.get("QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8".to_string())
-        ).unwrap();
-        Ok(assert_eq!(data, "Lorem ipsum dolor sit amet".as_bytes().into()))
+        let data =
+            task::block_on(api.get("QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8".to_string()))
+                .unwrap();
+        Ok(assert_eq!(
+            data,
+            "Lorem ipsum dolor sit amet".as_bytes().into()
+        ))
     }
 }

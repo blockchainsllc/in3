@@ -6,4 +6,5 @@ cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-
 cp CMakeLists.txt rust/in3-sys/in3-core/
 export UPDATE_IN3_BINDINGS=1
 cd rust && cargo clean && cargo build
+#cd rust && cargo build
 cd ../scripts
