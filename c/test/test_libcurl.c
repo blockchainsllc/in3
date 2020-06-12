@@ -221,5 +221,8 @@ void test_send_curl_timing() {
     _free(response2[n].result.data);
   }
   _free(response2);
+
+  for (int i = 0; i < count; ++i)
+    _free(ips[i]);
   _free(ips);
 }
