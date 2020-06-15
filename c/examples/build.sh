@@ -13,7 +13,9 @@ if [ ! -d /usr/local/include/in3 ]; then
   fi
 
   # set the library path to use the local
-  BUILDARGS="-L../../build/lib/  -I../../c/include/ "
+  BUILDARGS="-L../../build/lib/  -I../../c/include/ ../../build/lib/libin3.a -ltransport_curl -lcurl"
+else
+  BUILDARGS="-lin3"
 fi
 # now build the examples build
 for f in *.c; 
@@ -21,6 +23,6 @@ for f in *.c;
     if [ "$f" == ledger_sign.c ]; then # skipping ledger_sign compilation as it requires specific dependencies 
       continue
     fi
-    gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -lin3  -D_POSIX_C_SOURCE=199309L
+    gcc -std=c99 -o "${f%%.*}" $f $BUILDARGS -D_POSIX_C_SOURCE=199309L
 done
 

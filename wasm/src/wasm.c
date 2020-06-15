@@ -147,7 +147,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
       break;
     default:
       sb_add_chars(sb, "\"error\",\"error\":\"");
-      sb_add_chars(sb, ctx->error ? ctx->error : "Unknown error");
+      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
       sb_add_chars(sb, "\"");
   }
 
@@ -172,7 +172,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         request->times[i] = start;
         if (i) sb_add_char(sb, ',');
         sb_add_char(sb, '"');
-        sb_add_chars(sb, request->urls[i]);
+        sb_add_escaped_chars(sb, request->urls[i]);
         sb_add_char(sb, '"');
       }
       sb_add_chars(sb, "],\"ptr\":");

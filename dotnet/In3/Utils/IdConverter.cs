@@ -2,9 +2,8 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using In3.Rpc;
-using In3.Utils;
 
-namespace csharp.Utils
+namespace In3.Utils
 {
     internal class IdConverter : JsonConverter<Id>
     {

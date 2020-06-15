@@ -18,6 +18,9 @@ namespace In3
         /// <summary>Goerli testnet.</summary>
         Goerli = 0x5,
 
+        /// <summary>Bitcoin chain.</summary>
+        Btc = 0x99,
+
         /// <summary>Evan testnet.</summary>
         Evan = 0x4b1,
 

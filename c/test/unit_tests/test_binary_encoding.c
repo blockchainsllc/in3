@@ -85,6 +85,7 @@ static void test_binary_primitives() {
   TEST_ASSERT_EQUAL_STRING(jsonrpc, "2.0");
   TEST_ASSERT_EQUAL_INT32(id_, 1);
   free(str_result);
+  json_free(ctx);
 }
 
 static void test_binary_object() {
@@ -110,6 +111,7 @@ static void test_binary_object() {
     TEST_ASSERT_EQUAL_INT32(value, 1);
   }
   free(str_proof);
+  json_free(ctx);
 }
 static void test_binary_array() {
   json_ctx_t* ctx            = init();
@@ -132,6 +134,7 @@ static void test_binary_array() {
       free(str_proof);
     }
   }
+  json_free(ctx);
 }
 
 /*

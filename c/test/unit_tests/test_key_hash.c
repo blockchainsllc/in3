@@ -131,7 +131,7 @@ void test_key_hash_collisions() {
     if (kstr) {
       hashes[i] = key_(kstr);
 #ifdef DEBUG
-      printf("\"%s\" => [%u]\n", kstr, hashes[i]);
+//      printf("\"%s\" => [%u]\n", kstr, hashes[i]);
 #endif
     } else {
       hashes[i] = 0;

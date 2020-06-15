@@ -236,3 +236,7 @@ in3_ret_t send_http(in3_request_t* req) {
 
   return 0;
 }
+
+void in3_register_http() {
+  in3_set_default_transport(send_http);
+}

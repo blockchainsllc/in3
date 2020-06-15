@@ -61,7 +61,7 @@ win_jni:
   image: docker.slock.it/build-images/cmake:gcc7-mingw
   extends: .conanbuild
   variables:
-    CONAN_OPTS: "-DUSE_CURL=false -DJAVA=true"
+    CONAN_OPTS: "-DTRANSPORTS=true -DUSE_CURL=false -DJAVA=true"
     BUILD: "win_jni"
 
 centos:
@@ -131,7 +131,7 @@ mac_os:
     - mkdir mac_build
     - mkdir mac_jni
     - cd mac_build
-    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true -DUSE_CURL=false -DUSE_SCRYPT=true ..
+    - cmake -DTAG_VERSION=$CI_COMMIT_TAG  -DCMAKE_BUILD_TYPE=MINSIZEREL -DJAVA=true -DTRANSPORTS=false -DUSE_SCRYPT=true ..
     - make in3_jni
     - cp lib/libin3_jni.dylib ../mac_jni/
     - rm -rf *

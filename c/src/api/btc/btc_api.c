@@ -60,8 +60,9 @@
 
 // adds the data as hex to the string without the 0x-prefix
 static void add_btc_hex(sb_t* sb, bytes_t data) {
-  char* tmp = alloca(data.len * 2 + 1);
+  char* tmp = data.len > 500 ? _malloc(data.len * 2 + 1) : alloca(data.len * 2 + 1);
   sb_add_range(sb, tmp, 0, bytes_to_hex(data.data, data.len, tmp));
+  if (data.len > 500) _free(tmp);
 }
 
 // converts a hex string without a 0x-prefix to a new bytes_t-pointer, which needs to be freed.
@@ -77,7 +78,7 @@ static size_t tx_data_size(d_token_t* t) {
 }
 
 // write into transaction-struct from json-token
-static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
+static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data, bytes32_t block_hash) {
 
   EXPECT_EQ(d_type(t), T_OBJECT)
 
@@ -107,7 +108,10 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
 
   EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("txid")), -1, res->txid, 32), 32)
   EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("hash")), -1, res->hash, 32), 32)
-  EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
+  if (block_hash)
+    memcpy(res->blockhash, block_hash, 32);
+  else
+    EXPECT_EQ(hex_to_bytes(d_get_stringk(t, key("blockhash")), -1, res->blockhash, 32), 32)
 
   // handle vin
   uint8_t* p     = txdata.input.data;
@@ -142,10 +146,10 @@ static in3_ret_t fill_tx(d_token_t* t, btc_transaction_t* res, void* data) {
   return IN3_OK;
 }
 
-static btc_transaction_t* to_tx(d_token_t* t) {
+btc_transaction_t* btc_d_to_tx(d_token_t* t) {
   if (d_type(t) != T_OBJECT) RETURN_NULL_ERROR(IN3_EINVAL, "invalid json");
   void* res = _malloc(tx_data_size(t) + sizeof(btc_transaction_t));
-  TRY_OR_NULL(fill_tx(t, res, res + sizeof(btc_transaction_t)), "invalid transaction-data");
+  TRY_OR_NULL(fill_tx(t, res, res + sizeof(btc_transaction_t), NULL), "invalid transaction-data");
   return res;
 }
 
@@ -170,14 +174,14 @@ static in3_ret_t fill_blockheader(d_token_t* t, btc_blockheader_t* res) {
   return IN3_OK;
 }
 
-static btc_blockheader_t* to_blockheader(d_token_t* t) {
+btc_blockheader_t* btc_d_to_blockheader(d_token_t* t) {
   if (d_type(t) != T_OBJECT) RETURN_NULL_ERROR(IN3_EINVAL, "invalid json");
   btc_blockheader_t* res = _malloc(sizeof(btc_blockheader_t));
   TRY_OR_NULL(fill_blockheader(t, res), "invalid blockheader");
   return res;
 }
 
-static btc_block_txids_t* to_block_txids(d_token_t* t) {
+btc_block_txids_t* btc_d_to_block_txids(d_token_t* t) {
   if (d_type(t) != T_OBJECT) RETURN_NULL_ERROR(IN3_EINVAL, "invalid json");
 
   d_token_t* tx = d_get(t, key("tx"));
@@ -196,7 +200,7 @@ static btc_block_txids_t* to_block_txids(d_token_t* t) {
   return res;
 }
 
-static btc_block_txdata_t* to_block_txdata(d_token_t* t) {
+btc_block_txdata_t* btc_d_to_block_txdata(d_token_t* t) {
   if (d_type(t) != T_OBJECT) RETURN_NULL_ERROR(IN3_EINVAL, "invalid json");
 
   d_token_t* tx = d_get(t, key("tx"));
@@ -214,7 +218,7 @@ static btc_block_txdata_t* to_block_txdata(d_token_t* t) {
   res->tx_len            = d_len(tx);
   res->tx                = txp;
   for (d_iterator_t iter = d_iter(tx); iter.left; d_iter_next(&iter), txp++) {
-    TRY_OR_NULL(fill_tx(iter.token, txp, p), "invalid txdata");
+    TRY_OR_NULL(fill_tx(iter.token, txp, p, res->header.hash), "invalid txdata");
     p += tx_data_size(iter.token);
   }
   return res;
@@ -233,8 +237,7 @@ btc_transaction_t* btc_get_transaction(in3_t* in3, bytes32_t txid) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(txid, 32));
   sb_add_chars(params, "\",true");
-  rpc_exec("getrawtransaction", btc_transaction_t*, to_tx(result));
-  return NULL;
+  rpc_exec("getrawtransaction", btc_transaction_t*, btc_d_to_tx(result));
 }
 
 btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash) {
@@ -242,8 +245,7 @@ btc_blockheader_t* btc_get_blockheader(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",true");
-  rpc_exec("getblockheader", btc_blockheader_t*, to_blockheader(result));
-  return NULL;
+  rpc_exec("getblockheader", btc_blockheader_t*, btc_d_to_blockheader(result));
 }
 
 bytes_t* btc_get_blockheader_bytes(in3_t* in3, bytes32_t blockhash) {
@@ -267,14 +269,13 @@ btc_block_txdata_t* btc_get_block_txdata(in3_t* in3, bytes32_t blockhash) {
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",2");
-  rpc_exec("getblock", btc_block_txdata_t*, to_block_txdata(result));
-  return NULL;
+  rpc_exec("getblock", btc_block_txdata_t*, btc_d_to_block_txdata(result));
 }
+
 btc_block_txids_t* btc_get_block_txids(in3_t* in3, bytes32_t blockhash) {
   rpc_init;
   sb_add_char(params, '\"');
   add_btc_hex(params, bytes(blockhash, 32));
   sb_add_chars(params, "\",1");
-  rpc_exec("getblock", btc_block_txids_t*, to_block_txids(result));
-  return NULL;
+  rpc_exec("getblock", btc_block_txids_t*, btc_d_to_block_txids(result));
 }

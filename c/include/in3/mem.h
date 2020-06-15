@@ -100,7 +100,6 @@ void   t_free(void* ptr, char* file, const char* func, int line);
 int    mem_get_memleak_cnt();
 void   mem_reset(int cnt);
 void   memstack();
-int    mem_stack_size();
 #else /* TEST */
 #ifdef ERR_MSG
 #define _malloc(s) _malloc_(s, __FILE__, __func__, __LINE__)

@@ -462,8 +462,8 @@ void in3_free(in3_t* a) {
     whitelist_free(a->chains[i].whitelist);
     _free(a->chains[i].nodelist_upd8_params);
   }
-  if (a->signer) _free(a->signer);
-  if (a->cache) _free(a->cache);
+  if (a->signer && a->signer != default_signer) _free(a->signer);
+  if (a->cache && a->cache != default_storage) _free(a->cache);
   if (a->chains) _free(a->chains);
 
   if (a->filters) {
