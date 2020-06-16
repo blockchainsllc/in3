@@ -256,7 +256,7 @@ impl Api {
     /// * `blockhash` - block hash.
     pub async fn get_blockheader_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
+        let hash_str = hash.as_str().unwrap(); // cannot fail
         rpc(self.client(), Request {
             method: "getblockheader",
             params: json!([hash_str.trim_start_matches("0x"), false]),
@@ -272,7 +272,7 @@ impl Api {
     /// If response if not serializable to output type.
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
+        let hash_str = hash.as_str().unwrap(); // cannot fail
         let header: Value = rpc(self.client(), Request {
             method: "getblockheader",
             params: json!([hash_str.trim_start_matches("0x"), true]),
@@ -295,7 +295,7 @@ impl Api {
     /// * `tx_id` - transaction id.
     pub async fn get_transaction_bytes(&mut self, tx_id: Hash) -> In3Result<Bytes> {
         let hash = json!(tx_id);
-        let hash_str = hash.as_str().unwrap();
+        let hash_str = hash.as_str().unwrap(); // cannot fail
         rpc(self.client(), Request {
             method: "getrawtransaction",
             params: json!([hash_str.trim_start_matches("0x"), false]),
@@ -311,7 +311,7 @@ impl Api {
     /// If response if not serializable to output type.
     pub async fn get_transaction(&mut self, tx_id: Hash) -> In3Result<Transaction> {
         let hash = json!(tx_id);
-        let hash_str = hash.as_str().unwrap();
+        let hash_str = hash.as_str().unwrap(); // cannot fail
         let tx: Value = rpc(self.client(), Request {
             method: "getrawtransaction",
             params: json!([hash_str.trim_start_matches("0x"), true]),
@@ -338,7 +338,7 @@ impl Api {
     /// If response if not serializable to output type.
     pub async fn get_block_transaction_data(&mut self, blockhash: Hash) -> In3Result<BlockTransactionData> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
+        let hash_str = hash.as_str().unwrap(); // cannot fail
         let block: Value = rpc(self.client(), Request {
             method: "getblock",
             params: json!([hash_str.trim_start_matches("0x"), 2]),
@@ -365,7 +365,7 @@ impl Api {
     /// If response if not serializable to output type.
     pub async fn get_block_transaction_ids(&mut self, blockhash: Hash) -> In3Result<BlockTransactionIds> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
+        let hash_str = hash.as_str().unwrap(); // cannot fail
         let block: Value = rpc(self.client(), Request {
             method: "getblock",
             params: json!([hash_str.trim_start_matches("0x"), 1]),
@@ -389,7 +389,7 @@ impl Api {
     /// * `blockhash` - block hash.
     pub async fn get_block_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
+        let hash_str = hash.as_str().unwrap(); // cannot fail
         rpc(self.client(), Request {
             method: "getblock",
             params: json!([hash_str.trim_start_matches("0x"), false]),
@@ -438,7 +438,7 @@ mod tests {
         }));
         let header = task::block_on(
             api.get_blockheader_bytes(serde_json::from_str::<Hash>(r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#)?)
-        ).unwrap();
+        )?;
         assert_eq!(header.0, FromHex::from_hex("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae").unwrap());
         Ok(())
     }
@@ -488,7 +488,7 @@ mod tests {
         }));
         let header = task::block_on(
             api.get_blockheader(serde_json::from_str::<Hash>(r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#)?)
-        ).unwrap();
+        )?;
         assert_eq!(header.confirmations, 1979);
         assert_eq!(header.height, 631076);
         assert_eq!(header.version, 536870912);
@@ -532,7 +532,7 @@ mod tests {
         }));
         let tx = task::block_on(
             api.get_transaction_bytes(serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?)
-        ).unwrap();
+        )?;
         assert_eq!(tx.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
         Ok(())
     }

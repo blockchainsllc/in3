@@ -3,7 +3,7 @@ use std::str;
 
 use libc::c_char;
 use rustc_hex::FromHex;
-use secp256k1::{sign, Message, SecretKey};
+use secp256k1::{Message, SecretKey, sign};
 use sha3::{Digest, Keccak256Full};
 
 use crate::traits::Signer;
@@ -32,8 +32,8 @@ pub struct SignerRust<'a> {
 
 impl Signer for SignerRust<'_> {
     fn sign(&mut self, msg: &str) -> *const c_char {
-        let msg_hex = msg.from_hex().unwrap();
-        let pk_hex = self.pk.from_hex().unwrap();
+        let msg_hex = msg.from_hex().expect("message is not valid hex string");
+        let pk_hex = self.pk.from_hex().expect("private key is not valid hex string");
         let mut hasher = Keccak256Full::new();
         // write input message
         hasher.input(msg_hex);
@@ -43,7 +43,7 @@ impl Signer for SignerRust<'_> {
         msg_slice.copy_from_slice(&result[0..32]);
         let mut pk_slice: [u8; 32] = Default::default();
         pk_slice.copy_from_slice(&pk_hex[0..32]);
-        let seckey = SecretKey::parse(&pk_slice).unwrap();
+        let seckey = SecretKey::parse(&pk_slice).expect("invalid private key");
         let message = Message::parse(&msg_slice);
         let (signature, _) = sign(&message, &seckey);
         let signature_arr = signature.serialize();
@@ -63,12 +63,12 @@ mod tests {
         let mut sign_str = "".to_string();
         for byte in &data[0..64] {
             let mut tmp = "".to_string();
-            write!(&mut tmp, "{:02x}", byte).unwrap();
+            write!(&mut tmp, "{:02x}", byte).unwrap(); // cannot fail
             sign_str.push_str(tmp.as_str());
         }
         //Equivalent to recoverycode ethereum += 27
         let mut tmp = "".to_string();
-        write!(&mut tmp, "{:02x}", 28).unwrap();
+        write!(&mut tmp, "{:02x}", 28).unwrap(); // cannot fail
         sign_str.push_str(tmp.as_str());
         sign_str
     }
@@ -77,8 +77,8 @@ mod tests {
     fn test_signature() {
         let msg = "9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465";
         let pk = "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6";
-        let msg_hex = msg.from_hex().unwrap();
-        let pk_hex = pk.from_hex().unwrap();
+        let msg_hex = msg.from_hex().unwrap(); // cannot fail
+        let pk_hex = pk.from_hex().unwrap(); // cannot fail
         let mut hasher = Keccak256Full::new();
         // write input message
         hasher.input(msg_hex);
@@ -88,7 +88,7 @@ mod tests {
         msg_slice.copy_from_slice(&result[0..32]);
         let mut pk_slice: [u8; 32] = Default::default();
         pk_slice.copy_from_slice(&pk_hex[0..32]);
-        let seckey = SecretKey::parse(&pk_slice).unwrap();
+        let seckey = SecretKey::parse(&pk_slice).unwrap(); // cannot fail
         let message = Message::parse(&msg_slice);
         let (signature, _) = sign(&message, &seckey);
         let signature_arr = signature.serialize();
