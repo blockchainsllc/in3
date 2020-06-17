@@ -48,9 +48,9 @@ where
     T: serde::de::DeserializeOwned,
 {
     let req_str = serde_json::to_string(&request)?;
-    // println!("REQUEST: {:?}", req_str);
+     println!("REQUEST: {:?}", req_str);
     let resp_str = client.rpc(req_str.as_str()).await?;
-    // println!("RESPONSE: {:?}", resp_str.to_string());
+     println!("RESPONSE: {:?}", resp_str.to_string());
     //Check for array in or object in the response.
     let resp_: Vec<Response> = match serde_json::from_str(resp_str.as_str()) {
         Result::Ok(val) => val,
@@ -63,6 +63,7 @@ where
             vec![response]
         }
     };
+    println!("{:?}", resp_);
     //Check array is valid and try once again
     if resp_[0].result == Some(serde_json::Value::Null) {
         let resp_single: Response = serde_json::from_str(resp_str.as_str()).unwrap();

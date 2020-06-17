@@ -7,7 +7,58 @@ use in3::eth1::*;
 use in3::prelude::*;
 use in3::types::Bytes;
 
+
 fn main() -> In3Result<()> {
+    let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+    let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
+    let responses = vec![
+        (
+            "eth_newFilter",
+            r#"{"jsonrpc":"2.0","result":"0x1","id":73}"#,
+        ),(
+            "eth_blockNumber",
+            r#"[{"jsonrpc":"2.0","id":1,"result":"0x9bef49"}]"#,
+        ),    
+    (
+        "eth_getLogs",
+        r#"[]"#,
+    ),(
+        "eth_blockNumber",
+        r#"[{"jsonrpc":"2.0","id":1,"result":"0x9bef49"}]"#,
+    )];
+    // let responses = vec![(
+    //     "eth_getLogs",
+    //     r#"[]"#,
+    // ),(
+    //     "eth_blockNumber",
+    //     r#"[{"jsonrpc":"2.0","id":1,"result":"0x9bef49"}]"#,
+    // )];
+    let transport: Box<dyn Transport> = Box::new(MockTransport {
+        responses: responses,
+    });
+    // let mut eth_api = init_api(transport, chain::MAINNET, config);
+    let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
+    let mut client = Client::new(chain::MAINNET);
+    // client.set_log_debug();
+    let _ = client.configure(config);
+    // client.set_pk_signer("dcb7b68bf23f6b29ffef8f316b0015bfd952385f26ae72befaf68cf0d0b6b1b6");
+    client.set_transport(transport);
+    
+    let mut eth_api = Api::new(client);
+    let jopts = serde_json::json!({
+        "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
+        "blockHash":"0x40b6019185d6ee0112445fbe678438b6968bad2e6f24ae26c7bb75461428fd43"
+    });
+    let fid = task::block_on(eth_api.new_filter(jopts))?;
+    // let fid: U256 = (3).into();
+    let ret: FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
+    // println!("{:?}", ret);
+    assert!(true);
+    Ok(())
+}
+
+
+fn main_1() -> In3Result<()> {
     // configure client and API
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
     eth_api

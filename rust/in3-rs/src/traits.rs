@@ -61,6 +61,8 @@ pub trait Client {
     /// Sets a custom storage implementation to be used by the client.
     fn set_storage(&mut self, storage: Box<dyn Storage>);
 
+    fn set_log_debug(&mut self);
+
     /// Makes a remote procedure call and returns the result as a String asynchronously.
     async fn rpc(&mut self, call: &str) -> error::In3Result<String>;
 
