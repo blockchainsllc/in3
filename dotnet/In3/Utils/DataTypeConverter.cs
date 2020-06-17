@@ -4,11 +4,14 @@ using System.Numerics;
 
 namespace In3.Utils
 {
-    internal class TypesMatcher
+    /// <summary>
+    /// General util class for conversion between blockchain types.
+    /// </summary>
+    public static class DataTypeConverter
     {
         private static readonly char[] charsToTrim = new char[] { '0' };
 
-        public static string BytesToHexString(byte[] input, int len)
+        internal static string BytesToHexString(byte[] input, int len)
         {
             char[] result = new char[len * 2];
             char[] hex = "0123456789abcdef".ToCharArray();
@@ -24,6 +27,11 @@ namespace In3.Utils
             string zeroSufixedString = new string(result);
             return $"0x{zeroSufixedString}";
         }
+        /// <summary>
+        /// Converts a zero-prefixed hex (e.g.: 0x05) to <see cref="BigInteger"/>
+        /// </summary>
+        /// <param name="source">The hex number string.</param>
+        /// <returns>The number representation of <param name="source"></param>.</returns>
         public static BigInteger HexStringToBigint(string source)
         {
             if (String.IsNullOrWhiteSpace(source)) return BigInteger.Zero;
@@ -43,7 +51,7 @@ namespace In3.Utils
             return BigInteger.Parse(source, NumberStyles.AllowHexSpecifier);
         }
 
-        public static string BigIntToPrefixedHex(BigInteger source)
+        internal static string BigIntToPrefixedHex(BigInteger source)
         {
             // This initial if is to overcome the weird behavior of ".ToString("X")" and the corner case of trimming leading zeroes. 
             if (source == 0) return "0x0";
@@ -52,13 +60,13 @@ namespace In3.Utils
             return isPositive ? $"0x{toConvert.ToString("X").TrimStart(charsToTrim)}" : $"-0x{toConvert.ToString("X").TrimStart(charsToTrim)}";
         }
 
-        public static string AddHexPrefixer(string integerString)
+        internal static string AddHexPrefixer(string integerString)
         {
             if (integerString.StartsWith("0x") || integerString.StartsWith("-0x")) return integerString;
             return BigIntToPrefixedHex(BigInteger.Parse(integerString));
         }
 
-        public static byte[] HexStringToByteArray(string hexString)
+        internal static byte[] HexStringToByteArray(string hexString)
         {
             if (String.IsNullOrEmpty(hexString)) return new byte[] {};
 
@@ -70,5 +78,6 @@ namespace In3.Utils
 
             return a;
         }
+
     }
 }

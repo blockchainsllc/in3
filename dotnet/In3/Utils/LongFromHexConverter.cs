@@ -10,12 +10,12 @@ namespace In3.Utils
         public override long Read(
             ref Utf8JsonReader reader,
             Type typeToConvert,
-            JsonSerializerOptions options) => (long) TypesMatcher.HexStringToBigint(reader.GetString());
+            JsonSerializerOptions options) => (long) DataTypeConverter.HexStringToBigint(reader.GetString());
 
         public override void Write(
             Utf8JsonWriter writer,
             long intVal,
             JsonSerializerOptions options) =>
-            writer.WriteStringValue(TypesMatcher.BigIntToPrefixedHex(intVal));
+            writer.WriteStringValue(DataTypeConverter.BigIntToPrefixedHex(intVal));
     }
 }

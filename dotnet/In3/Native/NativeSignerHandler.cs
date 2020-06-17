@@ -46,11 +46,11 @@ namespace In3.Native
         {
             byte[] accountBytes = new byte[account.len];
             Marshal.Copy(account.data, accountBytes, 0, account.len);
-            string accountStr = TypesMatcher.BytesToHexString(accountBytes, account.len);
+            string accountStr = DataTypeConverter.BytesToHexString(accountBytes, account.len);
 
             byte[] messageBytes = new byte[message.len];
             Marshal.Copy(message.data, messageBytes, 0, message.len);
-            string messageStr = TypesMatcher.BytesToHexString(messageBytes, message.len);
+            string messageStr = DataTypeConverter.BytesToHexString(messageBytes, message.len);
 
             String signedData = Wrapper.Client.Signer.Sign(messageStr, accountStr);
 

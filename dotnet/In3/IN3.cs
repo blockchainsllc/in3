@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using In3.Configuration;
-using In3.Crypto;
-using In3.Eth1;
 using In3.Transport;
 using In3.Storage;
 using In3.Native;
@@ -29,7 +27,7 @@ namespace In3
         public Storage.Storage Storage { get; set; }
 
         /// <summary>Get or Sets <see cref="Signer"/> object. If not set <see cref="SimpleWallet"/> will be used.</summary>
-        public Signer Signer { get; set; }
+        public Crypto.Signer Signer { get; set; }
 
         /// <summary>Gets <see cref="In3.Btc.Api"/> object.</summary>
         public Btc.Api Btc { get; }
@@ -48,7 +46,7 @@ namespace In3
             // Starting to get convoluted. Need to think of a better way.
             Transport = new DefaultTransport();
             Storage = new InMemoryStorage();
-            Signer = new SimpleWallet(this);
+            Signer = new Crypto.SimpleWallet(this);
             Native = new NativeWrapper(this, chainId);
             Btc = new Btc.Api(this);
             Eth1 = new Eth1.Api(this);

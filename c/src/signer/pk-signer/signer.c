@@ -45,6 +45,24 @@
 #include "../../verifier/eth1/nano/serialize.h"
 #include "signer-priv.h"
 
+/** minimum signer for the wallet, returns the signed message which needs to be freed **/
+char* eth_wallet_sign(const char* key, const char* data) {
+  int     data_l = strlen(data) / 2 - 1;
+  uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+
+  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
+  data_l    = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
+  char* res = malloc(133);
+
+  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
+    bytes_to_hex(dst, 65, res + 2);
+    res[0] = '0';
+    res[1] = 'x';
+  }
+
+  return res;
+}
+
 /**  in3 utiliy to sign the given data with give private key with option to hash data or not */
 in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst) {
   switch (type) {
