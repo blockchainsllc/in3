@@ -4,6 +4,8 @@ bleach==3.1.5
 certifi==2019.11.28
 chardet==3.0.4
 click==7.1.1
+coverage==5.1
+coverage-badge==1.0.1
 docutils==0.16
 future==0.18.2
 idna==2.9
