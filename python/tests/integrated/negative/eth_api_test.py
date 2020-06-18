@@ -21,10 +21,10 @@ class EthereumNegativeTest(unittest.TestCase):
             with self.assertRaises(in3.ClientException):
                 self.client.eth.block_by_number(True)
 
-    def test_get_block_by_number_client_issue_334(self):
-        for i in range(20):
-            with self.assertRaises(in3.ClientException):
-                self.client.eth.block_by_number(False)
+    # def test_get_block_by_number_client_issue_334(self):
+    #     for i in range(20):
+    #         with self.assertRaises(in3.ClientException):
+    #             self.client.eth.block_by_number(False)
 
     def test_get_transaction_by_hash_client(self):
         tx_bad_hash = '0xTe25a4b673bd87f40ea147a5506cb2ffb38e32ec1efc372c6730a5ba50668aeP'
