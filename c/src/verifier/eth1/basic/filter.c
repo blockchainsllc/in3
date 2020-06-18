@@ -163,15 +163,15 @@ in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
   else if (options == NULL && type != FILTER_BLOCK)
     return IN3_EINVAL;
 
-  sb_t*   req    = sb_new("{\"method\":\"eth_blockNumber\",\"params\":[]}");
-  in3_ctx_t* new_ctx     = ctx_find_required(ctx, "eth_blockNumber");
+  sb_t*      req     = sb_new("{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  in3_ctx_t* new_ctx = ctx_find_required(ctx, "eth_blockNumber");
   if (!new_ctx)
     return ctx_add_required(ctx, ctx_new(ctx->client, req->data));
-  d_token_t * response= filter_process_internal_ctx(new_ctx, "eth_blockNumber");
+  d_token_t* response = filter_process_internal_ctx(new_ctx, "eth_blockNumber");
   if (response == NULL && IN3_WAITING != ctx_get_error(new_ctx, 0)) return ctx_get_error(new_ctx, 0);
   TRY(ctx_remove_required(ctx, new_ctx));
   uint64_t current_block = d_get_longk(response, K_RESULT);
-  
+
   in3_filter_t* f = filter_new(type);
   f->options      = options;
   f->last_block   = current_block;
@@ -218,26 +218,26 @@ bool filter_remove(in3_t* in3, size_t id) {
   return true;
 }
 
-d_token_t * filter_process_internal_ctx(in3_ctx_t* new_ctx, const char* method){
-  in3_ret_t  res           = IN3_OK;
-  char* msg = alloca(strlen(method) + 36);
+d_token_t* filter_process_internal_ctx(in3_ctx_t* new_ctx, const char* method) {
+  in3_ret_t res = IN3_OK;
+  char*     msg = alloca(strlen(method) + 36);
   sprintf(msg, "Error fetching the internal request: %s", method);
-  d_token_t *   response = NULL;
+  d_token_t* response = NULL;
   switch (in3_ctx_state(new_ctx)) {
     case CTX_ERROR:
-    ctx_set_error(new_ctx, new_ctx->error ? new_ctx->error : msg, new_ctx->verification_state ? new_ctx->verification_state : IN3_ERPC);
+      ctx_set_error(new_ctx, new_ctx->error ? new_ctx->error : msg, new_ctx->verification_state ? new_ctx->verification_state : IN3_ERPC);
       return NULL;
     case CTX_WAITING_FOR_REQUIRED_CTX:
     case CTX_WAITING_FOR_RESPONSE:
       ctx_set_error(new_ctx, "", IN3_WAITING);
       return NULL;
     case CTX_SUCCESS:
-      if (IN3_OK != (res = ctx_get_error(new_ctx, 0))){
+      if (IN3_OK != (res = ctx_get_error(new_ctx, 0))) {
         ctx_set_error(new_ctx, new_ctx->error ? new_ctx->error : msg, res);
         return NULL;
       }
       response = new_ctx->responses[0];
-  } 
+  }
   return response;
 }
 
@@ -247,17 +247,27 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
     return ctx_set_error(ctx, "no filters found", IN3_EUNKNOWN);
   if (id == 0 || id > in3->filters->count)
     return ctx_set_error(ctx, "filter with id does not exist", IN3_EUNKNOWN);
-  
-  sb_t*   req    = sb_new("{\"method\":\"eth_blockNumber\",\"params\":[]}");
-  in3_ctx_t* new_ctx     = ctx_find_required(ctx, "eth_blockNumber");
-  if (!new_ctx)
+
+  sb_t*      req       = sb_new("{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  in3_ret_t  res       = IN3_OK;
+  uint64_t   blkno     = 0;
+  in3_ctx_t* block_ctx = ctx_find_required(ctx, "eth_blockNumber");
+  if (!block_ctx)
     return ctx_add_required(ctx, ctx_new(ctx->client, req->data));
-  
-  d_token_t *   response= filter_process_internal_ctx(new_ctx, "eth_blockNumber");
-  _free(req);
-  if (response == NULL) return ctx_get_error(new_ctx, 0);
-  TRY(ctx_remove_required(ctx, new_ctx));
-  uint64_t blkno = d_get_longk(response, K_RESULT);
+  else {
+    switch (in3_ctx_state(block_ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
+      case CTX_WAITING_FOR_REQUIRED_CTX:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+      case CTX_SUCCESS:
+        if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
+          return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
+        blkno = d_get_longk(block_ctx->responses[0], K_RESULT);
+        TRY(ctx_remove_required(ctx, block_ctx));
+    }
+  }
 
   in3_filter_t* f = in3->filters->array[id - 1];
   if (!f)
@@ -272,12 +282,26 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         sb_t* params = sb_new("[");
         char* fopt_  = filter_opt_set_fromBlock(fopt, f->last_block, !f->is_first_usage);
         sb_add_chars(params, fopt_);
-        in3_ctx_t* new_ctx     = ctx_find_required(ctx, "eth_getLogs");
-        if (!new_ctx)
-          return ctx_add_required(ctx, ctx_new(ctx->client, sb_add_char(params, ']')->data));
-        d_token_t *   response= filter_process_internal_ctx(new_ctx, "eth_getLogs" );
-        if (response == NULL && IN3_WAITING != ctx_get_error(new_ctx, 0)) return ctx_get_error(new_ctx, 0);
-        TRY(ctx_remove_required(ctx, new_ctx));
+
+        in3_ret_t  res      = IN3_OK;
+        d_token_t* response = NULL;
+        in3_ctx_t* ctx_     = ctx_find_required(ctx, "eth_getLogs");
+        if (!ctx_)
+        return ctx_add_required(ctx, ctx_new(ctx->client, sb_add_char(params, ']')->data));
+        else {
+          switch (in3_ctx_state(ctx_)) {
+            case CTX_ERROR:
+              return ctx_set_error(ctx_, ctx_->error ? block_ctx->error : "Error fetching the blocknumber", ctx_->verification_state ? ctx_->verification_state : IN3_ERPC);
+            case CTX_WAITING_FOR_REQUIRED_CTX:
+            case CTX_WAITING_FOR_RESPONSE:
+              return IN3_WAITING;
+            case CTX_SUCCESS:
+              if (IN3_OK != (res = ctx_get_error(ctx_, 0)))
+                return ctx_set_error(ctx_, ctx_->error ? block_ctx->error : "Error fetching the blocknumber", res);
+              response = block_ctx->responses[0];
+              TRY(ctx_remove_required(ctx, ctx_));
+          }
+        }
         d_token_t* r  = d_get(response, K_RESULT);
         char*      jr = d_create_json(r);
         sb_add_chars(result, jr);
@@ -293,12 +317,26 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         sb_add_char(result, '[');
         for (uint64_t i = f->last_block + 1, j = 0; i <= blkno; i++, j++) {
           sprintf(params, "[\"0x%" PRIx64 "\", false]", i);
-          in3_ctx_t* new_ctx     = ctx_find_required(ctx, "eth_getBlockByNumber");
-          if (!new_ctx)
+
+          in3_ret_t  res      = IN3_OK;
+          d_token_t* response = NULL;
+          in3_ctx_t* ctx_     = ctx_find_required(ctx, "eth_getBlockByNumber");
+          if (!ctx_)
             return ctx_add_required(ctx, ctx_new(ctx->client, params));
-          d_token_t *   response= filter_process_internal_ctx(new_ctx, "eth_getBlockByNumber");
-          if (response == NULL && IN3_WAITING != ctx_get_error(new_ctx, 0)) return ctx_get_error(new_ctx, 0);
-          TRY(ctx_remove_required(ctx, new_ctx));
+          else {
+            switch (in3_ctx_state(ctx_)) {
+              case CTX_ERROR:
+                return ctx_set_error(ctx_, ctx_->error ? block_ctx->error : "Error fetching the blocknumber", ctx_->verification_state ? ctx_->verification_state : IN3_ERPC);
+              case CTX_WAITING_FOR_REQUIRED_CTX:
+              case CTX_WAITING_FOR_RESPONSE:
+                return IN3_WAITING;
+              case CTX_SUCCESS:
+                if (IN3_OK != (res = ctx_get_error(ctx_, 0)))
+                  return ctx_set_error(ctx_, ctx_->error ? block_ctx->error : "Error fetching the blocknumber", res);
+                response = block_ctx->responses[0];
+                TRY(ctx_remove_required(ctx, ctx_));
+            }
+          }
           d_token_t* hash  = d_getl(d_get(response, K_RESULT), K_HASH, 32);
           char       h[67] = "0x";
           bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
@@ -307,7 +345,6 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
           sb_add_char(result, '"');
           sb_add_chars(result, h);
           sb_add_char(result, '"');
-          
         }
         sb_add_char(result, ']');
         f->last_block = blkno;

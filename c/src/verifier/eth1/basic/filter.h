@@ -38,11 +38,11 @@
 #include "../../../core/client/client.h"
 #include "../../../core/client/context.h"
 
-in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options);
-bool      filter_remove(in3_t* in3, size_t id);
-in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result);
-bool      filter_opt_valid(d_token_t* tx_params);
-char*     filter_opt_set_fromBlock(char* fopt, uint64_t toBlock, bool should_overwrite);
-d_token_t * filter_process_internal_ctx(in3_ctx_t* new_ctx, const char* method);
+in3_ret_t  filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options);
+bool       filter_remove(in3_t* in3, size_t id);
+in3_ret_t  filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result);
+bool       filter_opt_valid(d_token_t* tx_params);
+char*      filter_opt_set_fromBlock(char* fopt, uint64_t toBlock, bool should_overwrite);
+d_token_t* filter_process_internal_ctx(in3_ctx_t* new_ctx, const char* method);
 
 #endif //FILTER_H
