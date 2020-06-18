@@ -133,11 +133,11 @@ in3_ret_t eth_verify_eth_getBlock(in3_vctx_t* vc, bytes_t* block_hash, uint64_t 
   bytes_t    tmp, *bhash;
   uint64_t   bnumber = d_get_longk(vc->result, K_NUMBER);
   bhash              = d_get_byteskl(vc->result, K_HASH, 32);
-  
+
   if (block_hash && !b_cmp(block_hash, bhash))
     return vc_err(vc, "The transactionHash does not match the required");
 
-  if (blockNumber != bnumber)
+  if (blockNumber && blockNumber != bnumber)
     return vc_err(vc, "The blockNumber  does not match the required");
 
   // this means result: null, which is ok, since we can not verify a transaction that does not exists
