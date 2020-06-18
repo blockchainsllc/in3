@@ -88,7 +88,7 @@ python_win:
   script:
     - cd python_multilib
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml && coverage report && coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml
