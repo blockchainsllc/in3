@@ -74,7 +74,7 @@ python_arm:
     - cd python_multilib
     - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
     - coverage report
     - coverage-badge -fo docs/coverage.svg
   artifacts:
@@ -92,7 +92,7 @@ python_win:
     - cd python_multilib
     - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
     - coverage report
     - coverage-badge -fo docs/coverage.svg
   artifacts:
@@ -113,7 +113,7 @@ python_macos:
     - cd python_multilib
     - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
     - coverage report
     - coverage-badge -fo docs/coverage.svg
   artifacts:
@@ -134,7 +134,7 @@ python_linux:
     - cd python_multilib
     - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
     - coverage report
     - coverage-badge -fo docs/coverage.svg
   artifacts:
