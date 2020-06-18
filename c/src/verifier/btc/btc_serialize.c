@@ -3,6 +3,7 @@
 #include "../../core/util/utils.h"
 #include "../../third-party/crypto/sha2.h"
 #include "../../third-party/tommath/tommath.h"
+#include "btc_types.h"
 #include <string.h>
 
 static void rev_hex(char* hex, uint8_t* dst, int l) {
@@ -67,7 +68,7 @@ uint64_t le_to_long(uint8_t* data) {
          (((uint64_t) data[3]) << 24) | (((uint64_t) data[2]) << 16) | (((uint64_t) data[1]) << 8) | data[0];
 }
 
-void btc_target(bytes_t block, bytes32_t target) {
+void btc_target_from_block(bytes_t block, bytes32_t target) {
   uint8_t *bits = btc_block_get(block, BTC_B_BITS).data, tmp[32];
   memset(tmp, 0, 32);
   memcpy(tmp + bits[3] - 3, bits, 3);
@@ -102,16 +103,30 @@ int btc_get_transaction_count(bytes_t block) {
 int btc_get_transactions(bytes_t block, bytes_t* dst) {
   uint64_t count;
   uint8_t* p = block.data + 80 + decode_var_int(block.data + 80, &count);
-  for (unsigned int i = 0; i < count; i++) p += (dst[i] = btc_get_transaction(p)).len;
+  for (unsigned int i = 0; i < count; i++) p += (dst[i] = btc_get_transaction_end(p)).len;
   return count;
 }
 
-bytes_t btc_get_transaction(uint8_t* data) {
+bytes_t btc_get_transaction_end(uint8_t* data) {
   uint64_t len;
-  uint8_t* p = data + 4 + decode_var_int(data + 4, &len);
+  bool     witness = data[4] == 0 && data[5] == 1;
+  uint8_t* p       = data + (witness ? 6 : 4);
+  p += decode_var_int(p, &len);
   for (unsigned int i = 0; i < len; i++) p += btc_get_txinput(p).len;
+  int txin = witness ? (int) len : 0;
+
   p += decode_var_int(p, &len);
   for (unsigned int i = 0; i < len; i++) p += btc_get_txoutput(p).len;
+
+  // now read witnesses
+  for (int i = 0; i < txin; i++) {
+    p += decode_var_int(p, &len);
+    int n = (int) len;
+    for (int j = 0; j < n; j++) {
+      p += decode_var_int(p, &len);
+      p += len;
+    }
+  }
   return bytes(data, (p - data) + 4);
 }
 

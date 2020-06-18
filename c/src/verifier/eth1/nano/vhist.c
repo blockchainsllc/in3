@@ -66,9 +66,8 @@ static vhist_engine_t stoengine(const char* str) {
 
 vhist_t* vh_new() {
   vhist_t* vh = _malloc(sizeof(*vh));
-  if (vh == NULL) return NULL;
-  vh->vldtrs = bb_new();
-  vh->diffs  = bb_new();
+  vh->vldtrs  = bb_new();
+  vh->diffs   = bb_new();
   if (!vh->vldtrs || !vh->diffs) {
     _free(vh);
     _free(vh->vldtrs);

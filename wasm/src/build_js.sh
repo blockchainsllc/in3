@@ -12,6 +12,7 @@ cat "$1/in3.js" >> $TARGET_JS
 cat "$1/in3_util.js" >> $TARGET_JS
 cat "$1/in3_eth_api.js" >> $TARGET_JS
 cat "$1/in3_ipfs_api.js" >> $TARGET_JS
+cat "$1/in3_btc_api.js" >> $TARGET_JS
 # we return the default export
 echo " return IN3; })();" >> $TARGET_JS
 

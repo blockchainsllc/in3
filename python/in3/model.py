@@ -13,7 +13,7 @@ class In3Node(DataTransferObject):
     Args:
         url (str): Endpoint to post to example: https://in3.slock.it
         index (int): Index within the contract example: 13
-        address (in3.Account): Address of the node, which is the public address it iis signing with. example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
+        address (in3.Account): Address of the node, which is the public address it is signing with. example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
         deposit (int): Deposit of the node in wei example: 12350000
         props (int): Properties of the node. example: 3
         timeout (int): Time (in seconds) until an owner is able to receive his deposit back after he unregisters himself example: 3600
@@ -72,7 +72,7 @@ class ClientConfig(DataTransferObject):
         latest_block_stall (int): Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
         account_secret (str): Account SK to sign all in3 requests. (Experimental use `set_account_sk`) example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
         node_signatures (int): Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
-        node_signature_consensus (int): Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
+        node_signature_consensus (int): Useful when node_signatures <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
         node_min_deposit (int): Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
         node_list_auto_update (bool): If true the nodelist will be automatically updated. False may compromise data security.
         node_limit (int): Limit nodes stored in the client. example: 150 nodes

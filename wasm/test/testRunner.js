@@ -54,13 +54,18 @@ if (process.argv.find(_ => _.indexOf('mocha') >= 0)) {
     })
 }
 
-const ignoreFuxxProps = ['id', 'error', 'code', 'weight', 'proofHash', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
+const ignoreFuxxProps = ['id', 'error', 'code', 'dap', 'weight', 'confirmations', 'version', 'proofHash', 'strippedsize', 'height', 'difficulty', 'nTx', 'mediantime', 'registryId', 'timeout', 'lastBlockNumber', 'lastWhiteList', 'currentBlock', 'rpcTime', 'rpcCount', 'gasUsed', 'execTime', 'lastNodeList', 'totalDifficulty', 'size', 'chainId', 'transactionLogIndex', 'logIndex', 'lastValidatorChange']
 const ignoreTxProps = ['from', 'blockHash', 'blockNumber', 'publicKey', 'raw', 'standardV', 'transactionIndex']
+const ignoreVoutProps = ['value', 'reqSigs']
 
 
 async function runFuzzTests(filter, test, allResults, c, ob, prefix = '') {
     if (!ob) return c
-    for (const k of Object.keys(ob).filter(_ => _ && ignoreFuxxProps.indexOf(_) < 0 && (prefix.indexOf('proof.transactions') < 0 || ignoreTxProps.indexOf(_) < 0))) {
+    for (const k of Object.keys(ob).filter(_ => _
+        && ignoreFuxxProps.indexOf(_) < 0
+        && (prefix.indexOf('proof.transactions') < 0 || ignoreTxProps.indexOf(_) < 0)
+        && (prefix.indexOf('result.vout') < 0 || ignoreVoutProps.indexOf(_) < 0)
+    )) {
         if (k === 'txIndex' && test.response[0].result === null)
             continue
         const val = ob[k]
@@ -155,7 +160,9 @@ async function runSingleTest(test, c) {
         test.response[res].id = data[0].id
         const r = test.response[res++]
         accounts = r.in3 && r.in3.proof && r.in3.proof.accounts
-        return Promise.resolve(JSON.stringify([r]))
+        const json = JSON.stringify([r])
+        //        console.log('RES:', json.substr(0, 20))
+        return Promise.resolve(json)
     })
     const client = new Client({
         requestCount: config.requestCount || 1,
@@ -165,6 +172,7 @@ async function runSingleTest(test, c) {
         chainId: test.chainId || '0x1',
         autoUpdateList: false,
         maxAttempts: 1,
+        finality: test.finality || 0,
         signatureCount: test.signatures ? test.signatures.length : 0,
         nodes: {
             '0x1': {
@@ -178,6 +186,11 @@ async function runSingleTest(test, c) {
                 registryId: '0x67c02e5e272f9d6b4a33716614061dd298283f86351079ef903bf0d4410a44ea'
             },
             '0x2a': {
+                needsUpdate: false,
+                contract: '0x4c396dcf50ac396e5fdea18163251699b5fcca25',
+                registryId: '0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf'
+            },
+            '0x99': {
                 needsUpdate: false,
                 contract: '0x4c396dcf50ac396e5fdea18163251699b5fcca25',
                 registryId: '0x92eb6ad5ed9068a24c1c85276cd7eb11eda1e8c50b17fbaffaf3e8396df4becf'

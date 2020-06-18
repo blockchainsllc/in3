@@ -46,7 +46,7 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/scache.h"
-#include "../../src/verifier/eth1/basic/signer.h"
+#include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 
@@ -362,7 +362,7 @@ static void test_eth_getblock_txcount_number(void) {
   // we expect this to fail as we dont have verification for this
   char* error = eth_last_error();
   in3_log_debug("error found: %s", error);
-  TEST_ASSERT_EQUAL_INT64(tx_count,6ll);
+  TEST_ASSERT_EQUAL_INT64(tx_count, 6ll);
   in3_free(in3);
 }
 
@@ -374,7 +374,7 @@ static void test_eth_getblock_txcount_hash(void) {
   uint64_t tx_count = eth_getBlockTransactionCountByHash(in3, blk_hash);
   char*    error    = eth_last_error();
   in3_log_debug("error found: %s", error);
-  TEST_ASSERT_EQUAL_INT64(tx_count,2ll);
+  TEST_ASSERT_EQUAL_INT64(tx_count, 2ll);
   in3_free(in3);
 }
 

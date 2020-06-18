@@ -34,15 +34,17 @@
 
 
 IF (IN3API)
-    add_library(api_utils_o OBJECT utils/api_utils.c)
-    add_library(api_utils STATIC $<TARGET_OBJECTS:api_utils_o>)
-
     add_subdirectory(eth1)
     add_subdirectory(usn)
+    add_subdirectory(utils)
     
-
     IF (IPFS)
         add_subdirectory(ipfs)
     ENDIF (IPFS)
+
+    IF (BTC)
+        add_subdirectory(btc)
+    ENDIF (BTC)
+
 ENDIF (IN3API)
 

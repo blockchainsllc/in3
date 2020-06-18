@@ -38,14 +38,12 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
-#include "../../../verifier/eth1/basic/signer-priv.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -109,59 +107,16 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return in3_verify_eth_nano(vc);
 }
 
+/** called to see if we can handle the request internally */
 in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
   if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
-  // check method
-  if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0) {
-    // get the transaction-object
-    d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
+  // check method to handle internally
+  if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0)
+    return handle_eth_sendTransaction(ctx, req);
 
-    // sign it.
-    bytes_t raw = sign_tx(tx_params + 1, ctx);
-    if (!raw.len) {
-      switch (in3_ctx_state(ctx->required)) {
-        case CTX_ERROR:
-          return IN3_EUNKNOWN;
-        case CTX_WAITING_FOR_REQUIRED_CTX:
-        case CTX_WAITING_FOR_RESPONSE:
-          return IN3_WAITING;
-        case CTX_SUCCESS:
-          return ctx_set_error(ctx, "error signing the transaction", IN3_EINVAL);
-      }
-    }
-
-    // build the RPC-request
-    uint64_t id = d_get_longk(req, K_ID);
-    sb_t*    sb = sb_new("{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[");
-    sb_add_bytes(sb, "", &raw, 1, false);
-    sb_add_chars(sb, "]");
-    if (id) {
-      char tmp[16];
-
-#ifdef __ZEPHYR__
-      char bufTmp[21];
-      snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64_to_str(id, bufTmp, sizeof(bufTmp)));
-#else
-      snprintf(tmp, sizeof(tmp), ", \"id\":%" PRId64 "", id);
-      // sprintf(tmp, ", \"id\":%" PRId64 "", id);
-#endif
-      sb_add_chars(sb, tmp);
-    }
-    sb_add_chars(sb, "}");
-
-    // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
-    _free(raw.data);
-    json_free(ctx->request_context);
-
-    // set the new RPC-Request.
-    ctx->request_context = parse_json(sb->data);
-    ctx->requests[0]     = ctx->request_context->result;
-    in3_cache_add_ptr(&ctx->cache, sb->data); // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-    _free(sb);                                // and we only free the stringbuilder, but not the data itself.
-  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
+  else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
     if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid type of params, expected object", IN3_EINVAL);

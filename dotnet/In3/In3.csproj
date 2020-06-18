@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>csharp</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Authors>slock.it</Authors>
@@ -17,6 +18,7 @@
     <PackageDocumentation>https://in3.readthedocs.io</PackageDocumentation>
     <PackageProjectUrl>https://in3.readthedocs.io</PackageProjectUrl>
     <PackageTags>In3;C;Arm;X86;X64;Macos;Windows;Linux;Blockchain;Ethereum;Bitcoin;Ipfs</PackageTags>
+    <DocumentationMarkdown>$(MSBuildProjectDirectory)\bin\$(Configuration)\IN3.md</DocumentationMarkdown>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Text.Json, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">

@@ -132,9 +132,8 @@ static uint64_t fill_transition(d_token_t* params, uint64_t b, eip_t* eip) {
 }
 
 chainspec_t* chainspec_create_from_json(d_token_t* data) {
-  chainspec_t* spec = _malloc(sizeof(chainspec_t));
-  if (!spec) return log_error("not enough memory for chainspec!");
-  d_token_t* params = d_get(data, key("params"));
+  chainspec_t* spec   = _malloc(sizeof(chainspec_t));
+  d_token_t*   params = d_get(data, key("params"));
   if (!params) return log_error("no params-tag in data");
 
   spec->network_id          = d_get_long(params, "networkID");

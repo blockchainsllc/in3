@@ -36,22 +36,34 @@
 #define in3_device_apdu_h__
 
 #include "../../../core/client/client.h"
-#define HID_CMD_MAX_LEN 64
+#include "../../../third-party/hidapi/hidapi/hidapi.h"
 
-extern const uint8_t CLA;
-extern const uint8_t INS_GET_PUBLIC_KEY;
-extern const uint8_t INS_SIGN;
-extern const uint8_t P1_MORE;
-extern const uint8_t P1_FINAL;
-extern const uint8_t P2_FINAL;
-extern const uint8_t TAG;
+#define HID_CMD_MIN_LEN 64
+#define HID_CMD_MID_LEN 128
+#define HID_CMD_HIGH_LEN 255
+
+extern uint8_t CLA;
+extern uint8_t INS_GET_PUBLIC_KEY;
+extern uint8_t INS_GET_PUB_ADDR;
+extern uint8_t INS_SIGN_MSG;
+extern uint8_t INS_SIGN_TX;
+extern uint8_t INS_SIGN;
+extern uint8_t P1_MORE;
+extern uint8_t P1_FINAL;
+extern uint8_t P2_FINAL;
+extern uint8_t TAG;
 
 int len_to_bytes(uint16_t x, uint8_t* buf);
 
 uint16_t bytes_to_len(uint8_t* buf);
 
-void wrap_apdu(bytes_t i_apdu, uint16_t seq, bytes_t* o_wrapped_hid_cmd);
+void wrap_apdu(uint8_t* i_apdu, int len, uint16_t seq, bytes_t* wrapped_hid_cmd);
 
-void unwrap_apdu(bytes_t o_wrapped_hid_cmd, bytes_t* o_apdu_res);
+void read_hid_response(hid_device* handle, bytes_t* response);
 
+int write_hid(hid_device* handle, uint8_t* data, int len);
+
+hid_device* open_device();
+
+void close_device(hid_device* handle);
 #endif

@@ -1,10 +1,11 @@
+using System;
 using System.Numerics;
 using In3;
 using In3.Crypto;
 using In3.Eth1;
 using In3.Utils;
 using NUnit.Framework;
- 
+
 namespace Test.Eth1
 {
     public class ApiTest
@@ -62,10 +63,10 @@ namespace Test.Eth1
         [Test]
         public void AbiEncode()
         {
-            IN3 in3 = _builder.ConstructClient(new string[][] {});
+            IN3 in3 = _builder.ConstructClient(new string[][] { });
 
             string signature = "getBalance(address)";
-            string[] args = {"0x1234567890123456789012345678901234567890"};
+            string[] args = { "0x1234567890123456789012345678901234567890" };
             string expectedEncoded = "0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890";
 
             string result = in3.Eth1.AbiEncode(signature, args);
@@ -76,7 +77,7 @@ namespace Test.Eth1
         [Test]
         public void AbiDecode()
         {
-            IN3 in3 = _builder.ConstructClient(new string[][] {});
+            IN3 in3 = _builder.ConstructClient(new string[][] { });
 
             string signature = "(address,uint256)";
             string encoded = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005";
@@ -174,7 +175,7 @@ namespace Test.Eth1
             };
             IN3 in3 = _builder.ConstructClient(mockedResponses);
 
-            Transaction tx  = in3.Eth1.GetTransactionByBlockHashAndIndex(
+            Transaction tx = in3.Eth1.GetTransactionByBlockHashAndIndex(
                 "0xd03f4a0ce830ce568be08aa37bc0a72374e92da5b388e839b35f24a144a5085d", 1);
             Assert.That(tx.Value, Is.EqualTo(new BigInteger(48958690000000000)));
         }
@@ -233,7 +234,7 @@ namespace Test.Eth1
             string rawTransaction = "0xf8671b8477359400825208943940256b93c4be0b1d5931a6a036608c25706b0c8405f5e100802da0278d2c010a59688fc12a55563d81239b1dc7e3d9c6a535b34600329b0c640ad8a03894daf8d7c25b56caec71b695c5f6b1b6fd903ecfa441b2c4e15fd1c72c54a9";
 
             string hash = in3.Eth1.SendRawTransaction(rawTransaction);
-            
+
             Assert.That(hash, Is.EqualTo("0xd55a8b0cf4896ffbbb10b125bf20d89c8006f42cc327a9859c59ac54e439b388"));
         }
 
@@ -248,28 +249,28 @@ namespace Test.Eth1
             };
 
             IN3 in3 = _builder.ConstructClient(mockedResponses);
-            string excpectedReceipt = "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38";
+            string expectedHash = "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38";
             string pk = "0x0829B3C639A3A8F2226C8057F100128D4F7AE8102C92048BA6DE38CF4D3BC6F1";
-            SimpleWallet sw = (SimpleWallet) in3.Signer;
+            SimpleWallet sw = (SimpleWallet)in3.Signer;
             string from = sw.AddRawKey(pk);
 
             TransactionRequest request = new TransactionRequest();
             request.From = from;
             request.To = "0x3940256B93c4BE0B1d5931A6A036608c25706B0c";
             request.Gas = 21000;
-            request.Value  = 100000000;
+            request.Value = 100000000;
 
-            object receipt = in3.Eth1.SendTransaction(request);
-            Assert.That(receipt, Is.EqualTo(excpectedReceipt));
+            object txHash = in3.Eth1.SendTransaction(request);
+            Assert.That(txHash, Is.EqualTo(expectedHash));
         }
 
         [Test]
         public void ChecksumAddress()
         {
-            IN3 in3 = _builder.ConstructClient(new string[][] {});
+            IN3 in3 = _builder.ConstructClient(new string[][] { });
 
             string expectedAddress = "0xBc0ea09C1651A3D5D40Bacb4356FB59159A99564";
-            string address  = in3.Eth1.ChecksumAddress("0xbc0ea09c1651a3d5d40bacb4356fb59159a99564");
+            string address = in3.Eth1.ChecksumAddress("0xbc0ea09c1651a3d5d40bacb4356fb59159a99564");
 
             Assert.That(address, Is.EqualTo(expectedAddress));
         }
@@ -345,11 +346,11 @@ namespace Test.Eth1
             IN3 in3 = _builder.ConstructClient(mockedResponses);
 
             TransactionRequest request = new TransactionRequest();
-            request.To = "0x2736D225f85740f42D17987100dc8d58e9e16252";;
+            request.To = "0x2736D225f85740f42D17987100dc8d58e9e16252"; ;
             request.Function = "servers(uint256):(string,address,uint32,uint256,uint256,address)";
             request.Params = new object[] { 1 };
 
-            string[] res1 = (string[]) in3.Eth1.Call(request, BlockParameter.Latest);
+            string[] res1 = (string[])in3.Eth1.Call(request, BlockParameter.Latest);
 
             Assert.That(res1.Length, Is.EqualTo(6));
             Assert.That(res1[0], Is.EqualTo("https://in3.slock.it/mainnet/nd-4"));
@@ -381,8 +382,8 @@ namespace Test.Eth1
             };
             IN3 in3 = _builder.ConstructClient(mockedResponses);
             string pk = "0x0829B3C639A3A8F2226C8057F100128D4F7AE8102C92048BA6DE38CF4D3BC6F1";
-            SimpleWallet wallet = (SimpleWallet) in3.Signer;
-            string       from   = wallet.AddRawKey(pk);
+            SimpleWallet wallet = (SimpleWallet)in3.Signer;
+            string from = wallet.AddRawKey(pk);
 
             long expectedGasEstimate = 21000;
             TransactionRequest tx = new TransactionRequest();
@@ -465,7 +466,7 @@ namespace Test.Eth1
         public void GetLogs()
         {
             string[][] mockedResponses = {
-                new[] {"eth_getLogs", "eth_getLogs.json"}    
+                new[] {"eth_getLogs", "eth_getLogs.json"}
             };
             IN3 in3 = _builder.ConstructClient(mockedResponses);
 
@@ -487,7 +488,7 @@ namespace Test.Eth1
             };
             IN3 in3 = _builder.ConstructClient(mockedResponses);
 
-            TransactionReceipt receipt = in3.Eth1 .GetTransactionReceipt("0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2");
+            TransactionReceipt receipt = in3.Eth1.GetTransactionReceipt("0x6188bf0672c005e30ad7c2542f2f048521662e30c91539d976408adf379bdae2");
             Assert.That(receipt.To, Is.EqualTo("0x5b8174e20996ec743f01d3b55a35dd376429c596"));
             Assert.That(receipt.Status);
             Assert.That(receipt.Logs[0].Address, Is.EqualTo("0x5b8174e20996ec743f01d3b55a35dd376429c596"));

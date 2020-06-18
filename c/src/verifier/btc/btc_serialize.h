@@ -26,11 +26,11 @@ in3_ret_t btc_serialize_block_header(d_token_t* data, uint8_t* block_header);
 void     rev_copy(uint8_t* dst, uint8_t* src);
 uint32_t le_to_int(uint8_t* data);
 uint64_t le_to_long(uint8_t* data);
-void     btc_target(bytes_t block, bytes32_t target);
+void     btc_target_from_block(bytes_t block, bytes32_t target);
 uint32_t decode_var_int(uint8_t* p, uint64_t* val);
 int      btc_get_transaction_count(bytes_t block);
 int      btc_get_transactions(bytes_t block, bytes_t* dst);
-bytes_t  btc_get_transaction(uint8_t* data);
+bytes_t  btc_get_transaction_end(uint8_t* data);
 bytes_t  btc_get_txinput(uint8_t* data);
 bytes_t  btc_get_txoutput(uint8_t* data);
 

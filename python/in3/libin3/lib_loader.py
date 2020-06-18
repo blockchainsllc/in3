@@ -170,6 +170,19 @@ def _map_function_signatures():
     # map transport function for response
     libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int]
     libin3.in3_req_add_response.restype = None
+
+    libin3.in3_get_request_urls_len.argtypes = [c.c_void_p]
+    libin3.in3_get_request_urls_len.restype = c.c_int
+
+    libin3.in3_get_request_payload.argtypes = [c.c_void_p]
+    libin3.in3_get_request_payload.restype = c.c_char_p
+
+    libin3.in3_get_request_timeout.argtypes = [c.c_void_p]
+    libin3.in3_get_request_timeout.restype = c.c_int
+
+    libin3.in3_get_request_urls.argtypes = [c.c_void_p]
+    libin3.in3_get_request_urls.restype = c.POINTER(c.POINTER(c.c_char))
+
     # map logging functions
     libin3.in3_log_set_quiet_.argtypes = c.c_bool,
     libin3.in3_log_set_quiet_.restype = None

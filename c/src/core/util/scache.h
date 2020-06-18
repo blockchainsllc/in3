@@ -83,7 +83,7 @@ void in3_cache_free(
 /**
  * adds a pointer, which should be freed when the context is freed.
  */
-static inline cache_entry_t* in3_cache_add_ptr(
+NONULL static inline cache_entry_t* in3_cache_add_ptr(
     cache_entry_t** cache, /**< the root entry of the linked list. */
     void*           ptr    /**< pointer to memory which shold be freed. */
 ) {

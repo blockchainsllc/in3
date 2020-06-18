@@ -28,6 +28,13 @@ When configuring cmake, you can set a lot of different incubed specific like `cm
 Default-Value: `-DASMJS=OFF`
 
 
+#### ASSERTIONS
+
+  includes assertions into the code, which help track errors but may cost time during runtime
+
+Default-Value: `-DASSERTIONS=OFF`
+
+
 #### BTC
 
   if true, the bitcoin verifiers will be build

@@ -32,14 +32,15 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
+include("compiler.cmake")
 #  build modules
 add_subdirectory(src/third-party)
 
 
 if (GCC_ANALYZER) 
-  add_compile_options(-fanalyzer -Werror)
+  ADD_DEFINITIONS(-DGCC_ANALYZER=1)
+  add_compile_options(-fanalyzer -Werror -Wno-nonnull-compare)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer -Werror")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
 endif()
@@ -47,6 +48,7 @@ endif()
 add_subdirectory(src/core)
 add_subdirectory(src/transport)
 add_subdirectory(src/verifier)
+add_subdirectory(src/signer/pk-signer)
 
 if( LEDGER_NANO AND HIDAPI )
   add_subdirectory(src/signer/ledger-nano/signer)
@@ -66,6 +68,7 @@ if (IN3_LIB)
     set(IN3_LIBS
         $<TARGET_OBJECTS:core_o>
         $<TARGET_OBJECTS:init_o>
+        $<TARGET_OBJECTS:pk_signer_o>
         $<TARGET_OBJECTS:crypto_o>
     )
 
@@ -101,6 +104,17 @@ if (IN3_LIB)
         endif()
     endif()
 
+    if (BTC) 
+        set(IN3_LIBS ${IN3_LIBS} 
+          $<TARGET_OBJECTS:btc_o>
+        )
+        if (IN3API) 
+            set(IN3_LIBS ${IN3_LIBS} 
+                $<TARGET_OBJECTS:btc_api_o>
+            )
+        endif()
+    endif()
+
     if (IN3API) 
         set(IN3_LIBS ${IN3_LIBS} 
             $<TARGET_OBJECTS:eth_api_o>
@@ -124,13 +138,12 @@ if (IN3_LIB)
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-    
     if( LEDGER_NANO AND HIDAPI )
-       target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+        target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
     else()
-       target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
+        target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
     endif()
-    
+ 
 
     # install
     INSTALL(TARGETS in3_bundle

@@ -32,13 +32,12 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 endif()
 
-add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c)
+add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c)
 target_compile_definitions(ledger_signer_o PRIVATE -D_POSIX_C_SOURCE=199309L)
 add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
 

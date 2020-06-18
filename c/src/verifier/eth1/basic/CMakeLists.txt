@@ -31,8 +31,6 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
-
 
 # static lib
 add_library(eth_basic_o OBJECT
@@ -42,15 +40,11 @@ add_library(eth_basic_o OBJECT
         eth_account.c
         eth_getLog.c
         trie.c
-        signer.c
         filter.c
+        sign_tx.c
         )
 
 # add dependency
 add_library(eth_basic STATIC $<TARGET_OBJECTS:eth_basic_o>)
 
-if( LEDGER_NANO AND HIDAPI)
-   target_link_libraries(eth_basic eth_nano ledger_signer)
-else()
-   target_link_libraries(eth_basic eth_nano )
-endif()
+target_link_libraries(eth_basic eth_nano)

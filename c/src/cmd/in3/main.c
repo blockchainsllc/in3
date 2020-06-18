@@ -61,10 +61,12 @@
 #include "../../core/util/colors.h"
 
 #if defined(LEDGER_NANO)
+#include "../../signer/ledger-nano/signer/ethereum_apdu_client.h"
+#include "../../signer/ledger-nano/signer/ethereum_apdu_client_priv.h"
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
-#include "../../verifier/eth1/basic/signer.h"
+#include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/evm/evm.h"
 #include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/chainspec.h"
@@ -112,7 +114,7 @@ void show_help(char* name) {
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
--bip32         the bip32 path which is to be used for signing in hardware wallet \n\
+-path          the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000 \n\
 -st, -sigtype  the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw \n\
 -pwd           password to unlock the key \n\
 -value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
@@ -125,6 +127,7 @@ void show_help(char* name) {
 -q             quit. no additional output. \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
 \n\
@@ -538,7 +541,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 }
 
 static bytes_t*  last_response;
-static bytes_t   in_response = {.data = NULL, .len = 0};
+static bytes_t   in_response      = {.data = NULL, .len = 0};
+static bool      only_show_raw_tx = false;
 static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
@@ -548,6 +552,12 @@ static in3_ret_t debug_transport(in3_request_t* req) {
     for (int i = 0; i < req->urls_len; i++)
       sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
     return 0;
+  }
+  if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
+    char* data         = str_find(req->payload, "0x");
+    *strchr(data, '"') = 0;
+    printf("%s\n", data);
+    exit(EXIT_SUCCESS);
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(req);
@@ -621,7 +631,7 @@ int main(int argc, char* argv[]) {
   int       p  = 1, i;
   bytes32_t pk;
 #ifdef LEDGER_NANO
-  uint8_t bip32[5];
+  uint8_t path[5];
 #endif
 
   // we want to verify all
@@ -663,9 +673,6 @@ int main(int argc, char* argv[]) {
   char*           sig_type         = "raw";
   bool            to_eth           = false;
 
-  // use the storagehandler to cache data in .in3
-  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
-
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
@@ -675,7 +682,10 @@ int main(int argc, char* argv[]) {
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
-      c->cache->clear(c->cache->cptr);
+      storage_clear(NULL);
+
+  // use the storagehandler to cache data in .in3
+  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
 
   // check env
   if (getenv("IN3_PK")) {
@@ -695,14 +705,14 @@ int main(int argc, char* argv[]) {
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
-    } else if (strcmp(argv[i], "-bip32") == 0) {
+    } else if (strcmp(argv[i], "-path") == 0) {
 #if defined(LEDGER_NANO)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
-        hex_to_bytes(argv[++i], -1, bip32, 5);
-        eth_ledger_set_signer(c, bip32);
+        hex_to_bytes(argv[++i], -1, path, 5);
+        eth_ledger_set_signer_txn(c, path);
       }
 #else
-      die("bip32 option not supported currently ");
+      die("path option not supported currently ");
 #endif
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
@@ -747,6 +757,8 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-os") == 0)
+      only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)
       c->request_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-a") == 0)
@@ -799,9 +811,10 @@ int main(int argc, char* argv[]) {
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
-      else if (strcmp(method, "sign") == 0 && !data)
+      else if (strcmp(method, "sign") == 0 && !data) {
+
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
+      } else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
         // otherwise we add it to the params
@@ -950,6 +963,8 @@ int main(int argc, char* argv[]) {
         printf(COLORT_RED);
       else if (warning)
         printf(COLORT_YELLOW);
+      else if (!weight->response_count)
+        printf(COLORT_DARKGRAY);
       else
         printf(COLORT_GREEN);
       printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
@@ -976,13 +991,35 @@ int main(int argc, char* argv[]) {
       sig_type = "raw";
     }
 
-    if (!c->signer) die("No private key/bip32 path given");
-    uint8_t   sig[65];
+    if (!c->signer) die("No private key/path given");
     in3_ctx_t ctx;
     ctx.client = c;
-    c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
-    sig[64] += 27;
-    print_hex(sig, 65);
+    in3_sign_ctx_t sc;
+    sc.ctx     = &ctx;
+    sc.wallet  = c->signer->wallet;
+    sc.account = bytes(NULL, 0);
+    sc.message = *data;
+    sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+#if defined(LEDGER_NANO)
+    if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
+      char     prefix[] = "msg";
+      bytes_t* tmp_data = b_new((uint8_t*) NULL, data->len + strlen(prefix));
+
+      memcpy(tmp_data->data, prefix, strlen(prefix));
+      memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
+
+      sc.message = *tmp_data;
+      c->signer->sign(&sc);
+      b_free(tmp_data);
+    } else {
+      c->signer->sign(&sc);
+    }
+#else
+    c->signer->sign(&sc);
+#endif
+
+    sc.signature[64] += 27;
+    print_hex(sc.signature, 65);
     return 0;
   } else if (strcmp(method, "chainspec") == 0) {
     char* json;

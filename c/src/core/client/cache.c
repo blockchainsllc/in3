@@ -48,26 +48,34 @@
 #define CACHE_VERSION 6
 #define MAX_KEYLEN 200
 
-static void write_cache_key(char* key, chain_id_t chain_id, const address_t contract) {
-  if (contract && contract) {
-    char contract_[41];
-    if (contract) bytes_to_hex(contract, 20, contract_);
-    sprintf(key, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_);
+/**
+ * generates and writes the cachekey
+ */
+static void write_cache_key(char* key, chain_id_t chain_id, const address_t whitelist_contract) {
+  if (whitelist_contract) {                                           //  only  whitelistnodelists contain the address.
+    char contract_[41];                                               // currently we have a max with of 40 which is more than the chain_id could hold
+    bytes_to_hex(whitelist_contract, 20, contract_);                  // contract is appended as hex
+    sprintf(key, NODE_LIST_KEY WHITTE_LIST_KEY, chain_id, contract_); // we need to append both to be unique
   } else
     sprintf(key, NODE_LIST_KEY, chain_id);
 }
 
+/**
+ * initializes the cache by trying to read the nodelist and whitelist.
+ */
 in3_ret_t in3_cache_init(in3_t* c) {
-  // the reason why we ignore the result here, is because we want to ignore errors if the cache is able to update.
   for (int i = 0; i < c->chains_length; i++) {
+    // the reason why we ignore the error here, is because we want to ignore errors if the cache is able to update.
     if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) { in3_log_debug("Failed to update cached nodelist\n"); }
     if (in3_cache_update_whitelist(c, c->chains + i) != IN3_OK) { in3_log_debug("Failed to update cached whitelist\n"); }
     in3_client_run_chain_whitelisting(c->chains + i);
   }
-
   return IN3_OK;
 }
 
+/**
+ * updates the nodlist from the cache.
+ */
 in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
   // it is ok not to have a storage
   if (!c->cache) return IN3_OK;
@@ -201,8 +209,6 @@ in3_ret_t in3_cache_update_whitelist(in3_t* c, in3_chain_t* chain) {
     wl->last_block         = b_read_long(data, &pos);
     uint32_t adress_length = b_read_int(data, &pos) * 20;
     wl->addresses          = bytes(_malloc(adress_length), adress_length);
-    if (!wl->addresses.data)
-      return IN3_ENOMEM;
     memcpy(wl->addresses.data, data->data + pos, adress_length);
     b_free(data);
   }

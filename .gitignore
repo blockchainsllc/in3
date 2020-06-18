@@ -29,4 +29,5 @@ bin/
 *.class
 target/
 .cproject
-Cargo.lock
+rust/in3-sys/in3-core/*
+rust/Cargo.lock
