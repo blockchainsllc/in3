@@ -1,5 +1,51 @@
 # Examples
 
+### btc_transaction
+
+source : [in3-c/c/examples/btc_transaction.c](https://github.com/slockit/in3-c/blob/master/c/examples/btc_transaction.c)
+
+checking a Bitcoin transaction data
+
+
+```c
+/// checking a Bitcoin transaction data
+
+#include <in3/btc_api.h>  // we need the btc-api
+#include <in3/client.h>   // the core client
+#include <in3/in3_init.h> // this header will make sure we initialize the default verifiers and transports
+#include <in3/utils.h>    // helper functions
+#include <stdio.h>
+
+int main() {
+  // create new incubed client for BTC
+  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_BTC);
+
+  // the hash of transaction that we want to get
+  bytes32_t tx_id;
+  hex_to_bytes("c41eee1c2d97f6158ea3b3aeba0a5271a2174067a38d089ccc1eefbc796706e0", -1, tx_id, 32);
+
+  // fetch and verify the transaction
+  btc_transaction_t* tx = btc_get_transaction(in3, tx_id);
+
+  if (!tx)
+    // if the result is null there was an error an we can get the latest error message from btc_last_error()
+    printf("error getting the tx : %s\n", btc_last_error());
+  else {
+    // we loop through the tx outputs
+    for (int i = 0; i < tx->vout_len; i++)
+      // and prrint the values
+      printf("Transaction vout #%d : value: %llu\n", i, tx->vout[i].value);
+
+    // don't forget the clean up!
+    free(tx);
+  }
+
+  // cleanup client after usage
+  in3_free(in3);
+}
+
+```
+
 ### call_a_function
 
 source : [in3-c/c/examples/call_a_function.c](https://github.com/slockit/in3-c/blob/master/c/examples/call_a_function.c)
@@ -607,8 +653,9 @@ source : [in3-c/c/examples/ledger_sign.c](https://github.com/slockit/in3-c/blob/
 
 ```c
 
-#include <in3/client.h>        // the core client
-#include <in3/eth_api.h>       // functions for direct api-access
+#include <in3/client.h>  // the core client
+#include <in3/eth_api.h> // functions for direct api-access
+#include <in3/ethereum_apdu_client.h>
 #include <in3/in3_init.h>      // if included the verifier will automaticly be initialized.
 #include <in3/ledger_signer.h> //to invoke ledger nano device for signing
 #include <in3/log.h>           // logging functions
@@ -624,7 +671,8 @@ int main() {
   in3_log_set_level(LOG_DEBUG);
   // setting ledger nano s to be the default signer for incubed client
   // it will cause the transaction or any msg to be sent to ledger nanos device for siging
-  eth_ledger_set_signer(in3, bip_path);
+  eth_ledger_set_signer_txn(in3, bip_path);
+  // eth_ledger_set_signer(in3, bip_path);
 
   // send tx using API
   send_tx_api(in3);

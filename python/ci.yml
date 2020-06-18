@@ -72,8 +72,11 @@ python_arm:
     - *cache_scipt_before
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml
@@ -87,8 +90,11 @@ python_win:
   stage: python
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - coverage run -m pytest --pylama --junitxml=report.xml && coverage report && coverage-badge -fo docs/coverage.svg
+    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml
@@ -105,8 +111,11 @@ python_macos:
     - *cache_scipt_before
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml
@@ -123,8 +132,11 @@ python_linux:
     - *cache_scipt_before
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml

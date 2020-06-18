@@ -9,8 +9,8 @@ Go to our [readthedocs](https://in3.readthedocs.io/) page for more.
 
 ### Install with pip 
  
-```python
-pip3 install in3
+```shell script
+coverage run -m pytest --pylama --junitxml=report.xml && coverage report && coverage-badge -fo docs/coverage.svg
 ```
 
 ### In3 Client API

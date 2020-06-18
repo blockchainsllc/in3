@@ -1,6 +1,9 @@
 # Examples
 
 
+-  [btc_transaction](./btc_transaction.c)
+   checking a Bitcoin transaction data
+
 -  [call_a_function](./call_a_function.c)
    This example shows how to call functions on a smart contract eiither directly or using the api to encode the arguments
 
