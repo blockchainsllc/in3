@@ -37,13 +37,13 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
+#include "../../../third-party/crypto/ecdsa.h"
+#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "eth_basic.h"
 
 #include <inttypes.h>
@@ -309,7 +309,6 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   _free(sb);                                // and we only free the stringbuilder, but not the data itself.
   return IN3_OK;
 }
-
 
 /** minimum signer for the wallet, returns the signed message which needs to be freed **/
 char* eth_wallet_sign(const char* key, const char* data) {
