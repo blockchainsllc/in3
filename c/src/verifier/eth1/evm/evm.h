@@ -268,7 +268,6 @@ int     evm_stack_pop(evm_t* evm, uint8_t* dst, uint8_t len);
 int     evm_stack_pop_ref(evm_t* evm, uint8_t** dst);
 int     evm_stack_pop_byte(evm_t* evm, uint8_t* dst);
 int32_t evm_stack_pop_int(evm_t* evm);
-int     evm_stack_peek_len(evm_t* evm);
 
 int evm_run(evm_t* evm, address_t code_address);
 #define EVM_CALL_MODE_STATIC 1

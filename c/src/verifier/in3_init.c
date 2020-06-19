@@ -2,6 +2,7 @@
 #include "../api/eth1/eth_api.h"
 #include "../pay/eth/pay_eth.h"
 #include "../transport/curl/in3_curl.h"
+#include "../transport/http/in3_http.h"
 #include "../verifier/btc/btc.h"
 #include "../verifier/eth1/basic/eth_basic.h"
 #include "../verifier/eth1/full/eth_full.h"
@@ -35,9 +36,13 @@ static void init_verifier() {
 }
 
 static void init_transport() {
+#ifdef TRANSPORTS
 #ifdef USE_CURL
   in3_register_curl();
-#endif
+#else
+  in3_register_http();
+#endif /* USE_CURL */
+#endif /* TRANSPORTS */
 }
 
 in3_t* in3_for_chain_auto_init(chain_id_t chain_id) {

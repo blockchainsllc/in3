@@ -43,7 +43,6 @@ pub trait Storage {
     fn clear(&mut self);
 }
 
-
 /// Client trait methods.
 ///
 /// Interface for a RPC capable client with configurable transport, signing and storage

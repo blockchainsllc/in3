@@ -106,16 +106,4 @@ public class IN3Test {
     String[] transformed = (String[]) in3.handleEns(params);
     Assertions.assertArrayEquals(expected, transformed);
   }
-
-  @Test
-  public void free() {
-    String[][] mockedResponses = {
-        {"eth_call", "eth_call_2.json"},
-        {"in3_nodeList", "in3_nodeList.json"},
-        {"in3_sign", "in3_sign.json"}};
-    IN3MockBuilder builder = new IN3MockBuilder(Chain.GOERLI);
-    IN3            in3     = builder.constructClient(mockedResponses);
-
-    in3.free();
-  }
 }

@@ -118,14 +118,14 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
   else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+    if (!tx_params || d_type(tx_params) != T_ARRAY || !d_len(tx_params) || d_type(tx_params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid type of params, expected object", IN3_EINVAL);
     else if (!filter_opt_valid(tx_params + 1))
       return ctx_set_error(ctx, "filter option parsing failed", IN3_EINVAL);
     if (!tx_params->data) return ctx_set_error(ctx, "binary request are not supported!", IN3_ENOTSUP);
 
     char*     fopt = d_create_json(tx_params + 1);
-    in3_ret_t res  = filter_add(ctx->client, FILTER_EVENT, fopt);
+    in3_ret_t res  = filter_add(ctx, FILTER_EVENT, fopt);
     if (res < 0) {
       _free(fopt);
       return ctx_set_error(ctx, "filter creation failed", res);
@@ -144,7 +144,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
-    in3_ret_t res = filter_add(ctx->client, FILTER_BLOCK, NULL);
+    in3_ret_t res = filter_add(ctx, FILTER_BLOCK, NULL);
     if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
 
     RESPONSE_START();

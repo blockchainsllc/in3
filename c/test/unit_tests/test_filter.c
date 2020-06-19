@@ -39,6 +39,7 @@
 #define DEBUG
 #endif
 
+#include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/cache.h"
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/nodelist.h"
@@ -65,7 +66,10 @@ static void test_filter() {
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
+  for (int i = 0; i < c->chains_length; i++) {
+    _free(c->chains[i].nodelist_upd8_params);
+    c->chains[i].nodelist_upd8_params = NULL;
+  }
 
   char *result = NULL, *error = NULL;
   add_response("eth_blockNumber", "[]", "\"0x84cf52\"", NULL, NULL);
@@ -130,6 +134,7 @@ static void test_filter() {
   TEST_ASSERT_NULL(error);
   TEST_ASSERT_NOT_NULL(result);
   TEST_ASSERT_EQUAL_STRING("false", result);
+  free(result);
 
   in3_free(c);
 }
@@ -185,17 +190,20 @@ static void test_filter_creation() {
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
+  for (int i = 0; i < c->chains_length; i++) {
+    _free(c->chains[i].nodelist_upd8_params);
+    c->chains[i].nodelist_upd8_params = NULL;
+  }
 
   TEST_ASSERT_FALSE(filter_remove(c, 1));
-  TEST_ASSERT_EQUAL(IN3_EINVAL, filter_add(c, FILTER_EVENT, NULL));
+  TEST_ASSERT_EQUAL(0, eth_newFilter(c, NULL));
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
-  TEST_ASSERT_GREATER_THAN(0, filter_add(c, FILTER_BLOCK, NULL));
+  TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   add_response("eth_blockNumber", "[]", "\"0x84cf5a\"", NULL, NULL);
-  TEST_ASSERT_GREATER_THAN(0, filter_add(c, FILTER_BLOCK, NULL));
+  TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   TEST_ASSERT_TRUE(filter_remove(c, 1));
   add_response("eth_blockNumber", "[]", "\"0x84cf5f\"", NULL, NULL);
-  TEST_ASSERT_GREATER_THAN(0, filter_add(c, FILTER_BLOCK, NULL));
+  TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   TEST_ASSERT_EQUAL(2, c->filters->count);
   TEST_ASSERT_FALSE(filter_remove(c, 10));
   TEST_ASSERT_FALSE(filter_remove(c, 0));
@@ -210,12 +218,15 @@ static void test_filter_changes() {
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
 
-  for (int i = 0; i < c->chains_length; i++) c->chains[i].nodelist_upd8_params = NULL;
+  for (int i = 0; i < c->chains_length; i++) {
+    _free(c->chains[i].nodelist_upd8_params);
+    c->chains[i].nodelist_upd8_params = NULL;
+  }
 
   in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 1, NULL));
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
-  TEST_ASSERT_GREATER_THAN(0, filter_add(c, FILTER_BLOCK, NULL));
+  TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 10, NULL));
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 0, NULL));
   TEST_ASSERT_TRUE(filter_remove(c, 1));
@@ -224,7 +235,7 @@ static void test_filter_changes() {
   TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 1, NULL));
 
   add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
-  TEST_ASSERT_EQUAL(1, filter_add(c, FILTER_BLOCK, NULL));
+  TEST_ASSERT_EQUAL(1, eth_newBlockFilter(c));
   ctx_free(ctx);
 
   add_response("eth_getBlockByNumber",
@@ -263,9 +274,10 @@ static void test_filter_changes() {
   TEST_ASSERT_EQUAL(IN3_OK, filter_get_changes(ctx, 1, result));
   TEST_ASSERT_EQUAL_STRING("[\"0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9\"]", result->data);
   ctx_free(ctx);
+  sb_free(result);
 
   add_response("eth_blockNumber", "[]", "\"0x84cf60\"", NULL, NULL);
-  TEST_ASSERT_EQUAL(2, filter_add(c, FILTER_BLOCK, NULL));
+  TEST_ASSERT_EQUAL(2, eth_newBlockFilter(c));
   add_response("eth_blockNumber", "[]", "\"0x84cf60\"", NULL, NULL);
   ctx    = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   result = sb_new("");
@@ -273,6 +285,7 @@ static void test_filter_changes() {
   TEST_ASSERT_EQUAL_STRING("[]", result->data);
   ctx_free(ctx);
   in3_free(c);
+  sb_free(result);
 }
 
 /*

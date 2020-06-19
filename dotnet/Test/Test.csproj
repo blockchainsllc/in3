@@ -29,6 +29,34 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Remove="Responses/btc_GetBlockBytes_1.json" />
+      <Content Include="Responses/btc_GetTransactionBytes_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/btc_GetBlockBytes_1.json" />
+      <Content Include="Responses/btc_GetBlockBytes_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/btc_GetBlockHeaderBytes_1.json" />
+      <Content Include="Responses/btc_GetBlockHeaderBytes_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/btc_GetBlockHeader_1.json" />
+      <Content Include="Responses/btc_GetBlockHeader_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/btc_GetBlockWithTxData_1.json" />
+      <Content Include="Responses/btc_GetBlockWithTxData_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/btc_GetBlockWithTxIds_1.json" />
+      <Content Include="Responses/btc_GetBlockWithTxIds_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Responses/btc_GetTransaction_1.json" />
+      <Content Include="Responses/btc_GetTransaction_1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <None Remove="Responses/eth_blockNumber_1.json" />
       <Content Include="Responses/eth_blockNumber_1.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>

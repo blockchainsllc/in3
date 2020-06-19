@@ -126,6 +126,7 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
+  if (conf->times) _free(conf->times);
   conf->use_full_proof  = c->proof == PROOF_FULL;
   conf->verification    = VERIFICATION_PROOF;
   conf->times           = _calloc(ctx_nodes_len(ctx->nodes), sizeof(uint32_t));
@@ -140,6 +141,7 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
     const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
     if (res < 0)
       return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
+    if (conf->signers) _free(conf->signers);
     const int node_count  = ctx_nodes_len(signer_nodes);
     conf->signers_length  = node_count;
     conf->signers         = _malloc(sizeof(bytes_t) * node_count);
@@ -160,6 +162,7 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
         }
       }
       if (conf->verified_hashes_length) {
+        if (conf->verified_hashes) _free(conf->verified_hashes);
         conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
         for (int i = 0; i < conf->verified_hashes_length; i++)
           conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);

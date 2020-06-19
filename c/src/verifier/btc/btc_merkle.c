@@ -23,17 +23,17 @@ static void create_parent_hashes(uint8_t* hashes, int hashes_len, SHA256_CTX* ct
 }
 
 in3_ret_t btc_merkle_create_root(bytes32_t* hashes, int hashes_len, bytes32_t dst) {
-  if (hashes_len == 0) { // emptyList = NULL hash
+  uint8_t*   tmp = _malloc(hashes_len << 5); // we create an byte array with hashes_len*32 to store all hashes
+  SHA256_CTX ctx;                            // we want to reuse the struct later
+  if (hashes_len == 0)                       // emptyList = NULL hash
     memset(dst, 0, 32);
-    return IN3_OK;
+  else {
+    for (int i = 0; i < hashes_len; i++) rev_copy(tmp + (i << 5), hashes[i]); // copy the hashes in reverse order into the buffer
+    create_proofs(tmp, hashes_len, &ctx, NULL, -1);                           // reduce the roothash until we have only one left.
+    rev_copy(dst, tmp);                                                       // the first hash in the buffer is the root hash, which copy reverse again.
   }
-
-  uint8_t*   tmp = alloca(hashes_len << 5);                                 // we create an byte array with hashes_len*32 to store all hashes
-  SHA256_CTX ctx;                                                           // we want to reuse the struct later
-  for (int i = 0; i < hashes_len; i++) rev_copy(tmp + (i << 5), hashes[i]); // copy the hashes in reverse order into the buffer
-  create_parent_hashes(tmp, hashes_len, &ctx);                              // reduce the roothash until we have only one left.
-  rev_copy(dst, tmp);                                                       // the first hash in the buffer is the root hash, which copy reverse again.
-  return IN3_OK;                                                            // no way to create an exception here.
+  _free(tmp);
+  return IN3_OK; // no way to create an exception here.
 }
 
 bool btc_merkle_verify_proof(bytes32_t target, bytes_t proof, int index, bytes32_t start_hash) {

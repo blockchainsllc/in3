@@ -60,24 +60,6 @@ static in3_t* get_in3(JNIEnv* env, jobject obj) {
 
 /*
  * Class:     in3_IN3
- * Method:    getCacheTimeout
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getCacheTimeout(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->cache_timeout;
-}
-
-/*s
- * Class:     in3_IN3
- * Method:    setCacheTimeout
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setCacheTimeout(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->cache_timeout = val;
-}
-
-/*
- * Class:     in3_IN3
  * Method:    setConfig
  * Signature: (Ljava/lang/String)V
  */
@@ -91,23 +73,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
     (*env)->ThrowNew(env, IllegalArgumentException, error);
     _free(error);
   }
-}
-/*
- * Class:     in3_IN3
- * Method:    getNodeLimit
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getNodeLimit(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->node_limit;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setNodeLimit
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setNodeLimit(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->node_limit = val;
 }
 
 /*
@@ -140,206 +105,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray v
 
 /*
  * Class:     in3_IN3
- * Method:    getMaxCodeCache
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getMaxCodeCache(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->max_code_cache;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMaxCodeCache
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMaxCodeCache(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->max_code_cache = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getMaxBlockCache
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getMaxBlockCache(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->max_block_cache;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMaxBlockCache
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMaxBlockCache(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->max_block_cache = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getProof
- * Signature: ()Lin3/Proof;
- */
-JNIEXPORT jobject JNICALL Java_in3_IN3_getProof(JNIEnv* env, jobject ob) {
-  in3_t*   in3        = get_in3(env, ob);
-  jfieldID val        = NULL;
-  jclass   enum_clazz = (*env)->FindClass(env, "in3/Proof");
-  switch (in3->proof) {
-    case PROOF_NONE:
-      val = (*env)->GetStaticFieldID(env, enum_clazz, "none", "Lin3/Proof;");
-      break;
-    case PROOF_STANDARD:
-      val = (*env)->GetStaticFieldID(env, enum_clazz, "standard", "Lin3/Proof;");
-      break;
-    case PROOF_FULL:
-      val = (*env)->GetStaticFieldID(env, enum_clazz, "full", "Lin3/Proof;");
-      break;
-  }
-  return (*env)->GetStaticObjectField(env, enum_clazz, val);
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setProof
- * Signature: (Lin3/Proof;)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setProof(JNIEnv* env, jobject ob, jobject val) {
-  in3_t* in3        = get_in3(env, ob);
-  jclass enum_clazz = (*env)->FindClass(env, "in3/Proof");
-
-  char* values[] = {"none", "standard", "full"};
-  for (int i = 0; i < 3; i++) {
-    if (val == (*env)->GetStaticObjectField(env, enum_clazz, (*env)->GetStaticFieldID(env, enum_clazz, values[i], "Lin3/Proof;")))
-      in3->proof = i;
-  }
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getRequestCount
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getRequestCount(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->request_count;
-}
-/*
- * Class:     in3_IN3
- * Method:    setRequestCount
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setRequestCount(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->request_count = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getSignatureCount
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getSignatureCount(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->signature_count;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setSignatureCount
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setSignatureCount(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->signature_count = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getMinDeposit
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_in3_IN3_getMinDeposit(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->min_deposit;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMinDeposit
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMinDeposit(JNIEnv* env, jobject ob, jlong val) {
-  get_in3(env, ob)->min_deposit = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getReplaceLatestBlock
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getReplaceLatestBlock(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->replace_latest_block;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getReplaceLatestBlock
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setReplaceLatestBlock(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->replace_latest_block = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getFinality
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getFinality(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->finality;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setFinality
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setFinality(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->finality = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getMaxAttempts
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getMaxAttempts(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->max_attempts;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMaxAttempts
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMaxAttempts(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->max_attempts = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getTimeout
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getTimeout(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->timeout;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setTimeout
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setTimeout(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->timeout = val;
-}
-
-/*
- * Class:     in3_IN3
  * Method:    getChainId
  * Signature: ()J
  */
@@ -354,36 +119,6 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong val) {
   get_in3(env, ob)->chain_id = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    isAutoUpdateList
- * Signature: ()Z
- */
-JNIEXPORT jboolean JNICALL Java_in3_IN3_isAutoUpdateList(JNIEnv* env, jobject ob) {
-  return (get_in3(env, ob)->flags & FLAGS_AUTO_UPDATE_LIST) != 0;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setAutoUpdateList
- * Signature: (Z)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList(JNIEnv* env, jobject ob, jboolean val) {
-  BITMASK_SET_BOOL(get_in3(env, ob)->flags, FLAGS_AUTO_UPDATE_LIST, val);
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getStorageProvider
- * Signature: ()Lin3/StorageProvider;
- */
-JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider(JNIEnv* env, jobject ob) {
-  in3_t* in3 = get_in3(env, ob);
-  if (in3->cache && in3->cache->cptr)
-    return (jobject) in3->cache->cptr;
-  return NULL;
 }
 
 static JNIEnv* jni = NULL;
@@ -977,7 +712,6 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
   in3_t* in3 = in3_for_chain(jchain);
   in3_register_eth_api();
-  in3_log_set_level(LOG_DEBUG);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
   in3->transport          = Java_in3_IN3_transport;
   in3->signer             = _malloc(sizeof(in3_signer_t));

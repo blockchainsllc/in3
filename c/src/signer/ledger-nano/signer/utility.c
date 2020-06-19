@@ -36,6 +36,10 @@ int get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uin
     if (ret == 0) {
       if (memcmp(pub_key, p_key, 65) == 0) {
         recid = i;
+#ifdef DEBUG
+        in3_log_debug("public key matched with recid value\n");
+        ba_print(p_key, 65);
+#endif
         break;
       }
     }

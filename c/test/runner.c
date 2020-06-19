@@ -113,8 +113,7 @@ char* readContent(char* name) {
   }
   buffer[len] = 0;
 
-  if (file)
-    fclose(file);
+  fclose(file);
 
   return buffer;
 }
@@ -477,5 +476,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  return runRequests(names, testIndex, membrk);
+  int res = runRequests(names, testIndex, membrk);
+  free(names);
+  return res;
 }

@@ -72,23 +72,13 @@ option(DEV_NO_INTRN_PTR "(*dev option*) if true the client will NOT include a vo
 option(LEDGER_NANO "include support for nano ledger" OFF)
 option(ESP_IDF "include support for ESP-IDF microcontroller framework" OFF)
 option(ASSERTIONS "includes assertions into the code, which help track errors but may cost time during runtime" OFF)
+OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
 else()
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=0)
 endif()
-
-if (USE_CURL AND NOT (JAVA OR WASM OR ASMJS))
-    ADD_DEFINITIONS(-DUSE_CURL)
-    set(IN3_TRANSPORT ${IN3_TRANSPORT} transport_curl)
-    if (CURL_BLOCKING)
-        ADD_DEFINITIONS(-DCURL_BLOCKING)
-    endif()
-else()
-   set(USE_CURL 0)
-endif()
-
 
 if (ERR_MSG)
   ADD_DEFINITIONS(-DERR_MSG)

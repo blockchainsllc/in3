@@ -41,7 +41,7 @@ namespace In3.Crypto
         /// <param name="pk">Private key.</param>
         /// <param name="sigType">Type of signature, one of <see cref="SignatureType" />.</param>
         /// <returns>The signed data.</returns>
-        public SignedData SignData(string msg, string pk, SignatureType? sigType = null)
+        public SignedData SignData(string msg, string pk, SignatureType sigType = null)
         {
             string jsonResponse = in3.SendRpc(CryptoSignData, new object[] { msg, pk, sigType?.Value });
             return RpcHandler.From<SignedData>(jsonResponse);

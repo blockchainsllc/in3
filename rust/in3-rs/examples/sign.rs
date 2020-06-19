@@ -77,7 +77,7 @@ fn sign_tx_api() {
         "setData(uint256,string)",
         serde_json::json!([123, "testdata"]),
     ))
-        .unwrap();
+    .unwrap();
     println!("{:?}", params);
     let to: Address =
         serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();

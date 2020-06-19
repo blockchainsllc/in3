@@ -69,7 +69,13 @@ file(GLOB files "unit_tests/*.c")
 foreach (file ${files})
      get_filename_component(testname "${file}" NAME_WE)
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
-     target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ${IN3_API})
+
+     if( LEDGER_NANO AND HIDAPI )
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API})
+     else()
+       target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ${IN3_API})
+     endif()
+
      add_test(
                 NAME "in3_${testname}"
                 COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testname}
@@ -96,7 +102,7 @@ foreach (file ${files})
     get_filename_component(testname "${file}" NAME_WE)
     add_test(
             NAME "in3_${testname}"
-            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file}
+            COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/runner ${file} 
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
     )
     set_tests_properties("in3_${testname}" PROPERTIES 
@@ -105,6 +111,9 @@ foreach (file ${files})
 
 endforeach ()
 
+if (CODE_COVERAGE)
+  set (EVMARG "-d")
+endif()
 
 foreach (testdir
         vmTests/vmBitwiseLogicOperation
@@ -187,7 +196,7 @@ foreach (testdir
         get_filename_component(testname "${file}" NAME_WE)
         add_test(
                 NAME "evm/${testdir}/${testname}"
-                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file}
+                COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/vmrunner ${file} ${EVMARG}
                 WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/..
         )
         set_tests_properties("evm/${testdir}/${testname}" PROPERTIES 
@@ -196,6 +205,7 @@ foreach (testdir
           )
 
     endforeach ()
+    set (EVMARG "")
 endforeach ()
 
 set_property(TARGET runner PROPERTY C_STANDARD 99)

@@ -399,6 +399,7 @@ uint64_t getchain_id(char* name) {
   if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
   if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
   if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
+  if (strcmp(name, "ewc") == 0) return ETH_CHAIN_ID_EWC;
   if (strcmp(name, "ipfs") == 0) return ETH_CHAIN_ID_IPFS;
   if (strcmp(name, "btc") == 0) return ETH_CHAIN_ID_BTC;
   if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;

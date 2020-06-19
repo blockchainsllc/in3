@@ -157,20 +157,31 @@ static in3_filter_t* filter_new(in3_filter_type_t ft) {
   return f;
 }
 
-in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
+in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
   if (type == FILTER_PENDING)
     return IN3_ENOTSUP;
   else if (options == NULL && type != FILTER_BLOCK)
     return IN3_EINVAL;
 
-  in3_ret_t  res = IN3_OK;
-  in3_ctx_t* ctx = in3_client_rpc_ctx(in3, "eth_blockNumber", "[]");
-  if (IN3_OK != (res = ctx_get_error(ctx, 0))) {
-    ctx_free(ctx);
-    return res;
+  in3_ret_t  res           = IN3_OK;
+  uint64_t   current_block = 0;
+  in3_ctx_t* block_ctx     = ctx_find_required(ctx, "eth_blockNumber");
+  if (!block_ctx)
+    return ctx_add_required(ctx, ctx_new(ctx->client, _strdupn("{\"method\":\"eth_blockNumber\",\"params\":[]}", -1)));
+  else {
+    switch (in3_ctx_state(block_ctx)) {
+      case CTX_ERROR:
+        return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
+      case CTX_WAITING_FOR_REQUIRED_CTX:
+      case CTX_WAITING_FOR_RESPONSE:
+        return IN3_WAITING;
+      case CTX_SUCCESS:
+        if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
+          return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", res);
+        current_block = d_get_longk(block_ctx->responses[0], K_RESULT);
+        TRY(ctx_remove_required(ctx, block_ctx));
+    }
   }
-  uint64_t current_block = d_get_longk(ctx->responses[0], K_RESULT);
-  ctx_free(ctx);
 
   in3_filter_t* f = filter_new(type);
   f->options      = options;
@@ -179,9 +190,9 @@ in3_ret_t filter_add(in3_t* in3, in3_filter_type_t type, char* options) {
   // Reuse filter ids that have been uninstalled
   // Note: filter ids are 1 indexed, and the associated in3_filter_t object is stored
   // at pos (id - 1) internally in in3->filters->array
-  if (in3->filters == NULL)
-    in3->filters = _calloc(1, sizeof *(in3->filters));
-  in3_filter_handler_t* fh = in3->filters;
+  if (ctx->client->filters == NULL)
+    ctx->client->filters = _calloc(1, sizeof *(ctx->client->filters));
+  in3_filter_handler_t* fh = ctx->client->filters;
   for (size_t i = 0; i < fh->count; i++) {
     if (fh->array[i] == NULL) {
       fh->array[i] = f;
