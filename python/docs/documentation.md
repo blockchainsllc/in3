@@ -1,7 +1,6 @@
 # API Reference Python
 
 # Python Incubed client
-![coverage badge](docs/coverage.svg)
 
 This library is based on the [C version of Incubed](http://github.com/slockit/in3-c), which limits the compatibility for Cython, so please contribute by compiling it to your own platform and sending us a pull-request!
 
@@ -12,7 +11,6 @@ Go to our [readthedocs](https://in3.readthedocs.io/) page for more.
 ### Install with pip 
  
 ```shell script
-coverage run -m pytest --pylama --junitxml=report.xml && coverage report && coverage-badge -fo docs/coverage.svg
 ```
 
 ### In3 Client API
@@ -413,7 +411,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<function http_transport at 0x10a72d8c0>)
+transport=<CFunctionType object at 0x107da0390>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -479,7 +477,7 @@ Resolves ENS domain name to Ethereum address of domain owner.
 
 **Arguments**:
 
-- `domain_name` - ENS supported domain. i.e mydomain.eth
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
 - `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
 
 **Returns**:
@@ -496,7 +494,7 @@ Resolves ENS domain name to Smart-contract address of the resolver registered fo
 
 **Arguments**:
 
-- `domain_name` - ENS supported domain. i.e mydomain.eth
+- `domain_name` - ENS supported domain. mydomain.ens, mydomain.xyz, etc
 - `registry` - ENS registry contract address. i.e. 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
 
 **Returns**:
@@ -543,7 +541,7 @@ The verification policy enforces an extra step of security, adding a financial s
 - `latest_block_stall` _int_ - Distance considered safe, consensus wise, from the very latest block. Higher values exponentially increases state finality, and therefore data security, as well guaranteeded responses from in3 nodes. example: 10 - will ask for the state from (latestBlock-10).
 - `account_secret` _str_ - Account SK to sign all in3 requests. (Experimental use `set_account_sk`) example: 0x387a8233c96e1fc0ad5e284353276177af2186e7afa85296f106336e376669f7
 - `node_signatures` _int_ - Node signatures attesting the response to your request. Will send a separate request for each. example: 3 nodes will have to sign the response.
-- `node_signature_consensus` _int_ - Useful when node_signatures <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
+- `node_signature_consensus` _int_ - Useful when signatureCount <= 1. The client will check for consensus in responses. example: 10 - will ask for 10 different nodes and compare results looking for a consensus in the responses.
 - `node_min_deposit` _int_ - Only nodes owning at least this amount will be chosen to sign responses to your requests. i.e. 1000000000000000000 Wei
 - `node_list_auto_update` _bool_ - If true the nodelist will be automatically updated. False may compromise data security.
 - `node_limit` _int_ - Limit nodes stored in the client. example: 150 nodes
@@ -570,7 +568,7 @@ indeed mined are in the correct chain fork.
 
 - `url` _str_ - Endpoint to post to example: https://in3.slock.it
 - `index` _int_ - Index within the contract example: 13
-- `address` _in3.Account_ - Address of the node, which is the public address it is signing with. example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
+- `address` _in3.Account_ - Address of the node, which is the public address it iis signing with. example: 0x6C1a01C2aB554930A937B0a2E8105fB47946c679
 - `deposit` _int_ - Deposit of the node in wei example: 12350000
 - `props` _int_ - Properties of the node. example: 3
 - `timeout` _int_ - Time (in seconds) until an owner is able to receive his deposit back after he unregisters himself example: 3600
@@ -1172,7 +1170,8 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 
 ### In3Runtime
 ```python
-In3Runtime(self, chain_id: int, transport)
+In3Runtime(self, chain_id: int,
+transport: <function CFUNCTYPE at 0x1078338c0>)
 ```
 
 Instantiate libin3 and frees it when garbage collected.
@@ -1200,7 +1199,8 @@ Example of RPC to In3-Core library, In3 Network and back.
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport: <function CFUNCTYPE at 0x10a778170>)
+transport: <function CFUNCTYPE at 0x1078338c0>,
+debug=False)
 ```
 
 Instantiate new In3 Client instance.
