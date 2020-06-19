@@ -317,7 +317,7 @@ char* eth_wallet_sign(const char* key, const char* data) {
 
   hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
   data_l    = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
-  char* res = malloc(133);
+  char* res = _malloc(133);
 
   if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
     bytes_to_hex(dst, 65, res + 2);
