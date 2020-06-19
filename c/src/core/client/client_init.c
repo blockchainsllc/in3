@@ -282,8 +282,6 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->filters              = NULL;
   c->timeout              = 10000;
 
-  //TODO check for failed malloc!
-
   in3_chain_t* chain = c->chains;
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_MAINNET)

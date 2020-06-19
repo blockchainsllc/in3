@@ -70,7 +70,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
   char*       error       = in3_configure(get_in3(env, ob), json_config);
   (*env)->ReleaseStringUTFChars(env, val, json_config);
   if (error) {
-    // TODO create a human readable error message
     jclass IllegalArgumentException = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
     (*env)->ThrowNew(env, IllegalArgumentException, error);
     _free(error);

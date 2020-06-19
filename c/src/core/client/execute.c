@@ -232,7 +232,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
     if ((t = d_get(request_token, K_PARAMS)) == NULL)
       sb_add_key_value(sb, "params", "[]", 2, false);
     else {
-      //TODO this only works with JSON!!!!
+      if (d_is_binary_ctx(c->request_context)) return ctx_set_error(c, "only text json input is allowed", IN3_EINVAL);
       const str_range_t ps = d_to_json(t);
       if (msg_hash) add_token_to_hash(msg_hash, t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);

@@ -189,7 +189,6 @@ static void test_in3_client_rpc() {
   free(error);
 
   // test in3_client_exec_req() with keep_in3 set to true
-  // TODO: also test with use_binary set to true
   c->flags |= FLAGS_KEEP_IN3;
   add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
   char* response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");

@@ -20,7 +20,6 @@ static void set_cachekey(chain_id_t id, char* buffer) {
 }
 
 // format:  <2 bytes big endias HEX DAP NR> <4 bytes bits>
-// TODO add targets for all daps every 6 months
 #define BTC_TARGETS "000affff001d" \
                     "000fffff001d" \
                     "00145746651c" \

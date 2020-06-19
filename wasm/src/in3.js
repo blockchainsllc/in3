@@ -34,6 +34,7 @@
 
 // implement the transport and storage handlers
 if (typeof fetch === 'function') {
+
     // for browsers
     in3w.in3_cache = {
         get: key => window.localStorage.getItem('in3.' + key),
@@ -172,7 +173,7 @@ class IN3 {
      */
     setConfig(conf) {
         if (conf) {
-            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
+            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5', ewc: '0xf6', btc: '0x99' }
             if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
             this.config = { ...this.config, ...conf }
         }
