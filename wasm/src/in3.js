@@ -151,6 +151,8 @@ class IN3 {
         if (chainId === 'kovan') chainId = '0x2a'
         if (chainId === 'goerli') chainId = '0x5'
         if (chainId === 'mainnet') chainId = '0x1'
+        if (chainId === 'btc') chainId = '0x99'
+        if (chainId === 'ewc') chainId = '0xf6'
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
     }
@@ -255,7 +257,7 @@ class IN3 {
                         }
                         else
                             in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
-                        // console.log((isError ? 'ERROR ' : '') + ' response  :', msg.substr(0, 10))
+                        //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
                     }
                     function freeRequest() {
                         in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
@@ -275,7 +277,7 @@ class IN3 {
                             break;
 
                         case 'rpc':
-                            //                            console.log("req ", JSON.stringify(req, null, 2))
+                            //                            console.log("req to " + req.urls[0], req.payload[0])
                             await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
                                 res => setResponse(res, i, false),
                                 err => setResponse(err.message || err, i, true)
