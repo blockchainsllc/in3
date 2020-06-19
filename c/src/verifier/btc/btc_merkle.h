@@ -15,19 +15,10 @@ in3_ret_t btc_merkle_create_root(
 );
 
 /**
- * create the merkle proof.
- */
-bytes_t* btc_merkle_create_proof(
-    bytes32_t* hashes,     /**< the list of hashes */
-    int        hashes_len, /**< the number of hashes in the list */
-    int        index       /**< the proof to create */
-);
-
-/**
  * verify a merkle proof.
  * @returns true if successful
  */
-int btc_merkle_verify_proof(
+bool btc_merkle_verify_proof(
     bytes32_t root_hash, /**< the expected root hash */
     bytes_t   proof,     /**< the proof-data */
     int       index,     /**< the expected inde x*/

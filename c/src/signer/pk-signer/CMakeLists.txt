@@ -36,13 +36,7 @@
 add_library(pk_signer_o OBJECT signer.c)
 add_library(pk_signer STATIC $<TARGET_OBJECTS:pk_signer_o>)
 
-if( LEDGER_NANO AND HIDAPI)
-   target_link_libraries(pk_signer eth_nano ledger_signer)
-else()
-   target_link_libraries(pk_signer eth_nano)
-endif()
-
-
+target_link_libraries(pk_signer eth_nano)
 
 
 

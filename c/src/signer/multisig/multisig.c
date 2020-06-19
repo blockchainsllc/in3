@@ -31,12 +31,39 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#ifndef in3_ethereum_apdu_client_priv_h__
-#define in3_ethereum_apdu_client_priv_h__
 
-#include "../../../core/client/client.h"
+#include "multisig.h"
+#include "../../core/client/client.h"
+#include "../../core/client/keys.h"
+#include "../../core/util/mem.h"
+#include "../../third-party/crypto/ecdsa.h"
+#include "../../third-party/crypto/secp256k1.h"
+#include "../../verifier/eth1/nano/rlp.h"
+#include "../../verifier/eth1/nano/serialize.h"
 
-void      read_bip32_path(uint8_t path_length, const uint8_t* path, uint32_t* bip32_path);
-in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc);
-void      set_command_params_eth();
-#endif
+in3_ret_t gs_prepare_tx(void* ctx, bytes_t raw_tx, bytes_t* new_raw_tx) {
+
+  return IN3_OK;
+}
+in3_ret_t delegate_sign(in3_sign_ctx_t* sc) {
+  multisig_t* ms = sc->wallet;
+  sc->wallet     = ms->signer->wallet;
+  in3_ret_t res  = ms->signer->sign(sc);
+  sc->wallet     = ms;
+
+  return res;
+}
+
+in3_signer_t* create_gnosis_safe_signer(address_t adr, in3_signer_t* old_signer) {
+  multisig_t* ms = _malloc(sizeof(multisig_t));
+  ms->type       = MS_GNOSIS_SAFE;
+  ms->signer     = old_signer;
+  memcpy(ms->address, adr, 20);
+
+  in3_signer_t* signer = _malloc(sizeof(in3_signer_t));
+  signer->prepare_tx   = gs_prepare_tx;
+  signer->sign         = delegate_sign;
+  signer->wallet       = ms;
+  memcpy(signer->default_address, old_signer->default_address, 20);
+  return signer;
+}
