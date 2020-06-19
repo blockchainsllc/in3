@@ -315,6 +315,18 @@ typedef enum {
   SIGN_EC_HASH = 1, /**< hash and sign the data */
 } d_signature_type_t;
 
+/**
+ * signing context. This Context is passed to the signer-function. 
+ */
+typedef struct sign_ctx {
+  d_signature_type_t type;          /**< the type of signature*/
+  bytes_t            message;       /**< the message to sign*/
+  bytes_t            account;       /**< the account to use for the signature */
+  uint8_t            signature[65]; /**< the resulting signature needs to be writte into these bytes */
+  void*              wallet;        /**< the custom wallet-pointer  */
+  void*              ctx;           /**< the context of the request in order report errors */
+} in3_sign_ctx_t;
+
 /** 
  * signing function.
  * 
@@ -323,7 +335,7 @@ typedef enum {
  * In case of an error a negativ value must be returned. It should be one of the IN3_SIGN_ERR... values.
  * 
 */
-typedef in3_ret_t (*in3_sign)(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+typedef in3_ret_t (*in3_sign)(in3_sign_ctx_t* ctx);
 
 /** 
  * transform transaction function.
@@ -332,7 +344,7 @@ typedef in3_ret_t (*in3_sign)(void* ctx, d_signature_type_t type, bytes_t messag
  * if the new_tx is not set within the function, it will use the old_tx.
  * 
 */
-typedef in3_ret_t (*in3_prepare_tx)(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx);
+typedef in3_ret_t (*in3_prepare_tx)(void* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
 
 /**
  * definition of a signer holding funciton-pointers and data.

@@ -139,8 +139,8 @@ public class TransactionRequest {
   }
 
   /**
-     * creates the data based on the function/params values.
-     */
+   * creates the data based on the function/params values.
+   */
   public String getData() {
     String result = data == null || data.length() < 2 ? "0x" : data;
     if (function != null) {
@@ -174,8 +174,8 @@ public class TransactionRequest {
   public Object getResult(String data) {
     if (function == null)
       return data;
-    Object[] res = (Object[]) abiDecode(function, data);
-    return res.length == 1 ? res[0] : res;
+    Object res = abiDecode(function, data);
+    return res instanceof String ? (Object) res : (Object[]) res;
   }
 
   static {

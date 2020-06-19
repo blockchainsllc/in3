@@ -37,6 +37,8 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
+#include "../../../third-party/crypto/ecdsa.h"
+#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
@@ -306,4 +308,22 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, d_token_t* req) {
   in3_cache_add_ptr(&ctx->cache, sb->data); // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
   _free(sb);                                // and we only free the stringbuilder, but not the data itself.
   return IN3_OK;
+}
+
+/** minimum signer for the wallet, returns the signed message which needs to be freed **/
+char* eth_wallet_sign(const char* key, const char* data) {
+  int     data_l = strlen(data) / 2 - 1;
+  uint8_t key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+
+  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
+  data_l    = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
+  char* res = _malloc(133);
+
+  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
+    bytes_to_hex(dst, 65, res + 2);
+    res[0] = '0';
+    res[1] = 'x';
+  }
+
+  return res;
 }

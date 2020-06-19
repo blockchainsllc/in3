@@ -111,4 +111,10 @@ in3_ret_t eth_sign_raw_tx(bytes_t    raw_tx, /**< the unsigned raw transaction t
 in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, /**< the current context */
                                      d_token_t* req  /**< the request */
 );
+
+/**
+ * minimum signer for the wallet, returns the signed message which needs to be freed
+ */
+RETURNS_NONULL NONULL char* eth_wallet_sign(const char* key, const char* data);
+
 #endif // in3_eth_basic_h__

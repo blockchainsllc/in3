@@ -697,6 +697,27 @@ in3_signer_t* in3_create_signer(
 );
 
 /**
+ * helper function to retrieve and message from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_message(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve and account from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_account(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve the signature from a in3_sign_ctx_t
+ */
+uint8_t* in3_sign_ctx_get_signature(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
  * set the transport handler on the client.
  */
 void in3_set_transport(
