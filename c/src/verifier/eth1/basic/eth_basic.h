@@ -115,6 +115,6 @@ in3_ret_t handle_eth_sendTransaction(in3_ctx_t* ctx, /**< the current context */
 /**
  * minimum signer for the wallet, returns the signed message which needs to be freed
  */
-char* eth_wallet_sign(const char* key, const char* data);
+RETURNS_NONULL NONULL char* eth_wallet_sign(const char* key, const char* data);
 
 #endif // in3_eth_basic_h__
