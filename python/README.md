@@ -1,4 +1,5 @@
 # Python Incubed client
+![coverage badge](docs/coverage.svg)
 
 This library is based on the [C version of Incubed](http://github.com/slockit/in3-c), which limits the compatibility for Cython, so please contribute by compiling it to your own platform and sending us a pull-request!
 
