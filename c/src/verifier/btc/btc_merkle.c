@@ -29,7 +29,7 @@ in3_ret_t btc_merkle_create_root(bytes32_t* hashes, int hashes_len, bytes32_t ds
     memset(dst, 0, 32);
   else {
     for (int i = 0; i < hashes_len; i++) rev_copy(tmp + (i << 5), hashes[i]); // copy the hashes in reverse order into the buffer
-    create_proofs(tmp, hashes_len, &ctx, NULL, -1);                           // reduce the roothash until we have only one left.
+    create_parent_hashes(tmp, hashes_len, &ctx);                              // reduce the roothash until we have only one left.
     rev_copy(dst, tmp);                                                       // the first hash in the buffer is the root hash, which copy reverse again.
   }
   _free(tmp);
