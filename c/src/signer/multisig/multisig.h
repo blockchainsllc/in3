@@ -31,12 +31,16 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
-#ifndef in3_ethereum_apdu_client_priv_h__
-#define in3_ethereum_apdu_client_priv_h__
+#include "../../core/client/client.h"
 
-#include "../../../core/client/client.h"
+typedef enum {
+  MS_GNOSIS_SAFE
+} ms_type_t;
 
-void      read_bip32_path(uint8_t path_length, const uint8_t* path, uint32_t* bip32_path);
-in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc);
-void      set_command_params_eth();
-#endif
+typedef struct ms {
+  in3_signer_t* signer;
+  ms_type_t     type;
+  address_t     address;
+} multisig_t;
+
+void add_gnosis_safe(in3_t* in3, address_t adr);

@@ -515,20 +515,20 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
   return NULL;
 }
 
-in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
-  in3_ctx_t* ctx = (in3_ctx_t*) pk;
-  UNUSED_VAR(type);
-  jclass    cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
-  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
-  jobject   signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
+//in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t jsign(in3_sign_ctx_t* sc) {
+  in3_ctx_t* ctx    = (in3_ctx_t*) sc->ctx;
+  jclass     cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
+  jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
+  jobject    signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
 
   if (!signer) return -1;
 
-  char *data = alloca(message.len * 2 + 3), address[43];
+  char *data = alloca(sc->message.len * 2 + 3), address[43];
   data[0] = address[0] = '0';
   data[1] = address[1] = 'x';
-  bytes_to_hex(message.data, message.len, data + 2);
-  bytes_to_hex(account.data, account.len, address + 2);
+  bytes_to_hex(sc->message.data, sc->message.len, data + 2);
+  bytes_to_hex(sc->account.data, sc->account.len, address + 2);
 
   jstring jdata      = (*jni)->NewStringUTF(jni, data);
   jstring jaddress   = (*jni)->NewStringUTF(jni, address);
@@ -538,9 +538,9 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
 
   if (!jsignature) return -2;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  hex_to_bytes((char*) signature, -1, dst, 65);
+  hex_to_bytes((char*) signature, -1, sc->signature, 65);
   (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
-  return 65;
+  return IN3_OK;
 }
 
 void in3_set_jclient_config(in3_t* c, jobject jclient) {

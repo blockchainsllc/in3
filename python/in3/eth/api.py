@@ -2,6 +2,7 @@ from in3.eth.account import EthAccountApi
 from in3.eth.contract import EthContractApi
 from in3.eth.factory import EthObjectFactory
 from in3.eth.model import Transaction, Block, TransactionReceipt
+from in3.exception import ClientException
 from in3.libin3.enum import EthMethods, BlockAt
 from in3.libin3.runtime import In3Runtime
 
@@ -56,6 +57,8 @@ class EthereumApi:
         """
         serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_HASH, self._factory.get_hash(block_hash),
                                               get_full_block)
+        if not serialized:
+            raise ClientException('Block not found or non-existent.')
         return self._factory.get_block(serialized)
 
     def block_by_number(self, block_number: [int or str], get_full_block: bool = False) -> Block:
@@ -74,6 +77,8 @@ class EthereumApi:
         else:
             raise AssertionError('Block number must be an integer or in (`latest`, `earliest`, `pending`).')
         serialized: dict = self._runtime.call(EthMethods.BLOCK_BY_NUMBER, block_number_str, bool(get_full_block))
+        if not serialized:
+            raise ClientException('Block not found or non-existent.')
         return self._factory.get_block(serialized)
 
     def transaction_by_hash(self, tx_hash: str) -> Transaction:
@@ -86,6 +91,8 @@ class EthereumApi:
             transaction: Desired transaction, if exists.
         """
         serialized: dict = self._runtime.call(EthMethods.TRANSACTION_BY_HASH, self._factory.get_hash(tx_hash))
+        if not serialized:
+            raise ClientException('Transaction not found or non-existent.')
         return self._factory.get_transaction(serialized)
 
     def transaction_receipt(self, tx_hash: str) -> TransactionReceipt:
@@ -101,5 +108,7 @@ class EthereumApi:
         Returns:
             tx_receipt: The mined Transaction data including event logs.
         """
-        tx_receipt = self._runtime.execute(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
-        return self._factory.get_tx_receipt(tx_receipt)
+        serialized: dict = self._runtime.execute(EthMethods.TRANSACTION_RECEIPT, self._factory.get_hash(tx_hash))
+        if not serialized:
+            raise ClientException('Transaction not found or non-existent.')
+        return self._factory.get_tx_receipt(serialized)

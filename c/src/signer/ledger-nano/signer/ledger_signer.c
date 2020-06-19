@@ -46,9 +46,9 @@ in3_ret_t is_ledger_device_connected() {
   return ret;
 }
 
-in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
-  //UNUSED_VAR(account); // at least for now
-  uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
+in3_ret_t eth_ledger_sign(in3_sign_ctx_t* sc) {
+  // void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst
+  uint8_t* bip_path_bytes = sc->wallet;
 
   uint8_t bip_data[5];
 
@@ -77,13 +77,13 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
 
     hid_set_nonblocking(handle, 0);
 
-    switch (type) {
+    switch (sc->type) {
       case SIGN_EC_RAW:
-        memcpy(hash, message.data, message.len);
+        memcpy(hash, sc->message.data, sc->message.len);
         is_hashed = true;
       case SIGN_EC_HASH:
         if (!is_hashed)
-          hasher_Raw(HASHER_SHA3K, message.data, message.len, hash);
+          hasher_Raw(HASHER_SHA3K, sc->message.data, sc->message.len, hash);
 
         apdu[index_counter++] = CLA;
         apdu[index_counter++] = INS_SIGN;
@@ -120,13 +120,13 @@ in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, b
           ret = IN3_OK;
 
           in3_log_debug("apdu executed succesfully \n");
-          extract_signture(response, dst);
-          recid   = get_recid_from_pub_key(&secp256k1, public_key, dst, hash);
-          dst[64] = recid;
+          extract_signture(response, sc->signature);
+          recid             = get_recid_from_pub_key(&secp256k1, public_key, sc->signature, hash);
+          sc->signature[64] = recid;
 
 #ifdef DEBUG
           in3_log_debug("printing signature returned by device with recid value\n");
-          ba_print(dst, 65);
+          ba_print(sc->signature, 65);
 #endif
 
         } else {
@@ -201,11 +201,21 @@ in3_ret_t eth_ledger_get_public_key(uint8_t* i_bip_path, uint8_t* o_public_key) 
 }
 
 in3_ret_t eth_ledger_set_signer(in3_t* in3, uint8_t* bip_path) {
+
   if (in3->signer) free(in3->signer);
   in3->signer             = malloc(sizeof(in3_signer_t));
   in3->signer->sign       = eth_ledger_sign;
   in3->signer->prepare_tx = NULL;
   in3->signer->wallet     = bip_path;
+  // generate the address from the key
+  uint8_t   public_key[65], sdata[32];
+  bytes_t   pubkey_bytes = {.data = public_key + 1, .len = 64};
+  bytes32_t bip32;
+  memcpy(bip32, bip_path, 5);
+  eth_ledger_get_public_key(bip32, public_key);
+  sha3_to(&pubkey_bytes, sdata);
+  memcpy(in3->signer->default_address, sdata + 12, 20);
+
   return IN3_OK;
 }
 

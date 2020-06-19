@@ -36,8 +36,8 @@ class EthAccountGoerliTestCase(unittest.TestCase):
     def test_sign(self):
         message = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
         private_key = '0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8'
-        singature = self.client.eth.account.sign(private_key, message)
-        self.assertEqual(singature,
+        signature = self.client.eth.account.sign(private_key, message)
+        self.assertEqual(signature,
                          "0xdd34194276b13f44d3f83401f87da6672dd8dc5905590b7ef44623f424af462f70ce23d37b4" +
                          "ada4ff33f5645df62524402c4fb5cac5dca3bce60331f8d6bc5d41c")
 
