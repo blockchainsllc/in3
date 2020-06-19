@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 // implement the transport and storage handlers
+/* istanbul ignore next */
 if (typeof fetch === 'function') {
 
     // for browsers

@@ -33,7 +33,7 @@
  *******************************************************************************/
 
 const fs = require('fs')
-const IN3 = require('../../build/bin/in3.js')
+const IN3 = require('./in3/index.js')
 const { util } = require('in3-common')
 const Client = IN3.default
 
