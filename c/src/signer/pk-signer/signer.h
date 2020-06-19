@@ -66,11 +66,6 @@ typedef enum {
 in3_ret_t eth_set_pk_signer(in3_t* in3, bytes32_t pk);
 
 /**
- * minimum signer for the wallet, returns the signed message which needs to be freed
- */
-char* eth_wallet_sign(const char* key, const char* data);
-
-/**
  * simply signer with one private key as hex.
  */
 uint8_t* eth_set_pk_signer_hex(in3_t* in3, char* key);
