@@ -278,6 +278,7 @@ pages:
     - vulnerabilities
     - java_linux
     - test_wasm
+    - python_linux
   script:
     - mkdir -p public/lib
     - tar -zcvf libFiles_$CI_COMMIT_SHORT_SHA.tar.gz arm7_build/lib
@@ -289,7 +290,8 @@ pages:
     - cp -r vulnerability_analysis.json public/vulnerability_analysis.json || true
     - cp -r java/build/reports/jacoco/test/html    public/coverage_java
     - cp -r wasm/test/coverage public/coverage_wasm
-    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li><li><a href='coverage_wasm/index.html'>Code Coverage WASM</a></li></ul></body></html>" > public/index.html
+    - cp -r python_multilib/htmlcov public/coverage_python
+    - echo "<html><body><h1>Incubed report for last build</h1><ul><li><a href='rtd/html/index.html'>Read the docs(html)</a></li><li><a href='rtd/latex/Incubed.pdf'>Read the docs(pdf)</a></li><li><a href='code_analysis/index.html'>Code Analysis</a></li><li><a href='vulnerability_analysis.json'>Vulnerability Analysis</a></li><li><a href='coverage/index.html'>Code Coverage C</a></li><li><a href='coverage_java/index.html'>Code Coverage JAVA</a></li><li><a href='coverage_wasm/index.html'>Code Coverage WASM</a></li><li><a href='coverage_python/index.html'>Code Coverage PYTHON</a></li></ul></body></html>" > public/index.html
   artifacts:
     paths:
       - public

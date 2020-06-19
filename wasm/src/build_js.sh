@@ -30,4 +30,8 @@ if [ $2 == "true" ]
    cat "$1/package.json" | sed  's/wasm/asmjs/g' > ../module/package.json
    cat "$1/../README.md" | sed  's/wasm/asmjs/g' > ../module/README.md
 fi
+if [ -d "$1/../test/in3" ] 
+  then 
+     rm -rf "$1/../test/in3"
+fi
 cp -r ../module "$1/../test/in3"

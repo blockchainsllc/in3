@@ -124,6 +124,7 @@ python_macos:
 
 python_linux:
   extends: .cache_setup_with_only_python
+  coverage: '/TOTAL\s+\d+\s+\d+\s+([0-9.]+%)/'
   needs:
     - python
   image: python
@@ -136,8 +137,11 @@ python_linux:
     - pip3 install -r requirements.txt
     - coverage run -m pytest --pylama --junitxml=report.xml
     - coverage report
+    - coverage html
     - coverage-badge -fo docs/coverage.svg
   artifacts:
+    paths:
+      - python_multilib/htmlcov
     reports:
       junit: python_multilib/report.xml
   tags:

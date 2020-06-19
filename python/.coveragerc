@@ -1,2 +1,2 @@
 [run]
-omit = venv/*,tests/*
+omit = venv/*,tests/*,/usr*,*/site-packages/*
