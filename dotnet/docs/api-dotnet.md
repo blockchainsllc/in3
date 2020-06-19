@@ -5,7 +5,6 @@ Dotnet bindings and library for in3. Go to our [readthedocs](https://in3.readthe
 
 This library is based on the [C version of Incubed](http://github.com/slockit/in3-c)
 
-
 ## Quickstart
 
 ### Install with nuget
