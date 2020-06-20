@@ -61,8 +61,11 @@ add_executable(in3w wasm.c)
 target_link_libraries(in3w init)
 set_target_properties(in3w PROPERTIES LINK_FLAGS "${EMC_PROPS}")
 
-add_custom_command(TARGET in3w
-    POST_BUILD
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/bin/in3.js
+    DEPENDS in3w  in3.js in3_eth_api.js in3_btc_api.js in3_ipfs_api.js in3_util.js in3.d.ts
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/
     COMMAND  ${CMAKE_CURRENT_SOURCE_DIR}/build_js.sh ${CMAKE_CURRENT_SOURCE_DIR} ${ASMJS}
 )
+
+add_custom_target(in3_wasm ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/in3.js)
