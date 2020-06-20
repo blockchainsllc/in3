@@ -47,7 +47,9 @@
     "bn.js": "^5.0.0",
     "buffer": "^5.2.1",
     "eth-lib": "^0.2.8",
-    "in3-common": "^2.0.3-RC1"
+    "in3-common": "^2.0.3-RC1",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
   },
   "keywords": [
     "ethereum",
