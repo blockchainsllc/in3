@@ -69,3 +69,7 @@ add_custom_command(
 )
 
 add_custom_target(in3_wasm ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/in3.js)
+add_custom_target(test 
+   COMMAND npm test 
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../test
+)

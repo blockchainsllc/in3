@@ -186,6 +186,17 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+IF (WASM)
+  set(TEST false)
+  set(TRANSPORTS false)
+  set(BUILD_DOC false)
+  set(IN3_LIB false)
+  set(CMD false)
+  set(USE_CURL false)
+  add_subdirectory(wasm/src)
+ENDIF (WASM)
+
+
 # build tests
 if(TEST)
     MESSAGE(STATUS "Build Tests and add debug infos")
@@ -208,7 +219,4 @@ IF (JAVA)
    add_subdirectory(java)
 ENDIF (JAVA)
 
-IF (WASM)
-    add_subdirectory(wasm/src)
-ENDIF (WASM)
 

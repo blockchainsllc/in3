@@ -5,7 +5,7 @@
   "main": "js/src/index.js",
   "scripts": {
     "build": "tsc -p .",
-    "test": "mocha --timeout 15000 --full-trace testRunner.js testApi.js testUtil.js testApi.js testIpfs.js",
+    "test": "[ -d node_modules ] || npm i ; mocha --timeout 15000 --full-trace testRunner.js testApi.js testUtil.js testApi.js testIpfs.js",
     "test_report": "mocha  --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testApi.js testIpfs.js testUtil.js",
     "test_coverage": "nyc mocha  --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testApi.js testIpfs.js testUtil.js",
     "test_api": "mocha --inspect-brk  --timeout 15000 --full-trace  testApi.js",
