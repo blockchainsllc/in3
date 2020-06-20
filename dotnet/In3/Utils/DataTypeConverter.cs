@@ -31,7 +31,7 @@ namespace In3.Utils
         /// Converts a zero-prefixed hex (e.g.: 0x05) to <see cref="BigInteger"/>
         /// </summary>
         /// <param name="source">The hex number string.</param>
-        /// <returns>The number representation of <param name="source"></param>.</returns>
+        /// <returns>The number representation of <paramref name="source"></paramref>.</returns>
         public static BigInteger HexStringToBigint(string source)
         {
             if (String.IsNullOrWhiteSpace(source)) return BigInteger.Zero;
@@ -68,12 +68,12 @@ namespace In3.Utils
 
         internal static byte[] HexStringToByteArray(string hexString)
         {
-            if (String.IsNullOrEmpty(hexString)) return new byte[] {};
+            if (String.IsNullOrEmpty(hexString)) return new byte[] { };
 
-            byte[] a = new byte[hexString.Length/2];
+            byte[] a = new byte[hexString.Length / 2];
             for (int i = 0, h = 0; h < hexString.Length; i++, h += 2)
             {
-                a[i] = (byte) Int32.Parse(hexString.Substring(h, 2), System.Globalization.NumberStyles.HexNumber);
+                a[i] = (byte)Int32.Parse(hexString.Substring(h, 2), System.Globalization.NumberStyles.HexNumber);
             }
 
             return a;

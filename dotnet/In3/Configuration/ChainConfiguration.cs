@@ -50,7 +50,7 @@ namespace In3.Configuration
         [JsonPropertyName("registryId")]
         public string RegistryId
         {
-            get => (string?)GetState("registryId");
+            get => (string)GetState("registryId");
             set => SetState("registryId", value);
         }
 
@@ -61,7 +61,7 @@ namespace In3.Configuration
         [JsonPropertyName("whiteListContract")]
         public string WhiteListContract
         {
-            get => (string?)GetState("whiteListContract");
+            get => (string)GetState("whiteListContract");
             set => SetState("whiteListContract", value);
         }
 

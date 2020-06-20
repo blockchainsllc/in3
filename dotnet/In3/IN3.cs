@@ -26,7 +26,7 @@ namespace In3
         /// <summary>Get or Sets <see cref="In3.Storage.Storage"/> object. If not set <see cref="InMemoryStorage"/> will be used.</summary>
         public Storage.Storage Storage { get; set; }
 
-        /// <summary>Get or Sets <see cref="Signer"/> object. If not set <see cref="SimpleWallet"/> will be used.</summary>
+        /// <summary>Get or Sets <see cref="Signer"/> object. If not set <see cref="Crypto.SimpleWallet"/> will be used.</summary>
         public Crypto.Signer Signer { get; set; }
 
         /// <summary>Gets <see cref="In3.Btc.Api"/> object.</summary>
@@ -83,6 +83,9 @@ namespace In3
             return Native.Send(RpcHandler.To(method, args, in3));
         }
 
+        /// <summary>
+        /// Finalizer for the client.
+        /// </summary>
         ~IN3() => Native?.Free();
     }
 }
