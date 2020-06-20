@@ -399,7 +399,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     if (response[n].error.len || !response[n].result.len) {
       blacklist_node(node);
-      ctx_set_error(ctx, response[n].error.data, IN3_ERPC);
+      ctx_set_error(ctx, response[n].error.len ? response[n].error.data : "no response from node", IN3_ERPC);
     } else {
       // we need to clean up the previos responses if set
       if (ctx->error) _free(ctx->error);
