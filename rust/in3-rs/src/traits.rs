@@ -39,7 +39,7 @@ pub trait Storage {
     /// Sets the value for given key.
     fn set(&mut self, key: &str, value: &[u8]);
 
-    /// Clears the storage by deleting are KV pairs.
+    /// Clears the storage by deleting all KV pairs.
     fn clear(&mut self);
 }
 
