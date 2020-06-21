@@ -40,4 +40,4 @@ add_library(eth_full_o OBJECT
 
 # add dependency
 add_library(eth_full STATIC $<TARGET_OBJECTS:eth_full_o>)
-target_link_libraries(eth_full evm)
+target_link_libraries(eth_full evm eth_basic)

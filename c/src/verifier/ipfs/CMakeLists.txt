@@ -43,4 +43,4 @@ add_library(ipfs_o OBJECT
         ../../third-party/multihash/multihash.c)
 add_library(ipfs STATIC $<TARGET_OBJECTS:ipfs_o>)
 
-target_link_libraries(ipfs eth_nano b64)
+target_link_libraries(ipfs core b64)

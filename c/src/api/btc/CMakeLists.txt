@@ -34,4 +34,4 @@
 
 add_library(btc_api_o OBJECT btc_api.c)
 add_library(btc_api STATIC $<TARGET_OBJECTS:btc_api_o>)
-target_link_libraries(btc_api core api_utils)
+target_link_libraries(btc_api core api_utils btc)
