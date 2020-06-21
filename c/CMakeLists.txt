@@ -33,6 +33,23 @@
 ###############################################################################
 
 include("compiler.cmake")
+set(IN3_OBJECTS  "emhuhupty")
+
+
+macro(add_static_library )
+    cmake_parse_arguments(_LIB "" NAME "SOURCES;DEPENDS" ${ARGN} )
+   
+    # create objects
+    add_library(${_LIB_NAME}_o OBJECT ${_LIB_SOURCES})
+    
+    # add dependency
+    add_library(${_LIB_NAME} STATIC $<TARGET_OBJECTS:${_LIB_NAME}_o>)
+
+    target_link_libraries(${_LIB_NAME} ${_LIB_DEPENDS})
+    get_property(tmp GLOBAL PROPERTY IN3_OBJECTS)
+    set_property(GLOBAL PROPERTY IN3_OBJECTS ${tmp} $<TARGET_OBJECTS:${_LIB_NAME}_o>)
+endmacro()
+
 #  build modules
 add_subdirectory(src/third-party)
 
@@ -77,72 +94,8 @@ link_directories(${CMAKE_BINARY_DIR}/lib/)
 
 # create the library
 if (IN3_LIB)
-    set(IN3_LIBS
-        $<TARGET_OBJECTS:core_o>
-        $<TARGET_OBJECTS:init_o>
-        $<TARGET_OBJECTS:pk_signer_o>
-        $<TARGET_OBJECTS:crypto_o>
-    )
-
-    if (ETH_FULL)
-      set(IN3_LIBS ${IN3_LIBS} 
-         $<TARGET_OBJECTS:tommath_o> 
-         $<TARGET_OBJECTS:evm_o> 
-         $<TARGET_OBJECTS:eth_full_o>
-      )
-    endif()
-
-    if (ETH_BASIC) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_basic_o>
-        )
-    endif()
-
-    if (ETH_NANO) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_nano_o>
-        )
-    endif()
-
-    if (IPFS) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:b64_o>
-            $<TARGET_OBJECTS:ipfs_o>
-        )
-        if (IN3API) 
-            set(IN3_LIBS ${IN3_LIBS} 
-                $<TARGET_OBJECTS:ipfs_api_o>
-            )
-        endif()
-    endif()
-
-    if (BTC) 
-        set(IN3_LIBS ${IN3_LIBS} 
-          $<TARGET_OBJECTS:btc_o>
-        )
-        if (IN3API) 
-            set(IN3_LIBS ${IN3_LIBS} 
-                $<TARGET_OBJECTS:btc_api_o>
-            )
-        endif()
-    endif()
-
-    if (IN3API) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_api_o>
-            $<TARGET_OBJECTS:usn_api_o>
-            $<TARGET_OBJECTS:api_utils_o>
-        )
-    endif()
-
-    if (PAY_ETH)
-       set(IN3_LIBS ${IN3_LIBS}  $<TARGET_OBJECTS:pay_eth_o>)
-    endif()
-
-    if (USE_SCRYPT)
-       set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
-    endif()
-    
+   get_property(IN3_LIBS GLOBAL PROPERTY IN3_OBJECTS)
+   message(status "IN3-libs : ${IN3_LIBS} ")
 
 
     # create the libraries
@@ -173,3 +126,4 @@ if (IN3_LIB)
         FILES_MATCHING PATTERN "*.h*")
 
 endif()
+

@@ -32,19 +32,19 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-# static lib
-add_library(eth_basic_o OBJECT
-        eth_basic.c
-        eth_getTransaction.c
-        eth_getBlock.c
-        eth_account.c
-        eth_getLog.c
-        trie.c
-        filter.c
-        sign_tx.c
-        )
+add_static_library(
+  NAME     eth_basic 
+  
+  SOURCES 
+    eth_basic.c
+    eth_getTransaction.c
+    eth_getBlock.c
+    eth_account.c
+    eth_getLog.c
+    trie.c
+    filter.c
+    sign_tx.c
 
-# add dependency
-add_library(eth_basic STATIC $<TARGET_OBJECTS:eth_basic_o>)
-
-target_link_libraries(eth_basic eth_nano)
+  DEPENDS 
+    eth_nano
+)

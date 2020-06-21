@@ -32,15 +32,22 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 # static lib
-add_library(ipfs_o OBJECT
-        ipfs.c
-        ipfs.pb.c
-        ../../third-party/nanopb/pb_encode.c
-        ../../third-party/nanopb/pb_decode.c
-        ../../third-party/nanopb/pb_common.c
-        ../../third-party/multihash/errors.c
-        ../../third-party/multihash/hashes.c
-        ../../third-party/multihash/multihash.c)
-add_library(ipfs STATIC $<TARGET_OBJECTS:ipfs_o>)
 
-target_link_libraries(ipfs core b64)
+add_static_library(
+  NAME     ipfs 
+  
+  SOURCES 
+    ipfs.c
+    ipfs.pb.c
+    ../../third-party/nanopb/pb_encode.c
+    ../../third-party/nanopb/pb_decode.c
+    ../../third-party/nanopb/pb_common.c
+    ../../third-party/multihash/errors.c
+    ../../third-party/multihash/hashes.c
+    ../../third-party/multihash/multihash.c
+
+  DEPENDS 
+    core
+    b64
+)
+

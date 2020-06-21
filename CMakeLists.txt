@@ -75,6 +75,11 @@ option(ASSERTIONS "includes assertions into the code, which help track errors bu
 OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 OPTION(IN3_SERVER "support for proxy server as part of the cmd-tool, which allows to start the cmd-tool with the -p option and listens to the given port for rpc-requests" OFF)
 OPTION(CMD "build the comandline utils" ON)
+OPTION(POA "support POA verification including validatorlist updates" OFF)
+
+IF (POA)
+  ADD_DEFINITIONS(-DPOA)
+ENDIF (POA)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -227,5 +232,3 @@ add_subdirectory(c)
 IF (JAVA)
    add_subdirectory(java)
 ENDIF (JAVA)
-
-

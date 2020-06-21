@@ -32,6 +32,13 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_library(pay_eth_o OBJECT pay_eth.c)
-add_library(pay_eth STATIC $<TARGET_OBJECTS:pay_eth_o>)
-target_link_libraries(pay_eth eth_nano)
+
+add_static_library(
+  NAME     pay_eth 
+  
+  SOURCES 
+    pay_eth.c 
+
+  DEPENDS 
+    eth_nano
+)
