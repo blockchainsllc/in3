@@ -137,9 +137,8 @@ endif()
 
 if(LEDGER_NANO AND ( NOT (WIN32 OR MSVC OR MSYS OR MINGW )))
     add_definitions(-DLEDGER_NANO)
-    set(HIDAPI true)
 else()
-    set(HIDAPI false)
+    set(LEDGER_NANO false)
 endif()
 
 if(COLOR AND NOT (MSVC OR MSYS OR MINGW))
@@ -152,25 +151,20 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif(CMAKE_BUILD_TYPE MATCHES Debug)
 
 if(EVM_GAS)
-    MESSAGE(STATUS "Enable GAS in EVM")
     ADD_DEFINITIONS(-DEVM_GAS)
 endif(EVM_GAS)
 
 if(FAST_MATH)
-    MESSAGE(STATUS "Enable math optimizations (excutable size may increase)")
     ADD_DEFINITIONS(-DIN3_MATH_FAST)
 else()
-    MESSAGE(STATUS "Disable math optimizations (optimised for executable size)")
     ADD_DEFINITIONS(-DIN3_MATH_LITE)
 endif(FAST_MATH)
 
 if(SEGGER_RTT)
-    MESSAGE(STATUS "Enable segger RTT for logging")
     ADD_DEFINITIONS(-DSEGGER_RTT)
 endif(SEGGER_RTT)
 
 if (DEV_NO_INTRN_PTR)
-    MESSAGE(STATUS "Disable dev opt (internal ptr)")
     ADD_DEFINITIONS(-DDEV_NO_INTRN_PTR)
 endif()
 
@@ -213,7 +207,6 @@ ENDIF (WASM)
 
 # build tests
 if(TEST)
-    MESSAGE(STATUS "Build Tests and add debug infos")
     ADD_DEFINITIONS(-DTEST)
     ADD_DEFINITIONS(-DIN3_DONT_HASH_KEYS)
     ADD_DEFINITIONS(-DIN3_EXPORT_TEST=)

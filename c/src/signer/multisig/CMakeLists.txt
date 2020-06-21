@@ -33,10 +33,14 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 
-add_library(multisig_o OBJECT multisig.c)
-add_library(multisig STATIC $<TARGET_OBJECTS:pk_signer_o>)
+add_static_library(
+  NAME     multisig 
+  
+  SOURCES 
+    multisig.c
 
-target_link_libraries(multisig eth_nano)
-
+  DEPENDS 
+    eth_nano
+)
 
 
