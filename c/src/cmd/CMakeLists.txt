@@ -32,13 +32,11 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-OPTION(IN3_SERVER "support for proxy server as part of the cmd-tool, which allows to start the cmd-tool with the -p option and listens to the given port for rpc-requests" OFF)
-OPTION(CMD "build the comandline utils" ON)
-IF (CMD)
+IF (CMD AND NOT WASM)
     IF (IN3_SERVER) 
        add_subdirectory(http-server)
     ENDIF (IN3_SERVER)
     add_subdirectory(in3)
     add_subdirectory(tools)
-ENDIF (CMD)
+ENDIF (CMD AND NOT WASM)
 

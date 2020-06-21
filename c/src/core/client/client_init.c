@@ -209,9 +209,17 @@ static void init_ipfs(in3_chain_t* chain) {
 }
 
 static void init_mainnet(in3_chain_t* chain) {
-  initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 2, CHAIN_ETH, NULL);
+  initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 5, CHAIN_ETH, NULL);
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
+  initNode(chain, 2, "0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d", "https://in3-g.open-dna.de");
+  initNode(chain, 3, "ccd12a2222995e62eca64426989c2688d828aa47", "https://chaind.de/eth/mainnet1");
+  initNode(chain, 4, "510ee7f6f198e018e3529164da2473a96eeb3dc8", "https://0001.mainnet.in3.anyblock.tools");
+}
+static void init_ewf(in3_chain_t* chain) {
+  initChain(chain, 0xf6, "039562872008f7a76674a6e7842804f0ad37cb13", "313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed75", 2, 2, CHAIN_ETH, NULL);
+  initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/ewc/nd-1");
+  initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/ewc/nd-2");
 }
 
 static void init_btc(in3_chain_t* chain) {
@@ -269,12 +277,10 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->proof                = PROOF_STANDARD;
   c->replace_latest_block = 0;
   c->request_count        = 1;
-  c->chains_length        = chain_id ? 1 : 6;
+  c->chains_length        = chain_id ? 1 : 7;
   c->chains               = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters              = NULL;
   c->timeout              = 10000;
-
-  //TODO check for failed malloc!
 
   in3_chain_t* chain = c->chains;
 
@@ -292,6 +298,9 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_BTC)
     init_btc(chain++);
+
+  if (!chain_id || chain_id == ETH_CHAIN_ID_EWC)
+    init_ewf(chain++);
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_LOCAL) {
     initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);

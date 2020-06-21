@@ -32,7 +32,6 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)

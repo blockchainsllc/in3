@@ -51,6 +51,11 @@ if (BTC)
     set(LIBS ${LIBS} btc)
 endif()
 
+if (LEDGER_NANO AND HIDAPI)
+    ADD_DEFINITIONS(-DLEDGER_NANO)
+    set(IN3_API ${IN3_API} ledger_signer)
+endif()
+
 if (IPFS)
     ADD_DEFINITIONS(-DIPFS)
     set(LIBS ${LIBS} ipfs ipfs_api )
@@ -60,11 +65,7 @@ endif()
 add_executable(in3 main.c in3_storage.c)
 target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
 
-if( LEDGER_NANO AND HIDAPI)
-  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API} ledger_signer  -lm)
-else()
-  target_link_libraries(in3 ${LIBS} eth_full  ${IN3_API}  -lm)
-endif()
+target_link_libraries(in3 ${LIBS} pk_signer eth_full  ${IN3_API}  -lm)
 
 install(TARGETS in3
         DESTINATION /usr/local/bin/

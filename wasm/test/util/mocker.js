@@ -1,4 +1,4 @@
-const IN3 = require('../../../build/bin/in3.js')
+const IN3 = require('../in3/index.js')
 const Client = IN3
 let responses = {}
 function test_transport(url, data) {

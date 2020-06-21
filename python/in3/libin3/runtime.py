@@ -8,7 +8,6 @@ from enum import Enum
 from in3.exception import ClientException
 from in3.libin3.enum import RPCCode
 from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_exec, libin3_set_pk, libin3
-from typing import Callable
 
 
 class RPCExecRequest:
@@ -216,9 +215,11 @@ def create_in3_transport(custom_transport):
     """
     Factory-like higher-order function that decorates a transport function augmenting its capabilities for native interoperability
     """
+
     def transport(native_request: NativeRequest):
         request = In3Request(native_request)
         response = In3Response(native_request)
         return custom_transport(request, response)
+
     TRANSPORT_HANDLER = c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
     return TRANSPORT_HANDLER(transport)

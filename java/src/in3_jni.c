@@ -43,8 +43,10 @@
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
+#include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/verifier/eth1/basic/eth_basic.h"
 #include "../../c/src/verifier/in3_init.h"
 #ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
@@ -68,7 +70,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
   char*       error       = in3_configure(get_in3(env, ob), json_config);
   (*env)->ReleaseStringUTFChars(env, val, json_config);
   if (error) {
-    // TODO create a human readable error message
     jclass IllegalArgumentException = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
     (*env)->ThrowNew(env, IllegalArgumentException, error);
     _free(error);
@@ -484,22 +485,18 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
  */
 JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclass clz, jstring jkey, jstring jdata) {
   UNUSED_VAR(clz);
-  const char* key    = (*env)->GetStringUTFChars(env, jkey, 0);
-  const char* data   = (*env)->GetStringUTFChars(env, jdata, 0);
-  int         data_l = strlen(data) / 2 - 1;
-  uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+  const char* key  = (*env)->GetStringUTFChars(env, jkey, 0);
+  const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
+  jstring     res  = NULL;
 
-  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
-  data_l      = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
-  jstring res = NULL;
+  char* tmp = eth_wallet_sign(key, data);
 
-  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
-    char tmp[133];
-    bytes_to_hex(dst, 65, tmp + 2);
-    tmp[0] = '0';
-    tmp[1] = 'x';
-    res    = (*env)->NewStringUTF(env, tmp);
+  if (tmp != NULL) {
+    res = (*env)->NewStringUTF(env, tmp);
   }
+
+  _free(tmp);
+
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   (*env)->ReleaseStringUTFChars(env, jdata, data);
   return res;
@@ -518,20 +515,20 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
   return NULL;
 }
 
-in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
-  in3_ctx_t* ctx = (in3_ctx_t*) pk;
-  UNUSED_VAR(type);
-  jclass    cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
-  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
-  jobject   signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
+//in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t jsign(in3_sign_ctx_t* sc) {
+  in3_ctx_t* ctx    = (in3_ctx_t*) sc->ctx;
+  jclass     cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
+  jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
+  jobject    signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
 
   if (!signer) return -1;
 
-  char *data = alloca(message.len * 2 + 3), address[43];
+  char *data = alloca(sc->message.len * 2 + 3), address[43];
   data[0] = address[0] = '0';
   data[1] = address[1] = 'x';
-  bytes_to_hex(message.data, message.len, data + 2);
-  bytes_to_hex(account.data, account.len, address + 2);
+  bytes_to_hex(sc->message.data, sc->message.len, data + 2);
+  bytes_to_hex(sc->account.data, sc->account.len, address + 2);
 
   jstring jdata      = (*jni)->NewStringUTF(jni, data);
   jstring jaddress   = (*jni)->NewStringUTF(jni, address);
@@ -541,9 +538,9 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
 
   if (!jsignature) return -2;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  hex_to_bytes((char*) signature, -1, dst, 65);
+  hex_to_bytes((char*) signature, -1, sc->signature, 65);
   (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
-  return 65;
+  return IN3_OK;
 }
 
 void in3_set_jclient_config(in3_t* c, jobject jclient) {

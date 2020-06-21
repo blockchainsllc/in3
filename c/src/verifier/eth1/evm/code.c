@@ -97,7 +97,6 @@ NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key
           if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");
             ctx_remove_required(vc->ctx, ctx);
-            // TODO maybe we should not give up here, but blacklist the node and try again!
             return IN3_EINVAL;
           }
 

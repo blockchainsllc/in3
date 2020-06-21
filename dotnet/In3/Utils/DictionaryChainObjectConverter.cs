@@ -126,7 +126,7 @@ namespace In3.Utils
 
                 foreach (KeyValuePair<In3.Chain, TValue> kvp in dictionary)
                 {
-                    writer.WritePropertyName(TypesMatcher.BigIntToPrefixedHex((int)kvp.Key));
+                    writer.WritePropertyName(DataTypeConverter.BigIntToPrefixedHex((int)kvp.Key));
 
                     if (_valueConverter != null)
                     {
