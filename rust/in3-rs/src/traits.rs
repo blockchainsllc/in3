@@ -1,9 +1,8 @@
 //! Core trait definitions.
-use libc::c_char;
-
 use async_trait::async_trait;
 
-use crate::error;
+use crate::error::In3Result;
+use crate::types::Bytes;
 
 /// Transport trait methods.
 ///
@@ -24,9 +23,10 @@ pub trait Transport {
 ///
 /// Interface for a utility that can cryptographically sign arbitrary data thereby providing a
 /// means of authentication and non-repudiation.
+#[async_trait(? Send)]
 pub trait Signer {
-    /// Signs the message.
-    fn sign(&mut self, msg: &str) -> *const c_char;
+    /// Returns signed message.
+    async fn sign(&mut self, msg: &str) -> In3Result<Bytes>;
 }
 
 /// Storage trait methods.
@@ -62,11 +62,11 @@ pub trait Client {
     fn set_storage(&mut self, storage: Box<dyn Storage>);
 
     /// Makes a remote procedure call and returns the result as a String asynchronously.
-    async fn rpc(&mut self, call: &str) -> error::In3Result<String>;
+    async fn rpc(&mut self, call: &str) -> In3Result<String>;
 
     /// Same as rpc() but may block.
     #[cfg(feature = "blocking")]
-    fn rpc_blocking(&mut self, call: &str) -> error::In3Result<String>;
+    fn rpc_blocking(&mut self, call: &str) -> In3Result<String>;
 
     /// Sets the private key that must be used for signing.
     fn set_pk_signer(&mut self, data: &str);
