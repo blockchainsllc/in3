@@ -26,7 +26,7 @@ pub trait Transport {
 #[async_trait(? Send)]
 pub trait Signer {
     /// Returns signed message.
-    async fn sign(&mut self, msg: &str) -> In3Result<Bytes>;
+    async fn sign(&mut self, msg: Bytes) -> In3Result<Bytes>;
 }
 
 /// Storage trait methods.
