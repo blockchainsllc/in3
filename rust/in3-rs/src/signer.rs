@@ -57,6 +57,20 @@ impl Signer for In3Signer {
         let res: Bytes = serde_json::from_str(resp["result"]["signature"].to_string().as_str())?;
         Ok(res)
     }
+
+    async fn prepare(&mut self, msg: Bytes) -> In3Result<Bytes> {
+        let resp_str = self
+            .in3
+            .rpc(
+                serde_json::to_string(&json!({
+                    "method": "in3_prepareTx",
+                    "params": [msg]
+                })).unwrap().as_str()
+            ).await?;
+        let resp: Value = serde_json::from_str(resp_str.as_str())?;
+        let res: Bytes = serde_json::from_str(resp["result"].to_string().as_str())?;
+        Ok(res)
+    }
 }
 
 
