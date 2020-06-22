@@ -1,10 +1,11 @@
 //! Types common to all modules.
+use std::convert::TryFrom;
 use std::fmt;
+use std::fmt::Formatter;
 
-use rustc_hex::{FromHex, ToHex};
+use rustc_hex::{FromHex, FromHexError, ToHex};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, Visitor};
-use serde::export::Formatter;
 
 /// Newtype wrapper around vector of bytes
 #[derive(PartialEq, Eq, Default, Hash, Clone)]
@@ -15,6 +16,14 @@ impl fmt::Debug for Bytes {
         let mut serialized = "0x".to_owned();
         serialized.push_str(self.0.to_hex().as_str());
         write!(f, "{}", serialized)
+    }
+}
+
+impl TryFrom<&str> for Bytes {
+    type Error = FromHexError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Ok(s.from_hex()?.into())
     }
 }
 
