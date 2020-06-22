@@ -74,7 +74,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     /* Perform the request, res will get the return code */
     res = curl_multi_add_handle(cm, curl);
     if (res != CURLM_OK) {
-      sb_add_chars(&r->error, "curl_multi_add_handle() failed:");
+      sb_add_chars(&r->error, "Invalid response:");
       sb_add_chars(&r->error, (char*) curl_easy_strerror((CURLcode) res));
     }
   } else
@@ -165,7 +165,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
     res = curl_easy_perform(curl);
     /* Check for errors */
     if (res != CURLE_OK) {
-      sb_add_chars(&r->error, "curl_easy_perform() failed:");
+      sb_add_chars(&r->error, "Invalid response:");
       sb_add_chars(&r->error, (char*) curl_easy_strerror(res));
     }
     curl_slist_free_all(headers);

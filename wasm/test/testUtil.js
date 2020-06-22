@@ -97,9 +97,16 @@ describe('Util-Tests', () => {
         assert.equal(IN3.util.toHex(res), "0xdab3b69bd378ba16296c2e116cf7395e352699802234ec4e870b4f4b824248ae")
     })
 
+    it('getVersion', async () => {
+        const res = IN3.util.getVersion()
+        assert.match(res, /2\.[0-9]+\.[0-9]+/)
+    })
+
     it('getAddress', async () => {
         assert.equal(IN3.util.private2address("0x3f64dd6972bda1e7611dc38a294d7e3404d51c4aff4b09534675ecd43f66d659"),
             "0xeebCfd8F610e497748989B7cbAF0633E644512E6")
+
+
     })
 
     it('toMinHex', async () => {

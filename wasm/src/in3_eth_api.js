@@ -5,7 +5,7 @@ class EthAPI {
     send(name, ...params) {
         return this.client.sendRPC(name, params || [])
     }
-    
+
     /**
      * Returns the current price per g wei. ()
      */
@@ -123,7 +123,7 @@ class EthAPI {
      * Returns the number of transactions in a block from a block matching the given block number.
      */
     getBlockTransactionCountByNumber(block) {
-        return this.send('eth_getBlockTransactionCountByNumber', block).then(parseInt)
+        return this.send('eth_getBlockTransactionCountByNumber', toMinHex(block)).then(parseInt)
     }
 
     /**
@@ -157,7 +157,7 @@ class EthAPI {
      * Returns information about a transaction by block hash and transaction index position.
      */
     getTransactionByBlockHashAndIndex(hash, pos) {
-        return this.send('eth_getTransactionByBlockHashAndIndex', hash, pos)
+        return this.send('eth_getTransactionByBlockHashAndIndex', hash, toMinHex(pos))
     }
 
 
@@ -165,7 +165,7 @@ class EthAPI {
      * Returns information about a transaction by block number and transaction index position.
      */
     getTransactionByBlockNumberAndIndex(block, pos) {
-        return this.send('eth_getTransactionByBlockNumberAndIndex', toHexBlock(block), pos)
+        return this.send('eth_getTransactionByBlockNumberAndIndex', toHexBlock(block), toMinHex(pos))
     }
 
     /**
@@ -332,7 +332,7 @@ class EthAPI {
     }
 
     contractAt(abi, address) {
-        const api = this, ob = {_address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
+        const api = this, ob = { _address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
             const method = def.name + createSignature(def.inputs)
             if (def.constant) {
@@ -496,7 +496,7 @@ function decodeEventData(log, def) {
 function decodeEvent(log, d) {
     const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed), r = { event: d && d.name }
 
-    if (indexed.length){
+    if (indexed.length) {
         let logBufs = appendBuffers(log.topics.slice(1).map(_ => toBuffer(_)))
         abiDecode(`prefix():${createSignature(indexed)}`, logBufs).forEach((v, i) => r[indexed[i].name] = v)
     }
@@ -510,15 +510,15 @@ function appendBuffers(buffers) {
     const totalLength = buffers.reduce((acc, value) => acc + value.length, 0);
     if (!buffers.length) return null;
     let result = new Uint8Array(totalLength);
-  
+
     // for each array - copy it over result; next array is copied right after the previous one
     let length = 0;
-    for(let array of buffers) {
-      result.set(array, length);
-      length += array.length;
-    } 
-    return result; 
-  }
+    for (let array of buffers) {
+        result.set(array, length);
+        length += array.length;
+    }
+    return result;
+}
 
 function toHexBlock(b) {
     return typeof b === 'string' ? b : util.toMinHex(b)

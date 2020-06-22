@@ -1,5 +1,19 @@
 {
-    "1M": {
-        "result": "0x1e8480"
+  "1M": {
+    "result": "0x1e8480"
+  },
+  "WETH.totalSupply": {
+    "jsonrpc": "2.0",
+    "result": "0x55f7",
+    "id": 1,
+    "in3": {
+      "lastValidatorChange": 0,
+      "lastNodeList": 10304742,
+      "execTime": 12,
+      "rpcTime": 12,
+      "rpcCount": 1,
+      "currentBlock": 10316353,
+      "version": "2.1.0"
     }
+  }
 }

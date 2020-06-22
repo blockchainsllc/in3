@@ -213,8 +213,8 @@ static void init_mainnet(in3_chain_t* chain) {
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
   initNode(chain, 2, "0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d", "https://in3-g.open-dna.de");
-  initNode(chain, 3, "ccd12a2222995e62eca64426989c2688d828aa47", "https://chaind.de/eth/mainnet1");
-  initNode(chain, 4, "510ee7f6f198e018e3529164da2473a96eeb3dc8", "https://0001.mainnet.in3.anyblock.tools");
+  initNode(chain, 3, "6e314c4c7b5ae5c6f49aea2d90a1d083abab045d", "https://in3.ahnenposter.de");
+  initNode(chain, 4, "77a4a0e80d7786dec85e3087cc1c6ac3802af9cd", "https://incubed.online");
 }
 static void init_ewf(in3_chain_t* chain) {
   initChain(chain, 0xf6, "039562872008f7a76674a6e7842804f0ad37cb13", "313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed75", 2, 2, CHAIN_ETH, NULL);

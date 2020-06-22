@@ -1059,6 +1059,10 @@ export declare interface Utils<BufferType> {
      * optionally the target length can be specified (in bytes)
      */
     toHex(data: Hex | BufferType | number | bigint, len?: number): Hex
+    /**
+     * returns the incubed version.
+     */
+    getVersion(): string
 
     /** removes all leading 0 in the hexstring */
     toMinHex(key: string | BufferType | number): string;
