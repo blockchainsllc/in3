@@ -1,12 +1,13 @@
 //! Signer trait implementations.
-use std::str;
-
 use libc::c_char;
-use rustc_hex::FromHex;
-use secp256k1::{Message, SecretKey, sign};
-use sha3::{Digest, Keccak256Full};
+use serde_json::{json, Value};
 
-use crate::traits::Signer;
+use async_trait::async_trait;
+
+use crate::error::In3Result;
+use crate::in3::{chain, Client};
+use crate::traits::{Client as ClientTrait, Signer};
+use crate::types::Bytes;
 
 /// Sign data using specified private key using low-level FFI types.
 ///
@@ -25,31 +26,36 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     dst
 }
 
-/// Signer implementation in pure and safe Rust.
-pub struct SignerRust<'a> {
+/// Signer implementation using IN3 C client's RPC.
+pub struct In3Signer<'a> {
+    in3: Box<Client>,
     pub pk: &'a str,
 }
 
-impl Signer for SignerRust<'_> {
-    fn sign(&mut self, msg: &str) -> *const c_char {
-        let msg_hex = msg.from_hex().expect("message is not valid hex string");
-        let pk_hex = self.pk.from_hex().expect("private key is not valid hex string");
-        let mut hasher = Keccak256Full::new();
-        // write input message
-        hasher.input(msg_hex);
-        // read hash digest
-        let result = hasher.result();
-        let mut msg_slice: [u8; 32] = Default::default();
-        msg_slice.copy_from_slice(&result[0..32]);
-        let mut pk_slice: [u8; 32] = Default::default();
-        pk_slice.copy_from_slice(&pk_hex[0..32]);
-        let seckey = SecretKey::parse(&pk_slice).expect("invalid private key");
-        let message = Message::parse(&msg_slice);
-        let (signature, _) = sign(&message, &seckey);
-        let signature_arr = signature.serialize();
-        let ret_s = signature_arr.as_ptr();
-        let ret_c_char = ret_s as *const c_char;
-        ret_c_char
+impl In3Signer<'_> {
+    /// Create an In3Signer instance
+    pub fn new(pk: &str) -> In3Signer {
+        In3Signer {
+            in3: Client::new(chain::LOCAL),
+            pk,
+        }
+    }
+}
+
+#[async_trait(? Send)]
+impl Signer for In3Signer<'_> {
+    async fn sign(&mut self, msg: &str) -> In3Result<Bytes> {
+        let resp_str = self
+            .in3
+            .rpc(
+                serde_json::to_string(&json!({
+                    "method": "in3_signData",
+                    "params": [format!("0x{}", msg), format!("0x{}", self.pk)]
+                })).unwrap().as_str()
+            ).await?;
+        let resp: Value = serde_json::from_str(resp_str.as_str())?;
+        let res: Bytes = serde_json::from_str(resp["result"]["signature"].to_string().as_str())?;
+        Ok(res)
     }
 }
 
