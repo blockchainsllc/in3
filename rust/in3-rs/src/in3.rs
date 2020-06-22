@@ -59,7 +59,7 @@ impl Ctx {
         signer::signc(pk, data, len)
     }
 
-    unsafe fn sign(&mut self, msg: &str) -> *const c_char {
+    async unsafe fn sign(&mut self, msg: &str) -> *const c_char {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
@@ -73,7 +73,7 @@ impl Ctx {
             return c_sig;
         } else if let Some(signer) = &mut (*c).signer {
             let sig = signer.sign(msg);
-            return sig;
+            return sig.await.expect("Signing failed").0.as_ptr() as *const c_char;
         }
         std::ptr::null_mut()
     }
@@ -138,7 +138,7 @@ impl Ctx {
                     let request: serde_json::Value = serde_json::from_str(slice)
                         .expect("result not valid JSON");
                     let data_str = &request["params"][0].as_str().expect("params[0] not string")[2..];
-                    let res_str = self.sign(data_str);
+                    let res_str = self.sign(data_str).await;
                     in3_sys::in3_req_add_response(req, 0.try_into().unwrap(), false, res_str, 65);
                 }
                 in3_sys::ctx_type::CT_RPC => {
