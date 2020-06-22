@@ -309,7 +309,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
       if (blkno > f->last_block) {
         sb_t* req        = sb_new("[");
         char  params[62] = {0};
-        // build bulk request for blocks 
+        // build bulk request for blocks
         for (uint64_t i = f->last_block + 1; i <= blkno; i++) {
           sprintf(params, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
           sb_add_chars(req, params);
