@@ -13,6 +13,7 @@ use crate::error::{Error, In3Result};
 use crate::signer;
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
+use crate::types::Bytes;
 
 /// Chain identifiers
 pub mod chain {
@@ -59,16 +60,15 @@ impl Ctx {
         signer::signc(pk, data, len)
     }
 
-    async unsafe fn sign(&mut self, msg: &str) -> *const c_char {
+    async unsafe fn sign(&mut self, msg: Bytes) -> *const c_char {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
         let signer = &mut (*c).signer;
         let no_signer = signer.is_none();
         if no_signer {
-            let data_hex = msg.from_hex().expect("message is not valid hex string");
-            let c_data = data_hex.as_ptr() as *const c_char;
-            let data_sig: *mut u8 = self.signc(c_data, data_hex.len());
+            let c_data = msg.0.as_ptr() as *const c_char;
+            let data_sig: *mut u8 = self.signc(c_data, msg.0.len());
             let c_sig = data_sig as *const c_char;
             return c_sig;
         } else if let Some(signer) = &mut (*c).signer {
@@ -137,8 +137,9 @@ impl Ctx {
                         .expect("result is not valid UTF-8");
                     let request: serde_json::Value = serde_json::from_str(slice)
                         .expect("result not valid JSON");
-                    let data_str = &request["params"][0].as_str().expect("params[0] not string")[2..];
-                    let res_str = self.sign(data_str).await;
+                    let data_str = &request["params"][0].as_str().expect("params[0] not string");
+                    let data_hex = data_str[2..].from_hex().expect("message is not valid hex string");
+                    let res_str = self.sign(data_hex.into()).await;
                     in3_sys::in3_req_add_response(req, 0.try_into().unwrap(), false, res_str, 65);
                 }
                 in3_sys::ctx_type::CT_RPC => {
