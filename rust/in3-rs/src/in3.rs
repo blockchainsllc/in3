@@ -305,12 +305,11 @@ impl ClientTrait for Client {
     /// # Example
     /// ```
     /// # use in3::prelude::*;
-    /// use in3::signer::SignerRust;
+    /// use in3::signer::In3Signer;
     ///
     /// # let mut client = Client::new(chain::MAINNET);
-    /// client.set_signer(Box::new(SignerRust {
-    ///     pk: "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f",
-    /// }));
+    /// client.set_signer(Box::new(In3Signer::new(
+    ///         "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f")));
     /// ```
     fn set_signer(&mut self, signer: Box<dyn Signer>) {
         self.signer = Some(signer);
