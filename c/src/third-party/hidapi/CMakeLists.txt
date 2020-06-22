@@ -37,25 +37,42 @@ if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 endif()
 
+add_compile_options(-Wno-unused-parameter -Wno-sign-compare)
 
 if(APPLE)
-   add_library(hidapi_o OBJECT  ./mac/hid.c) 
-   target_compile_definitions(hidapi_o PRIVATE)
-   add_library(hidapi STATIC $<TARGET_OBJECTS:hidapi_o>)
-   target_link_libraries(hidapi  "-framework CoreFoundation"  "-framework IOKit"  "-framework AppKit"  )
+   add_static_library(
+      NAME     hidapi 
+      
+      SOURCES 
+         mac/hid.c
+
+      DEPENDS
+         "-framework CoreFoundation"
+         "-framework IOKit"
+         "-framework AppKit"
+   )
 
 elseif(WIN32 OR MSVC OR MSYS OR MINGW)
-   add_library(hidapi_o OBJECT ./windows/hid.c)
-   target_compile_definitions(hidapi_o PRIVATE)
-   add_library(hidapi STATIC $<TARGET_OBJECTS:hidapi_o>)
-   target_link_libraries(hidapi setupapi)
+   add_static_library(
+      NAME     hidapi 
+      
+      SOURCES 
+         windows/hid.c
 
+      DEPENDS
+         setupapi
+   )
+   
 elseif(LINUX)
-   add_library(hidapi_o OBJECT  ./linux/hid.c)
-   target_compile_definitions(hidapi_o PRIVATE)
-   add_library(hidapi STATIC $<TARGET_OBJECTS:hidapi_o>)
-   target_link_libraries(hidapi -ludev)
+   add_static_library(
+      NAME     hidapi 
+      
+      SOURCES 
+         linux/hid.c
 
+      DEPENDS
+         -ludev
+   )
 else()
    
 endif()

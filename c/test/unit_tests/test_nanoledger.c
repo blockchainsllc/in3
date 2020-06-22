@@ -110,8 +110,7 @@ static void test_tx() {
 
 static void test_signer() {
 #if defined(LEDGER_NANO)
-  in3_t*         c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3_sign_ctx_t sc;
+  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
   eth_ledger_set_signer_txn(c, bip_path);
 
   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
