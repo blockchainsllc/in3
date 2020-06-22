@@ -537,11 +537,11 @@ namespace In3.Eth1
         /// <param name="type"> One of <see cref="ENSParameter" />.</param>
         /// <returns>The resolved entity for the domain.</returns>
         /// <remarks>
-        /// The actual semantics of the returning value changes according to <paramref name="type" /> .
+        /// The actual semantics of the returning value changes according to <paramref name="type" />.
         /// </remarks>
-        public string ENS(string name, ENSParameter? type = null)
+        public string Ens(string name, ENSParameter? type = null)
         {
-            string jsonResponse = _in3.SendRpc(EthENS, new object[] { name, type });
+            string jsonResponse = _in3.SendRpc(EthENS, new object[] { name, type?.Value });
             return RpcHandler.From<string>(jsonResponse);
         }
 
