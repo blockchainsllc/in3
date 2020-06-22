@@ -39,27 +39,41 @@ IF (IN3_STAGING)
     ADD_DEFINITIONS(-DIN3_STAGING)
 ENDIF (IN3_STAGING)
 
-add_library(core_o OBJECT
-        client/context.c
-        client/client.c
-        client/cache.c
-        client/nodelist.c
-        client/verifier.c
-        client/execute.c
-        client/client_init.c
-        util/debug.c
-        util/bytes.c
-        util/utils.c
-        util/scache.c
-        util/data.c
-        util/log.c
-        util/mem.c
-        util/stringbuilder.c
-        util/bitset.c
-        )
-add_library(core STATIC $<TARGET_OBJECTS:core_o>)
-target_link_libraries(core crypto)
 
-add_library(init_o OBJECT ../verifier/in3_init.c)
-add_library(init STATIC $<TARGET_OBJECTS:init_o>)
-target_link_libraries(init ${IN3_VERIFIER} ${IN3_API} ${IN3_TRANSPORT})
+add_static_library(
+  NAME     core 
+  
+  SOURCES 
+    client/context.c
+    client/client.c
+    client/cache.c
+    client/nodelist.c
+    client/verifier.c
+    client/execute.c
+    client/client_init.c
+    util/debug.c
+    util/bytes.c
+    util/utils.c
+    util/scache.c
+    util/data.c
+    util/log.c
+    util/mem.c
+    util/stringbuilder.c
+    util/bitset.c
+
+  DEPENDS 
+    crypto
+)
+
+
+add_static_library(
+  NAME     init 
+  
+  SOURCES 
+    ../verifier/in3_init.c
+
+  DEPENDS 
+    ${IN3_VERIFIER} 
+    ${IN3_API} 
+    ${IN3_TRANSPORT}
+)

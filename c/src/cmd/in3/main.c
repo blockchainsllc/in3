@@ -37,6 +37,7 @@
  * */
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
+#include "../../api/ipfs/ipfs_api.h"
 #include "../../core/util/bitset.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
@@ -67,9 +68,8 @@
 #endif
 
 #include "../../signer/pk-signer/signer.h"
-#include "../../verifier/eth1/evm/evm.h"
-#include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/chainspec.h"
+#include "../../verifier/in3_init.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
@@ -77,17 +77,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef BTC
-#include "../../verifier/btc/btc.h"
-#endif
-#ifdef IPFS
-#include "../../api/ipfs/ipfs_api.h"
-#include "../../verifier/ipfs/ipfs.h"
-#endif
-#ifdef PAY_ETH
-#include "../../pay/eth/pay_eth.h"
-#endif
 
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
@@ -636,18 +625,6 @@ int main(int argc, char* argv[]) {
 #endif
 
   // we want to verify all
-  in3_register_eth_full();
-#ifdef IPFS
-  in3_register_ipfs();
-#endif
-#ifdef BTC
-  in3_register_btc();
-#endif
-  in3_register_eth_api();
-
-#ifdef PAY_ETH
-  in3_register_pay_eth();
-#endif
   in3_log_set_level(LOG_INFO);
 
   // create the client
@@ -964,6 +941,8 @@ int main(int argc, char* argv[]) {
         printf(COLORT_RED);
       else if (warning)
         printf(COLORT_YELLOW);
+      else if (!weight->response_count)
+        printf(COLORT_DARKGRAY);
       else
         printf(COLORT_GREEN);
       printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
@@ -991,9 +970,14 @@ int main(int argc, char* argv[]) {
     }
 
     if (!c->signer) die("No private key/path given");
-    uint8_t   sig[65];
     in3_ctx_t ctx;
     ctx.client = c;
+    in3_sign_ctx_t sc;
+    sc.ctx     = &ctx;
+    sc.wallet  = c->signer->wallet;
+    sc.account = bytes(NULL, 0);
+    sc.message = *data;
+    sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
 #if defined(LEDGER_NANO)
     if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
       char     prefix[] = "msg";
@@ -1002,17 +986,18 @@ int main(int argc, char* argv[]) {
       memcpy(tmp_data->data, prefix, strlen(prefix));
       memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
 
-      c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *tmp_data, bytes(NULL, 0), sig);
+      sc.message = *tmp_data;
+      c->signer->sign(&sc);
       b_free(tmp_data);
     } else {
-      c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+      c->signer->sign(&sc);
     }
 #else
-    c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
+    c->signer->sign(&sc);
 #endif
 
-    sig[64] += 27;
-    print_hex(sig, 65);
+    sc.signature[64] += 27;
+    print_hex(sc.signature, 65);
     return 0;
   } else if (strcmp(method, "chainspec") == 0) {
     char* json;

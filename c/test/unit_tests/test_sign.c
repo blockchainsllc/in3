@@ -174,12 +174,17 @@ static void test_signer() {
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
   eth_set_pk_signer(c, pk);
-  uint8_t    sig[65]  = {0};
-  in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  char*      data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-  bytes_t*   data     = hex_to_new_bytes(data_str, strlen(data_str));
-  TEST_ASSERT_EQUAL(65, eth_sign_pk_ctx(ctx, SIGN_EC_RAW, *data, bytes(NULL, 0), sig));
-  TEST_ASSERT_FALSE(memiszero(sig, 65));
+  in3_ctx_t*     ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
+  char*          data_str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  bytes_t*       data     = hex_to_new_bytes(data_str, strlen(data_str));
+  in3_sign_ctx_t sc;
+  sc.ctx     = ctx;
+  sc.wallet  = c->signer->wallet;
+  sc.message = *data;
+  sc.type    = SIGN_EC_RAW;
+  sc.account = bytes(NULL, 0),
+  TEST_ASSERT_EQUAL(IN3_OK, eth_sign_pk_ctx(&sc));
+  TEST_ASSERT_FALSE(memiszero(sc.signature, 65));
   b_free(data);
   ctx_free(ctx);
   in3_free(c);
@@ -218,6 +223,7 @@ static void test_signer_prepare_tx() {
 
   ctx    = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   jtx    = parse_json("{\"success\":true}");
+
   raw_tx = sign_tx(jtx->result, ctx);
   TEST_ASSERT_TRUE(ctx->type == CT_RPC && ctx->verification_state == IN3_WAITING && ctx->required);
   TEST_ASSERT_EQUAL(IN3_OK, in3_send_ctx(ctx->required));

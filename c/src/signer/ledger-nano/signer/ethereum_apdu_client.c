@@ -9,10 +9,9 @@
 static uint8_t public_key[65];
 static int     is_public_key_assigned = false;
 
-in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
   in3_log_debug("eth_ledger_sign_txn:enter\n");
-  // UNUSED_VAR(account); // at least for now
-  uint8_t* bip_path_bytes = ((in3_ctx_t*) ctx)->client->signer->wallet;
+  uint8_t* bip_path_bytes = sc->wallet;
   uint8_t  bip_data[5];
   bool     is_msg = false;
 
@@ -40,24 +39,20 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   int recid = 0;
 
   if (NULL != handle) {
-    in3_log_debug("device connected\n");
-    switch (type) {
+
+    switch (sc->type) {
       case SIGN_EC_RAW:
-        in3_log_debug("received SIGN_EC_RAW\n");
-        memcpy(hash, message.data, message.len);
+        memcpy(hash, sc->message.data, sc->message.len);
         is_hashed = true;
       case SIGN_EC_HASH:
-        if (memcmp(prefix, message.data, strlen(prefix)) == 0) {
-
+        if (memcmp(prefix, sc->message.data, strlen(prefix)) == 0) {
           is_msg = true;
         }
 
-        if (!is_hashed && is_msg == true) {
-          in3_log_debug("signing msg\n");
-          hasher_Raw(HASHER_SHA3K, message.data + strlen(prefix), message.len - strlen(prefix), hash);
-        } else {
-          in3_log_debug("signing txn\n");
-          hasher_Raw(HASHER_SHA3K, message.data, message.len, hash);
+        if (!is_hashed && is_msg == true)
+          hasher_Raw(HASHER_SHA3K, sc->message.data + strlen(prefix), sc->message.len - strlen(prefix), hash);
+        else {
+          hasher_Raw(HASHER_SHA3K, sc->message.data, sc->message.len, hash);
         }
 
         apdu[index_counter++] = 0xe0;
@@ -72,9 +67,9 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
 
         if (is_msg == true) { // final apdu lenghts will be adjusted differenly for message and transaction`
 
-          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 5 + (message.len - strlen(prefix));
+          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 5 + (sc->message.len - strlen(prefix));
         } else {
-          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1 + message.len;
+          apdu[index_counter++] = bip32_len * sizeof(uint32_t) + 1 + sc->message.len;
         }
 
         apdu[index_counter++] = bip32_len;
@@ -85,12 +80,12 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
           apdu[index_counter++] = 0x00;
           apdu[index_counter++] = 0x00;
           apdu[index_counter++] = 0x00;
-          apdu[index_counter++] = message.len - strlen(prefix);
-          memcpy(apdu + index_counter, message.data + strlen(prefix), message.len - strlen(prefix));
-          index_counter += message.len - strlen(prefix);
+          apdu[index_counter++] = sc->message.len - strlen(prefix);
+          memcpy(apdu + index_counter, sc->message.data + strlen(prefix), sc->message.len - strlen(prefix));
+          index_counter += sc->message.len - strlen(prefix);
         } else {
-          memcpy(apdu + index_counter, message.data, message.len);
-          index_counter += message.len;
+          memcpy(apdu + index_counter, sc->message.data, sc->message.len);
+          index_counter += sc->message.len;
         }
 
 #ifdef DEBUG
@@ -111,17 +106,18 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
           if (response.data[response.len - 2] == 0x90 && response.data[response.len - 1] == 0x00) {
             ret = IN3_OK;
 
-            memcpy(dst, response.data + 1, 64);
+            memcpy(sc->signature, response.data + 1, 64);
             eth_ledger_get_public_addr(bip_data, pkey);
-            recid   = get_recid_from_pub_key(&secp256k1, pkey, dst, hash);
-            dst[64] = recid;
-
+            recid             = get_recid_from_pub_key(&secp256k1, pkey, sc->signature, hash);
+            sc->signature[64] = recid;
+            in3_log_debug("recid %d\n", recid);
 #ifdef DEBUG
             in3_log_debug("hash value\n");
             ba_print(hash, 32);
             in3_log_debug("recid %d\n", recid);
             in3_log_debug("printing signature returned by device with recid value\n");
-            ba_print(dst, 65);
+
+            ba_print(sc->signature, 65);
 #endif
 
           } else {
@@ -152,7 +148,7 @@ in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t messag
   }
 
   in3_log_debug("eth_ledger_sign_txn:exit\n");
-  return 65;
+  return IN3_OK;
 }
 
 in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key) {
@@ -245,6 +241,16 @@ in3_ret_t eth_ledger_set_signer_txn(in3_t* in3, uint8_t* bip_path) {
   in3->signer->sign       = eth_ledger_sign_txn;
   in3->signer->prepare_tx = NULL;
   in3->signer->wallet     = bip_path;
+
+  // generate the address from the key
+  uint8_t   public_key[65], sdata[32];
+  bytes_t   pubkey_bytes = {.data = public_key + 1, .len = 64};
+  bytes32_t bip32;
+  memcpy(bip32, bip_path, 5);
+  eth_ledger_get_public_addr(bip32, public_key);
+  sha3_to(&pubkey_bytes, sdata);
+  memcpy(in3->signer->default_address, sdata + 12, 20);
+
   return IN3_OK;
 }
 

@@ -31,7 +31,7 @@
     - export RUST_BACKTRACE=1
     - export OPENSSL_DIR=/usr/lib/ssl
     - mkdir -p rust/in3-sys/in3-core/c
-    - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
+    - cp -r c/CMakeLists.txt c/macro.cmake c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
     - export UPDATE_IN3_BINDINGS=1
@@ -67,7 +67,7 @@ rust:
   script:
     - export RUST_BACKTRACE=1
     - mkdir -p rust/in3-sys/in3-core/c
-    - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
+    - cp -r c/CMakeLists.txt c/macro.cmake c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
     - export UPDATE_IN3_BINDINGS=1
@@ -87,7 +87,7 @@ deploy_rust:
     - cargo login $CARGO_TOKEN
   script:
     - mkdir -p rust/in3-sys/in3-core/c
-    - cp -r c/CMakeLists.txt c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
+    - cp -r c/CMakeLists.txt c/macro.cmake c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
     - cd in3-sys/ && cargo release "${CI_COMMIT_TAG:1}" --skip-push --skip-tag --no-dev-version --no-confirm --token $CARGO_TOKEN || true

@@ -47,7 +47,7 @@ namespace In3.Btc
         public byte[] GetTransactionBytes(string txid)
         {
             string jsonResponse = _in3.SendRpc(BtcGetRawTransaction, new object[] { txid, false });
-            return TypesMatcher.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
+            return DataTypeConverter.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace In3.Btc
         public byte[] GetBlockHeaderBytes(string blockHash)
         {
             string jsonResponse = _in3.SendRpc(BtcGetBlockHeader, new object[] { blockHash, false });
-            return TypesMatcher.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
+            return DataTypeConverter.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace In3.Btc
         public byte[] GetBlockBytes(string blockHash)
         {
             string jsonResponse = _in3.SendRpc(BtcGetBlock, new object[] { blockHash, false });
-            return TypesMatcher.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
+            return DataTypeConverter.HexStringToByteArray(RpcHandler.From<string>(jsonResponse));
         }
     }
 }

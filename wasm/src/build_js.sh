@@ -15,6 +15,7 @@ cat "$1/in3_ipfs_api.js" >> $TARGET_JS
 cat "$1/in3_btc_api.js" >> $TARGET_JS
 # we return the default export
 echo " return IN3; })();" >> $TARGET_JS
+#echo "//# sourceMappingURL=index.js.map" >> $TARGET_JS
 
 # create package
 mkdir -p ../module
@@ -29,3 +30,8 @@ if [ $2 == "true" ]
    cat "$1/package.json" | sed  's/wasm/asmjs/g' > ../module/package.json
    cat "$1/../README.md" | sed  's/wasm/asmjs/g' > ../module/README.md
 fi
+if [ -d "$1/../test/in3" ] 
+  then 
+     rm -rf "$1/../test/in3"
+fi
+cp -r ../module "$1/../test/in3"

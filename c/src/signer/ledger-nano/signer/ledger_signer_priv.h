@@ -40,7 +40,7 @@
 #include "types.h"
 
 in3_ret_t is_ledger_device_connected();
-in3_ret_t eth_ledger_sign(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+in3_ret_t eth_ledger_sign(in3_sign_ctx_t* sc);
 void      set_command_params();
 void      extract_signture(bytes_t i_raw_sig, uint8_t* o_sig);
 int       get_recid_from_pub_key(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest);

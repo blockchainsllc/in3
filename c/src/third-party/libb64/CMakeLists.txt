@@ -32,8 +32,11 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-add_library(b64_o OBJECT
-        cencode.c
-        cdecode.c
-        )
-add_library(b64 STATIC $<TARGET_OBJECTS:b64_o>)
+add_static_library(
+  NAME     b64 
+  
+  SOURCES 
+    cencode.c
+    cdecode.c
+)
+

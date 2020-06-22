@@ -50,11 +50,15 @@ set(CRYPTO_SRC
   aes/aes_modes.c
   aes/aescrypt.c
   aes/aeskey.c
-  aes/aestab.c)
-
+  aes/aestab.c
+)
 if (NOT ESP_IDF)
     set(CRYPTO_SRC ${CRYPTO_SRC} hmac.c)
 endif()
 
-add_library(crypto_o OBJECT ${CRYPTO_SRC})
-add_library(crypto STATIC $<TARGET_OBJECTS:crypto_o>)
+add_static_library(
+  NAME     crypto 
+  
+  SOURCES 
+    ${CRYPTO_SRC}
+)
