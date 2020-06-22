@@ -49,5 +49,5 @@ if (IPFS)
 endif()
 
 if (LEDGER_NANO)
-   add_subdirectory( hidapi )
+  add_subdirectory( hidapi )
 endif()

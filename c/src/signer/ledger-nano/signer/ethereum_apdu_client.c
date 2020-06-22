@@ -143,7 +143,7 @@ in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
   }
 
   in3_log_debug("eth_ledger_sign_txn:exit\n");
-  return 65;
+  return IN3_OK;
 }
 
 in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key) {

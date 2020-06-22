@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using System.Text.Json;
 using In3.Crypto;
 using In3.Utils;
 
@@ -59,7 +63,7 @@ namespace In3.Eth1
         public BigInteger BlockNumber()
         {
             string jsonResponse = _in3.SendRpc(EthBlockNumber, new object[] { });
-            return TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -146,17 +150,35 @@ namespace In3.Eth1
         {
             string jsonResponse = _in3.SendRpc(In3AbiDecode, new object[] {
                 signature, encodedData});
-            return RpcHandler.From<string[]>(jsonResponse);
+            // This is ugly, unsemantic and error prone and SHOULD be changed.
+            JsonElement result = (JsonElement) RpcHandler.From<object>(jsonResponse);
+
+            if (result.ValueKind == JsonValueKind.String)
+            {
+                string singleResult = result.GetString();
+                return new [] { singleResult };
+            }
+
+            IEnumerator<JsonElement> arr = result.EnumerateArray();
+            string[] arrayResult = new string[result.GetArrayLength()];
+            int i = 0;
+            while (arr.MoveNext())
+            {
+                arrayResult[i] = arr.Current.GetString();
+                i++;
+            }
+
+            return arrayResult;
         }
 
         /// <summary>
         /// The current gas price in Wei (1 ETH equals 1000000000000000000 Wei ).
         /// </summary>
         /// <returns>The gas price.</returns>
-        public BigInteger GetGasPrice()
+        public long GetGasPrice()
         {
             string jsonResponse = _in3.SendRpc(EthGasPrice, new object[] { });
-            return TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return (long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -166,7 +188,7 @@ namespace In3.Eth1
         public Chain GetChainId()
         {
             string jsonResponse = _in3.SendRpc(EthChainId, new object[] { });
-            return (Chain)(long)TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return (Chain)(long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -178,7 +200,7 @@ namespace In3.Eth1
         public BigInteger GetBalance(string address, BigInteger blockNumber)
         {
             string jsonResponse = _in3.SendRpc(EthGetBalance, new object[] { address, BlockParameter.AsString(blockNumber) });
-            return TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -204,7 +226,7 @@ namespace In3.Eth1
         public string GetStorageAt(string address, BigInteger position, BigInteger blockNumber)
         {
             string jsonResponse = _in3.SendRpc(EthGetStorageAt, new object[] {
-                address, TypesMatcher.BigIntToPrefixedHex(position), BlockParameter.AsString(blockNumber)
+                address, DataTypeConverter.BigIntToPrefixedHex(position), BlockParameter.AsString(blockNumber)
             });
             return RpcHandler.From<string>(jsonResponse);
         }
@@ -350,7 +372,7 @@ namespace In3.Eth1
         public long NewBlockFilter()
         {
             string jsonResponse = _in3.SendRpc(EthNewBlockFilter, new object[] { });
-            return (long)TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return (long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -360,7 +382,7 @@ namespace In3.Eth1
         /// <returns>The result of the operation, <see langword="true" /> on success or <see langword="false" /> on failure.</returns>
         public bool UninstallFilter(long filterId)
         {
-            string jsonResponse = _in3.SendRpc(EthUninstallFilter, new object[] { TypesMatcher.BigIntToPrefixedHex(filterId) });
+            string jsonResponse = _in3.SendRpc(EthUninstallFilter, new object[] { DataTypeConverter.BigIntToPrefixedHex(filterId) });
             return RpcHandler.From<bool>(jsonResponse);
         }
 
@@ -376,11 +398,11 @@ namespace In3.Eth1
             string jsonResponse = _in3.SendRpc(EthCall, new object[] { MapTransactionToRpc(request), BlockParameter.AsString(blockNumber) });
             if (request.IsFunctionInvocation())
             {
-                return RpcHandler.From<object>(jsonResponse);
+                return AbiDecode(request.Function, RpcHandler.From<string>(jsonResponse));
             }
             else
             {
-                return AbiDecode(request.Function, RpcHandler.From<string>(jsonResponse));
+                return RpcHandler.From<object>(jsonResponse);
             }
         }
 
@@ -393,7 +415,7 @@ namespace In3.Eth1
         public long EstimateGas(TransactionRequest request, BigInteger blockNumber)
         {
             string jsonResponse = _in3.SendRpc(EthEstimateGas, new object[] { MapTransactionToRpc(request), BlockParameter.AsString(blockNumber) });
-            return (long)TypesMatcher.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
+            return (long)DataTypeConverter.HexStringToBigint(RpcHandler.From<string>(jsonResponse));
         }
 
         /// <summary>
@@ -423,7 +445,7 @@ namespace In3.Eth1
         /// </remarks>
         public Log[] GetFilterChangesFromLogs(long filterId)
         {
-            string jsonResponse = _in3.SendRpc(EthGetFilterChanges, new object[] { TypesMatcher.BigIntToPrefixedHex((BigInteger)filterId) });
+            string jsonResponse = _in3.SendRpc(EthGetFilterChanges, new object[] { DataTypeConverter.BigIntToPrefixedHex((BigInteger)filterId) });
             return RpcHandler.From<Log[]>(jsonResponse);
         }
 
@@ -437,7 +459,7 @@ namespace In3.Eth1
         /// </remarks>
         public Log[] GetFilterLogs(long filterId)
         {
-            string jsonResponse = _in3.SendRpc(EthGetFilterLogs, new object[] { TypesMatcher.BigIntToPrefixedHex((BigInteger)filterId) });
+            string jsonResponse = _in3.SendRpc(EthGetFilterLogs, new object[] { DataTypeConverter.BigIntToPrefixedHex((BigInteger)filterId) });
             return RpcHandler.From<Log[]>(jsonResponse);
         }
 
@@ -470,7 +492,7 @@ namespace In3.Eth1
         /// </summary>
         /// <param name="tx">All information needed to perform a transaction.</param>
         /// <returns>Transaction hash, used to get the receipt and check if the transaction was mined.</returns>
-        /// /// <example>
+        /// <example>
         ///   <code>
         ///    SimpleWallet wallet = (SimpleWallet) client.Signer;
         ///    TransactionRequest tx = new TransactionRequest();
@@ -504,7 +526,7 @@ namespace In3.Eth1
         public Block GetUncleByBlockNumberAndIndex(BigInteger blockNumber, int position)
         {
             string jsonResponse = _in3.SendRpc(EthGetUncleByBlockNumberAndIndex,
-                new object[] { BlockParameter.AsString(blockNumber), TypesMatcher.BigIntToPrefixedHex(position) });
+                new object[] { BlockParameter.AsString(blockNumber), DataTypeConverter.BigIntToPrefixedHex(position) });
             return RpcHandler.From<TransactionBlock>(jsonResponse);
         }
 
@@ -540,22 +562,22 @@ namespace In3.Eth1
             result.From = tx.From;
             if (tx.Value.HasValue)
             {
-                result.Value = TypesMatcher.BigIntToPrefixedHex(tx.Value.Value);
+                result.Value = DataTypeConverter.BigIntToPrefixedHex(tx.Value.Value);
             }
 
             if (tx.Nonce.HasValue)
             {
-                result.Nonce = TypesMatcher.BigIntToPrefixedHex(tx.Nonce.Value);
+                result.Nonce = DataTypeConverter.BigIntToPrefixedHex(tx.Nonce.Value);
             }
 
             if (tx.Gas.HasValue)
             {
-                result.Gas = TypesMatcher.BigIntToPrefixedHex(tx.Gas.Value);
+                result.Gas = DataTypeConverter.BigIntToPrefixedHex(tx.Gas.Value);
             }
 
             if (tx.GasPrice.HasValue)
             {
-                result.GasPrice = TypesMatcher.BigIntToPrefixedHex(tx.GasPrice.Value);
+                result.GasPrice = DataTypeConverter.BigIntToPrefixedHex(tx.GasPrice.Value);
             }
 
             if (result.Data == null || result.Data.Length < 2)
@@ -564,7 +586,7 @@ namespace In3.Eth1
             }
             else
             {
-                result.Data = TypesMatcher.AddHexPrefixer(result.Data);
+                result.Data = DataTypeConverter.AddHexPrefixer(result.Data);
             }
 
             return result;

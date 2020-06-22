@@ -171,7 +171,7 @@ static void verify_action_message(usn_device_conf_t* conf, d_token_t* msg, usn_m
   rejectp_if(!result->device, "the device with this url does not exist");
 
   // prepare message hash
-  //TODO  the timestamp would run out space around 2106 !
+  // the timestamp would run out space around 2106, so please make sure we update by then. !
   sprintf(tmp, "%s%u%s{}", result->device->url, d_get_intk(msg, K_TIMESTAMP), d_get_stringk(msg, K_ACTION));
   sprintf(mhash, "\031Ethereum Signed Message:\n%zu%s", strlen(tmp), tmp);
   bytes_t msg_data = {.data = (uint8_t*) mhash, .len = strlen(mhash)};

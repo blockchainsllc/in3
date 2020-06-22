@@ -6,7 +6,7 @@ pydocmd build
 printf "# API Reference Python\n\n" > documentation.md
 
 cd _build/pydocmd || exit
-cat index.md examples.md  >> ../../documentation.md
+cat index.md examples.md | grep -v coverage.svg  >> ../../documentation.md
 
 # shellcheck disable=SC2129
 sed 's/# /## /' in3.md |

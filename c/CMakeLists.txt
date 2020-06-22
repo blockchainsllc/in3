@@ -32,7 +32,9 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
+include("macro.cmake")
 include("compiler.cmake")
+
 #  build modules
 add_subdirectory(src/third-party)
 
@@ -60,104 +62,28 @@ ENDIF (TRANSPORTS)
 
 add_subdirectory(src/core)
 add_subdirectory(src/verifier)
-add_subdirectory(src/signer/pk-signer)
-
-if( LEDGER_NANO )
-  add_subdirectory(src/signer/ledger-nano/signer)
-endif()
-
+add_subdirectory(src/signer)
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
-IF (ETH_FULL)
-    add_subdirectory(src/cmd)
-endif()
+add_subdirectory(src/cmd)
 add_subdirectory(docs)
-link_directories(${CMAKE_BINARY_DIR}/lib/)
 
+link_directories(${CMAKE_BINARY_DIR}/lib/)
 
 # create the library
 if (IN3_LIB)
-    set(IN3_LIBS
-        $<TARGET_OBJECTS:core_o>
-        $<TARGET_OBJECTS:init_o>
-        $<TARGET_OBJECTS:pk_signer_o>
-        $<TARGET_OBJECTS:crypto_o>
-    )
-
-    if (ETH_FULL)
-      set(IN3_LIBS ${IN3_LIBS} 
-         $<TARGET_OBJECTS:tommath_o> 
-         $<TARGET_OBJECTS:evm_o> 
-         $<TARGET_OBJECTS:eth_full_o>
-      )
-    endif()
-
-    if (ETH_BASIC) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_basic_o>
-        )
-    endif()
-
-    if (ETH_NANO) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_nano_o>
-        )
-    endif()
-
-    if (IPFS) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:b64_o>
-            $<TARGET_OBJECTS:ipfs_o>
-        )
-        if (IN3API) 
-            set(IN3_LIBS ${IN3_LIBS} 
-                $<TARGET_OBJECTS:ipfs_api_o>
-            )
-        endif()
-    endif()
-
-    if (BTC) 
-        set(IN3_LIBS ${IN3_LIBS} 
-          $<TARGET_OBJECTS:btc_o>
-        )
-        if (IN3API) 
-            set(IN3_LIBS ${IN3_LIBS} 
-                $<TARGET_OBJECTS:btc_api_o>
-            )
-        endif()
-    endif()
-
-    if (IN3API) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_api_o>
-            $<TARGET_OBJECTS:usn_api_o>
-            $<TARGET_OBJECTS:api_utils_o>
-        )
-    endif()
-
-    if (PAY_ETH)
-       set(IN3_LIBS ${IN3_LIBS}  $<TARGET_OBJECTS:pay_eth_o>)
-    endif()
-
-    if (USE_SCRYPT)
-       set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
-    endif()
-    
-
+   get_property(IN3_LIBS GLOBAL PROPERTY IN3_OBJECTS)
 
     # create the libraries
     add_library(in3_bundle STATIC ${IN3_LIBS} )
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-
-    if(LEDGER_NANO)
+    if( LEDGER_NANO)
         target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
     else()
         target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
     endif()
-
- 
 
     # install
     INSTALL(TARGETS in3_bundle
@@ -175,3 +101,4 @@ if (IN3_LIB)
         FILES_MATCHING PATTERN "*.h*")
 
 endif()
+

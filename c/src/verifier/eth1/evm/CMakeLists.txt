@@ -31,23 +31,28 @@
 # You should have received a copy of the GNU Affero General Public License along
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-add_library(evm_o OBJECT
-        evm.c
-        opcodes.c
-        big.c
-        call.c
-        code.c
-        env.c
-        evm_mem.c
-        accounts.c
-        gas.c
-        pre_ec.c
-        pre_blake2.c
-        precompiled.c)
 
-# add gas-calculation
-#ADD_DEFINITIONS(-DEVM_GAS)
 
-# add dependency
-add_library(evm STATIC $<TARGET_OBJECTS:evm_o>)
-target_link_libraries(evm eth_basic tommath)
+add_static_library(
+  NAME     evm 
+  
+  SOURCES 
+    evm.c
+    opcodes.c
+    big.c
+    call.c
+    code.c
+    env.c
+    evm_mem.c
+    accounts.c
+    gas.c
+    pre_ec.c
+    pre_blake2.c
+    precompiled.c
+
+  DEPENDS 
+    eth_basic
+    tommath
+)
+
+

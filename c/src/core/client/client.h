@@ -59,6 +59,7 @@
 #define ETH_CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
 #define ETH_CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
 #define ETH_CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
+#define ETH_CHAIN_ID_EWC 0xf6       /**< chain_id for ewc */
 #define ETH_CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
 #define ETH_CHAIN_ID_BTC 0x99       /**< chain_id for btc */
 #define ETH_CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
@@ -693,6 +694,27 @@ in3_signer_t* in3_create_signer(
     in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
     in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
     void*          wallet      /**<custom object whill will be passed to functions */
+);
+
+/**
+ * helper function to retrieve and message from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_message(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve and account from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_account(
+    in3_sign_ctx_t* ctx /**< the signer context */
+);
+
+/**
+ * helper function to retrieve the signature from a in3_sign_ctx_t
+ */
+uint8_t* in3_sign_ctx_get_signature(
+    in3_sign_ctx_t* ctx /**< the signer context */
 );
 
 /**

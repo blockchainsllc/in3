@@ -114,19 +114,19 @@ static void test_signer() {
   in3_sign_ctx_t sc;
   eth_ledger_set_signer_txn(c, bip_path);
 
-  uint8_t    sig[65]  = {0};
   in3_ctx_t* ctx      = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
   char*      data_str = "msgABCDEF"; // prefixing messages with msg to differentiate between transaction and message signing
   bytes_t*   data     = b_new((uint8_t*) data_str, strlen(data_str));
 
-  sc.ctx     = &ctx;
-  sc.message = *data;
-  sc.type    = SIGN_EC_HASH;
-  sc.wallet  = c->signer->wallet;
-  sc.account = bytes(NULL, 0);
+  in3_sign_ctx_t sc = {0};
+  sc.type           = SIGN_EC_HASH;
+  sc.message        = *data;
+  sc.account        = bytes(NULL, 0);
+  sc.wallet         = c->signer->wallet;
+  sc.ctx            = ctx;
 
-  TEST_ASSERT_EQUAL(65, eth_ledger_sign_txn(&sc));
-  TEST_ASSERT_FALSE(memiszero(sig, 65));
+  TEST_ASSERT_EQUAL(IN3_OK, eth_ledger_sign_txn(&sc));
+  TEST_ASSERT_FALSE(memiszero(sc.signature, 65));
   b_free(data);
   in3_free(c);
 #endif

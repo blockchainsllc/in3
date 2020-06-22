@@ -232,7 +232,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
     if ((t = d_get(request_token, K_PARAMS)) == NULL)
       sb_add_key_value(sb, "params", "[]", 2, false);
     else {
-      //TODO this only works with JSON!!!!
+      if (d_is_binary_ctx(c->request_context)) return ctx_set_error(c, "only text json input is allowed", IN3_EINVAL);
       const str_range_t ps = d_to_json(t);
       if (msg_hash) add_token_to_hash(msg_hash, t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
@@ -369,6 +369,13 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
 
 static inline bool is_blacklisted(const node_match_t* node_weight) { return node_weight && node_weight->weight == NULL; }
 
+static bool is_user_error(d_token_t* error) {
+  char* err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
+  // here we need to find a better way to detect user errors
+  // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
+  return err_msg && strncmp(err_msg, "Error:", 6) != 0;
+}
+
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
   node_match_t* node = ctx->nodes;
 
@@ -390,12 +397,15 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     // since nodes_count was detected before, this should not happen!
 
-    if (response[n].error.len || !response[n].result.len)
+    if (response[n].error.len || !response[n].result.len) {
       blacklist_node(node);
-    else {
+      ctx_set_error(ctx, response[n].error.len ? response[n].error.data : "no response from node", IN3_ERPC);
+    } else {
       // we need to clean up the previos responses if set
+      if (ctx->error) _free(ctx->error);
       if (ctx->responses) _free(ctx->responses);
       if (ctx->response_context) json_free(ctx->response_context);
+      ctx->error = NULL;
 
       if (node && node->weight) node->weight->blacklisted_until = 0;                            // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
       in3_ret_t res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len); // parse the result
@@ -443,13 +453,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             // if we don't have a result, the node reported an error
             // since we don't know if this error is our fault or the server fault,we don't blacklist the node, but retry
             ctx->verification_state = IN3_ERPC;
-            d_token_t* error        = d_get(ctx->responses[i], K_ERROR);
-            char*      err_msg      = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
-            // this is a workaround to check whether this is
-            if (err_msg && strncmp(err_msg, "Error:", 6) == 0)
-              blacklist_node(node);
+            if (is_user_error(d_get(ctx->responses[i], K_ERROR)))
+              node->weight = NULL; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
             else
-              node->weight = NULL;
+              blacklist_node(node);
             break;
           } else if (verifier) {
             res = ctx->verification_state = verifier->verify(&vc);
@@ -460,6 +467,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
               break;
             }
           } else
+            // no verifier - nothing to verify
             ctx->verification_state = IN3_OK;
         }
       }
@@ -747,8 +755,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // find the verifier
       in3_verifier_t* verifier = in3_get_verifier(chain->type);
-      if (verifier == NULL)
-        return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
+      if (verifier == NULL) return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
 
       // do we need to handle it internaly?
       if (!ctx->raw_response && !ctx->response_context && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
@@ -798,7 +805,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         in3_log_debug("Retrying send request...\n");
         // reset the error and try again
         if (ctx->error) _free(ctx->error);
-        ctx->error = NULL;
+        ctx->error              = NULL;
+        ctx->verification_state = IN3_WAITING;
         // now try again, which should end in waiting for the next request.
         return in3_ctx_execute(ctx);
       } else {

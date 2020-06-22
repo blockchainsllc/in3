@@ -37,6 +37,7 @@
  * */
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
+#include "../../api/ipfs/ipfs_api.h"
 #include "../../core/util/bitset.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
@@ -67,9 +68,8 @@
 #endif
 
 #include "../../signer/pk-signer/signer.h"
-#include "../../verifier/eth1/evm/evm.h"
-#include "../../verifier/eth1/full/eth_full.h"
 #include "../../verifier/eth1/nano/chainspec.h"
+#include "../../verifier/in3_init.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
@@ -77,17 +77,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef BTC
-#include "../../verifier/btc/btc.h"
-#endif
-#ifdef IPFS
-#include "../../api/ipfs/ipfs_api.h"
-#include "../../verifier/ipfs/ipfs.h"
-#endif
-#ifdef PAY_ETH
-#include "../../pay/eth/pay_eth.h"
-#endif
 
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
@@ -399,6 +388,7 @@ uint64_t getchain_id(char* name) {
   if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
   if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
   if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
+  if (strcmp(name, "ewc") == 0) return ETH_CHAIN_ID_EWC;
   if (strcmp(name, "ipfs") == 0) return ETH_CHAIN_ID_IPFS;
   if (strcmp(name, "btc") == 0) return ETH_CHAIN_ID_BTC;
   if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
@@ -635,18 +625,6 @@ int main(int argc, char* argv[]) {
 #endif
 
   // we want to verify all
-  in3_register_eth_full();
-#ifdef IPFS
-  in3_register_ipfs();
-#endif
-#ifdef BTC
-  in3_register_btc();
-#endif
-  in3_register_eth_api();
-
-#ifdef PAY_ETH
-  in3_register_pay_eth();
-#endif
   in3_log_set_level(LOG_INFO);
 
   // create the client

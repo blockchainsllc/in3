@@ -52,6 +52,6 @@ namespace In3.Eth1
         /// </summary>
         public object[] Params { get; set; }
 
-        internal bool IsFunctionInvocation() => string.IsNullOrEmpty(Function);
+        internal bool IsFunctionInvocation() => !string.IsNullOrEmpty(Function);
     }
 }

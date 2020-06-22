@@ -1,5 +1,3 @@
-import ctypes as c
-
 import requests
 
 from in3.libin3.runtime import In3Request, In3Response

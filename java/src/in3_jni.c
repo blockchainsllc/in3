@@ -43,8 +43,10 @@
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
+#include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/verifier/eth1/basic/eth_basic.h"
 #include "../../c/src/verifier/in3_init.h"
 #ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
@@ -68,7 +70,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
   char*       error       = in3_configure(get_in3(env, ob), json_config);
   (*env)->ReleaseStringUTFChars(env, val, json_config);
   if (error) {
-    // TODO create a human readable error message
     jclass IllegalArgumentException = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
     (*env)->ThrowNew(env, IllegalArgumentException, error);
     _free(error);
@@ -484,22 +485,18 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
  */
 JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclass clz, jstring jkey, jstring jdata) {
   UNUSED_VAR(clz);
-  const char* key    = (*env)->GetStringUTFChars(env, jkey, 0);
-  const char* data   = (*env)->GetStringUTFChars(env, jdata, 0);
-  int         data_l = strlen(data) / 2 - 1;
-  uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+  const char* key  = (*env)->GetStringUTFChars(env, jkey, 0);
+  const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
+  jstring     res  = NULL;
 
-  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
-  data_l      = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
-  jstring res = NULL;
+  char* tmp = eth_wallet_sign(key, data);
 
-  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
-    char tmp[133];
-    bytes_to_hex(dst, 65, tmp + 2);
-    tmp[0] = '0';
-    tmp[1] = 'x';
-    res    = (*env)->NewStringUTF(env, tmp);
+  if (tmp != NULL) {
+    res = (*env)->NewStringUTF(env, tmp);
   }
+
+  _free(tmp);
+
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   (*env)->ReleaseStringUTFChars(env, jdata, data);
   return res;

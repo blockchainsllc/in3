@@ -34,12 +34,21 @@
 #cmake_minimum_required(VERSION 3.15)
 
 if(UNIX AND NOT APPLE)
-    set(LINUX TRUE)
+   set(LINUX TRUE)
 endif()
 
-add_library(ledger_signer_o OBJECT ledger_signer.c device_apdu_commands.c utility.c ethereum_apdu_client.c )
+
+add_static_library(
+   NAME     ledger_signer 
    
-target_compile_definitions(ledger_signer_o PRIVATE)
-add_library(ledger_signer STATIC $<TARGET_OBJECTS:ledger_signer_o>)
-target_link_libraries(ledger_signer hidapi)
+   SOURCES 
+      ledger_signer.c
+      device_apdu_commands.c
+      utility.c
+      ethereum_apdu_client.c
+
+   DEPENDS 
+      eth_nano
+      hidapi
+)
 
