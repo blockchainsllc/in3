@@ -37,7 +37,7 @@ if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 endif()
 
-add_compile_options(-Wno-unused-parameter -Wno-sign-compare)
+add_compile_options(-Wno-unused-parameter -Wno-sign-compare -Wno-int-conversion -Wno-implicit-function-declaration -Wno-conditional-type-mismatch)
 
 if(APPLE)
    add_static_library(
