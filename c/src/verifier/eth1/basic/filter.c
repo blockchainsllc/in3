@@ -333,7 +333,6 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
             case CTX_SUCCESS:
               if (IN3_OK != (res = ctx_get_error(blocks_ctx, 0)))
                 return ctx_set_error(blocks_ctx, blocks_ctx->error ? blocks_ctx->error : "Error fetching logs", res);
-              char params[37] = {0};
               sb_add_char(result, '[');
               for (uint64_t j = 0; j <= blkno; j++) {
                 d_token_t* hash  = d_getl(d_get(blocks_ctx->responses[j], K_RESULT), K_HASH, 32);
