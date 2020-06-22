@@ -364,7 +364,7 @@ class EthAPI {
         }
 
         for (const def of abi.filter(_ => _.type == 'event')) {
-            const eHash = '0x' + keccak(Buffer.from(def.name + createSignature(def.inputs), 'utf8')).toString('hex')
+            const eHash = toHex(keccak(toHex(def.name + createSignature(def.inputs))))
             ob._eventHashes[def.name] = eHash
             ob._eventHashes[eHash] = def
             ob.events[def.name] = {
@@ -373,7 +373,7 @@ class EthAPI {
                         address,
                         fromBlock: options.fromBlock || 'latest',
                         toBlock: options.toBlock || 'latest',
-                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + serialize.bytes32(options.filter[d.name]).toString('hex') : null))],
+                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? toHex(options.filter[d.name], 32) : null))],
                         limit: options.limit || 50
                     }).then((logs) => logs.map(_ => {
                         const event = ob.events.decode(_)
