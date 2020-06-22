@@ -313,7 +313,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         for (uint64_t i = f->last_block + 1; i <= blkno; i++) {
           sprintf(params, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
           sb_add_chars(req, params);
-          if (i + 1 < blkno)
+          if (i + 1 <= blkno)
             sb_add_chars(req, ",");
         }
         sb_add_chars(req, "]");
