@@ -75,7 +75,6 @@ option(ASSERTIONS "includes assertions into the code, which help track errors bu
 OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 OPTION(IN3_SERVER "support for proxy server as part of the cmd-tool, which allows to start the cmd-tool with the -p option and listens to the given port for rpc-requests" OFF)
 OPTION(CMD "build the comandline utils" ON)
-OPTION(LOGGING "enables logging support" OFF)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -220,10 +219,6 @@ if(TEST)
     add_custom_target(ptest COMMAND ${CMAKE_CTEST_COMMAND} -j 8)
     add_custom_target(rtest COMMAND ${CMAKE_CTEST_COMMAND} -V )
 endif(TEST)
-
-if (DEBUG OR LOGGING)
-    ADD_DEFINITIONS(-DLOGGING)
-endif()
 
 add_subdirectory(c)
 

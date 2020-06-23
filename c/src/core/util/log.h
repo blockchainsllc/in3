@@ -24,7 +24,7 @@ typedef enum { LOG_TRACE,
                LOG_ERROR,
                LOG_FATAL } in3_log_level_t;
 
-#if defined(LOGGING)
+#if defined(DEBUG)
 #define in3_log_trace(...) in3_log_(LOG_TRACE, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define in3_log_debug(...) in3_log_(LOG_DEBUG, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define in3_log_info(...) in3_log_(LOG_INFO, __FILE__, __func__, __LINE__, __VA_ARGS__)
