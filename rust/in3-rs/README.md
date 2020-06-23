@@ -8,18 +8,25 @@ The Incubed client is a
 
 blockchain client (Crypto-Economic Client, Minimal Verification Client, Ultra Light Client).
 
-**[API Documentation](https://docs.rs/in3-rs/)**
+## Documentation
+* **[Crate](https://crates.io/crates/in3)**
+* **[API](https://docs.rs/in3/)**
 
 ## Requirements
-* Rust version >= 1.42.0 -> `rustc --version`
+* Rust compiler version >= 1.42.0 -> `rustc --version`
+* A toolchain capable of compiling IN3 C sources
+* OpenSSL dev libs (`apt-get install libssl-dev` on Ubuntu)
+* CMake version >= 3.5.1, because we build the bundled IN3 C library with the [`cmake` crate](https://github.com/alexcrichton/cmake-rs)
+* [bindgen](https://github.com/rust-lang/rust-bindgen) and therefore clang dev libraries (`apt-get install clang libclang-dev llvm-dev` on Ubuntu)
 * in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library.
-See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
+
+> Most requirements See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
 
 
 ## Features
 * `blocking`- Enables the blocking API which depends on [async-std](https://github.com/async-rs/async-std).
 
-### Installation
+## Installation
 `cargo` (crates/package manager for rust) allows only **binaries** to be installed using its `cargo install` command and `in3`'s rust binding happens to be a **library**. Hence, `in3` must be manually added to your project's `Cargo.toml` file.
 
 ```toml
@@ -54,7 +61,7 @@ fn main() -> In3Result<()> {
 }
 ```
 
-### Contributing
+## Contributing
 
 #### Instructions for running the tests
 
