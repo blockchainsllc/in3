@@ -20,14 +20,14 @@ blockchain client (Crypto-Economic Client, Minimal Verification Client, Ultra Li
 * [bindgen](https://github.com/rust-lang/rust-bindgen) and therefore clang dev libraries (`apt-get install clang libclang-dev llvm-dev` on Ubuntu)
 * in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library.
 
-> Most requirements See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
+> Requirements are shared with `in3-sys`. See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
 
 
 ## Features
 * `blocking`- Enables the blocking API which depends on [async-std](https://github.com/async-rs/async-std).
 
 ## Installation
-`cargo` (crates/package manager for rust) allows only **binaries** to be installed using its `cargo install` command and `in3`'s rust binding happens to be a **library**. Hence, `in3` must be manually added to your project's `Cargo.toml` file.
+`in3` must be manually added to your project's `Cargo.toml` file.
 
 ```toml
 [dependencies]
@@ -40,8 +40,6 @@ Alternatively you can use `cargo-edit` to manage your libraries.
 cargo install cargo-edit
 cargo add in3
 ```
-
-*Other features that come with cargo edit are `cargo rm` and `cargo upgrade`*
 
 ## Example
 ```rust
