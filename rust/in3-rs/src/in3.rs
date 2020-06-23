@@ -70,6 +70,7 @@ impl Ctx {
             let c_data = data_hex.as_ptr() as *const c_char;
             let data_sig: *mut u8 = self.signc(c_data, data_hex.len());
             let c_sig = data_sig as *const c_char;
+            // libc::free(data_sig as *mut core::ffi::c_void);
             return c_sig;
         } else if let Some(signer) = &mut (*c).signer {
             let sig = signer.sign(msg);
@@ -396,9 +397,12 @@ impl ClientTrait for Client {
 
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
-            // let pk_ = Client::hex_to_bytes(data);
+            let pk_ = Client::hex_to_bytes(data);
             // let mut data_ = data.as_ptr();
-            in3_sys::eth_set_pk_signer_hex(self.ptr,  data.as_ptr() as *mut libc::c_char);
+            // in3_sys::eth_set_pk_signer_hex(self.ptr,  data.as_ptr() as *mut libc::c_char);
+            in3_sys::eth_set_pk_signer(self.ptr,  pk_);
+            // libc::free(pk_ as *mut core::ffi::c_void);
+
         }
     }
 }
