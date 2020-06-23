@@ -30,6 +30,7 @@ async fn http_async(
 pub struct MockJsonTransport;
 // const MOCK_DIR: &'static str = "../../c/test/testdata/mock/";
 const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
+// const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
 impl MockJsonTransport {
     /// Read file from path
     ///
