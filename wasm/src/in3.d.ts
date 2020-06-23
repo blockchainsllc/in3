@@ -768,6 +768,10 @@ export type TxRequest = {
     confirmations?: number
 }
 
+export interface Web3Event {
+
+}
+
 export declare interface Signer<BigIntType, BufferType> {
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
@@ -952,6 +956,69 @@ export interface EthAPI<BigIntType, BufferType> {
     sign(account: Address, data: Data): Promise<BufferType>;
     /** sends a Transaction */
     sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
+
+
+
+    web3ContractAt(abi: ABI[], address?: Address, options?: {
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+        data?: Hex
+    }): {
+        options: {
+            address: Address,
+            jsonInterface: ABI[],
+            gasPrice?: string | number | bigint,
+            gas?: string | number | bigint,
+            from?: Address,
+            data?: Hex,
+            transactionConfirmationBlocks: number,
+            transactionPollingTimeout: number
+        },
+        methods: {
+            [methodName: string]: (...args: any) => {
+                call: (options?: {
+                    gasPrice?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                }) => Promise<any>,
+                send: (options?: {
+                    gasPrice?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                    value?: number | string | bigint
+                }) => Promise<any>,
+                estimateGas: (options?: {
+                    value?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                }) => Promise<any>,
+                encodeABI: () => Hex
+            }
+        },
+
+        once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,
+
+        events: {
+            [eventName: string]: (options?: {
+                fromBlock?: number,
+                topics?: any[],
+                filter?: { [indexedName: string]: any }
+            }) => {
+                on: (ev: 'data', handler: (ev: Web3Event) => void) => any
+                on: (ev: 'error', handler: (ev: Error) => void) => any
+                once: (ev: 'data', handler: (ev: Web3Event) => void) => any
+                off: (ev: string, handler: (ev: any) => void) => any
+            }
+        },
+
+        getPastEvents(evName: string, options?: {
+            fromBlock?: number,
+            topics?: any[],
+            filter?: { [indexedName: string]: any }
+        }): Promise<Web3Event[]>
+
+    }
 
     contractAt(abi: ABI[], address?: Address): {
         [methodName: string]: any;

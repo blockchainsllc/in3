@@ -282,6 +282,31 @@ describe('API-Tests', () => {
         assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].log.address)
 
 
+    })
+
+
+    it('eth.web3ContractAt()', async () => {
+        //        let w = createClient({}, ['weth.Transfer', 'WETH']).eth.contractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
+
+
+
+        mockResponse('eth_call', 'weth.name')
+        mockResponse('eth_getCode', 'WETH')
+        mockResponse('eth_call', 'weth.decimals')
+        mockResponse('eth_call', 'weth.balanceOf')
+        const weth = createClient().eth.web3ContractAt(require('./abi/weth.json'), '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
+        assert.equal('Wrapped Ether', await weth.methods.name().call()) // string
+        assert.equal(18, await weth.methods.decimals().call()) // uint8 -> number
+        assert.equal(860298690748n, await weth.methods.balanceOf('0xb958a8f59ac6145851729f73c7a6968311d8b633').call()) // uint8 -> number
+
+        mockResponse('eth_getLogs', 'weth.Transfer')
+        let logs = await weth.getPastEvents('Transfer', { fromBlock: 10317749, toBlock: 10317749 })
+        assert.equal(9, logs.length)
+        assert.equal('0x7a250d5630b4cf539739df2c5dacb4c659f2488d', logs[0].returnValues.src)
+        assert.equal('0xbb2b8038a1640196fbe3e38816f3e67cba72d940', logs[0].returnValues.dst)
+        assert.equal('Transfer', logs[0].event)
+        assert.equal(74573366884515930470n, logs[0].returnValues.wad)
+        assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].address)
 
 
     })

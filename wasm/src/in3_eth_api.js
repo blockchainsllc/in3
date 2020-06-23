@@ -331,6 +331,121 @@ class EthAPI {
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations) : txHash
     }
 
+    web3ContractAt(abi, address, options = {}) {
+        const api = this
+        const ob = {
+            _in3: this.client,
+            _eventHashes: {},
+            options: {
+                ...options,
+                address,
+                jsonInterface: abi,
+                handleRevert: false,
+                transactionBlockTimeout: 50,
+                transactionConfirmationBlocks: 6,
+                transactionPollingTimeout: 750,
+            },
+            methods: {},
+            events: {}
+        }
+
+        const createTopics = (name, options) => options.topics || [ob._eventHashes[name], ...(!options.filter ? [] : ob._eventHashes[ob._eventHashes[name]].inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? toHex(options.filter[d.name], 32) : null))]
+
+        for (const def of abi) {
+            switch (def.type) {
+                case 'function':
+                    const signature = def.name + createSignature(def.inputs)
+                    const sigReturn = signature + createSignature(def.outnputs)
+                    ob.methods[def.name] = (...args) => ({
+                        call: (options, block) => api.callFn(address, sigReturn, ...args, block || 'latest')
+                            .then(r => {
+                                if (def.outputs.length > 1) {
+                                    let o = {}
+                                    def.outputs.forEach((d, i) => o[i] = o[d.name] = r[i])
+                                    return o;
+                                }
+                                return r
+                            }),
+                        send: options => {
+                            let tx = { ...options }
+                            if (args.length != def.inputs.length) throw new Error('Invalid number of arguments for ' + signature)
+                            tx.method = signature
+                            tx.args = args
+                            tx.confirmations = ob.transactionConfirmationBlocks || 1
+                            tx.to = address
+                            return api.sendTransaction(tx)
+                        },
+                        encodeABI: () => toHex(abiEncode(signature, args)),
+                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: abiEncode(signature, ...args) }).then(toNumber))
+                    })
+                    break
+                case 'event':
+                    const evSig = def.name + createSignature(def.inputs)
+                    const eHash = toHex(keccak(toHex(evSig)))
+                    ob._eventHashes[def.name] = eHash
+                    ob._eventHashes[eHash] = def
+                    ob.events[def.name] = options => new LogEmitter(
+                        api,
+                        {
+                            address,
+                            fromBlock: options.fromBlock || 'latest',
+                            topics: createTopics(def.name, options),
+                            limit: options.limit || 50
+                        },
+                        ob.options.transactionPollingTimeout,
+                        l => ({ ...l, event: def.name, returnValues: decodeEventData(l, ob), signature: evSig })
+                    )
+            }
+
+        }
+        ob.once = (ev, options, handler) => {
+            const e = ob.events[ev]
+            if (!e) throw new Error('Event ' + ev + ' does not exist!')
+            if (!handler) {
+                handler = options
+                options = {}
+            }
+            e.on('error', handler).once('data', d => h(null, d))
+        }
+
+        ob.events.allEvents = options => new LogEmitter(
+            api,
+            {
+                address,
+                fromBlock: options.fromBlock || 'latest',
+                limit: options.limit || 50
+            },
+            ob.options.transactionPollingTimeout,
+            l => ({ ...l, event: def.name, returnValues: decodeEventData(l, ob), signature: evSig })
+        )
+        ob.getPastEvents = (ev, options) => {
+            return api.getLogs({
+                address,
+                fromBlock: options.fromBlock || 'latest',
+                toBlock: options.toBlock || 'latest',
+                limit: options.limit || 50,
+                topics: ev === 'allEvents' ? [] : createTopics(ev, options)
+            }).then(logs => logs.map(l => {
+                const e = decodeEventData(l, ob)
+                const def = abi.find(_ => _.name === e.event)
+                if (!def) throw new Error('unknown event found!')
+                delete e.event
+                return { ...l, event: def.name, returnValues: e, signature: def.name + createSignature(def.inputs) }
+            }))
+
+
+        }
+
+
+
+        return ob
+
+    }
+
+
+
+
+
     contractAt(abi, address) {
         const api = this, ob = { _address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
@@ -539,4 +654,71 @@ function fixBytesValues(input, type) {
 
 function encodeEtheresBN(val) {
     return val && BN.isBN(val) ? toHex(val) : val
+}
+
+class EventEmitter {
+    on(ev, handler) {
+        const list = this[ev] || (this[ev] = [])
+        list.push(handler)
+        return this
+    }
+    off(ev, handler) {
+        const list = this[ev] || (this[ev] = [])
+        const p = list.indexOf(handler)
+        if (p >= 0) list.splice(p, 1)
+    }
+    once(ev, handler) {
+        const list = this[ev] || (this[ev] = [])
+        const f = val => {
+            handler(val)
+            this.off(ev, f)
+        }
+        list.push(f)
+        return this
+    }
+
+    emit(ev, data) {
+        (this[ev] || []).forEach(h => h(data))
+    }
+}
+
+class LogEmitter {
+    constructor(api, filter, polltime, decoder) {
+        this.filterId = null
+        this.timer = null
+        this.listeners = new EventEmitter()
+        api.newFilter(filter)
+            .then(id => {
+                const h = () => {
+                    if (!(this.listeners.data || []).length && this.timer) {
+                        // no more listeners
+                        clearInterval(this.timer)
+                        this.timer = null
+                        api.uninstallFilter(id).then(() => { }, err => this.listeners.emit('error', err))
+                        return
+                    }
+                    api.getFilterChanges(id)
+                        .then(data => {
+                            if (data && data.length)
+                                data.forEach(d => this.listeners.emit('data', decoder(d)))
+                        }, err => this.listeners.emit('error', err)
+                        )
+                }
+                this.filterId = id
+                this.timer = setInterval(() => { }, polltime)
+            }, err => this.listeners.emit('error', err))
+    }
+    on(ev, handler) {
+        this.listeners.on(ev, handler)
+        return this
+    }
+    off(ev, handler) {
+        this.listeners.off(ev, handler)
+        return this
+    }
+    once(ev, handler) {
+        this.listeners.once(ev, handler)
+        return this
+    }
+
 }
