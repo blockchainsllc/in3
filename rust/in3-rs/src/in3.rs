@@ -407,12 +407,9 @@ impl ClientTrait for Client {
 
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
-            let pk_ = Client::hex_to_bytes(data);
-            // let mut data_ = data.as_ptr();
-            // in3_sys::eth_set_pk_signer_hex(self.ptr,  data.as_ptr() as *mut libc::c_char);
-            in3_sys::eth_set_pk_signer(self.ptr,  pk_);
-            // libc::free(pk_ as *mut core::ffi::c_void);
-
+            let c_data = data.as_ptr() as *mut libc::c_char;
+            in3_sys::eth_set_pk_signer_hex(self.ptr, c_data);
+            
         }
     }
 }
@@ -542,11 +539,13 @@ impl Client {
     unsafe fn hex_to_bytes(data: &str) -> *mut u8 {
         let c_str_data = CString::new(data).unwrap(); // cannot fail since data is a string
         let c_data: *const c_char = c_str_data.as_ptr();
-        let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
+        let mut dst = [0u8;65];
+        let out:*mut u8 = dst.as_mut_ptr();
         let len: i32 = -1;
         in3_sys::hex_to_bytes(c_data, len, out, 32);
         out
     }
+
 }
 
 impl Drop for Client {
