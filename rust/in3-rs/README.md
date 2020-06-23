@@ -10,6 +10,15 @@ blockchain client (Crypto-Economic Client, Minimal Verification Client, Ultra Li
 
 **[API Documentation](https://docs.rs/in3-rs/)**
 
+## Requirements
+* Rust version >= 1.42.0 -> `rustc --version`
+* in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library.
+See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
+
+
+## Features
+* `blocking`- Enables the blocking API which depends on [async-std](https://github.com/async-rs/async-std).
+
 ### Installation
 `cargo` (crates/package manager for rust) allows only **binaries** to be installed using its `cargo install` command and `in3`'s rust binding happens to be a **library**. Hence, `in3` must be manually added to your project's `Cargo.toml` file.
 
@@ -26,16 +35,6 @@ cargo add in3
 ```
 
 *Other features that come with cargo edit are `cargo rm` and `cargo upgrade`*
-
-## Requirements
-* Rust version >= 1.42.0
-* in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library.
-See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
-
-
-## Features
-* `blocking`- Enables the blocking API which depends on [async-std](https://github.com/async-rs/async-std).
-
 
 ## Example
 ```rust
@@ -54,3 +53,11 @@ fn main() -> In3Result<()> {
     Ok(())
 }
 ```
+
+### Contributing
+
+#### Instructions for running the tests
+
+1. To run the tests you need to first run the build script. `./scripts/build_rust.sh`.
+2. Navigate to the rust binding folder. `cd rust`
+3. Then run the test using **cargo** and an additional option `RUST_TEST_THREADS=1`. This can be done via `RUST_TEST_THREADS=1 cargo test`.
