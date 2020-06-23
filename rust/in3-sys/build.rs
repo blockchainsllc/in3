@@ -72,11 +72,10 @@ fn main() {
     header_search_paths.push([IN3_DIR, "c", "include"].iter().collect());
 
     let dst = Config::new(IN3_DIR)
-        .profile("MinSizeRel")
+        .profile("Debug")
         .define("TRANSPORTS", "OFF")
         .define("USE_CURL", "OFF")
         .define("CMD", "OFF")
-        .define("LOGGING", "ON")
         .define("DEV_NO_INTRN_PTR", "OFF")
         .build_target("in3_bundle")
         .build();
