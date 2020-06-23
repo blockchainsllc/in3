@@ -51,7 +51,7 @@ impl Api {
     /// * `blockhash` - block hash.
     ///
     /// # Panics
-    /// If response if not serializable to output type.
+    /// If response is not serializable to output type.
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
@@ -90,7 +90,7 @@ impl Api {
     /// * `tx_id` - transaction id.
     ///
     /// # Panics
-    /// If response if not serializable to output type.
+    /// If response is not serializable to output type.
     pub async fn get_transaction(&mut self, tx_id: Hash) -> In3Result<Transaction> {
         let hash = json!(tx_id);
         let hash_str = hash.as_str().unwrap(); // cannot fail
@@ -117,7 +117,7 @@ impl Api {
     /// * `blockhash` - block hash.
     ///
     /// # Panics
-    /// If response if not serializable to output type.
+    /// If response is not serializable to output type.
     pub async fn get_block_transaction_data(&mut self, blockhash: Hash) -> In3Result<BlockTransactionData> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
@@ -144,7 +144,7 @@ impl Api {
     /// * `blockhash` - block hash.
     ///
     /// # Panics
-    /// If response if not serializable to output type.
+    /// If response is not serializable to output type.
     pub async fn get_block_transaction_ids(&mut self, blockhash: Hash) -> In3Result<BlockTransactionIds> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
