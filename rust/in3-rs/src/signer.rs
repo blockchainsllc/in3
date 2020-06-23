@@ -16,14 +16,14 @@ use crate::types::Bytes;
 ///
 /// # Safety
 /// Being a thin wrapper over in3_sys::ec_sign_pk_hash(), this method is unsafe.
-pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
+pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> Bytes {
     let data_ = data as *mut u8;
-    let dst: *mut u8 = libc::malloc(65) as *mut u8;
-    let error = in3_sys::ec_sign_pk_hash(data_, len, pk, in3_sys::hasher_t::hasher_sha3k, dst);
+    let mut dst = [0u8;65];
+    let error = in3_sys::ec_sign_pk_hash(data_, len, pk, in3_sys::hasher_t::hasher_sha3k, dst.as_mut_ptr());
     if error < 0 {
         panic!("Sign error{:?}", error);
     }
-    dst
+    dst[0..].into()
 }
 
 /// Signer implementation using IN3 C client's RPC.

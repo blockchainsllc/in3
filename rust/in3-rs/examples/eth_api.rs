@@ -9,6 +9,48 @@ use in3::types::Bytes;
 
 
 fn main() -> In3Result<()> {
+    // mock verified from etherscan tx: https://goerli.etherscan.io/tx/0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a
+    let responses = vec![(
+        "eth_sendRawTransaction",
+        r#"[{"jsonrpc":"2.0","result":"0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a","id":2,"in3":{"lastValidatorChange":0,"lastNodeList":2837876,"execTime":213,"rpcTime":213,"rpcCount":1,"currentBlock":2850136,"version":"2.1.0"}}]"#,
+    )];
+    let transport: Box<dyn Transport> = Box::new(MockTransport {
+        responses: responses,
+    });
+    let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x5":{"needsUpdate":false}}}}"#;
+    let mut client = Client::new(chain::GOERLI);
+    let _ = client.configure(config);
+    client.set_pk_signer("dcb7b68bf23f6b29ffef8f316b0015bfd952385f26ae72befaf68cf0d0b6b1b6");
+    client.set_transport(transport);
+    let mut eth_api = Api::new(client);
+    let to: Address =
+        serde_json::from_str(r#""0x930e62afa9ceb9889c2177c858dc28810cedbf5d""#).unwrap(); // cannot fail
+    let from: Address =
+        serde_json::from_str(r#""0x25e10479a1AD17B895C45364a7D971e815F8867D""#).unwrap(); // cannot fail
+
+    let data = "00";
+    let rawbytes: Bytes = FromHex::from_hex(&data).unwrap().into(); // cannot fail
+    let txn = OutgoingTransaction {
+        to: to,
+        from: from,
+        gas: Some((0x668A0).into()),
+        gas_price: Some((0xee6b28000i64).into()),
+        value: Some((0x1bc16d674ec80000i64).into()),
+        data: Some(rawbytes),
+        nonce: Some(0x1i64.into()),
+    };
+
+    let hash: Hash = task::block_on(eth_api.send_transaction(txn)).expect("ETH send transaction failed");
+    let expected_hash: Hash = serde_json::from_str(
+        r#""0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a""#,
+    ).unwrap(); // cannot fail
+    println!("Hash => {:?}", hash);
+    assert_eq!(hash.to_string(), expected_hash.to_string());
+    Ok(())
+}
+
+
+fn main2() -> In3Result<()> {
     let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
     let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
     let responses = vec![

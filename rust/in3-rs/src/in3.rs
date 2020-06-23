@@ -55,12 +55,12 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    unsafe fn signc(&mut self, data: *const c_char, len: usize) -> *mut u8 {
+    unsafe fn signc(&mut self, data: *const c_char, len: usize) -> Bytes {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
         signer::signc(pk, data, len)
     }
 
-    async unsafe fn sign(&mut self, msg: Bytes) -> *const c_char {
+    async unsafe fn sign(&mut self, msg: Bytes) -> Bytes{
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
@@ -68,15 +68,13 @@ impl Ctx {
         let no_signer = signer.is_none();
         if no_signer {
             let c_data = msg.0.as_ptr() as *const c_char;
-            let data_sig: *mut u8 = self.signc(c_data, msg.0.len());
-            let c_sig = data_sig as *const c_char;
-            // libc::free(data_sig as *mut core::ffi::c_void);
-            return c_sig;
+            let sig = self.signc(c_data, msg.0.len());
+            return sig;
         } else if let Some(signer) = &mut (*c).signer {
             let sig = signer.sign(msg);
-            return sig.await.expect("Signing failed").0.as_ptr() as *const c_char;
+            return sig.await.expect("Signing failed");
         }
-        std::ptr::null_mut()
+        Bytes::default()
     }
 
     async unsafe fn execute(&mut self) -> In3Result<String> {
@@ -140,8 +138,8 @@ impl Ctx {
                         .expect("result not valid JSON");
                     let data_str = &request["params"][0].as_str().expect("params[0] not string");
                     let data_hex = data_str[2..].from_hex().expect("message is not valid hex string");
-                    let res_str = self.sign(data_hex.into()).await;
-                    in3_sys::in3_req_add_response(req, 0.try_into().unwrap(), false, res_str, 65);
+                    let mut res_str = self.sign(data_hex.into()).await;
+                    in3_sys::in3_req_add_response(req, 0.try_into().unwrap(), false, res_str.0.as_mut_ptr() as *const c_char, 65);
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let payload = ffi::CStr::from_ptr((*req).payload).to_str()
