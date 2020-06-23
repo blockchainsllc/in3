@@ -22,14 +22,14 @@ See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) pag
 ### Installation
 `cargo` (crates/package manager for rust) allows only **binaries** to be installed using its `cargo install` command and `in3`'s rust binding happens to be a **library**. Hence, `in3` must be manually added to your project's `Cargo.toml` file.
 
-```
+```toml
 [dependencies]
 in3 = "0.0.2"
 ```
 
 Alternatively you can use `cargo-edit` to manage your libraries.
 
-```
+```bash
 cargo install cargo-edit
 cargo add in3
 ```
