@@ -396,8 +396,9 @@ impl ClientTrait for Client {
 
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
-            let pk_ = Client::hex_to_bytes(data);
-            in3_sys::eth_set_pk_signer(self.ptr, pk_);
+            // let pk_ = Client::hex_to_bytes(data);
+            // let mut data_ = data.as_ptr();
+            in3_sys::eth_set_pk_signer_hex(self.ptr,  data.as_ptr() as *mut libc::c_char);
         }
     }
 }

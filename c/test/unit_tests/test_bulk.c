@@ -84,15 +84,12 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
 }
 
 static void test_context_bulk() {
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  c->transport       = test_bulk_transport;
-  c->flags           = FLAGS_STATS;
-
-  // c->proof           = PROOF_NONE;
-  c->signature_count = 0;
-  for (int i = 0; i < c->chains_length; i++) {
-    _free(c->chains[i].nodelist_upd8_params);
-    c->chains[i].nodelist_upd8_params = NULL;
+  in3_t* in3           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3->transport       = test_bulk_transport;
+  in3->flags           = FLAGS_STATS;
+  for (int i = 0; i < in3->chains_length; i++) {
+    _free(in3->chains[i].nodelist_upd8_params);
+    in3->chains[i].nodelist_upd8_params = NULL;
   }
   uint64_t blkno = 5;
   sb_t*      req       = sb_new("[");
@@ -104,7 +101,7 @@ static void test_context_bulk() {
           sb_add_chars(req, ",");
   }
   sb_add_chars(req, "]");
-  in3_ctx_t* block_ctx = ctx_new(c, req->data);
+  in3_ctx_t* block_ctx = ctx_new(in3, req->data);
   in3_ret_t ret= in3_send_ctx(block_ctx);
   for (uint64_t i = 0; i < blkno; i++) {
     d_token_t* hash  = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);
@@ -113,7 +110,9 @@ static void test_context_bulk() {
     bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
     in3_log_trace("HASH %s\n", h);  
   } 
+  ctx_free(block_ctx);
   _free(req);
+  in3_free(in3);
 }
 
 
