@@ -8,7 +8,12 @@ The Incubed client is a
 
 blockchain client (Crypto-Economic Client, Minimal Verification Client, Ultra Light Client).
 
-## Documentation
+```toml
+[dependencies]
+in3 = "0.0.2"
+```
+
+Links:
 * **[Crate](https://crates.io/crates/in3)**
 * **[API](https://docs.rs/in3/)**
 
@@ -20,26 +25,11 @@ blockchain client (Crypto-Economic Client, Minimal Verification Client, Ultra Li
 * [bindgen](https://github.com/rust-lang/rust-bindgen) and therefore clang dev libraries (`apt-get install clang libclang-dev llvm-dev` on Ubuntu)
 * in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library.
 
-> Requirements are shared with `in3-sys`. See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
+> `in3-rs` has a system level dependency [`in3-sys`](https://github.com/slockit/in3-c/tree/master/rust/in3-sys).
 
 
 ## Features
 * `blocking`- Enables the blocking API which depends on [async-std](https://github.com/async-rs/async-std).
-
-## Installation
-`in3` must be manually added to your project's `Cargo.toml` file.
-
-```toml
-[dependencies]
-in3 = "0.0.2"
-```
-
-Alternatively you can use `cargo-edit` to manage your libraries.
-
-```bash
-cargo install cargo-edit
-cargo add in3
-```
 
 ## Example
 ```rust
