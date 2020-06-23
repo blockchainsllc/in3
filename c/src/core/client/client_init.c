@@ -513,9 +513,6 @@ in3_t* in3_for_chain_default(chain_id_t chain_id) {
   if (default_storage) c->cache = default_storage;
   if (default_signer) c->signer = default_signer;
 
-#ifndef TEST
-  in3_log_set_quiet(1);
-#endif
   return c;
 }
 
