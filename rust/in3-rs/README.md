@@ -8,13 +8,28 @@ The Incubed client is a
 
 blockchain client (Crypto-Economic Client, Minimal Verification Client, Ultra Light Client).
 
-
 **[API Documentation](https://docs.rs/in3-rs/)**
 
+### Installation
+`cargo` (crates/package manager for rust) allows only **binaries** to be installed using its `cargo install` command and `in3`'s rust binding happens to be a **library**. Hence, `in3` must be manually added to your project's `Cargo.toml` file.
+
+```
+[dependencies]
+in3 = "0.0.2"
+```
+
+Alternatively you can use `cargo-edit` to manage your libraries.
+
+```
+cargo install cargo-edit
+cargo add in3
+```
+
+*Other features that come with cargo edit are `cargo rm` and `cargo upgrade`*
 
 ## Requirements
 * Rust version >= 1.42.0
-* in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library. 
+* in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library.
 See the [in3-sys](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) page for the requirements.
 
 
