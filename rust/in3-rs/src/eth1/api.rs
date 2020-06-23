@@ -8,7 +8,7 @@ use crate::eth1::{
     Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
     Transaction, TransactionReceipt,
 };
-use crate::json_rpc::{rpc, Request};
+use crate::json_rpc::{Request, rpc};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
@@ -51,7 +51,7 @@ impl Api {
                 params: json!([address, key, block]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns code at a given address.
@@ -67,7 +67,7 @@ impl Api {
                 params: json!([address, block]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the balance of the account of given address.
@@ -83,7 +83,7 @@ impl Api {
                 params: json!([address, block]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the number of most recent block.
@@ -95,7 +95,7 @@ impl Api {
                 params: json!([]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the current price per gas in wei.
@@ -107,7 +107,7 @@ impl Api {
                 params: json!([]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns information about a block by block number.
@@ -128,7 +128,7 @@ impl Api {
                 params: json!([block, include_tx]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns information about a block by hash.
@@ -145,7 +145,7 @@ impl Api {
                 params: json!([hash, include_tx]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns an array of all logs matching a given filter object.
@@ -168,7 +168,7 @@ impl Api {
                 params: json!([filter_options]),
             },
         )
-        .await
+            .await
     }
 
     /// Creates a filter object, based on filter options.
@@ -191,7 +191,7 @@ impl Api {
                 params: json!([filter_options]),
             },
         )
-        .await
+            .await
     }
 
     /// Creates a filter in the node, to notify when a new block arrives.
@@ -203,7 +203,7 @@ impl Api {
                 params: json!([]),
             },
         )
-        .await
+            .await
     }
 
     /// Creates a filter in the node, to notify when new pending transactions arrive.
@@ -226,7 +226,7 @@ impl Api {
                 params: json!([filter_id]),
             },
         )
-        .await
+            .await
     }
 
     /// Polling method for a filter, which returns an array of logs which occurred since last poll.
@@ -241,7 +241,7 @@ impl Api {
                 params: json!([filter_id]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns an array of all logs matching filter with given id.
@@ -256,7 +256,7 @@ impl Api {
                 params: json!([filter_id]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the currently configured chain id, a value used in replay-protected transaction
@@ -269,7 +269,7 @@ impl Api {
                 params: json!([]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the number of transactions in a block from a block matching the given block hash.
@@ -284,7 +284,7 @@ impl Api {
                 params: json!([hash]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the number of transactions in a block matching the given block number.
@@ -302,7 +302,7 @@ impl Api {
                 params: json!([block]),
             },
         )
-        .await
+            .await
     }
 
     /// Executes a new message call immediately without creating a transaction on the block chain.
@@ -323,7 +323,7 @@ impl Api {
                 params: json!([transaction, block]),
             },
         )
-        .await
+            .await
     }
 
     /// Generates and returns an estimate of how much gas is necessary to allow the transaction to
@@ -347,7 +347,7 @@ impl Api {
                 params: json!([transaction, block]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the information about a transaction requested by transaction hash.
@@ -362,7 +362,7 @@ impl Api {
                 params: json!([hash]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns information about a transaction by block hash and transaction index position.
@@ -382,7 +382,7 @@ impl Api {
                 params: json!([hash, index]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns information about a transaction by block number and transaction index position.
@@ -402,7 +402,7 @@ impl Api {
                 params: json!([block, index]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the number of transactions sent from an address.
@@ -422,7 +422,7 @@ impl Api {
                 params: json!([address, block]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns information about a uncle of a block by number and uncle index position.
@@ -442,7 +442,7 @@ impl Api {
                 params: json!([block, index]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns information about a uncle of a block by hash and uncle index position.
@@ -462,7 +462,7 @@ impl Api {
                 params: json!([hash, index]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the number of uncles in a block from a block matching the given block hash.
@@ -477,7 +477,7 @@ impl Api {
                 params: json!([hash]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the number of uncles in a block from a block matching the given block number.
@@ -492,7 +492,7 @@ impl Api {
                 params: json!([block]),
             },
         )
-        .await
+            .await
     }
 
     /// Creates new message call transaction or a contract creation, if the data field contains
@@ -508,7 +508,7 @@ impl Api {
                 params: json!([transaction]),
             },
         )
-        .await
+            .await
     }
 
     /// Creates new message call transaction or a contract creation for signed transactions.
@@ -523,7 +523,7 @@ impl Api {
                 params: json!([data]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the receipt of a transaction by transaction hash.
@@ -541,7 +541,7 @@ impl Api {
                 params: json!([transaction_hash]),
             },
         )
-        .await
+            .await
     }
 }
 
@@ -550,14 +550,12 @@ mod tests {
     use std::convert::TryInto;
 
     use async_std::task;
-
-    use crate::eth1::*;
-    use crate::types::Bytes;
+    use ethereum_types::{Address, U256};
     use rustc_hex::FromHex;
 
-    use ethereum_types::{Address, U256};
-
+    use crate::eth1::*;
     use crate::prelude::*;
+    use crate::types::Bytes;
 
     use super::*;
 
@@ -581,7 +579,7 @@ mod tests {
         });
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let num: u64 = task::block_on(eth_api.block_number())?.try_into().unwrap();
+        let num: u64 = task::block_on(eth_api.block_number())?.try_into().expect("cannot convert to u64");
         println!("{:?}", num);
         assert_eq!(num, 0x96bacd);
         Ok(())
@@ -593,12 +591,12 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
-            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
+            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap(); // cannot fail
         let key: U256 = 0u64.into();
         let storage: u64 =
             task::block_on(eth_api.get_storage_at(address, key, BlockNumber::Earliest))?
                 .try_into()
-                .unwrap();
+                .expect("cannot convert to u64");
         println!("Storage value is {:?}", storage);
         assert_eq!(storage, 0x1);
         Ok(())
@@ -613,7 +611,7 @@ mod tests {
             serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#)?;
         let code: Bytes = task::block_on(eth_api.get_code(address, BlockNumber::Latest))?
             .try_into()
-            .unwrap();
+            .expect("cannot convert to bytes");
         println!("Code at address {:?} is {:?}", address, code);
         assert!(code.0.len() > 0);
         Ok(())
@@ -629,7 +627,7 @@ mod tests {
         let balance: u64 =
             task::block_on(eth_api.get_balance(address, BlockNumber::Number((1555415).into())))?
                 .try_into()
-                .unwrap();
+                .expect("cannot convert to u64");
         println!("Balance of address {:?} is {:?} wei", address, balance);
         assert!(balance > 0);
         Ok(())
@@ -644,7 +642,7 @@ mod tests {
             eth_api.get_block_by_number(BlockNumber::Number((1692767).into()), true),
         )?;
         let expected: U256 = (1692767).into();
-        let blk: U256 = block.number.unwrap();
+        let blk: U256 = block.number.expect("missing block number in block");
         assert_eq!(blk, expected);
         Ok(())
     }
@@ -654,7 +652,7 @@ mod tests {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let gas_price: u64 = task::block_on(eth_api.gas_price())?.try_into().unwrap();
+        let gas_price: u64 = task::block_on(eth_api.gas_price())?.try_into().expect("cannot convert to u64");
         println!("Gas price is {:?}", gas_price);
         assert!(gas_price > 1);
         Ok(())
@@ -672,7 +670,7 @@ mod tests {
         let block: Block = task::block_on(eth_api.get_block_by_hash(hash, false))?;
         println!("Block => {:?}", block);
         let expected: U256 = (1550244).into();
-        let blk: U256 = block.number.unwrap();
+        let blk: U256 = block.number.expect("missing block number in block");
         println!("Block => {:?}", block);
         assert_eq!(blk, expected);
         Ok(())
@@ -704,20 +702,19 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}},"verification":"none"}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let contract: Address =
-            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
+            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap(); // cannot fail
         let mut abi = abi::In3EthAbi::new();
-        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([]))).unwrap();
+        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([]))).expect("ABI encode failed");
         let txn = CallTransaction {
             to: Some(contract),
             data: Some(params),
             ..Default::default()
         };
-        let output: Bytes = task::block_on(eth_api.call(txn, BlockNumber::Latest))
-            .unwrap()
+        let output: Bytes = task::block_on(eth_api.call(txn, BlockNumber::Latest))?
             .try_into()
-            .unwrap();
-        let output = task::block_on(abi.decode("uint256", output)).unwrap();
-        let access: U256 = serde_json::from_value(output).unwrap();
+            .expect("cannot convert to bytes");
+        let output = task::block_on(abi.decode("uint256", output)).expect("ABI decode failed");
+        let access: U256 = serde_json::from_value(output).unwrap(); // cannot fail if decode succeeded
         println!("{:?}", access);
         let expected: U256 = (1).into();
         assert_eq!(access, expected);
@@ -732,7 +729,7 @@ mod tests {
         // let _ = client.configure(config);
         // let mut eth_api = Api::new(client);
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let ret: u64 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
+        let ret: u64 = task::block_on(eth_api.chain_id())?.try_into().expect("cannot convert to u64");
         assert_eq!(ret, 1);
         Ok(())
     }
@@ -745,10 +742,10 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d""#,
         )?;
-        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_hash(hash))?
+        let ret: u64 = task::block_on(eth_api.get_block_transaction_count_by_hash(hash))?
             .try_into()
-            .unwrap();
-        assert_eq!(ret, (2).into());
+            .expect("cannot convert to u64");
+        assert_eq!(ret, 2u64);
         Ok(())
     }
 
@@ -758,10 +755,10 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let number = BlockNumber::Number((1692767).into());
-        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_number(number))?
+        let ret: u64 = task::block_on(eth_api.get_block_transaction_count_by_number(number))?
             .try_into()
-            .unwrap();
-        assert_eq!(ret, (6).into());
+            .expect("cannot convert to u64");
+        assert_eq!(ret, 6u64);
         Ok(())
     }
 
@@ -771,18 +768,18 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let contract: Address =
-            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
+            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap(); // cannot fail
         let mut abi = abi::In3EthAbi::new();
-        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([]))).unwrap();
+        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([]))).expect("ABI encode failed");
         let txn = CallTransaction {
             to: Some(contract),
             data: Some(params),
             ..Default::default()
         };
-        let ret: U256 = task::block_on(eth_api.estimate_gas(txn, BlockNumber::Latest))?
+        let ret: u64 = task::block_on(eth_api.estimate_gas(txn, BlockNumber::Latest))?
             .try_into()
-            .unwrap();
-        assert_eq!(ret, (22103).into());
+            .expect("cannot convert to u64");
+        assert_eq!(ret, 22103u64);
         Ok(())
     }
 
@@ -794,11 +791,9 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164""#,
         )?;
-        let tx: Transaction = task::block_on(eth_api.get_transaction_by_hash(hash))?
-            .try_into()
-            .unwrap();
+        let tx: Transaction = task::block_on(eth_api.get_transaction_by_hash(hash))?;
         let nonce = tx.nonce;
-        let blk_number = tx.block_number.unwrap();
+        let blk_number = tx.block_number.expect("missing block number in transaction");
         let gas = tx.gas;
         assert_eq!(nonce, (49).into());
         assert_eq!(gas, (41943).into());
@@ -814,12 +809,9 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4""#,
         )?;
-        let tx: Transaction =
-            task::block_on(eth_api.get_transaction_by_block_hash_and_index(hash, (0).into()))?
-                .try_into()
-                .unwrap();
+        let tx: Transaction = task::block_on(eth_api.get_transaction_by_block_hash_and_index(hash, (0).into()))?;
         let nonce = tx.nonce;
-        let blk_number = tx.block_number.unwrap();
+        let blk_number = tx.block_number.expect("missing block number in transaction");
         let gas = tx.gas;
         assert_eq!(nonce, (8).into());
         assert_eq!(gas, (21000).into());
@@ -838,7 +830,7 @@ mod tests {
                 .try_into()
                 .unwrap();
         let nonce = tx.nonce;
-        let blk_number = tx.block_number.unwrap();
+        let blk_number = tx.block_number.expect("missing block number in transaction");
         let gas = tx.gas;
         assert_eq!(nonce, (8).into());
         assert_eq!(gas, (21000).into());
@@ -856,7 +848,7 @@ mod tests {
         let tx_count: u64 =
             task::block_on(eth_api.get_transaction_count(address, BlockNumber::Latest))?
                 .try_into()
-                .unwrap();
+                .expect("cannot convert to u64");
         assert!(tx_count > 0);
         Ok(())
     }
@@ -870,8 +862,8 @@ mod tests {
             .client()
             .set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
         let data = "f8da098609184e72a0008296c094f99dbd3cfc292b11f74deea9fa730825ee0b56f2849184e72ab87000ff86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affff2ea0936324cf235541114275bb72b5acfb5a5c1f6f6e7f426c94806ff4093539bfaaa010a7482378b19ee0930a77c14b18c5664b3aa6c3ebc7420954d81263625d6d6a";
-        let rawbytes: Bytes = FromHex::from_hex(&data[0..]).unwrap().into();
-        let hash: Hash = task::block_on(eth_api.send_raw_transaction(rawbytes)).unwrap();
+        let rawbytes: Bytes = FromHex::from_hex(data).unwrap().into(); // cannot fail
+        let hash: Hash = task::block_on(eth_api.send_raw_transaction(rawbytes)).expect("ETH send raw transaction failed");
         println!("Hash => {:?}", hash);
         Ok(())
     }
@@ -893,12 +885,12 @@ mod tests {
         client.set_transport(transport);
         let mut eth_api = Api::new(client);
         let to: Address =
-            serde_json::from_str(r#""0x930e62afa9ceb9889c2177c858dc28810cedbf5d""#).unwrap();
+            serde_json::from_str(r#""0x930e62afa9ceb9889c2177c858dc28810cedbf5d""#).unwrap(); // cannot fail
         let from: Address =
-            serde_json::from_str(r#""0x25e10479a1AD17B895C45364a7D971e815F8867D""#).unwrap();
+            serde_json::from_str(r#""0x25e10479a1AD17B895C45364a7D971e815F8867D""#).unwrap(); // cannot fail
 
         let data = "00";
-        let rawbytes: Bytes = FromHex::from_hex(&data).unwrap().into();
+        let rawbytes: Bytes = FromHex::from_hex(&data).unwrap().into(); // cannot fail
         let txn = OutgoingTransaction {
             to: to,
             from: from,
@@ -909,11 +901,10 @@ mod tests {
             nonce: Some(0x1i64.into()),
         };
 
-        let hash: Hash = task::block_on(eth_api.send_transaction(txn)).unwrap();
+        let hash: Hash = task::block_on(eth_api.send_transaction(txn)).expect("ETH send transaction failed");
         let expected_hash: Hash = serde_json::from_str(
             r#""0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a""#,
-        )
-        .unwrap();
+        ).unwrap(); // cannot fail
         println!("Hash => {:?}", hash);
         assert_eq!(hash.to_string(), expected_hash.to_string());
         Ok(())
@@ -952,6 +943,7 @@ mod tests {
         assert_eq!(fid, expected);
         Ok(())
     }
+
     //FIX: internal blocknumber call issue #367
     #[test]
     fn test_eth_api_get_filter_changes() -> In3Result<()> {
@@ -996,6 +988,7 @@ mod tests {
         assert!(true);
         Ok(())
     }
+
     //FIX: Method not supported by nano
     #[test]
     #[ignore]
@@ -1005,14 +998,12 @@ mod tests {
         let _ = client.configure(config);
         let mut eth_api = Api::new(client);
         let number = BlockNumber::Number((56160).into());
-        let block: Block =
-            task::block_on(eth_api.get_uncle_by_block_number_and_index(number, (0).into()))?
-                .try_into()
-                .unwrap();
-        let blk: U256 = block.number.unwrap();
+        let block: Block = task::block_on(eth_api.get_uncle_by_block_number_and_index(number, (0).into()))?;
+        let blk = block.number.expect("missing block number in block");
         assert!(blk > (0).into());
         Ok(())
     }
+
     //FIX: Method not supported by nano
     #[test]
     #[ignore]
@@ -1024,10 +1015,10 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845""#,
         )?;
-        let count: U256 = task::block_on(eth_api.get_uncle_count_by_block_hash(hash))?
+        let count: u64 = task::block_on(eth_api.get_uncle_count_by_block_hash(hash))?
             .try_into()
-            .unwrap();
-        assert!(count > (0).into());
+            .expect("cannot convert to u64");
+        assert!(count > 0u64);
         Ok(())
     }
 

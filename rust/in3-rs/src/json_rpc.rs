@@ -30,8 +30,8 @@ impl Response {
             Ok(res)
         } else {
             Err(Error::CustomError(format!(
-                "{}",
-                self.error.as_ref().unwrap()
+                "{:?}",
+                &self.error
             )))
         }
     }
@@ -66,12 +66,12 @@ where
     println!("{:?}", resp_);
     //Check array is valid and try once again
     if resp_[0].result == Some(serde_json::Value::Null) {
-        let resp_single: Response = serde_json::from_str(resp_str.as_str()).unwrap();
+        let resp_single: Response = serde_json::from_str(resp_str.as_str()).expect("response is not valid JSON-RPC result");
         return Ok(serde_json::from_str(
             resp_single.to_result()?.to_string().as_str(),
         )?);
     } else {
-        let resp = resp_.first().unwrap();
+        let resp = resp_.first().expect("empty response");
         return Ok(serde_json::from_str(
             resp.to_result()?.to_string().as_str(),
         )?);
