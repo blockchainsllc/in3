@@ -769,6 +769,22 @@ export type TxRequest = {
 }
 
 export interface Web3Event {
+    returnValues: {
+        [name: string]: any
+    },
+    event: string,
+    signature: string,
+    logIndex: number
+    transactionIndex: number,
+    transactionHash: Hash,
+    address: Address
+    blockNumber: number
+    blockHash: Hash,
+    raw: {
+        data: Hex
+        topicx: Hash[]
+    }
+
 
 }
 
@@ -992,7 +1008,7 @@ export interface EthAPI<BigIntType, BufferType> {
                     value?: string | number | bigint,
                     gas?: string | number | bigint,
                     from?: Address,
-                }) => Promise<any>,
+                }) => Promise<number>,
                 encodeABI: () => Hex
             }
         },
@@ -1005,8 +1021,7 @@ export interface EthAPI<BigIntType, BufferType> {
                 topics?: any[],
                 filter?: { [indexedName: string]: any }
             }) => {
-                on: (ev: 'data', handler: (ev: Web3Event) => void) => any
-                on: (ev: 'error', handler: (ev: Error) => void) => any
+                on: (ev: 'data' | 'error', handler: (ev: Web3Event | Error) => void) => any
                 once: (ev: 'data', handler: (ev: Web3Event) => void) => any
                 off: (ev: string, handler: (ev: any) => void) => any
             }
