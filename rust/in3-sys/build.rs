@@ -76,6 +76,7 @@ fn main() {
         .define("TRANSPORTS", "OFF")
         .define("USE_CURL", "OFF")
         .define("CMD", "OFF")
+        .define("LOGGING", "ON")
         .define("DEV_NO_INTRN_PTR", "OFF")
         .build_target("in3_bundle")
         .build();
@@ -87,9 +88,7 @@ fn main() {
         env_var("CARGO_MANIFEST_DIR"),
         "pre_generated".into(),
         BINDINGS_FILE.into(),
-    ]
-    .iter()
-    .collect();
+    ].iter().collect();
 
     let out_bindings_path = PathBuf::from(env_var("OUT_DIR")).join(BINDINGS_FILE);
 
