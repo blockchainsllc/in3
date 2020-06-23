@@ -1,0 +1,63 @@
+[
+    {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+            "txid": "1427c7d1698e61afe061950226f1c149990b8c1e1b157320b0c4acf7d6b5605d",
+            "hash": "371d1b497b6a9930b1f40c30ea18df4027bf452bb312c5945648d85d1f56dad5",
+            "version": 2,
+            "size": 225,
+            "vsize": 143,
+            "weight": 570,
+            "locktime": 633980,
+            "vin": [
+                {
+                    "txid": "7c6c587fa6c48cd3d4f10e5d23fe63ec2d159eca61f08567293023846f29baad",
+                    "vout": 0,
+                    "scriptSig": {
+                        "asm": "",
+                        "hex": ""
+                    },
+                    "txinwitness": [
+                        "3045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e7801",
+                        "035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c"
+                    ],
+                    "sequence": 4294967294
+                }
+            ],
+            "vout": [
+                {
+                    "value": 0.5,
+                    "n": 0,
+                    "scriptPubKey": {
+                        "asm": "OP_HASH160 e9f20f1225a9528739495649405861ae5d77ba1e OP_EQUAL",
+                        "hex": "a914e9f20f1225a9528739495649405861ae5d77ba1e87",
+                        "reqSigs": 1,
+                        "type": "scripthash",
+                        "addresses": [
+                            "3P21LnWRCWp92mPNuY2HWvbi4JFrLx1Kwr"
+                        ]
+                    }
+                },
+                {
+                    "value": 0.98552092,
+                    "n": 1,
+                    "scriptPubKey": {
+                        "asm": "OP_HASH160 1abf9a43d3a56f06930b95b1a8f0161bc0b0c9be OP_EQUAL",
+                        "hex": "a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be87",
+                        "reqSigs": 1,
+                        "type": "scripthash",
+                        "addresses": [
+                            "348T2K7sdJSH6zdgvdan5pxqmDfg5zSYxK"
+                        ]
+                    }
+                }
+            ],
+            "hex": "02000000000101adba296f842330296785f061ca9e152dec63fe235d0ef1d4d38cc4a67f586c7c0000000000feffffff0280f0fa020000000017a914e9f20f1225a9528739495649405861ae5d77ba1e871cc9df050000000017a9141abf9a43d3a56f06930b95b1a8f0161bc0b0c9be8702483045022100a1c74e429c4e40ef90d915556ce4b54a9aa4a83872622d0dbbaca3029f07f2d802204d99cd230b2e1d7378401d502cf589227272173f93b3ccc4aed6f97988067e780121035ad17694971c7dadab72369ab2444e355ae7d17ed8fba67aab80da9a3556d37c7cac0900",
+            "blockhash": "0000000000000000000cd3c5d7638014e78a5fba33be5fa5cb10ef9f03d99e60",
+            "confirmations": 17,
+            "time": 1591782412,
+            "blocktime": 1591782412
+        }
+    }
+]

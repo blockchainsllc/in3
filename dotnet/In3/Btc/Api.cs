@@ -83,7 +83,7 @@ namespace In3.Btc
         }
 
         /// <summary>
-        /// Retrieves the block including the full transaction data. Use <see cref="Api.GetBlockWithTxIds" /> for only the transaction ids. 
+        /// Retrieves the block including the full transaction data. Use <see cref="Api.GetBlockWithTxIds" /> for only the transaction ids.
         /// </summary>
         /// <param name="blockHash">The hash of the Block.</param>
         /// <returns>The block of type <see cref="Block{Transaction}"/>.</returns>
@@ -100,7 +100,7 @@ namespace In3.Btc
         }
 
         /// <summary>
-        /// Retrieves the block including only transaction ids. Use <see cref="Api.GetBlockWithTxData" /> for the full transaction data. 
+        /// Retrieves the block including only transaction ids. Use <see cref="Api.GetBlockWithTxData" /> for the full transaction data.
         /// </summary>
         /// <param name="blockHash">The hash of the Block.</param>
         /// <returns>The block of type <see cref="Block{String}"/>.</returns>
