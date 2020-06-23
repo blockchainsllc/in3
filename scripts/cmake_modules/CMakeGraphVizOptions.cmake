@@ -1,2 +1,2 @@
-set(GRAPHVIZ_IGNORE_TARGETS   .*_o;test.*)
+set(GRAPHVIZ_IGNORE_TARGETS   .*_o;test.*;.*runner;junit)
 set(GRAPHVIZ_GRAPH_NAME OVERVIEW)

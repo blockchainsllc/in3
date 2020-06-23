@@ -1,8 +1,15 @@
-### build examples
+### Build Examples
 
+
+To setup and run the example projects, simply run on the respective project folder:
 
 ```sh
-dotnet add package Slockit.In3
+dotnet run
 ```
 
-TODO explain how to set up example-projects
+To build all of them, on the solution folder, run:
+
+```sh
+dotnet build
+```
+
