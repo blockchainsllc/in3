@@ -1,14 +1,12 @@
 //! Errors used throughout the library.
-use core::fmt;
 use core::result;
-use std::{convert, ffi};
+use std::convert;
 
 use in3_sys::in3_ret_t::*;
 
 macro_rules! in3_error_def {
     ( $( $( #[$attr:meta] )* => $rust_variant:ident = $cs_variant:ident; )* ) => {
         #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-
         pub enum Error {
             $(
                 $(
@@ -70,27 +68,6 @@ in3_error_def!(
 #[must_use]
 pub type In3Result<T> = result::Result<T, Error>;
 
-impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.description())
-    }
-}
-
-impl Error {
-    fn description(&self) -> &str {
-        use self::Error::*;
-        match self {
-            CustomError(ref msg) => msg,
-            UnknownIn3Error => "Unknown error",
-            _ => unsafe {
-                ffi::CStr::from_ptr(in3_sys::in3_errmsg(self.into()))
-                    .to_str()
-                    .unwrap()
-            },
-        }
-    }
-}
-
 impl convert::From<serde_json::error::Error> for Error {
     fn from(_: serde_json::error::Error) -> Self {
         Self::DataInvalid
@@ -126,7 +103,7 @@ mod tests {
         ];
 
         for error in errors.iter() {
-            println!("{}", error);
+            println!("{:?}", error);
         }
     }
 }

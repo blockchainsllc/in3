@@ -135,7 +135,7 @@ fn sign_tx_rpc() {
     let req_str = serde_json::to_string(&rpc_req).unwrap(); // Serialize `Request` impl cannot fail
     match task::block_on(c.rpc(&req_str)) {
         Ok(res) => println!("RESPONSE > {:?}, {:?}\n\n", req_str, res),
-        Err(err) => println!("Failed with error: {}\n\n", err),
+        Err(err) => println!("Failed with error: {:?}\n\n", err),
     }
 }
 
