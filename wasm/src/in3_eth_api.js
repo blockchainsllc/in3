@@ -355,7 +355,7 @@ class EthAPI {
             switch (def.type) {
                 case 'function':
                     const signature = def.name + createSignature(def.inputs)
-                    const sigReturn = signature + createSignature(def.outnputs)
+                    const sigReturn = signature + createSignature(def.outputs)
                     ob.methods[def.name] = (...args) => ({
                         call: (options, block) => api.callFn(address, sigReturn, ...args, block || 'latest')
                             .then(r => {
