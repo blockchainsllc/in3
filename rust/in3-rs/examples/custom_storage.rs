@@ -12,7 +12,7 @@ struct FsStorage<'a> {
 
 impl FsStorage<'_> {
     fn new(dir: &str) -> FsStorage {
-        fs::create_dir_all(dir).unwrap();
+        fs::create_dir_all(dir).expect(format!("failed to create {}", dir).as_str());
         FsStorage { dir }
     }
 }
@@ -28,12 +28,12 @@ impl Storage for FsStorage<'_> {
 
     fn set(&mut self, key: &str, value: &[u8]) {
         println!("FsStorage log: set {}", key);
-        fs::write(format!("{}/{}", self.dir, key), value).expect("Unable to write file");
+        fs::write(format!("{}/{}", self.dir, key), value).expect("unable to write file");
     }
 
     fn clear(&mut self) {
         println!("FsStorage log: clear");
-        fs::remove_dir_all(format!("{}", self.dir)).unwrap();
+        fs::remove_dir_all(format!("{}", self.dir)).expect(format!("failed to remove {}", self.dir).as_str());
     }
 }
 

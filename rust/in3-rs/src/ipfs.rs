@@ -3,7 +3,7 @@ use base64::{decode, DecodeError, encode};
 use serde_json::json;
 
 use crate::error::{Error, In3Result};
-use crate::json_rpc::{rpc, Request};
+use crate::json_rpc::{Request, rpc};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
@@ -42,7 +42,7 @@ impl Api {
                 params: json!([encode(content.0), "base64"]),
             },
         )
-        .await
+            .await
     }
 
     /// Returns the IPFS content associated with specified multihash.
@@ -58,9 +58,9 @@ impl Api {
                     params: json!([hash, "base64"]),
                 },
             )
-            .await?,
+                .await?,
         )?
-        .into())
+            .into())
     }
 }
 
@@ -89,7 +89,8 @@ mod tests {
                 r#"[{"jsonrpc":"2.0","id":1,"result":"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"}]"#,
             )],
         }));
-        let hash = task::block_on(api.put("Lorem ipsum dolor sit amet".as_bytes().into())).unwrap();
+        let hash = task::block_on(api.put("Lorem ipsum dolor sit amet".as_bytes().into()))
+            .expect("IPFS put failed");
         Ok(assert_eq!(
             hash,
             "QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"
@@ -109,7 +110,7 @@ mod tests {
         }));
         let data =
             task::block_on(api.get("QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8".to_string()))
-                .unwrap();
+                .expect("IPFS get failed");
         Ok(assert_eq!(
             data,
             "Lorem ipsum dolor sit amet".as_bytes().into()
