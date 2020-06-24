@@ -127,7 +127,7 @@ public class ClientConfiguration implements Configuration {
     * if true, the first request (updating the nodelist) will also fetch the current health status
     * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
     */
-  public void setBootWeights(boolean valuee) {
+  public void setBootWeights(boolean value) {
     this.bootWeights = value;
   }
 
