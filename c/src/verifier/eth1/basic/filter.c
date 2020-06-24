@@ -286,6 +286,7 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
         sb_t* sb_req = sb_new("{\"method\":\"eth_getLogs\",\"params\":[");
         sb_add_chars(sb_req, fopt_);
         sb_add_chars(sb_req, "]}");
+        _free(fopt_);
         char* req = sb_req->data;
         _free(sb_req);
         return ctx_add_required(ctx, ctx_new(ctx->client, req));
