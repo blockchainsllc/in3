@@ -69,14 +69,21 @@ rust_valgrind:
     IN3_MODE: "DEBUG"
     VALGRIND_OPTS: "-v -q --num-callers=50  --main-stacksize=4000 --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
   script:
+    - export RUST_BACKTRACE=1
+    - mkdir -p rust/in3-sys/in3-core/c
+    - cp -r c/CMakeLists.txt c/macro.cmake c/compiler.cmake c/docs c/src c/include rust/in3-sys/in3-core/c/
+    - cp CMakeLists.txt rust/in3-sys/in3-core/
+    - export UPDATE_IN3_BINDINGS=1
     - cd rust
-    - export CARGO_MANIFEST_DIR=.
     - export IN3_MODE="DEBUG"
     - export RUST_TEST_THREADS=1
+    - export IN3_MODE="RELEASE"
     - cargo test test_eth_api
+    - export CARGO_MANIFEST_DIR=.
+    - export IN3_MODE="DEBUG"
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - export "executable=`basename target/debug/in3-*`"
-    - valgrind $VALGRIND_OPTS target/debug/$executable
+    - valgrind $VALGRIND_OPTS target/debug/$executable test_eth_api
   tags:
     - long-jobs
 
@@ -92,7 +99,7 @@ rust:
     - export UPDATE_IN3_BINDINGS=1
     - export IN3_MODE="RELEASE"
     - cargo run --example custom_transport --release
-    - RUST_TEST_THREADS=1 cargo test -- --nocapture
+    - RUST_TEST_THREADS=1 cargo test
   needs: []
   tags:
     - mac-mini-runner
