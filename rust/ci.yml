@@ -81,6 +81,7 @@ rust_valgrind:
 
 
 rust:
+  image: docker.slock.it/build-images/cmake:rust
   stage: bindings
   script:
     - export RUST_BACKTRACE=1
