@@ -43,11 +43,11 @@ impl MockJsonTransport {
         let u = serde_json::from_reader(reader)?;
         Ok(u)
     }
-    fn get_mock_dir(&mut self) -> & str {
+    fn get_mock_dir(&mut self) -> &str {
         let in3_mod = self.env_var("IN3_MODE");
         match in3_mod == "DEBUG" {
-            true => return  MOCK_DIR_DEBUG, 
-            _ => return MOCK_DIR_RELEASE
+            true => return MOCK_DIR_DEBUG,
+            _ => return MOCK_DIR_RELEASE,
         }
     }
     fn find_json_file(&mut self, name: String) -> Option<String> {

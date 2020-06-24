@@ -115,7 +115,6 @@ impl Ctx {
                 }
             }
             in3_sys::in3_ret_t::IN3_OK => {
-                
                 // if (*self.ptr).response_context == std::ptr::null_mut() {
                 //     // let result = *((*(*self.ptr).raw_response.offset(0)).result).data;
                 //     // let data = ffi::CStr::from_ptr(result as *const i8).to_str()

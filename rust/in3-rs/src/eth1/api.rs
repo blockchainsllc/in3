@@ -940,7 +940,6 @@ mod tests {
         Ok(())
     }
 
-
     #[test]
     fn test_eth_api_get_filter_changes() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
