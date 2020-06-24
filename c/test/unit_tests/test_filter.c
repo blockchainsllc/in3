@@ -223,21 +223,16 @@ static void test_filter_changes() {
     c->chains[i].nodelist_upd8_params = NULL;
   }
 
-  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 1, NULL));
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
-  TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
-  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 10, NULL));
-  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 0, NULL));
-  TEST_ASSERT_TRUE(filter_remove(c, 1));
-
-  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
-  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, filter_get_changes(ctx, 1, NULL));
+  char *result = NULL, *error = NULL;
 
   add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
-  TEST_ASSERT_EQUAL(1, eth_newBlockFilter(c));
-  ctx_free(ctx);
-
+  TEST_ASSERT_GREATER_THAN(0, eth_newBlockFilter(c));
+  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x5\"]", &result, &error));
+  _free(error);
+  add_response("eth_blockNumber", "[]", "\"0x84cf58\"", NULL, NULL);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_EQUAL_STRING("[]", result);
+  _free(result);
   add_response("eth_getBlockByNumber",
                "[\"0x84cf59\",false]",
                "{"
@@ -269,23 +264,17 @@ static void test_filter_changes() {
                NULL);
   add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
 
-  ctx          = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  sb_t* result = sb_new("");
-  TEST_ASSERT_EQUAL(IN3_OK, filter_get_changes(ctx, 1, result));
-  TEST_ASSERT_EQUAL_STRING("[\"0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9\"]", result->data);
-  ctx_free(ctx);
-  sb_free(result);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_EQUAL_STRING("[\"0xf407f59e59f35659ebf92b7c51d7faab027b3217144dd5bce9fc5b42de1e1de9\"]", result);
+  _free(result);
 
-  add_response("eth_blockNumber", "[]", "\"0x84cf60\"", NULL, NULL);
-  TEST_ASSERT_EQUAL(2, eth_newBlockFilter(c));
-  add_response("eth_blockNumber", "[]", "\"0x84cf60\"", NULL, NULL);
-  ctx    = ctx_new(c, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}");
-  result = sb_new("");
-  TEST_ASSERT_EQUAL(IN3_OK, filter_get_changes(ctx, 2, result));
-  TEST_ASSERT_EQUAL_STRING("[]", result->data);
-  ctx_free(ctx);
+  add_response("eth_blockNumber", "[]", "\"0x84cf59\"", NULL, NULL);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_client_rpc(c, "eth_getFilterChanges", "[\"0x1\"]", &result, &error));
+  TEST_ASSERT_EQUAL_STRING("[]", result);
+  _free(result);
+
+  TEST_ASSERT_TRUE(filter_remove(c, 1));
   in3_free(c);
-  sb_free(result);
 }
 
 /*
@@ -295,10 +284,10 @@ int main() {
   in3_log_set_quiet(true);
   TESTS_BEGIN();
   in3_register_eth_basic();
+  RUN_TEST(test_filter_changes);
   RUN_TEST(test_filter);
   RUN_TEST(test_filter_opt_validation);
   RUN_TEST(test_filter_from_block_manip);
   RUN_TEST(test_filter_creation);
-  RUN_TEST(test_filter_changes);
   return TESTS_END();
 }
