@@ -109,7 +109,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
 
 /** called to see if we can handle the request internally */
 in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  if (ctx->len > 1) return IN3_OK; // internal handling is only possible for single requests (at least for now)
+  if (ctx->len > 1) return ctx_set_error(ctx, "bulk-request are not yet supported", IN3_ENOTSUP); // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
   // check method to handle internally
