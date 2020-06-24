@@ -4,7 +4,7 @@ use std::convert::TryInto;
 use std::ffi;
 use std::str;
 
-use libc::{c_char, strlen};
+use libc::{c_char};
 use rustc_hex::FromHex;
 
 use async_trait::async_trait;
