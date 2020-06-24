@@ -41,7 +41,7 @@
 #include "signer-priv.h"
 
 /**  in3 utiliy to sign the given data with give private key with option to hash data or not */
-in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint8_t* dst) {
+in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, const uint8_t* pk, uint8_t* dst) {
   switch (type) {
     case SIGN_EC_RAW:
       return ec_sign_pk_raw(message.data, pk, dst);
@@ -54,14 +54,14 @@ in3_ret_t ec_sign_pk(d_signature_type_t type, bytes_t message, uint8_t* pk, uint
 }
 
 /** hash data with given hasher type and sign the given data with give private key*/
-in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, uint8_t* pk, hasher_t hasher, uint8_t* dst) {
+in3_ret_t ec_sign_pk_hash(uint8_t* message, size_t len, const uint8_t* pk, hasher_t hasher, uint8_t* dst) {
   if (hasher == hasher_sha3k && ecdsa_sign(&secp256k1, HASHER_SHA3K, pk, message, len, dst, dst + 64, NULL) < 0)
     return IN3_EUNKNOWN;
   return IN3_OK;
 }
 
 /**  sign the given data with give private key */
-in3_ret_t ec_sign_pk_raw(uint8_t* message, uint8_t* pk, uint8_t* dst) {
+in3_ret_t ec_sign_pk_raw(uint8_t* message, const uint8_t* pk, uint8_t* dst) {
   if (ecdsa_sign_digest(&secp256k1, pk, message, dst, dst + 64, NULL) < 0)
     return IN3_EUNKNOWN;
   return IN3_OK;

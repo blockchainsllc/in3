@@ -55,7 +55,7 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    unsafe fn signc(&mut self, data: *const c_char, len: usize) -> Bytes {
+    unsafe fn signc(&mut self, data: *const c_char, len: usize, pk_:*mut u8) -> Bytes {
         let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
         signer::signc(pk, data, len)
     }
@@ -67,8 +67,12 @@ impl Ctx {
         let signer = &mut (*c).signer;
         let no_signer = signer.is_none();
         if no_signer {
+            let wallet = &mut (*c).wallet;
+            let pk = wallet.as_ref().unwrap();// cannot fail as wallet is string
+            let pk_ = pk.as_str();
+            let pk_data = pk_.as_ptr() as *mut u8;
             let c_data = msg.0.as_ptr() as *const c_char;
-            let sig = self.signc(c_data, msg.0.len());
+            let sig = self.signc(c_data, msg.0.len(), pk_data);
             return sig;
         } else if let Some(signer) = &mut (*c).signer {
             let sig = signer.sign(msg);
@@ -230,6 +234,8 @@ pub struct Client {
     signer: Option<Box<dyn Signer>>,
     /// Storage implementation
     storage: Option<Box<dyn Storage>>,
+    /// private key wallet,
+    wallet: Option<String>,
 }
 
 #[async_trait(? Send)]
@@ -407,8 +413,12 @@ impl ClientTrait for Client {
 
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
-            let c_data = data.as_ptr() as *mut libc::c_char;
-            in3_sys::eth_set_pk_signer_hex(self.ptr, c_data);
+            self.wallet = Some(String::from(data));
+            // let c_data = data.as_ptr() as *mut libc::c_char;
+            // in3_sys::eth_set_pk_signer_hex(self.ptr, c_data);
+            let pk_ = Client::hex_to_bytes(data);
+            in3_sys::eth_set_pk_signer(self.ptr,  pk_);
+            
             
         }
     }
@@ -433,6 +443,7 @@ impl Client {
                 transport: Box::new(HttpTransport {}),
                 signer: None,
                 storage: None,
+                wallet: None,
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
