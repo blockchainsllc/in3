@@ -90,6 +90,18 @@ namespace In3.Configuration
         }
 
         /// <summary>
+        /// if true, the first request (updating the nodelist) will also fetch the current health status
+        ///  and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+        /// </summary>
+        /// <value></value>
+        [JsonPropertyName("bootWeights")]
+        public bool BootWeights
+        {
+            get => (bool)GetState("bootWeights");
+            set => SetState("bootWeights", value);
+        }
+
+        ///         /// <summary>
         /// Code is included when sending eth_call-requests.
         /// </summary>
         /// <value>If <see langword="true"/>, every request with the address field will include the data, if existent, that is stored in that wallet/smart-contract. If <see langword="false"/>, only the code digest is included.</value>

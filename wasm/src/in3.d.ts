@@ -84,6 +84,14 @@ export declare interface IN3Config {
     includeCode?: boolean
 
     /**
+    * if true, the first request (updating the nodelist) will also fetch the current health status
+    * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+    * 
+    * default: false
+    */
+    bootWeights?: boolean
+
+    /**
      * max number of attempts in case a response is rejected.
      * Incubed will retry to find a different node giving a verified response.
      * 

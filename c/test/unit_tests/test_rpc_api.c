@@ -70,6 +70,7 @@ static void test_in3_config() {
      \"autoUpdateList\":true,\
      \"finality\":50,\
      \"includeCode\":true,\
+     \"bootWeights\":true,\
      \"maxAttempts\":99,\
      \"maxBlockCache\":98,\
      \"maxCodeCache\":97,\

@@ -230,6 +230,14 @@ static void test_configure_validation() {
   TEST_ASSERT_CONFIGURE_PASS(c, "{\"includeCode\":true}");
   TEST_ASSERT_EQUAL(FLAGS_INCLUDE_CODE, c->flags & FLAGS_INCLUDE_CODE);
 
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: bootWeights", c, "{\"bootWeights\":1}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: bootWeights", c, "{\"bootWeights\":\"1\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_FAIL("mismatched type: bootWeights", c, "{\"bootWeights\":\"0x00000\"}", "expected boolean");
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"bootWeights\":true}");
+  TEST_ASSERT_EQUAL(FLAGS_BOOT_WEIGHTS, c->flags & FLAGS_BOOT_WEIGHTS);
+  TEST_ASSERT_CONFIGURE_PASS(c, "{\"includeCode\":false}");
+  TEST_ASSERT_EQUAL(0, c->flags & FLAGS_BOOT_WEIGHTS);
+
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"-1\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"0x123412341234\"}", "expected uint16");
   TEST_ASSERT_CONFIGURE_FAIL("mismatched type: maxAttempts", c, "{\"maxAttempts\":\"value\"}", "expected uint16");

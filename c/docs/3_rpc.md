@@ -35,6 +35,9 @@ The config params support the following properties :
 * **includeCode** :`bool` *(optional)*  - if true, the request should include the codes of all accounts. otherwise only the the codeHash is returned. In this case the client may ask by calling eth_getCode() afterwards.
     example: true
 
+* **bootWeights** :`bool` *(optional)*  - if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+    example: true
+
 * **maxAttempts** :`uint16_t` *(optional)*  - max number of attempts in case a response is rejected.
     example: 10
 

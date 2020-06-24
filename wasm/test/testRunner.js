@@ -168,6 +168,7 @@ async function runSingleTest(test, c) {
         requestCount: config.requestCount || 1,
         autoUpdateList: false,
         includeCode: true,
+        bootWeights: false,
         proof: test.proof || 'standard',
         chainId: test.chainId || '0x1',
         autoUpdateList: false,
