@@ -89,6 +89,7 @@ rust:
     - cp CMakeLists.txt rust/in3-sys/in3-core/
     - cd rust/
     - export UPDATE_IN3_BINDINGS=1
+    - export IN3_MODE="DEBUG"
     - cargo run --example custom_transport --release
     - RUST_TEST_THREADS=1 cargo test
   needs: []
