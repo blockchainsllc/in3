@@ -55,9 +55,9 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    unsafe fn signc(&mut self, data: *const c_char, len: usize) -> Bytes {
-        let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        signer::signc(pk, data, len)
+    unsafe fn signc(&mut self, data: *const c_char, len: usize, _pk:*mut u8) -> Bytes {
+        // let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
+        signer::signc(_pk, data, len)
     }
 
     async unsafe fn sign(&mut self, msg: Bytes) -> Bytes{
@@ -67,8 +67,10 @@ impl Ctx {
         let signer = &mut (*c).signer;
         let no_signer = signer.is_none();
         if no_signer {
+            let wallet = &mut (*c).wallet;
+            // let pk_data = pk_.as_ptr() as *mut u8;
             let c_data = msg.0.as_ptr() as *const c_char;
-            let sig = self.signc(c_data, msg.0.len());
+            let sig = self.signc(c_data, msg.0.len(), wallet.as_mut_ptr());
             return sig;
         } else if let Some(signer) = &mut (*c).signer {
             let sig = signer.sign(msg);
@@ -230,6 +232,8 @@ pub struct Client {
     signer: Option<Box<dyn Signer>>,
     /// Storage implementation
     storage: Option<Box<dyn Storage>>,
+    /// private key wallet,
+    wallet: [u8;65],
 }
 
 #[async_trait(? Send)]
@@ -407,12 +411,13 @@ impl ClientTrait for Client {
 
     fn set_pk_signer(&mut self, data: &str) {
         unsafe {
-            let pk_ = Client::hex_to_bytes(data);
-            // let mut data_ = data.as_ptr();
-            // in3_sys::eth_set_pk_signer_hex(self.ptr,  data.as_ptr() as *mut libc::c_char);
-            in3_sys::eth_set_pk_signer(self.ptr,  pk_);
-            // libc::free(pk_ as *mut core::ffi::c_void);
-
+            // self.wallet = Some(String::from(data));
+            // let c_data = data.as_ptr() as *mut libc::c_char;
+            // in3_sys::eth_set_pk_signer_hex(self.ptr, c_data);
+            // let mut w:[0u8;65];
+            Client::hex_to_bytes(data, & mut self.wallet);
+            // self.wallet = Some(w);
+            in3_sys::eth_set_pk_signer(self.ptr,  self.wallet.as_mut_ptr());
         }
     }
 }
@@ -436,6 +441,7 @@ impl Client {
                 transport: Box::new(HttpTransport {}),
                 signer: None,
                 storage: None,
+                wallet: [0u8; 65],
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
@@ -539,14 +545,13 @@ impl Client {
         in3_sys::in3_ret_t::IN3_OK
     }
 
-    unsafe fn hex_to_bytes(data: &str) -> *mut u8 {
+    unsafe fn hex_to_bytes(data: &str, dst: & mut [u8;65]){
         let c_str_data = CString::new(data).unwrap(); // cannot fail since data is a string
         let c_data: *const c_char = c_str_data.as_ptr();
-        let out: *mut u8 = libc::malloc(strlen(c_data) as usize) as *mut u8;
         let len: i32 = -1;
-        in3_sys::hex_to_bytes(c_data, len, out, 32);
-        out
+        in3_sys::hex_to_bytes(c_data, len, dst.as_mut_ptr(), 32);
     }
+
 }
 
 impl Drop for Client {
