@@ -64,8 +64,7 @@ rust_arm7:
 
 rust_valgrind:
   image: docker.slock.it/build-images/cmake:rust
-  stage: rust
-  extends: .only_rust
+  stage: analysis
   variables:
     IN3_MODE: "DEBUG"
     VALGRIND_OPTS: "-v -q --num-callers=50  --main-stacksize=4000 --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
@@ -78,10 +77,11 @@ rust_valgrind:
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - export "executable=`basename target/debug/in3-*`"
     - valgrind $VALGRIND_OPTS target/debug/$executable
+  tags:
+    - long-jobs
 
 
 rust:
-  image: docker.slock.it/build-images/cmake:rust
   stage: bindings
   script:
     - export RUST_BACKTRACE=1
@@ -94,6 +94,8 @@ rust:
     - cargo run --example custom_transport --release
     - RUST_TEST_THREADS=1 cargo test -- --nocapture
   needs: []
+  tags:
+    - mac-mini-runner
 
 deploy_rust:
   stage: deploy
