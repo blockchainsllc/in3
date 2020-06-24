@@ -31,5 +31,11 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-add_library(api_utils_o OBJECT api_utils.c)
-add_library(api_utils STATIC $<TARGET_OBJECTS:api_utils_o>)
+
+add_static_library(
+  NAME     api_utils
+  
+  SOURCES 
+    api_utils.c
+
+)

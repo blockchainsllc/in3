@@ -37,6 +37,6 @@
 #include "../../../core/client/client.h"
 
 void      read_bip32_path(uint8_t path_length, const uint8_t* path, uint32_t* bip32_path);
-in3_ret_t eth_ledger_sign_txn(void* ctx, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst);
+in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc);
 void      set_command_params_eth();
 #endif

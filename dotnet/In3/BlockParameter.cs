@@ -28,7 +28,7 @@ namespace In3
         {
             if (block == Latest) return "latest";
             if (block == Earliest || block < -1) return "earliest";
-            return TypesMatcher.BigIntToPrefixedHex(block);
+            return DataTypeConverter.BigIntToPrefixedHex(block);
         }
     }
 }

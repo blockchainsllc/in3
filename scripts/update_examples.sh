@@ -61,21 +61,20 @@ cd ../../scripts
 DOC="../../dotnet/docs/examples.md"
 README="README.md"
 
-cd ../dotnet/examples
+cd ../dotnet/Examples
 
 printf "## Examples\n\n" > $DOC
 printf "# Examples\n\n" > $README
 
-for f in *.cs;
+for f in */;
   do
-    printf "### ${f%%.*}\n\nsource : [in3-c/dotnet/examples/$f](https://github.com/slockit/in3-c/blob/master/dotnet/examples/$f)\n\n" >> $DOC
-    cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $DOC
-    printf "\n\n\`\`\`dotnet\n" >> $DOC
-    cat $f >> $DOC
+    printf "### ${f%/*}\n\nsource : [in3-c/dotnet/Examples/${f%/*}](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/${f%/*}/Program.cs)\n\n" >> $DOC
+    printf "\n\n\`\`\`c#\n" >> $DOC
+    cat ${f%/*}/Program.cs >> $DOC
     printf "\n\`\`\`\n\n" >> $DOC
 
-    printf "\n-  [${f%%.*}](./$f)\n   " >> $README
-    cat $f | grep ^/// | sed "s/\/\/\/ //g" >> $README
+    printf "\n-  [${f%/*}](./${f%/*}/Program.cs)\n" >> $README
+    cat ${f%/*}/Program.cs | grep -v // | sed "s/\/\/\/ //g" >> $README
 done
 
 cat ../../dotnet/docs/build_examples.md_ >> $DOC

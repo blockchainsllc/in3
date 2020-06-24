@@ -100,5 +100,13 @@
         "PAY",
         "ETH_PAY"
     ],
-
+    "mocha.subdirectory": "wasm/test",
+    "mocha.files.glob": "test*.js",
+    "mocha.options": {
+        "timeout": 9999999
+    },
+    "mocha.requires": [],
+    "mocha.env": {
+        "CI": true
+    }
 }

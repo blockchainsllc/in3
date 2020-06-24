@@ -3,6 +3,7 @@ test/bindings/wasm/node_modules/
 **/node_modules/
 **/package-lock.json
 Testing*
+wasm/test/in3
 .in3
 build*/
 _build
@@ -17,6 +18,9 @@ cmake-build-debug/
 .idea/
 .settings/
 # Vim
+python/htmlcov
+wasm/test/.nyc_output
+wasm/test/coverage
 [._]*.s[a-v][a-z]
 [._]*.sw[a-p]
 [._]s[a-rt-v][a-z]
@@ -31,3 +35,4 @@ target/
 .cproject
 rust/in3-sys/in3-core/*
 rust/Cargo.lock
+.overcommit.yml

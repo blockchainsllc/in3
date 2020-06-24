@@ -141,8 +141,15 @@ in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char*
 }
 
 static char* create_rpc_error(uint32_t id, int code, char* error) {
-  char* res = _malloc(strlen(error) + 100);
-  sprintf(res, "{\"id\":%d,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", id, code, error);
+  sb_t* sb = sb_new("{\"id\":");
+  sb_add_int(sb, id);
+  sb_add_chars(sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
+  sb_add_int(sb, code);
+  sb_add_chars(sb, ",\"message\":\"");
+  sb_add_escaped_chars(sb, error);
+  sb_add_chars(sb, "\"}}");
+  char* res = sb->data;
+  _free(sb);
   return res;
 }
 char* in3_client_exec_req(
@@ -210,6 +217,33 @@ in3_signer_t* in3_create_signer(
   signer->sign         = sign;
   signer->prepare_tx   = prepare_tx;
   return signer;
+}
+
+/**
+ * helper function to retrieve the message from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_message(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->message;
+}
+
+/**
+ * helper function to retrieve the account from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_account(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->account;
+}
+
+/**
+ * helper function to retrieve the signature from a in3_sign_ctx_t
+ */
+uint8_t* in3_sign_ctx_get_signature(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->signature;
 }
 
 /**

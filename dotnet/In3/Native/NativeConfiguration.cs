@@ -1,9 +1,7 @@
 using System;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using In3.Configuration;
-using In3.Utils;
 
 namespace In3.Native
 {

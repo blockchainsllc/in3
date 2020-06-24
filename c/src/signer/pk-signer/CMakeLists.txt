@@ -33,16 +33,14 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 
-add_library(pk_signer_o OBJECT signer.c)
-add_library(pk_signer STATIC $<TARGET_OBJECTS:pk_signer_o>)
+add_static_library(
+  NAME     pk_signer 
+  
+  SOURCES 
+    signer.c
 
-if( LEDGER_NANO AND HIDAPI)
-   target_link_libraries(pk_signer eth_nano ledger_signer)
-else()
-   target_link_libraries(pk_signer eth_nano)
-endif()
-
-
-
+  DEPENDS 
+    eth_nano
+)
 
 

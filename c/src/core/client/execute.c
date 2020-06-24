@@ -126,6 +126,7 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
+  if (conf->times) _free(conf->times);
   conf->use_full_proof  = c->proof == PROOF_FULL;
   conf->verification    = VERIFICATION_PROOF;
   conf->times           = _calloc(ctx_nodes_len(ctx->nodes), sizeof(uint32_t));
@@ -140,6 +141,7 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
     const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
     if (res < 0)
       return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
+    if (conf->signers) _free(conf->signers);
     const int node_count  = ctx_nodes_len(signer_nodes);
     conf->signers_length  = node_count;
     conf->signers         = _malloc(sizeof(bytes_t) * node_count);
@@ -160,6 +162,7 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
         }
       }
       if (conf->verified_hashes_length) {
+        if (conf->verified_hashes) _free(conf->verified_hashes);
         conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
         for (int i = 0; i < conf->verified_hashes_length; i++)
           conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
@@ -229,7 +232,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
     if ((t = d_get(request_token, K_PARAMS)) == NULL)
       sb_add_key_value(sb, "params", "[]", 2, false);
     else {
-      //TODO this only works with JSON!!!!
+      if (d_is_binary_ctx(c->request_context)) return ctx_set_error(c, "only text json input is allowed", IN3_EINVAL);
       const str_range_t ps = d_to_json(t);
       if (msg_hash) add_token_to_hash(msg_hash, t);
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
@@ -342,9 +345,6 @@ static uint16_t update_waittime(uint64_t nodelist_block, uint64_t current_blk, u
 static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t* response_in3, node_match_t* node) {
   if ((ctx->client->flags & FLAGS_AUTO_UPDATE_LIST) == 0) return;
 
-  // for now we do not support it yet
-  if (chain->chain_id == ETH_CHAIN_ID_BTC) return;
-
   if (d_get_longk(response_in3, K_LAST_NODE_LIST) > d_get_longk(response_in3, K_CURRENT_BLOCK)) {
     // this shouldn't be possible, so we ignore this lastNodeList and do NOT try to update the nodeList
     return;
@@ -369,6 +369,13 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
 
 static inline bool is_blacklisted(const node_match_t* node_weight) { return node_weight && node_weight->weight == NULL; }
 
+static bool is_user_error(d_token_t* error) {
+  char* err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
+  // here we need to find a better way to detect user errors
+  // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
+  return err_msg && strncmp(err_msg, "Error:", 6) != 0;
+}
+
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
   node_match_t* node = ctx->nodes;
 
@@ -390,12 +397,15 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     // since nodes_count was detected before, this should not happen!
 
-    if (response[n].error.len || !response[n].result.len)
+    if (response[n].error.len || !response[n].result.len) {
       blacklist_node(node);
-    else {
+      ctx_set_error(ctx, response[n].error.len ? response[n].error.data : "no response from node", IN3_ERPC);
+    } else {
       // we need to clean up the previos responses if set
+      if (ctx->error) _free(ctx->error);
       if (ctx->responses) _free(ctx->responses);
       if (ctx->response_context) json_free(ctx->response_context);
+      ctx->error = NULL;
 
       if (node && node->weight) node->weight->blacklisted_until = 0;                            // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
       in3_ret_t res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len); // parse the result
@@ -443,13 +453,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
             // if we don't have a result, the node reported an error
             // since we don't know if this error is our fault or the server fault,we don't blacklist the node, but retry
             ctx->verification_state = IN3_ERPC;
-            d_token_t* error        = d_get(ctx->responses[i], K_ERROR);
-            char*      err_msg      = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
-            // this is a workaround to check whether this is
-            if (err_msg && strncmp(err_msg, "Error:", 6) == 0)
-              blacklist_node(node);
+            if (is_user_error(d_get(ctx->responses[i], K_ERROR)))
+              node->weight = NULL; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
             else
-              node->weight = NULL;
+              blacklist_node(node);
             break;
           } else if (verifier) {
             res = ctx->verification_state = verifier->verify(&vc);
@@ -460,6 +467,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
               break;
             }
           } else
+            // no verifier - nothing to verify
             ctx->verification_state = IN3_OK;
         }
       }
@@ -649,20 +657,23 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
         }
         case CT_SIGN: {
           if (ctx->client->signer) {
-            d_token_t*    params = d_get(ctx->requests[0], K_PARAMS);
-            const bytes_t data   = d_to_bytes(d_get_at(params, 0));
-            const bytes_t from   = d_to_bytes(d_get_at(params, 1));
-            if (!data.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
-            if (!from.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+            d_token_t*     params = d_get(ctx->requests[0], K_PARAMS);
+            in3_sign_ctx_t sign_ctx;
+            sign_ctx.message = d_to_bytes(d_get_at(params, 0));
+            sign_ctx.account = d_to_bytes(d_get_at(params, 1));
+            sign_ctx.type    = SIGN_EC_HASH;
+            sign_ctx.ctx     = ctx;
+            sign_ctx.wallet  = ctx->client->signer->wallet;
+            if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+            if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
             ctx->raw_response = _malloc(sizeof(in3_response_t));
             sb_init(&ctx->raw_response[0].error);
             sb_init(&ctx->raw_response[0].result);
             in3_log_trace("... request to sign ");
-            uint8_t sig[65];
-            res = ctx->client->signer->sign(ctx, SIGN_EC_HASH, data, from, sig);
+            res = ctx->client->signer->sign(&sign_ctx);
             if (res < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, res);
-            sb_add_range(&ctx->raw_response->result, (char*) sig, 0, 65);
+            sb_add_range(&ctx->raw_response->result, (char*) sign_ctx.signature, 0, 65);
             break;
           } else
             return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
@@ -744,8 +755,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
       // find the verifier
       in3_verifier_t* verifier = in3_get_verifier(chain->type);
-      if (verifier == NULL)
-        return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
+      if (verifier == NULL) return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
 
       // do we need to handle it internaly?
       if (!ctx->raw_response && !ctx->response_context && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
@@ -795,7 +805,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         in3_log_debug("Retrying send request...\n");
         // reset the error and try again
         if (ctx->error) _free(ctx->error);
-        ctx->error = NULL;
+        ctx->error              = NULL;
+        ctx->verification_state = IN3_WAITING;
         // now try again, which should end in waiting for the next request.
         return in3_ctx_execute(ctx);
       } else {

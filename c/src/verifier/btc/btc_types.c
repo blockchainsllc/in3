@@ -71,11 +71,12 @@ in3_ret_t btc_tx_id(btc_tx_t* tx, bytes32_t dst) {
   bytes_t  data;
   uint8_t* start = tx->all.data + (tx->flag ? 6 : 4);
   data.len       = tx->output.len + tx->output.data - start + 8;
-  data.data      = alloca(data.len);
+  data.data      = data.len > 1000 ? _malloc(data.len) : alloca(data.len);
   memcpy(data.data, tx->all.data, 4);                                  // nVersion
   memcpy(data.data + 4, start, data.len - 8);                          // txins/txouts
   memcpy(data.data + data.len - 4, tx->all.data + tx->all.len - 4, 4); //lockTime
 
   btc_hash(data, dst);
+  if (data.len > 1000) _free(data.data);
   return IN3_OK;
 }

@@ -32,10 +32,8 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
-IF (TRANSPORTS)
-    IF (USE_CURL)
-        add_subdirectory(curl)
-    ENDIF()
+IF (USE_CURL)
+    add_subdirectory(curl)
+else ()
     add_subdirectory(http)
-ENDIF (TRANSPORTS)
+ENDIF ()

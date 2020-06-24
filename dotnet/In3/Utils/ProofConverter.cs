@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using In3.Configuration;
 
-namespace csharp.Utils
+namespace In3.Utils
 {
     internal class ProofConverter : JsonConverter<Proof>
     {

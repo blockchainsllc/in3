@@ -19,7 +19,6 @@ pub trait Decode {
     async fn decode(&mut self, fn_sig: &str, data: Bytes) -> In3Result<Value>;
 }
 
-
 /// ABI implementation using IN3 C client's RPC.
 pub struct In3EthAbi {
     in3: Box<Client>,

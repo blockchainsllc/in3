@@ -56,4 +56,9 @@
  */
 in3_ret_t send_http(in3_request_t* req);
 
+/**
+ * registers http as a default transport.
+ */
+void in3_register_http();
+
 #endif // in3_http_h__

@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using In3.Eth1;
+using In3.Native;
 
 namespace In3.Crypto
 {
@@ -60,8 +60,7 @@ namespace In3.Crypto
         public string Sign(string data, string address)
         {
             string key = PrivateKeys[address.ToLower()];
-            SignedData sign = In3.Crypto.SignData(data, key);
-            return sign.Signature;
+            return NativeWallet.Sign(key, data);
         }
 
         /// <summary>

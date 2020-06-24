@@ -1,4 +1,3 @@
-using System;
 using System.Numerics;
 using In3;
 using In3.Crypto;
@@ -75,13 +74,27 @@ namespace Test.Eth1
         }
 
         [Test]
-        public void AbiDecode()
+        public void AbiDecode_arityGreaterThen1()
         {
             IN3 in3 = _builder.ConstructClient(new string[][] { });
 
             string signature = "(address,uint256)";
             string encoded = "0x00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000005";
             string[] expectedDecode = { "0x1234567890123456789012345678901234567890", "0x05" };
+
+            string[] result = in3.Eth1.AbiDecode(signature, encoded);
+
+            Assert.That(result, Is.EqualTo(expectedDecode));
+        }
+
+        [Test]
+        public void AbiDecode_Arity1()
+        {
+            IN3 in3 = _builder.ConstructClient(new string[][] { });
+
+            string signature = "():uint256";
+            string encoded = "0x0000000000000000000000000000000000000000000000000000000000000005";
+            string[] expectedDecode = { "0x05" };
 
             string[] result = in3.Eth1.AbiDecode(signature, encoded);
 
@@ -338,7 +351,7 @@ namespace Test.Eth1
         }
 
         [Test]
-        public void Call()
+        public void Call_1()
         {
             string[][] mockedResponses = {
                 new[] {"eth_call", "eth_call_1.json"}
@@ -357,6 +370,25 @@ namespace Test.Eth1
             Assert.That(res1[1], Is.EqualTo("0xbc0ea09c1651a3d5d40bacb4356fb59159a99564"));
             Assert.That(res1[2], Is.EqualTo("0xffff"));
             Assert.That(res1[3], Is.EqualTo("0xffff"));
+        }
+
+        [Test]
+        public void Call_2()
+        {
+            string[][] mockedResponses = {
+                new[] {"eth_call", "eth_call_2.json"}
+            };
+            IN3 in3 = _builder.ConstructClient(mockedResponses);
+
+            TransactionRequest request = new TransactionRequest();
+            request.To = "0x2736D225f85740f42D17987100dc8d58e9e16252"; ;
+            request.Function = "totalServers():(uint256)";
+            request.Params = new object[] { };
+
+            string[] res1 = (string[])in3.Eth1.Call(request, BlockParameter.Latest);
+
+            Assert.That(res1.Length, Is.EqualTo(1));
+            Assert.That(res1[0], Is.EqualTo("0x05"));
         }
 
         [Test]
@@ -471,8 +503,8 @@ namespace Test.Eth1
             IN3 in3 = _builder.ConstructClient(mockedResponses);
 
             LogFilter filter = new LogFilter();
-            filter.FromBlock = TypesMatcher.HexStringToBigint("0x834B77");
-            filter.ToBlock = TypesMatcher.HexStringToBigint("0x834B77");
+            filter.FromBlock = DataTypeConverter.HexStringToBigint("0x834B77");
+            filter.ToBlock = DataTypeConverter.HexStringToBigint("0x834B77");
             filter.Address = "0xdac17f958d2ee523a2206206994597c13d831ec7";
 
             Log[] response = in3.Eth1.GetLogs(filter);
@@ -506,6 +538,19 @@ namespace Test.Eth1
 
             Assert.That(uncle.Number, Is.EqualTo(new BigInteger(9317998)));
             Assert.That(uncle.Size, Is.EqualTo(37088));
+        }
+
+        [Test]
+        public void Ens()
+        {
+            string[][] mockedResponses = {
+                new[] {"eth_call", "eth_call_3.json"}
+            };
+            IN3 in3 = _builder.ConstructClient(mockedResponses);
+
+            string result = in3.Eth1.Ens("cryptokitties.eth");
+
+            Assert.That(result, Is.EqualTo("0x06012c8cf97bead5deae237070f9587f8e7a266d"));
         }
     }
 }

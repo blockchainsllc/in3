@@ -3,7 +3,7 @@ use std::str;
 
 use libc::c_char;
 use rustc_hex::FromHex;
-use secp256k1::{Message, SecretKey, sign};
+use secp256k1::{sign, Message, SecretKey};
 use sha3::{Digest, Keccak256Full};
 
 use crate::traits::Signer;
@@ -22,7 +22,6 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
     if error < 0 {
         panic!("Sign error{:?}", error);
     }
-    *dst.offset(64) += 27;
     dst
 }
 

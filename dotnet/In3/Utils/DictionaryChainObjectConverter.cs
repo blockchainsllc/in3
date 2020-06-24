@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using In3;
-using In3.Utils;
 
-namespace SystemTextJsonSamples
+namespace In3.Utils
 {
     // This is copied from: https://docs.microsoft.com/en-us/dotnet/api/system.enum.getvalues?view=netframework-4.8
     // I had to narrow down to a more specific case because we dont want a key.ToString in the json writer.
@@ -28,7 +26,7 @@ namespace SystemTextJsonSamples
         }
 
         public override JsonConverter CreateConverter(
-            Type type, 
+            Type type,
             JsonSerializerOptions options)
         {
             Type keyType = type.GetGenericArguments()[0];
@@ -45,7 +43,7 @@ namespace SystemTextJsonSamples
             return converter;
         }
 
-        private class DictionaryEnumConverterInner<Chain, TValue> : 
+        private class DictionaryEnumConverterInner<Chain, TValue> :
             JsonConverter<Dictionary<In3.Chain, TValue>> where Chain : struct
         {
             private readonly JsonConverter<TValue> _valueConverter;
@@ -64,8 +62,8 @@ namespace SystemTextJsonSamples
             }
 
             public override Dictionary<In3.Chain, TValue> Read(
-                ref Utf8JsonReader reader, 
-                Type typeToConvert, 
+                ref Utf8JsonReader reader,
+                Type typeToConvert,
                 JsonSerializerOptions options)
             {
                 if (reader.TokenType != JsonTokenType.StartObject)
@@ -120,15 +118,15 @@ namespace SystemTextJsonSamples
             }
 
             public override void Write(
-                Utf8JsonWriter writer, 
-                Dictionary<In3.Chain, TValue> dictionary, 
+                Utf8JsonWriter writer,
+                Dictionary<In3.Chain, TValue> dictionary,
                 JsonSerializerOptions options)
             {
                 writer.WriteStartObject();
 
                 foreach (KeyValuePair<In3.Chain, TValue> kvp in dictionary)
                 {
-                    writer.WritePropertyName(TypesMatcher.BigIntToPrefixedHex((int) kvp.Key));
+                    writer.WritePropertyName(DataTypeConverter.BigIntToPrefixedHex((int)kvp.Key));
 
                     if (_valueConverter != null)
                     {

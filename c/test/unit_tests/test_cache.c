@@ -83,6 +83,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
   str_range_t json = d_to_json(d_get_at(d_get(d_get_at(res->result, 0), key("response")), 0));
   sb_add_range(&req->results->result, json.data, 0, json.len);
   json_free(res);
+  if (buffer) _free(buffer);
   return IN3_OK;
 }
 #define MAX_ENTRIES 10
@@ -129,8 +130,9 @@ void static setup_test_cache(in3_t* c) {
 }
 
 static void test_cache() {
-  in3_t* c     = in3_for_chain(ETH_CHAIN_ID_GOERLI);
-  c->transport = test_transport;
+  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  c->transport       = test_transport;
+  c->signature_count = 0;
   setup_test_cache(c);
 
   in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_GOERLI);
@@ -171,6 +173,9 @@ static void test_cache() {
   if (ctx->error) printf("ERROR : %s\n", ctx->error);
   TEST_ASSERT(ctx && ctx->error == NULL);
   ctx_free(ctx);
+  in3_free(c);
+  c2->cache = NULL;
+  in3_free(c2);
 }
 
 static void test_newchain() {
@@ -181,7 +186,7 @@ static void test_newchain() {
   c->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
   setup_test_cache(c);
 
-  in3_set_default_storage(c->cache);
+  in3_set_default_storage(c->cache); // the default cache will not be freed when freeing a in3-instance
 
   in3_chain_t* chain = NULL;
   for (int i = 0; i < c->chains_length; i++) {
@@ -236,6 +241,11 @@ static void test_newchain() {
   TEST_ASSERT_EQUAL_INT32(6, chain2->nodelist_length);
   in3_client_clear_nodes(c2, c2->chain_id);
   TEST_ASSERT_EQUAL_INT32(0, chain2->nodelist_length);
+
+  in3_set_default_storage(NULL);
+  in3_free(c);
+  c2->cache = NULL;
+  in3_free(c2);
 }
 
 static void test_scache() {
@@ -249,6 +259,7 @@ static void test_scache() {
   TEST_ASSERT_TRUE(val != NULL && val->len == 5);
   val = in3_cache_get_entry(cache, &v);
   TEST_ASSERT_NULL(val);
+  _free(cache);
 }
 
 static void test_whitelist_cache() {
@@ -308,8 +319,6 @@ static void test_whitelist_cache() {
  * Main
  */
 int main() {
-  TEST_ASSERT_EQUAL(0, mem_stack_size());
-  memstack();
   in3_register_eth_nano();
   in3_log_set_udata_(NULL);
   in3_log_set_lock_(NULL);

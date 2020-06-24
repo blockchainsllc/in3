@@ -43,8 +43,10 @@
 #include "../../c/src/core/util/bitset.h"
 #include "../../c/src/core/util/log.h"
 #include "../../c/src/core/util/mem.h"
+#include "../../c/src/signer/pk-signer/signer.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
 #include "../../c/src/third-party/crypto/secp256k1.h"
+#include "../../c/src/verifier/eth1/basic/eth_basic.h"
 #include "../../c/src/verifier/in3_init.h"
 #ifdef IPFS
 #include "../../c/src/third-party/libb64/cdecode.h"
@@ -60,24 +62,6 @@ static in3_t* get_in3(JNIEnv* env, jobject obj) {
 
 /*
  * Class:     in3_IN3
- * Method:    getCacheTimeout
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getCacheTimeout(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->cache_timeout;
-}
-
-/*s
- * Class:     in3_IN3
- * Method:    setCacheTimeout
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setCacheTimeout(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->cache_timeout = val;
-}
-
-/*
- * Class:     in3_IN3
  * Method:    setConfig
  * Signature: (Ljava/lang/String)V
  */
@@ -86,28 +70,10 @@ JNIEXPORT void JNICALL Java_in3_IN3_setConfig(JNIEnv* env, jobject ob, jstring v
   char*       error       = in3_configure(get_in3(env, ob), json_config);
   (*env)->ReleaseStringUTFChars(env, val, json_config);
   if (error) {
-    // TODO create a human readable error message
     jclass IllegalArgumentException = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
     (*env)->ThrowNew(env, IllegalArgumentException, error);
     _free(error);
   }
-}
-/*
- * Class:     in3_IN3
- * Method:    getNodeLimit
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getNodeLimit(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->node_limit;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setNodeLimit
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setNodeLimit(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->node_limit = val;
 }
 
 /*
@@ -140,206 +106,6 @@ JNIEXPORT void JNICALL Java_in3_IN3_setKey(JNIEnv* env, jobject ob, jbyteArray v
 
 /*
  * Class:     in3_IN3
- * Method:    getMaxCodeCache
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getMaxCodeCache(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->max_code_cache;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMaxCodeCache
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMaxCodeCache(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->max_code_cache = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getMaxBlockCache
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getMaxBlockCache(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->max_block_cache;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMaxBlockCache
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMaxBlockCache(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->max_block_cache = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getProof
- * Signature: ()Lin3/Proof;
- */
-JNIEXPORT jobject JNICALL Java_in3_IN3_getProof(JNIEnv* env, jobject ob) {
-  in3_t*   in3        = get_in3(env, ob);
-  jfieldID val        = NULL;
-  jclass   enum_clazz = (*env)->FindClass(env, "in3/Proof");
-  switch (in3->proof) {
-    case PROOF_NONE:
-      val = (*env)->GetStaticFieldID(env, enum_clazz, "none", "Lin3/Proof;");
-      break;
-    case PROOF_STANDARD:
-      val = (*env)->GetStaticFieldID(env, enum_clazz, "standard", "Lin3/Proof;");
-      break;
-    case PROOF_FULL:
-      val = (*env)->GetStaticFieldID(env, enum_clazz, "full", "Lin3/Proof;");
-      break;
-  }
-  return (*env)->GetStaticObjectField(env, enum_clazz, val);
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setProof
- * Signature: (Lin3/Proof;)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setProof(JNIEnv* env, jobject ob, jobject val) {
-  in3_t* in3        = get_in3(env, ob);
-  jclass enum_clazz = (*env)->FindClass(env, "in3/Proof");
-
-  char* values[] = {"none", "standard", "full"};
-  for (int i = 0; i < 3; i++) {
-    if (val == (*env)->GetStaticObjectField(env, enum_clazz, (*env)->GetStaticFieldID(env, enum_clazz, values[i], "Lin3/Proof;")))
-      in3->proof = i;
-  }
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getRequestCount
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getRequestCount(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->request_count;
-}
-/*
- * Class:     in3_IN3
- * Method:    setRequestCount
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setRequestCount(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->request_count = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getSignatureCount
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getSignatureCount(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->signature_count;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setSignatureCount
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setSignatureCount(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->signature_count = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getMinDeposit
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_in3_IN3_getMinDeposit(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->min_deposit;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMinDeposit
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMinDeposit(JNIEnv* env, jobject ob, jlong val) {
-  get_in3(env, ob)->min_deposit = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getReplaceLatestBlock
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getReplaceLatestBlock(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->replace_latest_block;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getReplaceLatestBlock
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setReplaceLatestBlock(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->replace_latest_block = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getFinality
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getFinality(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->finality;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setFinality
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setFinality(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->finality = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getMaxAttempts
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getMaxAttempts(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->max_attempts;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setMaxAttempts
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setMaxAttempts(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->max_attempts = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getTimeout
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_in3_IN3_getTimeout(JNIEnv* env, jobject ob) {
-  return get_in3(env, ob)->timeout;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setTimeout
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setTimeout(JNIEnv* env, jobject ob, jint val) {
-  get_in3(env, ob)->timeout = val;
-}
-
-/*
- * Class:     in3_IN3
  * Method:    getChainId
  * Signature: ()J
  */
@@ -354,36 +120,6 @@ JNIEXPORT jlong JNICALL Java_in3_IN3_getChainId(JNIEnv* env, jobject ob) {
  */
 JNIEXPORT void JNICALL Java_in3_IN3_setChainId(JNIEnv* env, jobject ob, jlong val) {
   get_in3(env, ob)->chain_id = val;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    isAutoUpdateList
- * Signature: ()Z
- */
-JNIEXPORT jboolean JNICALL Java_in3_IN3_isAutoUpdateList(JNIEnv* env, jobject ob) {
-  return (get_in3(env, ob)->flags & FLAGS_AUTO_UPDATE_LIST) != 0;
-}
-
-/*
- * Class:     in3_IN3
- * Method:    setAutoUpdateList
- * Signature: (Z)V
- */
-JNIEXPORT void JNICALL Java_in3_IN3_setAutoUpdateList(JNIEnv* env, jobject ob, jboolean val) {
-  BITMASK_SET_BOOL(get_in3(env, ob)->flags, FLAGS_AUTO_UPDATE_LIST, val);
-}
-
-/*
- * Class:     in3_IN3
- * Method:    getStorageProvider
- * Signature: ()Lin3/StorageProvider;
- */
-JNIEXPORT jobject JNICALL Java_in3_IN3_getStorageProvider(JNIEnv* env, jobject ob) {
-  in3_t* in3 = get_in3(env, ob);
-  if (in3->cache && in3->cache->cptr)
-    return (jobject) in3->cache->cptr;
-  return NULL;
 }
 
 static JNIEnv* jni = NULL;
@@ -749,22 +485,18 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_getAddressFromKey(JNIEnv* e
  */
 JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_signData(JNIEnv* env, jclass clz, jstring jkey, jstring jdata) {
   UNUSED_VAR(clz);
-  const char* key    = (*env)->GetStringUTFChars(env, jkey, 0);
-  const char* data   = (*env)->GetStringUTFChars(env, jdata, 0);
-  int         data_l = strlen(data) / 2 - 1;
-  uint8_t     key_bytes[32], *data_bytes = alloca(data_l + 1), dst[65];
+  const char* key  = (*env)->GetStringUTFChars(env, jkey, 0);
+  const char* data = (*env)->GetStringUTFChars(env, jdata, 0);
+  jstring     res  = NULL;
 
-  hex_to_bytes((char*) key + 2, -1, key_bytes, 32);
-  data_l      = hex_to_bytes((char*) data + 2, -1, data_bytes, data_l + 1);
-  jstring res = NULL;
+  char* tmp = eth_wallet_sign(key, data);
 
-  if (ecdsa_sign(&secp256k1, HASHER_SHA3K, key_bytes, data_bytes, data_l, dst, dst + 64, NULL) >= 0) {
-    char tmp[133];
-    bytes_to_hex(dst, 65, tmp + 2);
-    tmp[0] = '0';
-    tmp[1] = 'x';
-    res    = (*env)->NewStringUTF(env, tmp);
+  if (tmp != NULL) {
+    res = (*env)->NewStringUTF(env, tmp);
   }
+
+  _free(tmp);
+
   (*env)->ReleaseStringUTFChars(env, jkey, key);
   (*env)->ReleaseStringUTFChars(env, jdata, data);
   return res;
@@ -783,20 +515,20 @@ JNIEXPORT jstring JNICALL Java_in3_eth1_SimpleWallet_decodeKeystore(JNIEnv* env,
   return NULL;
 }
 
-in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
-  in3_ctx_t* ctx = (in3_ctx_t*) pk;
-  UNUSED_VAR(type);
-  jclass    cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
-  jmethodID mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
-  jobject   signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
+//in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t account, uint8_t* dst) {
+in3_ret_t jsign(in3_sign_ctx_t* sc) {
+  in3_ctx_t* ctx    = (in3_ctx_t*) sc->ctx;
+  jclass     cls    = (*jni)->GetObjectClass(jni, ctx->client->cache->cptr);
+  jmethodID  mid    = (*jni)->GetMethodID(jni, cls, "getSigner", "()Lin3/utils/Signer;");
+  jobject    signer = (*jni)->CallObjectMethod(jni, ctx->client->cache->cptr, mid);
 
   if (!signer) return -1;
 
-  char *data = alloca(message.len * 2 + 3), address[43];
+  char *data = alloca(sc->message.len * 2 + 3), address[43];
   data[0] = address[0] = '0';
   data[1] = address[1] = 'x';
-  bytes_to_hex(message.data, message.len, data + 2);
-  bytes_to_hex(account.data, account.len, address + 2);
+  bytes_to_hex(sc->message.data, sc->message.len, data + 2);
+  bytes_to_hex(sc->account.data, sc->account.len, address + 2);
 
   jstring jdata      = (*jni)->NewStringUTF(jni, data);
   jstring jaddress   = (*jni)->NewStringUTF(jni, address);
@@ -806,9 +538,9 @@ in3_ret_t jsign(void* pk, d_signature_type_t type, bytes_t message, bytes_t acco
 
   if (!jsignature) return -2;
   const char* signature = (*jni)->GetStringUTFChars(jni, jsignature, 0);
-  hex_to_bytes((char*) signature, -1, dst, 65);
+  hex_to_bytes((char*) signature, -1, sc->signature, 65);
   (*jni)->ReleaseStringUTFChars(jni, jsignature, signature);
-  return 65;
+  return IN3_OK;
 }
 
 void in3_set_jclient_config(in3_t* c, jobject jclient) {
@@ -975,9 +707,7 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_t* in3 = in3_for_chain(jchain);
-  in3_register_eth_api();
-  in3_log_set_level(LOG_DEBUG);
+  in3_t* in3 = in3_for_chain_auto_init(jchain);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
   in3->transport          = Java_in3_IN3_transport;
   in3->signer             = _malloc(sizeof(in3_signer_t));
