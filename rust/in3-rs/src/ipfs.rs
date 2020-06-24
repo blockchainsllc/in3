@@ -1,9 +1,9 @@
 //! IPFS JSON RPC client API.
-use base64::{decode, DecodeError, encode};
+use base64::{decode, encode, DecodeError};
 use serde_json::json;
 
 use crate::error::{Error, In3Result};
-use crate::json_rpc::{Request, rpc};
+use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
@@ -42,7 +42,7 @@ impl Api {
                 params: json!([encode(content.0), "base64"]),
             },
         )
-            .await
+        .await
     }
 
     /// Returns the IPFS content associated with specified multihash.
@@ -58,9 +58,9 @@ impl Api {
                     params: json!([hash, "base64"]),
                 },
             )
-                .await?,
+            .await?,
         )?
-            .into())
+        .into())
     }
 }
 

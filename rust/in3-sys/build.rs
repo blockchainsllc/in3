@@ -47,7 +47,7 @@ fn write_bindgen_bindings(
             find_in3_header(header_search_paths, "in3.rs.h")
                 .expect("Could not find header")
                 .to_str()
-                .unwrap(),  // unlikely to have non-UTF8 path
+                .unwrap(), // unlikely to have non-UTF8 path
         )
         .disable_name_namespacing()
         .prepend_enum_name(false)

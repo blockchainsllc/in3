@@ -29,7 +29,9 @@ pub trait Signer {
     async fn sign(&mut self, msg: Bytes) -> In3Result<Bytes>;
 
     /// Transforms message before signing. (Optional)
-    async fn prepare(&mut self, msg: Bytes) -> In3Result<Bytes> { Ok(msg) }
+    async fn prepare(&mut self, msg: Bytes) -> In3Result<Bytes> {
+        Ok(msg)
+    }
 }
 
 /// Storage trait methods.
