@@ -356,8 +356,7 @@ namespace Test.Eth1
             string[][] mockedResponses = {
                 new[] {"eth_call", "eth_call_1.json"}
             };
-            //IN3 in3 = _builder.ConstructClient(mockedResponses);
-            IN3 in3 = IN3.ForChain(Chain.Mainnet);
+            IN3 in3 = _builder.ConstructClient(mockedResponses);
 
             TransactionRequest request = new TransactionRequest();
             request.To = "0x2736D225f85740f42D17987100dc8d58e9e16252"; ;

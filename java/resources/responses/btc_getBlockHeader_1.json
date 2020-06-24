@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+            "hash": "0000000000000000000cd3c5d7638014e78a5fba33be5fa5cb10ef9f03d99e60",
+            "confirmations": 13,
+            "height": 634026,
+            "version": 1073676288,
+            "versionHex": "3fff0000",
+            "merkleroot": "0b27b05fb5c9c53f595cf12696daa3ea4fb03ea67e0ffd909a1f2bb6544b63c1",
+            "time": 1591782412,
+            "mediantime": 1591778995,
+            "nonce": 783981944,
+            "bits": "17147f35",
+            "difficulty": 13732352106018.34,
+            "chainwork": "00000000000000000000000000000000000000001038fd1e673c4ff045dbd6c1",
+            "nTx": 1659,
+            "previousblockhash": "00000000000000000013a6ca3921ce63af646ac191c733d9728103d7a9e3236e",
+            "nextblockhash": "0000000000000000000d1e4cf9f6f0a6fa88aa162e08a966bf3043f7f77e21bb"
+        }
+    }
+]

@@ -51,7 +51,7 @@ public class Transaction {
     this.data = data;
   }
 
-  protected static Transaction asTransaction(Object o) {
+  public static Transaction asTransaction(Object o) {
     return o == null ? null : new Transaction((JSON) o);
   }
 

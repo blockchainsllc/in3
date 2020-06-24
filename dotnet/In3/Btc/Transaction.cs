@@ -70,11 +70,11 @@ namespace In3.Btc
         /// <summary>
         /// The transaction inputs.
         /// </summary>
-        [JsonPropertyName("vin")] public object[] Vin { get; set; }
+        [JsonPropertyName("vin")] public TransactionInput[] Vin { get; set; }
 
         /// <summary>
         /// The transaction outputs.
         /// </summary>
-        [JsonPropertyName("vout")] public object[] Vout { get; set; }
+        [JsonPropertyName("vout")] public TransactionOutput[] Vout { get; set; }
     }
 }

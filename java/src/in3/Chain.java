@@ -41,4 +41,8 @@ public final class Chain {
      * use local client 
      */
   public static final long LOCAL = 0xFFFF;
+  /**
+   * use bitcoin client 
+   */
+  public static final long BTC = 0x99;
 }
