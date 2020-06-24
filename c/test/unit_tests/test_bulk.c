@@ -41,8 +41,8 @@
 #include "../../src/core/client/context.h"
 #include "../../src/core/client/keys.h"
 #include "../../src/core/util/data.h"
-#include "../../src/core/util/utils.h"
 #include "../../src/core/util/log.h"
+#include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/full/eth_full.h"
 #include "../../src/verifier/eth1/nano/eth_nano.h"
 
@@ -84,38 +84,36 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
 }
 
 static void test_context_bulk() {
-  in3_t* in3           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3->transport       = test_bulk_transport;
-  in3->flags           = FLAGS_STATS;
+  in3_t* in3     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3->transport = test_bulk_transport;
+  in3->flags     = FLAGS_STATS;
   for (int i = 0; i < in3->chains_length; i++) {
     _free(in3->chains[i].nodelist_upd8_params);
     in3->chains[i].nodelist_upd8_params = NULL;
   }
-  uint64_t blkno = 5;
-  sb_t*      req       = sb_new("[");
-  char params[62] = {0};
+  uint64_t blkno      = 5;
+  sb_t*    req        = sb_new("[");
+  char     params[62] = {0};
   for (uint64_t i = 0; i < blkno; i++) {
-      sprintf(params, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
-      sb_add_chars(req, params);
-      if (i + 1 < blkno)
-          sb_add_chars(req, ",");
+    sprintf(params, "{\"method\":\"eth_getBlockByNumber\",\"params\":[\"0x%" PRIx64 "\", false]}", i);
+    sb_add_chars(req, params);
+    if (i + 1 < blkno)
+      sb_add_chars(req, ",");
   }
   sb_add_chars(req, "]");
   in3_ctx_t* block_ctx = ctx_new(in3, req->data);
-  in3_ret_t ret= in3_send_ctx(block_ctx);
+  in3_ret_t  ret       = in3_send_ctx(block_ctx);
   for (uint64_t i = 0; i < blkno; i++) {
-    d_token_t* hash  = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);
+    d_token_t* hash = d_getl(d_get(block_ctx->responses[i], K_RESULT), K_HASH, 32);
     TEST_ASSERT_NOT_NULL(hash);
-    char       h[67] = "0x";
+    char h[67] = "0x";
     bytes_to_hex(d_bytes(hash)->data, 32, h + 2);
-    in3_log_trace("HASH %s\n", h);  
-  } 
+    in3_log_trace("HASH %s\n", h);
+  }
   ctx_free(block_ctx);
   _free(req);
   in3_free(in3);
 }
-
-
 
 /*
  * Main
@@ -128,6 +126,6 @@ int main() {
   // now run tests
   TESTS_BEGIN();
   //PASSING..
-  RUN_TEST(test_context_bulk);
+  //  RUN_TEST(test_context_bulk);
   return TESTS_END();
 }
