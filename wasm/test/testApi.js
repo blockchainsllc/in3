@@ -308,7 +308,24 @@ describe('API-Tests', () => {
         assert.equal(74573366884515930470n, logs[0].returnValues.wad)
         assert.equal('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', logs[0].address)
 
+        /*
+        const firstEvent = await new Promise((resolve, reject) => {
+            let data = null
+            mockResponse('eth_getLogs', 'weth.Transfer')
+            const ev = weth.events.Transfer({ fromBlock: 10317749, toBlock: 10317749 })
+                .on('error', reject)
+                .once('data', resolve)
+                .on('test', console.log)
+                .off('test', console.log)
 
+            assert.equal(0, ev.listeners.test.length)
+            assert.equal(1, ev.listeners.error.length)
+            assert.equal(1, ev.listeners.data.length)
+        })
+
+        assert.equal('Transfer', firstEvent.event)
+
+*/
     })
 
 
