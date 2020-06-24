@@ -261,7 +261,7 @@ static void init_goerli(in3_chain_t* chain) {
 }
 
 static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
-  c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST;
+  c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST; //| FLAGS_BOOT_WEIGHTS;
   c->cache                = NULL;
   c->signer               = NULL;
   c->cache_timeout        = 0;

@@ -165,7 +165,7 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
     res = curl_easy_perform(curl);
     /* Check for errors */
     if (res != CURLE_OK) {
-      sb_add_chars(&r->error, "curl_easy_perform() failed:");
+      sb_add_chars(&r->error, "request failed:");
       sb_add_chars(&r->error, (char*) curl_easy_strerror(res));
     }
     curl_slist_free_all(headers);

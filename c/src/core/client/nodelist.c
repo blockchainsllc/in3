@@ -118,7 +118,7 @@ NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t
     BIT_CLEAR(n->attrs, ATTR_BOOT_NODE); // nodes are considered boot nodes only until first nodeList update succeeds
 
     if ((ctx->client->flags & FLAGS_BOOT_WEIGHTS) && (t = d_get(node, K_PERFORMANCE))) {
-      weights[i].blacklisted_until   = d_get_longk(t, K_LAST_FAILED) + (24 * 3600);
+      weights[i].blacklisted_until   = d_get_longk(t, K_LAST_FAILED) / 1000 + (24 * 3600);
       weights[i].response_count      = d_get_intk(t, K_COUNT);
       weights[i].total_response_time = d_get_intk(t, K_TOTAL);
     }
