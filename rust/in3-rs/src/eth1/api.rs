@@ -681,7 +681,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_eth_api_get_logs() -> In3Result<()> {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
@@ -690,8 +689,7 @@ mod tests {
         client.set_transport(transport);
         let mut eth_api = Api::new(client);
         let logs: Vec<Log> = task::block_on(eth_api.get_logs(serde_json::json!({
-        "blockHash": "0x468f88ed8b40d940528552f093a11e4eb05991c787608139c931b0e9782ec5af",
-        "topics": ["0xa61b5dec2abee862ab0841952bfbc161b99ad8c14738afa8ed8d5c522cd03946"]
+        "fromBlock":"0x1ca181",
         })))?;
         assert!(logs.len() > 0);
         Ok(())
@@ -950,17 +948,24 @@ mod tests {
         Ok(())
     }
 
-    //FIX: internal blocknumber call issue #367
+
     #[test]
-    #[ignore]
     fn test_eth_api_get_filter_changes() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
-        let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let fid: U256 = (3).into();
+        let mut client = Client::new(chain::MAINNET);
+        let _ = client.configure(config);
+        client.set_transport(transport);
+        let mut eth_api = Api::new(client);
+        let jopts = serde_json::json!({
+            "fromBlock":"0x1ca181"
+        });
+        let fid = task::block_on(eth_api.new_filter(jopts))?;
         let ret: FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
-        println!("{:?}", ret);
-        assert!(true);
+        match ret {
+            FilterChanges::Logs(vec) => assert!(vec.len() > 0),
+            FilterChanges::BlockHashes(vec) => assert!(vec.len() > 0),
+        }
         Ok(())
     }
 

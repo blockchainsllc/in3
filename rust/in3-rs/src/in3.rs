@@ -115,6 +115,13 @@ impl Ctx {
                 }
             }
             in3_sys::in3_ret_t::IN3_OK => {
+                
+                // if (*self.ptr).response_context == std::ptr::null_mut() {
+                //     // let result = *((*(*self.ptr).raw_response.offset(0)).result).data;
+                //     // let data = ffi::CStr::from_ptr(result as *const i8).to_str()
+                //     // .expect("result is not valid UTF-8");
+                //     return Err(Error::TryAgain);
+                // }
                 let result = (*(*self.ptr).response_context).c;
                 let data = ffi::CStr::from_ptr(result)
                     .to_str()
