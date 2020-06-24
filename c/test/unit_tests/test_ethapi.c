@@ -618,44 +618,44 @@ static void test_send_raw_tx(void) {
  * Main
  */
 int main() {
-  in3_log_set_quiet(false);
-  in3_log_set_level(LOG_TRACE);
+  in3_log_set_quiet(true);
+  in3_log_set_level(LOG_ERROR);
   in3_register_eth_full();
 
   // now run tests
   TESTS_BEGIN();
   //PASSING..
-  // RUN_TEST(test_eth_chain_id);
-  // RUN_TEST(test_eth_get_storage_at);
-  // RUN_TEST(test_get_balance);
-  // RUN_TEST(test_block_number);
-  // RUN_TEST(test_eth_gas_price);
-  // RUN_TEST(test_eth_getblock_number);
-  // RUN_TEST(test_eth_getblock_hash);
+  RUN_TEST(test_eth_chain_id);
+  RUN_TEST(test_eth_get_storage_at);
+  RUN_TEST(test_get_balance);
+  RUN_TEST(test_block_number);
+  RUN_TEST(test_eth_gas_price);
+  RUN_TEST(test_eth_getblock_number);
+  RUN_TEST(test_eth_getblock_hash);
   RUN_TEST(test_get_logs);
-  // RUN_TEST(test_eth_call_fn);
-  // RUN_TEST(test_get_tx_blkhash_index);
-  // RUN_TEST(test_get_tx_blknum_index);
-  // RUN_TEST(test_get_tx_count);
-  // RUN_TEST(test_get_tx_receipt);
-  // RUN_TEST(test_eth_call_fn);
-  // RUN_TEST(test_eth_get_code);
-  // RUN_TEST(test_estimate_fn);
-  // RUN_TEST(test_get_uncle_blknum_index);
-  // RUN_TEST(test_get_uncle_count_blkhash);
-  // RUN_TEST(test_get_uncle_count_blknum);
-  // RUN_TEST(test_new_pending_tx_filter);
-  // RUN_TEST(test_eth_getblock_txcount_hash);
-  // RUN_TEST(test_eth_getblock_txcount_number);
-  // RUN_TEST(test_get_filter_changes);
-  // RUN_TEST(test_new_block_filter);
-  // RUN_TEST(test_get_tx_hash);
-  // RUN_TEST(test_utilities);
-  // RUN_TEST(test_eth_call_multiple);
-  // RUN_TEST(test_get_result_no_error);
-  // RUN_TEST(test_get_nonexistent_block);
-  // RUN_TEST(test_wait_for_receipt);
-  // RUN_TEST(test_send_tx);
-  // RUN_TEST(test_send_raw_tx);
+  RUN_TEST(test_eth_call_fn);
+  RUN_TEST(test_get_tx_blkhash_index);
+  RUN_TEST(test_get_tx_blknum_index);
+  RUN_TEST(test_get_tx_count);
+  RUN_TEST(test_get_tx_receipt);
+  RUN_TEST(test_eth_call_fn);
+  RUN_TEST(test_eth_get_code);
+  RUN_TEST(test_estimate_fn);
+  RUN_TEST(test_get_uncle_blknum_index);
+  RUN_TEST(test_get_uncle_count_blkhash);
+  RUN_TEST(test_get_uncle_count_blknum);
+  RUN_TEST(test_new_pending_tx_filter);
+  RUN_TEST(test_eth_getblock_txcount_hash);
+  RUN_TEST(test_eth_getblock_txcount_number);
+  RUN_TEST(test_get_filter_changes);
+  RUN_TEST(test_new_block_filter);
+  RUN_TEST(test_get_tx_hash);
+  RUN_TEST(test_utilities);
+  RUN_TEST(test_eth_call_multiple);
+  RUN_TEST(test_get_result_no_error);
+  RUN_TEST(test_get_nonexistent_block);
+  RUN_TEST(test_wait_for_receipt);
+  RUN_TEST(test_send_tx);
+  RUN_TEST(test_send_raw_tx);
   return TESTS_END();
 }
