@@ -278,7 +278,7 @@ public class ClientConfiguration implements Configuration {
     }
     if (isIncludeCode() != null) {
       JSON.appendKey(sb, "includeCode", isIncludeCode());
-    }   
+    }
     if (isBootWeights() != null) {
       JSON.appendKey(sb, "bootWeights", isBootWeights());
     }

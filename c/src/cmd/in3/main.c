@@ -111,7 +111,7 @@ void show_help(char* name) {
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
 -kin3          if kin3 is specified, the response including in3-section is returned\n\
--b             initialize with weights from boot nodes.\n\
+-bw            initialize with weights from boot nodes.\n\
 -debug         if given incubed will output debug information when executing. \n\
 -k             32bytes raw private key to sign requests.\n\
 -q             quit. no additional output. \n\
@@ -721,7 +721,7 @@ int main(int argc, char* argv[]) {
       c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->flags |= FLAGS_KEEP_IN3;
-    else if (strcmp(argv[i], "-b") == 0)
+    else if (strcmp(argv[i], "-bw") == 0)
       c->flags |= FLAGS_BOOT_WEIGHTS;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
