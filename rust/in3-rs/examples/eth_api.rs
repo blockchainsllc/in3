@@ -8,8 +8,6 @@ use in3::prelude::*;
 use in3::types::Bytes;
 
 
-
-
 fn main() -> In3Result<()> {
     // configure client and API
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
