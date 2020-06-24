@@ -28,9 +28,8 @@ async fn http_async(
 /// See examples/custom_transport.rs for usage.
 
 pub struct MockJsonTransport;
-const MOCK_DIR: &'static str = "../../c/test/testdata/mock/";
-// const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
-// const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
+const MOCK_DIR_RELEASE: &'static str = "../../c/test/testdata/mock/";
+const MOCK_DIR_DEBUG: &'static str = "../c/test/testdata/mock/";
 impl MockJsonTransport {
     /// Read file from path
     ///

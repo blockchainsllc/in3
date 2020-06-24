@@ -923,28 +923,20 @@ mod tests {
         Ok(())
     }
 
-    //FIX: internal blocknumber call issue #367
     #[test]
-    #[ignore]
     fn test_eth_api_new_filter() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-        let responses = vec![(
-            "eth_newFilter",
-            r#"{"jsonrpc":"2.0","result":"0x3","id":73}"#,
-        )];
-        let transport: Box<dyn Transport> = Box::new(MockTransport {
-            responses: responses,
-        });
-        let mut eth_api = init_api(transport, chain::MAINNET, config);
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
+        let mut client = Client::new(chain::MAINNET);
+        let _ = client.configure(config);
+        client.set_transport(transport);
+        let mut eth_api = Api::new(client);
         let jopts = serde_json::json!({
-            "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
-            "blockHash":"0x40b6019185d6ee0112445fbe678438b6968bad2e6f24ae26c7bb75461428fd43"
+            "fromBlock":"0x1ca181"
         });
         let fid = task::block_on(eth_api.new_filter(jopts))?;
-        let expected: U256 = (3).into();
-
         println!("{:?}", fid);
-        assert_eq!(fid, expected);
+        assert_eq!(fid, 1.into());
         Ok(())
     }
 
