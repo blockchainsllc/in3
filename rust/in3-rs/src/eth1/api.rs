@@ -677,11 +677,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
+    // #[ignore]
     fn test_eth_api_get_logs() -> In3Result<()> {
-        // let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-        //     method: "eth_getLogs",
-        // });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut client = Client::new(chain::MAINNET);
         let _ = client.configure(config);
