@@ -188,6 +188,8 @@ def _map_function_signatures():
     # map logging functions
     libin3.in3_log_set_quiet_.argtypes = c.c_bool,
     libin3.in3_log_set_level_.argtypes = c.c_int,
+    # map storage
+    # libin3.in3_set_storage_handler.argtypes = [c.c_int, c.c_int, c.c_int, c.c_int, c.c_int]
 
 
 def _fallback_loader(search_string: str):

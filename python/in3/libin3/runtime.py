@@ -5,9 +5,12 @@ import ctypes as c
 import json
 from enum import Enum
 
+import in3.storage as storage
+
 from in3.exception import ClientException
 from in3.libin3.enum import RPCCode
-from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_exec, libin3_set_pk, libin3
+from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_exec, libin3_set_pk, libin3, \
+    libin3_set_storage_handler
 
 
 class RPCExecRequest:
@@ -90,6 +93,7 @@ class In3Runtime:
         # This is needed to prevent the handler function to be freed. Without it, there would be a fault.
         self.in3_transport = create_in3_transport(transport)
         self.in3 = libin3_new(chain_id, self.in3_transport)
+        libin3_set_storage_handler(self.in3, storage.retrieve, storage.store, storage.delete_all)
         self.chain_id = chain_id
 
     def __del__(self):
