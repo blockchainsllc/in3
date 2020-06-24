@@ -168,11 +168,16 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
       return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
 
-    uint64_t id = d_get_long_at(tx_params, 0);
-    RESPONSE_START();
-    in3_ret_t ret = filter_get_changes(ctx, id, &response[0]->result);
-    if (ret != IN3_OK)
+    uint64_t  id  = d_get_long_at(tx_params, 0);
+    sb_t*     sb  = sb_new("");
+    in3_ret_t ret = filter_get_changes(ctx, id, sb);
+    if (ret != IN3_OK) {
+      sb_free(sb);
       return ctx_set_error(ctx, "failed to get filter changes", ret);
+    }
+    RESPONSE_START();
+    sb_add_chars(&response[0]->result, sb->data);
+    sb_free(sb);
     RESPONSE_END();
   }
   return IN3_OK;
