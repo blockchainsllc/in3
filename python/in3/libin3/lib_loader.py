@@ -17,6 +17,7 @@ import platform
 from pathlib import Path
 
 DEBUG = False
+CACHE = True
 
 
 def libin3_new(chain_id: int, transport: c.CFUNCTYPE) -> int:
@@ -98,6 +99,19 @@ def libin3_set_pk(instance: int, private_key: bytes):
     libin3.eth_set_pk_signer_hex(instance, private_key)
 
 
+def libin3_set_storage_handler(instance: int, get_item_fn: c.CFUNCTYPE, set_item_fn: c.CFUNCTYPE,
+                               clear_fn: c.CFUNCTYPE):
+    """
+    Register a handler to manage local cache storage in the device running the client.
+    Args:
+        instance: Memory address of the client instance, return value from libin3_new
+        get_item_fn: Function that retrieves values from the local storage.
+        set_item_fn: Function that stores values in the local storage.
+        clear_fn: Function that wipes clean all values in the local storage.
+    """
+    libin3.in3_set_storage_handler(instance, get_item_fn, set_item_fn, clear_fn, None)
+
+
 def _multi_platform_selector(prefix: str, path: str) -> str:
     """
     Helper to define the path of installed shared libraries.
@@ -154,12 +168,9 @@ def _map_function_signatures():
     libin3.in3_for_chain_default.restype = c.c_void_p
     # map free in3
     libin3.in3_free.argtypes = c.c_void_p,
-    libin3.in3_free.restype = None
     libin3._free_.argtypes = c.c_void_p,
-    libin3._free_.restype = None
     # map set pk signer
     libin3.eth_set_pk_signer_hex.argtypes = [c.c_void_p, c.c_char_p]
-    libin3.eth_set_pk_signer_hex.restype = None
     # map transport request function
     libin3.in3_client_exec_req.argtypes = [c.c_void_p, c.c_char_p]
     libin3.in3_client_exec_req.restype = c.c_void_p
@@ -167,27 +178,16 @@ def _map_function_signatures():
                                       c.POINTER(c.c_char_p),
                                       c.POINTER(c.c_char_p)]
     libin3.in3_client_rpc.restype = c.c_int
-    # map transport function for response
+    # map transport responses
     libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int]
-    libin3.in3_req_add_response.restype = None
-
-    libin3.in3_get_request_urls_len.argtypes = [c.c_void_p]
+    # map transport requests
     libin3.in3_get_request_urls_len.restype = c.c_int
-
-    libin3.in3_get_request_payload.argtypes = [c.c_void_p]
     libin3.in3_get_request_payload.restype = c.c_char_p
-
-    libin3.in3_get_request_timeout.argtypes = [c.c_void_p]
     libin3.in3_get_request_timeout.restype = c.c_int
-
-    libin3.in3_get_request_urls.argtypes = [c.c_void_p]
     libin3.in3_get_request_urls.restype = c.POINTER(c.POINTER(c.c_char))
-
     # map logging functions
     libin3.in3_log_set_quiet_.argtypes = c.c_bool,
-    libin3.in3_log_set_quiet_.restype = None
     libin3.in3_log_set_level_.argtypes = c.c_int,
-    libin3.in3_log_set_level_.restype = None
 
 
 def _fallback_loader(search_string: str):
