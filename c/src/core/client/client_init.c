@@ -585,6 +585,7 @@ char* in3_get_config(in3_t* c) {
   add_uint(sb, ',', "signatureCount", c->signature_count);
   add_uint(sb, ',', "finality", c->finality);
   add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
+  add_bool(sb, ',', "bootWeights", c->flags & FLAGS_BOOT_WEIGHTS);
   add_uint(sb, ',', "maxAttempts", c->max_attempts);
   add_bool(sb, ',', "keepIn3", c->flags & FLAGS_KEEP_IN3);
   add_bool(sb, ',', "stats", c->flags & FLAGS_STATS);
@@ -672,6 +673,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("includeCode")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_INCLUDE_CODE, (d_int(token) ? true : false));
+    } else if (token->key == key("bootWeights")) {
+      EXPECT_TOK_BOOL(token);
+      BITMASK_SET_BOOL(c->flags, FLAGS_BOOT_WEIGHTS, (d_int(token) ? true : false));
     } else if (token->key == key("maxAttempts")) {
       EXPECT_TOK_U16(token);
       c->max_attempts = d_int(token);
