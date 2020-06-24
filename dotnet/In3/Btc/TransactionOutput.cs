@@ -10,7 +10,7 @@ namespace In3.Btc
         /// <summary>
         /// The value in bitcoins.
         /// </summary>
-        [JsonPropertyName("value")] public ulong Value { get; set; }
+        [JsonPropertyName("value")] public float Value { get; set; }
 
         /// <summary>
         /// The index in the transaction.

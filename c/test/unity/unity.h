@@ -3,7 +3,7 @@
     Copyright (c) 2007-14 Mike Karlesky, Mark VanderVoord, Greg Williams
     [Released under MIT License. Please refer to license.txt for details]
 ========================================== */
-
+#define UNITY_OUTPUT_COLOR
 #ifndef UNITY_FRAMEWORK_H
 #define UNITY_FRAMEWORK_H
 #define UNITY
