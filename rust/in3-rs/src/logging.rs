@@ -39,8 +39,8 @@ impl Log {
     fn log(&mut self, level: FilterLevel, message: &str) {
         unsafe {
             in3_sys::in3_log_(level.into(),
-                              format!("{}", file!()).as_ptr() as *const i8,
-                              format!("{}", column!()).as_ptr() as *const i8,
+                              format!("{}", file!()).as_ptr() as *const libc::c_char,
+                              format!("{}", column!()).as_ptr() as *const libc::c_char,
                               line!() as i32,
                               message.as_ptr() as *const i8).into()
         }
