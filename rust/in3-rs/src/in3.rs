@@ -79,7 +79,7 @@ impl Ctx {
         Bytes::default()
     }
 
-    async unsafe fn execute(&mut self) -> In3Result<String> {
+    async unsafe fn execute(&mut self) -> Result<String, SysError> {
         let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
         p = self.ptr;
@@ -95,10 +95,10 @@ impl Ctx {
                     p = (*last_waiting).required;
                 }
                 if last_waiting == std::ptr::null_mut() {
-                    return Err("Cound not find the last waiting context".into());
+                    return Err(SysError::ContextError);
                 } else {
                     in3_sys::ctx_handle_failable(last_waiting);
-                    return Err(SysError::TryAgain.into());
+                    return Err(SysError::TryAgain);
                 }
             }
             in3_sys::in3_ret_t::IN3_WAITING => {
@@ -111,24 +111,18 @@ impl Ctx {
                     p = (*p).required;
                 }
                 if last_waiting == std::ptr::null_mut() {
-                    return Err("Cound not find the last waiting context".into());
+                    return Err(SysError::ContextError);
                 }
             }
             in3_sys::in3_ret_t::IN3_OK => {
-                // if (*self.ptr).response_context == std::ptr::null_mut() {
-                //     // let result = *((*(*self.ptr).raw_response.offset(0)).result).data;
-                //     // let data = ffi::CStr::from_ptr(result as *const i8).to_str()
-                //     // .expect("result is not valid UTF-8");
-                //     return Err(Error::TryAgain);
-                // }
                 let result = (*(*self.ptr).response_context).c;
                 let data = ffi::CStr::from_ptr(result)
                     .to_str()
                     .expect("result is not valid UTF-8");
-                return Ok(data.into());
+                return Ok(data.to_owned());
             }
             err => {
-                return Err(SysError::from(err).into());
+                return Err(SysError::from(err));
             }
         }
 
@@ -204,20 +198,21 @@ impl Ctx {
                         }
                     }
                     let res = *(*req).results.offset(0);
-                    let mut err = SysError::TryAgain.into();
-                    if res.result.len == 0 {
+                    let err = if res.result.len == 0 {
                         let error = (*(*req).results.offset(0)).error;
-                        err = ffi::CStr::from_ptr(error.data)
+                        let error = ffi::CStr::from_ptr(error.data)
                             .to_str()
-                            .expect("err is not valid UTF-8")
-                            .into();
-                    }
+                            .expect("err is not valid UTF-8");
+                        SysError::ResponseError(error.to_owned())
+                    } else {
+                        SysError::TryAgain.into()
+                    };
                     in3_sys::request_free(req, last_waiting, false);
                     return Err(err);
                 }
             }
         }
-        return Err(SysError::TryAgain.into());
+        return Err(SysError::TryAgain);
     }
 
     #[cfg(feature = "blocking")]
@@ -395,8 +390,8 @@ impl ClientTrait for Client {
         let mut ctx = Ctx::new(self, call);
         loop {
             let res = unsafe { ctx.execute().await };
-            if !matches!(res, Err(Error::InternalError(SysError::TryAgain))) {
-                return res;
+            if !matches!(res, Err(SysError::TryAgain)) {
+                return res.map_err(|err| Error::InternalError(err));
             }
         }
     }
@@ -454,9 +449,9 @@ impl Client {
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
             #[cfg(feature = "blocking")]
-            {
-                (*c.ptr).transport = Some(Client::in3_rust_transport);
-            }
+                {
+                    (*c.ptr).transport = Some(Client::in3_rust_transport);
+                }
             c
         }
     }
