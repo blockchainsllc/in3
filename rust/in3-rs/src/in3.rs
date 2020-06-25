@@ -449,9 +449,9 @@ impl Client {
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
             #[cfg(feature = "blocking")]
-                {
-                    (*c.ptr).transport = Some(Client::in3_rust_transport);
-                }
+            {
+                (*c.ptr).transport = Some(Client::in3_rust_transport);
+            }
             c
         }
     }

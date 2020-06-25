@@ -60,8 +60,8 @@ impl Response {
 /// * `client` - reference to [`Client`](../in3/struct.Client.html) instance.
 /// * `request` - request to perform.
 pub async fn rpc<T>(client: &mut Box<dyn Client>, request: Request<'_>) -> error::In3Result<T>
-    where
-        T: serde::de::DeserializeOwned,
+where
+    T: serde::de::DeserializeOwned,
 {
     let req_str = serde_json::to_string(&request)?;
     let resp_str = client.rpc(req_str.as_str()).await?;

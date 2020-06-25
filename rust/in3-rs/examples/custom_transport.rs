@@ -1,9 +1,6 @@
-extern crate in3;
-
 use async_std::task;
 
 use in3::prelude::*;
-
 use in3::transport::MockTransport;
 
 fn main() {

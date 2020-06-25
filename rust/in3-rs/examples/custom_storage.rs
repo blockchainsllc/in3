@@ -1,5 +1,3 @@
-extern crate in3;
-
 use std::fs;
 
 use async_std::task;
