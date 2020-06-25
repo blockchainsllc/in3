@@ -64,8 +64,10 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
   curl = curl_easy_init();
   if (curl) {
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) strlen(payload));
+    if (payload && *payload) {
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) strlen(payload));
+    }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
@@ -93,9 +95,10 @@ in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, 
 
   struct curl_slist* headers = NULL;
   headers                    = curl_slist_append(headers, "Accept: application/json");
-  headers                    = curl_slist_append(headers, "Content-Type: application/json");
-  headers                    = curl_slist_append(headers, "charsets: utf-8");
-  headers                    = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
+  if (payload && *payload)
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+  headers = curl_slist_append(headers, "charsets: utf-8");
+  headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
   for (transfers = 0; transfers < min(CURL_MAX_PARALLEL, urls_len); transfers++)
     readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers, timeout);
 
@@ -145,17 +148,16 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
   curl = curl_easy_init();
   if (curl) {
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
-
-    /* if we don't provide POSTFIELDSIZE, libcurl will strlen() by
-       itself */
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) strlen(payload));
-
+    if (payload && *payload) {
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) strlen(payload));
+    }
     struct curl_slist* headers = NULL;
     headers                    = curl_slist_append(headers, "Accept: application/json");
-    headers                    = curl_slist_append(headers, "Content-Type: application/json");
-    headers                    = curl_slist_append(headers, "charsets: utf-8");
-    headers                    = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
+    if (payload && *payload)
+      headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "charsets: utf-8");
+    headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
