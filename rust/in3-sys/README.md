@@ -13,5 +13,6 @@ Instead, consider using [in3-rs](https://github.com/slockit/in3-c/tree/master/ru
 * Rust version >= 1.42.0
 * A toolchain capable of compiling IN3 C sources
 * OpenSSL dev libs (`apt-get install libssl-dev` on Ubuntu)
-* CMake version >= 3.5.1, because we build the bundled IN3 C library with the [`cmake` crate](https://github.com/alexcrichton/cmake-rs)
+* GNU GCC C/C++ compilers (`apt-get install build-essential`)
+* CMake version >= 3.5.1, because we build the bundled IN3 C library with the [`cmake` crate](https://github.com/alexcrichton/cmake-rs)(`apt-get install cmake`)
 * [bindgen](https://github.com/rust-lang/rust-bindgen) and therefore clang dev libraries (`apt-get install clang libclang-dev llvm-dev` on Ubuntu)

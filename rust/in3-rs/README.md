@@ -21,7 +21,8 @@ Links:
 * Rust compiler version >= 1.42.0 -> `rustc --version`
 * A toolchain capable of compiling IN3 C sources
 * OpenSSL dev libs (`apt-get install libssl-dev` on Ubuntu)
-* CMake version >= 3.5.1, because we build the bundled IN3 C library with the [`cmake` crate](https://github.com/alexcrichton/cmake-rs)
+* GNU GCC C/C++ compilers (`apt-get install build-essential`)
+* CMake version >= 3.5.1, because we build the bundled IN3 C library with the [`cmake` crate](https://github.com/alexcrichton/cmake-rs)(`apt-get install cmake`)
 * [bindgen](https://github.com/rust-lang/rust-bindgen) and therefore clang dev libraries (`apt-get install clang libclang-dev llvm-dev` on Ubuntu)
 * in3-rs uses the in3-sys crate to provide low-level bindings to the IN3 C library.
 
