@@ -53,6 +53,6 @@ fn main() {
     let req_str = serde_json::to_string(&rpc_req).unwrap(); // Serialize `Request` impl cannot fail
     match task::block_on(c.rpc(&req_str)) {
         Ok(res) => println!("RESPONSE > {:?}, {:?}", req_str, res),
-        Err(err) => println!("Failed with error: {}", err),
+        Err(err) => println!("Failed with error: {:?}", err),
     }
 }

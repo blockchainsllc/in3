@@ -17,6 +17,6 @@ fn main() {
     }));
     match task::block_on(c.rpc(r#"{"method": "eth_blockNumber", "params": []}"#)) {
         Ok(res) => println!("{}", res),
-        Err(err) => println!("Failed with error: {}", err),
+        Err(err) => println!("Failed with error: {:?}", err),
     }
 }

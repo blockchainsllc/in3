@@ -9,7 +9,7 @@ use rustc_hex::FromHex;
 
 use async_trait::async_trait;
 
-use crate::error::{Error, In3Result};
+use crate::error::{Error, In3Result, SysError};
 use crate::signer;
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
@@ -97,7 +97,7 @@ impl Ctx {
                     return Err("Cound not find the last waiting context".into());
                 } else {
                     in3_sys::ctx_handle_failable(last_waiting);
-                    return Err(Error::TryAgain);
+                    return Err(SysError::TryAgain.into());
                 }
             }
             in3_sys::in3_ret_t::IN3_WAITING => {
@@ -121,7 +121,7 @@ impl Ctx {
                 return Ok(data.into());
             }
             err => {
-                return Err(err.into());
+                return Err(SysError::from(err).into());
             }
         }
 
@@ -186,18 +186,18 @@ impl Ctx {
                         }
                     }
                     let res = *(*req).results.offset(0);
-                    let mut err = Error::TryAgain;
+                    let mut err = SysError::TryAgain.into();
                     if res.result.len == 0 {
                         let error = (*(*req).results.offset(0)).error;
                         err = ffi::CStr::from_ptr(error.data).to_str()
                             .expect("err is not valid UTF-8").into();
                     }
                     in3_sys::request_free(req, last_waiting, false);
-                    return Err(err.into());
+                    return Err(err);
                 }
             }
         }
-        return Err(Error::TryAgain);
+        return Err(SysError::TryAgain.into());
     }
 
     #[cfg(feature = "blocking")]
@@ -372,7 +372,7 @@ impl ClientTrait for Client {
         let mut ctx = Ctx::new(self, call);
         loop {
             let res = unsafe { ctx.execute().await };
-            if res != Err(Error::TryAgain) {
+            if !matches!(res, Err(Error::InternalError(SysError::TryAgain))) {
                 return res;
             }
         }

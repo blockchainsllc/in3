@@ -65,8 +65,8 @@ impl Api {
 }
 
 impl From<base64::DecodeError> for Error {
-    fn from(e: DecodeError) -> Self {
-        Error::CustomError(format!("Error decoding base64: {}", e))
+    fn from(err: DecodeError) -> Self {
+        Error::Base64Error(err)
     }
 }
 
