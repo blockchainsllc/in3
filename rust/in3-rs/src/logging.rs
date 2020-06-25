@@ -15,20 +15,20 @@ pub struct Log(());
 
 impl Log {
     pub fn init() -> Log {
-        let log = Log { 0: () };
+        let mut log = Log { 0: () };
         log.quiet(false);
         log
     }
 
-    pub fn quiet(&self, enable: bool) {
+    pub fn quiet(&mut self, enable: bool) {
         unsafe { in3_log_set_quiet_(enable.into()) }
     }
 
-    pub fn prefix(&self, enable: bool) {
+    pub fn prefix(&mut self, enable: bool) {
         unsafe { if enable { in3_log_enable_prefix_() } else { in3_log_disable_prefix_() } }
     }
 
-    pub fn set_level(&self, level: FilterLevel) {
+    pub fn set_level(&mut self, level: FilterLevel) {
         unsafe { in3_sys::in3_log_set_level_(level.into()) }
     }
 
@@ -36,7 +36,7 @@ impl Log {
         unsafe { in3_sys::in3_log_get_level_().into() }
     }
 
-    fn log(&self, level: FilterLevel, message: &str) {
+    fn log(&mut self, level: FilterLevel, message: &str) {
         unsafe {
             in3_sys::in3_log_(level.into(),
                               format!("{}", file!()).as_ptr() as *const i8,
@@ -46,15 +46,15 @@ impl Log {
         }
     }
 
-    pub fn trace(&self, message: &str) { self.log(FilterLevel::Trace, message) }
+    pub fn trace(&mut self, message: &str) { self.log(FilterLevel::Trace, message) }
 
-    pub fn debug(&self, message: &str) { self.log(FilterLevel::Debug, message) }
+    pub fn debug(&mut self, message: &str) { self.log(FilterLevel::Debug, message) }
 
-    pub fn info(&self, message: &str) { self.log(FilterLevel::Info, message) }
+    pub fn info(&mut self, message: &str) { self.log(FilterLevel::Info, message) }
 
-    pub fn warn(&self, message: &str) { self.log(FilterLevel::Warn, message) }
+    pub fn warn(&mut self, message: &str) { self.log(FilterLevel::Warn, message) }
 
-    pub fn error(&self, message: &str) { self.log(FilterLevel::Error, message) }
+    pub fn error(&mut self, message: &str) { self.log(FilterLevel::Error, message) }
 }
 
 impl From<FilterLevel> for in3_log_level_t {
