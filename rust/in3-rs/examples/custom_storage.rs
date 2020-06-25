@@ -33,7 +33,8 @@ impl Storage for FsStorage<'_> {
 
     fn clear(&mut self) {
         println!("FsStorage log: clear");
-        fs::remove_dir_all(format!("{}", self.dir)).expect(format!("failed to remove {}", self.dir).as_str());
+        fs::remove_dir_all(format!("{}", self.dir))
+            .expect(format!("failed to remove {}", self.dir).as_str());
     }
 }
 

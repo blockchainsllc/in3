@@ -4,8 +4,8 @@ use std::fmt;
 use std::fmt::Formatter;
 
 use rustc_hex::{FromHex, FromHexError, ToHex};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Newtype wrapper around vector of bytes
 #[derive(PartialEq, Eq, Default, Hash, Clone)]
@@ -48,8 +48,8 @@ impl From<in3_sys::bytes> for Bytes {
 
 impl Serialize for Bytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let mut serialized = "0x".to_owned();
         serialized.push_str(self.0.to_hex().as_str());
@@ -59,8 +59,8 @@ impl Serialize for Bytes {
 
 impl<'a> Deserialize<'a> for Bytes {
     fn deserialize<D>(deserializer: D) -> Result<Bytes, D::Error>
-        where
-            D: Deserializer<'a>,
+    where
+        D: Deserializer<'a>,
     {
         deserializer.deserialize_str(BytesVisitor)
     }
@@ -75,8 +75,13 @@ impl<'a> Visitor<'a> for BytesVisitor {
         write!(formatter, "a hex string (optionally prefixed with '0x')")
     }
 
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E> where E: Error {
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
         let start = if value.starts_with("0x") { 2 } else { 0 };
-        Ok(FromHex::from_hex(&value[start..]).map_err(|e| Error::custom(format!("Invalid hex: {}", e)))?.into())
+        Ok(FromHex::from_hex(&value[start..])
+            .map_err(|e| Error::custom(format!("Invalid hex: {}", e)))?
+            .into())
     }
 }

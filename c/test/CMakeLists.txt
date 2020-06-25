@@ -70,7 +70,7 @@ foreach (file ${files})
      get_filename_component(testname "${file}" NAME_WE)
      add_executable("${testname}" "${file}" util/transport.c unity/unity.c)
 
-     if( LEDGER_NANO AND HIDAPI )
+     if( LEDGER_NANO )
        target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ledger_signer ${IN3_API})
      else()
        target_link_libraries("${testname}" core eth_full pk_signer btc btc_api ipfs ipfs_api ${IN3_API})

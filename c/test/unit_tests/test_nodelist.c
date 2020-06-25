@@ -225,7 +225,43 @@ static in3_t* in3_init_test(chain_id_t chain) {
   in3_t* in3     = in3_for_chain(chain);
   in3->chain_id  = chain;
   in3->transport = test_transport;
-  in3->flags |= FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
+  in3->flags     = FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
+  if (chain == ETH_CHAIN_ID_MAINNET) {
+    // use a predefined nodelist
+    /*
+      initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 5, CHAIN_ETH, NULL);
+  initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
+  initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
+  initNode(chain, 2, "0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d", "https://in3-g.open-dna.de");
+  initNode(chain, 3, "ccd12a2222995e62eca64426989c2688d828aa47", "https://chaind.de/eth/mainnet1");
+  initNode(chain, 4, "510ee7f6f198e018e3529164da2473a96eeb3dc8", "https://0001.mainnet.in3.anyblock.tools");
+
+*/
+    char* err = in3_configure(in3, "{\"servers\": {"
+                                   "\"0x1\": {"
+                                   "    \"nodeList\": [{"
+                                   "                        \"address\": \"0x45d45e6ff99e6c34a235d263965910298985fcfe\","
+                                   "                       \"url\": \"https://in3-v2.slock.it/mainnet/nd-1\","
+                                   "                       \"props\": \"0xFFFF\""
+                                   "  },{"
+                                   "                        \"address\": \"0x1fe2e9bf29aa1938859af64c413361227d04059a\","
+                                   "                       \"url\": \"https://in3-v2.slock.it/mainnet/nd-2\","
+                                   "                       \"props\": \"0xFFFF\""
+                                   "  },{"
+                                   "                        \"address\": \"0x0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d\","
+                                   "                       \"url\": \"https://in3-v2.slock.it/mainnet/nd-3\","
+                                   "                       \"props\": \"0xFFFF\""
+                                   "  },{"
+                                   "                        \"address\": \"0xccd12a2222995e62eca64426989c2688d828aa47\","
+                                   "                       \"url\": \"https://in3-v2.slock.it/mainnet/nd-4\","
+                                   "                       \"props\": \"0xFFFF\""
+                                   "  },{"
+                                   "                        \"address\": \"0x510ee7f6f198e018e3529164da2473a96eeb3dc8\","
+                                   "                       \"url\": \"https://in3-v2.slock.it/mainnet/nd-5\","
+                                   "                       \"props\": \"0xFFFF\""
+                                   "  }]}}}");
+    if (err) printf("ERR: %s\n", err);
+  }
   return in3;
 }
 

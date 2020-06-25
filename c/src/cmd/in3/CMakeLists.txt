@@ -32,40 +32,19 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-IF (USE_CURL)
-    message("using curl for comandline")
-    set(LIBS ${LIBS} transport_curl)
-else()
-    message("using http for comandline")
-    set(LIBS ${LIBS} transport_http)
-ENDIF()
-
 IF (IN3_SERVER)
-    message("using server for comandline")
     ADD_DEFINITIONS(-DIN3_SERVER)
     set(LIBS ${LIBS} http_server)
 ENDIF()
 
-if (BTC)
-    ADD_DEFINITIONS(-DBTC)
-    set(LIBS ${LIBS} btc)
+if (LEDGER_NANO)
+    set(LIBS ${LIBS} ledger_signer)
 endif()
-
-if (LEDGER_NANO AND HIDAPI)
-    ADD_DEFINITIONS(-DLEDGER_NANO)
-    set(IN3_API ${IN3_API} ledger_signer)
-endif()
-
-if (IPFS)
-    ADD_DEFINITIONS(-DIPFS)
-    set(LIBS ${LIBS} ipfs ipfs_api )
-endif()
-
 
 add_executable(in3 main.c in3_storage.c)
 target_compile_definitions(in3 PRIVATE _XOPEN_SOURCE=600)
 
-target_link_libraries(in3 ${LIBS} pk_signer eth_full  ${IN3_API}  -lm)
+target_link_libraries(in3 init pk_signer ${LIBS} -lm)
 
 install(TARGETS in3
         DESTINATION /usr/local/bin/

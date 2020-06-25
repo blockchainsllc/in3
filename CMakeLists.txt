@@ -75,6 +75,11 @@ option(ASSERTIONS "includes assertions into the code, which help track errors bu
 OPTION(TRANSPORTS "builds transports, which may require extra libraries." ON)
 OPTION(IN3_SERVER "support for proxy server as part of the cmd-tool, which allows to start the cmd-tool with the -p option and listens to the given port for rpc-requests" OFF)
 OPTION(CMD "build the comandline utils" ON)
+OPTION(POA "support POA verification including validatorlist updates" OFF)
+
+IF (POA)
+  ADD_DEFINITIONS(-DPOA)
+ENDIF (POA)
 
 if (USE_PRECOMPUTED_EC)
   ADD_DEFINITIONS(-DUSE_PRECOMPUTED_CP=1)
@@ -132,9 +137,8 @@ endif()
 
 if(LEDGER_NANO AND ( NOT (WIN32 OR MSVC OR MSYS OR MINGW )))
     add_definitions(-DLEDGER_NANO)
-    set(HIDAPI true)
 else()
-    set(HIDAPI false)
+    set(LEDGER_NANO false)
 endif()
 
 if(COLOR AND NOT (MSVC OR MSYS OR MINGW))
@@ -147,25 +151,20 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif(CMAKE_BUILD_TYPE MATCHES Debug)
 
 if(EVM_GAS)
-    MESSAGE(STATUS "Enable GAS in EVM")
     ADD_DEFINITIONS(-DEVM_GAS)
 endif(EVM_GAS)
 
 if(FAST_MATH)
-    MESSAGE(STATUS "Enable math optimizations (excutable size may increase)")
     ADD_DEFINITIONS(-DIN3_MATH_FAST)
 else()
-    MESSAGE(STATUS "Disable math optimizations (optimised for executable size)")
     ADD_DEFINITIONS(-DIN3_MATH_LITE)
 endif(FAST_MATH)
 
 if(SEGGER_RTT)
-    MESSAGE(STATUS "Enable segger RTT for logging")
     ADD_DEFINITIONS(-DSEGGER_RTT)
 endif(SEGGER_RTT)
 
 if (DEV_NO_INTRN_PTR)
-    MESSAGE(STATUS "Disable dev opt (internal ptr)")
     ADD_DEFINITIONS(-DDEV_NO_INTRN_PTR)
 endif()
 
@@ -194,6 +193,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+
 IF (WASM)
   set(TEST false)
   set(TRANSPORTS false)
@@ -207,7 +207,6 @@ ENDIF (WASM)
 
 # build tests
 if(TEST)
-    MESSAGE(STATUS "Build Tests and add debug infos")
     ADD_DEFINITIONS(-DTEST)
     ADD_DEFINITIONS(-DIN3_DONT_HASH_KEYS)
     ADD_DEFINITIONS(-DIN3_EXPORT_TEST=)
@@ -225,5 +224,3 @@ add_subdirectory(c)
 IF (JAVA)
    add_subdirectory(java)
 ENDIF (JAVA)
-
-

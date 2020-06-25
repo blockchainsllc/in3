@@ -16,7 +16,7 @@ unsafe fn signature_hex_string(data: *mut u8) -> String {
     let mut sign_str = "".to_string();
     for byte in value {
         let mut tmp = "".to_string();
-        write!(&mut tmp, "{:02x}", byte).unwrap();  // unlikely to fail
+        write!(&mut tmp, "{:02x}", byte).unwrap(); // unlikely to fail
         sign_str.push_str(tmp.as_str());
     }
     println!(" signature {}", sign_str);
@@ -36,7 +36,9 @@ fn sign() {
         let pk_hex = pk.from_hex().unwrap(); // cannot fail since input is valid
         let raw_pk = pk_hex.as_ptr() as *mut u8;
         // Hash and sign the msg
-        let signature_hash = signer::signc(raw_pk, raw_msg_ptr, msg_hex.len());
+        let signature_hash = signer::signc(raw_pk, raw_msg_ptr, msg_hex.len())
+            .0
+            .as_mut_ptr();
         let sig_hash_expected = "349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c";
         assert_eq!(signature_hex_string(signature_hash), sig_hash_expected);
     }
@@ -76,7 +78,8 @@ fn sign_tx_api() {
     let params = task::block_on(abi.encode(
         "setData(uint256,string)",
         serde_json::json!([123, "testdata"]),
-    )).expect("failed to ABI encode params");
+    ))
+    .expect("failed to ABI encode params");
     println!("{:?}", params);
 
     let to: Address =
@@ -90,8 +93,8 @@ fn sign_tx_api() {
         ..Default::default()
     };
 
-    let hash: Hash = task::block_on(eth_api.send_transaction(txn))
-        .expect("ETH send transaction failed");
+    let hash: Hash =
+        task::block_on(eth_api.send_transaction(txn)).expect("ETH send transaction failed");
     println!("Hash => {:?}", hash);
 }
 

@@ -82,6 +82,20 @@ namespace Test.Btc
             Assert.That(result.Time, Is.EqualTo(1591782412));
             Assert.That(result.Version, Is.EqualTo(2));
             Assert.That(result.Vin.Length, Is.EqualTo(1));
+
+            Assert.That(result.Vin[0].Sequence, Is.EqualTo(4294967294));
+            Assert.That(result.Vin[0].Txinwitness.Length, Is.EqualTo(2));
+            Assert.That(result.Vin[0].Yout, Is.EqualTo(0));
+            Assert.That(result.Vin[0].ScriptSig.Asm, Is.EqualTo(""));
+            Assert.That(result.Vin[0].ScriptSig.Hex, Is.EqualTo(""));
+
+            Assert.That(result.Vout.Length, Is.EqualTo(2));
+            Assert.That(result.Vout[0].N, Is.EqualTo(0));
+            Assert.That(result.Vout[0].Value, Is.EqualTo(0.5f));
+            Assert.That(result.Vout[0].ScriptPubKey.Asm, Is.EqualTo("OP_HASH160 e9f20f1225a9528739495649405861ae5d77ba1e OP_EQUAL"));
+            Assert.That(result.Vout[0].ScriptPubKey.Hex, Is.EqualTo("a914e9f20f1225a9528739495649405861ae5d77ba1e87"));
+            Assert.That(result.Vout[0].ScriptPubKey.Addresses.Length, Is.EqualTo(1));
+
             Assert.That(result.Vout.Length, Is.EqualTo(2));
             Assert.That(result.Vsize, Is.EqualTo(143));
             Assert.That(result.Weight, Is.EqualTo(570));

@@ -28,8 +28,8 @@ async fn http_async(
 /// See examples/custom_transport.rs for usage.
 
 pub struct MockJsonTransport;
-const MOCK_DIR: &'static str = "../../c/test/testdata/mock/";
-// const MOCK_DIR: &'static str = "../c/test/testdata/mock/";
+const MOCK_DIR_RELEASE: &'static str = "../../c/test/testdata/mock/";
+const MOCK_DIR_DEBUG: &'static str = "../c/test/testdata/mock/";
 impl MockJsonTransport {
     /// Read file from path
     ///
@@ -43,8 +43,15 @@ impl MockJsonTransport {
         let u = serde_json::from_reader(reader)?;
         Ok(u)
     }
+    fn get_mock_dir(&mut self) -> &str {
+        let in3_mod = self.env_var("IN3_MODE");
+        match in3_mod == "DEBUG" {
+            true => return MOCK_DIR_DEBUG,
+            _ => return MOCK_DIR_RELEASE,
+        }
+    }
     fn find_json_file(&mut self, name: String) -> Option<String> {
-        let files = fs::read_dir(MOCK_DIR).unwrap();
+        let files = fs::read_dir(self.get_mock_dir()).unwrap();
         let json_files = files
             .filter_map(Result::ok)
             .filter(|d| d.path().extension().unwrap() == "json");
@@ -69,7 +76,7 @@ impl MockJsonTransport {
     /// Get testdata path from in3c project
     pub fn prepare_file_path(&mut self, name: String) -> String {
         let mut relative_path = PathBuf::from(self.env_var("CARGO_MANIFEST_DIR"));
-        relative_path.push(MOCK_DIR);
+        relative_path.push(self.get_mock_dir());
         let mut full_path = relative_path.to_str().unwrap().to_string();
         let data = self.find_json_file(name).unwrap();
         full_path.push_str(&data);

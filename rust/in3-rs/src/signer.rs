@@ -16,14 +16,20 @@ use crate::types::Bytes;
 ///
 /// # Safety
 /// Being a thin wrapper over in3_sys::ec_sign_pk_hash(), this method is unsafe.
-pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> *mut u8 {
+pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> Bytes {
     let data_ = data as *mut u8;
-    let dst: *mut u8 = libc::malloc(65) as *mut u8;
-    let error = in3_sys::ec_sign_pk_hash(data_, len, pk, in3_sys::hasher_t::hasher_sha3k, dst);
+    let mut dst = [0u8; 65];
+    let error = in3_sys::ec_sign_pk_hash(
+        data_,
+        len,
+        pk,
+        in3_sys::hasher_t::hasher_sha3k,
+        dst.as_mut_ptr(),
+    );
     if error < 0 {
         panic!("Sign error{:?}", error);
     }
-    dst
+    dst[0..].into()
 }
 
 /// Signer implementation using IN3 C client's RPC.
@@ -51,8 +57,11 @@ impl Signer for In3Signer {
                 serde_json::to_string(&json!({
                     "method": "in3_signData",
                     "params": [msg, self.pk]
-                })).unwrap().as_str()
-            ).await?;
+                }))
+                .unwrap()
+                .as_str(),
+            )
+            .await?;
         let resp: Value = serde_json::from_str(resp_str.as_str())?;
         let res: Bytes = serde_json::from_str(resp["result"]["signature"].to_string().as_str())?;
         Ok(res)
@@ -65,14 +74,16 @@ impl Signer for In3Signer {
                 serde_json::to_string(&json!({
                     "method": "in3_prepareTx",
                     "params": [msg]
-                })).unwrap().as_str()
-            ).await?;
+                }))
+                .unwrap()
+                .as_str(),
+            )
+            .await?;
         let resp: Value = serde_json::from_str(resp_str.as_str())?;
         let res: Bytes = serde_json::from_str(resp["result"].to_string().as_str())?;
         Ok(res)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -83,9 +94,11 @@ mod tests {
     #[test]
     fn test_signature() {
         let msg = "9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465"
-            .from_hex().unwrap();
+            .from_hex()
+            .unwrap();
         let pk = "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
-            .from_hex().unwrap();
+            .from_hex()
+            .unwrap();
         let mut s = In3Signer::new(pk.into());
         let signature = async_std::task::block_on(s.sign(msg.into()));
         let sign_str = format!("{:?}", signature.unwrap());

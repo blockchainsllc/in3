@@ -147,6 +147,13 @@ public class IN3 {
   }
 
   /**
+   * gets the btc-api
+   */
+  public in3.btc.API getBtcAPI() {
+    return new in3.btc.API(this);
+  }
+
+  /**
    * gets the ethereum-api
    */
   public in3.eth1.API getEth1API() {

@@ -84,6 +84,14 @@ export declare interface IN3Config {
     includeCode?: boolean
 
     /**
+    * if true, the first request (updating the nodelist) will also fetch the current health status
+    * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+    * 
+    * default: false
+    */
+    bootWeights?: boolean
+
+    /**
      * max number of attempts in case a response is rejected.
      * Incubed will retry to find a different node giving a verified response.
      * 
@@ -768,6 +776,26 @@ export type TxRequest = {
     confirmations?: number
 }
 
+export interface Web3Event {
+    returnValues: {
+        [name: string]: any
+    },
+    event: string,
+    signature: string,
+    logIndex: number
+    transactionIndex: number,
+    transactionHash: Hash,
+    address: Address
+    blockNumber: number
+    blockHash: Hash,
+    raw: {
+        data: Hex
+        topicx: Hash[]
+    }
+
+
+}
+
 export declare interface Signer<BigIntType, BufferType> {
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
@@ -953,6 +981,68 @@ export interface EthAPI<BigIntType, BufferType> {
     /** sends a Transaction */
     sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
 
+
+
+    web3ContractAt(abi: ABI[], address?: Address, options?: {
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+        data?: Hex
+    }): {
+        options: {
+            address: Address,
+            jsonInterface: ABI[],
+            gasPrice?: string | number | bigint,
+            gas?: string | number | bigint,
+            from?: Address,
+            data?: Hex,
+            transactionConfirmationBlocks: number,
+            transactionPollingTimeout: number
+        },
+        methods: {
+            [methodName: string]: (...args: any) => {
+                call: (options?: {
+                    gasPrice?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                }) => Promise<any>,
+                send: (options?: {
+                    gasPrice?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                    value?: number | string | bigint
+                }) => Promise<any>,
+                estimateGas: (options?: {
+                    value?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                }) => Promise<number>,
+                encodeABI: () => Hex
+            }
+        },
+
+        once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,
+
+        events: {
+            [eventName: string]: (options?: {
+                fromBlock?: number,
+                topics?: any[],
+                filter?: { [indexedName: string]: any }
+            }) => {
+                on: (ev: 'data' | 'error', handler: (ev: Web3Event | Error) => void) => any
+                once: (ev: 'data', handler: (ev: Web3Event) => void) => any
+                off: (ev: string, handler: (ev: any) => void) => any
+            }
+        },
+
+        getPastEvents(evName: string, options?: {
+            fromBlock?: number,
+            topics?: any[],
+            filter?: { [indexedName: string]: any }
+        }): Promise<Web3Event[]>
+
+    }
+
     contractAt(abi: ABI[], address?: Address): {
         [methodName: string]: any;
         _address: Address;
@@ -1059,6 +1149,10 @@ export declare interface Utils<BufferType> {
      * optionally the target length can be specified (in bytes)
      */
     toHex(data: Hex | BufferType | number | bigint, len?: number): Hex
+    /**
+     * returns the incubed version.
+     */
+    getVersion(): string
 
     /** removes all leading 0 in the hexstring */
     toMinHex(key: string | BufferType | number): string;

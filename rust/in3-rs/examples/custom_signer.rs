@@ -29,14 +29,15 @@ fn main() {
 
     // Rust implementation of this can be found in signer.rs
     c.set_signer(Box::new(In3Signer::new(
-        "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f".try_into().unwrap())));
+        "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
+            .try_into()
+            .unwrap(),
+    )));
 
     // Enable to change for c implementation of the signer
     // c.set_pk_signer("8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f");
 
-    c.set_transport(Box::new(MockTransport {
-        responses,
-    }));
+    c.set_transport(Box::new(MockTransport { responses }));
     let tx = json!([{
         "from": "0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377",
         "to": "0xd46e8dd67c5d32be8058bb8eb970870f07244567",

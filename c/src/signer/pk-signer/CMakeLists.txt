@@ -33,10 +33,14 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 
-add_library(pk_signer_o OBJECT signer.c)
-add_library(pk_signer STATIC $<TARGET_OBJECTS:pk_signer_o>)
+add_static_library(
+  NAME     pk_signer 
+  
+  SOURCES 
+    signer.c
 
-target_link_libraries(pk_signer eth_nano)
-
+  DEPENDS 
+    eth_nano
+)
 
 

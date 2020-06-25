@@ -1,5 +1,8 @@
 {
     "test_hash": {
         "result": "0xd5651b7c0b396c16ad9dc44ef0770aa215ca795702158395713facfbc9b55f38"
+    },
+    "main": {
+        "result": "0x9c8024cc5a409df58f3949848f39c17d1e1d6e53bfe607adac77117fc2724fd2"
     }
 }

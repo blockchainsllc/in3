@@ -84,6 +84,13 @@ Default-Value: `-DDEV_NO_INTRN_PTR=ON`
 Default-Value: `-DERR_MSG=ON`
 
 
+#### ESP_IDF
+
+  include support for ESP-IDF microcontroller framework
+
+Default-Value: `-DESP_IDF=OFF`
+
+
 #### ETH_BASIC
 
   build basic eth verification.(all rpc-calls except eth_call)
@@ -186,7 +193,7 @@ Default-Value: `-DPAY_ETH=OFF`
 
   pkg-config executable
 
-Default-Value: `-DPKG_CONFIG_EXECUTABLE=/usr/local/bin/pkg-config`
+Default-Value: `-DPKG_CONFIG_EXECUTABLE=/opt/local/bin/pkg-config`
 
 
 #### POA

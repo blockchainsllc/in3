@@ -30,19 +30,24 @@ fn main() -> In3Result<()> {
     println!("Code at address {:?} is {:?}", address, code);
 
     // eth_blockNumber
-    let latest_blk_num: u64 = task::block_on(eth_api.block_number())?.try_into().expect("cannot convert to u64");
+    let latest_blk_num: u64 = task::block_on(eth_api.block_number())?
+        .try_into()
+        .expect("cannot convert to u64");
     println!("Latest block number is {:?}", latest_blk_num);
 
     // eth_gasPrice
     let gas_price: u64 = task::block_on(eth_api.gas_price())?
-        .try_into().expect("cannot convert to u64");
+        .try_into()
+        .expect("cannot convert to u64");
     println!("Gas price is {:?}", gas_price);
 
     // eth_getBalance
     let address: Address = serde_json::from_str(r#""0x0123456789012345678901234567890123456789""#)?;
     let balance: u64 = task::block_on(
         eth_api.get_balance(address, BlockNumber::Number((latest_blk_num - 10).into())),
-    )?.try_into().expect("cannot convert to u64");
+    )?
+    .try_into()
+    .expect("cannot convert to u64");
 
     println!("Balance of address {:?} is {:?} wei", address, balance);
 
@@ -66,20 +71,20 @@ fn main() -> In3Result<()> {
 
     // eth_call
     let contract: Address =
-        serde_json::from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap();   // cannot fail
+        serde_json::from_str(r#""0x2736D225f85740f42D17987100dc8d58e9e16252""#).unwrap(); // cannot fail
     let mut abi = abi::In3EthAbi::new();
-    let params =
-        task::block_on(abi.encode("totalServers():uint256", serde_json::json!([])))
-            .expect("failed to ABI encode params");
+    let params = task::block_on(abi.encode("totalServers():uint256", serde_json::json!([])))
+        .expect("failed to ABI encode params");
 
     let txn = CallTransaction {
         to: Some(contract),
         data: Some(params),
         ..Default::default()
     };
-    let output: Bytes = task::block_on(eth_api.call(txn, BlockNumber::Latest))
-        .expect("ETH call failed");
-    let output = task::block_on(abi.decode("uint256", output)).expect("failed to ABI decode output");
+    let output: Bytes =
+        task::block_on(eth_api.call(txn, BlockNumber::Latest)).expect("ETH call failed");
+    let output =
+        task::block_on(abi.decode("uint256", output)).expect("failed to ABI decode output");
     let total_servers: U256 = serde_json::from_value(output).unwrap(); // cannot fail if ABI decode succeeds
     println!("{:?}", total_servers);
 

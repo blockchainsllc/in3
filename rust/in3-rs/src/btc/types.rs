@@ -19,7 +19,6 @@ pub struct TransactionInput {
     pub txinwitness: Bytes,
 }
 
-
 /// The transaction out type.
 #[derive(Debug)]
 pub struct TransactionOutput {

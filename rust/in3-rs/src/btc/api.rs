@@ -3,9 +3,7 @@ use std::ffi::CString;
 
 use serde_json::{json, Value};
 
-use crate::btc::{
-    BlockHeader, BlockTransactionData, BlockTransactionIds, Transaction,
-};
+use crate::btc::{BlockHeader, BlockTransactionData, BlockTransactionIds, Transaction};
 use crate::error::In3Result;
 use crate::eth1::Hash;
 use crate::json_rpc::{Request, rpc};
@@ -39,10 +37,14 @@ impl Api {
     pub async fn get_blockheader_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
-        rpc(self.client(), Request {
-            method: "getblockheader",
-            params: json!([hash_str.trim_start_matches("0x"), false]),
-        }).await
+        rpc(
+            self.client(),
+            Request {
+                method: "getblockheader",
+                params: json!([hash_str.trim_start_matches("0x"), false]),
+            },
+        )
+            .await
     }
 
     /// Returns the blockheader for specified blockhash.
@@ -55,10 +57,14 @@ impl Api {
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
-        let header: Value = rpc(self.client(), Request {
-            method: "getblockheader",
-            params: json!([hash_str.trim_start_matches("0x"), true]),
-        }).await?;
+        let header: Value = rpc(
+            self.client(),
+            Request {
+                method: "getblockheader",
+                params: json!([hash_str.trim_start_matches("0x"), true]),
+            },
+        )
+            .await?;
         let header = unsafe {
             let js = CString::new(header.to_string()).expect("CString::new failed");
             let j_data = in3_sys::parse_json(js.as_ptr());
@@ -78,10 +84,14 @@ impl Api {
     pub async fn get_transaction_bytes(&mut self, tx_id: Hash) -> In3Result<Bytes> {
         let hash = json!(tx_id);
         let hash_str = hash.as_str().unwrap(); // cannot fail
-        rpc(self.client(), Request {
-            method: "getrawtransaction",
-            params: json!([hash_str.trim_start_matches("0x"), false]),
-        }).await
+        rpc(
+            self.client(),
+            Request {
+                method: "getrawtransaction",
+                params: json!([hash_str.trim_start_matches("0x"), false]),
+            },
+        )
+            .await
     }
 
     /// Returns the transaction identified by specified transaction id.
@@ -94,10 +104,14 @@ impl Api {
     pub async fn get_transaction(&mut self, tx_id: Hash) -> In3Result<Transaction> {
         let hash = json!(tx_id);
         let hash_str = hash.as_str().unwrap(); // cannot fail
-        let tx: Value = rpc(self.client(), Request {
-            method: "getrawtransaction",
-            params: json!([hash_str.trim_start_matches("0x"), true]),
-        }).await?;
+        let tx: Value = rpc(
+            self.client(),
+            Request {
+                method: "getrawtransaction",
+                params: json!([hash_str.trim_start_matches("0x"), true]),
+            },
+        )
+            .await?;
 
         let tx = unsafe {
             let js = CString::new(tx.to_string()).expect("CString::new failed");
@@ -117,14 +131,21 @@ impl Api {
     /// * `blockhash` - block hash.
     ///
     /// # Panics
-    /// If response is not serializable to output type.
-    pub async fn get_block_transaction_data(&mut self, blockhash: Hash) -> In3Result<BlockTransactionData> {
+    /// If response if not serializable to output type.
+    pub async fn get_block_transaction_data(
+        &mut self,
+        blockhash: Hash,
+    ) -> In3Result<BlockTransactionData> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
-        let block: Value = rpc(self.client(), Request {
-            method: "getblock",
-            params: json!([hash_str.trim_start_matches("0x"), 2]),
-        }).await?;
+        let block: Value = rpc(
+            self.client(),
+            Request {
+                method: "getblock",
+                params: json!([hash_str.trim_start_matches("0x"), 2]),
+            },
+        )
+            .await?;
 
         let block_data = unsafe {
             let js = CString::new(block.to_string()).expect("CString::new failed");
@@ -144,14 +165,21 @@ impl Api {
     /// * `blockhash` - block hash.
     ///
     /// # Panics
-    /// If response is not serializable to output type.
-    pub async fn get_block_transaction_ids(&mut self, blockhash: Hash) -> In3Result<BlockTransactionIds> {
+    /// If response if not serializable to output type.
+    pub async fn get_block_transaction_ids(
+        &mut self,
+        blockhash: Hash,
+    ) -> In3Result<BlockTransactionIds> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
-        let block: Value = rpc(self.client(), Request {
-            method: "getblock",
-            params: json!([hash_str.trim_start_matches("0x"), 1]),
-        }).await?;
+        let block: Value = rpc(
+            self.client(),
+            Request {
+                method: "getblock",
+                params: json!([hash_str.trim_start_matches("0x"), 1]),
+            },
+        )
+            .await?;
 
         let block_data = unsafe {
             let js = CString::new(block.to_string()).expect("CString::new failed");
@@ -172,13 +200,16 @@ impl Api {
     pub async fn get_block_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
-        rpc(self.client(), Request {
-            method: "getblock",
-            params: json!([hash_str.trim_start_matches("0x"), false]),
-        }).await
+        rpc(
+            self.client(),
+            Request {
+                method: "getblock",
+                params: json!([hash_str.trim_start_matches("0x"), false]),
+            },
+        )
+            .await
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -219,9 +250,9 @@ mod tests {
                 ]"#,
             )],
         }));
-        let header = task::block_on(
-            api.get_blockheader_bytes(serde_json::from_str::<Hash>(r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#)?)
-        )?;
+        let header = task::block_on(api.get_blockheader_bytes(serde_json::from_str::<Hash>(
+            r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#,
+        )?))?;
         assert_eq!(header.0, FromHex::from_hex("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae").unwrap());
         Ok(())
     }
@@ -269,15 +300,25 @@ mod tests {
                 }]"#,
             )],
         }));
-        let header = task::block_on(
-            api.get_blockheader(serde_json::from_str::<Hash>(r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#)?)
-        )?;
+        let header = task::block_on(api.get_blockheader(serde_json::from_str::<Hash>(
+            r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#,
+        )?))?;
         assert_eq!(header.confirmations, 1979);
         assert_eq!(header.height, 631076);
         assert_eq!(header.version, 536870912);
-        assert_eq!(header.chainwork, serde_json::from_str::<U256>(r#""0x00000000000000000000000000000000000000000f9f574f8d39680a92ad1bdc""#)?);
+        assert_eq!(
+            header.chainwork,
+            serde_json::from_str::<U256>(
+                r#""0x00000000000000000000000000000000000000000f9f574f8d39680a92ad1bdc""#
+            )?
+        );
         assert_eq!(header.n_tx, 2339);
-        assert_eq!(header.next_hash, serde_json::from_str::<Hash>(r#""0x00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d""#)?);
+        assert_eq!(
+            header.next_hash,
+            serde_json::from_str::<Hash>(
+                r#""0x00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d""#
+            )?
+        );
         // it is sufficient to verify data field as it contains all remaining fields serialized
         assert_eq!(header.data.to_vec(), FromHex::from_hex("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae").unwrap());
         Ok(())
@@ -313,9 +354,9 @@ mod tests {
                 }]"#,
             )],
         }));
-        let tx = task::block_on(
-            api.get_transaction_bytes(serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?)
-        )?;
+        let tx = task::block_on(api.get_transaction_bytes(serde_json::from_str::<Hash>(
+            r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#,
+        )?))?;
         assert_eq!(tx.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
         Ok(())
     }
@@ -394,9 +435,10 @@ mod tests {
                 }]"#,
             )],
         }));
-        let tx = task::block_on(
-            api.get_transaction(serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?)
-        ).expect("invalid tx");
+        let tx = task::block_on(api.get_transaction(serde_json::from_str::<Hash>(
+            r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#,
+        )?))
+            .expect("invalid tx");
         assert_eq!(tx.version, 1);
         assert_eq!(tx.size, 247);
         assert_eq!(tx.vsize, 166);
@@ -405,16 +447,32 @@ mod tests {
         assert_eq!(tx.confirmations, 2890);
         assert_eq!(tx.time, 1589863750);
         assert_eq!(tx.blocktime, 1589863750);
-        assert_eq!(tx.txid, serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?);
-        assert_eq!(tx.hash, serde_json::from_str::<Hash>(r#""0x4041e8162e2c1a9711b15fd2a2b0c7aae59fbc06a95667682f1271fab0393f69""#)?);
+        assert_eq!(
+            tx.txid,
+            serde_json::from_str::<Hash>(
+                r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#
+            )?
+        );
+        assert_eq!(
+            tx.hash,
+            serde_json::from_str::<Hash>(
+                r#""0x4041e8162e2c1a9711b15fd2a2b0c7aae59fbc06a95667682f1271fab0393f69""#
+            )?
+        );
         assert_eq!(tx.data.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
         assert_eq!(tx.vin.len(), 1);
-        assert_eq!(tx.vin[0].script.0, FromHex::from_hex("16001430d71be06aa53fd845913f8613ed518d742d082a").unwrap());
+        assert_eq!(
+            tx.vin[0].script.0,
+            FromHex::from_hex("16001430d71be06aa53fd845913f8613ed518d742d082a").unwrap()
+        );
         assert_eq!(tx.vin[0].sequence, 4294967295);
         assert_eq!(tx.vin[0].vout, 1);
         assert_eq!(tx.vout.len(), 2);
         assert_eq!(tx.vout[1].n, 1);
-        assert_eq!(tx.vout[0].script_pubkey.0, FromHex::from_hex("a914d129842dbe1ee73e69d14d54a8a62784877fb83e87").unwrap());
+        assert_eq!(
+            tx.vout[0].script_pubkey.0,
+            FromHex::from_hex("a914d129842dbe1ee73e69d14d54a8a62784877fb83e87").unwrap()
+        );
         assert_eq!(tx.vout[0].value, 11000000);
         Ok(())
     }

@@ -32,23 +32,21 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-OPTION(POA "support POA verification including validatorlist updates" OFF)
-IF (POA)
-  add_definitions(-DPOA)
-ENDIF (POA)
+add_static_library(
+  NAME     eth_nano 
+  
+  SOURCES 
+    eth_nano.c
+    rlp.c
+    merkle.c
+    serialize.c
+    blockheader.c
+    signature.c
+    txreceipt.c
+    registry.c
+    chainspec.c
 
-# static lib
-add_library(eth_nano_o OBJECT
-        eth_nano.c
-        rlp.c
-        merkle.c
-        serialize.c
-        blockheader.c
-        signature.c
-        txreceipt.c
-        registry.c
-        chainspec.c
-        )
+  DEPENDS 
+    core
+)
 
-add_library(eth_nano STATIC $<TARGET_OBJECTS:eth_nano_o>)
-target_link_libraries(eth_nano core)

@@ -85,6 +85,10 @@
       <Content Include="Responses/eth_call_2.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <None Remove="Responses/eth_call_3.json" />
+      <Content Include="Responses/eth_call_3.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <None Remove="Responses/eth_estimateGas.json" />
       <Content Include="Responses/eth_estimateGas.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>

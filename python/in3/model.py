@@ -83,6 +83,7 @@ class ClientConfig(DataTransferObject):
         response_keep_proof (bool): If true, proof data will be kept in every rpc response. False will remove this data after using it to verify the responses. Useful for debugging and manually verifying the proofs.
         cached_blocks (int): Maximum blocks kept in memory. example: 100 last requested blocks
         cached_code_bytes (int): Maximum number of bytes used to cache EVM code in memory. example: 100000 bytes
+        boot_weights (bool): if true, the first request (updating the nodelist) will also fetch the current health status and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
         in3_registry (dict): In3 Registry Smart Contract configuration data
     """
 
@@ -102,6 +103,7 @@ class ClientConfig(DataTransferObject):
                  response_keep_proof: bool = None,
                  cached_blocks: int = None,
                  cached_code_bytes: int = None,
+                 boot_weights: bool = None,
                  in3_registry: dict = None):
         self.finality: int = chain_finality_threshold
         self.key: str = account_secret
@@ -114,13 +116,15 @@ class ClientConfig(DataTransferObject):
         self.timeout: int = request_timeout
         self.maxAttempts: int = request_retries
         self.proof: str = response_proof_level
+        self.bootWeights: bool = boot_weights
         self.includeCode: bool = response_includes_code
         self.keepIn3: bool = response_keep_proof
         self.maxBlockCache: int = cached_blocks
         self.maxCodeCache: int = cached_code_bytes
         self.nodes: dict = in3_registry
         if self.key:
-            warnings.warn('In3 Config: `account_secret` may cause instability.', DeprecationWarning)
+            warnings.warn(
+                'In3 Config: `account_secret` may cause instability.', DeprecationWarning)
 
 
 class ChainConfig:
