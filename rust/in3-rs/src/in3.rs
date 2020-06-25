@@ -391,13 +391,6 @@ impl ClientTrait for Client {
         }
     }
 
-    fn set_log_debug(&mut self) {
-        unsafe {
-            in3_sys::in3_log_set_quiet_(0);
-            in3_sys::in3_log_set_level_(in3_sys::in3_log_level_t::LOG_TRACE);
-        }
-    }
-
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
         let mut ctx = Ctx::new(self, call);
         loop {
@@ -451,8 +444,6 @@ impl Client {
     /// ```
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
-            in3_sys::in3_log_set_quiet_(0);
-            in3_sys::in3_log_set_level_(in3_sys::in3_log_level_t::LOG_TRACE);
             let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: Box::new(HttpTransport {}),

@@ -27,7 +27,6 @@ async fn http_async(
 /// Read the contents of Mock response and request from a json file
 ///
 /// See examples/custom_transport.rs for usage.
-
 pub struct MockJsonTransport;
 
 const MOCK_DIR_RELEASE: &'static str = "../../c/test/testdata/mock/";
