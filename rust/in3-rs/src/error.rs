@@ -74,6 +74,7 @@ pub enum Error {
     CustomError(String),
     JsonError(serde_json::error::Error),
     Base64Error(base64::DecodeError),
+    JsonRpcError(crate::json_rpc::Error),
 }
 
 impl convert::From<SysError> for Error {

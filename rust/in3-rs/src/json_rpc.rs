@@ -1,8 +1,10 @@
 //! Minimal JSON RPC implementation.
+use std::convert;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::*;
+use crate::error;
 use crate::traits::Client;
 
 /// JSON RPC request.
@@ -15,7 +17,7 @@ pub struct Request<'a> {
 }
 
 /// JSON RPC response.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Response {
     /// Result - required if `error` is `None`
     pub result: Option<Value>,
@@ -23,13 +25,30 @@ pub struct Response {
     pub error: Option<Value>,
 }
 
+/// JSON RPC error.
+#[derive(Debug)]
+pub enum Error {
+    /// Neither `result` nor `error` field was set in response
+    InvalidResponse(String),
+    /// `error` field was set in response
+    ErrorResponse(String),
+}
+
+impl convert::From<Error> for error::Error {
+    fn from(err: Error) -> Self {
+        Self::JsonRpcError(err)
+    }
+}
+
 impl Response {
     /// Returns the [`Response`](struct.Response.html) interpreted a `Result` type
-    pub fn to_result(&self) -> In3Result<&Value> {
+    pub fn to_result(&self) -> error::In3Result<&Value> {
         if let Some(ref res) = self.result {
             Ok(res)
+        } else if let Some(ref err) = self.error {
+            Err(Error::ErrorResponse(serde_json::to_string(err).unwrap()).into())
         } else {
-            Err(Error::CustomError(format!("{:?}", &self.error)))
+            Err(Error::InvalidResponse(serde_json::to_string(self).unwrap()).into())
         }
     }
 }
@@ -40,19 +59,17 @@ impl Response {
 /// # Arguments
 /// * `client` - reference to [`Client`](../in3/struct.Client.html) instance.
 /// * `request` - request to perform.
-pub async fn rpc<T>(client: &mut Box<dyn Client>, request: Request<'_>) -> In3Result<T>
-where
-    T: serde::de::DeserializeOwned,
+pub async fn rpc<T>(client: &mut Box<dyn Client>, request: Request<'_>) -> error::In3Result<T>
+    where
+        T: serde::de::DeserializeOwned,
 {
     let req_str = serde_json::to_string(&request)?;
-    println!("REQUEST: {:?}", req_str);
     let resp_str = client.rpc(req_str.as_str()).await?;
-    println!("RESPONSE: {:?}", resp_str.to_string());
+
     //Check for array in or object in the response.
     let resp_: Vec<Response> = match serde_json::from_str(resp_str.as_str()) {
         Result::Ok(val) => val,
-        Result::Err(err) => {
-            println!("parsing was unsuccessful for array: {:?}", err);
+        Result::Err(_) => {
             let response = Response {
                 result: Some(serde_json::Value::Null),
                 error: Some(serde_json::Value::Null),
@@ -60,7 +77,7 @@ where
             vec![response]
         }
     };
-    println!("{:?}", resp_);
+
     //Check array is valid and try once again
     if resp_[0].result == Some(serde_json::Value::Null) {
         let resp_single: Response =
