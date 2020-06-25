@@ -6,8 +6,10 @@ use in3_sys::in3_ret_t::*;
 
 macro_rules! in3_error_def {
     ( $( $( #[$attr:meta] )* => $rust_variant:ident = $cs_variant:ident; )* ) => {
+        /// Errors either originating in the C code (that map to `in3_ret_t`) or low-level errors
+        /// in unsafe code.
+        /// Enabling logging should help with debugging such errors.
         #[derive(Debug, PartialEq, Eq)]
-
         pub enum SysError {
             $(
                 $(
@@ -15,9 +17,14 @@ macro_rules! in3_error_def {
                 )*
                 $rust_variant,
             )*
-
+            /// Error that cannot be mapped to `in3_ret_t` variants
             UnknownIn3Error,
+            /// Resource temporarily unavailable
             TryAgain,
+            /// Error response
+            ResponseError(String),
+            /// Could not find last waiting context in execute loop
+            ContextError,
         }
 
         impl From<in3_sys::in3_ret_t::Type> for SysError {
@@ -68,13 +75,19 @@ in3_error_def!(
 #[must_use]
 pub type In3Result<T> = result::Result<T, Error>;
 
+/// Error type that represents all possible errors in the lib
 #[derive(Debug)]
 pub enum Error {
+    /// Errors originating in the C code
     InternalError(SysError),
-    CustomError(String),
+    /// JSON parser errors
     JsonError(serde_json::error::Error),
+    /// Base64 decoding errors
     Base64Error(base64::DecodeError),
+    /// JSON RPC errors
     JsonRpcError(crate::json_rpc::Error),
+    /// Custom error type for ease of use
+    CustomError(String),
 }
 
 impl convert::From<SysError> for Error {
