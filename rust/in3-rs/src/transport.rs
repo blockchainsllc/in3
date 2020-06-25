@@ -1,13 +1,14 @@
 //! Transport trait implementations used by default or in tests.
-use async_trait::async_trait;
-
-use crate::traits::Transport;
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+
+use async_trait::async_trait;
+
+use crate::traits::Transport;
 
 async fn http_async(
     url: &str,
@@ -28,8 +29,10 @@ async fn http_async(
 /// See examples/custom_transport.rs for usage.
 
 pub struct MockJsonTransport;
+
 const MOCK_DIR_RELEASE: &'static str = "../../c/test/testdata/mock/";
 const MOCK_DIR_DEBUG: &'static str = "../c/test/testdata/mock/";
+
 impl MockJsonTransport {
     /// Read file from path
     ///
@@ -43,13 +46,15 @@ impl MockJsonTransport {
         let u = serde_json::from_reader(reader)?;
         Ok(u)
     }
+
     fn get_mock_dir(&mut self) -> &str {
         let in3_mod = self.env_var("IN3_MODE");
-        match in3_mod == "DEBUG" {
-            true => return MOCK_DIR_DEBUG,
-            _ => return MOCK_DIR_RELEASE,
+        match in3_mod {
+            Some(val) if val == "DEBUG".to_owned() => MOCK_DIR_DEBUG,
+            _ => MOCK_DIR_RELEASE,
         }
     }
+
     fn find_json_file(&mut self, name: String) -> Option<String> {
         let files = fs::read_dir(self.get_mock_dir()).unwrap();
         let json_files = files
@@ -69,19 +74,22 @@ impl MockJsonTransport {
         }
         None
     }
+
     /// Helper for getting env vars
-    pub fn env_var(&mut self, var: &str) -> String {
-        env::var(var).expect(&format!("Environment variable {} is not set", var))
+    pub fn env_var(&mut self, var: &str) -> Option<String> {
+        env::var(var).ok()
     }
+
     /// Get testdata path from in3c project
     pub fn prepare_file_path(&mut self, name: String) -> String {
-        let mut relative_path = PathBuf::from(self.env_var("CARGO_MANIFEST_DIR"));
+        let mut relative_path = PathBuf::from(self.env_var("CARGO_MANIFEST_DIR").unwrap());
         relative_path.push(self.get_mock_dir());
         let mut full_path = relative_path.to_str().unwrap().to_string();
         let data = self.find_json_file(name).unwrap();
         full_path.push_str(&data);
         full_path
     }
+
     /// Read and parse json from test data path
     pub fn read_json(&mut self, data: String) -> String {
         let full_path = self.prepare_file_path(data);
@@ -191,12 +199,13 @@ impl Transport for HttpTransport {
 
 #[cfg(test)]
 mod tests {
+    use ethereum_types::U256;
 
     use crate::json_rpc::Response;
     use crate::prelude::*;
-    use ethereum_types::U256;
 
     use super::*;
+
     #[test]
     fn test_json_tx_count() -> In3Result<()> {
         let mut transport = MockJsonTransport {};
