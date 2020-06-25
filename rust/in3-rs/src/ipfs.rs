@@ -3,6 +3,7 @@ use base64::{decode, encode, DecodeError};
 use serde_json::json;
 
 use crate::error::{Error, In3Result};
+use crate::in3::chain::{IPFS, MULTICHAIN};
 use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -19,6 +20,7 @@ impl ApiTrait for Api {
     /// Creates an [`ipfs::Api`](../ipfs/struct.Api.html) instance by consuming a
     /// [`Client`](../in3/struct.Client.html).
     fn new(client: Box<dyn ClientTrait>) -> Self {
+        assert!(client.id() == IPFS || client.id() == MULTICHAIN);
         Api { client }
     }
 

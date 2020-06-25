@@ -8,6 +8,7 @@ use crate::eth1::{
     Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
     Transaction, TransactionReceipt,
 };
+use crate::in3::chain::{BTC, IPFS};
 use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -21,6 +22,7 @@ impl ApiTrait for Api {
     /// Creates an [`eth1::Api`](../eth1/api/struct.Api.html) instance by consuming a
     /// [`Client`](../in3/struct.Client.html).
     fn new(client: Box<dyn ClientTrait>) -> Self {
+        assert!(client.id() != BTC && client.id() != IPFS);
         Api { client }
     }
 
