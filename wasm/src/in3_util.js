@@ -151,11 +151,12 @@ function ecSign(pk, data, hashMessage = true, adjustV = true) {
 }
 
 function abiDecode(sig, data) {
+    const types = splitTypes(sig.substr(sig.indexOf(':') + 1))
     data = toUint8Array(data)
     let res = JSON.parse(call_string('abi_decode', sig, data, data.byteLength))
-    if (!Array.isArray(res)) res = [res]
+    if (types.length == 1) res = [res]
     if (!res.length) return []
-    return convertTypes(splitTypes(sig.substr(sig.indexOf(':') + 1)), res)
+    return convertTypes(types, res)
 }
 
 function convertType(val, t) {
@@ -262,6 +263,7 @@ function toNumber(val) {
         case 'null':
             return 0
         default:
+            if (!val) return 0
             if (val.readBigInt64BE) //nodejs Buffer
                 return val.length == 0 ? 0 : parseInt(toMinHex(val))
             else if (val.redIMul)
@@ -447,7 +449,8 @@ const util = {
     createSignatureHash,
     toUint8Array,
     base64Decode,
-    base64Encode
+    base64Encode,
+    getVersion
 }
 
 // add as static proporty and as standard property.

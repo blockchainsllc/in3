@@ -515,7 +515,6 @@ int op_return(evm_t* evm, uint8_t revert) {
 
   if (evm->return_data.data) _free(evm->return_data.data);
   evm->return_data.data = _malloc(len);
-  if (!evm->return_data.data) return EVM_ERROR_BUFFER_TOO_SMALL;
   if (evm_mem_readi(evm, offset, evm->return_data.data, len) < 0) return EVM_ERROR_OUT_OF_GAS;
   evm->return_data.len = len;
   evm->state           = revert ? EVM_STATE_REVERTED : EVM_STATE_STOPPED;
@@ -537,9 +536,6 @@ int op_call(evm_t* evm, uint8_t mode) {
   uint64_t gas = bytes_to_long(gas_limit, l_gas);
 
   if ((out_len > 0 && mem_check(evm, out_offset + out_len, true) < 0) || (in_len && mem_check(evm, in_offset + in_len, true) < 0)) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
-
-  //TODO  do we need this check?
-  //  if ((uint32_t) in_offset + in_len > evm->memory.bsize) return EVM_ERROR_ILLEGAL_MEMORY_ACCESS;
 
   switch (mode) {
     case CALL_CALL:

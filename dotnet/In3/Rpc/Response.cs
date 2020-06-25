@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using csharp.Utils;
+using In3.Utils;
 
 namespace In3.Rpc
 {

@@ -52,7 +52,7 @@
 #define BLACKLISTTIME DAY
 #define BLACKLISTWEIGHT 7 * DAY
 
-static void free_nodeList(in3_node_t* nodelist, int count) {
+NONULL static void free_nodeList(in3_node_t* nodelist, int count) {
   // clean chain..
   for (int i = 0; i < count; i++) {
     if (nodelist[i].url) _free(nodelist[i].url);
@@ -61,20 +61,20 @@ static void free_nodeList(in3_node_t* nodelist, int count) {
   _free(nodelist);
 }
 
-static bool postpone_update(const in3_chain_t* chain) {
+NONULL static bool postpone_update(const in3_chain_t* chain) {
   if (chain->nodelist_upd8_params && chain->nodelist_upd8_params->timestamp)
     if (DIFFTIME(chain->nodelist_upd8_params->timestamp, in3_time(NULL)) > 0)
       return true;
   return false;
 }
 
-static inline bool nodelist_exp_last_block_neq(in3_chain_t* chain, uint64_t exp_last_block) {
+NONULL static inline bool nodelist_exp_last_block_neq(in3_chain_t* chain, uint64_t exp_last_block) {
   return (chain->nodelist_upd8_params != NULL && chain->nodelist_upd8_params->exp_last_block != exp_last_block);
 }
 
-static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+NONULL static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_ret_t      res  = IN3_OK;
-  uint64_t       _now = in3_time(NULL); // TODO here we might get a -1 or a unsuable number if the device does not know the current timestamp.
+  uint64_t       _now = in3_time(NULL);
   const uint64_t now  = (uint64_t) _now;
 
   // read the nodes
@@ -116,6 +116,12 @@ static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* resul
     n->url        = d_get_stringk(node, K_URL);
     n->address    = d_get_byteskl(node, K_ADDRESS, 20);
     BIT_CLEAR(n->attrs, ATTR_BOOT_NODE); // nodes are considered boot nodes only until first nodeList update succeeds
+
+    if ((ctx->client->flags & FLAGS_BOOT_WEIGHTS) && (t = d_get(node, K_PERFORMANCE))) {
+      weights[i].blacklisted_until   = d_get_longk(t, K_LAST_FAILED) / 1000 + (24 * 3600);
+      weights[i].response_count      = d_get_intk(t, K_COUNT);
+      weights[i].total_response_time = d_get_intk(t, K_TOTAL);
+    }
 
     if (n->address)
       n->address = b_dup(n->address); // create a copy since the src will be freed.
@@ -165,7 +171,7 @@ static in3_ret_t fill_chain(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* resul
   return res;
 }
 
-void in3_client_run_chain_whitelisting(in3_chain_t* chain) {
+NONULL void in3_client_run_chain_whitelisting(in3_chain_t* chain) {
   if (!chain->whitelist)
     return;
 
@@ -179,7 +185,7 @@ void in3_client_run_chain_whitelisting(in3_chain_t* chain) {
   }
 }
 
-static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
+NONULL static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* ctx, d_token_t* result) {
   in3_whitelist_t* wl    = chain->whitelist;
   int              i     = 0;
   d_token_t *      nodes = d_get(result, K_NODES), *t = NULL;
@@ -201,7 +207,6 @@ static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* 
   // now update the addresses
   if (wl->addresses.data) _free(wl->addresses.data);
   wl->addresses = bytes(_malloc(len * 20), len * 20);
-  if (!wl->addresses.data) return IN3_ENOMEM;
 
   for (d_iterator_t iter = d_iter(nodes); iter.left; d_iter_next(&iter), i += 20)
     d_bytes_to(iter.token, wl->addresses.data + i, 20);
@@ -210,7 +215,7 @@ static in3_ret_t in3_client_fill_chain_whitelist(in3_chain_t* chain, in3_ctx_t* 
   return IN3_OK;
 }
 
-static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+NONULL static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   // is there a useable required ctx?
   in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_nodeList");
 
@@ -271,14 +276,17 @@ static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent
 
   // create request
   char* req = _malloc(350);
-  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]],\"in3\":%s}", c->node_limit, seed, sb_add_char(in3_sec, '}')->data);
+  sprintf(req, "{\"method\":\"in3_nodeList\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[%i,\"%s\",[]%s],\"in3\":%s}",
+          c->node_limit, seed,
+          ((c->flags & FLAGS_BOOT_WEIGHTS) && nodelist_first_upd8(chain)) ? ",true" : "",
+          sb_add_char(in3_sec, '}')->data);
   sb_free(in3_sec);
 
   // new client
   return ctx_add_required(parent_ctx, ctx_new(c, req));
 }
 
-static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
+NONULL static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* parent_ctx) {
   // is there a useable required ctx?
   in3_ctx_t* ctx = ctx_find_required(parent_ctx, "in3_whiteList");
 
@@ -319,7 +327,7 @@ static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t* paren
   return ctx_add_required(parent_ctx, ctx_new(c, req));
 }
 
-void in3_ctx_free_nodes(node_match_t* node) {
+NONULL void in3_ctx_free_nodes(node_match_t* node) {
   node_match_t* last_node = NULL;
   while (node) {
     last_node = node;
@@ -329,19 +337,20 @@ void in3_ctx_free_nodes(node_match_t* node) {
 }
 
 in3_ret_t update_nodes(in3_t* c, in3_chain_t* chain) {
-  in3_ctx_t ctx;
-  memset(&ctx, 0, sizeof(ctx));
+  in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
+  ctx->client    = c;
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;
   }
 
-  in3_ret_t ret = update_nodelist(c, chain, &ctx);
-  if (ret == IN3_WAITING && ctx.required) {
-    ret = in3_send_ctx(ctx.required);
-    if (ret) return ret;
-    return update_nodelist(c, chain, &ctx);
+  in3_ret_t ret = update_nodelist(c, chain, ctx);
+  if (ret == IN3_WAITING && ctx->required) {
+    ret = in3_send_ctx(ctx->required);
+    if (!ret) ret = update_nodelist(c, chain, ctx);
   }
+
+  ctx_free(ctx);
   return ret;
 }
 
@@ -400,10 +409,6 @@ node_match_t* in3_node_list_fill_weight(in3_t* c, chain_id_t chain_id, in3_node_
 
   SKIP_FILTERING:
     current = _malloc(sizeof(node_match_t));
-    if (!current) {
-      // TODO clean up memory
-      return NULL;
-    }
     if (!first) first = current;
     current->node   = node_def;
     current->weight = weight_def;
@@ -555,7 +560,7 @@ in3_ret_t in3_node_list_pick_nodes(in3_ctx_t* ctx, node_match_t** nodes, int req
   }
 
   *nodes = first;
-  in3_ctx_free_nodes(found);
+  if (found) in3_ctx_free_nodes(found);
 
   // select them based on random
   return res;

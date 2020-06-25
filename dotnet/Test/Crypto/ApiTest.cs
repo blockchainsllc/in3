@@ -13,11 +13,12 @@ namespace Test.Crypto
         public void Setup()
         {
             ClientBuilder _builder = new ClientBuilder(Chain.Mainnet);
-            in3 = _builder.ConstructClient(new string[][] {});
+            in3 = _builder.ConstructClient(new string[][] { });
         }
 
         [Test]
-        public void SignData() {
+        public void SignData()
+        {
             string msg = "0x0102030405060708090a0b0c0d0e0f";
             string key = "0xa8b8759ec8b59d7c13ef3630e8530f47ddb47eba12f00f9024d3d48247b62852";
             SignedData signature = in3.Crypto.SignData(msg, key, SignatureType.Raw);
@@ -65,7 +66,7 @@ namespace Test.Crypto
             String msg = "0x487b2cbb7997e45b4e9771d14c336b47c87dc2424b11590e32b3a8b9ab327999";
             String signature = "0x0f804ff891e97e8a1c35a2ebafc5e7f129a630a70787fb86ad5aec0758d98c7b454dee5564310d497ddfe814839c8babd3a727692be40330b5b41e7693a445b71c";
 
-            Account account  = in3.Crypto.EcRecover(msg, signature, SignatureType.Hash);
+            Account account = in3.Crypto.EcRecover(msg, signature, SignatureType.Hash);
 
             Assert.That(account.PublicKey, Is.EqualTo("0x94b26bafa6406d7b636fbb4de4edd62a2654eeecda9505e9a478a66c4f42e504c4481bad171e5ba6f15a5f11c26acfc620f802c6768b603dbcbe5151355bbffb"));
             Assert.That(account.Address, Is.EqualTo("0xf68a4703314e9a9cf65be688bd6d9b3b34594ab4"));
@@ -77,7 +78,7 @@ namespace Test.Crypto
             string data = "0x68656c6c6f20776f726c64";
 
             string result = in3.Crypto.Sha3(data);
-            
+
             Assert.That(result, Is.EqualTo("0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad"));
         }
     }

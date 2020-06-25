@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace In3.Rpc
 {
-    public class LogFilter
+    internal class LogFilter
     {
         [JsonPropertyName("fromBlock")] public string FromBlock { get; set; }
         [JsonPropertyName("toBlock")] public string ToBlock { get; set; }

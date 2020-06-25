@@ -35,7 +35,7 @@ README="README.md"
 
 cd ../java/examples
 
-printf "# Examples\n\n" > $DOC
+printf "## Examples\n\n" > $DOC
 printf "# Examples\n\n" > $README
 
 for f in *.java;
@@ -52,6 +52,33 @@ done
 
 cat ../../java/docs/build_examples.md_ >> $DOC
 cat ../../java/docs/build_examples.md_ >> $README
+cd ../../scripts
+
+
+
+# DOTNET
+
+DOC="../../dotnet/docs/examples.md"
+README="README.md"
+
+cd ../dotnet/Examples
+
+printf "## Examples\n\n" > $DOC
+printf "# Examples\n\n" > $README
+
+for f in */;
+  do
+    printf "### ${f%/*}\n\nsource : [in3-c/dotnet/Examples/${f%/*}](https://github.com/slockit/in3-c/blob/master/dotnet/Examples/${f%/*}/Program.cs)\n\n" >> $DOC
+    printf "\n\n\`\`\`c#\n" >> $DOC
+    cat ${f%/*}/Program.cs >> $DOC
+    printf "\n\`\`\`\n\n" >> $DOC
+
+    printf "\n-  [${f%/*}](./${f%/*}/Program.cs)\n" >> $README
+    cat ${f%/*}/Program.cs | grep -v // | sed "s/\/\/\/ //g" >> $README
+done
+
+cat ../../dotnet/docs/build_examples.md_ >> $DOC
+cat ../../dotnet/docs/build_examples.md_ >> $README
 cd ../../scripts
 
 

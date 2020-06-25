@@ -1,18 +1,19 @@
-
-Python bindings and library for in3. Go to our [readthedocs](https://in3.readthedocs.io/) page for more on usage.
+## Python Incubed client
+![coverage badge](docs/coverage.svg)
 
 This library is based on the [C version of Incubed](http://github.com/slockit/in3-c), which limits the compatibility for Cython, so please contribute by compiling it to your own platform and sending us a pull-request!
 
+Go to our [readthedocs](https://in3.readthedocs.io/) page for more.
 
-## Quickstart
+### Quickstart
 
-### Install with pip 
+#### Install with pip 
  
-```python
-pip install in3
+```shell script
+coverage run -m pytest --pylama --junitxml=report.xml && coverage report && coverage-badge -fo docs/coverage.svg
 ```
 
-### In3 Client API
+#### In3 Client API
 
 ```python
 import in3
@@ -29,12 +30,12 @@ in3_client.account  # ethereum account api
 in3_client.contract  # ethereum smart-contract api
 ```
 
-### Tests
+#### Tests
 ```bash
 pytest --pylama
 ```
 
-### Index
+#### Index
 Explanation of this source code architecture and how it is organized. For more on design-patterns see [here](http://geekswithblogs.net/joycsharp/archive/2012/02/19/design-patterns-for-model.aspx) or on [Martin Fowler's](https://martinfowler.com/eaaCatalog/) Catalog of Patterns of Enterprise Application Architecture.
 
 - **in3.__init__.py**: Library entry point, imports organization. Standard for any pipy package.

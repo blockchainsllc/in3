@@ -33,7 +33,9 @@
  *******************************************************************************/
 
 // implement the transport and storage handlers
+/* istanbul ignore next */
 if (typeof fetch === 'function') {
+
     // for browsers
     in3w.in3_cache = {
         get: key => window.localStorage.getItem('in3.' + key),
@@ -151,6 +153,8 @@ class IN3 {
         if (chainId === 'kovan') chainId = '0x2a'
         if (chainId === 'goerli') chainId = '0x5'
         if (chainId === 'mainnet') chainId = '0x1'
+        if (chainId === 'btc') chainId = '0x99'
+        if (chainId === 'ewc') chainId = '0xf6'
         this.ptr = in3w.ccall('in3_create', 'number', ['number'], [parseInt(chainId) || 0]);
         clients['' + this.ptr] = this
     }
@@ -162,6 +166,7 @@ class IN3 {
         this.ptr = 0;
         this.eth = new EthAPI(this)
         this.ipfs = new IpfsAPI(this)
+        this.btc = new BtcAPI(this)
     }
 
     /**
@@ -169,7 +174,7 @@ class IN3 {
      */
     setConfig(conf) {
         if (conf) {
-            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5' }
+            const aliases = { kovan: '0x2a', tobalaba: '0x44d', main: '0x1', ipfs: '0x7d0', mainnet: '0x1', goerli: '0x5', ewc: '0xf6', btc: '0x99' }
             if (conf.chainId) conf.chainId = aliases[conf.chainId] || conf.chainId
             this.config = { ...this.config, ...conf }
         }
@@ -219,55 +224,62 @@ class IN3 {
         // create the context
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
-        function finalize() {
-            // we always need to cleanup
-            in3w.ccall('in3_request_free', 'void', ['number'], [r])
-        }
 
-        while (true) {
-            const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
-            switch (state.status) {
-                case 'error':
-                    finalize()
-                    throw new Error(state.error || 'Unknown error')
-                case 'ok':
-                    finalize()
-                    if (Array.isArray(state.result)) {
-                        const s = state.result[0]
-                        delete s.in3
-                        return s
-                    }
-                    return state.result
-                case 'waiting': {
-                    const req = state.request
-                    function setResponse(msg, i, isError) {
-                        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
-                    }
-                    function freeRequest() {
-                        in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
-                    }
+        try {
+            // main async loop
+            // we repeat it until we have a result
+            while (true) {
+                const state = JSON.parse(call_string('ctx_execute', r).replace(/\n/g, ' > '))
+                switch (state.status) {
+                    case 'error':
+                        throw new Error(state.error || 'Unknown error')
+                    case 'ok':
+                        if (Array.isArray(state.result)) {
+                            const s = state.result[0]
+                            delete s.in3
+                            return s
+                        }
+                        return state.result
+                    case 'waiting': {
+                        const req = state.request
+                        try {
+                            switch (req.type) {
 
-                    switch (req.type) {
-                        case 'sign':
-                            try {
-                                const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
-                                if (!this.signer) throw new Error('no signer set to handle signing')
-                                if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
-                                setResponse(toHex(await this.signer.sign(message, account, true, false)), 0, false)
-                            } catch (ex) {
-                                setResponse(ex.message || ex, 0, true)
+                                case 'sign':
+                                    try {
+                                        const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                        if (!this.signer) throw new Error('no signer set to handle signing')
+                                        if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
+                                        setResponse(req, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                                    } catch (ex) {
+                                        setResponse(req, ex.message || ex, 0, true)
+                                    }
+                                    break;
+
+                                case 'rpc':
+                                    //                            console.log("req to " + req.urls[0], req.payload[0])
+                                    await Promise.all(
+                                        req.urls.map((url, i) =>
+                                            in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000)
+                                                .then(
+                                                    res => setResponse(req, res, i, false),
+                                                    err => setResponse(req, err.message || err, i, true)
+                                                )
+                                        )
+                                    )
                             }
-                            freeRequest()
-                            break;
-
-                        case 'rpc':
-                            await Promise.all(req.urls.map((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
-                                res => setResponse(res, i, false),
-                                err => setResponse(err.message || err, i, true)
-                            ))).then(freeRequest, err => { freeRequest(); throw err })
+                        }
+                        finally {
+                            // we need to free the request
+                            in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
+                        }
                     }
                 }
             }
+        }
+        finally {
+            // we always need to cleanup
+            in3w.ccall('in3_request_free', 'void', ['number'], [r])
         }
     }
 
@@ -287,8 +299,6 @@ class IN3 {
             this.ptr = 0
         }
     }
-
-
 }
 // change the transport
 IN3.setTransport = function (fn) {
@@ -338,3 +348,21 @@ if (typeof module !== "undefined")
     module.exports = IN3
 
 
+
+// helper functions
+function setResponse(req, msg, i, isError) {
+    if (msg.length > 5000) {
+        // here we pass the string as pointer using malloc before
+        const len = (msg.length << 2) + 1;
+        const ptr = in3w.ccall('imalloc', 'number', ['number'], [len])
+        if (!ptr)
+            throw new Error('Could not allocate memory (' + len + ')')
+        stringToUTF8(msg, ptr, len);
+        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'number'], [req.ctx, req.ptr, i, isError, ptr])
+        in3w.ccall('ifree', 'void', ['number'], [ptr])
+
+    }
+    else
+        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+    //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
+}

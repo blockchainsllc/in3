@@ -31,7 +31,6 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
 
 # add a option
 option(LIBCURL_LINKTYPE "Link type for curl" SHARED)
@@ -98,15 +97,17 @@ else ()
 
 endif ()
 
-# static lib
-#add_library(transport_curl STATIC in3_curl.c)
-add_library(transport_curl_o OBJECT in3_curl.c)
-add_library(transport_curl STATIC $<TARGET_OBJECTS:transport_curl_o>)
+# add lib
+add_static_library(
+  NAME     transport_curl 
+  
+  SOURCES 
+    in3_curl.c
 
-
-
-# add dependency
-target_link_libraries(transport_curl CONAN_PKG::libcurl)
+  DEPENDS 
+    core
+    CONAN_PKG::libcurl
+)
 
 if (CURL_INCLUDE_DIRS)
   target_include_directories(transport_curl_o PRIVATE ${CURL_INCLUDE_DIRS})

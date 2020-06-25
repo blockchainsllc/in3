@@ -28,6 +28,13 @@ When configuring cmake, you can set a lot of different incubed specific like `cm
 Default-Value: `-DASMJS=OFF`
 
 
+#### ASSERTIONS
+
+  includes assertions into the code, which help track errors but may cost time during runtime
+
+Default-Value: `-DASSERTIONS=OFF`
+
+
 #### BTC
 
   if true, the bitcoin verifiers will be build
@@ -75,6 +82,13 @@ Default-Value: `-DDEV_NO_INTRN_PTR=ON`
   if set human readable error messages will be inculded in th executable, otherwise only the error code is used. (saves about 19kB)
 
 Default-Value: `-DERR_MSG=ON`
+
+
+#### ESP_IDF
+
+  include support for ESP-IDF microcontroller framework
+
+Default-Value: `-DESP_IDF=OFF`
 
 
 #### ETH_BASIC
@@ -179,7 +193,7 @@ Default-Value: `-DPAY_ETH=OFF`
 
   pkg-config executable
 
-Default-Value: `-DPKG_CONFIG_EXECUTABLE=/usr/local/bin/pkg-config`
+Default-Value: `-DPKG_CONFIG_EXECUTABLE=/opt/local/bin/pkg-config`
 
 
 #### POA

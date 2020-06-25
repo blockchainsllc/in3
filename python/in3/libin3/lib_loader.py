@@ -16,8 +16,10 @@ import platform
 
 from pathlib import Path
 
+DEBUG = False
 
-def libin3_new(chain_id: int, transport: c.CFUNCTYPE, debug=False) -> int:
+
+def libin3_new(chain_id: int, transport: c.CFUNCTYPE) -> int:
     """
     Instantiate new In3 Client instance.
     Args:
@@ -38,7 +40,8 @@ def libin3_new(chain_id: int, transport: c.CFUNCTYPE, debug=False) -> int:
     libin3.in3_register_eth_api()
     # TODO: in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
     # enable logging
-    if debug:
+    global DEBUG
+    if DEBUG:
         # set logger level to TRACE
         libin3.in3_log_set_quiet_(False)
         libin3.in3_log_set_level_(0)
@@ -110,8 +113,12 @@ def _multi_platform_selector(prefix: str, path: str) -> str:
     if not processor:
         processor = 'i386'
     # Similar behavior could be achieved with regex expressions if we known them better.
+    global DEBUG
     suffix = None
-    if processor in ('i386', 'x86_64') or 'Intel' in processor or 'AMD' in processor:
+
+    if DEBUG:
+        suffix = "x64d.dylib"
+    elif processor in ('i386', 'x86_64') or 'Intel' in processor or 'AMD' in processor:
         # AMD64 x86_64 64bit ...
         if '64' in machine:
             if system == 'Windows':
@@ -163,6 +170,19 @@ def _map_function_signatures():
     # map transport function for response
     libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int]
     libin3.in3_req_add_response.restype = None
+
+    libin3.in3_get_request_urls_len.argtypes = [c.c_void_p]
+    libin3.in3_get_request_urls_len.restype = c.c_int
+
+    libin3.in3_get_request_payload.argtypes = [c.c_void_p]
+    libin3.in3_get_request_payload.restype = c.c_char_p
+
+    libin3.in3_get_request_timeout.argtypes = [c.c_void_p]
+    libin3.in3_get_request_timeout.restype = c.c_int
+
+    libin3.in3_get_request_urls.argtypes = [c.c_void_p]
+    libin3.in3_get_request_urls.restype = c.POINTER(c.POINTER(c.c_char))
+
     # map logging functions
     libin3.in3_log_set_quiet_.argtypes = c.c_bool,
     libin3.in3_log_set_quiet_.restype = None

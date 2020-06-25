@@ -84,6 +84,14 @@ export declare interface IN3Config {
     includeCode?: boolean
 
     /**
+    * if true, the first request (updating the nodelist) will also fetch the current health status
+    * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+    * 
+    * default: false
+    */
+    bootWeights?: boolean
+
+    /**
      * max number of attempts in case a response is rejected.
      * Incubed will retry to find a different node giving a verified response.
      * 
@@ -472,6 +480,11 @@ export default class IN3Generic<BigIntType, BufferType> {
     public ipfs: IpfsAPI<BufferType>
 
     /**
+     * Bitcoin API.
+     */
+    public btc: BtcAPI<BufferType>
+
+    /**
      * collection of util-functions.
      */
     public util: Utils<BufferType>
@@ -763,6 +776,26 @@ export type TxRequest = {
     confirmations?: number
 }
 
+export interface Web3Event {
+    returnValues: {
+        [name: string]: any
+    },
+    event: string,
+    signature: string,
+    logIndex: number
+    transactionIndex: number,
+    transactionHash: Hash,
+    address: Address
+    blockNumber: number
+    blockHash: Hash,
+    raw: {
+        data: Hex
+        topicx: Hash[]
+    }
+
+
+}
+
 export declare interface Signer<BigIntType, BufferType> {
     /** optiional method which allows to change the transaction-data before sending it. This can be used for redirecting it through a multisig. */
     prepareTransaction?: (client: IN3Generic<BigIntType, BufferType>, tx: Transaction) => Promise<Transaction>
@@ -948,6 +981,68 @@ export interface EthAPI<BigIntType, BufferType> {
     /** sends a Transaction */
     sendTransaction(args: TxRequest): Promise<string | TransactionReceipt>;
 
+
+
+    web3ContractAt(abi: ABI[], address?: Address, options?: {
+        gasPrice?: string | number | bigint,
+        gas?: string | number | bigint,
+        from?: Address,
+        data?: Hex
+    }): {
+        options: {
+            address: Address,
+            jsonInterface: ABI[],
+            gasPrice?: string | number | bigint,
+            gas?: string | number | bigint,
+            from?: Address,
+            data?: Hex,
+            transactionConfirmationBlocks: number,
+            transactionPollingTimeout: number
+        },
+        methods: {
+            [methodName: string]: (...args: any) => {
+                call: (options?: {
+                    gasPrice?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                }) => Promise<any>,
+                send: (options?: {
+                    gasPrice?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                    value?: number | string | bigint
+                }) => Promise<any>,
+                estimateGas: (options?: {
+                    value?: string | number | bigint,
+                    gas?: string | number | bigint,
+                    from?: Address,
+                }) => Promise<number>,
+                encodeABI: () => Hex
+            }
+        },
+
+        once: (eventName: string, options: {}, handler: (error?: Error, evData?: Web3Event) => void) => void,
+
+        events: {
+            [eventName: string]: (options?: {
+                fromBlock?: number,
+                topics?: any[],
+                filter?: { [indexedName: string]: any }
+            }) => {
+                on: (ev: 'data' | 'error', handler: (ev: Web3Event | Error) => void) => any
+                once: (ev: 'data', handler: (ev: Web3Event) => void) => any
+                off: (ev: string, handler: (ev: any) => void) => any
+            }
+        },
+
+        getPastEvents(evName: string, options?: {
+            fromBlock?: number,
+            topics?: any[],
+            filter?: { [indexedName: string]: any }
+        }): Promise<Web3Event[]>
+
+    }
+
     contractAt(abi: ABI[], address?: Address): {
         [methodName: string]: any;
         _address: Address;
@@ -1054,6 +1149,10 @@ export declare interface Utils<BufferType> {
      * optionally the target length can be specified (in bytes)
      */
     toHex(data: Hex | BufferType | number | bigint, len?: number): Hex
+    /**
+     * returns the incubed version.
+     */
+    getVersion(): string
 
     /** removes all leading 0 in the hexstring */
     toMinHex(key: string | BufferType | number): string;
@@ -1120,4 +1219,178 @@ export declare interface IpfsAPI<BufferType> {
      * @param content puts a IPFS content
      */
     put(content: BufferType): Promise<string>
+}
+
+/**
+ * a Input of a Bitcoin Transaction
+ */
+export declare interface BtcTransactionInput {
+    /** the transaction id  */
+    txid: Hash
+
+    /** the index of the transactionoutput */
+    vout: number
+
+    /** the script */
+    scriptSig: {
+        /** the asm data */
+        asm: Data
+
+        /** the raw hex data */
+        hex: Data
+    }
+
+    /**  The script sequence number */
+    sequence: number
+
+    /** hex-encoded witness data (if any) */
+    txinwitness: Data[]
+}
+/**
+ * a Input of a Bitcoin Transaction
+ */
+export declare interface BtcTransactionOutput {
+    /** the value in BTC  */
+    value: number
+
+    /** the index */
+    n: number
+
+    /** the index of the transactionoutput */
+    vout: number
+
+    /** the script */
+    scriptPubKey: {
+        /** the asm data */
+        asm: Data
+
+        /** the raw hex data */
+        hex: Data
+
+        /** the required sigs */
+        reqSigs: number
+
+        /** The type, eg 'pubkeyhash' */
+        type: string
+
+        /** list of addresses */
+        addresses: Address[]
+    }
+}
+
+/**
+ * a BitCoin Transaction.
+ */
+export declare interface BtcTransaction {
+    /** true if this transaction is part of the longest chain */
+    in_active_chain: boolean
+
+    /** the hex representation of raw data*/
+    hex: Data
+
+    /** The requested transaction id. */
+    txid: Hash
+
+    /** The transaction hash (differs from txid for witness transactions) */
+    hash: Hash
+
+    /** The serialized transaction size */
+    size: number
+
+    /** The virtual transaction size (differs from size for witness transactions) */
+    vsize: number
+
+    /** The transaction’s weight (between vsize4-3 and vsize4) */
+    weight: number
+
+    /** The version */
+    version: number
+
+    /** The locktime */
+    locktime: number
+
+    /** the block hash of the block containing this transaction. */
+    blockhash: Hash
+
+    /** The confirmations. */
+    confirmations: number
+
+    /** The transaction time in seconds since epoch (Jan 1 1970 GMT) */
+    time: number
+
+    /** The block time in seconds since epoch (Jan 1 1970 GMT) */
+    blocktime: number
+
+    /** the transaction inputs */
+    vin: BtcTransactionInput[]
+
+    /** the transaction outputs */
+    vout: BtcTransactionOutput[]
+
+}
+/** a Block header */
+export interface BTCBlockHeader {
+    /** the hash of the blockheader */
+    hash: string,
+    /** number of confirmations or blocks mined on top of the containing block*/
+    confirmations: number,
+    /** block number */
+    height: number,
+    /** used version  */
+    version: number,
+    /**  version as hex */
+    versionHex: string,
+    /** merkle root of the trie of all transactions in the block  */
+    merkleroot: string,
+    /** unix timestamp in seconds since 1970 */
+    time: string,
+    /** unix timestamp in seconds since 1970 */
+    mediantime: string,
+    /** nonce-field of the block */
+    nonce: number,
+    /** bits (target) for the block as hex*/
+    bits: string,
+    /** difficulty of the block */
+    difficulty: number,
+    /** total amount of work since genesis */
+    chainwork: string,
+    /**  number of transactions in the block  */
+    nTx: number,
+    /**  hash of the parent blockheader  */
+    previousblockhash: string,
+    /**  hash of the next blockheader  */
+    nextblockhash: string
+}
+
+/** a full Block including the transactions */
+export interface BTCBlock<T> extends BTCBlockHeader {
+    /** the transactions */
+    tx: T[]
+}
+
+
+/**
+ * API for handling BitCoin data
+ */
+export declare interface BtcAPI<BufferType> {
+    /** retrieves the transaction and returns the data as json. */
+    getTransaction(txid: Hash): Promise<BtcTransaction>
+
+    /** retrieves the serialized transaction (bytes) */
+    getTransactionBytes(txid: Hash): Promise<BufferType>
+
+    /** retrieves the blockheader and returns the data as json. */
+    getBlockHeader(blockHash: Hash): Promise<BTCBlockHeader>
+
+    /** retrieves the serialized blockheader (bytes) */
+    getBlockHeaderBytes(blockHash: Hash): Promise<BufferType>
+
+    /** retrieves the block including all tx data as json. */
+    getBlockWithTxData(blockHash: Hash): Promise<BTCBlock<BtcTransaction>>
+
+    /** retrieves the block including all tx ids as json. */
+    getBlockWithTxIds(blockHash: Hash): Promise<BTCBlock<string>>
+
+    /** retrieves the serialized block (bytes) including all transactions */
+    getBlockBytes(blockHash: Hash): Promise<BufferType>
 }

@@ -147,7 +147,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
       break;
     default:
       sb_add_chars(sb, "\"error\",\"error\":\"");
-      sb_add_chars(sb, ctx->error ? ctx->error : "Unknown error");
+      sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
       sb_add_chars(sb, "\"");
   }
 
@@ -172,7 +172,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         request->times[i] = start;
         if (i) sb_add_char(sb, ',');
         sb_add_char(sb, '"');
-        sb_add_chars(sb, request->urls[i]);
+        sb_add_escaped_chars(sb, request->urls[i]);
         sb_add_char(sb, '"');
       }
       sb_add_chars(sb, "],\"ptr\":");
@@ -188,6 +188,9 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
 }
 void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
   _free(ptr);
+}
+void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
+  return _malloc(size);
 }
 void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
   request_free(r, ctx, false);

@@ -1,6 +1,14 @@
 {
-    "0x1": {
-        "jsonrpc": "2.0",
-        "result": "0xc94" 
-      }
+  "0x1": {
+    "jsonrpc": "2.0",
+    "result": "0xc94"
+  },
+  "s": {
+    "jsonrpc": "2.0",
+    "result": "0x834B77"
+  },
+  "0x834B77": {
+    "jsonrpc": "2.0",
+    "result": "0x834B77"
+  }
 }

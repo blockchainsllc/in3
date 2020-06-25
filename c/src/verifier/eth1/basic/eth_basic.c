@@ -38,14 +38,12 @@
 #include "../../../core/util/data.h"
 #include "../../../core/util/mem.h"
 #include "../../../core/util/utils.h"
-#include "../../../third-party/crypto/ecdsa.h"
-#include "../../../third-party/crypto/secp256k1.h"
 #include "../../../verifier/eth1/basic/filter.h"
-#include "../../../verifier/eth1/basic/signer-priv.h"
 #include "../../../verifier/eth1/nano/eth_nano.h"
 #include "../../../verifier/eth1/nano/merkle.h"
 #include "../../../verifier/eth1/nano/rlp.h"
 #include "../../../verifier/eth1/nano/serialize.h"
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -109,68 +107,25 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
     return in3_verify_eth_nano(vc);
 }
 
+/** called to see if we can handle the request internally */
 in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
-  if (ctx->len > 1) return IN3_ENOTSUP; // internal handling is only possible for single requests (at least for now)
+  if (ctx->len > 1) return ctx_set_error(ctx, "bulk-request are not yet supported", IN3_ENOTSUP); // internal handling is only possible for single requests (at least for now)
   d_token_t* req = ctx->requests[0];
 
-  // check method
-  if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0) {
-    // get the transaction-object
+  // check method to handle internally
+  if (strcmp(d_get_stringk(req, K_METHOD), "eth_sendTransaction") == 0)
+    return handle_eth_sendTransaction(ctx, req);
+
+  else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT) return ctx_set_error(ctx, "invalid params", IN3_EINVAL);
-
-    // sign it.
-    bytes_t raw = sign_tx(tx_params + 1, ctx);
-    if (!raw.len) {
-      switch (in3_ctx_state(ctx->required)) {
-        case CTX_ERROR:
-          return IN3_EUNKNOWN;
-        case CTX_WAITING_FOR_REQUIRED_CTX:
-        case CTX_WAITING_FOR_RESPONSE:
-          return IN3_WAITING;
-        case CTX_SUCCESS:
-          return ctx_set_error(ctx, "error signing the transaction", IN3_EINVAL);
-      }
-    }
-
-    // build the RPC-request
-    uint64_t id = d_get_longk(req, K_ID);
-    sb_t*    sb = sb_new("{ \"jsonrpc\":\"2.0\", \"method\":\"eth_sendRawTransaction\", \"params\":[");
-    sb_add_bytes(sb, "", &raw, 1, false);
-    sb_add_chars(sb, "]");
-    if (id) {
-      char tmp[16];
-
-#ifdef __ZEPHYR__
-      char bufTmp[21];
-      snprintk(tmp, sizeof(tmp), ", \"id\":%s", u64_to_str(id, bufTmp, sizeof(bufTmp)));
-#else
-      snprintf(tmp, sizeof(tmp), ", \"id\":%" PRId64 "", id);
-      // sprintf(tmp, ", \"id\":%" PRId64 "", id);
-#endif
-      sb_add_chars(sb, tmp);
-    }
-    sb_add_chars(sb, "}");
-
-    // now that we included the signature in the rpc-request, we can free it + the old rpc-request.
-    _free(raw.data);
-    json_free(ctx->request_context);
-
-    // set the new RPC-Request.
-    ctx->request_context = parse_json(sb->data);
-    ctx->requests[0]     = ctx->request_context->result;
-    in3_cache_add_ptr(&ctx->cache, sb->data); // we add the request-string to the cache, to make sure the request-string will be cleaned afterwards
-    _free(sb);                                // and we only free the stringbuilder, but not the data itself.
-  } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newFilter") == 0) {
-    d_token_t* tx_params = d_get(req, K_PARAMS);
-    if (!tx_params || d_type(tx_params + 1) != T_OBJECT)
+    if (!tx_params || d_type(tx_params) != T_ARRAY || !d_len(tx_params) || d_type(tx_params + 1) != T_OBJECT)
       return ctx_set_error(ctx, "invalid type of params, expected object", IN3_EINVAL);
     else if (!filter_opt_valid(tx_params + 1))
       return ctx_set_error(ctx, "filter option parsing failed", IN3_EINVAL);
     if (!tx_params->data) return ctx_set_error(ctx, "binary request are not supported!", IN3_ENOTSUP);
 
     char*     fopt = d_create_json(tx_params + 1);
-    in3_ret_t res  = filter_add(ctx->client, FILTER_EVENT, fopt);
+    in3_ret_t res  = filter_add(ctx, FILTER_EVENT, fopt);
     if (res < 0) {
       _free(fopt);
       return ctx_set_error(ctx, "filter creation failed", res);
@@ -189,7 +144,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     sb_add_char(&response[0]->result, '"');
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
-    in3_ret_t res = filter_add(ctx->client, FILTER_BLOCK, NULL);
+    in3_ret_t res = filter_add(ctx, FILTER_BLOCK, NULL);
     if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
 
     RESPONSE_START();
@@ -213,11 +168,16 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     if (!tx_params || d_len(tx_params) == 0 || d_type(tx_params + 1) != T_INTEGER)
       return ctx_set_error(ctx, "invalid type of params, expected filter-id as integer", IN3_EINVAL);
 
-    uint64_t id = d_get_long_at(tx_params, 0);
-    RESPONSE_START();
-    in3_ret_t ret = filter_get_changes(ctx, id, &response[0]->result);
-    if (ret != IN3_OK)
+    uint64_t  id  = d_get_long_at(tx_params, 0);
+    sb_t*     sb  = sb_new("");
+    in3_ret_t ret = filter_get_changes(ctx, id, sb);
+    if (ret != IN3_OK) {
+      sb_free(sb);
       return ctx_set_error(ctx, "failed to get filter changes", ret);
+    }
+    RESPONSE_START();
+    sb_add_chars(&response[0]->result, sb->data);
+    sb_free(sb);
     RESPONSE_END();
   }
   return IN3_OK;

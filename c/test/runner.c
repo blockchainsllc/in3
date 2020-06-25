@@ -40,6 +40,7 @@
 #include "../src/core/client/context.h"
 #include "../src/core/util/log.h"
 #include "../src/core/util/mem.h"
+#include "../src/verifier/btc/btc.h"
 #include "../src/verifier/eth1/full/eth_full.h"
 #include "../src/verifier/ipfs/ipfs.h"
 #include <stdio.h>
@@ -112,8 +113,7 @@ char* readContent(char* name) {
   }
   buffer[len] = 0;
 
-  if (file)
-    fclose(file);
+  fclose(file);
 
   return buffer;
 }
@@ -317,6 +317,7 @@ int run_test(d_token_t* test, int counter, char* fuzz_prop, in3_proof_t proof) {
   c->flags               = FLAGS_STATS | FLAGS_INCLUDE_CODE | FLAGS_AUTO_UPDATE_LIST;
   c->transport           = send_mock;
   c->cache               = NULL;
+  c->finality            = d_get_intkd(test, key("finality"), 0);
   d_token_t* first_res   = d_get(d_get_at(d_get(test, key("response")), 0), key("result"));
   d_token_t* registry_id = d_type(first_res) == T_OBJECT ? d_get(first_res, key("registryId")) : NULL;
   for (j = 0; j < c->chains_length; j++) {
@@ -452,6 +453,7 @@ int main(int argc, char* argv[]) {
   in3_register_eth_full();
   in3_register_eth_api();
   in3_register_ipfs();
+  in3_register_btc();
 
   int    i = 0, size = 1;
   int    testIndex = -1, membrk = -1;
@@ -474,5 +476,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  return runRequests(names, testIndex, membrk);
+  int res = runRequests(names, testIndex, membrk);
+  free(names);
+  return res;
 }

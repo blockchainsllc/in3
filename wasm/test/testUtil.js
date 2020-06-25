@@ -35,6 +35,7 @@
 require('mocha')
 const { assert } = require('chai')
 const { IN3, beforeTest } = require('./util/mocker')
+const convertArray2Hex = a => Array.isArray(a) ? a.map(convertArray2Hex) : IN3.util.toHex(a)
 
 describe('Util-Tests', () => {
 
@@ -43,11 +44,40 @@ describe('Util-Tests', () => {
     afterEach(IN3.freeAll)
 
     it('abi encode decode', async () => {
-        const sig = "transfer(address,uint,string)"
-        const data = "0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561,74323,Alice"
+        function check(sig, bytes, ...data) {
+            assert.equal(
+                bytes,
+                IN3.util.abiEncode(sig, ...data)
+            )
+            assert.equal(
+                JSON.stringify(convertArray2Hex(data)),
+                JSON.stringify(convertArray2Hex(IN3.util.abiDecode('test():' + sig.substr(sig.indexOf('(')), '0x' + bytes.substr(10))))
+            )
 
-        //const encodeStr = IN3.util.abiEncode(sig,data)
-        // assert.equal(IN3.util.abiDecode(sig,encodeStr),data)
+        }
+
+        check("transfer(address,uint256,string)",
+            "0x56b8c724000000000000000000000000965d1c9987bd2c34e151e63d60aff8e9db6b15610000000000000000000000000000000000000000000000000000000000001c4200000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000007496e637562656400000000000000000000000000000000000000000000000000",
+            "0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561", 7234, "Incubed"
+        )
+
+
+        check(
+            "transfer(bytes,string)",
+            "0x8fa7e45f000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000014965d1c9987bd2c34e151e63d60aff8e9db6b15610000000000000000000000000000000000000000000000000000000000000000000000000000000000000007496e637562656400000000000000000000000000000000000000000000000000",
+            "0x965D1C9987BD2c34e151E63d60AFf8E9dB6b1561", "Incubed"
+        )
+        check(
+            "transfer(uint8[2])",
+            "0xb3168d0e00000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000034",
+            [0x12, 0x34]
+        )
+        check(
+            "transfer(uint8[])",
+            "0x360a10540000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000034",
+            [0x12, 0x34]
+        )
+
     })
 
     it('splitSignature', async () => {
@@ -67,9 +97,16 @@ describe('Util-Tests', () => {
         assert.equal(IN3.util.toHex(res), "0xdab3b69bd378ba16296c2e116cf7395e352699802234ec4e870b4f4b824248ae")
     })
 
+    it('getVersion', async () => {
+        const res = IN3.util.getVersion()
+        assert.match(res, /2\.[0-9]+\.[0-9]+/)
+    })
+
     it('getAddress', async () => {
         assert.equal(IN3.util.private2address("0x3f64dd6972bda1e7611dc38a294d7e3404d51c4aff4b09534675ecd43f66d659"),
             "0xeebCfd8F610e497748989B7cbAF0633E644512E6")
+
+
     })
 
     it('toMinHex', async () => {
@@ -80,6 +117,36 @@ describe('Util-Tests', () => {
         //assert.equal(IN3.util.toSimpleHex("0x00000203423"),expectedHex)
         assert.equal(IN3.util.toSimpleHex("0x0000203423"), expectedHex)
     })
+
+    it('toHex', async () => {
+        assert.equal('0x0a', IN3.util.toHex("0xA"))
+        assert.equal('0x01', IN3.util.toHex(1))
+        assert.equal(undefined, IN3.util.toHex(undefined))
+        assert.equal('0x01', IN3.util.toHex(true))
+        assert.equal('0x00', IN3.util.toHex(false))
+        assert.equal('0x00000001', IN3.util.toHex(true, 4))
+        assert.equal('0xffff', IN3.util.toHex(65535n))
+        assert.equal('0x00001234', IN3.util.toHex("0x1234", 4))
+        assert.equal('0xff', IN3.util.toHex("255"))
+        assert.equal('0x616263', IN3.util.toHex("abc"))
+        assert.equal('0x616263', IN3.util.toHex(Buffer.from("abc", 'utf8')))
+        assert.Throw(() => IN3.util.toHex({}))
+    })
+
+
+    it('toNumber', async () => {
+        assert.equal(1, IN3.util.toNumber(1))
+        assert.equal(1, IN3.util.toNumber(true))
+        assert.equal(0, IN3.util.toNumber(false))
+        assert.equal(65535, IN3.util.toNumber(65535n))
+        assert.equal(65535, IN3.util.toNumber("65535"))
+        assert.equal(0, IN3.util.toNumber(undefined))
+        assert.equal(0, IN3.util.toNumber(null))
+        assert.equal(97, IN3.util.toNumber(Buffer.from('a', 'utf8')))
+        assert.equal(255, IN3.util.toNumber("0xff"))
+        assert.Throw(() => IN3.util.toNumber({}))
+    })
+
 
     it('toUtf8', async () => {
         const testStr = "this is test"

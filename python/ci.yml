@@ -12,6 +12,26 @@
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
       when: manual
 
+.cache_setup:
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip
+      - venv/
+
+.cache_setup_with_only_python:
+  extends: .only_python
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip
+      - venv/
+
+.cache_scipt_before: &cache_scipt_before
+  - pip3 install virtualenv || echo "could not install virtualenv, hope it is already installed"
+  - virtualenv venv
+  - source venv/bin/activate
+
 python:
   image: python
   stage: bindings
@@ -21,6 +41,7 @@ python:
     - gcc8
     - arm_jni
     - gcc8-x86
+  extends: .cache_setup
   tags:
     - short-jobs
   script:
@@ -42,14 +63,19 @@ python:
 python_arm:
   allow_failure: true
   image: python
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   needs:
     - python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml
@@ -64,8 +90,11 @@ python_win:
   stage: python
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml
@@ -73,15 +102,20 @@ python_win:
     - windows
 
 python_macos:
-  extends: .only_python
+  extends: .cache_setup_with_only_python
   allow_failure: true
   needs:
     - python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
     reports:
       junit: python_multilib/report.xml
@@ -89,16 +123,30 @@ python_macos:
     - mac-mini-runner
 
 python_linux:
-  extends: .only_python
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip
+      - venv/
+  #  extends: .cache_setup_with_only_python
+  coverage: '/TOTAL\s+\d+\s+\d+\s+([0-9.]+%)/'
   needs:
     - python
   image: python
   stage: python
+  before_script:
+    - *cache_scipt_before
   script:
     - cd python_multilib
+    - pip3 install --upgrade pip
     - pip3 install -r requirements.txt
-    - pytest --pylama --junitxml=report.xml
+    - coverage run -m pytest --pylama --junitxml=report.xml
+    - coverage report
+    - coverage html
+    - coverage-badge -fo docs/coverage.svg
   artifacts:
+    paths:
+      - python_multilib/htmlcov
     reports:
       junit: python_multilib/report.xml
   tags:

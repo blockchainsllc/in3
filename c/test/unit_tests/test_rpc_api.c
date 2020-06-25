@@ -38,11 +38,11 @@
 #ifndef TEST
 #define DEBUG
 #endif
-
 #include "../../src/api/eth1/abi.h"
 #include "../../src/api/eth1/eth_api.h"
 #include "../../src/core/client/context_internal.h"
 #include "../../src/core/client/keys.h"
+#include "../../src/core/client/nodelist.h"
 #include "../../src/core/util/bitset.h"
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
@@ -51,6 +51,9 @@
 #include "../util/transport.h"
 #include <stdio.h>
 #include <unistd.h>
+#ifndef IN3_IMPORT_TEST
+#define IN3_IMPORT_TEST
+#endif
 
 #define err_string(msg) ("Error:" msg)
 
@@ -67,6 +70,7 @@ static void test_in3_config() {
      \"autoUpdateList\":true,\
      \"finality\":50,\
      \"includeCode\":true,\
+     \"bootWeights\":true,\
      \"maxAttempts\":99,\
      \"maxBlockCache\":98,\
      \"maxCodeCache\":97,\
@@ -140,8 +144,10 @@ static void test_in3_client_rpc() {
   c->proof           = PROOF_NONE;
   c->signature_count = 0;
   c->max_attempts    = 1;
-  for (int i = 0; i < c->chains_length; i++)
+  for (int i = 0; i < c->chains_length; i++) {
+    _free(c->chains[i].nodelist_upd8_params);
     c->chains[i].nodelist_upd8_params = NULL;
+  }
 
   // Error response string
   add_response("eth_blockNumber", "[]", NULL, "\"Error\"", NULL);
@@ -180,9 +186,10 @@ static void test_in3_client_rpc() {
   c->transport = NULL;
   TEST_ASSERT_EQUAL(IN3_ECONFIG, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
   c->transport = test_transport;
+  free(result);
+  free(error);
 
   // test in3_client_exec_req() with keep_in3 set to true
-  // TODO: also test with use_binary set to true
   c->flags |= FLAGS_KEEP_IN3;
   add_response("eth_blockNumber", "[]", NULL, "{\"message\":\"Undefined\"}", "{\"version\": \"2.1.0\",\"chainId\": \"0x5\",\"verification\": \"proof\"}");
   char* response = in3_client_exec_req(c, "{\"method\":\"eth_blockNumber\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":[]}");
@@ -197,6 +204,8 @@ static void test_in3_client_rpc() {
   TEST_ASSERT_NOT_NULL(response);
   free(response);
 
+  in3_free(c);
+
   //  // Invalid JSON result
   //  add_response("eth_blockNumber", "[]", "\"\"0x84cf52\"", NULL, NULL);
   //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
@@ -206,7 +215,7 @@ static void test_in3_client_rpc() {
   //  TEST_ASSERT_EQUAL(IN3_EUNKNOWN, in3_client_rpc(c, "eth_blockNumber", "[]", &result, &error));
 }
 
-IN3_IMPORT_TEST void initChain(in3_chain_t* chain, uint64_t chainId, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, json_ctx_t* spec);
+IN3_IMPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract);
 
 static void test_in3_client_chain() {
   // Leading zeros in registry id
@@ -215,6 +224,9 @@ static void test_in3_client_chain() {
   uint8_t reg_id[32];
   hex_to_bytes("0023d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845fa", -1, reg_id, 32);
   TEST_ASSERT_EQUAL_MEMORY(chain.registry_id, reg_id, 32);
+  in3_nodelist_clear(&chain);
+  b_free(chain.contract);
+  _free(chain.nodelist_upd8_params);
 
   // Reregister chains with same chain id
   in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
@@ -262,6 +274,8 @@ static void test_in3_checksum_rpc() {
   TEST_ASSERT_EQUAL_STRING(ret_checksum, str_result);
   free(result);
   free(error);
+  json_free(json);
+  in3_free(in3);
 }
 
 static void test_in3_client_context() {

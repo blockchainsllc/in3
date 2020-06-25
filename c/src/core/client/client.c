@@ -69,7 +69,6 @@ in3_ctx_t* in3_client_rpc_ctx(in3_t* c, const char* method, const char* params) 
   const int  max  = strlen(method) + strlen(params) + 200;                                              // determine the max length of the request string
   const bool heap = max > 500;                                                                          // if we need more than 500 bytes, we better put it in the heap
   char*      req  = heap ? _malloc(max) : alloca(max);                                                  // allocate memory in heap or stack
-  if (!req) return NULL;                                                                                // if we don't have the memory for a string, we stop here
   snprintX(req, max, "{\"method\":\"%s\",\"jsonrpc\":\"2.0\",\"id\":1,\"params\":%s}", method, params); // create request
 
   in3_ctx_t* ctx = in3_client_rpc_ctx_raw(c, req);
@@ -142,8 +141,15 @@ in3_ret_t in3_client_rpc_raw(in3_t* c, const char* request, char** result, char*
 }
 
 static char* create_rpc_error(uint32_t id, int code, char* error) {
-  char* res = _malloc(strlen(error) + 100);
-  if (res) sprintf(res, "{\"id\":%d,\"jsonrpc\":\"2.0\",\"error\":{\"code\":%i,\"message\":\"%s\"}}", id, code, error);
+  sb_t* sb = sb_new("{\"id\":");
+  sb_add_int(sb, id);
+  sb_add_chars(sb, ",\"jsonrpc\":\"2.0\",\"error\":{\"code\":");
+  sb_add_int(sb, code);
+  sb_add_chars(sb, ",\"message\":\"");
+  sb_add_escaped_chars(sb, error);
+  sb_add_chars(sb, "\"}}");
+  char* res = sb->data;
+  _free(sb);
   return res;
 }
 char* in3_client_exec_req(
@@ -189,7 +195,7 @@ char* in3_client_exec_req(
   }
   res         = _malloc(rr.len + 1);
   res[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
-  if (res) memcpy(res, rr.data, rr.len);
+  memcpy(res, rr.data, rr.len);
 
 clean:
 
@@ -214,13 +220,76 @@ in3_signer_t* in3_create_signer(
 }
 
 /**
+ * helper function to retrieve the message from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_message(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->message;
+}
+
+/**
+ * helper function to retrieve the account from a in3_sign_ctx_t
+ */
+bytes_t in3_sign_ctx_get_account(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->account;
+}
+
+/**
+ * helper function to retrieve the signature from a in3_sign_ctx_t
+ */
+uint8_t* in3_sign_ctx_get_signature(
+    in3_sign_ctx_t* ctx /**< the signer context */
+) {
+  return ctx->signature;
+}
+
+/**
  * set the transport handler on the client.
  */
 void in3_set_transport(
-    in3_t* c,   /**< the incubed client */
-    void*  cptr /**< custom pointer which will will be passed to functions */
+    in3_t*             c,   /**< the incubed client */
+    in3_transport_send cptr /**< custom pointer which will will be passed to functions */
 ) {
   c->transport = cptr;
+}
+
+/**
+ * getter to retrieve the payload from a in3_request_t struct
+ */
+char* in3_get_request_payload(
+    in3_request_t* request /**< request struct */
+) {
+  return request->payload;
+}
+
+/**
+ * getter to retrieve the urls list from a in3_request_t struct
+ */
+char** in3_get_request_urls(
+    in3_request_t* request /**< request struct */
+) {
+  return request->urls;
+}
+
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+int in3_get_request_urls_len(
+    in3_request_t* request /**< request struct */
+) {
+  return request->urls_len;
+}
+
+/**
+ * getter to retrieve the urls list length from a in3_request_t struct
+ */
+uint32_t in3_get_request_timeout(
+    in3_request_t* request /**< request struct */
+) {
+  return request->timeout;
 }
 
 /**

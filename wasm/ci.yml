@@ -4,6 +4,13 @@
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+(\-RC[0-9]+)?$/'
       when: manual
 
+.cache_setup:
+  # Caches per branch - per job
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .npm/
+
 wasm:
   image: docker.slock.it/build-images/cmake:clang11
   needs: []
@@ -13,7 +20,7 @@ wasm:
   script:
     - mkdir wasm_build_min
     - cd wasm_build_min
-    - emcmake cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DWASM_EMBED=false -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DBTC=false -DIN3_LIB=false -DWASM_EMMALLOC=true  -DBUILD_DOC=false -DIN3API=false -DETH_BASIC=false -DETH_FULL=false -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
     - make -j8
     - mkdir ../wasm_build
     - cd ../wasm_build
@@ -21,7 +28,6 @@ wasm:
     - make -j8
     - cp ../wasm_build_min/bin/*.wasm bin/in3w_min.wasm
     - cp ../wasm_build_min/bin/*.wasm module/in3w_min.wasm
-
   artifacts:
     paths:
       - wasm_build/module
@@ -36,28 +42,31 @@ asmjs:
   script:
     - mkdir asmjs_build
     - cd asmjs_build
-    - emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG -DTRANSPORTS=false -DIN3_LIB=false -DBUILD_DOC=false -DIN3API=true -DUSE_CURL=false -DCMD=false -DCMAKE_BUILD_TYPE=MINSIZEREL ..
+    - emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMBED=true -DTAG_VERSION=$CI_COMMIT_TAG  -DIN3API=true  -DCMAKE_BUILD_TYPE=RELEASE ..
     - make -j8
-
   artifacts:
     paths:
       - asmjs_build/module
       - asmjs_build/bin
 
 test_wasm:
+  coverage: '/Lines.*:\s+(\d+.\d+\%)/'
   image: docker.slock.it/build-images/node:10-alpine
   needs:
     - wasm
   stage: wasm
   tags:
     - short-jobs
+  extends: .cache_setup
   script:
-    - mv wasm_build build
+    - mv wasm_build/module wasm/test/in3
     - cd wasm/test
     - sh /prepare.sh
     - npm install
-    - npm run test_report
+    - npm run test_coverage
   artifacts:
+    paths:
+      - wasm/test/coverage
     reports:
       junit: wasm/test/mocha.xml
 
@@ -68,8 +77,9 @@ test_asmjs:
   stage: wasm
   tags:
     - short-jobs
+  extends: .cache_setup
   script:
-    - mv asmjs_build build
+    - mv asmjs_build/module wasm/test/in3
     - cd wasm/test
     - sh /prepare.sh
     - npm install

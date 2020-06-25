@@ -1,30 +1,22 @@
-// extern crate abi;
-// extern crate in3;
+use std::fmt::Write;
+
 use async_std::task;
-use async_trait::async_trait;
-use ethereum_types::{Address, U256};
-use ffi::{CStr, CString};
-use in3::eth1::api::RpcRequest;
+use ethereum_types::Address;
+use libc::c_char;
+use rustc_hex::FromHex;
+use serde_json::json;
+
 use in3::eth1::*;
+use in3::json_rpc::Request;
 use in3::prelude::*;
 use in3::signer;
-use in3::signer::SignatureType;
-use libc::c_char;
-use rustc_hex::{FromHex, ToHex};
-use serde_json::json;
-use std::collections::HashMap;
-use std::ffi;
-use std::fmt::Write;
-use std::num::ParseIntError;
-use std::str;
-// use crate::transport::MockTransport;
 
 unsafe fn signature_hex_string(data: *mut u8) -> String {
     let value = std::slice::from_raw_parts_mut(data, 65 as usize);
     let mut sign_str = "".to_string();
     for byte in value {
         let mut tmp = "".to_string();
-        write!(&mut tmp, "{:02x}", byte).unwrap();
+        write!(&mut tmp, "{:02x}", byte).unwrap(); // unlikely to fail
         sign_str.push_str(tmp.as_str());
     }
     println!(" signature {}", sign_str);
@@ -38,17 +30,15 @@ fn sign() {
         //Message to sign
         let msg = "9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465";
         // decode Hex msg
-        let msg_hex = msg.from_hex().unwrap();
+        let msg_hex = msg.from_hex().unwrap(); // cannot fail since input is valid
         let raw_msg_ptr = msg_hex.as_ptr() as *const c_char;
         // pk to raw ptr
-        let pk_hex = pk.from_hex().unwrap();
+        let pk_hex = pk.from_hex().unwrap(); // cannot fail since input is valid
         let raw_pk = pk_hex.as_ptr() as *mut u8;
-        //Sign the message raw
-        let signature_raw = signer::sign(raw_pk, SignatureType::Raw, raw_msg_ptr, msg_hex.len());
-        let sig_raw_expected = "f596af3336ac65b01ff4b9c632bc8af8043f8c11ae4de626c74d834412cb5a234783c14807e20a9e665b3118dec54838bd78488307d9175dd1ff13eeb67e05941c";
-        assert_eq!(signature_hex_string(signature_raw), sig_raw_expected);
         // Hash and sign the msg
-        let signature_hash = signer::sign(raw_pk, SignatureType::Hash, raw_msg_ptr, msg_hex.len());
+        let signature_hash = signer::signc(raw_pk, raw_msg_ptr, msg_hex.len())
+            .0
+            .as_mut_ptr();
         let sig_hash_expected = "349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c";
         assert_eq!(signature_hex_string(signature_hash), sig_hash_expected);
     }
@@ -75,7 +65,7 @@ fn sign_tx_api() {
             r#"[{"jsonrpc":"2.0","id":1,"result":"0x0"}]"#,
         ),
     ];
-    eth_api.client().configure(
+    let _ = eth_api.client().configure(
         r#"{"proof":"none", "autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
     );
     eth_api
@@ -89,12 +79,13 @@ fn sign_tx_api() {
         "setData(uint256,string)",
         serde_json::json!([123, "testdata"]),
     ))
-    .unwrap();
+    .expect("failed to ABI encode params");
     println!("{:?}", params);
+
     let to: Address =
-        serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
+        serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap(); // cannot fail
     let from: Address =
-        serde_json::from_str(r#""0x3fEfF9E04aCD51062467C494b057923F771C9423""#).unwrap();
+        serde_json::from_str(r#""0x3fEfF9E04aCD51062467C494b057923F771C9423""#).unwrap(); // cannot fail
     let txn = OutgoingTransaction {
         to: to,
         from: from,
@@ -102,7 +93,8 @@ fn sign_tx_api() {
         ..Default::default()
     };
 
-    let hash: Hash = task::block_on(eth_api.send_transaction(txn)).unwrap();
+    let hash: Hash =
+        task::block_on(eth_api.send_transaction(txn)).expect("ETH send transaction failed");
     println!("Hash => {:?}", hash);
 }
 
@@ -139,11 +131,11 @@ fn sign_tx_rpc() {
         "nonce": "0x0",
         "data": "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"
     }]);
-    let rpc_req = RpcRequest {
+    let rpc_req = Request {
         method: "eth_sendTransaction",
         params: tx,
     };
-    let req_str = serde_json::to_string(&rpc_req).unwrap();
+    let req_str = serde_json::to_string(&rpc_req).unwrap(); // Serialize `Request` impl cannot fail
     match task::block_on(c.rpc(&req_str)) {
         Ok(res) => println!("RESPONSE > {:?}, {:?}\n\n", req_str, res),
         Err(err) => println!("Failed with error: {}\n\n", err),

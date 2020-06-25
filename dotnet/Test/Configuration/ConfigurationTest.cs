@@ -41,7 +41,9 @@ namespace Test.Configuration
 
             NodeConfiguration nodeListConfig = new NodeConfiguration(chainConfig)
             {
-                Props = 0x0, Url = "scheme://userinfo@host:port/path?query#fragment", Address = "0x0"
+                Props = 0x0,
+                Url = "scheme://userinfo@host:port/path?query#fragment",
+                Address = "0x0"
             };
 
             string jsonConfiguration2 = clientConfig.ToJson();
@@ -87,7 +89,7 @@ namespace Test.Configuration
                 RegistryId = "0x23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb",
                 Contract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab",
                 WhiteListContract = "0xdd80249a0631cf0f1593c7a9c9f9b8545e6c88ab",
-                WhiteList = new [] {
+                WhiteList = new[] {
                     "0x0123456789012345678901234567890123456789",
                     "0x1234567890123456789012345678901234567890"
                 }

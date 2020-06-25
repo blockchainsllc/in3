@@ -1,4 +1,6 @@
-const IN3 = require('../../../build/bin/in3.js')
+const IN3 = require('../in3/index.js')
+const fs = require('fs')
+const axios = require('axios')
 const Client = IN3
 let responses = {}
 function test_transport(url, data) {
@@ -29,7 +31,7 @@ function mockResponse(method, ...names) {
     names.forEach(_ => n.push(_))
 }
 
-function createClient(config = {}) {
+function createClient(config = {}, recordName) {
     const c = new IN3({
         requestCount: 1,
         autoUpdateList: false,
@@ -62,7 +64,26 @@ function createClient(config = {}) {
         },
         ...config
     })
-    IN3.setTransport(test_transport)
+
+    if (recordName)
+        IN3.setTransport((url, payload, timeout = 30000) => {
+            const req = JSON.parse(payload)[0]
+            return axios.post(url, req, { timeout, headers: { 'Content-Type': 'application/json' } })
+                .then(res => {
+                    if (res.status != 200) throw new Error("Invalid satus")
+                    const fname = 'responses/' + req.method + '.json'
+                    let data = {}
+                    try {
+                        data = JSON.parse(fs.readFileSync(fname, 'utf8'))
+                    } catch { }
+                    data[recordName.shift()] = res.data
+                    fs.writeFileSync(fname, JSON.stringify(data, null, 2), 'utf8')
+                    return JSON.stringify([res.data])
+                })
+        })
+
+    else
+        IN3.setTransport(test_transport)
     return c
 }
 

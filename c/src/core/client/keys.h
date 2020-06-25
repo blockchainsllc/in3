@@ -159,3 +159,7 @@
 #define K_TO_BLOCK          key("toBlock")
 #define K_SIGNER_NODES      key("signerNodes")
 #define K_DATA_NODES        key("dataNodes")
+#define K_PERFORMANCE       key("performance")
+#define K_TOTAL             key("total")
+#define K_LAST_FAILED       key("last_failed")
+#define K_COUNT             key("count")

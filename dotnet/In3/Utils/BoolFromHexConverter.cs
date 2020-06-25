@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using In3.Utils;
 
 namespace In3.Utils
 {
@@ -19,7 +18,7 @@ namespace In3.Utils
             "undefined",
             "NaN"
         };
-        
+
         private static readonly string[] HexsFalsyValues = {
             "0x",
             "0x0",

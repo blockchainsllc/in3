@@ -16,7 +16,7 @@ namespace In3.Native
             Client = in3;
             NativeHandlers.Add(new NativeTransportHandler(this));
             NativeHandlers.Add(new NativeSignerHandler(this));
-            new NativeStorageHandler(this).RegisterNativeHandler();
+            NativeHandlers.Add(new NativeStorageHandler(this));
 
             NativeClientPointer = in3_for_chain_auto_init(chainId);
             NativeHandlers.ForEach(handler => handler.RegisterNativeHandler());

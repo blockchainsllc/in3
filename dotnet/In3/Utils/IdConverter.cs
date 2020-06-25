@@ -2,11 +2,10 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using In3.Rpc;
-using In3.Utils;
 
-namespace csharp.Utils
+namespace In3.Utils
 {
-    public class IdConverter : JsonConverter<Id>
+    internal class IdConverter : JsonConverter<Id>
     {
         public override Id Read(
             ref Utf8JsonReader reader,

@@ -1,3 +1,4 @@
+//! ABI encoder/decoder.
 use serde_json::{json, Value};
 
 use async_trait::async_trait;
@@ -5,21 +6,26 @@ use async_trait::async_trait;
 use crate::prelude::*;
 use crate::types::Bytes;
 
+/// Trait definition for ABI encode.
 #[async_trait(? Send)]
 pub trait Encode {
+    /// ABI encode the given parameters using given function signature as bytes.
     async fn encode(&mut self, fn_sig: &str, params: Value) -> In3Result<Bytes>;
 }
 
 #[async_trait(? Send)]
 pub trait Decode {
+    /// ABI decode the given bytes data using given function signature as JSON.
     async fn decode(&mut self, fn_sig: &str, data: Bytes) -> In3Result<Value>;
 }
 
+/// ABI implementation using IN3 C client's RPC.
 pub struct In3EthAbi {
     in3: Box<Client>,
 }
 
 impl In3EthAbi {
+    /// Create an In3EthAbi instance
     pub fn new() -> In3EthAbi {
         In3EthAbi {
             in3: Client::new(chain::LOCAL),
@@ -29,6 +35,7 @@ impl In3EthAbi {
 
 #[async_trait(? Send)]
 impl Encode for In3EthAbi {
+    /// Encode implementation using IN3's `in3_abiEncode()` RPC.
     async fn encode(&mut self, fn_sig: &str, params: Value) -> In3Result<Bytes> {
         let resp_str = self
             .in3
@@ -49,6 +56,7 @@ impl Encode for In3EthAbi {
 
 #[async_trait(? Send)]
 impl Decode for In3EthAbi {
+    /// Decode implementation using IN3's `in3_abiDecode()` RPC.
     async fn decode(&mut self, fn_sig: &str, data: Bytes) -> In3Result<Value> {
         let resp_str = self
             .in3

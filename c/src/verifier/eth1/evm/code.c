@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address, bytes_t** target, bytes_t** code_hash) {
+NONULL static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address, bytes_t** target, bytes_t** code_hash) {
   d_token_t* accounts = d_get(vc->proof, K_ACCOUNTS);
   if (!accounts) return IN3_EFIND;
   for (d_iterator_t iter = d_iter(accounts); iter.left; d_iter_next(&iter)) {
@@ -61,7 +61,7 @@ static in3_ret_t find_code_in_accounts(in3_vctx_t* vc, address_t address, bytes_
   return IN3_EFIND;
 }
 
-static in3_ctx_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
+NONULL static in3_ctx_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
   // ok, we need a request, do we have a useable?
   in3_ctx_t* ctx = vc->ctx->required;
   while (ctx) {
@@ -75,7 +75,7 @@ static in3_ctx_t* find_pending_code_request(in3_vctx_t* vc, address_t address) {
   return NULL;
 }
 
-static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, address_t address, bool* must_free, bytes_t** target) {
+NONULL static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, address_t address, bool* must_free, bytes_t** target) {
   bytes_t* code_hash = NULL;
 
   in3_ret_t res = find_code_in_accounts(vc, address, target, &code_hash);
@@ -97,7 +97,6 @@ static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, addre
           if (code_hash && memcmp(code_hash->data, calculated_code_hash, 32) != 0) {
             vc_err(vc, "Wrong codehash");
             ctx_remove_required(vc->ctx, ctx);
-            // TODO maybe we should not give up here, but blacklist the node and try again!
             return IN3_EINVAL;
           }
 
@@ -114,7 +113,7 @@ static in3_ret_t in3_get_code_from_client(in3_vctx_t* vc, char* cache_key, addre
             vc->ctx->client->cache->set_item(vc->ctx->client->cache->cptr, cache_key, *target);
           return IN3_OK;
         } else
-          return vc_err(vc, ctx->error);
+          return vc_err(vc, ctx->error ? ctx->error : "Missing result");
       }
       case CTX_ERROR:
         return IN3_ERPC;
@@ -172,6 +171,7 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
 
     // we also store the length into the 4 bytes buffer, so we can reference it later on.
     int_to_bytes(code->len, (*target)->buffer);
+    if (must_free) _free(code);
     return IN3_OK;
   }
   return IN3_EFIND;

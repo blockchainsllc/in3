@@ -40,6 +40,7 @@
 #include "cache.h"
 #include "client.h"
 #include "nodelist.h"
+#include "verifier.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -150,6 +151,7 @@ static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
 }
 
 IN3_EXPORT_TEST void initChain(in3_chain_t* chain, chain_id_t chain_id, char* contract, char* registry_id, uint8_t version, int boot_node_count, in3_chain_type_t type, char* wl_contract) {
+  chain->conf                 = NULL;
   chain->chain_id             = chain_id;
   chain->init_addresses       = NULL;
   chain->last_block           = 0;
@@ -207,20 +209,28 @@ static void init_ipfs(in3_chain_t* chain) {
 }
 
 static void init_mainnet(in3_chain_t* chain) {
-  initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 2, CHAIN_ETH, NULL);
+  initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 4, CHAIN_ETH, NULL);
   initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/mainnet/nd-1");
   initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/mainnet/nd-2");
+  initNode(chain, 2, "0cea2ff03adcfa047e8f54f98d41d9147c3ccd4d", "https://in3-g.open-dna.de");
+  initNode(chain, 3, "77a4a0e80d7786dec85e3087cc1c6ac3802af9cd", "https://incubed.online");
+  //  initNode(chain, 4, "510ee7f6f198e018e3529164da2473a96eeb3dc8", "https://0001.mainnet.in3.anyblock.tools");
+}
+static void init_ewf(in3_chain_t* chain) {
+  initChain(chain, 0xf6, "039562872008f7a76674a6e7842804f0ad37cb13", "313454c05fc6e5336a3315ed2233da6b831d4cb826d836c3d603f2e2a9f1ed75", 2, 2, CHAIN_ETH, NULL);
+  initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3-v2.slock.it/ewc/nd-1");
+  initNode(chain, 1, "1fe2e9bf29aa1938859af64c413361227d04059a", "https://in3-v2.slock.it/ewc/nd-2");
 }
 
 static void init_btc(in3_chain_t* chain) {
-  initChain(chain, 0x99, "85613723dB1Bc29f332A37EeF10b61F8a4225c7e", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 1, 1, CHAIN_BTC, NULL);
-  initNode(chain, 0, "8f354b72856e516f1e931c97d1ed3bf1709f38c9", "https://in3.stage.slock.it/btc/nd-1");
+  initChain(chain, 0x99, "ed7bb275ca33c46ef3875a9c959c91553ca6acb8", "084ec5cd9274e7c05b827a0d417f92820eb249b9d4ae6e497e355620114a52dc", 1, 1, CHAIN_BTC, NULL);
+  initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "https://in3.stage.slock.it/btc/nd-1");
+  //initNode(chain, 0, "45d45e6ff99e6c34a235d263965910298985fcfe", "http://localhost:8500");
   if (chain->nodelist_upd8_params) {
     _free(chain->nodelist_upd8_params);
     chain->nodelist_upd8_params = NULL;
   }
 }
-
 static void init_kovan(in3_chain_t* chain) {
 #ifdef IN3_STAGING
   // kovan
@@ -251,7 +261,7 @@ static void init_goerli(in3_chain_t* chain) {
 }
 
 static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
-  c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST;
+  c->flags                = FLAGS_STATS | FLAGS_AUTO_UPDATE_LIST | FLAGS_BOOT_WEIGHTS;
   c->cache                = NULL;
   c->signer               = NULL;
   c->cache_timeout        = 0;
@@ -267,12 +277,10 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->proof                = PROOF_STANDARD;
   c->replace_latest_block = 0;
   c->request_count        = 1;
-  c->chains_length        = chain_id ? 1 : 6;
+  c->chains_length        = chain_id ? 1 : 7;
   c->chains               = _malloc(sizeof(in3_chain_t) * c->chains_length);
   c->filters              = NULL;
   c->timeout              = 10000;
-
-  //TODO check for failed malloc!
 
   in3_chain_t* chain = c->chains;
 
@@ -290,6 +298,9 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_BTC)
     init_btc(chain++);
+
+  if (!chain_id || chain_id == ETH_CHAIN_ID_EWC)
+    init_ewf(chain++);
 
   if (!chain_id || chain_id == ETH_CHAIN_ID_LOCAL) {
     initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
@@ -320,6 +331,7 @@ in3_ret_t in3_client_register_chain(in3_t* c, chain_id_t chain_id, in3_chain_typ
     c->chains = _realloc(c->chains, sizeof(in3_chain_t) * (c->chains_length + 1), sizeof(in3_chain_t) * c->chains_length);
     if (c->chains == NULL) return IN3_ENOMEM;
     chain                       = c->chains + c->chains_length;
+    chain->conf                 = NULL;
     chain->nodelist             = NULL;
     chain->nodelist_length      = 0;
     chain->weights              = NULL;
@@ -445,14 +457,19 @@ void in3_free(in3_t* a) {
   if (!a) return;
   int i;
   for (i = 0; i < a->chains_length; i++) {
+    if (a->chains[i].conf) {
+      in3_verifier_t* verifier = in3_get_verifier(a->chains[i].type);
+      if (verifier && verifier->free_chain)
+        verifier->free_chain(a, a->chains + i);
+    }
     if (a->chains[i].verified_hashes) _free(a->chains[i].verified_hashes);
     in3_nodelist_clear(a->chains + i);
     b_free(a->chains[i].contract);
     whitelist_free(a->chains[i].whitelist);
     _free(a->chains[i].nodelist_upd8_params);
   }
-  if (a->signer) _free(a->signer);
-  if (a->cache) _free(a->cache);
+  if (a->signer && a->signer != default_signer) _free(a->signer);
+  if (a->cache && a->cache != default_storage) _free(a->cache);
   if (a->chains) _free(a->chains);
 
   if (a->filters) {
@@ -521,8 +538,7 @@ static chain_id_t chain_id(d_token_t* t) {
 
 static inline char* config_err(const char* keyname, const char* err) {
   char* s = _malloc(strlen(keyname) + strlen(err) + 4);
-  if (s)
-    sprintf(s, "%s: %s!", keyname, err);
+  sprintf(s, "%s: %s!", keyname, err);
   return s;
 }
 
@@ -569,6 +585,7 @@ char* in3_get_config(in3_t* c) {
   add_uint(sb, ',', "signatureCount", c->signature_count);
   add_uint(sb, ',', "finality", c->finality);
   add_bool(sb, ',', "includeCode", c->flags & FLAGS_INCLUDE_CODE);
+  add_bool(sb, ',', "bootWeights", c->flags & FLAGS_BOOT_WEIGHTS);
   add_uint(sb, ',', "maxAttempts", c->max_attempts);
   add_bool(sb, ',', "keepIn3", c->flags & FLAGS_KEEP_IN3);
   add_bool(sb, ',', "stats", c->flags & FLAGS_STATS);
@@ -656,6 +673,9 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("includeCode")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_INCLUDE_CODE, (d_int(token) ? true : false));
+    } else if (token->key == key("bootWeights")) {
+      EXPECT_TOK_BOOL(token);
+      BITMASK_SET_BOOL(c->flags, FLAGS_BOOT_WEIGHTS, (d_int(token) ? true : false));
     } else if (token->key == key("maxAttempts")) {
       EXPECT_TOK_U16(token);
       c->max_attempts = d_int(token);
@@ -740,10 +760,6 @@ char* in3_configure(in3_t* c, const char* config) {
       in3_node_t*  n     = &chain->nodelist[0];
       if (n->url) _free(n->url);
       n->url = _malloc(d_len(token) + 1);
-      if (!n->url) {
-        res = config_err("in3_configure", "OOM");
-        goto cleanup;
-      }
       strcpy(n->url, d_string(token));
       _free(chain->nodelist_upd8_params);
       chain->nodelist_upd8_params = NULL;
@@ -850,6 +866,11 @@ char* in3_configure(in3_t* c, const char* config) {
 #endif
             }
           } else {
+
+            // try to delegate the call to the verifier.
+            const in3_verifier_t* verifier = in3_get_verifier(chain->type);
+            if (verifier && verifier->set_confg && verifier->set_confg(c, cp.token, chain) == IN3_OK) continue;
+
             EXPECT_TOK(cp.token, false, "unsupported config option!");
           }
         }

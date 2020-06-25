@@ -74,10 +74,11 @@ public class IN3 {
   }
 
   /**
-     * create a Incubed client using the chain-config.
-     * if chainId is Chain.MULTICHAIN, the client can later be switched between different chains,
-     * for all other chains, it will be initialized only with the chainspec for this one chain (safes memory)
-     */
+   * create a Incubed client using the chain-config. if chainId is
+   * Chain.MULTICHAIN, the client can later be switched between different chains,
+   * for all other chains, it will be initialized only with the chainspec for this
+   * one chain (safes memory)
+   */
   public static IN3 forChain(long chainId) {
     return new IN3(chainId);
   }
@@ -105,9 +106,9 @@ public class IN3 {
   }
 
   /**
-     * returns the current configuration.
-     * any changes to the configuration will be applied witth the next request.
-     */
+   * returns the current configuration. any changes to the configuration will be
+   * applied witth the next request.
+   */
   public ClientConfiguration getConfig() {
     return config;
   }
@@ -125,29 +126,36 @@ public class IN3 {
   }
 
   /**
-     * sets the signer or wallet.
-     */
+   * sets the signer or wallet.
+   */
   public void setSigner(Signer signer) {
     this.signer = signer;
   }
 
   /**
-     * returns the signer or wallet.
-     */
+   * returns the signer or wallet.
+   */
   public Signer getSigner() {
     return signer;
   }
 
   /**
-     * gets the ipfs-api
-     */
+   * gets the ipfs-api
+   */
   public in3.ipfs.API getIpfs() {
     return new in3.ipfs.API(this);
   }
 
   /**
-     * gets the ethereum-api
-     */
+   * gets the btc-api
+   */
+  public in3.btc.API getBtcAPI() {
+    return new in3.btc.API(this);
+  }
+
+  /**
+   * gets the ethereum-api
+   */
   public in3.eth1.API getEth1API() {
     return new in3.eth1.API(this);
   }
@@ -160,9 +168,9 @@ public class IN3 {
   }
 
   /**
-     * provides the ability to cache content like nodelists, contract codes and
-     * validatorlists
-     */
+   * provides the ability to cache content like nodelists, contract codes and
+   * validatorlists
+   */
   public void setStorageProvider(StorageProvider val) {
     provider = val;
     initcache();
@@ -174,16 +182,16 @@ public class IN3 {
   }
 
   /**
-     * sets The transport interface.
-     * This allows to fetch the result of the incubed in a different way.
-     */
+   * sets The transport interface. This allows to fetch the result of the incubed
+   * in a different way.
+   */
   public void setTransport(IN3Transport newTransport) {
     IN3.transport = newTransport;
   }
 
   /**
-     * returns the current transport implementation.
-     */
+   * returns the current transport implementation.
+   */
   public IN3Transport getTransport() {
     return IN3.transport;
   }
@@ -195,8 +203,8 @@ public class IN3 {
   public native void setChainId(long val);
 
   /**
-     * send a request. The request must a valid json-string with method and params
-     */
+   * send a request. The request must a valid json-string with method and params
+   */
   public String send(String request) {
     if (!config.isSynced()) {
       this.applyConfig();
@@ -207,9 +215,9 @@ public class IN3 {
   private native String sendinternal(String request);
 
   /**
-     * send a request but returns a object like array or map with the parsed
-     * response. The request must a valid json-string with method and params
-     */
+   * send a request but returns a object like array or map with the parsed
+   * response. The request must a valid json-string with method and params
+   */
   public Object sendobject(String request) {
     if (!config.isSynced()) {
       this.applyConfig();
@@ -259,9 +267,9 @@ public class IN3 {
   }
 
   /**
-     * send a RPC request by only passing the method and params. It will create the
-     * raw request from it and return the result.
-     */
+   * send a RPC request by only passing the method and params. It will create the
+   * raw request from it and return the result.
+   */
   public String sendRPC(String method, Object[] params) {
     return this.send(toRPC(method, params));
   }
@@ -276,9 +284,9 @@ public class IN3 {
   }
 
   /**
-     * send a RPC request by only passing the method and params. It will create the
-     * raw request from it and return the result.
-     */
+   * send a RPC request by only passing the method and params. It will create the
+   * raw request from it and return the result.
+   */
   public Object sendRPCasObject(String method, Object[] params) {
     return sendRPCasObject(method, params, true);
   }
@@ -288,34 +296,34 @@ public class IN3 {
     return IN3.transport.handle(urls, payload);
   }
 
-  protected native void free();
+  private native void free();
 
   private native long init(long chainId);
 
   private native void initcache();
 
-  /** 
-     *  returns the current incubed version.
-     */
+  /**
+   * returns the current incubed version.
+   */
   public static native String getVersion();
 
   /**
-     * clears the cache.
-     */
+   * clears the cache.
+   */
   public boolean cacheClear() {
     return (boolean) sendRPCasObject(CACHE_CLEAR, new Object[] {});
   }
 
   /**
-     * restrieves the node list
-     */
+   * restrieves the node list
+   */
   public IN3Node[] nodeList() {
     return nodeList(new String[] {});
   }
 
   /**
-     * restrieves the node list
-     */
+   * restrieves the node list
+   */
   protected IN3Node[] nodeList(String[] signerNodeAddresses) {
     NodeList nl;
     if (signerNodeAddresses != null && signerNodeAddresses.length > 0) {
@@ -329,8 +337,8 @@ public class IN3 {
   }
 
   /**
-     * request for a signature of an already verified hash.
-     */
+   * request for a signature of an already verified hash.
+   */
   public SignedBlockHash[] sign(BlockID[] blocks, String[] dataNodeAdresses) {
     if (dataNodeAdresses != null && dataNodeAdresses.length > 0) {
       IN3Props props = new IN3Props();

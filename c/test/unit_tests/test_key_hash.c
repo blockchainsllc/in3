@@ -102,9 +102,7 @@ static char* filetostr(const char* filename) {
     fseek(f, 0, SEEK_SET);
     buffer         = _malloc(length + 1);
     buffer[length] = 0;
-    if (buffer) {
-      fread(buffer, 1, length, f);
-    }
+    fread(buffer, 1, length, f);
     fclose(f);
   }
   return buffer;
@@ -133,7 +131,7 @@ void test_key_hash_collisions() {
     if (kstr) {
       hashes[i] = key_(kstr);
 #ifdef DEBUG
-      printf("\"%s\" => [%u]\n", kstr, hashes[i]);
+//      printf("\"%s\" => [%u]\n", kstr, hashes[i]);
 #endif
     } else {
       hashes[i] = 0;

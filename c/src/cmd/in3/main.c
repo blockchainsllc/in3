@@ -37,6 +37,7 @@
  * */
 #include "../../api/eth1/abi.h"
 #include "../../api/eth1/eth_api.h"
+#include "../../api/ipfs/ipfs_api.h"
 #include "../../core/util/bitset.h"
 #include "../../core/util/data.h"
 #include "../../core/util/debug.h"
@@ -61,13 +62,14 @@
 #include "../../core/util/colors.h"
 
 #if defined(LEDGER_NANO)
+#include "../../signer/ledger-nano/signer/ethereum_apdu_client.h"
+#include "../../signer/ledger-nano/signer/ethereum_apdu_client_priv.h"
 #include "../../signer/ledger-nano/signer/ledger_signer.h"
 #endif
 
-#include "../../verifier/eth1/basic/signer.h"
-#include "../../verifier/eth1/evm/evm.h"
-#include "../../verifier/eth1/full/eth_full.h"
+#include "../../signer/pk-signer/signer.h"
 #include "../../verifier/eth1/nano/chainspec.h"
+#include "../../verifier/in3_init.h"
 #include "in3_storage.h"
 #include <inttypes.h>
 #include <math.h>
@@ -75,17 +77,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef BTC
-#include "../../verifier/btc/btc.h"
-#endif
-#ifdef IPFS
-#include "../../api/ipfs/ipfs_api.h"
-#include "../../verifier/ipfs/ipfs.h"
-#endif
-#ifdef PAY_ETH
-#include "../../pay/eth/pay_eth.h"
-#endif
 
 #ifndef IN3_VERSION
 #define IN3_VERSION "local"
@@ -112,7 +103,7 @@ void show_help(char* name) {
 -d, -data      the data for a transaction. This can be a filepath, a 0x-hexvalue or - for stdin.\n\
 -gas           the gas limit to use when sending transactions. (default: 100000) \n\
 -pk            the private key as raw as keystorefile \n\
--bip32         the bip32 path which is to be used for signing in hardware wallet \n\
+-path          the HD wallet derivation path . We can pass in simplified way as hex string  i.e [44,60,00,00,00] => 0x2c3c000000 \n\
 -st, -sigtype  the type of the signature data : eth_sign (use the prefix and hash it), raw (hash the raw data), hash (use the already hashed data). Default: raw \n\
 -pwd           password to unlock the key \n\
 -value         the value to send when sending a transaction. can be hexvalue or a float/integer with the suffix eth or wei like 1.8eth (default: 0)\n\
@@ -120,11 +111,15 @@ void show_help(char* name) {
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
 -kin3          if kin3 is specified, the response including in3-section is returned\n\
+-bw            initialize with weights from boot nodes.\n\
 -debug         if given incubed will output debug information when executing. \n\
 -k             32bytes raw private key to sign requests.\n\
 -q             quit. no additional output. \n\
+-tr            runs test request when showing in3_weights \n\
+-thr           runs test request including health-check when showing in3_weights \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
+-os            only sign, don't send the raw Transaction \n\
 -version       displays the version \n\
 -help          displays this help message \n\
 \n\
@@ -396,6 +391,7 @@ uint64_t getchain_id(char* name) {
   if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
   if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
   if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
+  if (strcmp(name, "ewc") == 0) return ETH_CHAIN_ID_EWC;
   if (strcmp(name, "ipfs") == 0) return ETH_CHAIN_ID_IPFS;
   if (strcmp(name, "btc") == 0) return ETH_CHAIN_ID_BTC;
   if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
@@ -538,7 +534,8 @@ void read_pk(char* pk_file, char* pwd, in3_t* c, char* method) {
 }
 
 static bytes_t*  last_response;
-static bytes_t   in_response = {.data = NULL, .len = 0};
+static bytes_t   in_response      = {.data = NULL, .len = 0};
+static bool      only_show_raw_tx = false;
 static in3_ret_t debug_transport(in3_request_t* req) {
 #ifndef DEBUG
   if (debug_mode)
@@ -548,6 +545,12 @@ static in3_ret_t debug_transport(in3_request_t* req) {
     for (int i = 0; i < req->urls_len; i++)
       sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
     return 0;
+  }
+  if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
+    char* data         = str_find(req->payload, "0x");
+    *strchr(data, '"') = 0;
+    printf("%s\n", data);
+    exit(EXIT_SUCCESS);
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(req);
@@ -621,22 +624,10 @@ int main(int argc, char* argv[]) {
   int       p  = 1, i;
   bytes32_t pk;
 #ifdef LEDGER_NANO
-  uint8_t bip32[5];
+  uint8_t path[5];
 #endif
 
   // we want to verify all
-  in3_register_eth_full();
-#ifdef IPFS
-  in3_register_ipfs();
-#endif
-#ifdef BTC
-  in3_register_btc();
-#endif
-  in3_register_eth_api();
-
-#ifdef PAY_ETH
-  in3_register_pay_eth();
-#endif
   in3_log_set_level(LOG_INFO);
 
   // create the client
@@ -644,7 +635,7 @@ int main(int argc, char* argv[]) {
   c->transport                     = debug_transport;
   c->request_count                 = 1;
   bool            out_response     = false;
-  bool            run_test_request = false;
+  int             run_test_request = 0;
   bool            force_hex        = false;
   char*           sig              = NULL;
   char*           to               = NULL;
@@ -663,9 +654,6 @@ int main(int argc, char* argv[]) {
   char*           sig_type         = "raw";
   bool            to_eth           = false;
 
-  // use the storagehandler to cache data in .in3
-  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
-
 #ifdef __MINGW32__
   c->flags |= FLAGS_HTTP;
 #endif
@@ -675,7 +663,10 @@ int main(int argc, char* argv[]) {
   // handle clear cache opt before initializing cache
   for (i = 1; i < argc; i++)
     if (strcmp(argv[i], "-ccache") == 0)
-      c->cache->clear(c->cache->cptr);
+      storage_clear(NULL);
+
+  // use the storagehandler to cache data in .in3
+  in3_set_storage_handler(c, storage_get_item, storage_set_item, storage_clear, NULL);
 
   // check env
   if (getenv("IN3_PK")) {
@@ -695,14 +686,14 @@ int main(int argc, char* argv[]) {
         eth_set_pk_signer(c, pk);
       } else
         pk_file = argv[++i];
-    } else if (strcmp(argv[i], "-bip32") == 0) {
+    } else if (strcmp(argv[i], "-path") == 0) {
 #if defined(LEDGER_NANO)
       if (argv[i + 1][0] == '0' && argv[i + 1][1] == 'x') {
-        hex_to_bytes(argv[++i], -1, bip32, 5);
-        eth_ledger_set_signer(c, bip32);
+        hex_to_bytes(argv[++i], -1, path, 5);
+        eth_ledger_set_signer_txn(c, path);
       }
 #else
-      die("bip32 option not supported currently ");
+      die("path option not supported currently ");
 #endif
     } else if (strcmp(argv[i], "-chain") == 0 || strcmp(argv[i], "-c") == 0) // chain_id
       set_chain_id(c, argv[++i]);
@@ -725,13 +716,17 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
     else if (strcmp(argv[i], "-tr") == 0)
-      run_test_request = true;
+      run_test_request = 1;
+    else if (strcmp(argv[i], "-thr") == 0)
+      run_test_request = 2;
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
       c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->flags |= FLAGS_KEEP_IN3;
+    else if (strcmp(argv[i], "-bw") == 0)
+      c->flags |= FLAGS_BOOT_WEIGHTS;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -747,6 +742,8 @@ int main(int argc, char* argv[]) {
       value = get_wei(argv[++i]);
     else if (strcmp(argv[i], "-port") == 0)
       port = argv[++i];
+    else if (strcmp(argv[i], "-os") == 0)
+      only_show_raw_tx = true;
     else if (strcmp(argv[i], "-rc") == 0)
       c->request_count = atoi(argv[++i]);
     else if (strcmp(argv[i], "-a") == 0)
@@ -799,9 +796,10 @@ int main(int argc, char* argv[]) {
         method = argv[i];
       else if (strcmp(method, "keystore") == 0 || strcmp(method, "key") == 0)
         pk_file = argv[i];
-      else if (strcmp(method, "sign") == 0 && !data)
+      else if (strcmp(method, "sign") == 0 && !data) {
+
         data = b_new((uint8_t*) argv[i], strlen(argv[i]));
-      else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
+      } else if (sig == NULL && (strcmp(method, "call") == 0 || strcmp(method, "send") == 0 || strcmp(method, "abi_encode") == 0 || strcmp(method, "abi_decode") == 0))
         sig = argv[i];
       else {
         // otherwise we add it to the params
@@ -900,9 +898,13 @@ int main(int argc, char* argv[]) {
     BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     uint64_t     now   = in3_time(NULL);
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
-    printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", run_test_request ? "WEIGHT   : LAST_BLOCK" : "WEIGHT");
+    char*        more  = "WEIGHT";
+    if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
+    if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
+    printf("   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
     for (int i = 0; i < chain->nodelist_length; i++) {
-      in3_ctx_t* ctx = NULL;
+      in3_ctx_t* ctx      = NULL;
+      char*      health_s = NULL;
       if (run_test_request) {
         char req[300];
         char adr[41];
@@ -910,6 +912,53 @@ int main(int argc, char* argv[]) {
         sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
         ctx = ctx_new(c, req);
         if (ctx) in3_send_ctx(ctx);
+        if (run_test_request == 2) {
+          int         health     = 1;
+          char*       version    = "";
+          char*       node_name  = "";
+          uint32_t    running    = 0;
+          json_ctx_t* health_res = NULL;
+          char        health_url[500];
+          char*       urls[1];
+          urls[0] = health_url;
+          sprintf(health_url, "%s/health", chain->nodelist[i].url);
+          in3_request_t r;
+          r.in3      = c;
+          r.urls     = urls;
+          r.urls_len = 1;
+          r.timeout  = 5000;
+          r.payload  = "";
+          r.results  = _malloc(sizeof(in3_response_t));
+          sb_init(&r.results->error);
+          sb_init(&r.results->result);
+          c->transport(&r);
+
+          if (r.results->error.len || !r.results->result.len)
+            health = 0;
+          else {
+            health_res = parse_json(r.results->result.data);
+            if (!health_res)
+              health = 0;
+            else {
+              node_name    = d_get_string(health_res->result, "name");
+              version      = d_get_string(health_res->result, "version");
+              running      = d_get_int(health_res->result, "running");
+              char* status = d_get_string(health_res->result, "status");
+              if (!status && strcmp(status, "healthy")) health = 0;
+            }
+          }
+          if (version) {
+            char* l = strrchr(version, ':');
+            if (l) version = l + 1;
+          }
+          health_s = _malloc(3000);
+          sprintf(health_s, "%-22s %-7s   %7d   %-9s ", node_name ? node_name : "-", version ? version : "-", running, health ? "OK" : "unhealthy");
+
+          _free(r.results->result.data);
+          _free(r.results->error.data);
+          _free(r.results);
+          if (health_res) json_free(health_res);
+        }
       }
       in3_node_t*        node        = chain->nodelist + i;
       in3_node_weight_t* weight      = chain->weights + i;
@@ -945,16 +994,20 @@ int main(int argc, char* argv[]) {
           sprintf((warning = tr), "The node is marked as able to support http-requests");
         else
           tr = ctx->error;
+        if (strlen(tr) > 100) tr[100] = 0;
       }
       if (blacklisted)
         printf(COLORT_RED);
       else if (warning)
         printf(COLORT_YELLOW);
+      else if (!weight->response_count)
+        printf(COLORT_DARKGRAY);
       else
         printf(COLORT_GREEN);
-      printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
+      printf("%2i   %-45s   %7i   %5i   %5i   %5i   %s%s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, health_s ? health_s : "", tr ? tr : "");
       printf(COLORT_RESET "\n");
       if (tr && tr != ctx->error) _free(tr);
+      if (health_s) _free(health_s);
       if (ctx) ctx_free(ctx);
     }
 
@@ -976,13 +1029,35 @@ int main(int argc, char* argv[]) {
       sig_type = "raw";
     }
 
-    if (!c->signer) die("No private key/bip32 path given");
-    uint8_t   sig[65];
+    if (!c->signer) die("No private key/path given");
     in3_ctx_t ctx;
     ctx.client = c;
-    c->signer->sign(&ctx, strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH, *data, bytes(NULL, 0), sig);
-    sig[64] += 27;
-    print_hex(sig, 65);
+    in3_sign_ctx_t sc;
+    sc.ctx     = &ctx;
+    sc.wallet  = c->signer->wallet;
+    sc.account = bytes(NULL, 0);
+    sc.message = *data;
+    sc.type    = strcmp(sig_type, "hash") == 0 ? SIGN_EC_RAW : SIGN_EC_HASH;
+#if defined(LEDGER_NANO)
+    if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
+      char     prefix[] = "msg";
+      bytes_t* tmp_data = b_new((uint8_t*) NULL, data->len + strlen(prefix));
+
+      memcpy(tmp_data->data, prefix, strlen(prefix));
+      memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
+
+      sc.message = *tmp_data;
+      c->signer->sign(&sc);
+      b_free(tmp_data);
+    } else {
+      c->signer->sign(&sc);
+    }
+#else
+    c->signer->sign(&sc);
+#endif
+
+    sc.signature[64] += 27;
+    print_hex(sc.signature, 65);
     return 0;
   } else if (strcmp(method, "chainspec") == 0) {
     char* json;

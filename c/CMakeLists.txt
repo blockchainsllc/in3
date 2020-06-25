@@ -32,105 +32,60 @@
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
 
-include("${PROJECT_SOURCE_DIR}/c/compiler.cmake")
+include("macro.cmake")
+include("compiler.cmake")
 
 #  build modules
 add_subdirectory(src/third-party)
 
 
 if (GCC_ANALYZER) 
-  add_compile_options(-fanalyzer -Werror)
+  ADD_DEFINITIONS(-DGCC_ANALYZER=1)
+  add_compile_options(-fanalyzer -Werror -Wno-nonnull-compare)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer -Werror")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer -Werror")
 endif()
-  
-add_subdirectory(src/core)
-add_subdirectory(src/transport)
-add_subdirectory(src/verifier)
 
-if( LEDGER_NANO AND HIDAPI )
-  add_subdirectory(src/signer/ledger-nano/signer)
-endif()
+IF (TRANSPORTS)
+    ADD_DEFINITIONS(-DTRANSPORTS)
+    if (USE_CURL)
+        ADD_DEFINITIONS(-DUSE_CURL)
+        set(IN3_TRANSPORT ${IN3_TRANSPORT} transport_curl)
+        if (CURL_BLOCKING)
+            ADD_DEFINITIONS(-DCURL_BLOCKING)
+        endif (CURL_BLOCKING)
+    else ()
+        set(IN3_TRANSPORT ${IN3_TRANSPORT} transport_http)
+    endif (USE_CURL)
+    add_subdirectory(src/transport)
+ENDIF (TRANSPORTS)
+
+add_subdirectory(src/core)
+add_subdirectory(src/verifier)
+add_subdirectory(src/signer/pk-signer)
+add_subdirectory(src/signer/ledger-nano/signer)
 
 add_subdirectory(src/pay)
 add_subdirectory(src/api)
-IF (ETH_FULL)
-    add_subdirectory(src/cmd)
-endif()
+add_subdirectory(src/cmd)
 add_subdirectory(docs)
-link_directories(${CMAKE_BINARY_DIR}/lib/)
 
+link_directories(${CMAKE_BINARY_DIR}/lib/)
 
 # create the library
 if (IN3_LIB)
-    set(IN3_LIBS
-        $<TARGET_OBJECTS:core_o>
-        $<TARGET_OBJECTS:init_o>
-        $<TARGET_OBJECTS:crypto_o>
-    )
-
-    if (ETH_FULL)
-      set(IN3_LIBS ${IN3_LIBS} 
-         $<TARGET_OBJECTS:tommath_o> 
-         $<TARGET_OBJECTS:evm_o> 
-         $<TARGET_OBJECTS:eth_full_o>
-      )
-    endif()
-
-    if (ETH_BASIC) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_basic_o>
-        )
-    endif()
-
-    if (ETH_NANO) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_nano_o>
-        )
-    endif()
-
-    if (IPFS) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:b64_o>
-            $<TARGET_OBJECTS:ipfs_o>
-        )
-        if (IN3API) 
-            set(IN3_LIBS ${IN3_LIBS} 
-                $<TARGET_OBJECTS:ipfs_api_o>
-            )
-        endif()
-    endif()
-
-    if (IN3API) 
-        set(IN3_LIBS ${IN3_LIBS} 
-            $<TARGET_OBJECTS:eth_api_o>
-            $<TARGET_OBJECTS:usn_api_o>
-            $<TARGET_OBJECTS:api_utils_o>
-        )
-    endif()
-
-    if (PAY_ETH)
-       set(IN3_LIBS ${IN3_LIBS}  $<TARGET_OBJECTS:pay_eth_o>)
-    endif()
-
-    if (USE_SCRYPT)
-       set(IN3_LIBS ${IN3_LIBS} $<TARGET_OBJECTS:scrypt_o>)
-    endif()
-    
-
+   get_property(IN3_LIBS GLOBAL PROPERTY IN3_OBJECTS)
 
     # create the libraries
     add_library(in3_bundle STATIC ${IN3_LIBS} )
     add_library(in3_lib    SHARED ${IN3_LIBS} )
     set_target_properties(in3_bundle PROPERTIES OUTPUT_NAME "in3")
     set_target_properties(in3_lib PROPERTIES OUTPUT_NAME "in3")
-    
-    if( LEDGER_NANO AND HIDAPI )
-       target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
+    if( LEDGER_NANO)
+        target_link_libraries(in3_lib ${IN3_TRANSPORT} ledger_signer) 
     else()
-       target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
+        target_link_libraries(in3_lib ${IN3_TRANSPORT} ) 
     endif()
-    
 
     # install
     INSTALL(TARGETS in3_bundle
@@ -143,8 +98,9 @@ if (IN3_LIB)
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE)
     INSTALL (
-        DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+        DIRECTORY ${CMAKE_SOURCE_DIR}/c/include/in3
         DESTINATION include
         FILES_MATCHING PATTERN "*.h*")
 
 endif()
+

@@ -5,7 +5,7 @@ class EthAPI {
     send(name, ...params) {
         return this.client.sendRPC(name, params || [])
     }
-    
+
     /**
      * Returns the current price per g wei. ()
      */
@@ -123,7 +123,7 @@ class EthAPI {
      * Returns the number of transactions in a block from a block matching the given block number.
      */
     getBlockTransactionCountByNumber(block) {
-        return this.send('eth_getBlockTransactionCountByNumber', block).then(parseInt)
+        return this.send('eth_getBlockTransactionCountByNumber', toMinHex(block)).then(parseInt)
     }
 
     /**
@@ -157,7 +157,7 @@ class EthAPI {
      * Returns information about a transaction by block hash and transaction index position.
      */
     getTransactionByBlockHashAndIndex(hash, pos) {
-        return this.send('eth_getTransactionByBlockHashAndIndex', hash, pos)
+        return this.send('eth_getTransactionByBlockHashAndIndex', hash, toMinHex(pos))
     }
 
 
@@ -165,7 +165,7 @@ class EthAPI {
      * Returns information about a transaction by block number and transaction index position.
      */
     getTransactionByBlockNumberAndIndex(block, pos) {
-        return this.send('eth_getTransactionByBlockNumberAndIndex', toHexBlock(block), pos)
+        return this.send('eth_getTransactionByBlockNumberAndIndex', toHexBlock(block), toMinHex(pos))
     }
 
     /**
@@ -331,8 +331,123 @@ class EthAPI {
         return args.confirmations ? confirm(txHash, this, parseInt(tx.gas || 21000), args.confirmations) : txHash
     }
 
+    web3ContractAt(abi, address, options = {}) {
+        const api = this
+        const ob = {
+            _in3: this.client,
+            _eventHashes: {},
+            options: {
+                ...options,
+                address,
+                jsonInterface: abi,
+                handleRevert: false,
+                transactionBlockTimeout: 50,
+                transactionConfirmationBlocks: 6,
+                transactionPollingTimeout: 750,
+            },
+            methods: {},
+            events: {}
+        }
+
+        const createTopics = (name, options) => options.topics || [ob._eventHashes[name], ...(!options.filter ? [] : ob._eventHashes[ob._eventHashes[name]].inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? toHex(options.filter[d.name], 32) : null))]
+
+        for (const def of abi) {
+            switch (def.type) {
+                case 'function':
+                    const signature = def.name + createSignature(def.inputs)
+                    const sigReturn = signature + ':' + createSignature(def.outputs)
+                    ob.methods[def.name] = (...args) => ({
+                        call: (options, block) => api.callFn(address, sigReturn, ...args, block || 'latest')
+                            .then(r => {
+                                if (def.outputs.length > 1) {
+                                    let o = {}
+                                    def.outputs.forEach((d, i) => o[i] = o[d.name] = r[i])
+                                    return o;
+                                }
+                                return r
+                            }),
+                        send: options => {
+                            let tx = { ...options }
+                            if (args.length != def.inputs.length) throw new Error('Invalid number of arguments for ' + signature)
+                            tx.method = signature
+                            tx.args = args
+                            tx.confirmations = ob.transactionConfirmationBlocks || 1
+                            tx.to = address
+                            return api.sendTransaction(tx)
+                        },
+                        encodeABI: () => toHex(abiEncode(signature, args)),
+                        estimateGas: (options, block) => IN3.onInit(() => this.send('eth_estimateGas', { to: toHex(address, 20), data: abiEncode(signature, ...args) }).then(toNumber))
+                    })
+                    break
+                case 'event':
+                    const evSig = def.name + createSignature(def.inputs)
+                    const eHash = toHex(keccak(toHex(evSig)))
+                    ob._eventHashes[def.name] = eHash
+                    ob._eventHashes[eHash] = def
+                    ob.events[def.name] = options => new LogEmitter(
+                        api,
+                        {
+                            address,
+                            fromBlock: options.fromBlock || 'latest',
+                            topics: createTopics(def.name, options),
+                            limit: options.limit || 50
+                        },
+                        ob.options.transactionPollingTimeout,
+                        l => ({ ...l, event: def.name, returnValues: decodeEventData(l, ob), signature: evSig })
+                    )
+            }
+
+        }
+        ob.once = (ev, options, handler) => {
+            const e = ob.events[ev]
+            if (!e) throw new Error('Event ' + ev + ' does not exist!')
+            if (!handler) {
+                handler = options
+                options = {}
+            }
+            e.on('error', handler).once('data', d => h(null, d))
+        }
+
+        ob.events.allEvents = options => new LogEmitter(
+            api,
+            {
+                address,
+                fromBlock: options.fromBlock || 'latest',
+                limit: options.limit || 50
+            },
+            ob.options.transactionPollingTimeout,
+            l => ({ ...l, event: def.name, returnValues: decodeEventData(l, ob), signature: evSig })
+        )
+        ob.getPastEvents = (ev, options) => {
+            return api.getLogs({
+                address,
+                fromBlock: options.fromBlock || 'latest',
+                toBlock: options.toBlock || 'latest',
+                limit: options.limit || 50,
+                topics: ev === 'allEvents' ? [] : createTopics(ev, options)
+            }).then(logs => logs.map(l => {
+                const e = decodeEventData(l, ob)
+                const def = abi.find(_ => _.name === e.event)
+                if (!def) throw new Error('unknown event found!')
+                delete e.event
+                return { ...l, event: def.name, returnValues: e, signature: def.name + createSignature(def.inputs) }
+            }))
+
+
+        }
+
+
+
+        return ob
+
+    }
+
+
+
+
+
     contractAt(abi, address) {
-        const api = this, ob = {_address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
+        const api = this, ob = { _address: address, _eventHashes: {}, events: {}, _abi: abi, _in3: this.client }
         for (const def of abi.filter(_ => _.type == 'function')) {
             const method = def.name + createSignature(def.inputs)
             if (def.constant) {
@@ -364,7 +479,7 @@ class EthAPI {
         }
 
         for (const def of abi.filter(_ => _.type == 'event')) {
-            const eHash = '0x' + keccak(Buffer.from(def.name + createSignature(def.inputs), 'utf8')).toString('hex')
+            const eHash = toHex(keccak(toHex(def.name + createSignature(def.inputs))))
             ob._eventHashes[def.name] = eHash
             ob._eventHashes[eHash] = def
             ob.events[def.name] = {
@@ -373,7 +488,7 @@ class EthAPI {
                         address,
                         fromBlock: options.fromBlock || 'latest',
                         toBlock: options.toBlock || 'latest',
-                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? '0x' + serialize.bytes32(options.filter[d.name]).toString('hex') : null))],
+                        topics: options.topics || [eHash, ...(!options.filter ? [] : def.inputs.filter(_ => _.indexed).map(d => options.filter[d.name] ? toHex(options.filter[d.name], 32) : null))],
                         limit: options.limit || 50
                     }).then((logs) => logs.map(_ => {
                         const event = ob.events.decode(_)
@@ -496,7 +611,7 @@ function decodeEventData(log, def) {
 function decodeEvent(log, d) {
     const indexed = d.inputs.filter(_ => _.indexed), unindexed = d.inputs.filter(_ => !_.indexed), r = { event: d && d.name }
 
-    if (indexed.length){
+    if (indexed.length) {
         let logBufs = appendBuffers(log.topics.slice(1).map(_ => toBuffer(_)))
         abiDecode(`prefix():${createSignature(indexed)}`, logBufs).forEach((v, i) => r[indexed[i].name] = v)
     }
@@ -510,15 +625,15 @@ function appendBuffers(buffers) {
     const totalLength = buffers.reduce((acc, value) => acc + value.length, 0);
     if (!buffers.length) return null;
     let result = new Uint8Array(totalLength);
-  
+
     // for each array - copy it over result; next array is copied right after the previous one
     let length = 0;
-    for(let array of buffers) {
-      result.set(array, length);
-      length += array.length;
-    } 
-    return result; 
-  }
+    for (let array of buffers) {
+        result.set(array, length);
+        length += array.length;
+    }
+    return result;
+}
 
 function toHexBlock(b) {
     return typeof b === 'string' ? b : util.toMinHex(b)
@@ -539,4 +654,71 @@ function fixBytesValues(input, type) {
 
 function encodeEtheresBN(val) {
     return val && BN.isBN(val) ? toHex(val) : val
+}
+
+class EventEmitter {
+    on(ev, handler) {
+        const list = this[ev] || (this[ev] = [])
+        list.push(handler)
+        return this
+    }
+    off(ev, handler) {
+        const list = this[ev] || (this[ev] = [])
+        const p = list.indexOf(handler)
+        if (p >= 0) list.splice(p, 1)
+    }
+    once(ev, handler) {
+        const list = this[ev] || (this[ev] = [])
+        const f = val => {
+            handler(val)
+            this.off(ev, f)
+        }
+        list.push(f)
+        return this
+    }
+
+    emit(ev, data) {
+        (this[ev] || []).forEach(h => h(data))
+    }
+}
+
+class LogEmitter {
+    constructor(api, filter, polltime, decoder) {
+        this.filterId = null
+        this.timer = null
+        this.listeners = new EventEmitter()
+        api.newFilter(filter)
+            .then(id => {
+                const h = () => {
+                    if (!(this.listeners.data || []).length && this.timer) {
+                        // no more listeners
+                        clearInterval(this.timer)
+                        this.timer = null
+                        api.uninstallFilter(id).then(() => { }, err => this.listeners.emit('error', err))
+                        return
+                    }
+                    api.getFilterChanges(id)
+                        .then(data => {
+                            if (data && data.length)
+                                data.forEach(d => this.listeners.emit('data', decoder(d)))
+                        }, err => this.listeners.emit('error', err)
+                        )
+                }
+                this.filterId = id
+                this.timer = setInterval(() => { }, polltime)
+            }, err => this.listeners.emit('error', err))
+    }
+    on(ev, handler) {
+        this.listeners.on(ev, handler)
+        return this
+    }
+    off(ev, handler) {
+        this.listeners.off(ev, handler)
+        return this
+    }
+    once(ev, handler) {
+        this.listeners.once(ev, handler)
+        return this
+    }
+
 }

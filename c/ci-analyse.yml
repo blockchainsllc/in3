@@ -78,9 +78,9 @@ valgrind:
   #  allow_failure: true
   needs: []
   tags:
-    - short-jobs
+    - long-jobs
   variables:
-    VALGRIND_OPTS: "-v -q --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
+    VALGRIND_OPTS: "-v -q --num-callers=50  --main-stacksize=4000 --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
   script:
     - mkdir _build
     - cd _build
@@ -88,6 +88,7 @@ valgrind:
     - make
     - printf "{\n  ignore_libcrypto_conditional_jump_errors\n  Memcheck:Leak\n  ...\n  obj:*/libcrypto.so.*\n}\n"  > suppress.valgrind
     - for f in test/test*; do valgrind $VALGRIND_OPTS $(pwd)/$f; done
+    - for f in ../c/test/testdata/requests/*.json; do valgrind $VALGRIND_OPTS test/runner $(pwd)/$f; done
 
 code_quality:
   rules:

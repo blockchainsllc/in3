@@ -5,8 +5,8 @@
 #include "../../src/core/util/data.h"
 #include "../../src/core/util/log.h"
 #include "../../src/core/util/utils.h"
+#include "../../src/signer/pk-signer/signer.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
-#include "../../src/verifier/eth1/basic/signer.h"
 #include "../test_utils.h"
 #include <stdio.h>
 #include <unistd.h>
@@ -40,10 +40,8 @@ char*              read_json_response_buffer(char* path) {
     length = ftell(f);
     fseek(f, 0, SEEK_SET);
     response_buffer = _malloc(length + 1);
-    if (response_buffer) {
-      fread(response_buffer, 1, length, f);
-      response_buffer[length] = 0;
-    }
+    fread(response_buffer, 1, length, f);
+    response_buffer[length] = 0;
     fclose(f);
     return response_buffer;
   } else {
@@ -72,27 +70,59 @@ void add_response(char* request_method, char* request_params, char* result, char
   responses = n;
 }
 
-/* add response - request mock from json*/
-void add_response_test(char* test) {
+static void clean_last_response() {
   if (response_buffer) {
+    _free(response_buffer->request_method);
+    _free(response_buffer->request_params);
+    _free(response_buffer->response);
     _free(response_buffer);
     response_buffer = NULL;
   }
-  char path[70];
+}
+/* add response - request mock from json*/
+int add_response_test(char* test, char* needed_params) {
+  clean_last_response();
+  char path[270];
   sprintf(path, MOCK_PATH, test);
   char*       buffer = read_json_response_buffer(path);
   json_ctx_t* mock   = parse_json(buffer);
-  str_range_t res    = d_to_json(d_get_at(d_get(mock->result, key("response")), 0));
-  d_token_t*  req    = d_get_at(d_get(mock->result, key("request")), 0);
-  char*       params = d_create_json(d_get(req, key("params")));
-  clean_json_str(params);
-  char* method                    = d_get_string(req, "method");
-  response_buffer                 = _calloc(1, sizeof(response_t));
-  response_buffer->request_method = method;
-  response_buffer->request_params = params;
-  response_buffer->response       = _malloc(40 + res.len);
-  sprintf(response_buffer->response, "%s", res.data);
+  str_range_t res;
+  d_token_t*  req;
+  char*       params;
+  if (d_type(mock->result) == T_OBJECT) {
+    res    = d_to_json(d_get_at(d_get(mock->result, key("response")), 0));
+    req    = d_get_at(d_get(mock->result, key("request")), 0);
+    params = d_create_json(d_get(req, key("params")));
+  } else if (d_type(mock->result) == T_ARRAY) {
+    for (d_iterator_t iter = d_iter(mock->result); iter.left; d_iter_next(&iter)) {
+      res    = d_to_json(d_get_at(d_get(iter.token, key("response")), 0));
+      req    = d_get_at(d_get(iter.token, key("request")), 0);
+      params = d_create_json(d_get(req, key("params")));
+      clean_json_str(params);
+      if (strcmp(params, needed_params)) {
+        _free(params);
+        params = NULL;
+      } else
+        break;
+    }
+  }
+
+  if (params) {
+    clean_json_str(params);
+
+    response_buffer                 = _calloc(1, sizeof(response_t));
+    response_buffer->request_method = _strdupn(d_get_stringk(req, key("method")), -1);
+    response_buffer->request_params = params;
+    response_buffer->response       = _strdupn(res.data, res.len);
+  }
+
+  json_free(mock);
+  _free(buffer);
+  return params ? 0 : -1;
 }
+
+
+
 
 in3_ret_t test_transport(in3_request_t* req) {
   TEST_ASSERT_NOT_NULL_MESSAGE(responses, "no request registered");
@@ -119,22 +149,44 @@ in3_ret_t test_transport(in3_request_t* req) {
 }
 
 in3_ret_t mock_transport(in3_request_t* req) {
-  json_ctx_t* r       = parse_json(req->payload);
-  d_token_t*  request = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
-  char*       method  = d_get_string(request, "method");
-  add_response_test(method);
-  TEST_ASSERT_NOT_NULL_MESSAGE(response_buffer, "no request registered");
-  TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
-  str_range_t params = d_to_json(d_get(request, key("params")));
-  char*       p      = alloca(params.len + 1);
+  json_ctx_t* r        = parse_json(req->payload);
+  d_token_t*  request  = d_type(r->result) == T_ARRAY ? r->result + 1 : r->result;
+  char*       method   = d_get_string(request, "method");
+  str_range_t params   = d_to_json(d_get(request, key("params")));
+  char*       p        = alloca(params.len + 1);
+  sb_t*       filename = sb_new(method);
+  for (d_iterator_t iter = d_iter(d_get(request, key("params"))); iter.left; d_iter_next(&iter)) {
+    switch (d_type(iter.token)) {
+      case T_BOOLEAN:
+      case T_INTEGER:
+        sb_add_char(filename, '_');
+        sb_add_int(filename, d_int(iter.token));
+        break;
+      case T_STRING:
+        if (d_len(iter.token) < 10) {
+          sb_add_char(filename, '_');
+          sb_add_chars(filename, d_string(iter.token));
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
   strncpy(p, params.data, params.len);
   p[params.len] = 0;
+  TEST_ASSERT_EQUAL_MESSAGE(0, add_response_test(filename->data, p), "response not found");
+  TEST_ASSERT_NOT_NULL_MESSAGE(response_buffer, "no request registered");
+  TEST_ASSERT_NOT_NULL_MESSAGE(r, "payload not parseable");
   clean_json_str(p);
+  sb_free(filename);
 
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_method, method);
   TEST_ASSERT_EQUAL_STRING(response_buffer->request_params, p);
   json_free(r);
 
   sb_add_chars(&req->results->result, response_buffer->response);
+  clean_last_response();
   return IN3_OK;
 }

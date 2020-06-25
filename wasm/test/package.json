@@ -5,8 +5,9 @@
   "main": "js/src/index.js",
   "scripts": {
     "build": "tsc -p .",
-    "test": "mocha --timeout 15000 --full-trace testRunner.js testApi.js testUtil.js testApi.js testIpfs.js",
-    "test_report": "mocha --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testApi.js testUtil.js",
+    "test": "[ -d node_modules ] || npm i ; mocha --timeout 15000 --full-trace testRunner.js testApi.js testUtil.js testApi.js testIpfs.js",
+    "test_report": "mocha  --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testApi.js testIpfs.js testUtil.js",
+    "test_coverage": "nyc mocha  --timeout 15000 --reporter mocha-junit-reporter --reporter-options mochaFile=mocha.xml --full-trace testRunner.js testApi.js testIpfs.js testUtil.js",
     "test_api": "mocha --inspect-brk  --timeout 15000 --full-trace  testApi.js",
     "test_ipfs": "mocha --inspect-brk  --timeout 15000 --full-trace  testIpfs.js",
     "test_fail": "mocha --timeout 15000 --full-trace  testApi.js testRunner.js ",
@@ -14,14 +15,9 @@
     "test_runner": "mocha --inspect-brk --timeout 15000 --full-trace  testRunner.js"
   },
   "nyc": {
+    "all": true,
     "include": [
-      "*.ts"
-    ],
-    "extension": [
-      ".ts"
-    ],
-    "require": [
-      "ts-node/register"
+      "in3/*.js"
     ],
     "reporter": [
       "text-summary",
@@ -44,14 +40,17 @@
     "handlebars": ">=4.1.2",
     "mocha": "^5.1.1",
     "mocha-junit-reporter": "^1.23.3",
-    "nyc": "^11.8.0",
-    "source-map-support": "^0.5.6"
+    "nyc": "^15.0.0",
+    "source-map-support": "^0.5.12"
   },
   "dependencies": {
+    "axios": "^0.19.2",
     "bn.js": "^5.0.0",
     "buffer": "^5.2.1",
     "eth-lib": "^0.2.8",
-    "in3-common": "^2.0.3-RC1"
+    "in3-common": "^2.0.3-RC1",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
   },
   "keywords": [
     "ethereum",

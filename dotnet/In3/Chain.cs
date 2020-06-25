@@ -1,42 +1,36 @@
 namespace In3
 {
+    /// <summary>Represents the multiple chains supported by Incubed.</summary>
     public enum Chain : uint
     {
-        /**
-         * support for multiple chains, a client can then switch between different chains (but consumes more memory)
-         */
+        /// <summary>Support for multiple chains, a client can then switch between different chains (but consumes more memory).</summary>
         Multichain = 0x0,
-        /**
-           * use mainnet
-           */
+
+        /// <summary>Ethereum mainnet.</summary>
         Mainnet = 0x1,
-        /**
-           * use kovan testnet
-           */
+
+        /// <summary>Kovan testnet.</summary>
         Kovan = 0x2a,
-        /**
-           * use tobalaba testnet
-           */
+
+        /// <summary>Tobalaba testnet.</summary>
         Tobalaba = 0x44d,
-        /**
-           * use goerli testnet
-           */
+
+        /// <summary>Goerli testnet.</summary>
         Goerli = 0x5,
-        /**
-           * use evan testnet
-           */
+
+        /// <summary>Bitcoin chain.</summary>
+        Btc = 0x99,
+
+        /// <summary>Evan testnet.</summary>
         Evan = 0x4b1,
-        /**
-           * use ipfs
-           */
+
+        /// <summary>Ipfs (InterPlanetary File System).</summary>
         Ipfs = 0x7d0,
-        /**
-           * use volta test net
-           */
+
+        /// <summary>Volta testnet.</summary>
         Volta = 0x12046,
-        /**
-           * use local client
-           */
+
+        /// <summary>Local client.</summary>
         Local = 0xFFFF
     }
 }

@@ -377,6 +377,7 @@ static void* eth_call_fn_intern(in3_t* in3, address_t contract, eth_blknum_t blo
 
   if (res >= 0) {
     if (only_estimate) {
+      req_free(req);
       rpc_exec("eth_estimateGas", uint64_t*, d_to_u64ptr(result));
     } else {
       rpc_exec("eth_call", json_ctx_t*, parse_call_result(req, result));
@@ -426,19 +427,25 @@ char* eth_wait_for_receipt(in3_t* in3, bytes32_t tx_hash) {
 }
 
 in3_ret_t eth_newFilter(in3_t* in3, json_ctx_t* options) {
-  if (options == NULL || !filter_opt_valid(&options->result[0])) return IN3_EINVAL;
-  char*     fopt = d_create_json(&options->result[0]);
-  in3_ret_t res  = filter_add(in3, FILTER_EVENT, fopt);
-  if (res < 0) _free(fopt);
-  return res;
+  rpc_init;
+  if (options) {
+    char* p = d_create_json(options->result);
+    sb_add_chars(params, p);
+    _free(p);
+  }
+  rpc_exec("eth_newFilter", uint64_t, d_long(result));
 }
 
 in3_ret_t eth_newBlockFilter(in3_t* in3) {
-  return filter_add(in3, FILTER_BLOCK, NULL);
+  rpc_init;
+  rpc_exec("eth_newBlockFilter", uint64_t, d_long(result));
 }
 
 in3_ret_t eth_newPendingTransactionFilter(in3_t* in3) {
-  return filter_add(in3, FILTER_PENDING, NULL);
+  UNUSED_VAR(in3);
+  return IN3_ENOTSUP;
+  //  rpc_init;
+  //  rpc_exec("eth_newPendingTransactionFilter", uint64_t, d_long(result));
 }
 
 bool eth_uninstallFilter(in3_t* in3, size_t id) {
@@ -601,11 +608,7 @@ static eth_tx_receipt_t* parse_tx_receipt(d_token_t* result) {
     if (d_type(result) == T_NULL)
       api_set_error(EAGAIN, "Error getting the Receipt!");
     else {
-      eth_tx_receipt_t* txr = _malloc(sizeof(*txr));
-      if (!txr) {
-        api_set_error(ENOMEM, "Not enough memory");
-        return NULL;
-      }
+      eth_tx_receipt_t* txr    = _malloc(sizeof(*txr));
       txr->transaction_index   = d_get_intk(result, K_TRANSACTION_INDEX);
       txr->block_number        = d_get_longk(result, K_BLOCK_NUMBER);
       txr->cumulative_gas_used = d_get_longk(result, K_CUMULATIVE_GAS_USED);
