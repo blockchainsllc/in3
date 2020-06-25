@@ -32,13 +32,21 @@ Links:
   * Ubuntu: `apt-get install clang libclang-dev llvm-dev`
   * Windows: *TODO*
 
-> in3-rs uses the [`in3-sys`](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) to provide low-level bindings to the IN3 C library. 
+> in3-rs uses the [`in3-sys`](https://github.com/slockit/in3-c/tree/master/rust/in3-sys) to provide low-level bindings to the IN3 C library.
 
 
 ## Features
 * `blocking`- Enables the blocking API which depends on [async-std](https://github.com/async-rs/async-std).
 
 ## Example
+Cargo.toml
+
+```toml
+[dependencies]
+async-std = "1.5.0"
+in3 = "0.2.0"
+```
+main.rs
 ```rust
 use std::convert::TryInto;
 use async_std::task;
