@@ -1,4 +1,5 @@
 .only_rust:
+  needs: []
   rules:
     - changes:
         - rust/**/*
@@ -86,7 +87,6 @@ rust_valgrind:
     - valgrind $VALGRIND_OPTS target/debug/$IN3_EXEC test_eth_api
   tags:
     - long-jobs
-
 
 rust:
   stage: bindings
