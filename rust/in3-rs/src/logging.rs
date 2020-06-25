@@ -1,7 +1,9 @@
 //! Minimal logger implementation that interfaces with the underlying C impl
 use std::ffi::CString;
 
-use in3_sys::{in3_log_disable_prefix_, in3_log_enable_prefix_, in3_log_level_t, in3_log_set_quiet_};
+use in3_sys::{
+    in3_log_disable_prefix_, in3_log_enable_prefix_, in3_log_level_t, in3_log_set_quiet_,
+};
 
 pub enum FilterLevel {
     Trace,
@@ -27,7 +29,13 @@ impl Log {
     }
 
     pub fn prefix(&mut self, enable: bool) {
-        unsafe { if enable { in3_log_enable_prefix_() } else { in3_log_disable_prefix_() } }
+        unsafe {
+            if enable {
+                in3_log_enable_prefix_()
+            } else {
+                in3_log_disable_prefix_()
+            }
+        }
     }
 
     pub fn set_level(&mut self, level: FilterLevel) {
@@ -43,23 +51,36 @@ impl Log {
         let column = CString::new(format!("{}", column!())).unwrap();
         let message = CString::new(format!("{}", message)).unwrap();
         unsafe {
-            in3_sys::in3_log_(level.into(),
-                              file.as_ptr() as *const libc::c_char,
-                              column.as_ptr() as *const libc::c_char,
-                              line!() as i32,
-                              message.as_ptr() as *const libc::c_char).into()
+            in3_sys::in3_log_(
+                level.into(),
+                file.as_ptr() as *const libc::c_char,
+                column.as_ptr() as *const libc::c_char,
+                line!() as i32,
+                message.as_ptr() as *const libc::c_char,
+            )
+            .into()
         }
     }
 
-    pub fn trace(&mut self, message: &str) { self.log(FilterLevel::Trace, message) }
+    pub fn trace(&mut self, message: &str) {
+        self.log(FilterLevel::Trace, message)
+    }
 
-    pub fn debug(&mut self, message: &str) { self.log(FilterLevel::Debug, message) }
+    pub fn debug(&mut self, message: &str) {
+        self.log(FilterLevel::Debug, message)
+    }
 
-    pub fn info(&mut self, message: &str) { self.log(FilterLevel::Info, message) }
+    pub fn info(&mut self, message: &str) {
+        self.log(FilterLevel::Info, message)
+    }
 
-    pub fn warn(&mut self, message: &str) { self.log(FilterLevel::Warn, message) }
+    pub fn warn(&mut self, message: &str) {
+        self.log(FilterLevel::Warn, message)
+    }
 
-    pub fn error(&mut self, message: &str) { self.log(FilterLevel::Error, message) }
+    pub fn error(&mut self, message: &str) {
+        self.log(FilterLevel::Error, message)
+    }
 }
 
 impl From<FilterLevel> for in3_log_level_t {

@@ -87,7 +87,9 @@ fn main() {
         env_var("CARGO_MANIFEST_DIR"),
         "pre_generated".into(),
         BINDINGS_FILE.into(),
-    ].iter().collect();
+    ]
+    .iter()
+    .collect();
 
     let out_bindings_path = PathBuf::from(env_var("OUT_DIR")).join(BINDINGS_FILE);
 

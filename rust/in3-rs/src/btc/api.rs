@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use crate::btc::{BlockHeader, BlockTransactionData, BlockTransactionIds, Transaction};
 use crate::error::In3Result;
 use crate::eth1::Hash;
-use crate::json_rpc::{Request, rpc};
+use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
 
@@ -44,7 +44,7 @@ impl Api {
                 params: json!([hash_str.trim_start_matches("0x"), false]),
             },
         )
-            .await
+        .await
     }
 
     /// Returns the blockheader for specified blockhash.
@@ -64,7 +64,7 @@ impl Api {
                 params: json!([hash_str.trim_start_matches("0x"), true]),
             },
         )
-            .await?;
+        .await?;
         let header = unsafe {
             let js = CString::new(header.to_string()).expect("CString::new failed");
             let j_data = in3_sys::parse_json(js.as_ptr());
@@ -91,7 +91,7 @@ impl Api {
                 params: json!([hash_str.trim_start_matches("0x"), false]),
             },
         )
-            .await
+        .await
     }
 
     /// Returns the transaction identified by specified transaction id.
@@ -111,7 +111,7 @@ impl Api {
                 params: json!([hash_str.trim_start_matches("0x"), true]),
             },
         )
-            .await?;
+        .await?;
 
         let tx = unsafe {
             let js = CString::new(tx.to_string()).expect("CString::new failed");
@@ -145,7 +145,7 @@ impl Api {
                 params: json!([hash_str.trim_start_matches("0x"), 2]),
             },
         )
-            .await?;
+        .await?;
 
         let block_data = unsafe {
             let js = CString::new(block.to_string()).expect("CString::new failed");
@@ -179,7 +179,7 @@ impl Api {
                 params: json!([hash_str.trim_start_matches("0x"), 1]),
             },
         )
-            .await?;
+        .await?;
 
         let block_data = unsafe {
             let js = CString::new(block.to_string()).expect("CString::new failed");
@@ -207,7 +207,7 @@ impl Api {
                 params: json!([hash_str.trim_start_matches("0x"), false]),
             },
         )
-            .await
+        .await
     }
 }
 
@@ -438,7 +438,7 @@ mod tests {
         let tx = task::block_on(api.get_transaction(serde_json::from_str::<Hash>(
             r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#,
         )?))
-            .expect("invalid tx");
+        .expect("invalid tx");
         assert_eq!(tx.version, 1);
         assert_eq!(tx.size, 247);
         assert_eq!(tx.vsize, 166);
