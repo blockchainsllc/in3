@@ -1,234 +1,14 @@
 //! Bitcoin JSON RPC client API.
 use std::ffi::CString;
 
-use ethereum_types::U256;
 use serde_json::{json, Value};
 
+use crate::btc::{BlockHeader, BlockTransactionData, BlockTransactionIds, Transaction};
 use crate::error::In3Result;
 use crate::eth1::Hash;
-use crate::json_rpc::{Request, rpc};
+use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
-
-/// The transaction in type.
-#[derive(Debug)]
-pub struct TransactionInput {
-    /// Transaction index of output
-    pub vout: u32,
-    /// Transaction id of output
-    pub txid: Hash,
-    /// Sequence
-    pub sequence: u32,
-    /// Script
-    pub script: Bytes,
-    /// Witnessdata (if used)
-    pub txinwitness: Bytes,
-}
-
-
-/// The transaction out type.
-#[derive(Debug)]
-pub struct TransactionOutput {
-    /// Value of the transaction
-    pub value: u64,
-    /// Index
-    pub n: u32,
-    /// Script pubkey (or signature)
-    pub script_pubkey: Bytes,
-}
-
-/// The transaction type.
-#[derive(Debug)]
-pub struct Transaction {
-    /// True if transaction is part of the active chain
-    pub in_active_chain: bool,
-    /// Serialized transaction data
-    pub data: Bytes,
-    /// Transaction id
-    pub txid: Hash,
-    /// Transaction hash
-    pub hash: Hash,
-    /// Raw size of transaction
-    pub size: u32,
-    /// Virtual size of transaction
-    pub vsize: u32,
-    /// Weight of transaction
-    pub weight: u32,
-    /// Used version
-    pub version: u32,
-    /// Locktime
-    pub locktime: u32,
-    /// Vector of [`TransactionInput`](struct.TransactionInput.html) objects
-    pub vin: Vec<TransactionInput>,
-    /// Vector of [`TransactionOutput`](struct.TransactionOutput.html) objects
-    pub vout: Vec<TransactionOutput>,
-    /// Hash of block containing the transaction
-    pub blockhash: Hash,
-    /// Number of confirmations or blocks mined on top of the containing block
-    pub confirmations: u32,
-    /// Unix timestamp in seconds since 1970
-    pub time: u32,
-    /// Unix timestamp in seconds since 1970
-    pub blocktime: u32,
-}
-
-impl From<*const in3_sys::btc_transaction> for Transaction {
-    fn from(c_tx: *const in3_sys::btc_transaction) -> Self {
-        unsafe {
-            let mut vin = vec![];
-            for i in 0..(*c_tx).vin_len {
-                let tx_in = (*c_tx).vin.offset(i as isize);
-                vin.push(TransactionInput {
-                    vout: (*tx_in).vout,
-                    txid: Hash::from_slice(&(*tx_in).txid),
-                    sequence: (*tx_in).sequence,
-                    script: (*tx_in).script.into(),
-                    txinwitness: (*tx_in).txinwitness.into(),
-                })
-            }
-
-            let mut vout = vec![];
-            for i in 0..(*c_tx).vout_len {
-                let tx_out = (*c_tx).vout.offset(i as isize);
-                vout.push(TransactionOutput {
-                    value: (*tx_out).value,
-                    n: (*tx_out).n,
-                    script_pubkey: (*tx_out).script_pubkey.into(),
-                })
-            }
-
-            Transaction {
-                in_active_chain: (*c_tx).in_active_chain,
-                data: (*c_tx).data.into(),
-                txid: Hash::from_slice(&(*c_tx).txid),
-                hash: Hash::from_slice(&(*c_tx).hash),
-                size: (*c_tx).size,
-                vsize: (*c_tx).vsize,
-                weight: (*c_tx).weight,
-                version: (*c_tx).version,
-                locktime: (*c_tx).locktime,
-                vin,
-                vout,
-                blockhash: Hash::from_slice(&(*c_tx).blockhash),
-                confirmations: (*c_tx).confirmations,
-                time: (*c_tx).time,
-                blocktime: (*c_tx).blocktime,
-            }
-        }
-    }
-}
-
-/// The block header type.
-#[allow(dead_code)]
-pub struct BlockHeader {
-    /// Hash of blockheader
-    pub hash: Hash,
-    /// Number of confirmations or blocks mined on top of the containing block
-    pub confirmations: u32,
-    /// Block number
-    pub height: u32,
-    /// Used version
-    pub version: u32,
-    /// Merkle root of the trie of all transactions in the block
-    pub merkleroot: Hash,
-    /// Unix timestamp in seconds since 1970
-    pub time: u32,
-    /// nonce-field of the block
-    pub nonce: u32,
-    /// bits (target) for the block
-    pub bits: [u8; 4],
-    /// Total amount of work since genesis
-    pub chainwork: U256,
-    /// Number of transactions in the block
-    pub n_tx: u32,
-    /// Hash of parent blockheader
-    pub previous_hash: Hash,
-    /// Hash of next blockheader
-    pub next_hash: Hash,
-    /// Raw serialized header-bytes
-    pub data: [u8; 80],
-}
-
-impl From<*const in3_sys::btc_blockheader> for BlockHeader {
-    fn from(c_header: *const in3_sys::btc_blockheader) -> Self {
-        unsafe {
-            BlockHeader {
-                hash: Hash::from_slice(&(*c_header).hash),
-                confirmations: (*c_header).confirmations,
-                height: (*c_header).height,
-                version: (*c_header).version,
-                merkleroot: Hash::from_slice(&(*c_header).merkleroot),
-                time: (*c_header).time,
-                nonce: (*c_header).time,
-                bits: (*c_header).bits.into(),
-                chainwork: (*c_header).chainwork.into(),
-                n_tx: (*c_header).n_tx,
-                previous_hash: Hash::from_slice(&(*c_header).previous_hash),
-                next_hash: Hash::from_slice(&(*c_header).next_hash),
-                data: (*c_header).data.into(),
-            }
-        }
-    }
-}
-
-impl From<in3_sys::btc_blockheader> for BlockHeader {
-    fn from(header: in3_sys::btc_blockheader) -> Self {
-        BlockHeader::from(&header as *const in3_sys::btc_blockheader)
-    }
-}
-
-/// A block with all transactions including their full data.
-#[allow(dead_code)]
-pub struct BlockTransactionData {
-    /// The [`BlockHeader`](struct.BlockHeader.html) of this block
-    pub header: BlockHeader,
-    /// Vector of [`Transaction`](struct.Transaction.html) objects
-    pub transactions: Vec<Transaction>,
-}
-
-impl From<*const in3_sys::btc_block_txdata> for BlockTransactionData {
-    fn from(c_blk_data: *const in3_sys::btc_block_txdata) -> Self {
-        unsafe {
-            let mut txs: Vec<Transaction> = vec![];
-            for i in 0..(*c_blk_data).tx_len {
-                let tx = (*c_blk_data).tx.offset(i as isize) as *const in3_sys::btc_transaction;
-                txs.push(tx.into())
-            }
-
-            BlockTransactionData {
-                header: (*c_blk_data).header.into(),
-                transactions: txs,
-            }
-        }
-    }
-}
-
-/// A block with all transaction ids.
-#[allow(dead_code)]
-pub struct BlockTransactionIds {
-    /// The [`BlockHeader`](struct.BlockHeader.html) of this block
-    pub header: BlockHeader,
-    /// Vector of transaction ids
-    pub transactions: Vec<Hash>,
-}
-
-impl From<*const in3_sys::btc_block_txids> for BlockTransactionIds {
-    fn from(c_blk_ids: *const in3_sys::btc_block_txids) -> Self {
-        unsafe {
-            let mut txs: Vec<Hash> = vec![];
-            for i in 0..(*c_blk_ids).tx_len {
-                let tx = (*c_blk_ids).tx.offset(i as isize);
-                txs.push(Hash::from_slice(&*tx))
-            }
-
-            BlockTransactionIds {
-                header: (*c_blk_ids).header.into(),
-                transactions: txs,
-            }
-        }
-    }
-}
-
 
 /// Primary interface for the BTC JSON RPC API.
 pub struct Api {
@@ -256,11 +36,15 @@ impl Api {
     /// * `blockhash` - block hash.
     pub async fn get_blockheader_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
-        rpc(self.client(), Request {
-            method: "getblockheader",
-            params: json!([hash_str.trim_start_matches("0x"), false]),
-        }).await
+        let hash_str = hash.as_str().unwrap(); // cannot fail
+        rpc(
+            self.client(),
+            Request {
+                method: "getblockheader",
+                params: json!([hash_str.trim_start_matches("0x"), false]),
+            },
+        )
+        .await
     }
 
     /// Returns the blockheader for specified blockhash.
@@ -272,11 +56,15 @@ impl Api {
     /// If response if not serializable to output type.
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
-        let header: Value = rpc(self.client(), Request {
-            method: "getblockheader",
-            params: json!([hash_str.trim_start_matches("0x"), true]),
-        }).await?;
+        let hash_str = hash.as_str().unwrap(); // cannot fail
+        let header: Value = rpc(
+            self.client(),
+            Request {
+                method: "getblockheader",
+                params: json!([hash_str.trim_start_matches("0x"), true]),
+            },
+        )
+        .await?;
         let header = unsafe {
             let js = CString::new(header.to_string()).expect("CString::new failed");
             let j_data = in3_sys::parse_json(js.as_ptr());
@@ -295,11 +83,15 @@ impl Api {
     /// * `tx_id` - transaction id.
     pub async fn get_transaction_bytes(&mut self, tx_id: Hash) -> In3Result<Bytes> {
         let hash = json!(tx_id);
-        let hash_str = hash.as_str().unwrap();
-        rpc(self.client(), Request {
-            method: "getrawtransaction",
-            params: json!([hash_str.trim_start_matches("0x"), false]),
-        }).await
+        let hash_str = hash.as_str().unwrap(); // cannot fail
+        rpc(
+            self.client(),
+            Request {
+                method: "getrawtransaction",
+                params: json!([hash_str.trim_start_matches("0x"), false]),
+            },
+        )
+        .await
     }
 
     /// Returns the transaction identified by specified transaction id.
@@ -311,11 +103,15 @@ impl Api {
     /// If response if not serializable to output type.
     pub async fn get_transaction(&mut self, tx_id: Hash) -> In3Result<Transaction> {
         let hash = json!(tx_id);
-        let hash_str = hash.as_str().unwrap();
-        let tx: Value = rpc(self.client(), Request {
-            method: "getrawtransaction",
-            params: json!([hash_str.trim_start_matches("0x"), true]),
-        }).await?;
+        let hash_str = hash.as_str().unwrap(); // cannot fail
+        let tx: Value = rpc(
+            self.client(),
+            Request {
+                method: "getrawtransaction",
+                params: json!([hash_str.trim_start_matches("0x"), true]),
+            },
+        )
+        .await?;
 
         let tx = unsafe {
             let js = CString::new(tx.to_string()).expect("CString::new failed");
@@ -336,13 +132,20 @@ impl Api {
     ///
     /// # Panics
     /// If response if not serializable to output type.
-    pub async fn get_block_transaction_data(&mut self, blockhash: Hash) -> In3Result<BlockTransactionData> {
+    pub async fn get_block_transaction_data(
+        &mut self,
+        blockhash: Hash,
+    ) -> In3Result<BlockTransactionData> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
-        let block: Value = rpc(self.client(), Request {
-            method: "getblock",
-            params: json!([hash_str.trim_start_matches("0x"), 2]),
-        }).await?;
+        let hash_str = hash.as_str().unwrap(); // cannot fail
+        let block: Value = rpc(
+            self.client(),
+            Request {
+                method: "getblock",
+                params: json!([hash_str.trim_start_matches("0x"), 2]),
+            },
+        )
+        .await?;
 
         let block_data = unsafe {
             let js = CString::new(block.to_string()).expect("CString::new failed");
@@ -363,13 +166,20 @@ impl Api {
     ///
     /// # Panics
     /// If response if not serializable to output type.
-    pub async fn get_block_transaction_ids(&mut self, blockhash: Hash) -> In3Result<BlockTransactionIds> {
+    pub async fn get_block_transaction_ids(
+        &mut self,
+        blockhash: Hash,
+    ) -> In3Result<BlockTransactionIds> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
-        let block: Value = rpc(self.client(), Request {
-            method: "getblock",
-            params: json!([hash_str.trim_start_matches("0x"), 1]),
-        }).await?;
+        let hash_str = hash.as_str().unwrap(); // cannot fail
+        let block: Value = rpc(
+            self.client(),
+            Request {
+                method: "getblock",
+                params: json!([hash_str.trim_start_matches("0x"), 1]),
+            },
+        )
+        .await?;
 
         let block_data = unsafe {
             let js = CString::new(block.to_string()).expect("CString::new failed");
@@ -389,18 +199,22 @@ impl Api {
     /// * `blockhash` - block hash.
     pub async fn get_block_bytes(&mut self, blockhash: Hash) -> In3Result<Bytes> {
         let hash = json!(blockhash);
-        let hash_str = hash.as_str().unwrap();
-        rpc(self.client(), Request {
-            method: "getblock",
-            params: json!([hash_str.trim_start_matches("0x"), false]),
-        }).await
+        let hash_str = hash.as_str().unwrap(); // cannot fail
+        rpc(
+            self.client(),
+            Request {
+                method: "getblock",
+                params: json!([hash_str.trim_start_matches("0x"), false]),
+            },
+        )
+        .await
     }
 }
-
 
 #[cfg(test)]
 mod tests {
     use async_std::task;
+    use ethereum_types::U256;
     use rustc_hex::FromHex;
 
     use crate::prelude::*;
@@ -436,9 +250,9 @@ mod tests {
                 ]"#,
             )],
         }));
-        let header = task::block_on(
-            api.get_blockheader_bytes(serde_json::from_str::<Hash>(r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#)?)
-        ).unwrap();
+        let header = task::block_on(api.get_blockheader_bytes(serde_json::from_str::<Hash>(
+            r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#,
+        )?))?;
         assert_eq!(header.0, FromHex::from_hex("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae").unwrap());
         Ok(())
     }
@@ -486,15 +300,25 @@ mod tests {
                 }]"#,
             )],
         }));
-        let header = task::block_on(
-            api.get_blockheader(serde_json::from_str::<Hash>(r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#)?)
-        ).unwrap();
+        let header = task::block_on(api.get_blockheader(serde_json::from_str::<Hash>(
+            r#""0x00000000000000000007171457f3352e101d92bca75f055c330fe33e84bb183b""#,
+        )?))?;
         assert_eq!(header.confirmations, 1979);
         assert_eq!(header.height, 631076);
         assert_eq!(header.version, 536870912);
-        assert_eq!(header.chainwork, serde_json::from_str::<U256>(r#""0x00000000000000000000000000000000000000000f9f574f8d39680a92ad1bdc""#)?);
+        assert_eq!(
+            header.chainwork,
+            serde_json::from_str::<U256>(
+                r#""0x00000000000000000000000000000000000000000f9f574f8d39680a92ad1bdc""#
+            )?
+        );
         assert_eq!(header.n_tx, 2339);
-        assert_eq!(header.next_hash, serde_json::from_str::<Hash>(r#""0x00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d""#)?);
+        assert_eq!(
+            header.next_hash,
+            serde_json::from_str::<Hash>(
+                r#""0x00000000000000000000eac6e799c468b3a140d9e1400c31f7603fdb20e1198d""#
+            )?
+        );
         // it is sufficient to verify data field as it contains all remaining fields serialized
         assert_eq!(header.data.to_vec(), FromHex::from_hex("00000020802cb8f913050c95fdeaffdf45605a17d09ba2d6121e06000000000000000000b66e299fce5925442281461266a189bd786db1013093cebaa84ab1666c75f5184959c55ef6971217a26a25ae").unwrap());
         Ok(())
@@ -530,9 +354,9 @@ mod tests {
                 }]"#,
             )],
         }));
-        let tx = task::block_on(
-            api.get_transaction_bytes(serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?)
-        ).unwrap();
+        let tx = task::block_on(api.get_transaction_bytes(serde_json::from_str::<Hash>(
+            r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#,
+        )?))?;
         assert_eq!(tx.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
         Ok(())
     }
@@ -611,9 +435,10 @@ mod tests {
                 }]"#,
             )],
         }));
-        let tx = task::block_on(
-            api.get_transaction(serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?)
-        ).expect("invalid tx");
+        let tx = task::block_on(api.get_transaction(serde_json::from_str::<Hash>(
+            r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#,
+        )?))
+        .expect("invalid tx");
         assert_eq!(tx.version, 1);
         assert_eq!(tx.size, 247);
         assert_eq!(tx.vsize, 166);
@@ -622,16 +447,32 @@ mod tests {
         assert_eq!(tx.confirmations, 2890);
         assert_eq!(tx.time, 1589863750);
         assert_eq!(tx.blocktime, 1589863750);
-        assert_eq!(tx.txid, serde_json::from_str::<Hash>(r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#)?);
-        assert_eq!(tx.hash, serde_json::from_str::<Hash>(r#""0x4041e8162e2c1a9711b15fd2a2b0c7aae59fbc06a95667682f1271fab0393f69""#)?);
+        assert_eq!(
+            tx.txid,
+            serde_json::from_str::<Hash>(
+                r#""0x83ce5041679c75721ec7135e0ebeeae52636cfcb4844dbdccf86644df88da8c1""#
+            )?
+        );
+        assert_eq!(
+            tx.hash,
+            serde_json::from_str::<Hash>(
+                r#""0x4041e8162e2c1a9711b15fd2a2b0c7aae59fbc06a95667682f1271fab0393f69""#
+            )?
+        );
         assert_eq!(tx.data.0, FromHex::from_hex("01000000000101dccee3ce73ba66bc2d2602d647e1238a76d795cfb120f520ba64b0f085e2f694010000001716001430d71be06aa53fd845913f8613ed518d742d082affffffff02c0d8a7000000000017a914d129842dbe1ee73e69d14d54a8a62784877fb83e87108428030000000017a914e483fe5491d8ef5acf043fac5eb1af0f049a80318702473044022035c13c5fdf5f5d07c2101176db8a9c727cec9c31c612b15ae0a4cbdeb25b4dc2022046849e039477aa67fb60e24635668ae1de0bddb9ade3eac2d5ca350898d43c2b01210344715d54ec59240a4ae9f5d8e469f3933a7b03d5c09e15ac3ff53239ea1041b800000000").unwrap());
         assert_eq!(tx.vin.len(), 1);
-        assert_eq!(tx.vin[0].script.0, FromHex::from_hex("16001430d71be06aa53fd845913f8613ed518d742d082a").unwrap());
+        assert_eq!(
+            tx.vin[0].script.0,
+            FromHex::from_hex("16001430d71be06aa53fd845913f8613ed518d742d082a").unwrap()
+        );
         assert_eq!(tx.vin[0].sequence, 4294967295);
         assert_eq!(tx.vin[0].vout, 1);
         assert_eq!(tx.vout.len(), 2);
         assert_eq!(tx.vout[1].n, 1);
-        assert_eq!(tx.vout[0].script_pubkey.0, FromHex::from_hex("a914d129842dbe1ee73e69d14d54a8a62784877fb83e87").unwrap());
+        assert_eq!(
+            tx.vout[0].script_pubkey.0,
+            FromHex::from_hex("a914d129842dbe1ee73e69d14d54a8a62784877fb83e87").unwrap()
+        );
         assert_eq!(tx.vout[0].value, 11000000);
         Ok(())
     }

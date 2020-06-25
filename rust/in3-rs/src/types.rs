@@ -1,14 +1,31 @@
 //! Types common to all modules.
+use std::convert::TryFrom;
 use std::fmt;
+use std::fmt::Formatter;
 
-use rustc_hex::{FromHex, ToHex};
+use rustc_hex::{FromHex, FromHexError, ToHex};
 use serde::de::{Error, Visitor};
-use serde::export::Formatter;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Newtype wrapper around vector of bytes
-#[derive(Debug, PartialEq, Eq, Default, Hash, Clone)]
+#[derive(PartialEq, Eq, Default, Hash, Clone)]
 pub struct Bytes(pub Vec<u8>);
+
+impl fmt::Debug for Bytes {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut serialized = "0x".to_owned();
+        serialized.push_str(self.0.to_hex().as_str());
+        write!(f, "{}", serialized)
+    }
+}
+
+impl TryFrom<&str> for Bytes {
+    type Error = FromHexError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Ok(s.from_hex()?.into())
+    }
+}
 
 impl From<Vec<u8>> for Bytes {
     fn from(vec: Vec<u8>) -> Bytes {
@@ -58,8 +75,13 @@ impl<'a> Visitor<'a> for BytesVisitor {
         write!(formatter, "a hex string (optionally prefixed with '0x')")
     }
 
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E> where E: Error {
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
         let start = if value.starts_with("0x") { 2 } else { 0 };
-        Ok(FromHex::from_hex(&value[start..]).map_err(|e| Error::custom(format!("Invalid hex: {}", e)))?.into())
+        Ok(FromHex::from_hex(&value[start..])
+            .map_err(|e| Error::custom(format!("Invalid hex: {}", e)))?
+            .into())
     }
 }

@@ -613,6 +613,7 @@ static void test_send_raw_tx(void) {
   in3_free(in3);
 }
 
+
 /*
  * Main
  */
