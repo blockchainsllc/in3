@@ -35,3 +35,4 @@ target/
 .cproject
 rust/in3-sys/in3-core/*
 rust/Cargo.lock
+rust/in3-sys/pre_generated/in3.rs
