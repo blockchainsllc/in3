@@ -44,6 +44,7 @@
     "source-map-support": "^0.5.12"
   },
   "dependencies": {
+    "axios": "^0.19.2",
     "bn.js": "^5.0.0",
     "buffer": "^5.2.1",
     "eth-lib": "^0.2.8",

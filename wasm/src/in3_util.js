@@ -449,7 +449,8 @@ const util = {
     createSignatureHash,
     toUint8Array,
     base64Decode,
-    base64Encode
+    base64Encode,
+    getVersion
 }
 
 // add as static proporty and as standard property.
