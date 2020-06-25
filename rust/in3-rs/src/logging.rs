@@ -1,4 +1,6 @@
 //! Minimal logger implementation that interfaces with the underlying C impl
+use std::ffi::CString;
+
 use in3_sys::{in3_log_disable_prefix_, in3_log_enable_prefix_, in3_log_level_t, in3_log_set_quiet_};
 
 pub enum FilterLevel {
@@ -37,12 +39,15 @@ impl Log {
     }
 
     fn log(&mut self, level: FilterLevel, message: &str) {
+        let file = CString::new(format!("{}", file!())).unwrap();
+        let column = CString::new(format!("{}", column!())).unwrap();
+        let message = CString::new(format!("{}", message)).unwrap();
         unsafe {
             in3_sys::in3_log_(level.into(),
-                              format!("{}", file!()).as_ptr() as *const libc::c_char,
-                              format!("{}", column!()).as_ptr() as *const libc::c_char,
+                              file.as_ptr() as *const libc::c_char,
+                              column.as_ptr() as *const libc::c_char,
                               line!() as i32,
-                              message.as_ptr() as *const i8).into()
+                              message.as_ptr() as *const libc::c_char).into()
         }
     }
 
