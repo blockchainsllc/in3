@@ -1,6 +1,5 @@
 //! Minimal logger implementation that interfaces with the underlying C impl
-use in3_sys::{in3_log_level_t, in3_log_set_quiet_};
-
+use in3_sys::{in3_log_disable_prefix_, in3_log_enable_prefix_, in3_log_level_t, in3_log_set_quiet_};
 
 pub enum FilterLevel {
     Trace,
@@ -23,6 +22,10 @@ impl Log {
 
     pub fn quiet(&self, enable: bool) {
         unsafe { in3_log_set_quiet_(enable.into()) }
+    }
+
+    pub fn prefix(&self, enable: bool) {
+        unsafe { if enable { in3_log_enable_prefix_() } else { in3_log_disable_prefix_() } }
     }
 
     pub fn set_level(&self, level: FilterLevel) {
