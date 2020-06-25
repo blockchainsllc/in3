@@ -4,6 +4,9 @@ use async_trait::async_trait;
 use crate::error::In3Result;
 use crate::types::Bytes;
 
+/// Identifier for client type to allow for user-defined classification of Clients
+type ClientTypeId = u32;
+
 /// Transport trait methods.
 ///
 /// Interface for a facility that encapsulates getting data from a remote endpoint, potentially
@@ -54,6 +57,9 @@ pub trait Storage {
 /// facilities.
 #[async_trait(? Send)]
 pub trait Client {
+    /// Returns the client's type id.
+    fn id(&self) -> ClientTypeId;
+
     /// Configures the client using the given config string.
     fn configure(&mut self, config: &str) -> Result<(), String>;
 
@@ -81,7 +87,7 @@ pub trait Client {
 ///
 /// Interface for a facility that provides a user API using the RPC Client's services.
 pub trait Api {
-    /// Create an API instance by consuming a Client
+    /// Create an API instance by consuming a Client.
     fn new(client: Box<dyn Client>) -> Self;
 
     /// Get a mutable reference to the client, for eg. to configure it dynamically.
