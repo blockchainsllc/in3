@@ -29,6 +29,7 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> Bytes {
     if error < 0 {
         panic!("Sign error{:?}", error);
     }
+    dst[64] += 27;
     dst[0..].into()
 }
 
