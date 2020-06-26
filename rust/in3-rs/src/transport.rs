@@ -140,6 +140,9 @@ impl Transport for MockTransport<'_> {
     async fn fetch(&mut self, request: &str, _uris: &[&str]) -> Vec<Result<String, String>> {
         let response = self.responses.pop();
         let request: serde_json::Value = serde_json::from_str(request).unwrap();
+        unsafe {
+            LOGGER.trace(&format!("{:?} ->\n {:?}\n", request, response));
+        }
         match response {
             Some(response) if response.0 == request[0]["method"] => {
                 vec![Ok(response.1.to_string())]
