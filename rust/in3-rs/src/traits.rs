@@ -61,7 +61,7 @@ pub trait Client {
     fn id(&self) -> ClientTypeId;
 
     /// Configures the client using the given config string.
-    fn configure(&mut self, config: &str) -> Result<(), String>;
+    fn configure(&mut self, config: &str) -> In3Result<()>;
 
     /// Sets a custom transport implementation to be used by the client.
     fn set_transport(&mut self, transport: Box<dyn Transport>);

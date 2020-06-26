@@ -292,13 +292,13 @@ impl ClientTrait for Client {
     /// 	}
     /// }"#).is_ok());
     /// ```
-    fn configure(&mut self, config: &str) -> Result<(), String> {
+    fn configure(&mut self, config: &str) -> In3Result<()> {
         unsafe {
-            let config_c = ffi::CString::new(config).expect("CString::new failed");
+            let config_c = CString::new(config).expect("CString::new failed");
             let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
             if err.as_ref().is_some() {
-                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
-                // cannot fail as err is guaranteed to be a C string
+                let err = CStr::from_ptr(err).to_str().unwrap(); // cannot fail as err is guaranteed to be a C string
+                return Err(SysError::ConfigError(err.to_owned()).into());
             }
         }
         Ok(())
