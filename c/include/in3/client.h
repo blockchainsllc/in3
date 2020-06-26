@@ -95,33 +95,6 @@ typedef enum {
   PROOF_FULL     = 2  /**< All field will be validated including uncles */
 } in3_proof_t;
 
-/** verification as delivered by the server. 
- * 
- * This will be part of the in3-request and will be generated based on the prooftype.*/
-typedef enum {
-  VERIFICATION_NEVER = 0, /**< No Verifacation */
-  VERIFICATION_PROOF = 1, /**< Includes the proof of the data */
-} in3_verification_t;
-
-/** the configuration as part of each incubed request. 
- * This will be generated for each request based on the client-configuration. the verifier may access this during verification in order to check against the request. 
- * 
- */
-typedef struct in3_request_config {
-  chain_id_t         chain_id;               /**< the chain to be used. this is holding the integer-value of the hexstring. */
-  uint_fast8_t       flags;                  /**< the current flags from the client. */
-  uint8_t            use_full_proof;         /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
-  bytes_t*           verified_hashes;        /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
-  uint16_t           verified_hashes_length; /**< number of verified blockhashes*/
-  uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
-  uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
-  in3_verification_t verification;           /**< Verification-type */
-  bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
-  uint8_t            signers_length;         /**< number or addresses */
-  uint32_t*          times;                  /**< meassured times in ms for the request */
-
-} in3_request_config_t;
-
 /**
  * Node capabilities
  * @note Always access using getters/setters in nodelist.h
@@ -151,7 +124,8 @@ typedef enum {
   FLAGS_BINARY           = 0x8,  /**< the client will use binary format  */
   FLAGS_HTTP             = 0x10, /**< the client will try to use http instead of https  */
   FLAGS_STATS            = 0x20, /**< nodes will keep track of the stats (default=true)  */
-  FLAGS_NODE_LIST_NO_SIG = 0x40  /**< nodelist update request will not automatically ask for signatures and proof */
+  FLAGS_NODE_LIST_NO_SIG = 0x40, /**< nodelist update request will not automatically ask for signatures and proof */
+  FLAGS_BOOT_WEIGHTS     = 0x80  /**< if true the client will initialize the first weights from the nodelist given by the nodelist.*/
 } in3_flags_type_t;
 
 /**
@@ -379,7 +353,7 @@ typedef void (*in3_pay_free)(void* cptr);
  * 
  * this function is called when the in3-section of payload of the request is built and allows the handler to add properties. 
 */
-typedef in3_ret_t (*in3_pay_handle_request)(void* ctx, sb_t* sb, in3_request_config_t* rc, void* cptr);
+typedef in3_ret_t (*in3_pay_handle_request)(void* ctx, sb_t* sb, void* cptr);
 
 /** 
  * the payment handler.

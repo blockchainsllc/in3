@@ -73,9 +73,6 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
       ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
   }
 
-  if (ctx->len)
-    ctx->requests_configs = _calloc(1, sizeof(in3_request_config_t));
-
   return ctx;
 }
 

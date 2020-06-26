@@ -386,7 +386,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
   }
 
   // if we expect no signatures ...
-  if (vc->config->signers_length == 0) {
+  if (vc->ctx->signers_length == 0) {
 #ifdef POA
     in3_ret_t res = IN3_OK;
     vhist_t*  vh  = NULL;
@@ -407,7 +407,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
     vh_free(vh);
     return res;
 #endif
-  } else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->config->signers_length)
+  } else if (!(signatures = d_get(vc->proof, K_SIGNATURES)) || d_len(signatures) < vc->ctx->signers_length)
     // no signatures found,even though we expected some.
     return vc_err(vc, "missing signatures");
   else {
@@ -436,7 +436,7 @@ in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expec
         confirmed |= eth_verify_signature(vc, &msg, sig);
     }
 
-    if (confirmed != (1 << vc->config->signers_length) - 1) // we must collect all signatures!
+    if (confirmed != (1 << vc->ctx->signers_length) - 1) // we must collect all signatures!
       return vc_err(vc, "missing signatures");
 
     // ok, is is verified, so we should add it to the verified hashes

@@ -271,7 +271,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, vc->proof))) return ret;
   if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
   if (!in_active_chain) return IN3_OK;
-  if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+  if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
   if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
 
   return IN3_OK;
@@ -293,7 +293,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
 
   // verify the blockheader
   if ((ret = btc_verify_header(vc, block_header, hash, block_target, &block_number, NULL, vc->proof))) return ret;
-  if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+  if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
   if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, bytes(block_header, 80)))) return ret;
 
   // check blockhash
@@ -377,7 +377,7 @@ in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
     if (header.len != 80) return vc_err(vc, "invalid header");
 
     if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, iter.token))) return ret;
-    if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+    if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
     if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
   }
 
@@ -390,7 +390,7 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   bytes32_t  hash;
 
   // make sure we want to verify
-  if (vc->config->verification == VERIFICATION_NEVER) return IN3_OK;
+  if (!vc->client->proof) return IN3_OK;
 
   // do we support this request?
   if (!method) return vc_err(vc, "No Method in request defined!");
