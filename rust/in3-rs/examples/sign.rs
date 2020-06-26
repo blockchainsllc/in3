@@ -1,33 +1,10 @@
 use async_std::task;
 use ethereum_types::Address;
-use libc::c_char;
-use rustc_hex::FromHex;
 use serde_json::json;
 
 use in3::eth1::*;
 use in3::json_rpc::Request;
 use in3::prelude::*;
-use in3::signer;
-
-fn sign() {
-    let msg = "9fa034abf05bd334e60d92da257eb3d66dd3767bba9a1d7a7575533eb0977465"
-        .from_hex()
-        .unwrap(); // cannot fail since input is valid
-    let mut pk = "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
-        .from_hex()
-        .unwrap(); // cannot fail since input is valid
-
-    // Hash and sign the msg
-    let signature_hash = unsafe {
-        signer::signc(
-            pk.as_mut_ptr() as *mut u8,
-            msg.as_ptr() as *const c_char,
-            msg.len(),
-        )
-    };
-    assert_eq!(format!("{:?}", signature_hash),
-               "0x349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c");
-}
 
 fn sign_tx_api() {
     // Config in3 api client
@@ -128,5 +105,4 @@ fn sign_tx_rpc() {
 fn main() {
     sign_tx_api();
     sign_tx_rpc();
-    sign();
 }
