@@ -2,9 +2,8 @@ extern crate in3;
 
 use async_std::task;
 
-use in3::prelude::*;
 use in3::ipfs::*;
-
+use in3::prelude::*;
 
 fn main() {
     let mut ipfs_api = Api::new(Client::new(chain::IPFS));
