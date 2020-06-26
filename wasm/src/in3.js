@@ -299,8 +299,6 @@ class IN3 {
             this.ptr = 0
         }
     }
-
-
 }
 // change the transport
 IN3.setTransport = function (fn) {

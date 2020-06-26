@@ -151,12 +151,12 @@ namespace In3.Eth1
             string jsonResponse = _in3.SendRpc(In3AbiDecode, new object[] {
                 signature, encodedData});
             // This is ugly, unsemantic and error prone and SHOULD be changed.
-            JsonElement result = (JsonElement) RpcHandler.From<object>(jsonResponse);
+            JsonElement result = (JsonElement)RpcHandler.From<object>(jsonResponse);
 
             if (result.ValueKind == JsonValueKind.String)
             {
                 string singleResult = result.GetString();
-                return new [] { singleResult };
+                return new[] { singleResult };
             }
 
             IEnumerator<JsonElement> arr = result.EnumerateArray();
@@ -539,7 +539,7 @@ namespace In3.Eth1
         /// <remarks>
         /// The actual semantics of the returning value changes according to <paramref name="type" />.
         /// </remarks>
-        public string Ens(string name, ENSParameter? type = null)
+        public string Ens(string name, ENSParameter type = null)
         {
             string jsonResponse = _in3.SendRpc(EthENS, new object[] { name, type?.Value });
             return RpcHandler.From<string>(jsonResponse);

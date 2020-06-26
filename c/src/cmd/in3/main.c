@@ -111,9 +111,12 @@ void show_help(char* name) {
 -json          if given the result will be returned as json, which is especially important for eth_call results with complex structres.\n\
 -hex           if given the result will be returned as hex.\n\
 -kin3          if kin3 is specified, the response including in3-section is returned\n\
+-bw            initialize with weights from boot nodes.\n\
 -debug         if given incubed will output debug information when executing. \n\
 -k             32bytes raw private key to sign requests.\n\
 -q             quit. no additional output. \n\
+-tr            runs test request when showing in3_weights \n\
+-thr           runs test request including health-check when showing in3_weights \n\
 -ri            read response from stdin \n\
 -ro            write raw response to stdout \n\
 -os            only sign, don't send the raw Transaction \n\
@@ -632,7 +635,7 @@ int main(int argc, char* argv[]) {
   c->transport                     = debug_transport;
   c->request_count                 = 1;
   bool            out_response     = false;
-  bool            run_test_request = false;
+  int             run_test_request = 0;
   bool            force_hex        = false;
   char*           sig              = NULL;
   char*           to               = NULL;
@@ -713,13 +716,17 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-latest") == 0 || strcmp(argv[i], "-l") == 0)
       c->replace_latest_block = atoll(argv[++i]);
     else if (strcmp(argv[i], "-tr") == 0)
-      run_test_request = true;
+      run_test_request = 1;
+    else if (strcmp(argv[i], "-thr") == 0)
+      run_test_request = 2;
     else if (strcmp(argv[i], "-eth") == 0)
       to_eth = true;
     else if (strcmp(argv[i], "-md") == 0)
       c->min_deposit = atoll(argv[++i]);
     else if (strcmp(argv[i], "-kin3") == 0)
       c->flags |= FLAGS_KEEP_IN3;
+    else if (strcmp(argv[i], "-bw") == 0)
+      c->flags |= FLAGS_BOOT_WEIGHTS;
     else if (strcmp(argv[i], "-to") == 0)
       to = argv[++i];
     else if (strcmp(argv[i], "-gas") == 0 || strcmp(argv[i], "-gas_limit") == 0)
@@ -891,9 +898,13 @@ int main(int argc, char* argv[]) {
     BIT_CLEAR(c->flags, FLAGS_AUTO_UPDATE_LIST);
     uint64_t     now   = in3_time(NULL);
     in3_chain_t* chain = in3_find_chain(c, c->chain_id);
-    printf("   : %45s : %7s : %5s : %5s: %s\n----------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", run_test_request ? "WEIGHT   : LAST_BLOCK" : "WEIGHT");
+    char*        more  = "WEIGHT";
+    if (run_test_request == 1) more = "WEIGHT : LAST_BLOCK";
+    if (run_test_request == 2) more = "WEIGHT : NAME                   VERSION : RUNNING : HEALTH : LAST_BLOCK";
+    printf("   : %-45s : %7s : %5s : %5s: %s\n------------------------------------------------------------------------------------------------\n", "URL", "BL", "CNT", "AVG", more);
     for (int i = 0; i < chain->nodelist_length; i++) {
-      in3_ctx_t* ctx = NULL;
+      in3_ctx_t* ctx      = NULL;
+      char*      health_s = NULL;
       if (run_test_request) {
         char req[300];
         char adr[41];
@@ -901,6 +912,53 @@ int main(int argc, char* argv[]) {
         sprintf(req, "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"in3\":{\"dataNodes\":[\"0x%s\"]}}", adr);
         ctx = ctx_new(c, req);
         if (ctx) in3_send_ctx(ctx);
+        if (run_test_request == 2) {
+          int         health     = 1;
+          char*       version    = "";
+          char*       node_name  = "";
+          uint32_t    running    = 0;
+          json_ctx_t* health_res = NULL;
+          char        health_url[500];
+          char*       urls[1];
+          urls[0] = health_url;
+          sprintf(health_url, "%s/health", chain->nodelist[i].url);
+          in3_request_t r;
+          r.in3      = c;
+          r.urls     = urls;
+          r.urls_len = 1;
+          r.timeout  = 5000;
+          r.payload  = "";
+          r.results  = _malloc(sizeof(in3_response_t));
+          sb_init(&r.results->error);
+          sb_init(&r.results->result);
+          c->transport(&r);
+
+          if (r.results->error.len || !r.results->result.len)
+            health = 0;
+          else {
+            health_res = parse_json(r.results->result.data);
+            if (!health_res)
+              health = 0;
+            else {
+              node_name    = d_get_string(health_res->result, "name");
+              version      = d_get_string(health_res->result, "version");
+              running      = d_get_int(health_res->result, "running");
+              char* status = d_get_string(health_res->result, "status");
+              if (!status && strcmp(status, "healthy")) health = 0;
+            }
+          }
+          if (version) {
+            char* l = strrchr(version, ':');
+            if (l) version = l + 1;
+          }
+          health_s = _malloc(3000);
+          sprintf(health_s, "%-22s %-7s   %7d   %-9s ", node_name ? node_name : "-", version ? version : "-", running, health ? "OK" : "unhealthy");
+
+          _free(r.results->result.data);
+          _free(r.results->error.data);
+          _free(r.results);
+          if (health_res) json_free(health_res);
+        }
       }
       in3_node_t*        node        = chain->nodelist + i;
       in3_node_weight_t* weight      = chain->weights + i;
@@ -936,6 +994,7 @@ int main(int argc, char* argv[]) {
           sprintf((warning = tr), "The node is marked as able to support http-requests");
         else
           tr = ctx->error;
+        if (strlen(tr) > 100) tr[100] = 0;
       }
       if (blacklisted)
         printf(COLORT_RED);
@@ -945,9 +1004,10 @@ int main(int argc, char* argv[]) {
         printf(COLORT_DARKGRAY);
       else
         printf(COLORT_GREEN);
-      printf("%2i   %45s   %7i   %5i   %5i  %5i %s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, tr ? tr : "");
+      printf("%2i   %-45s   %7i   %5i   %5i   %5i   %s%s", i, node->url, (int) (blacklisted ? blacklisted - now : 0), weight->response_count, weight->response_count ? (weight->total_response_time / weight->response_count) : 0, calc_weight, health_s ? health_s : "", tr ? tr : "");
       printf(COLORT_RESET "\n");
       if (tr && tr != ctx->error) _free(tr);
+      if (health_s) _free(health_s);
       if (ctx) ctx_free(ctx);
     }
 

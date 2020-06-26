@@ -1,9 +1,8 @@
 //! Core trait definitions.
-use libc::c_char;
-
 use async_trait::async_trait;
 
-use crate::error;
+use crate::error::In3Result;
+use crate::types::Bytes;
 
 /// Transport trait methods.
 ///
@@ -24,9 +23,15 @@ pub trait Transport {
 ///
 /// Interface for a utility that can cryptographically sign arbitrary data thereby providing a
 /// means of authentication and non-repudiation.
+#[async_trait(? Send)]
 pub trait Signer {
-    /// Signs the message.
-    fn sign(&mut self, msg: &str) -> *const c_char;
+    /// Returns signed message.
+    async fn sign(&mut self, msg: Bytes) -> In3Result<Bytes>;
+
+    /// Transforms message before signing. (Optional)
+    async fn prepare(&mut self, msg: Bytes) -> In3Result<Bytes> {
+        Ok(msg)
+    }
 }
 
 /// Storage trait methods.
@@ -39,7 +44,7 @@ pub trait Storage {
     /// Sets the value for given key.
     fn set(&mut self, key: &str, value: &[u8]);
 
-    /// Clears the storage by deleting are KV pairs.
+    /// Clears the storage by deleting all KV pairs.
     fn clear(&mut self);
 }
 
@@ -61,12 +66,14 @@ pub trait Client {
     /// Sets a custom storage implementation to be used by the client.
     fn set_storage(&mut self, storage: Box<dyn Storage>);
 
+    fn set_log_debug(&mut self);
+
     /// Makes a remote procedure call and returns the result as a String asynchronously.
-    async fn rpc(&mut self, call: &str) -> error::In3Result<String>;
+    async fn rpc(&mut self, call: &str) -> In3Result<String>;
 
     /// Same as rpc() but may block.
     #[cfg(feature = "blocking")]
-    fn rpc_blocking(&mut self, call: &str) -> error::In3Result<String>;
+    fn rpc_blocking(&mut self, call: &str) -> In3Result<String>;
 
     /// Sets the private key that must be used for signing.
     fn set_pk_signer(&mut self, data: &str);

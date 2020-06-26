@@ -20,6 +20,7 @@ public class ClientConfiguration implements Configuration {
   private Integer signatureCount;
   private Integer finality;
   private Boolean includeCode;
+  private Boolean bootWeights;
   private Boolean keepIn3;
   private Boolean useHttp;
   private Long    maxCodeCache;
@@ -116,6 +117,18 @@ public class ClientConfiguration implements Configuration {
   /* TODO ask what is this to Simon */
   public void setIncludeCode(boolean includeCode) {
     this.includeCode = includeCode;
+  }
+
+  public Boolean isBootWeights() {
+    return bootWeights;
+  }
+
+  /** 
+    * if true, the first request (updating the nodelist) will also fetch the current health status
+    * and use it for blacklisting unhealthy nodes. This is used only if no nodelist is availabkle from cache.
+    */
+  public void setBootWeights(boolean value) {
+    this.bootWeights = value;
   }
 
   public Boolean isKeepIn3() {
@@ -265,6 +278,9 @@ public class ClientConfiguration implements Configuration {
     }
     if (isIncludeCode() != null) {
       JSON.appendKey(sb, "includeCode", isIncludeCode());
+    }
+    if (isBootWeights() != null) {
+      JSON.appendKey(sb, "bootWeights", isBootWeights());
     }
     if (isKeepIn3() != null) {
       JSON.appendKey(sb, "keepIn3", isKeepIn3());

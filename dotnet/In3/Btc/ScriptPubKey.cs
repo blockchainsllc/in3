@@ -13,7 +13,7 @@ namespace In3.Btc
         [JsonPropertyName("asm")] public string Asm { get; set; }
 
         /// <summary>
-        /// The raw hex data. 
+        /// The raw hex data.
         /// </summary>
         [JsonPropertyName("hex")] public string Hex { get; set; }
 
@@ -31,6 +31,6 @@ namespace In3.Btc
         /// <summary>
         /// List of addresses.
         /// </summary>
-        [JsonPropertyName("address")] public string[] Address { get; set; }
+        [JsonPropertyName("addresses")] public string[] Addresses { get; set; }
     }
 }

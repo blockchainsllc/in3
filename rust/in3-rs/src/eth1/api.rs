@@ -550,14 +550,12 @@ mod tests {
     use std::convert::TryInto;
 
     use async_std::task;
-
-    use crate::eth1::*;
-    use crate::types::Bytes;
+    use ethereum_types::{Address, U256};
     use rustc_hex::FromHex;
 
-    use ethereum_types::{Address, U256};
-
+    use crate::eth1::*;
     use crate::prelude::*;
+    use crate::types::Bytes;
 
     use super::*;
 
@@ -581,7 +579,9 @@ mod tests {
         });
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let num: u64 = task::block_on(eth_api.block_number())?.try_into().unwrap();
+        let num: u64 = task::block_on(eth_api.block_number())?
+            .try_into()
+            .expect("cannot convert to u64");
         println!("{:?}", num);
         assert_eq!(num, 0x96bacd);
         Ok(())
@@ -593,12 +593,12 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let address: Address =
-            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
+            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap(); // cannot fail
         let key: U256 = 0u64.into();
         let storage: u64 =
             task::block_on(eth_api.get_storage_at(address, key, BlockNumber::Earliest))?
                 .try_into()
-                .unwrap();
+                .expect("cannot convert to u64");
         println!("Storage value is {:?}", storage);
         assert_eq!(storage, 0x1);
         Ok(())
@@ -613,7 +613,7 @@ mod tests {
             serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#)?;
         let code: Bytes = task::block_on(eth_api.get_code(address, BlockNumber::Latest))?
             .try_into()
-            .unwrap();
+            .expect("cannot convert to bytes");
         println!("Code at address {:?} is {:?}", address, code);
         assert!(code.0.len() > 0);
         Ok(())
@@ -629,7 +629,7 @@ mod tests {
         let balance: u64 =
             task::block_on(eth_api.get_balance(address, BlockNumber::Number((1555415).into())))?
                 .try_into()
-                .unwrap();
+                .expect("cannot convert to u64");
         println!("Balance of address {:?} is {:?} wei", address, balance);
         assert!(balance > 0);
         Ok(())
@@ -644,7 +644,7 @@ mod tests {
             eth_api.get_block_by_number(BlockNumber::Number((1692767).into()), true),
         )?;
         let expected: U256 = (1692767).into();
-        let blk: U256 = block.number.unwrap();
+        let blk: U256 = block.number.expect("missing block number in block");
         assert_eq!(blk, expected);
         Ok(())
     }
@@ -654,7 +654,9 @@ mod tests {
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let gas_price: u64 = task::block_on(eth_api.gas_price())?.try_into().unwrap();
+        let gas_price: u64 = task::block_on(eth_api.gas_price())?
+            .try_into()
+            .expect("cannot convert to u64");
         println!("Gas price is {:?}", gas_price);
         assert!(gas_price > 1);
         Ok(())
@@ -672,27 +674,22 @@ mod tests {
         let block: Block = task::block_on(eth_api.get_block_by_hash(hash, false))?;
         println!("Block => {:?}", block);
         let expected: U256 = (1550244).into();
-        let blk: U256 = block.number.unwrap();
+        let blk: U256 = block.number.expect("missing block number in block");
         println!("Block => {:?}", block);
         assert_eq!(blk, expected);
         Ok(())
     }
 
     #[test]
-    #[ignore]
     fn test_eth_api_get_logs() -> In3Result<()> {
-        // let transport: Box<dyn Transport> = Box::new(MockJsonTransport {
-        //     method: "eth_getLogs",
-        // });
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut client = Client::new(chain::MAINNET);
         let _ = client.configure(config);
+        client.set_transport(transport);
         let mut eth_api = Api::new(client);
-        // let mut eth_api = init_api(transport, chain::MAINNET, config);
-        // eth_getLogs
         let logs: Vec<Log> = task::block_on(eth_api.get_logs(serde_json::json!({
-        "blockHash": "0x468f88ed8b40d940528552f093a11e4eb05991c787608139c931b0e9782ec5af",
-        "topics": ["0xa61b5dec2abee862ab0841952bfbc161b99ad8c14738afa8ed8d5c522cd03946"]
+        "fromBlock":"0x1ca181",
         })))?;
         assert!(logs.len() > 0);
         Ok(())
@@ -704,20 +701,20 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}},"verification":"none"}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let contract: Address =
-            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
+            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap(); // cannot fail
         let mut abi = abi::In3EthAbi::new();
-        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([]))).unwrap();
+        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([])))
+            .expect("ABI encode failed");
         let txn = CallTransaction {
             to: Some(contract),
             data: Some(params),
             ..Default::default()
         };
-        let output: Bytes = task::block_on(eth_api.call(txn, BlockNumber::Latest))
-            .unwrap()
+        let output: Bytes = task::block_on(eth_api.call(txn, BlockNumber::Latest))?
             .try_into()
-            .unwrap();
-        let output = task::block_on(abi.decode("uint256", output)).unwrap();
-        let access: U256 = serde_json::from_value(output).unwrap();
+            .expect("cannot convert to bytes");
+        let output = task::block_on(abi.decode("uint256", output)).expect("ABI decode failed");
+        let access: U256 = serde_json::from_value(output).unwrap(); // cannot fail if decode succeeded
         println!("{:?}", access);
         let expected: U256 = (1).into();
         assert_eq!(access, expected);
@@ -732,7 +729,9 @@ mod tests {
         // let _ = client.configure(config);
         // let mut eth_api = Api::new(client);
         let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let ret: u64 = task::block_on(eth_api.chain_id())?.try_into().unwrap();
+        let ret: u64 = task::block_on(eth_api.chain_id())?
+            .try_into()
+            .expect("cannot convert to u64");
         assert_eq!(ret, 1);
         Ok(())
     }
@@ -745,10 +744,10 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x1c9d592c4ad3fba02f7aa063e8048b3ff12551fd377e78061ab6ad146cc8df4d""#,
         )?;
-        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_hash(hash))?
+        let ret: u64 = task::block_on(eth_api.get_block_transaction_count_by_hash(hash))?
             .try_into()
-            .unwrap();
-        assert_eq!(ret, (2).into());
+            .expect("cannot convert to u64");
+        assert_eq!(ret, 2u64);
         Ok(())
     }
 
@@ -758,10 +757,10 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let number = BlockNumber::Number((1692767).into());
-        let ret: U256 = task::block_on(eth_api.get_block_transaction_count_by_number(number))?
+        let ret: u64 = task::block_on(eth_api.get_block_transaction_count_by_number(number))?
             .try_into()
-            .unwrap();
-        assert_eq!(ret, (6).into());
+            .expect("cannot convert to u64");
+        assert_eq!(ret, 6u64);
         Ok(())
     }
 
@@ -771,18 +770,19 @@ mod tests {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let mut eth_api = init_api(transport, chain::MAINNET, config);
         let contract: Address =
-            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap();
+            serde_json::from_str(r#""0x36643F8D17FE745a69A2Fd22188921Fade60a98B""#).unwrap(); // cannot fail
         let mut abi = abi::In3EthAbi::new();
-        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([]))).unwrap();
+        let params = task::block_on(abi.encode("hasAccess():bool", serde_json::json!([])))
+            .expect("ABI encode failed");
         let txn = CallTransaction {
             to: Some(contract),
             data: Some(params),
             ..Default::default()
         };
-        let ret: U256 = task::block_on(eth_api.estimate_gas(txn, BlockNumber::Latest))?
+        let ret: u64 = task::block_on(eth_api.estimate_gas(txn, BlockNumber::Latest))?
             .try_into()
-            .unwrap();
-        assert_eq!(ret, (22103).into());
+            .expect("cannot convert to u64");
+        assert_eq!(ret, 22103u64);
         Ok(())
     }
 
@@ -794,11 +794,11 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x9241334b0b568ef6cd44d80e37a0ce14de05557a3cfa98b5fd1d006204caf164""#,
         )?;
-        let tx: Transaction = task::block_on(eth_api.get_transaction_by_hash(hash))?
-            .try_into()
-            .unwrap();
+        let tx: Transaction = task::block_on(eth_api.get_transaction_by_hash(hash))?;
         let nonce = tx.nonce;
-        let blk_number = tx.block_number.unwrap();
+        let blk_number = tx
+            .block_number
+            .expect("missing block number in transaction");
         let gas = tx.gas;
         assert_eq!(nonce, (49).into());
         assert_eq!(gas, (41943).into());
@@ -815,11 +815,11 @@ mod tests {
             r#""0xbaf52e8d5e9c7ece67b1c3a0788379a4f486d8ec50bbf531b3a6720ca03fe1c4""#,
         )?;
         let tx: Transaction =
-            task::block_on(eth_api.get_transaction_by_block_hash_and_index(hash, (0).into()))?
-                .try_into()
-                .unwrap();
+            task::block_on(eth_api.get_transaction_by_block_hash_and_index(hash, (0).into()))?;
         let nonce = tx.nonce;
-        let blk_number = tx.block_number.unwrap();
+        let blk_number = tx
+            .block_number
+            .expect("missing block number in transaction");
         let gas = tx.gas;
         assert_eq!(nonce, (8).into());
         assert_eq!(gas, (21000).into());
@@ -838,7 +838,9 @@ mod tests {
                 .try_into()
                 .unwrap();
         let nonce = tx.nonce;
-        let blk_number = tx.block_number.unwrap();
+        let blk_number = tx
+            .block_number
+            .expect("missing block number in transaction");
         let gas = tx.gas;
         assert_eq!(nonce, (8).into());
         assert_eq!(gas, (21000).into());
@@ -856,7 +858,7 @@ mod tests {
         let tx_count: u64 =
             task::block_on(eth_api.get_transaction_count(address, BlockNumber::Latest))?
                 .try_into()
-                .unwrap();
+                .expect("cannot convert to u64");
         assert!(tx_count > 0);
         Ok(())
     }
@@ -870,8 +872,9 @@ mod tests {
             .client()
             .set_pk_signer("0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6");
         let data = "f8da098609184e72a0008296c094f99dbd3cfc292b11f74deea9fa730825ee0b56f2849184e72ab87000ff86c088504a817c80082520894f99dbd3cfc292b11f74deea9fa730825ee0b56f288016345785d8a0000802da089a9217cedb1fbe05f815264a355d339693fb80e4dc508c36656d62fa18695eaa04a3185a9a31d7d1feabd3f8652a15628e498eea03e0a08fe736a0ad67735affff2ea0936324cf235541114275bb72b5acfb5a5c1f6f6e7f426c94806ff4093539bfaaa010a7482378b19ee0930a77c14b18c5664b3aa6c3ebc7420954d81263625d6d6a";
-        let rawbytes: Bytes = FromHex::from_hex(&data[0..]).unwrap().into();
-        let hash: Hash = task::block_on(eth_api.send_raw_transaction(rawbytes)).unwrap();
+        let rawbytes: Bytes = FromHex::from_hex(data).unwrap().into(); // cannot fail
+        let hash: Hash = task::block_on(eth_api.send_raw_transaction(rawbytes))
+            .expect("ETH send raw transaction failed");
         println!("Hash => {:?}", hash);
         Ok(())
     }
@@ -893,12 +896,12 @@ mod tests {
         client.set_transport(transport);
         let mut eth_api = Api::new(client);
         let to: Address =
-            serde_json::from_str(r#""0x930e62afa9ceb9889c2177c858dc28810cedbf5d""#).unwrap();
+            serde_json::from_str(r#""0x930e62afa9ceb9889c2177c858dc28810cedbf5d""#).unwrap(); // cannot fail
         let from: Address =
-            serde_json::from_str(r#""0x25e10479a1AD17B895C45364a7D971e815F8867D""#).unwrap();
+            serde_json::from_str(r#""0x25e10479a1AD17B895C45364a7D971e815F8867D""#).unwrap(); // cannot fail
 
         let data = "00";
-        let rawbytes: Bytes = FromHex::from_hex(&data).unwrap().into();
+        let rawbytes: Bytes = FromHex::from_hex(&data).unwrap().into(); // cannot fail
         let txn = OutgoingTransaction {
             to: to,
             from: from,
@@ -909,53 +912,54 @@ mod tests {
             nonce: Some(0x1i64.into()),
         };
 
-        let hash: Hash = task::block_on(eth_api.send_transaction(txn)).unwrap();
+        let hash: Hash =
+            task::block_on(eth_api.send_transaction(txn)).expect("ETH send transaction failed");
         let expected_hash: Hash = serde_json::from_str(
             r#""0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a""#,
         )
-        .unwrap();
+        .unwrap(); // cannot fail
         println!("Hash => {:?}", hash);
         assert_eq!(hash.to_string(), expected_hash.to_string());
         Ok(())
     }
 
-    //FIX: internal blocknumber call issue #367
     #[test]
-    #[ignore]
     fn test_eth_api_new_filter() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
-        let responses = vec![(
-            "eth_newFilter",
-            r#"{"jsonrpc":"2.0","result":"0x3","id":73}"#,
-        )];
-        let transport: Box<dyn Transport> = Box::new(MockTransport {
-            responses: responses,
-        });
-        let mut eth_api = init_api(transport, chain::MAINNET, config);
+        let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
+        let mut client = Client::new(chain::MAINNET);
+        let _ = client.configure(config);
+        client.set_transport(transport);
+        let mut eth_api = Api::new(client);
         let jopts = serde_json::json!({
-            "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
-            "blockHash":"0x40b6019185d6ee0112445fbe678438b6968bad2e6f24ae26c7bb75461428fd43"
+            "fromBlock":"0x1ca181"
         });
         let fid = task::block_on(eth_api.new_filter(jopts))?;
-        let expected: U256 = (3).into();
-
         println!("{:?}", fid);
-        assert_eq!(fid, expected);
+        assert_eq!(fid, 1.into());
         Ok(())
     }
-    //FIX: internal blocknumber call issue #367
+
     #[test]
-    #[ignore]
     fn test_eth_api_get_filter_changes() -> In3Result<()> {
         let config = r#"{"autoUpdateList":false,"requestCount":1,"maxAttempts":1,"nodes":{"0x1":{"needsUpdate":false}}}}"#;
         let transport: Box<dyn Transport> = Box::new(MockJsonTransport {});
-        let mut eth_api = init_api(transport, chain::MAINNET, config);
-        let fid: U256 = (3).into();
+        let mut client = Client::new(chain::MAINNET);
+        let _ = client.configure(config);
+        client.set_transport(transport);
+        let mut eth_api = Api::new(client);
+        let jopts = serde_json::json!({
+            "fromBlock":"0x1ca181"
+        });
+        let fid = task::block_on(eth_api.new_filter(jopts))?;
         let ret: FilterChanges = task::block_on(eth_api.get_filter_changes(fid))?;
-        println!("{:?}", ret);
-        assert!(true);
+        match ret {
+            FilterChanges::Logs(vec) => assert!(vec.len() > 0),
+            FilterChanges::BlockHashes(vec) => assert!(vec.len() > 0),
+        }
         Ok(())
     }
+
     //FIX: Method not supported by nano
     #[test]
     #[ignore]
@@ -966,13 +970,12 @@ mod tests {
         let mut eth_api = Api::new(client);
         let number = BlockNumber::Number((56160).into());
         let block: Block =
-            task::block_on(eth_api.get_uncle_by_block_number_and_index(number, (0).into()))?
-                .try_into()
-                .unwrap();
-        let blk: U256 = block.number.unwrap();
+            task::block_on(eth_api.get_uncle_by_block_number_and_index(number, (0).into()))?;
+        let blk = block.number.expect("missing block number in block");
         assert!(blk > (0).into());
         Ok(())
     }
+
     //FIX: Method not supported by nano
     #[test]
     #[ignore]
@@ -984,10 +987,10 @@ mod tests {
         let hash: Hash = serde_json::from_str(
             r#""0x685b2226cbf6e1f890211010aa192bf16f0a0cba9534264a033b023d7367b845""#,
         )?;
-        let count: U256 = task::block_on(eth_api.get_uncle_count_by_block_hash(hash))?
+        let count: u64 = task::block_on(eth_api.get_uncle_count_by_block_hash(hash))?
             .try_into()
-            .unwrap();
-        assert!(count > (0).into());
+            .expect("cannot convert to u64");
+        assert!(count > 0u64);
         Ok(())
     }
 

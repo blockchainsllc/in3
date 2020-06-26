@@ -707,8 +707,7 @@ JNIEXPORT jstring JNICALL Java_in3_ipfs_API_base64Encode(JNIEnv* env, jobject ob
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_in3_IN3_init(JNIEnv* env, jobject ob, jlong jchain) {
-  in3_t* in3 = in3_for_chain(jchain);
-  in3_register_eth_api();
+  in3_t* in3 = in3_for_chain_auto_init(jchain);
   in3_set_storage_handler(in3, storage_get_item, storage_set_item, storage_clear, (*env)->NewGlobalRef(env, ob));
   in3->transport          = Java_in3_IN3_transport;
   in3->signer             = _malloc(sizeof(in3_signer_t));

@@ -1,5 +1,5 @@
 //! IPFS JSON RPC client API.
-use base64::{decode, DecodeError, encode};
+use base64::{decode, encode, DecodeError};
 use serde_json::json;
 
 use crate::error::{Error, In3Result};
@@ -89,7 +89,8 @@ mod tests {
                 r#"[{"jsonrpc":"2.0","id":1,"result":"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"}]"#,
             )],
         }));
-        let hash = task::block_on(api.put("Lorem ipsum dolor sit amet".as_bytes().into())).unwrap();
+        let hash = task::block_on(api.put("Lorem ipsum dolor sit amet".as_bytes().into()))
+            .expect("IPFS put failed");
         Ok(assert_eq!(
             hash,
             "QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"
@@ -109,7 +110,7 @@ mod tests {
         }));
         let data =
             task::block_on(api.get("QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8".to_string()))
-                .unwrap();
+                .expect("IPFS get failed");
         Ok(assert_eq!(
             data,
             "Lorem ipsum dolor sit amet".as_bytes().into()
