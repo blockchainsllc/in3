@@ -1,5 +1,4 @@
 //! Signer trait implementations.
-use libc::c_char;
 use serde_json::{json, Value};
 
 use async_trait::async_trait;
@@ -8,30 +7,6 @@ use crate::error::{In3Result, SysError};
 use crate::in3::{chain, Client};
 use crate::traits::{Client as ClientTrait, Signer};
 use crate::types::Bytes;
-
-/// Sign data using specified private key using low-level FFI types.
-///
-/// # Panics
-/// This function does not report errors and panics instead.
-///
-/// # Safety
-/// Being a thin wrapper over in3_sys::ec_sign_pk_hash(), this method is unsafe.
-pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> Bytes {
-    let data_ = data as *mut u8;
-    let mut dst = [0u8; 65];
-    let error = in3_sys::ec_sign_pk_hash(
-        data_,
-        len,
-        pk,
-        in3_sys::hasher_t::hasher_sha3k,
-        dst.as_mut_ptr(),
-    );
-    if error < 0 {
-        panic!("Sign error{:?}", error);
-    }
-    dst[64] += 27;
-    dst[0..].into()
-}
 
 /// Signer implementation using IN3 C code.
 pub struct In3Signer {
