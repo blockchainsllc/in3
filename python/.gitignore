@@ -11,3 +11,4 @@ MANIFEST
 .DS_Store
 .coverage
 report.xml
+in3/libin3/shared/lib*

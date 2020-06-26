@@ -115,46 +115,31 @@ def libin3_set_storage_handler(instance: int, get_item_fn: c.CFUNCTYPE, set_item
 def _multi_platform_selector(prefix: str, path: str) -> str:
     """
     Helper to define the path of installed shared libraries.
+    Used by most developers and backend platforms.
     Returns:
         libin3_file_path (pathlib.Path): Path to the correct library, compiled to the current platform.
     """
     system, node, release, version, machine, processor = platform.uname()
 
-    def fail():
-        raise OSError('Not available on this platform ({}, {}, {}).'.format(system, processor, machine))
-
-    # Fail over
-    if not processor:
-        processor = 'i386'
-    # Similar behavior could be achieved with regex expressions if we known them better.
     global DEBUG
     suffix = None
-
-    if DEBUG:
-        suffix = "x64d.dylib"
-    elif processor in ('i386', 'x86_64') or 'Intel' in processor or 'AMD' in processor:
-        # AMD64 x86_64 64bit ...
+    if processor in ('i386', 'x86_64') or 'Intel' in processor or 'AMD' in processor:
         if '64' in machine:
-            if system == 'Windows':
-                suffix = "x64.dll"
-            elif system == "Linux":
-                suffix = "x64.so"
-            elif system == 'Darwin':
-                suffix = "x64.dylib"
+            suffix = 'x64'
         elif '32' in machine or '86' in machine:
-            if system == 'Windows':
-                fail()
-            elif system == "Linux":
-                suffix = "x86.so"
-            elif system == 'Darwin':
-                fail()
-        elif 'armv' in machine:
-            suffix = 'arm7.so'
-    elif 'ARM' in processor:
-        if machine == 'ARM7':
-            suffix = 'arm7.so'
+            suffix = 'x86'
+        elif 'arm' in machine.lower():
+            suffix = 'arm7'
+        if DEBUG:
+            suffix += 'd'
+        if system == 'Windows':
+            suffix += ".dll"
+        elif system == "Linux":
+            suffix += ".so"
+        elif system == 'Darwin':
+            suffix += ".dylib"
     if not suffix:
-        fail()
+        raise OSError()
     return str(Path(path, "{}.{}".format(prefix, suffix)))
 
 
@@ -194,22 +179,19 @@ def _map_function_signatures():
 
 def _fallback_loader(search_string: str):
     """
-    Loader used when platform is not detected. Throws a warning.
+    Loader used when platform is not detected by _multi_platform_selector.
     Args:
         search_string: Glob search string.
     Returns:
         library_instance: Pointer to library instance
     """
     import glob
-    import warnings
 
     system, node, release, version, machine, processor = platform.uname()
     lib_list = glob.glob(search_string)
     for lib in lib_list:
         try:
             lib_instance = c.cdll.LoadLibrary(lib)
-            warning_msg = "Platform ({}, {}, {}) not detected. Fallback to {}".format(system, processor, machine, lib)
-            warnings.warn(warning_msg, RuntimeWarning)
             return lib_instance
         except Exception:
             pass
