@@ -181,7 +181,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
 
   sb_add_char(sb, '[');
 
-  for (int i = 0; i < c->len; i++) {
+  for (uint_fast16_t i = 0; i < c->len; i++) {
     d_token_t *request_token = c->requests[i], *t;
     if (msg_hash) sha3_256_Init(msg_hash);
 
@@ -296,10 +296,10 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
   } else if (d_type(ctx->response_context->result) == T_ARRAY) {
     int        i;
     d_token_t* t = NULL;
-    if (d_len(ctx->response_context->result) != ctx->len)
+    if (d_len(ctx->response_context->result) != (int) ctx->len)
       return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
     ctx->responses = _malloc(sizeof(d_token_t*) * ctx->len);
-    for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
+    for (i = 0, t = ctx->response_context->result + 1; i < (int) ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
   } else
     return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
@@ -398,7 +398,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         blacklist_node(node);
       else {
         // check each request
-        for (int i = 0; i < ctx->len; i++) {
+        for (uint_fast16_t i = 0; i < ctx->len; i++) {
           vc.request = ctx->requests[i];
           vc.result  = d_get(ctx->responses[i], K_RESULT);
           vc.client  = ctx->client;

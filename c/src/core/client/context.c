@@ -69,7 +69,7 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
       d_token_t* t  = ctx->request_context->result + 1;
       ctx->len      = d_len(ctx->request_context->result);
       ctx->requests = _malloc(sizeof(d_token_t*) * ctx->len);
-      for (int i = 0; i < ctx->len; i++, t = d_next(t))
+      for (uint_fast16_t i = 0; i < ctx->len; i++, t = d_next(t))
         ctx->requests[i] = t;
     } else
       ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
@@ -121,7 +121,7 @@ in3_ret_t ctx_set_error_intern(in3_ctx_t* ctx, char* message, in3_ret_t errnumbe
 in3_ret_t ctx_get_error(in3_ctx_t* ctx, int id) {
   if (ctx->error)
     return IN3_ERPC;
-  else if (id >= ctx->len)
+  else if (id >= (int) ctx->len)
     return IN3_EINVAL;
   else if (!ctx->responses || !ctx->responses[id])
     return IN3_ERPCNRES;
