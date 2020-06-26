@@ -106,11 +106,11 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != ETH_CHAIN_ID_BTC);
 }
 
-NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, d_token_t* request, in3_chain_t* chain) {
+NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, d_token_t* request) {
 
   const in3_t* c = ctx->client;
 
-  if (c->proof == PROOF_NONE && !auto_ask_sig(ctx))
+  if (in3_ctx_get_proof(ctx) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
@@ -177,6 +177,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
   char                 temp[100];
   in3_t*               rc       = c->client;
   struct SHA3_CTX*     msg_hash = rc->key ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  in3_proof_t          proof    = in3_ctx_get_proof(c);
 
   sb_add_char(sb, '[');
 
@@ -209,9 +210,9 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
     }
 
-    if (rc->proof || msg_hash) {
+    if (proof || msg_hash) {
       // add in3
-      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", rc->proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
+      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
       const in3_chain_t* chain = in3_find_chain(rc, c->client->chain_id);
@@ -235,7 +236,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
         sb_add_bytes(sb, ",\"signers\":", c->signers, c->signers_length, true);
       if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
-      if (rc->proof == PROOF_FULL)
+      if (proof == PROOF_FULL)
         sb_add_chars(sb, ",\"useFullProof\":true");
       if ((rc->flags & FLAGS_STATS) == 0)
         sb_add_chars(sb, ",\"noStats\":true");
@@ -749,9 +750,9 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
         filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
-        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
+        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx) != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
-          if ((ret = configure_request(ctx, ctx->requests[0], chain)) < 0)
+          if ((ret = configure_request(ctx, ctx->requests[0])) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret);
 
 #ifdef PAY

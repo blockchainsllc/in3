@@ -138,8 +138,7 @@ in3_ret_t in3_verify_ipfs(in3_vctx_t* vc) {
   char*      method = NULL;
   d_token_t* params = d_get(vc->request, K_PARAMS);
 
-  if (vc->client->proof == PROOF_NONE)
-    return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a vaslid error-response
   if (!vc->result)

@@ -390,7 +390,7 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   bytes32_t  hash;
 
   // make sure we want to verify
-  if (!vc->client->proof) return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
 
   // do we support this request?
   if (!method) return vc_err(vc, "No Method in request defined!");

@@ -63,7 +63,7 @@ in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);
 
   // make sure we want to verify
-  if (!vc->client->proof) return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
 
   // do we have a result? if not it is a valid error-response
   if (!vc->result) {

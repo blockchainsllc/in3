@@ -385,4 +385,10 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
     const char* params  /**< [in] params as string. */
 );
 
+/**
+ * determines the proof as set in the request.
+ */
+NONULL in3_proof_t in3_ctx_get_proof(
+    in3_ctx_t* ctx /**< [in] the current request. */
+);
 #endif
