@@ -78,6 +78,6 @@ mod tests {
         let mut s = In3Signer::new(pk.into());
         let signature = async_std::task::block_on(s.sign(msg.into()));
         let sign_str = format!("{:?}", signature.unwrap());
-        assert_eq!(sign_str, "0x349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc71c");
+        assert_eq!(sign_str, "0x349338b22f8c19d4c8d257595493450a88bb51cc0df48bb9b0077d1d86df3643513e0ab305ffc3d4f9a0f300d501d16556f9fb43efd1a224d6316012bb5effc701");
     }
 }
