@@ -88,11 +88,6 @@ in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
           index_counter += sc->message.len;
         }
 
-#ifdef DEBUG
-        in3_log_debug("apdu commnd sent to device\n");
-        ba_print(apdu, index_counter);
-#endif
-
         write_hid(handle, apdu, index_counter);
 
         read_hid_response(handle, &response);

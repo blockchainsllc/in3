@@ -135,10 +135,8 @@ if(BTC)
     endif()
 endif()
 
-if(LEDGER_NANO AND ( NOT (WIN32 OR MSVC OR MSYS OR MINGW )))
+if(LEDGER_NANO)
     add_definitions(-DLEDGER_NANO)
-else()
-    set(LEDGER_NANO false)
 endif()
 
 if(COLOR AND NOT (MSVC OR MSYS OR MINGW))

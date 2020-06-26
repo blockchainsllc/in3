@@ -31,50 +31,10 @@
 # You should have received a copy of the GNU Affero General Public License along 
 # with this program. If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-#cmake_minimum_required(VERSION 3.15)
 
-if(UNIX AND NOT APPLE)
-    set(LINUX TRUE)
+add_subdirectory(pk-signer)
+
+if (LEDGER_NANO)
+  add_subdirectory(ledger-nano/signer)
 endif()
-
-add_compile_options(-Wno-unused-parameter -Wno-sign-compare -Wno-int-conversion -Wno-implicit-function-declaration -Wno-conditional-type-mismatch)
-
-if(APPLE)
-   add_static_library(
-      NAME     hidapi 
-      
-      SOURCES 
-         mac/hid.c
-
-      DEPENDS
-         "-framework CoreFoundation"
-         "-framework IOKit"
-         "-framework AppKit"
-   )
-
-elseif(WIN32 OR MSVC OR MSYS OR MINGW)
-   add_static_library(
-      NAME     hidapi 
-      
-      SOURCES 
-         windows/hid.c
-
-      DEPENDS
-         setupapi
-   )
-   
-elseif(LINUX)
-   add_static_library(
-      NAME     hidapi 
-      
-      SOURCES 
-         linux/hid.c
-
-      DEPENDS
-         -ludev
-   )
-else()
-   
-endif()
-
 

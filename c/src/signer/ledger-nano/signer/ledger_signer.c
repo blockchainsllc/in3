@@ -100,11 +100,6 @@ in3_ret_t eth_ledger_sign(in3_sign_ctx_t* sc) {
         memcpy(apdu + index_counter, hash, msg_len);
         index_counter += msg_len;
 
-#ifdef DEBUG
-        in3_log_debug("apdu commnd sent to device\n");
-        ba_print(apdu, index_counter);
-#endif
-
         res = write_hid(handle, apdu, index_counter);
 
         in3_log_debug("written to hid %d\n", res);
