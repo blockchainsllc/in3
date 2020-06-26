@@ -45,10 +45,12 @@
 
 in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
 
+  if (client->pending == 0xFFFF) return NULL; // avoid overflows by not creating any new ctx anymore
   in3_ctx_t* ctx = _calloc(1, sizeof(in3_ctx_t));
   if (!ctx) return NULL;
   ctx->client             = client;
   ctx->verification_state = IN3_WAITING;
+  client->pending++;
 
   if (req_data != NULL) {
     ctx->request_context = parse_json(req_data);
@@ -72,7 +74,6 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
     } else
       ctx_set_error(ctx, "The Request is not a valid structure!", IN3_EINVAL);
   }
-
   return ctx;
 }
 

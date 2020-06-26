@@ -167,11 +167,13 @@ static in3_ret_t in3_sha3(in3_ctx_t* ctx, d_token_t* params, in3_response_t** re
   return IN3_OK;
 }
 static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** response) {
+  ctx->client->pending--; // we need to to temporarly decrees it in order to allow configuring
   str_range_t r   = d_to_json(d_get_at(params, 0));
   char        old = r.data[r.len];
   r.data[r.len]   = 0;
   char* ret       = in3_configure(ctx->client, r.data);
   r.data[r.len]   = old;
+  ctx->client->pending++;
   if (ret) {
     ctx_set_error(ctx, ret, IN3_ECONFIG);
     free(ret);

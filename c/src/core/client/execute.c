@@ -84,7 +84,10 @@ NONULL static void response_free(in3_ctx_t* ctx) {
 
 NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   // only for intern requests, we actually free the original request-string
-  if (is_sub) _free(ctx->request_context->c);
+  if (is_sub)
+    _free(ctx->request_context->c);
+  else
+    ctx->client->pending--;
   if (ctx->error) _free(ctx->error);
   response_free(ctx);
   if (ctx->request_context)
