@@ -66,6 +66,7 @@ rust_arm7:
 rust_valgrind:
   image: docker.slock.it/build-images/cmake:rust
   stage: analysis
+  extends: .only_rust
   variables:
     IN3_MODE: "DEBUG"
     VALGRIND_OPTS: "-v -q --num-callers=50  --main-stacksize=4000 --error-exitcode=1 --leak-check=full --show-leak-kinds=definite --suppressions=suppress.valgrind"
