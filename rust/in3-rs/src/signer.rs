@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 
 use async_trait::async_trait;
 
-use crate::error::In3Result;
+use crate::error::{In3Result, SysError};
 use crate::in3::{chain, Client};
 use crate::traits::{Client as ClientTrait, Signer};
 use crate::types::Bytes;
@@ -33,7 +33,7 @@ pub unsafe fn signc(pk: *mut u8, data: *const c_char, len: usize) -> Bytes {
     dst[0..].into()
 }
 
-/// Signer implementation using IN3 C client's RPC.
+/// Signer implementation using IN3 C code.
 pub struct In3Signer {
     in3: Box<Client>,
     pk: Bytes,
@@ -51,21 +51,21 @@ impl In3Signer {
 
 #[async_trait(? Send)]
 impl Signer for In3Signer {
-    async fn sign(&mut self, msg: Bytes) -> In3Result<Bytes> {
-        let resp_str = self
-            .in3
-            .rpc(
-                serde_json::to_string(&json!({
-                    "method": "in3_signData",
-                    "params": [msg, self.pk]
-                }))
-                .unwrap()
-                .as_str(),
+    async fn sign(&mut self, mut msg: Bytes) -> In3Result<Bytes> {
+        let mut dst = vec![0u8; 65];
+        let error = unsafe {
+            in3_sys::ec_sign_pk_hash(
+                msg.0.as_mut_ptr(),
+                msg.0.len(),
+                self.pk.0.as_mut_ptr(),
+                in3_sys::hasher_t::hasher_sha3k,
+                dst.as_mut_ptr(),
             )
-            .await?;
-        let resp: Value = serde_json::from_str(resp_str.as_str())?;
-        let res: Bytes = serde_json::from_str(resp["result"]["signature"].to_string().as_str())?;
-        Ok(res)
+        };
+        if error < 0 {
+            return Err(SysError::from(error).into());
+        }
+        Ok(dst[0..].into())
     }
 
     async fn prepare(&mut self, msg: Bytes) -> In3Result<Bytes> {
