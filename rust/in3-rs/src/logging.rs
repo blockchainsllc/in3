@@ -44,6 +44,7 @@ pub enum FilterLevel {
 // The `()` member prevents struct literal initialization
 pub struct Log(());
 
+#[allow(dead_code)]
 impl Log {
     pub unsafe fn quiet(&mut self, enable: bool) {
         in3_log_set_quiet_(enable.into())
