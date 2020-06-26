@@ -235,8 +235,6 @@ pub struct Client {
     signer: Option<Box<dyn Signer>>,
     /// Storage implementation
     storage: Option<Box<dyn Storage>>,
-    /// private key wallet,
-    wallet: [u8; 65],
 }
 
 #[async_trait(? Send)]
@@ -410,13 +408,6 @@ impl ClientTrait for Client {
             }
         }
     }
-
-    fn set_pk_signer(&mut self, data: &str) {
-        unsafe {
-            Client::hex_to_bytes(data, &mut self.wallet);
-            in3_sys::eth_set_pk_signer(self.ptr, self.wallet.as_mut_ptr());
-        }
-    }
 }
 
 impl Client {
@@ -436,7 +427,6 @@ impl Client {
                 transport: Box::new(HttpTransport {}),
                 signer: None,
                 storage: None,
-                wallet: [0u8; 65],
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
@@ -541,13 +531,6 @@ impl Client {
         }
 
         in3_sys::in3_ret_t::IN3_OK
-    }
-
-    unsafe fn hex_to_bytes(data: &str, dst: &mut [u8; 65]) {
-        let c_str_data = CString::new(data).unwrap(); // cannot fail since data is a string
-        let c_data: *const c_char = c_str_data.as_ptr();
-        let len: i32 = -1;
-        in3_sys::hex_to_bytes(c_data, len, dst.as_mut_ptr(), 32);
     }
 }
 

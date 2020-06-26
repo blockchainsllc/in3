@@ -78,9 +78,6 @@ pub trait Client {
     /// Same as rpc() but may block.
     #[cfg(feature = "blocking")]
     fn rpc_blocking(&mut self, call: &str) -> In3Result<String>;
-
-    /// Sets the private key that must be used for signing.
-    fn set_pk_signer(&mut self, data: &str);
 }
 
 /// Api trait methods.
