@@ -5,6 +5,32 @@ use in3_sys::{
     in3_log_disable_prefix_, in3_log_enable_prefix_, in3_log_level_t, in3_log_set_quiet_,
 };
 
+/// Singleton for logging, wraps the underlying C log impl.
+/// Direct access is discouraged, instead use helpers like `enable()`, `disable()`, `set_level()`
+pub static mut LOGGER: Log = Log { 0: () };
+
+/// Enable logging
+pub fn enable() {
+    unsafe {
+        LOGGER.quiet(false);
+    }
+}
+
+/// Disable logging
+pub fn disable() {
+    unsafe {
+        LOGGER.quiet(true);
+    }
+}
+
+/// Set log level to `level`
+pub fn set_level(level: FilterLevel) {
+    unsafe {
+        LOGGER.set_level(level);
+    }
+}
+
+/// Logging filter level
 pub enum FilterLevel {
     Trace,
     Debug,
@@ -14,71 +40,62 @@ pub enum FilterLevel {
     Fatal,
 }
 
+/// Log type, direct usage is discouraged.
 // The `()` member prevents struct literal initialization
 pub struct Log(());
 
 impl Log {
-    pub fn init() -> Log {
-        let mut log = Log { 0: () };
-        log.quiet(false);
-        log
+    pub unsafe fn quiet(&mut self, enable: bool) {
+        in3_log_set_quiet_(enable.into())
     }
 
-    pub fn quiet(&mut self, enable: bool) {
-        unsafe { in3_log_set_quiet_(enable.into()) }
-    }
-
-    pub fn prefix(&mut self, enable: bool) {
-        unsafe {
-            if enable {
-                in3_log_enable_prefix_()
-            } else {
-                in3_log_disable_prefix_()
-            }
+    pub unsafe fn prefix(&mut self, enable: bool) {
+        if enable {
+            in3_log_enable_prefix_()
+        } else {
+            in3_log_disable_prefix_()
         }
     }
 
-    pub fn set_level(&mut self, level: FilterLevel) {
-        unsafe { in3_sys::in3_log_set_level_(level.into()) }
+    pub unsafe fn set_level(&mut self, level: FilterLevel) {
+        in3_sys::in3_log_set_level_(level.into())
     }
 
-    pub fn get_level(&self) -> FilterLevel {
-        unsafe { in3_sys::in3_log_get_level_().into() }
+    pub unsafe fn get_level(&self) -> FilterLevel {
+        in3_sys::in3_log_get_level_().into()
     }
 
-    fn log(&mut self, level: FilterLevel, message: &str) {
+    unsafe fn log(&mut self, level: FilterLevel, message: &str) {
         let file = CString::new(format!("{}", file!())).unwrap();
         let column = CString::new(format!("{}", column!())).unwrap();
         let message = CString::new(format!("{}", message)).unwrap();
-        unsafe {
-            in3_sys::in3_log_(
-                level.into(),
-                file.as_ptr() as *const libc::c_char,
-                column.as_ptr() as *const libc::c_char,
-                line!() as i32,
-                message.as_ptr() as *const libc::c_char,
-            )
-            .into()
-        }
+        in3_sys::in3_log_(
+            level.into(),
+            file.as_ptr() as *const libc::c_char,
+            column.as_ptr() as *const libc::c_char,
+            line!() as i32,
+            message.as_ptr() as *const libc::c_char,
+        )
+        .into()
     }
 
-    pub fn trace(&mut self, message: &str) {
+    pub(crate) unsafe fn trace(&mut self, message: &str) {
         self.log(FilterLevel::Trace, message)
     }
 
-    pub fn debug(&mut self, message: &str) {
+    pub(crate) unsafe fn debug(&mut self, message: &str) {
         self.log(FilterLevel::Debug, message)
     }
 
-    pub fn info(&mut self, message: &str) {
+    pub(crate) unsafe fn info(&mut self, message: &str) {
         self.log(FilterLevel::Info, message)
     }
 
-    pub fn warn(&mut self, message: &str) {
+    pub(crate) unsafe fn warn(&mut self, message: &str) {
         self.log(FilterLevel::Warn, message)
     }
 
-    pub fn error(&mut self, message: &str) {
+    pub(crate) unsafe fn error(&mut self, message: &str) {
         self.log(FilterLevel::Error, message)
     }
 }
