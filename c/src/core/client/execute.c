@@ -253,7 +253,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
         }
         if (l) {
           bytes_t* hashes = alloca(sizeof(bytes_t) * l);
-          for (int i = 0; i < l; i++) hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
+          for (uint_fast16_t i = 0; i < l; i++) hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
           sb_add_bytes(sb, ",\"verifiedHashes\":", hashes, l, true);
         }
       }
