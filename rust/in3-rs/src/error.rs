@@ -25,6 +25,8 @@ macro_rules! in3_error_def {
             ResponseError(String),
             /// Could not find last waiting context in execute loop
             ContextError,
+            /// Config error
+            ConfigError(String)
         }
 
         impl From<in3_sys::in3_ret_t::Type> for SysError {
