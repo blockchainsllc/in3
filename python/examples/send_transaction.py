@@ -13,14 +13,12 @@ import time
 # By reading the terminal input, this value will stay in memory only.
 sender_secret = input("Sender secret: ")
 receiver = input("Receiver address: ")
-#               1000000000000000000 == 1 ETH
-#                        1000000000 == 1 Gwei Check https://etherscan.io/gasTracker.
-value_in_wei = 12328699290000000000
-# value_in_wei = 1463926659
+#     1000000000000000000 == 1 ETH
+#              1000000000 == 1 Gwei Check https://etherscan.io/gasTracker.
+value_in_wei = 1463926659
 # None for Eth mainnet
-# chain = 'goerli'
-chain = None
-client = in3.Client(chain)
+chain = 'goerli'
+client = in3.Client(chain if chain else 'mainnet')
 # A transaction is only final if a certain number of blocks are mined on top of it.
 # This number varies with the chain's consensus algorithm. Time can be calculated over using:
 # wait_time = blocks_for_consensus * avg_block_time_in_secs

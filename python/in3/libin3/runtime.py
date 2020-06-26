@@ -93,7 +93,7 @@ class In3Runtime:
         # This is needed to prevent the handler function to be freed. Without it, there would be a fault.
         self.in3_transport = create_in3_transport(transport)
         self.in3 = libin3_new(chain_id, self.in3_transport)
-        libin3_set_storage_handler(self.in3, storage.retrieve, storage.store, storage.delete_all)
+        # libin3_set_storage_handler(self.in3, storage.retrieve, storage.store, storage.delete_all)
         self.chain_id = chain_id
 
     def __del__(self):
