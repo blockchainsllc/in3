@@ -10,7 +10,6 @@ use rustc_hex::FromHex;
 use async_trait::async_trait;
 
 use crate::error::{Error, In3Result, SysError};
-use crate::signer;
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
 use crate::types::Bytes;
@@ -55,28 +54,12 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    unsafe fn signc(&mut self, data: *const c_char, len: usize, _pk: *mut u8) -> Bytes {
-        // let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        signer::signc(_pk, data, len)
-    }
-
-    async unsafe fn sign(&mut self, msg: Bytes) -> Bytes {
+    async unsafe fn sign(&mut self, msg: Bytes) -> In3Result<Bytes> {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        let signer = &mut (*c).signer;
-        let no_signer = signer.is_none();
-        if no_signer {
-            let wallet = &mut (*c).wallet;
-            // let pk_data = pk_.as_ptr() as *mut u8;
-            let c_data = msg.0.as_ptr() as *const c_char;
-            let sig = self.signc(c_data, msg.0.len(), wallet.as_mut_ptr());
-            return sig;
-        } else if let Some(signer) = &mut (*c).signer {
-            let sig = signer.sign(msg);
-            return sig.await.expect("Signing failed");
-        }
-        Bytes::default()
+        let signer = &mut (*c).signer.as_mut().expect("No signer set");
+        signer.sign(msg).await
     }
 
     async unsafe fn execute(&mut self) -> Result<String, SysError> {
@@ -142,7 +125,13 @@ impl Ctx {
                     let data_hex = data_str[2..]
                         .from_hex()
                         .expect("message is not valid hex string");
-                    let mut res_str = self.sign(data_hex.into()).await;
+                    let mut res_str = self.sign(data_hex.into()).await.map_err(|err| {
+                        if let Error::InternalError(sys_err) = err {
+                            sys_err
+                        } else {
+                            SysError::UnknownError
+                        }
+                    })?;
                     in3_sys::in3_req_add_response(
                         req,
                         0.try_into().unwrap(),
