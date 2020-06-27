@@ -62,7 +62,7 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
     # transport for in3 requests from client to server and back
     libin3.in3_set_default_transport(transport_fn)
     # storage for in3 cache
-    libin3.in3_set_default_storage(storage_fn)
+    # libin3.in3_set_default_storage(storage_fn)
     # TODO: in3_set_default_signer
     # register transport and verifiers (needed only once)
     libin3.in3_register_eth_full()

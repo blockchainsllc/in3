@@ -5,7 +5,6 @@ from in3.libin3.lib_loader import libin3
 
 class NativeRequest(c.Structure):
     """
-    Request sent by the libin3 to the In3 Network, transported over the _http_transport function
     Based on in3/client/.h in3_request_t struct
     """
     _fields_ = [("payload", c.POINTER(c.c_char)),
@@ -14,6 +13,12 @@ class NativeRequest(c.Structure):
                 ("results", c.c_void_p),
                 ("timeout", c.c_uint32),
                 ("times", c.c_uint32)]
+
+
+class NativeResponse(c.Structure):
+    """
+    Based on in3/client/.h in3_response_t struct
+    """
 
 
 class In3Request:
@@ -58,8 +63,8 @@ class In3Response:
     C level abstraction of an Incubed response.
     """
 
-    def __init__(self, in3_request: NativeRequest):
-        self.in3_request = in3_request
+    def __init__(self, in3_response: NativeResponse):
+        self.in3_response = in3_response
 
     def success(self, index: int, msg: bytes):
         """
@@ -68,7 +73,7 @@ class In3Response:
             index (int): Positional argument related to which url on the `In3Request` list this response is associated with. Use `In3Request#url_at` to get the url. The value of both parameters are shared
             msg (str): The actual response to be returned to in3 client
         """
-        libin3.in3_req_add_response(self.in3_request, index, False, msg, len(msg))
+        libin3.in3_req_add_response(self.in3_response, index, False, msg, len(msg))
 
     def failure(self, index: int, msg: bytes):
         """
@@ -77,7 +82,7 @@ class In3Response:
             index (int): Positional argument related to which url on the `In3Request` list this response is associated with. Use `In3Request#url_at` to get the url. The value of both parameters are shared.
             msg (str): The actual response to be returned to in3 client.
         """
-        libin3.in3_req_add_response(self.in3_request, index, True, msg, len(msg))
+        libin3.in3_req_add_response(self.in3_response, index, True, msg, len(msg))
 
 
 def factory(transport_fn):
