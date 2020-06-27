@@ -7,7 +7,7 @@ from enum import Enum
 import in3.libin3.transport as transport
 from in3.exception import ClientException
 from in3.libin3.enum import RPCCode
-from in3.libin3.lib_loader import libin3_new, libin3_free, libin3_call, libin3_set_pk
+from in3.libin3.rpc_api import libin3_new, libin3_free, libin3_call, libin3_set_pk
 
 
 class RPCCallRequest:

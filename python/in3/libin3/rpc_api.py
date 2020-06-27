@@ -33,37 +33,32 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
 
     def map_function_signatures():
         # =================== LIBIN3 SHARED LIBRARY MAPPING ===================
-        # map new in3
-        libin3.in3_for_chain_auto_init.argtypes = c.c_int,
-        libin3.in3_for_chain_auto_init.restype = c.c_void_p
-        # map free in3
-        libin3.in3_free.argtypes = c.c_void_p,
-        libin3._free_.argtypes = c.c_void_p,
-        # map set pk signer
-        libin3.eth_set_pk_signer_hex.argtypes = c.c_void_p, c.c_char_p
-        libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char_p)
-        libin3.in3_client_rpc.restype = c.c_int
-        # map transport responses
-        libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
+        _libin3.in3_for_chain_auto_init.argtypes = c.c_int,
+        _libin3.in3_for_chain_auto_init.restype = c.c_void_p
+        _libin3.in3_free.argtypes = c.c_void_p,
+        _libin3.eth_set_pk_signer_hex.argtypes = c.c_void_p, c.c_char_p
+        _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char_p)
+        _libin3.in3_client_rpc.restype = c.c_int
+        _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
 
     assert isinstance(chain_id, int)
-    global libin3
+    global _libin3
     map_function_signatures()
     # transport for in3 requests from client to server and back
-    libin3.in3_set_default_transport(transport_fn)
+    _libin3.in3_set_default_transport(transport_fn)
     # storage for in3 cache
-    libin3.in3_set_default_storage(storage_fn)
+    _libin3.in3_set_default_storage(storage_fn)
     # TODO: in3_set_default_signer
     # register transport and verifiers (needed only once)
-    libin3.in3_register_eth_full()
+    _libin3.in3_register_eth_full()
     # TODO: IPFS libin3.in3_register_ipfs();
-    libin3.in3_register_eth_api()
+    _libin3.in3_register_eth_api()
     global DEBUG
     if DEBUG:
         # set logger level to TRACE
-        libin3.in3_log_set_quiet_(False)
-        libin3.in3_log_set_level_(0)
-    return libin3.in3_for_chain_auto_init(chain_id)
+        _libin3.in3_log_set_quiet_(False)
+        _libin3.in3_log_set_level_(0)
+    return _libin3.in3_for_chain_auto_init(chain_id)
 
 
 def libin3_free(instance: int):
@@ -72,7 +67,7 @@ def libin3_free(instance: int):
     Args:
         instance (int): Memory address of the client instance, return value from libin3_new
     """
-    libin3.in3_free(instance)
+    _libin3.in3_free(instance)
 
 
 def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
@@ -87,7 +82,7 @@ def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
     """
     response = c.c_char_p()
     error = c.c_char_p()
-    result = libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
+    result = _libin3.in3_client_rpc(instance, fn_name, fn_args, c.byref(response), c.byref(error))
     return result, response.value, error.value
 
 
@@ -98,7 +93,16 @@ def libin3_set_pk(instance: int, private_key: bytes):
         instance (int): Memory address of the client instance, return value from libin3_new
         private_key: 256 bit number.
     """
-    libin3.eth_set_pk_signer_hex(instance, private_key)
+    _libin3.eth_set_pk_signer_hex(instance, private_key)
+
+
+def libin3_in3_req_add_response(*args):
+    """
+    Transport function that registers a response to a request.
+    Args:
+        *args:
+    """
+    _libin3.in3_req_add_response(*args)
 
 
 def init():
@@ -155,4 +159,4 @@ def init():
         return fallback_platform_selector(str(path) + '/*')
 
 
-libin3 = init()
+_libin3 = init()

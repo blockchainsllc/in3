@@ -1,6 +1,6 @@
 import ctypes as c
 
-from in3.libin3.lib_loader import libin3
+from in3.libin3.rpc_api import libin3_in3_req_add_response
 
 
 class NativeRequest(c.Structure):
@@ -78,7 +78,7 @@ class In3Response:
             index (int): Positional argument related to which url on the `In3Request` list this response is associated with. Use `In3Request#url_at` to get the url. The value of both parameters are shared
             msg (str): The actual response to be returned to in3 client
         """
-        libin3.in3_req_add_response(self.in3_response, index, False, msg, len(msg))
+        libin3_in3_req_add_response(self.in3_response, index, False, msg, len(msg))
 
     def failure(self, index: int, msg: bytes):
         """
@@ -87,7 +87,7 @@ class In3Response:
             index (int): Positional argument related to which url on the `In3Request` list this response is associated with. Use `In3Request#url_at` to get the url. The value of both parameters are shared.
             msg (str): The actual response to be returned to in3 client.
         """
-        libin3.in3_req_add_response(self.in3_response, index, True, msg, len(msg))
+        libin3_in3_req_add_response(self.in3_response, index, True, msg, len(msg))
 
 
 def factory(transport_fn):
