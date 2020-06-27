@@ -36,23 +36,15 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
         # map new in3
         libin3.in3_for_chain_auto_init.argtypes = c.c_int,
         libin3.in3_for_chain_auto_init.restype = c.c_void_p
-        libin3.in3_for_chain_default.argtypes = c.c_int,
-        libin3.in3_for_chain_default.restype = c.c_void_p
         # map free in3
         libin3.in3_free.argtypes = c.c_void_p,
         libin3._free_.argtypes = c.c_void_p,
         # map set pk signer
         libin3.eth_set_pk_signer_hex.argtypes = c.c_void_p, c.c_char_p
-        # map transport request function
-        libin3.in3_client_exec_req.argtypes = c.c_void_p, c.c_char_p
-        libin3.in3_client_exec_req.restype = c.c_void_p
         libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char_p)
         libin3.in3_client_rpc.restype = c.c_int
         # map transport responses
         libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
-        # map logging functions
-        libin3.in3_log_set_quiet_.argtypes = c.c_bool,
-        libin3.in3_log_set_level_.argtypes = c.c_int,
 
     assert isinstance(chain_id, int)
     global libin3
@@ -60,7 +52,7 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
     # transport for in3 requests from client to server and back
     libin3.in3_set_default_transport(transport_fn)
     # storage for in3 cache
-    # libin3.in3_set_default_storage(storage_fn)
+    libin3.in3_set_default_storage(storage_fn)
     # TODO: in3_set_default_signer
     # register transport and verifiers (needed only once)
     libin3.in3_register_eth_full()
@@ -81,21 +73,6 @@ def libin3_free(instance: int):
         instance (int): Memory address of the client instance, return value from libin3_new
     """
     libin3.in3_free(instance)
-
-
-def libin3_exec(instance: int, rpc: bytes):
-    """
-    Make Remote Procedure Call mapped methods in the client.
-    Args:
-        instance (int): Memory address of the client instance, return value from libin3_new
-        rpc (bytes): Serialized function call, a json string.
-    Returns:
-        returned_value (object): The returned function value(s)
-    """
-    ptr_res = libin3.in3_client_exec_req(instance, rpc)
-    result = c.cast(ptr_res, c.c_char_p).value
-    libin3._free_(ptr_res)
-    return result
 
 
 def libin3_call(instance: int, fn_name: bytes, fn_args: bytes) -> (str, str):
