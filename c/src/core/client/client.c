@@ -37,7 +37,6 @@
 #include "../util/mem.h"
 #include "context.h"
 #include "keys.h"
-#include "../util/log.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -254,8 +253,6 @@ void in3_set_transport(
     in3_t*             c,   /**< the incubed client */
     in3_transport_send cptr /**< custom pointer which will will be passed to functions */
 ) {
-  in3_log_debug("Transport C %i\n", &c);
-  in3_log_debug("Transport CPTR %i\n", &cptr);
   c->transport = cptr;
 }
 
@@ -286,15 +283,7 @@ in3_storage_handler_t* in3_set_storage_handler(
   handler->get_item              = get_item;
   handler->set_item              = set_item;
   handler->clear                 = clear;
-  in3_log_debug("Abaxei a calcinha <3!\n");
-  in3_log_debug("Address of CPTR %i\n", &cptr);
-  in3_log_debug("Address of h %i\n", &handler);
-  in3_log_debug("Value of C %i\n", c);
-  in3_log_debug("Address of get_item %i\n", &get_item);
-  in3_log_debug("Address of set_item %i\n", &set_item);
-  in3_log_debug("Address of clear %i\n", &clear);
   c->cache                       = handler;
-  in3_log_debug("Passei!\n");
   in3_cache_init(c);
   return handler;
 }
