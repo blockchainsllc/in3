@@ -16,7 +16,7 @@ import platform
 
 from pathlib import Path
 
-# TODO: Mark false
+# TODO: Mark false b4 release
 DEBUG = True
 
 
@@ -62,7 +62,7 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
     # transport for in3 requests from client to server and back
     libin3.in3_set_default_transport(transport_fn)
     # storage for in3 cache
-    # libin3.in3_set_default_storage(storage_fn)
+    libin3.in3_set_default_storage(storage_fn)
     # TODO: in3_set_default_signer
     # register transport and verifiers (needed only once)
     libin3.in3_register_eth_full()
@@ -131,10 +131,9 @@ def init():
     Loads library depending on host system.
     """
 
-    def multi_platform_selector(prefix: str, lib_path: str) -> str:
+    def platform_selector(prefix: str, lib_path: str) -> str:
         """
         Helper to define the path of installed shared libraries.
-        Used by most developers and backend platforms.
         Returns:
             libin3_file_path (pathlib.Path): Path to the correct library, compiled to the current platform.
         """
@@ -161,14 +160,7 @@ def init():
             raise OSError()
         return str(Path(lib_path, "{}.{}".format(prefix, suffix)))
 
-    def fallback_loader(search_string: str):
-        """
-        Loader used when platform is not detected by _multi_platform_selector.
-        Args:
-            search_string: Glob search string.
-        Returns:
-            library_instance: Pointer to library instance
-        """
+    def fallback_platform_selector(search_string: str):
         import glob
 
         system, node, release, version, machine, processor = platform.uname()
@@ -183,9 +175,9 @@ def init():
 
     path = Path(Path(__file__).parent, "shared")
     try:
-        return c.cdll.LoadLibrary(multi_platform_selector('libin3', path))
+        return c.cdll.LoadLibrary(platform_selector('libin3', path))
     except OSError:
-        return fallback_loader(str(path) + '/*')
+        return fallback_platform_selector(str(path) + '/*')
 
 
 libin3 = init()
