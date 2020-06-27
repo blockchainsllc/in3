@@ -14,7 +14,7 @@ def mock_transport(in3_request: In3Request, in3_response: In3Response):
     Transports each request coming from libin3 to the in3 network and and reports the answer back
     Args:
         in3_request (In3Request): request sent by the In3 Client Core to the In3 Network
-        in3_request (In3Response): response to be dispatched to the In3 Client Core
+        in3_response (In3Response): response to be dispatched to the In3 Client Core
     Returns:
         exit_status (int): Always zero for signaling libin3 the function executed OK.
     """

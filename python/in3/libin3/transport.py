@@ -8,14 +8,12 @@ class NativeRequest(c.Structure):
     Request sent by the libin3 to the In3 Network, transported over the _http_transport function
     Based on in3/client/.h in3_request_t struct
     """
-    """
     _fields_ = [("payload", c.POINTER(c.c_char)),
                 ("urls", c.POINTER(c.POINTER(c.c_char))),
                 ("urls_len", c.c_int),
                 ("results", c.c_void_p),
                 ("timeout", c.c_uint32),
                 ("times", c.c_uint32)]
-    """
 
 
 class In3Request:
@@ -40,19 +38,19 @@ class In3Request:
         """
         Gets the the size of the request url node list
         """
-        return libin3.in3_get_request_urls_len(self.in3_request)
+        return self.in3_request.contents.urls_len
 
     def payload(self):
         """
         Gets the payload to be sent
         """
-        return c.string_at(libin3.in3_get_request_payload(self.in3_request))
+        return c.string_at(self.in3_request.contents.payload)
 
     def timeout(self):
         """
         Get timeout of the request, `0` being no set timeout
         """
-        return libin3.in3_get_request_timeout(self.in3_request)
+        return self.in3_request.contents.timeout
 
 
 class In3Response:

@@ -16,7 +16,7 @@ import platform
 
 from pathlib import Path
 
-DEBUG = True
+DEBUG = False
 
 
 def libin3_new(chain_id: int, transport: c.CFUNCTYPE) -> int:
@@ -165,10 +165,7 @@ def _map_function_signatures():
     libin3.in3_client_rpc.restype = c.c_int
     # map transport responses
     libin3.in3_req_add_response.argtypes = [c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int]
-    # map transport requests
-    libin3.in3_get_request_urls_len.restype = c.c_int
-    libin3.in3_get_request_payload.restype = c.c_char_p
-    libin3.in3_get_request_timeout.restype = c.c_int
+    # map transport fn to parse the array of char arrays
     libin3.in3_get_request_urls.restype = c.POINTER(c.POINTER(c.c_char))
     # map logging functions
     libin3.in3_log_set_quiet_.argtypes = c.c_bool,
