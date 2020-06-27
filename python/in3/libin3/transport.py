@@ -90,6 +90,7 @@ class In3Response:
         libin3_in3_req_add_response(self.in3_response, index, True, msg, len(msg))
 
 
+# TODO: Move to a OO perspective
 def factory(transport_fn):
     """
     C level abstraction of a transport handler.
@@ -103,5 +104,5 @@ def factory(transport_fn):
 
     # the transport function to be implemented by the transport provider.
     # typedef in3_ret_t (*in3_transport_send)(in3_request_t* request);
-    c_transport_fn = c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
-    return c_transport_fn(new)
+    c_transport_fn_interface = c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
+    return c_transport_fn_interface(new)
