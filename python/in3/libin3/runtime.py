@@ -38,10 +38,7 @@ class In3Runtime:
 
     def __init__(self, chain_id: int, transport_fn):
         self.transport_handler = transport.factory(transport_fn)
-        self.in3 = libin3_new(chain_id, self.transport_handler)
-        # TODO: Add storage handler
-        # libin3_set_storage_handler(self.in3, storage.retrieve, storage.store, storage.delete_all)
-        # TODO: Add signer handler
+        self.in3 = libin3_new(chain_id, self.transport_handler, None)
         self.chain_id = chain_id
 
     def __del__(self):
