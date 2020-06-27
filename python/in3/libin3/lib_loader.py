@@ -108,6 +108,7 @@ def libin3_set_storage_handler(instance: int, get_item_fn: c.CFUNCTYPE, set_item
         set_item_fn: Function that stores values in the local storage.
         clear_fn: Function that wipes clean all values in the local storage.
     """
+    # libin3.in3_set_storage_handler.argtypes = [c.c_int, c.POINTER(c.c_int), c.POINTER(c.c_void_p), c.POINTER(c.c_void_p), c.c_void_p]
     libin3.in3_set_storage_handler(instance, get_item_fn, set_item_fn, clear_fn, None)
 
 

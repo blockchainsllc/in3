@@ -10,7 +10,7 @@ import time
 
 # On Metamask, be sure to be connected to the correct chain, click on the `...` icon on the right corner of
 # your Account name, select `Account Details`. There, click `Export Private Key`, copy the value to use as secret.
-# By reading the terminal input, this value will stay in memory only.
+# By reading the terminal input, this value will stay in memory only. Don't forget to cls or clear terminal after ;)
 sender_secret = input("Sender secret: ")
 receiver = input("Receiver address: ")
 #     1000000000000000000 == 1 ETH

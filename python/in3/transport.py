@@ -1,6 +1,6 @@
 import requests
 
-from in3.libin3.runtime import In3Request, In3Response
+from in3.libin3.transport import In3Request, In3Response
 
 
 def http_transport(in3_request: In3Request, in3_response: In3Response):
