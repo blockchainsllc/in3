@@ -50,8 +50,6 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
         libin3.in3_client_rpc.restype = c.c_int
         # map transport responses
         libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
-        # map transport fn to parse the array of char arrays
-        libin3.in3_get_request_urls.restype = c.POINTER(c.POINTER(c.c_char))
         # map logging functions
         libin3.in3_log_set_quiet_.argtypes = c.c_bool,
         libin3.in3_log_set_level_.argtypes = c.c_int,

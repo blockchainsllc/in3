@@ -19,6 +19,11 @@ class NativeResponse(c.Structure):
     """
     Based on in3/client/.h in3_response_t struct
     """
+    """
+    typedef struct in3_response {
+      sb_t error;  /**< a stringbuilder to add any errors! */
+      sb_t result; /**< a stringbuilder to add the result */
+    """
 
 
 class In3Request:
@@ -37,7 +42,7 @@ class In3Request:
         Returns:
             fn_return (str): The url of a node to request a response from.
         """
-        return c.string_at(libin3.in3_get_request_urls(self.in3_request)[index])
+        return c.string_at(self.in3_request.contents.urls[index])
 
     def urls_len(self):
         """

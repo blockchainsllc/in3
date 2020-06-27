@@ -260,15 +260,6 @@ void in3_set_transport(
 }
 
 /**
- * getter to retrieve the urls list from a in3_request_t struct
- */
-char** in3_get_request_urls(
-    in3_request_t* request /**< request struct */
-) {
-  return request->urls;
-}
-
-/**
  * set the signer on the client.
  * the caller will need to free this pointer after usage.
  */
