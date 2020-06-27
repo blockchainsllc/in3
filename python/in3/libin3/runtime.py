@@ -39,7 +39,9 @@ class In3Runtime:
     def __init__(self, chain_id: int, transport_fn):
         self.transport_handler = transport.factory(transport_fn)
         self.in3 = libin3_new(chain_id, self.transport_handler)
+        # TODO: Add storage handler
         # libin3_set_storage_handler(self.in3, storage.retrieve, storage.store, storage.delete_all)
+        # TODO: Add signer handler
         self.chain_id = chain_id
 
     def __del__(self):
@@ -62,6 +64,7 @@ class In3Runtime:
             raise ClientException(str(error))
         return json.loads(response)
 
+    # TODO: Refactor for the new signer api
     def set_signer_account(self, secret: int) -> int:
         """
         Load an account secret to sign Ethereum transactions with `eth_sendTransaction` and `eth_call`.
