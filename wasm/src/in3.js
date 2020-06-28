@@ -222,6 +222,7 @@ class IN3 {
             }
 
         // create the context
+        let responses = {}
         const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
         if (!r) throwLastError();
 
@@ -242,42 +243,32 @@ class IN3 {
                         return state.result
                     case 'waiting': {
                         const req = state.request
-                        try {
-                            switch (req.type) {
+                        switch (req.type) {
+                            case 'sign':
+                                try {
+                                    const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                    if (!this.signer) throw new Error('no signer set to handle signing')
+                                    if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
+                                    setResponse(req, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                                } catch (ex) {
+                                    setResponse(req, ex.message || ex, 0, true)
+                                }
+                                finally {
+                                    // we need to free the request
+                                    in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [this.ptr, req.ptr])
+                                }
+                                break;
 
-                                case 'sign':
-                                    try {
-                                        const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
-                                        if (!this.signer) throw new Error('no signer set to handle signing')
-                                        if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
-                                        setResponse(req, toHex(await this.signer.sign(message, account, true, false)), 0, false)
-                                    } catch (ex) {
-                                        setResponse(req, ex.message || ex, 0, true)
-                                    }
-                                    break;
-
-                                case 'rpc':
-                                    //                            console.log("req to " + req.urls[0], req.payload[0])
-                                    await Promise.all(
-                                        req.urls.map((url, i) =>
-                                            in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000)
-                                                .then(
-                                                    res => setResponse(req, res, i, false),
-                                                    err => setResponse(req, err.message || err, i, true)
-                                                )
-                                        )
-                                    )
-                            }
-                        }
-                        finally {
-                            // we need to free the request
-                            in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [req.ctx, req.ptr])
+                            case 'rpc':
+                                await getNextResponse(responses, req, this.ptr)
                         }
                     }
                 }
             }
         }
         finally {
+            cleanUpResponses(responses, this.ptr)
+
             // we always need to cleanup
             in3w.ccall('in3_request_free', 'void', ['number'], [r])
         }
@@ -300,6 +291,91 @@ class IN3 {
         }
     }
 }
+
+function cleanUpResponses(responses, ptr) {
+    Object.keys(responses).forEach(ctx => {
+        // clean up requests
+        in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [ptr, responses[ctx].req.ptr]);
+        responses[ctx].cleanUp(ptr)
+    })
+}
+
+function getNextResponse(map, req, ptr) {
+    let res = map[req.ctx + '']
+    if (res && req.ptr && res.req.ptr != req.ptr) {
+        in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [ptr, res.req.ptr])
+        res = null
+    }
+
+    if (!res) {
+        if (!req.ptr) throw new Error("Expected a request-pointer!")
+        map[req.ctx + ''] = res = url_queue(req)
+    }
+    return res.getNext()
+}
+
+function url_queue(req) {
+    let counter = 0
+    const promises = [], responses = []
+    req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
+        response => { responses.push({ i, url, response }); trigger() },
+        error => { responses.push({ i, url, error }); trigger() }
+    ))
+    function trigger() {
+        while (promises.length && responses.length) {
+            const p = promises.shift(), r = responses.shift()
+            if (r.error)
+                setResponse(req, r.error.message || r.error, r.i, true)
+            else
+                setResponse(req, r.response, r.i, false)
+            p.resolve(r)
+        }
+    }
+
+    const result = {
+        req,
+        getNext: () => new Promise((resolve, reject) => {
+            counter++
+            if (counter > req.urls.length) throw new Error('no more response available')
+            promises.push({ resolve, reject })
+            trigger()
+        }),
+        cleanUp(ptr) {
+            while (req.urls.length - counter) {
+                this.getNext().then(
+                    r => {
+                        // is the client still alive?
+                        if (!clients['' + ptr]) return
+                        let blacklist = false
+                        try {
+                            if (r.error) blacklist = true
+                            else
+                                blacklist = !!JSON.parse(r.response)[0].error
+                        }
+                        catch {
+                            blacklist = true
+                        }
+                        if (blacklist)
+                            in3w.ccall('in3_blacklist', 'void', ['number', 'string'], [ptr, r.url])
+
+                    }, () => { }
+                )
+
+
+            }
+            // all responses where fetched?
+            if (counter - req.urls.length == 0) return
+
+
+
+
+        }
+    }
+    return result
+}
+
+
+
 // change the transport
 IN3.setTransport = function (fn) {
     in3w.transport = fn

@@ -556,9 +556,9 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   return request;
 }
 
-NONULL void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) {
+NONULL void request_free(in3_request_t* req, const in3_t* c, bool free_response) {
   // free resources
-  free_urls(req->urls, req->urls_len, ctx->client->flags & FLAGS_HTTP);
+  free_urls(req->urls, req->urls_len, c->flags & FLAGS_HTTP);
 
   if (free_response) {
     for (int n = 0; n < req->urls_len; n++) {
@@ -639,7 +639,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
                               ? "... response: \n... " COLOR_RED_STR "\n"
                               : "... response: \n... " COLOR_GREEN_STR "\n",
                           request->results->data.data);
-            request_free(request, ctx, false);
+            request_free(request, ctx->client, false);
             break;
           } else
             return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);

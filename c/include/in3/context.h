@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -219,7 +219,7 @@ NONULL in3_ret_t in3_send_ctx(
             ctx->client->transport(request);
 
             // clean up
-            request_free(request, ctx, false);
+            request_free(request, ctx->client, false);
             break;
         }
 
