@@ -106,7 +106,7 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != ETH_CHAIN_ID_BTC);
 }
 
-NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, d_token_t* request) {
+NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
 
   const in3_t* c = ctx->client;
 
@@ -752,7 +752,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
         filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
         filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx) != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
-          if ((ret = configure_request(ctx, ctx->requests[0])) < 0)
+          if ((ret = pick_signers(ctx, ctx->requests[0])) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret);
 
 #ifdef PAY
@@ -763,7 +763,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
         } else
           // since we could not get the nodes, we either report it as error or wait.
-          return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);
+          return ctx_set_error(ctx, "could not find any node", ret);
       }
 
       // if we still don't have an response, we keep on waiting
