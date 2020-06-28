@@ -542,8 +542,10 @@ static in3_ret_t debug_transport(in3_request_t* req) {
     fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
   if (in_response.len) {
-    for (int i = 0; i < req->urls_len; i++)
-      sb_add_range(&req->results[i].result, (char*) in_response.data, 0, in_response.len);
+    for (int i = 0; i < req->urls_len; i++) {
+      req->results[i].state = IN3_OK;
+      sb_add_range(&req->results[i].data, (char*) in_response.data, 0, in_response.len);
+    }
     return 0;
   }
   if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
@@ -557,13 +559,13 @@ static in3_ret_t debug_transport(in3_request_t* req) {
 #else
   in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new((uint8_t*) req->results[0].result.data, req->results[0].result.len);
+  last_response = b_new((uint8_t*) req->results[0].data.data, req->results[0].data.len);
 #ifndef DEBUG
   if (debug_mode) {
-    if (req->results[0].result.len)
-      fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].result.data);
+    if (req->results[0].state)
+      fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].data.data);
     else
-      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].error.data);
+      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].data.data);
   }
 #endif
   return r;
@@ -577,7 +579,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
-    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->results->result.data);
+    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->results->data.data);
     exit(0);
   }
 
@@ -929,14 +931,12 @@ int main(int argc, char* argv[]) {
           r.timeout  = 5000;
           r.payload  = "";
           r.results  = _malloc(sizeof(in3_response_t));
-          sb_init(&r.results->error);
-          sb_init(&r.results->result);
+          sb_init(&r.results->data);
           c->transport(&r);
-
-          if (r.results->error.len || !r.results->result.len)
+          if (r.results->state)
             health = 0;
           else {
-            health_res = parse_json(r.results->result.data);
+            health_res = parse_json(r.results->data.data);
             if (!health_res)
               health = 0;
             else {
@@ -954,8 +954,7 @@ int main(int argc, char* argv[]) {
           health_s = _malloc(3000);
           sprintf(health_s, "%-22s %-7s   %7d   %-9s ", node_name ? node_name : "-", version ? version : "-", running, health ? "OK" : "unhealthy");
 
-          _free(r.results->result.data);
-          _free(r.results->error.data);
+          _free(r.results->data.data);
           _free(r.results);
           if (health_res) json_free(health_res);
         }

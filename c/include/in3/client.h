@@ -373,8 +373,8 @@ typedef struct in3_pay {
  * if the error has a length>0 the response will be rejected
  */
 typedef struct in3_response {
-  sb_t error;  /**< a stringbuilder to add any errors! */
-  sb_t result; /**< a stringbuilder to add the result */
+  in3_ret_t state; /**< the state of the response */
+  sb_t      data;  /**< a stringbuilder to add the result */
 } in3_response_t;
 
 /** Incubed Configuration. 
@@ -394,7 +394,7 @@ typedef struct in3_request {
   int             urls_len; /**< number of urls */
   in3_response_t* results;  /**< the responses*/
   uint32_t        timeout;  /**< the timeout 0= no timeout*/
-  uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
+  uint32_t*       times;    /**< measured time (in ms) which will be used for ajusting the weights */
   in3_t*          in3;      /**< pointer to associated IN3 instance */
 } in3_request_t;
 

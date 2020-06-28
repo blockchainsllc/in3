@@ -75,9 +75,11 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
   }
 
   // now parse the json
-  json_ctx_t* res  = parse_json(buffer);
-  str_range_t json = d_to_json(d_get(d_get_at(res->result, 0), key("response")));
-  sb_add_range(&req->results->result, json.data, 0, json.len);
+  json_ctx_t* res     = parse_json(buffer);
+  str_range_t json    = d_to_json(d_get(d_get_at(res->result, 0), key("response")));
+  req->results->state = IN3_OK;
+  sb_add_range(&req->results->data, json.data, 0, json.len);
+
   json_free(res);
   if (buffer) _free(buffer);
   return IN3_OK;
