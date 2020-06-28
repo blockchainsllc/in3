@@ -268,8 +268,7 @@ NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
   if (!ctx->client->cache || ctx->client->chain_id == ETH_CHAIN_ID_LOCAL) return;
   chain_id_t chain_id = ctx->client->chain_id;
-  if (!chain_id) chain_id = ctx->client->chain_id;
-  in3_cache_store_nodelist(ctx, in3_find_chain(ctx->client, chain_id));
+  in3_cache_store_nodelist(ctx->client, in3_find_chain(ctx->client, chain_id));
 }
 
 NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {

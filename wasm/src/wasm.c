@@ -31,6 +31,7 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#include "../../c/src/core/client/cache.h"
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
@@ -211,6 +212,9 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
   for (int i = 0; i < chain->nodelist_length; i++) {
     if (strcmp(chain->nodelist[i].url, url) == 0) {
       chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
+      // we don't update weights for local chains.
+      if (!in3->cache || in3->chain_id == ETH_CHAIN_ID_LOCAL) return;
+      in3_cache_store_nodelist(in3, chain);
       return;
     }
   }

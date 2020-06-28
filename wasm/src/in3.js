@@ -254,8 +254,7 @@ class IN3 {
                                     setResponse(req, ex.message || ex, 0, true)
                                 }
                                 finally {
-                                    // we need to free the request
-                                    in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [this.ptr, req.ptr])
+                                    done_response(this.ptr, req.ptr)
                                 }
                                 break;
 
@@ -292,10 +291,13 @@ class IN3 {
     }
 }
 
+function done_response(ptr, req_pr) {
+    in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [ptr, req_ptr])
+}
+
 function cleanUpResponses(responses, ptr) {
     Object.keys(responses).forEach(ctx => {
-        // clean up requests
-        in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [ptr, responses[ctx].req.ptr]);
+        done_response(ptr, responses[ctx].req.ptr);
         responses[ctx].cleanUp(ptr)
     })
 }
@@ -303,7 +305,7 @@ function cleanUpResponses(responses, ptr) {
 function getNextResponse(map, req, ptr) {
     let res = map[req.ctx + '']
     if (res && req.ptr && res.req.ptr != req.ptr) {
-        in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [ptr, res.req.ptr])
+        done_response(ptr, res.req.ptr)
         res = null
     }
 
@@ -348,27 +350,15 @@ function url_queue(req) {
                         if (!clients['' + ptr]) return
                         let blacklist = false
                         try {
-                            if (r.error) blacklist = true
-                            else
-                                blacklist = !!JSON.parse(r.response)[0].error
+                            blacklist = r.error || !!JSON.parse(r.response)[0].error
                         }
                         catch {
                             blacklist = true
                         }
-                        if (blacklist)
-                            in3w.ccall('in3_blacklist', 'void', ['number', 'string'], [ptr, r.url])
-
+                        if (blacklist) in3w.ccall('in3_blacklist', 'void', ['number', 'string'], [ptr, r.url])
                     }, () => { }
                 )
-
-
             }
-            // all responses where fetched?
-            if (counter - req.urls.length == 0) return
-
-
-
-
         }
     }
     return result
