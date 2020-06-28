@@ -197,15 +197,14 @@ void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
-  r->times[i] = now() - r->times[i];
-  if (is_error)
-    sb_add_chars(&r->results[i].error, msg);
-  else if (ctx->type == CT_SIGN) {
+  r->times[i]         = now() - r->times[i];
+  r->results[i].state = is_error ? IN3_ERPC : IN3_OK;
+  if (ctx->type == CT_SIGN && !is_error) {
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
-    sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
+    sb_add_range(&r->results[i].data, (char*) sig, 0, 65);
   } else
-    sb_add_chars(&r->results[i].result, msg);
+    sb_add_chars(&r->results[i].data, msg);
 }
 #ifdef IPFS
 
