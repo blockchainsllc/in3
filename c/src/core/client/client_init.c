@@ -126,6 +126,15 @@ void in3_set_default_transport(in3_transport_send transport) {
  * defines a default storage handler which is used when creating a new client.
  */
 void in3_set_default_storage(in3_storage_handler_t* cacheStorage) {
+  in3_log_debug("Entrei in3_set_default_storage\n");
+  in3_log_debug("cacheStorage cptr %u\n", cacheStorage->cptr);
+  in3_log_debug("cacheStorage get_item %u\n", cacheStorage->get_item);
+  in3_log_debug("cacheStorage set_item %u\n", cacheStorage->set_item);
+  in3_log_debug("cacheStorage clear %u\n", cacheStorage->clear);
+  in3_log_debug("cacheStorage cptr %u\n", &cacheStorage->cptr);
+  in3_log_debug("cacheStorage get_item %u\n", &cacheStorage->get_item);
+  in3_log_debug("cacheStorage set_item %u\n", &cacheStorage->set_item);
+  in3_log_debug("cacheStorage clear %u\n", &cacheStorage->clear);
   default_storage = cacheStorage;
 }
 /**

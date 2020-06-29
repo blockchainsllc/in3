@@ -4,7 +4,9 @@ Encapsulates low-level rpc calls into a comprehensive runtime.
 import json
 from enum import Enum
 
+import in3.libin3.storage as storage
 import in3.libin3.transport as transport
+import in3.storage as cache
 from in3.exception import ClientException
 from in3.libin3.enum import RPCCode
 from in3.libin3.rpc_api import libin3_new, libin3_free, libin3_call, libin3_set_pk
@@ -38,10 +40,13 @@ class In3Runtime:
 
     def __init__(self, chain_id: int, transport_fn):
         self.transport_handler = transport.factory(transport_fn)
-        self.in3 = libin3_new(chain_id, self.transport_handler, None)
+        self.storage_handler = storage.factory(cache.retrieve, cache.store, cache.delete_all)
+        self.in3 = libin3_new(chain_id, self.transport_handler, self.storage_handler)
         self.chain_id = chain_id
 
     def __del__(self):
+        # libin3_free(self.transport_handler)
+        # libin3_free(self.storage_handler)
         libin3_free(self.in3)
 
     def call(self, fn_name: str or Enum, *fn_args, formatted: bool = False) -> str or dict:

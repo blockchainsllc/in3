@@ -1,18 +1,30 @@
 import ctypes as c
 
-in3_storage_get_item = c.CFUNCTYPE(c.POINTER(c.c_char), c.c_void_p, c.POINTER(c.c_char))
-in3_storage_set_item = c.CFUNCTYPE(None, c.c_void_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char))
+
+class Bytes(c.Structure):
+    """
+    typedef struct bytes {
+      uint8_t* data; /**< the byte-data  */
+      uint32_t len;  /**< the length of the array ion bytes */
+    } bytes_t;
+    """
+    _fields_ = [("data", c.c_uint8),
+                ("len", c.c_uint32)]
+
+
+in3_storage_get_item = c.CFUNCTYPE(None, c.c_void_p, c.POINTER(c.c_char))
+in3_storage_set_item = c.CFUNCTYPE(None, c.c_void_p, c.POINTER(c.c_char), c.POINTER(Bytes))
 in3_storage_clear = c.CFUNCTYPE(None, c.c_void_p)
 
 
-class NativeRequest(c.Structure):
+class In3StorageHandler(c.Structure):
     """
     Request sent by the libin3 to the In3 Network, transported over the _http_transport function
     Based on in3/client/.h in3_request_t struct
     """
-    _fields_ = [("get_item", c.POINTER(in3_storage_get_item)),
-                ("set_item", c.POINTER(in3_storage_set_item)),
-                ("clear", c.POINTER(in3_storage_clear)),
+    _fields_ = [("get_item", in3_storage_get_item),
+                ("set_item", in3_storage_set_item),
+                ("clear", in3_storage_clear),
                 ("cptr", c.c_void_p)]
 
 
@@ -48,6 +60,6 @@ def factory(get_item_fn, set_item_fn, clear_fn):
     );
 
     """
-
-    c_transport_fn = c.CFUNCTYPE(c.c_int, c.POINTER(NativeRequest))
-    return c_transport_fn(in3_storage_get_item, in3_storage_set_item, in3_storage_clear, None)
+    instance = In3StorageHandler(in3_storage_get_item(get_item_fn), in3_storage_set_item(set_item_fn), in3_storage_clear(clear_fn))
+    # c_transport_fn = c.CFUNCTYPE(c.c_int, c.POINTER(In3StorageHandler))
+    return instance

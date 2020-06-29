@@ -86,7 +86,7 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
     assert isinstance(chain_id, int)
     map_function_signatures()
     _libin3.in3_set_default_transport(transport_fn)
-    _libin3.in3_set_default_storage(storage_fn)
+    # _libin3.in3_set_default_storage(storage_fn)
     # TODO: in3_set_default_signer
     _libin3.in3_register_eth_full()
     # TODO: IPFS libin3.in3_register_ipfs();
