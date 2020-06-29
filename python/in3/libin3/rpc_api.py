@@ -6,8 +6,7 @@ import platform
 
 from pathlib import Path
 
-# TODO: Mark false b4 release
-DEBUG = True
+DEBUG = False
 
 
 def _load_shared_library():
