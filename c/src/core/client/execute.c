@@ -363,7 +363,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   bool still_pending = false;
 
   // blacklist nodes for missing response
-  for (int n = 0; n < nodes_count; n++, node = node->next) {
+  for (int n = 0; n < nodes_count; n++, node = node ? node->next : NULL) {
 
     // if the response is still pending, we skip...
     if (response[n].state == IN3_WAITING) {
