@@ -828,6 +828,7 @@ void in3_req_add_response(
     const char*    data,     /**<  the data or the the string*/
     int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 ) {
+  if (req->results[index].state == IN3_OK && is_error) req->results[index].data.len = 0;
   req->results[index].state = is_error ? IN3_ERPC : IN3_OK;
   if (data_len == -1)
     sb_add_chars(&req->results[index].data, data);
