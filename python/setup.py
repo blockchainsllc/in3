@@ -30,7 +30,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url=url,
     packages=setuptools.find_packages(exclude=["docs", "tests"]),
-    install_requires=['requests==2.23.0'],
+    install_requires=[],
     keywords=keywords,
     include_package_data=True,
     classifiers=[
