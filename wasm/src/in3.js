@@ -291,7 +291,7 @@ class IN3 {
     }
 }
 
-function done_response(ptr, req_pr) {
+function done_response(ptr, req_ptr) {
     in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [ptr, req_ptr])
 }
 
@@ -323,28 +323,30 @@ function url_queue(req) {
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))
-    function trigger() {
+    function trigger(no_response) {
         while (promises.length && responses.length) {
             const p = promises.shift(), r = responses.shift()
-            if (r.error)
-                setResponse(req, r.error.message || r.error, r.i, true)
-            else
-                setResponse(req, r.response, r.i, false)
+            if (!no_response) {
+                if (r.error)
+                    setResponse(req, r.error.message || r.error, r.i, true)
+                else
+                    setResponse(req, r.response, r.i, false)
+            }
             p.resolve(r)
         }
     }
 
     const result = {
         req,
-        getNext: () => new Promise((resolve, reject) => {
+        getNext: (no_response) => new Promise((resolve, reject) => {
             counter++
             if (counter > req.urls.length) throw new Error('no more response available')
             promises.push({ resolve, reject })
-            trigger()
+            trigger(no_response)
         }),
         cleanUp(ptr) {
             while (req.urls.length - counter) {
-                this.getNext().then(
+                this.getNext(true).then(
                     r => {
                         // is the client still alive?
                         if (!clients['' + ptr]) return
