@@ -380,9 +380,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
     // since nodes_count was detected before, this should not happen!
     if (response[n].state) {
-      if (is_blacklisted(node)) continue;
-
-      blacklist_node(node);
+      if (is_blacklisted(node))
+        continue;
+      else if (node)
+        blacklist_node(node);
       ctx_set_error(ctx, response[n].data.len ? response[n].data.data : "no response from node", IN3_ERPC);
       if (response[n].data.data) {
         // clean up invalid data
