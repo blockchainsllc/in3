@@ -107,7 +107,7 @@ static void test_configure_signed_request() {
     _free(c->chains[i].nodelist_upd8_params);
     c->chains[i].nodelist_upd8_params = NULL;
   }
-  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  in3_ctx_t* ctx = ctx_new(c, "{\"id\":2,\"method\":\"eth_blockNumber\",\"params\":[]}");
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   in3_request_t* request = in3_create_request(ctx);
   json_ctx_t*    json    = parse_json(request->payload);
@@ -159,12 +159,49 @@ static void test_partial_response() {
   // first response is an error we expect a waiting since the transport has not passed all responses yet
   in3_req_add_response(req, 0, true, "500 from server", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
-
-  TEST_ASSERT_NULL(ctx->nodes->weight);           // first node is blacklisted
-  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight); // second node is not blacklisted
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
+  TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
+  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
 
   // now we have a valid response and should get a accaptable response
   in3_req_add_response(req, 2, false, "{\"result\":\"0x100\"}", -1);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
+
+  request_free(req, c, false);
+  ctx_free(ctx);
+  in3_free(c);
+}
+
+static void test_retry_response() {
+  in3_t* c         = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->request_count = 2;
+  c->flags         = 0;
+  _free(c->chains->nodelist_upd8_params);
+  c->chains->nodelist_upd8_params = NULL;
+
+  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+  in3_request_t* req = in3_create_request(ctx);
+
+  // first response is an error we expect a waiting since the transport has not passed all responses yet
+  in3_req_add_response(req, 0, true, "500 from server", -1);
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
+  TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
+  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
+  TEST_ASSERT_NOT_NULL(ctx->raw_response);              // we still keep the raw response
+
+  in3_req_add_response(req, 1, false, "{\"error\":\"no internet\"}", -1);
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+
+  TEST_ASSERT_NULL(ctx->raw_response);
+  request_free(req, c, false);
+
+  // we must create a new request since this is a reattempt
+  req = in3_create_request(ctx);
+  TEST_ASSERT_NOT_NULL(ctx->raw_response); // now the raw response is set
+
+  in3_req_add_response(req, 0, false, "{\"result\":\"0x100\"}", -1);
   TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
 
   request_free(req, c, false);
@@ -551,6 +588,7 @@ int main() {
 
   TESTS_BEGIN();
   RUN_TEST(test_partial_response);
+  RUN_TEST(test_retry_response);
   RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);
   RUN_TEST(test_configure);
