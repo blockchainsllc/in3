@@ -103,7 +103,7 @@ gcc8-x86:
 # Following job builds IN3 without CURL using an older compiler
 # (required for Rust cross compilation)
 gcc_legacy:
-  image: gcc:4.9
+  image: docker.slock.it/build-images/cmake:gcc-legacy
   extends: .conanbuild
   before_script:
     - curl -sSL https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz | tar -xzC /opt
