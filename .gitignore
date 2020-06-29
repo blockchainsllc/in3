@@ -36,3 +36,4 @@ target/
 rust/in3-sys/in3-core/*
 rust/Cargo.lock
 .overcommit.yml
+rust/in3-sys/pre_generated/in3.rs

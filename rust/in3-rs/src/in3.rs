@@ -4,13 +4,12 @@ use std::convert::TryInto;
 use std::ffi;
 use std::str;
 
-use libc::{c_char};
+use libc::c_char;
 use rustc_hex::FromHex;
 
 use async_trait::async_trait;
 
-use crate::error::{Error, In3Result};
-use crate::signer;
+use crate::error::{Error, In3Result, SysError};
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
 use crate::types::Bytes;
@@ -42,12 +41,12 @@ pub mod chain {
 struct Ctx {
     ptr: *mut in3_sys::in3_ctx_t,
     #[allow(dead_code)]
-    config: ffi::CString,
+    config: CString,
 }
 
 impl Ctx {
     fn new(in3: &mut Client, config_str: &str) -> Ctx {
-        let config = ffi::CString::new(config_str).expect("CString::new failed");
+        let config = CString::new(config_str).expect("CString::new failed");
         let ptr: *mut in3_sys::in3_ctx_t;
         unsafe {
             ptr = in3_sys::ctx_new(in3.ptr, config.as_ptr());
@@ -55,31 +54,15 @@ impl Ctx {
         Ctx { ptr, config }
     }
 
-    unsafe fn signc(&mut self, data: *const c_char, len: usize, _pk: *mut u8) -> Bytes {
-        // let pk = (*(*(*self.ptr).client).signer).wallet as *mut u8;
-        signer::signc(_pk, data, len)
-    }
-
-    async unsafe fn sign(&mut self, msg: Bytes) -> Bytes {
+    async unsafe fn sign(&mut self, msg: Bytes) -> In3Result<Bytes> {
         let cptr = (*self.ptr).client;
         let client = cptr as *mut in3_sys::in3_t;
         let c = (*client).internal as *mut Client;
-        let signer = &mut (*c).signer;
-        let no_signer = signer.is_none();
-        if no_signer {
-            let wallet = &mut (*c).wallet;
-            // let pk_data = pk_.as_ptr() as *mut u8;
-            let c_data = msg.0.as_ptr() as *const c_char;
-            let sig = self.signc(c_data, msg.0.len(), wallet.as_mut_ptr());
-            return sig;
-        } else if let Some(signer) = &mut (*c).signer {
-            let sig = signer.sign(msg);
-            return sig.await.expect("Signing failed");
-        }
-        Bytes::default()
+        let signer = &mut (*c).signer.as_mut().expect("No signer set");
+        signer.sign(msg).await
     }
 
-    async unsafe fn execute(&mut self) -> In3Result<String> {
+    async unsafe fn execute(&mut self) -> Result<String, SysError> {
         let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
         let mut p: *mut in3_sys::in3_ctx_t;
         p = self.ptr;
@@ -95,10 +78,10 @@ impl Ctx {
                     p = (*last_waiting).required;
                 }
                 if last_waiting == std::ptr::null_mut() {
-                    return Err("Cound not find the last waiting context".into());
+                    return Err(SysError::ContextError);
                 } else {
                     in3_sys::ctx_handle_failable(last_waiting);
-                    return Err(Error::TryAgain);
+                    return Err(SysError::TryAgain);
                 }
             }
             in3_sys::in3_ret_t::IN3_WAITING => {
@@ -111,24 +94,18 @@ impl Ctx {
                     p = (*p).required;
                 }
                 if last_waiting == std::ptr::null_mut() {
-                    return Err("Cound not find the last waiting context".into());
+                    return Err(SysError::ContextError);
                 }
             }
             in3_sys::in3_ret_t::IN3_OK => {
-                // if (*self.ptr).response_context == std::ptr::null_mut() {
-                //     // let result = *((*(*self.ptr).raw_response.offset(0)).result).data;
-                //     // let data = ffi::CStr::from_ptr(result as *const i8).to_str()
-                //     // .expect("result is not valid UTF-8");
-                //     return Err(Error::TryAgain);
-                // }
                 let result = (*(*self.ptr).response_context).c;
-                let data = ffi::CStr::from_ptr(result)
+                let data = CStr::from_ptr(result)
                     .to_str()
                     .expect("result is not valid UTF-8");
-                return Ok(data.into());
+                return Ok(data.to_owned());
             }
             err => {
-                return Err(err.into());
+                return Err(SysError::from(err));
             }
         }
 
@@ -148,7 +125,13 @@ impl Ctx {
                     let data_hex = data_str[2..]
                         .from_hex()
                         .expect("message is not valid hex string");
-                    let mut res_str = self.sign(data_hex.into()).await;
+                    let mut res_str = self.sign(data_hex.into()).await.map_err(|err| {
+                        if let Error::InternalError(sys_err) = err {
+                            sys_err
+                        } else {
+                            SysError::UnknownError
+                        }
+                    })?;
                     in3_sys::in3_req_add_response(
                         req,
                         0.try_into().unwrap(),
@@ -159,13 +142,13 @@ impl Ctx {
                     in3_sys::request_free(req, last_waiting, false);
                 }
                 in3_sys::ctx_type::CT_RPC => {
-                    let payload = ffi::CStr::from_ptr((*req).payload)
+                    let payload = CStr::from_ptr((*req).payload)
                         .to_str()
                         .expect("payload is not valid UTF-8");
                     let urls_len = (*req).urls_len;
                     let mut urls = Vec::new();
                     for i in 0..urls_len as usize {
-                        let url = ffi::CStr::from_ptr(*(*req).urls.add(i))
+                        let url = CStr::from_ptr(*(*req).urls.add(i))
                             .to_str()
                             .expect("URL is not valid UTF-8");
                         urls.push(url);
@@ -182,7 +165,7 @@ impl Ctx {
                     for (i, resp) in responses.iter().enumerate() {
                         match resp {
                             Err(err) => {
-                                let err_str = ffi::CString::new(err.to_string()).unwrap(); // cannot fail as err is string
+                                let err_str = CString::new(err.to_string()).unwrap(); // cannot fail as err is string
                                 in3_sys::in3_req_add_response(
                                     req,
                                     i.try_into().unwrap(), // cannot fail
@@ -192,7 +175,7 @@ impl Ctx {
                                 );
                             }
                             Ok(res) => {
-                                let res_str = ffi::CString::new(res.to_string()).unwrap(); // cannot fail as res is string
+                                let res_str = CString::new(res.to_string()).unwrap(); // cannot fail as res is string
                                 in3_sys::in3_req_add_response(
                                     req,
                                     i.try_into().unwrap(), // cannot fail
@@ -204,20 +187,21 @@ impl Ctx {
                         }
                     }
                     let res = *(*req).results.offset(0);
-                    let mut err = Error::TryAgain;
-                    if res.result.len == 0 {
+                    let err = if res.result.len == 0 {
                         let error = (*(*req).results.offset(0)).error;
-                        err = ffi::CStr::from_ptr(error.data)
+                        let error = CStr::from_ptr(error.data)
                             .to_str()
-                            .expect("err is not valid UTF-8")
-                            .into();
-                    }
+                            .expect("err is not valid UTF-8");
+                        SysError::ResponseError(error.to_owned())
+                    } else {
+                        SysError::TryAgain.into()
+                    };
                     in3_sys::request_free(req, last_waiting, false);
-                    return Err(err.into());
+                    return Err(err);
                 }
             }
         }
-        return Err(Error::TryAgain);
+        return Err(SysError::TryAgain);
     }
 
     #[cfg(feature = "blocking")]
@@ -251,12 +235,14 @@ pub struct Client {
     signer: Option<Box<dyn Signer>>,
     /// Storage implementation
     storage: Option<Box<dyn Storage>>,
-    /// private key wallet,
-    wallet: [u8; 65],
 }
 
 #[async_trait(? Send)]
 impl ClientTrait for Client {
+    fn id(&self) -> u32 {
+        unsafe { (*self.ptr).chain_id }
+    }
+
     /// Configures the IN3 client using a JSON str.
     ///
     /// # Example with supported options
@@ -293,13 +279,13 @@ impl ClientTrait for Client {
     /// 	}
     /// }"#).is_ok());
     /// ```
-    fn configure(&mut self, config: &str) -> Result<(), String> {
+    fn configure(&mut self, config: &str) -> In3Result<()> {
         unsafe {
-            let config_c = ffi::CString::new(config).expect("CString::new failed");
+            let config_c = CString::new(config).expect("CString::new failed");
             let err = in3_sys::in3_configure(self.ptr, config_c.as_ptr());
             if err.as_ref().is_some() {
-                return Err(ffi::CStr::from_ptr(err).to_str().unwrap().to_string());
-                // cannot fail as err is guaranteed to be a C string
+                let err = CStr::from_ptr(err).to_str().unwrap(); // cannot fail as err is guaranteed to be a C string
+                return Err(SysError::ConfigError(err.to_owned()).into());
             }
         }
         Ok(())
@@ -391,19 +377,12 @@ impl ClientTrait for Client {
         }
     }
 
-    fn set_log_debug(&mut self) {
-        unsafe {
-            in3_sys::in3_log_set_quiet_(0);
-            in3_sys::in3_log_set_level_(in3_sys::in3_log_level_t::LOG_TRACE);
-        }
-    }
-
     async fn rpc(&mut self, call: &str) -> In3Result<String> {
         let mut ctx = Ctx::new(self, call);
         loop {
             let res = unsafe { ctx.execute().await };
-            if res != Err(Error::TryAgain) {
-                return res;
+            if !matches!(res, Err(SysError::TryAgain)) {
+                return res.map_err(|err| Error::InternalError(err));
             }
         }
     }
@@ -413,28 +392,20 @@ impl ClientTrait for Client {
         let mut null: *mut i8 = std::ptr::null_mut();
         let res: *mut *mut i8 = &mut null;
         let err: *mut *mut i8 = &mut null;
-        let req_str = ffi::CString::new(call).unwrap(); // cannot fail as call is a string
+        let req_str = CString::new(call).unwrap(); // cannot fail as call is a string
         unsafe {
             let ret = in3_sys::in3_client_rpc_raw(self.ptr, req_str.as_ptr(), res, err);
             match ret {
-                in3_sys::in3_ret_t::IN3_OK => Ok(ffi::CStr::from_ptr(*res)
+                in3_sys::in3_ret_t::IN3_OK => Ok(CStr::from_ptr(*res)
                     .to_str()
                     .expect("result is not valid UTF-8")
                     .to_string()),
-                _ => Err(Error::CustomError(
-                    ffi::CStr::from_ptr(*err)
-                        .to_str()
-                        .expect("error is not valid UTF-8")
-                        .to_string(),
-                )),
+                _ => Err(CStr::from_ptr(*err)
+                    .to_str()
+                    .expect("error is not valid UTF-8")
+                    .to_string()
+                    .into()),
             }
-        }
-    }
-
-    fn set_pk_signer(&mut self, data: &str) {
-        unsafe {
-            Client::hex_to_bytes(data, &mut self.wallet);
-            in3_sys::eth_set_pk_signer(self.ptr, self.wallet.as_mut_ptr());
         }
     }
 }
@@ -451,14 +422,11 @@ impl Client {
     /// ```
     pub fn new(chain_id: chain::ChainId) -> Box<Client> {
         unsafe {
-            in3_sys::in3_log_set_quiet_(0);
-            in3_sys::in3_log_set_level_(in3_sys::in3_log_level_t::LOG_TRACE);
             let mut c = Box::new(Client {
                 ptr: in3_sys::in3_for_chain_auto_init(chain_id),
                 transport: Box::new(HttpTransport {}),
                 signer: None,
                 storage: None,
-                wallet: [0u8; 65],
             });
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
@@ -474,7 +442,7 @@ impl Client {
         cptr: *mut libc::c_void,
         key: *const libc::c_char,
     ) -> *mut in3_sys::bytes_t {
-        let key = ffi::CStr::from_ptr(key)
+        let key = CStr::from_ptr(key)
             .to_str()
             .expect("URL is not valid UTF-8");
         let client = cptr as *mut in3_sys::in3_t;
@@ -492,7 +460,7 @@ impl Client {
         key: *const libc::c_char,
         value: *mut in3_sys::bytes_t,
     ) {
-        let key = ffi::CStr::from_ptr(key)
+        let key = CStr::from_ptr(key)
             .to_str()
             .expect("key is not valid UTF-8");
         let value = std::slice::from_raw_parts_mut((*value).data, (*value).len as usize);
@@ -519,12 +487,12 @@ impl Client {
         let mut urls = Vec::new();
 
         unsafe {
-            let payload = ffi::CStr::from_ptr((*request).payload)
+            let payload = CStr::from_ptr((*request).payload)
                 .to_str()
                 .expect("URL is not valid UTF-8");
             let urls_len = (*request).urls_len;
             for i in 0..urls_len as usize {
-                let url = ffi::CStr::from_ptr(*(*request).urls.add(i))
+                let url = CStr::from_ptr(*(*request).urls.add(i))
                     .to_str()
                     .expect("URL is not valid UTF-8");
                 urls.push(url);
@@ -540,7 +508,7 @@ impl Client {
                     Err(err) => {
                         any_err = true;
                         let err_str =
-                            ffi::CString::new(err.to_string()).expect("error is not valid UTF-8");
+                            CString::new(err.to_string()).expect("error is not valid UTF-8");
                         in3_sys::sb_add_chars(
                             &mut (*(*request).results.add(i)).error,
                             err_str.as_ptr(),
@@ -548,7 +516,7 @@ impl Client {
                     }
                     Ok(res) => {
                         let res_str =
-                            ffi::CString::new(res.to_string()).expect("result is not valid UTF-8");
+                            CString::new(res.to_string()).expect("result is not valid UTF-8");
                         in3_sys::sb_add_chars(
                             &mut (*(*request).results.add(i)).result,
                             res_str.as_ptr(),
@@ -563,13 +531,6 @@ impl Client {
         }
 
         in3_sys::in3_ret_t::IN3_OK
-    }
-
-    unsafe fn hex_to_bytes(data: &str, dst: &mut [u8; 65]) {
-        let c_str_data = CString::new(data).unwrap(); // cannot fail since data is a string
-        let c_data: *const c_char = c_str_data.as_ptr();
-        let len: i32 = -1;
-        in3_sys::hex_to_bytes(c_data, len, dst.as_mut_ptr(), 32);
     }
 }
 

@@ -19,6 +19,7 @@ pub mod eth1;
 pub mod in3;
 pub mod ipfs;
 pub mod json_rpc;
+pub mod logging;
 pub mod signer;
 pub mod traits;
 pub mod transport;
