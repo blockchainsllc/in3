@@ -4,7 +4,7 @@ use std::convert::TryInto;
 use std::ffi;
 use std::str;
 
-use libc::{c_char};
+use libc::c_char;
 use rustc_hex::FromHex;
 
 use async_trait::async_trait;
@@ -156,7 +156,7 @@ impl Ctx {
                         res_str.0.as_mut_ptr() as *const c_char,
                         65,
                     );
-                    in3_sys::request_free(req, last_waiting, false);
+                    in3_sys::request_free(req, last_waiting.client, false);
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let payload = ffi::CStr::from_ptr((*req).payload)
@@ -212,7 +212,7 @@ impl Ctx {
                             .expect("err is not valid UTF-8")
                             .into();
                     }
-                    in3_sys::request_free(req, last_waiting, false);
+                    in3_sys::request_free(req, last_waiting.client, false);
                     return Err(err.into());
                 }
             }
