@@ -50,3 +50,4 @@ c/src/third-party/hidapi/depcomp
 c/src/third-party/hidapi/compile
 c/src/third-party/hidapi/aclocal.m4
 
+rust/in3-sys/pre_generated/in3.rs

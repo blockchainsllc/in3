@@ -4,10 +4,15 @@ use async_std::task;
 use ethereum_types::{Address, U256};
 
 use in3::eth1::*;
+use in3::logging;
 use in3::prelude::*;
 use in3::types::Bytes;
 
 fn main() -> In3Result<()> {
+    // enable logging
+    logging::enable();
+    logging::set_level(logging::FilterLevel::Debug);
+
     // configure client and API
     let mut eth_api = Api::new(Client::new(chain::MAINNET));
     eth_api
