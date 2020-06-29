@@ -148,7 +148,7 @@ in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
 
 in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key) {
   in3_log_debug("eth_ledger_get_public_addr:enter\n");
-
+  printf("eth_ledger_get_public_addr:enter\n");
   in3_ret_t     ret;
   uint8_t       apdu[64];
   int           index_counter = 0;
@@ -157,10 +157,10 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
 
   bytes_t     response;
   hid_device* handle;
-
+  printf("eth_ledger_get_public_addr:opening device\n");
   handle = open_device();
   if (NULL != handle) {
-
+    printf("eth_ledger_get_public_addr:handle opened\n");
     if (is_public_key_assigned) {
       memcpy(o_public_key, public_key, 65);
       close_device(handle);
@@ -216,7 +216,7 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
   }
 
   in3_log_debug("eth_ledger_get_public_addr:exit\n");
-
+  printf("eth_ledger_get_public_addr:exit\n");
   return ret;
 }
 

@@ -179,12 +179,16 @@ hid_device* open_device() {
   hid_device*             handle;
   int                     res = hid_init();
   if (res == 0) {
+    printf("open_device:opening device\n");
     device_info = hid_enumerate(LEDGER_NANOS_VID, LEDGER_NANOS_PID);
+    printf("open_device: hid enumerated\n");
     if (device_info != NULL) {
+      printf("open_device:device found\n");
       handle = hid_open_path(device_info->path);
     } else {
       handle = NULL;
     }
+    printf("open_device: freeing resouces\n");
     hid_free_enumeration(device_info);
   } else {
     handle = NULL;
