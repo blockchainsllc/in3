@@ -139,7 +139,7 @@ impl Ctx {
                         res_str.0.as_mut_ptr() as *const c_char,
                         65,
                     );
-                    in3_sys::request_free(req, last_waiting.client, false);
+                    in3_sys::request_free(req, (*last_waiting).client, false);
                 }
                 in3_sys::ctx_type::CT_RPC => {
                     let payload = CStr::from_ptr((*req).payload)
@@ -187,8 +187,8 @@ impl Ctx {
                         }
                     }
                     let res = *(*req).results.offset(0);
-                    let err = if res.result.len == 0 {
-                        let error = (*(*req).results.offset(0)).error;
+                    let err = if res.state != in3_sys::in3_ret_t::IN3_OK {
+                        let error = (*(*req).results.offset(0)).data;
                         let error = CStr::from_ptr(error.data)
                             .to_str()
                             .expect("err is not valid UTF-8");
@@ -196,7 +196,7 @@ impl Ctx {
                     } else {
                         SysError::TryAgain.into()
                     };
-                    in3_sys::request_free(req, last_waiting.client, false);
+                    in3_sys::request_free(req, (*last_waiting).client, false);
                     return Err(err);
                 }
             }
