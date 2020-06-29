@@ -33,37 +33,22 @@
 ###############################################################################
 #cmake_minimum_required(VERSION 3.15)
 
-if (LEDGER_NANO)
-   if(UNIX AND NOT APPLE)
-      set(LINUX TRUE)
-   endif()
-
-
-   add_static_library(
-      NAME     ledger_signer 
-      
-      SOURCES 
-        ledger_signer.c
-        device_apdu_commands.c
-        utility.c
-        ethereum_apdu_client.c
-   
-      DEPENDS 
-        eth_nano
-   )
-   
-   target_compile_definitions(ledger_signer_o PRIVATE -D_POSIX_C_SOURCE=199309L)
-
-   if(APPLE)
-      target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
-   elseif(LINUX)
-      target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhidapi-hidraw${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
-   elseif(WIN32)
-   # not building for windows currently
-   # target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}hidapi${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
-   else()
-      target_link_libraries(ledger_signer ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhidapi-hidraw${CMAKE_SHARED_LIBRARY_SUFFIX} ${LIBS})
-   endif()
-
-   add_dependencies(ledger_signer lib-hidapi)
+if(UNIX AND NOT APPLE)
+   set(LINUX TRUE)
 endif()
+
+
+add_static_library(
+   NAME     ledger_signer 
+   
+   SOURCES 
+      ledger_signer.c
+      device_apdu_commands.c
+      utility.c
+      ethereum_apdu_client.c
+
+   DEPENDS 
+      eth_nano
+      hidapi
+)
+
