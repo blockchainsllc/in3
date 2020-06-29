@@ -32,6 +32,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
+#include "freertos/FreeRTOS.h"
 #include "block_number.h"
 #include "cJSON.h"
 #include "esp_system.h"
@@ -52,8 +53,6 @@
 #include <sys/param.h>
 
 static const char* REST_TAG = "esp-rest";
-//buffer to receive data from in3 http transport
-static sb_t* http_in3_buffer = NULL;
 // in3 client
 static in3_t* c;
 
