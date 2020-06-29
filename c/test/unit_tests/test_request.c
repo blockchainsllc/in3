@@ -49,6 +49,7 @@
 #include "../../src/core/util/utils.h"
 #include "../../src/verifier/eth1/basic/eth_basic.h"
 #include "../test_utils.h"
+#include "../util/transport.h"
 #include <stdio.h>
 #include <unistd.h>
 
@@ -143,7 +144,33 @@ static void test_exec_req() {
 
   in3_free(c);
 }
+static void test_partial_response() {
+  in3_t* c         = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  c->request_count = 3;
+  c->flags         = 0;
+  _free(c->chains->nodelist_upd8_params);
+  c->chains->nodelist_upd8_params = NULL;
 
+  //  add_response("eth_blockNumber", "[]", "0x2", NULL, NULL);
+  in3_ctx_t* ctx = ctx_new(c, "{\"method\":\"eth_blockNumber\",\"params\":[]}");
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+  in3_request_t* req = in3_create_request(ctx);
+
+  // first response is an error we expect a waiting since the transport has not passed all responses yet
+  in3_req_add_response(req, 0, true, "500 from server", -1);
+  TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
+
+  TEST_ASSERT_NULL(ctx->nodes->weight);           // first node is blacklisted
+  TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight); // second node is not blacklisted
+
+  // now we have a valid response and should get a accaptable response
+  in3_req_add_response(req, 2, false, "{\"result\":\"0x100\"}", -1);
+  TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
+
+  request_free(req, c, false);
+  ctx_free(ctx);
+  in3_free(c);
+}
 static void test_configure() {
   in3_t* c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
   char*  tmp = NULL;
@@ -523,6 +550,7 @@ int main() {
   in3_register_eth_api();
 
   TESTS_BEGIN();
+  RUN_TEST(test_partial_response);
   RUN_TEST(test_configure_request);
   RUN_TEST(test_exec_req);
   RUN_TEST(test_configure);

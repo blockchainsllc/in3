@@ -363,7 +363,7 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   bool still_pending = false;
 
   // blacklist nodes for missing response
-  for (int n = 0; n < nodes_count; n++) {
+  for (int n = 0; n < nodes_count; n++, node = node->next) {
 
     // if the response is still pending, we skip...
     if (response[n].state == IN3_WAITING) {
@@ -471,13 +471,12 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     // !node_weight is valid, because it means this is a internaly handled response
     if (!node || !is_blacklisted(node))
       return IN3_OK; // this reponse was successfully verified, so let us keep it.
-
-    node = node->next;
   }
   // no valid response found,
   // if pending, we remove the error and wait
   if (still_pending) {
     if (ctx->error) _free(ctx->error);
+    ctx->error              = NULL;
     ctx->verification_state = IN3_WAITING;
     return IN3_WAITING;
   }
