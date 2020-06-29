@@ -64,15 +64,12 @@ static void write_cache_key(char* key, chain_id_t chain_id, const address_t whit
  * initializes the cache by trying to read the nodelist and whitelist.
  */
 in3_ret_t in3_cache_init(in3_t* c) {
-  in3_log_debug("Entrei init\n");
   for (int i = 0; i < c->chains_length; i++) {
-    in3_log_debug("Entrei loop\n");
     // the reason why we ignore the error here, is because we want to ignore errors if the cache is able to update.
     if (in3_cache_update_nodelist(c, c->chains + i) != IN3_OK) { in3_log_debug("Failed to update cached nodelist\n"); }
     if (in3_cache_update_whitelist(c, c->chains + i) != IN3_OK) { in3_log_debug("Failed to update cached whitelist\n"); }
     in3_client_run_chain_whitelisting(c->chains + i);
   }
-  in3_log_debug("Entrei init deu bom!\n");
   return IN3_OK;
 }
 
@@ -138,8 +135,6 @@ in3_ret_t in3_cache_update_nodelist(in3_t* c, in3_chain_t* chain) {
 }
 
 in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
-  in3_log_debug("Entrei in3_cache_store_nodelist\n");
-  in3_log_debug("!ctx->client->cache %i\n", !ctx->client->cache);
   // it is ok not to have a storage
   if (!ctx->client->cache) return IN3_OK;
 
@@ -176,15 +171,10 @@ in3_ret_t in3_cache_store_nodelist(in3_ctx_t* ctx, in3_chain_t* chain) {
   } else
     bb_write_int(bb, 0);
 
-  in3_log_debug("Chguei na KElly key\n");
   // create key
   char key[200];
   write_cache_key(key, chain->chain_id, chain->contract->data);
-  in3_log_debug("cheguei no set item\n");
-  in3_log_debug("ctx->client->cache->set_item %u\n", !ctx->client->cache->set_item);
-  in3_log_debug("ctx->client->cache->set_item addr %u\n", &ctx->client->cache->set_item);
-  in3_log_debug("key %s\n", key);
-  in3_log_debug("ctx->client->cache->cptr %u", &ctx->client->cache->cptr);
+
   // store it and ignore return value since failing when writing cache should not stop us.
   ctx->client->cache->set_item(ctx->client->cache->cptr, key, &bb->b);
 
