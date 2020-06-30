@@ -180,9 +180,11 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
     if (tmp.len == 4 && le_to_int(tmp.data) != (uint32_t) d_get_longk(vc->result, key("time"))) return vc_err(vc, "invalid time");
 
     // check vin
-    uint8_t*    p   = tx_data.input.data;
-    uint8_t*    end = p + tx_data.input.len;
+    uint8_t*    p        = tx_data.input.data;
+    uint8_t*    end      = p + tx_data.input.len;
+    uint32_t    tx_index = d_get_intk(vc->proof, key("txIndex"));
     btc_tx_in_t tx_in;
+    char*       hex;
     list = d_get(vc->result, key("vin"));
     if (d_type(list) != T_ARRAY || d_len(list) != (int) tx_data.input_count) return vc_err(vc, "invalid vin");
 
@@ -190,19 +192,25 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
       p = btc_parse_tx_in(p, &tx_in, end);
       if (!p) return vc_err(vc, "invalid vin");
 
-      // txid
-      char* hex = d_get_stringk(iter.token, key("txid"));
-      if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
-
-      // vout
-      if (d_get_intk(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) return vc_err(vc, "invalid vin.vout");
-
       // sequence
       if (d_get_longk(iter.token, key("sequence")) != tx_in.sequence) return vc_err(vc, "invalid vin.sequence");
 
-      // sig.hex
-      hex = d_get_stringk(d_get(iter.token, key("scriptSig")), key("hex"));
-      if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
+      if (tx_index == 0) {
+        // coinbase
+        hex = d_get_stringk(iter.token, key("coinbase"));
+        if (!hex || !equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid coinbase");
+      } else {
+        // txid
+        hex = d_get_stringk(iter.token, key("txid"));
+        if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
+
+        // vout
+        if (d_get_intk(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) return vc_err(vc, "invalid vin.vout");
+
+        // sig.hex
+        hex = d_get_stringk(d_get(iter.token, key("scriptSig")), key("hex"));
+        if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
+      }
     }
 
     p   = tx_data.output.data;
