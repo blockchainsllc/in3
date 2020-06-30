@@ -1,4 +1,4 @@
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #include <windows.h>
 #endif
 
@@ -10,7 +10,17 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+static uint8_t CHANNEL[] = {0x00, 0x01, 0x01};
+static uint8_t header[]  = {0x00, 0x01, 0x01, 0x05};
+static uint8_t chunk[65];
+static int     chunk_size = 65;
+#else
 static uint8_t CHANNEL[] = {0x01, 0x01};
+static uint8_t header[]  = {0x01, 0x01, 0x05};
+static uint8_t chunk[64];
+static int     chunk_size = 64;
+#endif
 
 uint8_t CLA;
 uint8_t INS_GET_PUBLIC_KEY;
@@ -29,7 +39,7 @@ void wrap_apdu(uint8_t* i_apdu, int len, uint16_t seq, bytes_t* o_wrapped_hid_cm
   uint8_t  data[2];
   int      index      = 0;
   int      cmd_len    = 0;
-  int      header_len = 7;
+  int      header_len = 5 + sizeof(CHANNEL);
 
   if (len < 64 - header_len) {
     cmd_len = 64;
@@ -92,8 +102,10 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
   hid_set_nonblocking(handle, 0);
 
   do {
+    printf("reading\n");
     bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
-
+    printf("chunk read from hid\n");
+    printfBytes(read_chunk, bytes_read);
     if (memcmp(bug_header, read_chunk, sizeof(bug_header)) == 0) { //random bug header received, signing will have to be reattempted
       total_bytes_available = 0;
       index_counter         = 0;
@@ -103,6 +115,11 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
       if (index_counter == 0) //first chunk read
       {
         total_bytes_available = read_chunk[6];
+        if (total_bytes_available == 0) {
+          total_bytes_available = 0;
+          index_counter         = 0;
+          break;
+        }
         index_counter += (bytes_read - 7);
 
         memcpy(read_buf, read_chunk + 7, bytes_read - 7);
@@ -113,8 +130,9 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
 
       bytes_to_read = total_bytes_available - index_counter;
     }
-
+    printf("data %d %d %d\n", bytes_to_read, total_bytes_available, index_counter);
     if (bytes_to_read <= 0 && total_bytes_available > 1) {
+      printf("data %d %d %d\n", bytes_to_read, total_bytes_available, index_counter);
       break;
     }
 
@@ -122,47 +140,52 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
 
   response->len  = total_bytes_available;
   response->data = malloc(total_bytes_available);
-
+  printf("exiting hid read\n");
   memcpy(response->data, read_buf, total_bytes_available);
 }
 
 int write_hid(hid_device* handle, uint8_t* data, int len) {
   bytes_t final_apdu_command;
-  uint8_t chunk[64];
-  int     res        = 0;
-  int     seq        = 0;
-  int     totalBytes = 0;
-  int     sent       = 0;
-  int     tobesent   = 0;
-  int     bufsize    = 0;
-  uint8_t header[]   = {0x01, 0x01, 0x05};
+
+  int res        = 0;
+  int seq        = 0;
+  int totalBytes = 0;
+  int sent       = 0;
+  int tobesent   = 0;
+  int bufsize    = 0;
+
   uint8_t seq_data[2];
   int     total_padding = 0;
 
   wrap_apdu(data, len, 0, &final_apdu_command);
-  total_padding = final_apdu_command.len - (len + 7);
+  total_padding = final_apdu_command.len - (len + 5 + sizeof(CHANNEL));
   totalBytes    = final_apdu_command.len;
-
-  if (totalBytes > 64) {
+  printf("wrapped apdu to hid\n");
+  printfBytes(final_apdu_command.data, final_apdu_command.len);
+  if (totalBytes > chunk_size) {
     while (totalBytes > total_padding) {
       if (seq == 0) { // first packet
-        hid_write(handle, final_apdu_command.data, 64);
-        bufsize += 64;
-        totalBytes -= 64;
-        sent += 64;
+        printf("writing to hid\n");
+        printfBytes(final_apdu_command.data, chunk_size);
+        hid_write(handle, final_apdu_command.data, chunk_size);
+        bufsize += chunk_size;
+        totalBytes -= chunk_size;
+        sent += chunk_size;
         seq++;
       } else {
         len_to_bytes(seq, seq_data);
-        memset(chunk, 0, 64);
+        memset(chunk, 0, chunk_size);
         memcpy(chunk, header, sizeof(header));
         memcpy(chunk + sizeof(header), seq_data, sizeof(seq_data));
-        tobesent = (totalBytes > (int) (64 - (sizeof(header) + sizeof(seq_data)))) ? (64 - (sizeof(header) + sizeof(seq_data))) : totalBytes;
+        tobesent = (totalBytes > (int) (chunk_size - (sizeof(header) + sizeof(seq_data)))) ? (chunk_size - (sizeof(header) + sizeof(seq_data))) : totalBytes;
         memcpy(chunk + sizeof(header) + sizeof(seq_data), final_apdu_command.data + sent, tobesent);
         totalBytes -= tobesent;
         sent += tobesent;
         seq++;
-        hid_write(handle, chunk, 64);
-        bufsize += 64;
+        printf("writing to hid\n");
+        printfBytes(chunk, chunk_size);
+        hid_write(handle, chunk, chunk_size);
+        bufsize += chunk_size;
       }
     }
   } else {
@@ -171,6 +194,7 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
   }
 
   free(final_apdu_command.data);
+  printf("bytes writting to hid\n");
   return res;
 }
 
@@ -200,4 +224,13 @@ hid_device* open_device() {
 void close_device(hid_device* handle) {
   hid_close(handle);
   hid_exit();
+}
+
+void printfBytes(uint8_t* bytes, int size) {
+  int i = 0;
+  for (i = 0; i < size; i++) {
+
+    printf("%02x ", bytes[i]);
+  }
+  printf("\n");
 }

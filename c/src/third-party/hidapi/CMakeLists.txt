@@ -60,7 +60,7 @@ elseif(WIN32 OR MSVC OR MSYS OR MINGW)
          windows/hid.c
 
       DEPENDS
-         setupapi
+         -lsetupapi
    )
    
 elseif(LINUX)

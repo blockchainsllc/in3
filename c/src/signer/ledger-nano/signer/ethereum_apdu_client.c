@@ -180,9 +180,13 @@ in3_ret_t eth_ledger_get_public_addr(uint8_t* i_bip_path, uint8_t* o_public_key)
     memcpy(apdu + index_counter, bip32, bip32_len * sizeof(uint32_t));
     index_counter += bip32_len * sizeof(uint32_t);
 
+    printf("eth_ledger_get_public_addr:writing hid\n");
+    printfBytes(apdu, index_counter);
     write_hid(handle, apdu, index_counter);
 
+    printf("eth_ledger_get_public_addr:reading hid\n");
     read_hid_response(handle, &response);
+    printfBytes(response.data, response.len);
 
 #ifdef DEBUG
     in3_log_debug("response received from device\n");
