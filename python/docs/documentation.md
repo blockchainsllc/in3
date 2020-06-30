@@ -34,7 +34,7 @@ in3_client.contract  # ethereum smart-contract api
 Compile local libraries and run tests
 ```bash
 ./buidl_libs.sh
-pytest --pylama
+coverage run -m pytest --pylama
 ```
 
 #### Index
@@ -423,7 +423,7 @@ python example.py
 Client(self,
 chain: str = 'mainnet',
 in3_config: ClientConfig = None,
-transport=<function http_transport at 0x103a68ef0>)
+transport=<function http_transport at 0x10d449ef0>)
 ```
 
 Incubed network client. Connect to the blockchain via a list of bootnodes, then gets the latest list of nodes in
@@ -1203,8 +1203,8 @@ Load libin3 shared library for the current system, map function ABI, sets in3 ne
 #### libin3_new
 ```python
 libin3_new(chain_id: int,
-transport_fn: <function CFUNCTYPE at 0x1036f5830>,
-storage_fn: <function CFUNCTYPE at 0x1036f5830>)
+transport_fn: <function CFUNCTYPE at 0x10d0d6830>,
+storage_fn: <function CFUNCTYPE at 0x10d0d6830>)
 ```
 
 Instantiate new In3 Client instance.

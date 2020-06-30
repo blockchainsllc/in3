@@ -34,7 +34,7 @@ in3_client.contract  # ethereum smart-contract api
 Compile local libraries and run tests
 ```bash
 ./buidl_libs.sh
-pytest --pylama
+coverage run -m pytest --pylama
 ```
 
 #### Index
