@@ -61,7 +61,7 @@ def _load_shared_library():
 _libin3 = _load_shared_library()
 
 
-def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE) -> int:
+def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE) -> int:
     """
     Instantiate new In3 Client instance.
     Args:
@@ -78,14 +78,14 @@ def libin3_new(chain_id: int, transport_fn: c.CFUNCTYPE, storage_fn: c.CFUNCTYPE
         _libin3.in3_for_chain_auto_init.restype = c.c_void_p
         _libin3.in3_free.argtypes = c.c_void_p,
         _libin3.eth_set_pk_signer_hex.argtypes = c.c_void_p, c.c_char_p
-        _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(c.c_char_p)
+        _libin3.in3_client_rpc.argtypes = c.c_void_p, c.c_char_p, c.c_char_p, c.POINTER(c.c_char_p), c.POINTER(
+            c.c_char_p)
         _libin3.in3_client_rpc.restype = c.c_int
         _libin3.in3_req_add_response.argtypes = c.c_void_p, c.c_int, c.c_bool, c.c_char_p, c.c_int
 
     assert isinstance(chain_id, int)
     map_function_signatures()
     _libin3.in3_set_default_transport(transport_fn)
-    # _libin3.in3_set_default_storage(storage_fn)
     # TODO: in3_set_default_signer
     _libin3.in3_register_eth_full()
     # TODO: IPFS libin3.in3_register_ipfs();

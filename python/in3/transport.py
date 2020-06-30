@@ -1,5 +1,5 @@
-from http import HTTPStatus
 import http.client
+from http import HTTPStatus
 
 from in3.libin3.transport import In3Request, In3Response
 
