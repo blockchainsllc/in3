@@ -253,7 +253,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t*
         if (res < 0)
           return ctx_set_error(parent_ctx, "Error updating node_list", ctx_set_error(parent_ctx, ctx->error, res));
         else if (c->cache)
-          in3_cache_store_nodelist(ctx, chain);
+          in3_cache_store_nodelist(ctx->client, chain);
         ctx_remove_required(parent_ctx, ctx);
         in3_client_run_chain_whitelisting(chain);
         return IN3_OK;

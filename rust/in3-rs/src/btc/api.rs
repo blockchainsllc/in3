@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 use crate::btc::{BlockHeader, BlockTransactionData, BlockTransactionIds, Transaction};
 use crate::error::In3Result;
 use crate::eth1::Hash;
+use crate::in3::chain::{BTC, MULTICHAIN};
 use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
@@ -19,6 +20,7 @@ impl ApiTrait for Api {
     /// Creates an [`btc::Api`](../btc/struct.Api.html) instance by consuming a
     /// [`Client`](../in3/struct.Client.html).
     fn new(client: Box<dyn ClientTrait>) -> Self {
+        assert!(client.id() == BTC || client.id() == MULTICHAIN);
         Api { client }
     }
 
@@ -53,7 +55,7 @@ impl Api {
     /// * `blockhash` - block hash.
     ///
     /// # Panics
-    /// If response if not serializable to output type.
+    /// If response is not serializable to output type.
     pub async fn get_blockheader(&mut self, blockhash: Hash) -> In3Result<BlockHeader> {
         let hash = json!(blockhash);
         let hash_str = hash.as_str().unwrap(); // cannot fail
@@ -100,7 +102,7 @@ impl Api {
     /// * `tx_id` - transaction id.
     ///
     /// # Panics
-    /// If response if not serializable to output type.
+    /// If response is not serializable to output type.
     pub async fn get_transaction(&mut self, tx_id: Hash) -> In3Result<Transaction> {
         let hash = json!(tx_id);
         let hash_str = hash.as_str().unwrap(); // cannot fail

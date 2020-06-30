@@ -649,6 +649,7 @@ char* in3_configure(in3_t* c, const char* config) {
   char* res = NULL;
 
   if (!cnf || !cnf->result) return config_err("in3_configure", "parse error");
+  if (c->pending) return config_err("in3_configure", "can not change config because there are pending requests!");
   for (d_iterator_t iter = d_iter(cnf->result); iter.left; d_iter_next(&iter)) {
     d_token_t* token = iter.token;
     if (token->key == key("autoUpdateList")) {

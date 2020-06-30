@@ -217,7 +217,6 @@ if(TEST)
     add_custom_target(rtest COMMAND ${CMAKE_CTEST_COMMAND} -V )
 endif(TEST)
 
-
 add_subdirectory(c)
 
 IF (JAVA)
