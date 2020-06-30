@@ -562,7 +562,7 @@ static in3_ret_t debug_transport(in3_request_t* req) {
   last_response = b_new((uint8_t*) req->results[0].data.data, req->results[0].data.len);
 #ifndef DEBUG
   if (debug_mode) {
-    if (req->results[0].state)
+    if (req->results[0].state == IN3_OK)
       fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].data.data);
     else
       fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].data.data);
@@ -777,6 +777,7 @@ int main(int argc, char* argv[]) {
     else if (strcmp(argv[i], "-sigtype") == 0 || strcmp(argv[i], "-st") == 0)
       sig_type = argv[++i];
     else if (strcmp(argv[i], "-debug") == 0) {
+      in3_log_set_quiet(false);
       in3_log_set_level(LOG_TRACE);
       debug_mode = true;
     } else if (strcmp(argv[i], "-signs") == 0 || strcmp(argv[i], "-s") == 0)

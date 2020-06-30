@@ -303,7 +303,7 @@ NONULL static void blacklist_node(node_match_t* node_weight) {
     // blacklist the node
     node_weight->weight->blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
     node_weight->weight                    = NULL; // setting the weight to NULL means we reject the response.
-    in3_log_debug("Blacklisting node for empty response: %s\n", node_weight->node->url);
+    in3_log_debug("Blacklisting node for unverifiable response: %s\n", node_weight->node->url);
   }
 }
 

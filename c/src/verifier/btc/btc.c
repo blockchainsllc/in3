@@ -111,6 +111,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   d_token_t *t, *list;
   btc_tx_t   tx_data;
   bool       in_active_chain = true;
+  if (!vc->proof) return vc_err(vc, "missing the proof");
 
   // define the expected blockhash
   if (block_hash) memcpy(expected_block_hash, block_hash, 32);
@@ -286,6 +287,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
   in3_ret_t ret              = IN3_OK;
   uint32_t  block_number     = 0;
   bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
+  if (!vc->proof) return vc_err(vc, "missing the proof");
   if (verbose)
     btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
   else                                                         //
