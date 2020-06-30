@@ -156,7 +156,7 @@ static void add_req_id(sb_t* sb, uint64_t id) {
 
 /** gets the v-value from the chain_id */
 static uint64_t get_v(in3_ctx_t* ctx) {
-  uint64_t v = ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id;
+  uint64_t v = ctx->client->chain_id;
   if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
   return v;
 }

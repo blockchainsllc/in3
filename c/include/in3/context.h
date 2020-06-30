@@ -75,55 +75,23 @@ typedef struct weight {
  * This is generated for each request and represents the current state. it holds the state until the request is finished and must be freed afterwards.
  * */
 typedef struct in3_ctx {
-  /** the type of the request */
-  ctx_type_t type;
-
-  /** reference to the client*/
-  in3_t* client;
-
-  /** the result of the json-parser for the request.*/
-  json_ctx_t* request_context;
-
-  /** the result of the json-parser for the response.*/
-  json_ctx_t* response_context;
-
-  /** in case of an error this will hold the message, if not it points to `NULL` */
-  char* error;
-
-  /** the number of requests */
-  int len;
-
-  /** the number of attempts */
-  unsigned int attempt;
-
-  /** references to the tokens representring the parsed responses*/
-  d_token_t** responses;
-
-  /** references to the tokens representring the requests*/
-  d_token_t** requests;
-
-  /**configs for a request. */
-  in3_request_config_t* requests_configs;
-
-  /* selected nodes to process the request, which are stored as linked list.*/
-  node_match_t* nodes;
-
-  /** 
-   * optional cache-entries. 
-   * 
-   * These entries will be freed when cleaning up the context.
-   * */
-  cache_entry_t* cache;
-
-  /** the raw response-data, which should be verified. */
-  in3_response_t* raw_response;
-
-  /** pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
-  struct in3_ctx* required;
-
-  /** state of the verification */
-  in3_ret_t verification_state;
-
+  ctx_type_t      type;               /**< the type of the request */
+  in3_t*          client;             /**< reference to the client*/
+  json_ctx_t*     request_context;    /**< the result of the json-parser for the request.*/
+  json_ctx_t*     response_context;   /**< the result of the json-parser for the response.*/
+  char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
+  int             len;                /**< the number of requests */
+  unsigned int    attempt;            /**< the number of attempts */
+  d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
+  d_token_t**     requests;           /**< references to the tokens representring the requests*/
+  node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
+  cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
+  in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
+  struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
+  in3_ret_t       verification_state; /**< state of the verification */
+  bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
+  uint8_t         signers_length;     /**< number or addresses */
+  uint32_t*       times;              /**< meassured times in ms for the request */
 } in3_ctx_t;
 
 /**
@@ -417,4 +385,10 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
     const char* params  /**< [in] params as string. */
 );
 
+/**
+ * determines the proof as set in the request.
+ */
+NONULL in3_proof_t in3_ctx_get_proof(
+    in3_ctx_t* ctx /**< [in] the current request. */
+);
 #endif

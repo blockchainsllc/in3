@@ -76,34 +76,26 @@ NONULL static void response_free(in3_ctx_t* ctx) {
   ctx->responses        = NULL;
   ctx->raw_response     = NULL;
   ctx->nodes            = NULL;
-  if (ctx->requests_configs) {
-    if (ctx->requests_configs->verified_hashes) {
-      _free(ctx->requests_configs->verified_hashes);
-      ctx->requests_configs->verified_hashes = NULL;
-    }
-    if (ctx->requests_configs->signers_length) {
-      if (ctx->requests_configs->signers) {
-        _free(ctx->requests_configs->signers);
-        ctx->requests_configs->signers = NULL;
-      }
-    }
+  if (ctx->signers) {
+    _free(ctx->signers);
+    ctx->signers = NULL;
   }
 }
 
 NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
   // only for intern requests, we actually free the original request-string
-  if (is_sub) _free(ctx->request_context->c);
+  if (is_sub)
+    _free(ctx->request_context->c);
+  else
+    ctx->client->pending--;
   if (ctx->error) _free(ctx->error);
   response_free(ctx);
   if (ctx->request_context)
     json_free(ctx->request_context);
 
   if (ctx->requests) _free(ctx->requests);
-  if (ctx->requests_configs) {
-    if (ctx->requests_configs->times)
-      _free(ctx->requests_configs->times);
-    _free(ctx->requests_configs);
-  }
+  if (ctx->times)
+    _free(ctx->times);
   if (ctx->cache) in3_cache_free(ctx->cache);
   if (ctx->required) free_ctx_intern(ctx->required, true);
 
@@ -114,24 +106,17 @@ NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
   return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != ETH_CHAIN_ID_BTC);
 }
 
-NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* conf, d_token_t* request, in3_chain_t* chain) {
+NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
 
-  const in3_t* c     = ctx->client;
-  conf->chain_id     = c->chain_id;
-  conf->finality     = c->finality;
-  conf->latest_block = c->replace_latest_block;
-  conf->flags        = c->flags;
+  const in3_t* c = ctx->client;
 
-  if (c->proof == PROOF_NONE && !auto_ask_sig(ctx))
+  if (in3_ctx_get_proof(ctx) == PROOF_NONE && !auto_ask_sig(ctx))
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  if (conf->times) _free(conf->times);
-  conf->use_full_proof  = c->proof == PROOF_FULL;
-  conf->verification    = VERIFICATION_PROOF;
-  conf->times           = _calloc(ctx_nodes_len(ctx->nodes), sizeof(uint32_t));
-  uint8_t total_sig_cnt = c->signature_count ? c->signature_count
-                                             : auto_ask_sig(ctx) ? 1 : 0;
+  if (ctx->times) _free(ctx->times);
+  ctx->times            = _calloc(ctx_nodes_len(ctx->nodes), sizeof(uint32_t));
+  uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
     node_match_t*     signer_nodes = NULL;
@@ -141,34 +126,19 @@ NONULL static in3_ret_t configure_request(in3_ctx_t* ctx, in3_request_config_t* 
     const in3_ret_t res            = in3_node_list_pick_nodes(ctx, &signer_nodes, total_sig_cnt, filter);
     if (res < 0)
       return ctx_set_error(ctx, "Could not find any nodes for requesting signatures", res);
-    if (conf->signers) _free(conf->signers);
+    if (ctx->signers) _free(ctx->signers);
     const int node_count  = ctx_nodes_len(signer_nodes);
-    conf->signers_length  = node_count;
-    conf->signers         = _malloc(sizeof(bytes_t) * node_count);
+    ctx->signers_length   = node_count;
+    ctx->signers          = _malloc(sizeof(bytes_t) * node_count);
     const node_match_t* w = signer_nodes;
     for (int i = 0; i < node_count; i++) {
-      conf->signers[i].len  = w->node->address->len;
-      conf->signers[i].data = w->node->address->data;
-      w                     = w->next;
+      ctx->signers[i].len  = w->node->address->len;
+      ctx->signers[i].data = w->node->address->data;
+      w                    = w->next;
     }
     if (signer_nodes) in3_ctx_free_nodes(signer_nodes);
-
-    if (chain->verified_hashes) {
-      conf->verified_hashes_length = ctx->client->max_verified_hashes;
-      for (int i = 0; i < conf->verified_hashes_length; i++) {
-        if (!chain->verified_hashes[i].block_number) {
-          conf->verified_hashes_length = i;
-          break;
-        }
-      }
-      if (conf->verified_hashes_length) {
-        if (conf->verified_hashes) _free(conf->verified_hashes);
-        conf->verified_hashes = _malloc(sizeof(bytes_t) * conf->verified_hashes_length);
-        for (int i = 0; i < conf->verified_hashes_length; i++)
-          conf->verified_hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
-      }
-    }
   }
+
   return IN3_OK;
 }
 
@@ -205,11 +175,13 @@ NONULL static void add_token_to_hash(struct SHA3_CTX* msg_hash, d_token_t* t) {
 NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multichain) {
   static unsigned long rpc_id_counter = 1;
   char                 temp[100];
-  struct SHA3_CTX*     msg_hash = c->client->key ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  in3_t*               rc       = c->client;
+  struct SHA3_CTX*     msg_hash = rc->key ? alloca(sizeof(struct SHA3_CTX)) : NULL;
+  in3_proof_t          proof    = in3_ctx_get_proof(c);
 
   sb_add_char(sb, '[');
 
-  for (int i = 0; i < c->len; i++) {
+  for (uint_fast16_t i = 0; i < c->len; i++) {
     d_token_t *request_token = c->requests[i], *t;
     if (msg_hash) sha3_256_Init(msg_hash);
 
@@ -238,13 +210,12 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
       sb_add_key_value(sb, "params", ps.data, ps.len, false);
     }
 
-    in3_request_config_t* rc = c->requests_configs;
-    if (rc->verification == VERIFICATION_PROOF || msg_hash) {
+    if (proof || msg_hash) {
       // add in3
-      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", rc->verification == VERIFICATION_NEVER ? "never" : "proof", IN3_PROTO_VER));
+      sb_add_range(sb, temp, 0, sprintf(temp, ",\"in3\":{\"verification\":\"%s\",\"version\": \"%s\"", proof == PROOF_NONE ? "never" : "proof", IN3_PROTO_VER));
       if (multichain)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"chainId\":\"0x%x\"", (unsigned int) rc->chain_id));
-      const in3_chain_t* chain = in3_find_chain(c->client, c->requests_configs->chain_id ? c->requests_configs->chain_id : c->client->chain_id);
+      const in3_chain_t* chain = in3_find_chain(rc, c->client->chain_id);
       if (chain->whitelist) {
         const bytes_t adr = bytes(chain->whitelist->contract, 20);
         sb_add_bytes(sb, ",\"whiteListContract\":", &adr, 1, false);
@@ -259,20 +230,35 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
       }
       if (rc->finality)
         sb_add_range(sb, temp, 0, sprintf(temp, ",\"finality\":%i", rc->finality));
-      if (rc->latest_block)
-        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->latest_block));
-      if (rc->signers_length)
-        sb_add_bytes(sb, ",\"signers\":", rc->signers, rc->signers_length, true);
+      if (rc->replace_latest_block)
+        sb_add_range(sb, temp, 0, sprintf(temp, ",\"latestBlock\":%i", rc->replace_latest_block));
+      if (c->signers_length)
+        sb_add_bytes(sb, ",\"signers\":", c->signers, c->signers_length, true);
       if ((rc->flags & FLAGS_INCLUDE_CODE) && strcmp(d_get_stringk(request_token, K_METHOD), "eth_call") == 0)
         sb_add_chars(sb, ",\"includeCode\":true");
-      if (rc->use_full_proof)
+      if (proof == PROOF_FULL)
         sb_add_chars(sb, ",\"useFullProof\":true");
       if ((rc->flags & FLAGS_STATS) == 0)
         sb_add_chars(sb, ",\"noStats\":true");
       if ((rc->flags & FLAGS_BINARY))
         sb_add_chars(sb, ",\"useBinary\":true");
-      if (rc->verified_hashes_length)
-        sb_add_bytes(sb, ",\"verifiedHashes\":", rc->verified_hashes, rc->verified_hashes_length, true);
+
+      // do we have verified hashes?
+      if (chain->verified_hashes) {
+        uint_fast16_t l = rc->max_verified_hashes;
+        for (uint_fast16_t i = 0; i < l; i++) {
+          if (!chain->verified_hashes[i].block_number) {
+            l = i;
+            break;
+          }
+        }
+        if (l) {
+          bytes_t* hashes = alloca(sizeof(bytes_t) * l);
+          for (uint_fast16_t i = 0; i < l; i++) hashes[i] = bytes(chain->verified_hashes[i].hash, 32);
+          sb_add_bytes(sb, ",\"verifiedHashes\":", hashes, l, true);
+        }
+      }
+
 #ifdef PAY
       if (c->client->pay && c->client->pay->handle_request) {
         in3_ret_t ret = c->client->pay->handle_request(c, sb, rc, c->client->pay->cptr);
@@ -289,7 +275,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
 NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
   if (!ctx->client->cache || ctx->client->chain_id == ETH_CHAIN_ID_LOCAL) return;
-  chain_id_t chain_id = ctx->requests_configs->chain_id;
+  chain_id_t chain_id = ctx->client->chain_id;
   if (!chain_id) chain_id = ctx->client->chain_id;
   in3_cache_store_nodelist(ctx, in3_find_chain(ctx->client, chain_id));
 }
@@ -310,10 +296,10 @@ NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, 
   } else if (d_type(ctx->response_context->result) == T_ARRAY) {
     int        i;
     d_token_t* t = NULL;
-    if (d_len(ctx->response_context->result) != ctx->len)
+    if (d_len(ctx->response_context->result) != (int) ctx->len)
       return ctx_set_error(ctx, "The responses must be a array with the same number as the requests!", IN3_EINVALDT);
     ctx->responses = _malloc(sizeof(d_token_t*) * ctx->len);
-    for (i = 0, t = ctx->response_context->result + 1; i < ctx->len; i++, t = d_next(t))
+    for (i = 0, t = ctx->response_context->result + 1; i < (int) ctx->len; i++, t = d_next(t))
       ctx->responses[i] = t;
   } else
     return ctx_set_error(ctx, "The response must be a Object or Array", IN3_EINVALDT);
@@ -388,11 +374,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
   for (int n = 0; n < nodes_count; n++) {
 
     // handle times
-    in3_request_config_t* req_conf = ctx->requests_configs;
-    if (req_conf->times && node && node->weight && req_conf->times[n]) {
+    if (ctx->times && node && node->weight && ctx->times[n]) {
       node->weight->response_count++;
-      node->weight->total_response_time += req_conf->times[n];
-      req_conf->times[n] = 0; // make sure we count the time only once
+      node->weight->total_response_time += ctx->times[n];
+      ctx->times[n] = 0; // make sure we count the time only once
     }
 
     // since nodes_count was detected before, this should not happen!
@@ -413,10 +398,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
         blacklist_node(node);
       else {
         // check each request
-        for (int i = 0; i < ctx->len; i++) {
+        for (uint_fast16_t i = 0; i < ctx->len; i++) {
           vc.request = ctx->requests[i];
           vc.result  = d_get(ctx->responses[i], K_RESULT);
-          vc.config  = ctx->requests_configs;
+          vc.client  = ctx->client;
 
           if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
             // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
@@ -563,9 +548,9 @@ NONULL void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_res
   free_urls(req->urls, req->urls_len, ctx->client->flags & FLAGS_HTTP);
 
   if (req->times) {
-    if (ctx->requests_configs->times) {
+    if (ctx->times) {
       for (int i = 0; i < req->urls_len; i++)
-        ctx->requests_configs->times[i] = req->times[i];
+        ctx->times[i] = req->times[i];
     }
     _free(req->times);
   }
@@ -750,7 +735,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     case CT_RPC: {
 
       // check chain_id
-      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id);
+      in3_chain_t* chain = in3_find_chain(ctx->client, ctx->client->chain_id);
       if (!chain) return ctx_set_error(ctx, "chain not found", IN3_EFIND);
 
       // find the verifier
@@ -765,9 +750,9 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (!ctx->raw_response && !ctx->nodes) {
         in3_node_filter_t filter = NODE_FILTER_INIT;
         filter.nodes             = d_get(d_get(ctx->requests[0], K_IN3), K_DATA_NODES);
-        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (ctx->client->proof != PROOF_NONE ? NODE_PROP_PROOF : 0);
+        filter.props             = (ctx->client->node_props & 0xFFFFFFFF) | NODE_PROP_DATA | ((ctx->client->flags & FLAGS_HTTP) ? NODE_PROP_HTTP : 0) | (in3_ctx_get_proof(ctx) != PROOF_NONE ? NODE_PROP_PROOF : 0);
         if ((ret = in3_node_list_pick_nodes(ctx, &ctx->nodes, ctx->client->request_count, filter)) == IN3_OK) {
-          if ((ret = configure_request(ctx, ctx->requests_configs, ctx->requests[0], chain)) < 0)
+          if ((ret = pick_signers(ctx, ctx->requests[0])) < 0)
             return ctx_set_error(ctx, "error configuring the config for request", ret);
 
 #ifdef PAY
@@ -778,7 +763,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
 
         } else
           // since we could not get the nodes, we either report it as error or wait.
-          return ret == IN3_WAITING ? ret : ctx_set_error(ctx, "could not find any node", ret);
+          return ctx_set_error(ctx, "could not find any node", ret);
       }
 
       // if we still don't have an response, we keep on waiting
