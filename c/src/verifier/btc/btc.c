@@ -289,6 +289,15 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
 /**
  * check a block
  */
+in3_ret_t btc_verify_blockcount(in3_vctx_t* vc) {
+  // verify the blockheader
+  //TODO verify the proof
+  return vc->proof ? IN3_OK : vc_err(vc, "missing the proof");
+}
+
+/**
+ * check a block
+ */
 in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bool full_block) {
   uint8_t   block_header[80];
   bytes32_t block_target, hash, tmp, tmp2;
@@ -419,6 +428,9 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, true);
+  }
+  if (strcmp(method, "getblockcount") == 0) {
+    return btc_verify_blockcount(vc);
   }
   if (strcmp(method, "getblockheader") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);

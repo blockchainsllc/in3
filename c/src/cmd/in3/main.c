@@ -1157,14 +1157,18 @@ int main(int argc, char* argv[]) {
   }
 
   in3_log_debug("..sending request %s %s\n", method, params);
+  in3_chain_t* chain = in3_find_chain(c, c->chain_id);
 
   // send the request
   in3_client_rpc(c, method, params, &result, &error);
 
   // Update nodelist if a newer latest block was reported
-  if (in3_find_chain(c, c->chain_id)->nodelist_upd8_params && in3_find_chain(c, c->chain_id)->nodelist_upd8_params->exp_last_block) {
+  if (chain && chain->nodelist_upd8_params && chain->nodelist_upd8_params->exp_last_block) {
     char *r = NULL, *e = NULL;
-    in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
+    if (chain->type == CHAIN_ETH)
+      in3_client_rpc(c, "eth_blockNumber", "[]", &r, &e);
+    //    else if (chain->type == CHAIN_BTC)
+    //     in3_client_rpc(c, "getblockcount", "[]", &r, &e);
   }
 
   // if we need to wait
