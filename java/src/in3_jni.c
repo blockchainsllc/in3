@@ -368,11 +368,14 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       const size_t l     = (*jni)->GetArrayLength(jni, content);
       uint8_t*     bytes = _malloc(l);
       (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
-      sb_add_range(&req->results[i].result, (char*) bytes, 0, l);
+      sb_add_range(&req->results[i].data, (char*) bytes, 0, l);
+      req->results[i].state = IN3_OK;
       _free(bytes);
-    } else
-      sb_add_chars(&req->results[i].error, "Could not fetch the data!");
-    if (req->results[i].error.len) success = IN3_ERPC;
+    } else {
+      sb_add_chars(&req->results[i].data, "Could not fetch the data!");
+      req->results[i].state = IN3_ERPC;
+    }
+    if (req->results[i].state) success = IN3_ERPC;
   }
   uint64_t end = current_ms();
 

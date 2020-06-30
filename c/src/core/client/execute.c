@@ -54,32 +54,26 @@
 #define BLACKLISTTIME 24 * 3600
 
 NONULL static void response_free(in3_ctx_t* ctx) {
+  int nodes_count = 1;
   if (ctx->nodes) {
-    const int nodes_count = ctx_nodes_len(ctx->nodes);
+    nodes_count = ctx_nodes_len(ctx->nodes);
     in3_ctx_free_nodes(ctx->nodes);
-    if (ctx->raw_response) {
-      for (int i = 0; i < nodes_count; i++) {
-        _free(ctx->raw_response[i].error.data);
-        _free(ctx->raw_response[i].result.data);
-      }
-      _free(ctx->raw_response);
+  }
+  if (ctx->raw_response) {
+    for (int i = 0; i < nodes_count; i++) {
+      if (ctx->raw_response[i].data.data) _free(ctx->raw_response[i].data.data);
     }
-  } else if (ctx->raw_response) {
-    _free(ctx->raw_response[0].error.data);
-    _free(ctx->raw_response[0].result.data);
     _free(ctx->raw_response);
   }
 
   if (ctx->responses) _free(ctx->responses);
   if (ctx->response_context) json_free(ctx->response_context);
+  if (ctx->signers) _free(ctx->signers);
   ctx->response_context = NULL;
   ctx->responses        = NULL;
   ctx->raw_response     = NULL;
   ctx->nodes            = NULL;
-  if (ctx->signers) {
-    _free(ctx->signers);
-    ctx->signers = NULL;
-  }
+  ctx->signers          = NULL;
 }
 
 NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
@@ -114,8 +108,6 @@ NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
     return IN3_OK;
 
   // For nodeList request, we always ask for proof & atleast one signature
-  if (ctx->times) _free(ctx->times);
-  ctx->times            = _calloc(ctx_nodes_len(ctx->nodes), sizeof(uint32_t));
   uint8_t total_sig_cnt = c->signature_count ? c->signature_count : auto_ask_sig(ctx) ? 1 : 0;
 
   if (total_sig_cnt) {
@@ -276,8 +268,7 @@ NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
   if (!ctx->client->cache || ctx->client->chain_id == ETH_CHAIN_ID_LOCAL) return;
   chain_id_t chain_id = ctx->client->chain_id;
-  if (!chain_id) chain_id = ctx->client->chain_id;
-  in3_cache_store_nodelist(ctx, in3_find_chain(ctx->client, chain_id));
+  in3_cache_store_nodelist(ctx->client, in3_find_chain(ctx->client, chain_id));
 }
 
 NONULL static in3_ret_t ctx_parse_response(in3_ctx_t* ctx, char* response_data, int len) {
@@ -367,11 +358,18 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
   // find the verifier
   in3_vctx_t vc;
-  vc.ctx   = ctx;
-  vc.chain = chain;
+  vc.ctx             = ctx;
+  vc.chain           = chain;
+  bool still_pending = false;
 
   // blacklist nodes for missing response
-  for (int n = 0; n < nodes_count; n++) {
+  for (int n = 0; n < nodes_count; n++, node = node ? node->next : NULL) {
+
+    // if the response is still pending, we skip...
+    if (response[n].state == IN3_WAITING) {
+      still_pending = true;
+      continue;
+    }
 
     // handle times
     if (ctx->times && node && node->weight && ctx->times[n]) {
@@ -381,10 +379,19 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     }
 
     // since nodes_count was detected before, this should not happen!
-
-    if (response[n].error.len || !response[n].result.len) {
-      blacklist_node(node);
-      ctx_set_error(ctx, response[n].error.len ? response[n].error.data : "no response from node", IN3_ERPC);
+    if (response[n].state) {
+      if (is_blacklisted(node))
+        continue;
+      else if (node)
+        blacklist_node(node);
+      ctx_set_error(ctx, response[n].data.len ? response[n].data.data : "no response from node", IN3_ERPC);
+      if (response[n].data.data) {
+        // clean up invalid data
+        _free(response[n].data.data);
+        response[n].data.data     = NULL;
+        response[n].data.allocted = 0;
+        response[n].data.len      = 0;
+      }
     } else {
       // we need to clean up the previos responses if set
       if (ctx->error) _free(ctx->error);
@@ -392,8 +399,8 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
       if (ctx->response_context) json_free(ctx->response_context);
       ctx->error = NULL;
 
-      if (node && node->weight) node->weight->blacklisted_until = 0;                            // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
-      in3_ret_t res = ctx_parse_response(ctx, response[n].result.data, response[n].result.len); // parse the result
+      if (node && node->weight) node->weight->blacklisted_until = 0;                        // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
+      in3_ret_t res = ctx_parse_response(ctx, response[n].data.data, response[n].data.len); // parse the result
       if (res < 0)
         blacklist_node(node);
       else {
@@ -459,16 +466,22 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     }
 
     // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-    if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3))
+    if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
       check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
 
     // !node_weight is valid, because it means this is a internaly handled response
     if (!node || !is_blacklisted(node))
       return IN3_OK; // this reponse was successfully verified, so let us keep it.
-
-    node = node->next;
   }
-  // no valid response found
+  // no valid response found,
+  // if pending, we remove the error and wait
+  if (still_pending) {
+    if (ctx->error) _free(ctx->error);
+    ctx->error              = NULL;
+    ctx->verification_state = IN3_WAITING;
+    return IN3_WAITING;
+  }
+
   return IN3_EINVAL;
 }
 
@@ -520,20 +533,19 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   }
 
   // prepare response-object
-  in3_request_t* request = _malloc(sizeof(in3_request_t));
+  if (ctx->times) _free(ctx->times);
+  in3_request_t* request = _calloc(sizeof(in3_request_t), 1);
   request->in3           = ctx->client;
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;
-  request->times         = NULL;
+  request->times         = nodes_count ? _calloc(nodes_count, sizeof(uint32_t)) : NULL;
   request->timeout       = ctx->client->timeout;
+  ctx->times             = request->times;
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
-  request->results = _malloc(sizeof(in3_response_t) * nodes_count);
-  for (int n = 0; n < nodes_count; n++) {
-    sb_init(&request->results[n].error);
-    sb_init(&request->results[n].result);
-  }
+  request->results = _calloc(sizeof(in3_response_t), nodes_count);
+  for (int n = 0; n < nodes_count; n++) request->results[n].state = IN3_WAITING;
 
   // we set the raw_response
   ctx->raw_response = request->results;
@@ -543,22 +555,14 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   return request;
 }
 
-NONULL void request_free(in3_request_t* req, const in3_ctx_t* ctx, bool free_response) {
+NONULL void request_free(in3_request_t* req, const in3_t* c, bool free_response) {
   // free resources
-  free_urls(req->urls, req->urls_len, ctx->client->flags & FLAGS_HTTP);
-
-  if (req->times) {
-    if (ctx->times) {
-      for (int i = 0; i < req->urls_len; i++)
-        ctx->times[i] = req->times[i];
-    }
-    _free(req->times);
-  }
+  free_urls(req->urls, req->urls_len, c->flags & FLAGS_HTTP);
 
   if (free_response) {
     for (int n = 0; n < req->urls_len; n++) {
-      _free(req->results[n].error.data);
-      _free(req->results[n].result.data);
+      if (req->results[n].data.data)
+        _free(req->results[n].data.data);
     }
     _free(req->results);
   }
@@ -630,12 +634,11 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
               return IN3_ENOMEM;
             in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
             ctx->client->transport(request);
-            if (request->results[0].error.len) {
-              in3_log_trace("... response: \n... " COLOR_RED_STR "\n", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
-            } else {
-              in3_log_trace("... response: \n... " COLOR_GREEN_STR "\n", request->results[0].error.len ? request->results[0].error.data : request->results[0].result.data);
-            }
-            request_free(request, ctx, false);
+            in3_log_trace(request->results->state
+                              ? "... response: \n... " COLOR_RED_STR "\n"
+                              : "... response: \n... " COLOR_GREEN_STR "\n",
+                          request->results->data.data);
+            request_free(request, ctx->client, false);
             break;
           } else
             return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
@@ -652,13 +655,12 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
             if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
-            ctx->raw_response = _malloc(sizeof(in3_response_t));
-            sb_init(&ctx->raw_response[0].error);
-            sb_init(&ctx->raw_response[0].result);
+            ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
+            sb_init(&ctx->raw_response[0].data);
             in3_log_trace("... request to sign ");
             res = ctx->client->signer->sign(&sign_ctx);
-            if (res < 0) return ctx_set_error(ctx, ctx->raw_response->error.data, res);
-            sb_add_range(&ctx->raw_response->result, (char*) sign_ctx.signature, 0, 65);
+            if (res < 0) return ctx_set_error(ctx, ctx->raw_response->data.data, res);
+            sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
             break;
           } else
             return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
@@ -716,6 +718,10 @@ void ctx_free(in3_ctx_t* ctx) {
   if (ctx) free_ctx_intern(ctx, false);
 }
 
+static inline in3_ret_t pre_handle(in3_verifier_t* verifier, in3_ctx_t* ctx) {
+  return verifier->pre_handle ? verifier->pre_handle(ctx, &ctx->raw_response) : IN3_OK;
+}
+
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
@@ -743,7 +749,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
       if (verifier == NULL) return ctx_set_error(ctx, "No Verifier found", IN3_EFIND);
 
       // do we need to handle it internaly?
-      if (!ctx->raw_response && !ctx->response_context && verifier->pre_handle && (ret = verifier->pre_handle(ctx, &ctx->raw_response)) < 0)
+      if (!ctx->raw_response && !ctx->response_context && (ret = pre_handle(verifier, ctx)) < 0)
         return ctx_set_error(ctx, "The request could not be handled", ret);
 
       // if we don't have a nodelist, we try to get it.
@@ -805,12 +811,10 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     }
 
     case CT_SIGN: {
-      if (!ctx->raw_response)
+      if (!ctx->raw_response || ctx->raw_response->state == IN3_WAITING)
         return IN3_WAITING;
-      else if (ctx->raw_response->error.len)
+      else if (ctx->raw_response->state)
         return IN3_ERPC;
-      else if (!ctx->raw_response->result.len)
-        return IN3_WAITING;
       return IN3_OK;
     }
     default:
@@ -825,9 +829,10 @@ void in3_req_add_response(
     const char*    data,     /**<  the data or the the string*/
     int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 ) {
-  sb_t* sb = is_error ? &req->results[index].error : &req->results[index].result;
+  if (req->results[index].state == IN3_OK && is_error) req->results[index].data.len = 0;
+  req->results[index].state = is_error ? IN3_ERPC : IN3_OK;
   if (data_len == -1)
-    sb_add_chars(sb, data);
+    sb_add_chars(&req->results[index].data, data);
   else
-    sb_add_range(sb, data, 0, data_len);
+    sb_add_range(&req->results[index].data, data, 0, data_len);
 }

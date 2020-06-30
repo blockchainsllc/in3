@@ -31,9 +31,11 @@
  * You should have received a copy of the GNU Affero General Public License along 
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
+#include "../../c/src/core/client/cache.h"
 #include "../../c/src/core/client/client.h"
 #include "../../c/src/core/client/context_internal.h"
 #include "../../c/src/core/client/keys.h"
+#include "../../c/src/core/client/nodelist.h"
 #include "../../c/src/core/client/version.h"
 #include "../../c/src/core/util/mem.h"
 #include "../../c/src/third-party/crypto/ecdsa.h"
@@ -54,6 +56,7 @@
 #endif
 
 #define err_string(msg) (":ERROR:" msg)
+#define BLACKLISTTIME 24 * 3600
 
 static char*    last_error = NULL;
 static uint32_t now() {
@@ -153,31 +156,39 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
 
   // create next request
   if (last_waiting) {
-    in3_request_t* request = in3_create_request(last_waiting);
-    if (request == NULL)
-      sb_add_chars(sb, ",\"error\",\"could not create request, memory?\"");
-    else {
-      request->times = _malloc(sizeof(uint32_t) * request->urls_len);
-      uint32_t start = now();
-      char     tmp[160];
+    char tmp[160];
+    if (last_waiting->raw_response) {
       sb_add_chars(sb, ",\"request\":{ \"type\": ");
       sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
-      sb_add_chars(sb, ",\"timeout\":");
-      sprintf(tmp, "%d", (unsigned int) request->timeout);
+      sprintf(tmp, ",\"ctx\":%d}", (unsigned int) last_waiting);
       sb_add_chars(sb, tmp);
-      sb_add_chars(sb, ",\"payload\":");
-      sb_add_chars(sb, request->payload);
-      sb_add_chars(sb, ",\"urls\":[");
-      for (int i = 0; i < request->urls_len; i++) {
-        request->times[i] = start;
-        if (i) sb_add_char(sb, ',');
-        sb_add_char(sb, '"');
-        sb_add_escaped_chars(sb, request->urls[i]);
-        sb_add_char(sb, '"');
+    } else {
+
+      // do we need to create a new req uest or are there pending responses?
+      in3_request_t* request = in3_create_request(last_waiting);
+      if (request == NULL)
+        sb_add_chars(sb, ",\"error\",\"could not create request\"");
+      else {
+        uint32_t start = now();
+        sb_add_chars(sb, ",\"request\":{ \"type\": ");
+        sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+        sb_add_chars(sb, ",\"timeout\":");
+        sprintf(tmp, "%d", (unsigned int) request->timeout);
+        sb_add_chars(sb, tmp);
+        sb_add_chars(sb, ",\"payload\":");
+        sb_add_chars(sb, request->payload);
+        sb_add_chars(sb, ",\"urls\":[");
+        for (int i = 0; i < request->urls_len; i++) {
+          request->times[i] = start;
+          if (i) sb_add_char(sb, ',');
+          sb_add_char(sb, '"');
+          sb_add_escaped_chars(sb, request->urls[i]);
+          sb_add_char(sb, '"');
+        }
+        sb_add_chars(sb, "],\"ptr\":");
+        sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
+        sb_add_chars(sb, tmp);
       }
-      sb_add_chars(sb, "],\"ptr\":");
-      sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
-      sb_add_chars(sb, tmp);
     }
   }
   sb_add_char(sb, '}');
@@ -192,20 +203,32 @@ void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
-void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_ctx_t* ctx, in3_request_t* r) {
-  request_free(r, ctx, false);
+void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_t* c, in3_request_t* r) {
+  request_free(r, c, false);
+}
+void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
+  in3_chain_t* chain = in3_find_chain(in3, in3->chain_id);
+  if (!chain) return;
+  for (int i = 0; i < chain->nodelist_length; i++) {
+    if (strcmp(chain->nodelist[i].url, url) == 0) {
+      chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
+      // we don't update weights for local chains.
+      if (!in3->cache || in3->chain_id == ETH_CHAIN_ID_LOCAL) return;
+      in3_cache_store_nodelist(in3, chain);
+      return;
+    }
+  }
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
-  r->times[i] = now() - r->times[i];
-  if (is_error)
-    sb_add_chars(&r->results[i].error, msg);
-  else if (ctx->type == CT_SIGN) {
+  r->times[i]         = now() - r->times[i];
+  r->results[i].state = is_error ? IN3_ERPC : IN3_OK;
+  if (ctx->type == CT_SIGN && !is_error) {
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
-    sb_add_range(&r->results[i].result, (char*) sig, 0, 65);
+    sb_add_range(&r->results[i].data, (char*) sig, 0, 65);
   } else
-    sb_add_chars(&r->results[i].result, msg);
+    sb_add_chars(&r->results[i].data, msg);
 }
 #ifdef IPFS
 

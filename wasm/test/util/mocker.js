@@ -4,16 +4,21 @@ const axios = require('axios')
 const Client = IN3
 let responses = {}
 function test_transport(url, data) {
-    return Promise.resolve(JSON.stringify(JSON.parse(data).map(r => {
-        const names = responses[r.method]
-        if (!names || !names.length)
-            throw new Error('failing to find the request for ' + JSON.stringify(r))
-        const rdata = require('../responses/' + r.method + '.json')
-        const res = rdata[names[0]]
-        if (!res) throw new Error('Could not find response ' + names[0])
-        names.splice(0, 1)
-        return res
-    })))
+    try {
+        return Promise.resolve(JSON.stringify(JSON.parse(data).map(r => {
+            const names = responses[r.method]
+            if (!names || !names.length)
+                throw new Error('failing to find the request for ' + JSON.stringify(r))
+            const rdata = require('../responses/' + r.method + '.json')
+            const res = rdata[names[0]]
+            if (!res) throw new Error('Could not find response ' + names[0])
+            names.splice(0, 1)
+            return res
+        })))
+    }
+    catch (x) {
+        return Promise.reject(x)
+    }
 }
 
 function beforeTest(done) {

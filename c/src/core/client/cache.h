@@ -65,7 +65,7 @@ in3_ret_t in3_cache_update_nodelist(
  * 
  */
 in3_ret_t in3_cache_store_nodelist(
-    in3_ctx_t*   ctx,  /**< the current incubed context */
+    in3_t*       c,    /**< the client */
     in3_chain_t* chain /**< the chain upating to cache */
 );
 

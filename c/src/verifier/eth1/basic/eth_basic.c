@@ -48,16 +48,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#define RESPONSE_START()                                                             \
-  do {                                                                               \
-    *response = _malloc(sizeof(in3_response_t));                                     \
-    sb_init(&response[0]->result);                                                   \
-    sb_init(&response[0]->error);                                                    \
-    sb_add_chars(&response[0]->result, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
+#define RESPONSE_START()                                                           \
+  do {                                                                             \
+    *response          = _malloc(sizeof(in3_response_t));                          \
+    response[0]->state = IN3_OK;                                                   \
+    sb_init(&response[0]->data);                                                   \
+    sb_add_chars(&response[0]->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
   } while (0)
 
 #define RESPONSE_END() \
-  do { sb_add_char(&response[0]->result, '}'); } while (0)
+  do { sb_add_char(&response[0]->data, '}'); } while (0)
 
 in3_ret_t in3_verify_eth_basic(in3_vctx_t* vc) {
   char* method = d_get_stringk(vc->request, K_METHOD);
@@ -132,25 +132,25 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
     }
 
     RESPONSE_START();
-    sb_add_char(&response[0]->result, '"');
-    sb_add_hexuint(&response[0]->result, res);
-    sb_add_char(&response[0]->result, '"');
+    sb_add_char(&response[0]->data, '"');
+    sb_add_hexuint(&response[0]->data, res);
+    sb_add_char(&response[0]->data, '"');
     RESPONSE_END();
     return IN3_OK;
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_chainId") == 0) {
     RESPONSE_START();
-    sb_add_char(&response[0]->result, '"');
-    sb_add_hexuint(&response[0]->result, ctx->client->chain_id);
-    sb_add_char(&response[0]->result, '"');
+    sb_add_char(&response[0]->data, '"');
+    sb_add_hexuint(&response[0]->data, ctx->client->chain_id);
+    sb_add_char(&response[0]->data, '"');
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newBlockFilter") == 0) {
     in3_ret_t res = filter_add(ctx, FILTER_BLOCK, NULL);
     if (res < 0) return ctx_set_error(ctx, "filter creation failed", res);
 
     RESPONSE_START();
-    sb_add_char(&response[0]->result, '"');
-    sb_add_hexuint(&response[0]->result, res);
-    sb_add_char(&response[0]->result, '"');
+    sb_add_char(&response[0]->data, '"');
+    sb_add_hexuint(&response[0]->data, res);
+    sb_add_char(&response[0]->data, '"');
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_newPendingTransactionFilter") == 0) {
     return ctx_set_error(ctx, "pending filter not supported", IN3_ENOTSUP);
@@ -161,7 +161,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
 
     uint64_t id = d_get_long_at(tx_params, 0);
     RESPONSE_START();
-    sb_add_chars(&response[0]->result, filter_remove(ctx->client, id) ? "true" : "false");
+    sb_add_chars(&response[0]->data, filter_remove(ctx->client, id) ? "true" : "false");
     RESPONSE_END();
   } else if (strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterChanges") == 0 || strcmp(d_get_stringk(req, K_METHOD), "eth_getFilterLogs") == 0) {
     d_token_t* tx_params = d_get(req, K_PARAMS);
@@ -176,7 +176,7 @@ in3_ret_t eth_handle_intern(in3_ctx_t* ctx, in3_response_t** response) {
       return ctx_set_error(ctx, "failed to get filter changes", ret);
     }
     RESPONSE_START();
-    sb_add_chars(&response[0]->result, sb->data);
+    sb_add_chars(&response[0]->data, sb->data);
     sb_free(sb);
     RESPONSE_END();
   }

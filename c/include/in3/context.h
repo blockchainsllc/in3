@@ -76,22 +76,22 @@ typedef struct weight {
  * */
 typedef struct in3_ctx {
   ctx_type_t      type;               /**< the type of the request */
-  in3_t*          client;             /**< reference to the client*/
+  in3_ret_t       verification_state; /**< state of the verification */
+  char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
+  uint_fast16_t   len;                /**< the number of requests */
+  uint_fast16_t   attempt;            /**< the number of attempts */
   json_ctx_t*     request_context;    /**< the result of the json-parser for the request.*/
   json_ctx_t*     response_context;   /**< the result of the json-parser for the response.*/
-  char*           error;              /**< in case of an error this will hold the message, if not it points to `NULL` */
-  int             len;                /**< the number of requests */
-  unsigned int    attempt;            /**< the number of attempts */
-  d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
   d_token_t**     requests;           /**< references to the tokens representring the requests*/
+  d_token_t**     responses;          /**< references to the tokens representring the parsed responses*/
+  in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
+  bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
+  uint_fast8_t    signers_length;     /**< number or addresses */
+  uint32_t*       times;              /**< meassured times in ms for the request */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
-  in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
-  in3_ret_t       verification_state; /**< state of the verification */
-  bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
-  uint8_t         signers_length;     /**< number or addresses */
-  uint32_t*       times;              /**< meassured times in ms for the request */
+  in3_t*          client;             /**< reference to the client*/
 } in3_ctx_t;
 
 /**
@@ -219,7 +219,7 @@ NONULL in3_ret_t in3_send_ctx(
             ctx->client->transport(request);
 
             // clean up
-            request_free(request, ctx, false);
+            request_free(request, ctx->client, false);
             break;
         }
 

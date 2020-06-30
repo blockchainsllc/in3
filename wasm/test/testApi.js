@@ -118,6 +118,12 @@ describe('API-Tests', () => {
         assert.equal(res, 3220)
     })
 
+    it('requestCount', async () => {
+        mockResponse('eth_blockNumber', '0x1')
+        const res = await createClient({ requestCount: 3 }).eth.blockNumber()
+        assert.equal(res, 3220)
+    })
+
 
     it('eth.gasPrice()', async () => {
         mockResponse('eth_gasPrice', 'gas')

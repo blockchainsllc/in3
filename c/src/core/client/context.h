@@ -219,7 +219,7 @@ NONULL in3_ret_t in3_send_ctx(
             ctx->client->transport(request);
 
             // clean up
-            request_free(request, ctx, false);
+            request_free(request, ctx->client, false);
             break;
         }
 

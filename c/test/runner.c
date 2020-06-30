@@ -177,8 +177,10 @@ static int send_mock(in3_request_t* req) {
   int     i;
   bytes_t response;
   if (d_len(_tmp_responses) <= _tmp_pos) {
-    for (i = 0; i < req->urls_len; i++)
-      sb_add_chars(&(req->results + i)->error, "Reached end of available responses!");
+    for (i = 0; i < req->urls_len; i++) {
+      req->results[i].state = IN3_ECONFIG;
+      sb_add_chars(&(req->results + i)->data, "Reached end of available responses!");
+    }
     return IN3_EINVAL;
   }
 
@@ -201,8 +203,10 @@ static int send_mock(in3_request_t* req) {
   }
 
   // printf("payload: %s\n",payload);
-  for (i = 0; i < req->urls_len; i++)
-    sb_add_range(&(req->results + i)->result, (char*) response.data, 0, response.len);
+  for (i = 0; i < req->urls_len; i++) {
+    sb_add_range(&(req->results + i)->data, (char*) response.data, 0, response.len);
+    req->results[i].state = IN3_OK;
+  }
 
   _free(response.data);
   _tmp_pos++;

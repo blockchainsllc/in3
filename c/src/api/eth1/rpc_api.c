@@ -53,16 +53,18 @@
 #define ETH_SIGN_PREFIX "\x19" \
                         "Ethereum Signed Message:\n%u"
 
-#define RESPONSE_START()                                                             \
-  do {                                                                               \
-    *response = _malloc(sizeof(in3_response_t));                                     \
-    sb_init(&response[0]->result);                                                   \
-    sb_init(&response[0]->error);                                                    \
-    sb_add_chars(&response[0]->result, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
+#define RESPONSE_START()                                                           \
+  do {                                                                             \
+    *response = _malloc(sizeof(in3_response_t));                                   \
+    sb_init(&response[0]->data);                                                   \
+    sb_add_chars(&response[0]->data, "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":"); \
   } while (0)
 
-#define RESPONSE_END() \
-  do { sb_add_char(&response[0]->result, '}'); } while (0)
+#define RESPONSE_END()                    \
+  do {                                    \
+    sb_add_char(&response[0]->data, '}'); \
+    response[0]->state = IN3_OK;          \
+  } while (0)
 
 static in3_verify     parent_verify = NULL;
 static in3_pre_handle parent_handle = NULL;
@@ -82,7 +84,7 @@ static in3_ret_t in3_abiEncode(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     req_free(req);
     return ctx_set_error(ctx, "invalid input data", IN3_EINVAL);
   }
-  sb_add_bytes(&response[0]->result, NULL, &req->call_data->b, 1, false);
+  sb_add_bytes(&response[0]->data, NULL, &req->call_data->b, 1, false);
   req_free(req);
   RESPONSE_END();
   return IN3_OK;
@@ -103,7 +105,7 @@ static in3_ret_t in3_abiDecode(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   if (!res)
     return ctx_set_error(ctx, "the input data can not be decoded", IN3_EINVAL);
   char* result = d_create_json(res->result);
-  sb_add_chars(&response[0]->result, result);
+  sb_add_chars(&response[0]->data, result);
   json_free(res);
   _free(result);
 
@@ -117,9 +119,9 @@ static in3_ret_t in3_checkSumAddress(in3_ctx_t* ctx, d_token_t* params, in3_resp
   in3_ret_t res = to_checksum(adr->data, d_get_int_at(params, 1) ? ctx->client->chain_id : 0, result);
   if (res) return ctx_set_error(ctx, "Could not create the checksum address", res);
   RESPONSE_START();
-  sb_add_char(&response[0]->result, '\'');
-  sb_add_chars(&response[0]->result, result);
-  sb_add_char(&response[0]->result, '\'');
+  sb_add_char(&response[0]->data, '\'');
+  sb_add_chars(&response[0]->data, result);
+  sb_add_char(&response[0]->data, '\'');
   RESPONSE_END();
   return IN3_OK;
 }
@@ -151,7 +153,7 @@ static in3_ret_t in3_ens(in3_ctx_t* ctx, d_token_t* params, in3_response_t** res
   bytes_t result_bytes = bytes(result, res_len);
 
   RESPONSE_START();
-  sb_add_bytes(&response[0]->result, NULL, &result_bytes, 1, false);
+  sb_add_bytes(&response[0]->data, NULL, &result_bytes, 1, false);
   RESPONSE_END();
   return IN3_OK;
 }
@@ -162,7 +164,7 @@ static in3_ret_t in3_sha3(in3_ctx_t* ctx, d_token_t* params, in3_response_t** re
   bytes32_t hash;
   bytes_t   hbytes = bytes(hash, 32);
   sha3_to(&data, hash);
-  sb_add_bytes(&response[0]->result, NULL, &hbytes, 1, false);
+  sb_add_bytes(&response[0]->data, NULL, &hbytes, 1, false);
   RESPONSE_END();
   return IN3_OK;
 }
@@ -180,14 +182,14 @@ static in3_ret_t in3_config(in3_ctx_t* ctx, d_token_t* params, in3_response_t** 
     return IN3_ECONFIG;
   }
   RESPONSE_START();
-  sb_add_chars(&response[0]->result, "true");
+  sb_add_chars(&response[0]->data, "true");
   RESPONSE_END();
   return IN3_OK;
 }
 static in3_ret_t in3_getConfig(in3_ctx_t* ctx, in3_response_t** response) {
   char* ret = in3_get_config(ctx->client);
   RESPONSE_START();
-  sb_add_chars(&response[0]->result, ret);
+  sb_add_chars(&response[0]->data, ret);
   RESPONSE_END();
   _free(ret);
   return IN3_OK;
@@ -203,9 +205,9 @@ static in3_ret_t in3_pk2address(in3_ctx_t* ctx, d_token_t* params, in3_response_
   RESPONSE_START();
   if (strcmp(d_get_stringk(ctx->requests[0], K_METHOD), "in3_pk2address") == 0) {
     sha3_to(&pubkey_bytes, sdata);
-    sb_add_bytes(&response[0]->result, NULL, &addr, 1, false);
+    sb_add_bytes(&response[0]->data, NULL, &addr, 1, false);
   } else
-    sb_add_bytes(&response[0]->result, NULL, &pubkey_bytes, 1, false);
+    sb_add_bytes(&response[0]->data, NULL, &pubkey_bytes, 1, false);
   RESPONSE_END();
   return IN3_OK;
 }
@@ -238,14 +240,14 @@ static in3_ret_t in3_ecrecover(in3_ctx_t* ctx, d_token_t* params, in3_response_t
     return ctx_set_error(ctx, "Invalid Signature", IN3_EINVAL);
 
   RESPONSE_START();
-  sb_add_char(&response[0]->result, '{');
+  sb_add_char(&response[0]->data, '{');
   sha3_to(&pubkey_bytes, hash);
-  sb_add_bytes(&response[0]->result, "\"publicKey\":", &pubkey_bytes, 1, false);
-  sb_add_char(&response[0]->result, ',');
+  sb_add_bytes(&response[0]->data, "\"publicKey\":", &pubkey_bytes, 1, false);
+  sb_add_char(&response[0]->data, ',');
   pubkey_bytes.data = hash + 12;
   pubkey_bytes.len  = 20;
-  sb_add_bytes(&response[0]->result, "\"address\":", &pubkey_bytes, 1, false);
-  sb_add_char(&response[0]->result, '}');
+  sb_add_bytes(&response[0]->data, "\"address\":", &pubkey_bytes, 1, false);
+  sb_add_char(&response[0]->data, '}');
   RESPONSE_END();
   return IN3_OK;
 }
@@ -290,27 +292,27 @@ static in3_ret_t in3_sign_data(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   sc.signature[64] += 27;
 
   RESPONSE_START();
-  sb_add_char(&response[0]->result, '{');
-  sb_add_bytes(&response[0]->result, "\"message\":", &data, 1, false);
-  sb_add_char(&response[0]->result, ',');
+  sb_add_char(&response[0]->data, '{');
+  sb_add_bytes(&response[0]->data, "\"message\":", &data, 1, false);
+  sb_add_char(&response[0]->data, ',');
   if (strcmp(sig_type, "raw") == 0) {
     bytes32_t hash_val;
     bytes_t   hash_bytes = bytes(hash_val, 32);
     sha3_to(&data, hash_val);
-    sb_add_bytes(&response[0]->result, "\"messageHash\":", &hash_bytes, 1, false);
+    sb_add_bytes(&response[0]->data, "\"messageHash\":", &hash_bytes, 1, false);
   } else
-    sb_add_bytes(&response[0]->result, "\"messageHash\":", &data, 1, false);
-  sb_add_char(&response[0]->result, ',');
-  sb_add_bytes(&response[0]->result, "\"signature\":", &sig_bytes, 1, false);
+    sb_add_bytes(&response[0]->data, "\"messageHash\":", &data, 1, false);
+  sb_add_char(&response[0]->data, ',');
+  sb_add_bytes(&response[0]->data, "\"signature\":", &sig_bytes, 1, false);
   sig_bytes = bytes(sc.signature, 32);
-  sb_add_char(&response[0]->result, ',');
-  sb_add_bytes(&response[0]->result, "\"r\":", &sig_bytes, 1, false);
+  sb_add_char(&response[0]->data, ',');
+  sb_add_bytes(&response[0]->data, "\"r\":", &sig_bytes, 1, false);
   sig_bytes = bytes(sc.signature + 32, 32);
-  sb_add_char(&response[0]->result, ',');
-  sb_add_bytes(&response[0]->result, "\"s\":", &sig_bytes, 1, false);
+  sb_add_char(&response[0]->data, ',');
+  sb_add_bytes(&response[0]->data, "\"s\":", &sig_bytes, 1, false);
   char v[15];
   sprintf(v, ",\"v\":%d}", (unsigned int) sc.signature[64]);
-  sb_add_chars(&response[0]->result, v);
+  sb_add_chars(&response[0]->data, v);
   RESPONSE_END();
   return IN3_OK;
 }
@@ -321,7 +323,7 @@ static in3_ret_t in3_cacheClear(in3_ctx_t* ctx, in3_response_t** response) {
     return ctx_set_error(ctx, "No storage set", IN3_ECONFIG);
   cache->clear(cache->cptr);
   RESPONSE_START();
-  sb_add_chars(&response[0]->result, "true");
+  sb_add_chars(&response[0]->data, "true");
   RESPONSE_END();
   return IN3_OK;
 }
@@ -341,7 +343,7 @@ static in3_ret_t in3_decryptKey(in3_ctx_t* ctx, d_token_t* params, in3_response_
   if (res) return ctx_set_error(ctx, "Invalid key", res);
 
   RESPONSE_START();
-  sb_add_bytes(&response[0]->result, NULL, &dst_bytes, 1, false);
+  sb_add_bytes(&response[0]->data, NULL, &dst_bytes, 1, false);
   RESPONSE_END();
   return IN3_OK;
 }
@@ -354,7 +356,7 @@ static in3_ret_t in3_prepareTx(in3_ctx_t* ctx, d_token_t* params, in3_response_t
   if (params || tx || ctx) return ctx_set_error(ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   RESPONSE_START();
-  sb_add_bytes(&response[0]->result, NULL, &dst, 1, false);
+  sb_add_bytes(&response[0]->data, NULL, &dst, 1, false);
   _free(dst.data);
   RESPONSE_END();
   return IN3_OK;
@@ -373,7 +375,7 @@ static in3_ret_t in3_signTx(in3_ctx_t* ctx, d_token_t* params, in3_response_t** 
   if (data || ctx || from || params) return ctx_set_error(ctx, "eth_basic is needed in order to use eth_prepareTx", IN3_EINVAL);
 #endif
   RESPONSE_START();
-  sb_add_bytes(&response[0]->result, NULL, &dst, 1, false);
+  sb_add_bytes(&response[0]->data, NULL, &dst, 1, false);
   _free(dst.data);
   RESPONSE_END();
   return IN3_OK;
