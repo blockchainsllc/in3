@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
-#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -165,8 +165,8 @@ NONULL in3_ret_t in3_send_ctx(
   waiting -> sign[label=CT_SIGN]
   waiting -> request[label=CT_RPC] 
   
-  sign -> exec [label="in3_req_add_response()"]
-  request -> exec[label="in3_req_add_response()"]
+  sign -> exec [label="in3_ctx_add_response()"]
+  request -> exec[label="in3_ctx_add_response()"]
   
   response -> free
   error->free
@@ -401,17 +401,6 @@ NONULL void in3_ctx_add_response(
     bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
     const char* data,     /**<  the data or the the string*/
     int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-);
-/**
- * adds a response for a request-object.
- * This function should be used in the transport-function to set the response.
- */
-NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in]the the request */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
 #endif
