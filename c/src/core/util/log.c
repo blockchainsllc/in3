@@ -41,9 +41,9 @@ static struct {
   int             enable_prefix;
 } L = {.quiet = 1, .enable_prefix = 1,
 #ifdef DEBUG
-       .level = DEBUG
+       .level = LOG_DEBUG
 #else
-       .level = INFO
+       .level = LOG_INFO
 #endif
 };
 
