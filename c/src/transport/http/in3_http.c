@@ -230,8 +230,8 @@ in3_ret_t send_http(in3_request_t* req) {
       continue;
     }
 
-    memmove(res, body, req->results[n].data.len - (body - res) + 1);
-    req->results[n].data.len -= body - res;
+    memmove(res, body, req->ctx->raw_response[n].data.len - (body - res) + 1);
+    req->ctx->raw_response[n].data.len -= body - res;
   }
 
   return 0;
