@@ -92,7 +92,7 @@ impl Ctx {
                             .expect("result is not valid UTF-8");
                         let jreq: serde_json::Value =
                             serde_json::from_str(slice).expect("result not valid JSON");
-                        let data_str = &jreq["params"][0].as_str().expect("params[0] not string");
+                        let data_str = &jreq[0]["params"][0].as_str().expect("params[0] not string");
                         let data_hex = data_str[2..]
                             .from_hex()
                             .expect("message is not valid hex string");
