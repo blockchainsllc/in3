@@ -101,7 +101,7 @@ int    mem_get_memleak_cnt();
 void   mem_reset(int cnt);
 void   memstack();
 #else /* TEST */
-#ifdef ERR_MSG
+#ifdef LOGGING
 #define _malloc(s) _malloc_(s, __FILE__, __func__, __LINE__)
 #define _calloc(n, s) _calloc_(n, s, __FILE__, __func__, __LINE__)
 #define _free(p) _free_(p)
