@@ -104,8 +104,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
   do {
 
     bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
-    printf("chunk read from hid\n");
-    printfBytes(read_chunk, bytes_read);
+
     if (memcmp(bug_header, read_chunk, sizeof(bug_header)) == 0) { //random bug header received, signing will have to be reattempted
       total_bytes_available = 0;
       index_counter         = 0;
@@ -132,7 +131,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
     }
 
     if (bytes_to_read <= 0 && total_bytes_available > 1) {
-      printf("data %d %d %d\n", bytes_to_read, total_bytes_available, index_counter);
+
       break;
     }
 
@@ -164,8 +163,7 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
   if (totalBytes > chunk_size) {
     while (totalBytes > total_padding) {
       if (seq == 0) { // first packet
-        printf("writing to hid\n");
-        printfBytes(final_apdu_command.data, chunk_size);
+
         hid_write(handle, final_apdu_command.data, chunk_size);
         bufsize += chunk_size;
         totalBytes -= chunk_size;
@@ -181,8 +179,7 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
         totalBytes -= tobesent;
         sent += tobesent;
         seq++;
-        printf("writing to hid\n");
-        printfBytes(chunk, chunk_size);
+
         hid_write(handle, chunk, chunk_size);
         bufsize += chunk_size;
       }
@@ -223,13 +220,4 @@ hid_device* open_device() {
 void close_device(hid_device* handle) {
   hid_close(handle);
   hid_exit();
-}
-
-void printfBytes(uint8_t* bytes, int size) {
-  int i = 0;
-  for (i = 0; i < size; i++) {
-
-    printf("%02x ", bytes[i]);
-  }
-  printf("\n");
 }

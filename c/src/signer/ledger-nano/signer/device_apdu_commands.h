@@ -67,5 +67,4 @@ hid_device* open_device();
 
 void close_device(hid_device* handle);
 
-void printfBytes(uint8_t* bytes, int size);
 #endif
