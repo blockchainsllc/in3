@@ -32,11 +32,11 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "freertos/FreeRTOS.h"
 #include "block_number.h"
 #include "cJSON.h"
 #include "esp_system.h"
 #include "eth_call.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -80,7 +80,7 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
 }
 
 in3_ret_t transport_mock(in3_request_t* req) {
-  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->results);
+  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 /* Setup and init in3 */
 void init_in3(void) {
