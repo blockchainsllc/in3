@@ -392,7 +392,7 @@ NONULL in3_proof_t in3_ctx_get_proof(
 );
 
 /**
- * adds a response for a request-object.
+ * adds a response to a context.
  * This function should be used in the transport-function to set the response.
  */
 NONULL void in3_ctx_add_response(

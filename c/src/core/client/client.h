@@ -728,6 +728,19 @@ in3_storage_handler_t* in3_set_storage_handler(
     in3_storage_clear    clear,    /**< function pointer clearing all contents of cache.*/
     void*                cptr      /**< custom pointer which will will be passed to functions */
 );
+
+/**
+ * adds a response for a request-object.
+ * This function should be used in the transport-function to set the response.
+ */
+NONULL void in3_req_add_response(
+    in3_request_t* req,      /**< [in]the the request */
+    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char*    data,     /**<  the data or the the string*/
+    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+);
+
 #ifdef PAY
 /**
   *  configure function for a payment.
