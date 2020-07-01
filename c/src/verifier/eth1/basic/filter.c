@@ -174,8 +174,8 @@ in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
     switch (in3_ctx_state(block_ctx)) {
       case CTX_ERROR:
         return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
-      case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_TRIGGER_REQUEST:
         return IN3_WAITING;
       case CTX_SUCCESS:
         if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
@@ -258,8 +258,8 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
     switch (in3_ctx_state(block_ctx)) {
       case CTX_ERROR:
         return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching the blocknumber", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
-      case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_TRIGGER_REQUEST:
         return IN3_WAITING;
       case CTX_SUCCESS:
         if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))
@@ -297,8 +297,8 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
       switch (in3_ctx_state(logs_ctx)) {
         case CTX_ERROR:
           return ctx_set_error(logs_ctx, logs_ctx->error ? logs_ctx->error : "Error fetching logs", logs_ctx->verification_state ? logs_ctx->verification_state : IN3_ERPC);
-        case CTX_WAITING_FOR_REQUIRED_CTX:
         case CTX_WAITING_FOR_RESPONSE:
+        case CTX_WAITING_TO_TRIGGER_REQUEST:
           return IN3_WAITING;
         case CTX_SUCCESS:
           if (IN3_OK != (res = ctx_get_error(logs_ctx, 0)))
@@ -333,8 +333,8 @@ in3_ret_t filter_get_changes(in3_ctx_t* ctx, size_t id, sb_t* result) {
             switch (in3_ctx_state(block_ctx)) {
               case CTX_ERROR:
                 return ctx_set_error(block_ctx, block_ctx->error ? block_ctx->error : "Error fetching blocks", block_ctx->verification_state ? block_ctx->verification_state : IN3_ERPC);
-              case CTX_WAITING_FOR_REQUIRED_CTX:
               case CTX_WAITING_FOR_RESPONSE:
+              case CTX_WAITING_TO_TRIGGER_REQUEST:
                 return IN3_WAITING;
               case CTX_SUCCESS:
                 if (IN3_OK != (res = ctx_get_error(block_ctx, 0)))

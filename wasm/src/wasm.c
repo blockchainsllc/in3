@@ -115,66 +115,43 @@ void storage_set_item(void* cptr, const char* key, bytes_t* content) {
 }
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
-  in3_ctx_t *p = ctx, *last_waiting = NULL;
-  sb_t*      sb = sb_new("{\"status\":");
-  switch (in3_ctx_execute(ctx)) {
-    case IN3_EIGNORE:
-      while (p) {
-        if (p->required && p->required->verification_state == IN3_EIGNORE) {
-          last_waiting = p;
-          break;
-        }
-        p = p->required;
-      }
-      if (!last_waiting) {
-        sb_add_chars(sb, "\"error\",\"error\":\"could not find the last ignored context\"");
-        break;
-      } else {
-        ctx_handle_failable(last_waiting);
-        sb_free(sb);
-        return ctx_execute(ctx);
-      }
-    case IN3_OK:
+  in3_ctx_t*     p   = ctx;
+  in3_request_t* req = NULL;
+  sb_t*          sb  = sb_new("{\"status\":");
+  in3_ctx_execute(ctx);
+
+  switch (in3_ctx_state(ctx)) {
+    case CTX_SUCCESS:
       sb_add_chars(sb, "\"ok\", \"result\":");
       sb_add_chars(sb, ctx->response_context->c);
       break;
-    case IN3_WAITING:
-      sb_add_chars(sb, "\"waiting\"");
-      while (p) {
-        if (!p->raw_response && in3_ctx_state(p) == CTX_WAITING_FOR_RESPONSE)
-          last_waiting = p;
-        p = p->required;
-      }
-      if (!last_waiting)
-        sb_add_chars(sb, ",\"error\":\"could not find the last waiting context\"");
-      break;
-    default:
+    case CTX_ERROR:
+      while (ctx->required && !ctx->error) ctx = ctx->required;
       sb_add_chars(sb, "\"error\",\"error\":\"");
       sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
       sb_add_chars(sb, "\"");
-  }
-
-  // create next request
-  if (last_waiting) {
-    char tmp[160];
-    if (last_waiting->raw_response) {
-      sb_add_chars(sb, ",\"request\":{ \"type\": ");
-      sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
-      sprintf(tmp, ",\"ctx\":%d}", (unsigned int) last_waiting);
-      sb_add_chars(sb, tmp);
-    } else {
-
-      // do we need to create a new req uest or are there pending responses?
-      in3_request_t* request = in3_create_request(last_waiting);
-      if (request == NULL)
-        sb_add_chars(sb, ",\"error\",\"could not create request\"");
-      else {
+      break;
+    case CTX_WAITING_FOR_RESPONSE:
+      while (ctx->required && in3_ctx_state(ctx->required) == CTX_WAITING_FOR_RESPONSE) ctx = ctx->required;
+      sb_add_chars(sb, "\"waiting\",\"request\":{ \"type\": ");
+      sb_add_chars(sb, ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+      sb_add_chars(sb, ",\"ctx\":");
+      sb_add_int(sb, (unsigned int) ctx);
+      sb_add_char(sb, '}');
+      break;
+    case CTX_WAITING_TO_TRIGGER_REQUEST:
+      sb_add_chars(sb, "\"request\"");
+      in3_request_t* request = in3_create_request(ctx);
+      if (request == NULL) {
+        sb_add_chars(sb, ",\"error\",\"");
+        sb_add_escaped_chars(sb, request->ctx->error ? request->ctx->error : "could not create request");
+        sb_add_char(sb, '"');
+      } else {
         uint32_t start = now();
         sb_add_chars(sb, ",\"request\":{ \"type\": ");
-        sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+        sb_add_chars(sb, request->ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
-        sprintf(tmp, "%d", (unsigned int) request->ctx->client->timeout);
-        sb_add_chars(sb, tmp);
+        sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
         sb_add_chars(sb, ",\"payload\":");
         sb_add_chars(sb, request->payload);
         sb_add_chars(sb, ",\"urls\":[");
@@ -186,11 +163,14 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
           sb_add_char(sb, '"');
         }
         sb_add_chars(sb, "],\"ptr\":");
-        sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
-        sb_add_chars(sb, tmp);
+        sb_add_int(sb, (uint64_t) request);
+        sb_add_chars(sb, ",\"ctx\":");
+        sb_add_int(sb, (uint64_t) request->ctx);
+        sb_add_char(sb, '}');
       }
-    }
+      break;
   }
+
   sb_add_char(sb, '}');
 
   char* r = sb->data;

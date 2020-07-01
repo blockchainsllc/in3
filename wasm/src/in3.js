@@ -241,7 +241,10 @@ class IN3 {
                             return s
                         }
                         return state.result
-                    case 'waiting': {
+                    case 'waiting':
+                        await getNextResponse(responses, req)
+                        break
+                    case 'request': {
                         const req = state.request
                         try {
                             switch (req.type) {
@@ -266,6 +269,7 @@ class IN3 {
                         }
 
                     }
+
                 }
             }
         }

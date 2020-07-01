@@ -497,14 +497,28 @@ NONULL static char* convert_to_http_url(char* src_url) {
 }
 
 NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
+  switch (in3_ctx_state(ctx)) {
+    case CTX_ERROR:
+      ctx_set_error(ctx, "You cannot create an request if the was an error!", IN3_EINVAL);
+      return NULL;
+    case CTX_SUCCESS:
+      return NULL;
+    case CTX_WAITING_FOR_RESPONSE:
+      ctx_set_error(ctx, "There are pending requests, finish them before creating a new one!", IN3_EINVAL);
+      return NULL;
+    case CTX_WAITING_TO_TRIGGER_REQUEST: {
+      in3_ctx_t* p = ctx;
+      for (; p; p = p->required) {
+        if (!p->raw_response) ctx = p;
+      }
+    }
+  }
 
-  int       nodes_count = ctx_nodes_len(ctx->nodes);
-  in3_ret_t res;
-
-  // create url-array
-  char**        urls       = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
-  node_match_t* node       = ctx->nodes;
-  bool          multichain = false;
+  in3_ret_t     res;
+  int           nodes_count = ctx_nodes_len(ctx->nodes);
+  char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
+  node_match_t* node        = ctx->nodes;
+  bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
     urls[n] = node->node->url;
@@ -689,11 +703,11 @@ in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
 in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
   if (ctx == NULL) return CTX_SUCCESS;
   in3_ctx_state_t required_state = in3_ctx_state(ctx->required);
-  if (required_state == CTX_ERROR) return CTX_ERROR;
-  if (ctx->error) return CTX_ERROR;
-  if (ctx->required && required_state != CTX_SUCCESS) return CTX_WAITING_FOR_REQUIRED_CTX;
-  if (!ctx->raw_response) return CTX_WAITING_FOR_RESPONSE;
+  if (required_state == CTX_ERROR || ctx->error) return CTX_ERROR;
+  if (ctx->required && required_state != CTX_SUCCESS) return required_state;
+  if (!ctx->raw_response) return CTX_WAITING_TO_TRIGGER_REQUEST;
   if (ctx->type == CT_RPC && !ctx->response_context) return CTX_WAITING_FOR_RESPONSE;
+  if (ctx->type == CT_SIGN && ctx->raw_response->state == IN3_WAITING) return CTX_WAITING_FOR_RESPONSE;
   return CTX_SUCCESS;
 }
 
@@ -717,8 +731,12 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   if (ctx->response_context && ctx->verification_state == IN3_OK) return IN3_OK;
 
   // if we have required-contextes, we need to check them first
-  if (ctx->required && (ret = in3_ctx_execute(ctx->required)))
-    return ret;
+  if (ctx->required && (ret = in3_ctx_execute(ctx->required))) {
+    if (ret == IN3_EIGNORE)
+      ctx_handle_failable(ctx);
+    else
+      return ret;
+  }
 
   switch (ctx->type) {
     case CT_RPC: {
