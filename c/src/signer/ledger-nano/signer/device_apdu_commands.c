@@ -102,7 +102,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
   hid_set_nonblocking(handle, 0);
 
   do {
-    printf("reading\n");
+
     bytes_read = hid_read(handle, read_chunk, sizeof(read_chunk));
     printf("chunk read from hid\n");
     printfBytes(read_chunk, bytes_read);
@@ -130,7 +130,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
 
       bytes_to_read = total_bytes_available - index_counter;
     }
-    printf("data %d %d %d\n", bytes_to_read, total_bytes_available, index_counter);
+
     if (bytes_to_read <= 0 && total_bytes_available > 1) {
       printf("data %d %d %d\n", bytes_to_read, total_bytes_available, index_counter);
       break;
@@ -140,7 +140,7 @@ void read_hid_response(hid_device* handle, bytes_t* response) {
 
   response->len  = total_bytes_available;
   response->data = malloc(total_bytes_available);
-  printf("exiting hid read\n");
+
   memcpy(response->data, read_buf, total_bytes_available);
 }
 
@@ -160,8 +160,7 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
   wrap_apdu(data, len, 0, &final_apdu_command);
   total_padding = final_apdu_command.len - (len + 5 + sizeof(CHANNEL));
   totalBytes    = final_apdu_command.len;
-  printf("wrapped apdu to hid\n");
-  printfBytes(final_apdu_command.data, final_apdu_command.len);
+
   if (totalBytes > chunk_size) {
     while (totalBytes > total_padding) {
       if (seq == 0) { // first packet
@@ -194,7 +193,7 @@ int write_hid(hid_device* handle, uint8_t* data, int len) {
   }
 
   free(final_apdu_command.data);
-  printf("bytes writting to hid\n");
+
   return res;
 }
 
@@ -203,17 +202,17 @@ hid_device* open_device() {
   hid_device*             handle;
   int                     res = hid_init();
   if (res == 0) {
-    printf("open_device:opening device\n");
+
     device_info = hid_enumerate(LEDGER_NANOS_VID, LEDGER_NANOS_PID);
-    printf("open_device: hid enumerated\n");
+
     if (device_info != NULL) {
-      printf("open_device:device found\n");
+
       handle = hid_open_path(device_info->path);
+      hid_free_enumeration(device_info);
     } else {
       handle = NULL;
     }
-    printf("open_device: freeing resouces\n");
-    hid_free_enumeration(device_info);
+
   } else {
     handle = NULL;
   }
