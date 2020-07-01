@@ -242,30 +242,24 @@ class IN3 {
                         }
                         return state.result
                     case 'waiting':
-                        await getNextResponse(responses, req)
+                        await getNextResponse(responses, state.request)
                         break
                     case 'request': {
                         const req = state.request
-                        try {
-                            switch (req.type) {
-                                case 'sign':
-                                    try {
-                                        const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
-                                        if (!this.signer) throw new Error('no signer set to handle signing')
-                                        if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
-                                        setResponse(req, toHex(await this.signer.sign(message, account, true, false)), 0, false)
-                                    } catch (ex) {
-                                        setResponse(req, ex.message || ex, 0, true)
-                                    }
-                                    break;
+                        switch (req.type) {
+                            case 'sign':
+                                try {
+                                    const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                    if (!this.signer) throw new Error('no signer set to handle signing')
+                                    if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
+                                    setResponse(req.ctx, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                                } catch (ex) {
+                                    setResponse(req.ctx, ex.message || ex, 0, true)
+                                }
+                                break;
 
-                                case 'rpc':
-                                    await getNextResponse(responses, req, this.ptr)
-                            }
-                        }
-                        finally {
-                            if (req.ptr)
-                                done_response(req.ptr)
+                            case 'rpc':
+                                await getNextResponse(responses, req)
                         }
 
                     }
@@ -299,22 +293,13 @@ class IN3 {
     }
 }
 
-function done_response(req_ptr) {
-    in3w.ccall('ctx_done_response', 'void', ['number'], [req_ptr])
-}
 
 function cleanUpResponses(responses, ptr) {
     Object.keys(responses).forEach(ctx => responses[ctx].cleanUp(ptr))
 }
 
 function getNextResponse(map, req) {
-    let res = map[req.ctx + '']
-    if (res && req.ptr && res.req.ptr != req.ptr) res = null
-
-    if (!res) {
-        if (!req.ptr) throw new Error("Expected a request-pointer!")
-        map[req.ctx + ''] = res = url_queue(req)
-    }
+    let res = req.urls ? (map[req.ctx + ''] = url_queue(req)) : map[req.ctx + '']
     return res.getNext()
 }
 
@@ -330,9 +315,9 @@ function url_queue(req) {
             const p = promises.shift(), r = responses.shift()
             if (!no_response) {
                 if (r.error)
-                    setResponse(req, r.error.message || r.error, r.i, true)
+                    setResponse(req.ctx, r.error.message || r.error, r.i, true)
                 else
-                    setResponse(req, r.response, r.i, false)
+                    setResponse(req.ctx, r.response, r.i, false)
             }
             p.resolve(r)
         }
@@ -347,7 +332,7 @@ function url_queue(req) {
             trigger(no_response)
         }),
         cleanUp(ptr) {
-            while (req.urls.length - counter) {
+            while (req.urls.length - counter > 0) {
                 this.getNext(true).then(
                     r => {
                         // is the client still alive?
@@ -420,7 +405,7 @@ if (typeof module !== "undefined")
 
 
 // helper functions
-function setResponse(req, msg, i, isError) {
+function setResponse(ctx, msg, i, isError) {
     if (msg.length > 5000) {
         // here we pass the string as pointer using malloc before
         const len = (msg.length << 2) + 1;
@@ -428,11 +413,11 @@ function setResponse(req, msg, i, isError) {
         if (!ptr)
             throw new Error('Could not allocate memory (' + len + ')')
         stringToUTF8(msg, ptr, len);
-        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'number'], [req.ctx, req.ptr, i, isError, ptr])
+        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number'], [ctx, i, isError, ptr])
         in3w.ccall('ifree', 'void', ['number'], [ptr])
 
     }
     else
-        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'number', 'string'], [req.ctx, req.ptr, i, isError, msg])
+        in3w.ccall('ctx_set_response', 'void', ['number', 'number', 'number', 'string'], [ctx, i, isError, msg])
     //                        console.log((isError ? 'ERROR ' : '') + ' response  :', msg)
 }

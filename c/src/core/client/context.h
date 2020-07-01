@@ -128,6 +128,13 @@ NONULL in3_ret_t in3_send_ctx(
 );
 
 /**
+ * finds the last waiting request-context.
+ */
+NONULL in3_ctx_t* in3_ctx_last_waiting(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
  * executes the context and returns its state.
  */
 NONULL in3_ctx_state_t in3_ctx_exec_state(

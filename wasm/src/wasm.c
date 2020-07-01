@@ -118,25 +118,22 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
   in3_ctx_t*     p   = ctx;
   in3_request_t* req = NULL;
   sb_t*          sb  = sb_new("{\"status\":");
-  in3_ctx_execute(ctx);
 
-  switch (in3_ctx_state(ctx)) {
+  switch (in3_ctx_exec_state(ctx)) {
     case CTX_SUCCESS:
       sb_add_chars(sb, "\"ok\", \"result\":");
       sb_add_chars(sb, ctx->response_context->c);
       break;
     case CTX_ERROR:
-      while (ctx->required && !ctx->error) ctx = ctx->required;
       sb_add_chars(sb, "\"error\",\"error\":\"");
       sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
       sb_add_chars(sb, "\"");
       break;
     case CTX_WAITING_FOR_RESPONSE:
-      while (ctx->required && in3_ctx_state(ctx->required) == CTX_WAITING_FOR_RESPONSE) ctx = ctx->required;
       sb_add_chars(sb, "\"waiting\",\"request\":{ \"type\": ");
       sb_add_chars(sb, ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
       sb_add_chars(sb, ",\"ctx\":");
-      sb_add_int(sb, (unsigned int) ctx);
+      sb_add_int(sb, (unsigned int) in3_ctx_last_waiting(ctx));
       sb_add_char(sb, '}');
       break;
     case CTX_WAITING_TO_TRIGGER_REQUEST:
@@ -144,7 +141,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
       in3_request_t* request = in3_create_request(ctx);
       if (request == NULL) {
         sb_add_chars(sb, ",\"error\",\"");
-        sb_add_escaped_chars(sb, request->ctx->error ? request->ctx->error : "could not create request");
+        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
         sb_add_char(sb, '"');
       } else {
         uint32_t start = now();
@@ -162,11 +159,10 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
           sb_add_escaped_chars(sb, request->urls[i]);
           sb_add_char(sb, '"');
         }
-        sb_add_chars(sb, "],\"ptr\":");
-        sb_add_int(sb, (uint64_t) request);
-        sb_add_chars(sb, ",\"ctx\":");
+        sb_add_chars(sb, "],\"ctx\":");
         sb_add_int(sb, (uint64_t) request->ctx);
         sb_add_char(sb, '}');
+        request_free(request);
       }
       break;
   }
@@ -183,9 +179,6 @@ void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
-void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_request_t* r) {
-  request_free(r);
-}
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
   in3_chain_t* chain = in3_find_chain(in3, in3->chain_id);
   if (!chain) return;
@@ -200,15 +193,15 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
   }
 }
 
-void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
-  r->ctx->raw_response[i].time  = now() - r->ctx->raw_response[i].time;
-  r->ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
+void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
+  ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
+  ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
   if (ctx->type == CT_SIGN && !is_error) {
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
-    sb_add_range(&r->ctx->raw_response[i].data, (char*) sig, 0, 65);
+    sb_add_range(&ctx->raw_response[i].data, (char*) sig, 0, 65);
   } else
-    sb_add_chars(&r->ctx->raw_response[i].data, msg);
+    sb_add_chars(&ctx->raw_response[i].data, msg);
 }
 #ifdef IPFS
 
