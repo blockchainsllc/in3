@@ -399,9 +399,9 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
       if (node && node->weight) node->weight->blacklisted_until = 0;                        // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
       in3_ret_t res = ctx_parse_response(ctx, response[n].data.data, response[n].data.len); // parse the result
-      if (res < 0)
-        blacklist_node(node);
-      else {
+      if (res < 0) {
+        if (node) blacklist_node(node);
+      } else {
         // check each request
         for (uint_fast16_t i = 0; i < ctx->len; i++) {
           vc.request = ctx->requests[i];
