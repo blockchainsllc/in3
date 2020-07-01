@@ -92,7 +92,7 @@ static void test_configure_request() {
   d_token_t* signers = d_get(in3, key("signers"));
   TEST_ASSERT_NOT_NULL(signers);
   TEST_ASSERT_EQUAL(2, d_len(signers));
-  request_free(request, ctx->client, false);
+  request_free(request);
   json_free(json);
   ctx_free(ctx);
 
@@ -119,7 +119,7 @@ static void test_configure_signed_request() {
   char hex[150];
   TEST_ASSERT_EQUAL(65 * 2, bytes_to_hex(sig->data, sig->len, hex)); // 65bytes *2
   TEST_ASSERT_EQUAL_STRING("8e39d2066cf9d1898e6bc9fbbfaa8fd6b9e5a86515e643f537c831982718866d0903e91f5f8824363dd3754fe550b37aa1e6eeb3742f13ad36d3321972e959a701", hex);
-  request_free(request, ctx->client, false);
+  request_free(request);
   json_free(json);
   ctx_free(ctx);
   in3_free(c);
@@ -157,17 +157,17 @@ static void test_partial_response() {
   in3_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
-  in3_req_add_response(req, 0, true, "500 from server", -1);
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
   TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
   TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
 
   // now we have a valid response and should get a accaptable response
-  in3_req_add_response(req, 2, false, "{\"result\":\"0x100\"}", -1);
+  in3_ctx_add_response(req->ctx, 2, false, "{\"result\":\"0x100\"}", -1);
   TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
 
-  request_free(req, c, false);
+  request_free(req);
   ctx_free(ctx);
   in3_free(c);
 }
@@ -185,26 +185,26 @@ static void test_retry_response() {
   in3_request_t* req = in3_create_request(ctx);
 
   // first response is an error we expect a waiting since the transport has not passed all responses yet
-  in3_req_add_response(req, 0, true, "500 from server", -1);
+  in3_ctx_add_response(req->ctx, 0, true, "500 from server", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx)); // calling twice will give the same result
   TEST_ASSERT_NULL(ctx->nodes->weight);                 // first node is blacklisted
   TEST_ASSERT_NOT_NULL(ctx->nodes->next->weight);       // second node is not blacklisted
   TEST_ASSERT_NOT_NULL(ctx->raw_response);              // we still keep the raw response
 
-  in3_req_add_response(req, 1, false, "{\"error\":\"no internet\"}", -1);
+  in3_ctx_add_response(req->ctx, 1, false, "{\"error\":\"no internet\"}", -1);
   TEST_ASSERT_EQUAL(IN3_WAITING, in3_ctx_execute(ctx));
 
   TEST_ASSERT_NULL(ctx->raw_response);
-  request_free(req, c, false);
+  request_free(req);
 
   // we must create a new request since this is a reattempt
   req = in3_create_request(ctx);
   TEST_ASSERT_NOT_NULL(ctx->raw_response); // now the raw response is set
 
-  in3_req_add_response(req, 0, false, "{\"result\":\"0x100\"}", -1);
+  in3_ctx_add_response(req->ctx, 0, false, "{\"result\":\"0x100\"}", -1);
   TEST_ASSERT_EQUAL(IN3_OK, in3_ctx_execute(ctx));
 
-  request_free(req, c, false);
+  request_free(req);
   ctx_free(ctx);
   in3_free(c);
 }

@@ -87,7 +87,6 @@ typedef struct in3_ctx {
   in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
   bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
   uint_fast8_t    signers_length;     /**< number or addresses */
-  uint32_t*       times;              /**< meassured times in ms for the request */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
@@ -166,8 +165,8 @@ NONULL in3_ret_t in3_send_ctx(
   waiting -> sign[label=CT_SIGN]
   waiting -> request[label=CT_RPC] 
   
-  sign -> exec [label="in3_req_add_response()"]
-  request -> exec[label="in3_req_add_response()"]
+  sign -> exec [label="in3_ctx_add_response()"]
+  request -> exec[label="in3_ctx_add_response()"]
   
   response -> free
   error->free
@@ -219,7 +218,7 @@ NONULL in3_ret_t in3_send_ctx(
             ctx->client->transport(request);
 
             // clean up
-            request_free(request, ctx->client, false);
+            request_free(request);
             break;
         }
 
@@ -391,4 +390,17 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
 NONULL in3_proof_t in3_ctx_get_proof(
     in3_ctx_t* ctx /**< [in] the current request. */
 );
+
+/**
+ * adds a response for a request-object.
+ * This function should be used in the transport-function to set the response.
+ */
+NONULL void in3_ctx_add_response(
+    in3_ctx_t*  ctx,      /**< [in]the current context */
+    int         index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char* data,     /**<  the data or the the string*/
+    int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+);
+
 #endif

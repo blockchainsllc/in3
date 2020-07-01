@@ -243,24 +243,28 @@ class IN3 {
                         return state.result
                     case 'waiting': {
                         const req = state.request
-                        switch (req.type) {
-                            case 'sign':
-                                try {
-                                    const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
-                                    if (!this.signer) throw new Error('no signer set to handle signing')
-                                    if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
-                                    setResponse(req, toHex(await this.signer.sign(message, account, true, false)), 0, false)
-                                } catch (ex) {
-                                    setResponse(req, ex.message || ex, 0, true)
-                                }
-                                finally {
-                                    done_response(this.ptr, req.ptr)
-                                }
-                                break;
+                        try {
+                            switch (req.type) {
+                                case 'sign':
+                                    try {
+                                        const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                        if (!this.signer) throw new Error('no signer set to handle signing')
+                                        if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
+                                        setResponse(req, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                                    } catch (ex) {
+                                        setResponse(req, ex.message || ex, 0, true)
+                                    }
+                                    break;
 
-                            case 'rpc':
-                                await getNextResponse(responses, req, this.ptr)
+                                case 'rpc':
+                                    await getNextResponse(responses, req, this.ptr)
+                            }
                         }
+                        finally {
+                            if (req.ptr)
+                                done_response(req.ptr)
+                        }
+
                     }
                 }
             }
@@ -291,23 +295,17 @@ class IN3 {
     }
 }
 
-function done_response(ptr, req_ptr) {
-    in3w.ccall('ctx_done_response', 'void', ['number', 'number'], [ptr, req_ptr])
+function done_response(req_ptr) {
+    in3w.ccall('ctx_done_response', 'void', ['number'], [req_ptr])
 }
 
 function cleanUpResponses(responses, ptr) {
-    Object.keys(responses).forEach(ctx => {
-        done_response(ptr, responses[ctx].req.ptr);
-        responses[ctx].cleanUp(ptr)
-    })
+    Object.keys(responses).forEach(ctx => responses[ctx].cleanUp(ptr))
 }
 
-function getNextResponse(map, req, ptr) {
+function getNextResponse(map, req) {
     let res = map[req.ctx + '']
-    if (res && req.ptr && res.req.ptr != req.ptr) {
-        done_response(ptr, res.req.ptr)
-        res = null
-    }
+    if (res && req.ptr && res.req.ptr != req.ptr) res = null
 
     if (!res) {
         if (!req.ptr) throw new Error("Expected a request-pointer!")

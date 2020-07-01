@@ -70,6 +70,8 @@
  */
 typedef uint32_t chain_id_t;
 
+struct in3_ctx;
+
 /** the type of the chain. 
  * 
  * for incubed a chain can be any distributed network or database with incubed support.
@@ -298,7 +300,7 @@ typedef struct sign_ctx {
   bytes_t            account;       /**< the account to use for the signature */
   uint8_t            signature[65]; /**< the resulting signature needs to be writte into these bytes */
   void*              wallet;        /**< the custom wallet-pointer  */
-  void*              ctx;           /**< the context of the request in order report errors */
+  struct in3_ctx*    ctx;           /**< the context of the request in order report errors */
 } in3_sign_ctx_t;
 
 /** 
@@ -318,7 +320,7 @@ typedef in3_ret_t (*in3_sign)(in3_sign_ctx_t* ctx);
  * if the new_tx is not set within the function, it will use the old_tx.
  * 
 */
-typedef in3_ret_t (*in3_prepare_tx)(void* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
+typedef in3_ret_t (*in3_prepare_tx)(struct in3_ctx* ctx, bytes_t raw_tx, bytes_t* new_raw_tx);
 
 /**
  * definition of a signer holding funciton-pointers and data.
@@ -336,12 +338,12 @@ typedef struct in3_signer {
  * allows the payment to handle things before the request will be send.
  * 
 */
-typedef in3_ret_t (*in3_pay_prepare)(void* ctx, void* cptr);
+typedef in3_ret_t (*in3_pay_prepare)(struct in3_ctx* ctx, void* cptr);
 
 /** 
  * called after receiving a parseable response with a in3-section.
 */
-typedef in3_ret_t (*in3_pay_follow_up)(void* ctx, void* node, d_token_t* in3, d_token_t* error, void* cptr);
+typedef in3_ret_t (*in3_pay_follow_up)(struct in3_ctx* ctx, void* node, d_token_t* in3, d_token_t* error, void* cptr);
 
 /** 
  * free function for the custom pointer.
@@ -353,7 +355,7 @@ typedef void (*in3_pay_free)(void* cptr);
  * 
  * this function is called when the in3-section of payload of the request is built and allows the handler to add properties. 
 */
-typedef in3_ret_t (*in3_pay_handle_request)(void* ctx, sb_t* sb, void* cptr);
+typedef in3_ret_t (*in3_pay_handle_request)(struct in3_ctx* ctx, sb_t* sb, void* cptr);
 
 /** 
  * the payment handler.
@@ -375,6 +377,7 @@ typedef struct in3_pay {
 typedef struct in3_response {
   in3_ret_t state; /**< the state of the response */
   sb_t      data;  /**< a stringbuilder to add the result */
+  uint32_t  time;  /**< measured time (in ms) which will be used for ajusting the weights */
 } in3_response_t;
 
 /** Incubed Configuration. 
@@ -392,10 +395,7 @@ typedef struct in3_request {
   char*           payload;  /**< the payload to send */
   char**          urls;     /**< array of urls */
   int             urls_len; /**< number of urls */
-  in3_response_t* results;  /**< the responses*/
-  uint32_t        timeout;  /**< the timeout 0= no timeout*/
-  uint32_t*       times;    /**< measured time (in ms) which will be used for ajusting the weights */
-  in3_t*          in3;      /**< pointer to associated IN3 instance */
+  struct in3_ctx* ctx;      /**< the current context */
 } in3_request_t;
 
 /** the transport function to be implemented by the transport provider.
@@ -553,18 +553,6 @@ NONULL in3_ret_t in3_client_rpc_raw(
 NONULL char* in3_client_exec_req(
     in3_t* c,  /**< [in] the pointer to the incubed client config. */
     char*  req /**< [in] the request as rpc. */
-);
-
-/**
- * adds a response for a request-object.
- * This function should be used in the transport-function to set the response.
- */
-NONULL void in3_req_add_response(
-    in3_request_t* req,      /**< [in] the request-pointer passed to the transport-function containing the payload and url */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
 );
 
 /** registers a new chain or replaces a existing (but keeps the nodelist)*/

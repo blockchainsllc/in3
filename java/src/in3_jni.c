@@ -368,19 +368,18 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
       const size_t l     = (*jni)->GetArrayLength(jni, content);
       uint8_t*     bytes = _malloc(l);
       (*jni)->GetByteArrayRegion(jni, content, 0, l, (jbyte*) bytes);
-      sb_add_range(&req->results[i].data, (char*) bytes, 0, l);
-      req->results[i].state = IN3_OK;
+      sb_add_range(&req->ctx->raw_response[i].data, (char*) bytes, 0, l);
+      req->ctx->raw_response[i].state = IN3_OK;
       _free(bytes);
     } else {
-      sb_add_chars(&req->results[i].data, "Could not fetch the data!");
-      req->results[i].state = IN3_ERPC;
+      sb_add_chars(&req->ctx->raw_response[i].data, "Could not fetch the data!");
+      req->ctx->raw_response[i].state = IN3_ERPC;
     }
-    if (req->results[i].state) success = IN3_ERPC;
+    if (req->ctx->raw_response[i].state) success = IN3_ERPC;
   }
   uint64_t end = current_ms();
 
-  req->times = _malloc(sizeof(uint32_t) * req->urls_len);
-  for (int i = 0; i < req->urls_len; i++) req->times[i] = (uint32_t)(end - start);
+  for (int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = (uint32_t)(end - start);
 
   return success;
 }

@@ -173,13 +173,13 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
         sb_add_chars(sb, ",\"request\":{ \"type\": ");
         sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
-        sprintf(tmp, "%d", (unsigned int) request->timeout);
+        sprintf(tmp, "%d", (unsigned int) request->ctx->client->timeout);
         sb_add_chars(sb, tmp);
         sb_add_chars(sb, ",\"payload\":");
         sb_add_chars(sb, request->payload);
         sb_add_chars(sb, ",\"urls\":[");
         for (int i = 0; i < request->urls_len; i++) {
-          request->times[i] = start;
+          request->ctx->raw_response[i].time = start;
           if (i) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
           sb_add_escaped_chars(sb, request->urls[i]);
@@ -203,8 +203,8 @@ void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
-void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_t* c, in3_request_t* r) {
-  request_free(r, c, false);
+void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_request_t* r) {
+  request_free(r);
 }
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
   in3_chain_t* chain = in3_find_chain(in3, in3->chain_id);
@@ -221,14 +221,14 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
 }
 
 void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
-  r->times[i]         = now() - r->times[i];
-  r->results[i].state = is_error ? IN3_ERPC : IN3_OK;
+  r->ctx->raw_response[i].time  = now() - r->ctx->raw_response[i].time;
+  r->ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
   if (ctx->type == CT_SIGN && !is_error) {
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
-    sb_add_range(&r->results[i].data, (char*) sig, 0, 65);
+    sb_add_range(&r->ctx->raw_response[i].data, (char*) sig, 0, 65);
   } else
-    sb_add_chars(&r->results[i].data, msg);
+    sb_add_chars(&r->ctx->raw_response[i].data, msg);
 }
 #ifdef IPFS
 

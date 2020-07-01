@@ -289,7 +289,7 @@ int in3_get_request_urls_len(
 uint32_t in3_get_request_timeout(
     in3_request_t* request /**< request struct */
 ) {
-  return request->timeout;
+  return request->ctx->client->timeout;
 }
 
 /**

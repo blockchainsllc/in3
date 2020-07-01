@@ -88,8 +88,6 @@ NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
     json_free(ctx->request_context);
 
   if (ctx->requests) _free(ctx->requests);
-  if (ctx->times)
-    _free(ctx->times);
   if (ctx->cache) in3_cache_free(ctx->cache);
   if (ctx->required) free_ctx_intern(ctx->required, true);
 
@@ -372,10 +370,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     }
 
     // handle times
-    if (ctx->times && node && node->weight && ctx->times[n]) {
+    if (node && node->weight && ctx->raw_response && ctx->raw_response[n].time) {
       node->weight->response_count++;
-      node->weight->total_response_time += ctx->times[n];
-      ctx->times[n] = 0; // make sure we count the time only once
+      node->weight->total_response_time += ctx->raw_response[n].time;
+      ctx->raw_response[n].time = 0; // make sure we count the time only once
     }
 
     // since nodes_count was detected before, this should not happen!
@@ -533,40 +531,25 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   }
 
   // prepare response-object
-  if (ctx->times) _free(ctx->times);
   in3_request_t* request = _calloc(sizeof(in3_request_t), 1);
-  request->in3           = ctx->client;
+  request->ctx           = ctx;
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;
-  request->times         = nodes_count ? _calloc(nodes_count, sizeof(uint32_t)) : NULL;
-  request->timeout       = ctx->client->timeout;
-  ctx->times             = request->times;
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
-  request->results = _calloc(sizeof(in3_response_t), nodes_count);
-  for (int n = 0; n < nodes_count; n++) request->results[n].state = IN3_WAITING;
-
-  // we set the raw_response
-  ctx->raw_response = request->results;
+  ctx->raw_response = _calloc(sizeof(in3_response_t), nodes_count);
+  for (int n = 0; n < nodes_count; n++) ctx->raw_response[n].state = IN3_WAITING;
 
   // we only clean up the the stringbuffer, but keep the content (payload->data)
   _free(payload);
+
   return request;
 }
 
-NONULL void request_free(in3_request_t* req, const in3_t* c, bool free_response) {
+NONULL void request_free(in3_request_t* req) {
   // free resources
-  free_urls(req->urls, req->urls_len, c->flags & FLAGS_HTTP);
-
-  if (free_response) {
-    for (int n = 0; n < req->urls_len; n++) {
-      if (req->results[n].data.data)
-        _free(req->results[n].data.data);
-    }
-    _free(req->results);
-  }
-
+  free_urls(req->urls, req->urls_len, req->ctx->client->flags & FLAGS_HTTP);
   _free(req->payload);
   _free(req);
 }
@@ -634,11 +617,11 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
               return IN3_ENOMEM;
             in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
             ctx->client->transport(request);
-            in3_log_trace(request->results->state
+            in3_log_trace(ctx->raw_response->state
                               ? "... response: \n... " COLOR_RED_STR "\n"
                               : "... response: \n... " COLOR_GREEN_STR "\n",
-                          request->results->data.data);
-            request_free(request, ctx->client, false);
+                          ctx->raw_response->data.data);
+            request_free(request);
             break;
           } else
             return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
@@ -820,19 +803,4 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     default:
       return IN3_EINVAL;
   }
-}
-
-void in3_req_add_response(
-    in3_request_t* req,      /**< [in] the request-pointer passed to the transport-function containing the payload and url */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-) {
-  if (req->results[index].state == IN3_OK && is_error) req->results[index].data.len = 0;
-  req->results[index].state = is_error ? IN3_ERPC : IN3_OK;
-  if (data_len == -1)
-    sb_add_chars(&req->results[index].data, data);
-  else
-    sb_add_range(&req->results[index].data, data, 0, data_len);
 }

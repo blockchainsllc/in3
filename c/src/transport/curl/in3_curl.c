@@ -34,6 +34,7 @@
 
 #include "in3_curl.h"
 #include "../../core/client/client.h"
+#include "../../core/client/context.h"
 #include "../../core/client/version.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
@@ -203,13 +204,12 @@ in3_ret_t send_curl(in3_request_t* req) {
   in3_ret_t res;
   uint64_t  start = current_ms();
 #ifdef CURL_BLOCKING
-  res = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
+  res = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response, req->ctx->client->timeout);
 #else
-  res = send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
+  res = send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response, req->ctx->client->timeout);
 #endif
   uint32_t t = (uint32_t)(current_ms() - start);
-  if (!req->times) req->times = _malloc(sizeof(uint32_t) * req->urls_len);
-  for (int i = 0; i < req->urls_len; i++) req->times[i] = t;
+  for (int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = t;
   return res;
 }
 
