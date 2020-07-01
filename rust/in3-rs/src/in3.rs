@@ -63,145 +63,117 @@ impl Ctx {
     }
 
     async unsafe fn execute(&mut self) -> Result<String, SysError> {
-        let mut last_waiting: *mut in3_sys::in3_ctx_t = std::ptr::null_mut();
-        let mut p: *mut in3_sys::in3_ctx_t;
-        p = self.ptr;
-        match in3_sys::in3_ctx_execute(self.ptr) {
-            in3_sys::in3_ret_t::IN3_EIGNORE => {
-                while p != std::ptr::null_mut() {
-                    let p_req = (*p).required;
-                    if p_req != std::ptr::null_mut()
-                        && (*p_req).verification_state == in3_sys::in3_ret_t::IN3_EIGNORE
-                    {
-                        last_waiting = p;
-                    }
-                    p = (*last_waiting).required;
+        match in3_sys::in3_ctx_exec_state(self.ptr) {
+            in3_sys::state::CTX_ERROR => {
+                while (*self.ptr).required != std::ptr::null_mut()
+                    && (*self.ptr).error == std::ptr::null_mut() {
+                    self.ptr = (*self.ptr).required;
                 }
-                if last_waiting == std::ptr::null_mut() {
-                    return Err(SysError::ContextError);
-                } else {
-                    in3_sys::ctx_handle_failable(last_waiting);
-                    return Err(SysError::TryAgain);
-                }
+                if (*self.ptr).error != std::ptr::null_mut() {
+                    let error = CStr::from_ptr((*self.ptr).error)
+                        .to_str()
+                        .expect("err is not valid UTF-8");
+                    Err(SysError::ResponseError(error.to_owned()))
+                } else { Err(SysError::UnknownIn3Error) }
             }
-            in3_sys::in3_ret_t::IN3_WAITING => {
-                while p != std::ptr::null_mut() {
-                    if (*p).raw_response == std::ptr::null_mut()
-                        && in3_sys::in3_ctx_state(p) == in3_sys::state::CTX_WAITING_FOR_RESPONSE
-                    {
-                        last_waiting = p;
-                    }
-                    p = (*p).required;
-                }
-                if last_waiting == std::ptr::null_mut() {
-                    return Err(SysError::ContextError);
-                }
-            }
-            in3_sys::in3_ret_t::IN3_OK => {
-                let result = (*(*self.ptr).response_context).c;
-                let data = CStr::from_ptr(result)
+            in3_sys::state::CTX_SUCCESS => {
+                let response = CStr::from_ptr((*(*self.ptr).response_context).c)
                     .to_str()
-                    .expect("result is not valid UTF-8");
-                return Ok(data.to_owned());
+                    .expect("err is not valid UTF-8");
+                Ok(response.to_owned())
             }
-            err => {
-                return Err(SysError::from(err));
-            }
-        }
-
-        if last_waiting != std::ptr::null_mut() {
-            let req = in3_sys::in3_create_request(last_waiting);
-            let req_type = (*last_waiting).type_;
-            match req_type {
-                in3_sys::ctx_type::CT_SIGN => {
-                    let ite_ = (*last_waiting).requests.offset(0);
-                    let item_ = (*(*ite_)).data as *const c_char;
-                    let slice = CStr::from_ptr(item_)
-                        .to_str()
-                        .expect("result is not valid UTF-8");
-                    let request: serde_json::Value =
-                        serde_json::from_str(slice).expect("result not valid JSON");
-                    let data_str = &request["params"][0].as_str().expect("params[0] not string");
-                    let data_hex = data_str[2..]
-                        .from_hex()
-                        .expect("message is not valid hex string");
-                    let mut res_str = self.sign(data_hex.into()).await.map_err(|err| {
-                        if let Error::InternalError(sys_err) = err {
-                            sys_err
-                        } else {
-                            SysError::UnknownError
-                        }
-                    })?;
-                    in3_sys::in3_req_add_response(
-                        req,
-                        0.try_into().unwrap(),
-                        false,
-                        res_str.0.as_mut_ptr() as *const c_char,
-                        65,
-                    );
-                    in3_sys::request_free(req);
-                }
-                in3_sys::ctx_type::CT_RPC => {
-                    let payload = CStr::from_ptr((*req).payload)
-                        .to_str()
-                        .expect("payload is not valid UTF-8");
-                    let urls_len = (*req).urls_len;
-                    let mut urls = Vec::new();
-                    for i in 0..urls_len as usize {
-                        let url = CStr::from_ptr(*(*req).urls.add(i))
+            in3_sys::state::CTX_WAITING_FOR_RESPONSE => { Err(SysError::NotSupported) }
+            in3_sys::state::CTX_WAITING_TO_TRIGGER_REQUEST => {
+                let request = in3_sys::in3_create_request(self.ptr);
+                match (*(*request).ctx).type_ {
+                    in3_sys::ctx_type::CT_SIGN => {
+                        let slice = CStr::from_ptr((*request).payload)
                             .to_str()
-                            .expect("URL is not valid UTF-8");
-                        urls.push(url);
+                            .expect("result is not valid UTF-8");
+                        let jreq: serde_json::Value =
+                            serde_json::from_str(slice).expect("result not valid JSON");
+                        let data_str = &jreq["params"][0].as_str().expect("params[0] not string");
+                        let data_hex = data_str[2..]
+                            .from_hex()
+                            .expect("message is not valid hex string");
+                        let mut res_str = self.sign(data_hex.into()).await.map_err(|err| {
+                            if let Error::InternalError(sys_err) = err {
+                                sys_err
+                            } else {
+                                SysError::UnknownError
+                            }
+                        })?;
+                        in3_sys::in3_req_add_response(
+                            request,
+                            0.try_into().unwrap(),
+                            false,
+                            res_str.0.as_mut_ptr() as *const c_char,
+                            65,
+                        );
+                        in3_sys::request_free(request);
+                        Err(SysError::TryAgain)
                     }
+                    in3_sys::ctx_type::CT_RPC => {
+                        let payload = CStr::from_ptr((*request).payload)
+                            .to_str()
+                            .expect("payload is not valid UTF-8");
+                        let urls_len = (*request).urls_len;
+                        let mut urls = Vec::new();
+                        for i in 0..urls_len as usize {
+                            let url = CStr::from_ptr(*(*request).urls.add(i))
+                                .to_str()
+                                .expect("URL is not valid UTF-8");
+                            urls.push(url);
+                        }
 
-                    let responses: Vec<Result<String, String>> = {
-                        let transport = {
-                            let c = (*(*last_waiting).client).internal as *mut Client;
-                            &mut (*c).transport
+                        let responses: Vec<Result<String, String>> = {
+                            let transport = {
+                                let c = (*(*self.ptr).client).internal as *mut Client;
+                                &mut (*c).transport
+                            };
+                            transport.fetch(payload, &urls).await
                         };
-                        transport.fetch(payload, &urls).await
-                    };
-                    // println!("{:?}", responses);
-                    for (i, resp) in responses.iter().enumerate() {
-                        match resp {
-                            Err(err) => {
-                                let err_str = CString::new(err.to_string()).unwrap(); // cannot fail as err is string
-                                in3_sys::in3_req_add_response(
-                                    req,
-                                    i.try_into().unwrap(), // cannot fail
-                                    true,
-                                    err_str.as_ptr(),
-                                    -1i32,
-                                );
-                            }
-                            Ok(res) => {
-                                let res_str = CString::new(res.to_string()).unwrap(); // cannot fail as res is string
-                                in3_sys::in3_req_add_response(
-                                    req,
-                                    i.try_into().unwrap(), // cannot fail
-                                    false,
-                                    res_str.as_ptr(),
-                                    -1i32,
-                                );
+                        // println!("{:?}", responses);
+                        for (i, resp) in responses.iter().enumerate() {
+                            match resp {
+                                Err(err) => {
+                                    let err_str = CString::new(err.to_string()).unwrap(); // cannot fail as err is string
+                                    in3_sys::in3_req_add_response(
+                                        request,
+                                        i.try_into().unwrap(), // cannot fail
+                                        true,
+                                        err_str.as_ptr(),
+                                        -1i32,
+                                    );
+                                }
+                                Ok(res) => {
+                                    let res_str = CString::new(res.to_string()).unwrap(); // cannot fail as res is string
+                                    in3_sys::in3_req_add_response(
+                                        request,
+                                        i.try_into().unwrap(), // cannot fail
+                                        false,
+                                        res_str.as_ptr(),
+                                        -1i32,
+                                    );
+                                }
                             }
                         }
+                        let res = *(*(*request).ctx).raw_response.offset(0);
+                        let err = if res.state != in3_sys::in3_ret_t::IN3_OK {
+                            let error = (*(*(*request).ctx).raw_response.offset(0)).data;
+                            let error = CStr::from_ptr(error.data)
+                                .to_str()
+                                .expect("err is not valid UTF-8");
+                            SysError::ResponseError(error.to_owned())
+                        } else {
+                            SysError::TryAgain.into()
+                        };
+                        in3_sys::request_free(request);
+                        Err(err)
                     }
-                    let res = *(*(*req).ctx).raw_response.offset(0);
-                    let err = if res.state != in3_sys::in3_ret_t::IN3_OK {
-                        let error = (*(*(*req).ctx).raw_response.offset(0)).data;
-                        let error = CStr::from_ptr(error.data)
-                            .to_str()
-                            .expect("err is not valid UTF-8");
-                        SysError::ResponseError(error.to_owned())
-                    } else {
-                        SysError::TryAgain.into()
-                    };
-                    in3_sys::request_free(req);
-                    return Err(err);
                 }
             }
         }
-        return Err(SysError::TryAgain);
     }
 
     #[cfg(feature = "blocking")]
@@ -431,9 +403,9 @@ impl Client {
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
             #[cfg(feature = "blocking")]
-            {
-                (*c.ptr).transport = Some(Client::in3_rust_transport);
-            }
+                {
+                    (*c.ptr).transport = Some(Client::in3_rust_transport);
+                }
             c
         }
     }
