@@ -595,77 +595,73 @@ NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
 
   return res;
 }
+in3_ctx_t* in3_ctx_last_waiting(in3_ctx_t* ctx) {
+  in3_ctx_t* last = ctx;
+  for (; ctx; ctx = ctx->required) {
+    if (!ctx->response_context) last = ctx;
+  }
+  return last;
+}
+
+in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
+  if (ctx->client->signer) {
+    d_token_t*     params = d_get(ctx->requests[0], K_PARAMS);
+    in3_sign_ctx_t sign_ctx;
+    sign_ctx.message = d_to_bytes(d_get_at(params, 0));
+    sign_ctx.account = d_to_bytes(d_get_at(params, 1));
+    sign_ctx.type    = SIGN_EC_HASH;
+    sign_ctx.ctx     = ctx;
+    sign_ctx.wallet  = ctx->client->signer->wallet;
+    if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+    if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+
+    ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
+    sb_init(&ctx->raw_response[0].data);
+    in3_log_trace("... request to sign ");
+    in3_ret_t res = ctx->client->signer->sign(&sign_ctx);
+    if (res < 0) return ctx_set_error(ctx, ctx->raw_response->data.data, res);
+    sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
+    return IN3_OK;
+  } else
+    return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
+}
+
+void in3_handle_rpc(in3_ctx_t* ctx) {
+  if (ctx->client->transport) {
+    // handle transports
+    in3_request_t* request = in3_create_request(ctx);
+    in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
+    ctx->client->transport(request);
+    in3_log_trace(ctx->raw_response->state
+                      ? "... response: \n... " COLOR_RED_STR "\n"
+                      : "... response: \n... " COLOR_GREEN_STR "\n",
+                  ctx->raw_response->data.data);
+    request_free(request);
+  } else
+    ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+}
 
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
-  int       retry_count = 0;
-  in3_ret_t res;
-
-  while ((res = in3_ctx_execute(ctx)) != IN3_OK) {
-
-    // error we stop here
-    if (res != IN3_WAITING) return res;
-
-    // we are waiting for an response.
-    retry_count++;
-    if (retry_count > 10) return ctx_set_error(ctx, "Looks like the response is not valid or not set, since we are calling the execute over and over", IN3_ERPC);
-
-    // handle subcontexts first
-    while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
-      res = in3_send_ctx(ctx->required);
-      if (res == IN3_EIGNORE)
-        ctx_handle_failable(ctx);
-      else if (res != IN3_OK)
-        return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
-
-      // recheck in order to prepare the request.
-      if ((res = in3_ctx_execute(ctx)) != IN3_WAITING) return res;
-    }
-
-    if (!ctx->raw_response) {
-      switch (ctx->type) {
-        case CT_RPC: {
-          if (ctx->client->transport) {
-            // handle transports
-            in3_request_t* request = in3_create_request(ctx);
-            if (request == NULL)
-              return IN3_ENOMEM;
-            in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
-            ctx->client->transport(request);
-            in3_log_trace(ctx->raw_response->state
-                              ? "... response: \n... " COLOR_RED_STR "\n"
-                              : "... response: \n... " COLOR_GREEN_STR "\n",
-                          ctx->raw_response->data.data);
-            request_free(request);
+  while (true) {
+    switch (in3_ctx_exec_state(ctx)) {
+      case CTX_ERROR:
+        return ctx->verification_state ? ctx->verification_state : IN3_EUNKNOWN;
+      case CTX_SUCCESS:
+        return IN3_OK;
+      case CTX_WAITING_FOR_RESPONSE:
+        return ctx_set_error(ctx, "should never have to wait for a response, since the transport is getting all responses", IN3_ENOTSUP);
+      case CTX_WAITING_TO_TRIGGER_REQUEST: {
+        in3_ctx_t* last = in3_ctx_last_waiting(ctx);
+        switch (last->type) {
+          case CT_SIGN:
+            in3_handle_sign(last);
             break;
-          } else
-            return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
-        }
-        case CT_SIGN: {
-          if (ctx->client->signer) {
-            d_token_t*     params = d_get(ctx->requests[0], K_PARAMS);
-            in3_sign_ctx_t sign_ctx;
-            sign_ctx.message = d_to_bytes(d_get_at(params, 0));
-            sign_ctx.account = d_to_bytes(d_get_at(params, 1));
-            sign_ctx.type    = SIGN_EC_HASH;
-            sign_ctx.ctx     = ctx;
-            sign_ctx.wallet  = ctx->client->signer->wallet;
-            if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
-            if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
-
-            ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
-            sb_init(&ctx->raw_response[0].data);
-            in3_log_trace("... request to sign ");
-            res = ctx->client->signer->sign(&sign_ctx);
-            if (res < 0) return ctx_set_error(ctx, ctx->raw_response->data.data, res);
-            sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
-            break;
-          } else
-            return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
+          case CT_RPC:
+            in3_handle_rpc(last);
         }
       }
     }
   }
-  return res;
 }
 
 in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {
@@ -719,6 +715,11 @@ static inline in3_ret_t pre_handle(in3_verifier_t* verifier, in3_ctx_t* ctx) {
   return verifier->pre_handle ? verifier->pre_handle(ctx, &ctx->raw_response) : IN3_OK;
 }
 
+in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
+  in3_ctx_execute(ctx);
+  return in3_ctx_state(ctx);
+}
+
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
   // if there is an error it does not make sense to execute.
@@ -735,7 +736,7 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     if (ret == IN3_EIGNORE)
       ctx_handle_failable(ctx);
     else
-      return ret;
+      return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
   }
 
   switch (ctx->type) {

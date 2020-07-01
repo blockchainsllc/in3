@@ -126,6 +126,13 @@ NONULL in3_ctx_t* ctx_new(
 NONULL in3_ret_t in3_send_ctx(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
+
+/**
+ * executes the context and returns its state.
+ */
+NONULL in3_ctx_state_t in3_ctx_exec_state(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
 /**
  * execute the context, but stops whenever data are required.
  * 
