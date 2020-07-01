@@ -702,7 +702,7 @@ in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
 
 in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
   if (ctx == NULL) return CTX_SUCCESS;
-  in3_ctx_state_t required_state = in3_ctx_state(ctx->required);
+  in3_ctx_state_t required_state = ctx->required ? in3_ctx_state(ctx->required) : CTX_SUCCESS;
   if (required_state == CTX_ERROR || ctx->error) return CTX_ERROR;
   if (ctx->required && required_state != CTX_SUCCESS) return required_state;
   if (!ctx->raw_response) return CTX_WAITING_TO_TRIGGER_REQUEST;
