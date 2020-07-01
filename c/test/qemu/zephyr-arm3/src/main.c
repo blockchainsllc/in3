@@ -33,6 +33,7 @@
  *******************************************************************************/
 
 #include "block_number.h"
+#include "context.h"
 #include "eth_api.h"   //wrapper for easier use
 #include "eth_basic.h" // the full ethereum verifier containing the EVM
 #include "receipt.h"
