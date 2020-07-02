@@ -690,12 +690,12 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   request->action = REQ_ACTION_SEND;
   request->cptr   = NULL;
   transport_cleanup(ctx, transports);
-  for (int i = 0; i < request->urls_len; i++)
+  for (unsigned int i = 0; i < request->urls_len; i++)
     in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[i], i == 0 ? request->payload : "");
 
   ctx->client->transport(request);
 
-  for (int i = 0; i < request->urls_len; i++) {
+  for (unsigned int i = 0; i < request->urls_len; i++) {
     if (request->ctx->raw_response[i].state != IN3_WAITING)
       in3_log_trace(request->ctx->raw_response[i].state
                         ? "... response(%i): \n... " COLOR_RED_STR "\n"
