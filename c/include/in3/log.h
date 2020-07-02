@@ -54,7 +54,7 @@ typedef enum { LOG_TRACE,
 #define in3_log_set_lock(fn)
 #define in3_log_set_fp(fp)
 #define in3_log_set_level(level)
-#define in3_log_get_level()
+#define in3_log_get_level() LOG_TRACE
 #define in3_log_set_quiet(enable)
 #define in3_log_set_prefix(prefix)
 #define in3_log_enable_prefix()
