@@ -205,7 +205,7 @@ in3_ret_t btc_check_target(in3_vctx_t* vc, uint32_t block_number, bytes32_t bloc
       case CTX_ERROR:                                                                                              // there was an error,
         return ctx_set_error(vc->ctx, "Error verifying the target", ctx_set_error(vc->ctx, ctx->error, IN3_ERPC)); // so we report it!
       case CTX_WAITING_FOR_RESPONSE:                                                                               // for an response
-      case CTX_WAITING_TO_TRIGGER_REQUEST:
+      case CTX_WAITING_TO_SEND:
         return IN3_WAITING;                                                                                  // we keep on waiting.
       case CTX_SUCCESS:                                                                                      // if it was successful,
         if (ctx_remove_required(vc->ctx, ctx)) return vc_err(vc, "could not clean up proofTarget-request!"); //  we remove it,

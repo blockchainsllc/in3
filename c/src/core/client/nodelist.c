@@ -238,7 +238,7 @@ NONULL static in3_ret_t update_nodelist(in3_t* c, in3_chain_t* chain, in3_ctx_t*
     switch (in3_ctx_state(ctx)) {
       case CTX_ERROR: return IN3_OK; /* already handled before*/
       case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_TRIGGER_REQUEST:
+      case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
       case CTX_SUCCESS: {
         d_token_t* r = d_get(ctx->responses[0], K_RESULT);
@@ -295,7 +295,7 @@ NONULL static in3_ret_t update_whitelist(in3_t* c, in3_chain_t* chain, in3_ctx_t
       case CTX_ERROR:
         return ctx_set_error(parent_ctx, "Error updating white_list", ctx_set_error(parent_ctx, ctx->error, IN3_ERPC));
       case CTX_WAITING_FOR_RESPONSE:
-      case CTX_WAITING_TO_TRIGGER_REQUEST:
+      case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
       case CTX_SUCCESS: {
 

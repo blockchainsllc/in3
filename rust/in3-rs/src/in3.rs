@@ -66,7 +66,8 @@ impl Ctx {
         match in3_sys::in3_ctx_exec_state(self.ptr) {
             in3_sys::state::CTX_ERROR => {
                 while (*self.ptr).required != std::ptr::null_mut()
-                    && (*self.ptr).error == std::ptr::null_mut() {
+                    && (*self.ptr).error == std::ptr::null_mut()
+                {
                     self.ptr = (*self.ptr).required;
                 }
                 if (*self.ptr).error != std::ptr::null_mut() {
@@ -74,7 +75,9 @@ impl Ctx {
                         .to_str()
                         .expect("err is not valid UTF-8");
                     Err(SysError::ResponseError(error.to_owned()))
-                } else { Err(SysError::UnknownIn3Error) }
+                } else {
+                    Err(SysError::UnknownIn3Error)
+                }
             }
             in3_sys::state::CTX_SUCCESS => {
                 let response = CStr::from_ptr((*(*self.ptr).response_context).c)
@@ -82,8 +85,8 @@ impl Ctx {
                     .expect("err is not valid UTF-8");
                 Ok(response.to_owned())
             }
-            in3_sys::state::CTX_WAITING_FOR_RESPONSE => { Err(SysError::NotSupported) }
-            in3_sys::state::CTX_WAITING_TO_TRIGGER_REQUEST => {
+            in3_sys::state::CTX_WAITING_FOR_RESPONSE => Err(SysError::NotSupported),
+            in3_sys::state::CTX_WAITING_TO_SEND => {
                 let request = in3_sys::in3_create_request(self.ptr);
                 match (*(*request).ctx).type_ {
                     in3_sys::ctx_type::CT_SIGN => {
@@ -92,7 +95,8 @@ impl Ctx {
                             .expect("result is not valid UTF-8");
                         let jreq: serde_json::Value =
                             serde_json::from_str(slice).expect("result not valid JSON");
-                        let data_str = &jreq[0]["params"][0].as_str().expect("params[0] not string");
+                        let data_str =
+                            &jreq[0]["params"][0].as_str().expect("params[0] not string");
                         let data_hex = data_str[2..]
                             .from_hex()
                             .expect("message is not valid hex string");
@@ -403,9 +407,9 @@ impl Client {
             let c_ptr: *mut ffi::c_void = &mut *c as *mut _ as *mut ffi::c_void;
             (*c.ptr).internal = c_ptr;
             #[cfg(feature = "blocking")]
-                {
-                    (*c.ptr).transport = Some(Client::in3_rust_transport);
-                }
+            {
+                (*c.ptr).transport = Some(Client::in3_rust_transport);
+            }
             c
         }
     }

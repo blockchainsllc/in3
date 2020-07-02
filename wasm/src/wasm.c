@@ -136,7 +136,7 @@ char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
       sb_add_int(sb, (unsigned int) in3_ctx_last_waiting(ctx));
       sb_add_char(sb, '}');
       break;
-    case CTX_WAITING_TO_TRIGGER_REQUEST:
+    case CTX_WAITING_TO_SEND:
       sb_add_chars(sb, "\"request\"");
       in3_request_t* request = in3_create_request(ctx);
       if (request == NULL) {
