@@ -656,11 +656,23 @@ static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports) 
 }
 
 static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
+  in3_log_debug("waiting for the next response....");
   ctx = in3_ctx_last_waiting(ctx);
   for (int i = 0; i < transports->len; i++) {
     if (transports->req[i].ctx == ctx) {
       in3_request_t req = {.action = REQ_ACTION_RECEIVE, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       ctx->client->transport(&req);
+#ifdef DEBUG
+      node_match_t* w = ctx->nodes;
+      int           i = 0;
+      for (; w; i++, w = w->next) {
+        if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data)
+          in3_log_trace(ctx->raw_response[i].state
+                            ? "... response(%i): \n... " COLOR_RED_STR "\n"
+                            : "... response(%i): \n... " COLOR_GREEN_STR "\n",
+                        i, ctx->raw_response[i].data.data);
+      }
+#endif
       return;
     }
   }
@@ -678,12 +690,18 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
   request->action = REQ_ACTION_SEND;
   request->cptr   = NULL;
   transport_cleanup(ctx, transports);
-  in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
+  for (int i = 0; i < request->urls_len; i++)
+    in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[i], i == 0 ? request->payload : "");
+
   ctx->client->transport(request);
-  in3_log_trace(request->ctx->raw_response->state
-                    ? "... response: \n... " COLOR_RED_STR "\n"
-                    : "... response: \n... " COLOR_GREEN_STR "\n",
-                request->ctx->raw_response->data.data);
+
+  for (int i = 0; i < request->urls_len; i++) {
+    if (request->ctx->raw_response[i].state != IN3_WAITING)
+      in3_log_trace(request->ctx->raw_response[i].state
+                        ? "... response(%i): \n... " COLOR_RED_STR "\n"
+                        : "... response(%i): \n... " COLOR_GREEN_STR "\n",
+                    i, request->ctx->raw_response[i].data.data);
+  }
 
   if (request && request->cptr) {
     // we need to add the ctpr

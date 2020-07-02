@@ -537,37 +537,42 @@ static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
 static in3_ret_t debug_transport(in3_request_t* req) {
+  if (req->action == REQ_ACTION_SEND) {
 #ifndef DEBUG
-  if (debug_mode)
-    fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
+    if (debug_mode)
+      fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
-  if (in_response.len) {
-    for (int i = 0; i < req->urls_len; i++) {
-      req->ctx->raw_response[i].state = IN3_OK;
-      sb_add_range(&req->ctx->raw_response[i].data, (char*) in_response.data, 0, in_response.len);
+    if (in_response.len) {
+      for (int i = 0; i < req->urls_len; i++) {
+        req->ctx->raw_response[i].state = IN3_OK;
+        sb_add_range(&req->ctx->raw_response[i].data, (char*) in_response.data, 0, in_response.len);
+        req->ctx->raw_response[i].state = IN3_OK;
+      }
+      return 0;
     }
-    return 0;
-  }
-  if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
-    char* data         = str_find(req->payload, "0x");
-    *strchr(data, '"') = 0;
-    printf("%s\n", data);
-    exit(EXIT_SUCCESS);
+    if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
+      char* data         = str_find(req->payload, "0x");
+      *strchr(data, '"') = 0;
+      printf("%s\n", data);
+      exit(EXIT_SUCCESS);
+    }
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(req);
 #else
   in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
+  if (req->action != REQ_ACTION_CLEANUP) {
+    last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
 #ifndef DEBUG
-  if (debug_mode) {
-    if (req->ctx->raw_response[0].state == IN3_OK)
-      fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
-    else
-      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
-  }
+    if (debug_mode) {
+      if (req->ctx->raw_response[0].state == IN3_OK)
+        fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+      else
+        fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+    }
 #endif
+  }
   return r;
 }
 static char*     test_name = NULL;
