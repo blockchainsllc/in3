@@ -543,7 +543,7 @@ static in3_ret_t debug_transport(in3_request_t* req) {
       fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
     if (in_response.len) {
-      for (int i = 0; i < req->urls_len; i++) {
+      for (unsigned int i = 0; i < req->urls_len; i++) {
         req->ctx->raw_response[i].state = IN3_OK;
         sb_add_range(&req->ctx->raw_response[i].data, (char*) in_response.data, 0, in_response.len);
         req->ctx->raw_response[i].state = IN3_OK;

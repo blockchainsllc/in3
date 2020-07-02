@@ -111,7 +111,7 @@ in3_ret_t receive_next(in3_request_t* req) {
       curl_easy_getinfo(e, CURLINFO_RESPONSE_CODE, &response_code);
       if (msg->msg == CURLMSG_DONE) {
         CURLcode res = msg->data.result;
-        if (res != CURLM_OK) {
+        if (res != CURLE_OK) {
           sb_add_chars(&response->data, "Invalid response:");
           sb_add_chars(&response->data, (char*) curl_easy_strerror((CURLcode) res));
           response->state = IN3_ERPC;
@@ -158,7 +158,7 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
   c->headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
 
   // create requests
-  for (int i = 0; i < req->urls_len; i++) readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout);
+  for (unsigned int i = 0; i < req->urls_len; i++) readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout);
   in3_ret_t res = receive_next(req);
   if (req->urls_len == 1) {
     cleanup(c);
@@ -238,6 +238,8 @@ in3_ret_t send_curl(in3_request_t* req) {
       return receive_next(req);
     case REQ_ACTION_CLEANUP:
       return cleanup(req->cptr);
+    default:
+      return IN3_EINVAL;
   }
 #endif
 }
