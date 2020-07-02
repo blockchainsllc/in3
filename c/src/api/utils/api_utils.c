@@ -86,6 +86,7 @@ void set_error(int err, const char* msg) {
 #ifdef LOGGING
   return set_error_intern(err, msg);
 #else
+  UNUSED_VAR(msg);
   return set_error_intern(err, "E");
 #endif
 }
