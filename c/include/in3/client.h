@@ -387,15 +387,26 @@ typedef struct in3_response {
  */
 typedef struct in3_t_ in3_t;
 
+/**
+ * Filter type used internally when managing filters.
+ */
+typedef enum {
+  REQ_ACTION_SEND    = 0, /**< The request should be send */
+  REQ_ACTION_RECEIVE = 1, /**< a response is expected now. the request will not contains the urls anymore! */
+  REQ_ACTION_CLEANUP = 2, /**< the cstptr can perform clean up */
+} in3_req_action_t;
+
 /** request-object. 
  * 
  * represents a RPC-request
  */
 typedef struct in3_request {
-  char*           payload;  /**< the payload to send */
-  char**          urls;     /**< array of urls */
-  int             urls_len; /**< number of urls */
-  struct in3_ctx* ctx;      /**< the current context */
+  char*            payload;  /**< the payload to send */
+  char**           urls;     /**< array of urls */
+  uint_fast16_t    urls_len; /**< number of urls */
+  in3_req_action_t action;   /**< the action the transport should execute */
+  struct in3_ctx*  ctx;      /**< the current context */
+  void*            cptr;     /**< a custom ptr to hold information during */
 } in3_request_t;
 
 /** the transport function to be implemented by the transport provider.

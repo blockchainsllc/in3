@@ -99,10 +99,10 @@ typedef struct in3_ctx {
  * you can check this state after each execute-call.
  */
 typedef enum state {
-  CTX_SUCCESS                  = 0,  /**< The ctx has a verified result. */
-  CTX_WAITING_FOR_REQUIRED_CTX = 1,  /**< there are required contexts, which need to be resolved first */
-  CTX_WAITING_FOR_RESPONSE     = 2,  /**< the response is not set yet */
-  CTX_ERROR                    = -1, /**< the request has a error */
+  CTX_SUCCESS                    = 0,  /**< The ctx has a verified result. */
+  CTX_WAITING_TO_TRIGGER_REQUEST = 1,  /**< the request has not been sent yet */
+  CTX_WAITING_FOR_RESPONSE       = 2,  /**< the request is sent but not all of the response are set () */
+  CTX_ERROR                      = -1, /**< the request has a error */
 } in3_ctx_state_t;
 
 /** 
@@ -124,6 +124,20 @@ NONULL in3_ctx_t* ctx_new(
  * In order to handle calls asynchronously, you need to call the `in3_ctx_execute` function and provide the data as needed.
  */
 NONULL in3_ret_t in3_send_ctx(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * finds the last waiting request-context.
+ */
+NONULL in3_ctx_t* in3_ctx_last_waiting(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * executes the context and returns its state.
+ */
+NONULL in3_ctx_state_t in3_ctx_exec_state(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 /**
