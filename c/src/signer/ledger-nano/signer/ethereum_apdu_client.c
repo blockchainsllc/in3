@@ -18,7 +18,6 @@ in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
   in3_ret_t ret;
   uint8_t   apdu[256];
   int       index_counter = 0;
-  uint8_t   pkey[65];
 
   uint8_t  hash[32];
   uint8_t  bip32_len = 5;
@@ -102,8 +101,10 @@ in3_ret_t eth_ledger_sign_txn(in3_sign_ctx_t* sc) {
             ret = IN3_OK;
 
             memcpy(sc->signature, response.data + 1, 64);
-            eth_ledger_get_public_addr(bip_data, pkey);
-            recid             = get_recid_from_pub_key(&secp256k1, pkey, sc->signature, hash);
+
+
+            recid             = get_recid_from_pub_key(&secp256k1, public_key, sc->signature, hash);
+
             sc->signature[64] = recid;
             in3_log_debug("recid %d\n", recid);
 #ifdef DEBUG
