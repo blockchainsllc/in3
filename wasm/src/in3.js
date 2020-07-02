@@ -161,7 +161,8 @@ class IN3 {
 
     // here we are creating the instance lazy, when the first function is called.
     constructor(config) {
-        this.config = config
+        const def = { requestCount: 2 }
+        this.config = config ? { ...def, ...config } : def
         this.needsSetConfig = !!config
         this.ptr = 0;
         this.eth = new EthAPI(this)

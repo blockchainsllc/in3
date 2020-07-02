@@ -699,11 +699,12 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
 
   // debug output
   for (unsigned int i = 0; i < request->urls_len; i++) {
-    if (request->ctx->raw_response[i].state != IN3_WAITING)
+    if (request->ctx->raw_response[i].state != IN3_WAITING) {
       in3_log_trace(request->ctx->raw_response[i].state
                         ? "... response(%i): \n... " COLOR_RED_STR "\n"
                         : "... response(%i): \n... " COLOR_GREEN_STR "\n",
                     i, request->ctx->raw_response[i].data.data);
+    }
   }
 
   // in case we have a cptr, we need to save it in the transports
