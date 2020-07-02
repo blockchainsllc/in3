@@ -156,7 +156,7 @@ static void add_req_id(sb_t* sb, uint64_t id) {
 
 /** gets the v-value from the chain_id */
 static uint64_t get_v(in3_ctx_t* ctx) {
-  uint64_t v = ctx->requests_configs->chain_id ? ctx->requests_configs->chain_id : ctx->client->chain_id;
+  uint64_t v = ctx->client->chain_id;
   if (v > 0xFF) v = 0; // this is only valid for ethereum chains.
   return v;
 }
@@ -206,10 +206,10 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
       case CTX_WAITING_FOR_RESPONSE:
         return IN3_WAITING;
       case CTX_SUCCESS: {
-        if (c->raw_response && c->raw_response->result.len == 65)
-          memcpy(sig, c->raw_response->result.data, 65);
-        else if (c->raw_response && c->raw_response->error.data)
-          return ctx_set_error(ctx, c->raw_response->error.data, IN3_EINVAL);
+        if (c->raw_response && c->raw_response->data.len == 65)
+          memcpy(sig, c->raw_response->data.data, 65);
+        else if (c->raw_response && c->raw_response->state)
+          return ctx_set_error(ctx, c->raw_response->data.data, c->raw_response->state);
         else
           return ctx_set_error(ctx, "no data to sign", IN3_EINVAL);
       }

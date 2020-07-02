@@ -1,10 +1,9 @@
 .idea/
 wip/
-venv/
 venv
-idea
 dist/
 in3.egg-info/
+in3/libin3/shared/
 MANIFEST
 **/**.pyc
 **/**/.DS_Store

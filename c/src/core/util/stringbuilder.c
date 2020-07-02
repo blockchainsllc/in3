@@ -59,8 +59,13 @@ sb_t* sb_init(sb_t* sb) {
   sb->len      = 0;
   return sb;
 }
-static void check_size(sb_t* sb, size_t len) {
-  if (sb == NULL || len == 0 || sb->len + len < sb->allocted) return;
+NONULL static void check_size(sb_t* sb, size_t len) {
+  if (len == 0 || sb->len + len < sb->allocted) return;
+  if (sb->allocted == 0) {
+    sb->allocted = len + 1,
+    sb->data     = _malloc(sb->allocted);
+    return;
+  }
 #ifdef __ZEPHYR__
   size_t l = sb->allocted;
 #endif

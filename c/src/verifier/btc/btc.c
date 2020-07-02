@@ -111,6 +111,7 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   d_token_t *t, *list;
   btc_tx_t   tx_data;
   bool       in_active_chain = true;
+  if (!vc->proof) return vc_err(vc, "missing the proof");
 
   // define the expected blockhash
   if (block_hash) memcpy(expected_block_hash, block_hash, 32);
@@ -179,9 +180,11 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
     if (tmp.len == 4 && le_to_int(tmp.data) != (uint32_t) d_get_longk(vc->result, key("time"))) return vc_err(vc, "invalid time");
 
     // check vin
-    uint8_t*    p   = tx_data.input.data;
-    uint8_t*    end = p + tx_data.input.len;
+    uint8_t*    p        = tx_data.input.data;
+    uint8_t*    end      = p + tx_data.input.len;
+    uint32_t    tx_index = d_get_intk(vc->proof, key("txIndex"));
     btc_tx_in_t tx_in;
+    char*       hex;
     list = d_get(vc->result, key("vin"));
     if (d_type(list) != T_ARRAY || d_len(list) != (int) tx_data.input_count) return vc_err(vc, "invalid vin");
 
@@ -189,19 +192,25 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
       p = btc_parse_tx_in(p, &tx_in, end);
       if (!p) return vc_err(vc, "invalid vin");
 
-      // txid
-      char* hex = d_get_stringk(iter.token, key("txid"));
-      if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
-
-      // vout
-      if (d_get_intk(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) return vc_err(vc, "invalid vin.vout");
-
       // sequence
       if (d_get_longk(iter.token, key("sequence")) != tx_in.sequence) return vc_err(vc, "invalid vin.sequence");
 
-      // sig.hex
-      hex = d_get_stringk(d_get(iter.token, key("scriptSig")), key("hex"));
-      if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
+      if (tx_index == 0) {
+        // coinbase
+        hex = d_get_stringk(iter.token, key("coinbase"));
+        if (!hex || !equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid coinbase");
+      } else {
+        // txid
+        hex = d_get_stringk(iter.token, key("txid"));
+        if (!equals_hex_rev(bytes(tx_in.prev_tx_hash, 32), hex)) return vc_err(vc, "invalid vin.txid");
+
+        // vout
+        if (d_get_intk(iter.token, key("vout")) != (int32_t) tx_in.prev_tx_index) return vc_err(vc, "invalid vin.vout");
+
+        // sig.hex
+        hex = d_get_stringk(d_get(iter.token, key("scriptSig")), key("hex"));
+        if (!equals_hex(tx_in.script, hex)) return vc_err(vc, "invalid vin.hex");
+      }
     }
 
     p   = tx_data.output.data;
@@ -271,10 +280,19 @@ in3_ret_t btc_verify_tx(in3_vctx_t* vc, uint8_t* tx_id, bool json, uint8_t* bloc
   if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, vc->proof))) return ret;
   if ((block_hash || json) && memcmp(expected_block_hash, hash, 32)) return vc_err(vc, "invalid hash of blockheader!");
   if (!in_active_chain) return IN3_OK;
-  if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+  if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
   if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
 
   return IN3_OK;
+}
+
+/**
+ * check a block
+ */
+in3_ret_t btc_verify_blockcount(in3_vctx_t* vc) {
+  // verify the blockheader
+  //TODO verify the proof
+  return vc->proof ? IN3_OK : vc_err(vc, "missing the proof");
 }
 
 /**
@@ -286,6 +304,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
   in3_ret_t ret              = IN3_OK;
   uint32_t  block_number     = 0;
   bytes_t   finality_headers = d_to_bytes(d_get(vc->proof, key("final")));
+  if (!vc->proof) return vc_err(vc, "missing the proof");
   if (verbose)
     btc_serialize_block_header(vc->result, block_header);      // we need to serialize the header first, so we can check the hash
   else                                                         //
@@ -293,7 +312,7 @@ in3_ret_t btc_verify_block(in3_vctx_t* vc, bytes32_t block_hash, int verbose, bo
 
   // verify the blockheader
   if ((ret = btc_verify_header(vc, block_header, hash, block_target, &block_number, NULL, vc->proof))) return ret;
-  if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+  if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
   if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, bytes(block_header, 80)))) return ret;
 
   // check blockhash
@@ -377,7 +396,7 @@ in3_ret_t btc_verify_target_proof(in3_vctx_t* vc, d_token_t* params) {
     if (header.len != 80) return vc_err(vc, "invalid header");
 
     if ((ret = btc_verify_header(vc, header.data, hash, block_target, &block_number, NULL, iter.token))) return ret;
-    if ((ret = btc_check_finality(vc, hash, vc->config->finality, finality_headers, block_target, block_number))) return ret;
+    if ((ret = btc_check_finality(vc, hash, vc->client->finality, finality_headers, block_target, block_number))) return ret;
     if ((ret = btc_check_target(vc, block_number, block_target, finality_headers, header))) return ret;
   }
 
@@ -390,7 +409,7 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
   bytes32_t  hash;
 
   // make sure we want to verify
-  if (vc->config->verification == VERIFICATION_NEVER) return IN3_OK;
+  if (in3_ctx_get_proof(vc->ctx) == PROOF_NONE) return IN3_OK;
 
   // do we support this request?
   if (!method) return vc_err(vc, "No Method in request defined!");
@@ -409,6 +428,9 @@ in3_ret_t in3_verify_btc(in3_vctx_t* vc) {
     if (d_len(params) < 1 || d_type(params) != T_ARRAY || d_type(block_hash) != T_STRING || d_len(block_hash) != 64) return vc_err(vc, "Invalid params");
     hex_to_bytes(d_string(block_hash), 64, hash, 32);
     return btc_verify_block(vc, hash, d_len(params) > 1 ? d_get_int_at(params, 1) : 1, true);
+  }
+  if (strcmp(method, "getblockcount") == 0) {
+    return btc_verify_blockcount(vc);
   }
   if (strcmp(method, "getblockheader") == 0) {
     d_token_t* block_hash = d_get_at(params, 0);

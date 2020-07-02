@@ -95,33 +95,6 @@ typedef enum {
   PROOF_FULL     = 2  /**< All field will be validated including uncles */
 } in3_proof_t;
 
-/** verification as delivered by the server. 
- * 
- * This will be part of the in3-request and will be generated based on the prooftype.*/
-typedef enum {
-  VERIFICATION_NEVER = 0, /**< No Verifacation */
-  VERIFICATION_PROOF = 1, /**< Includes the proof of the data */
-} in3_verification_t;
-
-/** the configuration as part of each incubed request. 
- * This will be generated for each request based on the client-configuration. the verifier may access this during verification in order to check against the request. 
- * 
- */
-typedef struct in3_request_config {
-  chain_id_t         chain_id;               /**< the chain to be used. this is holding the integer-value of the hexstring. */
-  uint_fast8_t       flags;                  /**< the current flags from the client. */
-  uint8_t            use_full_proof;         /**< this flaqg is set, if the proof is set to "PROOF_FULL" */
-  bytes_t*           verified_hashes;        /**< a list of blockhashes already verified. The Server will not send any proof for them again . */
-  uint16_t           verified_hashes_length; /**< number of verified blockhashes*/
-  uint8_t            latest_block;           /**< the last blocknumber the nodelistz changed */
-  uint16_t           finality;               /**< number of signatures( in percent) needed in order to reach finality. */
-  in3_verification_t verification;           /**< Verification-type */
-  bytes_t*           signers;                /**< the addresses of servers requested to sign the blockhash */
-  uint8_t            signers_length;         /**< number or addresses */
-  uint32_t*          times;                  /**< meassured times in ms for the request */
-
-} in3_request_config_t;
-
 /**
  * Node capabilities
  * @note Always access using getters/setters in nodelist.h
@@ -380,7 +353,7 @@ typedef void (*in3_pay_free)(void* cptr);
  * 
  * this function is called when the in3-section of payload of the request is built and allows the handler to add properties. 
 */
-typedef in3_ret_t (*in3_pay_handle_request)(void* ctx, sb_t* sb, in3_request_config_t* rc, void* cptr);
+typedef in3_ret_t (*in3_pay_handle_request)(void* ctx, sb_t* sb, void* cptr);
 
 /** 
  * the payment handler.
@@ -400,8 +373,8 @@ typedef struct in3_pay {
  * if the error has a length>0 the response will be rejected
  */
 typedef struct in3_response {
-  sb_t error;  /**< a stringbuilder to add any errors! */
-  sb_t result; /**< a stringbuilder to add the result */
+  in3_ret_t state; /**< the state of the response */
+  sb_t      data;  /**< a stringbuilder to add the result */
 } in3_response_t;
 
 /** Incubed Configuration. 
@@ -421,7 +394,7 @@ typedef struct in3_request {
   int             urls_len; /**< number of urls */
   in3_response_t* results;  /**< the responses*/
   uint32_t        timeout;  /**< the timeout 0= no timeout*/
-  uint32_t*       times;    /**< measured times (in ms) which will be used for ajusting the weights */
+  uint32_t*       times;    /**< measured time (in ms) which will be used for ajusting the weights */
   in3_t*          in3;      /**< pointer to associated IN3 instance */
 } in3_request_t;
 
@@ -485,6 +458,7 @@ struct in3_t_ {
   uint16_t               chains_length;        /**< number of configured chains */
   in3_filter_handler_t*  filters;              /**< filter handler */
   in3_node_props_t       node_props;           /**< used to identify the capabilities of the node. */
+  uint_fast16_t          pending;              /**< number of pending requests created with this instance */
 
 #ifdef PAY
   in3_pay_t* pay; /**< payment handler. if set it will add payment to each request */

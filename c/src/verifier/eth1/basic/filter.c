@@ -163,6 +163,8 @@ in3_ret_t filter_add(in3_ctx_t* ctx, in3_filter_type_t type, char* options) {
   else if (options == NULL && type != FILTER_BLOCK)
     return IN3_EINVAL;
 
+  in3_log_debug("add filter %s : %options", type == FILTER_BLOCK ? "BLOCK" : "EVENTS", options);
+
   in3_ret_t  res           = IN3_OK;
   uint64_t   current_block = 0;
   in3_ctx_t* block_ctx     = ctx_find_required(ctx, "eth_blockNumber");
