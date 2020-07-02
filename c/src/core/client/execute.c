@@ -550,6 +550,8 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;
+  request->action        = REQ_ACTION_SEND;
+  request->cptr          = NULL;
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
   ctx->raw_response = _calloc(sizeof(in3_response_t), nodes_count);
@@ -634,25 +636,19 @@ typedef struct {
   int        len;
   ctx_req_t* req;
 } ctx_req_transports_t;
-static void transport_cleanup_all(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
-  for (int i = 0; i < transports->len; i++) {
-    if (transports->req[i].ctx) {
-      in3_request_t req = {.action = REQ_ACTION_CLEANUP, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
-      ctx->client->transport(&req);
-    }
-  }
-  if (transports->req) _free(transports->req);
-}
 
-static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
+static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, bool free_all) {
   for (int i = 0; i < transports->len; i++) {
-    if (transports->req[i].ctx == ctx) {
+    if (free_all || transports->req[i].ctx == ctx) {
       in3_request_t req = {.action = REQ_ACTION_CLEANUP, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
       ctx->client->transport(&req);
-      transports->req[i].ctx = NULL;
-      return;
+      if (!free_all) {
+        transports->req[i].ctx = NULL;
+        return;
+      }
     }
   }
+  if (free_all && transports->req) _free(transports->req);
 }
 
 static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
@@ -679,22 +675,29 @@ static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports
 
   ctx_set_error(ctx, "waiting to fetch more responses, but no cptr was registered", IN3_ENOTSUP);
 }
+
 void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
+  // error check
   if (!ctx->client->transport) {
     ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
     return;
   }
+
+  // if we can't create the request, this function will put it into error-state
   in3_request_t* request = in3_create_request(ctx);
   if (!request) return;
 
-  request->action = REQ_ACTION_SEND;
-  request->cptr   = NULL;
-  transport_cleanup(ctx, transports);
+  // in case there is still a old cptr we need to cleanup since this means this is a retry!
+  transport_cleanup(ctx, transports, false);
+
+  // debug output
   for (unsigned int i = 0; i < request->urls_len; i++)
     in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[i], i == 0 ? request->payload : "");
 
+  // handle it
   ctx->client->transport(request);
 
+  // debug output
   for (unsigned int i = 0; i < request->urls_len; i++) {
     if (request->ctx->raw_response[i].state != IN3_WAITING)
       in3_log_trace(request->ctx->raw_response[i].state
@@ -703,8 +706,9 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
                     i, request->ctx->raw_response[i].data.data);
   }
 
+  // in case we have a cptr, we need to save it in the transports
   if (request && request->cptr) {
-    // we need to add the ctpr
+    // find a free spot
     int index = -1;
     for (int i = 0; i < transports->len; i++) {
       if (!transports->req[i].ctx) {
@@ -716,10 +720,13 @@ void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
       transports->req = transports->len ? _realloc(transports->req, sizeof(ctx_req_t) * (transports->len + 1), sizeof(ctx_req_t) * transports->len) : _malloc(sizeof(ctx_req_t) * transports->len);
       index           = transports->len++;
     }
+
+    // store the pointers
     transports->req[index].ctx = request->ctx;
     transports->req[index].ptr = request->cptr;
   }
 
+  // we will cleanup even though the reponses may still be pending
   request_free(request);
 }
 
@@ -729,7 +736,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
     switch (in3_ctx_exec_state(ctx)) {
       case CTX_ERROR:
       case CTX_SUCCESS:
-        transport_cleanup_all(ctx, &transports);
+        transport_cleanup(ctx, &transports, true);
         return ctx->verification_state;
       case CTX_WAITING_FOR_RESPONSE:
         in3_handle_rpc_next(ctx, &transports);

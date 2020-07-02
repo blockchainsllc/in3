@@ -159,7 +159,12 @@ in3_ret_t send_curl_nonblocking(in3_request_t* req) {
 
   // create requests
   for (int i = 0; i < req->urls_len; i++) readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout);
-  return receive_next(req);
+  in3_ret_t res = receive_next(req);
+  if (req->urls_len == 1) {
+    cleanup(c);
+    req->cptr = NULL;
+  }
+  return res;
 }
 
 static void readDataBlocking(const char* url, char* payload, in3_response_t* r, uint32_t timeout) {
