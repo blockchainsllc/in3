@@ -49,7 +49,7 @@ typedef enum { LOG_TRACE,
 #define in3_log_warn(...)
 #define in3_log_error(...)
 #define in3_log_fatal(...)
-#define in3_log_level_is(level)
+#define in3_log_level_is(level) 0
 #define in3_log_set_udata(udata)
 #define in3_log_set_lock(fn)
 #define in3_log_set_fp(fp)
