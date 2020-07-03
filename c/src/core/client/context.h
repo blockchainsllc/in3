@@ -263,9 +263,52 @@ NONULL in3_ret_t in3_ctx_execute(
 );
 
 /**
+ * signs the data using the signer in the context
+ */
+in3_ret_t ctx_handle_sign(
+    in3_ctx_t*      ctx,     /**< [in] the request context. */
+    in3_sign_ctx_t* sign_ctx /**< [in] the sign context. */
+);
+
+/**
  * returns the current state of the context.
  */
 NONULL in3_ctx_state_t in3_ctx_state(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns the error of the context.
+ */
+char* ctx_get_error_data(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns the next required context or NULL in case there is none.
+ */
+in3_ctx_t* ctx_get_next_required(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns a bool telling if this context should be ignored
+ */
+char* ctx_should_ignore(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns json response for that context
+ */
+char* ctx_get_response_data(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns the type of the request
+ */
+ctx_type_t ctx_get_type(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 

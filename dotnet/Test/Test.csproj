@@ -13,21 +13,12 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     </ItemGroup>
 
-    <Import Project="..\In3\In3.targets" />
+    <Import Project="..\In3\Slockit.In3.targets" />
 
     <ItemGroup>
       <ProjectReference Include="..\In3\In3.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Eth1\TransactionRequestTest.cs" />
-      <Compile Remove="Ipfs\Encoding.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="Resources\config.properties" />
-    </ItemGroup>
-
+  
     <ItemGroup>
       <None Remove="Responses/btc_GetBlockBytes_1.json" />
       <Content Include="Responses/btc_GetTransactionBytes_1.json">

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using In3.Eth1;
 using In3.Native;
 
@@ -34,13 +35,6 @@ namespace In3.Crypto
             return address;
         }
 
-        private string GetAddress(string key)
-        {
-            return In3.Crypto.Pk2Address(key);
-        }
-
-        private void SimpleSigner() { }
-
         /// <summary>
         /// Check if this address is managed by this wallet.
         /// </summary>
@@ -57,10 +51,10 @@ namespace In3.Crypto
         /// <param name="data">Data to be signed.</param>
         /// <param name="address">Address managed by the wallet, see <see cref="SimpleWallet.AddRawKey" /></param>
         /// <returns>Signed transaction data.</returns>
-        public string Sign(string data, string address)
+        public Task<string> Sign(string data, string address)
         {
             string key = PrivateKeys[address.ToLower()];
-            return NativeWallet.Sign(key, data);
+            return Task.Run(() => NativeWallet.Sign(key, data));
         }
 
         /// <summary>
@@ -71,6 +65,13 @@ namespace In3.Crypto
         public TransactionRequest PrepareTransaction(TransactionRequest tx)
         {
             return tx;
+        }
+
+        private string GetAddress(string key)
+        {
+            Task<string> addressTask = In3.Crypto.Pk2Address(key);
+            addressTask.Wait();
+            return addressTask.Result;
         }
     }
 }

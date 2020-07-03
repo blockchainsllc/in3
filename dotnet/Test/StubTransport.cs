@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using In3.Transport;
 using Newtonsoft.Json.Linq;
 
@@ -16,9 +17,9 @@ namespace Test
             Responses = new Dictionary<string, string>();
         }
 
-        public string Handle(string url, string payload)
+        public Task<string> Handle(string url, string payload)
         {
-            return Responses[GetMethod(payload)];
+            return Task.Run(() =>  Responses[GetMethod(payload)]);
         }
 
         public void AddMockedresponse(string methodName, string filename)

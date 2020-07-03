@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace In3.Transport
 {
     /// <summary>
@@ -11,6 +13,6 @@ namespace In3.Transport
         /// <param name="url">Url of the node.</param>
         /// <param name="payload">Content for the RPC request.</param>
         /// <returns>The rpc response.</returns>
-        public string Handle(string url, string payload);
+        public Task<string> Handle(string url, string payload);
     }
 }

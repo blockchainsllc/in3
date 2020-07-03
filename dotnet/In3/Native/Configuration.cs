@@ -5,13 +5,13 @@ using In3.Configuration;
 
 namespace In3.Native
 {
-    internal class NativeConfiguration
+    internal static class Configuration
     {
         public static ClientConfiguration Read(IntPtr client)
         {
             IntPtr jsonPointer = in3_get_config(client);
             string jsonConfig = Marshal.PtrToStringUTF8(jsonPointer);
-            NativeUtils._free_(jsonPointer);
+            Utils._free_(jsonPointer);
 
             ClientConfiguration clientConf = JsonSerializer.Deserialize<ClientConfiguration>(jsonConfig);
             clientConf.MarkSynced();
@@ -24,7 +24,7 @@ namespace In3.Native
             if (jsonPointer != IntPtr.Zero)
             {
                 string error = Marshal.PtrToStringUTF8(jsonPointer);
-                NativeUtils._free_(jsonPointer);
+                Utils._free_(jsonPointer);
                 return error;
             }
 

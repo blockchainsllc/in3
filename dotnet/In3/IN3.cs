@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using In3.Configuration;
+using In3.Context;
+using In3.Crypto;
 using In3.Transport;
 using In3.Storage;
 using In3.Native;
@@ -14,7 +17,7 @@ namespace In3
     /// </summary>
     public class IN3
     {
-        private NativeWrapper Native { get; }
+        private NativeClient NativeClient { get; }
 
         /// <summary>Gets <see cref="In3.Eth1.Api"/> object.</summary>
         public Eth1.Api Eth1 { get; }
@@ -22,11 +25,10 @@ namespace In3
         /// <summary>Gets or sets <see cref="In3.Transport.Transport"/> object. If not set <see cref="DefaultTransport"/> will be used.</summary>
         public Transport.Transport Transport { get; set; }
 
-
         /// <summary>Get or Sets <see cref="In3.Storage.Storage"/> object. If not set <see cref="InMemoryStorage"/> will be used.</summary>
         public Storage.Storage Storage { get; set; }
 
-        /// <summary>Get or Sets <see cref="Signer"/> object. If not set <see cref="Crypto.SimpleWallet"/> will be used.</summary>
+        /// <summary>Get or Sets <see cref="Signer"/> object. If not set <see cref="SimpleWallet"/> will be used.</summary>
         public Crypto.Signer Signer { get; set; }
 
         /// <summary>Gets <see cref="In3.Btc.Api"/> object.</summary>
@@ -47,14 +49,13 @@ namespace In3
             Transport = new DefaultTransport();
             Storage = new InMemoryStorage();
             Signer = new Crypto.SimpleWallet(this);
-            Native = new NativeWrapper(this, chainId);
+            NativeClient = new NativeClient(this, chainId);
             Btc = new Btc.Api(this);
             Eth1 = new Eth1.Api(this);
             Crypto = new Crypto.Api(this);
             Ipfs = new Ipfs.Api(this);
-            Configuration = Native.ReadConfiguration();
+            Configuration = NativeClient.ReadConfiguration();
         }
-        private IN3() { }
 
         /// <summary>
         /// Creates a new instance of <c>IN3</c>.
@@ -74,18 +75,19 @@ namespace In3
             return new IN3(chain);
         }
 
-        internal string SendRpc(string method, object[] args, Dictionary<string, object> in3 = null)
+        internal Task<string> SendRpc(string method, object[] args, Dictionary<string, object> in3 = null)
         {
             if (Configuration.HasChanged())
             {
-                Native.ApplyConfiguration(Configuration);
+                NativeClient.ApplyConfiguration(Configuration);
             }
-            return Native.Send(RpcHandler.To(method, args, in3));
+
+            return new Runner(NativeClient).Run(RpcHandler.To(method, args, in3));
         }
 
         /// <summary>
         /// Finalizer for the client.
         /// </summary>
-        ~IN3() => Native?.Free();
+        ~IN3() => NativeClient?.Free();
     }
 }

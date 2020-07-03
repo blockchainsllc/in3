@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
+#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
-#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -118,6 +118,14 @@ NONULL in3_ctx_t* ctx_new(
     in3_t*      client,  /**< [in] the client-config. */
     const char* req_data /**< [in] the rpc-request as json string. */
 );
+
+/**
+ * helper function to retrieve the signature from a in3_sign_ctx_t
+ */
+void in3_sign_ctx_set_signature(
+    in3_ctx_t*     ctx, /**< [in] the rpc context */
+    in3_sign_ctx_t sign_ctx /**< [in] the signer context */);
+
 /**
  * sends a previously created context to nodes and verifies it.
  * 

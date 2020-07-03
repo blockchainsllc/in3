@@ -599,6 +599,15 @@ NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
   return res;
 }
 
+void ctx_handle_transport(in3_ctx_t* ctx, in3_request_t* request) {
+  in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
+  ctx->client->transport(request);
+  in3_log_trace(request->results->state
+                    ? "... response: \n... " COLOR_RED_STR "\n"
+                    : "... response: \n... " COLOR_GREEN_STR "\n",
+                request->results->data.data);
+}
+
 in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   int       retry_count = 0;
   in3_ret_t res;
@@ -632,12 +641,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
             in3_request_t* request = in3_create_request(ctx);
             if (request == NULL)
               return IN3_ENOMEM;
-            in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
-            ctx->client->transport(request);
-            in3_log_trace(request->results->state
-                              ? "... response: \n... " COLOR_RED_STR "\n"
-                              : "... response: \n... " COLOR_GREEN_STR "\n",
-                          request->results->data.data);
+            ctx_handle_transport(ctx, request);
             request_free(request, ctx->client, false);
             break;
           } else
@@ -645,22 +649,17 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
         }
         case CT_SIGN: {
           if (ctx->client->signer) {
-            d_token_t*     params = d_get(ctx->requests[0], K_PARAMS);
-            in3_sign_ctx_t sign_ctx;
-            sign_ctx.message = d_to_bytes(d_get_at(params, 0));
-            sign_ctx.account = d_to_bytes(d_get_at(params, 1));
-            sign_ctx.type    = SIGN_EC_HASH;
-            sign_ctx.ctx     = ctx;
-            sign_ctx.wallet  = ctx->client->signer->wallet;
-            if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
-            if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+            in3_sign_ctx_t* sign_ctx = create_sign_ctx(ctx, ctx->client->signer->wallet);
+            if (!sign_ctx->message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+            if (!sign_ctx->account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
             ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
             sb_init(&ctx->raw_response[0].data);
             in3_log_trace("... request to sign ");
-            res = ctx->client->signer->sign(&sign_ctx);
+            res = ctx->client->signer->sign(sign_ctx);
             if (res < 0) return ctx_set_error(ctx, ctx->raw_response->data.data, res);
-            sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
+            sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature, 0, 65);
+            _free(sign_ctx);
             break;
           } else
             return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
@@ -669,6 +668,28 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
     }
   }
   return res;
+}
+
+NONULL in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx, void* wallet) {
+  d_token_t*      params   = d_get(ctx->requests[0], K_PARAMS);
+  in3_sign_ctx_t* sign_ctx = _calloc(sizeof(in3_sign_ctx_t), 1);
+  sign_ctx->message        = d_to_bytes(d_get_at(params, 0));
+  sign_ctx->account        = d_to_bytes(d_get_at(params, 1));
+  sign_ctx->type           = SIGN_EC_HASH;
+  sign_ctx->ctx            = ctx;
+  sign_ctx->wallet         = wallet;
+  return sign_ctx;
+}
+
+/**
+ * helper function to set the signature on the signer context and rpc context
+ */
+void in3_sign_ctx_set_signature(
+    in3_ctx_t*      ctx,
+    in3_sign_ctx_t* sign_ctx) {
+  ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
+  sb_init(&ctx->raw_response[0].data);
+  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature, 0, 65);
 }
 
 in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {

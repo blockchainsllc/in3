@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading.Tasks;
 using In3;
 using NUnit.Framework;
 
@@ -22,11 +23,11 @@ namespace Test.Ipfs
         }
 
         [Test]
-        public void Put_Success()
+        public async Task Put_Success()
         {
             string content = "Lorem ipsum dolor sit amet";
 
-            string multihash = _in3.Ipfs.Put(content);
+            string multihash = await _in3.Ipfs.Put(content);
 
             Assert.NotNull(multihash);
             Assert.That(multihash, Is.EqualTo("QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8"));
@@ -37,15 +38,15 @@ namespace Test.Ipfs
         {
             string nullString = null;
 
-            Assert.Throws<ArgumentException>(() => _in3.Ipfs.Put(nullString));
+            Assert.ThrowsAsync<ArgumentException>(async () => await _in3.Ipfs.Put(nullString));
         }
 
         [Test]
-        public void Get_Success()
+        public async Task Get_Success()
         {
             string multihash = "QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8";
 
-            byte[] content = _in3.Ipfs.Get(multihash);
+            byte[] content = await _in3.Ipfs.Get(multihash);
 
             Assert.NotNull(content);
             Assert.That(content, Is.EqualTo(Encoding.UTF8.GetBytes("Lorem ipsum dolor sit amet")));
@@ -56,7 +57,7 @@ namespace Test.Ipfs
         {
             string nullString = null;
 
-            Assert.Throws<ArgumentException>(() => _in3.Ipfs.Get(nullString));
+            Assert.ThrowsAsync<ArgumentException>(async () => await _in3.Ipfs.Get(nullString));
         }
     }
 }
