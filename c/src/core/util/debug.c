@@ -77,7 +77,7 @@ void msg_dump(const char* s, unsigned char* data, unsigned len) {
  * converts a error code into a string.
  */
 char* in3_errmsg(in3_ret_t err /**< the error code */) {
-#ifdef ERR_MSG
+#ifdef LOGGING
   switch (err) {
     case IN3_OK: return NULL;
     case IN3_ECONFIG: return "Invalid configuration";

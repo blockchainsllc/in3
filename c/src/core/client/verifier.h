@@ -49,7 +49,7 @@
 #ifndef VERIFIER_H
 #define VERIFIER_H
 
-#ifdef ERR_MSG
+#ifdef LOGGING
 #define vc_err(vc, msg) vc_set_error(vc, msg)
 #else
 #define vc_err(vc, msg) vc_set_error(vc, NULL)
@@ -105,7 +105,7 @@ typedef struct verifier {
 /*! returns the verifier for the given chainType */
 NONULL in3_verifier_t* in3_get_verifier(in3_chain_type_t type);
 NONULL void            in3_register_verifier(in3_verifier_t* verifier);
-#ifdef ERR_MSG
+#ifdef LOGGING
 NONULL
 #endif
 in3_ret_t vc_set_error(in3_vctx_t* vc, char* msg); /* creates an error attaching it to the context and returns -1. */

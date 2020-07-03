@@ -1,17 +1,12 @@
 //! Ethereum JSON RPC client API. This implementation is more or less consistent with the
 //! [Ethereum JSON RPC wiki](https://github.com/ethereum/wiki/wiki/JSON-RPC).
-use ethereum_types::{Address, U256};
-use serde_json::json;
-
 use crate::error::*;
-use crate::eth1::{
-    Block, BlockNumber, CallTransaction, FilterChanges, Hash, Log, OutgoingTransaction,
-    Transaction, TransactionReceipt,
-};
+use crate::eth1::*;
 use crate::in3::chain::{BTC, IPFS};
 use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
 use crate::types::Bytes;
+use serde_json::json;
 
 /// Primary interface for the Ethereum JSON RPC API.
 pub struct Api {

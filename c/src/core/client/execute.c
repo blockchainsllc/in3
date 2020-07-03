@@ -630,7 +630,7 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
           if (ctx->client->transport) {
             // handle transports
             in3_request_t* request = in3_create_request(ctx);
-            if (request == NULL)
+            if (request == NULL || request->urls == NULL)
               return IN3_ENOMEM;
             in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
             ctx->client->transport(request);

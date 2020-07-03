@@ -230,15 +230,18 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
 
   // if we reached that point we have a valid signature in sig
   // create raw transaction with signature
-  bytes_t data, last;
-  uint8_t v = 27 + sig[64] + (get_v(ctx) ? (get_v(ctx) * 2 + 8) : 0);
+  bytes_t  data, last;
+  uint32_t v = 27 + sig[64] + (get_v(ctx) ? (get_v(ctx) * 2 + 8) : 0);
   EXPECT_EQ(rlp_decode(&raw_tx, 0, &data), 2)                           // the raw data must be a list(2)
   EXPECT_EQ(rlp_decode(&data, 5, &last), 1)                             // the last element (data) must be an item (1)
   bytes_builder_t* rlp = bb_newl(raw_tx.len + 68);                      // we try to make sure, we don't have to reallocate
   bb_write_raw_bytes(rlp, data.data, last.data + last.len - data.data); // copy the existing data without signature
 
   // add v
-  data = bytes(&v, 1);
+  uint8_t vdata[sizeof(v)];
+  data = bytes(vdata, sizeof(vdata));
+  int_to_bytes(v, vdata);
+  b_optimize_len(&data);
   rlp_encode_item(rlp, &data);
 
   // add r

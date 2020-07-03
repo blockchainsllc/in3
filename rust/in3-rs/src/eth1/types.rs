@@ -1,5 +1,5 @@
 //! Ethereum types' definitions.
-use ethereum_types::{Address, Bloom, H256, U256, U64};
+pub use ethereum_types::{Address, Bloom, H256, U256, U64};
 use serde::{Deserialize, Serialize, Serializer};
 
 use crate::types::Bytes;
