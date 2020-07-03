@@ -46,6 +46,18 @@ rust_linux:
   needs:
     - gcc_legacy
 
+rust_mac:
+  extends: .rust_multiarch
+  variables:
+    TARGET: "x86_64-unknown-linux-gnu"
+    BUILD_DIR: "mac_os"
+  needs:
+    - mac_os
+  tags:
+    - mac-mini-runner
+  
+  
+
 rust_win:
   allow_failure: true
   extends: .rust_multiarch
