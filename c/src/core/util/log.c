@@ -39,7 +39,13 @@ static struct {
   int             quiet;
   const char*     prefix;
   int             enable_prefix;
-} L = {.quiet = 1, .enable_prefix = 1};
+} L = {.quiet = 1, .enable_prefix = 1,
+#ifdef DEBUG
+       .level = LOG_DEBUG
+#else
+       .level = LOG_INFO
+#endif
+};
 
 static const char* level_names[] = {
     "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"};

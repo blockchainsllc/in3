@@ -40,4 +40,5 @@ pub mod prelude {
     pub use crate::traits::Client as ClientTrait;
     pub use crate::traits::{Signer, Storage, Transport};
     pub use crate::transport::{HttpTransport, MockJsonTransport, MockTransport};
+    pub use crate::types::*;
 }

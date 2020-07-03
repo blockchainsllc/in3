@@ -36,7 +36,7 @@
 
 #include "context.h"
 
-#ifdef ERR_MSG
+#ifdef LOGGING
 #define ctx_set_error(c, msg, err) ctx_set_error_intern(c, msg, err)
 #else
 #define ctx_set_error(c, msg, err) ctx_set_error_intern(c, NULL, err)

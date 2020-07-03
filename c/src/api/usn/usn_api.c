@@ -47,7 +47,7 @@
 #define K_ACTION key("action")
 #define K_TRANSACTIONHASH key("transactionHash")
 #define K_SIGNATURE key("signature")
-#ifdef ERR_MSG
+#ifdef LOGGING
 #define reject_if(c, m)            \
   if (c) {                         \
     if (parsed) json_free(parsed); \

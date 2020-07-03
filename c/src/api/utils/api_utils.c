@@ -83,9 +83,10 @@ char* api_last_error(void) {
 }
 
 void set_error(int err, const char* msg) {
-#ifdef ERR_MSG
+#ifdef LOGGING
   return set_error_intern(err, msg);
 #else
+  UNUSED_VAR(msg);
   return set_error_intern(err, "E");
 #endif
 }

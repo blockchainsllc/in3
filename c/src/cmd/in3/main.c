@@ -1049,6 +1049,11 @@ int main(int argc, char* argv[]) {
     if (c->signer->sign == eth_ledger_sign_txn) { // handling specific case when ledger nano signer is ethereum firmware app
       char     prefix[] = "msg";
       bytes_t* tmp_data = b_new((uint8_t*) NULL, data->len + strlen(prefix));
+      uint8_t  hash[32];
+
+      hasher_Raw(HASHER_SHA2, data->data, data->len, hash);
+      printf("Match the following hash with the message hash on ledger device\n");
+      print_hex(hash, 32);
 
       memcpy(tmp_data->data, prefix, strlen(prefix));
       memcpy(tmp_data->data + strlen(prefix), data->data, data->len);
