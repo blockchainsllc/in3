@@ -84,6 +84,7 @@ digraph "GG" {
     core -> segger_rtt;
     core -> crypto // core -> crypto
     eth_api -> eth_nano // eth_api -> eth_nano
+    btc_api -> btc // eth_api -> eth_nano
     eth_nano -> core // eth_nano -> core
     btc -> core // eth_nano -> core
     eth_basic -> eth_nano // eth_basic -> eth_nano
@@ -105,10 +106,11 @@ digraph "GG" {
 
 Incubed is a minimal verification client, which means that each response needs to be verifiable. Depending on the expected requests and responses, you need to carefully choose which verifier you may need to register. For Ethereum, we have developed three modules:
 
-1. [eth_nano](#module-eth-nano): a minimal module only able to verify transaction receipts (`eth_getTransactionReceipt`).
-2. [eth_basic](#module-eth-basic): module able to verify almost all other standard RPC functions (except `eth_call`).
-3. [eth_full](#module-eth-full): module able to verify standard RPC functions. It also implements a full EVM to handle `eth_call`.
-3. [btc](#module-btc): module able to verify bitcoin or bitcoin based chains.
+1. [eth_nano](#eth-nano-h): a minimal module only able to verify transaction receipts (`eth_getTransactionReceipt`).
+2. [eth_basic](#eth-basic-h): module able to verify almost all other standard RPC functions (except `eth_call`).
+3. [eth_full](#eth-full-h): module able to verify standard RPC functions. It also implements a full EVM to handle `eth_call`.
+3. [btc](#btc-h): module able to verify bitcoin or bitcoin based chains.
+4. [ipfs](#ipfs-h): module able to verify ipfs-hashes
 
 Depending on the module, you need to register the verifier before using it. This is done by calling the `in3_register...` function like [in3_register_eth_full()](#in3-register-eth-full).
 
@@ -118,12 +120,14 @@ To verify responses, you need to be able to send requests. The way to handle the
 
 At the moment we offer these modules; other implementations are supported by different hardware modules.
 
-1. [transport_curl](#module-transport-curl): module with a dependency on curl, which executes these requests and supports HTTPS. This module runs a standard OS with curl installed.
-2. [transport_http](#module-transport-http): module with no dependency, but a very basic http-implementation (no https-support)
+1. [transport_curl](#in3-curl-h): module with a dependency on curl, which executes these requests and supports HTTPS. This module runs a standard OS with curl installed.
+2. [transport_http](#in3-http-h): module with no dependency, but a very basic http-implementation (no https-support)
 
 #### API
 
 While Incubed operates on JSON-RPC level, as a developer, you might want to use a better-structured API to prepare these requests for you. These APIs are optional but make life easier:
 
-1. [**eth**](#module-eth-api): This module offers all standard RPC functions as described in the [Ethereum JSON-RPC Specification](https://github.com/ethereum/wiki/wiki/JSON-RPC). In addition, it allows you to sign and encode/decode calls and transactions.
-2. [**usn**](#module-usn-api): This module offers basic USN functions like renting, event handling, and message verification.
+1. [**eth**](#eth-api-h): This module offers all standard RPC functions as described in the [Ethereum JSON-RPC Specification](https://github.com/ethereum/wiki/wiki/JSON-RPC). In addition, it allows you to sign and encode/decode calls and transactions.
+2. [**usn**](#usn-api-h): This module offers basic USN functions like renting, event handling, and message verification.
+3. [**btc**](#btc-api-h): Collection of Bitcoin-functions to access blocks and transactions.
+4. [**ipfs**](#ipfs-api-h): Simple Ipfs-functions to get and store ipfs-content
