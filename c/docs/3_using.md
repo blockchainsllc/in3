@@ -173,4 +173,69 @@ While for sync calls you can just implement a transport function, you can also t
 
 For the js for example the main-loop is part of a async function.
 
+```js
+    async sendRequest(rpc) {
+        
+        // create the context
+        const r = in3w.ccall('in3_create_request_ctx', 'number', ['number', 'string'], [this.ptr, JSON.stringify(rpc)]);
+
+        // hold a queue for responses for the different request contexts
+        let responses = {}
+
+        try {
+          // main async loop
+          while (true) {
+
+              // execute and fetch the new state ( in this case the ctx_execute-function will return the status including the created request as json)
+              const state = JSON.parse(call_string('ctx_execute', r))
+              switch (state.status) {
+                  // CTX_ERROR
+                  case 'error':
+                      throw new Error(state.error || 'Unknown error')
+                      
+                  // CTX_SUCCESS
+                  case 'ok':
+                      return state.result
+
+                  // CTX_WAITING_FOR_RESPONSE
+                  case 'waiting':
+                      // await the promise for the next response ( the state.request contains the context-pointer to know which queue)
+                      await getNextResponse(responses, state.request)
+                      break
+
+                  // CTX_WAITING_TO_SEND
+                  case 'request': {
+                      // the request already contains the type, urls and payload.
+                      const req = state.request
+                      switch (req.type) {
+                          case 'sign':
+                              try {
+                                  // get the message and account from the request
+                                  const [message, account] = Array.isArray(req.payload) ? req.payload[0].params : req.payload.params;
+                                  // check if can sign
+                                  if (!(await this.signer.canSign(account))) throw new Error('unknown account ' + account)
+
+                                  // and set the signature (65 bytes) as response. 
+                                  setResponse(req.ctx, toHex(await this.signer.sign(message, account, true, false)), 0, false)
+                              } catch (ex) {
+                                  // or set the error
+                                  setResponse(req.ctx, ex.message || ex, 0, true)
+                              }
+                              break;
+
+                          case 'rpc':
+                              // here we will send a new request, which puts its responses in a queue
+                              await getNextResponse(responses, req)
+                      }
+                  }
+              }
+          }
+        }
+        finally {
+            // we always need to cleanup
+            in3w.ccall('in3_request_free', 'void', ['number'], [r])
+        }
+    }
+```
+
 
