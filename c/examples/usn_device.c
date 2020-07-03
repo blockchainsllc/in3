@@ -23,7 +23,7 @@ static int handle_booking(usn_event_t* ev) {
 
 int main(int argc, char* argv[]) {
   // create new incubed client
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
 
   // switch to goerli
   c->chain_id = 0x5;

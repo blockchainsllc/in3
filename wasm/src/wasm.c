@@ -186,7 +186,7 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
     if (strcmp(chain->nodelist[i].url, url) == 0) {
       chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
       // we don't update weights for local chains.
-      if (!in3->cache || in3->chain_id == ETH_CHAIN_ID_LOCAL) return;
+      if (!in3->cache || in3->chain_id == CHAIN_ID_LOCAL) return;
       in3_cache_store_nodelist(in3, chain);
       return;
     }

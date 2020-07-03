@@ -85,7 +85,7 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
 }
 
 static void test_context_bulk() {
-  in3_t* in3     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3     = in3_for_chain(CHAIN_ID_MAINNET);
   in3->transport = test_bulk_transport;
   in3->flags     = FLAGS_STATS;
   for (int i = 0; i < in3->chains_length; i++) {

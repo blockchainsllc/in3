@@ -85,7 +85,7 @@ in3_ret_t transport_mock(in3_request_t* req) {
 }
 /* Setup and init in3 */
 void init_in3(void) {
-  c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  c = in3_for_chain(CHAIN_ID_GOERLI);
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
   c->transport     = transport_mock;

@@ -59,7 +59,7 @@
 
 static void test_in3_config() {
 
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
@@ -138,7 +138,7 @@ static void test_in3_config() {
 
 static void test_in3_client_rpc() {
   char * result = NULL, *error = NULL;
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->flags           = FLAGS_STATS;
   c->proof           = PROOF_NONE;
@@ -229,7 +229,7 @@ static void test_in3_client_chain() {
   _free(chain.nodelist_upd8_params);
 
   // Reregister chains with same chain id
-  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
+  in3_t*    c = in3_for_chain(CHAIN_ID_MULTICHAIN);
   address_t contract1, contract2;
   hex_to_bytes("0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f", -1, contract1, 20);
   hex_to_bytes("0x5f51e413581dd76759e9eed51e63d14c8d1379c8", -1, contract2, 20);
@@ -259,7 +259,7 @@ static void checksum(d_token_t* params, chain_id_t chain, char* result) {
 static void test_in3_checksum_rpc() {
   char*       param_test = "[\"0x0dE496AE79194D5F5b18eB66987B504A0FEB32f2\",false]";
   char *      result = NULL, *error = NULL;
-  in3_t*      in3     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t*      in3     = in3_for_chain(CHAIN_ID_MAINNET);
   json_ctx_t* json    = parse_json(param_test);
   d_token_t*  address = &json->result[0];
   char        ret_checksum[43];
@@ -279,7 +279,7 @@ static void test_in3_checksum_rpc() {
 }
 
 static void test_in3_client_context() {
-  in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MULTICHAIN);
+  in3_t*     c   = in3_for_chain(CHAIN_ID_MULTICHAIN);
   in3_ctx_t* ctx = ctx_new(c, "[{\"id\":1,\"jsonrpc\":\"2.0\","
                               "\"method\":\"eth_getBlockByHash\","
                               "\"params\":[\"0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331\", false],"

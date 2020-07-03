@@ -62,7 +62,7 @@ static in3_t* in3_init_test(chain_id_t chain) {
 }
 
 void test_in3_ipfs_api() {
-  in3_t*  in3 = in3_init_test(ETH_CHAIN_ID_IPFS);
+  in3_t*  in3 = in3_init_test(CHAIN_ID_IPFS);
   bytes_t b   = {.data = (uint8_t*) LOREM_IPSUM, .len = strlen(LOREM_IPSUM)};
 
   add_response("ipfs_put", "[\"TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQ=\",\"base64\"]", "\"QmbGySCLuGxu2GxVLYWeqJW9XeyjGFvpoZAhGhXDGEUQu8\"", NULL, NULL);
@@ -80,7 +80,7 @@ void test_in3_ipfs_api() {
 }
 
 void test_in3_ipfs_api_long() {
-  in3_t*  in3 = in3_init_test(ETH_CHAIN_ID_IPFS);
+  in3_t*  in3 = in3_init_test(CHAIN_ID_IPFS);
   bytes_t b   = {.data = (uint8_t*) LOREM_IPSUM_LONG, .len = strlen(LOREM_IPSUM_LONG)};
 
   add_response("ipfs_put", "[\"" LOREM_IPSUM_LONG_B64 "\",\"base64\"]", "\"QmdefnkMuNaAro8sT2i5rufFbJmfd621UFsaoTaaL1Goh9\"", NULL, NULL);

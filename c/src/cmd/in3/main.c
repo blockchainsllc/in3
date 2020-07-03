@@ -388,13 +388,13 @@ bytes_t* get_std_in() {
 
 // convert the name to a chain_id
 uint64_t getchain_id(char* name) {
-  if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
-  if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
-  if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
-  if (strcmp(name, "ewc") == 0) return ETH_CHAIN_ID_EWC;
-  if (strcmp(name, "ipfs") == 0) return ETH_CHAIN_ID_IPFS;
-  if (strcmp(name, "btc") == 0) return ETH_CHAIN_ID_BTC;
-  if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
+  if (strcmp(name, "mainnet") == 0) return CHAIN_ID_MAINNET;
+  if (strcmp(name, "kovan") == 0) return CHAIN_ID_KOVAN;
+  if (strcmp(name, "goerli") == 0) return CHAIN_ID_GOERLI;
+  if (strcmp(name, "ewc") == 0) return CHAIN_ID_EWC;
+  if (strcmp(name, "ipfs") == 0) return CHAIN_ID_IPFS;
+  if (strcmp(name, "btc") == 0) return CHAIN_ID_BTC;
+  if (strcmp(name, "local") == 0) return CHAIN_ID_LOCAL;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
     return bytes_to_long(d, hex_to_bytes(name + 2, -1, d, 32));
@@ -882,7 +882,7 @@ int main(int argc, char* argv[]) {
     return 0;
 #ifdef IPFS
   } else if (strcmp(method, "ipfs_get") == 0) {
-    c->chain_id = ETH_CHAIN_ID_IPFS;
+    c->chain_id = CHAIN_ID_IPFS;
     int size    = strlen(params);
     if (p == 1 || params[1] != '"' || size < 20 || strstr(params + 2, "\"") == NULL) die("missing ipfs has");
     params[size - 2] = 0;
@@ -893,7 +893,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "ipfs_put") == 0) {
-    c->chain_id         = ETH_CHAIN_ID_IPFS;
+    c->chain_id         = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
     printf("%s\n", ipfs_put(c, &data));

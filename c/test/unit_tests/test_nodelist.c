@@ -226,7 +226,7 @@ static in3_t* in3_init_test(chain_id_t chain) {
   in3->chain_id  = chain;
   in3->transport = test_transport;
   in3->flags     = FLAGS_AUTO_UPDATE_LIST | FLAGS_NODE_LIST_NO_SIG;
-  if (chain == ETH_CHAIN_ID_MAINNET) {
+  if (chain == CHAIN_ID_MAINNET) {
     // use a predefined nodelist
     /*
       initChain(chain, 0x01, "ac1b824795e1eb1f6e609fe0da9b9af8beaab60f", "23d5345c5c13180a8080bd5ddbe7cde64683755dcce6e734d95b7b573845facb", 2, 5, CHAIN_ETH, NULL);
@@ -272,7 +272,7 @@ static in3_t* in3_init_test(chain_id_t chain) {
 // A request now shouldn't trigger a nodeList update. We then go to the future (i.e. to expected update time) and run `eth_blockNumber`
 // again; this should trigger a nodeList update.
 static void test_nodelist_update_1() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
 
@@ -291,7 +291,7 @@ static void test_nodelist_update_1() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
   TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989048);
@@ -335,7 +335,7 @@ static void test_nodelist_update_1() {
 // update. We again move ahead in time just before expected update time and call `eth_blockNumber` to check that nodeList isn't updated.
 // We then go to the future (i.e. to expected update time) and run `eth_blockNumber` again; this should trigger a nodeList update.
 static void test_nodelist_update_2() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = 10;
 
@@ -358,7 +358,7 @@ static void test_nodelist_update_2() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
   TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989049);
@@ -405,7 +405,7 @@ static void test_nodelist_update_2() {
 // After 200 secs, `eth_blockNumber` returns 87989050 and reports a nodeList update happened at 87989038 (i.e. `lastNodeList`).
 // A request now should trigger a nodeList update.
 static void test_nodelist_update_3() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
 
@@ -427,7 +427,7 @@ static void test_nodelist_update_3() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
   TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
@@ -453,7 +453,7 @@ static void test_nodelist_update_3() {
 // A request now should trigger a nodeList update (taken from same node that reported the update). Because the node lied to us, it cannot
 // furnish a newer nodeList and still gives us an old list. This must be detected and the node should be blacklisted.
 static void test_nodelist_update_4() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
 
@@ -475,7 +475,7 @@ static void test_nodelist_update_4() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
   TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
@@ -504,7 +504,7 @@ static void test_nodelist_update_4() {
 
 // Scenario 5: Boot nodes do not respond for first update
 static void test_nodelist_update_5() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
   c->proof                = PROOF_NONE;
   c->max_attempts         = 1;
@@ -527,7 +527,7 @@ static void test_nodelist_update_5() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
 
@@ -547,7 +547,7 @@ static void test_nodelist_update_5() {
 
 // Scenario 6: Wrong first update response
 static void test_nodelist_update_6() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
   c->max_attempts         = 1;
 
@@ -569,7 +569,7 @@ static void test_nodelist_update_6() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_NOT_NULL(chain->nodelist_upd8_params);
   TEST_ASSERT_EQUAL(chain->nodelist_upd8_params->exp_last_block, 87989038);
 
@@ -593,7 +593,7 @@ static void test_nodelist_update_6() {
 // Begin with 3 nodes in first nodeList update (always taken from a boot node) which happened at block 87989012 (i.e. `lastBlockNumber`).
 // eth_blockNumber returns a lastNodeList > currentBlock. This is impossible, so we ignore it and do NOT update the nodeList.
 static void test_nodelist_update_7() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
 
@@ -612,7 +612,7 @@ static void test_nodelist_update_7() {
   uint64_t blk = eth_blockNumber(c);
   TEST_ASSERT_NOT_EQUAL(0, blk);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_EQUAL(chain->nodelist_length, 3);
   TEST_ASSERT_NULL(chain->nodelist_upd8_params);
 
@@ -625,7 +625,7 @@ static void test_nodelist_update_7() {
 // Since the result was not valid, we must not accept the `lastNodeList` and should not trigger a nodeList update.
 // A request now should trigger a nodeList update.
 static void test_nodelist_update_8() {
-  in3_t* c                = in3_init_test(ETH_CHAIN_ID_MAINNET);
+  in3_t* c                = in3_init_test(CHAIN_ID_MAINNET);
   c->proof                = PROOF_NONE;
   c->replace_latest_block = DEF_REPL_LATEST_BLK;
   c->max_attempts         = 0;
@@ -665,7 +665,7 @@ static void test_nodelist_update_8() {
                "  \"version\": \"2.0.0\""
                "}");
   TEST_ASSERT_EQUAL(0, eth_blockNumber(c));
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_NULL(chain->nodelist_upd8_params);
 
   // test that nodelist_upd8_params are not set when we have a response without proof
@@ -689,7 +689,7 @@ static void test_nodelist_update_8() {
   long double balance = as_double(eth_getBalance(c, addr, BLKNUM_LATEST()));
   TEST_ASSERT_EQUAL(0, balance);
 
-  chain = in3_find_chain(c, ETH_CHAIN_ID_MAINNET);
+  chain = in3_find_chain(c, CHAIN_ID_MAINNET);
   TEST_ASSERT_NULL(chain->nodelist_upd8_params);
 
   in3_free(c);

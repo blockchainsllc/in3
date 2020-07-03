@@ -53,17 +53,17 @@
 
 #define IN3_PROTO_VER "2.1.0" /**< the protocol version used when sending requests from the this client */
 
-#define ETH_CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
-#define ETH_CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
-#define ETH_CHAIN_ID_KOVAN 0x2a     /**< chain_id for kovan */
-#define ETH_CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
-#define ETH_CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
-#define ETH_CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
-#define ETH_CHAIN_ID_EWC 0xf6       /**< chain_id for ewc */
-#define ETH_CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
-#define ETH_CHAIN_ID_BTC 0x99       /**< chain_id for btc */
-#define ETH_CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
-#define DEF_REPL_LATEST_BLK 6       /**< default replace_latest_block */
+#define CHAIN_ID_MULTICHAIN 0x0 /**< chain_id working with all known chains */
+#define CHAIN_ID_MAINNET 0x01   /**< chain_id for mainnet */
+#define CHAIN_ID_KOVAN 0x2a     /**< chain_id for kovan */
+#define CHAIN_ID_TOBALABA 0x44d /**< chain_id for tobalaba */
+#define CHAIN_ID_GOERLI 0x5     /**< chain_id for goerlii */
+#define CHAIN_ID_EVAN 0x4b1     /**< chain_id for evan */
+#define CHAIN_ID_EWC 0xf6       /**< chain_id for ewc */
+#define CHAIN_ID_IPFS 0x7d0     /**< chain_id for ipfs */
+#define CHAIN_ID_BTC 0x99       /**< chain_id for btc */
+#define CHAIN_ID_LOCAL 0xFFFF   /**< chain_id for local chain */
+#define DEF_REPL_LATEST_BLK 6   /**< default replace_latest_block */
 
 /**
  * type for a chain_id.
@@ -482,7 +482,7 @@ struct in3_t_ {
 
 /** creates a new Incubes configuration and returns the pointer.
  * 
- * This Method is depricated. you should use `in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)` instead.
+ * This Method is depricated. you should use `in3_for_chain(CHAIN_ID_MULTICHAIN)` instead.
  * 
  * you need to free this instance with `in3_free` after use!
  * 
@@ -507,11 +507,11 @@ struct in3_t_ {
  * 
  * @returns the incubed instance.
  */
-in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTICHAIN)")));
+in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(CHAIN_ID_MULTICHAIN)")));
 
 /** creates a new Incubes configuration for a specified chain and returns the pointer.
  * when creating the client only the one chain will be configured. (saves memory). 
- * but if you pass `ETH_CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
+ * but if you pass `CHAIN_ID_MULTICHAIN` as argument all known chains will be configured allowing you to switch between chains within the same client or configuring your own chain. 
  * 
  * you need to free this instance with `in3_free` after use!
  * 
@@ -523,7 +523,7 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
  * in3_register_eth_full();
  * 
  * // create new client
- * in3_t* client = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+ * in3_t* client = in3_for_chain(CHAIN_ID_MAINNET);
  * 
  * // configure transport
  * client->transport    = send_curl;
@@ -540,7 +540,7 @@ in3_t* in3_new() __attribute__((deprecated("use in3_for_chain(ETH_CHAIN_ID_MULTI
 #define in3_for_chain(chain_id) in3_for_chain_default(chain_id)
 
 in3_t* in3_for_chain_default(
-    chain_id_t chain_id /**< the chain_id (see ETH_CHAIN_ID_... constants). */
+    chain_id_t chain_id /**< the chain_id (see CHAIN_ID_... constants). */
 );
 
 /** sends a request and stores the result in the provided buffer */

@@ -13,7 +13,7 @@ static void send_tx_api(in3_t* in3);
 int main() {
   // create new incubed client
   uint8_t bip_path[5] = {44, 60, 0, 0, 0};
-  in3_t*  in3         = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t*  in3         = in3_for_chain(CHAIN_ID_MAINNET);
   in3_log_set_level(LOG_DEBUG);
   // setting ledger nano s to be the default signer for incubed client
   // it will cause the transaction or any msg to be sent to ledger nanos device for siging

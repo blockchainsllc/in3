@@ -95,7 +95,7 @@ NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
-  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != ETH_CHAIN_ID_BTC);
+  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != CHAIN_ID_BTC);
 }
 
 NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
@@ -264,7 +264,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
 }
 NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
-  if (!ctx->client->cache || ctx->client->chain_id == ETH_CHAIN_ID_LOCAL) return;
+  if (!ctx->client->cache || ctx->client->chain_id == CHAIN_ID_LOCAL) return;
   chain_id_t chain_id = ctx->client->chain_id;
   in3_cache_store_nodelist(ctx->client, in3_find_chain(ctx->client, chain_id));
 }

@@ -129,8 +129,8 @@ in3_ret_t ens_resolve(in3_ctx_t* parent, char* name, const address_t registry, i
     registry_address[1] = 'x';
   } else
     switch (parent->client->chain_id) {
-      case ETH_CHAIN_ID_MAINNET:
-      case ETH_CHAIN_ID_GOERLI:
+      case CHAIN_ID_MAINNET:
+      case CHAIN_ID_GOERLI:
         registry_address = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
         break;
       default:

@@ -123,7 +123,7 @@ static void test_new_pending_tx_filter() {
 }
 
 static void test_get_filter_changes() {
-  in3_t* in3 = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = init_in3(test_transport, CHAIN_ID_MAINNET);
   in3->proof = PROOF_NONE;
 
   // Test with no filters registered
@@ -303,12 +303,11 @@ static void test_get_tx_receipt(void) {
   in3_free(in3);
 }
 
-
 static void test_send_tx() {
-  // mock verified from etherscan tx 
+  // mock verified from etherscan tx
   // https://goerli.etherscan.io/tx/0xee051f86d1a55c58d8e828ac9e1fb60ecd7cd78de0e5e8b4061d5a4d6d51ae2a
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_GOERLI);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x5\": {\"needsUpdate\":false}}}");
   in3->transport = test_transport;
   add_response("eth_sendRawTransaction", "[\"0xf86d01850ee6b28000830668a094930e62afa9ceb9889c2177c858dc28810cedbf5d881bc16d674ec80000002ea0f07f44cd0a600823c392bd9d8a7c32ae99bd04014c451df0ebf4050556fe461ea01dd0cf7597621659eace230b0f0d36017b4ef565e0dbda6f34b9e680326318d3\"]",
@@ -570,7 +569,7 @@ static void test_eth_call_multiple(void) {
 }
 
 static void test_get_result_no_error(void) {
-  in3_t* c = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
+  in3_t* c = init_in3(test_transport, CHAIN_ID_MAINNET);
   c->proof = PROOF_NONE;
   add_response("eth_blockNumber", "[]", NULL, "{}", NULL);
   uint64_t blknum = eth_blockNumber(c);
@@ -579,7 +578,7 @@ static void test_get_result_no_error(void) {
 }
 
 static void test_get_nonexistent_block(void) {
-  in3_t* c = init_in3(test_transport, ETH_CHAIN_ID_MAINNET);
+  in3_t* c = init_in3(test_transport, CHAIN_ID_MAINNET);
   c->proof = PROOF_NONE;
   add_response("eth_getBlockByNumber", "[\"0xffffffffffffffff\",false]", "null", NULL, NULL);
   eth_block_t* blk = eth_getBlockByNumber(c, BLKNUM(UINT64_MAX), false);
@@ -588,7 +587,7 @@ static void test_get_nonexistent_block(void) {
 }
 
 static void test_wait_for_receipt(void) {
-  in3_t*    c = init_in3(mock_transport, ETH_CHAIN_ID_GOERLI);
+  in3_t*    c = init_in3(mock_transport, CHAIN_ID_GOERLI);
   bytes32_t blk_hash;
   hex_to_bytes("0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d", -1, blk_hash, 32);
   char* r = eth_wait_for_receipt(c, blk_hash);
@@ -596,7 +595,7 @@ static void test_wait_for_receipt(void) {
   _free(r);
   in3_free(c);
 
-  c = init_in3(test_transport, ETH_CHAIN_ID_GOERLI);
+  c = init_in3(test_transport, CHAIN_ID_GOERLI);
   add_response("eth_getTransactionReceipt", "[\"0x8e7fb87e95c69a780490fce3ea14b44c78366fc45baa6cb86a582166c10c6d9d\"]", NULL, "Unknown error", NULL);
   r = eth_wait_for_receipt(c, blk_hash);
   TEST_ASSERT_NULL(r);
@@ -612,7 +611,6 @@ static void test_send_raw_tx(void) {
   b_free(data);
   in3_free(in3);
 }
-
 
 /*
  * Main
