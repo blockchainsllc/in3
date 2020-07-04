@@ -81,18 +81,6 @@ char* ctx_get_error_data(in3_ctx_t* ctx) {
   return ctx->error;
 }
 
-in3_ctx_t* ctx_get_next_required(in3_ctx_t* ctx) {
-  return ctx->required;
-}
-
-bool ctx_is_ignore(in3_ctx_t* ctx) {
-  return ctx->verification_state == IN3_EIGNORE;
-}
-
-bool ctx_is_waiting_response(in3_ctx_t* ctx) {
-  return !ctx->raw_response && in3_ctx_state(ctx) == CTX_WAITING_FOR_RESPONSE;
-}
-
 char* ctx_get_response_data(in3_ctx_t* ctx) {
   str_range_t rr = d_to_json(ctx->responses[0]), rin3;
   if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {

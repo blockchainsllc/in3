@@ -59,14 +59,6 @@ NONULL in3_request_t* in3_create_request(
 );
 
 /**
- * creates a signer-object, which then need to be filled with the signature.
- */
-NONULL in3_sign_ctx_t* create_sign_ctx(
-    in3_ctx_t* ctx,   /**< [in] the request context. */
-    void*      wallet /**< [in] the wallet pointer to be incorporated to the signer. */
-);
-
-/**
  * frees a previuosly allocated request.
  */
 NONULL void request_free(
