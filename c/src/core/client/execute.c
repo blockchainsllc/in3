@@ -756,6 +756,17 @@ in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
   }
 }
 
+/**
+ * helper function to set the signature on the signer context and rpc context
+ */
+void in3_sign_ctx_set_signature(
+    in3_ctx_t*      ctx,
+    in3_sign_ctx_t* sign_ctx) {
+  ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
+  sb_init(&ctx->raw_response[0].data);
+  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature, 0, 65);
+}
+
 in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {
   in3_ctx_t* sub_ctx = parent->required;
   while (sub_ctx) {

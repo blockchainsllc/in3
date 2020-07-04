@@ -152,6 +152,12 @@ static char* create_rpc_error(uint32_t id, int code, char* error) {
   _free(sb);
   return res;
 }
+
+char* ctx_get_error_rpc(in3_ctx_t* ctx, in3_ret_t ret) {
+  uint32_t id = d_get_intk(ctx->requests[0], K_ID);
+  return create_rpc_error(id, ret ? ret : ctx->verification_state, ctx->error);
+}
+
 char* in3_client_exec_req(
     in3_t* c,  /**< [in] the pointer to the incubed client config. */
     char*  req /**< [in] the request as rpc. */
@@ -176,7 +182,7 @@ char* in3_client_exec_req(
 
   // do we have an error?
   if (ctx->error) {
-    res = create_rpc_error(id, ret ? ret : ctx->verification_state, ctx->error);
+    res = ctx_get_error_rpc(ctx, ret);
     goto clean;
   }
 
@@ -187,15 +193,7 @@ char* in3_client_exec_req(
   }
 
   // looks good, so we use the resonse and return it
-  str_range_t rr = d_to_json(ctx->responses[0]), rin3;
-  if ((c->flags & FLAGS_KEEP_IN3) == 0 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {
-    while (*rin3.data != ',' && rin3.data > rr.data) rin3.data--;
-    *rin3.data = '}';
-    rr.len     = rin3.data - rr.data + 1;
-  }
-  res         = _malloc(rr.len + 1);
-  res[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
-  memcpy(res, rr.data, rr.len);
+  res = ctx_get_response_data(ctx);
 
 clean:
 

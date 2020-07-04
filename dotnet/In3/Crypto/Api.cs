@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Threading.Tasks;
 using In3.Utils;
 
 namespace In3.Crypto
@@ -28,9 +29,9 @@ namespace In3.Crypto
         /// </summary>
         /// <param name="pk">Private key.</param>
         /// <returns>The address.</returns>
-        public string Pk2Address(string pk)
+        public async Task<string> Pk2Address(string pk)
         {
-            string jsonResponse = in3.SendRpc(CryptoPk2Address, new object[] { pk });
+            string jsonResponse = await in3.SendRpc(CryptoPk2Address, new object[] { pk });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -41,9 +42,9 @@ namespace In3.Crypto
         /// <param name="pk">Private key.</param>
         /// <param name="sigType">Type of signature, one of <see cref="SignatureType" />.</param>
         /// <returns>The signed data.</returns>
-        public SignedData SignData(string msg, string pk, SignatureType sigType = null)
+        public async Task<SignedData> SignData(string msg, string pk, SignatureType sigType = null)
         {
-            string jsonResponse = in3.SendRpc(CryptoSignData, new object[] { msg, pk, sigType?.Value });
+            string jsonResponse = await in3.SendRpc(CryptoSignData, new object[] { msg, pk, sigType?.Value });
             return RpcHandler.From<SignedData>(jsonResponse);
         }
 
@@ -52,9 +53,9 @@ namespace In3.Crypto
         /// </summary>
         /// <param name="pk">Private key.</param>
         /// <returns>The public key.</returns>
-        public string Pk2Public(string pk)
+        public async Task<string> Pk2Public(string pk)
         {
-            string jsonResponse = in3.SendRpc(CryptoPk2Public, new object[] { pk });
+            string jsonResponse = await in3.SendRpc(CryptoPk2Public, new object[] { pk });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -65,9 +66,9 @@ namespace In3.Crypto
         /// <param name="signature">The signature.</param>
         /// <param name="signatureType">One of <see cref="SignatureType" />.</param>
         /// <returns>The account.</returns>
-        public Account EcRecover(string signedData, string signature, SignatureType signatureType)
+        public async Task<Account> EcRecover(string signedData, string signature, SignatureType signatureType)
         {
-            string jsonResponse = in3.SendRpc(CryptoEcRecover, new object[] { signedData, signature, signatureType?.Value });
+            string jsonResponse = await in3.SendRpc(CryptoEcRecover, new object[] { signedData, signature, signatureType?.Value });
             return RpcHandler.From<Account>(jsonResponse);
         }
 
@@ -77,10 +78,10 @@ namespace In3.Crypto
         /// <param name="pk">Private key.</param>
         /// <param name="passphrase">Passphrase whose <paramref name="pk" />.</param>
         /// <returns>Decrypted key.</returns>
-        public string DecryptKey(string pk, string passphrase)
+        public async Task<string> DecryptKey(string pk, string passphrase)
         {
             Dictionary<string, object> res = JsonSerializer.Deserialize<Dictionary<string, object>>(pk);
-            string jsonResponse = in3.SendRpc(CryptoDecryptKey, new object[] { res, passphrase });
+            string jsonResponse = await in3.SendRpc(CryptoDecryptKey, new object[] { res, passphrase });
             return RpcHandler.From<string>(jsonResponse);
         }
 
@@ -89,9 +90,9 @@ namespace In3.Crypto
         /// </summary>
         /// <param name="data">Content to be hashed.</param>
         /// <returns>Hashed output.</returns>
-        public string Sha3(string data)
+        public async Task<string> Sha3(string data)
         {
-            string jsonResponse = in3.SendRpc(CryptoSha3, new object[] { data });
+            string jsonResponse = await in3.SendRpc(CryptoSha3, new object[] { data });
             return RpcHandler.From<string>(jsonResponse);
         }
 

@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace In3.Native
 {
-    internal class NativeStorageHandler : NativeHandler
+    internal class RegistrableStorageHandler : IRegistrableHandler
     {
-        private NativeWrapper Wrapper;
+        private NativeClient Wrapper;
 
         private GCHandle _giCol;
         private GCHandle _siCol;
@@ -14,7 +14,7 @@ namespace In3.Native
         private delegate void in3_storage_set_item(IntPtr cptr, string key, byte[] content);
         private delegate bool in3_storage_clear(IntPtr cptr);
 
-        public NativeStorageHandler(NativeWrapper wrapper)
+        public RegistrableStorageHandler(NativeClient wrapper)
         {
             Wrapper = wrapper;
         }
@@ -30,8 +30,8 @@ namespace In3.Native
             in3_storage_clear clearDel = Clear;
             _cCol = GCHandle.Alloc(clearDel);
 
-            in3_set_storage_handler(Wrapper.NativeClientPointer, getItemDel, setItemDel, clearDel,
-                Wrapper.NativeClientPointer);
+            in3_set_storage_handler(Wrapper.Pointer, getItemDel, setItemDel, clearDel,
+                Wrapper.Pointer);
         }
 
         public void UnregisterNativeHandler()

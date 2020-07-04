@@ -77,6 +77,39 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   return ctx;
 }
 
+char* ctx_get_error_data(in3_ctx_t* ctx) {
+  return ctx->error;
+}
+
+in3_ctx_t* ctx_get_next_required(in3_ctx_t* ctx) {
+  return ctx->required;
+}
+
+bool ctx_is_ignore(in3_ctx_t* ctx) {
+  return ctx->verification_state == IN3_EIGNORE;
+}
+
+bool ctx_is_waiting_response(in3_ctx_t* ctx) {
+  return !ctx->raw_response && in3_ctx_state(ctx) == CTX_WAITING_FOR_RESPONSE;
+}
+
+char* ctx_get_response_data(in3_ctx_t* ctx) {
+  str_range_t rr = d_to_json(ctx->responses[0]), rin3;
+  if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {
+    while (*rin3.data != ',' && rin3.data > rr.data) rin3.data--;
+    *rin3.data = '}';
+    rr.len     = rin3.data - rr.data + 1;
+  }
+  char* res   = _malloc(rr.len + 1);
+  res[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
+  memcpy(res, rr.data, rr.len);
+  return res;
+}
+
+ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
+  return ctx->type;
+}
+
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
   d_token_t* r = d_get(c->responses[i], K_ERROR);
   if (!r)

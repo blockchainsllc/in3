@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using In3;
 using In3.Crypto;
 using In3.Eth1;
@@ -8,7 +9,7 @@ namespace SendTransaction
 {
     public class Program
     {
-        static void Main()
+        static async Task Main()
         {
             IN3 goerliClient = IN3.ForChain(Chain.Goerli);
 
@@ -27,17 +28,17 @@ namespace SendTransaction
             transferWei.Value = 300;
 
             // Get the current gas prices
-            long currentGasPrice = goerliClient.Eth1.GetGasPrice();
+            long currentGasPrice = await goerliClient.Eth1.GetGasPrice();
             transferWei.GasPrice = currentGasPrice;
 
-            long estimatedSpentGas = goerliClient.Eth1.EstimateGas(transferWei, BlockParameter.Latest);
+            long estimatedSpentGas = await goerliClient.Eth1.EstimateGas(transferWei, BlockParameter.Latest);
             Console.Out.WriteLine($"Estimated gas to spend: {estimatedSpentGas}");
 
-            string transactionHash = goerliClient.Eth1.SendTransaction(transferWei);
+            string transactionHash = await goerliClient.Eth1.SendTransaction(transferWei);
             Console.Out.WriteLine($"Transaction {transactionHash} sent.");
             Thread.Sleep(30000);
 
-            TransactionReceipt receipt = goerliClient.Eth1.GetTransactionReceipt(transactionHash);
+            TransactionReceipt receipt = await goerliClient.Eth1.GetTransactionReceipt(transactionHash);
             Console.Out.WriteLine($"Transaction {transactionHash} mined on block {receipt.BlockNumber}.");
         }
     }

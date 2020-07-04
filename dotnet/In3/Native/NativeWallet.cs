@@ -12,7 +12,7 @@ namespace In3.Native
             IntPtr message = eth_wallet_sign(pk, data);
             Marshal.Copy(message, managedArray, 0, 132);
             string res = Encoding.UTF8.GetString(managedArray);
-            NativeUtils._free_(message);
+            Utils._free_(message);
             return res;
         }
 
