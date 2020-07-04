@@ -60,21 +60,35 @@ elseif(WIN32 OR MSVC OR MSYS OR MINGW)
          windows/hid.c
 
       DEPENDS
-         setupapi
+         -lsetupapi
    )
    
 elseif(LINUX)
+
+  find_path(LIBUSB_INCLUDE_DIR
+  NAMES libusb.h
+  PATH_SUFFIXES "include" "libusb" "libusb-1.0")
+
+ # find_library(LIBUSB_LIBRARY
+#  NAMES usb-1.0
+ # PATH_SUFFIXES "lib" "lib32" "lib64")
+
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
    add_static_library(
       NAME     hidapi 
       
       SOURCES 
-         linux/hid.c
+         libusb/hid.c
 
       DEPENDS
-         -ludev
+         -lusb-1.0
+         -lpthread
    )
+
+   target_include_directories(hidapi_o PRIVATE ${LIBUSB_INCLUDE_DIR})
+ 
 else()
    
 endif()
-
 

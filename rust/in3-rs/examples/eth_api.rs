@@ -25,26 +25,26 @@ fn main() -> In3Result<()> {
     let storage: u64 = task::block_on(eth_api.get_storage_at(address, key, BlockNumber::Latest))?
         .try_into()
         .expect("cannot convert to u64");
-    println!("Storage value is {:?}", storage);
+    println!("Storage value => {:?}", storage);
 
     // eth_getCode
     let address: Address = serde_json::from_str(r#""0xac1b824795e1eb1f6e609fe0da9b9af8beaab60f""#)?;
     let code: Bytes = task::block_on(eth_api.get_code(address, BlockNumber::Latest))?
         .try_into()
         .expect("cannot convert to Bytes");
-    println!("Code at address {:?} is {:?}", address, code);
+    println!("Code at address {:?} => {:?}", address, code);
 
     // eth_blockNumber
     let latest_blk_num: u64 = task::block_on(eth_api.block_number())?
         .try_into()
         .expect("cannot convert to u64");
-    println!("Latest block number is {:?}", latest_blk_num);
+    println!("Latest block number => {:?}", latest_blk_num);
 
     // eth_gasPrice
     let gas_price: u64 = task::block_on(eth_api.gas_price())?
         .try_into()
         .expect("cannot convert to u64");
-    println!("Gas price is {:?}", gas_price);
+    println!("Gas price => {:?}", gas_price);
 
     // eth_getBalance
     let address: Address = serde_json::from_str(r#""0x0123456789012345678901234567890123456789""#)?;
@@ -53,7 +53,6 @@ fn main() -> In3Result<()> {
     )?
     .try_into()
     .expect("cannot convert to u64");
-
     println!("Balance of address {:?} is {:?} wei", address, balance);
 
     // eth_getBlockByNumber
@@ -91,7 +90,7 @@ fn main() -> In3Result<()> {
     let output =
         task::block_on(abi.decode("uint256", output)).expect("failed to ABI decode output");
     let total_servers: U256 = serde_json::from_value(output).unwrap(); // cannot fail if ABI decode succeeds
-    println!("{:?}", total_servers);
+    println!("Total servers => {:?}", total_servers);
 
     Ok(())
 }
