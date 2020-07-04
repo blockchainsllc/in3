@@ -33,7 +33,7 @@ fn sign_tx_api() {
         r#"{"proof":"none", "autoUpdateList":false,"nodes":{"0x1":{"needsUpdate":false}}}}"#,
     );
     eth_api.client().set_signer(Box::new(In3Signer::new(
-        "0x889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
+        "889dbed9450f7a4b68e0732ccb7cd016dab158e6946d16158f2736fda1143ca6"
             .try_into()
             .unwrap(),
     )));
@@ -86,7 +86,7 @@ fn sign_tx_rpc() {
     ];
     c.set_transport(Box::new(MockTransport { responses }));
     c.set_signer(Box::new(In3Signer::new(
-        "0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
+        "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
             .try_into()
             .unwrap(),
     )));
