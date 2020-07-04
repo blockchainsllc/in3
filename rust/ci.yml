@@ -53,11 +53,8 @@ rust_mac:
     BUILD_DIR: "mac_os"
   needs:
     - mac_os
-  tags:
-    - mac-mini-runner
   
   
-
 rust_win:
   allow_failure: true
   extends: .rust_multiarch
