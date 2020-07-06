@@ -110,8 +110,11 @@ rust:
     - export IN3_MODE="RELEASE"
     - cargo install cargo2junit 
     - cargo run --example custom_transport --release
-    - RUST_TEST_THREADS=1 cargo test -- -Z unstable-options --format json | cargo2junit > results.xml
+    - RUST_TEST_THREADS=1 cargo test -- -Z unstable-options --format json | cargo2junit > ../rust_test.xml
   needs: []
+  artifacts:
+    reports:
+      junit: rust_test.xml
   tags:
     - mac-mini-runner
 
