@@ -1,10 +1,9 @@
 use std::convert::TryInto;
 
 use async_std::task;
-use serde_json::json;
 
 use in3::eth1::*;
-use in3::json_rpc::Request;
+use in3::json_rpc::{json::*, Request};
 use in3::prelude::*;
 
 fn sign_tx_api() {
@@ -40,17 +39,12 @@ fn sign_tx_api() {
         .client()
         .set_transport(Box::new(MockTransport { responses }));
     let mut abi = abi::In3EthAbi::new();
-    let params = task::block_on(abi.encode(
-        "setData(uint256,string)",
-        serde_json::json!([123, "testdata"]),
-    ))
-    .expect("failed to ABI encode params");
+    let params = task::block_on(abi.encode("setData(uint256,string)", json!([123, "testdata"])))
+        .expect("failed to ABI encode params");
     println!("{:?}", params);
 
-    let to: Address =
-        serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap(); // cannot fail
-    let from: Address =
-        serde_json::from_str(r#""0x3fEfF9E04aCD51062467C494b057923F771C9423""#).unwrap(); // cannot fail
+    let to: Address = from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap(); // cannot fail
+    let from: Address = from_str(r#""0x3fEfF9E04aCD51062467C494b057923F771C9423""#).unwrap(); // cannot fail
     let txn = OutgoingTransaction {
         to,
         from,
@@ -102,7 +96,7 @@ fn sign_tx_rpc() {
         method: "eth_sendTransaction",
         params: tx,
     };
-    let req_str = serde_json::to_string(&rpc_req).unwrap(); // Serialize `Request` impl cannot fail
+    let req_str = to_string(&rpc_req).unwrap(); // Serialize `Request` impl cannot fail
     match task::block_on(c.rpc(&req_str)) {
         Ok(res) => println!("RESPONSE > {:?}, {:?}\n\n", req_str, res),
         Err(err) => println!("Failed with error: {:?}\n\n", err),

@@ -1,10 +1,8 @@
 //! ABI encoder/decoder.
-use serde_json::{json, Value};
-
 use async_trait::async_trait;
 
+use crate::json_rpc::json::*;
 use crate::prelude::*;
-use crate::types::Bytes;
 
 /// Trait definition for ABI encode.
 #[async_trait(? Send)]
@@ -40,7 +38,7 @@ impl Encode for In3EthAbi {
         let resp_str = self
             .in3
             .rpc(
-                serde_json::to_string(&json!({
+                to_string(&json!({
                     "method": "in3_abiEncode",
                     "params": [fn_sig, params]
                 }))
@@ -48,8 +46,8 @@ impl Encode for In3EthAbi {
                 .as_str(),
             )
             .await?;
-        let resp: Value = serde_json::from_str(resp_str.as_str())?;
-        let res: Bytes = serde_json::from_str(resp["result"].to_string().as_str())?;
+        let resp: Value = from_str(resp_str.as_str())?;
+        let res: Bytes = from_str(resp["result"].to_string().as_str())?;
         Ok(res)
     }
 }
@@ -61,14 +59,12 @@ impl Decode for In3EthAbi {
         let resp_str = self
             .in3
             .rpc(
-                serde_json::to_string(
-                    &json!({"method": "in3_abiDecode", "params": [fn_sig, data]}),
-                )
-                .unwrap()
-                .as_str(),
+                to_string(&json!({"method": "in3_abiDecode", "params": [fn_sig, data]}))
+                    .unwrap()
+                    .as_str(),
             )
             .await?;
-        let resp: Value = serde_json::from_str(resp_str.as_str())?;
+        let resp: Value = from_str(resp_str.as_str())?;
         Ok(resp["result"].clone())
     }
 }
@@ -83,11 +79,10 @@ mod tests {
     #[test]
     fn test_abi_encode() {
         let mut encoder = In3EthAbi::new();
-        let address: Address =
-            serde_json::from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
+        let address: Address = from_str(r#""0x1234567890123456789012345678901234567890""#).unwrap();
         let params =
             task::block_on(encoder.encode("getBalance(address)", json!([address]))).unwrap();
-        let expected: Bytes = serde_json::from_str(
+        let expected: Bytes = from_str(
             r#""0xf8b2cb4f0000000000000000000000001234567890123456789012345678901234567890""#,
         )
         .unwrap();

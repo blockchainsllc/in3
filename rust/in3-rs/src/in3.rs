@@ -10,6 +10,7 @@ use rustc_hex::FromHex;
 use async_trait::async_trait;
 
 use crate::error::{Error, In3Result, SysError};
+use crate::json_rpc::json::*;
 use crate::traits::{Client as ClientTrait, Signer, Storage, Transport};
 use crate::transport::HttpTransport;
 use crate::types::Bytes;
@@ -119,8 +120,7 @@ impl Ctx {
                     let slice = CStr::from_ptr(item_)
                         .to_str()
                         .expect("result is not valid UTF-8");
-                    let request: serde_json::Value =
-                        serde_json::from_str(slice).expect("result not valid JSON");
+                    let request: Value = from_str(slice).expect("result not valid JSON");
                     let data_str = &request["params"][0].as_str().expect("params[0] not string");
                     let data_hex = data_str[2..]
                         .from_hex()
