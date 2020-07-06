@@ -24,7 +24,7 @@ if [ "$BUILDTYPE" = "debug" ]; then
    TEST=true
 fi
 
-if [ "$BUILDTYPE" = "--help" ]; then
+if [ "$CONTAINER" = "--help" ]; then
    echo "usage $0 <TARGET> <DEBUG|MINSIZEREL|RELEASE|debug|release> "
    echo "  <TARGET> could be one of the following:"
    echo "     - android-clang8-armv8"
