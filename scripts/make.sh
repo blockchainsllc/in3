@@ -11,7 +11,7 @@ if [ -z "$CONTAINER" ]; then
   make $TARGET -j8
 else                                  
   echo "build $CONTAINER"
-  docker run --rm -v $RD:$RD docker.slock.it/build-images/cmake:$CONTAINER \
+  docker run --rm -v $RD:$RD $CONTAINER \
   /bin/bash -c "cd $RD/build; make $TARGET -j8"
 fi
 

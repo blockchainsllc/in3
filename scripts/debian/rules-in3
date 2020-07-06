@@ -19,7 +19,7 @@ export DH_VERBOSE = 1
 override_dh_auto_configure:
 
 override_dh_auto_build:
-	cd scripts && ./build_release.sh
+	cd scripts && ./build.sh release
 	cd ..
 
 override_dh_auto_install:

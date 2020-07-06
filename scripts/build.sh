@@ -1,8 +1,17 @@
 #!/bin/sh
 CWD=$PWD
-BUILDTYPE=$1
-CONTAINER=$2
+BUILDTYPE=$2
+CONTAINER=$1
 TEST=false
+if [ "$CONTAINER" = "debug" ]; then
+   BUILDTYPE=debug
+   CONTAINER=""
+   TEST=true
+fi
+if [ "$CONTAINER" = "release" ]; then
+   BUILDTYPE=release
+   CONTAINER=""
+fi
 if [ -z "$BUILDTYPE" ]; then
    BUILDTYPE=DEBUG
    TEST=true
@@ -16,7 +25,7 @@ if [ "$BUILDTYPE" = "debug" ]; then
 fi
 
 if [ "$BUILDTYPE" = "--help" ]; then
-   echo "usage $0 <DEBUG|MINSIZEREL|RELEASE|debug|release> <TARGET>"
+   echo "usage $0 <TARGET> <DEBUG|MINSIZEREL|RELEASE|debug|release> "
    echo "  <TARGET> could be one of the following:"
    echo "     - android-clang8-armv8"
    echo "     - centos"
@@ -51,6 +60,7 @@ OPTS="-DCMAKE_EXPORT_COMPILE_COMMANDS=true -DUSE_CURL=true -DTEST=$TEST -DBUILD_
 if [ -z "$CONTAINER" ]; then
   echo "local_build"
   touch build/container.txt
+  cd build
   cmake $OPTS .. && make -j8
 elif [ "$CONTAINER" = "win" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:gcc7-mingw
@@ -75,7 +85,7 @@ elif [ "$CONTAINER" = "wasm_local" ]; then
 elif [ "$CONTAINER" = "wasm" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:clang11
   echo $CONTAINER > build/container.txt
-  docker run --rm -v $RD:$RD docker.slock.it/build-images/cmake:$CONTAINER /bin/bash -c "cd $RD/build; cmake -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true  -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
+  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=false -DWASM_EMMALLOC=true  -DWASM_EMBED=false -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
 elif [ "$CONTAINER" = "asmjs_local" ]; then
   cd build
   source ~/ws/tools/emsdk/emsdk_env.sh > /dev/null
@@ -84,10 +94,10 @@ elif [ "$CONTAINER" = "asmjs_local" ]; then
 elif [ "$CONTAINER" = "asmjs" ]; then
   CONTAINER=docker.slock.it/build-images/cmake:clang11
   echo $CONTAINER > build/container.txt
-  docker run --rm -v $RD:$RD docker.slock.it/build-images/cmake:$CONTAINER /bin/bash -c "cd $RD/build; cmake -DWASM=true -DASMJS=true -DWASM_EMMALLOC=true -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
+  docker run --rm -v $RD:$RD $CONTAINER /bin/bash -c "cd $RD/build; emcmake cmake -DWASM=true -DASMJS=true -DWASM_EMMALLOC=true -DCMAKE_BUILD_TYPE=$BUILDTYPE ..  && make -j8"
 else                                  
   echo "build $CONTAINER"
-  echo $CONTAINER > build/container.txt
+  echo docker.slock.it/build-images/cmake:$CONTAINER > build/container.txt
   docker run --rm -v $RD:$RD docker.slock.it/build-images/cmake:$CONTAINER /bin/bash -c "cd $RD/build; cmake $OPTS ..  && make -j8"
 fi
 
