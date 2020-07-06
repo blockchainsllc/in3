@@ -611,7 +611,7 @@ static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
   sign_ctx->account = d_to_bytes(d_get_at(params, 1));
   sign_ctx->type    = SIGN_EC_HASH;
   sign_ctx->ctx     = ctx;
-  sign_ctx->wallet  = ctx->client->signer->wallet;
+  sign_ctx->wallet  = ctx->client->signer ? ctx->client->signer->wallet : NULL;
 }
 
 in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
