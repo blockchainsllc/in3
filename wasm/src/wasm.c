@@ -115,82 +115,58 @@ void storage_set_item(void* cptr, const char* key, bytes_t* content) {
 }
 
 char* EMSCRIPTEN_KEEPALIVE ctx_execute(in3_ctx_t* ctx) {
-  in3_ctx_t *p = ctx, *last_waiting = NULL;
-  sb_t*      sb = sb_new("{\"status\":");
-  switch (in3_ctx_execute(ctx)) {
-    case IN3_EIGNORE:
-      while (p) {
-        if (p->required && p->required->verification_state == IN3_EIGNORE) {
-          last_waiting = p;
-          break;
-        }
-        p = p->required;
-      }
-      if (!last_waiting) {
-        sb_add_chars(sb, "\"error\",\"error\":\"could not find the last ignored context\"");
-        break;
-      } else {
-        ctx_handle_failable(last_waiting);
-        sb_free(sb);
-        return ctx_execute(ctx);
-      }
-    case IN3_OK:
+  in3_ctx_t*     p   = ctx;
+  in3_request_t* req = NULL;
+  sb_t*          sb  = sb_new("{\"status\":");
+
+  switch (in3_ctx_exec_state(ctx)) {
+    case CTX_SUCCESS:
       sb_add_chars(sb, "\"ok\", \"result\":");
       sb_add_chars(sb, ctx->response_context->c);
       break;
-    case IN3_WAITING:
-      sb_add_chars(sb, "\"waiting\"");
-      while (p) {
-        if (!p->raw_response && in3_ctx_state(p) == CTX_WAITING_FOR_RESPONSE)
-          last_waiting = p;
-        p = p->required;
-      }
-      if (!last_waiting)
-        sb_add_chars(sb, ",\"error\":\"could not find the last waiting context\"");
-      break;
-    default:
+    case CTX_ERROR:
       sb_add_chars(sb, "\"error\",\"error\":\"");
       sb_add_escaped_chars(sb, ctx->error ? ctx->error : "Unknown error");
       sb_add_chars(sb, "\"");
-  }
-
-  // create next request
-  if (last_waiting) {
-    char tmp[160];
-    if (last_waiting->raw_response) {
-      sb_add_chars(sb, ",\"request\":{ \"type\": ");
-      sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
-      sprintf(tmp, ",\"ctx\":%d}", (unsigned int) last_waiting);
-      sb_add_chars(sb, tmp);
-    } else {
-
-      // do we need to create a new req uest or are there pending responses?
-      in3_request_t* request = in3_create_request(last_waiting);
-      if (request == NULL)
-        sb_add_chars(sb, ",\"error\",\"could not create request\"");
-      else {
+      break;
+    case CTX_WAITING_FOR_RESPONSE:
+      sb_add_chars(sb, "\"waiting\",\"request\":{ \"type\": ");
+      sb_add_chars(sb, ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+      sb_add_chars(sb, ",\"ctx\":");
+      sb_add_int(sb, (unsigned int) in3_ctx_last_waiting(ctx));
+      sb_add_char(sb, '}');
+      break;
+    case CTX_WAITING_TO_SEND:
+      sb_add_chars(sb, "\"request\"");
+      in3_request_t* request = in3_create_request(ctx);
+      if (request == NULL) {
+        sb_add_chars(sb, ",\"error\",\"");
+        sb_add_escaped_chars(sb, ctx->error ? ctx->error : "could not create request");
+        sb_add_char(sb, '"');
+      } else {
         uint32_t start = now();
         sb_add_chars(sb, ",\"request\":{ \"type\": ");
-        sb_add_chars(sb, last_waiting->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
+        sb_add_chars(sb, request->ctx->type == CT_SIGN ? "\"sign\"" : "\"rpc\"");
         sb_add_chars(sb, ",\"timeout\":");
-        sprintf(tmp, "%d", (unsigned int) request->timeout);
-        sb_add_chars(sb, tmp);
+        sb_add_int(sb, (uint64_t) request->ctx->client->timeout);
         sb_add_chars(sb, ",\"payload\":");
         sb_add_chars(sb, request->payload);
         sb_add_chars(sb, ",\"urls\":[");
         for (int i = 0; i < request->urls_len; i++) {
-          request->times[i] = start;
+          request->ctx->raw_response[i].time = start;
           if (i) sb_add_char(sb, ',');
           sb_add_char(sb, '"');
           sb_add_escaped_chars(sb, request->urls[i]);
           sb_add_char(sb, '"');
         }
-        sb_add_chars(sb, "],\"ptr\":");
-        sprintf(tmp, "%d,\"ctx\":%d}", (unsigned int) request, (unsigned int) last_waiting);
-        sb_add_chars(sb, tmp);
+        sb_add_chars(sb, "],\"ctx\":");
+        sb_add_int(sb, (uint64_t) request->ctx);
+        sb_add_char(sb, '}');
+        request_free(request);
       }
-    }
+      break;
   }
+
   sb_add_char(sb, '}');
 
   char* r = sb->data;
@@ -203,9 +179,6 @@ void EMSCRIPTEN_KEEPALIVE ifree(void* ptr) {
 void* EMSCRIPTEN_KEEPALIVE imalloc(size_t size) {
   return _malloc(size);
 }
-void EMSCRIPTEN_KEEPALIVE ctx_done_response(in3_t* c, in3_request_t* r) {
-  request_free(r, c, false);
-}
 void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
   in3_chain_t* chain = in3_find_chain(in3, in3->chain_id);
   if (!chain) return;
@@ -213,22 +186,22 @@ void EMSCRIPTEN_KEEPALIVE in3_blacklist(in3_t* in3, char* url) {
     if (strcmp(chain->nodelist[i].url, url) == 0) {
       chain->weights[i].blacklisted_until = in3_time(NULL) + BLACKLISTTIME;
       // we don't update weights for local chains.
-      if (!in3->cache || in3->chain_id == ETH_CHAIN_ID_LOCAL) return;
+      if (!in3->cache || in3->chain_id == CHAIN_ID_LOCAL) return;
       in3_cache_store_nodelist(in3, chain);
       return;
     }
   }
 }
 
-void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, in3_request_t* r, int i, int is_error, char* msg) {
-  r->times[i]         = now() - r->times[i];
-  r->results[i].state = is_error ? IN3_ERPC : IN3_OK;
+void EMSCRIPTEN_KEEPALIVE ctx_set_response(in3_ctx_t* ctx, int i, int is_error, char* msg) {
+  ctx->raw_response[i].time  = now() - ctx->raw_response[i].time;
+  ctx->raw_response[i].state = is_error ? IN3_ERPC : IN3_OK;
   if (ctx->type == CT_SIGN && !is_error) {
     uint8_t sig[65];
     hex_to_bytes(msg, -1, sig, 65);
-    sb_add_range(&r->results[i].data, (char*) sig, 0, 65);
+    sb_add_range(&ctx->raw_response[i].data, (char*) sig, 0, 65);
   } else
-    sb_add_chars(&r->results[i].data, msg);
+    sb_add_chars(&ctx->raw_response[i].data, msg);
 }
 #ifdef IPFS
 

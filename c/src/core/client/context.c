@@ -77,6 +77,24 @@ in3_ctx_t* ctx_new(in3_t* client, const char* req_data) {
   return ctx;
 }
 
+char* ctx_get_error_data(in3_ctx_t* ctx) {
+  return ctx->error;
+}
+
+char* ctx_get_response_data(in3_ctx_t* ctx) {
+  str_range_t rr = d_to_json(ctx->responses[0]), rin3;
+  if ((ctx->client->flags & FLAGS_KEEP_IN3) == 0 && (rin3 = d_to_json(d_get(ctx->responses[0], K_IN3))).data) {
+    while (*rin3.data != ',' && rin3.data > rr.data) rin3.data--;
+    *rin3.data = '}';
+    rr.len     = rin3.data - rr.data + 1;
+  }
+  return _strdupn(rr.data, rr.len);
+}
+
+ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
+  return ctx->type;
+}
+
 in3_ret_t ctx_check_response_error(in3_ctx_t* c, int i) {
   d_token_t* r = d_get(c->responses[i], K_ERROR);
   if (!r)
@@ -147,4 +165,33 @@ in3_proof_t in3_ctx_get_proof(in3_ctx_t* ctx) {
   }
   if (ctx->signers_length && !ctx->client->proof) return PROOF_STANDARD;
   return ctx->client->proof;
+}
+NONULL void in3_req_add_response(
+    in3_request_t* req,      /**< [in]the the request */
+    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char*    data,     /**<  the data or the the string*/
+    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+) {
+  in3_ctx_add_response(req->ctx, index, is_error, data, data_len);
+}
+
+void in3_ctx_add_response(
+    in3_ctx_t*  ctx,      /**< [in] the context */
+    int         index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char* data,     /**<  the data or the the string*/
+    int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+) {
+  if (!ctx->raw_response) {
+    ctx_set_error(ctx, "no request created yet!", IN3_EINVAL);
+    return;
+  }
+  in3_response_t* response = ctx->raw_response + index;
+  if (response->state == IN3_OK && is_error) response->data.len = 0;
+  response->state = is_error ? IN3_ERPC : IN3_OK;
+  if (data_len == -1)
+    sb_add_chars(&response->data, data);
+  else
+    sb_add_range(&response->data, data, 0, data_len);
 }

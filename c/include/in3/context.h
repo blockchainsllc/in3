@@ -87,7 +87,6 @@ typedef struct in3_ctx {
   in3_response_t* raw_response;       /**< the raw response-data, which should be verified. */
   bytes_t*        signers;            /**< the addresses of servers requested to sign the blockhash */
   uint_fast8_t    signers_length;     /**< number or addresses */
-  uint32_t*       times;              /**< meassured times in ms for the request */
   node_match_t*   nodes;              /**< selected nodes to process the request, which are stored as linked list.*/
   cache_entry_t*  cache;              /**<optional cache-entries.  These entries will be freed when cleaning up the context.*/
   struct in3_ctx* required;           /**< pointer to the next required context. if not NULL the data from this context need get finished first, before being able to resume this context. */
@@ -100,10 +99,10 @@ typedef struct in3_ctx {
  * you can check this state after each execute-call.
  */
 typedef enum state {
-  CTX_SUCCESS                  = 0,  /**< The ctx has a verified result. */
-  CTX_WAITING_FOR_REQUIRED_CTX = 1,  /**< there are required contexts, which need to be resolved first */
-  CTX_WAITING_FOR_RESPONSE     = 2,  /**< the response is not set yet */
-  CTX_ERROR                    = -1, /**< the request has a error */
+  CTX_SUCCESS              = 0,  /**< The ctx has a verified result. */
+  CTX_WAITING_TO_SEND      = 1,  /**< the request has not been sent yet */
+  CTX_WAITING_FOR_RESPONSE = 2,  /**< the request is sent but not all of the response are set () */
+  CTX_ERROR                = -1, /**< the request has a error */
 } in3_ctx_state_t;
 
 /** 
@@ -125,6 +124,20 @@ NONULL in3_ctx_t* ctx_new(
  * In order to handle calls asynchronously, you need to call the `in3_ctx_execute` function and provide the data as needed.
  */
 NONULL in3_ret_t in3_send_ctx(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * finds the last waiting request-context.
+ */
+NONULL in3_ctx_t* in3_ctx_last_waiting(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * executes the context and returns its state.
+ */
+NONULL in3_ctx_state_t in3_ctx_exec_state(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 /**
@@ -166,8 +179,8 @@ NONULL in3_ret_t in3_send_ctx(
   waiting -> sign[label=CT_SIGN]
   waiting -> request[label=CT_RPC] 
   
-  sign -> exec [label="in3_req_add_response()"]
-  request -> exec[label="in3_req_add_response()"]
+  sign -> exec [label="in3_ctx_add_response()"]
+  request -> exec[label="in3_ctx_add_response()"]
   
   response -> free
   error->free
@@ -219,7 +232,7 @@ NONULL in3_ret_t in3_send_ctx(
             ctx->client->transport(request);
 
             // clean up
-            request_free(request, ctx->client, false);
+            request_free(request);
             break;
         }
 
@@ -266,6 +279,34 @@ NONULL in3_ret_t in3_ctx_execute(
  * returns the current state of the context.
  */
 NONULL in3_ctx_state_t in3_ctx_state(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns the error of the context.
+ */
+char* ctx_get_error_data(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns json response for that context
+ */
+char* ctx_get_response_data(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * creates a signer ctx to be used for async signing.
+ */
+NONULL in3_sign_ctx_t* create_sign_ctx(
+    in3_ctx_t* ctx /**< [in] the rpc context */
+);
+
+/**
+ * returns the type of the request
+ */
+ctx_type_t ctx_get_type(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 
@@ -391,4 +432,17 @@ NONULL in3_ctx_t* in3_client_rpc_ctx(
 NONULL in3_proof_t in3_ctx_get_proof(
     in3_ctx_t* ctx /**< [in] the current request. */
 );
+
+/**
+ * adds a response to a context.
+ * This function should be used in the transport-function to set the response.
+ */
+NONULL void in3_ctx_add_response(
+    in3_ctx_t*  ctx,      /**< [in]the current context */
+    int         index,    /**< [in] the index of the url, since this request could go out to many urls */
+    bool        is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
+    const char* data,     /**<  the data or the the string*/
+    int         data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
+);
+
 #endif

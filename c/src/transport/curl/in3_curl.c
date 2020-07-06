@@ -34,6 +34,7 @@
 
 #include "in3_curl.h"
 #include "../../core/client/client.h"
+#include "../../core/client/context.h"
 #include "../../core/client/version.h"
 #include "../../core/util/log.h"
 #include "../../core/util/mem.h"
@@ -44,6 +45,12 @@
 #ifndef CURL_MAX_PARALLEL
 #define CURL_MAX_PARALLEL 50
 #endif
+typedef struct {
+  CURLM*             cm;
+  uint32_t           start;
+  struct curl_slist* headers;
+
+} in3_curl_t;
 
 /*
 struct MemoryStruct {
@@ -53,7 +60,6 @@ struct MemoryStruct {
  */
 static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   in3_response_t* r = (in3_response_t*) userp;
-  r->state          = IN3_OK;
   sb_add_range(&r->data, contents, 0, size * nmemb);
   return size * nmemb;
 }
@@ -73,6 +79,7 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) r);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, (uint64_t) timeout / 1000L);
+    curl_easy_setopt(curl, CURLOPT_PRIVATE, (void*) r);
 
     /* Perform the request, res will get the return code */
     res = curl_multi_add_handle(cm, curl);
@@ -87,63 +94,77 @@ static void readDataNonBlocking(CURLM* cm, const char* url, const char* payload,
   }
 }
 
-in3_ret_t send_curl_nonblocking(const char** urls, int urls_len, char* payload, in3_response_t* result, uint32_t timeout) {
-  CURLM*   cm;
-  CURLMsg* msg;
-  int      transfers   = 0;
-  int      msgs_left   = -1;
-  int      still_alive = 1;
-
-  cm = curl_multi_init();
-  curl_multi_setopt(cm, CURLMOPT_MAXCONNECTS, (long) CURL_MAX_PARALLEL);
-
-  struct curl_slist* headers = NULL;
-  headers                    = curl_slist_append(headers, "Accept: application/json");
-  if (payload && *payload)
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-  headers = curl_slist_append(headers, "charsets: utf-8");
-  headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
-  for (transfers = 0; transfers < min(CURL_MAX_PARALLEL, urls_len); transfers++)
-    readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers, timeout);
+in3_ret_t receive_next(in3_request_t* req) {
+  in3_curl_t* c = req->cptr;
+  CURLMsg*    msg;
+  int         msgs_left   = -1;
+  int         still_alive = 1;
 
   do {
-    curl_multi_perform(cm, &still_alive);
+    curl_multi_perform(c->cm, &still_alive);
 
-    while ((msg = curl_multi_info_read(cm, &msgs_left))) {
+    while ((msg = curl_multi_info_read(c->cm, &msgs_left))) {
+      CURL*           e = msg->easy_handle;
+      in3_response_t* response;
+      long            response_code;
+      curl_easy_getinfo(e, CURLINFO_PRIVATE, &response);
+      curl_easy_getinfo(e, CURLINFO_RESPONSE_CODE, &response_code);
       if (msg->msg == CURLMSG_DONE) {
-        char* url;
-        CURL* e = msg->easy_handle;
-        curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &url);
-        // fprintf(stderr, "R: %d - %s <%s>\n",
-        //        msg->data.result, curl_easy_strerror(msg->data.result), url);
-        curl_multi_remove_handle(cm, e);
+        CURLcode res = msg->data.result;
+        if (res != CURLE_OK) {
+          sb_add_chars(&response->data, "Invalid response:");
+          sb_add_chars(&response->data, (char*) curl_easy_strerror((CURLcode) res));
+          response->state = IN3_ERPC;
+        } else if (response_code > 100 && response_code < 400)
+          response->state = IN3_OK;
+        else {
+          if (!response->data.len)
+            sb_add_chars(&response->data, "returned with invalid status code");
+          response->state = IN3_ERPC;
+        }
+        curl_multi_remove_handle(c->cm, e);
         curl_easy_cleanup(e);
-      } else {
-        // fprintf(stderr, "E: CURLMsg (%d)\n", msg->msg);
-        sb_add_chars(&result->data, "E: CURLMsg");
-        result->state = IN3_ERPC;
-      }
-      if (transfers < urls_len) {
-        readDataNonBlocking(cm, urls[transfers], payload, headers, result + transfers, timeout);
-        transfers++;
+        response->time = current_ms() - c->start;
+        return response->state;
       }
     }
 
     if (still_alive)
-      curl_multi_wait(cm, NULL, 0, 1000, NULL);
+      curl_multi_wait(c->cm, NULL, 0, 1000, NULL);
 
-  } while (still_alive || (transfers < urls_len));
+  } while (still_alive);
+  return msgs_left > 0 ? IN3_EFIND : IN3_ERPC;
+}
 
-  curl_slist_free_all(headers);
-  curl_multi_cleanup(cm);
+in3_ret_t cleanup(in3_curl_t* c) {
 
-  for (int i = 0; i < urls_len; i++) {
-    if ((result + i)->state) {
-      in3_log_debug("curl: failed for %s\n", urls[i]);
-      return IN3_ETRANS; // return error if even one failed
-    }
-  }
+  curl_slist_free_all(c->headers);
+  curl_multi_cleanup(c->cm);
+  _free(c);
   return IN3_OK;
+}
+
+in3_ret_t send_curl_nonblocking(in3_request_t* req) {
+
+  in3_curl_t* c = _malloc(sizeof(in3_curl_t));
+  req->cptr     = c;
+  c->cm         = curl_multi_init();
+  c->start      = current_ms();
+  curl_multi_setopt(c->cm, CURLMOPT_MAXCONNECTS, (long) CURL_MAX_PARALLEL);
+  struct curl_slist* headers = curl_slist_append(NULL, "Accept: application/json");
+  if (req->payload && *req->payload)
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+  headers    = curl_slist_append(headers, "charsets: utf-8");
+  c->headers = curl_slist_append(headers, "User-Agent: in3 curl " IN3_VERSION);
+
+  // create requests
+  for (unsigned int i = 0; i < req->urls_len; i++) readDataNonBlocking(c->cm, req->urls[i], req->payload, c->headers, req->ctx->raw_response + i, req->ctx->client->timeout);
+  in3_ret_t res = receive_next(req);
+  if (req->urls_len == 1) {
+    cleanup(c);
+    req->cptr = NULL;
+  }
+  return res;
 }
 
 static void readDataBlocking(const char* url, char* payload, in3_response_t* r, uint32_t timeout) {
@@ -175,7 +196,9 @@ static void readDataBlocking(const char* url, char* payload, in3_response_t* r, 
       sb_add_chars(&r->data, "Invalid response:");
       sb_add_chars(&r->data, (char*) curl_easy_strerror(res));
       r->state = IN3_ERPC;
-    }
+    } else
+      r->state = IN3_OK;
+
     curl_slist_free_all(headers);
     /* always cleanup */
     curl_easy_cleanup(curl);
@@ -200,17 +223,25 @@ in3_ret_t send_curl_blocking(const char** urls, int urls_len, char* payload, in3
 
 in3_ret_t send_curl(in3_request_t* req) {
   // set the init-time
+#ifdef CURL_BLOCKING
   in3_ret_t res;
   uint64_t  start = current_ms();
-#ifdef CURL_BLOCKING
-  res = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
-#else
-  res = send_curl_nonblocking((const char**) req->urls, req->urls_len, req->payload, req->results, req->timeout);
-#endif
-  uint32_t t = (uint32_t)(current_ms() - start);
-  if (!req->times) req->times = _malloc(sizeof(uint32_t) * req->urls_len);
-  for (int i = 0; i < req->urls_len; i++) req->times[i] = t;
+  res             = send_curl_blocking((const char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response, req->ctx->client->timeout);
+  uint32_t t      = (uint32_t)(current_ms() - start);
+  for (int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = t;
   return res;
+#else
+  switch (req->action) {
+    case REQ_ACTION_SEND:
+      return send_curl_nonblocking(req);
+    case REQ_ACTION_RECEIVE:
+      return receive_next(req);
+    case REQ_ACTION_CLEANUP:
+      return cleanup(req->cptr);
+    default:
+      return IN3_EINVAL;
+  }
+#endif
 }
 
 /**

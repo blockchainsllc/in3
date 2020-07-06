@@ -64,7 +64,7 @@
 #include <unistd.h>
 #define ETH_PRIVATE_KEY "0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
 static void test_sign() {
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c           = in3_for_chain(CHAIN_ID_MAINNET);
   c->transport       = test_transport;
   c->chain_id        = 0x1;
   c->flags           = FLAGS_STATS;
@@ -97,7 +97,7 @@ static void to_checksum_addr(uint8_t* address, chain_id_t chain, char* result) {
 
 static void test_tx() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
   in3_configure(in3, "{\"autoUpdateList\":false,\"nodes\":{\"0x1\": {\"needsUpdate\":false}}}");
   in3->transport = test_transport;
   add_response("eth_sendRawTransaction", "[\"0xf892808609184e72a0008296c094d46e8dd67c5d32be8058bb8eb970870f07244567849184e72aa9d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f07244567526a06f0103fccdcae0d6b265f8c38ee42f4a722c1cb36230fe8da40315acc30519a8a06252a68b26a5575f76a65ac08a7f684bc37b0c98d9e715d73ddce696b58f2c72\"]",
@@ -137,7 +137,7 @@ static void test_tx() {
 
 static void test_sign_hex() {
 
-  in3_t* c     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c     = in3_for_chain(CHAIN_ID_MAINNET);
   c->transport = test_transport;
   c->proof     = PROOF_NONE;
   c->flags     = FLAGS_STATS;
@@ -162,7 +162,7 @@ static void test_sign_hex() {
 }
 
 static void test_sign_sans_signer_and_from() {
-  in3_t*     c   = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t*     c   = in3_for_chain(CHAIN_ID_MAINNET);
   in3_ctx_t* ctx = in3_client_rpc_ctx(c, "eth_sendTransaction", "[{\"to\":\"0x45d45e6ff99e6c34a235d263965910298985fcfe\", \"value\":\"0xff\" }]");
   TEST_ASSERT_NOT_NULL(ctx->error);
   ctx_free(ctx);
@@ -170,7 +170,7 @@ static void test_sign_sans_signer_and_from() {
 }
 
 static void test_signer() {
-  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t*    c = in3_for_chain(CHAIN_ID_MAINNET);
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
   eth_set_pk_signer(c, pk);
@@ -206,7 +206,7 @@ static in3_ret_t prep_tx(void* ctx, d_token_t* old_tx, json_ctx_t** new_tx) {
 /*
 static void test_signer_prepare_tx() {
   // setup in3
-  in3_t*    c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t*    c = in3_for_chain(CHAIN_ID_MAINNET);
   bytes32_t pk;
   hex_to_bytes("0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8", -1, pk, 32);
   eth_set_pk_signer(c, pk);

@@ -59,7 +59,7 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
 }
 
 in3_ret_t transport_mock(in3_request_t* req) {
-  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->results);
+  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 
 in3_t* init_in3(in3_transport_send custom_transport, chain_id_t chain) {

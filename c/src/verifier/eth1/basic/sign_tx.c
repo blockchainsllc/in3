@@ -70,8 +70,8 @@ static in3_ret_t get_from_nodes(in3_ctx_t* parent, char* method, char* params, b
       case CTX_ERROR:
         return ctx_set_error(parent, ctx->error, IN3_EUNKNOWN);
       // if we are still waiting, we stop here and report it.
-      case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
 
       // if it is useable, we can now handle the result.
@@ -202,8 +202,8 @@ in3_ret_t eth_sign_raw_tx(bytes_t raw_tx, in3_ctx_t* ctx, address_t from, bytes_
     switch (in3_ctx_state(c)) {
       case CTX_ERROR:
         return ctx_set_error(ctx, c->error, IN3_ERPC);
-      case CTX_WAITING_FOR_REQUIRED_CTX:
       case CTX_WAITING_FOR_RESPONSE:
+      case CTX_WAITING_TO_SEND:
         return IN3_WAITING;
       case CTX_SUCCESS: {
         if (c->raw_response && c->raw_response->data.len == 65)

@@ -63,7 +63,7 @@ static void ipfs_api_example(in3_t* c) {
 
 int main() {
   // create new incubed client
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
+  in3_t* c = in3_for_chain(CHAIN_ID_IPFS);
 
   // IPFS put/get using raw RPC calls
   ipfs_rpc_example(c);

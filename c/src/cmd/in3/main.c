@@ -388,13 +388,13 @@ bytes_t* get_std_in() {
 
 // convert the name to a chain_id
 uint64_t getchain_id(char* name) {
-  if (strcmp(name, "mainnet") == 0) return ETH_CHAIN_ID_MAINNET;
-  if (strcmp(name, "kovan") == 0) return ETH_CHAIN_ID_KOVAN;
-  if (strcmp(name, "goerli") == 0) return ETH_CHAIN_ID_GOERLI;
-  if (strcmp(name, "ewc") == 0) return ETH_CHAIN_ID_EWC;
-  if (strcmp(name, "ipfs") == 0) return ETH_CHAIN_ID_IPFS;
-  if (strcmp(name, "btc") == 0) return ETH_CHAIN_ID_BTC;
-  if (strcmp(name, "local") == 0) return ETH_CHAIN_ID_LOCAL;
+  if (strcmp(name, "mainnet") == 0) return CHAIN_ID_MAINNET;
+  if (strcmp(name, "kovan") == 0) return CHAIN_ID_KOVAN;
+  if (strcmp(name, "goerli") == 0) return CHAIN_ID_GOERLI;
+  if (strcmp(name, "ewc") == 0) return CHAIN_ID_EWC;
+  if (strcmp(name, "ipfs") == 0) return CHAIN_ID_IPFS;
+  if (strcmp(name, "btc") == 0) return CHAIN_ID_BTC;
+  if (strcmp(name, "local") == 0) return CHAIN_ID_LOCAL;
   if (name[0] == '0' && name[1] == 'x') {
     bytes32_t d;
     return bytes_to_long(d, hex_to_bytes(name + 2, -1, d, 32));
@@ -537,37 +537,42 @@ static bytes_t*  last_response;
 static bytes_t   in_response      = {.data = NULL, .len = 0};
 static bool      only_show_raw_tx = false;
 static in3_ret_t debug_transport(in3_request_t* req) {
+  if (req->action == REQ_ACTION_SEND) {
 #ifndef DEBUG
-  if (debug_mode)
-    fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
+    if (debug_mode)
+      fprintf(stderr, "send request to %s: \n" COLORT_RYELLOW "%s" COLORT_RESET "\n", req->urls_len ? req->urls[0] : "none", req->payload);
 #endif
-  if (in_response.len) {
-    for (int i = 0; i < req->urls_len; i++) {
-      req->results[i].state = IN3_OK;
-      sb_add_range(&req->results[i].data, (char*) in_response.data, 0, in_response.len);
+    if (in_response.len) {
+      for (unsigned int i = 0; i < req->urls_len; i++) {
+        req->ctx->raw_response[i].state = IN3_OK;
+        sb_add_range(&req->ctx->raw_response[i].data, (char*) in_response.data, 0, in_response.len);
+        req->ctx->raw_response[i].state = IN3_OK;
+      }
+      return 0;
     }
-    return 0;
-  }
-  if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
-    char* data         = str_find(req->payload, "0x");
-    *strchr(data, '"') = 0;
-    printf("%s\n", data);
-    exit(EXIT_SUCCESS);
+    if (only_show_raw_tx && str_find(req->payload, "\"method\":\"eth_sendRawTransaction\"")) {
+      char* data         = str_find(req->payload, "0x");
+      *strchr(data, '"') = 0;
+      printf("%s\n", data);
+      exit(EXIT_SUCCESS);
+    }
   }
 #ifdef USE_CURL
   in3_ret_t r = send_curl(req);
 #else
   in3_ret_t r = send_http(req);
 #endif
-  last_response = b_new((uint8_t*) req->results[0].data.data, req->results[0].data.len);
+  if (req->action != REQ_ACTION_CLEANUP) {
+    last_response = b_new((uint8_t*) req->ctx->raw_response[0].data.data, req->ctx->raw_response[0].data.len);
 #ifndef DEBUG
-  if (debug_mode) {
-    if (req->results[0].state == IN3_OK)
-      fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->results[0].data.data);
-    else
-      fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->results[0].data.data);
-  }
+    if (debug_mode) {
+      if (req->ctx->raw_response[0].state == IN3_OK)
+        fprintf(stderr, "success response \n" COLORT_RGREEN "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+      else
+        fprintf(stderr, "error response \n" COLORT_RRED "%s" COLORT_RESET "\n", req->ctx->raw_response[0].data.data);
+    }
 #endif
+  }
   return r;
 }
 static char*     test_name = NULL;
@@ -579,7 +584,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
 #endif
   if (r == IN3_OK) {
     req->payload[strlen(req->payload) - 1] = 0;
-    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->results->data.data);
+    printf("[{ \"descr\": \"%s\",\"chainId\": \"0x1\", \"verification\": \"proof\",\"binaryFormat\": false, \"request\": %s, \"response\": %s }]", test_name, req->payload + 1, req->ctx->raw_response->data.data);
     exit(0);
   }
 
@@ -635,7 +640,7 @@ int main(int argc, char* argv[]) {
   // create the client
   in3_t* c                         = in3_for_chain(0);
   c->transport                     = debug_transport;
-  c->request_count                 = 1;
+  c->request_count                 = 2;
   bool            out_response     = false;
   int             run_test_request = 0;
   bool            force_hex        = false;
@@ -877,7 +882,7 @@ int main(int argc, char* argv[]) {
     return 0;
 #ifdef IPFS
   } else if (strcmp(method, "ipfs_get") == 0) {
-    c->chain_id = ETH_CHAIN_ID_IPFS;
+    c->chain_id = CHAIN_ID_IPFS;
     int size    = strlen(params);
     if (p == 1 || params[1] != '"' || size < 20 || strstr(params + 2, "\"") == NULL) die("missing ipfs has");
     params[size - 2] = 0;
@@ -888,7 +893,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
   } else if (strcmp(method, "ipfs_put") == 0) {
-    c->chain_id         = ETH_CHAIN_ID_IPFS;
+    c->chain_id         = CHAIN_ID_IPFS;
     bytes_t data        = readFile(stdin);
     data.data[data.len] = 0;
     printf("%s\n", ipfs_put(c, &data));
@@ -926,18 +931,19 @@ int main(int argc, char* argv[]) {
           urls[0] = health_url;
           sprintf(health_url, "%s/health", chain->nodelist[i].url);
           in3_request_t r;
-          r.in3      = c;
-          r.urls     = urls;
-          r.urls_len = 1;
-          r.timeout  = 5000;
-          r.payload  = "";
-          r.results  = _malloc(sizeof(in3_response_t));
-          sb_init(&r.results->data);
+          in3_ctx_t     ctx       = {0};
+          ctx.raw_response        = _calloc(sizeof(in3_response_t), 1);
+          ctx.raw_response->state = IN3_WAITING;
+          ctx.client              = c;
+          r.ctx                   = &ctx;
+          r.urls                  = urls;
+          r.urls_len              = 1;
+          r.payload               = "";
           c->transport(&r);
-          if (r.results->state)
+          if (ctx.raw_response->state)
             health = 0;
           else {
-            health_res = parse_json(r.results->data.data);
+            health_res = parse_json(ctx.raw_response->data.data);
             if (!health_res)
               health = 0;
             else {
@@ -945,7 +951,7 @@ int main(int argc, char* argv[]) {
               version      = d_get_string(health_res->result, "version");
               running      = d_get_int(health_res->result, "running");
               char* status = d_get_string(health_res->result, "status");
-              if (!status && strcmp(status, "healthy")) health = 0;
+              if (!status || strcmp(status, "healthy")) health = 0;
             }
           }
           if (version) {
@@ -955,8 +961,9 @@ int main(int argc, char* argv[]) {
           health_s = _malloc(3000);
           sprintf(health_s, "%-22s %-7s   %7d   %-9s ", node_name ? node_name : "-", version ? version : "-", running, health ? "OK" : "unhealthy");
 
-          _free(r.results->data.data);
-          _free(r.results);
+          if (ctx.raw_response->data.data)
+            _free(ctx.raw_response->data.data);
+          _free(ctx.raw_response);
           if (health_res) json_free(health_res);
         }
       }

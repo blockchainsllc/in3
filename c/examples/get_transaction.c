@@ -12,7 +12,7 @@ static void get_tx_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
 
   // get tx using raw RPC call
   get_tx_rpc(in3);

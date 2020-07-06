@@ -43,7 +43,6 @@ dotnet:
 
 .dotnet_test:
   stage: dotnet
-  extends: .only_dotnet
   needs:
     - dotnet
   script:
@@ -53,23 +52,30 @@ dotnet:
       junit: dotnet/Test/test_results.xml
 
 dotnet_win:
-  extends: .dotnet_test
+  extends:
+    - .dotnet_test
+    - .only_dotnet
   tags:
     - windows
 
 dotnet_linux:
-  extends: .dotnet_test
+  extends:
+    - .dotnet_test
   image: docker.slock.it/build-images/dotnet-core-sdk:3.1
   tags:
     - short-jobs
 
 dotnet_macos:
-  extends: .dotnet_test
+  extends:
+    - .dotnet_test
+    - .only_dotnet
   tags:
     - mac-mini-runner
 
 dotnet_arm:
-  extends: .dotnet_test
+  extends:
+    - .dotnet_test
+    - .only_dotnet
   image: mcr.microsoft.com/dotnet/core/sdk:3.1
   tags:
     - arm
@@ -90,4 +96,4 @@ dotnet_arm:
     - dotnet nuget push dotnet/In3/bin/Release/Slockit.In3.${CI_COMMIT_TAG}.nupkg -k {NUGET_API_KEY} -s https://api.nuget.org/v3/index.json
   artifacts:
     paths:
-    - dotnet/In3/bin/Release/Slockit.In3.${CI_COMMIT_TAG}.nupkg
+      - dotnet/In3/bin/Release/Slockit.In3.${CI_COMMIT_TAG}.nupkg

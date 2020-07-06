@@ -1,6 +1,6 @@
 namespace In3.Native
 {
-    internal interface NativeHandler
+    internal interface IRegistrableHandler
     {
         public void RegisterNativeHandler();
         public void UnregisterNativeHandler();

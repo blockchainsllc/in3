@@ -88,8 +88,6 @@ NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
     json_free(ctx->request_context);
 
   if (ctx->requests) _free(ctx->requests);
-  if (ctx->times)
-    _free(ctx->times);
   if (ctx->cache) in3_cache_free(ctx->cache);
   if (ctx->required) free_ctx_intern(ctx->required, true);
 
@@ -97,7 +95,7 @@ NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
 }
 
 NONULL static bool auto_ask_sig(const in3_ctx_t* ctx) {
-  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != ETH_CHAIN_ID_BTC);
+  return (ctx_is_method(ctx, "in3_nodeList") && !(ctx->client->flags & FLAGS_NODE_LIST_NO_SIG) && ctx->client->chain_id != CHAIN_ID_BTC);
 }
 
 NONULL static in3_ret_t pick_signers(in3_ctx_t* ctx, d_token_t* request) {
@@ -266,7 +264,7 @@ NONULL static in3_ret_t ctx_create_payload(in3_ctx_t* c, sb_t* sb, bool multicha
 }
 NONULL static void update_nodelist_cache(in3_ctx_t* ctx) {
   // we don't update weights for local chains.
-  if (!ctx->client->cache || ctx->client->chain_id == ETH_CHAIN_ID_LOCAL) return;
+  if (!ctx->client->cache || ctx->client->chain_id == CHAIN_ID_LOCAL) return;
   chain_id_t chain_id = ctx->client->chain_id;
   in3_cache_store_nodelist(ctx->client, in3_find_chain(ctx->client, chain_id));
 }
@@ -372,10 +370,10 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     }
 
     // handle times
-    if (ctx->times && node && node->weight && ctx->times[n]) {
+    if (node && node->weight && ctx->raw_response && ctx->raw_response[n].time) {
       node->weight->response_count++;
-      node->weight->total_response_time += ctx->times[n];
-      ctx->times[n] = 0; // make sure we count the time only once
+      node->weight->total_response_time += ctx->raw_response[n].time;
+      ctx->raw_response[n].time = 0; // make sure we count the time only once
     }
 
     // since nodes_count was detected before, this should not happen!
@@ -401,9 +399,9 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
 
       if (node && node->weight) node->weight->blacklisted_until = 0;                        // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
       in3_ret_t res = ctx_parse_response(ctx, response[n].data.data, response[n].data.len); // parse the result
-      if (res < 0)
-        blacklist_node(node);
-      else {
+      if (res < 0) {
+        if (node) blacklist_node(node);
+      } else {
         // check each request
         for (uint_fast16_t i = 0; i < ctx->len; i++) {
           vc.request = ctx->requests[i];
@@ -499,14 +497,28 @@ NONULL static char* convert_to_http_url(char* src_url) {
 }
 
 NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
+  switch (in3_ctx_state(ctx)) {
+    case CTX_ERROR:
+      ctx_set_error(ctx, "You cannot create an request if the was an error!", IN3_EINVAL);
+      return NULL;
+    case CTX_SUCCESS:
+      return NULL;
+    case CTX_WAITING_FOR_RESPONSE:
+      ctx_set_error(ctx, "There are pending requests, finish them before creating a new one!", IN3_EINVAL);
+      return NULL;
+    case CTX_WAITING_TO_SEND: {
+      in3_ctx_t* p = ctx;
+      for (; p; p = p->required) {
+        if (!p->raw_response) ctx = p;
+      }
+    }
+  }
 
-  int       nodes_count = ctx_nodes_len(ctx->nodes);
-  in3_ret_t res;
-
-  // create url-array
-  char**        urls       = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
-  node_match_t* node       = ctx->nodes;
-  bool          multichain = false;
+  in3_ret_t     res;
+  int           nodes_count = ctx_nodes_len(ctx->nodes);
+  char**        urls        = nodes_count ? _malloc(sizeof(char*) * nodes_count) : NULL;
+  node_match_t* node        = ctx->nodes;
+  bool          multichain  = false;
 
   for (int n = 0; n < nodes_count; n++) {
     urls[n] = node->node->url;
@@ -533,40 +545,27 @@ NONULL in3_request_t* in3_create_request(in3_ctx_t* ctx) {
   }
 
   // prepare response-object
-  if (ctx->times) _free(ctx->times);
   in3_request_t* request = _calloc(sizeof(in3_request_t), 1);
-  request->in3           = ctx->client;
+  request->ctx           = ctx;
   request->payload       = payload->data;
   request->urls_len      = nodes_count;
   request->urls          = urls;
-  request->times         = nodes_count ? _calloc(nodes_count, sizeof(uint32_t)) : NULL;
-  request->timeout       = ctx->client->timeout;
-  ctx->times             = request->times;
+  request->action        = REQ_ACTION_SEND;
+  request->cptr          = NULL;
 
   if (!nodes_count) nodes_count = 1; // at least one result, because for internal response we don't need nodes, but a result big enough.
-  request->results = _calloc(sizeof(in3_response_t), nodes_count);
-  for (int n = 0; n < nodes_count; n++) request->results[n].state = IN3_WAITING;
-
-  // we set the raw_response
-  ctx->raw_response = request->results;
+  ctx->raw_response = _calloc(sizeof(in3_response_t), nodes_count);
+  for (int n = 0; n < nodes_count; n++) ctx->raw_response[n].state = IN3_WAITING;
 
   // we only clean up the the stringbuffer, but keep the content (payload->data)
   _free(payload);
+
   return request;
 }
 
-NONULL void request_free(in3_request_t* req, const in3_t* c, bool free_response) {
+NONULL void request_free(in3_request_t* req) {
   // free resources
-  free_urls(req->urls, req->urls_len, c->flags & FLAGS_HTTP);
-
-  if (free_response) {
-    for (int n = 0; n < req->urls_len; n++) {
-      if (req->results[n].data.data)
-        _free(req->results[n].data.data);
-    }
-    _free(req->results);
-  }
-
+  free_urls(req->urls, req->urls_len, req->ctx->client->flags & FLAGS_HTTP);
   _free(req->payload);
   _free(req);
 }
@@ -598,77 +597,184 @@ NONULL in3_ret_t ctx_handle_failable(in3_ctx_t* ctx) {
 
   return res;
 }
+in3_ctx_t* in3_ctx_last_waiting(in3_ctx_t* ctx) {
+  in3_ctx_t* last = ctx;
+  for (; ctx; ctx = ctx->required) {
+    if (!ctx->response_context) last = ctx;
+  }
+  return last;
+}
 
-in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
-  int       retry_count = 0;
-  in3_ret_t res;
+static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
+  d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
+  sign_ctx->message = d_to_bytes(d_get_at(params, 0));
+  sign_ctx->account = d_to_bytes(d_get_at(params, 1));
+  sign_ctx->type    = SIGN_EC_HASH;
+  sign_ctx->ctx     = ctx;
+  sign_ctx->wallet  = ctx->client->signer ? ctx->client->signer->wallet : NULL;
+}
 
-  while ((res = in3_ctx_execute(ctx)) != IN3_OK) {
+in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
+  in3_sign_ctx_t* res = _malloc(sizeof(in3_sign_ctx_t));
+  init_sign_ctx(ctx, res);
+  return res;
+}
 
-    // error we stop here
-    if (res != IN3_WAITING) return res;
+in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
+  if (ctx->client->signer) {
+    in3_sign_ctx_t sign_ctx;
+    init_sign_ctx(ctx, &sign_ctx);
+    if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
+    if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 
-    // we are waiting for an response.
-    retry_count++;
-    if (retry_count > 10) return ctx_set_error(ctx, "Looks like the response is not valid or not set, since we are calling the execute over and over", IN3_ERPC);
+    ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
+    sb_init(&ctx->raw_response[0].data);
+    in3_log_trace("... request to sign ");
+    in3_ret_t res = ctx->client->signer->sign(&sign_ctx);
+    if (res < 0) return ctx_set_error(ctx, ctx->raw_response->data.data, res);
+    sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
+    return IN3_OK;
+  } else
+    return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
+}
 
-    // handle subcontexts first
-    while (ctx->required && in3_ctx_state(ctx->required) != CTX_SUCCESS) {
-      res = in3_send_ctx(ctx->required);
-      if (res == IN3_EIGNORE)
-        ctx_handle_failable(ctx);
-      else if (res != IN3_OK)
-        return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", res);
+typedef struct {
+  in3_ctx_t* ctx;
+  void*      ptr;
+} ctx_req_t;
+typedef struct {
+  int        len;
+  ctx_req_t* req;
+} ctx_req_transports_t;
 
-      // recheck in order to prepare the request.
-      if ((res = in3_ctx_execute(ctx)) != IN3_WAITING) return res;
+static void transport_cleanup(in3_ctx_t* ctx, ctx_req_transports_t* transports, bool free_all) {
+  for (int i = 0; i < transports->len; i++) {
+    if (free_all || transports->req[i].ctx == ctx) {
+      in3_request_t req = {.action = REQ_ACTION_CLEANUP, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+      ctx->client->transport(&req);
+      if (!free_all) {
+        transports->req[i].ctx = NULL;
+        return;
+      }
+    }
+  }
+  if (free_all && transports->req) _free(transports->req);
+}
+
+static void in3_handle_rpc_next(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
+  in3_log_debug("waiting for the next response....");
+  ctx = in3_ctx_last_waiting(ctx);
+  for (int i = 0; i < transports->len; i++) {
+    if (transports->req[i].ctx == ctx) {
+      in3_request_t req = {.action = REQ_ACTION_RECEIVE, .ctx = ctx, .cptr = transports->req[i].ptr, .urls_len = 0, .urls = NULL, .payload = NULL};
+      ctx->client->transport(&req);
+#ifdef DEBUG
+      node_match_t* w = ctx->nodes;
+      int           i = 0;
+      for (; w; i++, w = w->next) {
+        if (ctx->raw_response[i].state != IN3_WAITING && ctx->raw_response[i].data.data)
+          in3_log_trace(ctx->raw_response[i].state
+                            ? "... response(%i): \n... " COLOR_RED_STR "\n"
+                            : "... response(%i): \n... " COLOR_GREEN_STR "\n",
+                        i, ctx->raw_response[i].data.data);
+      }
+#endif
+      return;
+    }
+  }
+
+  ctx_set_error(ctx, "waiting to fetch more responses, but no cptr was registered", IN3_ENOTSUP);
+}
+
+void in3_handle_rpc(in3_ctx_t* ctx, ctx_req_transports_t* transports) {
+  // error check
+  if (!ctx->client->transport) {
+    ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
+    return;
+  }
+
+  // if we can't create the request, this function will put it into error-state
+  in3_request_t* request = in3_create_request(ctx);
+  if (!request) return;
+
+  // in case there is still a old cptr we need to cleanup since this means this is a retry!
+  transport_cleanup(ctx, transports, false);
+
+  // debug output
+  for (unsigned int i = 0; i < request->urls_len; i++)
+    in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[i], i == 0 ? request->payload : "");
+
+  // handle it
+  ctx->client->transport(request);
+
+  // debug output
+  for (unsigned int i = 0; i < request->urls_len; i++) {
+    if (request->ctx->raw_response[i].state != IN3_WAITING) {
+      in3_log_trace(request->ctx->raw_response[i].state
+                        ? "... response(%i): \n... " COLOR_RED_STR "\n"
+                        : "... response(%i): \n... " COLOR_GREEN_STR "\n",
+                    i, request->ctx->raw_response[i].data.data);
+    }
+  }
+
+  // in case we have a cptr, we need to save it in the transports
+  if (request && request->cptr) {
+    // find a free spot
+    int index = -1;
+    for (int i = 0; i < transports->len; i++) {
+      if (!transports->req[i].ctx) {
+        index = i;
+        break;
+      }
+    }
+    if (index == -1) {
+      transports->req = transports->len ? _realloc(transports->req, sizeof(ctx_req_t) * (transports->len + 1), sizeof(ctx_req_t) * transports->len) : _malloc(sizeof(ctx_req_t) * transports->len);
+      index           = transports->len++;
     }
 
-    if (!ctx->raw_response) {
-      switch (ctx->type) {
-        case CT_RPC: {
-          if (ctx->client->transport) {
-            // handle transports
-            in3_request_t* request = in3_create_request(ctx);
-            if (request == NULL || request->urls == NULL)
-              return IN3_ENOMEM;
-            in3_log_trace("... request to " COLOR_YELLOW_STR "\n... " COLOR_MAGENTA_STR "\n", request->urls[0], request->payload);
-            ctx->client->transport(request);
-            in3_log_trace(request->results->state
-                              ? "... response: \n... " COLOR_RED_STR "\n"
-                              : "... response: \n... " COLOR_GREEN_STR "\n",
-                          request->results->data.data);
-            request_free(request, ctx->client, false);
-            break;
-          } else
-            return ctx_set_error(ctx, "no transport set", IN3_ECONFIG);
-        }
-        case CT_SIGN: {
-          if (ctx->client->signer) {
-            d_token_t*     params = d_get(ctx->requests[0], K_PARAMS);
-            in3_sign_ctx_t sign_ctx;
-            sign_ctx.message = d_to_bytes(d_get_at(params, 0));
-            sign_ctx.account = d_to_bytes(d_get_at(params, 1));
-            sign_ctx.type    = SIGN_EC_HASH;
-            sign_ctx.ctx     = ctx;
-            sign_ctx.wallet  = ctx->client->signer->wallet;
-            if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
-            if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
+    // store the pointers
+    transports->req[index].ctx = request->ctx;
+    transports->req[index].ptr = request->cptr;
+  }
 
-            ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
-            sb_init(&ctx->raw_response[0].data);
-            in3_log_trace("... request to sign ");
-            res = ctx->client->signer->sign(&sign_ctx);
-            if (res < 0) return ctx_set_error(ctx, ctx->raw_response->data.data, res);
-            sb_add_range(&ctx->raw_response->data, (char*) sign_ctx.signature, 0, 65);
+  // we will cleanup even though the reponses may still be pending
+  request_free(request);
+}
+
+in3_ret_t in3_send_ctx(in3_ctx_t* ctx) {
+  ctx_req_transports_t transports = {0};
+  while (true) {
+    switch (in3_ctx_exec_state(ctx)) {
+      case CTX_ERROR:
+      case CTX_SUCCESS:
+        transport_cleanup(ctx, &transports, true);
+        return ctx->verification_state;
+      case CTX_WAITING_FOR_RESPONSE:
+        in3_handle_rpc_next(ctx, &transports);
+        break;
+      case CTX_WAITING_TO_SEND: {
+        in3_ctx_t* last = in3_ctx_last_waiting(ctx);
+        switch (last->type) {
+          case CT_SIGN:
+            in3_handle_sign(last);
             break;
-          } else
-            return ctx_set_error(ctx, "no signer set", IN3_ECONFIG);
+          case CT_RPC:
+            in3_handle_rpc(last, &transports);
         }
       }
     }
   }
-  return res;
+}
+
+/**
+ * helper function to set the signature on the signer context and rpc context
+ */
+void in3_sign_ctx_set_signature(
+    in3_ctx_t*      ctx,
+    in3_sign_ctx_t* sign_ctx) {
+  ctx->raw_response = _calloc(sizeof(in3_response_t), 1);
+  sb_init(&ctx->raw_response[0].data);
+  sb_add_range(&ctx->raw_response->data, (char*) sign_ctx->signature, 0, 65);
 }
 
 in3_ctx_t* ctx_find_required(const in3_ctx_t* parent, const char* search_method) {
@@ -705,12 +811,12 @@ in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
 
 in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
   if (ctx == NULL) return CTX_SUCCESS;
-  in3_ctx_state_t required_state = in3_ctx_state(ctx->required);
-  if (required_state == CTX_ERROR) return CTX_ERROR;
-  if (ctx->error) return CTX_ERROR;
-  if (ctx->required && required_state != CTX_SUCCESS) return CTX_WAITING_FOR_REQUIRED_CTX;
-  if (!ctx->raw_response) return CTX_WAITING_FOR_RESPONSE;
+  in3_ctx_state_t required_state = ctx->required ? in3_ctx_state(ctx->required) : CTX_SUCCESS;
+  if (required_state == CTX_ERROR || ctx->error) return CTX_ERROR;
+  if (ctx->required && required_state != CTX_SUCCESS) return required_state;
+  if (!ctx->raw_response) return CTX_WAITING_TO_SEND;
   if (ctx->type == CT_RPC && !ctx->response_context) return CTX_WAITING_FOR_RESPONSE;
+  if (ctx->type == CT_SIGN && ctx->raw_response->state == IN3_WAITING) return CTX_WAITING_FOR_RESPONSE;
   return CTX_SUCCESS;
 }
 
@@ -720,6 +826,11 @@ void ctx_free(in3_ctx_t* ctx) {
 
 static inline in3_ret_t pre_handle(in3_verifier_t* verifier, in3_ctx_t* ctx) {
   return verifier->pre_handle ? verifier->pre_handle(ctx, &ctx->raw_response) : IN3_OK;
+}
+
+in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
+  in3_ctx_execute(ctx);
+  return in3_ctx_state(ctx);
 }
 
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
@@ -734,8 +845,12 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   if (ctx->response_context && ctx->verification_state == IN3_OK) return IN3_OK;
 
   // if we have required-contextes, we need to check them first
-  if (ctx->required && (ret = in3_ctx_execute(ctx->required)))
-    return ret;
+  if (ctx->required && (ret = in3_ctx_execute(ctx->required))) {
+    if (ret == IN3_EIGNORE)
+      ctx_handle_failable(ctx);
+    else
+      return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
+  }
 
   switch (ctx->type) {
     case CT_RPC: {
@@ -820,19 +935,4 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     default:
       return IN3_EINVAL;
   }
-}
-
-void in3_req_add_response(
-    in3_request_t* req,      /**< [in] the request-pointer passed to the transport-function containing the payload and url */
-    int            index,    /**< [in] the index of the url, since this request could go out to many urls */
-    bool           is_error, /**< [in] if true this will be reported as error. the message should then be the error-message */
-    const char*    data,     /**<  the data or the the string*/
-    int            data_len  /**<  the length of the data or the the string (use -1 if data is a null terminated string)*/
-) {
-  if (req->results[index].state == IN3_OK && is_error) req->results[index].data.len = 0;
-  req->results[index].state = is_error ? IN3_ERPC : IN3_OK;
-  if (data_len == -1)
-    sb_add_chars(&req->results[index].data, data);
-  else
-    sb_add_range(&req->results[index].data, data, 0, data_len);
 }

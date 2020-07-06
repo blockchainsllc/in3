@@ -75,10 +75,9 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
   }
 
   // now parse the json
-  json_ctx_t* res     = parse_json(buffer);
-  str_range_t json    = d_to_json(d_get(d_get_at(res->result, 0), key("response")));
-  req->results->state = IN3_OK;
-  sb_add_range(&req->results->data, json.data, 0, json.len);
+  json_ctx_t* res  = parse_json(buffer);
+  str_range_t json = d_to_json(d_get(d_get_at(res->result, 0), key("response")));
+  in3_ctx_add_response(req->ctx, 0, false, json.data, json.len);
 
   json_free(res);
   if (buffer) _free(buffer);
@@ -86,7 +85,7 @@ static in3_ret_t test_bulk_transport(in3_request_t* req) {
 }
 
 static void test_context_bulk() {
-  in3_t* in3     = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3     = in3_for_chain(CHAIN_ID_MAINNET);
   in3->transport = test_bulk_transport;
   in3->flags     = FLAGS_STATS;
   for (int i = 0; i < in3->chains_length; i++) {

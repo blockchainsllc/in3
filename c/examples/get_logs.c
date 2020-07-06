@@ -12,8 +12,8 @@ static void get_logs_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3    = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3->chain_id = ETH_CHAIN_ID_KOVAN;
+  in3_t* in3    = in3_for_chain(CHAIN_ID_MAINNET);
+  in3->chain_id = CHAIN_ID_KOVAN;
 
   // get logs using raw RPC call
   get_logs_rpc(in3);

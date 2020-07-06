@@ -49,12 +49,12 @@
 #include <sys/socket.h> /* socket, connect */
 #endif
 #include "../../core/client/client.h"
+#include "../../core/client/context.h"
 #include "../../core/util/mem.h"
 #include "../../core/util/utils.h"
 #include "in3_http.h"
 
 in3_ret_t send_http(in3_request_t* req) {
-  if (!req->times) req->times = _malloc(sizeof(uint32_t) * req->urls_len);
   for (int n = 0; n < req->urls_len; n++) {
 
     struct hostent*    server;
@@ -69,7 +69,7 @@ in3_ret_t send_http(in3_request_t* req) {
 
     // parse url
     if (strncmp(url, "http://", 7)) {
-      in3_req_add_response(req, n, true, "invalid url must sart with http", -1);
+      in3_ctx_add_response(req->ctx, n, true, "invalid url must sart with http", -1);
       continue;
     }
 
@@ -99,13 +99,13 @@ in3_ret_t send_http(in3_request_t* req) {
     SOCKET  s;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-      in3_req_add_response(req, n, true, "no socket available", -1);
+      in3_ctx_add_response(req->ctx, n, true, "no socket available", -1);
       continue;
     }
 
     //Create a socket
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
-      in3_req_add_response(req, n, true, "could not create the socket", -1);
+      in3_ctx_add_response(req->ctx, n, true, "could not create the socket", -1);
       continue;
     }
 
@@ -119,24 +119,24 @@ in3_ret_t send_http(in3_request_t* req) {
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
     //Connect to remote server
     if (connect(s, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
-      in3_req_add_response(req, n, true, "Connection failed", -1);
+      in3_ctx_add_response(req->ctx, n, true, "Connection failed", -1);
       continue;
     }
 
     if (send(s, message, strlen(message), 0) < 0) {
-      in3_req_add_response(req, n, true, "Send failed", -1);
+      in3_ctx_add_response(req->ctx, n, true, "Send failed", -1);
       continue;
     }
 
     //Receive a reply from the server
     if ((received = recv(s, response, 2000, 0)) == SOCKET_ERROR) {
-      in3_req_add_response(req, n, true, "Receive failed", -1);
+      in3_ctx_add_response(req->ctx, n, true, "Receive failed", -1);
       continue;
     }
 
     //Add a NULL terminating character to make it a proper string before printing
     response[received] = '\0';
-    in3_req_add_response(req, n, false, response, -1);
+    in3_ctx_add_response(req->ctx, n, false, response, -1);
 
     closesocket(s);
     WSACleanup();
@@ -144,12 +144,12 @@ in3_ret_t send_http(in3_request_t* req) {
     int sockfd;
     server = gethostbyname(host);
     if (server == NULL) {
-      in3_req_add_response(req, n, true, "no such host", -1);
+      in3_ctx_add_response(req->ctx, n, true, "no such host", -1);
       continue;
     }
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-      in3_req_add_response(req, n, true, "ERROR opening socket", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR opening socket", -1);
       continue;
     }
     /* fill in the structreq->ure */
@@ -159,7 +159,7 @@ in3_ret_t send_http(in3_request_t* req) {
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr_list[0], server->h_length);
     /* connect the socket */
     if (connect(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
-      in3_req_add_response(req, n, true, "ERROR connecting", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR connecting", -1);
       continue;
     }
     /* send the request */
@@ -168,7 +168,7 @@ in3_ret_t send_http(in3_request_t* req) {
     do {
       bytes = write(sockfd, message + sent, total - sent);
       if (bytes < 0) {
-        in3_req_add_response(req, n, true, "ERROR writing message to socket", -1);
+        in3_ctx_add_response(req->ctx, n, true, "ERROR writing message to socket", -1);
         continue;
       }
       if (bytes == 0)
@@ -183,17 +183,17 @@ in3_ret_t send_http(in3_request_t* req) {
       memset(response, 0, sizeof(response));
       bytes = recv(sockfd, response, 1024, 0);
       if (bytes < 0) {
-        in3_req_add_response(req, n, true, "ERROR reading response from socket", -1);
+        in3_ctx_add_response(req->ctx, n, true, "ERROR reading response from socket", -1);
         continue;
       }
       if (bytes == 0)
         break;
-      in3_req_add_response(req, n, false, response, -1);
+      in3_ctx_add_response(req->ctx, n, false, response, -1);
       received += bytes;
     } while (1);
 
     if (received == total) {
-      in3_req_add_response(req, n, true, "ERROR storing complete response from socket", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR storing complete response from socket", -1);
       continue;
     }
 
@@ -202,36 +202,36 @@ in3_ret_t send_http(in3_request_t* req) {
 
 #endif
 
-    req->times[n] = (uint32_t)(current_ms() - start);
+    req->ctx->raw_response[n].time = (uint32_t)(current_ms() - start);
 
     // now evaluate the response
 
-    char *res = req->results[n].data.data, *header = strstr(res, "\r\n\r\n"), *body = header + 4;
+    char *res = req->ctx->raw_response[n].data.data, *header = strstr(res, "\r\n\r\n"), *body = header + 4;
     if (!header) {
-      in3_req_add_response(req, n, true, "ERROR invalid response", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid response", -1);
       continue;
     }
     *header = 0;
     header  = strstr(res, "\r\n");
     if (!header) {
-      in3_req_add_response(req, n, true, "ERROR invalid response", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid response", -1);
       continue;
     }
     *header = 0;
     header  = strtok(res, " ");
     if (header == NULL || (strcmp(header, "HTTP/1.1") && strcmp(header, "HTTP/1.0"))) {
-      in3_req_add_response(req, n, true, "ERROR invalid HTTP Version", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR invalid HTTP Version", -1);
       continue;
     }
     header     = strtok(NULL, " ");
     int status = header ? atoi(header) : 0;
     if (status < 200 || status >= 400) {
-      in3_req_add_response(req, n, true, "ERROR failed request", -1);
+      in3_ctx_add_response(req->ctx, n, true, "ERROR failed request", -1);
       continue;
     }
 
-    memmove(res, body, req->results[n].data.len - (body - res) + 1);
-    req->results[n].data.len -= body - res;
+    memmove(res, body, req->ctx->raw_response[n].data.len - (body - res) + 1);
+    req->ctx->raw_response[n].data.len -= body - res;
   }
 
   return 0;

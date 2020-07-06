@@ -18,7 +18,7 @@ checking a Bitcoin transaction data
 
 int main() {
   // create new incubed client for BTC
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_BTC);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_BTC);
 
   // the hash of transaction that we want to get
   bytes32_t tx_id;
@@ -73,7 +73,7 @@ int main() {
   in3_log_set_prefix("");
 
   // create new incubed client
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
 
   // define a address (20byte)
   address_t contract;
@@ -181,7 +181,7 @@ static void get_balance_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
 
   // get balance using raw RPC call
   get_balance_rpc(in3);
@@ -252,7 +252,7 @@ static void get_block_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
 
   // get block using raw RPC call
   get_block_rpc(in3);
@@ -323,8 +323,8 @@ static void get_logs_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3    = in3_for_chain(ETH_CHAIN_ID_MAINNET);
-  in3->chain_id = ETH_CHAIN_ID_KOVAN;
+  in3_t* in3    = in3_for_chain(CHAIN_ID_MAINNET);
+  in3->chain_id = CHAIN_ID_KOVAN;
 
   // get logs using raw RPC call
   get_logs_rpc(in3);
@@ -428,7 +428,7 @@ static void get_tx_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
 
   // get tx using raw RPC call
   get_tx_rpc(in3);
@@ -504,7 +504,7 @@ static void get_tx_receipt_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
 
   // get tx receipt using raw RPC call
   get_tx_receipt_rpc(in3);
@@ -630,7 +630,7 @@ static void ipfs_api_example(in3_t* c) {
 
 int main() {
   // create new incubed client
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_IPFS);
+  in3_t* c = in3_for_chain(CHAIN_ID_IPFS);
 
   // IPFS put/get using raw RPC calls
   ipfs_rpc_example(c);
@@ -667,7 +667,7 @@ static void send_tx_api(in3_t* in3);
 int main() {
   // create new incubed client
   uint8_t bip_path[5] = {44, 60, 0, 0, 0};
-  in3_t*  in3         = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t*  in3         = in3_for_chain(CHAIN_ID_MAINNET);
   in3_log_set_level(LOG_DEBUG);
   // setting ledger nano s to be the default signer for incubed client
   // it will cause the transaction or any msg to be sent to ledger nanos device for siging
@@ -730,7 +730,7 @@ static void send_tx_api(in3_t* in3);
 
 int main() {
   // create new incubed client
-  in3_t* in3 = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* in3 = in3_for_chain(CHAIN_ID_MAINNET);
 
   // convert the hexstring to bytes
   bytes32_t pk;
@@ -831,7 +831,7 @@ static int handle_booking(usn_event_t* ev) {
 
 int main(int argc, char* argv[]) {
   // create new incubed client
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_MAINNET);
+  in3_t* c = in3_for_chain(CHAIN_ID_MAINNET);
 
   // switch to goerli
   c->chain_id = 0x5;
@@ -916,7 +916,7 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
 
 int main(int argc, char* argv[]) {
   // create new incubed client
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  in3_t* c = in3_for_chain(CHAIN_ID_GOERLI);
 
   // address of the usn-contract, which we copy from hex
   address_t contract;

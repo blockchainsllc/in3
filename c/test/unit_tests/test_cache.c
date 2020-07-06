@@ -81,8 +81,7 @@ static in3_ret_t test_transport(in3_request_t* req) {
   // now parse the json
   json_ctx_t* res  = parse_json(buffer);
   str_range_t json = d_to_json(d_get_at(d_get(d_get_at(res->result, 0), key("response")), 0));
-  sb_add_range(&req->results->data, json.data, 0, json.len);
-  req->results->state = IN3_OK;
+  in3_ctx_add_response(req->ctx, 0, false, json.data, json.len);
   json_free(res);
   if (buffer) _free(buffer);
   return IN3_OK;
@@ -131,12 +130,12 @@ void static setup_test_cache(in3_t* c) {
 }
 
 static void test_cache() {
-  in3_t* c           = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  in3_t* c           = in3_for_chain(CHAIN_ID_GOERLI);
   c->transport       = test_transport;
   c->signature_count = 0;
   setup_test_cache(c);
 
-  in3_chain_t* chain = in3_find_chain(c, ETH_CHAIN_ID_GOERLI);
+  in3_chain_t* chain = in3_find_chain(c, CHAIN_ID_GOERLI);
 
   TEST_ASSERT_TRUE(chain != NULL);
   TEST_ASSERT_EQUAL_INT32(2, chain->nodelist_length);

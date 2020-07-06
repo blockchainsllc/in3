@@ -32,11 +32,11 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
 
-#include "freertos/FreeRTOS.h"
 #include "block_number.h"
 #include "cJSON.h"
 #include "esp_system.h"
 #include "eth_call.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -44,6 +44,7 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include <in3/client.h>        // the core client
+#include <in3/context.h>       // the context
 #include <in3/eth_api.h>       // functions for direct api-access
 #include <in3/in3_init.h>      // if included the verifier will automaticly be initialized.
 #include <in3/log.h>           // logging functions
@@ -80,11 +81,11 @@ in3_ret_t local_transport_func(char** urls, int urls_len, char* payload, in3_res
 }
 
 in3_ret_t transport_mock(in3_request_t* req) {
-  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->results);
+  return local_transport_func((char**) req->urls, req->urls_len, req->payload, req->ctx->raw_response);
 }
 /* Setup and init in3 */
 void init_in3(void) {
-  c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  c = in3_for_chain(CHAIN_ID_GOERLI);
   in3_log_set_quiet(false);
   in3_log_set_level(LOG_TRACE);
   c->transport     = transport_mock;

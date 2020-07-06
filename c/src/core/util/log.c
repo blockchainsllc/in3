@@ -103,12 +103,15 @@ void in3_log_disable_prefix_() {
   L.enable_prefix = 0;
 }
 
-void in3_log_(in3_log_level_t level, const char* file, const char* function, int line, const char* fmt, ...) {
+void in3_log_(in3_log_level_t level, const char* filename, const char* function, int line, const char* fmt, ...) {
   if (level < L.level) {
     return;
   } else if (L.quiet && !L.fp) {
     return;
   }
+
+  const char* file = strrchr(filename, '/');
+  file             = file ? file + 1 : filename;
 
   /* Acquire lock */
   lock();
@@ -125,10 +128,10 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
       if (L.prefix == NULL) {
 #ifdef LOG_USE_COLOR
         fprintf(
-            stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
-            buf, level_colors[level], level_names[level], file, function, line);
+            stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%d:%s():\x1b[0m ",
+            buf, level_colors[level], level_names[level], file, line, function);
 #else
-        fprintf(stderr, "%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+        fprintf(stderr, "%s %-5s %s:%d:%s(): ", buf, level_names[level], file, line, function);
 #endif
       } else {
         fprintf(stderr, "%s", L.prefix);
@@ -146,10 +149,10 @@ void in3_log_(in3_log_level_t level, const char* file, const char* function, int
     if (L.prefix == NULL) {
 #ifdef LOG_USE_COLOR
       printk(
-          "%s %s%-5s\x1b[0m \x1b[90m%s:%s:%d:\x1b[0m ",
-          buf, level_colors[level], level_names[level], file, function, line);
+          "%s %s%-5s\x1b[0m \x1b[90m%s:%d:%s():\x1b[0m ",
+          buf, level_colors[level], level_names[level], file, line, function);
 #else
-      printk("%s %-5s %s:%s:%d: ", buf, level_names[level], file, function, line);
+      printk("%s %-5s %s:%d:%s(): ", buf, level_names[level], file, line, function);
 #endif
     } else {
       printk("%s", L.prefix);

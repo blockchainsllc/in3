@@ -54,7 +54,7 @@
 void test_get_config() {
   in3_register_eth_nano();
   in3_register_eth_api();
-  in3_t* c      = in3_for_chain(ETH_CHAIN_ID_KOVAN);
+  in3_t* c      = in3_for_chain(CHAIN_ID_KOVAN);
   char * result = NULL, *error = NULL;
   in3_client_rpc(c, "in3_getConfig", "[]", &result, &error);
   if (error) printf("ERROR: %s\n", error);

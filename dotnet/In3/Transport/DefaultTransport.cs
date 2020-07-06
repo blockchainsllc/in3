@@ -2,6 +2,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace In3.Transport
 {
@@ -10,14 +11,14 @@ namespace In3.Transport
     /// </summary>
     public class DefaultTransport : Transport
     {
-        private readonly HttpClient client = new HttpClient();
+        private readonly HttpClient _client = new HttpClient();
 
         /// <summary>
         /// Standard construction.
         /// </summary>
         public DefaultTransport()
         {
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         /// <summary>
@@ -26,7 +27,7 @@ namespace In3.Transport
         /// <param name="url">The url of the node.</param>
         /// <param name="payload">Json for the body of the POST request to the node.</param>
         /// <returns>The http json response.</returns>
-        public string Handle(string url, string payload)
+        public async Task<string> Handle(string url, string payload)
         {
             var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
             httpWebRequest.ContentType = "application/json";
@@ -40,7 +41,7 @@ namespace In3.Transport
                 streamWriter.Close();
             }
 
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            var httpResponse = (HttpWebResponse) await httpWebRequest.GetResponseAsync();
             using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
             {
                 return streamReader.ReadToEnd();

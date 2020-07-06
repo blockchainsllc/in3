@@ -5,7 +5,7 @@ using In3.Rpc;
 
 namespace In3.Utils
 {
-    internal class RpcHandler
+    internal static class RpcHandler
     {
         public static T From<T>(string json)
         {

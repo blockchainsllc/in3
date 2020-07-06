@@ -29,7 +29,7 @@
       <Pack>true</Pack>
       <PackagePath>runtimes</PackagePath>
     </None>
-    <None Include="In3.targets">
+    <None Include="Slockit.In3.targets">
       <Pack>true</Pack>
       <PackagePath>build</PackagePath>
     </None>

@@ -36,7 +36,7 @@ void unlock_key(in3_t* c, char* json_data, char* passwd) {
 
 int main(int argc, char* argv[]) {
   // create new incubed client
-  in3_t* c = in3_for_chain(ETH_CHAIN_ID_GOERLI);
+  in3_t* c = in3_for_chain(CHAIN_ID_GOERLI);
 
   // address of the usn-contract, which we copy from hex
   address_t contract;

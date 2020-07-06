@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace In3.Native
 {
-    internal class NativeUtils
+    internal static class Utils
     {
         // Heavily inspired by: https://stackoverflow.com/questions/1498931/marshalling-array-of-strings-to-char-in-c-sharp
         public static string[] GetAllStrings(IntPtr ptr, int size) {
@@ -17,7 +17,6 @@ namespace In3.Native
         }
 
         [DllImport("libin3", CharSet = CharSet.Ansi)] public static extern void _free_(IntPtr ptr);
-
         [DllImport("libin3", CharSet = CharSet.Ansi)] public static extern int hex_to_bytes(string buf, int len, IntPtr dst, int outbuf_size);
     }
 }

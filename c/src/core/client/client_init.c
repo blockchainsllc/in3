@@ -143,9 +143,9 @@ static void whitelist_free(in3_whitelist_t* wl) {
 
 static uint16_t avg_block_time_for_chain_id(chain_id_t id) {
   switch (id) {
-    case ETH_CHAIN_ID_MAINNET: return 15;
-    case ETH_CHAIN_ID_KOVAN: return 6;
-    case ETH_CHAIN_ID_GOERLI: return 15;
+    case CHAIN_ID_MAINNET: return 15;
+    case CHAIN_ID_KOVAN: return 6;
+    case CHAIN_ID_GOERLI: return 15;
     default: return 5;
   }
 }
@@ -261,7 +261,7 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
   c->cache                = NULL;
   c->signer               = NULL;
   c->cache_timeout        = 0;
-  c->chain_id             = chain_id ? chain_id : ETH_CHAIN_ID_MAINNET; // mainnet
+  c->chain_id             = chain_id ? chain_id : CHAIN_ID_MAINNET; // mainnet
   c->key                  = NULL;
   c->finality             = 0;
   c->max_attempts         = 7;
@@ -280,25 +280,25 @@ static in3_ret_t in3_client_init(in3_t* c, chain_id_t chain_id) {
 
   in3_chain_t* chain = c->chains;
 
-  if (!chain_id || chain_id == ETH_CHAIN_ID_MAINNET)
+  if (!chain_id || chain_id == CHAIN_ID_MAINNET)
     init_mainnet(chain++);
 
-  if (!chain_id || chain_id == ETH_CHAIN_ID_KOVAN)
+  if (!chain_id || chain_id == CHAIN_ID_KOVAN)
     init_kovan(chain++);
 
-  if (!chain_id || chain_id == ETH_CHAIN_ID_GOERLI)
+  if (!chain_id || chain_id == CHAIN_ID_GOERLI)
     init_goerli(chain++);
 
-  if (!chain_id || chain_id == ETH_CHAIN_ID_IPFS)
+  if (!chain_id || chain_id == CHAIN_ID_IPFS)
     init_ipfs(chain++);
 
-  if (!chain_id || chain_id == ETH_CHAIN_ID_BTC)
+  if (!chain_id || chain_id == CHAIN_ID_BTC)
     init_btc(chain++);
 
-  if (!chain_id || chain_id == ETH_CHAIN_ID_EWC)
+  if (!chain_id || chain_id == CHAIN_ID_EWC)
     init_ewf(chain++);
 
-  if (!chain_id || chain_id == ETH_CHAIN_ID_LOCAL) {
+  if (!chain_id || chain_id == CHAIN_ID_LOCAL) {
     initChain(chain, 0xFFFF, "f0fb87f4757c77ea3416afe87f36acaa0496c7e9", NULL, 1, 1, CHAIN_ETH, NULL);
     initNode(chain++, 0, "784bfa9eb182c3a02dbeb5285e3dba92d717e07a", "http://localhost:8545");
   }
@@ -597,7 +597,7 @@ char* in3_get_config(in3_t* c) {
   if (c->replace_latest_block)
     add_uint(sb, ',', "replaceLatestBlock", c->replace_latest_block);
   add_uint(sb, ',', "requestCount", c->request_count);
-  if (c->chain_id == ETH_CHAIN_ID_LOCAL && chain)
+  if (c->chain_id == CHAIN_ID_LOCAL && chain)
     add_string(sb, ',', "rpc", chain->nodelist->url);
 
   sb_add_chars(sb, ",\"nodes\":{");
@@ -660,7 +660,7 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("finality")) {
       EXPECT_TOK_U16(token);
 #ifdef POA
-      if (c->chain_id == ETH_CHAIN_ID_GOERLI || c->chain_id == ETH_CHAIN_ID_KOVAN)
+      if (c->chain_id == CHAIN_ID_GOERLI || c->chain_id == CHAIN_ID_KOVAN)
         EXPECT_CFG(d_int(token) > 0 && d_int(token) <= 100, "expected % value");
 #endif
       c->finality = (uint16_t) d_int(token);
@@ -748,7 +748,7 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("rpc")) {
       EXPECT_TOK_STR(token);
       c->proof           = PROOF_NONE;
-      c->chain_id        = ETH_CHAIN_ID_LOCAL;
+      c->chain_id        = CHAIN_ID_LOCAL;
       c->request_count   = 1;
       in3_chain_t* chain = in3_find_chain(c, c->chain_id);
       in3_node_t*  n     = &chain->nodelist[0];
@@ -875,7 +875,7 @@ char* in3_configure(in3_t* c, const char* config) {
     }
   }
 
-  if (c->signature_count && c->chain_id != ETH_CHAIN_ID_LOCAL && !c->replace_latest_block) {
+  if (c->signature_count && c->chain_id != CHAIN_ID_LOCAL && !c->replace_latest_block) {
     in3_log_warn("signatureCount > 0 without replaceLatestBlock is bound to fail; using default (" STR(DEF_REPL_LATEST_BLK) ")\n");
     c->replace_latest_block = DEF_REPL_LATEST_BLK;
   }

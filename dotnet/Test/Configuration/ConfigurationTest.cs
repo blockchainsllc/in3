@@ -95,7 +95,7 @@ namespace Test.Configuration
                 }
             };
 
-            Assert.Throws<ArgumentException>(() => _client.Eth1.GetGasPrice());
+            Assert.ThrowsAsync<ArgumentException>(() => _client.Eth1.GetGasPrice());
         }
     }
 }
