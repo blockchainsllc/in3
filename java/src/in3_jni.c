@@ -356,13 +356,13 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
 
   // url-array
   jobject jurls = (*jni)->NewObjectArray(jni, req->urls_len, (*jni)->FindClass(jni, "java/lang/String"), NULL);
-  for (int i = 0; i < req->urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, req->urls[i]));
+  for (unsigned int i = 0; i < req->urls_len; i++) (*jni)->SetObjectArrayElement(jni, jurls, i, (*jni)->NewStringUTF(jni, req->urls[i]));
 
   jclass       cls    = (*jni)->FindClass(jni, "in3/IN3");
   jmethodID    mid    = (*jni)->GetStaticMethodID(jni, cls, "sendRequest", "([Ljava/lang/String;[B)[[B");
   jobjectArray result = (*jni)->CallStaticObjectMethod(jni, cls, mid, jurls, jpayload);
 
-  for (int i = 0; i < req->urls_len; i++) {
+  for (unsigned int i = 0; i < req->urls_len; i++) {
     jbyteArray content = result ? (*jni)->GetObjectArrayElement(jni, result, i) : NULL;
     if (content) {
       const size_t l     = (*jni)->GetArrayLength(jni, content);
@@ -379,7 +379,7 @@ in3_ret_t Java_in3_IN3_transport(in3_request_t* req) {
   }
   uint64_t end = current_ms();
 
-  for (int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = (uint32_t)(end - start);
+  for (unsigned int i = 0; i < req->urls_len; i++) req->ctx->raw_response[i].time = (uint32_t)(end - start);
 
   return success;
 }
