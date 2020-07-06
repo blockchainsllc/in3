@@ -1,12 +1,9 @@
 use std::convert::TryInto;
 
 use async_std::task;
-use ethereum_types::{Address, U256};
-
 use in3::eth1::*;
 use in3::logging;
 use in3::prelude::*;
-use in3::types::Bytes;
 
 fn main() -> In3Result<()> {
     // enable logging

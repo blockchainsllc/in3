@@ -76,9 +76,9 @@ impl Decode for In3EthAbi {
 #[cfg(test)]
 mod tests {
     use async_std::task;
-    use ethereum_types::Address;
 
     use super::*;
+    use crate::types::Address;
 
     #[test]
     fn test_abi_encode() {

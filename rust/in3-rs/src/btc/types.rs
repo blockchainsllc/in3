@@ -1,8 +1,6 @@
 //! Bitcoin types' definitions.
-use ethereum_types::U256;
-
 use crate::eth1::Hash;
-use crate::types::Bytes;
+use crate::types::*;
 
 /// The transaction in type.
 #[derive(Debug)]

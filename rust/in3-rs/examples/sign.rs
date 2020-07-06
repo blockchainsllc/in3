@@ -1,7 +1,6 @@
 use std::convert::TryInto;
 
 use async_std::task;
-use ethereum_types::Address;
 use serde_json::json;
 
 use in3::eth1::*;

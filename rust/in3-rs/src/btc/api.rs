@@ -216,7 +216,6 @@ impl Api {
 #[cfg(test)]
 mod tests {
     use async_std::task;
-    use ethereum_types::U256;
     use rustc_hex::FromHex;
 
     use crate::prelude::*;

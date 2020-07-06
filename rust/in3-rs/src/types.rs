@@ -3,6 +3,7 @@ use std::convert::TryFrom;
 use std::fmt;
 use std::fmt::Formatter;
 
+pub use ethereum_types::{Address, Bloom, H256, U256, U64};
 use rustc_hex::{FromHex, FromHexError, ToHex};
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

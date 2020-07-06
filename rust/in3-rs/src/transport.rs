@@ -206,8 +206,6 @@ impl Transport for HttpTransport {
 
 #[cfg(test)]
 mod tests {
-    use ethereum_types::U256;
-
     use crate::json_rpc::Response;
     use crate::prelude::*;
 

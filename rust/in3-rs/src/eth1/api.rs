@@ -5,7 +5,7 @@ use crate::eth1::*;
 use crate::in3::chain::{BTC, IPFS};
 use crate::json_rpc::{rpc, Request};
 use crate::traits::{Api as ApiTrait, Client as ClientTrait};
-use crate::types::Bytes;
+use crate::types::*;
 use serde_json::json;
 
 /// Primary interface for the Ethereum JSON RPC API.
@@ -547,12 +547,10 @@ mod tests {
     use std::convert::TryInto;
 
     use async_std::task;
-    use ethereum_types::{Address, U256};
     use rustc_hex::FromHex;
 
     use crate::eth1::*;
     use crate::prelude::*;
-    use crate::types::Bytes;
 
     use super::*;
 
