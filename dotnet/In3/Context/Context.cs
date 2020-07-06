@@ -98,13 +98,6 @@ namespace In3.Context
             return msg;
         }
 
-        /// <summary>
-        /// Proxy function to ctx_handle_failable.
-        /// </summary>
-        public void HandleFailable()
-        {
-            ctx_handle_failable(_nativeCtx);
-        }
 
         /// <summary>
         /// Method to get the consolidated response of a request.
