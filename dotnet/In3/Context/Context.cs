@@ -63,8 +63,8 @@ namespace In3.Context
         /// <returns>The state as computed by in3_ctx_execute.</returns>
         public async Task<IState> Execute()
         {
-            int returnCode = in3_ctx_execute(this._nativeCtx);
-            return await new StateMachine(returnCode).HandleChange(this);
+            int state = in3_ctx_execute(this._nativeCtx);
+            return await new StateMachine(state).HandleChange(this);
         }
 
         /// <summary>
@@ -73,41 +73,9 @@ namespace In3.Context
         /// <returns>A context object.</returns>
         public Context GetLastWaiting()
         {
-            IntPtr lastWaiting = IntPtr.Zero;
-            IntPtr p = _nativeCtx;
-            while (p != IntPtr.Zero)
-            {
-                if (p != IntPtr.Zero && ctx_is_waiting_response(p))
-                {
-                    lastWaiting = p;
-                }
-                p = ctx_get_next_required(p);
-            }
-
-            return new Context(lastWaiting, _wrapper);
+            return new Context(in3_ctx_last_waiting(_nativeCtx), _wrapper);
         }
 
-        /// <summary>
-        /// Method responsible to fetch the ignored context references in the current context.
-        /// </summary>
-        /// <returns>A context object.</returns>
-        public Context GetLastIgnored()
-        {
-            IntPtr lastWaiting = IntPtr.Zero;
-            IntPtr p = _nativeCtx;
-            while (p != IntPtr.Zero)
-            {
-                IntPtr nextRequired = ctx_get_next_required(p);
-                if (nextRequired != IntPtr.Zero && ctx_is_ignore(nextRequired))
-                {
-                    lastWaiting = p;
-                    break;
-                }
-                p = nextRequired;
-            }
-
-            return new Context(lastWaiting, _wrapper);
-        }
 
         /// <summary>
         /// Conditional to verify if the encapsulated pointer actually points to something.
@@ -200,10 +168,8 @@ namespace In3.Context
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern string ctx_get_error_data(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void ctx_free(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_ctx_execute(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern bool ctx_is_waiting_response(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern bool ctx_is_ignore(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr ctx_get_next_required(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_ctx_last_waiting(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr ctx_get_response_data(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int ctx_handle_failable(IntPtr ctx);
+
     }
 }

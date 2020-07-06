@@ -951,7 +951,7 @@ int main(int argc, char* argv[]) {
               version      = d_get_string(health_res->result, "version");
               running      = d_get_int(health_res->result, "running");
               char* status = d_get_string(health_res->result, "status");
-              if (!status && strcmp(status, "healthy")) health = 0;
+              if (!status || strcmp(status, "healthy")) health = 0;
             }
           }
           if (version) {

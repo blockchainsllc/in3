@@ -605,15 +605,25 @@ in3_ctx_t* in3_ctx_last_waiting(in3_ctx_t* ctx) {
   return last;
 }
 
+static void init_sign_ctx(in3_ctx_t* ctx, in3_sign_ctx_t* sign_ctx) {
+  d_token_t* params = d_get(ctx->requests[0], K_PARAMS);
+  sign_ctx->message = d_to_bytes(d_get_at(params, 0));
+  sign_ctx->account = d_to_bytes(d_get_at(params, 1));
+  sign_ctx->type    = SIGN_EC_HASH;
+  sign_ctx->ctx     = ctx;
+  sign_ctx->wallet  = ctx->client->signer->wallet;
+}
+
+in3_sign_ctx_t* create_sign_ctx(in3_ctx_t* ctx) {
+  in3_sign_ctx_t* res = _malloc(sizeof(in3_sign_ctx_t));
+  init_sign_ctx(ctx, res);
+  return res;
+}
+
 in3_ret_t in3_handle_sign(in3_ctx_t* ctx) {
   if (ctx->client->signer) {
-    d_token_t*     params = d_get(ctx->requests[0], K_PARAMS);
     in3_sign_ctx_t sign_ctx;
-    sign_ctx.message = d_to_bytes(d_get_at(params, 0));
-    sign_ctx.account = d_to_bytes(d_get_at(params, 1));
-    sign_ctx.type    = SIGN_EC_HASH;
-    sign_ctx.ctx     = ctx;
-    sign_ctx.wallet  = ctx->client->signer->wallet;
+    init_sign_ctx(ctx, &sign_ctx);
     if (!sign_ctx.message.data) return ctx_set_error(ctx, "missing data to sign", IN3_ECONFIG);
     if (!sign_ctx.account.data) return ctx_set_error(ctx, "missing account to sign", IN3_ECONFIG);
 

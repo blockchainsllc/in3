@@ -726,7 +726,16 @@ int in3_get_request_urls_len(
 uint32_t in3_get_request_timeout(
     in3_request_t* request /**< request struct */
 );
-
+/**
+ * set the signer on the client.
+ * the caller will need to free this pointer after usage.
+ */
+in3_signer_t* in3_set_signer(
+    in3_t*         c,          /**< the incubed client */
+    in3_sign       sign,       /**< function pointer returning a stored value for the given key.*/
+    in3_prepare_tx prepare_tx, /**< function pointer returning capable of manipulating the transaction before signing it. This is needed in order to support multisigs.*/
+    void*          wallet      /**<custom object whill will be passed to functions */
+);
 /**
  * create a new storage handler-object to be set on the client.
  * the caller will need to free this pointer after usage.

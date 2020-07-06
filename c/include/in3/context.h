@@ -38,11 +38,11 @@
  * This is used for each request holding request and response-pointers but also controls the execution process.
  * */
 
-#include "client.h"
 #include "data.h"
 #include "scache.h"
 #include "stringbuilder.h"
 #include "utils.h"
+#include "client.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef CONTEXT_H
@@ -117,14 +117,6 @@ NONULL in3_ctx_t* ctx_new(
     in3_t*      client,  /**< [in] the client-config. */
     const char* req_data /**< [in] the rpc-request as json string. */
 );
-
-/**
- * helper function to retrieve the signature from a in3_sign_ctx_t
- */
-void in3_sign_ctx_set_signature(
-    in3_ctx_t*     ctx, /**< [in] the rpc context */
-    in3_sign_ctx_t sign_ctx /**< [in] the signer context */);
-
 /**
  * sends a previously created context to nodes and verifies it.
  * 
@@ -287,6 +279,34 @@ NONULL in3_ret_t in3_ctx_execute(
  * returns the current state of the context.
  */
 NONULL in3_ctx_state_t in3_ctx_state(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns the error of the context.
+ */
+char* ctx_get_error_data(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * returns json response for that context
+ */
+char* ctx_get_response_data(
+    in3_ctx_t* ctx /**< [in] the request context. */
+);
+
+/**
+ * creates a signer ctx to be used for async signing.
+ */
+NONULL in3_sign_ctx_t* create_sign_ctx(
+    in3_ctx_t* ctx /**< [in] the rpc context */
+);
+
+/**
+ * returns the type of the request
+ */
+ctx_type_t ctx_get_type(
     in3_ctx_t* ctx /**< [in] the request context. */
 );
 

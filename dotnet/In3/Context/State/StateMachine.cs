@@ -9,14 +9,15 @@ namespace In3.Context.Action
 
         public StateMachine(int code)
         {
-            Dictionary<In3Code, IState> actions = new Dictionary<In3Code, IState>
+            Dictionary<ContextState, IState> actions = new Dictionary<ContextState, IState>
             {
-                {In3Code.IN3_OK, new OkState()},
-                {In3Code.IN3_WAITING, new WaitingState()},
-                {In3Code.IN3_EIGNORE, new IgnoreState()}
+                {ContextState.CTX_SUCCESS, new OkState()},
+                {ContextState.CTX_WAITING_TO_SEND, new WaitingState()},
+                {ContextState.CTX_WAITING_FOR_RESPONSE, new WaitingState()},
+                {ContextState.CTX_ERROR, new ErrorState()}
             };
 
-            _state = actions.ContainsKey((In3Code) code) ? actions[(In3Code) code] : new ErrorState(); ;
+            _state = actions[(ContextState)code];
         }
 
         public async Task<IState> HandleChange(Context ctx)

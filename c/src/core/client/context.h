@@ -297,6 +297,13 @@ char* ctx_get_response_data(
 );
 
 /**
+ * creates a signer ctx to be used for async signing.
+ */
+NONULL in3_sign_ctx_t* create_sign_ctx(
+    in3_ctx_t* ctx /**< [in] the rpc context */
+);
+
+/**
  * returns the type of the request
  */
 ctx_type_t ctx_get_type(

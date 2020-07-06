@@ -26,7 +26,7 @@ namespace In3.Native
 
         public async Task Handle(IntPtr ctx)
         {
-            IntPtr signCtx = create_sign_ctx(ctx, IntPtr.Zero);
+            IntPtr signCtx = create_sign_ctx(ctx);
 
             bytes_t message = in3_sign_ctx_get_message(signCtx);
             bytes_t account = in3_sign_ctx_get_account(signCtx);
@@ -46,7 +46,7 @@ namespace In3.Native
             Utils._free_(signCtx);
         }
 
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr create_sign_ctx(IntPtr ctx, IntPtr walletPtr);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr create_sign_ctx(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_sign_ctx_set_signature(IntPtr ctx, IntPtr signCtx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_sign_ctx_get_signature(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern bytes_t in3_sign_ctx_get_message(IntPtr ctx);
