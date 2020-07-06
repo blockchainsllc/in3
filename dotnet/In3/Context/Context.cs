@@ -63,8 +63,8 @@ namespace In3.Context
         /// <returns>The state as computed by in3_ctx_execute.</returns>
         public async Task<IState> Execute()
         {
-            int state = in3_ctx_exec_state(this._nativeCtx);
-            return await new StateMachine(state).HandleChange(this);
+            return await new StateMachine(in3_ctx_exec_state(this._nativeCtx))
+                .HandleChange(this);
         }
 
         /// <summary>

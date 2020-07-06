@@ -88,10 +88,7 @@ char* ctx_get_response_data(in3_ctx_t* ctx) {
     *rin3.data = '}';
     rr.len     = rin3.data - rr.data + 1;
   }
-  char* res   = _malloc(rr.len + 1);
-  res[rr.len] = 0; // we can now manipulating the response, since we will free it anyway.
-  memcpy(res, rr.data, rr.len);
-  return res;
+  return _strdupn(rr.data, rr.len);
 }
 
 ctx_type_t ctx_get_type(in3_ctx_t* ctx) {
