@@ -63,7 +63,7 @@ namespace In3.Context
         /// <returns>The state as computed by in3_ctx_execute.</returns>
         public async Task<IState> Execute()
         {
-            int state = in3_ctx_execute(this._nativeCtx);
+            int state = in3_ctx_exec_state(this._nativeCtx);
             return await new StateMachine(state).HandleChange(this);
         }
 
@@ -160,7 +160,7 @@ namespace In3.Context
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr ctx_new(IntPtr client, IntPtr req_data);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern string ctx_get_error_data(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern void ctx_free(IntPtr ctx);
-        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_ctx_execute(IntPtr ctx);
+        [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern int in3_ctx_exec_state(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr in3_ctx_last_waiting(IntPtr ctx);
         [DllImport("libin3", CharSet = CharSet.Ansi)] private static extern IntPtr ctx_get_response_data(IntPtr ctx);
 
