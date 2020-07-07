@@ -29,6 +29,7 @@ namespace In3.Native
                 try
                 {
                     string result = await NativeClient.Client.Transport.Handle(urls[i], payload);
+                    // This is freed here (by the declartive marshall) and it works because internally this is an sb_add which copies the string (same with error).
                     in3_req_add_response(reqPtr, i, false, result, result.Length);
                 }
                 catch (Exception ex)
