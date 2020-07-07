@@ -311,10 +311,10 @@ function url_queue(req) {
         response => { responses.push({ i, url, response }); trigger() },
         error => { responses.push({ i, url, error }); trigger() }
     ))
-    function trigger(no_response) {
+    function trigger() {
         while (promises.length && responses.length) {
             const p = promises.shift(), r = responses.shift()
-            if (!no_response) {
+            if (!req.cleanUp) {
                 if (r.error)
                     setResponse(req.ctx, r.error.message || r.error, r.i, true)
                 else
@@ -326,15 +326,16 @@ function url_queue(req) {
 
     const result = {
         req,
-        getNext: (no_response) => new Promise((resolve, reject) => {
+        getNext: () => new Promise((resolve, reject) => {
             counter++
             if (counter > req.urls.length) throw new Error('no more response available')
             promises.push({ resolve, reject })
-            trigger(no_response)
+            trigger()
         }),
         cleanUp(ptr) {
+            req.cleanUp = true
             while (req.urls.length - counter > 0) {
-                this.getNext(true).then(
+                this.getNext().then(
                     r => {
                         // is the client still alive?
                         if (!clients['' + ptr]) return

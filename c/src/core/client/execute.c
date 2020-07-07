@@ -76,7 +76,7 @@ NONULL static void response_free(in3_ctx_t* ctx) {
   ctx->signers          = NULL;
 }
 
-NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
+NONULL static void ctx_free_intern(in3_ctx_t* ctx, bool is_sub) {
   // only for intern requests, we actually free the original request-string
   if (is_sub)
     _free(ctx->request_context->c);
@@ -89,7 +89,7 @@ NONULL static void free_ctx_intern(in3_ctx_t* ctx, bool is_sub) {
 
   if (ctx->requests) _free(ctx->requests);
   if (ctx->cache) in3_cache_free(ctx->cache);
-  if (ctx->required) free_ctx_intern(ctx->required, true);
+  if (ctx->required) ctx_free_intern(ctx->required, true);
 
   _free(ctx);
 }
@@ -801,7 +801,7 @@ in3_ret_t ctx_remove_required(in3_ctx_t* parent, in3_ctx_t* ctx) {
     if (p->required == ctx) {
       //      printf(" -- remove required %s > %s\n", ctx_name(parent), ctx_name(ctx));
       p->required = NULL; //ctx->required;
-      free_ctx_intern(ctx, true);
+      ctx_free_intern(ctx, true);
       return IN3_OK;
     }
     p = p->required;
@@ -821,7 +821,7 @@ in3_ctx_state_t in3_ctx_state(in3_ctx_t* ctx) {
 }
 
 void ctx_free(in3_ctx_t* ctx) {
-  if (ctx) free_ctx_intern(ctx, false);
+  if (ctx) ctx_free_intern(ctx, false);
 }
 
 static inline in3_ret_t pre_handle(in3_verifier_t* verifier, in3_ctx_t* ctx) {

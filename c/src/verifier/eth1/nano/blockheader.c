@@ -352,7 +352,7 @@ NONULL static void add_verified(int max, in3_chain_t* chain, uint64_t number, by
 /** verify the header */
 in3_ret_t eth_verify_blockheader(in3_vctx_t* vc, bytes_t* header, bytes_t* expected_blockhash) {
 
-  if (!header)
+  if (!header || !header->data || !header->len)
     return vc_err(vc, "no header found");
 
   unsigned int i;
