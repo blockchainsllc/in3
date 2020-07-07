@@ -550,7 +550,7 @@ static void set_nodelist(in3_t* c, char* nodes, bool upddate) {
     sb_add_chars(sb, "\":{\"nodeList\":[");
     for (char* next = strtok(cpy, ","); next; next = strtok(NULL, ",")) {
       if (next != cpy) sb_add_char(sb, ',');
-      str_range_t address = {0}, url = {0};
+      str_range_t address, url;
 
       if (*next == '0' && next[1] == 'x' && (s = strchr(next, ':'))) {
         address = (str_range_t){.data = next, .len = s - next};
