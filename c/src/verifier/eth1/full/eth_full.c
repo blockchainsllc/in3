@@ -105,7 +105,13 @@ int in3_verify_eth_full(in3_vctx_t* vc) {
       case 0:
         if (!result) return vc_err(vc, "no result");
         res = b_cmp(d_bytes(vc->result), result);
+
         b_free(result);
+        if (!res) {
+          in3_log_debug("mismatching result\n");
+          b_print(result);
+          b_print(d_bytes(vc->result));
+        }
         return res ? 0 : vc_err(vc, "The result does not match the proven result");
       case IN3_WAITING:
         return IN3_WAITING;

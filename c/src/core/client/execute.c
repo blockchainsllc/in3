@@ -344,21 +344,145 @@ static void check_autoupdate(const in3_ctx_t* ctx, in3_chain_t* chain, d_token_t
 
 static inline bool is_blacklisted(const node_match_t* node_weight) { return node_weight && node_weight->weight == NULL; }
 
-static bool is_user_error(d_token_t* error) {
-  char* err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
+static bool is_user_error(d_token_t* error, char** err_msg) {
+  *err_msg = d_type(error) == T_STRING ? d_string(error) : d_get_stringk(error, K_MESSAGE);
   // here we need to find a better way to detect user errors
   // currently we assume a error-message starting with 'Error:' is a server error and not a user error.
-  return err_msg && strncmp(err_msg, "Error:", 6) != 0;
+  return *err_msg && strncmp(*err_msg, "Error:", 6) && strncmp(*err_msg, "TypeError:", 10);
+}
+
+static in3_ret_t handle_error_response(in3_ctx_t* ctx, node_match_t* node, in3_response_t* response) {
+  if (is_blacklisted(node)) return IN3_ERPC;                                                        // already handled
+  if (node) blacklist_node(node);                                                                   // we block this node
+  ctx_set_error(ctx, response->data.len ? response->data.data : "no response from node", IN3_ERPC); // and copy the error to the ctx
+  if (response->data.data) {                                                                        // free up memory
+    // clean up invalid data
+    _free(response->data.data);
+    response->data.data     = NULL;
+    response->data.allocted = 0;
+    response->data.len      = 0;
+  }
+  return IN3_ERPC;
+}
+
+static void clean_up_ctx(in3_ctx_t* ctx, node_match_t* node) {
+  if (ctx->verification_state != IN3_OK && ctx->verification_state != IN3_WAITING) ctx->verification_state = IN3_WAITING;
+  if (ctx->error) _free(ctx->error);
+  if (ctx->responses) _free(ctx->responses);
+  if (ctx->response_context) json_free(ctx->response_context);
+  ctx->error = NULL;
+  if (node && node->weight) node->weight->blacklisted_until = 0; // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
+}
+
+static in3_ret_t handle_payment(in3_ctx_t* ctx, node_match_t* node, int index) {
+#ifdef PAY
+  // we update the payment info from the in3-section
+  if (ctx->client->pay && ctx->client->pay->follow_up) {
+    in3_ret_t res = ctx->client->pay->follow_up(ctx, node, vc.proof, d_get(ctx->responses[index], K_ERROR), ctx->client->pay->cptr);
+    if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
+      int nodes_count = ctx_nodes_len(ctx->node);
+      // this means we need to retry with the same node
+      ctx->attempt++;
+      for (int i = 0; i < nodes_count; i++) {
+        if (ctx->raw_response[i].data.data)
+          _free(ctx->raw_response[i].data.data);
+      }
+      _free(ctx->raw_response);
+      _free(ctx->responses);
+      json_free(ctx->response_context);
+
+      ctx->raw_response     = NULL;
+      ctx->response_context = NULL;
+      ctx->responses        = NULL;
+      return res;
+
+    } else if (res)
+      return ctx_set_error(ctx, "Error following up the payment data", res);
+  }
+#else
+  UNUSED_VAR(ctx);
+  UNUSED_VAR(node);
+  UNUSED_VAR(index);
+#endif
+  return IN3_OK;
+}
+
+static in3_ret_t verify_response(in3_ctx_t* ctx, in3_chain_t* chain, in3_verifier_t* verifier, node_match_t* node, in3_response_t* response) {
+  in3_ret_t res = IN3_OK;
+
+  if (response->state || !response->data.len) // reponse has an error
+    return handle_error_response(ctx, node, response);
+
+  // we need to clean up the previos responses if set
+  clean_up_ctx(ctx, node);
+
+  // parse
+  if (ctx_parse_response(ctx, response->data.data, response->data.len)) { // in case of an error we get a error-code and error is set in the ctx?
+    if (node) blacklist_node(node);                                       // so we need to block the node.
+    return ctx->verification_state;
+  }
+
+  // check each request
+  for (uint_fast16_t i = 0; i < ctx->len; i++) {
+
+    // find the verifier
+    in3_vctx_t vc;
+    vc.ctx     = ctx;
+    vc.chain   = chain;
+    vc.request = ctx->requests[i];
+    vc.result  = d_get(ctx->responses[i], K_RESULT);
+    vc.client  = ctx->client;
+
+    if ((vc.proof = d_get(ctx->responses[i], K_IN3))) { // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
+      if ((res = handle_payment(ctx, node, i))) return res;
+      vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
+      vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
+      vc.proof                 = d_get(vc.proof, K_PROOF);
+    }
+
+    // no result?
+    if (!vc.result && ctx->attempt < ctx->client->max_attempts - 1) {
+      char* err_msg;
+      // if we don't have a result, the node reported an error
+      if (is_user_error(d_get(ctx->responses[i], K_ERROR), &err_msg)) {
+        node->weight = NULL; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
+        in3_log_debug("we have a user-error from %s, so we reject the response, but don't blacklist ..\n", node ? node->node->url : "intern");
+        continue;
+      } else {
+        in3_log_debug("we have a system-error from %s, so we block it ..\n", node ? node->node->url : "intern");
+        blacklist_node(node);
+        return ctx_set_error(ctx, err_msg ? err_msg : "Invalid response", IN3_EINVAL);
+      }
+    }
+
+    // we have a verifier?
+    if (verifier) {
+      res = ctx->verification_state = verifier->verify(&vc);
+      if (res == IN3_WAITING)
+        return res;
+      if (res) {
+        blacklist_node(node);
+        return res;
+      }
+    }
+  }
+
+  // all is ok
+  return (ctx->verification_state = IN3_OK);
+}
+
+static void handle_times(node_match_t* node, in3_response_t* response) {
+  if (node && node->weight && response && response->time) {
+    node->weight->response_count++;
+    node->weight->total_response_time += response->time;
+    response->time = 0; // make sure we count the time only once
+  }
 }
 
 static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response_t* response, in3_chain_t* chain, in3_verifier_t* verifier) {
-  node_match_t* node = ctx->nodes;
-
-  // find the verifier
-  in3_vctx_t vc;
-  vc.ctx             = ctx;
-  vc.chain           = chain;
-  bool still_pending = false;
+  node_match_t* node          = ctx->nodes;
+  bool          still_pending = false;
+  in3_ret_t     state         = IN3_ERPC;
 
   // blacklist nodes for missing response
   for (int n = 0; n < nodes_count; n++, node = node ? node->next : NULL) {
@@ -366,121 +490,43 @@ static in3_ret_t find_valid_result(in3_ctx_t* ctx, int nodes_count, in3_response
     // if the response is still pending, we skip...
     if (response[n].state == IN3_WAITING) {
       still_pending = true;
+      in3_log_debug("request from node %s is still pending ..\n", node ? node->node->url : "intern");
       continue;
     }
 
-    // handle times
-    if (node && node->weight && ctx->raw_response && ctx->raw_response[n].time) {
-      node->weight->response_count++;
-      node->weight->total_response_time += ctx->raw_response[n].time;
-      ctx->raw_response[n].time = 0; // make sure we count the time only once
-    }
+    handle_times(node, response + n);
 
-    // since nodes_count was detected before, this should not happen!
-    if (response[n].state) {
-      if (is_blacklisted(node))
-        continue;
-      else if (node)
-        blacklist_node(node);
-      ctx_set_error(ctx, response[n].data.len ? response[n].data.data : "no response from node", IN3_ERPC);
-      if (response[n].data.data) {
-        // clean up invalid data
-        _free(response[n].data.data);
-        response[n].data.data     = NULL;
-        response[n].data.allocted = 0;
-        response[n].data.len      = 0;
-      }
-    } else {
-      // we need to clean up the previos responses if set
-      if (ctx->error) _free(ctx->error);
-      if (ctx->responses) _free(ctx->responses);
-      if (ctx->response_context) json_free(ctx->response_context);
-      ctx->error = NULL;
-
-      if (node && node->weight) node->weight->blacklisted_until = 0;                        // we reset the blacklisted, because if the response was correct, no need to blacklist, otherwise we will set the blacklisted_until anyway
-      in3_ret_t res = ctx_parse_response(ctx, response[n].data.data, response[n].data.len); // parse the result
-      if (res < 0) {
-        if (node) blacklist_node(node);
-      } else {
-        // check each request
-        for (uint_fast16_t i = 0; i < ctx->len; i++) {
-          vc.request = ctx->requests[i];
-          vc.result  = d_get(ctx->responses[i], K_RESULT);
-          vc.client  = ctx->client;
-
-          if ((vc.proof = d_get(ctx->responses[i], K_IN3))) {
-            // vc.proof is temporary set to the in3-section. It will be updated to real proof in the next lines.
-#ifdef PAY
-            // we update the payment info from the in3-section
-            if (ctx->client->pay && ctx->client->pay->follow_up) {
-              res = ctx->client->pay->follow_up(ctx, node, vc.proof, d_get(ctx->responses[i], K_ERROR), ctx->client->pay->cptr);
-              if (res == IN3_WAITING && ctx->attempt < ctx->client->max_attempts - 1) {
-                // this means we need to retry with the same node
-                ctx->attempt++;
-                for (int i = 0; i < nodes_count; i++) {
-                  _free(ctx->raw_response[i].error.data);
-                  _free(ctx->raw_response[i].result.data);
-                }
-                _free(ctx->raw_response);
-                _free(ctx->responses);
-                json_free(ctx->response_context);
-
-                ctx->raw_response     = NULL;
-                ctx->response_context = NULL;
-                ctx->responses        = NULL;
-                return res;
-
-              } else if (res)
-                return ctx_set_error(ctx, "Error following up the payment data", (ctx->verification_state = res));
-            }
-#endif
-            vc.last_validator_change = d_get_longk(vc.proof, K_LAST_VALIDATOR_CHANGE);
-            vc.currentBlock          = d_get_longk(vc.proof, K_CURRENT_BLOCK);
-            vc.proof                 = d_get(vc.proof, K_PROOF);
-          }
-
-          if (!vc.result && ctx->attempt < ctx->client->max_attempts - 1) {
-            // if we don't have a result, the node reported an error
-            // since we don't know if this error is our fault or the server fault,we don't blacklist the node, but retry
-            ctx->verification_state = IN3_ERPC;
-            if (is_user_error(d_get(ctx->responses[i], K_ERROR)))
-              node->weight = NULL; // we mark it as blacklisted, but not blacklist it in the nodelist, since it was not the nodes fault.
-            else
-              blacklist_node(node);
-            break;
-          } else if (verifier) {
-            res = ctx->verification_state = verifier->verify(&vc);
-            if (res == IN3_WAITING)
-              return res;
-            else if (res < 0) {
-              blacklist_node(node);
-              break;
-            }
-          } else
-            // no verifier - nothing to verify
-            ctx->verification_state = IN3_OK;
-        }
-      }
-    }
-
-    // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
-    if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
-      check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
-
-    // !node_weight is valid, because it means this is a internaly handled response
-    if (!node || !is_blacklisted(node))
-      return IN3_OK; // this reponse was successfully verified, so let us keep it.
+    state = verify_response(ctx, chain, verifier, node, response + n);
+    if (state == IN3_OK) {
+      in3_log_debug("accepted response from %s\n", node ? node->node->url : "intern");
+      break;
+    } else if (state == IN3_WAITING)
+      return state;
+    // in case of an error, we keep on trying....
   }
+
   // no valid response found,
   // if pending, we remove the error and wait
-  if (still_pending) {
+  if (state && still_pending) {
+    in3_log_debug("failed to verify, but waiting for pending\n");
     if (ctx->error) _free(ctx->error);
+    if (ctx->responses) _free(ctx->responses);
+    if (ctx->response_context) json_free(ctx->response_context);
     ctx->error              = NULL;
     ctx->verification_state = IN3_WAITING;
+    ctx->response_context   = NULL;
+    ctx->responses          = NULL;
     return IN3_WAITING;
   }
 
-  return IN3_EINVAL;
+  // if the last state is an error we report this as failed
+  if (state) return state;
+
+  // check auto update opts only if this node wasn't blacklisted (due to wrong result/proof)
+  if (!is_blacklisted(node) && ctx->responses && d_get(ctx->responses[0], K_IN3) && !d_get(ctx->responses[0], K_ERROR))
+    check_autoupdate(ctx, chain, d_get(ctx->responses[0], K_IN3), node);
+
+  return IN3_OK;
 }
 
 NONULL static char* convert_to_http_url(char* src_url) {
@@ -835,6 +881,7 @@ in3_ctx_state_t in3_ctx_exec_state(in3_ctx_t* ctx) {
 
 in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
   in3_ret_t ret;
+
   // if there is an error it does not make sense to execute.
   if (ctx->error) return (ctx->verification_state && ctx->verification_state != IN3_WAITING) ? ctx->verification_state : IN3_EUNKNOWN;
 
@@ -851,6 +898,8 @@ in3_ret_t in3_ctx_execute(in3_ctx_t* ctx) {
     else
       return ctx_set_error(ctx, ctx->required->error ? ctx->required->error : "error handling subrequest", ret);
   }
+
+  in3_log_debug("ctx_execute %s ... attempt = %i\n", d_get_stringk(ctx->requests[0], K_METHOD), ctx->error, ctx->attempt);
 
   switch (ctx->type) {
     case CT_RPC: {

@@ -34,6 +34,7 @@
 
 #include "../../../core/client/keys.h"
 #include "../../../core/client/verifier.h"
+#include "../../../core/util/log.h"
 #include "../../../core/util/mem.h"
 #include <stdio.h>
 #include <string.h>
@@ -151,6 +152,8 @@ in3_ret_t in3_get_code(in3_vctx_t* vc, address_t address, cache_entry_t** target
   // not cached yet
   if (vc->ctx->client->cache)
     code = vc->ctx->client->cache->get_item(vc->ctx->client->cache->cptr, key_str);
+
+  in3_log_debug("try to get the code for %s from cache: %p\n", key_str, code);
 
   if (code)
     must_free = 1;
