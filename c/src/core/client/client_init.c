@@ -676,6 +676,12 @@ char* in3_configure(in3_t* c, const char* config) {
     } else if (token->key == key("keepIn3")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_KEEP_IN3, (d_int(token) ? true : false));
+    } else if (token->key == key("debug")) {
+      if (d_int(token)) {
+        in3_log_set_level(LOG_TRACE);
+        in3_log_set_quiet(false);
+      } else
+        in3_log_set_quiet(true);
     } else if (token->key == key("stats")) {
       EXPECT_TOK_BOOL(token);
       BITMASK_SET_BOOL(c->flags, FLAGS_STATS, (d_int(token) ? true : false));

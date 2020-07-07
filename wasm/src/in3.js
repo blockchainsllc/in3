@@ -243,10 +243,10 @@ class IN3 {
                         }
                         return state.result
                     case 'waiting':
-                        await getNextResponse(responses, state.request)
+                        await getNextResponse(responses, { ...state.request, in3: this })
                         break
                     case 'request': {
-                        const req = state.request
+                        const req = { ...state.request, in3: this }
                         switch (req.type) {
                             case 'sign':
                                 try {
@@ -307,9 +307,18 @@ function getNextResponse(map, req) {
 function url_queue(req) {
     let counter = 0
     const promises = [], responses = []
+    if (req.in3.config.debug) console.log("send req (" + req.ctx + ") to " + req.urls.join() + ' : ', JSON.stringify(req.payload, null, 2))
     req.urls.forEach((url, i) => in3w.transport(url, JSON.stringify(req.payload), req.timeout || 30000).then(
-        response => { responses.push({ i, url, response }); trigger() },
-        error => { responses.push({ i, url, error }); trigger() }
+        response => {
+            if (req.in3.config.debug) console.log("res (" + req.ctx + "," + url + ") : " + JSON.stringify(JSON.parse(response), null, 2))
+            responses.push({ i, url, response });
+            trigger()
+        },
+        error => {
+            if (req.in3.config.debug) console.error("res err (" + req.ctx + "," + url + ") : " + error)
+            responses.push({ i, url, error });
+            trigger()
+        }
     ))
     function trigger() {
         while (promises.length && responses.length) {
